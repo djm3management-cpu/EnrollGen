@@ -25,6 +25,21 @@ export default function App() {
           <ScriptUpload />
           <Timer />
           <ScriptFlow />
+          <footer className="legal-footer">
+            <p>
+              <strong>Compliance Notice:</strong> EnrollGen is a compliance
+              assistance tool. Agents are responsible for ensuring that all
+              required disclosures are delivered accurately, completely, and in
+              accordance with CMS regulations and applicable carrier guidelines.
+            </p>
+
+            <p>
+              <strong>Privacy Notice:</strong> No private or personal
+              information is stored or transmitted by EnrollGen. All information
+              entered into this tool is used locally for real-time guidance only
+              and is not saved, logged, or retained in any database.
+            </p>
+          </footer>
         </>
       )}
 
