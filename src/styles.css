@@ -293,3 +293,15 @@ input[type="file"] {
   margin: 0 auto 12px;
   display: block;
 }
+.legal-footer {
+  margin-top: 40px;
+  padding: 16px 20px;
+  border-top: 1px solid #3a3d45;
+  font-size: 12px;
+  color: #9aa0a6;
+  line-height: 1.4;
+}
+
+.legal-footer p {
+  margin: 6px 0;
+}
