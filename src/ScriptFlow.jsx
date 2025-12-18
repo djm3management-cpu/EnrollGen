@@ -67,6 +67,10 @@ export default function ScriptFlow() {
   // ====== SECTION GATES ======
   const [recordingOk, setRecordingOk] = useState(false);
   const [tpmoOk, setTpmoOk] = useState(false);
+  // ====== SNP BRANCHING ======
+  const [snpType, setSnpType] = useState(null); // "DSNP" | "CSNP" | null
+  const [snpOk, setSnpOk] = useState(false);
+
   const [soaOk, setSoaOk] = useState(false);
   const [neadsOk, setNeadsOk] = useState(false);
   const [sobOk, setSobOk] = useState(false);
@@ -77,6 +81,8 @@ export default function ScriptFlow() {
     ? 1
     : !tpmoOk
     ? 2
+    : snpType && !snpOk
+    ? 2.5
     : !soaOk
     ? 3
     : !neadsOk
@@ -130,6 +136,11 @@ export default function ScriptFlow() {
     enrollmentCode: "",
     confirmation: "",
   });
+  // ====== AGENT NAME (used in verbatim scripts) ======
+  const [agentName, setAgentName] = useState("");
+  // ====== TPMO DYNAMIC FIELDS ======
+  const [tpmoOrgs, setTpmoOrgs] = useState("");
+  const [tpmoPlans, setTpmoPlans] = useState("");
 
   // ====== CHECKLISTS (RESTORED FULL) ======
   const [preEnrollChecks, setPreEnrollChecks] = useState({
@@ -218,10 +229,32 @@ export default function ScriptFlow() {
         <h2>
           1) Recording Disclosure <span className="timer">{t1}</span>
         </h2>
+        <div style={{ marginTop: 10, marginBottom: 6 }}>
+          <label style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>
+            Agent Name (auto-fills disclosure)
+          </label>
+          <input
+            value={agentName}
+            onChange={(e) => setAgentName(e.target.value)}
+            placeholder="First and Last Name"
+            style={{
+              width: "100%",
+              padding: "10px",
+              borderRadius: 6,
+              border: "1px solid #3a3d45",
+              background: "#15161a",
+              color: "white",
+              outline: "none",
+            }}
+          />
+        </div>
 
         {unlocked.s1 && (
           <ScriptBox verbatim>
-            {`“Thank you for calling New Gen Health Solutions. My name is [First and Last Name]. I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?”
+            {`“Thank you for calling New Gen Health Solutions. My name is ${
+              agentName || "[First and Last Name]"
+            }.
+ I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?”
 (Agent to wait for caller to respond).
 
 “Please know our call will be recorded for quality and training purposes; is it ok if I continue?”`}
@@ -245,11 +278,53 @@ export default function ScriptFlow() {
         <h2>
           2) TPMO Disclaimer <span className="timer">{t2}</span>
         </h2>
+        <div style={{ marginTop: 10, marginBottom: 6 }}>
+          <label style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>
+            TPMO Counts (auto-fills disclosure)
+          </label>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <input
+              value={tpmoOrgs}
+              onChange={(e) => setTpmoOrgs(e.target.value)}
+              placeholder="# of Organizations"
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: 6,
+                border: "1px solid #3a3d45",
+                background: "#15161a",
+                color: "white",
+                outline: "none",
+              }}
+            />
+
+            <input
+              value={tpmoPlans}
+              onChange={(e) => setTpmoPlans(e.target.value)}
+              placeholder="# of Plans"
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: 6,
+                border: "1px solid #3a3d45",
+                background: "#15161a",
+                color: "white",
+                outline: "none",
+              }}
+            />
+          </div>
+        </div>
 
         {unlocked.s2 && (
           <ScriptBox verbatim>
             {`
-“We do not offer every plan available in your area. Currently we represent [insert number of organizations] organizations which offer [insert number of plans] products in your area. Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insurance Program (SHIP) to get information on all of your options.”
+“We do not offer every plan available in your area. Currently we represent ${
+              tpmoOrgs || "[number of organizations]"
+            } organizations which offer ${
+              tpmoPlans || "[number of plans]"
+            } products in your area.
+ Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insurance Program (SHIP) to get information on all of your options.”
 
 “Plans are insured or covered by a Medicare Advantage (HMO, PPO, PFFS) organization with a Medicare contract and/or a Medicare-approved Part D sponsor. Enrollment in the plan depends on the plan’s contract renewal with Medicare.”`}
           </ScriptBox>
@@ -269,6 +344,60 @@ export default function ScriptFlow() {
           lockText("Locked until Recording Disclosure is complete.")}
         {recordingOk && !tpmoOk && lockText("Complete TPMO to continue.")}
       </section>
+      {/* ===================== 2.5) SNP DISCLOSURE ===================== */}
+      {tpmoOk && (
+        <section className={card(2.5)}>
+          <h2>Special Needs Plan Disclosure</h2>
+
+          {!snpType && (
+            <div style={{ display: "flex", gap: 10 }}>
+              <button className="primary" onClick={() => setSnpType("DSNP")}>
+                Dual Eligible (D-SNP)
+              </button>
+              <button className="primary" onClick={() => setSnpType("CSNP")}>
+                Chronic Condition (C-SNP)
+              </button>
+            </div>
+          )}
+
+          {/* ===== D-SNP ===== */}
+          {snpType === "DSNP" && (
+            <ScriptBox verbatim>
+              {`“In your area we do offer Dual Eligible Special Needs Plans. These are plans specifically designed for individuals who have both Medicare and Medicaid. Would you like to hear more about this plan?”
+
+(If yes)
+
+“Your ability to enroll in this special needs plan is based on verification that you are entitled to both Medicare and the qualifying level of Medicaid.”`}
+            </ScriptBox>
+          )}
+
+          {/* ===== C-SNP ===== */}
+          {snpType === "CSNP" && (
+            <ScriptBox verbatim>
+              {`“In your area we do offer Chronic Care Special Needs Plans. These are plans specifically designed for individuals who have been diagnosed with certain chronic conditions such as diabetes or cardiovascular disease. Would you like to hear more about this plan?”
+
+(If yes)
+
+“There is a physician verification process required to confirm your chronic condition by the end of the first month of enrollment in the new plan. You are responsible for ensuring that the form is completed and returned. If not completed, your enrollment in the C-SNP will be voided. The process may vary by carrier. Please see your new member materials.”`}
+            </ScriptBox>
+          )}
+
+          {snpType && (
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={snpOk}
+                onChange={(e) => setSnpOk(e.target.checked)}
+              />
+              SNP disclosure read (verbatim)
+            </label>
+          )}
+
+          {snpType && !snpOk && (
+            <p className="lock">Complete SNP disclosure to continue.</p>
+          )}
+        </section>
+      )}
 
       {/* ===================== 3) SOA ===================== */}
       <section className={`${card(3)} ${tpmoOk ? "" : "disabled"}`}>
