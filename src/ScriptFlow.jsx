@@ -75,23 +75,27 @@ export default function ScriptFlow() {
   const [neadsOk, setNeadsOk] = useState(false);
   const [sobOk, setSobOk] = useState(false);
   const [enrollOk, setEnrollOk] = useState(false);
+  const [partBReduction, setPartBReduction] = useState(false);
+
+  // ====== QUALIFICATIONS ======
+  const [qualOk, setQualOk] = useState(false);
 
   // ====== ACTIVE SECTION ======
   const activeSection = !recordingOk
     ? 1
     : !tpmoOk
     ? 2
-    : snpType && !snpOk
-    ? 2.5
     : !soaOk
     ? 3
-    : !neadsOk
+    : !qualOk
     ? 4
-    : !sobOk
+    : !neadsOk
     ? 5
-    : !enrollOk
+    : !sobOk
     ? 6
-    : 7;
+    : !enrollOk
+    ? 7
+    : 8;
 
   // ====== SECTION TIMERS ======
   const t1 = useSectionTimer(activeSection === 1);
@@ -188,13 +192,13 @@ export default function ScriptFlow() {
   const lockText = (msg) => <p className="lock">{msg}</p>;
   const card = (n) => `card ${activeSection === n ? "active-card" : ""}`;
   const unlocked = {
-    s1: true,
-    s2: recordingOk,
-    s3: tpmoOk,
-    s4: soaOk,
-    s5: neadsOk,
-    s6: sobOk,
-    s7: enrollOk,
+    s1: true, // Recording
+    s2: recordingOk, // TPMO
+    s3: tpmoOk, // POA & SOA
+    s4: soaOk, // Qualifications
+    s5: qualOk, // NEADS
+    s6: neadsOk, // SOB
+    s7: sobOk, // Enrollment
   };
 
   const enrollmentCodeOk = (notes.enrollmentCode || "").trim().length >= 4;
@@ -402,12 +406,15 @@ export default function ScriptFlow() {
       {/* ===================== 3) SOA ===================== */}
       <section className={`${card(3)} ${tpmoOk ? "" : "disabled"}`}>
         <h2>
-          3) Scope of Appointment <span className="timer">{t3}</span>
+          3) Power of Attorney & Scope of Appointment{" "}
+          <span className="timer">{t3}</span>
         </h2>
 
         {unlocked.s3 && (
           <ScriptBox verbatim>
-            {`“I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as”
+            {` “Are you interested in discussing Medicare options for yourself or for someone else, such as a family member, guardian or someone that you are authorized to make decisions for?” (If yes): “Are they available now or should we discuss at a later time when they are available?”
+            
+            “I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as”
 (Agent to list out all product types available). [Medicare Advantage plans, Medicare Advantage Prescription Drug plans].
 “Would you like to discuss all of these options or are you only interested in certain ones?”
 (Must wait for an affirmative response)
@@ -427,110 +434,220 @@ export default function ScriptFlow() {
             checked={soaOk}
             onChange={(e) => setSoaOk(e.target.checked)}
           />
-          SOA completed / permission confirmed
+          POA & SOA completed / permission confirmed
         </label>
 
         {!tpmoOk && lockText("Locked until TPMO is complete.")}
         {tpmoOk && !soaOk && lockText("SOA required before Needs Assessment.")}
       </section>
-
-      {/* ===================== 4) NEADS ===================== */}
+      {/* ===================== 4) QUALIFICATIONS ===================== */}
       <section className={`${card(4)} ${soaOk ? "" : "disabled"}`}>
         <h2>
-          4) NEADS Assessment <span className="timer">{t4}</span>
+          4) Qualifications <span className="timer">{t4}</span>
         </h2>
+        {soaOk && (
+          <>
+            <ScriptBox verbatim>
+              {`“Before we continue, I have a few qualifying questions to ensure you are eligible for the types of plans available in your area. These questions are optional to answer, however they will help me determine what type of plan may be right for your needs.”`}
+            </ScriptBox>
+            <ScriptBox verbatim>
+              {`Medicare:
+“Do you have or will soon have Medicare Parts A and B?”
+If yes: “Can you please grab your Red, White and Blue Medicare card so I can confirm your MBI?”
+If not available: Verify full legal name, date of birth, and Social Security Number.
+(Agent note: Send to MARx check.)`}
+            </ScriptBox>
+            <ScriptBox verbatim>
+              {`Medicaid / Extra Help:
+“Are you currently receiving any assistance with your Part B premium through Medicaid, or Extra Help that helps pay for prescription coverage?”`}
+            </ScriptBox>
+            <ScriptBox verbatim>
+              {`Permanent Residence:
+“Do you mind confirming your permanent home address?”
+(Agent note: If the caller does not want to provide it, proceed without it. If unsure, confirm the address on file with Social Security, tax records, or voter registration.)`}
+            </ScriptBox>
+            <ScriptBox verbatim>
+              {`Permission to Contact (TCPA):
+“Would you like to provide your phone number so we can contact you in the future? This is optional.”
 
-        {unlocked.s4 && (
+“Does New Gen Health Solutions have permission to have a licensed sales agent contact you in the future about plan information and your Medicare enrollment options? Your consent is voluntary and allows us to contact you via text messaging or automatic dialing. You may change your preferences at any time. This will not affect your eligibility for enrollment or benefits. Message and data rates may apply.”`}
+            </ScriptBox>
+            <ScriptBox verbatim>
+              {`Email:
+“Would you like to provide an email address that we can use to contact you? This is optional and can be used to send plan information or updates.”`}
+            </ScriptBox>
+            <ScriptBox verbatim>
+              {`Other Coverage:
+“Are you a veteran?”
+(If yes: Thank them for their service.)
+
+“Do you currently have other coverage such as employer coverage, retiree benefits, VA benefits, Tricare for Life, or ChampVA?”
+(Agent note: If present, politely end the call. Basic VA coverage alone may proceed.)`}
+            </ScriptBox>
+            <ScriptBox verbatim>
+              {`Election Period:
+“Is this call taking place during the Annual Enrollment Period, October 15 through December 7?”
+
+Required Privacy Statement:
+“Please be aware that you are not required to give any health-related information unless it will be used to determine your enrollment eligibility. If you choose not to provide required health information, you may not be able to enroll.”`}
+            </ScriptBox>{" "}
+          </>
+        )}
+
+        <label className="check">
+          <input
+            type="checkbox"
+            disabled={!soaOk}
+            checked={qualOk}
+            onChange={(e) => setQualOk(e.target.checked)}
+          />
+          Qualifications completed
+        </label>
+
+        {!qualOk && (
+          <p className="lock">
+            Qualifications must be completed before proceeding to Needs
+            Assessment.
+          </p>
+        )}
+        {!soaOk &&
+          lockText(
+            "Locked until Power of Attorney & Scope of Appointment are completed."
+          )}
+      </section>
+
+      {/* ===================== 5) NEADS ===================== */}
+      <section className={`${card(5)} ${qualOk ? "" : "disabled"}`}>
+        <h2>
+          5) NEADS Assessment <span className="timer">{t5}</span>
+        </h2>
+        {unlocked.s5 && (
           <ScriptBox verbatim>
             {`“I am going to ask you some optional questions to help determine the plans best suited for your needs.”
 “What is your current coverage for health? RX, dental, and vision?”
 “Who is your current primary care physician?”
 “Do you see any specialists? If so, who?”
-Is there a particular hospital or any other preferred facilities we should check network status for?
+“Is there a particular hospital or any other preferred facilities we should check network status for?”
 “What medications do you take regularly?”
 “What do you pay for each?”
 “Which Pharmacy do you use to fill your prescriptions?”
 
-CMS regulations require that agents ensure that, prior to an enrollment, CMS’ required questions and topics regarding beneficiary needs in a health plan choice are fully discussed. Topics include:
-- Information regarding primary care providers and specialists (whether or not the beneficiary’s current providers are in the plan’s network)
-- Prescription drug coverage and costs (including whether or not the beneficiary’s current prescriptions are covered)
-- Costs of health care services
-- Premiums (Plan premium amount monthly, quarterly, annually and Part B premium)
-- Benefits
-- Specific health care needs such as durable medical equipment or physical therapy
+CMS regulations require that agents ensure that, prior to an enrollment, CMS’ required questions and topics regarding beneficiary needs in a health plan choice are fully discussed.
 
-Agent to provide recap/Summary:
+Agent recap:
 “I’ll summarize my notes for you. Did we get it all? Do you have any other health care needs?”`}
           </ScriptBox>
         )}
 
         <h3>Pre-Enrollment Checklist</h3>
+
         <div className="checklist">
           {renderCheck(
             preEnrollChecks.providers,
             "Provider network reviewed",
             (v) => setPreEnrollChecks((s) => ({ ...s, providers: v })),
-            !soaOk
+            !qualOk
           )}
           {renderCheck(
             preEnrollChecks.rx,
             "Prescription coverage reviewed",
             (v) => setPreEnrollChecks((s) => ({ ...s, rx: v })),
-            !soaOk
+            !qualOk
           )}
           {renderCheck(
             preEnrollChecks.costs,
             "Copays / cost sharing reviewed",
             (v) => setPreEnrollChecks((s) => ({ ...s, costs: v })),
-            !soaOk
+            !qualOk
           )}
           {renderCheck(
             preEnrollChecks.moop,
             "MOOP explained",
             (v) => setPreEnrollChecks((s) => ({ ...s, moop: v })),
-            !soaOk
+            !qualOk
           )}
           {renderCheck(
             preEnrollChecks.rules,
             "Plan rules (HMO/PPO) explained",
             (v) => setPreEnrollChecks((s) => ({ ...s, rules: v })),
-            !soaOk
+            !qualOk
           )}
           {renderCheck(
             preEnrollChecks.coverageImpact,
             "Effect on current coverage explained",
             (v) => setPreEnrollChecks((s) => ({ ...s, coverageImpact: v })),
-            !soaOk
+            !qualOk
           )}
         </div>
 
         <button
           className="primary"
-          disabled={!soaOk || !preEnrollAllDone}
+          disabled={!qualOk || !preEnrollAllDone}
           onClick={() => setNeadsOk(true)}
         >
           Mark NEADS Complete
         </button>
 
-        {!soaOk && lockText("Locked until SOA is complete.")}
+        {!qualOk && lockText("Locked until Qualifications are complete.")}
+
         {soaOk &&
           !preEnrollAllDone &&
           lockText("Complete the Pre-Enrollment Checklist to proceed.")}
       </section>
 
-      {/* ===================== 5) SOB ===================== */}
-      <section className={`${card(5)} ${neadsOk ? "" : "disabled"}`}>
+      {/* ===================== 6) SOB ===================== */}
+      <section className={`${card(6)} ${neadsOk ? "" : "disabled"}`}>
         <h2>
-          5) Summary of Benefits <span className="timer">{t5}</span>
+          6) Plan Selection & Summary of Benefits{" "}
+          <span className="timer">{t6}</span>
         </h2>
-
         {unlocked.s5 && (
+          <ScriptBox verbatim>
+            {`“Based on everything we discussed during your needs assessment — including your doctors, prescriptions, coverage preferences, and costs — I reviewed the plans available in your area.”
+
+“Based on your needs, the [plan name] appears to be a good option for you.”
+
+“The reason I’m recommending this plan is because it aligns with what you told me was most important, such as your coverage needs, provider access, prescription costs, or overall out-of-pocket expenses.”
+
+“Before I go into the full benefit details, does this plan sound like something that could work for you?”
+
+(Agent to wait for response.)
+
+“I’m now going to walk through the plan’s benefits and rules so you can fully understand how it works before making any decision.”`}
+          </ScriptBox>
+        )}
+
+        {unlocked.s6 && (
           <ScriptBox verbatim>
             {`“Before making an enrollment decision, it is important that you fully understand the plan’s benefits and rules. I will cover the plan requirements (disclosures), review the Pre-enrollment checklist and the Summary of Benefits and answer any questions you have. The pre-enrollment checklist, can also be reviewed on [carrier’s name] website.”
 
 “Do you understand the benefits we discussed earlier or have any other questions before we get started?”
 (agent to wait for response)`}
           </ScriptBox>
+        )}
+        {unlocked.s5 && (
+          <div style={{ marginBottom: 12 }}>
+            <button
+              className="secondary"
+              onClick={() => setPartBReduction((v) => !v)}
+            >
+              Part B Premium Reduction Applies
+            </button>
+
+            {partBReduction && (
+              <ScriptBox verbatim>
+                {`“This plan includes a Part B premium reduction. There may be a delay in the application of the Part B premium reduction.”
+
+“The reduction is not immediate and may take one or more payment cycles to take effect.”
+
+“If your Part B premium is deducted from your Social Security check, the reduction will appear as an increase in your Social Security payment.”
+
+“If your Part B premium is paid directly, you will receive a credit on your premium statement.”
+
+“For this plan, your Part B premium reduction is [amount], however this amount may change based on the amount you pay for Part B.”`}
+              </ScriptBox>
+            )}
+          </div>
         )}
 
         <div className="checklist">
@@ -598,10 +715,10 @@ Agent to provide recap/Summary:
           lockText("Complete the SOB checklist to proceed.")}
       </section>
 
-      {/* ===================== 6) ENROLLMENT ===================== */}
+      {/* ===================== 7) ENROLLMENT ===================== */}
       <section className={`${card(6)} ${sobOk ? "" : "disabled"}`}>
         <h2>
-          6) Enrollment <span className="timer">{t6}</span>
+          7) Enrollment <span className="timer">{t6}</span>
         </h2>
 
         {unlocked.s6 && (
@@ -719,10 +836,10 @@ Section 8: Telephonic Enrollment.
           lockText("Complete all enrollment confirmations to proceed.")}
       </section>
 
-      {/* ===================== 7) WRAP ===================== */}
+      {/* ===================== 8) WRAP ===================== */}
       <section className={`${card(7)} ${enrollOk ? "" : "disabled"}`}>
         <h2>
-          7) Wrap-Up <span className="timer">{t7}</span>
+          8) Wrap-Up <span className="timer">{t7}</span>
         </h2>
 
         {unlocked.s7 && (
