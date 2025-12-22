@@ -1,6 +1,19 @@
 export default function AgentTools() {
   return (
     <div className="agent-tools">
+      <section className="map-section">
+        <h3>🗺️ FEMA Disaster SEP Zones</h3>
+
+        <iframe
+          src="https://www.google.com/maps/d/embed?mid=1XUQ3Haav_eI8jD4lNnXErKMni_gyPMk&ehbc=2E312F"
+          width="100%"
+          height="650"
+          style={{ border: 0 }}
+          loading="lazy"
+          title="FEMA Disaster SEP Zones"
+        />
+      </section>
+
       <h3>🛠️ Agent Tools</h3>
 
       {/* CORE ENROLLMENT PERIODS */}
