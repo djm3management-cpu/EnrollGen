@@ -12,7 +12,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <h1>EnrollGenAI Agent Script Assist</h1>
+      <h1>EnrollGen Agent Script Assist</h1>
       <img src={logo} alt="EnrollGenAI" className="app-logo" />
 
       <div className="tabs">
