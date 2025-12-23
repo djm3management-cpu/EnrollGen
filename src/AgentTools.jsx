@@ -12,6 +12,17 @@ export default function AgentTools() {
           loading="lazy"
           title="FEMA Disaster SEP Zones"
         />
+
+        <h3 style={{ marginTop: "24px" }}>🏥 Medicaid Eligibility by State</h3>
+
+        <iframe
+          src="https://www.google.com/maps/d/u/0/embed?mid=14aNMdQKllgQH1P81J-0U9pIoiqjLD7g&ehbc=2E312F"
+          width="100%"
+          height="650"
+          style={{ border: 0 }}
+          loading="lazy"
+          title="Medicaid Eligibility by State"
+        />
       </section>
 
       <h3>🛠️ Agent Tools</h3>
