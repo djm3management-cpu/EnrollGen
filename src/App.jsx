@@ -39,6 +39,14 @@ export default function App() {
               entered into this tool is used locally for real-time guidance only
               and is not saved, logged, or retained in any database.
             </p>
+            <p style={{ opacity: 0.6, fontSize: "12px", textAlign: "center" }}>
+              © 2025 EnrollGen. All rights reserved.
+              <br />
+              EnrollGen and its associated scripts, workflows, and interface are
+              protected under U.S. copyright law. Unauthorized reproduction,
+              distribution, or use without express written permission is
+              prohibited.
+            </p>
           </footer>
         </>
       )}
