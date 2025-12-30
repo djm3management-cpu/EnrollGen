@@ -70,6 +70,7 @@ export default function ScriptFlow() {
   // ====== SNP BRANCHING ======
   const [snpType, setSnpType] = useState(null); // "DSNP" | "CSNP" | null
   const [snpOk, setSnpOk] = useState(false);
+  const [tpmoZip, setTpmoZip] = useState("");
 
   const [soaOk, setSoaOk] = useState(false);
   const [neadsOk, setNeadsOk] = useState(false);
@@ -288,6 +289,23 @@ export default function ScriptFlow() {
           </label>
 
           <div style={{ display: "flex", gap: 10 }}>
+            <input
+              value={tpmoZip}
+              onChange={(e) => setTpmoZip(e.target.value)}
+              placeholder="ZIP"
+              maxLength={5}
+              style={{
+                width: 80, // smaller than orgs/plans
+                padding: "8px",
+                borderRadius: 6,
+                border: "1px solid #3a3d45",
+                background: "#15161a",
+                color: "white",
+                outline: "none",
+                textAlign: "center",
+              }}
+            />
+
             <input
               value={tpmoOrgs}
               onChange={(e) => setTpmoOrgs(e.target.value)}
