@@ -498,16 +498,26 @@ If not available: Verify full legal name, date of birth, and Social Security Num
             <ScriptBox verbatim>
               {`Other Coverage:
 “Are you a veteran?”
-(If yes: Thank them for their service.)
+(If yes: Thank them for their service!)
 
 “Do you currently have other coverage such as employer coverage, retiree benefits, VA benefits, Tricare for Life, or ChampVA?”
 (Agent note: If present, politely end the call. Basic VA coverage alone may proceed.)`}
             </ScriptBox>
             <ScriptBox verbatim>
               {`Election Period:
-“Is this call taking place during the Annual Enrollment Period, October 15 through December 7?”
+             (If):Annual Election Period (AEP)
 
-Required Privacy Statement:
+             “The Annual Election Period runs from October 15 through December 7. We are currently within this period, so you may make a Medicare plan change.”
+             
+             (If):Open Enrollment (OE / MA-OEP)
+             
+             “Medicare Open Enrollment runs from January 1 through March 31. Since we are within this period, you may make a one-time plan change.”
+             
+             (If):Special Election Period (SEP)
+             
+             “You qualify for a Special Election Period, which allows you to make a Medicare plan change outside of the standard enrollment periods.”
+
+             Required Privacy Statement:
 “Please be aware that you are not required to give any health-related information unless it will be used to determine your enrollment eligibility. If you choose not to provide required health information, you may not be able to enroll.”`}
             </ScriptBox>{" "}
           </>
@@ -927,3 +937,4 @@ function renderCheck(value, label, onChange, disabled) {
     </label>
   );
 }
+
