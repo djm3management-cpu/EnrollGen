@@ -341,6 +341,7 @@ export default function ScriptFlow() {
         {unlocked.s2 && (
           <ScriptBox verbatim>
             {`
+"Can i please have your zipcode?"
 “We do not offer every plan available in your area. Currently we represent ${
               tpmoOrgs || "[number of organizations]"
             } organizations which offer ${
@@ -433,7 +434,7 @@ export default function ScriptFlow() {
             {` “Are you interested in discussing Medicare options for yourself or for someone else, such as a family member, guardian or someone that you are authorized to make decisions for?” (If yes): “Are they available now or should we discuss at a later time when they are available?”
             
             “I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as”
-(Agent to list out all product types available). [Medicare Advantage plans, Medicare Advantage Prescription Drug plans].
+(Agent to list product types seen in Sunfire). [Medicare Advantage plans, Medicare Advantage Prescription Drug plans].
 “Would you like to discuss all of these options or are you only interested in certain ones?”
 (Must wait for an affirmative response)
 
@@ -882,7 +883,9 @@ End the call: “Thank you for [calling/choosing] [Carrier name] and have a grea
                 AGENT REMINDER (NOT READ VERBATIM):
               </strong>
               {"\n"}After enrollment, complete the HRA with the customer on the
-              phone (if applicable for the plan) before ending the call.
+              phone (if applicable for the plan) before ending the call. Enter
+              Enrollment Code & Customer Info in NGHS Digital Sales Google
+              Sheet. Set status as a sale on EnrollHere.
             </ScriptBox>
           </>
         )}
