@@ -342,6 +342,9 @@ export default function ScriptFlow() {
           <ScriptBox verbatim>
             {`
 "Can i please have your zipcode?"
+"May I have your First and Last Name"
+"In case we get disconnected during this call, may I have a phone
+number to call you back?”
 “We do not offer every plan available in your area. Currently we represent ${
               tpmoOrgs || "[number of organizations]"
             } organizations which offer ${
@@ -550,7 +553,7 @@ If not available: Verify full legal name, date of birth, and Social Security Num
         <h2>
           5) NEADS Assessment <span className="timer">{t5}</span>
         </h2>
-        {unlocked.s5 && (
+        {unlocked.s6 && (
           <ScriptBox verbatim>
             {`“I am going to ask you some optional questions to help determine the plans best suited for your needs.”
 “What is your current coverage for health? RX, dental, and vision?”
@@ -562,6 +565,14 @@ If not available: Verify full legal name, date of birth, and Social Security Num
 “Which Pharmacy do you use to fill your prescriptions?”
 
 CMS regulations require that agents ensure that, prior to an enrollment, CMS’ required questions and topics regarding beneficiary needs in a health plan choice are fully discussed.
+
+* “What do you enjoy about your current coverage? Any benefits, doctors,
+hospitals, cost or other feature preferences?”
+* “What would you add or alter to have coverage you’d like even more?”
+* “What are you hoping to gain by changing your coverage arrangement?”
+* “Is anything more important to you – like health vs Rx benefits?”
+* “Any preference for plan types, like HMO or PPO?”
+* “Is travel or living elsewhere at times part of your lifestyle?”
 
 Agent recap:
 “I’ll summarize my notes for you. Did we get it all? Do you have any other health care needs?”`}
@@ -745,22 +756,63 @@ Agent recap:
       </section>
 
       {/* ===================== 7) ENROLLMENT ===================== */}
-      <section className={`${card(6)} ${sobOk ? "" : "disabled"}`}>
+      <section className={`${card(7)} ${sobOk ? "" : "disabled"}`}>
         <h2>
-          7) Enrollment <span className="timer">{t6}</span>
+          7) Enrollment <span className="timer">{t7}</span>
         </h2>
-
-        {unlocked.s6 && (
+        {unlocked.s7 && (
           <ScriptBox verbatim>
             {`Section 7: Transition to Enrollment.
-“Mr./Ms. , if you are ready to enroll today, we will now move to the enrollment process.”
+
+“Mr./Ms., if you are ready to enroll today, we will now move to the enrollment process.”
 
 7.1 Transition to Enrollment: Inbound call.
-“For Inbound Calls read: “I can enroll you today over the telephone in this [specific plan name] Enrolling in this plan today will replace the current [clarify existing coverage type] coverage that you have today. Once approved by Medicare, your new [clarify new plan coverage type] plan coverage will begin on [effective date]. Would you like to proceed with enrollment in the selected plan?”
-(agent to wait for beneficiary response)
+“For inbound calls: I can enroll you today over the telephone in this [specific plan name]. Enrolling in this plan today will replace your current coverage. Once approved by Medicare, your new coverage will begin on [effective date]. Would you like to proceed?”
 
 Section 8: Telephonic Enrollment.
-“Based on what we have discussed, it sounds like you are interested in [plan name, type and contract number with PBP]. Is that correct?”`}
+“Based on what we have discussed, it sounds like you are interested in [plan name, type, and contract number with PBP]. Is that correct?”
+
+If you are currently enrolled in a Medicare Advantage plan, your current coverage will end once your new coverage starts.
+If you have Tricare, your coverage may be affected.
+If you have a Medigap plan, you may want to drop it once MA coverage begins.
+
+If you are ready to enroll, we will complete the application and process your signature.
+Once completed, I will provide your application number and explain when to expect materials.
+
+[Carrier Name] is a Medicare Advantage organization with a Medicare contract.
+Enrollment depends on contract renewal.
+You must keep Medicare Part A and Part B and continue paying your Part B premium.
+You can only be enrolled in one Medicare Advantage plan at a time.
+
+MAPD Part D Statement:
+This plan includes Part D prescription drug coverage. Network pharmacies must be used except in non-routine circumstances.
+
+Benefits, premiums, and cost-sharing may change on January 1.
+This is not a complete description of benefits. Refer to the Evidence of Coverage.
+
+Coverage outside the U.S. is limited.
+
+PRIVACY ACT STATEMENT:
+CMS collects information to track enrollment, improve care, and make payments.
+Your response is voluntary, but failure to respond may affect enrollment.
+
+“Do you understand how the plan works?”
+
+“Do you understand and agree with the
+statements you have heard so far?”
+
+“Do you understand that
+enrollment in this plan will disenroll you from your current plan?
+
+“Are you ready to enroll in [plan name, type and
+  contract number with PBP]?”
+
+“Your enrollment application has been successfully submitted and the application
+number is[application ID]. [Plan name]’s Customer service number is [phone
+and TTY].”
+
+
+`}
           </ScriptBox>
         )}
 
@@ -866,7 +918,7 @@ Section 8: Telephonic Enrollment.
       </section>
 
       {/* ===================== 8) WRAP ===================== */}
-      <section className={`${card(7)} ${enrollOk ? "" : "disabled"}`}>
+      <section className={`${card(8)} ${enrollOk ? "" : "disabled"}`}>
         <h2>
           8) Wrap-Up <span className="timer">{t7}</span>
         </h2>
@@ -937,4 +989,3 @@ function renderCheck(value, label, onChange, disabled) {
     </label>
   );
 }
-
