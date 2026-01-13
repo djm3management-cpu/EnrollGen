@@ -349,7 +349,7 @@ input[type="file"] {
 /* Monaco blurred background */
 .app-shell::before {
   content: "";
-  position: absolute;
+  position: fixed;
   inset: 0;
 
   background-image: url("./assets/monaco-track.png");
@@ -359,7 +359,7 @@ input[type="file"] {
   background-size: cover;
 
   filter: blur(8px);
-  transform: scale(1);
+  transform: none !important;
   opacity: 0.05;
 
   z-index: 0;
@@ -380,3 +380,4 @@ input[type="file"] {
   position: relative;
   z-index: 2;
 }
+
