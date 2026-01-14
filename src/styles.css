@@ -352,30 +352,24 @@ input[type="file"] {
   position: fixed;
   inset: 0;
 
-  background-image: url("./assets/abstract.jpg");
+  background-image: url("/abstract.jpg");
   background-repeat: no-repeat;
-  background-position: center center;
-
+  background-position: center;
   background-size: cover;
 
-  filter: blur(0px);
-  transform: none !important;
   opacity: 1;
-
+  filter: blur(0px);
   z-index: 0;
 }
 
-/* Dark compliance overlay */
 .app-shell::after {
   content: "";
-  position: absolute;
+  position: fixed;
   inset: 0;
-
-  background: rgba(0, 0, 0, 0.623);
+  background: rgba(0, 0, 0, 0.6);
   z-index: 1;
 }
 
-/* Ensure app UI stays above background */
 .app {
   position: relative;
   z-index: 2;
