@@ -352,15 +352,15 @@ input[type="file"] {
   position: fixed;
   inset: 0;
 
-  background-image: url("./assets/monaco-track.png");
+  background-image: url("./assets/abstract.jpg");
   background-repeat: no-repeat;
-  background-position: 70% 45%;
+  background-position: center center;
 
   background-size: cover;
 
-  filter: blur(8px);
+  filter: blur(0px);
   transform: none !important;
-  opacity: 0.05;
+  opacity: 1;
 
   z-index: 0;
 }
@@ -371,7 +371,7 @@ input[type="file"] {
   position: absolute;
   inset: 0;
 
-  background: rgba(8, 0, 29, 0.103);
+  background: rgba(0, 0, 0, 0.623);
   z-index: 1;
 }
 
@@ -380,4 +380,3 @@ input[type="file"] {
   position: relative;
   z-index: 2;
 }
-
