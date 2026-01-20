@@ -507,6 +507,14 @@ If not available: Verify full legal name, date of birth, and Social Security Num
 (Agent note: If present, politely end the call. Basic VA coverage alone may proceed.)`}
             </ScriptBox>
             <ScriptBox verbatim>
+              {`Emergency Room / Urgent Care Use:
+
+“In the last twelve months, have you gone to an emergency room or an urgent care center for medical care?”
+
+(If yes):
+“Was that one or two times, or more than that?”`}
+            </ScriptBox>
+            <ScriptBox verbatim>
               {`Election Period:
              (If):Annual Election Period (AEP)
 
@@ -553,7 +561,7 @@ If not available: Verify full legal name, date of birth, and Social Security Num
         <h2>
           5) NEADS Assessment <span className="timer">{t5}</span>
         </h2>
-        {unlocked.s6 && (
+        {unlocked.s5 && (
           <ScriptBox verbatim>
             {`“I am going to ask you some optional questions to help determine the plans best suited for your needs.”
 “What is your current coverage for health? RX, dental, and vision?”
@@ -561,8 +569,58 @@ If not available: Verify full legal name, date of birth, and Social Security Num
 “Do you see any specialists? If so, who?”
 “Is there a particular hospital or any other preferred facilities we should check network status for?”
 “What medications do you take regularly?”
+Prescription Medication Review:
+
+“I’m going to review your prescription medications to make sure they’re covered correctly under the plans available to you.”
+
+“Please tell me the name of each medication you take, the dosage, how often you take it, and the pharmacy you normally use.”
+
+“Take your time — we’ll go through them one at a time.”
+
+“Thank you — I have your complete medication list.”
 “What do you pay for each?”
 “Which Pharmacy do you use to fill your prescriptions?”
+“I am now confirming your pharmacy’s network status for this plan.”
+
+“Your pharmacy is considered a preferred pharmacy for this plan.”
+
+OR
+
+“Your pharmacy is considered a standard pharmacy for this plan.”
+“Some prescription medications may have coverage requirements such as prior authorization, step therapy, or quantity limits.”
+
+“I am reviewing those requirements with you now so there are no surprises after enrollment.”
+“Do you have a hospital you prefer to use if you need inpatient care?”
+
+“I am checking that hospital’s network status for this plan.”
+
+“That hospital is in-network for this plan.”
+
+OR
+
+“That hospital is not in-network for this plan.”
+
+“Do you have a primary care doctor you would like to keep?”
+
+“I am checking your primary care doctor’s network status for this plan.”
+
+“Your primary care doctor is in-network for this plan.”
+
+OR
+
+“Your primary care doctor is not in-network for this plan.”
+
+“When a plan includes additional benefits, those services are accessed through specific networks or vendors.”
+
+“Dental services are provided through the plan’s dental network or vendor.”
+
+“Vision services are provided through the plan’s vision network or vendor.”
+
+“Hearing services are provided through the plan’s hearing network or vendor.”
+
+“Any OTC or flex benefits are provided through the plan’s assigned vendor.”
+
+“I will let you know how to access each benefit if it applies to the plan you choose.”
 
 CMS regulations require that agents ensure that, prior to an enrollment, CMS’ required questions and topics regarding beneficiary needs in a health plan choice are fully discussed.
 
@@ -653,7 +711,24 @@ Agent recap:
 
 (Agent to wait for response.)
 
-“I’m now going to walk through the plan’s benefits and rules so you can fully understand how it works before making any decision.”`}
+“I’m now going to walk through the plan’s benefits and rules so you can fully understand how it works before making any decision.”
+“Now I’m going to review the plan’s benefits and costs so you can fully understand how it works.
+
+If applicable, this plan has a medical deductible of [AMOUNT], and there may also be a Part B deductible.
+
+For prescription drugs, this plan has a Part D deductible of [AMOUNT], which applies to certain drug tiers. We reviewed which of your medications are covered, their tiers, and what you would pay in copays or coinsurance. Some medications may have requirements such as prior authorization, quantity limits, or step therapy, and I have explained those to you. If any medications are not on the formulary, I have let you know.
+
+Medicare prescription drug plans have different coverage stages throughout the year. If your out-of-pocket costs for covered prescription drugs reach the catastrophic coverage limit, your drug costs will be significantly reduced for the remainder of the year. The catastrophic coverage limit for this plan is [ENTER DOLLAR AMOUNT], and this applies to prescription drugs only.
+
+We also reviewed your medical benefits, including what you would pay for inpatient hospital care, outpatient hospital services, primary care visits, specialist visits, mental health services, preventive care, emergency room services, and urgently needed services. If this plan allows out-of-network coverage, I explained how those costs may differ.
+
+Emergency room services are covered anywhere in the United States. Urgently needed services are for care you receive when you are temporarily away from home and need treatment right away.
+
+We discussed any additional benefits offered by this plan, including dental, vision, hearing, and any other benefits that apply. I explained any costs or limitations and how to access these services, including using the plan’s required network, vendor, or provider.
+
+Medicare generally does not cover care outside the United States, and I reviewed whether this plan provides any coverage outside the country.”
+
+`}
           </ScriptBox>
         )}
 
@@ -925,6 +1000,14 @@ and TTY].”
 
         {unlocked.s7 && (
           <>
+            <ScriptBox verbatim>
+              {`Evidence of Coverage and Right to Cancel:
+
+“You will receive an Evidence of Coverage document that explains all of the plan’s benefits, costs, and rules in detail.”
+
+“You have the right to cancel this plan before it becomes effective if you change your mind.”`}
+            </ScriptBox>
+
             <ScriptBox verbatim>
               {`“Do you understand the benefits and conditions of enrollment as they have been explained for the[specific plan name] (eg”Generic Medicare Sunshine PPO). ?”
 “Do you understand that we will release information to Medicare and other plans as is necessary for treatment, payment and healthcare operations?”
