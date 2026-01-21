@@ -711,22 +711,40 @@ Agent recap:
 
 (Agent to wait for response.)
 
-“I’m now going to walk through the plan’s benefits and rules so you can fully understand how it works before making any decision.”
-“Now I’m going to review the plan’s benefits and costs so you can fully understand how it works.
+AGENT NOTE: State the dollar amounts for the current plan and the new plan when comparing benefits.
 
-If applicable, this plan has a medical deductible of [AMOUNT], and there may also be a Part B deductible.
+“I am now going to review the plan’s benefits and costs.
 
-For prescription drugs, this plan has a Part D deductible of [AMOUNT], which applies to certain drug tiers. We reviewed which of your medications are covered, their tiers, and what you would pay in copays or coinsurance. Some medications may have requirements such as prior authorization, quantity limits, or step therapy, and I have explained those to you. If any medications are not on the formulary, I have let you know.
+This plan will have a monthly premium of [AMOUNT].
 
-Medicare prescription drug plans have different coverage stages throughout the year. If your out-of-pocket costs for covered prescription drugs reach the catastrophic coverage limit, your drug costs will be significantly reduced for the remainder of the year. The catastrophic coverage limit for this plan is [ENTER DOLLAR AMOUNT], and this applies to prescription drugs only.
+If applicable, this plan will have a medical deductible of [AMOUNT], and the Medicare Part B deductible is [AMOUNT].
 
-We also reviewed your medical benefits, including what you would pay for inpatient hospital care, outpatient hospital services, primary care visits, specialist visits, mental health services, preventive care, emergency room services, and urgently needed services. If this plan allows out-of-network coverage, I explained how those costs may differ.
+For prescription drugs, this plan will have a Part D deductible of [AMOUNT], which applies to [TIERS]. Your prescription drugs will have copays or coinsurance of [AMOUNTS] based on their tier. Some medications may have requirements such as prior authorization, quantity limits, or step therapy, and those requirements have been reviewed. Any medications not covered on the formulary have been disclosed.
 
-Emergency room services are covered anywhere in the United States. Urgently needed services are for care you receive when you are temporarily away from home and need treatment right away.
+Medicare prescription drug plans have different coverage stages throughout the year. The catastrophic coverage limit for this plan is [DOLLAR AMOUNT]. Once that amount is reached, your prescription drug costs will be significantly reduced for the remainder of the year.
 
-We discussed any additional benefits offered by this plan, including dental, vision, hearing, and any other benefits that apply. I explained any costs or limitations and how to access these services, including using the plan’s required network, vendor, or provider.
+In-network inpatient hospital care will have a cost of [AMOUNT].
 
-Medicare generally does not cover care outside the United States, and I reviewed whether this plan provides any coverage outside the country.”
+In-network outpatient hospital services will have a cost of [AMOUNT].
+
+Primary care provider visits will have a cost of [AMOUNT].
+
+Specialist visits will have a cost of [AMOUNT].
+
+Inpatient and outpatient mental health services will have a cost of [AMOUNT].
+
+Preventive services will have a cost of [AMOUNT].
+
+Emergency room services will have a cost of [AMOUNT].
+
+Urgently needed services will have a cost of [AMOUNT] when you are temporarily away from home.
+
+If this plan allows out-of-network coverage, out-of-network services will have a cost of [AMOUNT], which may be higher than in-network costs.
+
+This plan may include additional benefits such as dental, vision, hearing, or other benefits. Dental services will have a cost of [AMOUNT], vision services will have a cost of [AMOUNT], and hearing services will have a cost of [AMOUNT]. Access to these services must be through the plan’s required network, vendor, or provider.
+
+Medicare generally does not cover care outside the United States. If this plan offers coverage outside the country, that coverage will have a cost of [AMOUNT].”
+
 
 `}
           </ScriptBox>
