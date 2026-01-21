@@ -281,7 +281,8 @@ export default function ScriptFlow() {
       {/* ===================== 2) TPMO ===================== */}
       <section className={`${card(2)} ${recordingOk ? "" : "disabled"}`}>
         <h2>
-          2) TPMO Disclaimer <span className="timer">{t2}</span>
+          2) TPMO Disclaimer & Federal Contracting Statement{" "}
+          <span className="timer">{t2}</span>
         </h2>
         <div style={{ marginTop: 10, marginBottom: 6 }}>
           <label style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>
@@ -341,7 +342,7 @@ export default function ScriptFlow() {
         {unlocked.s2 && (
           <ScriptBox verbatim>
             {`
-"Can i please have your zipcode?"
+"Can I please have your zipcode?"
 "May I have your First and Last Name"
 "In case we get disconnected during this call, may I have a phone
 number to call you back?”
@@ -874,22 +875,29 @@ Once completed, I will provide your application number and explain when to expec
 
 [Carrier Name] is a Medicare Advantage organization with a Medicare contract.
 Enrollment depends on contract renewal.
-You must keep Medicare Part A and Part B and continue paying your Part B premium.
-You can only be enrolled in one Medicare Advantage plan at a time.
+
+“Service Area: [Plan Name] serves a specific service area. When the plan begins you must obtain benefits from [Carrier Name] as described in the Evidence of Coverage document. No payment will be issued for services that are not covered.”
+
+"You must keep Medicare Part A and Part B and continue paying your Part B premium."
+"You can only be enrolled in one Medicare Advantage plan at a time."
 
 MAPD Part D Statement:
 This plan includes Part D prescription drug coverage. Network pharmacies must be used except in non-routine circumstances.
 
-Benefits, premiums, and cost-sharing may change on January 1.
-This is not a complete description of benefits. Refer to the Evidence of Coverage.
+“If you have not had Medicare prescription drug coverage, or creditable coverage as good as Medicare’s, you may have to pay a late enrollment penalty in addition to your premium for Medicare prescription drug coverage.”
 
-Coverage outside the U.S. is limited.
+"Benefits, premiums, and cost-sharing may change on January 1."
+"This is not a complete description of benefits. Refer to the Evidence of Coverage."
+
+"Coverage outside the U.S. is limited." 
 
 PRIVACY ACT STATEMENT:
 CMS collects information to track enrollment, improve care, and make payments.
 Your response is voluntary, but failure to respond may affect enrollment.
 
 “Do you understand how the plan works?”
+
+“If you receive help from a sales agent, broker, or other person employed by or contracted with [Carrier Name], they may be paid based on your enrollment in [Carrier Name].”
 
 “Do you understand and agree with the
 statements you have heard so far?”
@@ -1023,7 +1031,11 @@ and TTY].”
 
 “You will receive an Evidence of Coverage document that explains all of the plan’s benefits, costs, and rules in detail.”
 
-“You have the right to cancel this plan before it becomes effective if you change your mind.”`}
+“You have the right to cancel this plan before it becomes effective if you change your mind.”
+
+“Once you are a member, you have the right to appeal plan decisions about payment of benefits or coverage of services if you disagree. This is explained in the Evidence of Coverage.”
+
+Star Ratings: “Medicare evaluates plans yearly using a five-star rating system. You can review the plan’s Star Rating and Summary of Benefits on Medicare.gov or the plan’s website.”`}
             </ScriptBox>
 
             <ScriptBox verbatim>
