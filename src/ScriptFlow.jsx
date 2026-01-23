@@ -262,7 +262,14 @@ export default function ScriptFlow() {
  I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?”
 (Agent to wait for caller to respond).
 
-“Please know our call will be recorded for quality and training purposes; is it ok if I continue?”`}
+“Please know our call will be recorded for quality and training purposes; is it ok if I continue?”
+“How may I help you today?” or “Are you calling in regard to the 2026 Medicare
+benefits, such as the grocery allowance, social security giveback or transportation?”
+(Wait for the client to respond)
+“Do you currently have Medicare Advantage? If so, with which carrier?”
+BUILD RAPPORT HERE. Ask about current coverage, if they already have Medicare
+
+Advantage, with what carrier and if they are provided benefits.`}
           </ScriptBox>
         )}
 
@@ -435,7 +442,9 @@ number to call you back?”
 
         {unlocked.s3 && (
           <ScriptBox verbatim>
-            {` “Are you interested in discussing Medicare options for yourself or for someone else, such as a family member, guardian or someone that you are authorized to make decisions for?” (If yes): “Are they available now or should we discuss at a later time when they are available?”
+            {` “Are you interested in discussing Medicare options for yourself or for someone else, such as a family member, guardian or someone that you are authorized to make decisions for?” 
+            If yes: “Are they available now or should we discuss at a later
+            time when they are available?”
             
             “I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as”
 (Agent to list product types seen in Sunfire). [Medicare Advantage plans, Medicare Advantage Prescription Drug plans].
@@ -478,7 +487,9 @@ number to call you back?”
 “Do you have or will soon have Medicare Parts A and B?”
 If yes: “Can you please grab your Red, White and Blue Medicare card so I can confirm your MBI?”
 If not available: Verify full legal name, date of birth, and Social Security Number.
-(Agent note: Send to MARx check.)`}
+(Agent note: Send to MARx check.)
+
+"Can you tell me what it says on your card for the PART A & B Effective dates?"`}
             </ScriptBox>
             <ScriptBox verbatim>
               {`Medicaid / Extra Help:
@@ -517,6 +528,9 @@ If not available: Verify full legal name, date of birth, and Social Security Num
             </ScriptBox>
             <ScriptBox verbatim>
               {`Election Period:
+              Probe to determine if eligible for other election periods
+              (IEP/ICEP or SEP)
+              
              (If):Annual Election Period (AEP)
 
              “The Annual Election Period runs from October 15 through December 7. We are currently within this period, so you may make a Medicare plan change.”
@@ -564,76 +578,58 @@ If not available: Verify full legal name, date of birth, and Social Security Num
         </h2>
         {unlocked.s5 && (
           <ScriptBox verbatim>
-            {`“I am going to ask you some optional questions to help determine the plans best suited for your needs.”
-“What is your current coverage for health? RX, dental, and vision?”
-“Who is your current primary care physician?”
-“Do you see any specialists? If so, who?”
-“Is there a particular hospital or any other preferred facilities we should check network status for?”
-“What medications do you take regularly?”
-Prescription Medication Review:
+            {`NEADS Analysis Questions.
 
-“I’m going to review your prescription medications to make sure they’re covered correctly under the plans available to you.”
+“I am going to ask you some optional questions to help determine the plans best suited for your needs.”
 
-“Please tell me the name of each medication you take, the dosage, how often you take it, and the pharmacy you normally use.”
+Review current coverage and carrier. Open and review plan benefits for comparison.
 
-“Take your time — we’ll go through them one at a time.”
+“Who is your current primary care physician?” Confirm location.
 
-“Thank you — I have your complete medication list.”
-“What do you pay for each?”
-“Which Pharmacy do you use to fill your prescriptions?”
-“I am now confirming your pharmacy’s network status for this plan.”
+“Do you see any specialists? If so, who?” Confirm location.
 
-“Your pharmacy is considered a preferred pharmacy for this plan.”
+“Is there a particular hospital or any other preferred facilities we should check network status for?” Confirm location.
 
-OR
+“What medications do you take regularly?” Confirm medications if already populated in Sunfire. Confirm full name and spelling, dosage, form, and quantity. How many times per day they take it and whether it is refilled monthly or every three months.
 
-“Your pharmacy is considered a standard pharmacy for this plan.”
-“Some prescription medications may have coverage requirements such as prior authorization, step therapy, or quantity limits.”
+Remove any medications listed that the beneficiary is not currently taking and correct any wrong dosages.
 
-“I am reviewing those requirements with you now so there are no surprises after enrollment.”
-“Do you have a hospital you prefer to use if you need inpatient care?”
+“What do you usually pay for each medication?” Quantify per month and per year.
 
-“I am checking that hospital’s network status for this plan.”
+“Which pharmacy do you use to fill your prescriptions? Do you use mail order?”
 
-“That hospital is in-network for this plan.”
+Recommend a preferred pharmacy with the carrier for lower medication costs.
 
-OR
+“What do you enjoy about your current coverage? Any benefits, doctors, hospitals, cost, or other feature preferences?”
 
-“That hospital is not in-network for this plan.”
+“What would you add or alter to have coverage you would like even more?”
 
-“Do you have a primary care doctor you would like to keep?”
+“What are you hoping to gain by changing your coverage arrangement?”
 
-“I am checking your primary care doctor’s network status for this plan.”
+“Is anything more important to you, such as health benefits versus prescription drug benefits?”
 
-“Your primary care doctor is in-network for this plan.”
+“Do you have any preference for plan types, such as HMO or PPO?”
 
-OR
+“Is travel or living elsewhere at times part of your lifestyle?”
 
-“Your primary care doctor is not in-network for this plan.”
+5.2 NEADS Analysis: Pre-Enrollment Checklist.
 
-“When a plan includes additional benefits, those services are accessed through specific networks or vendors.”
+Discuss the following topics regarding the beneficiary’s current coverage and doctors.
 
-“Dental services are provided through the plan’s dental network or vendor.”
+Information regarding primary care providers and specialists, including whether the beneficiary’s current providers are in the plan’s network.
 
-“Vision services are provided through the plan’s vision network or vendor.”
+Prescription drug coverage and costs, including whether the beneficiary’s current prescriptions are covered.
 
-“Hearing services are provided through the plan’s hearing network or vendor.”
+Costs of health care services.
 
-“Any OTC or flex benefits are provided through the plan’s assigned vendor.”
+Premiums, including the plan premium amount monthly, quarterly, annually, and the Medicare Part B premium.
 
-“I will let you know how to access each benefit if it applies to the plan you choose.”
+Benefits.
 
-CMS regulations require that agents ensure that, prior to an enrollment, CMS’ required questions and topics regarding beneficiary needs in a health plan choice are fully discussed.
+Specific health care needs, such as durable medical equipment or physical therapy.
 
-* “What do you enjoy about your current coverage? Any benefits, doctors,
-hospitals, cost or other feature preferences?”
-* “What would you add or alter to have coverage you’d like even more?”
-* “What are you hoping to gain by changing your coverage arrangement?”
-* “Is anything more important to you – like health vs Rx benefits?”
-* “Any preference for plan types, like HMO or PPO?”
-* “Is travel or living elsewhere at times part of your lifestyle?”
+Agent recap and summary statement:
 
-Agent recap:
 “I’ll summarize my notes for you. Did we get it all? Do you have any other health care needs?”`}
           </ScriptBox>
         )}
@@ -756,7 +752,12 @@ Medicare generally does not cover care outside the United States. If this plan o
             {`“Before making an enrollment decision, it is important that you fully understand the plan’s benefits and rules. I will cover the plan requirements (disclosures), review the Pre-enrollment checklist and the Summary of Benefits and answer any questions you have. The pre-enrollment checklist, can also be reviewed on [carrier’s name] website.”
 
 “Do you understand the benefits we discussed earlier or have any other questions before we get started?”
-(agent to wait for response)`}
+(agent to wait for response)
+
+“You will be receiving your Summary of Benefits and your Evidence of Coverage in the mail or by email if chosen during enrollment. The Evidence of Coverage is a detailed explanation of the services provided by the carrier.”
+
+“You also have the right to cancel your plan at any time before the plan’s effective date by calling the carrier directly. I will provide the carrier’s member service number at the end of this call.”
+`}
           </ScriptBox>
         )}
         {unlocked.s5 && (
@@ -862,6 +863,13 @@ Medicare generally does not cover care outside the United States. If this plan o
 
 7.1 Transition to Enrollment: Inbound call.
 “For inbound calls: I can enroll you today over the telephone in this [specific plan name]. Enrolling in this plan today will replace your current coverage. Once approved by Medicare, your new coverage will begin on [effective date]. Would you like to proceed?”
+
+REPEAT BACK TO CLIENT THEIR MBI NUMBER AND PART A AND PART B EFFECTIVE
+DATE.
+
+CONFIRM PCP, AND THAT THEY ARE CURRENTLY A PATIENT. For PPO, if the client
+does not have preferred PCP, remind them the carrier might appoint a PCP for them.
+They are not required to stay with that PCP.
 
 Section 8: Telephonic Enrollment.
 “Based on what we have discussed, it sounds like you are interested in [plan name, type, and contract number with PBP]. Is that correct?”
