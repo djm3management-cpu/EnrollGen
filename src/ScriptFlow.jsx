@@ -259,17 +259,12 @@ export default function ScriptFlow() {
             {`“Thank you for calling New Gen Health Solutions. My name is ${
               agentName || "[First and Last Name]"
             }.
- I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?”
-(Agent to wait for caller to respond).
+I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?”
 
 “Please know our call will be recorded for quality and training purposes; is it ok if I continue?”
-“How may I help you today?” or “Are you calling in regard to the 2026 Medicare
-benefits, such as the grocery allowance, social security giveback or transportation?”
-(Wait for the client to respond)
-“Do you currently have Medicare Advantage? If so, with which carrier?”
-BUILD RAPPORT HERE. Ask about current coverage, if they already have Medicare
+“How may I help you today?” “Are you calling in regard to the 2026 Medicare benefits, such as the grocery allowance, social security giveback or transportation?”
 
-Advantage, with what carrier and if they are provided benefits.`}
+“Do you currently have Medicare Advantage? If so, which carrier?”`}
           </ScriptBox>
         )}
 
@@ -348,18 +343,14 @@ Advantage, with what carrier and if they are provided benefits.`}
 
         {unlocked.s2 && (
           <ScriptBox verbatim>
-            {`
-"Can I please have your zipcode?"
-"May I have your First and Last Name"
-"In case we get disconnected during this call, may I have a phone
-number to call you back?”
+            {`"Can I please have your Zipcode?" "May I have your First and Last Name" "May I have a phone number to call you back in case we get disconnected?”
+
 “We do not offer every plan available in your area. Currently we represent ${
               tpmoOrgs || "[number of organizations]"
             } organizations which offer ${
               tpmoPlans || "[number of plans]"
             } products in your area.
- Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insurance Program (SHIP) to get information on all of your options.”
-
+Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insurance Program (SHIP) to get information on all of your options.”
 “Plans are insured or covered by a Medicare Advantage (HMO, PPO, PFFS) organization with a Medicare contract and/or a Medicare-approved Part D sponsor. Enrollment in the plan depends on the plan’s contract renewal with Medicare.”`}
           </ScriptBox>
         )}
@@ -442,23 +433,16 @@ number to call you back?”
 
         {unlocked.s3 && (
           <ScriptBox verbatim>
-            {` “Are you interested in discussing Medicare options for yourself or for someone else, such as a family member, guardian or someone that you are authorized to make decisions for?” 
-            If yes: “Are they available now or should we discuss at a later
-            time when they are available?”
-            
-            “I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as”
-(Agent to list product types seen in Sunfire). [Medicare Advantage plans, Medicare Advantage Prescription Drug plans].
-“Would you like to discuss all of these options or are you only interested in certain ones?”
-(Must wait for an affirmative response)
-
-“I can give you a brief overview of each of these plans, then you can decide which plan might be best for you based on your needs. Would that be ok?”
-(Agent to wait for response).
-
-“This conversation has no effect on your current or future health coverage unless you enroll in a plan today. Talking to me does not obligate you to enroll or automatically enroll you in a plan.”
-(An affirmative response is required).`}
+            {` POA: “Are you interested in discussing Medicare options for yourself or for someone else, such as a family member, guardian or someone that you are authorized to make decisions for?”  (IF YES): “Are they available now or should we discuss at a later time when they are available?”`}
           </ScriptBox>
         )}
-
+        <ScriptBox verbatim>
+          {` SCOPE OF APPOINTMENT:
+“I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as” (Agent to list product types seen in Sunfire).
+“Would you like to discuss all of these options or are you only interested in certain ones?”
+“I can give you a brief overview of each of these plans, then you can decide which plan might be best for you based on your needs. Would that be ok?”
+“This conversation has no effect on your current or future health coverage unless you enroll in a plan today. Talking to me does not obligate you to enroll or automatically enroll you in a plan.” `}
+        </ScriptBox>
         <label className="check">
           <input
             type="checkbox"
@@ -480,70 +464,41 @@ number to call you back?”
         {soaOk && (
           <>
             <ScriptBox verbatim>
-              {`“Before we continue, I have a few qualifying questions to ensure you are eligible for the types of plans available in your area. These questions are optional to answer, however they will help me determine what type of plan may be right for your needs.”`}
-            </ScriptBox>
-            <ScriptBox verbatim>
-              {`Medicare:
-“Do you have or will soon have Medicare Parts A and B?”
+              {`“Do you have or will soon have Medicare Parts A and B?”
 If yes: “Can you please grab your Red, White and Blue Medicare card so I can confirm your MBI?”
 If not available: Verify full legal name, date of birth, and Social Security Number.
 (Agent note: Send to MARx check.)
 
-"Can you tell me what it says on your card for the PART A & B Effective dates?"`}
-            </ScriptBox>
-            <ScriptBox verbatim>
-              {`Medicaid / Extra Help:
-“Are you currently receiving any assistance with your Part B premium through Medicaid, or Extra Help that helps pay for prescription coverage?”`}
-            </ScriptBox>
-            <ScriptBox verbatim>
-              {`Permanent Residence:
-“Do you mind confirming your permanent home address?”
-(Agent note: If the caller does not want to provide it, proceed without it. If unsure, confirm the address on file with Social Security, tax records, or voter registration.)`}
-            </ScriptBox>
-            <ScriptBox verbatim>
-              {`Permission to Contact (TCPA):
-“Would you like to provide your phone number so we can contact you in the future? This is optional.”
+“Can you tell me what it says on your card for the Part A and Part B effective dates?” (Read back effective dates)
 
-“Does New Gen Health Solutions have permission to have a licensed sales agent contact you in the future about plan information and your Medicare enrollment options? Your consent is voluntary and allows us to contact you via text messaging or automatic dialing. You may change your preferences at any time. This will not affect your eligibility for enrollment or benefits. Message and data rates may apply.”`}
-            </ScriptBox>
-            <ScriptBox verbatim>
-              {`Email:
-“Would you like to provide an email address that we can use to contact you? This is optional and can be used to send plan information or updates.”`}
-            </ScriptBox>
-            <ScriptBox verbatim>
-              {`Other Coverage:
+Medicaid / Extra Help: “Are you currently receiving any assistance with your Part B premium through Medicaid, or Extra Help that helps pay for prescription coverage?”
+
+Permanent Residence: “Do you mind confirming your permanent home address?”
+(Agent note: If the caller does not want to provide it, proceed without it. If unsure, confirm the address on file with Social Security, tax records, or voter registration.)
+
+Permission to Contact (TCPA):
+“Would you like to provide your phone number so we can contact you in the future? This is optional.”
+“Does New Gen Health Solutions have permission to have a licensed sales agent contact you in the future about plan information and your Medicare enrollment options? Your consent is voluntary and allows us to contact you via text messaging or automatic dialing. You may change your preferences at any time. This will not affect your eligibility for enrollment or benefits. Message and data rates may apply.”
+“Would you like to provide an email address that we can use to contact you? This is optional and can be used to send plan information or updates.”
+
 “Are you a veteran?”
 (If yes: Thank them for their service!)
 
-“Do you currently have other coverage such as employer coverage, retiree benefits, VA benefits, Tricare for Life, or ChampVA?”
-(Agent note: If present, politely end the call. Basic VA coverage alone may proceed.)`}
+“Do you currently have other coverage such as employer coverage, retiree benefits, VA benefits, TRICARE for Life, or CHAMPVA?”
+(Agent note: If present, politely end the call. Basic VA coverage alone may proceed.)
+
+“In the last twelve months, have you gone to an emergency room or an urgent care center for medical care?” (IF YES): “Was that one or two times, or more than that?”`}
             </ScriptBox>
             <ScriptBox verbatim>
-              {`Emergency Room / Urgent Care Use:
-
-“In the last twelve months, have you gone to an emergency room or an urgent care center for medical care?”
-
-(If yes):
-“Was that one or two times, or more than that?”`}
+              {`(If):Annual Election Period (AEP)
+“The Annual Election Period runs from October 15 through December 7. We are currently within this period, so you may make a Medicare plan change.”             
+(If):Open Enrollment (OE / MA-OEP)
+“Medicare Open Enrollment runs from January 1 through March 31. Since we are within this period, you may make a one-time plan change.”             
+(If):Special Election Period (SEP)
+“You qualify for a Special Election Period, which allows you to make a Medicare plan change outside of the standard enrollment periods.”`}
             </ScriptBox>
             <ScriptBox verbatim>
-              {`Election Period:
-              Probe to determine if eligible for other election periods
-              (IEP/ICEP or SEP)
-              
-             (If):Annual Election Period (AEP)
-
-             “The Annual Election Period runs from October 15 through December 7. We are currently within this period, so you may make a Medicare plan change.”
-             
-             (If):Open Enrollment (OE / MA-OEP)
-             
-             “Medicare Open Enrollment runs from January 1 through March 31. Since we are within this period, you may make a one-time plan change.”
-             
-             (If):Special Election Period (SEP)
-             
-             “You qualify for a Special Election Period, which allows you to make a Medicare plan change outside of the standard enrollment periods.”
-
-             Required Privacy Statement:
+              {` Required Privacy Statement:
 “Please be aware that you are not required to give any health-related information unless it will be used to determine your enrollment eligibility. If you choose not to provide required health information, you may not be able to enroll.”`}
             </ScriptBox>{" "}
           </>
@@ -613,24 +568,19 @@ Recommend a preferred pharmacy with the carrier for lower medication costs.
 “Is travel or living elsewhere at times part of your lifestyle?”
 
 5.2 NEADS Analysis: Pre-Enrollment Checklist.
-
-Discuss the following topics regarding the beneficiary’s current coverage and doctors.
-
-Information regarding primary care providers and specialists, including whether the beneficiary’s current providers are in the plan’s network.
-
-Prescription drug coverage and costs, including whether the beneficiary’s current prescriptions are covered.
-
-Costs of health care services.
-
-Premiums, including the plan premium amount monthly, quarterly, annually, and the Medicare Part B premium.
-
-Benefits.
-
-Specific health care needs, such as durable medical equipment or physical therapy.
+*Current coverage and doctors.
+*Primary care providers and specialists, providers are in the plan’s network.
+*Prescription drug coverage and costs, beneficiary’s current prescriptions are covered.
+*Costs of health care services.
+*Premiums, plan premium amount monthly, quarterly, annually, Medicare Part B premium.
+*Durable medical equipment, physical therapy, extra benefits
 
 Agent recap and summary statement:
 
-“I’ll summarize my notes for you. Did we get it all? Do you have any other health care needs?”`}
+“I’ll summarize my notes for you. Did we get it all?"
+
+ "Do you have any other health care needs?”
+(If yes: Schedule call back for Dental, Vision, Hearing / Final Expense)`}
           </ScriptBox>
         )}
 
@@ -698,52 +648,35 @@ Agent recap and summary statement:
         </h2>
         {unlocked.s5 && (
           <ScriptBox verbatim>
-            {`“Based on everything we discussed during your needs assessment — including your doctors, prescriptions, coverage preferences, and costs — I reviewed the plans available in your area.”
-
-“Based on your needs, the [plan name] appears to be a good option for you.”
-
-“The reason I’m recommending this plan is because it aligns with what you told me was most important, such as your coverage needs, provider access, prescription costs, or overall out-of-pocket expenses.”
+            {`“Based on everything we discussed during your NEADS assessment, including your doctors, prescriptions, coverage preferences, and costs, [plan name] appears to be a good option for you. I’m recommending this plan is because it aligns with what you told me was most important, such as your coverage needs, provider access, prescription costs, or overall out-of-pocket expenses.”
 
 “Before I go into the full benefit details, does this plan sound like something that could work for you?”
+AGENT NOTE: State the dollar amounts for the current plan and the new plan when comparing benefits (Sunfire: Current Plan Summary of Benefits)
 
-(Agent to wait for response.)
+"This plan will have a monthly premium of [AMOUNT]."
+"If applicable, this plan will have a medical deductible of [AMOUNT], and the Medicare Part B deductible is [AMOUNT]."
 
-AGENT NOTE: State the dollar amounts for the current plan and the new plan when comparing benefits.
+"For prescription drugs, this plan will have a Part D deductible of [AMOUNT], which applies to [TIERS]. Your prescription drugs will have copays or coinsurance of [AMOUNTS] based on their tier. Some medications may have requirements such as prior authorization, quantity limits, or step therapy, and those requirements have been reviewed. Any medications not covered on the formulary have been disclosed."
 
-“I am now going to review the plan’s benefits and costs.
+"Medicare prescription drug plans have different coverage stages throughout the year. The catastrophic coverage limit for this plan is [DOLLAR AMOUNT]. Once that amount is reached, your prescription drug costs will be significantly reduced for the remainder of the year."
 
-This plan will have a monthly premium of [AMOUNT].
+"In-network inpatient hospital care will have a cost of [AMOUNT]."
+"In-network outpatient hospital services will have a cost of [AMOUNT]."
 
-If applicable, this plan will have a medical deductible of [AMOUNT], and the Medicare Part B deductible is [AMOUNT].
+"Primary care provider visits will have a cost of [AMOUNT]."
+"Specialist visits will have a cost of [AMOUNT]."
 
-For prescription drugs, this plan will have a Part D deductible of [AMOUNT], which applies to [TIERS]. Your prescription drugs will have copays or coinsurance of [AMOUNTS] based on their tier. Some medications may have requirements such as prior authorization, quantity limits, or step therapy, and those requirements have been reviewed. Any medications not covered on the formulary have been disclosed.
+"Inpatient and outpatient mental health services will have a cost of [AMOUNT]."
+"Preventive services will have a cost of [AMOUNT]."
 
-Medicare prescription drug plans have different coverage stages throughout the year. The catastrophic coverage limit for this plan is [DOLLAR AMOUNT]. Once that amount is reached, your prescription drug costs will be significantly reduced for the remainder of the year.
+"Emergency room services will have a cost of [AMOUNT]."
+"Urgently needed services will have a cost of [AMOUNT] when you are temporarily away from home."
 
-In-network inpatient hospital care will have a cost of [AMOUNT].
+"If this plan allows out-of-network coverage, out-of-network services will have a cost of [AMOUNT], which may be higher than in-network costs."
 
-In-network outpatient hospital services will have a cost of [AMOUNT].
+"This plan may include additional benefits such as dental, vision, hearing, or other benefits. Dental services will have a cost of [AMOUNT], vision services will have a cost of [AMOUNT], and hearing services will have a cost of [AMOUNT]. Access to these services must be through the plan’s required network, vendor, or provider."
 
-Primary care provider visits will have a cost of [AMOUNT].
-
-Specialist visits will have a cost of [AMOUNT].
-
-Inpatient and outpatient mental health services will have a cost of [AMOUNT].
-
-Preventive services will have a cost of [AMOUNT].
-
-Emergency room services will have a cost of [AMOUNT].
-
-Urgently needed services will have a cost of [AMOUNT] when you are temporarily away from home.
-
-If this plan allows out-of-network coverage, out-of-network services will have a cost of [AMOUNT], which may be higher than in-network costs.
-
-This plan may include additional benefits such as dental, vision, hearing, or other benefits. Dental services will have a cost of [AMOUNT], vision services will have a cost of [AMOUNT], and hearing services will have a cost of [AMOUNT]. Access to these services must be through the plan’s required network, vendor, or provider.
-
-Medicare generally does not cover care outside the United States. If this plan offers coverage outside the country, that coverage will have a cost of [AMOUNT].”
-
-
-`}
+"Medicare generally does not cover care outside the United States. If this plan offers coverage outside the country, that coverage will have a cost of [AMOUNT].”`}
           </ScriptBox>
         )}
 
@@ -752,11 +685,10 @@ Medicare generally does not cover care outside the United States. If this plan o
             {`“Before making an enrollment decision, it is important that you fully understand the plan’s benefits and rules. I will cover the plan requirements (disclosures), review the Pre-enrollment checklist and the Summary of Benefits and answer any questions you have. The pre-enrollment checklist, can also be reviewed on [carrier’s name] website.”
 
 “Do you understand the benefits we discussed earlier or have any other questions before we get started?”
-(agent to wait for response)
-
-“You will be receiving your Summary of Benefits and your Evidence of Coverage in the mail or by email if chosen during enrollment. The Evidence of Coverage is a detailed explanation of the services provided by the carrier.”
-
+“You will be receiving your Summary of Benefits and your Evidence of Coverage in the mail or by email if chosen during enrollment.
+"The Evidence of Coverage is a detailed explanation of the services provided by the carrier.”
 “You also have the right to cancel your plan at any time before the plan’s effective date by calling the carrier directly. I will provide the carrier’s member service number at the end of this call.”
+“Mr./Ms., if you are ready to enroll today, we will now move to the enrollment process.”
 `}
           </ScriptBox>
         )}
@@ -857,34 +789,20 @@ Medicare generally does not cover care outside the United States. If this plan o
         </h2>
         {unlocked.s7 && (
           <ScriptBox verbatim>
-            {`Section 7: Transition to Enrollment.
+            {`INBOUND: "I can enroll you today over the telephone in this [specific plan name]. Enrolling in this plan today will replace your current coverage. Once approved by Medicare, your new coverage will begin on [effective date]. Would you like to proceed?”
 
-“Mr./Ms., if you are ready to enroll today, we will now move to the enrollment process.”
-
-7.1 Transition to Enrollment: Inbound call.
-“For inbound calls: I can enroll you today over the telephone in this [specific plan name]. Enrolling in this plan today will replace your current coverage. Once approved by Medicare, your new coverage will begin on [effective date]. Would you like to proceed?”
-
-REPEAT BACK TO CLIENT THEIR MBI NUMBER AND PART A AND PART B EFFECTIVE
-DATE.
-
-CONFIRM PCP, AND THAT THEY ARE CURRENTLY A PATIENT. For PPO, if the client
-does not have preferred PCP, remind them the carrier might appoint a PCP for them.
-They are not required to stay with that PCP.
-
-Section 8: Telephonic Enrollment.
 “Based on what we have discussed, it sounds like you are interested in [plan name, type, and contract number with PBP]. Is that correct?”
 
-If you are currently enrolled in a Medicare Advantage plan, your current coverage will end once your new coverage starts.
-If you have Tricare, your coverage may be affected.
-If you have a Medigap plan, you may want to drop it once MA coverage begins.
+"If you are currently enrolled in a Medicare Advantage plan, your current coverage will end once your new coverage starts."
+"If you have Tricare, your coverage may be affected."
+"If you have a Medigap plan, you may want to drop it once MA coverage begins."
 
-If you are ready to enroll, we will complete the application and process your signature.
-Once completed, I will provide your application number and explain when to expect materials.
+"If you are ready to enroll, we will complete the application and process your signature.
+Once completed, I will provide your application number and explain when to expect materials."
 
-[Carrier Name] is a Medicare Advantage organization with a Medicare contract.
-Enrollment depends on contract renewal.
-
-“Service Area: [Plan Name] serves a specific service area. When the plan begins you must obtain benefits from [Carrier Name] as described in the Evidence of Coverage document. No payment will be issued for services that are not covered.”
+"[Carrier Name] is a Medicare Advantage organization with a Medicare contract.
+Enrollment depends on contract renewal."
+"[Plan Name] serves a specific service area. When the plan begins you must obtain benefits from [Carrier Name] as described in the Evidence of Coverage document. No payment will be issued for services that are not covered.”
 
 "You must keep Medicare Part A and Part B and continue paying your Part B premium."
 "You can only be enrolled in one Medicare Advantage plan at a time."
@@ -896,31 +814,18 @@ This plan includes Part D prescription drug coverage. Network pharmacies must be
 
 "Benefits, premiums, and cost-sharing may change on January 1."
 "This is not a complete description of benefits. Refer to the Evidence of Coverage."
-
 "Coverage outside the U.S. is limited." 
 
 PRIVACY ACT STATEMENT:
-CMS collects information to track enrollment, improve care, and make payments.
-Your response is voluntary, but failure to respond may affect enrollment.
+"CMS collects information to track enrollment, improve care, and make payments. Your response is voluntary, but failure to respond may affect enrollment."
 
 “Do you understand how the plan works?”
+“If you receive help from a sales agent, broker, or other person employed by or contracted with [Carrier Name], they may be paid based on your enrollment.”
+“Do you understand and agree with the statements you have heard so far?”
+“Do you understand that enrollment in this plan will disenroll you from your current plan?
+“Are you ready to enroll in [plan name, type and contract number with PBP]?”
 
-“If you receive help from a sales agent, broker, or other person employed by or contracted with [Carrier Name], they may be paid based on your enrollment in [Carrier Name].”
-
-“Do you understand and agree with the
-statements you have heard so far?”
-
-“Do you understand that
-enrollment in this plan will disenroll you from your current plan?
-
-“Are you ready to enroll in [plan name, type and
-  contract number with PBP]?”
-
-“Your enrollment application has been successfully submitted and the application
-number is[application ID]. [Plan name]’s Customer service number is [phone
-and TTY].”
-
-
+“Your enrollment application has been successfully submitted and the application number is[application ID]. [Plan name]’s Customer service number is [phone and TTY].”
 `}
           </ScriptBox>
         )}
@@ -1035,15 +940,13 @@ and TTY].”
         {unlocked.s7 && (
           <>
             <ScriptBox verbatim>
-              {`Evidence of Coverage and Right to Cancel:
-
-“You will receive an Evidence of Coverage document that explains all of the plan’s benefits, costs, and rules in detail.”
+              {`“You will receive an Evidence of Coverage (EOC) document that explains all of the plan’s benefits, costs, and rules in detail.”
 
 “You have the right to cancel this plan before it becomes effective if you change your mind.”
 
 “Once you are a member, you have the right to appeal plan decisions about payment of benefits or coverage of services if you disagree. This is explained in the Evidence of Coverage.”
 
-Star Ratings: “Medicare evaluates plans yearly using a five-star rating system. You can review the plan’s Star Rating and Summary of Benefits on Medicare.gov or the plan’s website.”`}
+“Medicare evaluates plans yearly using a 5-Star rating system. You can review the plan’s Star Rating and Summary of Benefits on Medicare.gov or the plan’s website.”`}
             </ScriptBox>
 
             <ScriptBox verbatim>
@@ -1055,8 +958,7 @@ Star Ratings: “Medicare evaluates plans yearly using a five-star rating system
 “You should receive plan information from [carrier name] including your member ID card in the mail within [7-10] business days of enrollment, but no later than within [ten] days of the plan effective date. You may also access plan materials online at [carrier’s URL address].”
 “If you have any questions about your plan or if your needs change and you want to look at other plan options, please give me a call at [877-909-1995].”
 
-Section 9: Call closing.
-“It’s been a pleasure speaking with you today. If you have any family members or friends that would benefit by speaking with me, please give them my number and I would be happy to assist them too.”
+Call closing. “It’s been a pleasure speaking with you today. If you have any family members or friends that would benefit by speaking with me, please give them my number and I would be happy to assist them too.”
 End the call: “Thank you for [calling/choosing] [Carrier name] and have a great day!”`}
             </ScriptBox>
 
