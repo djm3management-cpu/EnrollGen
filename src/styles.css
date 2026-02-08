@@ -29,9 +29,9 @@ h1 {
   font-size: 28px;
   font-weight: 900;
   letter-spacing: -0.6px;
-  text-shadow: 0 4px 10px rgba(126, 29, 216, 0.35),
-    0 0 30px rgba(89, 0, 255, 0.397);
-  color: #ff3b3b;
+  text-shadow: 0 4px 10px rgba(157, 0, 255, 0.965),
+    0 0 30px rgba(0, 0, 0, 0.857);
+  color: #de0c0cd4;
 }
 
 h2 {
@@ -352,7 +352,7 @@ input[type="file"] {
   position: fixed;
   inset: 0;
 
-  background-image: url("/abstract.jpg");
+  background-image: url("/abstract4.jpg");
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
@@ -366,7 +366,7 @@ input[type="file"] {
   content: "";
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.609);
   z-index: 1;
 }
 
