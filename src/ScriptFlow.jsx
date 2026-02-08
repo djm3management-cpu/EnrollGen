@@ -70,6 +70,19 @@ export default function ScriptFlow() {
   // ====== SNP BRANCHING ======
   const [snpType, setSnpType] = useState(null); // "DSNP" | "CSNP" | null
   const [snpOk, setSnpOk] = useState(false);
+  // ===== OPTIONAL HOSPITAL INDEMNITY (WRAP-UP) =====
+  const [hiActive, setHiActive] = useState(false);
+  const [hiConsentOk, setHiConsentOk] = useState(false);
+  const [hiDiscussed, setHiDiscussed] = useState(false);
+  // ===== OPTIONAL FINAL EXPENSE (WRAP-UP) =====
+  const [feActive, setFeActive] = useState(false);
+  const [feConsentOk, setFeConsentOk] = useState(false);
+  const [feDiscussed, setFeDiscussed] = useState(false);
+  // ===== OPTIONAL DENTAL & VISION (WRAP-UP) =====
+  const [dvActive, setDvActive] = useState(false);
+  const [dvConsentOk, setDvConsentOk] = useState(false);
+  const [dvDiscussed, setDvDiscussed] = useState(false);
+
   const [tpmoZip, setTpmoZip] = useState("");
 
   const [soaOk, setSoaOk] = useState(false);
@@ -260,11 +273,14 @@ export default function ScriptFlow() {
               agentName || "[First and Last Name]"
             }.
 I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?”
-
 “Please know our call will be recorded for quality and training purposes; is it ok if I continue?”
-“How may I help you today?” “Are you calling in regard to the 2026 Medicare benefits, such as the grocery allowance, social security giveback or transportation?”
 
-“Do you currently have Medicare Advantage? If so, which carrier?”`}
+So (Client’s Name), we are reaching out because it is Open Enrollment and unfortunately a lot
+of people made changes to their Medicare Advantage plans during the Annual Enrollment
+Period and were misinformed about their doctors being covered, prescription cost, and the
+benefits of the plan. I want to make sure you are receiving all of the benefits you are ENTITLED
+to like the grocery card & part B giveback as well as making sure you can see ALL of your doctors. 
+`}
           </ScriptBox>
         )}
 
@@ -559,6 +575,8 @@ Recommend a preferred pharmacy with the carrier for lower medication costs.
 
 “What would you add or alter to have coverage you would like even more?”
 
+“Some people also ask about dental or vision coverage that’s separate from Medicare. We’ll finish your Medicare first, and I can touch on that at the end if you’d like.” (CHECK DENTAL BOX AFTER ENROLLMENT)
+
 “What are you hoping to gain by changing your coverage arrangement?”
 
 “Is anything more important to you, such as health benefits versus prescription drug benefits?”
@@ -580,7 +598,7 @@ Agent recap and summary statement:
 “I’ll summarize my notes for you. Did we get it all?"
 
  "Do you have any other health care needs?”
-(If yes: Schedule call back for Dental, Vision, Hearing / Final Expense)`}
+ “Some people also like to make sure their family isn’t left with expenses later on. That’s not part of Medicare, but I can mention it briefly at the end if it’s ever something you want to hear about.” (CHECK FINAL EXPENSE BUTTON AFTER ENROLLMENT)`}
           </ScriptBox>
         )}
 
@@ -662,6 +680,8 @@ AGENT NOTE: State the dollar amounts for the current plan and the new plan when 
 
 "In-network inpatient hospital care will have a cost of [AMOUNT]."
 "In-network outpatient hospital services will have a cost of [AMOUNT]."
+
+“Even with Medicare Advantage, hospital stays are usually where most out-of-pocket costs happen. We’ll finish your Medicare enrollment first, and I can mention an optional way some people prepare for that later if you want.” (CHECK HOSPITAL INDEMNITY BOX IN WRAP UP AFTER ENROLLMENT)
 
 "Primary care provider visits will have a cost of [AMOUNT]."
 "Specialist visits will have a cost of [AMOUNT]."
@@ -959,7 +979,10 @@ PRIVACY ACT STATEMENT:
 “If you have any questions about your plan or if your needs change and you want to look at other plan options, please give me a call at [877-909-1995].”
 
 Call closing. “It’s been a pleasure speaking with you today. If you have any family members or friends that would benefit by speaking with me, please give them my number and I would be happy to assist them too.”
-End the call: “Thank you for [calling/choosing] [Carrier name] and have a great day!”`}
+End the call: “Thank you for [calling/choosing] [Carrier name] and have a great day!”
+AGENT NOTE (IMPORTANT):
+Optional non-Medicare products must only be discussed after Medicare enrollment is complete.
+Use the buttons below to initiate discussion only if the client expressed interest earlier.`}
             </ScriptBox>
 
             {/* Extra agent reminder (requested) */}
@@ -972,7 +995,192 @@ End the call: “Thank you for [calling/choosing] [Carrier name] and have a grea
               Enrollment Code & Customer Info in NGHS Digital Sales Google
               Sheet. Set status as a sale on EnrollHere.
             </ScriptBox>
+            {/* ===== OPTIONAL HOSPITAL INDEMNITY BUTTON (WRAP-UP ONLY) ===== */}
+            {enrollOk && !hiActive && (
+              <div style={{ marginTop: 16 }}>
+                <button className="primary" onClick={() => setHiActive(true)}>
+                  Optional Hospital Indemnity
+                </button>
+              </div>
+            )}
+
+            {/* ===== HOSPITAL INDEMNITY DISCLOSURE FLOW ===== */}
+            {hiActive && (
+              <div style={{ marginTop: 14 }}>
+                <ScriptBox verbatim>
+                  {`“Before we end the call, I want to be very clear that what we are discussing next is NOT a Medicare plan and is NOT affiliated with Medicare.
+
+Your Medicare Advantage enrollment is complete and will not change.
+
+This is a separate, optional insurance product that provides cash benefits directly to you.
+
+Would it be okay if I briefly explain how it works?”`}
+                </ScriptBox>
+
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={hiConsentOk}
+                    onChange={(e) => setHiConsentOk(e.target.checked)}
+                  />
+                  Permission granted to discuss non-Medicare product
+                </label>
+
+                {hiConsentOk && (
+                  <>
+                    <ScriptBox verbatim>
+                      {`“This is called hospital indemnity insurance.
+
+It does not replace Medicare and it does not pay doctors or hospitals.
+
+If you are admitted to the hospital for a covered stay, it pays a fixed cash benefit directly to you.
+
+That money can be used however you choose, such as deductibles, copays, prescriptions, rent, or household expenses.
+
+Coverage, benefit amounts, and eligibility depend on the policy terms.”`}
+                    </ScriptBox>
+
+                    <label className="check">
+                      <input
+                        type="checkbox"
+                        checked={hiDiscussed}
+                        onChange={(e) => setHiDiscussed(e.target.checked)}
+                      />
+                      Hospital indemnity explained (non-Medicare)
+                    </label>
+                  </>
+                )}
+
+                {!hiConsentOk && (
+                  <p className="lock">
+                    Permission is required before discussing optional coverage.
+                  </p>
+                )}
+              </div>
+            )}
           </>
+        )}
+
+        {/* ===== OPTIONAL DENTAL & VISION BUTTON ===== */}
+        {enrollOk && !dvActive && (
+          <div style={{ marginTop: 12 }}>
+            <button className="primary" onClick={() => setDvActive(true)}>
+              Optional Dental & Vision
+            </button>
+          </div>
+        )}
+
+        {/* ===== DENTAL & VISION DISCLOSURE FLOW ===== */}
+        {dvActive && (
+          <div style={{ marginTop: 14 }}>
+            <ScriptBox verbatim>
+              {`“Before we finish, I want to be clear that what we are discussing next is NOT a Medicare plan and is NOT affiliated with Medicare.
+
+Your Medicare Advantage enrollment is complete and will not change.
+
+This is a separate, optional dental and vision insurance product.
+
+Would it be okay if I briefly explain how it works?”`}
+            </ScriptBox>
+
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={dvConsentOk}
+                onChange={(e) => setDvConsentOk(e.target.checked)}
+              />
+              Permission granted to discuss non-Medicare product
+            </label>
+
+            {dvConsentOk && (
+              <>
+                <ScriptBox verbatim>
+                  {`“This dental and vision coverage is separate from Medicare.
+
+It may help with routine dental and vision expenses such as exams, cleanings, fillings, glasses, or contacts, depending on the plan selected.
+
+Coverage details, limitations, and waiting periods depend on the policy terms.”`}
+                </ScriptBox>
+
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={dvDiscussed}
+                    onChange={(e) => setDvDiscussed(e.target.checked)}
+                  />
+                  Dental & vision explained (non-Medicare)
+                </label>
+              </>
+            )}
+
+            {!dvConsentOk && (
+              <p className="lock">
+                Permission is required before discussing optional coverage.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ===== OPTIONAL FINAL EXPENSE BUTTON ===== */}
+        {enrollOk && !feActive && (
+          <div style={{ marginTop: 12 }}>
+            <button className="primary" onClick={() => setFeActive(true)}>
+              Optional Final Expense
+            </button>
+          </div>
+        )}
+
+        {/* ===== FINAL EXPENSE DISCLOSURE FLOW ===== */}
+        {feActive && (
+          <div style={{ marginTop: 14 }}>
+            <ScriptBox verbatim>
+              {`“Before we finish, I want to be very clear that what we are discussing next is NOT a Medicare plan and is NOT affiliated with Medicare.
+
+Your Medicare Advantage enrollment is complete and will not change.
+
+This is a separate, optional life insurance product often referred to as final expense coverage.
+
+Would it be okay if I briefly explain how it works?”`}
+            </ScriptBox>
+
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={feConsentOk}
+                onChange={(e) => setFeConsentOk(e.target.checked)}
+              />
+              Permission granted to discuss non-Medicare product
+            </label>
+
+            {feConsentOk && (
+              <>
+                <ScriptBox verbatim>
+                  {`“Final expense insurance is a form of life insurance.
+
+It is designed to provide a cash benefit to a beneficiary when you pass away.
+
+That money can be used for funeral costs, medical bills, or other end-of-life expenses.
+
+Coverage amounts, premiums, and underwriting requirements depend on the policy selected.”`}
+                </ScriptBox>
+
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={feDiscussed}
+                    onChange={(e) => setFeDiscussed(e.target.checked)}
+                  />
+                  Final expense explained (non-Medicare)
+                </label>
+              </>
+            )}
+
+            {!feConsentOk && (
+              <p className="lock">
+                Permission is required before discussing optional coverage.
+              </p>
+            )}
+          </div>
         )}
 
         <label>
