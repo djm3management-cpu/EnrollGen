@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@600;700;800;900&display=swap");
 
 /* ===============================
    GLOBAL
@@ -27,11 +27,12 @@ body {
 h1 {
   margin: 0 0 8px 0;
   font-size: 28px;
-  font-weight: 900;
-  letter-spacing: -0.6px;
-  text-shadow: 0 4px 10px rgba(157, 0, 255, 0.965),
-    0 0 30px rgba(0, 0, 0, 0.857);
-  color: #de0c0cd4;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  font-family: "Exo 2", Arial, Helvetica, sans-serif;
+  color: #ff2b2b;
+  animation: titlePulse 6s ease-in-out infinite;
+  -webkit-text-stroke: 0.25px rgba(255, 255, 255, 0.15);
 }
 
 h2 {
@@ -93,22 +94,58 @@ p {
 }
 
 .card {
-  background: #26282d;
-  border: 1px solid #3a3d45;
+  position: relative;
+  background: linear-gradient(
+    160deg,
+    rgba(120, 90, 255, 0.18),
+    rgba(30, 20, 60, 0.85) 55%,
+    rgba(10, 10, 20, 0.95)
+  );
+  border: 1px solid rgba(140, 120, 255, 0.35);
   padding: 14px;
+  border-radius: 10px;
+  backdrop-filter: blur(10px) saturate(120%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -25%;
+  border-radius: 20px;
+  background: radial-gradient(
+      500px 220px at 25% 20%,
+      rgba(160, 140, 255, 0.22),
+      transparent 65%
+    ),
+    radial-gradient(
+      420px 200px at 75% 80%,
+      rgba(120, 200, 255, 0.14),
+      transparent 70%
+    );
+  filter: blur(14px);
+  opacity: 0.45;
+  animation: glassBreath 22s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 .card.disabled {
   opacity: 0.55;
+  filter: grayscale(40%) saturate(70%);
+  box-shadow: none;
 }
 
 /* ===============================
    ACTIVE SECTION (PURPLE)
 ================================ */
 .active-card {
-  border: 2px solid #7c3aed;
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
-  transform: translateY(-1px);
+  border: 2px solid rgba(170, 140, 255, 0.85);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.35),
+    0 0 40px rgba(124, 58, 237, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
 }
 
 /* ===============================
@@ -374,3 +411,37 @@ input[type="file"] {
   position: relative;
   z-index: 2;
 }
+
+@keyframes glassBreath {
+  0% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+}
+@keyframes titlePulse {
+  0% {
+    text-shadow: 0 0 8px rgba(255, 60, 60, 0.3),
+      0 0 18px rgba(124, 58, 237, 0.25);
+  }
+  40% {
+    text-shadow: 0 0 22px rgba(255, 60, 60, 0.55),
+      0 0 45px rgba(124, 58, 237, 0.6);
+  }
+  70% {
+    text-shadow: 0 0 14px rgba(255, 60, 60, 0.4),
+      0 0 30px rgba(124, 58, 237, 0.45);
+  }
+  100% {
+    text-shadow: 0 0 8px rgba(255, 60, 60, 0.3),
+      0 0 18px rgba(124, 58, 237, 0.25);
+  }
+}
+
