@@ -69,7 +69,11 @@ function ScriptBox({ children, verbatim }) {
   return (
     <div
       style={{
-        background: "#1e1f23",
+        background:
+          "linear-gradient(180deg, rgba(5,5,10,0.98), rgba(25,20,60,0.85))",
+        backdropFilter: "blur(8px)",
+        boxShadow: "inset 0 0 0 1px rgba(140,110,255,0.4)",
+
         border: verbatim ? "2px solid #f1c40f" : "1px solid #3a3d45",
         padding: "10px",
         borderRadius: 4,
