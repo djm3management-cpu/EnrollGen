@@ -69,8 +69,8 @@ h1 {
   letter-spacing: 0.3px;
   font-family: "Exo 2", Arial, Helvetica, sans-serif;
   color: #ff2b2b;
-  animation: titlePulse 6s ease-in-out infinite;
-  -webkit-text-stroke: 0.25px rgba(255, 255, 255, 0.15);
+
+  -webkit-text-stroke: 0.25px rgb(0, 0, 0);
 }
 
 h2 {
@@ -94,11 +94,36 @@ p {
 .app > h1::after {
   content: "";
   display: block;
-  height: 2px;
-  margin-top: 8px;
-  background: linear-gradient(90deg, #2ecc71, #38bdf8, #a855f7, #e74c3c);
+  height: 3px;
+  margin-top: 10px;
+  margin-bottom: 8px;
+
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 40, 40, 0.9) 45%,
+    rgba(255, 40, 40, 1) 50%,
+    rgba(255, 40, 40, 0.9) 55%,
+    transparent 100%
+  );
+
   background-size: 200% 100%;
-  animation: headerGlow 6s linear infinite;
+  animation: horizonScan 8s linear infinite;
+
+  box-shadow: 0 0 6px rgba(255, 40, 40, 0.4), 0 0 14px rgba(255, 40, 40, 0.25);
+}
+
+.app > h1::before {
+  content: "AGENT MODE";
+  display: block;
+  margin-top: 6px;
+
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+
+  color: rgba(220, 220, 220, 0.75);
 }
 
 /* ===============================
@@ -542,4 +567,12 @@ input[type="file"] {
 .overdue {
   color: #ff2b2b;
   text-shadow: 0 0 8px rgba(255, 43, 43, 0.8), 0 0 16px rgba(255, 43, 43, 0.6);
+}
+@keyframes horizonScan {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
