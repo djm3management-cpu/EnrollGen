@@ -7,10 +7,47 @@ function formatTime(ms) {
   const s = String(total % 60).padStart(2, "0");
   return `${m}:${s}`;
 }
+function countWords(text) {
+  if (!text) return 0;
+  return String(text).trim().split(/\s+/).filter(Boolean).length;
+}
+
+function calcWpm(words, ms) {
+  if (ms < 6000) return 0; // warm-up period
+  const minutes = ms / 60000;
+  return Math.round(words / minutes);
+}
+
+function paceLevel(wpm) {
+  if (wpm === 0) return "idle";
+  if (wpm < 105) return "slow";
+  if (wpm <= 175) return "good";
+  if (wpm <= 195) return "fast";
+  return "too-fast";
+}
 
 function useSectionTimer(active) {
   const [start, setStart] = useState(null);
   const [elapsed, setElapsed] = useState(0);
+  function useSectionTimer(active) {
+    const [elapsed, setElapsed] = useState(0);
+
+    useEffect(() => {
+      if (!active) {
+        setElapsed(0);
+        return;
+      }
+
+      const start = Date.now();
+      const i = setInterval(() => {
+        setElapsed(Date.now() - start);
+      }, 500);
+
+      return () => clearInterval(i);
+    }, [active]);
+
+    return formatTime(elapsed);
+  }
 
   useEffect(() => {
     let i;
@@ -447,18 +484,22 @@ Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insuranc
           <span className="timer">{t3}</span>
         </h2>
 
-        {unlocked.s3 && (
+        {activeSection === 3 && (
           <ScriptBox verbatim>
             {` POA: “Are you interested in discussing Medicare options for yourself or for someone else, such as a family member, guardian or someone that you are authorized to make decisions for?”  (IF YES): “Are they available now or should we discuss at a later time when they are available?”`}
           </ScriptBox>
         )}
-        <ScriptBox verbatim>
-          {` SCOPE OF APPOINTMENT:
+
+        {activeSection === 3 && (
+          <ScriptBox verbatim>
+            {` SCOPE OF APPOINTMENT:
 “I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as” (Agent to list product types seen in Sunfire).
 “Would you like to discuss all of these options or are you only interested in certain ones?”
 “I can give you a brief overview of each of these plans, then you can decide which plan might be best for you based on your needs. Would that be ok?”
 “This conversation has no effect on your current or future health coverage unless you enroll in a plan today. Talking to me does not obligate you to enroll or automatically enroll you in a plan.” `}
-        </ScriptBox>
+          </ScriptBox>
+        )}
+
         <label className="check">
           <input
             type="checkbox"
