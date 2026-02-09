@@ -19,9 +19,11 @@ export default function App() {
       </SignedOut>
 
       <SignedIn>
-        {/* 🔥 BACKGROUND SHELL */}
+        {/* FIXED FULL-VIEWPORT BACKGROUND */}
+        <div className="viewport-bg" />
+
+        {/* APP CONTENT */}
         <div className="app-shell">
-          {/* 🔥 ACTUAL APP UI */}
           <div className="app">
             <h1>EnrollGen Agent Script Assist</h1>
             <img src={logo} alt="EnrollGenAI" className="app-logo" />
@@ -65,8 +67,6 @@ export default function App() {
                     <br />
                     EnrollGen and its associated scripts, workflows, and
                     interface are protected under U.S. copyright law.
-                    Unauthorized reproduction, distribution, or use without
-                    express written permission is prohibited.
                   </p>
                 </footer>
               </>
