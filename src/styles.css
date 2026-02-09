@@ -352,7 +352,7 @@ input[type="file"] {
   position: fixed;
   inset: 0;
 
-  background-image: url("/abstract4.jpg");
+  background-image: url("/wave1.jpg");
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
@@ -366,7 +366,7 @@ input[type="file"] {
   content: "";
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.609);
+  background: rgba(0, 0, 0, 0);
   z-index: 1;
 }
 
