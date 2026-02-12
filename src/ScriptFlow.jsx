@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 
 /* ===================== TIMER HELPERS ===================== */
 function formatTime(ms) {
@@ -7,101 +7,105 @@ function formatTime(ms) {
   const s = String(total % 60).padStart(2, "0");
   return `${m}:${s}`;
 }
-function countWords(text) {
-  if (!text) return 0;
-  return String(text).trim().split(/\s+/).filter(Boolean).length;
-}
-
-function calcWpm(words, ms) {
-  if (ms < 6000) return 0; // warm-up period
-  const minutes = ms / 60000;
-  return Math.round(words / minutes);
-}
-
-function paceLevel(wpm) {
-  if (wpm === 0) return "idle";
-  if (wpm < 105) return "slow";
-  if (wpm <= 175) return "good";
-  if (wpm <= 195) return "fast";
-  return "too-fast";
-}
 
 function useSectionTimer(active) {
-  const [start, setStart] = useState(null);
   const [elapsed, setElapsed] = useState(0);
-  function useSectionTimer(active) {
-    const [elapsed, setElapsed] = useState(0);
-
-    useEffect(() => {
-      if (!active) {
-        setElapsed(0);
-        return;
-      }
-
-      const start = Date.now();
-      const i = setInterval(() => {
-        setElapsed(Date.now() - start);
-      }, 500);
-
-      return () => clearInterval(i);
-    }, [active]);
-
-    return formatTime(elapsed);
-  }
 
   useEffect(() => {
-    let i;
-    if (active) {
-      const now = Date.now();
-      setStart((s) => s ?? now);
-      i = setInterval(() => {
-        setElapsed(Date.now() - (start ?? now));
-      }, 500);
+    if (!active) {
+      setElapsed(0);
+      return;
     }
-    return () => clearInterval(i);
-  }, [active, start]);
+
+    const start = Date.now();
+
+    const interval = setInterval(() => {
+      setElapsed(Date.now() - start);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [active]);
 
   return formatTime(elapsed);
 }
 
 /* ===================== SCRIPT BOX ===================== */
-function ScriptBox({ children, verbatim }) {
+const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
   return (
-    <div
-      style={{
-        background:
-          "linear-gradient(180deg, rgba(5,5,10,0.98), rgba(25,20,60,0.85))",
-        backdropFilter: "blur(8px)",
-        boxShadow: "inset 0 0 0 1px rgba(140,110,255,0.4)",
-
-        border: verbatim ? "2px solid #f1c40f" : "1px solid #3a3d45",
-        padding: "10px",
-        borderRadius: 4,
-        maxHeight: 220,
-        overflowY: "auto",
-        fontSize: 13,
-        lineHeight: 1.45,
-        margin: "10px 0 12px",
-        whiteSpace: "pre-wrap",
-      }}
-    >
-      {verbatim && (
-        <div
-          style={{
-            fontWeight: 800,
-            color: "#f1c40f",
-            marginBottom: 6,
-            fontSize: 12,
-            letterSpacing: 0.3,
-          }}
-        >
-          READ VERBATIM
-        </div>
-      )}
+    <div className={`script-box ${verbatim ? "verbatim" : ""}`}>
+      {verbatim && <div className="verbatim-label">READ VERBATIM</div>}
       {children}
     </div>
   );
-}
+});
+const SectionTimerDisplay = React.memo(function SectionTimerDisplay({
+  isActive,
+  time,
+}) {
+  return <span className="timer">{isActive ? time : ""}</span>;
+});
+const MainTimer = React.memo(function MainTimer({
+  running,
+  startTime,
+  onStart,
+  onReset,
+}) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!running || !startTime) return;
+
+    const interval = setInterval(() => {
+      setElapsed(Date.now() - startTime);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [running, startTime]);
+
+  const display = formatTime(elapsed);
+
+  return (
+    <section className="card">
+      <h2 style={{ justifyContent: "center" }}>
+        <span className="digital">{display}</span>
+      </h2>
+
+      <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+        <button className="primary" onClick={onStart}>
+          Start Timer
+        </button>
+        <button className="primary" onClick={onReset}>
+          Reset Timer
+        </button>
+      </div>
+
+      <p
+        className="muted"
+        style={{ textAlign: "center", fontWeight: 800, marginTop: 8 }}
+      >
+        TPMO REQUIRED WITHIN 60 SECONDS 🕰️
+      </p>
+    </section>
+  );
+});
+const CheckItem = React.memo(function CheckItem({
+  value,
+  label,
+  onChange,
+  disabled,
+}) {
+  return (
+    <label className={`check ${disabled ? "disabledRow" : ""}`}>
+      <input
+        type="checkbox"
+        checked={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      {label}
+    </label>
+  );
+});
 
 /* ===================== MAIN FLOW ===================== */
 export default function ScriptFlow() {
@@ -153,40 +157,20 @@ export default function ScriptFlow() {
     : 8;
 
   // ====== SECTION TIMERS ======
-  const t1 = useSectionTimer(activeSection === 1);
-  const t2 = useSectionTimer(activeSection === 2);
-  const t3 = useSectionTimer(activeSection === 3);
-  const t4 = useSectionTimer(activeSection === 4);
-  const t5 = useSectionTimer(activeSection === 5);
-  const t6 = useSectionTimer(activeSection === 6);
-  const t7 = useSectionTimer(activeSection === 7);
 
   // ====== MAIN TPMO TIMER (MANUAL) ======
   const [tpmoRunning, setTpmoRunning] = useState(false);
   const [tpmoStart, setTpmoStart] = useState(null);
-  const [tpmoElapsed, setTpmoElapsed] = useState(0);
-
-  useEffect(() => {
-    if (!tpmoRunning || tpmoOk) return;
-    const i = setInterval(() => {
-      setTpmoElapsed(Date.now() - tpmoStart);
-    }, 500);
-    return () => clearInterval(i);
-  }, [tpmoRunning, tpmoStart, tpmoOk]);
 
   const startMainTimer = () => {
     setTpmoStart(Date.now());
-    setTpmoElapsed(0);
     setTpmoRunning(true);
   };
 
   const resetMainTimer = () => {
     setTpmoRunning(false);
     setTpmoStart(null);
-    setTpmoElapsed(0);
   };
-
-  const mainTimer = formatTime(tpmoElapsed);
 
   // ====== LOCAL NOTES ======
   const [notes, setNotes] = useState({
@@ -261,33 +245,19 @@ export default function ScriptFlow() {
   return (
     <div className="flow">
       {/* ===================== MAIN TPMO TIMER ===================== */}
-      <section className="card">
-        <h2 style={{ justifyContent: "center" }}>
-          <span className="digital">{mainTimer}</span>
-        </h2>
-
-        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-          <button className="primary" onClick={startMainTimer}>
-            Start Timer
-          </button>
-          <button className="primary" onClick={resetMainTimer}>
-            Reset Timer
-          </button>
-        </div>
-
-        <p
-          className="muted"
-          style={{ textAlign: "center", fontWeight: 800, marginTop: 8 }}
-        >
-          TPMO REQUIRED WITHIN 60 SECONDS 🕰️
-        </p>
-      </section>
+      <MainTimer
+        running={tpmoRunning}
+        startTime={tpmoStart}
+        onStart={startMainTimer}
+        onReset={resetMainTimer}
+      />
 
       {/* ===================== 1) RECORDING ===================== */}
       <section className={card(1)}>
         <h2>
-          1) Recording Disclosure <span className="timer">{t1}</span>
+          1) Recording Disclosure <span className="timer"></span>
         </h2>
+
         <div style={{ marginTop: 10, marginBottom: 6 }}>
           <label style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>
             Agent Name (auto-fills disclosure)
@@ -341,8 +311,9 @@ to like the grocery card & part B giveback as well as making sure you can see AL
       <section className={`${card(2)} ${recordingOk ? "" : "disabled"}`}>
         <h2>
           2) TPMO Disclaimer & Federal Contracting Statement{" "}
-          <span className="timer">{t2}</span>
+          <span className="timer"></span>
         </h2>
+
         <div style={{ marginTop: 10, marginBottom: 6 }}>
           <label style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>
             TPMO Counts (auto-fills disclosure)
@@ -485,7 +456,7 @@ Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insuranc
       <section className={`${card(3)} ${tpmoOk ? "" : "disabled"}`}>
         <h2>
           3) Power of Attorney & Scope of Appointment{" "}
-          <span className="timer">{t3}</span>
+          <span className="timer"></span>
         </h2>
 
         {activeSection === 3 && (
@@ -520,8 +491,9 @@ Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insuranc
       {/* ===================== 4) QUALIFICATIONS ===================== */}
       <section className={`${card(4)} ${soaOk ? "" : "disabled"}`}>
         <h2>
-          4) Qualifications <span className="timer">{t4}</span>
+          4) Qualifications <span className="timer"></span>
         </h2>
+
         {soaOk && (
           <>
             <ScriptBox verbatim>
@@ -590,8 +562,9 @@ Permission to Contact (TCPA):
       {/* ===================== 5) NEADS ===================== */}
       <section className={`${card(5)} ${qualOk ? "" : "disabled"}`}>
         <h2>
-          5) NEADS Assessment <span className="timer">{t5}</span>
+          5) NEADS Assessment <span className="timer"></span>
         </h2>
+
         {unlocked.s5 && (
           <ScriptBox verbatim>
             {`NEADS Analysis Questions.
@@ -650,42 +623,51 @@ Agent recap and summary statement:
         <h3>Pre-Enrollment Checklist</h3>
 
         <div className="checklist">
-          {renderCheck(
-            preEnrollChecks.providers,
-            "Provider network reviewed",
-            (v) => setPreEnrollChecks((s) => ({ ...s, providers: v })),
-            !qualOk
-          )}
-          {renderCheck(
-            preEnrollChecks.rx,
-            "Prescription coverage reviewed",
-            (v) => setPreEnrollChecks((s) => ({ ...s, rx: v })),
-            !qualOk
-          )}
-          {renderCheck(
-            preEnrollChecks.costs,
-            "Copays / cost sharing reviewed",
-            (v) => setPreEnrollChecks((s) => ({ ...s, costs: v })),
-            !qualOk
-          )}
-          {renderCheck(
-            preEnrollChecks.moop,
-            "MOOP explained",
-            (v) => setPreEnrollChecks((s) => ({ ...s, moop: v })),
-            !qualOk
-          )}
-          {renderCheck(
-            preEnrollChecks.rules,
-            "Plan rules (HMO/PPO) explained",
-            (v) => setPreEnrollChecks((s) => ({ ...s, rules: v })),
-            !qualOk
-          )}
-          {renderCheck(
-            preEnrollChecks.coverageImpact,
-            "Effect on current coverage explained",
-            (v) => setPreEnrollChecks((s) => ({ ...s, coverageImpact: v })),
-            !qualOk
-          )}
+          <CheckItem
+            value={preEnrollChecks.providers}
+            label="Provider network reviewed"
+            disabled={!qualOk}
+            onChange={(v) =>
+              setPreEnrollChecks((s) => ({ ...s, providers: v }))
+            }
+          />
+
+          <CheckItem
+            value={preEnrollChecks.rx}
+            label="Prescription coverage reviewed"
+            disabled={!qualOk}
+            onChange={(v) => setPreEnrollChecks((s) => ({ ...s, rx: v }))}
+          />
+
+          <CheckItem
+            value={preEnrollChecks.costs}
+            label="Copays / cost sharing reviewed"
+            disabled={!qualOk}
+            onChange={(v) => setPreEnrollChecks((s) => ({ ...s, costs: v }))}
+          />
+
+          <CheckItem
+            value={preEnrollChecks.moop}
+            label="MOOP explained"
+            disabled={!qualOk}
+            onChange={(v) => setPreEnrollChecks((s) => ({ ...s, moop: v }))}
+          />
+
+          <CheckItem
+            value={preEnrollChecks.rules}
+            label="Plan rules (HMO/PPO) explained"
+            disabled={!qualOk}
+            onChange={(v) => setPreEnrollChecks((s) => ({ ...s, rules: v }))}
+          />
+
+          <CheckItem
+            value={preEnrollChecks.coverageImpact}
+            label="Effect on current coverage explained"
+            disabled={!qualOk}
+            onChange={(v) =>
+              setPreEnrollChecks((s) => ({ ...s, coverageImpact: v }))
+            }
+          />
         </div>
 
         <button
@@ -707,8 +689,9 @@ Agent recap and summary statement:
       <section className={`${card(6)} ${neadsOk ? "" : "disabled"}`}>
         <h2>
           6) Plan Selection & Summary of Benefits{" "}
-          <span className="timer">{t6}</span>
+          <span className="timer"></span>
         </h2>
+
         {unlocked.s5 && (
           <ScriptBox verbatim>
             {`“Based on everything we discussed during your NEADS assessment, including your doctors, prescriptions, coverage preferences, and costs, [plan name] appears to be a good option for you. I’m recommending this plan is because it aligns with what you told me was most important, such as your coverage needs, provider access, prescription costs, or overall out-of-pocket expenses.”
@@ -783,54 +766,61 @@ AGENT NOTE: State the dollar amounts for the current plan and the new plan when 
         )}
 
         <div className="checklist">
-          {renderCheck(
-            sobChecks.premium,
-            "Premium reviewed",
-            (v) => setSobChecks((s) => ({ ...s, premium: v })),
-            !neadsOk
-          )}
-          {renderCheck(
-            sobChecks.deductible,
-            "Deductible reviewed",
-            (v) => setSobChecks((s) => ({ ...s, deductible: v })),
-            !neadsOk
-          )}
-          {renderCheck(
-            sobChecks.moop,
-            "Maximum Out-of-Pocket (MOOP) reviewed",
-            (v) => setSobChecks((s) => ({ ...s, moop: v })),
-            !neadsOk
-          )}
-          {renderCheck(
-            sobChecks.network,
-            "Provider network rules reviewed",
-            (v) => setSobChecks((s) => ({ ...s, network: v })),
-            !neadsOk
-          )}
-          {renderCheck(
-            sobChecks.rx,
-            "Prescription drug coverage reviewed",
-            (v) => setSobChecks((s) => ({ ...s, rx: v })),
-            !neadsOk
-          )}
-          {renderCheck(
-            sobChecks.referralsPA,
-            "Referrals / prior authorization discussed (if applicable)",
-            (v) => setSobChecks((s) => ({ ...s, referralsPA: v })),
-            !neadsOk
-          )}
-          {renderCheck(
-            sobChecks.extras,
-            "Extra benefits reviewed (if applicable)",
-            (v) => setSobChecks((s) => ({ ...s, extras: v })),
-            !neadsOk
-          )}
-          {renderCheck(
-            sobChecks.limitations,
-            "Limitations / restrictions reviewed",
-            (v) => setSobChecks((s) => ({ ...s, limitations: v })),
-            !neadsOk
-          )}
+          <CheckItem
+            value={sobChecks.premium}
+            label="Premium reviewed"
+            disabled={!neadsOk}
+            onChange={(v) => setSobChecks((s) => ({ ...s, premium: v }))}
+          />
+
+          <CheckItem
+            value={sobChecks.deductible}
+            label="Deductible reviewed"
+            disabled={!neadsOk}
+            onChange={(v) => setSobChecks((s) => ({ ...s, deductible: v }))}
+          />
+
+          <CheckItem
+            value={sobChecks.moop}
+            label="Maximum Out-of-Pocket (MOOP) reviewed"
+            disabled={!neadsOk}
+            onChange={(v) => setSobChecks((s) => ({ ...s, moop: v }))}
+          />
+
+          <CheckItem
+            value={sobChecks.network}
+            label="Provider network rules reviewed"
+            disabled={!neadsOk}
+            onChange={(v) => setSobChecks((s) => ({ ...s, network: v }))}
+          />
+
+          <CheckItem
+            value={sobChecks.rx}
+            label="Prescription drug coverage reviewed"
+            disabled={!neadsOk}
+            onChange={(v) => setSobChecks((s) => ({ ...s, rx: v }))}
+          />
+
+          <CheckItem
+            value={sobChecks.referralsPA}
+            label="Referrals / prior authorization discussed (if applicable)"
+            disabled={!neadsOk}
+            onChange={(v) => setSobChecks((s) => ({ ...s, referralsPA: v }))}
+          />
+
+          <CheckItem
+            value={sobChecks.extras}
+            label="Extra benefits reviewed (if applicable)"
+            disabled={!neadsOk}
+            onChange={(v) => setSobChecks((s) => ({ ...s, extras: v }))}
+          />
+
+          <CheckItem
+            value={sobChecks.limitations}
+            label="Limitations / restrictions reviewed"
+            disabled={!neadsOk}
+            onChange={(v) => setSobChecks((s) => ({ ...s, limitations: v }))}
+          />
         </div>
 
         <button
@@ -850,8 +840,9 @@ AGENT NOTE: State the dollar amounts for the current plan and the new plan when 
       {/* ===================== 7) ENROLLMENT ===================== */}
       <section className={`${card(7)} ${sobOk ? "" : "disabled"}`}>
         <h2>
-          7) Enrollment <span className="timer">{t7}</span>
+          7) Enrollment <span className="timer"></span>
         </h2>
+
         {unlocked.s7 && (
           <ScriptBox verbatim>
             {`INBOUND: "I can enroll you today over the telephone in this [specific plan name]. Enrolling in this plan today will replace your current coverage. Once approved by Medicare, your new coverage will begin on [effective date]. Would you like to proceed?”
@@ -923,30 +914,35 @@ PRIVACY ACT STATEMENT:
 
         <h3>Enrollment Confirmations</h3>
         <div className="checklist">
-          {renderCheck(
-            enrollChecks.epConfirmed,
-            "Election period / eligibility confirmed",
-            (v) => setEnrollChecks((s) => ({ ...s, epConfirmed: v })),
-            !sobOk
-          )}
-          {renderCheck(
-            enrollChecks.piiConsent,
-            "Consent to collect necessary information (PII) confirmed",
-            (v) => setEnrollChecks((s) => ({ ...s, piiConsent: v })),
-            !sobOk
-          )}
-          {renderCheck(
-            enrollChecks.planConfirm,
-            "Beneficiary confirmed plan selection",
-            (v) => setEnrollChecks((s) => ({ ...s, planConfirm: v })),
-            !sobOk
-          )}
-          {renderCheck(
-            enrollChecks.submitConsent,
-            "Beneficiary authorized submission of enrollment",
-            (v) => setEnrollChecks((s) => ({ ...s, submitConsent: v })),
-            !sobOk
-          )}
+          <CheckItem
+            value={enrollChecks.epConfirmed}
+            label="Election period / eligibility confirmed"
+            disabled={!sobOk}
+            onChange={(v) => setEnrollChecks((s) => ({ ...s, epConfirmed: v }))}
+          />
+
+          <CheckItem
+            value={enrollChecks.piiConsent}
+            label="Consent to collect necessary information (PII) confirmed"
+            disabled={!sobOk}
+            onChange={(v) => setEnrollChecks((s) => ({ ...s, piiConsent: v }))}
+          />
+
+          <CheckItem
+            value={enrollChecks.planConfirm}
+            label="Beneficiary confirmed plan selection"
+            disabled={!sobOk}
+            onChange={(v) => setEnrollChecks((s) => ({ ...s, planConfirm: v }))}
+          />
+
+          <CheckItem
+            value={enrollChecks.submitConsent}
+            label="Beneficiary authorized submission of enrollment"
+            disabled={!sobOk}
+            onChange={(v) =>
+              setEnrollChecks((s) => ({ ...s, submitConsent: v }))
+            }
+          />
         </div>
 
         <button
@@ -999,7 +995,7 @@ PRIVACY ACT STATEMENT:
       {/* ===================== 8) WRAP ===================== */}
       <section className={`${card(8)} ${enrollOk ? "" : "disabled"}`}>
         <h2>
-          8) Wrap-Up <span className="timer">{t7}</span>
+          8) Wrap-Up <span className="timer"></span>
         </h2>
 
         {unlocked.s7 && (
@@ -1248,20 +1244,5 @@ Coverage amounts, premiums, and underwriting requirements depend on the policy s
         )}
       </section>
     </div>
-  );
-}
-
-/* ===================== CHECK HELPER ===================== */
-function renderCheck(value, label, onChange, disabled) {
-  return (
-    <label className={`check ${disabled ? "disabledRow" : ""}`}>
-      <input
-        type="checkbox"
-        checked={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      {label}
-    </label>
   );
 }
