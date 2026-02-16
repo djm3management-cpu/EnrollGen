@@ -1,4 +1,11 @@
-import { createContext, useContext, useReducer, useMemo } from "react";
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
 import {
   scriptReducer,
   initialState,
@@ -26,7 +33,25 @@ export function ScriptProvider({ children }) {
     () => allChecked(state.enrollChecks),
     [state.enrollChecks]
   );
-  const enrollmentCodeOk = (state.notes.enrollmentCode || "").trim().length >= 4;
+  const enrollmentCodeOk =
+    (state.notes.enrollmentCode || "").trim().length >= 4;
+
+  // Track previous active section for auto-scroll
+  const prevSection = useRef(activeSection);
+
+  useEffect(() => {
+    if (activeSection !== prevSection.current) {
+      prevSection.current = activeSection;
+      // Mark new section as started for per-section timing
+      dispatch({ type: "MARK_SECTION_START", section: activeSection });
+    }
+  }, [activeSection]);
+
+  // Mark initial section start
+  useEffect(() => {
+    dispatch({ type: "MARK_SECTION_START", section: activeSection });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const value = useMemo(
     () => ({

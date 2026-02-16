@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
 
 export default React.memo(function SectionRecording() {
   const { state, dispatch, activeSection } = useScript();
@@ -9,7 +9,10 @@ export default React.memo(function SectionRecording() {
 
   return (
     <section className={`card ${isActive ? "active-card" : ""}`}>
-      <h2>1) Recording Disclosure</h2>
+      <h2>
+        1) Recording Disclosure
+        <SectionTimer sectionNum={1} timestamps={state.sectionTimestamps} />
+      </h2>
 
       <div className="field-group">
         <label className="field-label">
@@ -18,7 +21,11 @@ export default React.memo(function SectionRecording() {
         <input
           value={agentName}
           onChange={(e) =>
-            dispatch({ type: "SET_FIELD", field: "agentName", value: e.target.value })
+            dispatch({
+              type: "SET_FIELD",
+              field: "agentName",
+              value: e.target.value,
+            })
           }
           placeholder="First and Last Name"
           className="input-dark"
@@ -44,7 +51,11 @@ to like the grocery card & part B giveback as well as making sure you can see AL
           type="checkbox"
           checked={recordingOk}
           onChange={(e) =>
-            dispatch({ type: "SET_GATE", field: "recordingOk", value: e.target.checked })
+            dispatch({
+              type: "SET_GATE",
+              field: "recordingOk",
+              value: e.target.checked,
+            })
           }
         />
         Recording disclosure read (verbatim)

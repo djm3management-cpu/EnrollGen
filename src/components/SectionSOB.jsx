@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, CheckItem, LockText } from "./SharedUI";
+import { ScriptBox, CheckItem, LockText, SectionTimer } from "./SharedUI";
 
 export default React.memo(function SectionSOB() {
   const { state, dispatch, activeSection, unlocked, sobAllDone } = useScript();
@@ -13,7 +13,10 @@ export default React.memo(function SectionSOB() {
         unlocked.s6 ? "" : "disabled"
       }`}
     >
-      <h2>6) Plan Selection & Summary of Benefits</h2>
+      <h2>
+        6) Plan Selection & Summary of Benefits
+        <SectionTimer sectionNum={6} timestamps={state.sectionTimestamps} />
+      </h2>
 
       {unlocked.s6 && (
         <ScriptBox verbatim>

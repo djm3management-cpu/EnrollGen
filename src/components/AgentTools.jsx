@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 /* ---- Collapsible Accordion ---- */
-function Accordion({ title, children, defaultOpen = false }) {
+function Accordion({
+  title,
+  children,
+  defaultOpen = false,
+  searchMatch = true,
+}) {
   const [open, setOpen] = useState(defaultOpen);
+
+  // If search is active and this doesn't match, hide it
+  if (!searchMatch) return null;
 
   return (
     <div className={`accordion ${open ? "open" : ""}`}>
@@ -19,13 +27,130 @@ function Accordion({ title, children, defaultOpen = false }) {
   );
 }
 
+/* ---- Carrier Quick Links ---- */
+const CARRIER_LINKS = [
+  { name: "Sunfire", url: "https://app.sunfirematrix.com", icon: "🔥" },
+  {
+    name: "MARx (CMS)",
+    url: "https://www.cms.gov/medicare/enrollment-renewal/providers-suppliers/internet-based-marx",
+    icon: "🏛️",
+  },
+  {
+    name: "Aetna / Producer World",
+    url: "https://www.aetna.com/producer.html",
+    icon: "🅰️",
+  },
+  {
+    name: "Anthem / Broker Connect",
+    url: "https://www.anthem.com/broker/",
+    icon: "🔷",
+  },
+  { name: "Cigna / Brokers", url: "https://cignaforbrokers.com", icon: "🟢" },
+  {
+    name: "Devoted Agent Portal",
+    url: "https://www.devoted.com/agents",
+    icon: "❤️",
+  },
+  { name: "Humana / Vantage", url: "https://www.humana.com/agent", icon: "🟡" },
+  { name: "UHC / Jarvis", url: "https://www.uhcjarvis.com", icon: "🔵" },
+  {
+    name: "WellCare / Broker Portal",
+    url: "https://www.wellcare.com/broker",
+    icon: "🟣",
+  },
+  { name: "Medicare.gov", url: "https://www.medicare.gov", icon: "🇺🇸" },
+];
+
 export default function AgentTools() {
   const [mapsLoaded, setMapsLoaded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Search filter logic — check if accordion title or content keywords match
+  const q = searchQuery.toLowerCase().trim();
+  const matchesSearch = (text) => {
+    if (!q) return true;
+    return text.toLowerCase().includes(q);
+  };
+
+  // Pre-compute accordion search matches
+  const accordionMatches = useMemo(() => {
+    if (!q)
+      return {
+        maps: true,
+        core: true,
+        seps: true,
+        disaster: true,
+        refs: true,
+        links: true,
+      };
+    return {
+      maps: matchesSearch("FEMA Disaster SEP Zones Medicaid Map"),
+      core: matchesSearch("Core Medicare Enrollment Periods AEP OEP IEP"),
+      seps: matchesSearch(
+        "Special Enrollment Periods SEP Moving Medicaid Extra Help Institutional Life Events Employer 5-Star Dual Chronic"
+      ),
+      disaster: matchesSearch(
+        "Disaster SEP Tracker FEMA Aetna Anthem Cigna Devoted Humana WellCare UHC"
+      ),
+      refs: matchesSearch(
+        "Quick Agent References Medicaid Income Limits D-SNP"
+      ),
+      links: matchesSearch(
+        "Carrier Quick Links Sunfire MARx Aetna Anthem Cigna Devoted Humana UHC WellCare Medicare portal login"
+      ),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
 
   return (
     <div className="agent-tools">
+      {/* Search Box */}
+      <div className="agent-tools-search">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="🔍 Search agent tools..."
+          className="input-dark agent-tools-search-input"
+        />
+        {searchQuery && (
+          <button
+            className="agent-tools-search-clear"
+            onClick={() => setSearchQuery("")}
+            title="Clear search"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {/* ===== CARRIER QUICK LINKS ===== */}
+      <Accordion
+        title="🚀 Carrier Quick Links"
+        defaultOpen
+        searchMatch={accordionMatches.links}
+      >
+        <div className="carrier-links-grid">
+          {CARRIER_LINKS.map((link) => (
+            <a
+              key={link.name}
+              href={link.url}
+              target="_blank"
+              rel="noreferrer"
+              className="carrier-link-card"
+            >
+              <span className="carrier-link-icon">{link.icon}</span>
+              <span className="carrier-link-name">{link.name}</span>
+            </a>
+          ))}
+        </div>
+      </Accordion>
+
       {/* ===== MAPS (lazy loaded) ===== */}
-      <Accordion title="🗺️ FEMA Disaster SEP Zones & Medicaid Map">
+      <Accordion
+        title="🗺️ FEMA Disaster SEP Zones & Medicaid Map"
+        searchMatch={accordionMatches.maps}
+      >
         {!mapsLoaded ? (
           <div className="map-load-prompt">
             <p>Maps are large and may take a moment to load.</p>
@@ -59,7 +184,11 @@ export default function AgentTools() {
       </Accordion>
 
       {/* ===== CORE ENROLLMENT PERIODS ===== */}
-      <Accordion title="🗓️ Core Medicare Enrollment Periods" defaultOpen>
+      <Accordion
+        title="🗓️ Core Medicare Enrollment Periods"
+        defaultOpen
+        searchMatch={accordionMatches.core}
+      >
         <ul>
           <li>
             <strong>AEP</strong> (Oct 15 – Dec 7): Change, drop, or enroll in
@@ -77,7 +206,10 @@ export default function AgentTools() {
       </Accordion>
 
       {/* ===== SPECIAL ENROLLMENT PERIODS ===== */}
-      <Accordion title="🔁 Medicare Advantage Special Enrollment Periods (SEPs)">
+      <Accordion
+        title="🔁 Medicare Advantage Special Enrollment Periods (SEPs)"
+        searchMatch={accordionMatches.seps}
+      >
         <h5>Moving / Location</h5>
         <ul>
           <li>Permanent Move: New MA plan options available</li>
@@ -138,7 +270,10 @@ export default function AgentTools() {
       </Accordion>
 
       {/* ===== DISASTER SEP TRACKER ===== */}
-      <Accordion title="🌪️ Disaster SEP Tracker">
+      <Accordion
+        title="🌪️ Disaster SEP Tracker"
+        searchMatch={accordionMatches.disaster}
+      >
         <p>
           <strong>National Disaster References</strong>
         </p>
@@ -172,7 +307,9 @@ export default function AgentTools() {
         <Accordion title="Aetna">
           <ul>
             <li>Log in to Producer World</li>
-            <li>Scroll down and click Individual Medicare under the News heading</li>
+            <li>
+              Scroll down and click Individual Medicare under the News heading
+            </li>
             <li>On Producer News page, click the Individual Medicare tab</li>
             <li>Click SEP Announcements</li>
             <li>Select month and state from the menu</li>
@@ -214,7 +351,9 @@ export default function AgentTools() {
           <ul>
             <li>Log in to Vantage</li>
             <li>Scroll to Additional Resources (right side)</li>
-            <li>Click SEP for Individuals Affected by a Disaster or Emergency</li>
+            <li>
+              Click SEP for Individuals Affected by a Disaster or Emergency
+            </li>
             <li>A PDF will open showing SEPs by state</li>
           </ul>
         </Accordion>
@@ -241,7 +380,10 @@ export default function AgentTools() {
       </Accordion>
 
       {/* ===== QUICK REFERENCES ===== */}
-      <Accordion title="🔗 Quick Agent References">
+      <Accordion
+        title="🔗 Quick Agent References"
+        searchMatch={accordionMatches.refs}
+      >
         <h5>Medicaid Income Limits by State</h5>
         <ul>
           <li>
@@ -280,6 +422,13 @@ export default function AgentTools() {
           </li>
         </ul>
       </Accordion>
+
+      {/* No results message */}
+      {q && !Object.values(accordionMatches).some(Boolean) && (
+        <div className="agent-tools-no-results">
+          <p>No results for "{searchQuery}"</p>
+        </div>
+      )}
     </div>
   );
 }

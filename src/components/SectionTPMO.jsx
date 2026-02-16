@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
 
 export default React.memo(function SectionTPMO() {
   const { state, dispatch, activeSection, unlocked } = useScript();
@@ -13,10 +13,15 @@ export default React.memo(function SectionTPMO() {
         unlocked.s2 ? "" : "disabled"
       }`}
     >
-      <h2>2) TPMO Disclaimer & Federal Contracting Statement</h2>
+      <h2>
+        2) TPMO Disclaimer & Federal Contracting Statement
+        <SectionTimer sectionNum={2} timestamps={state.sectionTimestamps} />
+      </h2>
 
       <div className="field-group">
-        <label className="field-label">TPMO Counts (auto-fills disclosure)</label>
+        <label className="field-label">
+          TPMO Counts (auto-fills disclosure)
+        </label>
 
         <div className="tpmo-inputs">
           <input
@@ -34,7 +39,11 @@ export default React.memo(function SectionTPMO() {
           <input
             value={tpmoOrgs}
             onChange={(e) =>
-              dispatch({ type: "SET_FIELD", field: "tpmoOrgs", value: e.target.value })
+              dispatch({
+                type: "SET_FIELD",
+                field: "tpmoOrgs",
+                value: e.target.value,
+              })
             }
             placeholder="# of Organizations"
             className="input-dark input-flex"
@@ -43,7 +52,11 @@ export default React.memo(function SectionTPMO() {
           <input
             value={tpmoPlans}
             onChange={(e) =>
-              dispatch({ type: "SET_FIELD", field: "tpmoPlans", value: e.target.value })
+              dispatch({
+                type: "SET_FIELD",
+                field: "tpmoPlans",
+                value: e.target.value,
+              })
             }
             placeholder="# of Plans"
             className="input-dark input-flex"
@@ -71,7 +84,11 @@ Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insuranc
           disabled={!recordingOk}
           checked={tpmoOk}
           onChange={(e) =>
-            dispatch({ type: "SET_GATE", field: "tpmoOk", value: e.target.checked })
+            dispatch({
+              type: "SET_GATE",
+              field: "tpmoOk",
+              value: e.target.checked,
+            })
           }
         />
         TPMO disclaimer read (verbatim)

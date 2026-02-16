@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
 
 export default React.memo(function SectionSOA() {
   const { state, dispatch, activeSection, unlocked } = useScript();
@@ -13,7 +13,10 @@ export default React.memo(function SectionSOA() {
         unlocked.s3 ? "" : "disabled"
       }`}
     >
-      <h2>3) Power of Attorney & Scope of Appointment</h2>
+      <h2>
+        3) Power of Attorney & Scope of Appointment
+        <SectionTimer sectionNum={3} timestamps={state.sectionTimestamps} />
+      </h2>
 
       {unlocked.s3 && isActive && (
         <>
@@ -37,7 +40,11 @@ export default React.memo(function SectionSOA() {
           disabled={!unlocked.s3}
           checked={soaOk}
           onChange={(e) =>
-            dispatch({ type: "SET_GATE", field: "soaOk", value: e.target.checked })
+            dispatch({
+              type: "SET_GATE",
+              field: "soaOk",
+              value: e.target.checked,
+            })
           }
         />
         POA & SOA completed / permission confirmed

@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, CheckItem, LockText } from "./SharedUI";
+import { ScriptBox, CheckItem, LockText, SectionTimer } from "./SharedUI";
 
 export default React.memo(function SectionNEADS() {
   const { state, dispatch, activeSection, unlocked, preEnrollAllDone } =
@@ -14,7 +14,10 @@ export default React.memo(function SectionNEADS() {
         unlocked.s5 ? "" : "disabled"
       }`}
     >
-      <h2>5) NEADS Assessment</h2>
+      <h2>
+        5) NEADS Assessment
+        <SectionTimer sectionNum={5} timestamps={state.sectionTimestamps} />
+      </h2>
 
       {unlocked.s5 && (
         <ScriptBox verbatim>
@@ -79,7 +82,11 @@ Agent recap and summary statement:
           label="Provider network reviewed"
           disabled={!qualOk}
           onChange={(v) =>
-            dispatch({ type: "SET_PRE_ENROLL_CHECK", field: "providers", value: v })
+            dispatch({
+              type: "SET_PRE_ENROLL_CHECK",
+              field: "providers",
+              value: v,
+            })
           }
         />
         <CheckItem

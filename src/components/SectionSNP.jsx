@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
 
 export default React.memo(function SectionSNP() {
   const { state, dispatch, activeSection } = useScript();
@@ -11,7 +11,10 @@ export default React.memo(function SectionSNP() {
 
   return (
     <section className={`card ${isActive ? "active-card" : ""}`}>
-      <h2>Special Needs Plan Disclosure</h2>
+      <h2>
+        Special Needs Plan Disclosure
+        <SectionTimer sectionNum={2.5} timestamps={state.sectionTimestamps} />
+      </h2>
 
       {!snpType && (
         <div className="snp-buttons">
@@ -56,7 +59,11 @@ export default React.memo(function SectionSNP() {
             type="checkbox"
             checked={snpOk}
             onChange={(e) =>
-              dispatch({ type: "SET_GATE", field: "snpOk", value: e.target.checked })
+              dispatch({
+                type: "SET_GATE",
+                field: "snpOk",
+                value: e.target.checked,
+              })
             }
           />
           SNP disclosure read (verbatim)

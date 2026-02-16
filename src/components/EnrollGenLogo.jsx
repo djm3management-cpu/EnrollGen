@@ -1,82 +1,76 @@
 import React from "react";
 
-export default function EnrollGenLogo({ width = 460, className = "" }) {
-  const height = (110 / 460) * width;
+export default function EnrollGenLogo({ width = 520, className = "" }) {
+  const height = (140 / 520) * width;
 
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 460 110"
-      fill="none"
+      viewBox="0 0 520 140"
       width={width}
       height={height}
       className={className}
-      role="img"
-      aria-label="EnrollGen Agent Script Assist"
+      xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        {/* Diagonal speed stripe behind text */}
-        <clipPath id="speedClip">
-          <rect x="0" y="0" width="460" height="110" />
-        </clipPath>
+        <linearGradient id="genGrad" x1="0" x2="1">
+          <stop offset="0%" stopColor="#38BDF8" />
+          <stop offset="100%" stopColor="#2DD4BF" />
+        </linearGradient>
       </defs>
 
-      {/* Speed stripes — subtle diagonal lines (F1 livery nod) */}
-      <g clipPath="url(#speedClip)" opacity="0.06">
-        <line x1="340" y1="-10" x2="300" y2="120" stroke="#e8edf5" strokeWidth="18" />
-        <line x1="370" y1="-10" x2="330" y2="120" stroke="#e8edf5" strokeWidth="8" />
-        <line x1="395" y1="-10" x2="355" y2="120" stroke="#e8edf5" strokeWidth="4" />
+      {/* Main Wordmark */}
+      <g transform="translate(60,85)">
+        <text
+          fontFamily="Rajdhani, sans-serif"
+          fontSize="64"
+          fontWeight="700"
+          letterSpacing="2"
+          fill="#E10600" // Proper F1 red
+        >
+          ENROLL
+        </text>
+
+        <text
+          x="235"
+          fontFamily="Rajdhani, sans-serif"
+          fontSize="64"
+          fontWeight="400"
+          letterSpacing="2"
+          fill="url(#genGrad)"
+        >
+          GEN
+        </text>
       </g>
 
-      {/* Red racing stripe — top edge */}
-      <rect x="0" y="0" width="160" height="3" rx="1" fill="#e11d48" />
-      <rect x="165" y="0" width="40" height="3" rx="1" fill="#e11d48" opacity="0.4" />
-      <rect x="210" y="0" width="12" height="3" rx="1" fill="#e11d48" opacity="0.2" />
+      {/* Clean Performance Underline */}
+      <rect
+        x="60"
+        y="100"
+        width="285"
+        height="3"
+        fill="url(#genGrad)"
+        opacity="0.95"
+      />
 
-      {/* ENROLL — white, heavy */}
+      {/* Sub Label */}
       <text
-        x="0"
-        y="62"
-        fontFamily="Rajdhani, sans-serif"
-        fontWeight="700"
-        fontSize="58"
-        letterSpacing="3"
-        fill="#e8edf5"
-      >
-        ENROLL
-      </text>
-
-      {/* GEN — red, matches racing accent */}
-      <text
-        x="234"
-        y="62"
-        fontFamily="Rajdhani, sans-serif"
-        fontWeight="700"
-        fontSize="58"
-        letterSpacing="3"
-        fill="#e11d48"
-      >
-        GEN
-      </text>
-
-      {/* AGENT SCRIPT ASSIST — larger, red tint */}
-      <text
-        x="1"
-        y="88"
+        x="200"
+        y="125"
         fontFamily="JetBrains Mono, monospace"
-        fontWeight="600"
         fontSize="13"
-        letterSpacing="4"
-        fill="#e11d48"
-        opacity="0.7"
+        fill="#5A6A80"
+        letterSpacing="5"
       >
         AGENT SCRIPT ASSIST
       </text>
 
-      {/* Bottom racing stripe */}
-      <rect x="0" y="100" width="260" height="2" rx="1" fill="#e11d48" opacity="0.35" />
-      <rect x="265" y="100" width="60" height="2" rx="1" fill="#e11d48" opacity="0.15" />
-      <rect x="330" y="100" width="20" height="2" rx="1" fill="#e11d48" opacity="0.08" />
+      {/* Subtle Checkered Accent */}
+      <g transform="translate(370,38) scale(0.85)" opacity="0.8">
+        <rect x="0" y="0" width="8" height="8" fill="#E8EDF5" />
+        <rect x="8" y="8" width="8" height="8" fill="#E8EDF5" />
+        <rect x="16" y="0" width="8" height="8" fill="#E8EDF5" />
+        <rect x="24" y="8" width="8" height="8" fill="#E8EDF5" />
+      </g>
     </svg>
   );
 }

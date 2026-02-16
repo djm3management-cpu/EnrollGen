@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
 
 /* ---- Optional Product Sub-section ---- */
 function OptionalProduct({
@@ -69,9 +69,15 @@ export default React.memo(function SectionWrapUp() {
   const { state, dispatch, activeSection, unlocked } = useScript();
   const {
     enrollOk,
-    hiActive, hiConsentOk, hiDiscussed,
-    dvActive, dvConsentOk, dvDiscussed,
-    feActive, feConsentOk, feDiscussed,
+    hiActive,
+    hiConsentOk,
+    hiDiscussed,
+    dvActive,
+    dvConsentOk,
+    dvDiscussed,
+    feActive,
+    feConsentOk,
+    feDiscussed,
     notes,
   } = state;
   const isActive = activeSection === 8;
@@ -82,7 +88,10 @@ export default React.memo(function SectionWrapUp() {
         unlocked.s8 ? "" : "disabled"
       }`}
     >
-      <h2>8) Wrap-Up</h2>
+      <h2>
+        8) Wrap-Up
+        <SectionTimer sectionNum={8} timestamps={state.sectionTimestamps} />
+      </h2>
 
       {unlocked.s8 && (
         <>

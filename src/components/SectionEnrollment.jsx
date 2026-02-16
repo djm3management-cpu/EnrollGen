@@ -1,10 +1,16 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, CheckItem, LockText } from "./SharedUI";
+import { ScriptBox, CheckItem, LockText, SectionTimer } from "./SharedUI";
 
 export default React.memo(function SectionEnrollment() {
-  const { state, dispatch, activeSection, unlocked, enrollAllDone, enrollmentCodeOk } =
-    useScript();
+  const {
+    state,
+    dispatch,
+    activeSection,
+    unlocked,
+    enrollAllDone,
+    enrollmentCodeOk,
+  } = useScript();
   const { sobOk, enrollOk, enrollChecks, notes } = state;
   const isActive = activeSection === 7;
 
@@ -14,7 +20,10 @@ export default React.memo(function SectionEnrollment() {
         unlocked.s7 ? "" : "disabled"
       }`}
     >
-      <h2>7) Enrollment</h2>
+      <h2>
+        7) Enrollment
+        <SectionTimer sectionNum={7} timestamps={state.sectionTimestamps} />
+      </h2>
 
       {unlocked.s7 && (
         <ScriptBox verbatim>
@@ -65,7 +74,11 @@ PRIVACY ACT STATEMENT:
             disabled={!sobOk}
             value={notes.planName}
             onChange={(e) =>
-              dispatch({ type: "SET_NOTE", field: "planName", value: e.target.value })
+              dispatch({
+                type: "SET_NOTE",
+                field: "planName",
+                value: e.target.value,
+              })
             }
             placeholder="Plan name"
           />
@@ -95,7 +108,11 @@ PRIVACY ACT STATEMENT:
           label="Election period / eligibility confirmed"
           disabled={!sobOk}
           onChange={(v) =>
-            dispatch({ type: "SET_ENROLL_CHECK", field: "epConfirmed", value: v })
+            dispatch({
+              type: "SET_ENROLL_CHECK",
+              field: "epConfirmed",
+              value: v,
+            })
           }
         />
         <CheckItem
@@ -103,7 +120,11 @@ PRIVACY ACT STATEMENT:
           label="Consent to collect necessary information (PII) confirmed"
           disabled={!sobOk}
           onChange={(v) =>
-            dispatch({ type: "SET_ENROLL_CHECK", field: "piiConsent", value: v })
+            dispatch({
+              type: "SET_ENROLL_CHECK",
+              field: "piiConsent",
+              value: v,
+            })
           }
         />
         <CheckItem
@@ -111,7 +132,11 @@ PRIVACY ACT STATEMENT:
           label="Beneficiary confirmed plan selection"
           disabled={!sobOk}
           onChange={(v) =>
-            dispatch({ type: "SET_ENROLL_CHECK", field: "planConfirm", value: v })
+            dispatch({
+              type: "SET_ENROLL_CHECK",
+              field: "planConfirm",
+              value: v,
+            })
           }
         />
         <CheckItem
@@ -119,7 +144,11 @@ PRIVACY ACT STATEMENT:
           label="Beneficiary authorized submission of enrollment"
           disabled={!sobOk}
           onChange={(v) =>
-            dispatch({ type: "SET_ENROLL_CHECK", field: "submitConsent", value: v })
+            dispatch({
+              type: "SET_ENROLL_CHECK",
+              field: "submitConsent",
+              value: v,
+            })
           }
         />
       </div>

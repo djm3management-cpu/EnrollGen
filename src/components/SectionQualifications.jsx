@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
 
 export default React.memo(function SectionQualifications() {
   const { state, dispatch, activeSection, unlocked } = useScript();
@@ -13,7 +13,10 @@ export default React.memo(function SectionQualifications() {
         unlocked.s4 ? "" : "disabled"
       }`}
     >
-      <h2>4) Qualifications</h2>
+      <h2>
+        4) Qualifications
+        <SectionTimer sectionNum={4} timestamps={state.sectionTimestamps} />
+      </h2>
 
       {unlocked.s4 && (
         <>
@@ -66,7 +69,11 @@ Permission to Contact (TCPA):
           disabled={!soaOk}
           checked={qualOk}
           onChange={(e) =>
-            dispatch({ type: "SET_GATE", field: "qualOk", value: e.target.checked })
+            dispatch({
+              type: "SET_GATE",
+              field: "qualOk",
+              value: e.target.checked,
+            })
           }
         />
         Qualifications completed
@@ -79,7 +86,8 @@ Permission to Contact (TCPA):
       )}
       {soaOk && !qualOk && (
         <LockText>
-          Qualifications must be completed before proceeding to Needs Assessment.
+          Qualifications must be completed before proceeding to Needs
+          Assessment.
         </LockText>
       )}
     </section>
