@@ -1,5 +1,5 @@
-import logo from "./assets/EnrollGenHeader.png";
 import { useState } from "react";
+import EnrollGenLogo from "./components/EnrollGenLogo";
 import ScriptFlow from "./components/ScriptFlow";
 import AgentTools from "./components/AgentTools";
 import ScriptUpload from "./components/ScriptUpload";
@@ -25,8 +25,7 @@ export default function App() {
         {/* APP CONTENT */}
         <div className="app-shell">
           <div className="app">
-            <h1>EnrollGen Agent Script Assist</h1>
-            <img src={logo} alt="EnrollGenAI" className="app-logo" />
+            <EnrollGenLogo width={400} className="app-logo" />
 
             <div className="tabs">
               <button
@@ -44,8 +43,8 @@ export default function App() {
             </div>
 
             {/*
-              FIX: Both tabs stay mounted — toggled via CSS display.
-              This prevents ScriptFlow state from being destroyed
+              Both tabs stay mounted — toggled via CSS display.
+              Prevents ScriptFlow state from being destroyed
               when the agent switches to Agent Tools mid-call.
             */}
             <ScriptProvider>
