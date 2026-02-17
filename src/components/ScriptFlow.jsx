@@ -17,7 +17,7 @@ import SectionNEADS from "./SectionNEADS";
 import SectionSOB from "./SectionSOB";
 import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
-
+import ScriptPrompter from "./ScriptPrompter";
 /* ---- Collapsible wrapper for completed sections ---- */
 function CollapsibleSection({
   sectionNum,
@@ -128,13 +128,8 @@ export default function ScriptFlow() {
       />
 
       {/* Main TPMO Timer */}
-      <MainTimer
-        running={state.tpmoRunning}
-        startTime={state.tpmoStart}
-        onStart={() => dispatch({ type: "START_TIMER" })}
-        onReset={() => dispatch({ type: "RESET_TIMER" })}
-      />
 
+      <ScriptPrompter />
       {/* Sequential enrollment flow sections */}
       <CollapsibleSection
         sectionNum={1}

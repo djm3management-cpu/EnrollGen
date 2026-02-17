@@ -34,7 +34,8 @@ export default function App() {
 
           <ScriptProvider>
             <div style={{ display: tab === "script" ? "block" : "none" }}>
-              <ScriptUpload />
+              {/* <ScriptUpload /> */}
+
               <ScriptFlow />
               <SessionSummary />
 
