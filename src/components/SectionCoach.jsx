@@ -310,7 +310,7 @@ INSTRUCTIONS:
 - Never give generic advice like "stay on script" — always reference the specific compliance point.`;
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
