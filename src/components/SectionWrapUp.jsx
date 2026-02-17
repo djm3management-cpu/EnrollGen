@@ -1,6 +1,7 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
 import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import SectionCoach from "./SectionCoach";
 
 /* ---- Optional Product Sub-section ---- */
 function OptionalProduct({
@@ -230,6 +231,8 @@ That money can be used for funeral costs, medical bills, or other end-of-life ex
 Coverage amounts, premiums, and underwriting requirements depend on the policy selected."`}
             discussedLabel="Final expense explained (non-Medicare)"
           />
+
+          <SectionCoach stepName="Wrap-Up" />
         </>
       )}
 

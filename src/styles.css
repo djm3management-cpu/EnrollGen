@@ -178,12 +178,12 @@ p {
 }
 
 .app-logo {
-  max-width: 280px;
-  width: 100%;
+  width: 400px;
+  max-width: 95%;
   height: auto;
-  margin: 0 auto 16px;
+  margin: 0 auto 24px;
   display: block;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 /* ===============================
@@ -1312,4 +1312,54 @@ input[type="file"]::file-selector-button:hover {
   50% {
     opacity: 0.3;
   }
+}
+.section-coach {
+  margin-top: 12px;
+  border-top: 1px solid #2a2c31;
+  padding-top: 10px;
+}
+
+.section-coach-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-coach-btn {
+  background: rgba(46, 204, 113, 0.08);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  color: #2ecc71;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.section-coach-btn:hover:not(:disabled) {
+  background: rgba(46, 204, 113, 0.15);
+}
+
+.section-coach-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.section-coach-toggle {
+  background: none;
+  border: 1px solid #3a3d45;
+  color: #6a6e7a;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.section-coach-tip {
+  margin-top: 8px;
+  background: rgba(46, 204, 113, 0.06);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2ecc71;
 }

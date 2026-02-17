@@ -1,6 +1,7 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
 import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSOA() {
   const { state, dispatch, activeSection, unlocked } = useScript();
@@ -49,6 +50,8 @@ export default React.memo(function SectionSOA() {
         />
         POA & SOA completed / permission confirmed
       </label>
+
+      <SectionCoach stepName="POA & Scope of Appointment" />
 
       {!tpmoOk && <LockText>Locked until TPMO is complete.</LockText>}
       {unlocked.s3 && !soaOk && (

@@ -1,11 +1,11 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, CheckItem, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionNEADS() {
-  const { state, dispatch, activeSection, unlocked, preEnrollAllDone } =
-    useScript();
-  const { qualOk, neadsOk, preEnrollChecks } = state;
+  const { state, dispatch, activeSection, unlocked } = useScript();
+  const { qualOk, neadsOk } = state;
   const isActive = activeSection === 5;
 
   return (
@@ -74,82 +74,20 @@ Agent recap and summary statement:
         </ScriptBox>
       )}
 
-      <h3>Pre-Enrollment Checklist</h3>
-
-      <div className="checklist">
-        <CheckItem
-          value={preEnrollChecks.providers}
-          label="Provider network reviewed"
-          disabled={!qualOk}
-          onChange={(v) =>
-            dispatch({
-              type: "SET_PRE_ENROLL_CHECK",
-              field: "providers",
-              value: v,
-            })
-          }
-        />
-        <CheckItem
-          value={preEnrollChecks.rx}
-          label="Prescription coverage reviewed"
-          disabled={!qualOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_PRE_ENROLL_CHECK", field: "rx", value: v })
-          }
-        />
-        <CheckItem
-          value={preEnrollChecks.costs}
-          label="Copays / cost sharing reviewed"
-          disabled={!qualOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_PRE_ENROLL_CHECK", field: "costs", value: v })
-          }
-        />
-        <CheckItem
-          value={preEnrollChecks.moop}
-          label="MOOP explained"
-          disabled={!qualOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_PRE_ENROLL_CHECK", field: "moop", value: v })
-          }
-        />
-        <CheckItem
-          value={preEnrollChecks.rules}
-          label="Plan rules (HMO/PPO) explained"
-          disabled={!qualOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_PRE_ENROLL_CHECK", field: "rules", value: v })
-          }
-        />
-        <CheckItem
-          value={preEnrollChecks.coverageImpact}
-          label="Effect on current coverage explained"
-          disabled={!qualOk}
-          onChange={(v) =>
-            dispatch({
-              type: "SET_PRE_ENROLL_CHECK",
-              field: "coverageImpact",
-              value: v,
-            })
-          }
-        />
-      </div>
-
       <button
         className="primary"
-        disabled={!qualOk || !preEnrollAllDone}
+        disabled={!qualOk || neadsOk}
         onClick={() =>
           dispatch({ type: "SET_GATE", field: "neadsOk", value: true })
         }
       >
-        Mark NEADS Complete
+        {neadsOk ? "✅ NEADS Reviewed" : "NEADS Reviewed"}
       </button>
+
+      <SectionCoach stepName="NEADS Assessment" />
 
       {!qualOk && (
         <LockText>Locked until Qualifications are complete.</LockText>
-      )}
-      {qualOk && !preEnrollAllDone && (
-        <LockText>Complete the Pre-Enrollment Checklist to proceed.</LockText>
       )}
     </section>
   );

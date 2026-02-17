@@ -1,6 +1,7 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
 import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionTPMO() {
   const { state, dispatch, activeSection, unlocked } = useScript();
@@ -93,6 +94,8 @@ Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insuranc
         />
         TPMO disclaimer read (verbatim)
       </label>
+
+      <SectionCoach stepName="TPMO Disclaimer" />
 
       {!recordingOk && (
         <LockText>Locked until Recording Disclosure is complete.</LockText>

@@ -1,6 +1,7 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
 import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionQualifications() {
   const { state, dispatch, activeSection, unlocked } = useScript();
@@ -78,6 +79,8 @@ Permission to Contact (TCPA):
         />
         Qualifications completed
       </label>
+
+      <SectionCoach stepName="Qualifications" />
 
       {!soaOk && (
         <LockText>

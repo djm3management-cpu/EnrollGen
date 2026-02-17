@@ -1,6 +1,7 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
 import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionRecording() {
   const { state, dispatch, activeSection } = useScript();
@@ -60,6 +61,8 @@ to like the grocery card & part B giveback as well as making sure you can see AL
         />
         Recording disclosure read (verbatim)
       </label>
+
+      <SectionCoach stepName="Recording Disclosure" />
 
       {!recordingOk && (
         <LockText>Complete Recording Disclosure to continue.</LockText>

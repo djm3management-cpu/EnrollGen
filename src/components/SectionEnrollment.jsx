@@ -1,17 +1,12 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, CheckItem, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionEnrollment() {
-  const {
-    state,
-    dispatch,
-    activeSection,
-    unlocked,
-    enrollAllDone,
-    enrollmentCodeOk,
-  } = useScript();
-  const { sobOk, enrollOk, enrollChecks, notes } = state;
+  const { state, dispatch, activeSection, unlocked, enrollmentCodeOk } =
+    useScript();
+  const { sobOk, enrollOk, notes } = state;
   const isActive = activeSection === 7;
 
   return (
@@ -101,66 +96,14 @@ PRIVACY ACT STATEMENT:
         </label>
       </div>
 
-      <h3>Enrollment Confirmations</h3>
-      <div className="checklist">
-        <CheckItem
-          value={enrollChecks.epConfirmed}
-          label="Election period / eligibility confirmed"
-          disabled={!sobOk}
-          onChange={(v) =>
-            dispatch({
-              type: "SET_ENROLL_CHECK",
-              field: "epConfirmed",
-              value: v,
-            })
-          }
-        />
-        <CheckItem
-          value={enrollChecks.piiConsent}
-          label="Consent to collect necessary information (PII) confirmed"
-          disabled={!sobOk}
-          onChange={(v) =>
-            dispatch({
-              type: "SET_ENROLL_CHECK",
-              field: "piiConsent",
-              value: v,
-            })
-          }
-        />
-        <CheckItem
-          value={enrollChecks.planConfirm}
-          label="Beneficiary confirmed plan selection"
-          disabled={!sobOk}
-          onChange={(v) =>
-            dispatch({
-              type: "SET_ENROLL_CHECK",
-              field: "planConfirm",
-              value: v,
-            })
-          }
-        />
-        <CheckItem
-          value={enrollChecks.submitConsent}
-          label="Beneficiary authorized submission of enrollment"
-          disabled={!sobOk}
-          onChange={(v) =>
-            dispatch({
-              type: "SET_ENROLL_CHECK",
-              field: "submitConsent",
-              value: v,
-            })
-          }
-        />
-      </div>
-
       <button
         className="primary"
-        disabled={!sobOk || !enrollAllDone}
+        disabled={!sobOk || enrollOk}
         onClick={() =>
           dispatch({ type: "SET_GATE", field: "enrollOk", value: true })
         }
       >
-        Mark Enrollment Submitted
+        {enrollOk ? "✅ Enrollment Complete" : "Enrollment Complete"}
       </button>
 
       {/* Enrollment Code + Green Check */}
@@ -198,10 +141,9 @@ PRIVACY ACT STATEMENT:
         )}
       </div>
 
+      <SectionCoach stepName="Enrollment" />
+
       {!sobOk && <LockText>Locked until SOB Review is complete.</LockText>}
-      {sobOk && !enrollAllDone && (
-        <LockText>Complete all enrollment confirmations to proceed.</LockText>
-      )}
     </section>
   );
 });

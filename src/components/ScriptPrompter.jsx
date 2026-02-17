@@ -62,20 +62,26 @@ const ScriptPrompter = memo(function ScriptPrompter() {
     recognition.interimResults = true;
     recognition.lang = "en-US";
 
+    let processedUpTo = 0; // track which results we've already added
+
     recognition.onresult = (event) => {
-      let finalChunk = "";
+      let newFinal = "";
       let interim = "";
-      for (let i = 0; i < event.results.length; i++) {
+      for (let i = processedUpTo; i < event.results.length; i++) {
         const r = event.results[i];
-        if (r.isFinal) finalChunk += r[0].transcript + " ";
-        else interim += r[0].transcript;
+        if (r.isFinal) {
+          newFinal += r[0].transcript + " ";
+          processedUpTo = i + 1; // mark as processed
+        } else {
+          interim += r[0].transcript;
+        }
       }
-      if (finalChunk) {
-        setTranscript((prev) => prev + finalChunk);
+      if (newFinal) {
+        setTranscript((prev) => prev + newFinal);
         setInterimText("");
         clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(
-          () => requestCoaching(finalChunk),
+          () => requestCoaching(newFinal),
           COACHING_DEBOUNCE_MS
         );
       }

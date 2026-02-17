@@ -1,10 +1,11 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, CheckItem, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSOB() {
-  const { state, dispatch, activeSection, unlocked, sobAllDone } = useScript();
-  const { neadsOk, sobOk, sobChecks, partBReduction } = state;
+  const { state, dispatch, activeSection, unlocked } = useScript();
+  const { neadsOk, sobOk, partBReduction } = state;
   const isActive = activeSection === 6;
 
   return (
@@ -93,87 +94,19 @@ AGENT NOTE: State the dollar amounts for the current plan and the new plan when 
         </div>
       )}
 
-      <div className="checklist">
-        <CheckItem
-          value={sobChecks.premium}
-          label="Premium reviewed"
-          disabled={!neadsOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_SOB_CHECK", field: "premium", value: v })
-          }
-        />
-        <CheckItem
-          value={sobChecks.deductible}
-          label="Deductible reviewed"
-          disabled={!neadsOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_SOB_CHECK", field: "deductible", value: v })
-          }
-        />
-        <CheckItem
-          value={sobChecks.moop}
-          label="Maximum Out-of-Pocket (MOOP) reviewed"
-          disabled={!neadsOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_SOB_CHECK", field: "moop", value: v })
-          }
-        />
-        <CheckItem
-          value={sobChecks.network}
-          label="Provider network rules reviewed"
-          disabled={!neadsOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_SOB_CHECK", field: "network", value: v })
-          }
-        />
-        <CheckItem
-          value={sobChecks.rx}
-          label="Prescription drug coverage reviewed"
-          disabled={!neadsOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_SOB_CHECK", field: "rx", value: v })
-          }
-        />
-        <CheckItem
-          value={sobChecks.referralsPA}
-          label="Referrals / prior authorization discussed (if applicable)"
-          disabled={!neadsOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_SOB_CHECK", field: "referralsPA", value: v })
-          }
-        />
-        <CheckItem
-          value={sobChecks.extras}
-          label="Extra benefits reviewed (if applicable)"
-          disabled={!neadsOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_SOB_CHECK", field: "extras", value: v })
-          }
-        />
-        <CheckItem
-          value={sobChecks.limitations}
-          label="Limitations / restrictions reviewed"
-          disabled={!neadsOk}
-          onChange={(v) =>
-            dispatch({ type: "SET_SOB_CHECK", field: "limitations", value: v })
-          }
-        />
-      </div>
-
       <button
         className="primary"
-        disabled={!neadsOk || !sobAllDone}
+        disabled={!neadsOk || sobOk}
         onClick={() =>
           dispatch({ type: "SET_GATE", field: "sobOk", value: true })
         }
       >
-        Mark SOB Review Complete
+        {sobOk ? "✅ Plan Reviewed" : "Plan Reviewed"}
       </button>
 
+      <SectionCoach stepName="Plan Selection & SOB" />
+
       {!neadsOk && <LockText>Locked until NEADS is complete.</LockText>}
-      {neadsOk && !sobAllDone && (
-        <LockText>Complete the SOB checklist to proceed.</LockText>
-      )}
     </section>
   );
 });

@@ -1,6 +1,7 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
 import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSNP() {
   const { state, dispatch, activeSection } = useScript();
@@ -69,6 +70,8 @@ export default React.memo(function SectionSNP() {
           SNP disclosure read (verbatim)
         </label>
       )}
+
+      {snpType && <SectionCoach stepName={`SNP Disclosure (${snpType})`} />}
 
       {snpType && !snpOk && (
         <LockText>Complete SNP disclosure to continue.</LockText>
