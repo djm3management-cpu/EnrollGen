@@ -166,7 +166,7 @@ Based on the agent's recent spoken words, give ONE short, actionable coaching ti
 Focus on compliance, tone, or script adherence. Be encouraging. Never repeat the transcript back.`;
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
