@@ -307,7 +307,8 @@ INSTRUCTIONS:
 - If there's a common mistake for this section, warn about it specifically.
 - Include the actual wording or phrasing the agent should use when relevant.
 - Be concise (2-3 sentences max) but highly specific.
-- Never give generic advice like "stay on script" — always reference the specific compliance point.`;
+- Never give generic advice like "stay on script" — always reference the specific compliance point.
+- DO NOT use markdown formatting (no **, no ##, no bullet points). Write in plain conversational sentences only.`;
 
     try {
       const response = await fetch("/.netlify/functions/coach", {

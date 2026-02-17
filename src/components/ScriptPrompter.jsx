@@ -163,7 +163,8 @@ const ScriptPrompter = memo(function ScriptPrompter() {
     const systemPrompt = `You are a real-time enrollment compliance coach for Medicare insurance agents.
 The agent is currently on step: "${currentStep}".
 Based on the agent's recent spoken words, give ONE short, actionable coaching tip (1-2 sentences max).
-Focus on compliance, tone, or script adherence. Be encouraging. Never repeat the transcript back.`;
+Focus on compliance, tone, or script adherence. Be encouraging. Never repeat the transcript back.
+DO NOT use markdown formatting (no **, no ##, no bullet points). Write in plain conversational sentences only.`;
 
     try {
       const response = await fetch("/.netlify/functions/coach", {
