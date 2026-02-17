@@ -146,6 +146,20 @@ export const MainTimer = React.memo(function MainTimer({
   );
 });
 
+/* ===================== SECTION TIMER THRESHOLDS ===================== */
+// Per-section time thresholds in seconds: [warn, danger]
+const SECTION_THRESHOLDS = {
+  1: [90, 180], // Recording Disclosure:  warn 1.5m, danger 3m
+  2: [60, 120], // TPMO Disclaimer:       warn 1m,   danger 2m
+  2.5: [60, 120], // SNP Disclosure:        warn 1m,   danger 2m
+  3: [120, 240], // Scope of Appointment:  warn 2m,   danger 4m
+  4: [180, 360], // Qualifications:        warn 3m,   danger 6m
+  5: [300, 540], // NEADS Assessment:      warn 5m,   danger 9m
+  6: [240, 480], // Plan Selection & SOB:  warn 4m,   danger 8m
+  7: [180, 360], // Enrollment:            warn 3m,   danger 6m
+  8: [120, 240], // Wrap-Up:               warn 2m,   danger 4m
+};
+
 /* ===================== SECTION TIMER ===================== */
 export const SectionTimer = React.memo(function SectionTimer({
   sectionNum,
@@ -153,6 +167,8 @@ export const SectionTimer = React.memo(function SectionTimer({
 }) {
   const ts = timestamps[sectionNum];
   const [elapsed, setElapsed] = useState(0);
+  const [alertShown, setAlertShown] = useState({ warn: false, danger: false });
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (!ts || !ts.start) return;
@@ -160,20 +176,70 @@ export const SectionTimer = React.memo(function SectionTimer({
       setElapsed(ts.end - ts.start);
       return;
     }
-
     const interval = setInterval(() => {
       setElapsed(Date.now() - ts.start);
     }, 1000);
-
     return () => clearInterval(interval);
   }, [ts]);
 
+  // Fire toast alerts at thresholds
+  useEffect(() => {
+    if (!ts?.start || ts?.end) return;
+    const [warnSec, dangerSec] = SECTION_THRESHOLDS[sectionNum] || [120, 300];
+    const sec = Math.floor(elapsed / 1000);
+
+    if (sec >= dangerSec && !alertShown.danger) {
+      setAlertShown((p) => ({ ...p, danger: true }));
+      setToast({
+        level: "danger",
+        msg: `Over ${dangerSec / 60}min — wrap up this section`,
+      });
+      setTimeout(() => setToast(null), 5000);
+    } else if (sec >= warnSec && !alertShown.warn) {
+      setAlertShown((p) => ({ ...p, warn: true }));
+      setToast({
+        level: "warn",
+        msg: `${warnSec / 60}min — start moving forward`,
+      });
+      setTimeout(() => setToast(null), 4000);
+    }
+  }, [elapsed, sectionNum, alertShown, ts]);
+
+  // Reset alerts when section restarts
+  useEffect(() => {
+    setAlertShown({ warn: false, danger: false });
+    setToast(null);
+  }, [ts?.start]);
+
   if (!ts || !ts.start) return null;
 
+  const [warnSec, dangerSec] = SECTION_THRESHOLDS[sectionNum] || [120, 300];
+  const sec = Math.floor(elapsed / 1000);
+  const isDanger = sec >= dangerSec;
+  const isWarn = sec >= warnSec && !isDanger;
+  const isDone = !!ts.end;
+
   return (
-    <span className="section-timer" title="Time in this section">
-      ⏱ {formatTime(elapsed)}
-    </span>
+    <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+      <span
+        className={`section-timer ${
+          isDanger && !isDone
+            ? "section-timer-danger"
+            : isWarn && !isDone
+            ? "section-timer-warn"
+            : ""
+        }`}
+        title="Time in this section"
+      >
+        {isDanger && !isDone ? "🔴" : isWarn && !isDone ? "🟡" : "⏱"}{" "}
+        {formatTime(elapsed)}
+      </span>
+      {toast && !isDone && (
+        <span className={`section-timer-toast ${toast.level}`}>
+          {toast.msg}
+        </span>
+      )}
+    </div>
   );
 });
 

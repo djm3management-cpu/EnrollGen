@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import ObjectionHandler from "./ObjectionHandler";
 
 /* ---- Collapsible Accordion ---- */
 function Accordion({
@@ -104,6 +105,9 @@ export default function AgentTools() {
 
   return (
     <div className="agent-tools">
+      {/* Objection Handler — always at top */}
+      <ObjectionHandler />
+
       {/* Search Box */}
       <div className="agent-tools-search">
         <input
