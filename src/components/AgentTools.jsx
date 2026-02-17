@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import ObjectionHandler from "./ObjectionHandler";
+import SEPLookup from "./SEPLookup";
 
 /* ---- Collapsible Accordion ---- */
 function Accordion({
@@ -83,6 +84,7 @@ export default function AgentTools() {
         disaster: true,
         refs: true,
         links: true,
+        sepLookup: true,
       };
     return {
       maps: matchesSearch("FEMA Disaster SEP Zones Medicaid Map"),
@@ -98,6 +100,9 @@ export default function AgentTools() {
       ),
       links: matchesSearch(
         "Carrier Quick Links Sunfire MARx Aetna Anthem Cigna Devoted Humana UHC WellCare Medicare portal login"
+      ),
+      sepLookup: matchesSearch(
+        "SEP Lookup Tool zip code search carrier FEMA disaster Medicare ACA Marketplace enrollment period UHC Aetna BCBS Cigna Humana Wellcare Molina Devoted Kaiser 5-star dual eligible"
       ),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,6 +132,14 @@ export default function AgentTools() {
           </button>
         )}
       </div>
+
+      {/* ===== SEP LOOKUP TOOL ===== */}
+      <Accordion
+        title="🔎 SEP Lookup Tool (Search by Zip Code)"
+        searchMatch={accordionMatches.sepLookup}
+      >
+        <SEPLookup />
+      </Accordion>
 
       {/* ===== CARRIER QUICK LINKS ===== */}
       <Accordion
