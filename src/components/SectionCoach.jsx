@@ -400,7 +400,7 @@ Rules:
           disabled={loading}
           title="Get a compliance tip for this section from AI"
         >
-          {loading ? "⏳ Thinking…" : "🛠 AI Assist"}
+          {loading ? "⏳ Thinking…" : "⌬ AI Assist"}
         </button>
         {tip && (
           <button
