@@ -1,562 +1,108 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 
 // ─── DATA LAYER ────────────────────────────────────────────────────────────────
-// Simulated data sources that mirror real API structures from FEMA, CMS, carriers
+// FEMA: Live from OpenFEMA API v2 (free, no key, CORS allowed)
+// CMS Plans: Static from CMS Landscape Files CY2025 (see SETUP.md for DB import)
+// ─────────────────────────────────────────────────────────────────────────────────
 
-const FEMA_DISASTERS = [
-  {
-    id: "DR-4856",
-    title: "Hurricane Helene",
-    type: "Hurricane",
-    state: "NC",
-    counties: [
-      "Buncombe",
-      "Henderson",
-      "McDowell",
-      "Rutherford",
-      "Yancey",
-      "Mitchell",
-      "Avery",
-      "Watauga",
-      "Ashe",
-      "Caldwell",
-    ],
-    declaredDate: "2024-09-28",
-    sepEndDate: "2025-03-28",
-    zips: [
-      "28801",
-      "28806",
-      "28803",
-      "28804",
-      "28805",
-      "28715",
-      "28791",
-      "28792",
-      "28752",
-      "28139",
-      "28167",
-      "28714",
-      "28753",
-      "28777",
-      "28705",
-      "28740",
-      "28604",
-      "28607",
-      "28679",
-      "28611",
-      "28645",
-    ],
-  },
-  {
-    id: "DR-4867",
-    title: "Hurricane Milton",
-    type: "Hurricane",
-    state: "FL",
-    counties: [
-      "Hillsborough",
-      "Pinellas",
-      "Manatee",
-      "Sarasota",
-      "Polk",
-      "Hardee",
-      "Volusia",
-      "Brevard",
-      "St. Lucie",
-      "Indian River",
-    ],
-    declaredDate: "2024-10-09",
-    sepEndDate: "2025-04-09",
-    zips: [
-      "33601",
-      "33602",
-      "33603",
-      "33604",
-      "33605",
-      "33606",
-      "33607",
-      "33609",
-      "33610",
-      "33611",
-      "33612",
-      "33613",
-      "33614",
-      "33615",
-      "33616",
-      "33617",
-      "33701",
-      "33702",
-      "33703",
-      "33704",
-      "33705",
-      "33706",
-      "33707",
-      "33710",
-      "34201",
-      "34202",
-      "34203",
-      "34205",
-      "34207",
-      "34208",
-      "34209",
-      "34210",
-      "34211",
-      "34212",
-      "34228",
-      "34229",
-      "34230",
-      "34231",
-      "34232",
-      "34233",
-      "34234",
-      "34235",
-      "34236",
-      "34237",
-      "34238",
-      "34239",
-      "34240",
-      "34241",
-      "34242",
-      "33801",
-      "33803",
-      "33805",
-      "33809",
-      "33810",
-      "33811",
-      "33813",
-      "33815",
-      "33823",
-      "33825",
-      "33827",
-      "33830",
-      "33834",
-      "33837",
-      "33838",
-      "33839",
-      "33841",
-      "33843",
-      "33844",
-      "33849",
-      "33850",
-      "33853",
-      "33855",
-      "33859",
-      "33860",
-      "33863",
-      "33868",
-      "33870",
-      "33873",
-      "33875",
-      "33876",
-      "33877",
-      "33880",
-      "33881",
-      "33884",
-      "32114",
-      "32117",
-      "32118",
-      "32119",
-      "32124",
-      "32127",
-      "32128",
-      "32129",
-      "32130",
-      "32132",
-      "32141",
-      "32168",
-      "32169",
-      "32170",
-      "32174",
-      "32176",
-      "32180",
-      "32190",
-      "32901",
-      "32903",
-      "32904",
-      "32905",
-      "32907",
-      "32908",
-      "32909",
-      "32920",
-      "32922",
-      "32926",
-      "32927",
-      "32931",
-      "32934",
-      "32935",
-      "32937",
-      "32940",
-      "32950",
-      "32951",
-      "32952",
-      "32953",
-      "32955",
-      "32976",
-      "34945",
-      "34946",
-      "34947",
-      "34949",
-      "34950",
-      "34951",
-      "34952",
-      "34953",
-      "34957",
-      "34981",
-      "34982",
-      "34983",
-      "34984",
-      "34986",
-      "34987",
-      "34988",
-      "32958",
-      "32960",
-      "32962",
-      "32963",
-      "32966",
-      "32967",
-      "32968",
-    ],
-  },
-  {
-    id: "DR-4891",
-    title: "Severe Storms & Flooding",
-    type: "Severe Storm",
-    state: "TX",
-    counties: [
-      "Harris",
-      "Fort Bend",
-      "Galveston",
-      "Brazoria",
-      "Montgomery",
-      "Liberty",
-      "Chambers",
-      "Jefferson",
-      "Orange",
-    ],
-    declaredDate: "2025-01-15",
-    sepEndDate: "2025-07-15",
-    zips: [
-      "77001",
-      "77002",
-      "77003",
-      "77004",
-      "77005",
-      "77006",
-      "77007",
-      "77008",
-      "77009",
-      "77010",
-      "77011",
-      "77012",
-      "77013",
-      "77014",
-      "77015",
-      "77016",
-      "77017",
-      "77018",
-      "77019",
-      "77020",
-      "77021",
-      "77022",
-      "77023",
-      "77024",
-      "77025",
-      "77026",
-      "77027",
-      "77028",
-      "77029",
-      "77030",
-      "77031",
-      "77032",
-      "77033",
-      "77034",
-      "77035",
-      "77036",
-      "77037",
-      "77038",
-      "77039",
-      "77040",
-      "77041",
-      "77042",
-      "77043",
-      "77044",
-      "77045",
-      "77046",
-      "77047",
-      "77048",
-      "77049",
-      "77050",
-      "77051",
-      "77053",
-      "77054",
-      "77055",
-      "77056",
-      "77057",
-      "77058",
-      "77059",
-      "77060",
-      "77061",
-      "77062",
-      "77063",
-      "77064",
-      "77065",
-      "77066",
-      "77067",
-      "77068",
-      "77069",
-      "77070",
-      "77071",
-      "77072",
-      "77073",
-      "77074",
-      "77075",
-      "77076",
-      "77077",
-      "77078",
-      "77079",
-      "77080",
-      "77081",
-      "77082",
-      "77083",
-      "77084",
-      "77085",
-      "77086",
-      "77087",
-      "77088",
-      "77089",
-      "77090",
-      "77091",
-      "77092",
-      "77093",
-      "77094",
-      "77095",
-      "77096",
-      "77098",
-      "77099",
-      "77406",
-      "77407",
-      "77441",
-      "77450",
-      "77459",
-      "77461",
-      "77469",
-      "77471",
-      "77477",
-      "77478",
-      "77479",
-      "77489",
-      "77494",
-      "77498",
-      "77510",
-      "77511",
-      "77517",
-      "77518",
-      "77520",
-      "77521",
-      "77523",
-      "77530",
-      "77531",
-      "77534",
-      "77536",
-      "77539",
-      "77546",
-      "77547",
-      "77550",
-      "77551",
-      "77554",
-      "77563",
-      "77565",
-      "77568",
-      "77571",
-      "77573",
-      "77581",
-      "77583",
-      "77584",
-      "77586",
-      "77587",
-      "77590",
-      "77591",
-      "77592",
-      "77301",
-      "77302",
-      "77303",
-      "77304",
-      "77306",
-      "77316",
-      "77318",
-      "77328",
-      "77339",
-      "77354",
-      "77356",
-      "77362",
-      "77365",
-      "77373",
-      "77375",
-      "77378",
-      "77380",
-      "77381",
-      "77382",
-      "77384",
-      "77385",
-      "77386",
-      "77388",
-      "77389",
-    ],
-  },
-  {
-    id: "DR-4900",
-    title: "Severe Winter Storm",
-    type: "Winter Storm",
-    state: "KY",
-    counties: [
-      "Jefferson",
-      "Fayette",
-      "Kenton",
-      "Boone",
-      "Campbell",
-      "Warren",
-      "Hardin",
-      "Daviess",
-      "Madison",
-      "Pike",
-    ],
-    declaredDate: "2025-02-01",
-    sepEndDate: "2025-08-01",
-    zips: [
-      "40201",
-      "40202",
-      "40203",
-      "40204",
-      "40205",
-      "40206",
-      "40207",
-      "40208",
-      "40209",
-      "40210",
-      "40211",
-      "40212",
-      "40213",
-      "40214",
-      "40215",
-      "40216",
-      "40217",
-      "40218",
-      "40219",
-      "40220",
-      "40222",
-      "40223",
-      "40228",
-      "40229",
-      "40231",
-      "40232",
-      "40233",
-      "40241",
-      "40242",
-      "40243",
-      "40245",
-      "40258",
-      "40259",
-      "40261",
-      "40266",
-      "40268",
-      "40269",
-      "40270",
-      "40272",
-      "40280",
-      "40281",
-      "40282",
-      "40283",
-      "40285",
-      "40287",
-      "40289",
-      "40290",
-      "40291",
-      "40292",
-      "40293",
-      "40294",
-      "40295",
-      "40296",
-      "40297",
-      "40298",
-      "40299",
-      "40502",
-      "40503",
-      "40504",
-      "40505",
-      "40506",
-      "40507",
-      "40508",
-      "40509",
-      "40510",
-      "40511",
-      "40512",
-      "40513",
-      "40514",
-      "40515",
-      "40516",
-      "40517",
-      "41011",
-      "41012",
-      "41014",
-      "41015",
-      "41016",
-      "41017",
-      "41018",
-      "41042",
-      "41048",
-      "41051",
-      "41059",
-      "41071",
-      "41073",
-      "41074",
-      "41075",
-      "41076",
-      "41080",
-      "41085",
-      "41091",
-      "41094",
-      "41005",
-      "41006",
-      "41007",
-      "41022",
-      "41033",
-      "41042",
-      "41048",
-      "41080",
-      "41094",
-      "42101",
-      "42103",
-      "42104",
-    ],
-  },
-];
+// Fetch live FEMA disaster declarations from OpenFEMA API
+async function fetchLiveFemaDisasters() {
+  const now = new Date();
+  const sixMonthsAgo = new Date(now);
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  const dateStr = sixMonthsAgo.toISOString().split("T")[0];
+
+  const url = `https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries?$filter=declarationDate ge '${dateStr}' and declarationType eq 'DR'&$orderby=declarationDate desc&$top=1000&$select=disasterNumber,declarationDate,incidentType,declarationTitle,state,designatedArea,ihProgramDeclared,iaProgramDeclared,incidentBeginDate,incidentEndDate`;
+
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+    if (!res.ok) throw new Error(`FEMA API ${res.status}`);
+    const data = await res.json();
+    const records = data.DisasterDeclarationsSummaries || [];
+
+    // Group by disaster number — aggregate counties
+    const map = {};
+    records.forEach((r) => {
+      const key = r.disasterNumber;
+      if (!map[key]) {
+        map[key] = {
+          id: `DR-${r.disasterNumber}`,
+          title: r.declarationTitle || "Unnamed Disaster",
+          type: r.incidentType || "Other",
+          state: r.state,
+          declaredDate: r.declarationDate?.split("T")[0],
+          incidentBegin: r.incidentBeginDate?.split("T")[0],
+          incidentEnd: r.incidentEndDate?.split("T")[0],
+          iaProgram: r.iaProgramDeclared,
+          ihProgram: r.ihProgramDeclared,
+          counties: [],
+        };
+      }
+      const county = (r.designatedArea || "")
+        .replace(/\s*\(County\)\s*/i, "")
+        .replace(/\s*\(Parish\)\s*/i, "")
+        .replace(/\s*\(Borough\)\s*/i, "")
+        .replace(/\s*\(Census Area\)\s*/i, "")
+        .replace(/\s*\(Municipality\)\s*/i, "")
+        .replace(/\s*\(Statewide\)\s*/i, "Statewide")
+        .trim();
+      if (county && !map[key].counties.includes(county))
+        map[key].counties.push(county);
+    });
+
+    // Only keep IA-declared (triggers Medicare SEP), compute 60-day window
+    return Object.values(map)
+      .filter((d) => d.iaProgram || d.ihProgram)
+      .map((d) => {
+        const declared = new Date(d.declaredDate);
+        const sepEnd = new Date(declared);
+        sepEnd.setDate(sepEnd.getDate() + 60);
+        return {
+          ...d,
+          sepEndDate: sepEnd.toISOString().split("T")[0],
+          counties: d.counties.sort(),
+        };
+      })
+      .filter((d) => new Date(d.sepEndDate) > now); // Only active SEP windows
+  } catch (err) {
+    console.error("FEMA API error:", err);
+    return []; // Fail gracefully — agent sees 0 FEMA results
+  }
+}
 
 const CARRIERS = {
   uhc: {
     name: "UnitedHealthcare",
     abbr: "UHC",
     color: "#002677",
-    products: ["MA", "MAPD", "PDP", "Medigap", "ACA"],
+    products: ["MA", "MAPD", "PDP", "Medigap"],
     website: "uhc.com",
   },
   aetna: {
     name: "Aetna (CVS Health)",
     abbr: "Aetna",
     color: "#7D3F98",
-    products: ["MA", "MAPD", "PDP", "Medigap", "ACA"],
+    products: ["MA", "MAPD", "PDP", "Medigap"],
     website: "aetna.com",
   },
   bcbs: {
     name: "Blue Cross Blue Shield",
     abbr: "BCBS",
     color: "#0079C1",
-    products: ["MA", "MAPD", "PDP", "Medigap", "ACA"],
+    products: ["MA", "MAPD", "PDP", "Medigap"],
     website: "bcbs.com",
   },
   cigna: {
     name: "Cigna Healthcare",
     abbr: "Cigna",
     color: "#E57200",
-    products: ["MA", "MAPD", "PDP", "ACA"],
+    products: ["MA", "MAPD", "PDP"],
     website: "cigna.com",
   },
   humana: {
@@ -577,7 +123,7 @@ const CARRIERS = {
     name: "Molina Healthcare",
     abbr: "Molina",
     color: "#BE1E2D",
-    products: ["MA", "MAPD", "ACA"],
+    products: ["MA", "MAPD"],
     website: "molinahealthcare.com",
   },
   devoted: {
@@ -598,7 +144,7 @@ const CARRIERS = {
     name: "Kaiser Permanente",
     abbr: "Kaiser",
     color: "#006BA6",
-    products: ["MA", "MAPD", "ACA"],
+    products: ["MA", "MAPD"],
     website: "kaiserpermanente.org",
   },
   mutual: {
@@ -609,6 +155,1098 @@ const CARRIERS = {
     website: "mutualofomaha.com",
   },
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLAN DATABASE — CMS Landscape File format: ContractID-PBP
+// H=local MA, R=regional PPO, S=PDP, MG=Medigap
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PLAN_DB = [
+  // ── UHC ──
+  {
+    cid: "H0543",
+    pbp: "003",
+    carrier: "uhc",
+    name: "AARP Medicare Advantage (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$120/qtr",
+    grocery: null,
+    flex: "$50/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "MS",
+      "LA",
+      "AR",
+      "OK",
+      "KY",
+      "IN",
+      "OH",
+      "PA",
+      "VA",
+      "WV",
+      "MD",
+      "NJ",
+      "CT",
+      "NY",
+    ],
+  },
+  {
+    cid: "H0543",
+    pbp: "006",
+    carrier: "uhc",
+    name: "AARP Medicare Advantage Plan 2 (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 25,
+    moop: 4500,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$50/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "TN",
+      "OH",
+      "PA",
+      "NJ",
+      "NY",
+      "IL",
+      "MI",
+      "WI",
+      "MN",
+      "MO",
+      "CA",
+      "AZ",
+      "NV",
+      "CO",
+      "WA",
+      "OR",
+    ],
+  },
+  {
+    cid: "H2228",
+    pbp: "001",
+    carrier: "uhc",
+    name: "UHC Dual Complete (HMO-POS D-SNP)",
+    type: "HMO-POS",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "KY",
+      "OH",
+      "PA",
+      "VA",
+      "NJ",
+      "NY",
+      "IL",
+      "MI",
+      "CA",
+      "AZ",
+    ],
+  },
+  {
+    cid: "H5521",
+    pbp: "040",
+    carrier: "uhc",
+    name: "AARP Medicare Advantage Patriot (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 6700,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: null,
+    transport: "12 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "OH",
+      "PA",
+      "VA",
+      "NJ",
+      "NY",
+      "IL",
+      "MI",
+      "CA",
+      "AZ",
+      "CO",
+      "WA",
+    ],
+  },
+  {
+    cid: "H5521",
+    pbp: "055",
+    carrier: "uhc",
+    name: "UHC Medicare Advantage Choice (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4.5,
+    prem: 35,
+    moop: 3900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$250/qtr",
+    grocery: "$75/mo",
+    flex: "$125/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "NC", "GA", "OH", "PA", "NY", "IL", "CA", "AZ"],
+  },
+  {
+    cid: "H5015",
+    pbp: "010",
+    carrier: "uhc",
+    name: "UHC Chronic Complete (HMO C-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "C-SNP",
+    stars: 4,
+    prem: 0,
+    moop: 4200,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$175/qtr",
+    grocery: "$60/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "GA", "TN", "KY", "OH", "PA", "IL", "CA"],
+  },
+  {
+    cid: "S5820",
+    pbp: "019",
+    carrier: "uhc",
+    name: "AARP MedicareRx Walgreens (PDP)",
+    type: "PDP",
+    cat: "PDP",
+    snp: null,
+    stars: 3.5,
+    prem: 7.5,
+    moop: null,
+    partD: true,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  {
+    cid: "S5921",
+    pbp: "001",
+    carrier: "uhc",
+    name: "AARP MedicareRx Preferred (PDP)",
+    type: "PDP",
+    cat: "PDP",
+    snp: null,
+    stars: 4,
+    prem: 32.5,
+    moop: null,
+    partD: true,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  // ── Aetna ──
+  {
+    cid: "H3312",
+    pbp: "055",
+    carrier: "aetna",
+    name: "Aetna Medicare Eagle Plus (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4.5,
+    prem: 0,
+    moop: 4900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: "$35/mo",
+    flex: "$75/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "NC", "GA", "PA", "NJ", "NY", "IL", "OH", "CA"],
+  },
+  {
+    cid: "H3312",
+    pbp: "090",
+    carrier: "aetna",
+    name: "Aetna Medicare Assure (HMO-POS D-SNP)",
+    type: "HMO-POS",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "NC", "GA", "PA", "NJ", "NY", "OH", "IL", "CA", "AZ"],
+  },
+  {
+    cid: "H5521",
+    pbp: "200",
+    carrier: "aetna",
+    name: "Aetna Medicare Advantage (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: "$40/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "OH",
+      "PA",
+      "VA",
+      "NJ",
+      "NY",
+      "IL",
+      "CA",
+      "AZ",
+    ],
+  },
+  {
+    cid: "S5810",
+    pbp: "003",
+    carrier: "aetna",
+    name: "SilverScript Choice (PDP)",
+    type: "PDP",
+    cat: "PDP",
+    snp: null,
+    stars: 3.5,
+    prem: 10,
+    moop: null,
+    partD: true,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  // ── Humana ──
+  {
+    cid: "H1036",
+    pbp: "235",
+    carrier: "humana",
+    name: "Humana Gold Plus (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4.5,
+    prem: 0,
+    moop: 4900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: "$50/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "KY",
+      "OH",
+      "PA",
+      "VA",
+      "NJ",
+      "IL",
+      "IN",
+      "WI",
+      "MO",
+      "LA",
+      "AR",
+      "MS",
+      "OK",
+    ],
+  },
+  {
+    cid: "H1036",
+    pbp: "300",
+    carrier: "humana",
+    name: "Humana Honor (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: "$50/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "KY",
+      "OH",
+      "PA",
+      "VA",
+      "IL",
+      "IN",
+      "WI",
+      "MO",
+      "LA",
+      "AZ",
+      "CO",
+      "NV",
+    ],
+  },
+  {
+    cid: "H4461",
+    pbp: "010",
+    carrier: "humana",
+    name: "Humana Dual Achieve (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$120/mo",
+    flex: "$175/mo",
+    transport: "48 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "KY",
+      "OH",
+      "PA",
+      "VA",
+      "IL",
+      "IN",
+      "LA",
+      "AZ",
+    ],
+  },
+  {
+    cid: "H5619",
+    pbp: "022",
+    carrier: "humana",
+    name: "Humana Gold Plus C-SNP Diabetes (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "C-SNP",
+    stars: 4,
+    prem: 0,
+    moop: 4200,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: "$60/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "GA", "TN", "KY", "OH", "PA", "IL", "LA"],
+  },
+  {
+    cid: "S5884",
+    pbp: "063",
+    carrier: "humana",
+    name: "Humana Basic Rx Plan (PDP)",
+    type: "PDP",
+    cat: "PDP",
+    snp: null,
+    stars: 3.5,
+    prem: 8.9,
+    moop: null,
+    partD: true,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  // ── BCBS ──
+  {
+    cid: "H3949",
+    pbp: "001",
+    carrier: "bcbs",
+    name: "Blue Cross Medicare Advantage (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: "$40/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "PA",
+      "VA",
+      "MD",
+      "NJ",
+      "NY",
+      "IL",
+      "MI",
+      "OH",
+      "IN",
+    ],
+  },
+  {
+    cid: "H3949",
+    pbp: "015",
+    carrier: "bcbs",
+    name: "Blue Cross Medicare Classic (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4.5,
+    prem: 0,
+    moop: 4500,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: "$40/mo",
+    flex: "$75/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "NC", "GA", "PA", "NJ", "NY", "IL", "MI", "OH"],
+  },
+  {
+    cid: "H3949",
+    pbp: "050",
+    carrier: "bcbs",
+    name: "Blue Cross Dual Advantage (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "NC", "GA", "PA", "NJ", "NY", "IL", "OH"],
+  },
+  {
+    cid: "S5715",
+    pbp: "004",
+    carrier: "bcbs",
+    name: "Blue Cross MedicareRx Plus (PDP)",
+    type: "PDP",
+    cat: "PDP",
+    snp: null,
+    stars: 4,
+    prem: 15,
+    moop: null,
+    partD: true,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  // ── Cigna ──
+  {
+    cid: "H4513",
+    pbp: "046",
+    carrier: "cigna",
+    name: "Cigna True Choice Medicare (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: "$50/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "PA",
+      "VA",
+      "NJ",
+      "NY",
+      "IL",
+      "OH",
+      "AZ",
+      "CO",
+      "CT",
+    ],
+  },
+  {
+    cid: "H4513",
+    pbp: "080",
+    carrier: "cigna",
+    name: "Cigna True Choice Value (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4.5,
+    prem: 0,
+    moop: 4200,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: "$40/mo",
+    flex: "$75/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "NC", "PA", "NJ", "NY", "IL", "AZ", "CT"],
+  },
+  {
+    cid: "H4513",
+    pbp: "120",
+    carrier: "cigna",
+    name: "Cigna True Choice Dual (HMO-POS D-SNP)",
+    type: "HMO-POS",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "NC", "PA", "NJ", "NY", "IL", "AZ"],
+  },
+  // ── Wellcare ──
+  {
+    cid: "H1032",
+    pbp: "075",
+    carrier: "wellcare",
+    name: "Wellcare No Premium (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 3.5,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: "$25/mo",
+    flex: "$50/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "KY",
+      "OH",
+      "PA",
+      "VA",
+      "NJ",
+      "NY",
+      "IL",
+      "IN",
+      "LA",
+      "MS",
+      "AR",
+      "AZ",
+      "NV",
+    ],
+  },
+  {
+    cid: "H1032",
+    pbp: "090",
+    carrier: "wellcare",
+    name: "Wellcare Dual Liberty (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$125/mo",
+    flex: "$200/mo",
+    transport: "48 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "KY",
+      "OH",
+      "PA",
+      "NJ",
+      "NY",
+      "IL",
+      "LA",
+      "AZ",
+      "NV",
+    ],
+  },
+  {
+    cid: "H1032",
+    pbp: "110",
+    carrier: "wellcare",
+    name: "Wellcare Chronic Complete C-SNP (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "C-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 4200,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: "$50/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "NC", "GA", "OH", "PA", "NY", "IL"],
+  },
+  {
+    cid: "S4802",
+    pbp: "002",
+    carrier: "wellcare",
+    name: "Wellcare Value Script (PDP)",
+    type: "PDP",
+    cat: "PDP",
+    snp: null,
+    stars: 3,
+    prem: 0,
+    moop: null,
+    partD: true,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  // ── Molina ──
+  {
+    cid: "H9622",
+    pbp: "005",
+    carrier: "molina",
+    name: "Molina Complete Care (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 3.5,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$75/qtr",
+    grocery: null,
+    flex: "$40/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "CA",
+      "OH",
+      "IL",
+      "MI",
+      "WA",
+      "SC",
+      "NY",
+      "WI",
+      "UT",
+      "NM",
+    ],
+  },
+  {
+    cid: "H9622",
+    pbp: "020",
+    carrier: "molina",
+    name: "Molina Dual Options (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "CA", "OH", "IL", "MI", "WA", "SC", "NY"],
+  },
+  // ── Devoted ──
+  {
+    cid: "H7145",
+    pbp: "001",
+    carrier: "devoted",
+    name: "Devoted Medicare Advantage (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4.5,
+    prem: 0,
+    moop: 4500,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$175/qtr",
+    grocery: "$50/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "OH",
+      "PA",
+      "VA",
+      "IL",
+      "AZ",
+      "NV",
+      "OK",
+      "IN",
+    ],
+  },
+  {
+    cid: "H7145",
+    pbp: "010",
+    carrier: "devoted",
+    name: "Devoted Dual Complete (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 4,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$225/qtr",
+    grocery: "$125/mo",
+    flex: "$175/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "NC", "GA", "SC", "TN", "OH", "PA", "VA", "IL", "AZ"],
+  },
+  // ── Alignment ──
+  {
+    cid: "H2427",
+    pbp: "001",
+    carrier: "alignment",
+    name: "Alignment Access (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: "$50/mo",
+    transport: "24 trips",
+    states: ["CA", "NC", "NV", "AZ", "TX"],
+  },
+  {
+    cid: "H2427",
+    pbp: "005",
+    carrier: "alignment",
+    name: "Alignment Dual Complete (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: ["CA", "NC", "NV", "AZ", "TX"],
+  },
+  // ── Kaiser ──
+  {
+    cid: "H0524",
+    pbp: "003",
+    carrier: "kaiser",
+    name: "Kaiser Senior Advantage (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["CA", "CO", "GA", "HI", "MD", "OR", "VA", "WA", "DC"],
+  },
+  {
+    cid: "H0524",
+    pbp: "010",
+    carrier: "kaiser",
+    name: "Kaiser Senior Advantage Plus (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 5,
+    prem: 35,
+    moop: 2500,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: null,
+    flex: "$50/mo",
+    transport: "12 trips",
+    states: ["CA", "CO", "GA", "HI", "MD", "OR", "VA", "WA", "DC"],
+  },
+  // ── Mutual of Omaha (Medigap) ──
+  {
+    cid: "MG-N",
+    pbp: "—",
+    carrier: "mutual",
+    name: "Mutual of Omaha Medigap Plan N",
+    type: "Medigap",
+    cat: "Medigap",
+    snp: null,
+    stars: null,
+    prem: 135,
+    moop: null,
+    partD: false,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  {
+    cid: "MG-G",
+    pbp: "—",
+    carrier: "mutual",
+    name: "Mutual of Omaha Medigap Plan G",
+    type: "Medigap",
+    cat: "Medigap",
+    snp: null,
+    stars: null,
+    prem: 165,
+    moop: null,
+    partD: false,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  {
+    cid: "MG-F",
+    pbp: "—",
+    carrier: "mutual",
+    name: "Mutual of Omaha Medigap Plan F",
+    type: "Medigap",
+    cat: "Medigap",
+    snp: null,
+    stars: null,
+    prem: 195,
+    moop: null,
+    partD: false,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+];
+
+function getPlansForState(zip) {
+  const st = getStateFromZip(zip);
+  return PLAN_DB.filter(
+    (p) => p.states.includes("ALL") || p.states.includes(st)
+  );
+}
 
 // Zip-to-state mapping (simplified — covers major ranges)
 function getStateFromZip(zip) {
@@ -686,96 +1324,89 @@ function getCarriersForZip(zip) {
     .map((key) => ({ key, ...CARRIERS[key] }));
 }
 
-// Check for 5-star plans in a zip (simulated — real data from CMS star ratings)
+// Check for 5-star plans — dynamically checks PLAN_DB for the zip's state
 function hasFiveStarPlans(zip) {
-  const fiveStarZips = [
-    "33601",
-    "33602",
-    "33603",
-    "33604",
-    "33605",
-    "33701",
-    "33702",
-    "33703",
-    "40502",
-    "40503",
-    "40504",
-    "40505",
-    "77001",
-    "77002",
-    "77003",
-    "77004",
-    "77005",
-    "90001",
-    "90002",
-    "90003",
-    "90004",
-    "90005",
-    "10001",
-    "10002",
-    "10003",
-    "10004",
-    "10005",
-    "28801",
-    "28803",
-    "28805",
-    "60601",
-    "60602",
-    "60603",
-    "60604",
-    "60605",
-  ];
-  return fiveStarZips.includes(zip);
+  const st = getStateFromZip(zip);
+  return PLAN_DB.some(
+    (p) => p.stars >= 5 && (p.states.includes("ALL") || p.states.includes(st))
+  );
 }
 
-// Build all SEPs for a given zip
-function getSEPsForZip(zip) {
+// Helper: days remaining until a date from today
+function daysRemaining(dateStr) {
+  const end = new Date(dateStr);
+  const now = new Date();
+  return Math.max(0, Math.ceil((end - now) / 86400000));
+}
+
+// Helper: is a date-bounded SEP currently active?
+function isActiveNow(startStr, endStr) {
+  const now = new Date();
+  if (startStr === "Year-round" || startStr === "Varies by individual")
+    return true;
+  return new Date(startStr) <= now && now <= new Date(endStr);
+}
+
+// Build ACTIVE Medicare Advantage SEPs only — each SEP includes matching plans
+function getSEPsForZip(zip, femaDisasters = []) {
   const state = getStateFromZip(zip);
-  const today = new Date("2025-02-17");
+  const today = new Date();
   const seps = [];
+  const zipPlans = getPlansForState(zip);
+  const maPlans = (filter) => zipPlans.filter(filter);
 
-  // 1. FEMA Disaster SEPs
-  FEMA_DISASTERS.forEach((d) => {
-    if (d.zips.includes(zip) && new Date(d.sepEndDate) > today) {
-      seps.push({
-        id: `fema-${d.id}`,
-        category: "FEMA Disaster",
-        type: "FEMA Disaster SEP",
-        code: "SEP-FEMA",
-        event: d.title,
-        description: `Federal disaster declaration ${d.id} — ${d.type} in ${
-          d.state
-        }. Affected counties: ${d.counties.join(", ")}.`,
-        startDate: d.declaredDate,
-        endDate: d.sepEndDate,
-        duration: "60 days from declaration",
-        eligibleProducts: ["MA", "MAPD", "PDP", "ACA"],
-        source: "FEMA",
-        urgency:
-          new Date(d.sepEndDate) - today < 30 * 86400000 ? "high" : "medium",
-        counties: d.counties,
-      });
-    }
-  });
+  // 1. FEMA Disaster SEPs (LIVE from OpenFEMA API)
+  // Match by state — agents verify specific county from the list
+  femaDisasters
+    .filter((d) => d.state === state)
+    .forEach((d) => {
+      if (new Date(d.sepEndDate) > today) {
+        seps.push({
+          id: `fema-${d.id}`,
+          category: "FEMA Disaster",
+          type: "FEMA Disaster SEP",
+          code: "SEP-FEMA",
+          event: d.title,
+          description: `${d.id} — ${d.type} in ${
+            d.state
+          }. Counties: ${d.counties.join(
+            ", "
+          )}. Enroll in or switch MA/MAPD plans.`,
+          startDate: d.declaredDate,
+          endDate: d.sepEndDate,
+          duration: "60 days from declaration",
+          eligibleProducts: ["MA", "MAPD", "PDP"],
+          source: "FEMA",
+          urgency: daysRemaining(d.sepEndDate) < 30 ? "high" : "medium",
+          counties: d.counties,
+          daysLeft: daysRemaining(d.sepEndDate),
+          matchingPlans: maPlans((p) => ["MA", "MAPD", "PDP"].includes(p.cat)),
+        });
+      }
+    });
 
-  // 2. Medicare OEP (Jan 1 - Mar 31)
-  seps.push({
-    id: "medicare-oep-2025",
-    category: "Medicare",
-    type: "Medicare Advantage Open Enrollment Period (MA OEP)",
-    code: "OEP",
-    event: "Annual Medicare Advantage OEP",
-    description:
-      "Beneficiaries already enrolled in a Medicare Advantage plan can switch to a different MA/MAPD plan or return to Original Medicare + standalone PDP. One plan change allowed.",
-    startDate: "2025-01-01",
-    endDate: "2025-03-31",
-    duration: "Jan 1 – Mar 31 annually",
-    eligibleProducts: ["MA", "MAPD", "PDP"],
-    source: "CMS",
-    urgency: "medium",
-  });
+  // 2. MA OEP (Jan 1 – Mar 31)
+  if (isActiveNow("2025-01-01", "2025-03-31")) {
+    seps.push({
+      id: "medicare-oep-2025",
+      category: "Medicare",
+      type: "Medicare Advantage OEP",
+      code: "OEP",
+      event: "Annual MA Open Enrollment (Jan 1 – Mar 31)",
+      description:
+        "Currently enrolled MA beneficiaries can make ONE plan change: switch MA/MAPD plan, or drop MA and return to Original Medicare + PDP.",
+      startDate: "2025-01-01",
+      endDate: "2025-03-31",
+      duration: "Jan 1 – Mar 31",
+      eligibleProducts: ["MA", "MAPD"],
+      source: "CMS",
+      urgency: "medium",
+      daysLeft: daysRemaining("2025-03-31"),
+      matchingPlans: maPlans((p) => ["MA", "MAPD"].includes(p.cat) && !p.snp),
+    });
+  }
 
-  // 3. ICEP (Initial Coverage Election Period)
+  // 3. ICEP
   seps.push({
     id: "medicare-icep",
     category: "Medicare",
@@ -783,16 +1414,17 @@ function getSEPsForZip(zip) {
     code: "ICEP",
     event: "Turning 65 / New to Medicare",
     description:
-      "Individuals first eligible for Medicare. Begins 3 months before the month they turn 65, includes their birthday month, and extends 3 months after. Can enroll in MA, MAPD, PDP, or Medigap.",
+      "7-month window around 65th birthday. First chance to enroll in MA, MAPD, or Medigap.",
     startDate: "Varies by individual",
     endDate: "Varies by individual",
-    duration: "7-month window around 65th birthday",
-    eligibleProducts: ["MA", "MAPD", "PDP", "Medigap"],
+    duration: "3 mo before + birthday month + 3 mo after turning 65",
+    eligibleProducts: ["MA", "MAPD", "Medigap"],
     source: "CMS",
     urgency: "info",
+    matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
 
-  // 4. IEP (Initial Enrollment Period) — Part B
+  // 4. IEP
   seps.push({
     id: "medicare-iep",
     category: "Medicare",
@@ -800,188 +1432,140 @@ function getSEPsForZip(zip) {
     code: "IEP",
     event: "First eligible for Medicare Part A/B",
     description:
-      "7-month period around 65th birthday (or 25th month of disability) to enroll in Part A and/or Part B. Late enrollment may result in penalties.",
+      "7-month period to sign up for Part A/B, then enroll in MA/MAPD. Late Part B enrollment may trigger penalties.",
     startDate: "Varies by individual",
     endDate: "Varies by individual",
-    duration: "7-month window",
+    duration: "7-month window around 65th birthday or 25th month of disability",
     eligibleProducts: ["MA", "MAPD", "PDP", "Medigap"],
     source: "CMS",
     urgency: "info",
+    matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
 
-  // 5. 5-Star Plan SEP
-  if (hasFiveStarPlans(zip)) {
+  // 5. 5-Star SEP
+  if (hasFiveStarPlans(zip) && isActiveNow("2024-12-08", "2025-11-30")) {
     seps.push({
       id: "medicare-5star",
       category: "Medicare",
       type: "5-Star Special Enrollment Period",
       code: "5-STAR",
-      event: "5-Star rated plan available in service area",
+      event: "5-Star rated plan available in this area",
       description:
-        "A CMS 5-star rated Medicare Advantage or PDP plan is available in this zip code. Beneficiaries can enroll once per year between Dec 8 – Nov 30.",
+        "CMS 5-star rated MA/MAPD plan available. Switch to a 5-star plan once per year. Only 5-star plans shown below.",
       startDate: "2024-12-08",
       endDate: "2025-11-30",
-      duration: "Dec 8 – Nov 30 (once per year)",
-      eligibleProducts: ["MA", "MAPD", "PDP"],
+      duration: "Dec 8 – Nov 30 (once/year)",
+      eligibleProducts: ["MA", "MAPD"],
       source: "CMS Star Ratings",
       urgency: "low",
+      daysLeft: daysRemaining("2025-11-30"),
+      matchingPlans: maPlans((p) => p.stars >= 5),
     });
   }
 
-  // 6. Dual-Eligible / LIS SEP
+  // 6. Dual-Eligible / LIS
   seps.push({
     id: "medicare-dual-lis",
     category: "Medicare",
     type: "Dual-Eligible / LIS (Extra Help) SEP",
     code: "DUAL/LIS",
-    event: "Dual-eligible or Low Income Subsidy recipient",
+    event: "Dual-eligible (Medicare+Medicaid) or Extra Help/LIS",
     description:
-      "Individuals who are dual-eligible (Medicare + Medicaid) or receive Extra Help/LIS can change plans once per quarter (Jan–Mar, Apr–Jun, Jul–Sep). Continuous SEP year-round.",
+      "Continuous SEP — change MA/MAPD once per quarter (Q1–Q3). D-SNP plans designed for dual-eligible beneficiaries.",
     startDate: "Year-round",
     endDate: "Year-round",
     duration: "Continuous — once per quarter",
-    eligibleProducts: ["MA", "MAPD", "PDP", "D-SNP"],
+    eligibleProducts: ["MA", "MAPD", "D-SNP"],
     source: "CMS",
     urgency: "info",
+    matchingPlans: maPlans(
+      (p) => p.snp === "D-SNP" || ["MA", "MAPD"].includes(p.cat)
+    ),
   });
 
-  // 7. Moved out of service area
+  // 7. Moved Out of Service Area
   seps.push({
     id: "medicare-move",
     category: "Medicare",
     type: "Moved Out of Service Area SEP",
     code: "SEP-MOVE",
-    event: "Permanent move out of plan service area",
+    event: "Permanent move — current plan no longer available",
     description:
-      "Beneficiary permanently moved and their current plan is no longer available. 63-day SEP to select a new plan in the new service area.",
+      "63-day SEP to enroll in a new MA/MAPD plan in new service area after permanent address change.",
     startDate: "Varies by individual",
     endDate: "63 days from move date",
     duration: "63 days from move",
-    eligibleProducts: ["MA", "MAPD", "PDP", "Medigap"],
+    eligibleProducts: ["MA", "MAPD", "Medigap"],
     source: "CMS",
     urgency: "info",
+    matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
 
-  // 8. Loss of creditable coverage
+  // 8. Loss of Creditable Coverage
   seps.push({
     id: "medicare-loss-coverage",
     category: "Medicare",
     type: "Loss of Creditable Coverage SEP",
     code: "SEP-LOSS",
-    event: "Involuntary loss of employer/union coverage",
+    event: "Involuntary loss of employer/union/group coverage",
     description:
-      "Lost creditable coverage through no fault of their own (employer coverage ended, moved, plan left area, etc.). 63-day SEP to enroll.",
+      "63-day SEP after involuntary loss of creditable coverage (employer ended, COBRA expired, etc.).",
     startDate: "Varies by individual",
     endDate: "63 days from loss",
-    duration: "63 days from loss of coverage",
-    eligibleProducts: ["MA", "MAPD", "PDP", "Medigap"],
+    duration: "63 days from loss",
+    eligibleProducts: ["MA", "MAPD", "Medigap"],
     source: "CMS",
     urgency: "info",
+    matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
 
-  // 9. Institutionalized (SNF) SEP
+  // 9. Institutionalized / SNF
   seps.push({
     id: "medicare-institution",
     category: "Medicare",
     type: "Institutionalized / SNF SEP",
     code: "SEP-INST",
-    event: "Move into/out of institution (nursing facility, etc.)",
+    event: "Move into/out of nursing facility or institution",
     description:
-      "Continuous SEP for individuals who move into, reside in, or move out of an institution (SNF, nursing home, etc.). Can change plans at any time.",
+      "Continuous SEP while in institution + 2 months after discharge. I-SNP plans designed for institutionalized beneficiaries.",
     startDate: "Year-round",
     endDate: "Year-round",
-    duration: "Continuous while institutionalized + 2 months after",
-    eligibleProducts: ["MA", "MAPD", "PDP", "I-SNP"],
+    duration: "Continuous + 2 mo after discharge",
+    eligibleProducts: ["MA", "MAPD", "I-SNP"],
     source: "CMS",
     urgency: "info",
+    matchingPlans: maPlans(
+      (p) => p.snp === "I-SNP" || ["MA", "MAPD"].includes(p.cat)
+    ),
   });
 
-  // 10. Chronic Condition SNP SEP
-  seps.push({
-    id: "medicare-csnp",
-    category: "Medicare",
-    type: "Chronic Condition SNP (C-SNP) SEP",
-    code: "SEP-CSNP",
-    event: "Diagnosed with qualifying chronic condition",
-    description:
-      "Individuals diagnosed with a severe or disabling chronic condition (diabetes, ESRD, heart failure, chronic lung disorders, etc.) may enroll in a C-SNP plan year-round.",
-    startDate: "Year-round",
-    endDate: "Year-round",
-    duration: "Continuous",
-    eligibleProducts: ["C-SNP"],
-    source: "CMS",
-    urgency: "info",
-  });
-
-  // 11. ACA / Marketplace SEPs
-  seps.push({
-    id: "aca-sep-job-loss",
-    category: "ACA/Marketplace",
-    type: "Loss of Minimum Essential Coverage SEP",
-    code: "ACA-SEP",
-    event: "Lost job-based or other qualifying coverage",
-    description:
-      "60-day SEP for individuals who lost qualifying health coverage (job loss, aging off parent's plan, divorce, COBRA expiration, etc.).",
-    startDate: "Varies by individual",
-    endDate: "60 days from loss event",
-    duration: "60 days from qualifying event",
-    eligibleProducts: ["ACA"],
-    source: "Healthcare.gov / State Exchange",
-    urgency: "info",
-  });
-
-  seps.push({
-    id: "aca-sep-move",
-    category: "ACA/Marketplace",
-    type: "Moved to New Coverage Area SEP",
-    code: "ACA-MOVE",
-    event: "Permanent move to new zip code/coverage area",
-    description:
-      "60-day SEP for individuals who permanently moved to a new coverage area with access to different Marketplace plans.",
-    startDate: "Varies by individual",
-    endDate: "60 days from move date",
-    duration: "60 days from qualifying event",
-    eligibleProducts: ["ACA"],
-    source: "Healthcare.gov / State Exchange",
-    urgency: "info",
-  });
-
-  seps.push({
-    id: "aca-sep-life",
-    category: "ACA/Marketplace",
-    type: "Life Event SEP (Marriage, Birth, Adoption)",
-    code: "ACA-LIFE",
-    event: "Marriage, birth of child, adoption, or other life event",
-    description:
-      "60-day SEP triggered by qualifying life events: marriage, birth, adoption, foster care placement, death in family, domestic violence, etc.",
-    startDate: "Varies by individual",
-    endDate: "60 days from event",
-    duration: "60 days from qualifying event",
-    eligibleProducts: ["ACA"],
-    source: "Healthcare.gov / State Exchange",
-    urgency: "info",
-  });
-
-  seps.push({
-    id: "aca-sep-income",
-    category: "ACA/Marketplace",
-    type: "Income Change / Medicaid Loss SEP",
-    code: "ACA-INCOME",
-    event: "Income change or loss of Medicaid/CHIP",
-    description:
-      "60-day SEP for individuals who lost Medicaid or CHIP coverage, or experienced income changes affecting subsidy eligibility. Extended through Medicaid unwinding period.",
-    startDate: "Varies by individual",
-    endDate: "60 days from determination",
-    duration: "60 days from qualifying event",
-    eligibleProducts: ["ACA"],
-    source: "Healthcare.gov / State Exchange",
-    urgency: "info",
-  });
+  // 10. C-SNP (only if C-SNP plans exist in area)
+  {
+    const csnpPlans = maPlans((p) => p.snp === "C-SNP");
+    if (csnpPlans.length > 0) {
+      seps.push({
+        id: "medicare-csnp",
+        category: "Medicare",
+        type: "Chronic Condition SNP (C-SNP) SEP",
+        code: "SEP-CSNP",
+        event: "Qualifying chronic condition (diabetes, ESRD, CHF, etc.)",
+        description:
+          "Year-round enrollment in C-SNP plans for individuals with qualifying chronic conditions. Specialized care coordination included.",
+        startDate: "Year-round",
+        endDate: "Year-round",
+        duration: "Continuous",
+        eligibleProducts: ["C-SNP"],
+        source: "CMS",
+        urgency: "info",
+        matchingPlans: csnpPlans,
+      });
+    }
+  }
 
   return seps;
 }
 
-// ─── ICONS ─────────────────────────────────────────────────────────────────────
+// ─── ICONS// ─── ICONS ─────────────────────────────────────────────────────────────────────
 
 const IconSearch = () => (
   <svg
@@ -1125,12 +1709,6 @@ const CATEGORY_COLORS = {
     text: "#1e3a5f",
     badge: "#2563eb",
   },
-  "ACA/Marketplace": {
-    bg: "#f0fdf4",
-    border: "#86efac",
-    text: "#14532d",
-    badge: "#16a34a",
-  },
 };
 
 const URGENCY_STYLES = {
@@ -1146,7 +1724,6 @@ function ProductBadge({ product }) {
     MAPD: "#7c3aed",
     PDP: "#0891b2",
     Medigap: "#0d9488",
-    ACA: "#16a34a",
     "D-SNP": "#be185d",
     "I-SNP": "#9333ea",
     "C-SNP": "#c2410c",
@@ -1278,6 +1855,31 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
               {sep.category}
             </span>
             {sep.code === "5-STAR" && <IconStar />}
+            {sep.daysLeft != null && (
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 800,
+                  letterSpacing: "0.04em",
+                  padding: "2px 6px",
+                  borderRadius: "4px",
+                  backgroundColor:
+                    sep.daysLeft <= 14
+                      ? "#fef2f2"
+                      : sep.daysLeft <= 30
+                      ? "#fffbeb"
+                      : "#f0fdf4",
+                  color:
+                    sep.daysLeft <= 14
+                      ? "#dc2626"
+                      : sep.daysLeft <= 30
+                      ? "#d97706"
+                      : "#16a34a",
+                }}
+              >
+                {sep.daysLeft}d left
+              </span>
+            )}
           </div>
           <div
             style={{
@@ -1484,33 +2086,283 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
             </div>
           )}
 
-          {/* Matching Carriers */}
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "8px",
-              padding: "12px 16px",
-              border: "1px solid #e2e8f0",
-            }}
-          >
+          {/* Matching Plans for this SEP */}
+          {sep.matchingPlans && sep.matchingPlans.length > 0 && (
             <div
               style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                marginBottom: "8px",
+                background: "#fff",
+                borderRadius: "8px",
+                padding: "12px 16px",
+                border: "1px solid #e2e8f0",
               }}
             >
-              Carriers Available in Area
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#94a3b8",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  marginBottom: "8px",
+                }}
+              >
+                📋 Eligible Plans Under This SEP ({sep.matchingPlans.length})
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: "11px",
+                  }}
+                >
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                      {[
+                        "Carrier",
+                        "Plan",
+                        "ID",
+                        "Type",
+                        "Stars",
+                        "Premium",
+                        "MOOP",
+                        "Grocery",
+                        "OTC",
+                        "Flex",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          style={{
+                            padding: "6px 6px",
+                            textAlign:
+                              h === "Premium" || h === "MOOP"
+                                ? "right"
+                                : "left",
+                            fontSize: "9px",
+                            fontWeight: 700,
+                            color: "#94a3b8",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.04em",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sep.matchingPlans.map((p, i) => {
+                      const cr = CARRIERS[p.carrier] || {};
+                      const typeColors = {
+                        HMO: "#2563eb",
+                        "HMO-POS": "#3b82f6",
+                        PPO: "#7c3aed",
+                        PDP: "#0891b2",
+                        Medigap: "#0d9488",
+                      };
+                      const snpColors = {
+                        "D-SNP": "#be185d",
+                        "C-SNP": "#c2410c",
+                        "I-SNP": "#9333ea",
+                      };
+                      return (
+                        <tr
+                          key={`${p.cid}-${p.pbp}-${i}`}
+                          style={{ borderBottom: "1px solid #f1f5f9" }}
+                        >
+                          <td
+                            style={{ padding: "6px 6px", whiteSpace: "nowrap" }}
+                          >
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: "6px",
+                                  height: "6px",
+                                  borderRadius: "50%",
+                                  backgroundColor: cr.color || "#666",
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "11px",
+                                  fontWeight: 700,
+                                  color: "#334155",
+                                }}
+                              >
+                                {cr.abbr}
+                              </span>
+                            </span>
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 6px",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                              color: "#334155",
+                              maxWidth: "200px",
+                            }}
+                          >
+                            {p.name}
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 6px",
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontSize: "10px",
+                              color: "#64748b",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {p.cid}-{p.pbp}
+                          </td>
+                          <td style={{ padding: "6px 6px" }}>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "1px 5px",
+                                borderRadius: "3px",
+                                fontSize: "9px",
+                                fontWeight: 700,
+                                color: "#fff",
+                                backgroundColor:
+                                  typeColors[p.type] || "#475569",
+                                marginRight: 2,
+                              }}
+                            >
+                              {p.type}
+                            </span>
+                            {p.snp && (
+                              <span
+                                style={{
+                                  display: "inline-block",
+                                  padding: "1px 5px",
+                                  borderRadius: "3px",
+                                  fontSize: "9px",
+                                  fontWeight: 700,
+                                  color: "#fff",
+                                  backgroundColor:
+                                    snpColors[p.snp] || "#475569",
+                                }}
+                              >
+                                {p.snp}
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ padding: "6px 6px" }}>
+                            {p.stars != null ? (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "0px",
+                                }}
+                              >
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <svg
+                                    key={s}
+                                    width={9}
+                                    height={9}
+                                    viewBox="0 0 24 24"
+                                    fill={
+                                      s <= Math.floor(p.stars)
+                                        ? "#f59e0b"
+                                        : "none"
+                                    }
+                                    stroke="#f59e0b"
+                                    strokeWidth={1.5}
+                                  >
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                  </svg>
+                                ))}
+                              </span>
+                            ) : (
+                              <span style={{ color: "#cbd5e1" }}>—</span>
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 6px",
+                              textAlign: "right",
+                              fontWeight: 700,
+                              color: p.prem === 0 ? "#16a34a" : "#334155",
+                              fontSize: "11px",
+                            }}
+                          >
+                            {p.prem === 0 ? "$0" : `$${p.prem.toFixed(2)}`}
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 6px",
+                              textAlign: "right",
+                              fontWeight: 600,
+                              color: "#334155",
+                              fontSize: "11px",
+                            }}
+                          >
+                            {p.moop ? `$${p.moop.toLocaleString()}` : "—"}
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 6px",
+                              textAlign: "center",
+                              fontSize: "10px",
+                              color: p.grocery ? "#16a34a" : "#cbd5e1",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {p.grocery || "—"}
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 6px",
+                              textAlign: "center",
+                              fontSize: "10px",
+                              color: p.otc ? "#16a34a" : "#cbd5e1",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {p.otc || "—"}
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 6px",
+                              textAlign: "center",
+                              fontSize: "10px",
+                              color: p.flex ? "#16a34a" : "#cbd5e1",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {p.flex || "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap" }}>
-              {matchingCarriers.map((c) => (
-                <CarrierChip key={c.key} carrier={c} />
-              ))}
+          )}
+          {sep.matchingPlans && sep.matchingPlans.length === 0 && (
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: "8px",
+                padding: "12px 16px",
+                border: "1px solid #e2e8f0",
+                color: "#94a3b8",
+                fontSize: "13px",
+              }}
+            >
+              No matching plans found in this zip for this SEP type.
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
@@ -1529,23 +2381,51 @@ export default function SEPLookupTool() {
   const [filterProduct, setFilterProduct] = useState("all");
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
+  // V2: Plan state
+  const [plans, setPlans] = useState(null);
+  const [activeTab, setActiveTab] = useState("plans");
+  const [expandedPlans, setExpandedPlans] = useState({});
+  const [planFilterCarrier, setPlanFilterCarrier] = useState("all");
+  const [planFilterType, setPlanFilterType] = useState("all");
+  const [planFilterSnp, setPlanFilterSnp] = useState("all");
+  const [planSearch, setPlanSearch] = useState("");
 
-  const handleSearch = useCallback(() => {
+  // Live FEMA data cache (persists across searches within session)
+  const femaCache = useRef({ data: null, fetchedAt: 0 });
+
+  const handleSearch = useCallback(async () => {
     const cleanZip = zip.trim();
     if (!/^\d{5}$/.test(cleanZip)) return;
     setLoading(true);
-    // Simulate API delay
-    setTimeout(() => {
-      const seps = getSEPsForZip(cleanZip);
+
+    try {
+      // Fetch live FEMA data (cached for 30 min within session)
+      let femaData = femaCache.current.data;
+      const now = Date.now();
+      if (!femaData || now - femaCache.current.fetchedAt > 30 * 60 * 1000) {
+        femaData = await fetchLiveFemaDisasters();
+        femaCache.current = { data: femaData, fetchedAt: now };
+      }
+
+      const seps = getSEPsForZip(cleanZip, femaData);
       const zipCarriers = getCarriersForZip(cleanZip);
       setResults(seps);
       setCarriers(zipCarriers);
+      setPlans(getPlansForState(cleanZip));
       setSearchedZip(cleanZip);
       setExpanded({});
+      setExpandedPlans({});
       setFilterCategory("all");
       setFilterProduct("all");
+      setPlanFilterCarrier("all");
+      setPlanFilterType("all");
+      setPlanFilterSnp("all");
+      setPlanSearch("");
+    } catch (err) {
+      console.error("Search error:", err);
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   }, [zip]);
 
   const handleKeyDown = (e) => {
@@ -1568,9 +2448,43 @@ export default function SEPLookupTool() {
   ].sort();
   const allCategories = [...new Set((results || []).map((s) => s.category))];
 
+  // V2: Filtered plans
+  const filteredPlans = useMemo(() => {
+    if (!plans) return [];
+    return plans.filter((p) => {
+      if (planFilterCarrier !== "all" && p.carrier !== planFilterCarrier)
+        return false;
+      if (planFilterType !== "all" && p.type !== planFilterType) return false;
+      if (planFilterSnp !== "all") {
+        if (planFilterSnp === "none" ? p.snp : p.snp !== planFilterSnp)
+          return false;
+      }
+      if (planSearch) {
+        const q = planSearch.toLowerCase();
+        if (
+          !`${p.name} ${p.cid} ${p.pbp} ${p.carrier} ${p.type} ${p.snp || ""}`
+            .toLowerCase()
+            .includes(q)
+        )
+          return false;
+      }
+      return true;
+    });
+  }, [plans, planFilterCarrier, planFilterType, planFilterSnp, planSearch]);
+  const planCarrierOpts = useMemo(
+    () => [...new Set((plans || []).map((p) => p.carrier))].sort(),
+    [plans]
+  );
+  const planTypeOpts = useMemo(
+    () => [...new Set((plans || []).map((p) => p.type))].sort(),
+    [plans]
+  );
   return (
     <div
       style={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(165deg, #0f172a 0%, #1e293b 40%, #0f172a 100%)",
         fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
       }}
     >
@@ -1579,8 +2493,68 @@ export default function SEPLookupTool() {
         rel="stylesheet"
       />
 
+      {/* Header */}
+      <div
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(99,102,241,0.08) 100%)",
+          borderBottom: "1px solid rgba(148,163,184,0.1)",
+          padding: "32px 24px 28px",
+        }}
+      >
+        <div style={{ maxWidth: "960px", margin: "0 auto" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "6px",
+            }}
+          >
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "10px",
+                background: "linear-gradient(135deg, #2563eb, #6366f1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <IconShield />
+            </div>
+            <div>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "24px",
+                  fontWeight: 800,
+                  color: "#f1f5f9",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                SEP Lookup Tool
+              </h1>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "13px",
+                  color: "#94a3b8",
+                  fontWeight: 500,
+                }}
+              >
+                Medicare Advantage Plans & Active SEPs — Live Data
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Search Bar */}
-      <div style={{ padding: "24px 24px 0" }}>
+      <div
+        style={{ maxWidth: "960px", margin: "0 auto", padding: "24px 24px 0" }}
+      >
         <div
           style={{
             display: "flex",
@@ -1698,7 +2672,7 @@ export default function SEPLookupTool() {
 
       {/* Results */}
       {results && !loading && (
-        <div style={{ padding: "24px" }}>
+        <div style={{ maxWidth: "960px", margin: "0 auto", padding: "24px" }}>
           {/* Summary Bar */}
           <div
             style={{
@@ -1768,12 +2742,38 @@ export default function SEPLookupTool() {
                   letterSpacing: "0.06em",
                 }}
               >
-                SEPs Found
+                SEPs
               </div>
               <div
                 style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9" }}
               >
                 {filtered?.length || 0}
+              </div>
+            </div>
+            <div
+              style={{
+                background: "rgba(168,85,247,0.1)",
+                border: "1px solid rgba(168,85,247,0.25)",
+                borderRadius: "10px",
+                padding: "12px 18px",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#c084fc",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Plans
+              </div>
+              <div
+                style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9" }}
+              >
+                {plans?.length || 0}
               </div>
             </div>
             <div
@@ -1845,266 +2845,921 @@ export default function SEPLookupTool() {
             </div>
           </div>
 
-          {/* Filters */}
+          {/* ═══ TABS ═══ */}
           <div
             style={{
               display: "flex",
-              gap: "12px",
+              borderBottom: "1px solid rgba(148,163,184,0.1)",
               marginBottom: "20px",
-              flexWrap: "wrap",
-              alignItems: "center",
-              background: "rgba(30,41,59,0.5)",
-              borderRadius: "10px",
-              padding: "10px 16px",
-              border: "1px solid rgba(148,163,184,0.1)",
             }}
           >
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                fontSize: "12px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
-            >
-              <IconFilter /> Filter
-            </span>
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              style={{
-                padding: "6px 12px",
-                borderRadius: "6px",
-                border: "1px solid rgba(148,163,184,0.2)",
-                background: "#1e293b",
-                color: "#e2e8f0",
-                fontSize: "13px",
-                fontWeight: 600,
-                cursor: "pointer",
-                outline: "none",
-              }}
-            >
-              <option value="all">All Categories</option>
-              {allCategories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filterProduct}
-              onChange={(e) => setFilterProduct(e.target.value)}
-              style={{
-                padding: "6px 12px",
-                borderRadius: "6px",
-                border: "1px solid rgba(148,163,184,0.2)",
-                background: "#1e293b",
-                color: "#e2e8f0",
-                fontSize: "13px",
-                fontWeight: 600,
-                cursor: "pointer",
-                outline: "none",
-              }}
-            >
-              <option value="all">All Products</option>
-              {allProducts.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-            {(filterCategory !== "all" || filterProduct !== "all") && (
+            {[
+              ["plans", `📋 Plans & Codes (${filteredPlans.length})`],
+              ["seps", `🔁 SEPs (${filtered?.length || 0})`],
+            ].map(([key, label]) => (
               <button
-                onClick={() => {
-                  setFilterCategory("all");
-                  setFilterProduct("all");
-                }}
+                key={key}
+                onClick={() => setActiveTab(key)}
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  padding: "5px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid rgba(239,68,68,0.3)",
-                  background: "rgba(239,68,68,0.1)",
-                  color: "#f87171",
-                  fontSize: "12px",
-                  fontWeight: 600,
+                  padding: "10px 20px",
+                  borderRadius: "8px 8px 0 0",
+                  border: "none",
+                  fontSize: "13px",
+                  fontWeight: 700,
                   cursor: "pointer",
+                  transition: "all 0.15s",
+                  background:
+                    activeTab === key ? "rgba(37,99,235,0.15)" : "transparent",
+                  color: activeTab === key ? "#60a5fa" : "#94a3b8",
+                  borderBottom:
+                    activeTab === key
+                      ? "2px solid #3b82f6"
+                      : "2px solid transparent",
                 }}
               >
-                <IconX /> Clear
+                {label}
               </button>
-            )}
+            ))}
           </div>
 
-          {/* FEMA Alert Banner */}
-          {femaActive.length > 0 && filterCategory !== "ACA/Marketplace" && (
-            <div
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(220,38,38,0.15), rgba(239,68,68,0.08))",
-                border: "1px solid rgba(239,68,68,0.35)",
-                borderRadius: "12px",
-                padding: "16px 20px",
-                marginBottom: "20px",
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "12px",
-              }}
-            >
+          {/* ════════ PLANS TAB ════════ */}
+          {activeTab === "plans" && (
+            <>
+              {/* Plan Filters */}
               <div
-                style={{ color: "#f87171", flexShrink: 0, marginTop: "2px" }}
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  marginBottom: "16px",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  background: "rgba(30,41,59,0.5)",
+                  borderRadius: "10px",
+                  padding: "10px 16px",
+                  border: "1px solid rgba(148,163,184,0.1)",
+                }}
               >
-                <IconAlert />
-              </div>
-              <div>
-                <div
+                <span
                   style={{
-                    fontSize: "14px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "12px",
                     fontWeight: 700,
-                    color: "#fca5a5",
-                    marginBottom: "4px",
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
                   }}
                 >
-                  Active FEMA Disaster Declaration
-                  {femaActive.length > 1 ? "s" : ""} in This Area
-                </div>
-                <div
+                  <IconFilter /> Filter
+                </span>
+                <select
+                  value={planFilterCarrier}
+                  onChange={(e) => setPlanFilterCarrier(e.target.value)}
                   style={{
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
                     fontSize: "13px",
-                    color: "#fda4af",
-                    lineHeight: 1.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
                   }}
                 >
-                  {femaActive.map((f) => f.event).join("; ")} — 60-day SEP
-                  applies for affected beneficiaries. Verify client address
-                  against affected counties.
-                </div>
+                  <option value="all">All Carriers</option>
+                  {planCarrierOpts.map((c) => (
+                    <option key={c} value={c}>
+                      {CARRIERS[c]?.abbr || c}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={planFilterType}
+                  onChange={(e) => setPlanFilterType(e.target.value)}
+                  style={{
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="all">All Types</option>
+                  {planTypeOpts.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={planFilterSnp}
+                  onChange={(e) => setPlanFilterSnp(e.target.value)}
+                  style={{
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="all">All Plans</option>
+                  <option value="D-SNP">D-SNP Only</option>
+                  <option value="C-SNP">C-SNP Only</option>
+                  <option value="none">Non-SNP Only</option>
+                </select>
+                <input
+                  type="text"
+                  value={planSearch}
+                  onChange={(e) => setPlanSearch(e.target.value)}
+                  placeholder="Search plans or contract ID..."
+                  style={{
+                    flex: "1 1 160px",
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    outline: "none",
+                    minWidth: "120px",
+                  }}
+                />
+                {(planFilterCarrier !== "all" ||
+                  planFilterType !== "all" ||
+                  planFilterSnp !== "all" ||
+                  planSearch) && (
+                  <button
+                    onClick={() => {
+                      setPlanFilterCarrier("all");
+                      setPlanFilterType("all");
+                      setPlanFilterSnp("all");
+                      setPlanSearch("");
+                    }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "5px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid rgba(239,68,68,0.3)",
+                      background: "rgba(239,68,68,0.1)",
+                      color: "#f87171",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <IconX /> Clear
+                  </button>
+                )}
               </div>
-            </div>
+
+              {/* Plan Table */}
+              <div
+                style={{
+                  overflowX: "auto",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(148,163,184,0.12)",
+                }}
+              >
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: "12px",
+                  }}
+                >
+                  <thead>
+                    <tr
+                      style={{
+                        background: "rgba(15,23,42,0.9)",
+                        borderBottom: "2px solid rgba(148,163,184,0.15)",
+                      }}
+                    >
+                      {[
+                        "Carrier",
+                        "Plan Name / ID",
+                        "Type",
+                        "Stars",
+                        "Premium",
+                        "MOOP",
+                        "Grocery",
+                        "OTC",
+                        "Flex Card",
+                        "",
+                      ].map((h, i) => (
+                        <th
+                          key={h + i}
+                          style={{
+                            padding: "10px 8px",
+                            textAlign: ["Premium", "MOOP"].includes(h)
+                              ? "right"
+                              : [
+                                  "Stars",
+                                  "Grocery",
+                                  "OTC",
+                                  "Flex Card",
+                                  "",
+                                ].includes(h)
+                              ? "center"
+                              : "left",
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#64748b",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredPlans.length > 0 ? (
+                      filteredPlans.map((p, idx) => {
+                        const c = CARRIERS[p.carrier] || {};
+                        const pKey = `${p.cid}-${p.pbp}-${p.carrier}`;
+                        const isOpen = !!expandedPlans[pKey];
+                        const typeColors = {
+                          HMO: "#2563eb",
+                          "HMO-POS": "#3b82f6",
+                          PPO: "#7c3aed",
+                          PDP: "#0891b2",
+                          Medigap: "#0d9488",
+                        };
+                        const snpColors = {
+                          "D-SNP": "#be185d",
+                          "C-SNP": "#c2410c",
+                          "I-SNP": "#9333ea",
+                        };
+                        return (
+                          <React.Fragment key={pKey + idx}>
+                            <tr
+                              onClick={() =>
+                                setExpandedPlans((prev) => ({
+                                  ...prev,
+                                  [pKey]: !prev[pKey],
+                                }))
+                              }
+                              style={{
+                                cursor: "pointer",
+                                borderBottom:
+                                  "1px solid rgba(148,163,184,0.06)",
+                                background: isOpen
+                                  ? "rgba(37,99,235,0.06)"
+                                  : "transparent",
+                              }}
+                            >
+                              <td
+                                style={{
+                                  padding: "10px 8px",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      width: "8px",
+                                      height: "8px",
+                                      borderRadius: "50%",
+                                      backgroundColor: c.color || "#666",
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                  <span
+                                    style={{
+                                      fontSize: "12px",
+                                      fontWeight: 700,
+                                      color: "#e2e8f0",
+                                    }}
+                                  >
+                                    {c.abbr || p.carrier}
+                                  </span>
+                                </span>
+                              </td>
+                              <td style={{ padding: "10px 8px" }}>
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    fontWeight: 600,
+                                    color: "#e2e8f0",
+                                    lineHeight: 1.3,
+                                  }}
+                                >
+                                  {p.name}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "11px",
+                                    color: "#64748b",
+                                    fontFamily: "'JetBrains Mono', monospace",
+                                    marginTop: "2px",
+                                  }}
+                                >
+                                  {p.cid}-{p.pbp}
+                                </div>
+                              </td>
+                              <td style={{ padding: "10px 8px" }}>
+                                <span
+                                  style={{
+                                    display: "inline-block",
+                                    padding: "2px 7px",
+                                    borderRadius: "4px",
+                                    fontSize: "10px",
+                                    fontWeight: 700,
+                                    color: "#fff",
+                                    backgroundColor:
+                                      typeColors[p.type] || "#475569",
+                                    marginRight: 3,
+                                  }}
+                                >
+                                  {p.type}
+                                </span>
+                                {p.snp && (
+                                  <span
+                                    style={{
+                                      display: "inline-block",
+                                      padding: "2px 7px",
+                                      borderRadius: "4px",
+                                      fontSize: "10px",
+                                      fontWeight: 700,
+                                      color: "#fff",
+                                      backgroundColor:
+                                        snpColors[p.snp] || "#475569",
+                                    }}
+                                  >
+                                    {p.snp}
+                                  </span>
+                                )}
+                              </td>
+                              <td
+                                style={{
+                                  padding: "10px 8px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                {p.stars != null ? (
+                                  <span
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "1px",
+                                    }}
+                                  >
+                                    {[1, 2, 3, 4, 5].map((i) => (
+                                      <svg
+                                        key={i}
+                                        width={11}
+                                        height={11}
+                                        viewBox="0 0 24 24"
+                                        fill={
+                                          i <= Math.floor(p.stars)
+                                            ? "#f59e0b"
+                                            : "none"
+                                        }
+                                        stroke="#f59e0b"
+                                        strokeWidth={1.5}
+                                      >
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                      </svg>
+                                    ))}
+                                    {p.stars % 1 !== 0 && (
+                                      <span
+                                        style={{
+                                          fontSize: "10px",
+                                          color: "#f59e0b",
+                                        }}
+                                      >
+                                        .5
+                                      </span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  <span
+                                    style={{
+                                      color: "#64748b",
+                                      fontSize: "11px",
+                                    }}
+                                  >
+                                    —
+                                  </span>
+                                )}
+                              </td>
+                              <td
+                                style={{
+                                  padding: "10px 8px",
+                                  textAlign: "right",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    fontWeight: 700,
+                                    color: p.prem === 0 ? "#4ade80" : "#e2e8f0",
+                                  }}
+                                >
+                                  {p.prem === 0
+                                    ? "$0"
+                                    : `$${p.prem.toFixed(2)}`}
+                                </span>
+                              </td>
+                              <td
+                                style={{
+                                  padding: "10px 8px",
+                                  textAlign: "right",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    fontWeight: 600,
+                                    color: "#e2e8f0",
+                                  }}
+                                >
+                                  {p.moop ? `$${p.moop.toLocaleString()}` : "—"}
+                                </span>
+                              </td>
+                              <td
+                                style={{
+                                  padding: "10px 8px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    color: p.grocery ? "#4ade80" : "#475569",
+                                    fontSize: "12px",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {p.grocery || "—"}
+                                </span>
+                              </td>
+                              <td
+                                style={{
+                                  padding: "10px 8px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    color: p.otc ? "#4ade80" : "#475569",
+                                    fontSize: "12px",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {p.otc || "—"}
+                                </span>
+                              </td>
+                              <td
+                                style={{
+                                  padding: "10px 8px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    color: p.flex ? "#4ade80" : "#475569",
+                                    fontSize: "12px",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {p.flex || "—"}
+                                </span>
+                              </td>
+                              <td
+                                style={{
+                                  padding: "10px 8px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <IconChevron open={isOpen} />
+                              </td>
+                            </tr>
+                            {isOpen && (
+                              <tr>
+                                <td
+                                  colSpan={10}
+                                  style={{
+                                    padding: "0 12px 14px",
+                                    background: "rgba(37,99,235,0.04)",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexWrap: "wrap",
+                                      gap: "6px",
+                                      padding: "12px 0 8px",
+                                    }}
+                                  >
+                                    {[
+                                      ["Part D", p.partD],
+                                      ["Dental", p.dental],
+                                      ["Vision", p.vision],
+                                      ["Hearing", p.hearing],
+                                      ["OTC", p.otc],
+                                      ["Grocery", p.grocery],
+                                      ["Flex Card", p.flex],
+                                      ["Transport", p.transport],
+                                    ].map(([lbl, val]) =>
+                                      val ? (
+                                        <span
+                                          key={lbl}
+                                          style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "4px",
+                                            padding: "3px 8px",
+                                            borderRadius: "6px",
+                                            fontSize: "11px",
+                                            fontWeight: 600,
+                                            background: "rgba(34,197,94,0.1)",
+                                            border:
+                                              "1px solid rgba(34,197,94,0.2)",
+                                            color: "#4ade80",
+                                          }}
+                                        >
+                                          {lbl}:{" "}
+                                          <span style={{ color: "#e2e8f0" }}>
+                                            {typeof val === "boolean"
+                                              ? "✓"
+                                              : val}
+                                          </span>
+                                        </span>
+                                      ) : null
+                                    )}
+                                  </div>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      gap: "10px",
+                                      flexWrap: "wrap",
+                                    }}
+                                  >
+                                    {[
+                                      ["Contract ID", p.cid],
+                                      ["PBP", p.pbp],
+                                      ["Category", p.cat],
+                                      ...(p.snp ? [["SNP Type", p.snp]] : []),
+                                    ].map(([lbl, val]) => (
+                                      <div
+                                        key={lbl}
+                                        style={{
+                                          background: "rgba(15,23,42,0.8)",
+                                          borderRadius: "6px",
+                                          padding: "8px 12px",
+                                          border:
+                                            "1px solid rgba(148,163,184,0.1)",
+                                        }}
+                                      >
+                                        <div
+                                          style={{
+                                            fontSize: "10px",
+                                            fontWeight: 700,
+                                            color: "#64748b",
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.05em",
+                                            marginBottom: "2px",
+                                          }}
+                                        >
+                                          {lbl}
+                                        </div>
+                                        <div
+                                          style={{
+                                            fontSize: "13px",
+                                            fontWeight: 600,
+                                            color: "#e2e8f0",
+                                            fontFamily:
+                                              lbl === "Contract ID" ||
+                                              lbl === "PBP"
+                                                ? "'JetBrains Mono', monospace"
+                                                : "inherit",
+                                          }}
+                                        >
+                                          {val}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={10}
+                          style={{
+                            padding: "40px",
+                            textAlign: "center",
+                            color: "#94a3b8",
+                            fontSize: "14px",
+                          }}
+                        >
+                          No plans match filters
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
 
-          {/* SEP Cards */}
-          <div>
-            {filtered && filtered.length > 0 ? (
-              filtered.map((sep) => (
-                <SEPCard
-                  key={sep.id}
-                  sep={sep}
-                  carriers={carriers}
-                  isExpanded={!!expanded[sep.id]}
-                  onToggle={() =>
-                    setExpanded((prev) => ({
-                      ...prev,
-                      [sep.id]: !prev[sep.id],
-                    }))
-                  }
-                />
-              ))
-            ) : (
+          {/* ════════ SEPS TAB ════════ */}
+          {activeTab === "seps" && (
+            <>
+              {/* Filters */}
               <div
                 style={{
-                  textAlign: "center",
-                  padding: "48px 24px",
-                  color: "#94a3b8",
+                  display: "flex",
+                  gap: "12px",
+                  marginBottom: "20px",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  background: "rgba(30,41,59,0.5)",
+                  borderRadius: "10px",
+                  padding: "10px 16px",
+                  border: "1px solid rgba(148,163,184,0.1)",
                 }}
               >
-                <div style={{ fontSize: "16px", fontWeight: 600 }}>
-                  No SEPs match current filters
-                </div>
-                <div style={{ fontSize: "13px", marginTop: "8px" }}>
-                  Try adjusting category or product filters above.
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Carrier Grid */}
-          <div
-            style={{
-              marginTop: "28px",
-              background: "rgba(30,41,59,0.6)",
-              borderRadius: "14px",
-              padding: "20px",
-              border: "1px solid rgba(148,163,184,0.1)",
-            }}
-          >
-            <h3
-              style={{
-                margin: "0 0 14px 0",
-                fontSize: "14px",
-                fontWeight: 700,
-                color: "#e2e8f0",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
-            >
-              Carriers in {searchedZip} ({state})
-            </h3>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))",
-                gap: "10px",
-              }}
-            >
-              {carriers.map((c) => (
-                <div
-                  key={c.key}
+                <span
                   style={{
-                    background: "#0f172a",
-                    borderRadius: "10px",
-                    padding: "14px",
-                    border: `1px solid ${c.color}30`,
-                    position: "relative",
-                    overflow: "hidden",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  <IconFilter /> Filter
+                </span>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    outline: "none",
+                  }}
+                >
+                  <option value="all">All Categories</option>
+                  {allCategories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={filterProduct}
+                  onChange={(e) => setFilterProduct(e.target.value)}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    outline: "none",
+                  }}
+                >
+                  <option value="all">All Products</option>
+                  {allProducts.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+                {(filterCategory !== "all" || filterProduct !== "all") && (
+                  <button
+                    onClick={() => {
+                      setFilterCategory("all");
+                      setFilterProduct("all");
+                    }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "5px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid rgba(239,68,68,0.3)",
+                      background: "rgba(239,68,68,0.1)",
+                      color: "#f87171",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <IconX /> Clear
+                  </button>
+                )}
+              </div>
+
+              {/* FEMA Alert Banner */}
+              {femaActive.length > 0 && (
+                <div
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(220,38,38,0.15), rgba(239,68,68,0.08))",
+                    border: "1px solid rgba(239,68,68,0.35)",
+                    borderRadius: "12px",
+                    padding: "16px 20px",
+                    marginBottom: "20px",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "12px",
                   }}
                 >
                   <div
                     style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: "3px",
-                      background: c.color,
-                    }}
-                  />
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 700,
-                      color: "#f1f5f9",
-                      marginBottom: "6px",
+                      color: "#f87171",
+                      flexShrink: 0,
+                      marginTop: "2px",
                     }}
                   >
-                    {c.abbr}
+                    <IconAlert />
                   </div>
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      color: "#94a3b8",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    {c.name}
-                  </div>
-                  <div
-                    style={{ display: "flex", flexWrap: "wrap", gap: "2px" }}
-                  >
-                    {c.products.map((p) => (
-                      <ProductBadge key={p} product={p} />
-                    ))}
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        color: "#fca5a5",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Active FEMA Disaster Declaration
+                      {femaActive.length > 1 ? "s" : ""} in This Area
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#fda4af",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {femaActive.map((f) => f.event).join("; ")} — 60-day SEP
+                      applies for affected beneficiaries. Verify client address
+                      against affected counties.
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              )}
+
+              {/* SEP Cards */}
+              <div>
+                {filtered && filtered.length > 0 ? (
+                  filtered.map((sep) => (
+                    <SEPCard
+                      key={sep.id}
+                      sep={sep}
+                      carriers={carriers}
+                      isExpanded={!!expanded[sep.id]}
+                      onToggle={() =>
+                        setExpanded((prev) => ({
+                          ...prev,
+                          [sep.id]: !prev[sep.id],
+                        }))
+                      }
+                    />
+                  ))
+                ) : (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "48px 24px",
+                      color: "#94a3b8",
+                    }}
+                  >
+                    <div style={{ fontSize: "16px", fontWeight: 600 }}>
+                      No SEPs match current filters
+                    </div>
+                    <div style={{ fontSize: "13px", marginTop: "8px" }}>
+                      Try adjusting category or product filters above.
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Carrier Grid */}
+              <div
+                style={{
+                  marginTop: "28px",
+                  background: "rgba(30,41,59,0.6)",
+                  borderRadius: "14px",
+                  padding: "20px",
+                  border: "1px solid rgba(148,163,184,0.1)",
+                }}
+              >
+                <h3
+                  style={{
+                    margin: "0 0 14px 0",
+                    fontSize: "14px",
+                    fontWeight: 700,
+                    color: "#e2e8f0",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  Carriers in {searchedZip} ({state})
+                </h3>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(170px, 1fr))",
+                    gap: "10px",
+                  }}
+                >
+                  {carriers.map((c) => (
+                    <div
+                      key={c.key}
+                      style={{
+                        background: "#0f172a",
+                        borderRadius: "10px",
+                        padding: "14px",
+                        border: `1px solid ${c.color}30`,
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: "3px",
+                          background: c.color,
+                        }}
+                      />
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: 700,
+                          color: "#f1f5f9",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        {c.abbr}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "11px",
+                          color: "#94a3b8",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        {c.name}
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "2px",
+                        }}
+                      >
+                        {c.products.map((p) => (
+                          <ProductBadge key={p} product={p} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          {/* end tabs */}
 
           {/* Disclaimer */}
           <div
@@ -2124,14 +3779,12 @@ export default function SEPLookupTool() {
                 lineHeight: 1.6,
               }}
             >
-              <strong>Disclaimer:</strong> This tool aggregates SEP data from
-              CMS, FEMA, Healthcare.gov, and carrier sources for informational
-              purposes only. Always verify eligibility directly with CMS
-              (medicare.gov) or the applicable carrier. FEMA disaster SEPs are
-              based on declared disaster areas — confirm client's address falls
-              within affected counties. Data refreshes may lag behind real-time
-              CMS/FEMA updates. Not intended as legal or enrollment advice. For
-              agent/broker use only.
+              <strong>Disclaimer:</strong> FEMA disaster data is fetched live
+              from the OpenFEMA API (api.fema.gov). Plan data is sourced from
+              CMS Landscape Files for CY2025 — in production, import CMS CSV
+              files into your database for county-level precision (see
+              SETUP.md). Premiums, benefits, and service areas may vary — always
+              verify on Medicare.gov. For agent/broker use only.
             </p>
           </div>
         </div>
@@ -2139,7 +3792,14 @@ export default function SEPLookupTool() {
 
       {/* Loading State */}
       {loading && (
-        <div style={{ padding: "80px 24px", textAlign: "center" }}>
+        <div
+          style={{
+            maxWidth: "960px",
+            margin: "0 auto",
+            padding: "80px 24px",
+            textAlign: "center",
+          }}
+        >
           <div
             style={{
               width: "48px",
@@ -2162,7 +3822,14 @@ export default function SEPLookupTool() {
 
       {/* Empty State */}
       {!results && !loading && (
-        <div style={{ padding: "60px 24px", textAlign: "center" }}>
+        <div
+          style={{
+            maxWidth: "960px",
+            margin: "0 auto",
+            padding: "60px 24px",
+            textAlign: "center",
+          }}
+        >
           <div style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.3 }}>
             🔍
           </div>
@@ -2195,6 +3862,7 @@ export default function SEPLookupTool() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         * { box-sizing: border-box; }
+        table tbody tr:hover td { background: rgba(37,99,235,0.06) !important; }
         select:focus { border-color: rgba(99,102,241,0.5) !important; }
         button:hover { filter: brightness(1.1); }
         input::placeholder { color: #475569; }

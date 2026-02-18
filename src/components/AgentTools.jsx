@@ -102,7 +102,7 @@ export default function AgentTools() {
         "Carrier Quick Links Sunfire MARx Aetna Anthem Cigna Devoted Humana UHC WellCare Medicare portal login"
       ),
       sepLookup: matchesSearch(
-        "SEP Lookup Tool zip code search carrier FEMA disaster Medicare ACA Marketplace enrollment period UHC Aetna BCBS Cigna Humana Wellcare Molina Devoted Kaiser 5-star dual eligible"
+        "SEP Lookup Tool zip code search carrier FEMA disaster Medicare Advantage plan codes contract ID PBP enrollment period UHC Aetna BCBS Cigna Humana Wellcare Molina Devoted Kaiser 5-star dual eligible D-SNP C-SNP grocery OTC flex card"
       ),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
