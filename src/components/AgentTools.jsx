@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import ObjectionHandler from "./ObjectionHandler";
 import SEPLookup from "./SEPLookup";
+import DailyVerse from "./DailyVerse";
 
 /* ---- Collapsible Accordion ---- */
 function Accordion({
@@ -60,7 +61,7 @@ const CARRIER_LINKS = [
     url: "https://www.wellcare.com/broker",
     icon: "🟣",
   },
-  { name: "Medicare.gov", url: "https://www.medicare.gov", icon: "🇺🇸" },
+  { name: "Medicare.gov", url: "https://www.medicare.gov", icon: "🏛️" },
 ];
 
 export default function AgentTools() {
@@ -110,9 +111,6 @@ export default function AgentTools() {
 
   return (
     <div className="agent-tools">
-      {/* Objection Handler — always at top */}
-      <ObjectionHandler />
-
       {/* Search Box */}
       <div className="agent-tools-search">
         <input
@@ -132,15 +130,9 @@ export default function AgentTools() {
           </button>
         )}
       </div>
+      <ObjectionHandler />
 
-      {/* ===== SEP LOOKUP TOOL ===== */}
-      <Accordion
-        title="🔎 SEP Lookup Tool (Search by Zip Code)"
-        searchMatch={accordionMatches.sepLookup}
-      >
-        <SEPLookup />
-      </Accordion>
-
+      <SEPLookup />
       {/* ===== CARRIER QUICK LINKS ===== */}
       <Accordion
         title="🚀 Carrier Quick Links"
@@ -162,7 +154,6 @@ export default function AgentTools() {
           ))}
         </div>
       </Accordion>
-
       {/* ===== MAPS (lazy loaded) ===== */}
       <Accordion
         title="🗺️ FEMA Disaster SEP Zones & Medicaid Map"
@@ -199,7 +190,6 @@ export default function AgentTools() {
           </>
         )}
       </Accordion>
-
       {/* ===== CORE ENROLLMENT PERIODS ===== */}
       <Accordion
         title="🗓️ Core Medicare Enrollment Periods"
@@ -221,7 +211,6 @@ export default function AgentTools() {
           </li>
         </ul>
       </Accordion>
-
       {/* ===== SPECIAL ENROLLMENT PERIODS ===== */}
       <Accordion
         title="🔁 Medicare Advantage Special Enrollment Periods (SEPs)"
@@ -285,7 +274,6 @@ export default function AgentTools() {
           <li>FEMA Disaster SEP: Extended enrollment window</li>
         </ul>
       </Accordion>
-
       {/* ===== DISASTER SEP TRACKER ===== */}
       <Accordion
         title="🌪️ Disaster SEP Tracker"
@@ -395,7 +383,6 @@ export default function AgentTools() {
           </ul>
         </Accordion>
       </Accordion>
-
       {/* ===== QUICK REFERENCES ===== */}
       <Accordion
         title="🔗 Quick Agent References"
@@ -439,13 +426,14 @@ export default function AgentTools() {
           </li>
         </ul>
       </Accordion>
-
       {/* No results message */}
       {q && !Object.values(accordionMatches).some(Boolean) && (
         <div className="agent-tools-no-results">
           <p>No results for "{searchQuery}"</p>
         </div>
       )}
+
+      <DailyVerse />
     </div>
   );
 }

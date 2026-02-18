@@ -367,7 +367,7 @@ Be like a helpful colleague, not a compliance robot. Be warm, specific, and prac
         {/* Header */}
         <div className="prompter-header" onClick={() => setExpanded((p) => !p)}>
           <div className="prompter-header-left">
-            <span className="prompter-mic-icon">{listening ? "🔴" : "🎙️"}</span>
+            <span className="prompter-mic-icon">{listening ? "🔴" : "⎇"}</span>
             <div>
               <h2 style={{ margin: 0 }}>AI Co-Pilot</h2>
               <span className="muted" style={{ fontSize: 12 }}>

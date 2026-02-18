@@ -18,6 +18,8 @@ import SectionSOB from "./SectionSOB";
 import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
 import ScriptPrompter from "./ScriptPrompter";
+import { motion, AnimatePresence } from "framer-motion";
+
 /* ---- Collapsible wrapper for completed sections ---- */
 function CollapsibleSection({
   sectionNum,
@@ -104,7 +106,12 @@ export default function ScriptFlow() {
   const ts = state.sectionTimestamps;
 
   return (
-    <div className="flow">
+    <motion.div
+      className="flow"
+      initial={{ opacity: 0, y: 40, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+    >
       {/* Sticky Timer Bar (appears when main timer scrolls out of view) */}
       <StickyTimerBar
         running={state.tpmoRunning}
@@ -204,6 +211,6 @@ export default function ScriptFlow() {
       </CollapsibleSection>
 
       <SectionWrapUp />
-    </div>
+    </motion.div>
   );
 }

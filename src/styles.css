@@ -1683,3 +1683,71 @@ input[type="file"]::file-selector-button:hover {
     transform: translateX(-50%) translateY(0);
   }
 }
+html {
+  scroll-behavior: smooth;
+}
+/* FORCE Carrier Quick Links to STACK */
+.accordion-body .carrier-links-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+}
+
+.accordion-body .carrier-links-grid .carrier-link-card {
+  display: flex !important; /* not inline-flex */
+  width: 100% !important;
+  justify-content: flex-start;
+}
+.legal-footer {
+  text-align: center;
+  max-width: 900px;
+  margin: 40px auto 20px auto; /* centers horizontally */
+  opacity: 0.8; /* optional – matches your subtle style */
+}
+/* =====================================
+   DAILY SCRIPTURE — ENROLLGEN STYLE
+===================================== */
+
+.daily-verse-card {
+  margin: 40px auto;
+  max-width: 960px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(15, 20, 28, 0.9),
+    rgba(16, 23, 34, 0.95)
+  );
+
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 18px;
+  padding: 24px;
+
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(14px);
+}
+
+.daily-verse-header {
+  margin-bottom: 14px;
+}
+
+.daily-verse-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+}
+
+.daily-verse-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+.daily-verse-ref {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
