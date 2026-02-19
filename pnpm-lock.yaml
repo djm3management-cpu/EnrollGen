@@ -8,9 +8,6 @@ dependencies:
   framer-motion:
     specifier: ^12.34.1
     version: 12.34.1(react-dom@19.1.0)(react@19.1.0)
-  netlify-identity-widget:
-    specifier: ^1.9.2
-    version: 1.9.2
   react:
     specifier: ^19.0.0
     version: 19.1.0
@@ -1995,10 +1992,6 @@ packages:
   /natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
     dev: true
-
-  /netlify-identity-widget@1.9.2:
-    resolution: {integrity: sha512-IbS1JHhs7BflCCvp3C9f6tmNSZqbyBhZ4Gs5+Qxt4IlPybTOVv0PqJ4TAsA7uxh1R+oXOAmk0OOMAkEaPYeCtA==}
-    dev: false
 
   /node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
