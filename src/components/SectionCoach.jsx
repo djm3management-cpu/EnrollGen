@@ -1,4 +1,5 @@
 import { useState, memo, useCallback } from "react";
+import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 
 /**
  * SectionCoach — AI Coach with deep, section-specific compliance knowledge.
@@ -180,6 +181,7 @@ const SectionCoach = memo(function SectionCoach({ stepName, context = "" }) {
   const [tip, setTip] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const { logEntry } = useCopilotLog();
 
   const askCoach = useCallback(async () => {
     setLoading(true);
@@ -237,11 +239,21 @@ Rules:
       try {
         const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
         setTip(parsed);
+        // Log the coach tip to transcript
+        const tipSummary = parsed.focus || "Coach tip provided";
+        logEntry(LOG_TYPES.SECTION_COACH, "info", tipSummary, {
+          section: stepName,
+          doItems: parsed.do,
+          avoidItems: parsed.avoid,
+          scriptTip: parsed.script_tip,
+        });
       } catch {
         // fallback: show raw text if JSON parse fails
-        setTip({
-          fallback:
-            raw || "Review the script requirements for this section carefully.",
+        const fallbackMsg =
+          raw || "Review the script requirements for this section carefully.";
+        setTip({ fallback: fallbackMsg });
+        logEntry(LOG_TYPES.SECTION_COACH, "info", fallbackMsg, {
+          section: stepName,
         });
       }
     } catch (err) {
@@ -253,7 +265,7 @@ Rules:
     } finally {
       setLoading(false);
     }
-  }, [stepName, context]);
+  }, [stepName, context, logEntry]);
 
   const renderTip = () => {
     if (!tip) return null;

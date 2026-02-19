@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 
 const QUICK_OBJECTIONS = [
   { label: "Not interested", text: "I'm not interested" },
@@ -19,6 +20,7 @@ export default function ObjectionHandler() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
   const inputRef = useRef(null);
+  const { logEntry } = useCopilotLog();
 
   const handleSubmit = async (objectionText) => {
     const text = objectionText || input.trim();
@@ -74,16 +76,31 @@ Rules:
           ...prev.slice(0, 4),
         ]);
         setInput("");
+        // Log objection + rebuttal to transcript
+        logEntry(LOG_TYPES.OBJECTION, "info", parsed.rebuttal, {
+          objection: text,
+          followup: parsed.followup,
+          agentTip: parsed.tip,
+        });
       } catch {
         setResponse({ rebuttal: raw, followup: null, tip: null });
+        // Log fallback rebuttal
+        logEntry(LOG_TYPES.OBJECTION, "info", raw || "Fallback rebuttal used", {
+          objection: text,
+        });
       }
     } catch (err) {
       console.error("ObjectionHandler error:", err);
+      const fallbackRebuttal =
+        "I understand completely. Can I ask — what would make this worth a few more minutes of your time?";
       setResponse({
-        rebuttal:
-          "I understand completely. Can I ask — what would make this worth a few more minutes of your time?",
+        rebuttal: fallbackRebuttal,
         followup: null,
         tip: null,
+      });
+      logEntry(LOG_TYPES.OBJECTION, "warn", fallbackRebuttal, {
+        objection: text,
+        error: true,
       });
     } finally {
       setLoading(false);

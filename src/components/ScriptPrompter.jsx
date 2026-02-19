@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { useScript } from "../context/ScriptContext";
 import { SECTION_LABELS } from "../context/scriptReducer";
-
+import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 /**
  * ScriptPrompter — AI Script Prompter with Speech Recognition
  *
@@ -51,6 +51,7 @@ const LEVEL_STYLE = {
 
 const ScriptPrompter = memo(function ScriptPrompter() {
   const { activeSection } = useScript();
+  const { logEntry } = useCopilotLog();
   const currentStep =
     SECTION_LABELS[activeSection] || `Section ${activeSection}`;
 
@@ -200,15 +201,20 @@ const ScriptPrompter = memo(function ScriptPrompter() {
   }, [transcript, scriptLines.length]);
 
   /* ─── show floating alert for warn/critical ─── */
-  const showFloat = useCallback((level, text) => {
-    if (level !== "warn" && level !== "critical") return;
-    clearTimeout(floatTimeout.current);
-    setFloatingAlert({ level, text });
-    floatTimeout.current = setTimeout(
-      () => setFloatingAlert(null),
-      level === "critical" ? 10000 : 6000
-    );
-  }, []);
+  const showFloat = useCallback(
+    (level, text) => {
+      if (level !== "warn" && level !== "critical") return;
+      clearTimeout(floatTimeout.current);
+      setFloatingAlert({ level, text });
+      // Log floating alert to transcript
+      logEntry(LOG_TYPES.FLOATING_ALERT, level, text, { section: currentStep });
+      floatTimeout.current = setTimeout(
+        () => setFloatingAlert(null),
+        level === "critical" ? 10000 : 6000
+      );
+    },
+    [logEntry, currentStep]
+  );
 
   /* ─── AI co-pilot ─── */
   const requestCoaching = useCallback(async () => {
@@ -290,13 +296,17 @@ Be like a helpful colleague, not a compliance robot. Be warm, specific, and prac
         };
         setMessages((prev) => [...prev.slice(-19), entry]); // keep last 20
         showFloat(level, message);
+        // Log co-pilot message to transcript
+        logEntry(LOG_TYPES.COPILOT_MSG, level, message, {
+          section: currentStep,
+        });
       }
     } catch (err) {
       console.error("Coaching API error:", err);
     } finally {
       setCoachingLoading(false);
     }
-  }, [currentStep, coachingLoading, showFloat]);
+  }, [currentStep, coachingLoading, showFloat, logEntry]);
 
   const clearTranscript = () => {
     setTranscript("");
