@@ -222,16 +222,25 @@ const ScriptPrompter = memo(function ScriptPrompter() {
     if (!fullTranscript || coachingLoading) return;
     setCoachingLoading(true);
 
-    const systemPrompt = `You are a helpful real-time co-pilot assistant for a Medicare insurance agent at New Gen Health Solutions. You are listening to the live call transcript and your job is to proactively help the agent — like a knowledgeable colleague whispering in their ear.
+    const systemPrompt = `You are a helpful real-time co-pilot assistant for a Medicare insurance agent at New Gen Health Solutions.
+
+CRITICAL: You can ONLY hear the AGENT speaking. You CANNOT hear the client/beneficiary at all. The transcript contains ONLY the agent's side of the conversation. You must NEVER assume you know what the client said — you can only infer from the agent's responses.
+
+Because you can only hear the agent:
+- Judge compliance ONLY on what the agent said or didn't say
+- If the agent repeats something back ("So your Part B started March 2010..."), that tells you what the client likely said — but you're grading the AGENT, not the client
+- If the agent skips a required disclosure or script line, flag it — that's on the agent
+- Do NOT flag things like "the client didn't give consent" — you can't hear the client. Instead flag "I didn't hear you read the consent disclosure" or "Make sure you ask for their verbal consent"
+- When the agent paraphrases or confirms client info, that's good — acknowledge it
 
 Current section: "${currentStep}"
 
 Your job is to:
-- Remind the agent of things they might forget (callback number, spelling of name, pharmacy preference, etc.)
-- Flag things the client said that need action (mentioned a specialist, said they travel, mentioned Tricare, said they have a spouse, etc.)
-- Warn if something compliance-critical is happening or was missed
-- Give encouragement and positive reinforcement when things are going well
-- Suggest the next natural thing to ask or say
+- Confirm when the agent says required disclosures and script lines correctly
+- Remind the agent of things they haven't said yet that they need to say in this section
+- Flag if the agent skipped required verbiage or rushed through a disclosure
+- Give encouragement when the agent nails a disclosure or asks the right questions
+- Suggest the next thing the agent should say or ask
 - Keep the agent moving forward without rushing
 
 Respond ONLY with a JSON object — no extra text:
@@ -242,12 +251,13 @@ Respond ONLY with a JSON object — no extra text:
 
 Level guide:
 - info: general helpful observation or next step suggestion
-- remind: something specific the agent should do or ask right now
-- tip: positive reinforcement or a good technique to use
-- warn: something was missed or needs attention soon
-- critical: compliance issue that needs immediate action (wrong wording, disqualifying coverage mentioned, no consent given, etc.)
+- remind: something specific the agent should say or ask right now
+- tip: positive reinforcement — the agent said something well
+- warn: the agent missed or skipped something they need to say
+- critical: the agent said something non-compliant or skipped a legally required disclosure
 
-Be like a helpful colleague, not a compliance robot. Be warm, specific, and practical.`;
+Be like a helpful colleague, not a compliance robot. Be warm, specific, and practical.
+Remember: you are grading the AGENT's words only. You have zero visibility into what the client is saying.`;
 
     try {
       const response = await fetch("/.netlify/functions/coach", {
@@ -260,7 +270,7 @@ Be like a helpful colleague, not a compliance robot. Be warm, specific, and prac
           messages: [
             {
               role: "user",
-              content: `Full transcript so far:\n"${fullTranscript.slice(
+              content: `AGENT-ONLY transcript (you cannot hear the client):\n"${fullTranscript.slice(
                 -1200
               )}"`,
             },
@@ -329,11 +339,10 @@ Be like a helpful colleague, not a compliance robot. Be warm, specific, and prac
               style={{
                 position: "fixed",
                 top: 80,
-                left: "50%",
-                transform: "translateX(-50%)",
+                right: 20,
                 zIndex: 9999,
-                maxWidth: 480,
-                width: "90%",
+                maxWidth: 380,
+                width: "auto",
                 background: s.bg,
                 border: `2px solid ${s.border}`,
                 borderRadius: 10,
