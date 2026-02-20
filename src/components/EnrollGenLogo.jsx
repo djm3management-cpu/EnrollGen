@@ -1,7 +1,7 @@
 export default function EnrollGenLogo({ width = 220, className = "" }) {
   return (
     <img
-      src="/logofinal.png"
+      src="/logofinalshadow.png"
       width={width}
       className={className}
       alt="EnrollGen Logo"

@@ -390,7 +390,7 @@ Remember: you are grading the AGENT's words only. You have zero visibility into 
             <div>
               <h2 style={{ margin: 0 }}>AI Co-Pilot</h2>
               <span className="muted" style={{ fontSize: 12 }}>
-                {currentStep} · Live transcript + real-time assistant
+                {currentStep} · Real-time assistant
               </span>
             </div>
           </div>
