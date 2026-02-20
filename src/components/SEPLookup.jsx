@@ -9,7 +9,7 @@ import { supabase } from "../lib/supabase";
 
 // ─── DATA LAYER ────────────────────────────────────────────────────────────────
 // FEMA: Live from OpenFEMA API v2 (free, no key, CORS allowed)
-// CMS Plans: Static from CMS Landscape Files CY2025 (see SETUP.md for DB import)
+// CMS Plans: Live from Supabase — CMS Landscape Files CY2026 (138K rows, county-level)
 // ─────────────────────────────────────────────────────────────────────────────────
 
 // Fetch live FEMA disaster declarations from OpenFEMA API
@@ -4528,11 +4528,11 @@ export default function SEPLookupTool() {
               }}
             >
               <strong>Disclaimer:</strong> FEMA disaster data is fetched live
-              from the OpenFEMA API (api.fema.gov). Plan data is sourced from
-              CMS Landscape Files for CY2025 — in production, import CMS CSV
-              files into your database for county-level precision (see
-              SETUP.md). Premiums, benefits, and service areas may vary — always
-              verify on Medicare.gov. For agent/broker use only.
+              from the OpenFEMA API (api.fema.gov) with verified fallback data.
+              Plan data is sourced from CMS Landscape Files for CY2026 (138K
+              rows via Supabase, county-level precision). Premiums, benefits,
+              and service areas may vary — always verify on Medicare.gov. For
+              agent/broker use only.
             </p>
           </div>
         </div>
