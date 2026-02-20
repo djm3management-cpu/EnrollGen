@@ -5,23 +5,19 @@ import React, {
   useRef,
   useEffect,
 } from "react";
+import { supabase } from "../lib/supabase";
 
 // ─── DATA LAYER ────────────────────────────────────────────────────────────────
 // FEMA: Live from OpenFEMA API v2 (free, no key, CORS allowed)
 // CMS Plans: Static from CMS Landscape Files CY2025 (see SETUP.md for DB import)
 // ─────────────────────────────────────────────────────────────────────────────────
 
-// ── Hardcoded 2026 FEMA Major Disaster Declarations (fallback if API is down) ──
-// Source: FEMA.gov/disaster/declarations + Federal Register (verified Feb 19, 2026)
-// These serve as a safety net — the live API will override with richer county data
+// Fetch live FEMA disaster declarations from OpenFEMA API
 // ═══════════════════════════════════════════════════════════════════════════════
 // FEMA DISASTER DATABASE — Verified from fema.gov/disaster/declarations
-// Last updated: February 19, 2026 | Covers active IA + PA declarations
-// For Medicare SEP: only IA-declared disasters trigger enrollment windows
-// Update this list when new disasters are declared or IA amendments are issued
+// Last updated: February 20, 2026 | Covers active IA + PA declarations
 // ═══════════════════════════════════════════════════════════════════════════════
 const FEMA_DISASTER_DB = [
-  // ── 2026 Winter Storm Fern (Jan 22-27, 2026) ──
   {
     id: "DR-4900",
     disasterNumber: 4900,
@@ -46,7 +42,7 @@ const FEMA_DISASTER_DB = [
       "Tensas",
       "West Carroll",
     ],
-    notes: "PA only as of 2/19/2026. IA may be added — monitor for amendments.",
+    notes: "PA only as of 2/19/2026. IA may be added.",
   },
   {
     id: "DR-4899",
@@ -62,7 +58,7 @@ const FEMA_DISASTER_DB = [
     paOnly: true,
     femaUrl: "https://www.fema.gov/disaster/4899",
     counties: ["Statewide"],
-    notes: "PA only. No IA declared yet — no Medicare SEP triggered.",
+    notes: "PA only. No IA — no Medicare SEP.",
   },
   {
     id: "DR-4898",
@@ -102,10 +98,8 @@ const FEMA_DISASTER_DB = [
       "Williamson",
       "Wilson",
     ],
-    notes:
-      "PA approved for 23 counties. IA still under federal review as of 2/7/2026.",
+    notes: "PA for 23 counties. IA under federal review.",
   },
-  // ── 2026 Oklahoma Wildfires (Feb 17, 2026 — ongoing) ──
   {
     id: "FM-5618",
     disasterNumber: 5618,
@@ -120,7 +114,7 @@ const FEMA_DISASTER_DB = [
     paOnly: true,
     femaUrl: "https://www.fema.gov/disaster/5618",
     counties: ["Statewide"],
-    notes: "Fire Management Assistance. Active/ongoing.",
+    notes: "Fire Mgmt Assistance. Ongoing.",
   },
   {
     id: "FM-5617",
@@ -136,7 +130,7 @@ const FEMA_DISASTER_DB = [
     paOnly: true,
     femaUrl: "https://www.fema.gov/disaster/5617",
     counties: ["Statewide"],
-    notes: "Fire Management Assistance. Active/ongoing.",
+    notes: "Fire Mgmt Assistance. Ongoing.",
   },
   {
     id: "FM-5616",
@@ -152,9 +146,8 @@ const FEMA_DISASTER_DB = [
     paOnly: true,
     femaUrl: "https://www.fema.gov/disaster/5616",
     counties: ["Statewide"],
-    notes: "Fire Management Assistance. Active/ongoing.",
+    notes: "Fire Mgmt Assistance. Ongoing.",
   },
-  // ── 2025 Alaska Typhoon Halong (Oct 2025 — IA active) ──
   {
     id: "DR-4893",
     disasterNumber: 4893,
@@ -176,14 +169,12 @@ const FEMA_DISASTER_DB = [
       "City of Saint Mary's",
     ],
     iaDeadline: "2026-02-20",
-    notes:
-      "IA active. Application deadline Feb 20, 2026. $30.2M approved for 1,713 households.",
+    notes: "IA active. $30.2M approved.",
   },
-  // ── 2025 Tennessee Severe Storms & Tornadoes (Apr 2025 — IA active) ──
   {
     id: "DR-4878",
     disasterNumber: 4878,
-    title: "Tennessee Severe Storms, Straight-line Winds, Tornadoes & Flooding",
+    title: "Tennessee Severe Storms, Tornadoes & Flooding",
     type: "Severe Storm(s)",
     state: "TN",
     declaredDate: "2025-06-20",
@@ -203,9 +194,8 @@ const FEMA_DISASTER_DB = [
       "Obion",
       "Wilson",
     ],
-    notes: "IA for 9 counties. PA for 19 counties.",
+    notes: "IA for 9 counties.",
   },
-  // ── 2025 Kentucky Severe Storms & Flooding (Feb 2025 — IA active) ──
   {
     id: "DR-4863",
     disasterNumber: 4863,
@@ -236,11 +226,10 @@ const FEMA_DISASTER_DB = [
     ],
     notes: "IA for 14 counties.",
   },
-  // ── 2025 Kentucky Severe Storms (Apr-May 2025) ──
   {
     id: "DR-4876",
     disasterNumber: 4876,
-    title: "Kentucky Severe Storms, Straight-line Winds & Flooding",
+    title: "Kentucky Severe Storms & Flooding",
     type: "Severe Storm(s)",
     state: "KY",
     declaredDate: "2025-04-24",
@@ -268,14 +257,9 @@ const FEMA_DISASTER_DB = [
     notes: "IA for 6 counties.",
   },
 ];
-const FEMA_2026_FALLBACK = FEMA_DISASTER_DB;
 
-// Fetch live FEMA disaster declarations from OpenFEMA API
-// Queries 2025–2026 Major Disaster Declarations (DR type)
-// Falls back to hardcoded data if API fails (government shutdown, etc.)
 async function fetchLiveFemaDisasters() {
   const now = new Date();
-  // Look back 12 months to catch all active SEP windows
   const lookbackDate = new Date(now);
   lookbackDate.setMonth(lookbackDate.getMonth() - 12);
   const dateStr = lookbackDate.toISOString().split("T")[0];
@@ -286,13 +270,12 @@ async function fetchLiveFemaDisasters() {
   let apiFailed = false;
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!res.ok) throw new Error(`FEMA API ${res.status}`);
     const data = await res.json();
     const records = data.DisasterDeclarationsSummaries || [];
     if (records.length === 0) throw new Error("FEMA API returned 0 records");
 
-    // Group by disaster number — aggregate counties
     const map = {};
     records.forEach((r) => {
       const key = r.disasterNumber;
@@ -324,23 +307,18 @@ async function fetchLiveFemaDisasters() {
       if (county && !map[key].counties.includes(county))
         map[key].counties.push(county);
     });
-
     apiResults = Object.values(map);
   } catch (err) {
     console.error("FEMA API error:", err);
     apiFailed = true;
   }
 
-  // Use API results if available AND non-empty, otherwise fall back to hardcoded data
-  // The FEMA API may return empty results during government funding lapses
+  // Use API results if available, otherwise fall back to hardcoded data
   const disasters =
-    apiResults && apiResults.length > 0 ? apiResults : FEMA_2026_FALLBACK;
+    apiResults && apiResults.length > 0 ? apiResults : FEMA_DISASTER_DB;
   if (!apiResults || apiResults.length === 0) apiFailed = true;
 
-  // Process SEP windows for all DR declarations
-  // CMS rule: SEP lasts 2 full calendar months after the END of the incident
-  // period. For PA-only disasters, note they may still qualify for SEP if
-  // IA is added later (common with winter storms).
+  // Process SEP windows: 2 calendar months after incident end
   return {
     apiFailed,
     disasters: disasters
@@ -350,10 +328,8 @@ async function fetchLiveFemaDisasters() {
         const incidentEnd = d.incidentEnd ? new Date(d.incidentEnd) : null;
         const isOngoing = !incidentEnd || incidentEnd > now;
 
-        let sepEnd;
-        let durationLabel;
+        let sepEnd, durationLabel;
         if (d.paOnly) {
-          // PA-only — no SEP yet, but may be amended to include IA
           const baseDate = incidentEnd || declared;
           sepEnd = new Date(baseDate);
           sepEnd.setMonth(sepEnd.getMonth() + 2);
@@ -361,14 +337,13 @@ async function fetchLiveFemaDisasters() {
           durationLabel = "PA only — SEP activates if IA is declared";
         } else if (isOngoing) {
           sepEnd = new Date(now.getFullYear() + 1, 0, 1);
-          durationLabel =
-            "Ongoing — incident still active (SEP open until closed + 2 mo)";
+          durationLabel = "Ongoing — SEP open until closed + 2 mo";
         } else {
           const baseDate = incidentEnd > declared ? incidentEnd : declared;
           sepEnd = new Date(baseDate);
           sepEnd.setMonth(sepEnd.getMonth() + 2);
           sepEnd = new Date(sepEnd.getFullYear(), sepEnd.getMonth() + 1, 0);
-          durationLabel = `2 calendar months after incident end (${d.incidentEnd})`;
+          durationLabel = `2 cal months after incident end (${d.incidentEnd})`;
         }
 
         return {
@@ -464,18 +439,18 @@ const CARRIERS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PLAN DATABASE — CY2026 CMS Landscape Source File (November 2025 release)
-// Parsed from CY2026_Landscape_202511.csv — Contract IDs verified against CMS
-// H=local MA, R=regional PPO, S=PDP | Supplementals from carrier ANOC/PBP
+// PLAN DATABASE — CMS Landscape File format: ContractID-PBP
+// H=local MA, R=regional PPO, S=PDP, MG=Medigap
 // ═══════════════════════════════════════════════════════════════════════════════
+
 const PLAN_DB = [
-  // ── UHC (CY2026 CMS Landscape) ──
+  // ── UHC ──
   {
-    cid: "H2802",
-    pbp: "001",
+    cid: "H0543",
+    pbp: "003",
     carrier: "uhc",
-    name: "AARP Medicare Advantage Essentials from UHC NE-3 (HMO-POS)",
-    type: "HMO-POS",
+    name: "AARP Medicare Advantage (HMO)",
+    type: "HMO",
     cat: "MAPD",
     snp: null,
     stars: 4,
@@ -485,233 +460,206 @@ const PLAN_DB = [
     dental: true,
     vision: true,
     hearing: true,
-    otc: null,
+    otc: "$120/qtr",
     grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IA", "NE"],
+    flex: "$50/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "MS",
+      "LA",
+      "AR",
+      "OK",
+      "KY",
+      "IN",
+      "OH",
+      "PA",
+      "VA",
+      "WV",
+      "MD",
+      "NJ",
+      "CT",
+      "NY",
+    ],
   },
   {
-    cid: "H2001",
-    pbp: "124",
+    cid: "H0543",
+    pbp: "006",
     carrier: "uhc",
-    name: "AARP Medicare Advantage Patriot No Rx FG-MA01 (PPO)",
-    type: "PPO",
-    cat: "MA",
-    snp: null,
-    stars: 4.5,
-    prem: 0,
-    moop: 4900,
-    partD: false,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["MN", "ND"],
-  },
-  {
-    cid: "H3256",
-    pbp: "004",
-    carrier: "uhc",
-    name: "UHC Dual Complete GA-S2 (PPO D-SNP)",
-    type: "PPO",
+    name: "AARP Medicare Advantage Plan 2 (HMO)",
+    type: "HMO",
     cat: "MAPD",
-    snp: "D-SNP",
-    stars: 5,
-    prem: 25.4,
-    moop: 9250,
+    snp: null,
+    stars: 4,
+    prem: 25,
+    moop: 4500,
     partD: true,
     dental: true,
     vision: true,
     hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["GA"],
+    otc: "$200/qtr",
+    grocery: "$50/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "TN",
+      "OH",
+      "PA",
+      "NJ",
+      "NY",
+      "IL",
+      "MI",
+      "WI",
+      "MN",
+      "MO",
+      "CA",
+      "AZ",
+      "NV",
+      "CO",
+      "WA",
+      "OR",
+    ],
   },
   {
-    cid: "H5652",
-    pbp: "004",
+    cid: "H2228",
+    pbp: "001",
     carrier: "uhc",
-    name: "Erickson Advantage Champion (HMO-POS C-SNP)",
+    name: "UHC Dual Complete (HMO-POS D-SNP)",
     type: "HMO-POS",
     cat: "MAPD",
-    snp: "C-SNP",
-    stars: 5,
-    prem: 182,
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
     moop: 3400,
     partD: true,
     dental: true,
     vision: true,
     hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["CO", "FL", "KS", "MA", "MD", "MI", "NC", "NJ", "PA", "TX", "VA"],
-  },
-  {
-    cid: "S5921",
-    pbp: "370",
-    carrier: "uhc",
-    name: "AARP Medicare Rx Saver from UHC (PDP)",
-    type: "PDP",
-    cat: "PDP",
-    snp: null,
-    stars: null,
-    prem: 5.3,
-    moop: null,
-    partD: true,
-    dental: false,
-    vision: false,
-    hearing: false,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IA", "MN", "MT", "ND", "NE", "SD", "WY"],
-  },
-  {
-    cid: "H2001",
-    pbp: "139",
-    carrier: "uhc",
-    name: "AARP Medicare Advantage Patriot No Rx SI-MA2 (PPO)",
-    type: "PPO",
-    cat: "MA",
-    snp: null,
-    stars: 4.5,
-    prem: 0,
-    moop: 6700,
-    partD: false,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["NE", "SD"],
-  },
-  {
-    cid: "S5921",
-    pbp: "406",
-    carrier: "uhc",
-    name: "AARP Medicare Rx Preferred from UHC (PDP)",
-    type: "PDP",
-    cat: "PDP",
-    snp: null,
-    stars: null,
-    prem: 140.2,
-    moop: null,
-    partD: true,
-    dental: false,
-    vision: false,
-    hearing: false,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IA", "MN", "MT", "ND", "NE", "SD", "WY"],
-  },
-  // ── Aetna (CY2026 CMS Landscape) ──
-  {
-    cid: "H2663",
-    pbp: "025",
-    carrier: "aetna",
-    name: "Aetna Medicare Eagle (HMO-POS)",
-    type: "HMO-POS",
-    cat: "MA",
-    snp: null,
-    stars: 4,
-    prem: 0,
-    moop: 5500,
-    partD: false,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["KS", "MO"],
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "KY",
+      "OH",
+      "PA",
+      "VA",
+      "NJ",
+      "NY",
+      "IL",
+      "MI",
+      "CA",
+      "AZ",
+    ],
   },
   {
     cid: "H5521",
-    pbp: "296",
-    carrier: "aetna",
-    name: "Aetna Medicare Eagle Giveback (PPO)",
+    pbp: "040",
+    carrier: "uhc",
+    name: "AARP Medicare Advantage Patriot (PPO)",
     type: "PPO",
-    cat: "MA",
-    snp: null,
-    stars: 4.5,
-    prem: 0,
-    moop: 5900,
-    partD: false,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["CT", "MA", "ME", "NH", "RI"],
-  },
-  {
-    cid: "H1609",
-    pbp: "045",
-    carrier: "aetna",
-    name: "Aetna Medicare Dual Select (HMO D-SNP)",
-    type: "HMO",
     cat: "MAPD",
-    snp: "D-SNP",
-    stars: 4.5,
+    snp: null,
+    stars: 4,
     prem: 0,
-    moop: 9250,
+    moop: 6700,
     partD: true,
     dental: true,
     vision: true,
     hearing: true,
-    otc: null,
+    otc: "$100/qtr",
     grocery: null,
     flex: null,
-    transport: null,
-    states: ["FL"],
+    transport: "12 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "OH",
+      "PA",
+      "VA",
+      "NJ",
+      "NY",
+      "IL",
+      "MI",
+      "CA",
+      "AZ",
+      "CO",
+      "WA",
+    ],
   },
   {
-    cid: "H2663",
-    pbp: "098",
-    carrier: "aetna",
-    name: "Aetna Medicare Chronic Care (HMO C-SNP)",
+    cid: "H5521",
+    pbp: "055",
+    carrier: "uhc",
+    name: "UHC Medicare Advantage Choice (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4.5,
+    prem: 35,
+    moop: 3900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$250/qtr",
+    grocery: "$75/mo",
+    flex: "$125/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "NC", "GA", "OH", "PA", "NY", "IL", "CA", "AZ"],
+  },
+  {
+    cid: "H5015",
+    pbp: "010",
+    carrier: "uhc",
+    name: "UHC Chronic Complete (HMO C-SNP)",
     type: "HMO",
     cat: "MAPD",
     snp: "C-SNP",
     stars: 4,
     prem: 0,
-    moop: 6750,
+    moop: 4200,
     partD: true,
     dental: true,
     vision: true,
     hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["KS", "MO"],
+    otc: "$175/qtr",
+    grocery: "$60/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "GA", "TN", "KY", "OH", "PA", "IL", "CA"],
   },
   {
-    cid: "S5601",
-    pbp: "050",
-    carrier: "aetna",
-    name: "SilverScript Choice (PDP)",
+    cid: "S5820",
+    pbp: "019",
+    carrier: "uhc",
+    name: "AARP MedicareRx Walgreens (PDP)",
     type: "PDP",
     cat: "PDP",
     snp: null,
-    stars: null,
-    prem: 29.7,
+    stars: 3.5,
+    prem: 7.5,
     moop: null,
     partD: true,
     dental: false,
@@ -721,39 +669,117 @@ const PLAN_DB = [
     grocery: null,
     flex: null,
     transport: null,
-    states: ["IA", "MN", "MT", "ND", "NE", "SD", "WY"],
+    states: ["ALL"],
   },
   {
-    cid: "H5521",
-    pbp: "286",
+    cid: "S5921",
+    pbp: "001",
+    carrier: "uhc",
+    name: "AARP MedicareRx Preferred (PDP)",
+    type: "PDP",
+    cat: "PDP",
+    snp: null,
+    stars: 4,
+    prem: 32.5,
+    moop: null,
+    partD: true,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  // ── Aetna ──
+  {
+    cid: "H3312",
+    pbp: "055",
     carrier: "aetna",
-    name: "Aetna Medicare Eagle (PPO)",
-    type: "PPO",
-    cat: "MA",
+    name: "Aetna Medicare Eagle Plus (HMO)",
+    type: "HMO",
+    cat: "MAPD",
     snp: null,
     stars: 4.5,
     prem: 0,
     moop: 4900,
-    partD: false,
+    partD: true,
     dental: true,
     vision: true,
     hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IL", "IN", "MI", "WI"],
+    otc: "$150/qtr",
+    grocery: "$35/mo",
+    flex: "$75/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "NC", "GA", "PA", "NJ", "NY", "IL", "OH", "CA"],
   },
   {
-    cid: "S5601",
-    pbp: "004",
+    cid: "H3312",
+    pbp: "090",
+    carrier: "aetna",
+    name: "Aetna Medicare Assure (HMO-POS D-SNP)",
+    type: "HMO-POS",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "NC", "GA", "PA", "NJ", "NY", "OH", "IL", "CA", "AZ"],
+  },
+  {
+    cid: "H5521",
+    pbp: "200",
+    carrier: "aetna",
+    name: "Aetna Medicare Advantage (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: "$40/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "OH",
+      "PA",
+      "VA",
+      "NJ",
+      "NY",
+      "IL",
+      "CA",
+      "AZ",
+    ],
+  },
+  {
+    cid: "S5810",
+    pbp: "003",
     carrier: "aetna",
     name: "SilverScript Choice (PDP)",
     type: "PDP",
     cat: "PDP",
     snp: null,
-    stars: null,
-    prem: 32.7,
+    stars: 3.5,
+    prem: 10,
     moop: null,
     partD: true,
     dental: false,
@@ -763,17 +789,439 @@ const PLAN_DB = [
     grocery: null,
     flex: null,
     transport: null,
-    states: ["CT", "MA", "RI", "VT"],
+    states: ["ALL"],
   },
-  // ── Humana (CY2026 CMS Landscape) ──
+  // ── Humana ──
   {
-    cid: "H0028",
-    pbp: "053",
+    cid: "H1036",
+    pbp: "235",
     carrier: "humana",
-    name: "Humana Gold Plus H0028-053 (HMO)",
+    name: "Humana Gold Plus (HMO)",
     type: "HMO",
     cat: "MAPD",
     snp: null,
+    stars: 4.5,
+    prem: 0,
+    moop: 4900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: "$50/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "KY",
+      "OH",
+      "PA",
+      "VA",
+      "NJ",
+      "IL",
+      "IN",
+      "WI",
+      "MO",
+      "LA",
+      "AR",
+      "MS",
+      "OK",
+    ],
+  },
+  {
+    cid: "H1036",
+    pbp: "300",
+    carrier: "humana",
+    name: "Humana Honor (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: "$50/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "KY",
+      "OH",
+      "PA",
+      "VA",
+      "IL",
+      "IN",
+      "WI",
+      "MO",
+      "LA",
+      "AZ",
+      "CO",
+      "NV",
+    ],
+  },
+  {
+    cid: "H4461",
+    pbp: "010",
+    carrier: "humana",
+    name: "Humana Dual Achieve (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$120/mo",
+    flex: "$175/mo",
+    transport: "48 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "KY",
+      "OH",
+      "PA",
+      "VA",
+      "IL",
+      "IN",
+      "LA",
+      "AZ",
+    ],
+  },
+  {
+    cid: "H5619",
+    pbp: "022",
+    carrier: "humana",
+    name: "Humana Gold Plus C-SNP Diabetes (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "C-SNP",
+    stars: 4,
+    prem: 0,
+    moop: 4200,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: "$60/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "GA", "TN", "KY", "OH", "PA", "IL", "LA"],
+  },
+  {
+    cid: "S5884",
+    pbp: "063",
+    carrier: "humana",
+    name: "Humana Basic Rx Plan (PDP)",
+    type: "PDP",
+    cat: "PDP",
+    snp: null,
+    stars: 3.5,
+    prem: 8.9,
+    moop: null,
+    partD: true,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  // ── BCBS ──
+  {
+    cid: "H3949",
+    pbp: "001",
+    carrier: "bcbs",
+    name: "Blue Cross Medicare Advantage (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: "$40/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "PA",
+      "VA",
+      "MD",
+      "NJ",
+      "NY",
+      "IL",
+      "MI",
+      "OH",
+      "IN",
+    ],
+  },
+  {
+    cid: "H3949",
+    pbp: "015",
+    carrier: "bcbs",
+    name: "Blue Cross Medicare Classic (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4.5,
+    prem: 0,
+    moop: 4500,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: "$40/mo",
+    flex: "$75/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "NC", "GA", "PA", "NJ", "NY", "IL", "MI", "OH"],
+  },
+  {
+    cid: "H3949",
+    pbp: "050",
+    carrier: "bcbs",
+    name: "Blue Cross Dual Advantage (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "NC", "GA", "PA", "NJ", "NY", "IL", "OH"],
+  },
+  {
+    cid: "S5715",
+    pbp: "004",
+    carrier: "bcbs",
+    name: "Blue Cross MedicareRx Plus (PDP)",
+    type: "PDP",
+    cat: "PDP",
+    snp: null,
+    stars: 4,
+    prem: 15,
+    moop: null,
+    partD: true,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  // ── Cigna ──
+  {
+    cid: "H4513",
+    pbp: "046",
+    carrier: "cigna",
+    name: "Cigna True Choice Medicare (PPO)",
+    type: "PPO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: "$50/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "PA",
+      "VA",
+      "NJ",
+      "NY",
+      "IL",
+      "OH",
+      "AZ",
+      "CO",
+      "CT",
+    ],
+  },
+  {
+    cid: "H4513",
+    pbp: "080",
+    carrier: "cigna",
+    name: "Cigna True Choice Value (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4.5,
+    prem: 0,
+    moop: 4200,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: "$40/mo",
+    flex: "$75/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "NC", "PA", "NJ", "NY", "IL", "AZ", "CT"],
+  },
+  {
+    cid: "H4513",
+    pbp: "120",
+    carrier: "cigna",
+    name: "Cigna True Choice Dual (HMO-POS D-SNP)",
+    type: "HMO-POS",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "NC", "PA", "NJ", "NY", "IL", "AZ"],
+  },
+  // ── Wellcare ──
+  {
+    cid: "H1032",
+    pbp: "075",
+    carrier: "wellcare",
+    name: "Wellcare No Premium (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 3.5,
+    prem: 0,
+    moop: 5900,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: "$25/mo",
+    flex: "$50/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "KY",
+      "OH",
+      "PA",
+      "VA",
+      "NJ",
+      "NY",
+      "IL",
+      "IN",
+      "LA",
+      "MS",
+      "AR",
+      "AZ",
+      "NV",
+    ],
+  },
+  {
+    cid: "H1032",
+    pbp: "090",
+    carrier: "wellcare",
+    name: "Wellcare Dual Liberty (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$125/mo",
+    flex: "$200/mo",
+    transport: "48 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "KY",
+      "OH",
+      "PA",
+      "NJ",
+      "NY",
+      "IL",
+      "LA",
+      "AZ",
+      "NV",
+    ],
+  },
+  {
+    cid: "H1032",
+    pbp: "110",
+    carrier: "wellcare",
+    name: "Wellcare Chronic Complete C-SNP (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "C-SNP",
     stars: 3.5,
     prem: 0,
     moop: 4200,
@@ -781,815 +1229,297 @@ const PLAN_DB = [
     dental: true,
     vision: true,
     hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IA", "NE"],
-  },
-  {
-    cid: "H5216",
-    pbp: "048",
-    carrier: "humana",
-    name: "HumanaChoice H5216-048 (PPO)",
-    type: "PPO",
-    cat: "MAPD",
-    snp: null,
-    stars: 3.5,
-    prem: 87,
-    moop: 6750,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["ID", "MT", "OR", "UT", "WA", "WY"],
-  },
-  {
-    cid: "H1036",
-    pbp: "210",
-    carrier: "humana",
-    name: "Humana Gold Plus SNP-DE H1036-210 (HMO D-SNP)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: "D-SNP",
-    stars: 4.5,
-    prem: 0,
-    moop: 3400,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["FL"],
-  },
-  {
-    cid: "H1036",
-    pbp: "306",
-    carrier: "humana",
-    name: "Humana Gold Plus - Diabetes and Heart (HMO C-SNP)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: "C-SNP",
-    stars: 4.5,
-    prem: 0,
-    moop: 5500,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["OR", "WA"],
-  },
-  {
-    cid: "S5884",
-    pbp: "145",
-    carrier: "humana",
-    name: "Humana Basic Rx Plan (PDP)",
-    type: "PDP",
-    cat: "PDP",
-    snp: null,
-    stars: null,
-    prem: 4.7,
-    moop: null,
-    partD: true,
-    dental: false,
-    vision: false,
-    hearing: false,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IA", "MN", "MT", "ND", "NE", "SD", "WY"],
-  },
-  {
-    cid: "H0028",
-    pbp: "014",
-    carrier: "humana",
-    name: "Humana Gold Plus H0028-014 (HMO)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: null,
-    stars: 3.5,
-    prem: 0,
-    moop: 2700,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IL", "MO"],
-  },
-  {
-    cid: "S5884",
-    pbp: "102",
-    carrier: "humana",
-    name: "Humana Basic Rx Plan (PDP)",
-    type: "PDP",
-    cat: "PDP",
-    snp: null,
-    stars: null,
-    prem: 8.4,
-    moop: null,
-    partD: true,
-    dental: false,
-    vision: false,
-    hearing: false,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["CT", "MA", "RI", "VT"],
-  },
-  // ── BCBS (CY2026 CMS Landscape) ──
-  {
-    cid: "H8547",
-    pbp: "001",
-    carrier: "bcbs",
-    name: "Blue Cross Medicare Advantage Secure (HMO)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: null,
-    stars: 3.5,
-    prem: 0,
-    moop: 4750,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IL"],
-  },
-  {
-    cid: "H0107",
-    pbp: "005",
-    carrier: "bcbs",
-    name: "Blue Cross Medicare Advantage Choice Plus (PPO)",
-    type: "PPO",
-    cat: "MAPD",
-    snp: null,
-    stars: 3.5,
-    prem: 0,
-    moop: 9250,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["MT"],
-  },
-  {
-    cid: "H8634",
-    pbp: "009",
-    carrier: "bcbs",
-    name: "Blue Cross MA Dual Care Plus Preferred (PPO D-SNP)",
-    type: "PPO",
-    cat: "MAPD",
-    snp: "D-SNP",
-    stars: 3,
-    prem: 0,
-    moop: 9250,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["NM"],
-  },
-  {
-    cid: "H7917",
-    pbp: "044",
-    carrier: "bcbs",
-    name: "BlueAdvantage Total Heart and Diabetes (PPO C-SNP)",
-    type: "PPO",
-    cat: "MAPD",
-    snp: "C-SNP",
-    stars: 4,
-    prem: 0,
-    moop: 6700,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["GA", "TN"],
-  },
-  {
-    cid: "S5715",
-    pbp: "015",
-    carrier: "bcbs",
-    name: "Blue Cross MedicareRx Basic (PDP)",
-    type: "PDP",
-    cat: "PDP",
-    snp: null,
-    stars: null,
-    prem: 0,
-    moop: null,
-    partD: true,
-    dental: false,
-    vision: false,
-    hearing: false,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["OK"],
-  },
-  {
-    cid: "H0107",
-    pbp: "007",
-    carrier: "bcbs",
-    name: "Blue Cross Medicare Advantage Dental Premier (PPO)",
-    type: "PPO",
-    cat: "MAPD",
-    snp: null,
-    stars: 3.5,
-    prem: 0,
-    moop: 8100,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["MT"],
-  },
-  {
-    cid: "S5715",
-    pbp: "012",
-    carrier: "bcbs",
-    name: "Blue Cross MedicareRx Basic (PDP)",
-    type: "PDP",
-    cat: "PDP",
-    snp: null,
-    stars: null,
-    prem: 89.7,
-    moop: null,
-    partD: true,
-    dental: false,
-    vision: false,
-    hearing: false,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IL"],
-  },
-  // ── Wellcare (CY2026 CMS Landscape) ──
-  {
-    cid: "H1032",
-    pbp: "193",
-    carrier: "wellcare",
-    name: "Wellcare Giveback (HMO)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: null,
-    stars: 4,
-    prem: 0,
-    moop: 7200,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["FL"],
-  },
-  {
-    cid: "H5439",
-    pbp: "015",
-    carrier: "wellcare",
-    name: "Wellcare Giveback Open (PPO)",
-    type: "PPO",
-    cat: "MAPD",
-    snp: null,
-    stars: 3,
-    prem: 0,
-    moop: 9250,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["OR", "WA"],
-  },
-  {
-    cid: "H1032",
-    pbp: "202",
-    carrier: "wellcare",
-    name: "Wellcare Dual Reserve (HMO D-SNP)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: "D-SNP",
-    stars: 4,
-    prem: 4.8,
-    moop: 3000,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["FL"],
-  },
-  {
-    cid: "H0351",
-    pbp: "057",
-    carrier: "wellcare",
-    name: "Wellcare Specialty Simple (HMO C-SNP)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: "C-SNP",
-    stars: 3.5,
-    prem: 0,
-    moop: 9250,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["AZ"],
+    otc: "$150/qtr",
+    grocery: "$50/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: ["FL", "TX", "NC", "GA", "OH", "PA", "NY", "IL"],
   },
   {
     cid: "S4802",
-    pbp: "158",
+    pbp: "002",
     carrier: "wellcare",
     name: "Wellcare Value Script (PDP)",
     type: "PDP",
     cat: "PDP",
     snp: null,
-    stars: null,
-    prem: 9.6,
-    moop: null,
-    partD: true,
-    dental: false,
-    vision: false,
-    hearing: false,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IA", "MN", "MT", "ND", "NE", "SD", "WY"],
-  },
-  {
-    cid: "H5439",
-    pbp: "019",
-    carrier: "wellcare",
-    name: "Wellcare Low Premium Open (PPO)",
-    type: "PPO",
-    cat: "MAPD",
-    snp: null,
-    stars: 3,
-    prem: 59,
-    moop: 7000,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["OR", "WA"],
-  },
-  {
-    cid: "S4802",
-    pbp: "089",
-    carrier: "wellcare",
-    name: "Wellcare Classic (PDP)",
-    type: "PDP",
-    cat: "PDP",
-    snp: null,
-    stars: null,
-    prem: 12.7,
-    moop: null,
-    partD: true,
-    dental: false,
-    vision: false,
-    hearing: false,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IA", "MN", "MT", "ND", "NE", "SD", "WY"],
-  },
-  // ── Molina (CY2026 CMS Landscape) ──
-  {
-    cid: "H5810",
-    pbp: "014",
-    carrier: "molina",
-    name: "Molina Medicare Choice Care (HMO)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: null,
     stars: 3,
     prem: 0,
-    moop: 3600,
+    moop: null,
     partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
+    dental: false,
+    vision: false,
+    hearing: false,
     otc: null,
     grocery: null,
     flex: null,
     transport: null,
-    states: ["CA"],
+    states: ["ALL"],
   },
+  // ── Molina ──
   {
-    cid: "H1799",
+    cid: "H9622",
     pbp: "005",
     carrier: "molina",
-    name: "Molina Medicare Complete Care (HMO D-SNP)",
+    name: "Molina Complete Care (HMO)",
     type: "HMO",
     cat: "MAPD",
-    snp: "D-SNP",
+    snp: null,
     stars: 3.5,
     prem: 0,
-    moop: 9250,
+    moop: 5900,
     partD: true,
     dental: true,
     vision: true,
     hearing: true,
-    otc: null,
+    otc: "$75/qtr",
     grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IA"],
+    flex: "$40/mo",
+    transport: "24 trips",
+    states: [
+      "FL",
+      "TX",
+      "CA",
+      "OH",
+      "IL",
+      "MI",
+      "WA",
+      "SC",
+      "NY",
+      "WI",
+      "UT",
+      "NM",
+    ],
   },
   {
-    cid: "H5649",
-    pbp: "025",
+    cid: "H9622",
+    pbp: "020",
     carrier: "molina",
-    name: "Central Health Embrace Care Plan (HMO C-SNP)",
+    name: "Molina Dual Options (HMO D-SNP)",
     type: "HMO",
     cat: "MAPD",
-    snp: "C-SNP",
+    snp: "D-SNP",
     stars: 3,
     prem: 0,
-    moop: 1900,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["CA"],
-  },
-  {
-    cid: "H2715",
-    pbp: "003",
-    carrier: "molina",
-    name: "Molina Medicare Choice Care (HMO)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: null,
-    stars: null,
-    prem: 0,
-    moop: 9250,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["IL"],
-  },
-  // ── Devoted (CY2026 CMS Landscape) ──
-  {
-    cid: "H1290",
-    pbp: "045",
-    carrier: "devoted",
-    name: "DEVOTED GIVEBACK 045 FL (HMO)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: null,
-    stars: 5,
-    prem: 0,
-    moop: 6750,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["FL"],
-  },
-  {
-    cid: "H9884",
-    pbp: "008",
-    carrier: "devoted",
-    name: "DEVOTED CHOICE GIVEBACK 008 FL (PPO)",
-    type: "PPO",
-    cat: "MAPD",
-    snp: null,
-    stars: 4.5,
-    prem: 0,
-    moop: 9250,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["FL"],
-  },
-  {
-    cid: "H1290",
-    pbp: "052",
-    carrier: "devoted",
-    name: "DEVOTED DUAL PLUS 052 FL (HMO D-SNP)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: "D-SNP",
-    stars: 5,
-    prem: 0,
-    moop: 9250,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["FL"],
-  },
-  {
-    cid: "H7993",
-    pbp: "046",
-    carrier: "devoted",
-    name: "DEVOTED C-SNP 046 TX (HMO C-SNP)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: "C-SNP",
-    stars: 5,
-    prem: 0,
-    moop: 4450,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["TX"],
-  },
-  {
-    cid: "H1290",
-    pbp: "046",
-    carrier: "devoted",
-    name: "DEVOTED CORE 046 FL (HMO)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: null,
-    stars: 5,
-    prem: 0,
-    moop: 4900,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["FL"],
-  },
-  // ── Alignment (CY2026 CMS Landscape) ──
-  {
-    cid: "H5296",
-    pbp: "003",
-    carrier: "alignment",
-    name: "Alignment Health Platinum (HMO)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: null,
-    stars: 5,
-    prem: 0,
-    moop: 3900,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["NC"],
-  },
-  {
-    cid: "H4961",
-    pbp: "006",
-    carrier: "alignment",
-    name: "Alignment Health Balance (PPO)",
-    type: "PPO",
-    cat: "MAPD",
-    snp: null,
-    stars: 4,
-    prem: 41,
-    moop: 2850,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["CA"],
-  },
-  {
-    cid: "H9686",
-    pbp: "005",
-    carrier: "alignment",
-    name: "Alignment Health the ONE (HMO D-SNP)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: "D-SNP",
-    stars: 5,
-    prem: 9.5,
-    moop: 9250,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["NV"],
-  },
-  {
-    cid: "H5296",
-    pbp: "011",
-    carrier: "alignment",
-    name: "Alignment Health Heart & Diabetes Care (HMO C-SNP)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: "C-SNP",
-    stars: 5,
-    prem: 0,
     moop: 3400,
     partD: true,
     dental: true,
     vision: true,
     hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["NC"],
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "CA", "OH", "IL", "MI", "WA", "SC", "NY"],
   },
+  // ── Devoted ──
   {
-    cid: "H5296",
-    pbp: "006",
-    carrier: "alignment",
-    name: "Alignment Health smartHMO (HMO)",
-    type: "HMO",
-    cat: "MAPD",
-    snp: null,
-    stars: 5,
-    prem: 0,
-    moop: 3400,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["NC"],
-  },
-  // ── Kaiser (CY2026 CMS Landscape) ──
-  {
-    cid: "H9003",
-    pbp: "009",
-    carrier: "kaiser",
-    name: "Kaiser Permanente Senior Advantage Value (HMO-POS)",
-    type: "HMO-POS",
-    cat: "MAPD",
-    snp: null,
-    stars: 4,
-    prem: 0,
-    moop: 5500,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["OR", "WA"],
-  },
-  {
-    cid: "H3138",
+    cid: "H7145",
     pbp: "001",
-    carrier: "kaiser",
-    name: "Kaiser Permanente Senior Advantage Choice DM (PPO)",
-    type: "PPO",
-    cat: "MAPD",
-    snp: null,
-    stars: null,
-    prem: 0,
-    moop: 6100,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["CO"],
-  },
-  {
-    cid: "H0630",
-    pbp: "014",
-    carrier: "kaiser",
-    name: "Kaiser Permanente Dual Essential (HMO D-SNP)",
+    carrier: "devoted",
+    name: "Devoted Medicare Advantage (HMO)",
     type: "HMO",
     cat: "MAPD",
-    snp: "D-SNP",
+    snp: null,
     stars: 4.5,
     prem: 0,
-    moop: 4900,
-    partD: true,
-    dental: true,
-    vision: true,
-    hearing: true,
-    otc: null,
-    grocery: null,
-    flex: null,
-    transport: null,
-    states: ["CO"],
-  },
-  {
-    cid: "H9003",
-    pbp: "006",
-    carrier: "kaiser",
-    name: "Kaiser Permanente Senior Advantage Standard (HMO-POS)",
-    type: "HMO-POS",
-    cat: "MAPD",
-    snp: null,
-    stars: 4,
-    prem: 37,
     moop: 4500,
     partD: true,
     dental: true,
     vision: true,
     hearing: true,
+    otc: "$175/qtr",
+    grocery: "$50/mo",
+    flex: "$100/mo",
+    transport: "36 trips",
+    states: [
+      "FL",
+      "TX",
+      "NC",
+      "GA",
+      "SC",
+      "TN",
+      "AL",
+      "OH",
+      "PA",
+      "VA",
+      "IL",
+      "AZ",
+      "NV",
+      "OK",
+      "IN",
+    ],
+  },
+  {
+    cid: "H7145",
+    pbp: "010",
+    carrier: "devoted",
+    name: "Devoted Dual Complete (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 4,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$225/qtr",
+    grocery: "$125/mo",
+    flex: "$175/mo",
+    transport: "48 trips",
+    states: ["FL", "TX", "NC", "GA", "SC", "TN", "OH", "PA", "VA", "IL", "AZ"],
+  },
+  // ── Alignment ──
+  {
+    cid: "H2427",
+    pbp: "001",
+    carrier: "alignment",
+    name: "Alignment Access (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 4,
+    prem: 0,
+    moop: 5400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: "$50/mo",
+    transport: "24 trips",
+    states: ["CA", "NC", "NV", "AZ", "TX"],
+  },
+  {
+    cid: "H2427",
+    pbp: "005",
+    carrier: "alignment",
+    name: "Alignment Dual Complete (HMO D-SNP)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: "D-SNP",
+    stars: 3.5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$200/qtr",
+    grocery: "$100/mo",
+    flex: "$150/mo",
+    transport: "48 trips",
+    states: ["CA", "NC", "NV", "AZ", "TX"],
+  },
+  // ── Kaiser ──
+  {
+    cid: "H0524",
+    pbp: "003",
+    carrier: "kaiser",
+    name: "Kaiser Senior Advantage (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 5,
+    prem: 0,
+    moop: 3400,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$100/qtr",
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["CA", "CO", "GA", "HI", "MD", "OR", "VA", "WA", "DC"],
+  },
+  {
+    cid: "H0524",
+    pbp: "010",
+    carrier: "kaiser",
+    name: "Kaiser Senior Advantage Plus (HMO)",
+    type: "HMO",
+    cat: "MAPD",
+    snp: null,
+    stars: 5,
+    prem: 35,
+    moop: 2500,
+    partD: true,
+    dental: true,
+    vision: true,
+    hearing: true,
+    otc: "$150/qtr",
+    grocery: null,
+    flex: "$50/mo",
+    transport: "12 trips",
+    states: ["CA", "CO", "GA", "HI", "MD", "OR", "VA", "WA", "DC"],
+  },
+  // ── Mutual of Omaha (Medigap) ──
+  {
+    cid: "MG-N",
+    pbp: "—",
+    carrier: "mutual",
+    name: "Mutual of Omaha Medigap Plan N",
+    type: "Medigap",
+    cat: "Medigap",
+    snp: null,
+    stars: null,
+    prem: 135,
+    moop: null,
+    partD: false,
+    dental: false,
+    vision: false,
+    hearing: false,
     otc: null,
     grocery: null,
     flex: null,
     transport: null,
-    states: ["OR", "WA"],
+    states: ["ALL"],
+  },
+  {
+    cid: "MG-G",
+    pbp: "—",
+    carrier: "mutual",
+    name: "Mutual of Omaha Medigap Plan G",
+    type: "Medigap",
+    cat: "Medigap",
+    snp: null,
+    stars: null,
+    prem: 165,
+    moop: null,
+    partD: false,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
+  },
+  {
+    cid: "MG-F",
+    pbp: "—",
+    carrier: "mutual",
+    name: "Mutual of Omaha Medigap Plan F",
+    type: "Medigap",
+    cat: "Medigap",
+    snp: null,
+    stars: null,
+    prem: 195,
+    moop: null,
+    partD: false,
+    dental: false,
+    vision: false,
+    hearing: false,
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: ["ALL"],
   },
 ];
 
@@ -1598,6 +1528,262 @@ function getPlansForState(zip) {
   return PLAN_DB.filter(
     (p) => p.states.includes("ALL") || p.states.includes(st)
   );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ZIP PREFIX → COUNTY MAPPING (covers major metros, ~60% of Medicare enrollees)
+// If ZIP prefix not found, user selects county from dropdown
+// ═══════════════════════════════════════════════════════════════════════════════
+const ZIP_COUNTY_MAP = {
+  287: "Mecklenburg",
+  288: "Buncombe",
+  276: "Guilford",
+  275: "Wake",
+  277: "Durham",
+  283: "Gaston",
+  284: "Catawba",
+  331: "Miami-Dade",
+  332: "Miami-Dade",
+  333: "Broward",
+  334: "Palm Beach",
+  336: "Hillsborough",
+  337: "Polk",
+  338: "Manatee",
+  347: "Orange",
+  327: "Orange",
+  328: "Seminole",
+  329: "Brevard",
+  326: "Volusia",
+  335: "Pinellas",
+  339: "Lee",
+  341: "Sarasota",
+  770: "Harris",
+  771: "Harris",
+  750: "Dallas",
+  751: "Dallas",
+  760: "Tarrant",
+  782: "Bexar",
+  787: "Travis",
+  799: "El Paso",
+  900: "Los Angeles",
+  901: "Los Angeles",
+  902: "Los Angeles",
+  906: "Los Angeles",
+  917: "Los Angeles",
+  921: "San Diego",
+  941: "San Francisco",
+  945: "Alameda",
+  950: "Santa Clara",
+  958: "Sacramento",
+  300: "Fulton",
+  303: "Fulton",
+  310: "Chatham",
+  150: "Allegheny",
+  190: "Philadelphia",
+  191: "Delaware",
+  100: "New York",
+  112: "Kings",
+  114: "Queens",
+  104: "Bronx",
+  441: "Cuyahoga",
+  432: "Franklin",
+  452: "Hamilton",
+  481: "Wayne",
+  488: "Ingham",
+  495: "Kent",
+  606: "Cook",
+  600: "Cook",
+  850: "Maricopa",
+  851: "Maricopa",
+  852: "Maricopa",
+  857: "Pima",
+  891: "Clark",
+  895: "Washoe",
+  405: "Fayette",
+  401: "Jefferson",
+  402: "Jefferson",
+  370: "Davidson",
+  371: "Davidson",
+  381: "Shelby",
+  379: "Knox",
+  700: "Orleans",
+  701: "Jefferson",
+  708: "East Baton Rouge",
+  392: "Hinds",
+  350: "Jefferson",
+  351: "Jefferson",
+  366: "Mobile",
+  294: "Charleston",
+  290: "Richland",
+  296: "Greenville",
+  230: "Richmond City",
+  220: "Fairfax",
+  223: "Fairfax",
+  981: "King",
+  984: "Pierce",
+  972: "Multnomah",
+  802: "Denver",
+  800: "Denver",
+  803: "El Paso",
+  641: "Jackson",
+  631: "St. Louis City",
+  462: "Marion",
+  532: "Milwaukee",
+  537: "Dane",
+  554: "Hennepin",
+  551: "Ramsey",
+  503: "Polk",
+  681: "Douglas",
+  "070": "Essex",
+  "071": "Passaic",
+  "088": "Middlesex",
+  "061": "Hartford",
+  "065": "New Haven",
+  "021": "Suffolk",
+  "017": "Worcester",
+};
+
+function getCountyFromZip(zip) {
+  return ZIP_COUNTY_MAP[zip.substring(0, 3)] || null;
+}
+
+// Fetch distinct county names for a state from Supabase
+async function fetchCountiesForState(state) {
+  const { data, error } = await supabase
+    .from("cms_plans_PY2026")
+    .select('"County Name"')
+    .eq("State Territory Abbreviation", state)
+    .neq("County Name", "All Counties")
+    .order('"County Name"');
+  if (error) {
+    console.error("Counties fetch error:", error);
+    return [];
+  }
+  return [...new Set(data.map((r) => r["County Name"]))].sort();
+}
+
+// Fetch plans for a specific state+county from Supabase
+async function fetchPlansFromSupabase(state, county) {
+  // Query: plans in this county OR "All Counties" (catches PDPs)
+  const { data, error } = await supabase
+    .from("cms_plans_PY2026")
+    .select("*")
+    .eq("State Territory Abbreviation", state)
+    .or(`County Name.eq.${county},County Name.eq.All Counties`)
+    .neq("Sanctioned Plan", "Yes");
+  if (error) {
+    console.error("Plans fetch error:", error);
+    return [];
+  }
+  return data;
+}
+
+// Map carrier org names from CMS to our carrier keys
+function mapCarrierKey(parentOrg, contractName, orgMarketing) {
+  const all = `${parentOrg} ${contractName} ${orgMarketing}`.toLowerCase();
+  if (all.includes("unitedhealth") || all.includes("aarp")) return "uhc";
+  if (
+    all.includes("cvs") ||
+    all.includes("aetna") ||
+    all.includes("silverscript")
+  )
+    return "aetna";
+  if (all.includes("humana")) return "humana";
+  if (all.includes("centene") || all.includes("wellcare")) return "wellcare";
+  if (
+    all.includes("blue cross") ||
+    all.includes("bluecross") ||
+    all.includes("anthem") ||
+    all.includes("elevance") ||
+    all.includes("highmark") ||
+    all.includes("health care service") ||
+    all.includes("bcbs") ||
+    all.includes("carefirst")
+  )
+    return "bcbs";
+  if (all.includes("cigna")) return "cigna";
+  if (all.includes("molina")) return "molina";
+  if (all.includes("devoted")) return "devoted";
+  if (all.includes("alignment")) return "alignment";
+  if (all.includes("kaiser")) return "kaiser";
+  if (all.includes("mutual of omaha")) return "mutual";
+  return null;
+}
+
+// Transform a CMS Landscape row into the UI plan format
+function transformCmsPlan(row) {
+  const cid = row["Contract ID"] || "";
+  const pbp = String(row["Plan ID"] || "").padStart(3, "0");
+  const planName = row["Plan Name"] || "Unknown Plan";
+  const planType = row["Plan Type"] || "";
+  const snpType = row["SNP Type"] || "";
+  const catType = row["Contract Category Type"] || "";
+  const parentOrg = row["Parent Organization Name"] || "";
+  const contractName = row["Contract Name"] || "";
+  const orgMarketing = row["Organization Marketing Name"] || "";
+
+  // Parse star rating
+  let stars = null;
+  const rawStars =
+    row["Overall Star Rating"] || row["Part C Summary Star Rating"] || "";
+  if (
+    rawStars &&
+    rawStars !== "Not enough data available" &&
+    rawStars !== "Too new to rate"
+  ) {
+    stars = parseFloat(rawStars);
+    if (isNaN(stars)) stars = null;
+  }
+
+  // Parse premiums
+  const partCPrem = parseFloat(row["Part C Premium"] || "0") || 0;
+  const consolidatedPrem =
+    parseFloat(row["Monthly Consolidated Premium (Part C + D)"] || "0") || 0;
+  const prem = consolidatedPrem || partCPrem || 0;
+
+  // Parse MOOP
+  const moopRaw = row["In-Network Maximum Out-of-Pocket (MOOP) Amount"] || "";
+  const moopMatch = moopRaw.replace(/[$,]/g, "");
+  const moop = parseFloat(moopMatch) || null;
+
+  // Determine category
+  let cat = "MA";
+  if (catType === "PDP") cat = "PDP";
+  else if (catType === "MA-PD" || catType === "SNP") cat = "MAPD";
+  else if (catType === "MA") cat = "MA";
+
+  // SNP
+  let snp = null;
+  if (snpType === "Dual-Eligible") snp = "D-SNP";
+  else if (snpType === "Chronic or Disabling Condition") snp = "C-SNP";
+  else if (snpType === "Institutional") snp = "I-SNP";
+
+  // Carrier
+  const carrier = mapCarrierKey(parentOrg, contractName, orgMarketing);
+
+  return {
+    cid,
+    pbp,
+    carrier,
+    name: planName,
+    type: planType || (cat === "PDP" ? "PDP" : "HMO"),
+    cat,
+    snp,
+    stars,
+    prem,
+    moop,
+    partD: catType === "MA-PD" || catType === "PDP" || catType === "SNP",
+    dental: true,
+    vision: true,
+    hearing: true, // CMS file doesn't break these out easily
+    otc: null,
+    grocery: null,
+    flex: null,
+    transport: null,
+    states: [row["State Territory Abbreviation"] || ""],
+    orgName: orgMarketing || contractName || parentOrg,
+    countyName: row["County Name"] || "",
+  };
 }
 
 // Zip-to-state mapping (simplified — covers major ranges)
@@ -1700,20 +1886,15 @@ function isActiveNow(startStr, endStr) {
 }
 
 // Build ACTIVE Medicare Advantage SEPs only — each SEP includes matching plans
-// clientQualifiers: { hasMedicaidLIS, hasChronicCondition, recentlyMoved, lostCoverage }
-function getSEPsForZip(zip, femaDisasters = [], clientQualifiers = {}) {
+function getSEPsForZip(zip, femaDisasters = []) {
   const state = getStateFromZip(zip);
   const today = new Date();
   const seps = [];
   const zipPlans = getPlansForState(zip);
   const maPlans = (filter) => zipPlans.filter(filter);
 
-  const { hasMedicaidLIS, hasChronicCondition, recentlyMoved, lostCoverage } =
-    clientQualifiers;
-
-  // 1. FEMA Disaster SEPs (LIVE from OpenFEMA API, with 2026 fallback)
+  // 1. FEMA Disaster SEPs (LIVE from OpenFEMA API)
   // Match by state — agents verify specific county from the list
-  // CMS: SEP = 2 full calendar months after incident end or declaration, whichever later
   femaDisasters
     .filter((d) => d.state === state)
     .forEach((d) => {
@@ -1769,24 +1950,24 @@ function getSEPsForZip(zip, femaDisasters = [], clientQualifiers = {}) {
       }
     });
 
-  // 2. MA OEP (Jan 1 – Mar 31) — dynamic year
-  const curYear = today.getFullYear();
-  if (isActiveNow(`${curYear}-01-01`, `${curYear}-03-31`)) {
+  // 2. MA OEP (Jan 1 – Mar 31)
+  const yr = today.getFullYear();
+  if (isActiveNow(`${yr}-01-01`, `${yr}-03-31`)) {
     seps.push({
-      id: `medicare-oep-${curYear}`,
+      id: `medicare-oep-${yr}`,
       category: "Medicare",
       type: "Medicare Advantage OEP",
       code: "OEP",
-      event: `Annual MA Open Enrollment (Jan 1 – Mar 31, ${curYear})`,
+      event: `Annual MA Open Enrollment (Jan 1 – Mar 31, ${yr})`,
       description:
         "Currently enrolled MA beneficiaries can make ONE plan change: switch MA/MAPD plan, or drop MA and return to Original Medicare + PDP.",
-      startDate: `${curYear}-01-01`,
-      endDate: `${curYear}-03-31`,
+      startDate: `${yr}-01-01`,
+      endDate: `${yr}-03-31`,
       duration: "Jan 1 – Mar 31",
       eligibleProducts: ["MA", "MAPD"],
       source: "CMS",
       urgency: "medium",
-      daysLeft: daysRemaining(`${curYear}-03-31`),
+      daysLeft: daysRemaining("2025-03-31"),
       matchingPlans: maPlans((p) => ["MA", "MAPD"].includes(p.cat) && !p.snp),
     });
   }
@@ -1827,10 +2008,8 @@ function getSEPsForZip(zip, femaDisasters = [], clientQualifiers = {}) {
     matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
 
-  // 5. 5-Star SEP (Dec 8 prior year – Nov 30 current year)
-  const fiveStarStart = `${curYear - 1}-12-08`;
-  const fiveStarEnd = `${curYear}-11-30`;
-  if (hasFiveStarPlans(zip) && isActiveNow(fiveStarStart, fiveStarEnd)) {
+  // 5. 5-Star SEP
+  if (hasFiveStarPlans(zip) && isActiveNow(`${yr - 1}-12-08`, `${yr}-11-30`)) {
     seps.push({
       id: "medicare-5star",
       category: "Medicare",
@@ -1839,60 +2018,38 @@ function getSEPsForZip(zip, femaDisasters = [], clientQualifiers = {}) {
       event: "5-Star rated plan available in this area",
       description:
         "CMS 5-star rated MA/MAPD plan available. Switch to a 5-star plan once per year. Only 5-star plans shown below.",
-      startDate: fiveStarStart,
-      endDate: fiveStarEnd,
+      startDate: `${yr - 1}-12-08`,
+      endDate: `${yr}-11-30`,
       duration: "Dec 8 – Nov 30 (once/year)",
       eligibleProducts: ["MA", "MAPD"],
       source: "CMS Star Ratings",
       urgency: "low",
-      daysLeft: daysRemaining(fiveStarEnd),
+      daysLeft: daysRemaining("2025-11-30"),
       matchingPlans: maPlans((p) => p.stars >= 5),
     });
   }
 
-  // 6. Dual-Eligible / LIS (SEP-MDE) — quarterly changes Q1-Q3
-  {
-    const currentQuarter = Math.floor(today.getMonth() / 3) + 1;
-    const quarterEndDates = {
-      1: `${curYear}-03-31`,
-      2: `${curYear}-06-30`,
-      3: `${curYear}-09-30`,
-      4: `${curYear}-12-31`,
-    };
-    const isInEnrollmentQuarters = currentQuarter <= 3; // Q1-Q3 only
-    const dsnpPlans = maPlans(
+  // 6. Dual-Eligible / LIS
+  seps.push({
+    id: "medicare-dual-lis",
+    category: "Medicare",
+    type: "Dual-Eligible / LIS (Extra Help) SEP",
+    code: "DUAL/LIS",
+    event: "Dual-eligible (Medicare+Medicaid) or Extra Help/LIS",
+    description:
+      "Continuous SEP — change MA/MAPD once per quarter (Q1–Q3). D-SNP plans designed for dual-eligible beneficiaries.",
+    startDate: "Year-round",
+    endDate: "Year-round",
+    duration: "Continuous — once per quarter",
+    eligibleProducts: ["MA", "MAPD", "D-SNP"],
+    source: "CMS",
+    urgency: "info",
+    matchingPlans: maPlans(
       (p) => p.snp === "D-SNP" || ["MA", "MAPD"].includes(p.cat)
-    );
+    ),
+  });
 
-    seps.push({
-      id: "medicare-dual-lis",
-      category: "Medicare",
-      type: "Dual-Eligible / LIS (Extra Help) SEP",
-      code: "DUAL/LIS",
-      event: "Dual-eligible (Medicare+Medicaid) or Extra Help/LIS",
-      description: `Continuous SEP — change MA/MAPD once per quarter during Q1–Q3 (Jan–Sep). D-SNP plans designed for dual-eligible beneficiaries.${
-        isInEnrollmentQuarters
-          ? ` Currently in Q${currentQuarter} — next quarterly deadline: ${quarterEndDates[currentQuarter]}.`
-          : ` Q4 (Oct–Dec): No quarterly changes available until Jan 1.`
-      }`,
-      startDate: "Year-round",
-      endDate: "Year-round",
-      duration: "Continuous — once per quarter (Q1–Q3)",
-      eligibleProducts: ["MA", "MAPD", "D-SNP"],
-      source: "CMS",
-      urgency: hasMedicaidLIS ? "high" : "info",
-      clientQualified: hasMedicaidLIS,
-      quarterInfo: isInEnrollmentQuarters
-        ? `Q${currentQuarter} ends ${quarterEndDates[currentQuarter]}`
-        : "Q4 — no changes until Jan",
-      daysLeft: isInEnrollmentQuarters
-        ? daysRemaining(quarterEndDates[currentQuarter])
-        : null,
-      matchingPlans: dsnpPlans,
-    });
-  }
-
-  // 7. Moved Out of Service Area (SEP-MOV)
+  // 7. Moved Out of Service Area
   seps.push({
     id: "medicare-move",
     category: "Medicare",
@@ -1900,18 +2057,17 @@ function getSEPsForZip(zip, femaDisasters = [], clientQualifiers = {}) {
     code: "SEP-MOVE",
     event: "Permanent move — current plan no longer available",
     description:
-      "63-day SEP to enroll in a new MA/MAPD plan in new service area after permanent address change. Client must have moved in last 63 days and plan must not serve new address.",
+      "63-day SEP to enroll in a new MA/MAPD plan in new service area after permanent address change.",
     startDate: "Varies by individual",
     endDate: "63 days from move date",
     duration: "63 days from move",
     eligibleProducts: ["MA", "MAPD", "Medigap"],
     source: "CMS",
-    urgency: recentlyMoved ? "high" : "info",
-    clientQualified: recentlyMoved,
+    urgency: "info",
     matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
 
-  // 8. Loss of Creditable Coverage (SEP-LOSS)
+  // 8. Loss of Creditable Coverage
   seps.push({
     id: "medicare-loss-coverage",
     category: "Medicare",
@@ -1919,14 +2075,13 @@ function getSEPsForZip(zip, femaDisasters = [], clientQualifiers = {}) {
     code: "SEP-LOSS",
     event: "Involuntary loss of employer/union/group coverage",
     description:
-      "63-day SEP after involuntary loss of creditable coverage (employer ended, COBRA expired, etc.). Includes loss of employer group health plan (EGHP), retiree coverage, or union coverage.",
+      "63-day SEP after involuntary loss of creditable coverage (employer ended, COBRA expired, etc.).",
     startDate: "Varies by individual",
     endDate: "63 days from loss",
     duration: "63 days from loss",
     eligibleProducts: ["MA", "MAPD", "Medigap"],
     source: "CMS",
-    urgency: lostCoverage ? "high" : "info",
-    clientQualified: lostCoverage,
+    urgency: "info",
     matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
 
@@ -1961,14 +2116,13 @@ function getSEPsForZip(zip, femaDisasters = [], clientQualifiers = {}) {
         code: "SEP-CSNP",
         event: "Qualifying chronic condition (diabetes, ESRD, CHF, etc.)",
         description:
-          "Year-round enrollment in C-SNP plans for individuals with qualifying chronic conditions. Qualifying conditions include: Diabetes Mellitus, ESRD, Chronic Heart Failure, Chronic Lung Disorders, Cardiovascular Disorders, and others per CMS list. Specialized care coordination included.",
+          "Year-round enrollment in C-SNP plans for individuals with qualifying chronic conditions. Specialized care coordination included.",
         startDate: "Year-round",
         endDate: "Year-round",
         duration: "Continuous",
         eligibleProducts: ["C-SNP"],
         source: "CMS",
-        urgency: hasChronicCondition ? "high" : "info",
-        clientQualified: hasChronicCondition,
+        urgency: "info",
         matchingPlans: csnpPlans,
       });
     }
@@ -2110,24 +2264,24 @@ const IconX = () => (
 
 const CATEGORY_COLORS = {
   "FEMA Disaster": {
-    bg: "rgba(220,38,38,0.1)",
-    border: "rgba(239,68,68,0.35)",
-    text: "#f87171",
-    badge: "#ef4444",
+    bg: "#fef2f2",
+    border: "#fca5a5",
+    text: "#991b1b",
+    badge: "#dc2626",
   },
   Medicare: {
-    bg: "rgba(37,99,235,0.1)",
-    border: "rgba(59,130,246,0.3)",
-    text: "#93c5fd",
-    badge: "#38bdf8",
+    bg: "#eff6ff",
+    border: "#93c5fd",
+    text: "#1e3a5f",
+    badge: "#2563eb",
   },
 };
 
 const URGENCY_STYLES = {
   high: { bg: "#dc2626", text: "#fff", label: "URGENT" },
-  medium: { bg: "#d97706", text: "#fff", label: "ACTIVE" },
+  medium: { bg: "#f59e0b", text: "#000", label: "ACTIVE" },
   low: { bg: "#6366f1", text: "#fff", label: "OPEN" },
-  info: { bg: "#5a6a80", text: "#cbd5e1", label: "ONGOING" },
+  info: { bg: "#64748b", text: "#fff", label: "ONGOING" },
 };
 
 function ProductBadge({ product }) {
@@ -2145,12 +2299,12 @@ function ProductBadge({ product }) {
       style={{
         display: "inline-block",
         padding: "2px 8px",
-        borderRadius: "6px",
+        borderRadius: "4px",
         fontSize: "11px",
         fontWeight: 700,
         letterSpacing: "0.05em",
         color: "#fff",
-        backgroundColor: colors[product] || "#5a6a80",
+        backgroundColor: colors[product] || "#64748b",
         marginRight: "4px",
         marginBottom: "4px",
       }}
@@ -2168,7 +2322,7 @@ function CarrierChip({ carrier }) {
         alignItems: "center",
         gap: "6px",
         padding: "4px 10px",
-        borderRadius: "10px",
+        borderRadius: "6px",
         fontSize: "12px",
         fontWeight: 600,
         backgroundColor: carrier.color + "14",
@@ -2203,16 +2357,11 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
   return (
     <div
       style={{
-        borderRadius: "20px",
-        border: sep.clientQualified
-          ? "1px solid rgba(52,211,153,0.35)"
-          : "1px solid rgba(255,255,255,0.04)",
-        background:
-          "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 40%, #0d1119 100%)",
+        borderRadius: "12px",
+        border: `1px solid ${catColors.border}`,
+        backgroundColor: "#fff",
         overflow: "hidden",
-        boxShadow: sep.clientQualified
-          ? "0 2px 4px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.4), 0 0 40px rgba(52,211,153,0.04), inset 0 1px 0 rgba(255,255,255,0.06)"
-          : "0 2px 4px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.4), 0 20px 50px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.3)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
         transition: "box-shadow 0.2s ease",
         marginBottom: "12px",
       }}
@@ -2249,7 +2398,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 fontWeight: 800,
                 letterSpacing: "0.08em",
                 padding: "2px 8px",
-                borderRadius: "6px",
+                borderRadius: "4px",
                 textTransform: "uppercase",
                 backgroundColor: urgStyle.bg,
                 color: urgStyle.text,
@@ -2257,30 +2406,13 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
             >
               {urgStyle.label}
             </span>
-            {sep.clientQualified && (
-              <span
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 800,
-                  letterSpacing: "0.06em",
-                  padding: "2px 8px",
-                  borderRadius: "6px",
-                  textTransform: "uppercase",
-                  backgroundColor: "#34d399",
-                  color: "#fff",
-                  animation: "none",
-                }}
-              >
-                ✓ CLIENT QUALIFIED
-              </span>
-            )}
             <span
               style={{
                 fontSize: "10px",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 padding: "2px 8px",
-                borderRadius: "6px",
+                borderRadius: "4px",
                 textTransform: "uppercase",
                 backgroundColor: catColors.badge + "18",
                 color: catColors.badge,
@@ -2289,37 +2421,6 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
               {sep.category}
             </span>
             {sep.code === "5-STAR" && <IconStar />}
-            {sep.isOngoing && (
-              <span
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 800,
-                  letterSpacing: "0.04em",
-                  padding: "2px 6px",
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(220,38,38,0.2)",
-                  color: "#f87171",
-                  animation: "pulse 2s ease-in-out infinite",
-                }}
-              >
-                ⚠ ONGOING
-              </span>
-            )}
-            {sep.quarterInfo && (
-              <span
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  letterSpacing: "0.04em",
-                  padding: "2px 6px",
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(99,102,241,0.15)",
-                  color: "#38bdf8",
-                }}
-              >
-                {sep.quarterInfo}
-              </span>
-            )}
             {sep.daysLeft != null && (
               <span
                 style={{
@@ -2327,19 +2428,19 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                   fontWeight: 800,
                   letterSpacing: "0.04em",
                   padding: "2px 6px",
-                  borderRadius: "6px",
+                  borderRadius: "4px",
                   backgroundColor:
                     sep.daysLeft <= 14
-                      ? "rgba(220,38,38,0.2)"
+                      ? "#fef2f2"
                       : sep.daysLeft <= 30
-                      ? "rgba(217,119,6,0.2)"
-                      : "rgba(22,163,74,0.2)",
+                      ? "#fffbeb"
+                      : "#f0fdf4",
                   color:
                     sep.daysLeft <= 14
-                      ? "#f87171"
+                      ? "#dc2626"
                       : sep.daysLeft <= 30
-                      ? "#fbbf24"
-                      : "#34d399",
+                      ? "#d97706"
+                      : "#16a34a",
                 }}
               >
                 {sep.daysLeft}d left
@@ -2350,13 +2451,13 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
             style={{
               fontSize: "15px",
               fontWeight: 700,
-              color: "#e8edf5",
+              color: "#0f172a",
               lineHeight: 1.3,
             }}
           >
             {sep.type}
           </div>
-          <div style={{ fontSize: "13px", color: "#8896ab", marginTop: "2px" }}>
+          <div style={{ fontSize: "13px", color: "#64748b", marginTop: "2px" }}>
             {sep.event}
           </div>
         </div>
@@ -2374,7 +2475,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           ))}
           {sep.eligibleProducts.length > 4 && (
             <span
-              style={{ fontSize: "11px", color: "#5a6a80", padding: "2px 4px" }}
+              style={{ fontSize: "11px", color: "#64748b", padding: "2px 4px" }}
             >
               +{sep.eligibleProducts.length - 4}
             </span>
@@ -2384,17 +2485,11 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
 
       {/* Expanded Detail */}
       {isExpanded && (
-        <div
-          style={{
-            padding: "20px",
-            background:
-              "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 100%)",
-          }}
-        >
+        <div style={{ padding: "20px", background: catColors.bg + "60" }}>
           <p
             style={{
               fontSize: "14px",
-              color: "#cbd5e1",
+              color: "#334155",
               lineHeight: 1.6,
               margin: "0 0 16px 0",
             }}
@@ -2412,17 +2507,17 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           >
             <div
               style={{
-                background: "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                borderRadius: "14px",
+                background: "#fff",
+                borderRadius: "8px",
                 padding: "12px 16px",
-                border: "1px solid rgba(255,255,255,0.04)",
+                border: "1px solid #e2e8f0",
               }}
             >
               <div
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#8896ab",
+                  color: "#94a3b8",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: "4px",
@@ -2439,12 +2534,12 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 </span>
               </div>
               <div
-                style={{ fontSize: "13px", fontWeight: 600, color: "#e8edf5" }}
+                style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}
               >
                 {sep.duration}
               </div>
               <div
-                style={{ fontSize: "12px", color: "#5a6a80", marginTop: "2px" }}
+                style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}
               >
                 {sep.startDate !== "Year-round" &&
                 sep.startDate !== "Varies by individual"
@@ -2454,17 +2549,17 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
             </div>
             <div
               style={{
-                background: "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                borderRadius: "14px",
+                background: "#fff",
+                borderRadius: "8px",
                 padding: "12px 16px",
-                border: "1px solid rgba(255,255,255,0.04)",
+                border: "1px solid #e2e8f0",
               }}
             >
               <div
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#8896ab",
+                  color: "#94a3b8",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: "4px",
@@ -2488,17 +2583,17 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
             </div>
             <div
               style={{
-                background: "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                borderRadius: "14px",
+                background: "#fff",
+                borderRadius: "8px",
                 padding: "12px 16px",
-                border: "1px solid rgba(255,255,255,0.04)",
+                border: "1px solid #e2e8f0",
               }}
             >
               <div
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#8896ab",
+                  color: "#94a3b8",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: "4px",
@@ -2507,12 +2602,12 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 Source
               </div>
               <div
-                style={{ fontSize: "13px", fontWeight: 600, color: "#e8edf5" }}
+                style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}
               >
                 {sep.source}
               </div>
               <div
-                style={{ fontSize: "12px", color: "#5a6a80", marginTop: "2px" }}
+                style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}
               >
                 Code: {sep.code}
               </div>
@@ -2522,10 +2617,10 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           {sep.counties && (
             <div
               style={{
-                background: "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                borderRadius: "14px",
+                background: "#fff",
+                borderRadius: "8px",
                 padding: "12px 16px",
-                border: "1px solid rgba(255,255,255,0.04)",
+                border: "1px solid #e2e8f0",
                 marginBottom: "16px",
               }}
             >
@@ -2533,7 +2628,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#8896ab",
+                  color: "#94a3b8",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: "6px",
@@ -2550,7 +2645,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 </span>
               </div>
               <div
-                style={{ fontSize: "13px", color: "#cbd5e1", lineHeight: 1.6 }}
+                style={{ fontSize: "13px", color: "#334155", lineHeight: 1.6 }}
               >
                 {sep.counties.join("  •  ")}
               </div>
@@ -2561,17 +2656,17 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           {sep.matchingPlans && sep.matchingPlans.length > 0 && (
             <div
               style={{
-                background: "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                borderRadius: "14px",
+                background: "#fff",
+                borderRadius: "8px",
                 padding: "12px 16px",
-                border: "1px solid rgba(255,255,255,0.04)",
+                border: "1px solid #e2e8f0",
               }}
             >
               <div
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#8896ab",
+                  color: "#94a3b8",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: "8px",
@@ -2588,11 +2683,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                   }}
                 >
                   <thead>
-                    <tr
-                      style={{
-                        borderBottom: "1px solid rgba(255,255,255,0.07)",
-                      }}
-                    >
+                    <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
                       {[
                         "Carrier",
                         "Plan",
@@ -2615,7 +2706,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                                 : "left",
                             fontSize: "9px",
                             fontWeight: 700,
-                            color: "#8896ab",
+                            color: "#94a3b8",
                             textTransform: "uppercase",
                             letterSpacing: "0.04em",
                             whiteSpace: "nowrap",
@@ -2631,7 +2722,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                       const cr = CARRIERS[p.carrier] || {};
                       const typeColors = {
                         HMO: "#2563eb",
-                        "HMO-POS": "#38bdf8",
+                        "HMO-POS": "#3b82f6",
                         PPO: "#7c3aed",
                         PDP: "#0891b2",
                         Medigap: "#0d9488",
@@ -2644,9 +2735,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                       return (
                         <tr
                           key={`${p.cid}-${p.pbp}-${i}`}
-                          style={{
-                            borderBottom: "1px solid rgba(255,255,255,0.04)",
-                          }}
+                          style={{ borderBottom: "1px solid #f1f5f9" }}
                         >
                           <td
                             style={{ padding: "6px 6px", whiteSpace: "nowrap" }}
@@ -2670,7 +2759,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                                 style={{
                                   fontSize: "11px",
                                   fontWeight: 700,
-                                  color: "#e8edf5",
+                                  color: "#334155",
                                 }}
                               >
                                 {cr.abbr}
@@ -2682,7 +2771,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               fontSize: "11px",
                               fontWeight: 600,
-                              color: "#cbd5e1",
+                              color: "#334155",
                               maxWidth: "200px",
                             }}
                           >
@@ -2691,9 +2780,9 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                           <td
                             style={{
                               padding: "6px 6px",
-                              fontFamily: "'IBM Plex Mono', monospace",
+                              fontFamily: "'JetBrains Mono', monospace",
                               fontSize: "10px",
-                              color: "#5a6a80",
+                              color: "#64748b",
                               whiteSpace: "nowrap",
                             }}
                           >
@@ -2704,12 +2793,12 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               style={{
                                 display: "inline-block",
                                 padding: "1px 5px",
-                                borderRadius: "4px",
+                                borderRadius: "3px",
                                 fontSize: "9px",
                                 fontWeight: 700,
                                 color: "#fff",
                                 backgroundColor:
-                                  typeColors[p.type] || "#5a6a80",
+                                  typeColors[p.type] || "#475569",
                                 marginRight: 2,
                               }}
                             >
@@ -2720,12 +2809,12 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                                 style={{
                                   display: "inline-block",
                                   padding: "1px 5px",
-                                  borderRadius: "4px",
+                                  borderRadius: "3px",
                                   fontSize: "9px",
                                   fontWeight: 700,
                                   color: "#fff",
                                   backgroundColor:
-                                    snpColors[p.snp] || "#5a6a80",
+                                    snpColors[p.snp] || "#475569",
                                 }}
                               >
                                 {p.snp}
@@ -2768,7 +2857,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               textAlign: "right",
                               fontWeight: 700,
-                              color: p.prem === 0 ? "#34d399" : "#cbd5e1",
+                              color: p.prem === 0 ? "#16a34a" : "#334155",
                               fontSize: "11px",
                             }}
                           >
@@ -2779,7 +2868,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               textAlign: "right",
                               fontWeight: 600,
-                              color: "#cbd5e1",
+                              color: "#334155",
                               fontSize: "11px",
                             }}
                           >
@@ -2790,7 +2879,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               textAlign: "center",
                               fontSize: "10px",
-                              color: p.grocery ? "#34d399" : "#5a6a80",
+                              color: p.grocery ? "#16a34a" : "#cbd5e1",
                               fontWeight: 600,
                             }}
                           >
@@ -2801,7 +2890,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               textAlign: "center",
                               fontSize: "10px",
-                              color: p.otc ? "#34d399" : "#5a6a80",
+                              color: p.otc ? "#16a34a" : "#cbd5e1",
                               fontWeight: 600,
                             }}
                           >
@@ -2812,7 +2901,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               textAlign: "center",
                               fontSize: "10px",
-                              color: p.flex ? "#34d399" : "#5a6a80",
+                              color: p.flex ? "#16a34a" : "#cbd5e1",
                               fontWeight: 600,
                             }}
                           >
@@ -2829,11 +2918,11 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           {sep.matchingPlans && sep.matchingPlans.length === 0 && (
             <div
               style={{
-                background: "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                borderRadius: "14px",
+                background: "#fff",
+                borderRadius: "8px",
                 padding: "12px 16px",
-                border: "1px solid rgba(255,255,255,0.04)",
-                color: "#8896ab",
+                border: "1px solid #e2e8f0",
+                color: "#94a3b8",
                 fontSize: "13px",
               }}
             >
@@ -2866,20 +2955,42 @@ export default function SEPLookupTool() {
   const [planFilterType, setPlanFilterType] = useState("all");
   const [planFilterSnp, setPlanFilterSnp] = useState("all");
   const [planSearch, setPlanSearch] = useState("");
-
-  // V3: Client qualification toggles
-  const [clientQualifiers, setClientQualifiers] = useState({
-    hasMedicaidLIS: false,
-    hasChronicCondition: false,
-    recentlyMoved: false,
-    lostCoverage: false,
-  });
-  const toggleQualifier = useCallback((key) => {
-    setClientQualifiers((prev) => ({ ...prev, [key]: !prev[key] }));
-  }, []);
+  // County-level plan lookup (Supabase)
+  const [selectedCounty, setSelectedCounty] = useState(null);
+  const [countyList, setCountyList] = useState([]);
+  const [countyLoading, setCountyLoading] = useState(false);
 
   // Live FEMA data cache (persists across searches within session)
-  const femaCache = useRef({ data: null, fetchedAt: 0, apiFailed: false });
+  const femaCache = useRef({ data: null, fetchedAt: 0 });
+
+  // County-level plan loading from Supabase
+  const loadPlansForCounty = useCallback(async (st, county) => {
+    if (!st || !county) return;
+    setCountyLoading(true);
+    try {
+      const cmsRows = await fetchPlansFromSupabase(st, county);
+      const seen = new Set();
+      const transformed = [];
+      for (const row of cmsRows) {
+        const key = `${row["Contract ID"]}-${row["Plan ID"]}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        transformed.push(transformCmsPlan(row));
+      }
+      transformed.sort((a, b) => {
+        if ((b.stars || 0) !== (a.stars || 0))
+          return (b.stars || 0) - (a.stars || 0);
+        if (a.prem !== b.prem) return a.prem - b.prem;
+        return a.name.localeCompare(b.name);
+      });
+      setPlans(transformed);
+    } catch (err) {
+      console.error("Supabase plan fetch error:", err);
+      setPlans(getPlansForState(st));
+    } finally {
+      setCountyLoading(false);
+    }
+  }, []);
 
   const handleSearch = useCallback(async () => {
     const cleanZip = zip.trim();
@@ -2900,11 +3011,11 @@ export default function SEPLookupTool() {
         };
       }
 
-      const seps = getSEPsForZip(cleanZip, femaData, clientQualifiers);
+      const st = getStateFromZip(cleanZip);
+      const seps = getSEPsForZip(cleanZip, femaData);
       const zipCarriers = getCarriersForZip(cleanZip);
       setResults(seps);
       setCarriers(zipCarriers);
-      setPlans(getPlansForState(cleanZip));
       setSearchedZip(cleanZip);
       setExpanded({});
       setExpandedPlans({});
@@ -2914,20 +3025,28 @@ export default function SEPLookupTool() {
       setPlanFilterType("all");
       setPlanFilterSnp("all");
       setPlanSearch("");
+
+      // County-level plan lookup via Supabase
+      const autoCounty = getCountyFromZip(cleanZip);
+      const counties = await fetchCountiesForState(st);
+      setCountyList(counties);
+
+      if (autoCounty && counties.includes(autoCounty)) {
+        setSelectedCounty(autoCounty);
+        await loadPlansForCounty(st, autoCounty);
+      } else if (counties.length > 0) {
+        setSelectedCounty(null);
+        setPlans([]);
+      } else {
+        setSelectedCounty(null);
+        setPlans(getPlansForState(cleanZip));
+      }
     } catch (err) {
       console.error("Search error:", err);
     } finally {
       setLoading(false);
     }
-  }, [zip]);
-
-  // Re-run SEP calculation when client qualifiers change (if we have a searched zip)
-  useEffect(() => {
-    if (!searchedZip) return;
-    const femaData = femaCache.current.data || [];
-    const seps = getSEPsForZip(searchedZip, femaData, clientQualifiers);
-    setResults(seps);
-  }, [clientQualifiers, searchedZip]);
+  }, [zip, loadPlansForCounty]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSearch();
@@ -2957,9 +3076,7 @@ export default function SEPLookupTool() {
         return false;
       if (planFilterType !== "all" && p.type !== planFilterType) return false;
       if (planFilterSnp !== "all") {
-        if (planFilterSnp === "5star") {
-          if (!p.stars || p.stars < 5) return false;
-        } else if (planFilterSnp === "none" ? p.snp : p.snp !== planFilterSnp)
+        if (planFilterSnp === "none" ? p.snp : p.snp !== planFilterSnp)
           return false;
       }
       if (planSearch) {
@@ -2987,12 +3104,12 @@ export default function SEPLookupTool() {
       style={{
         minHeight: "100vh",
         background:
-          "linear-gradient(180deg, #06090e 0%, #0c1017 50%, #06090e 100%)",
+          "linear-gradient(165deg, #0f172a 0%, #1e293b 40%, #0f172a 100%)",
         fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
       }}
     >
       <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@500;700&display=swap"
         rel="stylesheet"
       />
 
@@ -3000,8 +3117,8 @@ export default function SEPLookupTool() {
       <div
         style={{
           background:
-            "linear-gradient(180deg, rgba(56,189,248,0.04) 0%, transparent 100%)",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
+            "linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(99,102,241,0.08) 100%)",
+          borderBottom: "1px solid rgba(148,163,184,0.1)",
           padding: "32px 24px 28px",
         }}
       >
@@ -3018,8 +3135,8 @@ export default function SEPLookupTool() {
               style={{
                 width: "40px",
                 height: "40px",
-                borderRadius: "14px",
-                background: "linear-gradient(180deg, #162035 0%, #0f1724 100%)",
+                borderRadius: "10px",
+                background: "linear-gradient(135deg, #2563eb, #6366f1)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -3033,7 +3150,7 @@ export default function SEPLookupTool() {
                   margin: 0,
                   fontSize: "24px",
                   fontWeight: 800,
-                  color: "#e8edf5",
+                  color: "#f1f5f9",
                   letterSpacing: "-0.02em",
                 }}
               >
@@ -3043,7 +3160,7 @@ export default function SEPLookupTool() {
                 style={{
                   margin: 0,
                   fontSize: "13px",
-                  color: "#8896ab",
+                  color: "#94a3b8",
                   fontWeight: 500,
                 }}
               >
@@ -3063,12 +3180,11 @@ export default function SEPLookupTool() {
             display: "flex",
             gap: "12px",
             alignItems: "center",
-            background: "linear-gradient(180deg, #080c12 0%, #0b0f16 100%)",
-            borderRadius: "50px",
-            padding: "6px",
-            border: "1px solid rgba(255,255,255,0.07)",
-            boxShadow:
-              "inset 0 2px 6px rgba(0,0,0,0.45), inset 0 1px 2px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,255,255,0.03)",
+            background: "rgba(30,41,59,0.8)",
+            borderRadius: "14px",
+            padding: "8px",
+            border: "1px solid rgba(148,163,184,0.15)",
+            backdropFilter: "blur(12px)",
           }}
         >
           <input
@@ -3087,9 +3203,9 @@ export default function SEPLookupTool() {
               outline: "none",
               fontSize: "17px",
               fontWeight: 600,
-              color: "#e8edf5",
+              color: "#f1f5f9",
               background: "transparent",
-              fontFamily: "'IBM Plex Mono', monospace",
+              fontFamily: "'JetBrains Mono', monospace",
               letterSpacing: "0.08em",
             }}
           />
@@ -3098,11 +3214,11 @@ export default function SEPLookupTool() {
             disabled={!/^\d{5}$/.test(zip.trim()) || loading}
             style={{
               padding: "12px 28px",
-              borderRadius: "50px",
-              border: "1px solid rgba(56,189,248,0.12)",
+              borderRadius: "10px",
+              border: "none",
               background: /^\d{5}$/.test(zip.trim())
-                ? "linear-gradient(180deg, #162035 0%, #0f1724 100%)"
-                : "linear-gradient(180deg, #111620 0%, #0d1119 100%)",
+                ? "linear-gradient(135deg, #2563eb, #6366f1)"
+                : "#334155",
               color: "#fff",
               fontSize: "15px",
               fontWeight: 700,
@@ -3144,7 +3260,7 @@ export default function SEPLookupTool() {
             }}
           >
             <span
-              style={{ fontSize: "12px", color: "#5a6a80", padding: "6px 0" }}
+              style={{ fontSize: "12px", color: "#64748b", padding: "6px 0" }}
             >
               Try:
             </span>
@@ -3156,13 +3272,12 @@ export default function SEPLookupTool() {
                 }}
                 style={{
                   padding: "6px 14px",
-                  borderRadius: "14px",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  background:
-                    "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 100%)",
-                  color: "#8896ab",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(148,163,184,0.2)",
+                  background: "rgba(30,41,59,0.6)",
+                  color: "#94a3b8",
                   fontSize: "13px",
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontFamily: "'JetBrains Mono', monospace",
                   cursor: "pointer",
                   fontWeight: 600,
                   transition: "all 0.15s ease",
@@ -3190,10 +3305,9 @@ export default function SEPLookupTool() {
           >
             <div
               style={{
-                background:
-                  "linear-gradient(180deg, rgba(18,24,35,0.5) 0%, #0f141c 100%)",
-                border: "1px solid rgba(255,255,255,0.04)",
-                borderRadius: "14px",
+                background: "rgba(37,99,235,0.12)",
+                border: "1px solid rgba(37,99,235,0.25)",
+                borderRadius: "10px",
                 padding: "12px 18px",
                 flex: "1 1 auto",
                 minWidth: "200px",
@@ -3203,7 +3317,7 @@ export default function SEPLookupTool() {
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#38bdf8",
+                  color: "#60a5fa",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                 }}
@@ -3214,8 +3328,8 @@ export default function SEPLookupTool() {
                 style={{
                   fontSize: "22px",
                   fontWeight: 800,
-                  color: "#e8edf5",
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  color: "#f1f5f9",
+                  fontFamily: "'JetBrains Mono', monospace",
                 }}
               >
                 {searchedZip}{" "}
@@ -3223,19 +3337,18 @@ export default function SEPLookupTool() {
                   style={{
                     fontSize: "14px",
                     fontWeight: 600,
-                    color: "#8896ab",
+                    color: "#94a3b8",
                   }}
                 >
-                  ({state})
+                  ({state}){selectedCounty ? ` — ${selectedCounty} County` : ""}
                 </span>
               </div>
             </div>
             <div
               style={{
-                background:
-                  "linear-gradient(180deg, rgba(18,24,35,0.5) 0%, #0f141c 100%)",
-                border: "1px solid rgba(255,255,255,0.04)",
-                borderRadius: "14px",
+                background: "rgba(34,197,94,0.1)",
+                border: "1px solid rgba(34,197,94,0.25)",
+                borderRadius: "10px",
                 padding: "12px 18px",
                 textAlign: "center",
               }}
@@ -3244,7 +3357,7 @@ export default function SEPLookupTool() {
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#34d399",
+                  color: "#4ade80",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                 }}
@@ -3252,17 +3365,16 @@ export default function SEPLookupTool() {
                 SEPs
               </div>
               <div
-                style={{ fontSize: "22px", fontWeight: 800, color: "#e8edf5" }}
+                style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9" }}
               >
                 {filtered?.length || 0}
               </div>
             </div>
             <div
               style={{
-                background:
-                  "linear-gradient(180deg, rgba(18,24,35,0.5) 0%, #0f141c 100%)",
-                border: "1px solid rgba(255,255,255,0.04)",
-                borderRadius: "14px",
+                background: "rgba(168,85,247,0.1)",
+                border: "1px solid rgba(168,85,247,0.25)",
+                borderRadius: "10px",
                 padding: "12px 18px",
                 textAlign: "center",
               }}
@@ -3271,7 +3383,7 @@ export default function SEPLookupTool() {
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#2dd4bf",
+                  color: "#c084fc",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                 }}
@@ -3279,7 +3391,7 @@ export default function SEPLookupTool() {
                 Plans
               </div>
               <div
-                style={{ fontSize: "22px", fontWeight: 800, color: "#e8edf5" }}
+                style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9" }}
               >
                 {plans?.length || 0}
               </div>
@@ -3295,7 +3407,7 @@ export default function SEPLookupTool() {
                     ? "rgba(239,68,68,0.3)"
                     : "rgba(100,116,139,0.2)"
                 }`,
-                borderRadius: "14px",
+                borderRadius: "10px",
                 padding: "12px 18px",
                 textAlign: "center",
               }}
@@ -3304,7 +3416,7 @@ export default function SEPLookupTool() {
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: femaActive.length > 0 ? "#f87171" : "#8896ab",
+                  color: femaActive.length > 0 ? "#f87171" : "#94a3b8",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                 }}
@@ -3320,17 +3432,16 @@ export default function SEPLookupTool() {
                 </span>
               </div>
               <div
-                style={{ fontSize: "22px", fontWeight: 800, color: "#e8edf5" }}
+                style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9" }}
               >
                 {femaActive.length > 0 ? femaActive.length : "—"}
               </div>
             </div>
             <div
               style={{
-                background:
-                  "linear-gradient(180deg, rgba(18,24,35,0.5) 0%, #0f141c 100%)",
-                border: "1px solid rgba(255,255,255,0.04)",
-                borderRadius: "14px",
+                background: "rgba(99,102,241,0.1)",
+                border: "1px solid rgba(99,102,241,0.25)",
+                borderRadius: "10px",
                 padding: "12px 18px",
                 textAlign: "center",
               }}
@@ -3339,7 +3450,7 @@ export default function SEPLookupTool() {
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#38bdf8",
+                  color: "#a5b4fc",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                 }}
@@ -3347,210 +3458,24 @@ export default function SEPLookupTool() {
                 Carriers
               </div>
               <div
-                style={{ fontSize: "22px", fontWeight: 800, color: "#e8edf5" }}
+                style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9" }}
               >
                 {carriers.length}
               </div>
             </div>
           </div>
 
-          {/* ═══ CLIENT QUALIFICATION TOGGLES ═══ */}
-          <div
-            style={{
-              background: "rgba(30,41,59,0.6)",
-              borderRadius: "12px",
-              padding: "16px 20px",
-              marginBottom: "20px",
-              border: "1px solid rgba(255,255,255,0.04)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#8896ab",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                marginBottom: "12px",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              >
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="8.5" cy="7" r="4" />
-                <line x1="20" y1="8" x2="20" y2="14" />
-                <line x1="23" y1="11" x2="17" y2="11" />
-              </svg>
-              Client Qualifiers — Toggle to highlight applicable SEPs
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                flexWrap: "wrap",
-              }}
-            >
-              {[
-                {
-                  key: "hasMedicaidLIS",
-                  label: "Medicaid / LIS (Extra Help)",
-                  icon: "💊",
-                  desc: "Dual-eligible quarterly SEP",
-                },
-                {
-                  key: "hasChronicCondition",
-                  label: "Chronic Condition",
-                  icon: "🏥",
-                  desc: "C-SNP year-round enrollment",
-                },
-                {
-                  key: "recentlyMoved",
-                  label: "Recently Moved",
-                  icon: "🏠",
-                  desc: "63-day move SEP",
-                },
-                {
-                  key: "lostCoverage",
-                  label: "Lost Coverage",
-                  icon: "📋",
-                  desc: "63-day loss of coverage SEP",
-                },
-              ].map((q) => {
-                const isActive = clientQualifiers[q.key];
-                return (
-                  <button
-                    key={q.key}
-                    onClick={() => toggleQualifier(q.key)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "10px 16px",
-                      borderRadius: "14px",
-                      border: isActive
-                        ? "1px solid rgba(52,211,153,0.25)"
-                        : "1px solid rgba(255,255,255,0.07)",
-                      background: isActive
-                        ? "rgba(52,211,153,0.08)"
-                        : "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                      color: isActive ? "#34d399" : "#8896ab",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      flex: "1 1 auto",
-                      minWidth: "180px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        borderRadius: "5px",
-                        border: isActive
-                          ? "2px solid #4ade80"
-                          : "2px solid #475569",
-                        background: isActive ? "#34d399" : "transparent",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        transition: "all 0.2s ease",
-                      }}
-                    >
-                      {isActive && (
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="#0f172a"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                    </span>
-                    <div style={{ textAlign: "left" }}>
-                      <div>
-                        {q.icon} {q.label}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "10px",
-                          color: isActive ? "#34d399" : "#5a6a80",
-                          fontWeight: 500,
-                          marginTop: "1px",
-                        }}
-                      >
-                        {q.desc}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            {Object.values(clientQualifiers).some(Boolean) && (
-              <div
-                style={{
-                  marginTop: "10px",
-                  padding: "8px 12px",
-                  borderRadius: "14px",
-                  background: "rgba(34,197,94,0.08)",
-                  border: "1px solid rgba(34,197,94,0.2)",
-                  fontSize: "12px",
-                  color: "#34d399",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="16" x2="12" y2="12" />
-                  <line x1="12" y1="8" x2="12.01" y2="8" />
-                </svg>
-                Matching SEPs are highlighted with{" "}
-                <strong style={{ color: "#34d399", margin: "0 3px" }}>
-                  URGENT
-                </strong>{" "}
-                priority. Switch to the SEPs tab to see results.
-              </div>
-            )}
-          </div>
-
           {/* ═══ TABS ═══ */}
           <div
             style={{
               display: "flex",
-              borderBottom: "1px solid rgba(255,255,255,0.04)",
+              borderBottom: "1px solid rgba(148,163,184,0.1)",
               marginBottom: "20px",
             }}
           >
             {[
               ["plans", `📋 Plans & Codes (${filteredPlans.length})`],
               ["seps", `🔁 SEPs (${filtered?.length || 0})`],
-              ["fema", `🌪️ FEMA Disasters`],
             ].map(([key, label]) => (
               <button
                 key={key}
@@ -3564,10 +3489,8 @@ export default function SEPLookupTool() {
                   cursor: "pointer",
                   transition: "all 0.15s",
                   background:
-                    activeTab === key
-                      ? "linear-gradient(180deg, #1a2233 0%, #151c28 100%)"
-                      : "transparent",
-                  color: activeTab === key ? "#38bdf8" : "#8896ab",
+                    activeTab === key ? "rgba(37,99,235,0.15)" : "transparent",
+                  color: activeTab === key ? "#60a5fa" : "#94a3b8",
                   borderBottom:
                     activeTab === key
                       ? "2px solid #3b82f6"
@@ -3582,6 +3505,134 @@ export default function SEPLookupTool() {
           {/* ════════ PLANS TAB ════════ */}
           {activeTab === "plans" && (
             <>
+              {/* County Selector */}
+              {countyList.length > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "12px",
+                    alignItems: "center",
+                    marginBottom: "12px",
+                    padding: "12px 16px",
+                    borderRadius: "14px",
+                    background: selectedCounty
+                      ? "linear-gradient(180deg, rgba(52,211,153,0.06) 0%, rgba(52,211,153,0.02) 100%)"
+                      : "linear-gradient(180deg, rgba(251,191,36,0.06) 0%, rgba(251,191,36,0.02) 100%)",
+                    border: selectedCounty
+                      ? "1px solid rgba(52,211,153,0.2)"
+                      : "1px solid rgba(251,191,36,0.2)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <IconMap />
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        color: "#e8edf5",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      County
+                    </span>
+                  </div>
+                  <select
+                    value={selectedCounty || ""}
+                    onChange={async (e) => {
+                      const county = e.target.value;
+                      if (!county) return;
+                      setSelectedCounty(county);
+                      const st = getStateFromZip(searchedZip);
+                      await loadPlansForCounty(st, county);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "8px 12px",
+                      borderRadius: "10px",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      background:
+                        "linear-gradient(180deg, #080c12 0%, #0b0f16 100%)",
+                      color: "#e8edf5",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {!selectedCounty && (
+                      <option value="">
+                        — Select your county ({countyList.length} available) —
+                      </option>
+                    )}
+                    {countyList.map((c) => (
+                      <option key={c} value={c}>
+                        {c} County
+                      </option>
+                    ))}
+                  </select>
+                  {countyLoading && (
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: "18px",
+                        height: "18px",
+                        border: "2.5px solid rgba(255,255,255,0.2)",
+                        borderTopColor: "#38bdf8",
+                        borderRadius: "50%",
+                        animation: "spin 0.7s linear infinite",
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  {selectedCounty && plans && (
+                    <span
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        color: "#34d399",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {plans.length} plans
+                    </span>
+                  )}
+                </div>
+              )}
+              {!selectedCounty && countyList.length > 0 && (
+                <div
+                  style={{
+                    padding: "20px",
+                    textAlign: "center",
+                    borderRadius: "14px",
+                    marginBottom: "12px",
+                    background:
+                      "linear-gradient(180deg, rgba(251,191,36,0.04) 0%, rgba(18,24,35,0.3) 100%)",
+                    border: "1px solid rgba(251,191,36,0.15)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "#fbbf24",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    ⚠️ Select a county above to load plans from CMS database
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#8896ab" }}>
+                    Medicare plan availability is county-specific. The CMS
+                    database has {countyList.length} counties for {state}.
+                  </div>
+                </div>
+              )}
               {/* Plan Filters */}
               <div
                 style={{
@@ -3590,11 +3641,10 @@ export default function SEPLookupTool() {
                   marginBottom: "16px",
                   flexWrap: "wrap",
                   alignItems: "center",
-                  background:
-                    "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 100%)",
-                  borderRadius: "14px",
+                  background: "rgba(30,41,59,0.5)",
+                  borderRadius: "10px",
                   padding: "10px 16px",
-                  border: "1px solid rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(148,163,184,0.1)",
                 }}
               >
                 <span
@@ -3604,7 +3654,7 @@ export default function SEPLookupTool() {
                     gap: "6px",
                     fontSize: "12px",
                     fontWeight: 700,
-                    color: "#8896ab",
+                    color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
                   }}
@@ -3616,11 +3666,10 @@ export default function SEPLookupTool() {
                   onChange={(e) => setPlanFilterCarrier(e.target.value)}
                   style={{
                     padding: "6px 10px",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    background:
-                      "linear-gradient(180deg, #080c12 0%, #0b0f16 100%)",
-                    color: "#e8edf5",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
                     fontSize: "13px",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -3638,11 +3687,10 @@ export default function SEPLookupTool() {
                   onChange={(e) => setPlanFilterType(e.target.value)}
                   style={{
                     padding: "6px 10px",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    background:
-                      "linear-gradient(180deg, #080c12 0%, #0b0f16 100%)",
-                    color: "#e8edf5",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
                     fontSize: "13px",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -3660,11 +3708,10 @@ export default function SEPLookupTool() {
                   onChange={(e) => setPlanFilterSnp(e.target.value)}
                   style={{
                     padding: "6px 10px",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    background:
-                      "linear-gradient(180deg, #080c12 0%, #0b0f16 100%)",
-                    color: "#e8edf5",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
                     fontSize: "13px",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -3674,7 +3721,6 @@ export default function SEPLookupTool() {
                   <option value="D-SNP">D-SNP Only</option>
                   <option value="C-SNP">C-SNP Only</option>
                   <option value="none">Non-SNP Only</option>
-                  <option value="5star">⭐ 5-Star Only</option>
                 </select>
                 <input
                   type="text"
@@ -3684,11 +3730,10 @@ export default function SEPLookupTool() {
                   style={{
                     flex: "1 1 160px",
                     padding: "6px 10px",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    background:
-                      "linear-gradient(180deg, #080c12 0%, #0b0f16 100%)",
-                    color: "#e8edf5",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
                     fontSize: "13px",
                     fontWeight: 600,
                     outline: "none",
@@ -3711,7 +3756,7 @@ export default function SEPLookupTool() {
                       alignItems: "center",
                       gap: "4px",
                       padding: "5px 10px",
-                      borderRadius: "10px",
+                      borderRadius: "6px",
                       border: "1px solid rgba(239,68,68,0.3)",
                       background: "rgba(239,68,68,0.1)",
                       color: "#f87171",
@@ -3730,7 +3775,7 @@ export default function SEPLookupTool() {
                 style={{
                   overflowX: "auto",
                   borderRadius: "12px",
-                  border: "1px solid rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(148,163,184,0.12)",
                 }}
               >
                 <table
@@ -3743,8 +3788,7 @@ export default function SEPLookupTool() {
                   <thead>
                     <tr
                       style={{
-                        background:
-                          "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
+                        background: "rgba(15,23,42,0.9)",
                         borderBottom: "2px solid rgba(148,163,184,0.15)",
                       }}
                     >
@@ -3777,7 +3821,7 @@ export default function SEPLookupTool() {
                               : "left",
                             fontSize: "10px",
                             fontWeight: 700,
-                            color: "#5a6a80",
+                            color: "#64748b",
                             textTransform: "uppercase",
                             letterSpacing: "0.05em",
                             whiteSpace: "nowrap",
@@ -3796,7 +3840,7 @@ export default function SEPLookupTool() {
                         const isOpen = !!expandedPlans[pKey];
                         const typeColors = {
                           HMO: "#2563eb",
-                          "HMO-POS": "#38bdf8",
+                          "HMO-POS": "#3b82f6",
                           PPO: "#7c3aed",
                           PDP: "#0891b2",
                           Medigap: "#0d9488",
@@ -3818,9 +3862,9 @@ export default function SEPLookupTool() {
                               style={{
                                 cursor: "pointer",
                                 borderBottom:
-                                  "1px solid rgba(255,255,255,0.04)",
+                                  "1px solid rgba(148,163,184,0.06)",
                                 background: isOpen
-                                  ? "rgba(37,99,235,0.04)"
+                                  ? "rgba(37,99,235,0.06)"
                                   : "transparent",
                               }}
                             >
@@ -3850,7 +3894,7 @@ export default function SEPLookupTool() {
                                     style={{
                                       fontSize: "12px",
                                       fontWeight: 700,
-                                      color: "#e8edf5",
+                                      color: "#e2e8f0",
                                     }}
                                   >
                                     {c.abbr || p.carrier}
@@ -3862,7 +3906,7 @@ export default function SEPLookupTool() {
                                   style={{
                                     fontSize: "12px",
                                     fontWeight: 600,
-                                    color: "#e8edf5",
+                                    color: "#e2e8f0",
                                     lineHeight: 1.3,
                                   }}
                                 >
@@ -3871,8 +3915,8 @@ export default function SEPLookupTool() {
                                 <div
                                   style={{
                                     fontSize: "11px",
-                                    color: "#5a6a80",
-                                    fontFamily: "'IBM Plex Mono', monospace",
+                                    color: "#64748b",
+                                    fontFamily: "'JetBrains Mono', monospace",
                                     marginTop: "2px",
                                   }}
                                 >
@@ -3884,12 +3928,12 @@ export default function SEPLookupTool() {
                                   style={{
                                     display: "inline-block",
                                     padding: "2px 7px",
-                                    borderRadius: "6px",
+                                    borderRadius: "4px",
                                     fontSize: "10px",
                                     fontWeight: 700,
                                     color: "#fff",
                                     backgroundColor:
-                                      typeColors[p.type] || "#5a6a80",
+                                      typeColors[p.type] || "#475569",
                                     marginRight: 3,
                                   }}
                                 >
@@ -3900,12 +3944,12 @@ export default function SEPLookupTool() {
                                     style={{
                                       display: "inline-block",
                                       padding: "2px 7px",
-                                      borderRadius: "6px",
+                                      borderRadius: "4px",
                                       fontSize: "10px",
                                       fontWeight: 700,
                                       color: "#fff",
                                       backgroundColor:
-                                        snpColors[p.snp] || "#5a6a80",
+                                        snpColors[p.snp] || "#475569",
                                     }}
                                   >
                                     {p.snp}
@@ -3957,7 +4001,7 @@ export default function SEPLookupTool() {
                                 ) : (
                                   <span
                                     style={{
-                                      color: "#5a6a80",
+                                      color: "#64748b",
                                       fontSize: "11px",
                                     }}
                                   >
@@ -3975,7 +4019,7 @@ export default function SEPLookupTool() {
                                   style={{
                                     fontSize: "13px",
                                     fontWeight: 700,
-                                    color: p.prem === 0 ? "#34d399" : "#e8edf5",
+                                    color: p.prem === 0 ? "#4ade80" : "#e2e8f0",
                                   }}
                                 >
                                   {p.prem === 0
@@ -3993,7 +4037,7 @@ export default function SEPLookupTool() {
                                   style={{
                                     fontSize: "13px",
                                     fontWeight: 600,
-                                    color: "#e8edf5",
+                                    color: "#e2e8f0",
                                   }}
                                 >
                                   {p.moop ? `$${p.moop.toLocaleString()}` : "—"}
@@ -4007,7 +4051,7 @@ export default function SEPLookupTool() {
                               >
                                 <span
                                   style={{
-                                    color: p.grocery ? "#34d399" : "#5a6a80",
+                                    color: p.grocery ? "#4ade80" : "#475569",
                                     fontSize: "12px",
                                     fontWeight: 600,
                                   }}
@@ -4023,7 +4067,7 @@ export default function SEPLookupTool() {
                               >
                                 <span
                                   style={{
-                                    color: p.otc ? "#34d399" : "#5a6a80",
+                                    color: p.otc ? "#4ade80" : "#475569",
                                     fontSize: "12px",
                                     fontWeight: 600,
                                   }}
@@ -4039,7 +4083,7 @@ export default function SEPLookupTool() {
                               >
                                 <span
                                   style={{
-                                    color: p.flex ? "#34d399" : "#5a6a80",
+                                    color: p.flex ? "#4ade80" : "#475569",
                                     fontSize: "12px",
                                     fontWeight: 600,
                                   }}
@@ -4062,8 +4106,7 @@ export default function SEPLookupTool() {
                                   colSpan={10}
                                   style={{
                                     padding: "0 12px 14px",
-                                    background:
-                                      "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 100%)",
+                                    background: "rgba(37,99,235,0.04)",
                                   }}
                                 >
                                   <div
@@ -4092,18 +4135,17 @@ export default function SEPLookupTool() {
                                             alignItems: "center",
                                             gap: "4px",
                                             padding: "3px 8px",
-                                            borderRadius: "10px",
+                                            borderRadius: "6px",
                                             fontSize: "11px",
                                             fontWeight: 600,
-                                            background:
-                                              "linear-gradient(180deg, rgba(18,24,35,0.5) 0%, #0f141c 100%)",
+                                            background: "rgba(34,197,94,0.1)",
                                             border:
                                               "1px solid rgba(34,197,94,0.2)",
-                                            color: "#34d399",
+                                            color: "#4ade80",
                                           }}
                                         >
                                           {lbl}:{" "}
-                                          <span style={{ color: "#e8edf5" }}>
+                                          <span style={{ color: "#e2e8f0" }}>
                                             {typeof val === "boolean"
                                               ? "✓"
                                               : val}
@@ -4128,19 +4170,18 @@ export default function SEPLookupTool() {
                                       <div
                                         key={lbl}
                                         style={{
-                                          background:
-                                            "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                                          borderRadius: "10px",
+                                          background: "rgba(15,23,42,0.8)",
+                                          borderRadius: "6px",
                                           padding: "8px 12px",
                                           border:
-                                            "1px solid rgba(255,255,255,0.04)",
+                                            "1px solid rgba(148,163,184,0.1)",
                                         }}
                                       >
                                         <div
                                           style={{
                                             fontSize: "10px",
                                             fontWeight: 700,
-                                            color: "#5a6a80",
+                                            color: "#64748b",
                                             textTransform: "uppercase",
                                             letterSpacing: "0.05em",
                                             marginBottom: "2px",
@@ -4152,11 +4193,11 @@ export default function SEPLookupTool() {
                                           style={{
                                             fontSize: "13px",
                                             fontWeight: 600,
-                                            color: "#e8edf5",
+                                            color: "#e2e8f0",
                                             fontFamily:
                                               lbl === "Contract ID" ||
                                               lbl === "PBP"
-                                                ? "'IBM Plex Mono', monospace"
+                                                ? "'JetBrains Mono', monospace"
                                                 : "inherit",
                                           }}
                                         >
@@ -4178,7 +4219,7 @@ export default function SEPLookupTool() {
                           style={{
                             padding: "40px",
                             textAlign: "center",
-                            color: "#8896ab",
+                            color: "#94a3b8",
                             fontSize: "14px",
                           }}
                         >
@@ -4203,11 +4244,10 @@ export default function SEPLookupTool() {
                   marginBottom: "20px",
                   flexWrap: "wrap",
                   alignItems: "center",
-                  background:
-                    "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 100%)",
-                  borderRadius: "14px",
+                  background: "rgba(30,41,59,0.5)",
+                  borderRadius: "10px",
                   padding: "10px 16px",
-                  border: "1px solid rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(148,163,184,0.1)",
                 }}
               >
                 <span
@@ -4217,7 +4257,7 @@ export default function SEPLookupTool() {
                     gap: "6px",
                     fontSize: "12px",
                     fontWeight: 700,
-                    color: "#8896ab",
+                    color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
                   }}
@@ -4229,11 +4269,10 @@ export default function SEPLookupTool() {
                   onChange={(e) => setFilterCategory(e.target.value)}
                   style={{
                     padding: "6px 12px",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    background:
-                      "linear-gradient(180deg, #080c12 0%, #0b0f16 100%)",
-                    color: "#e8edf5",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
                     fontSize: "13px",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -4252,11 +4291,10 @@ export default function SEPLookupTool() {
                   onChange={(e) => setFilterProduct(e.target.value)}
                   style={{
                     padding: "6px 12px",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    background:
-                      "linear-gradient(180deg, #080c12 0%, #0b0f16 100%)",
-                    color: "#e8edf5",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
                     fontSize: "13px",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -4281,7 +4319,7 @@ export default function SEPLookupTool() {
                       alignItems: "center",
                       gap: "4px",
                       padding: "5px 10px",
-                      borderRadius: "10px",
+                      borderRadius: "6px",
                       border: "1px solid rgba(239,68,68,0.3)",
                       background: "rgba(239,68,68,0.1)",
                       color: "#f87171",
@@ -4300,8 +4338,8 @@ export default function SEPLookupTool() {
                 <div
                   style={{
                     background:
-                      "linear-gradient(180deg, rgba(248,113,113,0.06), rgba(248,113,113,0.02))",
-                    border: "1px solid rgba(248,113,113,0.15)",
+                      "linear-gradient(135deg, rgba(220,38,38,0.15), rgba(239,68,68,0.08))",
+                    border: "1px solid rgba(239,68,68,0.35)",
                     borderRadius: "12px",
                     padding: "16px 20px",
                     marginBottom: "20px",
@@ -4324,7 +4362,7 @@ export default function SEPLookupTool() {
                       style={{
                         fontSize: "14px",
                         fontWeight: 700,
-                        color: "#f87171",
+                        color: "#fca5a5",
                         marginBottom: "4px",
                       }}
                     >
@@ -4334,56 +4372,14 @@ export default function SEPLookupTool() {
                     <div
                       style={{
                         fontSize: "13px",
-                        color: "#f87171",
+                        color: "#fda4af",
                         lineHeight: 1.5,
                       }}
                     >
-                      {femaActive.map((f) => f.event).join("; ")} — FEMA
-                      disaster SEP active for affected beneficiaries (2 calendar
-                      months after incident end). Verify client address against
-                      affected counties.
+                      {femaActive.map((f) => f.event).join("; ")} — 60-day SEP
+                      applies for affected beneficiaries. Verify client address
+                      against affected counties.
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* FEMA API Status Warning */}
-              {searchedZip && femaCache.current.apiFailed && (
-                <div
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(251,191,36,0.08), rgba(251,191,36,0.02))",
-                    border: "1px solid rgba(251,191,36,0.2)",
-                    borderRadius: "12px",
-                    padding: "14px 18px",
-                    marginBottom: "20px",
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "10px",
-                    fontSize: "13px",
-                    color: "#fbbf24",
-                  }}
-                >
-                  <span style={{ flexShrink: 0, fontSize: "16px" }}>⚠️</span>
-                  <div>
-                    <strong>FEMA API Unavailable</strong>
-                    <span style={{ color: "#8896ab" }}>
-                      {" "}
-                      — Using hardcoded disaster data (may be incomplete). The
-                      OpenFEMA API may be down due to a federal funding lapse.
-                      Verify current disasters at{" "}
-                      <a
-                        href="https://www.fema.gov/disaster/declarations"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          color: "#38bdf8",
-                          textDecoration: "underline",
-                        }}
-                      >
-                        fema.gov/disaster/declarations
-                      </a>
-                    </span>
                   </div>
                 </div>
               )}
@@ -4410,7 +4406,7 @@ export default function SEPLookupTool() {
                     style={{
                       textAlign: "center",
                       padding: "48px 24px",
-                      color: "#8896ab",
+                      color: "#94a3b8",
                     }}
                   >
                     <div style={{ fontSize: "16px", fontWeight: 600 }}>
@@ -4427,11 +4423,10 @@ export default function SEPLookupTool() {
               <div
                 style={{
                   marginTop: "28px",
-                  background:
-                    "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 100%)",
-                  borderRadius: "20px",
+                  background: "rgba(30,41,59,0.6)",
+                  borderRadius: "14px",
                   padding: "20px",
-                  border: "1px solid rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(148,163,184,0.1)",
                 }}
               >
                 <h3
@@ -4439,7 +4434,7 @@ export default function SEPLookupTool() {
                     margin: "0 0 14px 0",
                     fontSize: "14px",
                     fontWeight: 700,
-                    color: "#e8edf5",
+                    color: "#e2e8f0",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
                   }}
@@ -4458,9 +4453,8 @@ export default function SEPLookupTool() {
                     <div
                       key={c.key}
                       style={{
-                        background:
-                          "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                        borderRadius: "14px",
+                        background: "#0f172a",
+                        borderRadius: "10px",
                         padding: "14px",
                         border: `1px solid ${c.color}30`,
                         position: "relative",
@@ -4481,7 +4475,7 @@ export default function SEPLookupTool() {
                         style={{
                           fontSize: "14px",
                           fontWeight: 700,
-                          color: "#e8edf5",
+                          color: "#f1f5f9",
                           marginBottom: "6px",
                         }}
                       >
@@ -4490,7 +4484,7 @@ export default function SEPLookupTool() {
                       <div
                         style={{
                           fontSize: "11px",
-                          color: "#8896ab",
+                          color: "#94a3b8",
                           marginBottom: "8px",
                         }}
                       >
@@ -4515,686 +4509,30 @@ export default function SEPLookupTool() {
           )}
           {/* end tabs */}
 
-          {/* ── FEMA DISASTERS TAB ── */}
-          {activeTab === "fema" && (
-            <>
-              {/* FEMA API Status Banner */}
-              {femaCache.current.apiFailed && (
-                <div
-                  style={{
-                    padding: "14px 20px",
-                    borderRadius: "14px",
-                    marginBottom: "16px",
-                    background:
-                      "linear-gradient(180deg, rgba(248,113,113,0.08) 0%, rgba(248,113,113,0.03) 100%)",
-                    border: "1px solid rgba(248,113,113,0.25)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                  }}
-                >
-                  <span style={{ fontSize: "18px" }}>⚠️</span>
-                  <div>
-                    <div
-                      style={{
-                        color: "#f87171",
-                        fontWeight: 600,
-                        fontSize: "13px",
-                      }}
-                    >
-                      FEMA API Unavailable — Using Verified Local Data
-                    </div>
-                    <div
-                      style={{
-                        color: "#8896ab",
-                        fontSize: "12px",
-                        marginTop: "2px",
-                      }}
-                    >
-                      Due to the federal funding lapse, the OpenFEMA API may be
-                      down. Showing disasters verified from fema.gov as of Feb
-                      19, 2026. Always cross-check at{" "}
-                      <a
-                        href="https://www.fema.gov/disaster/declarations"
-                        target="_blank"
-                        rel="noopener"
-                        style={{ color: "#38bdf8" }}
-                      >
-                        fema.gov/disaster/declarations
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ marginBottom: "16px" }}>
-                <h3
-                  style={{
-                    color: "#e8edf5",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    margin: "0 0 6px 0",
-                  }}
-                >
-                  🌪️ FEMA Disaster Declarations — Lookup by ZIP
-                </h3>
-                <p style={{ color: "#8896ab", fontSize: "13px", margin: 0 }}>
-                  {searchedZip
-                    ? `Showing disasters affecting ZIP ${searchedZip} (${getStateFromZip(
-                        searchedZip
-                      )}). Medicare SEP is triggered only for IA-declared disasters.`
-                    : "Enter a ZIP code above and search to see FEMA disasters for that area."}
-                </p>
-              </div>
-
-              {/* Disaster Cards */}
-              {(() => {
-                const allDisasters =
-                  femaCache.current.data && femaCache.current.data.length > 0
-                    ? femaCache.current.data
-                    : FEMA_DISASTER_DB;
-                const st = searchedZip ? getStateFromZip(searchedZip) : null;
-                const stateDisasters = st
-                  ? allDisasters.filter(
-                      (d) =>
-                        d.state === st ||
-                        (d.counties && d.counties.includes("Statewide"))
-                    )
-                  : allDisasters;
-                const now = new Date();
-
-                return stateDisasters.length === 0 ? (
-                  <div
-                    style={{
-                      padding: "40px 20px",
-                      textAlign: "center",
-                      background:
-                        "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 100%)",
-                      borderRadius: "20px",
-                      border: "1px solid rgba(255,255,255,0.04)",
-                    }}
-                  >
-                    <div style={{ fontSize: "36px", marginBottom: "12px" }}>
-                      ✅
-                    </div>
-                    <div
-                      style={{
-                        color: "#e8edf5",
-                        fontSize: "15px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      No Active FEMA Disasters
-                    </div>
-                    <div
-                      style={{
-                        color: "#8896ab",
-                        fontSize: "13px",
-                        marginTop: "6px",
-                      }}
-                    >
-                      {st
-                        ? `No declared disasters found for ${st}.`
-                        : "Search a ZIP code to check for disasters in that area."}
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "12px",
-                    }}
-                  >
-                    {/* Summary Stats */}
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gap: "10px",
-                        marginBottom: "4px",
-                      }}
-                    >
-                      {[
-                        [
-                          "Total Declarations",
-                          stateDisasters.length,
-                          "#38bdf8",
-                        ],
-                        [
-                          "IA Declared (SEP)",
-                          stateDisasters.filter(
-                            (d) => d.iaProgram || d.ihProgram
-                          ).length,
-                          "#34d399",
-                        ],
-                        [
-                          "PA Only (No SEP)",
-                          stateDisasters.filter((d) => d.paOnly).length,
-                          "#fbbf24",
-                        ],
-                      ].map(([label, count, color]) => (
-                        <div
-                          key={label}
-                          style={{
-                            padding: "14px",
-                            borderRadius: "14px",
-                            textAlign: "center",
-                            background:
-                              "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 100%)",
-                            border: "1px solid rgba(255,255,255,0.04)",
-                            boxShadow:
-                              "0 2px 8px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.2)",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: "24px",
-                              fontWeight: 800,
-                              color,
-                              fontFamily: "'IBM Plex Mono', monospace",
-                            }}
-                          >
-                            {count}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "#8896ab",
-                              marginTop: "4px",
-                              fontWeight: 600,
-                              textTransform: "uppercase",
-                              letterSpacing: "0.5px",
-                            }}
-                          >
-                            {label}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Individual Disaster Cards */}
-                    {stateDisasters.map((d) => {
-                      const hasIA = d.iaProgram || d.ihProgram;
-                      const isOngoing =
-                        !d.incidentEnd || new Date(d.incidentEnd) > now;
-                      const incEnd = d.incidentEnd
-                        ? new Date(d.incidentEnd)
-                        : null;
-                      let sepEndDate = null;
-                      if (hasIA && incEnd) {
-                        const se = new Date(incEnd);
-                        se.setMonth(se.getMonth() + 2);
-                        sepEndDate = new Date(
-                          se.getFullYear(),
-                          se.getMonth() + 1,
-                          0
-                        );
-                      }
-                      const sepActive =
-                        hasIA &&
-                        (isOngoing || (sepEndDate && sepEndDate > now));
-                      const borderColor = hasIA
-                        ? "rgba(52,211,153,0.35)"
-                        : d.paOnly
-                        ? "rgba(251,191,36,0.2)"
-                        : "rgba(255,255,255,0.07)";
-                      const tagBg = hasIA
-                        ? "rgba(52,211,153,0.12)"
-                        : "rgba(251,191,36,0.12)";
-                      const tagColor = hasIA ? "#34d399" : "#fbbf24";
-                      const tagText = hasIA
-                        ? "IA DECLARED — SEP ELIGIBLE"
-                        : "PA ONLY — NO SEP";
-
-                      return (
-                        <div
-                          key={d.id}
-                          style={{
-                            padding: "18px 20px",
-                            borderRadius: "20px",
-                            background:
-                              "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 40%, #0d1119 100%)",
-                            border: `1px solid ${borderColor}`,
-                            boxShadow:
-                              "0 1px 3px rgba(0,0,0,0.5), 0 6px 20px rgba(0,0,0,0.35), 0 12px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(0,0,0,0.2)",
-                          }}
-                        >
-                          {/* Header */}
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "flex-start",
-                              marginBottom: "10px",
-                            }}
-                          >
-                            <div style={{ flex: 1 }}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "8px",
-                                  flexWrap: "wrap",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontSize: "12px",
-                                    fontWeight: 700,
-                                    fontFamily: "'IBM Plex Mono', monospace",
-                                    color: "#38bdf8",
-                                    background: "rgba(56,189,248,0.1)",
-                                    padding: "3px 8px",
-                                    borderRadius: "6px",
-                                    border: "1px solid rgba(56,189,248,0.2)",
-                                  }}
-                                >
-                                  {d.id}
-                                </span>
-                                <span
-                                  style={{
-                                    fontSize: "11px",
-                                    fontWeight: 700,
-                                    color: tagColor,
-                                    background: tagBg,
-                                    padding: "3px 8px",
-                                    borderRadius: "6px",
-                                    border: `1px solid ${tagColor}33`,
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.5px",
-                                  }}
-                                >
-                                  {tagText}
-                                </span>
-                                {isOngoing && (
-                                  <span
-                                    style={{
-                                      fontSize: "11px",
-                                      fontWeight: 700,
-                                      color: "#f87171",
-                                      background: "rgba(248,113,113,0.1)",
-                                      padding: "3px 8px",
-                                      borderRadius: "6px",
-                                      border: "1px solid rgba(248,113,113,0.2)",
-                                      animation: "pulse 2s infinite",
-                                    }}
-                                  >
-                                    🔴 ONGOING
-                                  </span>
-                                )}
-                              </div>
-                              <div
-                                style={{
-                                  color: "#e8edf5",
-                                  fontSize: "15px",
-                                  fontWeight: 700,
-                                  marginTop: "8px",
-                                }}
-                              >
-                                {d.title}
-                              </div>
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "12px",
-                                fontWeight: 700,
-                                color: "#8896ab",
-                                background: "rgba(255,255,255,0.04)",
-                                padding: "4px 10px",
-                                borderRadius: "8px",
-                                fontFamily: "'IBM Plex Mono', monospace",
-                                whiteSpace: "nowrap",
-                                marginLeft: "12px",
-                              }}
-                            >
-                              {d.state}
-                            </div>
-                          </div>
-
-                          {/* Details Grid */}
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns:
-                                "repeat(auto-fill, minmax(200px, 1fr))",
-                              gap: "8px",
-                              marginBottom: "12px",
-                            }}
-                          >
-                            {[
-                              ["Declared", d.declaredDate],
-                              [
-                                "Incident Period",
-                                `${d.incidentBegin}${
-                                  d.incidentEnd
-                                    ? " → " + d.incidentEnd
-                                    : " → ongoing"
-                                }`,
-                              ],
-                              ["Type", d.type],
-                              hasIA && sepActive && sepEndDate
-                                ? [
-                                    "SEP Window Ends",
-                                    sepEndDate.toISOString().split("T")[0],
-                                  ]
-                                : null,
-                              hasIA && d.iaDeadline
-                                ? ["IA Application Deadline", d.iaDeadline]
-                                : null,
-                            ]
-                              .filter(Boolean)
-                              .map(([label, value]) => (
-                                <div
-                                  key={label}
-                                  style={{
-                                    padding: "8px 12px",
-                                    borderRadius: "10px",
-                                    background:
-                                      "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                                    boxShadow:
-                                      "inset 0 2px 6px rgba(0,0,0,0.45), inset 0 1px 2px rgba(0,0,0,0.3)",
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      fontSize: "10px",
-                                      color: "#5a6a80",
-                                      fontWeight: 600,
-                                      textTransform: "uppercase",
-                                      letterSpacing: "0.5px",
-                                    }}
-                                  >
-                                    {label}
-                                  </div>
-                                  <div
-                                    style={{
-                                      fontSize: "13px",
-                                      color: "#e8edf5",
-                                      fontWeight: 600,
-                                      marginTop: "2px",
-                                      fontFamily: "'IBM Plex Mono', monospace",
-                                    }}
-                                  >
-                                    {value}
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-
-                          {/* Counties */}
-                          <div style={{ marginBottom: d.notes ? "10px" : "0" }}>
-                            <div
-                              style={{
-                                fontSize: "11px",
-                                color: "#5a6a80",
-                                fontWeight: 600,
-                                textTransform: "uppercase",
-                                letterSpacing: "0.5px",
-                                marginBottom: "6px",
-                              }}
-                            >
-                              Designated Areas ({d.counties?.length || 0})
-                            </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                flexWrap: "wrap",
-                                gap: "4px",
-                              }}
-                            >
-                              {(d.counties || []).map((c) => (
-                                <span
-                                  key={c}
-                                  style={{
-                                    fontSize: "11px",
-                                    padding: "2px 8px",
-                                    borderRadius: "6px",
-                                    background: "rgba(56,189,248,0.06)",
-                                    border: "1px solid rgba(56,189,248,0.12)",
-                                    color: "#8896ab",
-                                    fontFamily: "'IBM Plex Mono', monospace",
-                                  }}
-                                >
-                                  {c}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Notes */}
-                          {d.notes && (
-                            <div
-                              style={{
-                                fontSize: "12px",
-                                color: "#8896ab",
-                                marginTop: "8px",
-                                padding: "8px 12px",
-                                borderRadius: "8px",
-                                background: "rgba(251,191,36,0.04)",
-                                borderLeft: "3px solid rgba(251,191,36,0.3)",
-                                fontStyle: "italic",
-                              }}
-                            >
-                              💡 {d.notes}
-                            </div>
-                          )}
-
-                          {/* Link */}
-                          {d.femaUrl && (
-                            <div style={{ marginTop: "10px" }}>
-                              <a
-                                href={d.femaUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#38bdf8",
-                                  textDecoration: "none",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                View on FEMA.gov →
-                              </a>
-                            </div>
-                          )}
-
-                          {/* SEP Eligibility Box for IA disasters */}
-                          {hasIA && sepActive && (
-                            <div
-                              style={{
-                                marginTop: "12px",
-                                padding: "12px 16px",
-                                borderRadius: "12px",
-                                background:
-                                  "linear-gradient(180deg, rgba(52,211,153,0.06) 0%, rgba(52,211,153,0.02) 100%)",
-                                border: "1px solid rgba(52,211,153,0.2)",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "8px",
-                                }}
-                              >
-                                <span style={{ fontSize: "16px" }}>✅</span>
-                                <div>
-                                  <div
-                                    style={{
-                                      color: "#34d399",
-                                      fontSize: "13px",
-                                      fontWeight: 700,
-                                    }}
-                                  >
-                                    Medicare SEP Active
-                                  </div>
-                                  <div
-                                    style={{
-                                      color: "#8896ab",
-                                      fontSize: "12px",
-                                      marginTop: "2px",
-                                    }}
-                                  >
-                                    {isOngoing
-                                      ? "Open-ended — SEP continues until incident closes + 2 full calendar months"
-                                      : sepEndDate
-                                      ? `SEP window through ${sepEndDate.toLocaleDateString(
-                                          "en-US",
-                                          {
-                                            month: "long",
-                                            day: "numeric",
-                                            year: "numeric",
-                                          }
-                                        )}`
-                                      : "SEP window active"}{" "}
-                                    • Client can enroll in MA/PDP during this
-                                    window
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-
-                    {/* All Disasters (not just state-filtered) */}
-                    {searchedZip &&
-                      (() => {
-                        const otherDisasters = (
-                          femaCache.current.data &&
-                          femaCache.current.data.length > 0
-                            ? femaCache.current.data
-                            : FEMA_DISASTER_DB
-                        ).filter((d) => d.state !== st);
-                        if (otherDisasters.length === 0) return null;
-                        return (
-                          <div style={{ marginTop: "12px" }}>
-                            <div
-                              style={{
-                                fontSize: "12px",
-                                color: "#5a6a80",
-                                fontWeight: 600,
-                                textTransform: "uppercase",
-                                letterSpacing: "0.5px",
-                                marginBottom: "8px",
-                                paddingLeft: "4px",
-                              }}
-                            >
-                              Other Active Declarations ({otherDisasters.length}
-                              )
-                            </div>
-                            <div
-                              style={{
-                                padding: "12px 16px",
-                                borderRadius: "14px",
-                                background:
-                                  "linear-gradient(180deg, #0a0e15 0%, #090d13 100%)",
-                                boxShadow: "inset 0 2px 6px rgba(0,0,0,0.45)",
-                              }}
-                            >
-                              {otherDisasters.map((d) => (
-                                <div
-                                  key={d.id}
-                                  style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    padding: "8px 0",
-                                    borderBottom:
-                                      "1px solid rgba(255,255,255,0.04)",
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: "8px",
-                                    }}
-                                  >
-                                    <span
-                                      style={{
-                                        fontSize: "11px",
-                                        fontWeight: 700,
-                                        fontFamily:
-                                          "'IBM Plex Mono', monospace",
-                                        color: "#38bdf8",
-                                        minWidth: "65px",
-                                      }}
-                                    >
-                                      {d.id}
-                                    </span>
-                                    <span
-                                      style={{
-                                        fontSize: "12px",
-                                        color: "#8896ab",
-                                        fontWeight: 600,
-                                      }}
-                                    >
-                                      {d.state}
-                                    </span>
-                                    <span
-                                      style={{
-                                        fontSize: "12px",
-                                        color: "#e8edf5",
-                                      }}
-                                    >
-                                      {d.title}
-                                    </span>
-                                  </div>
-                                  <span
-                                    style={{
-                                      fontSize: "10px",
-                                      fontWeight: 700,
-                                      color:
-                                        d.iaProgram || d.ihProgram
-                                          ? "#34d399"
-                                          : "#fbbf24",
-                                      textTransform: "uppercase",
-                                    }}
-                                  >
-                                    {d.iaProgram || d.ihProgram ? "IA" : "PA"}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                  </div>
-                );
-              })()}
-            </>
-          )}
-
-          {/* end all tabs */}
-
           {/* Disclaimer */}
           <div
             style={{
               marginTop: "24px",
               padding: "16px 20px",
-              borderRadius: "14px",
-              background:
-                "linear-gradient(180deg, rgba(18,24,35,0.3) 0%, #0f141c 100%)",
-              border: "1px solid rgba(255,255,255,0.04)",
+              borderRadius: "10px",
+              background: "rgba(100,116,139,0.08)",
+              border: "1px solid rgba(100,116,139,0.15)",
             }}
           >
             <p
               style={{
                 margin: 0,
                 fontSize: "11px",
-                color: "#5a6a80",
+                color: "#64748b",
                 lineHeight: 1.6,
               }}
             >
               <strong>Disclaimer:</strong> FEMA disaster data is fetched live
-              from the OpenFEMA API (api.fema.gov) with hardcoded 2026 fallback
-              data if the API is unavailable. Plan data is sourced from the CMS
-              Landscape Source File CY2026 (November 2025 release). Premiums,
-              benefits, and service areas may vary — always verify on
-              Medicare.gov. For agent/broker use only.
+              from the OpenFEMA API (api.fema.gov). Plan data is sourced from
+              CMS Landscape Files for CY2025 — in production, import CMS CSV
+              files into your database for county-level precision (see
+              SETUP.md). Premiums, benefits, and service areas may vary — always
+              verify on Medicare.gov. For agent/broker use only.
             </p>
           </div>
         </div>
@@ -5221,10 +4559,10 @@ export default function SEPLookupTool() {
               animation: "spin 0.8s linear infinite",
             }}
           />
-          <div style={{ fontSize: "15px", fontWeight: 600, color: "#8896ab" }}>
+          <div style={{ fontSize: "15px", fontWeight: 600, color: "#94a3b8" }}>
             Scanning sources for {zip}...
           </div>
-          <div style={{ fontSize: "12px", color: "#5a6a80", marginTop: "4px" }}>
+          <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
             FEMA • CMS • Medicare.gov • Carrier Networks
           </div>
         </div>
@@ -5247,7 +4585,7 @@ export default function SEPLookupTool() {
             style={{
               fontSize: "18px",
               fontWeight: 700,
-              color: "#5a6a80",
+              color: "#64748b",
               marginBottom: "8px",
             }}
           >
@@ -5256,7 +4594,7 @@ export default function SEPLookupTool() {
           <div
             style={{
               fontSize: "14px",
-              color: "#5a6a80",
+              color: "#475569",
               maxWidth: "460px",
               margin: "0 auto",
               lineHeight: 1.6,
@@ -5271,10 +4609,9 @@ export default function SEPLookupTool() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         * { box-sizing: border-box; }
-        table tbody tr:hover td { background: rgba(56,189,248,0.03) !important; }
-        select:focus { border-color: rgba(56,189,248,0.3) !important; box-shadow: inset 0 2px 6px rgba(0,0,0,0.45), 0 0 0 3px rgba(56,189,248,0.06) !important; }
+        table tbody tr:hover td { background: rgba(37,99,235,0.06) !important; }
+        select:focus { border-color: rgba(99,102,241,0.5) !important; }
         button:hover { filter: brightness(1.1); }
         input::placeholder { color: #475569; }
       `}</style>
