@@ -1997,3 +1997,7 @@ html {
   position: relative;
   z-index: 1;
 }
+.app-logo {
+  position: relative;
+  z-index: 50;
+}

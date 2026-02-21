@@ -1,22 +1,7 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase";
+import "../SEPLookupTool.css";
 
-// ─── DATA LAYER ────────────────────────────────────────────────────────────────
-// FEMA: Live from OpenFEMA API v2 (free, no key, CORS allowed)
-// CMS Plans: Live from Supabase — CMS Landscape Files CY2026 (138K rows, county-level)
-// ─────────────────────────────────────────────────────────────────────────────────
-
-// Fetch live FEMA disaster declarations from OpenFEMA API
-// ═══════════════════════════════════════════════════════════════════════════════
-// FEMA DISASTER DATABASE — Verified from fema.gov/disaster/declarations
-// Last updated: February 20, 2026 | Covers active IA + PA declarations
-// ═══════════════════════════════════════════════════════════════════════════════
 const FEMA_DISASTER_DB = [
   {
     id: "DR-4900",
@@ -263,19 +248,15 @@ async function fetchLiveFemaDisasters() {
   const lookbackDate = new Date(now);
   lookbackDate.setMonth(lookbackDate.getMonth() - 12);
   const dateStr = lookbackDate.toISOString().split("T")[0];
-
   const url = `https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries?$filter=declarationDate ge '${dateStr}' and declarationType eq 'DR'&$orderby=declarationDate desc&$top=1000&$select=disasterNumber,declarationDate,incidentType,declarationTitle,state,designatedArea,ihProgramDeclared,iaProgramDeclared,paProgramDeclared,incidentBeginDate,incidentEndDate`;
-
   let apiResults = null;
   let apiFailed = false;
-
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!res.ok) throw new Error(`FEMA API ${res.status}`);
     const data = await res.json();
     const records = data.DisasterDeclarationsSummaries || [];
     if (records.length === 0) throw new Error("FEMA API returned 0 records");
-
     const map = {};
     records.forEach((r) => {
       const key = r.disasterNumber;
@@ -312,13 +293,9 @@ async function fetchLiveFemaDisasters() {
     console.error("FEMA API error:", err);
     apiFailed = true;
   }
-
-  // Use API results if available, otherwise fall back to hardcoded data
   const disasters =
     apiResults && apiResults.length > 0 ? apiResults : FEMA_DISASTER_DB;
   if (!apiResults || apiResults.length === 0) apiFailed = true;
-
-  // Process SEP windows: 2 calendar months after incident end
   return {
     apiFailed,
     disasters: disasters
@@ -327,7 +304,6 @@ async function fetchLiveFemaDisasters() {
         const declared = new Date(d.declaredDate);
         const incidentEnd = d.incidentEnd ? new Date(d.incidentEnd) : null;
         const isOngoing = !incidentEnd || incidentEnd > now;
-
         let sepEnd, durationLabel;
         if (d.paOnly) {
           const baseDate = incidentEnd || declared;
@@ -345,7 +321,6 @@ async function fetchLiveFemaDisasters() {
           sepEnd = new Date(sepEnd.getFullYear(), sepEnd.getMonth() + 1, 0);
           durationLabel = `2 cal months after incident end (${d.incidentEnd})`;
         }
-
         return {
           ...d,
           sepEndDate: sepEnd.toISOString().split("T")[0],
@@ -364,87 +339,70 @@ const CARRIERS = {
     abbr: "UHC",
     color: "#002677",
     products: ["MA", "MAPD", "PDP", "Medigap"],
-    website: "uhc.com",
   },
   aetna: {
     name: "Aetna (CVS Health)",
     abbr: "Aetna",
     color: "#7D3F98",
     products: ["MA", "MAPD", "PDP", "Medigap"],
-    website: "aetna.com",
   },
   bcbs: {
     name: "Blue Cross Blue Shield",
     abbr: "BCBS",
     color: "#0079C1",
     products: ["MA", "MAPD", "PDP", "Medigap"],
-    website: "bcbs.com",
   },
   cigna: {
     name: "Cigna Healthcare",
     abbr: "Cigna",
     color: "#E57200",
     products: ["MA", "MAPD", "PDP"],
-    website: "cigna.com",
   },
   humana: {
     name: "Humana",
     abbr: "Humana",
     color: "#43B02A",
     products: ["MA", "MAPD", "PDP", "Medigap"],
-    website: "humana.com",
   },
   wellcare: {
     name: "Wellcare (Centene)",
     abbr: "Wellcare",
     color: "#005EB8",
     products: ["MA", "MAPD", "PDP"],
-    website: "wellcare.com",
   },
   molina: {
     name: "Molina Healthcare",
     abbr: "Molina",
     color: "#BE1E2D",
     products: ["MA", "MAPD"],
-    website: "molinahealthcare.com",
   },
   devoted: {
     name: "Devoted Health",
     abbr: "Devoted",
     color: "#FF6B35",
     products: ["MA", "MAPD"],
-    website: "devoted.com",
   },
   alignment: {
     name: "Alignment Health",
     abbr: "Alignment",
     color: "#00A99D",
     products: ["MA", "MAPD"],
-    website: "alignmenthealthcare.com",
   },
   kaiser: {
     name: "Kaiser Permanente",
     abbr: "Kaiser",
     color: "#006BA6",
     products: ["MA", "MAPD"],
-    website: "kaiserpermanente.org",
   },
   mutual: {
     name: "Mutual of Omaha",
     abbr: "MutualOmaha",
     color: "#003768",
     products: ["Medigap"],
-    website: "mutualofomaha.com",
   },
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PLAN DATABASE — CMS Landscape File format: ContractID-PBP
-// H=local MA, R=regional PPO, S=PDP, MG=Medigap
-// ═══════════════════════════════════════════════════════════════════════════════
-
 const PLAN_DB = [
-  // ── UHC ──
   {
     cid: "H0543",
     pbp: "003",
@@ -692,7 +650,6 @@ const PLAN_DB = [
     transport: null,
     states: ["ALL"],
   },
-  // ── Aetna ──
   {
     cid: "H3312",
     pbp: "055",
@@ -791,7 +748,6 @@ const PLAN_DB = [
     transport: null,
     states: ["ALL"],
   },
-  // ── Humana ──
   {
     cid: "H1036",
     pbp: "235",
@@ -952,7 +908,6 @@ const PLAN_DB = [
     transport: null,
     states: ["ALL"],
   },
-  // ── BCBS ──
   {
     cid: "H3949",
     pbp: "001",
@@ -1054,7 +1009,6 @@ const PLAN_DB = [
     transport: null,
     states: ["ALL"],
   },
-  // ── Cigna ──
   {
     cid: "H4513",
     pbp: "046",
@@ -1134,7 +1088,6 @@ const PLAN_DB = [
     transport: "48 trips",
     states: ["FL", "TX", "NC", "PA", "NJ", "NY", "IL", "AZ"],
   },
-  // ── Wellcare ──
   {
     cid: "H1032",
     pbp: "075",
@@ -1256,7 +1209,6 @@ const PLAN_DB = [
     transport: null,
     states: ["ALL"],
   },
-  // ── Molina ──
   {
     cid: "H9622",
     pbp: "005",
@@ -1312,7 +1264,6 @@ const PLAN_DB = [
     transport: "48 trips",
     states: ["FL", "TX", "CA", "OH", "IL", "MI", "WA", "SC", "NY"],
   },
-  // ── Devoted ──
   {
     cid: "H7145",
     pbp: "001",
@@ -1371,7 +1322,6 @@ const PLAN_DB = [
     transport: "48 trips",
     states: ["FL", "TX", "NC", "GA", "SC", "TN", "OH", "PA", "VA", "IL", "AZ"],
   },
-  // ── Alignment ──
   {
     cid: "H2427",
     pbp: "001",
@@ -1414,7 +1364,6 @@ const PLAN_DB = [
     transport: "48 trips",
     states: ["CA", "NC", "NV", "AZ", "TX"],
   },
-  // ── Kaiser ──
   {
     cid: "H0524",
     pbp: "003",
@@ -1457,7 +1406,6 @@ const PLAN_DB = [
     transport: "12 trips",
     states: ["CA", "CO", "GA", "HI", "MD", "OR", "VA", "WA", "DC"],
   },
-  // ── Mutual of Omaha (Medigap) ──
   {
     cid: "MG-N",
     pbp: "—",
@@ -1530,10 +1478,6 @@ function getPlansForState(zip) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ZIP PREFIX → COUNTY MAPPING (covers major metros, ~60% of Medicare enrollees)
-// If ZIP prefix not found, user selects county from dropdown
-// ═══════════════════════════════════════════════════════════════════════════════
 const ZIP_COUNTY_MAP = {
   287: "Mecklenburg",
   288: "Buncombe",
@@ -1642,12 +1586,10 @@ const ZIP_COUNTY_MAP = {
   "021": "Suffolk",
   "017": "Worcester",
 };
-
 function getCountyFromZip(zip) {
   return ZIP_COUNTY_MAP[zip.substring(0, 3)] || null;
 }
 
-// Fetch distinct county names for a state from Supabase
 async function fetchCountiesForState(state) {
   const { data, error } = await supabase
     .from("cms_plans_PY2026")
@@ -1661,10 +1603,7 @@ async function fetchCountiesForState(state) {
   }
   return [...new Set(data.map((r) => r["County Name"]))].sort();
 }
-
-// Fetch plans for a specific state+county from Supabase
 async function fetchPlansFromSupabase(state, county) {
-  // Query: plans in this county OR "All Counties" (catches PDPs)
   const { data, error } = await supabase
     .from("cms_plans_PY2026")
     .select("*")
@@ -1677,8 +1616,6 @@ async function fetchPlansFromSupabase(state, county) {
   }
   return data;
 }
-
-// Map carrier org names from CMS to our carrier keys
 function mapCarrierKey(parentOrg, contractName, orgMarketing) {
   const all = `${parentOrg} ${contractName} ${orgMarketing}`.toLowerCase();
   if (all.includes("unitedhealth") || all.includes("aarp")) return "uhc";
@@ -1709,8 +1646,6 @@ function mapCarrierKey(parentOrg, contractName, orgMarketing) {
   if (all.includes("mutual of omaha")) return "mutual";
   return null;
 }
-
-// Transform a CMS Landscape row into the UI plan format
 function transformCmsPlan(row) {
   const cid = row["Contract ID"] || "";
   const pbp = String(row["Plan ID"] || "").padStart(3, "0");
@@ -1721,8 +1656,6 @@ function transformCmsPlan(row) {
   const parentOrg = row["Parent Organization Name"] || "";
   const contractName = row["Contract Name"] || "";
   const orgMarketing = row["Organization Marketing Name"] || "";
-
-  // Parse star rating
   let stars = null;
   const rawStars =
     row["Overall Star Rating"] || row["Part C Summary Star Rating"] || "";
@@ -1734,33 +1667,20 @@ function transformCmsPlan(row) {
     stars = parseFloat(rawStars);
     if (isNaN(stars)) stars = null;
   }
-
-  // Parse premiums
   const partCPrem = parseFloat(row["Part C Premium"] || "0") || 0;
   const consolidatedPrem =
     parseFloat(row["Monthly Consolidated Premium (Part C + D)"] || "0") || 0;
   const prem = consolidatedPrem || partCPrem || 0;
-
-  // Parse MOOP
   const moopRaw = row["In-Network Maximum Out-of-Pocket (MOOP) Amount"] || "";
-  const moopMatch = moopRaw.replace(/[$,]/g, "");
-  const moop = parseFloat(moopMatch) || null;
-
-  // Determine category
+  const moop = parseFloat(moopRaw.replace(/[$,]/g, "")) || null;
   let cat = "MA";
   if (catType === "PDP") cat = "PDP";
   else if (catType === "MA-PD" || catType === "SNP") cat = "MAPD";
-  else if (catType === "MA") cat = "MA";
-
-  // SNP
   let snp = null;
   if (snpType === "Dual-Eligible") snp = "D-SNP";
   else if (snpType === "Chronic or Disabling Condition") snp = "C-SNP";
   else if (snpType === "Institutional") snp = "I-SNP";
-
-  // Carrier
   const carrier = mapCarrierKey(parentOrg, contractName, orgMarketing);
-
   return {
     cid,
     pbp,
@@ -1775,7 +1695,7 @@ function transformCmsPlan(row) {
     partD: catType === "MA-PD" || catType === "PDP" || catType === "SNP",
     dental: true,
     vision: true,
-    hearing: true, // CMS file doesn't break these out easily
+    hearing: true,
     otc: null,
     grocery: null,
     flex: null,
@@ -1785,8 +1705,6 @@ function transformCmsPlan(row) {
     countyName: row["County Name"] || "",
   };
 }
-
-// Zip-to-state mapping (simplified — covers major ranges)
 function getStateFromZip(zip) {
   const z = parseInt(zip);
   if (z >= 35000 && z <= 36999) return "AL";
@@ -1843,16 +1761,11 @@ function getStateFromZip(zip) {
   if (z >= 82000 && z <= 83199) return "WY";
   return "Unknown";
 }
-
-// Determine which carriers serve a given state (simplified service area logic)
 function getCarriersForZip(zip) {
   const state = getStateFromZip(zip);
   const allCarriers = Object.keys(CARRIERS);
-  // Kaiser only available in select states
   const kaiserStates = ["CA", "CO", "GA", "HI", "MD", "OR", "VA", "WA", "DC"];
-  // Alignment primarily in CA, NC, NV, AZ, TX
   const alignmentStates = ["CA", "NC", "NV", "AZ", "TX"];
-
   return allCarriers
     .filter((key) => {
       if (key === "kaiser" && !kaiserStates.includes(state)) return false;
@@ -1861,40 +1774,27 @@ function getCarriersForZip(zip) {
     })
     .map((key) => ({ key, ...CARRIERS[key] }));
 }
-
-// Check for 5-star plans — dynamically checks PLAN_DB for the zip's state
 function hasFiveStarPlans(zip) {
   const st = getStateFromZip(zip);
   return PLAN_DB.some(
     (p) => p.stars >= 5 && (p.states.includes("ALL") || p.states.includes(st))
   );
 }
-
-// Helper: days remaining until a date from today
 function daysRemaining(dateStr) {
-  const end = new Date(dateStr);
+  return Math.max(0, Math.ceil((new Date(dateStr) - new Date()) / 86400000));
+}
+function isActiveNow(s, e) {
   const now = new Date();
-  return Math.max(0, Math.ceil((end - now) / 86400000));
+  if (s === "Year-round" || s === "Varies by individual") return true;
+  return new Date(s) <= now && now <= new Date(e);
 }
 
-// Helper: is a date-bounded SEP currently active?
-function isActiveNow(startStr, endStr) {
-  const now = new Date();
-  if (startStr === "Year-round" || startStr === "Varies by individual")
-    return true;
-  return new Date(startStr) <= now && now <= new Date(endStr);
-}
-
-// Build ACTIVE Medicare Advantage SEPs only — each SEP includes matching plans
 function getSEPsForZip(zip, femaDisasters = []) {
   const state = getStateFromZip(zip);
   const today = new Date();
   const seps = [];
   const zipPlans = getPlansForState(zip);
   const maPlans = (filter) => zipPlans.filter(filter);
-
-  // 1. FEMA Disaster SEPs (LIVE from OpenFEMA API)
-  // Match by state — agents verify specific county from the list
   femaDisasters
     .filter((d) => d.state === state)
     .forEach((d) => {
@@ -1912,10 +1812,10 @@ function getSEPsForZip(zip, femaDisasters = []) {
             d.state
           }. Counties: ${d.counties.join(", ")}.${
             isPAOnly
-              ? " ⚠️ Public Assistance only — Medicare SEP NOT yet active. Monitor for IA amendment."
-              : ` Enroll in or switch MA/MAPD plans.${
+              ? " Public Assistance only — Medicare SEP NOT yet active. Monitor for IA amendment."
+              : `Enroll in or switch MA/MAPD plans.${
                   d.isOngoing
-                    ? " ⚠️ Incident still active — SEP window remains open."
+                    ? " Incident still active — SEP window remains open."
                     : ""
                 }`
           }`,
@@ -1949,8 +1849,6 @@ function getSEPsForZip(zip, femaDisasters = []) {
         });
       }
     });
-
-  // 2. MA OEP (Jan 1 – Mar 31)
   const yr = today.getFullYear();
   if (isActiveNow(`${yr}-01-01`, `${yr}-03-31`)) {
     seps.push({
@@ -1967,12 +1865,10 @@ function getSEPsForZip(zip, femaDisasters = []) {
       eligibleProducts: ["MA", "MAPD"],
       source: "CMS",
       urgency: "medium",
-      daysLeft: daysRemaining("2025-03-31"),
+      daysLeft: daysRemaining(`${yr}-03-31`),
       matchingPlans: maPlans((p) => ["MA", "MAPD"].includes(p.cat) && !p.snp),
     });
   }
-
-  // 3. ICEP
   seps.push({
     id: "medicare-icep",
     category: "Medicare",
@@ -1989,8 +1885,6 @@ function getSEPsForZip(zip, femaDisasters = []) {
     urgency: "info",
     matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
-
-  // 4. IEP
   seps.push({
     id: "medicare-iep",
     category: "Medicare",
@@ -2007,8 +1901,6 @@ function getSEPsForZip(zip, femaDisasters = []) {
     urgency: "info",
     matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
-
-  // 5. 5-Star SEP
   if (hasFiveStarPlans(zip) && isActiveNow(`${yr - 1}-12-08`, `${yr}-11-30`)) {
     seps.push({
       id: "medicare-5star",
@@ -2017,19 +1909,17 @@ function getSEPsForZip(zip, femaDisasters = []) {
       code: "5-STAR",
       event: "5-Star rated plan available in this area",
       description:
-        "CMS 5-star rated MA/MAPD plan available. Switch to a 5-star plan once per year. Only 5-star plans shown below.",
+        "CMS 5-star rated MA/MAPD plan available. Switch to a 5-star plan once per year.",
       startDate: `${yr - 1}-12-08`,
       endDate: `${yr}-11-30`,
       duration: "Dec 8 – Nov 30 (once/year)",
       eligibleProducts: ["MA", "MAPD"],
       source: "CMS Star Ratings",
       urgency: "low",
-      daysLeft: daysRemaining("2025-11-30"),
+      daysLeft: daysRemaining(`${yr}-11-30`),
       matchingPlans: maPlans((p) => p.stars >= 5),
     });
   }
-
-  // 6. Dual-Eligible / LIS
   seps.push({
     id: "medicare-dual-lis",
     category: "Medicare",
@@ -2048,8 +1938,6 @@ function getSEPsForZip(zip, femaDisasters = []) {
       (p) => p.snp === "D-SNP" || ["MA", "MAPD"].includes(p.cat)
     ),
   });
-
-  // 7. Moved Out of Service Area
   seps.push({
     id: "medicare-move",
     category: "Medicare",
@@ -2066,8 +1954,6 @@ function getSEPsForZip(zip, femaDisasters = []) {
     urgency: "info",
     matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
-
-  // 8. Loss of Creditable Coverage
   seps.push({
     id: "medicare-loss-coverage",
     category: "Medicare",
@@ -2084,8 +1970,6 @@ function getSEPsForZip(zip, femaDisasters = []) {
     urgency: "info",
     matchingPlans: maPlans((p) => ["MA", "MAPD", "Medigap"].includes(p.cat)),
   });
-
-  // 9. Institutionalized / SNF
   seps.push({
     id: "medicare-institution",
     category: "Medicare",
@@ -2093,7 +1977,7 @@ function getSEPsForZip(zip, femaDisasters = []) {
     code: "SEP-INST",
     event: "Move into/out of nursing facility or institution",
     description:
-      "Continuous SEP while in institution + 2 months after discharge. I-SNP plans designed for institutionalized beneficiaries.",
+      "Continuous SEP while in institution + 2 months after discharge.",
     startDate: "Year-round",
     endDate: "Year-round",
     duration: "Continuous + 2 mo after discharge",
@@ -2104,8 +1988,6 @@ function getSEPsForZip(zip, femaDisasters = []) {
       (p) => p.snp === "I-SNP" || ["MA", "MAPD"].includes(p.cat)
     ),
   });
-
-  // 10. C-SNP (only if C-SNP plans exist in area)
   {
     const csnpPlans = maPlans((p) => p.snp === "C-SNP");
     if (csnpPlans.length > 0) {
@@ -2116,7 +1998,7 @@ function getSEPsForZip(zip, femaDisasters = []) {
         code: "SEP-CSNP",
         event: "Qualifying chronic condition (diabetes, ESRD, CHF, etc.)",
         description:
-          "Year-round enrollment in C-SNP plans for individuals with qualifying chronic conditions. Specialized care coordination included.",
+          "Year-round enrollment in C-SNP plans for individuals with qualifying chronic conditions.",
         startDate: "Year-round",
         endDate: "Year-round",
         duration: "Continuous",
@@ -2127,16 +2009,16 @@ function getSEPsForZip(zip, femaDisasters = []) {
       });
     }
   }
-
   return seps;
 }
 
-// ─── ICONS// ─── ICONS ─────────────────────────────────────────────────────────────────────
-
+// ═══════════════════════════════════════════════════════════════════════════════
+// ICONS
+// ═══════════════════════════════════════════════════════════════════════════════
 const IconSearch = () => (
   <svg
-    width="20"
-    height="20"
+    width="18"
+    height="18"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -2225,8 +2107,8 @@ const IconStar = () => (
     width="14"
     height="14"
     viewBox="0 0 24 24"
-    fill="#00ff41"
-    stroke="#00ff41"
+    fill="#fbbf24"
+    stroke="#fbbf24"
     strokeWidth="1"
   >
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -2260,129 +2142,65 @@ const IconX = () => (
   </svg>
 );
 
-// ─── COMPONENTS ────────────────────────────────────────────────────────────────
-
-const CATEGORY_COLORS = {
-  "FEMA Disaster": {
-    bg: "#000f00",
-    border: "#00ff41",
-    text: "#00ff41",
-    badge: "#00cc30",
-  },
-  Medicare: {
-    bg: "#000f00",
-    border: "#00cc30",
-    text: "#00ee38",
-    badge: "#008a20",
-  },
-};
-
-const URGENCY_STYLES = {
-  high: { bg: "#001800", text: "#00ff41", label: "URGENT" },
-  medium: { bg: "#001200", text: "#00dd35", label: "ACTIVE" },
-  low: { bg: "#000e00", text: "#00cc30", label: "OPEN" },
-  info: { bg: "#000800", text: "#008820", label: "ONGOING" },
-};
+const Stars = ({ count }) =>
+  count != null ? (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "1px" }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <svg
+          key={i}
+          width={11}
+          height={11}
+          viewBox="0 0 24 24"
+          fill={i <= Math.floor(count) ? "#fbbf24" : "none"}
+          stroke="#fbbf24"
+          strokeWidth={1.5}
+        >
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+      ))}
+      {count % 1 !== 0 && (
+        <span style={{ fontSize: "10px", color: "#fbbf24" }}>.5</span>
+      )}
+    </span>
+  ) : (
+    <span className="muted">—</span>
+  );
 
 function ProductBadge({ product }) {
-  const colors = {
-    MA: "#004d00",
-    MAPD: "#006600",
-    PDP: "#005500",
-    Medigap: "#003d00",
-    "D-SNP": "#007700",
-    "I-SNP": "#006600",
-    "C-SNP": "#005500",
-  };
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: "2px",
-        fontSize: "11px",
-        fontWeight: 700,
-        letterSpacing: "0.05em",
-        color: "#00ff41",
-        backgroundColor: colors[product] || "#003300",
-        border: "1px solid #00aa28",
-        marginRight: "4px",
-        marginBottom: "4px",
-      }}
-    >
-      {product}
-    </span>
-  );
+  const cls =
+    {
+      MA: "ma",
+      MAPD: "mapd",
+      PDP: "pdp",
+      Medigap: "medigap",
+      "D-SNP": "dsnp",
+      "I-SNP": "isnp",
+      "C-SNP": "csnp",
+    }[product] || "ma";
+  return <span className={`sep-product-badge ${cls}`}>{product}</span>;
 }
 
-function CarrierChip({ carrier }) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "4px 10px",
-        borderRadius: "2px",
-        fontSize: "12px",
-        fontWeight: 600,
-        backgroundColor: carrier.color + "22",
-        color: carrier.color,
-        border: `1px solid ${carrier.color}55`,
-        marginRight: "6px",
-        marginBottom: "6px",
-      }}
-    >
-      <span
-        style={{
-          width: "8px",
-          height: "8px",
-          borderRadius: "50%",
-          backgroundColor: carrier.color,
-          flexShrink: 0,
-        }}
-      />
-      {carrier.abbr}
-    </span>
-  );
-}
-
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEP CARD COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
 function SEPCard({ sep, carriers, isExpanded, onToggle }) {
-  const catColors =
-    CATEGORY_COLORS[sep.category] || CATEGORY_COLORS["Medicare"];
-  const urgStyle = URGENCY_STYLES[sep.urgency] || URGENCY_STYLES.info;
-  const matchingCarriers = carriers.filter((c) =>
-    sep.eligibleProducts.some((p) => c.products.includes(p))
-  );
+  const catCls = sep.category === "FEMA Disaster" ? "fema" : "medicare";
+  const urgCls = sep.urgency || "info";
+  const daysCls =
+    sep.daysLeft != null
+      ? sep.daysLeft <= 14
+        ? "critical"
+        : sep.daysLeft <= 30
+        ? "warning"
+        : "normal"
+      : null;
 
   return (
-    <div
-      style={{
-        borderRadius: "2px",
-        border: `1px solid ${catColors.border}`,
-        backgroundColor: "#000000",
-        overflow: "hidden",
-
-        transition: "box-shadow 0.2s ease",
-        marginBottom: "12px",
-      }}
-    >
-      {/* Header */}
-      <div
-        onClick={onToggle}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          padding: "16px 20px",
-          cursor: "pointer",
-          userSelect: "none",
-          borderBottom: isExpanded ? `1px solid ${catColors.border}50` : "none",
-          background: isExpanded ? catColors.bg : "transparent",
-          transition: "background 0.2s ease",
-        }}
-      >
-        <IconChevron open={isExpanded} />
+    <div className={`sep-sep-card ${catCls} ${isExpanded ? "expanded" : ""}`}>
+      <div className="sep-sep-header" onClick={onToggle}>
+        <span style={{ color: "var(--text-muted)" }}>
+          <IconChevron open={isExpanded} />
+        </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -2393,57 +2211,22 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
               marginBottom: "4px",
             }}
           >
-            <span
-              style={{
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: "0.08em",
-                padding: "2px 8px",
-                borderRadius: "2px",
-                textTransform: "uppercase",
-                backgroundColor: urgStyle.bg,
-                color: urgStyle.text,
-              }}
-            >
-              {urgStyle.label}
+            <span className={`sep-urgency-pill ${urgCls}`}>
+              {
+                {
+                  high: "URGENT",
+                  medium: "ACTIVE",
+                  low: "OPEN",
+                  info: "ONGOING",
+                }[urgCls]
+              }
             </span>
-            <span
-              style={{
-                fontSize: "10px",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                padding: "2px 8px",
-                borderRadius: "2px",
-                textTransform: "uppercase",
-                backgroundColor: catColors.badge + "18",
-                color: catColors.badge,
-              }}
-            >
+            <span className={`sep-category-pill ${catCls}`}>
               {sep.category}
             </span>
             {sep.code === "5-STAR" && <IconStar />}
-            {sep.daysLeft != null && (
-              <span
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 800,
-                  letterSpacing: "0.04em",
-                  padding: "2px 6px",
-                  borderRadius: "2px",
-                  backgroundColor:
-                    sep.daysLeft <= 14
-                      ? "#1a1010"
-                      : sep.daysLeft <= 30
-                      ? "#001a00"
-                      : "#101a10",
-                  color:
-                    sep.daysLeft <= 14
-                      ? "#007700"
-                      : sep.daysLeft <= 30
-                      ? "#00cc30"
-                      : "#005500",
-                }}
-              >
+            {daysCls && (
+              <span className={`sep-days-pill ${daysCls}`}>
                 {sep.daysLeft}d left
               </span>
             )}
@@ -2452,13 +2235,19 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
             style={{
               fontSize: "15px",
               fontWeight: 700,
-              color: "#00ff41",
+              color: "var(--text-primary)",
               lineHeight: 1.3,
             }}
           >
             {sep.type}
           </div>
-          <div style={{ fontSize: "13px", color: "#008a20", marginTop: "2px" }}>
+          <div
+            style={{
+              fontSize: "13px",
+              color: "var(--text-secondary)",
+              marginTop: "2px",
+            }}
+          >
             {sep.event}
           </div>
         </div>
@@ -2475,228 +2264,76 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
             <ProductBadge key={p} product={p} />
           ))}
           {sep.eligibleProducts.length > 4 && (
-            <span
-              style={{ fontSize: "11px", color: "#008a20", padding: "2px 4px" }}
-            >
+            <span className="muted" style={{ padding: "2px 4px" }}>
               +{sep.eligibleProducts.length - 4}
             </span>
           )}
         </div>
       </div>
-
-      {/* Expanded Detail */}
       {isExpanded && (
-        <div style={{ padding: "20px", background: catColors.bg + "60" }}>
-          <p
-            style={{
-              fontSize: "14px",
-              color: "#00cc30",
-              lineHeight: 1.6,
-              margin: "0 0 16px 0",
-            }}
-          >
-            {sep.description}
-          </p>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "12px",
-              marginBottom: "16px",
-            }}
-          >
-            <div
-              style={{
-                background: "#000000",
-                borderRadius: "2px",
-                padding: "12px 16px",
-                border: "1px solid #005500",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#008a20",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: "4px",
-                }}
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <IconClock /> Enrollment Window
-                </span>
+        <div className="sep-sep-body">
+          <p>{sep.description}</p>
+          <div className="sep-info-grid">
+            <div className="sep-info-box">
+              <div className="sep-info-box-label">
+                <IconClock /> Enrollment Window
               </div>
-              <div
-                style={{ fontSize: "13px", fontWeight: 600, color: "#00ff41" }}
-              >
-                {sep.duration}
-              </div>
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#005500",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  letterSpacing: "0.08em",
-                  marginTop: "2px",
-                }}
-              >
-                {sep.startDate !== "Year-round" &&
-                sep.startDate !== "Varies by individual"
-                  ? `${sep.startDate} → ${sep.endDate}`
-                  : sep.startDate}
-              </div>
+              <div className="sep-info-box-main">{sep.duration}</div>
+              {sep.startDate !== "Year-round" &&
+                sep.startDate !== "Varies by individual" && (
+                  <div className="sep-info-box-sub">
+                    {sep.startDate} → {sep.endDate}
+                  </div>
+                )}
             </div>
-            <div
-              style={{
-                background: "#000000",
-                borderRadius: "2px",
-                padding: "12px 16px",
-                border: "1px solid #005500",
-              }}
-            >
+            <div className="sep-info-box">
+              <div className="sep-info-box-label">
+                <IconShield /> Eligible Products
+              </div>
               <div
                 style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#008a20",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: "4px",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "2px",
+                  marginTop: "4px",
                 }}
               >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <IconShield /> Eligible Products
-                </span>
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "2px" }}>
                 {sep.eligibleProducts.map((p) => (
                   <ProductBadge key={p} product={p} />
                 ))}
               </div>
             </div>
-            <div
-              style={{
-                background: "#000000",
-                borderRadius: "2px",
-                padding: "12px 16px",
-                border: "1px solid #005500",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#008a20",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: "4px",
-                }}
-              >
-                Source
-              </div>
-              <div
-                style={{ fontSize: "13px", fontWeight: 600, color: "#00ff41" }}
-              >
-                {sep.source}
-              </div>
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#005500",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  letterSpacing: "0.08em",
-                  marginTop: "2px",
-                }}
-              >
-                Code: {sep.code}
-              </div>
+            <div className="sep-info-box">
+              <div className="sep-info-box-label">Source</div>
+              <div className="sep-info-box-main">{sep.source}</div>
+              <div className="sep-info-box-sub">Code: {sep.code}</div>
             </div>
           </div>
-
           {sep.counties && (
-            <div
-              style={{
-                background: "#000000",
-                borderRadius: "2px",
-                padding: "12px 16px",
-                border: "1px solid #005500",
-                marginBottom: "16px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#008a20",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: "6px",
-                }}
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <IconMap /> Affected Counties
-                </span>
+            <div className="sep-info-box" style={{ marginBottom: "18px" }}>
+              <div className="sep-info-box-label">
+                <IconMap /> Affected Counties
               </div>
               <div
-                style={{ fontSize: "13px", color: "#00cc30", lineHeight: 1.6 }}
+                style={{
+                  fontSize: "13px",
+                  color: "var(--text-secondary)",
+                  lineHeight: 1.6,
+                }}
               >
                 {sep.counties.join("  •  ")}
               </div>
             </div>
           )}
-
-          {/* Matching Plans for this SEP */}
           {sep.matchingPlans && sep.matchingPlans.length > 0 && (
-            <div
-              style={{
-                background: "#000000",
-                borderRadius: "2px",
-                padding: "12px 16px",
-                border: "1px solid #005500",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#008a20",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: "8px",
-                }}
-              >
-                📋 Eligible Plans Under This SEP ({sep.matchingPlans.length})
+            <div className="sep-info-box">
+              <div className="sep-info-box-label">
+                Eligible Plans Under This SEP ({sep.matchingPlans.length})
               </div>
-              <div style={{ overflowX: "auto" }}>
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    fontSize: "11px",
-                  }}
-                >
+              <div style={{ overflowX: "auto", marginTop: "8px" }}>
+                <table className="sep-sub-table">
                   <thead>
-                    <tr style={{ borderBottom: "1px solid #c0c0c8" }}>
+                    <tr>
                       {[
                         "Carrier",
                         "Plan",
@@ -2712,17 +2349,10 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                         <th
                           key={h}
                           style={{
-                            padding: "6px 6px",
                             textAlign:
                               h === "Premium" || h === "MOOP"
                                 ? "right"
                                 : "left",
-                            fontSize: "9px",
-                            fontWeight: 700,
-                            color: "#008a20",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.04em",
-                            whiteSpace: "nowrap",
                           }}
                         >
                           {h}
@@ -2733,26 +2363,9 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                   <tbody>
                     {sep.matchingPlans.map((p, i) => {
                       const cr = CARRIERS[p.carrier] || {};
-                      const typeColors = {
-                        HMO: "#005500",
-                        "HMO-POS": "#006a00",
-                        PPO: "#004400",
-                        PDP: "#005d00",
-                        Medigap: "#003a00",
-                      };
-                      const snpColors = {
-                        "D-SNP": "#006600",
-                        "C-SNP": "#005500",
-                        "I-SNP": "#004d00",
-                      };
                       return (
-                        <tr
-                          key={`${p.cid}-${p.pbp}-${i}`}
-                          style={{ borderBottom: "1px solid #d8d8dc" }}
-                        >
-                          <td
-                            style={{ padding: "6px 6px", whiteSpace: "nowrap" }}
-                          >
+                        <tr key={`${p.cid}-${p.pbp}-${i}`}>
+                          <td className="nowrap">
                             <span
                               style={{
                                 display: "inline-flex",
@@ -2762,17 +2375,17 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                             >
                               <span
                                 style={{
-                                  width: "6px",
-                                  height: "6px",
+                                  width: 6,
+                                  height: 6,
                                   borderRadius: "50%",
                                   backgroundColor: cr.color || "#666",
                                 }}
                               />
                               <span
                                 style={{
-                                  fontSize: "11px",
+                                  fontSize: 11,
                                   fontWeight: 700,
-                                  color: "#00cc30",
+                                  color: "var(--text-primary)",
                                 }}
                               >
                                 {cr.abbr}
@@ -2781,140 +2394,83 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                           </td>
                           <td
                             style={{
-                              padding: "6px 6px",
-                              fontSize: "11px",
+                              fontSize: 11,
                               fontWeight: 600,
-                              color: "#00cc30",
-                              maxWidth: "200px",
+                              color: "var(--text-secondary)",
+                              maxWidth: 200,
                             }}
                           >
                             {p.name}
                           </td>
                           <td
-                            style={{
-                              padding: "6px 6px",
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: "10px",
-                              color: "#008a20",
-                              whiteSpace: "nowrap",
-                            }}
+                            className="mono"
+                            style={{ fontSize: 10, color: "var(--text-muted)" }}
                           >
                             {p.cid}-{p.pbp}
                           </td>
-                          <td style={{ padding: "6px 6px" }}>
-                            <span
-                              style={{
-                                display: "inline-block",
-                                padding: "1px 5px",
-                                borderRadius: "3px",
-                                fontSize: "9px",
-                                fontWeight: 700,
-                                color: "#00ff41",
-                                backgroundColor:
-                                  typeColors[p.type] || "#005500",
-                                marginRight: 2,
-                              }}
-                            >
-                              {p.type}
-                            </span>
+                          <td>
+                            <span className="sep-type-badge">{p.type}</span>
                             {p.snp && (
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  padding: "1px 5px",
-                                  borderRadius: "3px",
-                                  fontSize: "9px",
-                                  fontWeight: 700,
-                                  color: "#00ff41",
-                                  backgroundColor:
-                                    snpColors[p.snp] || "#005500",
-                                }}
-                              >
-                                {p.snp}
-                              </span>
+                              <span className="sep-snp-badge">{p.snp}</span>
                             )}
                           </td>
-                          <td style={{ padding: "6px 6px" }}>
-                            {p.stars != null ? (
-                              <span
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "0px",
-                                }}
-                              >
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <svg
-                                    key={s}
-                                    width={9}
-                                    height={9}
-                                    viewBox="0 0 24 24"
-                                    fill={
-                                      s <= Math.floor(p.stars)
-                                        ? "#00cc30"
-                                        : "none"
-                                    }
-                                    stroke="#00ff41"
-                                    strokeWidth={1.5}
-                                  >
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                  </svg>
-                                ))}
-                              </span>
-                            ) : (
-                              <span style={{ color: "#006a1a" }}>—</span>
-                            )}
+                          <td>
+                            <Stars count={p.stars} />
                           </td>
                           <td
+                            className="text-right"
                             style={{
-                              padding: "6px 6px",
-                              textAlign: "right",
                               fontWeight: 700,
-                              color: p.prem === 0 ? "#005500" : "#0d1a0d",
-                              fontSize: "11px",
+                              color:
+                                p.prem === 0
+                                  ? "var(--accent-green)"
+                                  : "var(--text-primary)",
+                              fontSize: 11,
                             }}
                           >
                             {p.prem === 0 ? "$0" : `$${p.prem.toFixed(2)}`}
                           </td>
                           <td
+                            className="text-right"
                             style={{
-                              padding: "6px 6px",
-                              textAlign: "right",
                               fontWeight: 600,
-                              color: "#00cc30",
-                              fontSize: "11px",
+                              color: "var(--text-secondary)",
+                              fontSize: 11,
                             }}
                           >
                             {p.moop ? `$${p.moop.toLocaleString()}` : "—"}
                           </td>
                           <td
+                            className="text-center"
                             style={{
-                              padding: "6px 6px",
-                              textAlign: "center",
-                              fontSize: "10px",
-                              color: p.grocery ? "#005500" : "#006a1a",
+                              fontSize: 10,
+                              color: p.grocery
+                                ? "var(--accent-green)"
+                                : "var(--text-muted)",
                               fontWeight: 600,
                             }}
                           >
                             {p.grocery || "—"}
                           </td>
                           <td
+                            className="text-center"
                             style={{
-                              padding: "6px 6px",
-                              textAlign: "center",
-                              fontSize: "10px",
-                              color: p.otc ? "#005500" : "#006a1a",
+                              fontSize: 10,
+                              color: p.otc
+                                ? "var(--accent-gold)"
+                                : "var(--text-muted)",
                               fontWeight: 600,
                             }}
                           >
                             {p.otc || "—"}
                           </td>
                           <td
+                            className="text-center"
                             style={{
-                              padding: "6px 6px",
-                              textAlign: "center",
-                              fontSize: "10px",
-                              color: p.flex ? "#005500" : "#006a1a",
+                              fontSize: 10,
+                              color: p.flex
+                                ? "var(--accent-teal)"
+                                : "var(--text-muted)",
                               fontWeight: 600,
                             }}
                           >
@@ -2930,14 +2486,8 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           )}
           {sep.matchingPlans && sep.matchingPlans.length === 0 && (
             <div
-              style={{
-                background: "#000000",
-                borderRadius: "2px",
-                padding: "12px 16px",
-                border: "1px solid #005500",
-                color: "#008a20",
-                fontSize: "13px",
-              }}
+              className="sep-info-box"
+              style={{ color: "var(--text-muted)", fontSize: 13 }}
             >
               No matching plans found in this zip for this SEP type.
             </div>
@@ -2948,8 +2498,9 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
   );
 }
 
-// ─── MAIN APP ──────────────────────────────────────────────────────────────────
-
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN APP COMPONENT — uses CSS classes from styles.css + SEPLookupTool.css
+// ═══════════════════════════════════════════════════════════════════════════════
 export default function SEPLookupTool() {
   const [zip, setZip] = useState("");
   const [searchedZip, setSearchedZip] = useState(null);
@@ -2960,7 +2511,6 @@ export default function SEPLookupTool() {
   const [filterProduct, setFilterProduct] = useState("all");
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
-  // V2: Plan state
   const [plans, setPlans] = useState(null);
   const [activeTab, setActiveTab] = useState("plans");
   const [expandedPlans, setExpandedPlans] = useState({});
@@ -2968,15 +2518,11 @@ export default function SEPLookupTool() {
   const [planFilterType, setPlanFilterType] = useState("all");
   const [planFilterSnp, setPlanFilterSnp] = useState("all");
   const [planSearch, setPlanSearch] = useState("");
-  // County-level plan lookup (Supabase)
   const [selectedCounty, setSelectedCounty] = useState(null);
   const [countyList, setCountyList] = useState([]);
   const [countyLoading, setCountyLoading] = useState(false);
-
-  // Live FEMA data cache (persists across searches within session)
   const femaCache = useRef({ data: null, fetchedAt: 0 });
 
-  // County-level plan loading from Supabase
   const loadPlansForCounty = useCallback(async (st, county) => {
     if (!st || !county) return;
     setCountyLoading(true);
@@ -3009,21 +2555,18 @@ export default function SEPLookupTool() {
     const cleanZip = zip.trim();
     if (!/^\d{5}$/.test(cleanZip)) return;
     setLoading(true);
-
     try {
-      // Fetch live FEMA data (cached for 30 min within session)
       let femaData = femaCache.current.data;
       const now = Date.now();
       if (!femaData || now - femaCache.current.fetchedAt > 30 * 60 * 1000) {
-        const femaResult = await fetchLiveFemaDisasters();
-        femaData = femaResult.disasters;
+        const r = await fetchLiveFemaDisasters();
+        femaData = r.disasters;
         femaCache.current = {
           data: femaData,
           fetchedAt: now,
-          apiFailed: femaResult.apiFailed,
+          apiFailed: r.apiFailed,
         };
       }
-
       const st = getStateFromZip(cleanZip);
       const seps = getSEPsForZip(cleanZip, femaData);
       const zipCarriers = getCarriersForZip(cleanZip);
@@ -3038,12 +2581,9 @@ export default function SEPLookupTool() {
       setPlanFilterType("all");
       setPlanFilterSnp("all");
       setPlanSearch("");
-
-      // County-level plan lookup via Supabase
       const autoCounty = getCountyFromZip(cleanZip);
       const counties = await fetchCountiesForState(st);
       setCountyList(counties);
-
       if (autoCounty && counties.includes(autoCounty)) {
         setSelectedCounty(autoCounty);
         await loadPlansForCounty(st, autoCounty);
@@ -3064,24 +2604,20 @@ export default function SEPLookupTool() {
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSearch();
   };
-
+  const isValidZip = /^\d{5}$/.test(zip.trim());
   const filtered = results?.filter((s) => {
     if (filterCategory !== "all" && s.category !== filterCategory) return false;
     if (filterProduct !== "all" && !s.eligibleProducts.includes(filterProduct))
       return false;
     return true;
   });
-
   const femaActive =
     filtered?.filter((s) => s.category === "FEMA Disaster") || [];
   const state = searchedZip ? getStateFromZip(searchedZip) : "";
-
   const allProducts = [
     ...new Set((results || []).flatMap((s) => s.eligibleProducts)),
   ].sort();
   const allCategories = [...new Set((results || []).map((s) => s.category))];
-
-  // V2: Filtered plans
   const filteredPlans = useMemo(() => {
     if (!plans) return [];
     return plans.filter((p) => {
@@ -3112,101 +2648,24 @@ export default function SEPLookupTool() {
     () => [...new Set((plans || []).map((p) => p.type))].sort(),
     [plans]
   );
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#000000",
-        fontFamily: "'IBM Plex Mono', 'Courier New', monospace",
-        color: "#00cc30",
-      }}
-    >
-      <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
-
-      {/* Header */}
-      <div
-        style={{
-          background: "#000000",
-          borderBottom: "2px solid #00ff41",
-          padding: "28px 24px 24px",
-        }}
-      >
-        <div style={{ maxWidth: "1040px", margin: "0 auto" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-              marginBottom: "6px",
-            }}
-          >
-            <div
-              style={{
-                width: "38px",
-                height: "38px",
-                borderRadius: "2px",
-                background: "#000",
-                border: "2px solid #00ff41",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#00ff41",
-                boxShadow: "0 0 12px rgba(0,255,65,0.4)",
-              }}
-            >
-              <IconShield />
-            </div>
-            <div>
-              <h1
-                style={{
-                  margin: 0,
-                  fontSize: "22px",
-                  fontWeight: 800,
-                  color: "#00ff41",
-                  letterSpacing: "0.05em",
-                  fontFamily: "'IBM Plex Mono', monospace",
-
-                  textTransform: "uppercase",
-                }}
-              >
-                ▶ SEP LOOKUP TOOL
-              </h1>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "12px",
-                  color: "#00882a",
-                  fontWeight: 500,
-                  letterSpacing: "0.08em",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  textTransform: "uppercase",
-                }}
-              >
-                // Medicare Advantage Plans & Active SEPs — Live Data
-              </p>
-            </div>
+    <div className="app-shell sep-tool">
+      <div className="viewport-bg" />
+      <div className="app" style={{ maxWidth: 1000 }}>
+        {/* ── Header ── */}
+        <div className="sep-header">
+          <div className="sep-header-icon">
+            <IconShield />
+          </div>
+          <div>
+            <h1>SEP Lookup Tool</h1>
+            <p>Medicare Advantage Plans & Active SEPs — Live Data</p>
           </div>
         </div>
-      </div>
 
-      {/* Search Bar */}
-      <div
-        style={{ maxWidth: "1040px", margin: "0 auto", padding: "24px 24px 0" }}
-      >
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            alignItems: "center",
-            background: "#000000",
-            borderRadius: "2px",
-            padding: "6px",
-            border: "1px solid #00cc30",
-          }}
-        >
+        {/* ── Search ── */}
+        <div className="card sep-search-bar">
           <input
             ref={inputRef}
             type="text"
@@ -3215,1468 +2674,704 @@ export default function SEPLookupTool() {
               setZip(e.target.value.replace(/\D/g, "").slice(0, 5))
             }
             onKeyDown={handleKeyDown}
-            placeholder="ENTER 5-DIGIT ZIP CODE_"
-            style={{
-              flex: 1,
-              padding: "14px 18px",
-              border: "none",
-              outline: "none",
-              fontSize: "18px",
-              fontWeight: 600,
-              color: "#00ff41",
-              background: "transparent",
-              fontFamily: "'IBM Plex Mono', monospace",
-              letterSpacing: "0.12em",
-              caretColor: "#00ff41",
-            }}
+            placeholder="Enter 5-digit zip code..."
           />
           <button
+            className="primary"
             onClick={handleSearch}
-            disabled={!/^\d{5}$/.test(zip.trim()) || loading}
-            style={{
-              padding: "12px 28px",
-              borderRadius: "2px",
-              border: /^\d{5}$/.test(zip.trim())
-                ? "1px solid #00ff41"
-                : "1px solid #003300",
-              background: /^\d{5}$/.test(zip.trim()) ? "#003d00" : "#000800",
-              color: /^\d{5}$/.test(zip.trim()) ? "#00ff41" : "#003d00",
-              fontSize: "13px",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              opacity: /^\d{5}$/.test(zip.trim()) ? 1 : 0.4,
-              transition: "all 0.2s ease",
-              fontFamily: "'IBM Plex Mono', monospace",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              boxShadow: /^\d{5}$/.test(zip.trim())
-                ? "0 0 14px rgba(0,255,65,0.3)"
-                : "none",
-            }}
+            disabled={!isValidZip || loading}
           >
-            {loading ? (
-              <span
-                style={{
-                  display: "inline-block",
-                  width: "18px",
-                  height: "18px",
-                  border: "2.5px solid rgba(0,255,65,0.2)",
-                  borderTopColor: "#00ff41",
-                  borderRadius: "50%",
-                  animation: "spin 0.7s linear infinite",
-                }}
-              />
-            ) : (
-              <IconSearch />
-            )}
-            [SEARCH]
+            {loading ? <span className="sep-spinner-sm" /> : <IconSearch />}{" "}
+            Search
           </button>
         </div>
 
-        {/* Quick Examples */}
         {!results && !loading && (
-          <div
-            style={{
-              marginTop: "16px",
-              display: "flex",
-              gap: "8px",
-              flexWrap: "wrap",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "12px",
-                color: "#005500",
-                fontFamily: "'IBM Plex Mono', monospace",
-                letterSpacing: "0.08em",
-                padding: "6px 0",
-              }}
-            >
-              Try:
-            </span>
+          <div className="sep-quick-zips">
+            <span>Try:</span>
             {["33601", "77002", "28801", "40502", "90001"].map((z) => (
               <button
                 key={z}
-                onClick={() => {
-                  setZip(z);
-                }}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: "2px",
-                  border: "1px solid #003d00",
-                  background: "#000800",
-                  color: "#00aa28",
-                  fontSize: "13px",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  transition: "all 0.15s ease",
-                  letterSpacing: "0.08em",
-                }}
+                className="sep-quick-zip-btn"
+                onClick={() => setZip(z)}
               >
                 {z}
               </button>
             ))}
           </div>
         )}
-      </div>
 
-      {/* Results */}
-      {results && !loading && (
-        <div style={{ maxWidth: "1040px", margin: "0 auto", padding: "24px" }}>
-          {/* Summary Bar */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr repeat(4, auto)",
-              gap: "8px",
-              marginBottom: "20px",
-              alignItems: "stretch",
-            }}
-          >
-            <div
-              style={{
-                background: "#000000",
-                border: "1px solid #003d00",
-                borderRadius: "2px",
-                padding: "14px 18px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  color: "#008a20",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  fontFamily: "'Outfit', sans-serif",
-                }}
-              >
-                Zip Code
-              </div>
-              <div
-                style={{
-                  fontSize: "20px",
-                  fontWeight: 800,
-                  color: "#00ff41",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                }}
-              >
-                {searchedZip}{" "}
-                <span
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    color: "#008a20",
-                  }}
-                >
-                  ({state}){selectedCounty ? ` — ${selectedCounty} Co.` : ""}
-                </span>
-              </div>
-            </div>
-            <div
-              style={{
-                background: "#000000",
-                border: "1px solid #003d00",
-                borderRadius: "2px",
-                padding: "14px 18px",
-                textAlign: "center",
-                minWidth: "80px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  color: "#008a20",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                SEPs
-              </div>
-              <div
-                style={{ fontSize: "20px", fontWeight: 800, color: "#00ff41" }}
-              >
-                {filtered?.length || 0}
-              </div>
-            </div>
-            <div
-              style={{
-                background: "#000000",
-                border: "1px solid #003d00",
-                borderRadius: "2px",
-                padding: "14px 18px",
-                textAlign: "center",
-                minWidth: "80px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  color: "#008a20",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                Plans
-              </div>
-              <div
-                style={{ fontSize: "20px", fontWeight: 800, color: "#00cc30" }}
-              >
-                {plans?.length || 0}
-              </div>
-            </div>
-            <div
-              style={{
-                background: femaActive.length > 0 ? "#000800" : "#020202",
-                border: `1px solid ${
-                  femaActive.length > 0 ? "#0d2a0d" : "#0d1a0d"
-                }`,
-                borderRadius: "2px",
-                padding: "14px 18px",
-                textAlign: "center",
-                minWidth: "80px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  color: femaActive.length > 0 ? "#005500" : "#008a20",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  {femaActive.length > 0 && <IconAlert />} FEMA
-                </span>
-              </div>
-              <div
-                style={{
-                  fontSize: "20px",
-                  fontWeight: 800,
-                  color: femaActive.length > 0 ? "#009920" : "#008a20",
-                }}
-              >
-                {femaActive.length > 0 ? femaActive.length : "—"}
-              </div>
-            </div>
-            <div
-              style={{
-                background: "#000000",
-                border: "1px solid #003d00",
-                borderRadius: "2px",
-                padding: "14px 18px",
-                textAlign: "center",
-                minWidth: "80px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  color: "#008a20",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                Carriers
-              </div>
-              <div
-                style={{ fontSize: "20px", fontWeight: 800, color: "#5a6a7a" }}
-              >
-                {carriers.length}
-              </div>
-            </div>
-          </div>
-
-          {/* ═══ TABS ═══ */}
-          <div
-            style={{
-              display: "flex",
-              gap: "4px",
-              marginBottom: "20px",
-              background: "#000000",
-              borderRadius: "2px",
-              padding: "4px",
-              border: "1px solid #003d00",
-            }}
-          >
-            {[
-              ["plans", `Plans & Codes (${filteredPlans.length})`],
-              ["seps", `SEPs (${filtered?.length || 0})`],
-            ].map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                style={{
-                  padding: "10px 22px",
-                  borderRadius: "2px",
-                  border: "none",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                  fontFamily: "'Outfit', sans-serif",
-                  letterSpacing: "0.01em",
-                  background: activeTab === key ? "#1a2a14" : "transparent",
-                  color: activeTab === key ? "#7aaa5a" : "#008a20",
-                  borderBottom: "none",
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* ════════ PLANS TAB ════════ */}
-          {activeTab === "plans" && (
-            <>
-              {/* County Selector */}
-              {countyList.length > 0 && (
+        {/* ═══ RESULTS ═══ */}
+        {results && !loading && (
+          <div style={{ marginTop: 24 }}>
+            {/* Stats */}
+            <div className="sep-stats-grid">
+              <div className="sep-stat-box">
+                <div className="sep-stat-label">Zip Code</div>
                 <div
-                  style={{
-                    display: "flex",
-                    gap: "12px",
-                    alignItems: "center",
-                    marginBottom: "12px",
-                    padding: "12px 16px",
-                    borderRadius: "2px",
-                    background: selectedCounty
-                      ? "linear-gradient(180deg, rgba(50,100,40,0.06) 0%, rgba(50,100,40,0.02) 100%)"
-                      : "linear-gradient(180deg, rgba(100,90,40,0.06) 0%, rgba(100,90,40,0.02) 100%)",
-                    border: selectedCounty
-                      ? "1px solid rgba(50,100,40,0.2)"
-                      : "1px solid rgba(100,90,40,0.2)",
-                  }}
+                  className="sep-stat-value"
+                  style={{ color: "var(--text-primary)" }}
                 >
-                  <div
+                  {searchedZip}{" "}
+                  <span
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      flexShrink: 0,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "var(--text-secondary)",
                     }}
                   >
-                    <IconMap />
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: 700,
-                        color: "#e8edf5",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
+                    ({state}){selectedCounty ? ` — ${selectedCounty} Co.` : ""}
+                  </span>
+                </div>
+              </div>
+              {[
+                {
+                  l: "SEPs",
+                  v: filtered?.length || 0,
+                  c: "var(--accent-cyan)",
+                },
+                { l: "Plans", v: plans?.length || 0, c: "var(--accent-teal)" },
+                {
+                  l: "FEMA",
+                  v: femaActive.length > 0 ? femaActive.length : "—",
+                  c:
+                    femaActive.length > 0
+                      ? "var(--accent-red)"
+                      : "var(--text-muted)",
+                  a: femaActive.length > 0,
+                },
+                { l: "Carriers", v: carriers.length, c: "var(--accent-gold)" },
+              ].map((s, i) => (
+                <div
+                  key={i}
+                  className={`sep-stat-box${s.a ? " alert" : ""}`}
+                  style={{ textAlign: "center", minWidth: 80 }}
+                >
+                  <div className="sep-stat-label">
+                    {s.a && <IconAlert />} {s.l}
+                  </div>
+                  <div className="sep-stat-value" style={{ color: s.c }}>
+                    {s.v}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Tabs */}
+            <div className="tabs">
+              {[
+                ["plans", `Plans & Codes (${filteredPlans.length})`],
+                ["seps", `SEPs (${filtered?.length || 0})`],
+              ].map(([k, l]) => (
+                <button
+                  key={k}
+                  className={`tab${activeTab === k ? " active" : ""}`}
+                  onClick={() => setActiveTab(k)}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+
+            {/* ════ PLANS TAB ════ */}
+            {activeTab === "plans" && (
+              <>
+                {countyList.length > 0 && (
+                  <div
+                    className={`card sep-county-card ${
+                      selectedCounty ? "active" : "pending"
+                    }`}
+                  >
+                    <div className="sep-county-label">
+                      <IconMap />
+                      <span>County</span>
+                    </div>
+                    <select
+                      value={selectedCounty || ""}
+                      onChange={async (e) => {
+                        const c = e.target.value;
+                        if (!c) return;
+                        setSelectedCounty(c);
+                        await loadPlansForCounty(
+                          getStateFromZip(searchedZip),
+                          c
+                        );
                       }}
                     >
-                      County
-                    </span>
-                  </div>
-                  <select
-                    value={selectedCounty || ""}
-                    onChange={async (e) => {
-                      const county = e.target.value;
-                      if (!county) return;
-                      setSelectedCounty(county);
-                      const st = getStateFromZip(searchedZip);
-                      await loadPlansForCounty(st, county);
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      borderRadius: "2px",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      background:
-                        "linear-gradient(180deg, #080c12 0%, #0b0f16 100%)",
-                      color: "#e8edf5",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {!selectedCounty && (
-                      <option value="">
-                        — Select your county ({countyList.length} available) —
-                      </option>
+                      {!selectedCounty && (
+                        <option value="">
+                          — Select your county ({countyList.length} available) —
+                        </option>
+                      )}
+                      {countyList.map((c) => (
+                        <option key={c} value={c}>
+                          {c} County
+                        </option>
+                      ))}
+                    </select>
+                    {countyLoading && <span className="sep-spinner-sm" />}
+                    {selectedCounty && plans && (
+                      <span className="sep-county-count">
+                        {plans.length} plans
+                      </span>
                     )}
-                    {countyList.map((c) => (
+                  </div>
+                )}
+                {!selectedCounty && countyList.length > 0 && (
+                  <div className="card sep-county-notice">
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "var(--accent-gold)",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Select a county above to load plans from CMS database
+                    </div>
+                    <div
+                      className="muted"
+                      style={{ fontFamily: "var(--font-mono)" }}
+                    >
+                      Medicare plan availability is county-specific. The CMS
+                      database has {countyList.length} counties for {state}.
+                    </div>
+                  </div>
+                )}
+                {/* Filters */}
+                <div className="card sep-filter-bar">
+                  <span className="sep-filter-label">
+                    <IconFilter /> Filter
+                  </span>
+                  <select
+                    value={planFilterCarrier}
+                    onChange={(e) => setPlanFilterCarrier(e.target.value)}
+                  >
+                    <option value="all">All Carriers</option>
+                    {planCarrierOpts.map((c) => (
                       <option key={c} value={c}>
-                        {c} County
+                        {CARRIERS[c]?.abbr || c}
                       </option>
                     ))}
                   </select>
-                  {countyLoading && (
-                    <span
-                      style={{
-                        display: "inline-block",
-                        width: "18px",
-                        height: "18px",
-                        border: "2.5px solid rgba(255,255,255,0.2)",
-                        borderTopColor: "#4a8a5a",
-                        borderRadius: "50%",
-                        animation: "spin 0.7s linear infinite",
-                        flexShrink: 0,
-                      }}
-                    />
-                  )}
-                  {selectedCounty && plans && (
-                    <span
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: 700,
-                        color: "#4a8a3a",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {plans.length} plans
-                    </span>
-                  )}
-                </div>
-              )}
-              {!selectedCounty && countyList.length > 0 && (
-                <div
-                  style={{
-                    padding: "20px",
-                    textAlign: "center",
-                    borderRadius: "2px",
-                    marginBottom: "12px",
-                    background:
-                      "linear-gradient(180deg, rgba(100,90,40,0.04) 0%, rgba(18,24,35,0.3) 100%)",
-                    border: "1px solid rgba(100,90,40,0.15)",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      color: "#9a8a3a",
-                      marginBottom: "4px",
-                    }}
+                  <select
+                    value={planFilterType}
+                    onChange={(e) => setPlanFilterType(e.target.value)}
                   >
-                    ⚠️ Select a county above to load plans from CMS database
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: "#005500",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      letterSpacing: "0.08em",
-                    }}
+                    <option value="all">All Types</option>
+                    {planTypeOpts.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={planFilterSnp}
+                    onChange={(e) => setPlanFilterSnp(e.target.value)}
                   >
-                    Medicare plan availability is county-specific. The CMS
-                    database has {countyList.length} counties for {state}.
-                  </div>
-                </div>
-              )}
-              {/* Plan Filters */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  marginBottom: "16px",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  background: "#000600",
-                  borderRadius: "2px",
-                  padding: "10px 16px",
-                  border: "1px solid rgba(0,255,65,0.15)",
-                }}
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#008a20",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  <IconFilter /> Filter
-                </span>
-                <select
-                  value={planFilterCarrier}
-                  onChange={(e) => setPlanFilterCarrier(e.target.value)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: "2px",
-                    border: "1px solid rgba(0,200,50,0.2)",
-                    background: "#000000",
-                    color: "#00cc30",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <option value="all">All Carriers</option>
-                  {planCarrierOpts.map((c) => (
-                    <option key={c} value={c}>
-                      {CARRIERS[c]?.abbr || c}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={planFilterType}
-                  onChange={(e) => setPlanFilterType(e.target.value)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: "2px",
-                    border: "1px solid rgba(0,200,50,0.2)",
-                    background: "#000000",
-                    color: "#00cc30",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <option value="all">All Types</option>
-                  {planTypeOpts.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={planFilterSnp}
-                  onChange={(e) => setPlanFilterSnp(e.target.value)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: "2px",
-                    border: "1px solid rgba(0,200,50,0.2)",
-                    background: "#000000",
-                    color: "#00cc30",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <option value="all">All Plans</option>
-                  <option value="D-SNP">D-SNP Only</option>
-                  <option value="C-SNP">C-SNP Only</option>
-                  <option value="none">Non-SNP Only</option>
-                </select>
-                <input
-                  type="text"
-                  value={planSearch}
-                  onChange={(e) => setPlanSearch(e.target.value)}
-                  placeholder="Search plans or contract ID..."
-                  style={{
-                    flex: "1 1 160px",
-                    padding: "6px 10px",
-                    borderRadius: "2px",
-                    border: "1px solid rgba(0,200,50,0.2)",
-                    background: "#000000",
-                    color: "#00cc30",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    outline: "none",
-                    minWidth: "120px",
-                  }}
-                />
-                {(planFilterCarrier !== "all" ||
-                  planFilterType !== "all" ||
-                  planFilterSnp !== "all" ||
-                  planSearch) && (
-                  <button
-                    onClick={() => {
-                      setPlanFilterCarrier("all");
-                      setPlanFilterType("all");
-                      setPlanFilterSnp("all");
-                      setPlanSearch("");
-                    }}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      padding: "5px 10px",
-                      borderRadius: "2px",
-                      border: "1px solid rgba(0,180,50,0.3)",
-                      background: "rgba(0,100,0,0.2)",
-                      color: "#009920",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <IconX /> Clear
-                  </button>
-                )}
-              </div>
-
-              {/* Plan Table */}
-              <div
-                style={{
-                  overflowX: "auto",
-                  borderRadius: "2px",
-                  border: "1px solid rgba(0,200,50,0.12)",
-                }}
-              >
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    fontSize: "12px",
-                  }}
-                >
-                  <thead>
-                    <tr
-                      style={{
-                        background: "rgba(0,5,0,0.95)",
-                        borderBottom: "2px solid rgba(0,200,50,0.15)",
+                    <option value="all">All Plans</option>
+                    <option value="D-SNP">D-SNP Only</option>
+                    <option value="C-SNP">C-SNP Only</option>
+                    <option value="none">Non-SNP Only</option>
+                  </select>
+                  <input
+                    type="text"
+                    className="input-dark"
+                    value={planSearch}
+                    onChange={(e) => setPlanSearch(e.target.value)}
+                    placeholder="Search plans or contract ID..."
+                    style={{ flex: "1 1 160px", minWidth: 120 }}
+                  />
+                  {(planFilterCarrier !== "all" ||
+                    planFilterType !== "all" ||
+                    planFilterSnp !== "all" ||
+                    planSearch) && (
+                    <button
+                      className="undo-btn"
+                      onClick={() => {
+                        setPlanFilterCarrier("all");
+                        setPlanFilterType("all");
+                        setPlanFilterSnp("all");
+                        setPlanSearch("");
                       }}
                     >
-                      {[
-                        "Carrier",
-                        "Plan Name / ID",
-                        "Type",
-                        "Stars",
-                        "Premium",
-                        "MOOP",
-                        "Grocery",
-                        "OTC",
-                        "Flex Card",
-                        "",
-                      ].map((h, i) => (
-                        <th
-                          key={h + i}
-                          style={{
-                            padding: "10px 8px",
-                            textAlign: ["Premium", "MOOP"].includes(h)
-                              ? "right"
-                              : [
-                                  "Stars",
-                                  "Grocery",
-                                  "OTC",
-                                  "Flex Card",
-                                  "",
-                                ].includes(h)
-                              ? "center"
-                              : "left",
-                            fontSize: "10px",
-                            fontWeight: 700,
-                            color: "#008a20",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredPlans.length > 0 ? (
-                      filteredPlans.map((p, idx) => {
-                        const c = CARRIERS[p.carrier] || {};
-                        const pKey = `${p.cid}-${p.pbp}-${p.carrier}`;
-                        const isOpen = !!expandedPlans[pKey];
-                        const typeColors = {
-                          HMO: "#005500",
-                          "HMO-POS": "#006a00",
-                          PPO: "#004400",
-                          PDP: "#005d00",
-                          Medigap: "#003a00",
-                        };
-                        const snpColors = {
-                          "D-SNP": "#006600",
-                          "C-SNP": "#005500",
-                          "I-SNP": "#004d00",
-                        };
-                        return (
-                          <React.Fragment key={pKey + idx}>
-                            <tr
-                              onClick={() =>
-                                setExpandedPlans((prev) => ({
-                                  ...prev,
-                                  [pKey]: !prev[pKey],
-                                }))
-                              }
+                      <IconX /> Clear
+                    </button>
+                  )}
+                </div>
+                {/* Table */}
+                <div className="card sep-plan-table-wrap">
+                  <div className="sep-plan-table-scroll">
+                    <table className="sep-plan-table">
+                      <thead>
+                        <tr>
+                          {[
+                            "Carrier",
+                            "Plan Name / ID",
+                            "Type",
+                            "Stars",
+                            "Premium",
+                            "MOOP",
+                            "Grocery",
+                            "OTC",
+                            "Flex Card",
+                            "",
+                          ].map((h, i) => (
+                            <th
+                              key={h + i}
                               style={{
-                                cursor: "pointer",
-                                borderBottom: "1px solid rgba(0,200,50,0.06)",
-                                background: isOpen
-                                  ? "rgba(0,255,65,0.07)"
-                                  : "transparent",
+                                textAlign: ["Premium", "MOOP"].includes(h)
+                                  ? "right"
+                                  : [
+                                      "Stars",
+                                      "Grocery",
+                                      "OTC",
+                                      "Flex Card",
+                                      "",
+                                    ].includes(h)
+                                  ? "center"
+                                  : "left",
                               }}
                             >
-                              <td
-                                style={{
-                                  padding: "10px 8px",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "6px",
-                                  }}
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredPlans.length > 0 ? (
+                          filteredPlans.map((p, idx) => {
+                            const c = CARRIERS[p.carrier] || {};
+                            const pKey = `${p.cid}-${p.pbp}-${p.carrier}`;
+                            const isOpen = !!expandedPlans[pKey];
+                            return (
+                              <React.Fragment key={pKey + idx}>
+                                <tr
+                                  className={isOpen ? "expanded" : ""}
+                                  onClick={() =>
+                                    setExpandedPlans((prev) => ({
+                                      ...prev,
+                                      [pKey]: !prev[pKey],
+                                    }))
+                                  }
                                 >
-                                  <span
-                                    style={{
-                                      width: "8px",
-                                      height: "8px",
-                                      borderRadius: "50%",
-                                      backgroundColor: c.color || "#666",
-                                      flexShrink: 0,
-                                    }}
-                                  />
-                                  <span
-                                    style={{
-                                      fontSize: "12px",
-                                      fontWeight: 700,
-                                      color: "#00cc30",
-                                    }}
-                                  >
-                                    {c.abbr || p.carrier}
-                                  </span>
-                                </span>
-                              </td>
-                              <td style={{ padding: "10px 8px" }}>
-                                <div
-                                  style={{
-                                    fontSize: "12px",
-                                    fontWeight: 600,
-                                    color: "#00cc30",
-                                    lineHeight: 1.3,
-                                  }}
-                                >
-                                  {p.name}
-                                </div>
-                                <div
-                                  style={{
-                                    fontSize: "11px",
-                                    color: "#008a20",
-                                    fontFamily: "'IBM Plex Mono', monospace",
-                                    marginTop: "2px",
-                                  }}
-                                >
-                                  {p.cid}-{p.pbp}
-                                </div>
-                              </td>
-                              <td style={{ padding: "10px 8px" }}>
-                                <span
-                                  style={{
-                                    display: "inline-block",
-                                    padding: "2px 7px",
-                                    borderRadius: "2px",
-                                    fontSize: "10px",
-                                    fontWeight: 700,
-                                    color: "#00ff41",
-                                    backgroundColor:
-                                      typeColors[p.type] || "#005500",
-                                    marginRight: 3,
-                                  }}
-                                >
-                                  {p.type}
-                                </span>
-                                {p.snp && (
-                                  <span
-                                    style={{
-                                      display: "inline-block",
-                                      padding: "2px 7px",
-                                      borderRadius: "2px",
-                                      fontSize: "10px",
-                                      fontWeight: 700,
-                                      color: "#00ff41",
-                                      backgroundColor:
-                                        snpColors[p.snp] || "#005500",
-                                    }}
-                                  >
-                                    {p.snp}
-                                  </span>
-                                )}
-                              </td>
-                              <td
-                                style={{
-                                  padding: "10px 8px",
-                                  textAlign: "center",
-                                }}
-                              >
-                                {p.stars != null ? (
-                                  <span
-                                    style={{
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: "1px",
-                                    }}
-                                  >
-                                    {[1, 2, 3, 4, 5].map((i) => (
-                                      <svg
-                                        key={i}
-                                        width={11}
-                                        height={11}
-                                        viewBox="0 0 24 24"
-                                        fill={
-                                          i <= Math.floor(p.stars)
-                                            ? "#00cc30"
-                                            : "none"
-                                        }
-                                        stroke="#00ff41"
-                                        strokeWidth={1.5}
-                                      >
-                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                      </svg>
-                                    ))}
-                                    {p.stars % 1 !== 0 && (
+                                  <td className="nowrap">
+                                    <span
+                                      style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: 6,
+                                      }}
+                                    >
                                       <span
                                         style={{
-                                          fontSize: "10px",
-                                          color: "#00cc30",
+                                          width: 8,
+                                          height: 8,
+                                          borderRadius: "50%",
+                                          backgroundColor: c.color || "#666",
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                      <span
+                                        style={{
+                                          fontSize: 12,
+                                          fontWeight: 700,
+                                          color: "var(--text-primary)",
                                         }}
                                       >
-                                        .5
+                                        {c.abbr || p.carrier}
+                                      </span>
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <div
+                                      style={{
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        color: "var(--text-primary)",
+                                        lineHeight: 1.3,
+                                      }}
+                                    >
+                                      {p.name}
+                                    </div>
+                                    <div
+                                      className="mono"
+                                      style={{
+                                        fontSize: 11,
+                                        color: "var(--text-muted)",
+                                        marginTop: 2,
+                                      }}
+                                    >
+                                      {p.cid}-{p.pbp}
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <span className="sep-type-badge">
+                                      {p.type}
+                                    </span>
+                                    {p.snp && (
+                                      <span className="sep-snp-badge">
+                                        {p.snp}
                                       </span>
                                     )}
-                                  </span>
-                                ) : (
-                                  <span
+                                  </td>
+                                  <td className="text-center">
+                                    <Stars count={p.stars} />
+                                  </td>
+                                  <td
+                                    className="text-right mono"
                                     style={{
-                                      color: "#008a20",
-                                      fontSize: "11px",
+                                      fontSize: 13,
+                                      fontWeight: 700,
+                                      color:
+                                        p.prem === 0
+                                          ? "var(--accent-green)"
+                                          : "var(--text-primary)",
                                     }}
                                   >
-                                    —
-                                  </span>
-                                )}
-                              </td>
-                              <td
-                                style={{
-                                  padding: "10px 8px",
-                                  textAlign: "right",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontSize: "13px",
-                                    fontWeight: 700,
-                                    color: p.prem === 0 ? "#00ff41" : "#00cc30",
-                                  }}
-                                >
-                                  {p.prem === 0
-                                    ? "$0"
-                                    : `$${p.prem.toFixed(2)}`}
-                                </span>
-                              </td>
-                              <td
-                                style={{
-                                  padding: "10px 8px",
-                                  textAlign: "right",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontSize: "13px",
-                                    fontWeight: 600,
-                                    color: "#00cc30",
-                                  }}
-                                >
-                                  {p.moop ? `$${p.moop.toLocaleString()}` : "—"}
-                                </span>
-                              </td>
-                              <td
-                                style={{
-                                  padding: "10px 8px",
-                                  textAlign: "center",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    color: p.grocery ? "#00ff41" : "#005500",
-                                    fontSize: "12px",
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {p.grocery || "—"}
-                                </span>
-                              </td>
-                              <td
-                                style={{
-                                  padding: "10px 8px",
-                                  textAlign: "center",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    color: p.otc ? "#00ff41" : "#005500",
-                                    fontSize: "12px",
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {p.otc || "—"}
-                                </span>
-                              </td>
-                              <td
-                                style={{
-                                  padding: "10px 8px",
-                                  textAlign: "center",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    color: p.flex ? "#00ff41" : "#005500",
-                                    fontSize: "12px",
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {p.flex || "—"}
-                                </span>
-                              </td>
-                              <td
-                                style={{
-                                  padding: "10px 8px",
-                                  textAlign: "center",
-                                }}
-                              >
-                                <IconChevron open={isOpen} />
-                              </td>
-                            </tr>
-                            {isOpen && (
-                              <tr>
-                                <td
-                                  colSpan={10}
-                                  style={{
-                                    padding: "0 12px 14px",
-                                    background: "rgba(0,255,65,0.04)",
-                                  }}
-                                >
-                                  <div
+                                    {p.prem === 0
+                                      ? "$0"
+                                      : `$${p.prem.toFixed(2)}`}
+                                  </td>
+                                  <td
+                                    className="text-right mono"
                                     style={{
-                                      display: "flex",
-                                      flexWrap: "wrap",
-                                      gap: "6px",
-                                      padding: "12px 0 8px",
+                                      fontSize: 13,
+                                      fontWeight: 600,
+                                      color: "var(--text-secondary)",
                                     }}
                                   >
-                                    {[
-                                      ["Part D", p.partD],
-                                      ["Dental", p.dental],
-                                      ["Vision", p.vision],
-                                      ["Hearing", p.hearing],
-                                      ["OTC", p.otc],
-                                      ["Grocery", p.grocery],
-                                      ["Flex Card", p.flex],
-                                      ["Transport", p.transport],
-                                    ].map(([lbl, val]) =>
-                                      val ? (
-                                        <span
-                                          key={lbl}
-                                          style={{
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            gap: "4px",
-                                            padding: "3px 8px",
-                                            borderRadius: "2px",
-                                            fontSize: "11px",
-                                            fontWeight: 600,
-                                            background: "rgba(0,255,65,0.1)",
-                                            border:
-                                              "1px solid rgba(0,255,65,0.2)",
-                                            color: "#00ff41",
-                                          }}
-                                        >
-                                          {lbl}:{" "}
-                                          <span style={{ color: "#00cc30" }}>
-                                            {typeof val === "boolean"
-                                              ? "✓"
-                                              : val}
-                                          </span>
-                                        </span>
-                                      ) : null
-                                    )}
-                                  </div>
-                                  <div
+                                    {p.moop
+                                      ? `$${p.moop.toLocaleString()}`
+                                      : "—"}
+                                  </td>
+                                  <td
+                                    className="text-center"
                                     style={{
-                                      display: "flex",
-                                      gap: "10px",
-                                      flexWrap: "wrap",
+                                      color: p.grocery
+                                        ? "var(--accent-green)"
+                                        : "var(--text-muted)",
+                                      fontSize: 12,
+                                      fontWeight: 600,
                                     }}
                                   >
-                                    {[
-                                      ["Contract ID", p.cid],
-                                      ["PBP", p.pbp],
-                                      ["Category", p.cat],
-                                      ...(p.snp ? [["SNP Type", p.snp]] : []),
-                                    ].map(([lbl, val]) => (
-                                      <div
-                                        key={lbl}
-                                        style={{
-                                          background: "rgba(0,5,0,0.85)",
-                                          borderRadius: "2px",
-                                          padding: "8px 12px",
-                                          border:
-                                            "1px solid rgba(0,255,65,0.15)",
-                                        }}
-                                      >
-                                        <div
-                                          style={{
-                                            fontSize: "10px",
-                                            fontWeight: 700,
-                                            color: "#008a20",
-                                            textTransform: "uppercase",
-                                            letterSpacing: "0.05em",
-                                            marginBottom: "2px",
-                                          }}
-                                        >
-                                          {lbl}
-                                        </div>
-                                        <div
-                                          style={{
-                                            fontSize: "13px",
-                                            fontWeight: 600,
-                                            color: "#00cc30",
-                                            fontFamily:
-                                              lbl === "Contract ID" ||
-                                              lbl === "PBP"
-                                                ? "'IBM Plex Mono', monospace"
-                                                : "inherit",
-                                          }}
-                                        >
-                                          {val}
-                                        </div>
+                                    {p.grocery || "—"}
+                                  </td>
+                                  <td
+                                    className="text-center"
+                                    style={{
+                                      color: p.otc
+                                        ? "var(--accent-gold)"
+                                        : "var(--text-muted)",
+                                      fontSize: 12,
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {p.otc || "—"}
+                                  </td>
+                                  <td
+                                    className="text-center"
+                                    style={{
+                                      color: p.flex
+                                        ? "var(--accent-teal)"
+                                        : "var(--text-muted)",
+                                      fontSize: 12,
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {p.flex || "—"}
+                                  </td>
+                                  <td
+                                    className="text-center"
+                                    style={{ color: "var(--text-muted)" }}
+                                  >
+                                    <IconChevron open={isOpen} />
+                                  </td>
+                                </tr>
+                                {isOpen && (
+                                  <tr>
+                                    <td
+                                      colSpan={10}
+                                      className="sep-plan-detail"
+                                    >
+                                      <div className="sep-plan-benefits">
+                                        {[
+                                          ["Part D", p.partD],
+                                          ["Dental", p.dental],
+                                          ["Vision", p.vision],
+                                          ["Hearing", p.hearing],
+                                          ["OTC", p.otc],
+                                          ["Grocery", p.grocery],
+                                          ["Flex Card", p.flex],
+                                          ["Transport", p.transport],
+                                        ].map(([lbl, val]) =>
+                                          val ? (
+                                            <span
+                                              key={lbl}
+                                              className="sep-benefit-pill"
+                                            >
+                                              {lbl}:{" "}
+                                              <span>
+                                                {typeof val === "boolean"
+                                                  ? "✓"
+                                                  : val}
+                                              </span>
+                                            </span>
+                                          ) : null
+                                        )}
                                       </div>
-                                    ))}
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan={10}
-                          style={{
-                            padding: "40px",
-                            textAlign: "center",
-                            color: "#008a20",
-                            fontSize: "14px",
-                          }}
-                        >
-                          No plans match filters
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-
-          {/* ════════ SEPS TAB ════════ */}
-          {activeTab === "seps" && (
-            <>
-              {/* Filters */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  marginBottom: "20px",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  background: "#000600",
-                  borderRadius: "2px",
-                  padding: "10px 16px",
-                  border: "1px solid rgba(0,255,65,0.15)",
-                }}
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#008a20",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  <IconFilter /> Filter
-                </span>
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: "2px",
-                    border: "1px solid rgba(0,200,50,0.2)",
-                    background: "#000000",
-                    color: "#00cc30",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    outline: "none",
-                  }}
-                >
-                  <option value="all">All Categories</option>
-                  {allCategories.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={filterProduct}
-                  onChange={(e) => setFilterProduct(e.target.value)}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: "2px",
-                    border: "1px solid rgba(0,200,50,0.2)",
-                    background: "#000000",
-                    color: "#00cc30",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    outline: "none",
-                  }}
-                >
-                  <option value="all">All Products</option>
-                  {allProducts.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-                {(filterCategory !== "all" || filterProduct !== "all") && (
-                  <button
-                    onClick={() => {
-                      setFilterCategory("all");
-                      setFilterProduct("all");
-                    }}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      padding: "5px 10px",
-                      borderRadius: "2px",
-                      border: "1px solid rgba(0,180,50,0.3)",
-                      background: "rgba(0,100,0,0.2)",
-                      color: "#009920",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <IconX /> Clear
-                  </button>
-                )}
-              </div>
-
-              {/* FEMA Alert Banner */}
-              {femaActive.length > 0 && (
-                <div
-                  style={{
-                    background:
-                      "linear-gradient(135deg, rgba(0,80,0,0.25), rgba(0,100,0,0.15))",
-                    border: "1px solid rgba(0,180,50,0.5)",
-                    borderRadius: "2px",
-                    padding: "16px 20px",
-                    marginBottom: "20px",
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "12px",
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#009920",
-                      flexShrink: 0,
-                      marginTop: "2px",
-                    }}
-                  >
-                    <IconAlert />
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: "#00cc30",
-                        marginBottom: "4px",
-                      }}
-                    >
-                      Active FEMA Disaster Declaration
-                      {femaActive.length > 1 ? "s" : ""} in This Area
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "#00cc30",
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {femaActive.map((f) => f.event).join("; ")} — 60-day SEP
-                      applies for affected beneficiaries. Verify client address
-                      against affected counties.
-                    </div>
+                                      <div className="sep-plan-ids">
+                                        {[
+                                          ["Contract ID", p.cid, true],
+                                          ["PBP", p.pbp, true],
+                                          ["Category", p.cat, false],
+                                          ...(p.snp
+                                            ? [["SNP Type", p.snp, false]]
+                                            : []),
+                                        ].map(([lbl, val, isMono]) => (
+                                          <div
+                                            key={lbl}
+                                            className="sep-plan-id-box"
+                                          >
+                                            <div className="sep-plan-id-label">
+                                              {lbl}
+                                            </div>
+                                            <div
+                                              className={`sep-plan-id-value${
+                                                isMono ? " mono" : ""
+                                              }`}
+                                            >
+                                              {val}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={10}
+                              className="text-center muted"
+                              style={{ padding: 40, fontSize: 14 }}
+                            >
+                              No plans match filters
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              )}
+              </>
+            )}
 
-              {/* SEP Cards */}
-              <div>
-                {filtered && filtered.length > 0 ? (
-                  filtered.map((sep) => (
-                    <SEPCard
-                      key={sep.id}
-                      sep={sep}
-                      carriers={carriers}
-                      isExpanded={!!expanded[sep.id]}
-                      onToggle={() =>
-                        setExpanded((prev) => ({
-                          ...prev,
-                          [sep.id]: !prev[sep.id],
-                        }))
-                      }
-                    />
-                  ))
-                ) : (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "48px 24px",
-                      color: "#008a20",
-                    }}
+            {/* ════ SEPS TAB ════ */}
+            {activeTab === "seps" && (
+              <>
+                <div className="card sep-filter-bar">
+                  <span className="sep-filter-label">
+                    <IconFilter /> Filter
+                  </span>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
                   >
-                    <div style={{ fontSize: "16px", fontWeight: 600 }}>
-                      No SEPs match current filters
-                    </div>
-                    <div style={{ fontSize: "13px", marginTop: "8px" }}>
-                      Try adjusting category or product filters above.
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Carrier Grid */}
-              <div
-                style={{
-                  marginTop: "28px",
-                  background: "#000800",
-                  borderRadius: "2px",
-                  padding: "20px",
-                  border: "1px solid rgba(0,255,65,0.15)",
-                }}
-              >
-                <h3
-                  style={{
-                    margin: "0 0 14px 0",
-                    fontSize: "14px",
-                    fontWeight: 700,
-                    color: "#00cc30",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  Carriers in {searchedZip} ({state})
-                </h3>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fill, minmax(170px, 1fr))",
-                    gap: "10px",
-                  }}
-                >
-                  {carriers.map((c) => (
-                    <div
-                      key={c.key}
-                      style={{
-                        background: "#000000",
-                        borderRadius: "2px",
-                        padding: "14px",
-                        border: `1px solid ${c.color}30`,
-                        position: "relative",
-                        overflow: "hidden",
+                    <option value="all">All Categories</option>
+                    {allCategories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={filterProduct}
+                    onChange={(e) => setFilterProduct(e.target.value)}
+                  >
+                    <option value="all">All Products</option>
+                    {allProducts.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                  {(filterCategory !== "all" || filterProduct !== "all") && (
+                    <button
+                      className="undo-btn"
+                      onClick={() => {
+                        setFilterCategory("all");
+                        setFilterProduct("all");
                       }}
                     >
+                      <IconX /> Clear
+                    </button>
+                  )}
+                </div>
+                {femaActive.length > 0 && (
+                  <div className="card sep-fema-alert">
+                    <div
+                      style={{
+                        color: "var(--accent-red)",
+                        flexShrink: 0,
+                        marginTop: 2,
+                      }}
+                    >
+                      <IconAlert />
+                    </div>
+                    <div>
                       <div
                         style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: "3px",
-                          background: c.color,
-                        }}
-                      />
-                      <div
-                        style={{
-                          fontSize: "14px",
+                          fontSize: 14,
                           fontWeight: 700,
-                          color: "#00ff41",
-                          marginBottom: "6px",
+                          color: "var(--text-primary)",
+                          marginBottom: 4,
                         }}
                       >
-                        {c.abbr}
+                        Active FEMA Disaster Declaration
+                        {femaActive.length > 1 ? "s" : ""} in This Area
                       </div>
                       <div
                         style={{
-                          fontSize: "11px",
-                          color: "#008a20",
-                          marginBottom: "8px",
+                          fontSize: 13,
+                          color: "var(--text-secondary)",
+                          lineHeight: 1.5,
                         }}
                       >
-                        {c.name}
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "2px",
-                        }}
-                      >
-                        {c.products.map((p) => (
-                          <ProductBadge key={p} product={p} />
-                        ))}
+                        {femaActive.map((f) => f.event).join("; ")} — 60-day SEP
+                        applies for affected beneficiaries.
                       </div>
                     </div>
-                  ))}
+                  </div>
+                )}
+                <div className="flow">
+                  {filtered && filtered.length > 0 ? (
+                    filtered.map((sep) => (
+                      <SEPCard
+                        key={sep.id}
+                        sep={sep}
+                        carriers={carriers}
+                        isExpanded={!!expanded[sep.id]}
+                        onToggle={() =>
+                          setExpanded((prev) => ({
+                            ...prev,
+                            [sep.id]: !prev[sep.id],
+                          }))
+                        }
+                      />
+                    ))
+                  ) : (
+                    <div
+                      className="text-center muted"
+                      style={{ padding: "48px 24px" }}
+                    >
+                      <div style={{ fontSize: 16, fontWeight: 600 }}>
+                        No SEPs match current filters
+                      </div>
+                      <div style={{ fontSize: 13, marginTop: 8 }}>
+                        Try adjusting filters above.
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </>
-          )}
-          {/* end tabs */}
+                {/* Carriers */}
+                <div className="card" style={{ marginTop: 28 }}>
+                  <h2>
+                    Carriers in {searchedZip} ({state})
+                  </h2>
+                  <div className="sep-carrier-grid">
+                    {carriers.map((c) => (
+                      <div
+                        key={c.key}
+                        className="sep-carrier-item"
+                        style={{ borderColor: `${c.color}30` }}
+                      >
+                        <div
+                          className="sep-carrier-stripe"
+                          style={{ background: c.color }}
+                        />
+                        <div className="sep-carrier-name">{c.abbr}</div>
+                        <div className="sep-carrier-full-name">{c.name}</div>
+                        <div
+                          style={{ display: "flex", flexWrap: "wrap", gap: 2 }}
+                        >
+                          {c.products.map((p) => (
+                            <ProductBadge key={p} product={p} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
-          {/* Disclaimer */}
-          <div
-            style={{
-              marginTop: "24px",
-              padding: "16px 20px",
-              borderRadius: "2px",
-              background: "rgba(0,180,50,0.08)",
-              border: "1px solid #003300",
-            }}
-          >
-            <p
+            {/* Disclaimer */}
+            <div className="sep-disclaimer">
+              <p>
+                <strong>Disclaimer:</strong> FEMA disaster data is fetched live
+                from the OpenFEMA API with verified fallback data. Plan data is
+                sourced from CMS Landscape Files for CY2026 (138K rows via
+                Supabase, county-level precision). Premiums, benefits, and
+                service areas may vary — always verify on Medicare.gov. For
+                agent/broker use only.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="sep-loading">
+            <div className="sep-spinner" />
+            <div
               style={{
-                margin: 0,
-                fontSize: "11px",
-                color: "#008a20",
-                lineHeight: 1.6,
+                fontSize: 15,
+                fontWeight: 600,
+                color: "var(--text-secondary)",
               }}
             >
-              <strong>Disclaimer:</strong> FEMA disaster data is fetched live
-              from the OpenFEMA API (api.fema.gov) with verified fallback data.
-              Plan data is sourced from CMS Landscape Files for CY2026 (138K
-              rows via Supabase, county-level precision). Premiums, benefits,
-              and service areas may vary — always verify on Medicare.gov. For
-              agent/broker use only.
-            </p>
+              Scanning sources for {zip}...
+            </div>
+            <div
+              className="muted mono"
+              style={{ marginTop: 4, letterSpacing: "0.06em" }}
+            >
+              FEMA • CMS • Medicare.gov • Carrier Networks
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Loading State */}
-      {loading && (
-        <div
-          style={{
-            maxWidth: "1040px",
-            margin: "0 auto",
-            padding: "80px 24px",
-            textAlign: "center",
-          }}
-        >
-          <div
-            style={{
-              width: "48px",
-              height: "48px",
-              border: "3px solid rgba(0,255,65,0.15)",
-              borderTopColor: "#00ff41",
-              borderRadius: "50%",
-              margin: "0 auto 16px",
-              animation: "spin 0.8s linear infinite",
-            }}
-          />
-          <div style={{ fontSize: "15px", fontWeight: 600, color: "#008a20" }}>
-            Scanning sources for {zip}...
+        {/* Empty */}
+        {!results && !loading && (
+          <div className="sep-empty">
+            <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>
+              🔍
+            </div>
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: "var(--text-secondary)",
+                marginBottom: 8,
+              }}
+            >
+              Enter a zip code to begin
+            </div>
+            <div
+              className="muted"
+              style={{ maxWidth: 460, margin: "0 auto", lineHeight: 1.6 }}
+            >
+              Search any 5-digit zip code to see all active Special Enrollment
+              Periods, FEMA disaster declarations, and available carriers in the
+              area.
+            </div>
           </div>
-          <div
-            style={{
-              fontSize: "12px",
-              color: "#005500",
-              fontFamily: "'IBM Plex Mono', monospace",
-              letterSpacing: "0.08em",
-              marginTop: "4px",
-            }}
-          >
-            FEMA • CMS • Medicare.gov • Carrier Networks
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!results && !loading && (
-        <div
-          style={{
-            maxWidth: "1040px",
-            margin: "0 auto",
-            padding: "60px 24px",
-            textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.3 }}>
-            🔍
-          </div>
-          <div
-            style={{
-              fontSize: "18px",
-              fontWeight: 700,
-              color: "#008a20",
-              marginBottom: "8px",
-            }}
-          >
-            Enter a zip code to begin
-          </div>
-          <div
-            style={{
-              fontSize: "14px",
-              color: "#005500",
-              maxWidth: "460px",
-              margin: "0 auto",
-              lineHeight: 1.6,
-            }}
-          >
-            Search any 5-digit zip code to see all active Special Enrollment
-            Periods, FEMA disaster declarations, and available carriers in the
-            area.
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes flicker { 0%,100%{opacity:1} 92%{opacity:0.97} 94%{opacity:0.92} 96%{opacity:0.98} }
-        * { box-sizing: border-box; }
-        body { background: #000; }
-        table tbody tr:hover td { background: rgba(0,255,65,0.09) !important; }
-        select { outline: none; }
-        select:focus { border-color: #00ff41 !important; box-shadow: 0 0 6px rgba(0,255,65,0.3) !important; }
-        select option { background: #000; color: #00cc30; }
-        button:hover { filter: brightness(1.15); box-shadow: 0 0 10px rgba(0,255,65,0.25); }
-        input::placeholder { color: #005500; }
-        input:focus { border-color: #00ff41 !important; box-shadow: 0 0 8px rgba(0,255,65,0.2) !important; outline: none; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #004400; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #00aa28; }
-        ::selection { background: #00aa28; color: #000; }
-      `}</style>
+        )}
+      </div>
     </div>
   );
 }
