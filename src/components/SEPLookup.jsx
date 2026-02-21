@@ -2225,8 +2225,8 @@ const IconStar = () => (
     width="14"
     height="14"
     viewBox="0 0 24 24"
-    fill="#f59e0b"
-    stroke="#f59e0b"
+    fill="#00ff41"
+    stroke="#00ff41"
     strokeWidth="1"
   >
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -2264,47 +2264,48 @@ const IconX = () => (
 
 const CATEGORY_COLORS = {
   "FEMA Disaster": {
-    bg: "#fef2f2",
-    border: "#fca5a5",
-    text: "#991b1b",
-    badge: "#dc2626",
+    bg: "#000f00",
+    border: "#00ff41",
+    text: "#00ff41",
+    badge: "#00cc30",
   },
   Medicare: {
-    bg: "#eff6ff",
-    border: "#93c5fd",
-    text: "#1e3a5f",
-    badge: "#2563eb",
+    bg: "#000f00",
+    border: "#00cc30",
+    text: "#00ee38",
+    badge: "#008a20",
   },
 };
 
 const URGENCY_STYLES = {
-  high: { bg: "#dc2626", text: "#fff", label: "URGENT" },
-  medium: { bg: "#f59e0b", text: "#000", label: "ACTIVE" },
-  low: { bg: "#6366f1", text: "#fff", label: "OPEN" },
-  info: { bg: "#64748b", text: "#fff", label: "ONGOING" },
+  high: { bg: "#001800", text: "#00ff41", label: "URGENT" },
+  medium: { bg: "#001200", text: "#00dd35", label: "ACTIVE" },
+  low: { bg: "#000e00", text: "#00cc30", label: "OPEN" },
+  info: { bg: "#000800", text: "#008820", label: "ONGOING" },
 };
 
 function ProductBadge({ product }) {
   const colors = {
-    MA: "#2563eb",
-    MAPD: "#7c3aed",
-    PDP: "#0891b2",
-    Medigap: "#0d9488",
-    "D-SNP": "#be185d",
-    "I-SNP": "#9333ea",
-    "C-SNP": "#c2410c",
+    MA: "#004d00",
+    MAPD: "#006600",
+    PDP: "#005500",
+    Medigap: "#003d00",
+    "D-SNP": "#007700",
+    "I-SNP": "#006600",
+    "C-SNP": "#005500",
   };
   return (
     <span
       style={{
         display: "inline-block",
         padding: "2px 8px",
-        borderRadius: "4px",
+        borderRadius: "2px",
         fontSize: "11px",
         fontWeight: 700,
         letterSpacing: "0.05em",
-        color: "#fff",
-        backgroundColor: colors[product] || "#64748b",
+        color: "#00ff41",
+        backgroundColor: colors[product] || "#003300",
+        border: "1px solid #00aa28",
         marginRight: "4px",
         marginBottom: "4px",
       }}
@@ -2322,12 +2323,12 @@ function CarrierChip({ carrier }) {
         alignItems: "center",
         gap: "6px",
         padding: "4px 10px",
-        borderRadius: "6px",
+        borderRadius: "2px",
         fontSize: "12px",
         fontWeight: 600,
-        backgroundColor: carrier.color + "14",
+        backgroundColor: carrier.color + "22",
         color: carrier.color,
-        border: `1px solid ${carrier.color}30`,
+        border: `1px solid ${carrier.color}55`,
         marginRight: "6px",
         marginBottom: "6px",
       }}
@@ -2357,11 +2358,11 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
   return (
     <div
       style={{
-        borderRadius: "12px",
+        borderRadius: "2px",
         border: `1px solid ${catColors.border}`,
-        backgroundColor: "#fff",
+        backgroundColor: "#000000",
         overflow: "hidden",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+
         transition: "box-shadow 0.2s ease",
         marginBottom: "12px",
       }}
@@ -2398,7 +2399,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 fontWeight: 800,
                 letterSpacing: "0.08em",
                 padding: "2px 8px",
-                borderRadius: "4px",
+                borderRadius: "2px",
                 textTransform: "uppercase",
                 backgroundColor: urgStyle.bg,
                 color: urgStyle.text,
@@ -2412,7 +2413,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 padding: "2px 8px",
-                borderRadius: "4px",
+                borderRadius: "2px",
                 textTransform: "uppercase",
                 backgroundColor: catColors.badge + "18",
                 color: catColors.badge,
@@ -2428,19 +2429,19 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                   fontWeight: 800,
                   letterSpacing: "0.04em",
                   padding: "2px 6px",
-                  borderRadius: "4px",
+                  borderRadius: "2px",
                   backgroundColor:
                     sep.daysLeft <= 14
-                      ? "#fef2f2"
+                      ? "#1a1010"
                       : sep.daysLeft <= 30
-                      ? "#fffbeb"
-                      : "#f0fdf4",
+                      ? "#001a00"
+                      : "#101a10",
                   color:
                     sep.daysLeft <= 14
-                      ? "#dc2626"
+                      ? "#007700"
                       : sep.daysLeft <= 30
-                      ? "#d97706"
-                      : "#16a34a",
+                      ? "#00cc30"
+                      : "#005500",
                 }}
               >
                 {sep.daysLeft}d left
@@ -2451,13 +2452,13 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
             style={{
               fontSize: "15px",
               fontWeight: 700,
-              color: "#0f172a",
+              color: "#00ff41",
               lineHeight: 1.3,
             }}
           >
             {sep.type}
           </div>
-          <div style={{ fontSize: "13px", color: "#64748b", marginTop: "2px" }}>
+          <div style={{ fontSize: "13px", color: "#008a20", marginTop: "2px" }}>
             {sep.event}
           </div>
         </div>
@@ -2475,7 +2476,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           ))}
           {sep.eligibleProducts.length > 4 && (
             <span
-              style={{ fontSize: "11px", color: "#64748b", padding: "2px 4px" }}
+              style={{ fontSize: "11px", color: "#008a20", padding: "2px 4px" }}
             >
               +{sep.eligibleProducts.length - 4}
             </span>
@@ -2489,7 +2490,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           <p
             style={{
               fontSize: "14px",
-              color: "#334155",
+              color: "#00cc30",
               lineHeight: 1.6,
               margin: "0 0 16px 0",
             }}
@@ -2507,17 +2508,17 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           >
             <div
               style={{
-                background: "#fff",
-                borderRadius: "8px",
+                background: "#000000",
+                borderRadius: "2px",
                 padding: "12px 16px",
-                border: "1px solid #e2e8f0",
+                border: "1px solid #005500",
               }}
             >
               <div
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#94a3b8",
+                  color: "#008a20",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: "4px",
@@ -2534,12 +2535,18 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 </span>
               </div>
               <div
-                style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}
+                style={{ fontSize: "13px", fontWeight: 600, color: "#00ff41" }}
               >
                 {sep.duration}
               </div>
               <div
-                style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}
+                style={{
+                  fontSize: "12px",
+                  color: "#005500",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  letterSpacing: "0.08em",
+                  marginTop: "2px",
+                }}
               >
                 {sep.startDate !== "Year-round" &&
                 sep.startDate !== "Varies by individual"
@@ -2549,17 +2556,17 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
             </div>
             <div
               style={{
-                background: "#fff",
-                borderRadius: "8px",
+                background: "#000000",
+                borderRadius: "2px",
                 padding: "12px 16px",
-                border: "1px solid #e2e8f0",
+                border: "1px solid #005500",
               }}
             >
               <div
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#94a3b8",
+                  color: "#008a20",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: "4px",
@@ -2583,17 +2590,17 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
             </div>
             <div
               style={{
-                background: "#fff",
-                borderRadius: "8px",
+                background: "#000000",
+                borderRadius: "2px",
                 padding: "12px 16px",
-                border: "1px solid #e2e8f0",
+                border: "1px solid #005500",
               }}
             >
               <div
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#94a3b8",
+                  color: "#008a20",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: "4px",
@@ -2602,12 +2609,18 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 Source
               </div>
               <div
-                style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}
+                style={{ fontSize: "13px", fontWeight: 600, color: "#00ff41" }}
               >
                 {sep.source}
               </div>
               <div
-                style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}
+                style={{
+                  fontSize: "12px",
+                  color: "#005500",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  letterSpacing: "0.08em",
+                  marginTop: "2px",
+                }}
               >
                 Code: {sep.code}
               </div>
@@ -2617,10 +2630,10 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           {sep.counties && (
             <div
               style={{
-                background: "#fff",
-                borderRadius: "8px",
+                background: "#000000",
+                borderRadius: "2px",
                 padding: "12px 16px",
-                border: "1px solid #e2e8f0",
+                border: "1px solid #005500",
                 marginBottom: "16px",
               }}
             >
@@ -2628,7 +2641,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#94a3b8",
+                  color: "#008a20",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: "6px",
@@ -2645,7 +2658,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                 </span>
               </div>
               <div
-                style={{ fontSize: "13px", color: "#334155", lineHeight: 1.6 }}
+                style={{ fontSize: "13px", color: "#00cc30", lineHeight: 1.6 }}
               >
                 {sep.counties.join("  •  ")}
               </div>
@@ -2656,17 +2669,17 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           {sep.matchingPlans && sep.matchingPlans.length > 0 && (
             <div
               style={{
-                background: "#fff",
-                borderRadius: "8px",
+                background: "#000000",
+                borderRadius: "2px",
                 padding: "12px 16px",
-                border: "1px solid #e2e8f0",
+                border: "1px solid #005500",
               }}
             >
               <div
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: "#94a3b8",
+                  color: "#008a20",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: "8px",
@@ -2683,7 +2696,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                   }}
                 >
                   <thead>
-                    <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                    <tr style={{ borderBottom: "1px solid #c0c0c8" }}>
                       {[
                         "Carrier",
                         "Plan",
@@ -2706,7 +2719,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                                 : "left",
                             fontSize: "9px",
                             fontWeight: 700,
-                            color: "#94a3b8",
+                            color: "#008a20",
                             textTransform: "uppercase",
                             letterSpacing: "0.04em",
                             whiteSpace: "nowrap",
@@ -2721,21 +2734,21 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                     {sep.matchingPlans.map((p, i) => {
                       const cr = CARRIERS[p.carrier] || {};
                       const typeColors = {
-                        HMO: "#2563eb",
-                        "HMO-POS": "#3b82f6",
-                        PPO: "#7c3aed",
-                        PDP: "#0891b2",
-                        Medigap: "#0d9488",
+                        HMO: "#005500",
+                        "HMO-POS": "#006a00",
+                        PPO: "#004400",
+                        PDP: "#005d00",
+                        Medigap: "#003a00",
                       };
                       const snpColors = {
-                        "D-SNP": "#be185d",
-                        "C-SNP": "#c2410c",
-                        "I-SNP": "#9333ea",
+                        "D-SNP": "#006600",
+                        "C-SNP": "#005500",
+                        "I-SNP": "#004d00",
                       };
                       return (
                         <tr
                           key={`${p.cid}-${p.pbp}-${i}`}
-                          style={{ borderBottom: "1px solid #f1f5f9" }}
+                          style={{ borderBottom: "1px solid #d8d8dc" }}
                         >
                           <td
                             style={{ padding: "6px 6px", whiteSpace: "nowrap" }}
@@ -2759,7 +2772,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                                 style={{
                                   fontSize: "11px",
                                   fontWeight: 700,
-                                  color: "#334155",
+                                  color: "#00cc30",
                                 }}
                               >
                                 {cr.abbr}
@@ -2771,7 +2784,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               fontSize: "11px",
                               fontWeight: 600,
-                              color: "#334155",
+                              color: "#00cc30",
                               maxWidth: "200px",
                             }}
                           >
@@ -2780,9 +2793,9 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                           <td
                             style={{
                               padding: "6px 6px",
-                              fontFamily: "'JetBrains Mono', monospace",
+                              fontFamily: "'IBM Plex Mono', monospace",
                               fontSize: "10px",
-                              color: "#64748b",
+                              color: "#008a20",
                               whiteSpace: "nowrap",
                             }}
                           >
@@ -2796,9 +2809,9 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                                 borderRadius: "3px",
                                 fontSize: "9px",
                                 fontWeight: 700,
-                                color: "#fff",
+                                color: "#00ff41",
                                 backgroundColor:
-                                  typeColors[p.type] || "#475569",
+                                  typeColors[p.type] || "#005500",
                                 marginRight: 2,
                               }}
                             >
@@ -2812,9 +2825,9 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                                   borderRadius: "3px",
                                   fontSize: "9px",
                                   fontWeight: 700,
-                                  color: "#fff",
+                                  color: "#00ff41",
                                   backgroundColor:
-                                    snpColors[p.snp] || "#475569",
+                                    snpColors[p.snp] || "#005500",
                                 }}
                               >
                                 {p.snp}
@@ -2838,10 +2851,10 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                                     viewBox="0 0 24 24"
                                     fill={
                                       s <= Math.floor(p.stars)
-                                        ? "#f59e0b"
+                                        ? "#00cc30"
                                         : "none"
                                     }
-                                    stroke="#f59e0b"
+                                    stroke="#00ff41"
                                     strokeWidth={1.5}
                                   >
                                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -2849,7 +2862,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                                 ))}
                               </span>
                             ) : (
-                              <span style={{ color: "#cbd5e1" }}>—</span>
+                              <span style={{ color: "#006a1a" }}>—</span>
                             )}
                           </td>
                           <td
@@ -2857,7 +2870,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               textAlign: "right",
                               fontWeight: 700,
-                              color: p.prem === 0 ? "#16a34a" : "#334155",
+                              color: p.prem === 0 ? "#005500" : "#0d1a0d",
                               fontSize: "11px",
                             }}
                           >
@@ -2868,7 +2881,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               textAlign: "right",
                               fontWeight: 600,
-                              color: "#334155",
+                              color: "#00cc30",
                               fontSize: "11px",
                             }}
                           >
@@ -2879,7 +2892,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               textAlign: "center",
                               fontSize: "10px",
-                              color: p.grocery ? "#16a34a" : "#cbd5e1",
+                              color: p.grocery ? "#005500" : "#006a1a",
                               fontWeight: 600,
                             }}
                           >
@@ -2890,7 +2903,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               textAlign: "center",
                               fontSize: "10px",
-                              color: p.otc ? "#16a34a" : "#cbd5e1",
+                              color: p.otc ? "#005500" : "#006a1a",
                               fontWeight: 600,
                             }}
                           >
@@ -2901,7 +2914,7 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
                               padding: "6px 6px",
                               textAlign: "center",
                               fontSize: "10px",
-                              color: p.flex ? "#16a34a" : "#cbd5e1",
+                              color: p.flex ? "#005500" : "#006a1a",
                               fontWeight: 600,
                             }}
                           >
@@ -2918,11 +2931,11 @@ function SEPCard({ sep, carriers, isExpanded, onToggle }) {
           {sep.matchingPlans && sep.matchingPlans.length === 0 && (
             <div
               style={{
-                background: "#fff",
-                borderRadius: "8px",
+                background: "#000000",
+                borderRadius: "2px",
                 padding: "12px 16px",
-                border: "1px solid #e2e8f0",
-                color: "#94a3b8",
+                border: "1px solid #005500",
+                color: "#008a20",
                 fontSize: "13px",
               }}
             >
@@ -3103,43 +3116,45 @@ export default function SEPLookupTool() {
     <div
       style={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(165deg, #0f172a 0%, #1e293b 40%, #0f172a 100%)",
-        fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
+        background: "#000000",
+        fontFamily: "'IBM Plex Mono', 'Courier New', monospace",
+        color: "#00cc30",
       }}
     >
       <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@500;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
         rel="stylesheet"
       />
 
       {/* Header */}
       <div
         style={{
-          background:
-            "linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(99,102,241,0.08) 100%)",
-          borderBottom: "1px solid rgba(148,163,184,0.1)",
-          padding: "32px 24px 28px",
+          background: "#000000",
+          borderBottom: "2px solid #00ff41",
+          padding: "28px 24px 24px",
         }}
       >
-        <div style={{ maxWidth: "960px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "1040px", margin: "0 auto" }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "12px",
+              gap: "14px",
               marginBottom: "6px",
             }}
           >
             <div
               style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "10px",
-                background: "linear-gradient(135deg, #2563eb, #6366f1)",
+                width: "38px",
+                height: "38px",
+                borderRadius: "2px",
+                background: "#000",
+                border: "2px solid #00ff41",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                color: "#00ff41",
+                boxShadow: "0 0 12px rgba(0,255,65,0.4)",
               }}
             >
               <IconShield />
@@ -3148,23 +3163,29 @@ export default function SEPLookupTool() {
               <h1
                 style={{
                   margin: 0,
-                  fontSize: "24px",
+                  fontSize: "22px",
                   fontWeight: 800,
-                  color: "#f1f5f9",
-                  letterSpacing: "-0.02em",
+                  color: "#00ff41",
+                  letterSpacing: "0.05em",
+                  fontFamily: "'IBM Plex Mono', monospace",
+
+                  textTransform: "uppercase",
                 }}
               >
-                SEP Lookup Tool
+                ▶ SEP LOOKUP TOOL
               </h1>
               <p
                 style={{
                   margin: 0,
-                  fontSize: "13px",
-                  color: "#94a3b8",
+                  fontSize: "12px",
+                  color: "#00882a",
                   fontWeight: 500,
+                  letterSpacing: "0.08em",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  textTransform: "uppercase",
                 }}
               >
-                Medicare Advantage Plans & Active SEPs — Live Data
+                // Medicare Advantage Plans & Active SEPs — Live Data
               </p>
             </div>
           </div>
@@ -3173,18 +3194,17 @@ export default function SEPLookupTool() {
 
       {/* Search Bar */}
       <div
-        style={{ maxWidth: "960px", margin: "0 auto", padding: "24px 24px 0" }}
+        style={{ maxWidth: "1040px", margin: "0 auto", padding: "24px 24px 0" }}
       >
         <div
           style={{
             display: "flex",
-            gap: "12px",
+            gap: "10px",
             alignItems: "center",
-            background: "rgba(30,41,59,0.8)",
-            borderRadius: "14px",
-            padding: "8px",
-            border: "1px solid rgba(148,163,184,0.15)",
-            backdropFilter: "blur(12px)",
+            background: "#000000",
+            borderRadius: "2px",
+            padding: "6px",
+            border: "1px solid #00cc30",
           }}
         >
           <input
@@ -3195,18 +3215,19 @@ export default function SEPLookupTool() {
               setZip(e.target.value.replace(/\D/g, "").slice(0, 5))
             }
             onKeyDown={handleKeyDown}
-            placeholder="Enter 5-digit zip code..."
+            placeholder="ENTER 5-DIGIT ZIP CODE_"
             style={{
               flex: 1,
               padding: "14px 18px",
               border: "none",
               outline: "none",
-              fontSize: "17px",
+              fontSize: "18px",
               fontWeight: 600,
-              color: "#f1f5f9",
+              color: "#00ff41",
               background: "transparent",
-              fontFamily: "'JetBrains Mono', monospace",
-              letterSpacing: "0.08em",
+              fontFamily: "'IBM Plex Mono', monospace",
+              letterSpacing: "0.12em",
+              caretColor: "#00ff41",
             }}
           />
           <button
@@ -3214,20 +3235,26 @@ export default function SEPLookupTool() {
             disabled={!/^\d{5}$/.test(zip.trim()) || loading}
             style={{
               padding: "12px 28px",
-              borderRadius: "10px",
-              border: "none",
-              background: /^\d{5}$/.test(zip.trim())
-                ? "linear-gradient(135deg, #2563eb, #6366f1)"
-                : "#334155",
-              color: "#fff",
-              fontSize: "15px",
+              borderRadius: "2px",
+              border: /^\d{5}$/.test(zip.trim())
+                ? "1px solid #00ff41"
+                : "1px solid #003300",
+              background: /^\d{5}$/.test(zip.trim()) ? "#003d00" : "#000800",
+              color: /^\d{5}$/.test(zip.trim()) ? "#00ff41" : "#003d00",
+              fontSize: "13px",
               fontWeight: 700,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              opacity: /^\d{5}$/.test(zip.trim()) ? 1 : 0.5,
+              opacity: /^\d{5}$/.test(zip.trim()) ? 1 : 0.4,
               transition: "all 0.2s ease",
+              fontFamily: "'IBM Plex Mono', monospace",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              boxShadow: /^\d{5}$/.test(zip.trim())
+                ? "0 0 14px rgba(0,255,65,0.3)"
+                : "none",
             }}
           >
             {loading ? (
@@ -3236,8 +3263,8 @@ export default function SEPLookupTool() {
                   display: "inline-block",
                   width: "18px",
                   height: "18px",
-                  border: "2.5px solid rgba(255,255,255,0.3)",
-                  borderTopColor: "#fff",
+                  border: "2.5px solid rgba(0,255,65,0.2)",
+                  borderTopColor: "#00ff41",
                   borderRadius: "50%",
                   animation: "spin 0.7s linear infinite",
                 }}
@@ -3245,7 +3272,7 @@ export default function SEPLookupTool() {
             ) : (
               <IconSearch />
             )}
-            Search
+            [SEARCH]
           </button>
         </div>
 
@@ -3260,7 +3287,13 @@ export default function SEPLookupTool() {
             }}
           >
             <span
-              style={{ fontSize: "12px", color: "#64748b", padding: "6px 0" }}
+              style={{
+                fontSize: "12px",
+                color: "#005500",
+                fontFamily: "'IBM Plex Mono', monospace",
+                letterSpacing: "0.08em",
+                padding: "6px 0",
+              }}
             >
               Try:
             </span>
@@ -3272,15 +3305,16 @@ export default function SEPLookupTool() {
                 }}
                 style={{
                   padding: "6px 14px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(148,163,184,0.2)",
-                  background: "rgba(30,41,59,0.6)",
-                  color: "#94a3b8",
+                  borderRadius: "2px",
+                  border: "1px solid #003d00",
+                  background: "#000800",
+                  color: "#00aa28",
                   fontSize: "13px",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "'IBM Plex Mono', monospace",
                   cursor: "pointer",
                   fontWeight: 600,
                   transition: "all 0.15s ease",
+                  letterSpacing: "0.08em",
                 }}
               >
                 {z}
@@ -3292,133 +3326,130 @@ export default function SEPLookupTool() {
 
       {/* Results */}
       {results && !loading && (
-        <div style={{ maxWidth: "960px", margin: "0 auto", padding: "24px" }}>
+        <div style={{ maxWidth: "1040px", margin: "0 auto", padding: "24px" }}>
           {/* Summary Bar */}
           <div
             style={{
-              display: "flex",
-              gap: "12px",
+              display: "grid",
+              gridTemplateColumns: "1fr repeat(4, auto)",
+              gap: "8px",
               marginBottom: "20px",
-              flexWrap: "wrap",
-              alignItems: "center",
+              alignItems: "stretch",
             }}
           >
             <div
               style={{
-                background: "rgba(37,99,235,0.12)",
-                border: "1px solid rgba(37,99,235,0.25)",
-                borderRadius: "10px",
-                padding: "12px 18px",
-                flex: "1 1 auto",
-                minWidth: "200px",
+                background: "#000000",
+                border: "1px solid #003d00",
+                borderRadius: "2px",
+                padding: "14px 18px",
               }}
             >
               <div
                 style={{
-                  fontSize: "11px",
+                  fontSize: "10px",
                   fontWeight: 700,
-                  color: "#60a5fa",
+                  color: "#008a20",
                   textTransform: "uppercase",
-                  letterSpacing: "0.06em",
+                  letterSpacing: "0.08em",
+                  fontFamily: "'Outfit', sans-serif",
                 }}
               >
                 Zip Code
               </div>
               <div
                 style={{
-                  fontSize: "22px",
+                  fontSize: "20px",
                   fontWeight: 800,
-                  color: "#f1f5f9",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  color: "#00ff41",
+                  fontFamily: "'IBM Plex Mono', monospace",
                 }}
               >
                 {searchedZip}{" "}
                 <span
                   style={{
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    color: "#94a3b8",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    color: "#008a20",
                   }}
                 >
-                  ({state}){selectedCounty ? ` — ${selectedCounty} County` : ""}
+                  ({state}){selectedCounty ? ` — ${selectedCounty} Co.` : ""}
                 </span>
               </div>
             </div>
             <div
               style={{
-                background: "rgba(34,197,94,0.1)",
-                border: "1px solid rgba(34,197,94,0.25)",
-                borderRadius: "10px",
-                padding: "12px 18px",
+                background: "#000000",
+                border: "1px solid #003d00",
+                borderRadius: "2px",
+                padding: "14px 18px",
                 textAlign: "center",
+                minWidth: "80px",
               }}
             >
               <div
                 style={{
-                  fontSize: "11px",
+                  fontSize: "10px",
                   fontWeight: 700,
-                  color: "#4ade80",
+                  color: "#008a20",
                   textTransform: "uppercase",
-                  letterSpacing: "0.06em",
+                  letterSpacing: "0.08em",
                 }}
               >
                 SEPs
               </div>
               <div
-                style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9" }}
+                style={{ fontSize: "20px", fontWeight: 800, color: "#00ff41" }}
               >
                 {filtered?.length || 0}
               </div>
             </div>
             <div
               style={{
-                background: "rgba(168,85,247,0.1)",
-                border: "1px solid rgba(168,85,247,0.25)",
-                borderRadius: "10px",
-                padding: "12px 18px",
+                background: "#000000",
+                border: "1px solid #003d00",
+                borderRadius: "2px",
+                padding: "14px 18px",
                 textAlign: "center",
+                minWidth: "80px",
               }}
             >
               <div
                 style={{
-                  fontSize: "11px",
+                  fontSize: "10px",
                   fontWeight: 700,
-                  color: "#c084fc",
+                  color: "#008a20",
                   textTransform: "uppercase",
-                  letterSpacing: "0.06em",
+                  letterSpacing: "0.08em",
                 }}
               >
                 Plans
               </div>
               <div
-                style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9" }}
+                style={{ fontSize: "20px", fontWeight: 800, color: "#00cc30" }}
               >
                 {plans?.length || 0}
               </div>
             </div>
             <div
               style={{
-                background:
-                  femaActive.length > 0
-                    ? "rgba(239,68,68,0.12)"
-                    : "rgba(100,116,139,0.1)",
+                background: femaActive.length > 0 ? "#000800" : "#020202",
                 border: `1px solid ${
-                  femaActive.length > 0
-                    ? "rgba(239,68,68,0.3)"
-                    : "rgba(100,116,139,0.2)"
+                  femaActive.length > 0 ? "#0d2a0d" : "#0d1a0d"
                 }`,
-                borderRadius: "10px",
-                padding: "12px 18px",
+                borderRadius: "2px",
+                padding: "14px 18px",
                 textAlign: "center",
+                minWidth: "80px",
               }}
             >
               <div
                 style={{
-                  fontSize: "11px",
+                  fontSize: "10px",
                   fontWeight: 700,
-                  color: femaActive.length > 0 ? "#f87171" : "#94a3b8",
+                  color: femaActive.length > 0 ? "#005500" : "#008a20",
                   textTransform: "uppercase",
-                  letterSpacing: "0.06em",
+                  letterSpacing: "0.08em",
                 }}
               >
                 <span
@@ -3432,33 +3463,38 @@ export default function SEPLookupTool() {
                 </span>
               </div>
               <div
-                style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9" }}
+                style={{
+                  fontSize: "20px",
+                  fontWeight: 800,
+                  color: femaActive.length > 0 ? "#009920" : "#008a20",
+                }}
               >
                 {femaActive.length > 0 ? femaActive.length : "—"}
               </div>
             </div>
             <div
               style={{
-                background: "rgba(99,102,241,0.1)",
-                border: "1px solid rgba(99,102,241,0.25)",
-                borderRadius: "10px",
-                padding: "12px 18px",
+                background: "#000000",
+                border: "1px solid #003d00",
+                borderRadius: "2px",
+                padding: "14px 18px",
                 textAlign: "center",
+                minWidth: "80px",
               }}
             >
               <div
                 style={{
-                  fontSize: "11px",
+                  fontSize: "10px",
                   fontWeight: 700,
-                  color: "#a5b4fc",
+                  color: "#008a20",
                   textTransform: "uppercase",
-                  letterSpacing: "0.06em",
+                  letterSpacing: "0.08em",
                 }}
               >
                 Carriers
               </div>
               <div
-                style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9" }}
+                style={{ fontSize: "20px", fontWeight: 800, color: "#5a6a7a" }}
               >
                 {carriers.length}
               </div>
@@ -3469,32 +3505,34 @@ export default function SEPLookupTool() {
           <div
             style={{
               display: "flex",
-              borderBottom: "1px solid rgba(148,163,184,0.1)",
+              gap: "4px",
               marginBottom: "20px",
+              background: "#000000",
+              borderRadius: "2px",
+              padding: "4px",
+              border: "1px solid #003d00",
             }}
           >
             {[
-              ["plans", `📋 Plans & Codes (${filteredPlans.length})`],
-              ["seps", `🔁 SEPs (${filtered?.length || 0})`],
+              ["plans", `Plans & Codes (${filteredPlans.length})`],
+              ["seps", `SEPs (${filtered?.length || 0})`],
             ].map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
                 style={{
-                  padding: "10px 20px",
-                  borderRadius: "8px 8px 0 0",
+                  padding: "10px 22px",
+                  borderRadius: "2px",
                   border: "none",
                   fontSize: "13px",
                   fontWeight: 700,
                   cursor: "pointer",
                   transition: "all 0.15s",
-                  background:
-                    activeTab === key ? "rgba(37,99,235,0.15)" : "transparent",
-                  color: activeTab === key ? "#60a5fa" : "#94a3b8",
-                  borderBottom:
-                    activeTab === key
-                      ? "2px solid #3b82f6"
-                      : "2px solid transparent",
+                  fontFamily: "'Outfit', sans-serif",
+                  letterSpacing: "0.01em",
+                  background: activeTab === key ? "#1a2a14" : "transparent",
+                  color: activeTab === key ? "#7aaa5a" : "#008a20",
+                  borderBottom: "none",
                 }}
               >
                 {label}
@@ -3514,13 +3552,13 @@ export default function SEPLookupTool() {
                     alignItems: "center",
                     marginBottom: "12px",
                     padding: "12px 16px",
-                    borderRadius: "14px",
+                    borderRadius: "2px",
                     background: selectedCounty
-                      ? "linear-gradient(180deg, rgba(52,211,153,0.06) 0%, rgba(52,211,153,0.02) 100%)"
-                      : "linear-gradient(180deg, rgba(251,191,36,0.06) 0%, rgba(251,191,36,0.02) 100%)",
+                      ? "linear-gradient(180deg, rgba(50,100,40,0.06) 0%, rgba(50,100,40,0.02) 100%)"
+                      : "linear-gradient(180deg, rgba(100,90,40,0.06) 0%, rgba(100,90,40,0.02) 100%)",
                     border: selectedCounty
-                      ? "1px solid rgba(52,211,153,0.2)"
-                      : "1px solid rgba(251,191,36,0.2)",
+                      ? "1px solid rgba(50,100,40,0.2)"
+                      : "1px solid rgba(100,90,40,0.2)",
                   }}
                 >
                   <div
@@ -3556,7 +3594,7 @@ export default function SEPLookupTool() {
                     style={{
                       flex: 1,
                       padding: "8px 12px",
-                      borderRadius: "10px",
+                      borderRadius: "2px",
                       border: "1px solid rgba(255,255,255,0.1)",
                       background:
                         "linear-gradient(180deg, #080c12 0%, #0b0f16 100%)",
@@ -3584,7 +3622,7 @@ export default function SEPLookupTool() {
                         width: "18px",
                         height: "18px",
                         border: "2.5px solid rgba(255,255,255,0.2)",
-                        borderTopColor: "#38bdf8",
+                        borderTopColor: "#4a8a5a",
                         borderRadius: "50%",
                         animation: "spin 0.7s linear infinite",
                         flexShrink: 0,
@@ -3596,7 +3634,7 @@ export default function SEPLookupTool() {
                       style={{
                         fontSize: "13px",
                         fontWeight: 700,
-                        color: "#34d399",
+                        color: "#4a8a3a",
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -3610,24 +3648,31 @@ export default function SEPLookupTool() {
                   style={{
                     padding: "20px",
                     textAlign: "center",
-                    borderRadius: "14px",
+                    borderRadius: "2px",
                     marginBottom: "12px",
                     background:
-                      "linear-gradient(180deg, rgba(251,191,36,0.04) 0%, rgba(18,24,35,0.3) 100%)",
-                    border: "1px solid rgba(251,191,36,0.15)",
+                      "linear-gradient(180deg, rgba(100,90,40,0.04) 0%, rgba(18,24,35,0.3) 100%)",
+                    border: "1px solid rgba(100,90,40,0.15)",
                   }}
                 >
                   <div
                     style={{
                       fontSize: "14px",
                       fontWeight: 600,
-                      color: "#fbbf24",
+                      color: "#9a8a3a",
                       marginBottom: "4px",
                     }}
                   >
                     ⚠️ Select a county above to load plans from CMS database
                   </div>
-                  <div style={{ fontSize: "12px", color: "#8896ab" }}>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#005500",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
                     Medicare plan availability is county-specific. The CMS
                     database has {countyList.length} counties for {state}.
                   </div>
@@ -3641,10 +3686,10 @@ export default function SEPLookupTool() {
                   marginBottom: "16px",
                   flexWrap: "wrap",
                   alignItems: "center",
-                  background: "rgba(30,41,59,0.5)",
-                  borderRadius: "10px",
+                  background: "#000600",
+                  borderRadius: "2px",
                   padding: "10px 16px",
-                  border: "1px solid rgba(148,163,184,0.1)",
+                  border: "1px solid rgba(0,255,65,0.15)",
                 }}
               >
                 <span
@@ -3654,7 +3699,7 @@ export default function SEPLookupTool() {
                     gap: "6px",
                     fontSize: "12px",
                     fontWeight: 700,
-                    color: "#94a3b8",
+                    color: "#008a20",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
                   }}
@@ -3666,10 +3711,10 @@ export default function SEPLookupTool() {
                   onChange={(e) => setPlanFilterCarrier(e.target.value)}
                   style={{
                     padding: "6px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid rgba(148,163,184,0.2)",
-                    background: "#1e293b",
-                    color: "#e2e8f0",
+                    borderRadius: "2px",
+                    border: "1px solid rgba(0,200,50,0.2)",
+                    background: "#000000",
+                    color: "#00cc30",
                     fontSize: "13px",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -3687,10 +3732,10 @@ export default function SEPLookupTool() {
                   onChange={(e) => setPlanFilterType(e.target.value)}
                   style={{
                     padding: "6px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid rgba(148,163,184,0.2)",
-                    background: "#1e293b",
-                    color: "#e2e8f0",
+                    borderRadius: "2px",
+                    border: "1px solid rgba(0,200,50,0.2)",
+                    background: "#000000",
+                    color: "#00cc30",
                     fontSize: "13px",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -3708,10 +3753,10 @@ export default function SEPLookupTool() {
                   onChange={(e) => setPlanFilterSnp(e.target.value)}
                   style={{
                     padding: "6px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid rgba(148,163,184,0.2)",
-                    background: "#1e293b",
-                    color: "#e2e8f0",
+                    borderRadius: "2px",
+                    border: "1px solid rgba(0,200,50,0.2)",
+                    background: "#000000",
+                    color: "#00cc30",
                     fontSize: "13px",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -3730,10 +3775,10 @@ export default function SEPLookupTool() {
                   style={{
                     flex: "1 1 160px",
                     padding: "6px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid rgba(148,163,184,0.2)",
-                    background: "#1e293b",
-                    color: "#e2e8f0",
+                    borderRadius: "2px",
+                    border: "1px solid rgba(0,200,50,0.2)",
+                    background: "#000000",
+                    color: "#00cc30",
                     fontSize: "13px",
                     fontWeight: 600,
                     outline: "none",
@@ -3756,10 +3801,10 @@ export default function SEPLookupTool() {
                       alignItems: "center",
                       gap: "4px",
                       padding: "5px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid rgba(239,68,68,0.3)",
-                      background: "rgba(239,68,68,0.1)",
-                      color: "#f87171",
+                      borderRadius: "2px",
+                      border: "1px solid rgba(0,180,50,0.3)",
+                      background: "rgba(0,100,0,0.2)",
+                      color: "#009920",
                       fontSize: "12px",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -3774,8 +3819,8 @@ export default function SEPLookupTool() {
               <div
                 style={{
                   overflowX: "auto",
-                  borderRadius: "12px",
-                  border: "1px solid rgba(148,163,184,0.12)",
+                  borderRadius: "2px",
+                  border: "1px solid rgba(0,200,50,0.12)",
                 }}
               >
                 <table
@@ -3788,8 +3833,8 @@ export default function SEPLookupTool() {
                   <thead>
                     <tr
                       style={{
-                        background: "rgba(15,23,42,0.9)",
-                        borderBottom: "2px solid rgba(148,163,184,0.15)",
+                        background: "rgba(0,5,0,0.95)",
+                        borderBottom: "2px solid rgba(0,200,50,0.15)",
                       }}
                     >
                       {[
@@ -3821,7 +3866,7 @@ export default function SEPLookupTool() {
                               : "left",
                             fontSize: "10px",
                             fontWeight: 700,
-                            color: "#64748b",
+                            color: "#008a20",
                             textTransform: "uppercase",
                             letterSpacing: "0.05em",
                             whiteSpace: "nowrap",
@@ -3839,16 +3884,16 @@ export default function SEPLookupTool() {
                         const pKey = `${p.cid}-${p.pbp}-${p.carrier}`;
                         const isOpen = !!expandedPlans[pKey];
                         const typeColors = {
-                          HMO: "#2563eb",
-                          "HMO-POS": "#3b82f6",
-                          PPO: "#7c3aed",
-                          PDP: "#0891b2",
-                          Medigap: "#0d9488",
+                          HMO: "#005500",
+                          "HMO-POS": "#006a00",
+                          PPO: "#004400",
+                          PDP: "#005d00",
+                          Medigap: "#003a00",
                         };
                         const snpColors = {
-                          "D-SNP": "#be185d",
-                          "C-SNP": "#c2410c",
-                          "I-SNP": "#9333ea",
+                          "D-SNP": "#006600",
+                          "C-SNP": "#005500",
+                          "I-SNP": "#004d00",
                         };
                         return (
                           <React.Fragment key={pKey + idx}>
@@ -3861,10 +3906,9 @@ export default function SEPLookupTool() {
                               }
                               style={{
                                 cursor: "pointer",
-                                borderBottom:
-                                  "1px solid rgba(148,163,184,0.06)",
+                                borderBottom: "1px solid rgba(0,200,50,0.06)",
                                 background: isOpen
-                                  ? "rgba(37,99,235,0.06)"
+                                  ? "rgba(0,255,65,0.07)"
                                   : "transparent",
                               }}
                             >
@@ -3894,7 +3938,7 @@ export default function SEPLookupTool() {
                                     style={{
                                       fontSize: "12px",
                                       fontWeight: 700,
-                                      color: "#e2e8f0",
+                                      color: "#00cc30",
                                     }}
                                   >
                                     {c.abbr || p.carrier}
@@ -3906,7 +3950,7 @@ export default function SEPLookupTool() {
                                   style={{
                                     fontSize: "12px",
                                     fontWeight: 600,
-                                    color: "#e2e8f0",
+                                    color: "#00cc30",
                                     lineHeight: 1.3,
                                   }}
                                 >
@@ -3915,8 +3959,8 @@ export default function SEPLookupTool() {
                                 <div
                                   style={{
                                     fontSize: "11px",
-                                    color: "#64748b",
-                                    fontFamily: "'JetBrains Mono', monospace",
+                                    color: "#008a20",
+                                    fontFamily: "'IBM Plex Mono', monospace",
                                     marginTop: "2px",
                                   }}
                                 >
@@ -3928,12 +3972,12 @@ export default function SEPLookupTool() {
                                   style={{
                                     display: "inline-block",
                                     padding: "2px 7px",
-                                    borderRadius: "4px",
+                                    borderRadius: "2px",
                                     fontSize: "10px",
                                     fontWeight: 700,
-                                    color: "#fff",
+                                    color: "#00ff41",
                                     backgroundColor:
-                                      typeColors[p.type] || "#475569",
+                                      typeColors[p.type] || "#005500",
                                     marginRight: 3,
                                   }}
                                 >
@@ -3944,12 +3988,12 @@ export default function SEPLookupTool() {
                                     style={{
                                       display: "inline-block",
                                       padding: "2px 7px",
-                                      borderRadius: "4px",
+                                      borderRadius: "2px",
                                       fontSize: "10px",
                                       fontWeight: 700,
-                                      color: "#fff",
+                                      color: "#00ff41",
                                       backgroundColor:
-                                        snpColors[p.snp] || "#475569",
+                                        snpColors[p.snp] || "#005500",
                                     }}
                                   >
                                     {p.snp}
@@ -3978,10 +4022,10 @@ export default function SEPLookupTool() {
                                         viewBox="0 0 24 24"
                                         fill={
                                           i <= Math.floor(p.stars)
-                                            ? "#f59e0b"
+                                            ? "#00cc30"
                                             : "none"
                                         }
-                                        stroke="#f59e0b"
+                                        stroke="#00ff41"
                                         strokeWidth={1.5}
                                       >
                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -3991,7 +4035,7 @@ export default function SEPLookupTool() {
                                       <span
                                         style={{
                                           fontSize: "10px",
-                                          color: "#f59e0b",
+                                          color: "#00cc30",
                                         }}
                                       >
                                         .5
@@ -4001,7 +4045,7 @@ export default function SEPLookupTool() {
                                 ) : (
                                   <span
                                     style={{
-                                      color: "#64748b",
+                                      color: "#008a20",
                                       fontSize: "11px",
                                     }}
                                   >
@@ -4019,7 +4063,7 @@ export default function SEPLookupTool() {
                                   style={{
                                     fontSize: "13px",
                                     fontWeight: 700,
-                                    color: p.prem === 0 ? "#4ade80" : "#e2e8f0",
+                                    color: p.prem === 0 ? "#00ff41" : "#00cc30",
                                   }}
                                 >
                                   {p.prem === 0
@@ -4037,7 +4081,7 @@ export default function SEPLookupTool() {
                                   style={{
                                     fontSize: "13px",
                                     fontWeight: 600,
-                                    color: "#e2e8f0",
+                                    color: "#00cc30",
                                   }}
                                 >
                                   {p.moop ? `$${p.moop.toLocaleString()}` : "—"}
@@ -4051,7 +4095,7 @@ export default function SEPLookupTool() {
                               >
                                 <span
                                   style={{
-                                    color: p.grocery ? "#4ade80" : "#475569",
+                                    color: p.grocery ? "#00ff41" : "#005500",
                                     fontSize: "12px",
                                     fontWeight: 600,
                                   }}
@@ -4067,7 +4111,7 @@ export default function SEPLookupTool() {
                               >
                                 <span
                                   style={{
-                                    color: p.otc ? "#4ade80" : "#475569",
+                                    color: p.otc ? "#00ff41" : "#005500",
                                     fontSize: "12px",
                                     fontWeight: 600,
                                   }}
@@ -4083,7 +4127,7 @@ export default function SEPLookupTool() {
                               >
                                 <span
                                   style={{
-                                    color: p.flex ? "#4ade80" : "#475569",
+                                    color: p.flex ? "#00ff41" : "#005500",
                                     fontSize: "12px",
                                     fontWeight: 600,
                                   }}
@@ -4106,7 +4150,7 @@ export default function SEPLookupTool() {
                                   colSpan={10}
                                   style={{
                                     padding: "0 12px 14px",
-                                    background: "rgba(37,99,235,0.04)",
+                                    background: "rgba(0,255,65,0.04)",
                                   }}
                                 >
                                   <div
@@ -4135,17 +4179,17 @@ export default function SEPLookupTool() {
                                             alignItems: "center",
                                             gap: "4px",
                                             padding: "3px 8px",
-                                            borderRadius: "6px",
+                                            borderRadius: "2px",
                                             fontSize: "11px",
                                             fontWeight: 600,
-                                            background: "rgba(34,197,94,0.1)",
+                                            background: "rgba(0,255,65,0.1)",
                                             border:
-                                              "1px solid rgba(34,197,94,0.2)",
-                                            color: "#4ade80",
+                                              "1px solid rgba(0,255,65,0.2)",
+                                            color: "#00ff41",
                                           }}
                                         >
                                           {lbl}:{" "}
-                                          <span style={{ color: "#e2e8f0" }}>
+                                          <span style={{ color: "#00cc30" }}>
                                             {typeof val === "boolean"
                                               ? "✓"
                                               : val}
@@ -4170,18 +4214,18 @@ export default function SEPLookupTool() {
                                       <div
                                         key={lbl}
                                         style={{
-                                          background: "rgba(15,23,42,0.8)",
-                                          borderRadius: "6px",
+                                          background: "rgba(0,5,0,0.85)",
+                                          borderRadius: "2px",
                                           padding: "8px 12px",
                                           border:
-                                            "1px solid rgba(148,163,184,0.1)",
+                                            "1px solid rgba(0,255,65,0.15)",
                                         }}
                                       >
                                         <div
                                           style={{
                                             fontSize: "10px",
                                             fontWeight: 700,
-                                            color: "#64748b",
+                                            color: "#008a20",
                                             textTransform: "uppercase",
                                             letterSpacing: "0.05em",
                                             marginBottom: "2px",
@@ -4193,11 +4237,11 @@ export default function SEPLookupTool() {
                                           style={{
                                             fontSize: "13px",
                                             fontWeight: 600,
-                                            color: "#e2e8f0",
+                                            color: "#00cc30",
                                             fontFamily:
                                               lbl === "Contract ID" ||
                                               lbl === "PBP"
-                                                ? "'JetBrains Mono', monospace"
+                                                ? "'IBM Plex Mono', monospace"
                                                 : "inherit",
                                           }}
                                         >
@@ -4219,7 +4263,7 @@ export default function SEPLookupTool() {
                           style={{
                             padding: "40px",
                             textAlign: "center",
-                            color: "#94a3b8",
+                            color: "#008a20",
                             fontSize: "14px",
                           }}
                         >
@@ -4244,10 +4288,10 @@ export default function SEPLookupTool() {
                   marginBottom: "20px",
                   flexWrap: "wrap",
                   alignItems: "center",
-                  background: "rgba(30,41,59,0.5)",
-                  borderRadius: "10px",
+                  background: "#000600",
+                  borderRadius: "2px",
                   padding: "10px 16px",
-                  border: "1px solid rgba(148,163,184,0.1)",
+                  border: "1px solid rgba(0,255,65,0.15)",
                 }}
               >
                 <span
@@ -4257,7 +4301,7 @@ export default function SEPLookupTool() {
                     gap: "6px",
                     fontSize: "12px",
                     fontWeight: 700,
-                    color: "#94a3b8",
+                    color: "#008a20",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
                   }}
@@ -4269,10 +4313,10 @@ export default function SEPLookupTool() {
                   onChange={(e) => setFilterCategory(e.target.value)}
                   style={{
                     padding: "6px 12px",
-                    borderRadius: "6px",
-                    border: "1px solid rgba(148,163,184,0.2)",
-                    background: "#1e293b",
-                    color: "#e2e8f0",
+                    borderRadius: "2px",
+                    border: "1px solid rgba(0,200,50,0.2)",
+                    background: "#000000",
+                    color: "#00cc30",
                     fontSize: "13px",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -4291,10 +4335,10 @@ export default function SEPLookupTool() {
                   onChange={(e) => setFilterProduct(e.target.value)}
                   style={{
                     padding: "6px 12px",
-                    borderRadius: "6px",
-                    border: "1px solid rgba(148,163,184,0.2)",
-                    background: "#1e293b",
-                    color: "#e2e8f0",
+                    borderRadius: "2px",
+                    border: "1px solid rgba(0,200,50,0.2)",
+                    background: "#000000",
+                    color: "#00cc30",
                     fontSize: "13px",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -4319,10 +4363,10 @@ export default function SEPLookupTool() {
                       alignItems: "center",
                       gap: "4px",
                       padding: "5px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid rgba(239,68,68,0.3)",
-                      background: "rgba(239,68,68,0.1)",
-                      color: "#f87171",
+                      borderRadius: "2px",
+                      border: "1px solid rgba(0,180,50,0.3)",
+                      background: "rgba(0,100,0,0.2)",
+                      color: "#009920",
                       fontSize: "12px",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -4338,9 +4382,9 @@ export default function SEPLookupTool() {
                 <div
                   style={{
                     background:
-                      "linear-gradient(135deg, rgba(220,38,38,0.15), rgba(239,68,68,0.08))",
-                    border: "1px solid rgba(239,68,68,0.35)",
-                    borderRadius: "12px",
+                      "linear-gradient(135deg, rgba(0,80,0,0.25), rgba(0,100,0,0.15))",
+                    border: "1px solid rgba(0,180,50,0.5)",
+                    borderRadius: "2px",
                     padding: "16px 20px",
                     marginBottom: "20px",
                     display: "flex",
@@ -4350,7 +4394,7 @@ export default function SEPLookupTool() {
                 >
                   <div
                     style={{
-                      color: "#f87171",
+                      color: "#009920",
                       flexShrink: 0,
                       marginTop: "2px",
                     }}
@@ -4362,7 +4406,7 @@ export default function SEPLookupTool() {
                       style={{
                         fontSize: "14px",
                         fontWeight: 700,
-                        color: "#fca5a5",
+                        color: "#00cc30",
                         marginBottom: "4px",
                       }}
                     >
@@ -4372,7 +4416,7 @@ export default function SEPLookupTool() {
                     <div
                       style={{
                         fontSize: "13px",
-                        color: "#fda4af",
+                        color: "#00cc30",
                         lineHeight: 1.5,
                       }}
                     >
@@ -4406,7 +4450,7 @@ export default function SEPLookupTool() {
                     style={{
                       textAlign: "center",
                       padding: "48px 24px",
-                      color: "#94a3b8",
+                      color: "#008a20",
                     }}
                   >
                     <div style={{ fontSize: "16px", fontWeight: 600 }}>
@@ -4423,10 +4467,10 @@ export default function SEPLookupTool() {
               <div
                 style={{
                   marginTop: "28px",
-                  background: "rgba(30,41,59,0.6)",
-                  borderRadius: "14px",
+                  background: "#000800",
+                  borderRadius: "2px",
                   padding: "20px",
-                  border: "1px solid rgba(148,163,184,0.1)",
+                  border: "1px solid rgba(0,255,65,0.15)",
                 }}
               >
                 <h3
@@ -4434,7 +4478,7 @@ export default function SEPLookupTool() {
                     margin: "0 0 14px 0",
                     fontSize: "14px",
                     fontWeight: 700,
-                    color: "#e2e8f0",
+                    color: "#00cc30",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
                   }}
@@ -4453,8 +4497,8 @@ export default function SEPLookupTool() {
                     <div
                       key={c.key}
                       style={{
-                        background: "#0f172a",
-                        borderRadius: "10px",
+                        background: "#000000",
+                        borderRadius: "2px",
                         padding: "14px",
                         border: `1px solid ${c.color}30`,
                         position: "relative",
@@ -4475,7 +4519,7 @@ export default function SEPLookupTool() {
                         style={{
                           fontSize: "14px",
                           fontWeight: 700,
-                          color: "#f1f5f9",
+                          color: "#00ff41",
                           marginBottom: "6px",
                         }}
                       >
@@ -4484,7 +4528,7 @@ export default function SEPLookupTool() {
                       <div
                         style={{
                           fontSize: "11px",
-                          color: "#94a3b8",
+                          color: "#008a20",
                           marginBottom: "8px",
                         }}
                       >
@@ -4514,16 +4558,16 @@ export default function SEPLookupTool() {
             style={{
               marginTop: "24px",
               padding: "16px 20px",
-              borderRadius: "10px",
-              background: "rgba(100,116,139,0.08)",
-              border: "1px solid rgba(100,116,139,0.15)",
+              borderRadius: "2px",
+              background: "rgba(0,180,50,0.08)",
+              border: "1px solid #003300",
             }}
           >
             <p
               style={{
                 margin: 0,
                 fontSize: "11px",
-                color: "#64748b",
+                color: "#008a20",
                 lineHeight: 1.6,
               }}
             >
@@ -4542,7 +4586,7 @@ export default function SEPLookupTool() {
       {loading && (
         <div
           style={{
-            maxWidth: "960px",
+            maxWidth: "1040px",
             margin: "0 auto",
             padding: "80px 24px",
             textAlign: "center",
@@ -4552,17 +4596,25 @@ export default function SEPLookupTool() {
             style={{
               width: "48px",
               height: "48px",
-              border: "3px solid rgba(99,102,241,0.2)",
-              borderTopColor: "#6366f1",
+              border: "3px solid rgba(0,255,65,0.15)",
+              borderTopColor: "#00ff41",
               borderRadius: "50%",
               margin: "0 auto 16px",
               animation: "spin 0.8s linear infinite",
             }}
           />
-          <div style={{ fontSize: "15px", fontWeight: 600, color: "#94a3b8" }}>
+          <div style={{ fontSize: "15px", fontWeight: 600, color: "#008a20" }}>
             Scanning sources for {zip}...
           </div>
-          <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#005500",
+              fontFamily: "'IBM Plex Mono', monospace",
+              letterSpacing: "0.08em",
+              marginTop: "4px",
+            }}
+          >
             FEMA • CMS • Medicare.gov • Carrier Networks
           </div>
         </div>
@@ -4572,7 +4624,7 @@ export default function SEPLookupTool() {
       {!results && !loading && (
         <div
           style={{
-            maxWidth: "960px",
+            maxWidth: "1040px",
             margin: "0 auto",
             padding: "60px 24px",
             textAlign: "center",
@@ -4585,7 +4637,7 @@ export default function SEPLookupTool() {
             style={{
               fontSize: "18px",
               fontWeight: 700,
-              color: "#64748b",
+              color: "#008a20",
               marginBottom: "8px",
             }}
           >
@@ -4594,7 +4646,7 @@ export default function SEPLookupTool() {
           <div
             style={{
               fontSize: "14px",
-              color: "#475569",
+              color: "#005500",
               maxWidth: "460px",
               margin: "0 auto",
               lineHeight: 1.6,
@@ -4609,11 +4661,21 @@ export default function SEPLookupTool() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes flicker { 0%,100%{opacity:1} 92%{opacity:0.97} 94%{opacity:0.92} 96%{opacity:0.98} }
         * { box-sizing: border-box; }
-        table tbody tr:hover td { background: rgba(37,99,235,0.06) !important; }
-        select:focus { border-color: rgba(99,102,241,0.5) !important; }
-        button:hover { filter: brightness(1.1); }
-        input::placeholder { color: #475569; }
+        body { background: #000; }
+        table tbody tr:hover td { background: rgba(0,255,65,0.09) !important; }
+        select { outline: none; }
+        select:focus { border-color: #00ff41 !important; box-shadow: 0 0 6px rgba(0,255,65,0.3) !important; }
+        select option { background: #000; color: #00cc30; }
+        button:hover { filter: brightness(1.15); box-shadow: 0 0 10px rgba(0,255,65,0.25); }
+        input::placeholder { color: #005500; }
+        input:focus { border-color: #00ff41 !important; box-shadow: 0 0 8px rgba(0,255,65,0.2) !important; outline: none; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #004400; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00aa28; }
+        ::selection { background: #00aa28; color: #000; }
       `}</style>
     </div>
   );
