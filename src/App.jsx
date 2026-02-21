@@ -48,10 +48,14 @@ export default function App() {
           </div>
 
           <ScriptProvider>
-            <div style={{ display: tab === "script" ? "block" : "none" }}>
-              <ScriptFlow />
-              <SessionSummary />
-            </div>
+            {tab === "script" && (
+              <>
+                <ScriptFlow />
+                <SessionSummary />
+              </>
+            )}
+
+            {tab === "tools" && <AgentTools />}
 
             <div style={{ display: tab === "tools" ? "block" : "none" }}>
               <AgentTools />
