@@ -136,10 +136,11 @@ export default function App() {
                 display: "flex",
                 justifyContent: "center",
                 pointerEvents: "none",
+                zIndex: 50, // <-- add this
               }}
             >
               <EnrollGenLogo
-                width={400}
+                width={350}
                 className="app-logo"
                 style={{ margin: 0 }}
               />

@@ -2013,3 +2013,230 @@ html {
   position: relative;
   z-index: 50;
 }
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px;
+}
+
+.app {
+  width: 100%;
+  max-width: 980px; /* forces the whole app to stay centered */
+  position: relative;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding-top: 14px;
+  padding-bottom: 10px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.app-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  position: relative;
+}
+
+.app-main {
+  padding-top: 10px;
+}
+
+/* keep these consistent with your existing inline styles if you want */
+.dev-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.mode-badge-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.mode-badge {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+/* Header is always visible */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  padding: 14px 0 10px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* True centered logo + right pinned toggle */
+.app-header-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+}
+
+/* Right column */
+.app-header-right {
+  justify-self: end;
+}
+
+/* Logo spacing in header */
+.app-logo {
+  margin: 0 auto;
+  width: auto; /* prevent the earlier .app-logo width:400px from fighting layout */
+  z-index: 250;
+}
+
+/* Tabs should never overlap the header */
+.tabs {
+  position: relative;
+  z-index: 50;
+}
+/* ===== Agent Tools header visibility fix ===== */
+.agent-tools-logo {
+  margin: 0 auto 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.agent-tools-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: var(--shadow-inset);
+}
+
+.agent-tools-search-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.agent-tools-search-clear {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-muted);
+  cursor: pointer;
+  box-shadow: var(--shadow-btn);
+}
+/* Force EnrollGenLogo to render visibly */
+.agent-tools-logo {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 12px;
+  position: relative;
+  z-index: 300;
+  color: var(--accent-cyan);
+}
+
+.agent-tools-logo svg,
+.agent-tools-logo svg * {
+  fill: currentColor !important;
+  opacity: 1 !important;
+}
+.agent-tools-search {
+  position: relative;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+/* =======================================
+   FINAL OVERRIDES (PASTE AT VERY BOTTOM)
+   Fixes: header order, hidden logo/search
+======================================= */
+
+/* 1) Sticky header stays on top */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  padding: 14px 0 10px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* 2) Header layout: center logo, right controls */
+.app-header-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-header-right {
+  justify-self: end;
+}
+
+/* 3) Logo: choose ONE width and make it visible */
+.app-logo {
+  display: block;
+  margin: 0 auto;
+  width: 400px;
+  max-width: 95%;
+  height: auto;
+  opacity: 1;
+  position: relative;
+  z-index: 250;
+}
+
+/* 4) Most important: push content below sticky header */
+.app-main {
+  padding-top: 140px; /* raise to 160 if still hidden */
+}
+
+/* 5) Tabs should appear below header */
+.tabs {
+  position: relative;
+  z-index: 50;
+}
+
+/* 6) Agent Tools: force logo + search visible */
+.agent-tools-logo {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 12px;
+  position: relative;
+  z-index: 1;
+  color: var(--accent-cyan);
+}
+
+.agent-tools-logo svg,
+.agent-tools-logo svg * {
+  fill: currentColor !important;
+  opacity: 1 !important;
+}
+
+/* Hide Agent Tools search UI */
+.agent-tools-search,
+.agent-tools-no-results {
+  display: none !important;
+}
+/* Make SEP tool narrower + centered */
+.sep-tool .sep-tool-inner {
+  max-width: 800px; /* try 680, 720, 760 */
+  width: 100%;
+  margin: 0 auto;
+}

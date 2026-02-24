@@ -2652,7 +2652,7 @@ export default function SEPLookupTool() {
   return (
     <div className="app-shell sep-tool">
       <div className="viewport-bg" />
-      <div className="app" style={{ maxWidth: 1000 }}>
+      <div className="app sep-tool-inner">
         {/* ── Header ── */}
         <div className="sep-header">
           <div className="sep-header-icon">
