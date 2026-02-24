@@ -111,7 +111,7 @@ Rules:
   return (
     <div className="objection-handler">
       <div className="objection-handler-header">
-        <span className="objection-handler-icon">🛡️</span>
+        <span className="objection-handler-icon">🗣️</span>
         <div>
           <h3 style={{ margin: 0, fontSize: "1em" }}>Objection Handler</h3>
           <span style={{ fontSize: "0.75em", opacity: 0.6 }}>

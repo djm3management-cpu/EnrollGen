@@ -123,21 +123,29 @@ body {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-
-  background: linear-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
-    radial-gradient(
-      circle at 20% 20%,
-      rgba(56, 189, 248, 0.18),
-      transparent 40%
+  background:
+    /* grid */ linear-gradient(
+      rgba(56, 189, 248, 0.08) 1px,
+      transparent 1px
     ),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+    /* glow orbs */
+      radial-gradient(
+        circle at 20% 20%,
+        rgba(56, 189, 248, 0.18),
+        transparent 40%
+      ),
     radial-gradient(
       circle at 80% 30%,
       rgba(45, 212, 191, 0.15),
       transparent 45%
     ),
-    radial-gradient(circle at 50% 80%, rgba(251, 191, 36, 0.1), transparent 50%),
-    linear-gradient(to bottom, #05070c, #060b12 60%, #05070c);
+    radial-gradient(
+      circle at 60% 80%,
+      rgba(251, 191, 36, 0.08),
+      transparent 50%
+    ),
+    /* base */ linear-gradient(to bottom, #050511, #070717 60%, #050511);
 
   background-size: 70px 70px, 70px 70px, 100% 100%, 100% 100%, 100% 100%,
     100% 100%;

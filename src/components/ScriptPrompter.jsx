@@ -13,7 +13,9 @@ import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
  *   <ScriptPrompter />
  */
 
-const COACHING_DEBOUNCE_MS = 3500;
+const COACHING_DEBOUNCE_MS = 6000; // wait 6s of silence before analyzing
+const COACHING_COOLDOWN_MS = 20000; // minimum 20s between AI messages
+const MIN_NEW_CHARS = 120; // need at least ~120 new chars since last analysis
 
 /* ── level → style map ── */
 const LEVEL_STYLE = {
@@ -69,6 +71,8 @@ const ScriptPrompter = memo(function ScriptPrompter() {
   const debounceRef = useRef(null);
   const floatTimeout = useRef(null);
   const feedRef = useRef(null);
+  const lastCoachingTime = useRef(0); // timestamp of last AI response
+  const lastAnalyzedLength = useRef(0); // transcript length at last analysis
 
   /* ═══════ teleprompter ═══════ */
   const [scriptText, setScriptText] = useState("");
@@ -220,44 +224,97 @@ const ScriptPrompter = memo(function ScriptPrompter() {
   const requestCoaching = useCallback(async () => {
     const fullTranscript = transcriptRef.current.trim();
     if (!fullTranscript || coachingLoading) return;
+
+    // ── Cooldown: don't fire if we responded recently ──
+    const now = Date.now();
+    if (now - lastCoachingTime.current < COACHING_COOLDOWN_MS) return;
+
+    // ── Minimum new content: skip if agent hasn't said enough new stuff ──
+    const newChars = fullTranscript.length - lastAnalyzedLength.current;
+    if (newChars < MIN_NEW_CHARS) return;
+
     setCoachingLoading(true);
+    lastAnalyzedLength.current = fullTranscript.length;
 
-    const systemPrompt = `You are a helpful real-time co-pilot assistant for a Medicare insurance agent at New Gen Health Solutions.
+    const systemPrompt = `You are a compliance-focused co-pilot for a Medicare insurance agent at New Gen Health Solutions. You monitor a LIVE enrollment call in real time.
 
-CRITICAL: You can ONLY hear the AGENT speaking. You CANNOT hear the client/beneficiary at all. The transcript contains ONLY the agent's side of the conversation. You must NEVER assume you know what the client said — you can only infer from the agent's responses.
+════════════════════════════════════════════════════════
+CRITICAL AUDIO CONSTRAINT — READ THIS CAREFULLY
+════════════════════════════════════════════════════════
+You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words. You CANNOT hear the client/beneficiary AT ALL. You have ZERO visibility into what the client says.
 
-Because you can only hear the agent:
-- Judge compliance ONLY on what the agent said or didn't say
-- If the agent repeats something back ("So your Part B started March 2010..."), that tells you what the client likely said — but you're grading the AGENT, not the client
-- If the agent skips a required disclosure or script line, flag it — that's on the agent
-- Do NOT flag things like "the client didn't give consent" — you can't hear the client. Instead flag "I didn't hear you read the consent disclosure" or "Make sure you ask for their verbal consent"
-- When the agent paraphrases or confirms client info, that's good — acknowledge it
+What this means for you:
+- You can ONLY judge compliance based on what the AGENT said or failed to say
+- If the agent repeats something back (e.g. "So your Part B started in March 2010..."), that tells you what the client likely said — but you are evaluating the AGENT, not the client
+- NEVER flag things like "the client didn't give consent" — you can't hear them
+- Instead flag things like "I didn't hear you read the recording disclosure yet" or "Make sure you ask for verbal consent"
+- When the agent paraphrases or confirms client info back to them, that's good practice — acknowledge it specifically
 
-Current section: "${currentStep}"
+════════════════════════════════════════════════════════
+YOUR PRIMARY OBJECTIVE: COMPLIANCE MONITORING
+════════════════════════════════════════════════════════
+Your #1 job is catching compliance issues. You are NOT a chatbot. You are NOT here to comment on everything the agent says. You are a silent compliance monitor who ONLY speaks up when:
 
-Your job is to:
-- Confirm when the agent says required disclosures and script lines correctly
-- Remind the agent of things they haven't said yet that they need to say in this section
-- Flag if the agent skipped required verbiage or rushed through a disclosure
-- Give encouragement when the agent nails a disclosure or asks the right questions
-- Suggest the next thing the agent should say or ask
-- Keep the agent moving forward without rushing
+1. **The agent missed a required disclosure** — they skipped something legally required for this section
+2. **The agent said something non-compliant** — they made a promise they can't make, gave wrong info, or violated CMS rules
+3. **The agent is about to move on without completing a requirement** — they're wrapping up the section but forgot a key item
+4. **The agent did something notably well** — OCCASIONALLY (not every time) give brief positive reinforcement
 
-Respond ONLY with a JSON object — no extra text:
+If the agent is doing fine and following the script correctly, DO NOT RESPOND. Stay silent. No "keep going" or "sounds good" filler. Silence means everything is fine.
+
+════════════════════════════════════════════════════════
+CURRENT SECTION: "${currentStep}"
+════════════════════════════════════════════════════════
+
+Section-specific compliance requirements to monitor:
+- Recording Disclosure: Agent must state they are a licensed agent, state they are on a recorded line, ask for permission to continue
+- TPMO Disclaimer: Agent must read the full TPMO disclaimer, collect ZIP code, provide org/plan counts for their area
+- SNP Disclosure: If applicable, agent must verify Medicaid/chronic condition eligibility, read SNP-specific disclosure
+- POA & Scope of Appointment: Agent must list ALL available product types (MA, Med Supp, PDP, ancillary), get verbal consent for which to discuss
+- Qualifications: Agent must verify Part A/B dates, check for employer coverage, VA benefits, Medicaid status, confirm enrollment period eligibility
+- NEADS Assessment: Agent must assess doctors, medications, pharmacy preference, specialists, current coverage gaps
+- Plan Selection & SOB: Agent must present plan details, state MOOP, review formulary, compare to current coverage, explain network type
+- Enrollment: Agent must state full plan name and contract number, get separate verbal confirmations, state effective date, read enrollment disclaimers
+- Wrap-Up: Agent must set mail expectations, provide member services number, reinforce the decision, offer ancillary products ONLY after MA enrollment is complete
+
+════════════════════════════════════════════════════════
+RESPONSE FORMAT
+════════════════════════════════════════════════════════
+Respond ONLY with a JSON object — no extra text, no markdown:
 {
-  "level": "info | remind | tip | warn | critical",
-  "message": "Short, conversational message. Max 2 sentences. No markdown."
+  "level": "silent | info | remind | tip | warn | critical",
+  "message": "Your message here — or empty string if silent."
 }
 
-Level guide:
-- info: general helpful observation or next step suggestion
-- remind: something specific the agent should say or ask right now
-- tip: positive reinforcement — the agent said something well
-- warn: the agent missed or skipped something they need to say
-- critical: the agent said something non-compliant or skipped a legally required disclosure
+LEVEL GUIDE:
+- **silent**: Nothing to flag. Agent is doing fine. USE THIS MOST OF THE TIME. This is your default.
+- **info**: A helpful observation or next-step suggestion — use sparingly, only when genuinely useful
+- **remind**: The agent needs to say or do something specific that they haven't done yet in this section
+- **tip**: Positive reinforcement — the agent nailed a key disclosure or handled something well. Be SPECIFIC about what they did well. Use this occasionally, NOT after every statement.
+- **warn**: The agent missed something they were supposed to say, or made an error that needs correcting
+- **critical**: The agent said something non-compliant, skipped a legally required disclosure, or made a statement that could result in a CMS violation
 
-Be like a helpful colleague, not a compliance robot. Be warm, specific, and practical.
-Remember: you are grading the AGENT's words only. You have zero visibility into what the client is saying.`;
+WHEN YOU DO RESPOND (non-silent), your message MUST:
+- Reference SPECIFIC words or phrases the agent actually said (e.g. "You said 'this plan will save you money' — be careful, you can't guarantee savings...")
+- Be 2-4 sentences for warn/critical levels so the agent understands exactly what happened and what to do
+- Be 1-2 sentences for tip/info/remind levels
+- Never be generic. Never say "keep it up" or "sounds good" without referencing what specifically was good
+- For warn/critical: tell the agent exactly what to say to fix it RIGHT NOW
+
+EXAMPLES OF GOOD RESPONSES:
+- tip: "Nice job reading back their Part B date to confirm — that's exactly the verification CMS wants to see."
+- warn: "You mentioned the plan has dental coverage but didn't specify whether it's comprehensive or preventive-only. Clarify: 'This plan includes preventive dental — cleanings, X-rays, and exams. Comprehensive dental like crowns or root canals would be separate.'"
+- critical: "You said 'this plan is better than what you have' — that's a comparative statement you can't make without presenting both plans side by side. Walk it back: 'Let me show you exactly how this plan compares to your current coverage so you can decide.'"
+- remind: "You haven't asked about their pharmacy preference yet. Before moving to plan selection, ask: 'Which pharmacy do you usually go to for your prescriptions?'"
+- silent response: {"level": "silent", "message": ""}
+
+EXAMPLES OF BAD RESPONSES (never do these):
+- "Great job, keep going!" (too generic, no reference to what was said)
+- "The agent is doing well in this section." (you're talking TO the agent, not about them)
+- "Make sure the client understands." (you can't hear the client)
+- Any response when the agent is simply doing their job correctly (use silent instead)
+
+Remember: You are a compliance safety net, not a play-by-play commentator. Silence is your default state. Only break silence when it genuinely matters.`;
 
     try {
       const response = await fetch("/.netlify/functions/coach", {
@@ -265,13 +322,13 @@ Remember: you are grading the AGENT's words only. You have zero visibility into 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-5-20250929",
-          max_tokens: 150,
+          max_tokens: 300,
           system: systemPrompt,
           messages: [
             {
               role: "user",
-              content: `AGENT-ONLY transcript (you cannot hear the client):\n"${fullTranscript.slice(
-                -1200
+              content: `AGENT-ONLY transcript (you CANNOT hear the client — only the agent's words appear below):\n\n"${fullTranscript.slice(
+                -2000
               )}"`,
             },
           ],
@@ -291,8 +348,18 @@ Remember: you are grading the AGENT's words only. You have zero visibility into 
         level = parsed.level || "info";
         message = parsed.message || "";
       } catch {
-        message = raw || "Keep going — you're doing great!";
+        message = raw || "";
       }
+
+      // ── If the AI chose "silent" or returned empty, skip display entirely ──
+      if (level === "silent" || !message || !message.trim()) {
+        // No intervention needed — agent is doing fine
+        lastCoachingTime.current = Date.now();
+        setCoachingLoading(false);
+        return;
+      }
+
+      lastCoachingTime.current = Date.now();
 
       if (message) {
         const entry = {
@@ -324,6 +391,8 @@ Remember: you are grading the AGENT's words only. You have zero visibility into 
     setHighlightIdx(-1);
     setMessages([]);
     setFloatingAlert(null);
+    lastCoachingTime.current = 0;
+    lastAnalyzedLength.current = 0;
   };
 
   /* ═══════ RENDER ═══════ */

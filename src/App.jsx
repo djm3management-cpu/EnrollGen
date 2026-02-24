@@ -55,8 +55,6 @@ export default function App() {
               </>
             )}
 
-            {tab === "tools" && <AgentTools />}
-
             <div style={{ display: tab === "tools" ? "block" : "none" }}>
               <AgentTools />
             </div>
