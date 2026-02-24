@@ -34,6 +34,16 @@ function Accordion({
 
 /* ---- Carrier Quick Links ---- */
 const CARRIER_LINKS = [
+  {
+    name: "Humana MBI Lookup (Vantage)",
+    url: "https://agentportal.humana.com/Vantage/apps/index.html?agenthome=-1#!/dual-eligibility-verification",
+    icon: "🟡",
+  },
+  {
+    name: "UHC MBI Lookup (Jarvis)",
+    url: "https://www.uhcjarvis.com/content/jarvis/en/secure/tools/eligibility_lookup.html",
+    icon: "🔵",
+  },
   { name: "Sunfire", url: "https://app.sunfirematrix.com", icon: "🔥" },
   {
     name: "MARx (CMS)",
