@@ -22,15 +22,11 @@ export default React.memo(function SectionSOA() {
       {unlocked.s3 && isActive && (
         <>
           <ScriptBox verbatim>
-            {` POA: "Are you interested in discussing Medicare options for yourself or for someone else, such as a family member, guardian or someone that you are authorized to make decisions for?"  (IF YES): "Are they available now or should we discuss at a later time when they are available?"`}
+            {`"Are you interested in discussing Medicare options for yourself or for someone else, such as a family member, guardian or someone that you are authorized to make decisions for?"  (IF YES): "Are they available now or should we discuss at a later time when they are available?"`}
           </ScriptBox>
 
           <ScriptBox verbatim>
-            {` SCOPE OF APPOINTMENT:
-"I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as" (Agent to list product types seen in Sunfire).
-"Would you like to discuss all of these options or are you only interested in certain ones?"
-"I can give you a brief overview of each of these plans, then you can decide which plan might be best for you based on your needs. Would that be ok?"
-"This conversation has no effect on your current or future health coverage unless you enroll in a plan today. Talking to me does not obligate you to enroll or automatically enroll you in a plan."`}
+            {` "You are not obligated to enroll in a plan and agreeing to answer these questions does not affect your current enrollment nor will it enroll you in any Medicare Advantage Prescription Drug Plan, or other Medicare Plan. Do I have your permission to discuss the plans in your area which may include Medicare Advantage plans, Prescription drug plans, and other types of plans like Stand-alone Dental plan, Stand-alone Vision plans, and Hospital Indemnity Plans today?"  `}
           </ScriptBox>
         </>
       )}

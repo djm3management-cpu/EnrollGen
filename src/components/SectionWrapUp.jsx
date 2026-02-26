@@ -98,28 +98,19 @@ export default React.memo(function SectionWrapUp() {
         <>
           <ScriptBox verbatim>
             {`"You will receive an Evidence of Coverage (EOC) document that explains all of the plan's benefits, costs, and rules in detail."
-
 "You have the right to cancel this plan before it becomes effective if you change your mind."
-
 "Once you are a member, you have the right to appeal plan decisions about payment of benefits or coverage of services if you disagree. This is explained in the Evidence of Coverage."
-
 "Medicare evaluates plans yearly using a 5-Star rating system. You can review the plan's Star Rating and Summary of Benefits on Medicare.gov or the plan's website."`}
           </ScriptBox>
 
           <ScriptBox verbatim>
-            {`"Do you understand the benefits and conditions of enrollment as they have been explained for the[specific plan name] (eg"Generic Medicare Sunshine PPO). ?"
-"Do you understand that we will release information to Medicare and other plans as is necessary for treatment, payment and healthcare operations?"
-"Do you understand that you are enrolling in the plan [specific plan name] (eg"Generic Medicare Sunshine PPO). for a monthly premium of no more than [$ amount]?"
-"The plan's proposed effective date is [effective date], subject to approval by Medicare."
-"You will receive a notice in the mail acknowledging receipt of the enrollment."
-"You should receive plan information from [carrier name] including your member ID card in the mail within [7-10] business days of enrollment, but no later than within [ten] days of the plan effective date. You may also access plan materials online at [carrier's URL address]."
+            {`"The plan's proposed effective date is [effective date], subject to approval by Medicare."
 "If you have any questions about your plan or if your needs change and you want to look at other plan options, please give me a call at [877-909-1995]."
 
-Call closing. "It's been a pleasure speaking with you today. If you have any family members or friends that would benefit by speaking with me, please give them my number and I would be happy to assist them too."
-End the call: "Thank you for [calling/choosing] [Carrier name] and have a great day!"
-AGENT NOTE (IMPORTANT):
-Optional non-Medicare products must only be discussed after Medicare enrollment is complete.
-Use the buttons below to initiate discussion only if the client expressed interest earlier.`}
+"Great news, your Medicare enrollment is all set. Now, you mentioned earlier you might be interested in [dental/vision/hearing/hospital coverage/life coverage]. These are separate from Medicare and completely optional, but I can give you a quick overview if you'd like. Want me to go over that now or would you prefer I call you back another time?"
+
+Call closing: "It's been a pleasure speaking with you today. If you have any family members or friends that would benefit by speaking with me, please give them my number and I would be happy to assist them too."
+End the call: "Thank you for [calling/choosing] [Carrier name] and have a great day!"`}
           </ScriptBox>
 
           {/* Agent reminder */}
@@ -149,21 +140,11 @@ Use the buttons below to initiate discussion only if the client expressed intere
             onDiscussed={(v) =>
               dispatch({ type: "SET_GATE", field: "hiDiscussed", value: v })
             }
-            consentScript={`"Before we end the call, I want to be very clear that what we are discussing next is NOT a Medicare plan and is NOT affiliated with Medicare.
-
-Your Medicare Advantage enrollment is complete and will not change.
-
-This is a separate, optional insurance product that provides cash benefits directly to you.
-
-Would it be okay if I briefly explain how it works?"`}
+            consentScript={`"Before we end the call, I want to be very clear that what we are discussing next is NOT a Medicare plan and is NOT affiliated with Medicare. Your Medicare Advantage enrollment is complete and will not change. This is a separate, optional insurance product that provides cash benefits directly to you. Would it be okay if I briefly explain how it works?"`}
             detailScript={`"This is called hospital indemnity insurance.
-
 It does not replace Medicare and it does not pay doctors or hospitals.
-
 If you are admitted to the hospital for a covered stay, it pays a fixed cash benefit directly to you.
-
 That money can be used however you choose, such as deductibles, copays, prescriptions, rent, or household expenses.
-
 Coverage, benefit amounts, and eligibility depend on the policy terms."`}
             discussedLabel="Hospital indemnity explained (non-Medicare)"
           />
@@ -185,17 +166,11 @@ Coverage, benefit amounts, and eligibility depend on the policy terms."`}
               dispatch({ type: "SET_GATE", field: "dvDiscussed", value: v })
             }
             consentScript={`"Before we finish, I want to be clear that what we are discussing next is NOT a Medicare plan and is NOT affiliated with Medicare.
-
 Your Medicare Advantage enrollment is complete and will not change.
-
 This is a separate, optional dental and vision insurance product.
-
 Would it be okay if I briefly explain how it works?"`}
             detailScript={`"This dental and vision coverage is separate from Medicare.
-
-It may help with routine dental and vision expenses such as exams, cleanings, fillings, glasses, or contacts, depending on the plan selected.
-
-Coverage details, limitations, and waiting periods depend on the policy terms."`}
+It may help with routine dental and vision expenses such as exams, cleanings, fillings, glasses, or contacts, depending on the plan selected. Coverage details, limitations, and waiting periods depend on the policy terms."`}
             discussedLabel="Dental & vision explained (non-Medicare)"
           />
 
@@ -215,19 +190,12 @@ Coverage details, limitations, and waiting periods depend on the policy terms."`
             onDiscussed={(v) =>
               dispatch({ type: "SET_GATE", field: "feDiscussed", value: v })
             }
-            consentScript={`"Before we finish, I want to be very clear that what we are discussing next is NOT a Medicare plan and is NOT affiliated with Medicare.
-
-Your Medicare Advantage enrollment is complete and will not change.
-
+            consentScript={`"Before we finish, I want to be very clear that what we are discussing next is NOT a Medicare plan and is NOT affiliated with Medicare. Your Medicare Advantage enrollment is complete and will not change.
 This is a separate, optional life insurance product often referred to as final expense coverage.
-
 Would it be okay if I briefly explain how it works?"`}
             detailScript={`"Final expense insurance is a form of life insurance.
-
 It is designed to provide a cash benefit to a beneficiary when you pass away.
-
 That money can be used for funeral costs, medical bills, or other end-of-life expenses.
-
 Coverage amounts, premiums, and underwriting requirements depend on the policy selected."`}
             discussedLabel="Final expense explained (non-Medicare)"
           />

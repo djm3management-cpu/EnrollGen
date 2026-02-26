@@ -67,15 +67,13 @@ export default React.memo(function SectionTPMO() {
 
       {unlocked.s2 && (
         <ScriptBox verbatim>
-          {`"Can I please have your Zipcode?" "May I have your First and Last Name" "May I have a phone number to call you back in case we get disconnected?"
+          {`"Can I please have your Zipcode?" "May I have your First and Last Name" "May I have a phone number to call you back?"
 
 "We do not offer every plan available in your area. Currently we represent ${
             tpmoOrgs || "[number of organizations]"
           } organizations which offer ${
             tpmoPlans || "[number of plans]"
-          } products in your area.
-Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insurance Program (SHIP) to get information on all of your options."
-"Plans are insured or covered by a Medicare Advantage (HMO, PPO, PFFS) organization with a Medicare contract and/or a Medicare-approved Part D sponsor. Enrollment in the plan depends on the plan's contract renewal with Medicare."`}
+          } products in your area. Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insurance Program (SHIP) to get information on all of your options. Plans are insured or covered by a Medicare Advantage (HMO, PPO, PFFS) organization with a Medicare contract and/or a Medicare-approved Part D sponsor. Enrollment in the plan depends on the plan's contract renewal with Medicare."`}
         </ScriptBox>
       )}
 

@@ -21,45 +21,20 @@ export default React.memo(function SectionEnrollment() {
       </h2>
 
       {unlocked.s7 && (
-        <ScriptBox verbatim>
-          {`INBOUND: "I can enroll you today over the telephone in this [specific plan name]. Enrolling in this plan today will replace your current coverage. Once approved by Medicare, your new coverage will begin on [effective date]. Would you like to proceed?"
+        <>
+          <ScriptBox verbatim>
+            {`"I can enroll you today over the telephone in this [plan name with plan code]. Enrolling in this plan will replace your current [coverage type]. Once approved by Medicare, your new coverage begins on [effective date]. Would you like to proceed?"
+(Complete enrollment on Sunfire and read all disclosures) `}
+          </ScriptBox>
 
-"Based on what we have discussed, it sounds like you are interested in [plan name, type, and contract number with PBP]. Is that correct?"
-
-"If you are currently enrolled in a Medicare Advantage plan, your current coverage will end once your new coverage starts."
-"If you have Tricare, your coverage may be affected."
-"If you have a Medigap plan, you may want to drop it once MA coverage begins."
-
-"If you are ready to enroll, we will complete the application and process your signature.
-Once completed, I will provide your application number and explain when to expect materials."
-
-"[Carrier Name] is a Medicare Advantage organization with a Medicare contract.
-Enrollment depends on contract renewal."
-"[Plan Name] serves a specific service area. When the plan begins you must obtain benefits from [Carrier Name] as described in the Evidence of Coverage document. No payment will be issued for services that are not covered."
-
-"You must keep Medicare Part A and Part B and continue paying your Part B premium."
-"You can only be enrolled in one Medicare Advantage plan at a time."
-
-MAPD Part D Statement:
-This plan includes Part D prescription drug coverage. Network pharmacies must be used except in non-routine circumstances.
-
-"If you have not had Medicare prescription drug coverage, or creditable coverage as good as Medicare's, you may have to pay a late enrollment penalty in addition to your premium for Medicare prescription drug coverage."
-
-"Benefits, premiums, and cost-sharing may change on January 1."
-"This is not a complete description of benefits. Refer to the Evidence of Coverage."
-"Coverage outside the U.S. is limited." 
-
-PRIVACY ACT STATEMENT:
-"CMS collects information to track enrollment, improve care, and make payments. Your response is voluntary, but failure to respond may affect enrollment."
-
-"Do you understand how the plan works?"
-"If you receive help from a sales agent, broker, or other person employed by or contracted with [Carrier Name], they may be paid based on your enrollment."
-"Do you understand and agree with the statements you have heard so far?"
-"Do you understand that enrollment in this plan will disenroll you from your current plan?
-"Are you ready to enroll in [plan name, type and contract number with PBP]?"
-
-"Your enrollment application has been successfully submitted and the application number is[application ID]. [Plan name]'s Customer service number is [phone and TTY]."`}
-        </ScriptBox>
+          <ScriptBox verbatim>
+            {`"Your enrollment application has been successfully submitted. Your application number is [application ID#]."
+"[Carrier]'s Customer Service number is [phone and TTY]."
+"Your proposed effective date is [effective date], subject to approval by Medicare."
+"You will receive a notice in the mail acknowledging your enrollment. Plan materials and your member ID card should arrive within 7 to 10 business days, but no later than 10 days before your effective date. You can also access materials online at [carrier URL]."
+"If you have any questions or your needs change, you can reach us at [EnrollHere number] or our office at [office number]."`}
+          </ScriptBox>
+        </>
       )}
 
       <div className="grid">
