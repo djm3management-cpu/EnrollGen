@@ -21,8 +21,7 @@ export default React.memo(function SectionNEADS() {
 
       {unlocked.s5 && (
         <ScriptBox verbatim>
-          {`"I am going to ask you a few quick questions to make sure I find the best plan for your needs."
-(Review current coverage and carrier. Open each plans Summary of Benefits for comparison.)      
+          {`"I am going to ask you a few quick questions to make sure I find the best plan for your needs."   
 "Who is your current primary care physician?" (Confirm location)
 "Do you see any specialists? If so, who?" (Confirm location)
 "Is there a particular hospital or facility you want to make sure is covered?"
@@ -33,8 +32,7 @@ export default React.memo(function SectionNEADS() {
 *Review Prescription drug coverage and costs
 *Review Plan premiums and Part B premium
 "Let me summarize what we've covered. Does that sound right? Anything else I should know before we look at plans?"
-"Some people also ask about dental, vision, or final expense coverage. We can touch on that after we finish your Medicare if you're interested."
-(CHECK DENTAL AND FINAL EXPENSE BUTTONS AFTER ENROLLMENT)`}
+"Some people also ask about dental, vision, or final expense coverage. We can touch on that after we finish your Medicare if you're interested." (CHECK DENTAL AND FINAL EXPENSE BUTTONS AFTER ENROLLMENT)`}
         </ScriptBox>
       )}
 
