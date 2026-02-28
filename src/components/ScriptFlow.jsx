@@ -18,6 +18,8 @@ import SectionSOB from "./SectionSOB";
 import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
 import ScriptPrompter from "./ScriptPrompter";
+import ComplianceDashboard from "./ComplianceDashboard";
+import ComplianceMini from "./ComplianceMini";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ---- Collapsible wrapper for completed sections ---- */
@@ -134,9 +136,11 @@ export default function ScriptFlow() {
         onUndo={() => dispatch({ type: "UNDO_LAST_GATE" })}
       />
 
+      {/* Floating Compliance Mini Score — always visible */}
+      <ComplianceMini />
+
       {/* Main TPMO Timer */}
 
-      <ScriptPrompter />
       {/* Sequential enrollment flow sections */}
       <CollapsibleSection
         sectionNum={1}
@@ -211,6 +215,7 @@ export default function ScriptFlow() {
       </CollapsibleSection>
 
       <SectionWrapUp />
+      <ComplianceDashboard />
     </motion.div>
   );
 }

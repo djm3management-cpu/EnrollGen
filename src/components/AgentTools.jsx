@@ -2,6 +2,7 @@ import EnrollGenLogo from "./EnrollGenLogo";
 import { useState, useMemo } from "react";
 import ObjectionHandler from "./ObjectionHandler";
 import SEPLookup from "./SEPLookup";
+import ComplianceDashboard from "./ComplianceDashboard";
 import DailyVerse from "./DailyVerse";
 
 /* ---- Collapsible Accordion ---- */
