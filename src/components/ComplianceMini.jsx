@@ -4,45 +4,34 @@ import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { scoreLive } from "../context/ComplianceScorer";
 
 /**
- * ComplianceMini — Floating mini compliance badge
+ * ComplianceMini v2 — Floating score badge with transcript awareness
  *
- * A small, always-visible widget that shows the live compliance
- * score as agents progress through the call. Expands on click
- * to show category breakdown.
+ * Props:
+ *   transcript — Current agent transcript from ScriptPrompter
  *
  * Drop into: src/components/ComplianceMini.jsx
- *
- * Usage in ScriptFlow.jsx:
- *   import ComplianceMini from "./ComplianceMini";
- *   // Place at top level of the flow component (it positions itself)
- *   <ComplianceMini />
  */
 
-function getScoreColor(score) {
-  if (score >= 90) return "#34d399";
-  if (score >= 75) return "#22c55e";
-  if (score >= 50) return "#fbbf24";
-  if (score >= 25) return "#f97316";
+function getScoreColor(s) {
+  if (s >= 90) return "#34d399";
+  if (s >= 75) return "#22c55e";
+  if (s >= 50) return "#fbbf24";
+  if (s >= 25) return "#f97316";
   return "#ef4444";
 }
 
-function getGradeBg(grade) {
-  if (grade.startsWith("A")) return "rgba(52,211,153,0.12)";
-  if (grade.startsWith("B")) return "rgba(34,197,94,0.1)";
-  if (grade.startsWith("C")) return "rgba(251,191,36,0.1)";
-  return "rgba(239,68,68,0.1)";
-}
-
-const ComplianceMini = memo(function ComplianceMini() {
+const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
   const { state } = useScript();
   const { entries } = useCopilotLog();
   const [expanded, setExpanded] = useState(false);
   const [pulse, setPulse] = useState(false);
   const prevScoreRef = useRef(null);
 
-  const result = useMemo(() => scoreLive(state, entries), [state, entries]);
+  const result = useMemo(
+    () => scoreLive(state, entries, transcript),
+    [state, entries, transcript]
+  );
 
-  // Pulse animation when score changes
   useEffect(() => {
     if (
       prevScoreRef.current !== null &&
@@ -56,12 +45,13 @@ const ComplianceMini = memo(function ComplianceMini() {
   }, [result.score]);
 
   const scoreColor = getScoreColor(result.score);
+  const isDual = result.scoringMode === "dual";
 
   return (
     <div
       style={{
         position: "sticky",
-        top: 52, // below the sticky timer bar
+        top: 52,
         zIndex: 90,
         display: "flex",
         justifyContent: "flex-end",
@@ -82,37 +72,29 @@ const ComplianceMini = memo(function ComplianceMini() {
           backdropFilter: "blur(12px)",
           boxShadow: `0 2px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04)`,
           transition: "all 0.25s ease",
-          minWidth: expanded ? 200 : "auto",
+          minWidth: expanded ? 210 : "auto",
           animation: pulse ? "compliancePulse 0.6s ease" : "none",
         }}
       >
-        {/* ── Collapsed view: just the score ── */}
+        {/* Collapsed */}
         {!expanded && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            {/* Mini bar indicators */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {result.categories.map((cat) => (
+              {result.categories.map((c) => (
                 <div
-                  key={cat.name}
-                  title={`${cat.name}: ${cat.score}%`}
+                  key={c.name}
+                  title={`${c.name}: ${c.score}%`}
                   style={{
                     width: 4,
                     height: 14,
                     borderRadius: 1.5,
-                    background: getScoreColor(cat.score),
+                    background: getScoreColor(c.score),
                     opacity: 0.85,
-                    transition: "all 0.4s ease",
+                    transition: "all 0.4s",
                   }}
                 />
               ))}
             </div>
-
             <span
               style={{
                 fontSize: "0.82em",
@@ -124,23 +106,31 @@ const ComplianceMini = memo(function ComplianceMini() {
             >
               {result.score}%
             </span>
-
             <span
-              style={{
-                fontSize: "0.6em",
-                color: "#64748b",
-                fontWeight: 600,
-              }}
+              style={{ fontSize: "0.6em", color: "#64748b", fontWeight: 600 }}
             >
               {result.categoriesPassed}/{result.totalCategories}
             </span>
+            {isDual && (
+              <span
+                style={{ fontSize: "0.5em", color: "#34d399", fontWeight: 600 }}
+              >
+                🎙️
+              </span>
+            )}
+            {result.violations > 0 && (
+              <span
+                style={{ fontSize: "0.5em", color: "#ef4444", fontWeight: 700 }}
+              >
+                🚨{result.violations}
+              </span>
+            )}
           </div>
         )}
 
-        {/* ── Expanded view: category breakdown ── */}
+        {/* Expanded */}
         {expanded && (
           <div>
-            {/* Header row */}
             <div
               style={{
                 display: "flex",
@@ -171,22 +161,29 @@ const ComplianceMini = memo(function ComplianceMini() {
                   {result.grade}
                 </span>
               </div>
-              <span
+              <div
                 style={{
-                  fontSize: "0.6em",
-                  color: "#64748b",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-end",
+                  gap: 1,
                 }}
               >
-                {result.categoriesPassed}/{result.totalCategories} passed
-              </span>
+                <span style={{ fontSize: "0.58em", color: "#64748b" }}>
+                  {result.categoriesPassed}/{result.totalCategories} passed
+                </span>
+                {isDual && (
+                  <span style={{ fontSize: "0.5em", color: "#34d399" }}>
+                    🎙️ Live · {result.transcriptCoverage}% coverage
+                  </span>
+                )}
+              </div>
             </div>
-
-            {/* Category rows */}
-            {result.categories.map((cat) => {
-              const color = getScoreColor(cat.score);
+            {result.categories.map((c) => {
+              const col = getScoreColor(c.score);
               return (
                 <div
-                  key={cat.name}
+                  key={c.name}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -201,21 +198,20 @@ const ComplianceMini = memo(function ComplianceMini() {
                       textAlign: "center",
                     }}
                   >
-                    {cat.icon}
+                    {c.icon}
                   </span>
                   <div
                     style={{
                       flex: 1,
-                      fontSize: "0.68em",
+                      fontSize: "0.66em",
                       color: "#94a3b8",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                     }}
                   >
-                    {cat.name}
+                    {c.name}
                   </div>
-                  {/* Progress bar */}
                   <div
                     style={{
                       width: 50,
@@ -228,42 +224,50 @@ const ComplianceMini = memo(function ComplianceMini() {
                   >
                     <div
                       style={{
-                        width: `${cat.score}%`,
+                        width: `${c.score}%`,
                         height: "100%",
-                        background: color,
+                        background: col,
                         borderRadius: 2,
-                        transition: "width 0.5s ease, background 0.3s ease",
+                        transition: "width 0.5s ease, background 0.3s",
                       }}
                     />
                   </div>
                   <span
                     style={{
-                      fontSize: "0.65em",
+                      fontSize: "0.63em",
                       fontWeight: 700,
-                      color,
+                      color: col,
                       minWidth: 30,
                       textAlign: "right",
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {cat.score}%
+                    {c.score}%
                   </span>
                 </div>
               );
             })}
+            {result.violations > 0 && (
+              <div
+                style={{
+                  marginTop: 6,
+                  padding: "3px 6px",
+                  background: "rgba(239,68,68,0.1)",
+                  borderRadius: 4,
+                  fontSize: "0.58em",
+                  color: "#f87171",
+                  fontWeight: 600,
+                  textAlign: "center",
+                }}
+              >
+                🚨 {result.violations} violation
+                {result.violations !== 1 ? "s" : ""} detected in transcript
+              </div>
+            )}
           </div>
         )}
       </div>
-
-      {/* Keyframe for pulse animation */}
-      <style>{`
-        @keyframes compliancePulse {
-          0% { transform: scale(1); }
-          30% { transform: scale(1.04); }
-          60% { transform: scale(0.98); }
-          100% { transform: scale(1); }
-        }
-      `}</style>
+      <style>{`@keyframes compliancePulse { 0% { transform: scale(1); } 30% { transform: scale(1.04); } 60% { transform: scale(0.98); } 100% { transform: scale(1); } }`}</style>
     </div>
   );
 });

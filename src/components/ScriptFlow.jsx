@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useScript } from "../context/ScriptContext";
 import {
   MainTimer,
@@ -18,9 +18,22 @@ import SectionSOB from "./SectionSOB";
 import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
 import ScriptPrompter from "./ScriptPrompter";
-import ComplianceDashboard from "./ComplianceDashboard";
 import ComplianceMini from "./ComplianceMini";
+import ComplianceDashboard from "./ComplianceDashboard";
 import { motion, AnimatePresence } from "framer-motion";
+
+/**
+ * ScriptFlow v2 — Now with transcript pass-through for dual-layer scoring.
+ *
+ * The ScriptPrompter exposes its transcript via onTranscriptChange callback.
+ * This transcript is passed down to ComplianceMini and ComplianceDashboard
+ * so the compliance scoring engine can do live intent detection against
+ * the actual words the agent speaks — not just checkbox state.
+ *
+ * NOTE: ScriptPrompter needs a small update to call props.onTranscriptChange
+ * whenever its transcript state changes. See INTEGRATION_GUIDE.md for the
+ * 3-line change needed.
+ */
 
 /* ---- Collapsible wrapper for completed sections ---- */
 function CollapsibleSection({
@@ -66,12 +79,14 @@ export default function ScriptFlow() {
   const { state, dispatch, activeSection } = useScript();
   const prevSectionRef = useRef(activeSection);
 
+  // ── Shared transcript state ──
+  // ScriptPrompter writes to this, ComplianceMini/Dashboard read it
+  const [transcript, setTranscript] = useState("");
+
   // Auto-scroll to active section when it changes
   useEffect(() => {
     if (activeSection !== prevSectionRef.current) {
       prevSectionRef.current = activeSection;
-
-      // Small delay to let React render the new active section
       requestAnimationFrame(() => {
         setTimeout(() => {
           const activeEl = document.querySelector(".active-card");
@@ -86,7 +101,6 @@ export default function ScriptFlow() {
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
     (e) => {
-      // Ctrl+Z = undo last gate
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
         if (state.undoHistory.length > 0) {
           const last = state.undoHistory[state.undoHistory.length - 1];
@@ -114,7 +128,6 @@ export default function ScriptFlow() {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Sticky Timer Bar (appears when main timer scrolls out of view) */}
       <StickyTimerBar
         running={state.tpmoRunning}
         startTime={state.tpmoStart}
@@ -123,23 +136,22 @@ export default function ScriptFlow() {
         totalSections={TOTAL_SECTIONS}
       />
 
-      {/* Progress Bar */}
       <ProgressBar
         activeSection={activeSection}
         totalSections={TOTAL_SECTIONS}
         sectionLabels={SECTION_LABELS}
       />
 
-      {/* Undo Button */}
       <UndoButton
         undoHistory={state.undoHistory}
         onUndo={() => dispatch({ type: "UNDO_LAST_GATE" })}
       />
 
-      {/* Floating Compliance Mini Score — always visible */}
-      <ComplianceMini />
+      {/* ── Floating Compliance Mini — transcript-aware ── */}
+      <ComplianceMini transcript={transcript} />
 
-      {/* Main TPMO Timer */}
+      {/* ── AI Co-Pilot — passes transcript up via callback ── */}
+      <ScriptPrompter onTranscriptChange={setTranscript} />
 
       {/* Sequential enrollment flow sections */}
       <CollapsibleSection
@@ -215,7 +227,9 @@ export default function ScriptFlow() {
       </CollapsibleSection>
 
       <SectionWrapUp />
-      <ComplianceDashboard />
+
+      {/* ── Full Compliance Dashboard — transcript-aware, at the bottom ── */}
+      <ComplianceDashboard transcript={transcript} />
     </motion.div>
   );
 }

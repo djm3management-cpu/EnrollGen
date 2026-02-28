@@ -1,72 +1,95 @@
 /**
- * ComplianceScorer v2 — CMS Compliance Calibration Engine
+ * ComplianceScorer v3 — DUAL-LAYER Live Compliance Engine
  *
- * Modeled after EnrollHere's 9-category / 26-benchmark framework
- * but designed for LIVE scoring during the call, not just post-call.
+ * Layer 1: GATE STATE (checkboxes)
+ * Layer 2: TRANSCRIPT ANALYSIS (150+ intent detectors)
+ * The higher score wins. Violations override.
  *
- * 9 Categories:
- *   1. Call Opening           (3 sub-questions)
- *   2. Required Disclosures   (4 sub-questions)
- *   3. Scope of Appointment   (3 sub-questions)
- *   4. Eligibility Verification (6 sub-questions)
- *   5. Needs Assessment       (3 sub-questions — NEW, maps to NEADS)
- *   6. Presentation / SOB     (4 sub-questions)
- *   7. Consent for Enrollment (3 sub-questions)
- *   8. Call Closing           (4 sub-questions)
- *   9. Consumer Experience    (3 sub-questions)
- *
- * Total: 33 sub-questions across 9 categories
- *
+ * 9 Categories, 33 Sub-Questions
  * Drop into: src/context/ComplianceScorer.js
- *
- * Usage:
- *   import { scoreCompliance, groupByCategory } from "../context/ComplianceScorer";
- *   const result = scoreCompliance(scriptState, copilotEntries);
- *   // result.score = 81
- *   // result.categories = [{ name: "Call Opening", score: 100, ... }, ...]
- *   // result.totalPassed = 27 of 33
  */
 
+import {
+  analyzeTranscript,
+  getTranscriptEvidence,
+  getIntentConfidence,
+} from "./TranscriptAnalyzer";
+
 /* ═══════════════════════════════════════════════════════════════
-   HELPER: Check if a section was completed within a time window
-   ═══════════════════════════════════════════════════════════════ */
+     HELPERS
+     ═══════════════════════════════════════════════════════════════ */
+
 function sectionCompletedWithinMs(state, sectionNum, maxMs) {
   const ts = state.sectionTimestamps || {};
   const callStart = state.tpmoStart || ts[1]?.start;
   const sectionEnd = ts[sectionNum]?.end;
-  if (!callStart || !sectionEnd) return null; // can't determine
+  if (!callStart || !sectionEnd) return null;
   return sectionEnd - callStart <= maxMs;
 }
 
 function getCallDurationMin(state) {
   if (!state.tpmoStart) return 0;
-  const endTime = state.callEndTime || Date.now();
-  return (endTime - state.tpmoStart) / 60000;
+  return ((state.callEndTime || Date.now()) - state.tpmoStart) / 60000;
+}
+
+/**
+ * mergeScores — Combine gate score with transcript evidence.
+ * Violations override. Otherwise higher score wins.
+ */
+function mergeScores(gateResult, te) {
+  if (!te || !te.hasTranscriptEvidence) {
+    if (te && te.violation)
+      return {
+        score: 0,
+        evidence: te.evidence,
+        source: "transcript_violation",
+      };
+    return {
+      score: gateResult.score,
+      evidence: gateResult.evidence,
+      source: "gate",
+    };
+  }
+  if (te.violation)
+    return { score: 0, evidence: te.evidence, source: "transcript_violation" };
+
+  const gs = gateResult.score;
+  const ts =
+    te.confidence >= 90
+      ? 100
+      : te.confidence >= 75
+      ? 85
+      : te.confidence >= 60
+      ? 66
+      : te.confidence >= 40
+      ? 50
+      : te.confidence >= 20
+      ? 25
+      : 0;
+  const fs = Math.max(gs, ts);
+
+  let ev = "";
+  if (gs > 0 && ts > 0) ev = "✓ Verified: " + te.evidence;
+  else if (ts > gs) ev = "🎙️ Detected in transcript: " + te.evidence;
+  else ev = gateResult.evidence;
+
+  return {
+    score: fs,
+    evidence: ev,
+    source: gs > 0 && ts > 0 ? "both" : ts > gs ? "transcript" : "gate",
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════════
-     CATEGORY DEFINITIONS
-     Each category has:
-       - name: display name
-       - icon: emoji for UI
-       - description: what this category measures
-       - cmsRef: CMS regulation references
-       - weight: category weight (all weights sum to 100)
-       - questions: array of sub-questions, each with:
-           - id: unique key
-           - question: the compliance question (matches EnrollHere style)
-           - points: max points for this question within the category
-           - evaluate: fn(state, entries) → { score: 0-100, evidence: string }
+     9 CATEGORIES — 33 QUESTIONS
      ═══════════════════════════════════════════════════════════════ */
 
 const CATEGORIES = [
-  // ════════════════════════════════════════════════════
-  // 1) CALL OPENING
-  // ════════════════════════════════════════════════════
+  /* ──────────── 1) CALL OPENING ──────────── */
   {
     name: "Call Opening",
     icon: "📣",
-    description: "Score of call opening",
+    description: "Agent identification, recording disclosure, and consent",
     cmsRef: "42 CFR § 422.2274(b); MMCM CH 2: 40.1.3",
     weight: 10,
     questions: [
@@ -75,22 +98,20 @@ const CATEGORIES = [
         question:
           "Did the agent use the required call opening? (Name, licensing, agency, recording disclosure)",
         points: 4,
-        evaluate: (state) => {
-          if (!state.recordingOk)
+        evaluate: (s) => {
+          if (!s.recordingOk)
             return {
               score: 0,
-              evidence:
-                "Recording disclosure was not completed. Agent must state their name, identify as a licensed sales agent, name their agency, and disclose call recording.",
+              evidence: "Recording disclosure not completed.",
             };
-          if (!state.agentName || state.agentName.trim().length < 3)
+          if (!s.agentName || s.agentName.trim().length < 3)
             return {
               score: 50,
-              evidence:
-                "Recording disclosure was checked but agent name was not entered. Agent must state their full name during the opening.",
+              evidence: "Recording checked but agent name not entered.",
             };
           return {
             score: 100,
-            evidence: `Agent identified as "${state.agentName}", disclosed recording, and obtained consent to continue.`,
+            evidence: `Agent identified as "${s.agentName}", disclosed recording.`,
           };
         },
       },
@@ -98,887 +119,506 @@ const CATEGORIES = [
         id: "opening_beneficiary_name",
         question: "Did the agent identify the name of the primary beneficiary?",
         points: 2,
-        evaluate: (state) => {
-          // If recording disclosure is done, agent asked "who do I have the pleasure of speaking with"
-          if (state.recordingOk) {
-            return {
-              score: 100,
-              evidence:
-                "Agent completed the recording disclosure which includes asking the beneficiary's name.",
-            };
-          }
-          return {
-            score: 0,
-            evidence:
-              "Agent did not complete the recording disclosure, which includes identifying the beneficiary by name.",
-          };
-        },
+        evaluate: (s) =>
+          s.recordingOk
+            ? {
+                score: 100,
+                evidence: "Recording completed — beneficiary name collected.",
+              }
+            : { score: 0, evidence: "Beneficiary name not collected." },
       },
       {
         id: "opening_recording_consent",
         question:
-          "Did the agent obtain explicit agreement to be recorded on the call?",
+          "Did the agent obtain consent to continue on a recorded line?",
         points: 4,
-        evaluate: (state) => {
-          if (state.recordingOk) {
-            return {
-              score: 100,
-              evidence:
-                "Agent disclosed that the call is recorded for quality and training purposes and obtained consent.",
-            };
-          }
-          return {
-            score: 0,
-            evidence:
-              "Recording consent was not obtained. CMS requires all sales, marketing, and enrollment calls to be recorded with beneficiary agreement.",
-          };
-        },
+        evaluate: (s) =>
+          s.recordingOk
+            ? { score: 100, evidence: "Recording consent obtained." }
+            : { score: 0, evidence: "Recording consent not obtained." },
       },
     ],
   },
 
-  // ════════════════════════════════════════════════════
-  // 2) REQUIRED DISCLOSURES
-  // ════════════════════════════════════════════════════
+  /* ──────────── 2) REQUIRED DISCLOSURES ──────────── */
   {
     name: "Required Disclosures",
-    icon: "📢",
-    description: "Combined score of required disclosures and TPMO compliance",
-    cmsRef:
-      "42 CFR § 422.2267(e)(41); 42 CFR § 422.2262(a)(1)(i),(iii); 42 CFR § 422.2268(a)(1),(2)",
+    icon: "📜",
+    description: "TPMO disclaimer, SNP disclosures, and prohibited claims",
+    cmsRef: "42 CFR § 422.2267(e)(41); MMCM CH 2: 30.5",
     weight: 15,
     questions: [
       {
-        id: "disclosure_tpmo_read",
+        id: "disclosures_tpmo",
         question:
-          "Did the agent read the TPMO disclaimer? ('We do not offer every plan...', org/plan counts, Medicare.gov/SHIP referral)",
+          "Was the TPMO disclaimer read with actual org/plan counts for the beneficiary's area?",
         points: 5,
-        evaluate: (state) => {
-          if (!state.tpmoOk)
+        evaluate: (s) => {
+          if (!s.tpmoOk) return { score: 0, evidence: "TPMO not completed." };
+          const ho = s.tpmoOrgs && s.tpmoOrgs.trim().length > 0;
+          const hp = s.tpmoPlans && s.tpmoPlans.trim().length > 0;
+          const hz = s.tpmoZip && s.tpmoZip.trim().length >= 5;
+          if (ho && hp && hz)
             return {
-              score: 0,
-              evidence:
-                "TPMO disclaimer was not read. Agent must state verbatim: number of organizations, number of plans, and refer to Medicare.gov/1-800-MEDICARE/SHIP.",
+              score: 100,
+              evidence: `TPMO: ${s.tpmoOrgs} orgs, ${s.tpmoPlans} plans for ZIP ${s.tpmoZip}.`,
             };
-          // Check if org/plan counts were filled in
-          const hasOrgs = state.tpmoOrgs && state.tpmoOrgs.trim().length > 0;
-          const hasPlans = state.tpmoPlans && state.tpmoPlans.trim().length > 0;
-          if (!hasOrgs || !hasPlans)
+          if (ho || hp)
             return {
               score: 66,
-              evidence:
-                "TPMO disclaimer was marked complete but organization/plan counts were not entered. Agent may have used placeholder numbers instead of actual counts for the beneficiary's ZIP.",
+              evidence: "TPMO read but counts/ZIP may be incomplete.",
             };
           return {
-            score: 100,
-            evidence: `TPMO disclaimer read with ${
-              state.tpmoOrgs
-            } organizations and ${state.tpmoPlans} plans for ZIP ${
-              state.tpmoZip || "unknown"
-            }.`,
+            score: 50,
+            evidence: "TPMO marked complete but counts not entered.",
           };
         },
       },
       {
-        id: "disclosure_tpmo_timing",
+        id: "disclosures_tpmo_timing",
         question:
-          "Was the TPMO disclaimer provided within the first minute of the sales call?",
+          "Was the TPMO disclaimer read within the first minute of the call?",
         points: 3,
-        evaluate: (state) => {
-          // Check if section 2 (TPMO) was completed within ~90s of section 1 start
-          // We give a generous 90s because recording disclosure comes first
-          const withinTime = sectionCompletedWithinMs(state, 2, 90000);
-          if (withinTime === null) {
-            // Can't determine — give partial credit if TPMO was completed
-            if (state.tpmoOk)
-              return {
-                score: 75,
+        evaluate: (s) => {
+          const w = sectionCompletedWithinMs(s, 2, 120000);
+          if (w === null)
+            return { score: 75, evidence: "Timing data unavailable." };
+          return w
+            ? { score: 100, evidence: "TPMO within first 2 minutes." }
+            : {
+                score: 25,
                 evidence:
-                  "TPMO disclaimer was completed but timing data is unavailable. CMS requires the disclaimer within the first minute.",
+                  "TPMO NOT within first 2 minutes — CMS requires first minute.",
               };
-            return {
-              score: 0,
-              evidence: "TPMO disclaimer was not completed.",
-            };
-          }
-          if (withinTime)
-            return {
-              score: 100,
-              evidence:
-                "TPMO disclaimer was provided within the first minute of the call, as required by CMS.",
-            };
-          if (state.tpmoOk)
-            return {
-              score: 50,
-              evidence:
-                "TPMO disclaimer was read but NOT within the first minute of the call. CMS regulation 42 CFR § 422.2267(e)(41) requires it within the first 60 seconds.",
-            };
-          return {
-            score: 0,
-            evidence: "TPMO disclaimer was not completed.",
-          };
         },
       },
       {
-        id: "disclosure_snp",
-        question:
-          "If applicable, did the agent read the SNP disclosure (DSNP/CSNP) including verification requirements?",
+        id: "disclosures_snp",
+        question: "If applicable, was the SNP-specific disclosure provided?",
         points: 3,
-        evaluate: (state) => {
-          if (
-            !state.snpType ||
-            state.snpType === "none" ||
-            state.snpType === "N/A"
-          )
-            return {
-              score: 100,
-              evidence: "SNP disclosure not applicable for this enrollment.",
-            };
-          if (state.snpOk)
-            return {
-              score: 100,
-              evidence: `${state.snpType} disclosure read, including ${
-                state.snpType === "DSNP"
-                  ? "verification of Medicare and Medicaid entitlement"
-                  : "physician verification process and voiding warning"
-              }.`,
-            };
-          return {
-            score: 0,
-            evidence: `${
-              state.snpType
-            } was selected but the required SNP disclosure was not completed. ${
-              state.snpType === "DSNP"
-                ? "Agent must state enrollment is based on verification of both Medicare and qualifying Medicaid."
-                : "Agent must explain physician verification, end-of-first-month deadline, and voiding of enrollment if form not returned."
-            }`,
-          };
+        evaluate: (s) => {
+          if (!s.snpType)
+            return { score: 100, evidence: "No SNP — not required." };
+          return s.snpOk
+            ? { score: 100, evidence: `${s.snpType} disclosure completed.` }
+            : {
+                score: 0,
+                evidence: `${s.snpType} selected but disclosure NOT completed.`,
+              };
         },
       },
       {
-        id: "disclosure_no_misleading",
+        id: "disclosures_no_misleading",
         question:
-          "Did the agent avoid misleading, inaccurate, or unsubstantiated claims during the call?",
+          "Were all statements accurate with no misleading or unsubstantiated claims?",
         points: 4,
-        evaluate: (_state, entries) => {
-          const misleadingFlags = entries.filter(
-            (e) =>
-              e.level === "critical" &&
-              e.message &&
-              (e.message.toLowerCase().includes("misleading") ||
-                e.message.toLowerCase().includes("superlative") ||
-                e.message.toLowerCase().includes("guarantee") ||
-                e.message.toLowerCase().includes("better than") ||
-                e.message.toLowerCase().includes("best plan") ||
-                e.message.toLowerCase().includes("comparative"))
+        evaluate: (_s, e) => {
+          const v = e.filter(
+            (x) =>
+              x.level === "critical" &&
+              (x.message?.includes("misleading") ||
+                x.message?.includes("superlative") ||
+                x.message?.includes("guarantee"))
           );
-          if (misleadingFlags.length === 0)
-            return {
-              score: 100,
-              evidence:
-                "No misleading or unsubstantiated claims detected during the call.",
-            };
-          return {
-            score: Math.max(0, 100 - misleadingFlags.length * 50),
-            evidence: `${misleadingFlags.length} potential misleading or unsubstantiated claim(s) flagged by AI compliance monitor. CMS prohibits superlatives, guarantees, and comparative claims without documentation.`,
-          };
+          return v.length === 0
+            ? { score: 100, evidence: "No misleading claims detected." }
+            : {
+                score: 0,
+                evidence: `${v.length} violation(s): ${v[0]?.message?.slice(
+                  0,
+                  100
+                )}`,
+              };
         },
       },
     ],
   },
 
-  // ════════════════════════════════════════════════════
-  // 3) SCOPE OF APPOINTMENT
-  // ════════════════════════════════════════════════════
+  /* ──────────── 3) SCOPE OF APPOINTMENT ──────────── */
   {
     name: "Scope of Appointment",
-    icon: "📝",
-    description: "Proper SOA documentation and adherence",
-    cmsRef: "42 CFR § 422.2260 - § 422.2274; § 423.2260 - § 423.2276",
+    icon: "📋",
+    description: "POA check, no-obligation statement, product scope",
+    cmsRef: "42 CFR § 422.2260-2274; MMCM CH 2: 60",
     weight: 12,
     questions: [
       {
         id: "soa_poa_check",
-        question:
-          "Did the agent ask if the beneficiary is enrolling for themselves or an authorized representative (POA check)?",
+        question: "Did the agent verify POA / decision-making authority?",
         points: 3,
-        evaluate: (state) => {
-          if (state.soaOk)
-            return {
-              score: 100,
-              evidence:
-                "POA check completed. Agent asked if the caller is discussing Medicare options for themselves or someone else.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "SOA was not completed. Agent must ask if the caller is enrolling for themselves or acting on behalf of someone else (guardian, family member, POA).",
-          };
-        },
+        evaluate: (s) =>
+          s.soaOk
+            ? { score: 100, evidence: "SOA completed — POA checked." }
+            : { score: 0, evidence: "POA check not performed." },
       },
       {
         id: "soa_not_obligated",
         question:
-          "Did the agent state that the beneficiary is not obligated to enroll and answering questions does not affect current coverage?",
+          "Did the agent state the beneficiary is not obligated to enroll?",
         points: 4,
-        evaluate: (state) => {
-          if (state.soaOk)
-            return {
-              score: 100,
-              evidence:
-                "SOA completed including non-obligation language: beneficiary is not obligated to enroll, and answering questions does not affect current enrollment.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not complete SOA. Must state: beneficiary is not obligated to enroll, and this call will not enroll them in any plan.",
-          };
-        },
+        evaluate: (s) =>
+          s.soaOk
+            ? { score: 100, evidence: "SOA completed — no-obligation stated." }
+            : { score: 0, evidence: "No-obligation statement not delivered." },
       },
       {
-        id: "soa_product_types",
+        id: "soa_products_permission",
         question:
-          "Did the agent list all product types to be discussed (MA, PDP, Dental, Vision, Hospital Indemnity) and obtain permission?",
+          "Did the agent list product types and obtain permission to discuss them?",
         points: 5,
-        evaluate: (state) => {
-          if (state.soaOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent obtained verbal SOA permission to discuss all applicable product types before proceeding with plan discussion.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "No scope of appointment was established. Agent did not disclose specific product types to be discussed or obtain beneficiary agreement for the scope before proceeding with plan discussion.",
-          };
-        },
+        evaluate: (s) =>
+          s.soaOk
+            ? { score: 100, evidence: "SOA completed — products listed." }
+            : { score: 0, evidence: "Product scope not established." },
       },
     ],
   },
 
-  // ════════════════════════════════════════════════════
-  // 4) ELIGIBILITY VERIFICATION
-  // ════════════════════════════════════════════════════
+  /* ──────────── 4) ELIGIBILITY VERIFICATION ──────────── */
   {
     name: "Eligibility Verification",
-    icon: "🔎",
-    description:
-      "Combined score of beneficiary eligibility and election period verification",
-    cmsRef: "MMCM CH 2: 10, 20, 30, 30.6, 40.1.3, 40.2, 40.2.1",
+    icon: "✅",
+    description: "Parts A/B, election period, disqualifying coverage",
+    cmsRef: "42 CFR § 422.50-422.74; MMCM CH 2: 40.2",
     weight: 15,
     questions: [
       {
         id: "elig_decision_authority",
-        question:
-          "Did the agent determine if the beneficiary is able to make their own healthcare decision?",
+        question: "Was decision-making authority confirmed?",
         points: 3,
-        evaluate: (state) => {
-          // POA check in SOA section covers this
-          if (state.soaOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent confirmed decision-making authority during the POA/SOA section.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not verify whether the beneficiary is making their own healthcare decisions or if an authorized representative is needed.",
-          };
-        },
+        evaluate: (s) =>
+          s.soaOk
+            ? { score: 100, evidence: "Authority verified." }
+            : { score: 0, evidence: "Not confirmed." },
       },
       {
         id: "elig_parts_ab",
-        question:
-          "Did the agent fully qualify the beneficiary? (Medicare Parts A & B, effective dates read back, address confirmed)",
+        question: "Was the beneficiary confirmed to have active Parts A and B?",
         points: 4,
-        evaluate: (state) => {
-          if (state.qualOk)
-            return {
-              score: 100,
-              evidence:
-                "Qualifications completed. Agent confirmed Part A and Part B enrollment, effective dates, permanent address, and checked for disqualifying coverage.",
-            };
-          if (state.soaOk)
-            return {
-              score: 25,
-              evidence:
-                "SOA was completed but Qualifications section was not finished. Agent must confirm Part A/B, effective dates, address, Medicaid status, veteran status, and other coverage.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Qualifications not completed. Agent did not verify Medicare Part A and Part B enrollment or effective dates.",
-          };
-        },
+        evaluate: (s) =>
+          s.qualOk
+            ? { score: 100, evidence: "Parts A & B confirmed." }
+            : { score: 0, evidence: "Not verified." },
       },
       {
         id: "elig_election_period",
-        question:
-          "Did the agent determine valid election period eligibility? (AEP, OEP/MA-OEP, SEP)",
+        question: "Was a valid election period determined?",
         points: 3,
-        evaluate: (state) => {
-          if (state.qualOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent confirmed the applicable enrollment period (AEP, OEP, or SEP) during qualifications.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not confirm which election period applies. Must state whether AEP (Oct 15-Dec 7), OEP (Jan 1-Mar 31), or SEP.",
-          };
-        },
+        evaluate: (s) =>
+          s.qualOk
+            ? { score: 100, evidence: "Election period confirmed." }
+            : { score: 0, evidence: "Not determined." },
       },
       {
-        id: "elig_disqualifying_coverage",
-        question:
-          "Did the agent check for disqualifying coverage? (Employer, TRICARE for Life, CHAMPVA, VA benefits)",
+        id: "elig_disqualifying",
+        question: "Was a disqualifying coverage check performed?",
         points: 3,
-        evaluate: (state) => {
-          if (state.qualOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent asked about other coverage types including employer, retiree, VA, TRICARE, and CHAMPVA during qualifications.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not check for disqualifying coverage. Must ask about employer coverage, retiree benefits, VA benefits, TRICARE for Life, and CHAMPVA.",
-          };
-        },
+        evaluate: (s) =>
+          s.qualOk
+            ? { score: 100, evidence: "Disqualifying coverage checked." }
+            : { score: 0, evidence: "Not performed." },
       },
       {
-        id: "elig_reason_for_inquiry",
-        question:
-          "Did the agent determine the reason the beneficiary is inquiring about a different plan with focus on current coverage experiences?",
-        points: 2,
-        evaluate: (state) => {
-          // NEADS captures this — "anything specific about your current plan"
-          if (state.neadsOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent explored the beneficiary's motivation for exploring new coverage during the needs assessment.",
-            };
-          if (state.qualOk)
-            return {
-              score: 50,
-              evidence:
-                "Qualifications were completed but the agent may not have specifically asked why the beneficiary is looking for a different plan.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not determine why the beneficiary is looking for a different plan or their experience with current coverage.",
-          };
-        },
+        id: "elig_reason",
+        question: "Was the reason for inquiry determined?",
+        points: 1,
+        evaluate: (s) =>
+          s.qualOk || s.neadsOk
+            ? { score: 100, evidence: "Reason assessed." }
+            : { score: 0, evidence: "Not determined." },
       },
       {
-        id: "elig_benefit_priorities",
-        question:
-          "Did the agent determine which benefits are a priority for the beneficiary?",
-        points: 2,
-        evaluate: (state) => {
-          if (state.neadsOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent assessed beneficiary's priorities during NEADS (doctors, medications, pharmacy, hospital, specific needs).",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not directly ask what matters most to the beneficiary or identify their specific benefit priorities.",
-          };
-        },
+        id: "elig_priorities",
+        question: "Were benefit priorities identified?",
+        points: 1,
+        evaluate: (s) =>
+          s.neadsOk
+            ? { score: 100, evidence: "Priorities identified." }
+            : { score: 0, evidence: "Not identified." },
       },
     ],
   },
 
-  // ════════════════════════════════════════════════════
-  // 5) NEEDS ASSESSMENT (NEADS)
-  // ════════════════════════════════════════════════════
+  /* ──────────── 5) NEEDS ASSESSMENT ──────────── */
   {
     name: "Needs Assessment",
     icon: "🩺",
-    description:
-      "Assessment of beneficiary healthcare needs before plan recommendation",
-    cmsRef: "42 CFR § 422.2274(c)(9)(i); MMCM CH 2: 40.2",
+    description: "Providers, medications, pharmacy, and summary recap",
+    cmsRef: "MMCM CH 2: 40.2.5 (PECL requirements)",
     weight: 10,
     questions: [
       {
-        id: "neads_providers",
+        id: "needs_providers",
         question:
-          "Did the agent ask about the beneficiary's doctors (PCP, specialists) and verify network status?",
+          "Did the agent ask about current doctors, specialists, and facilities?",
         points: 4,
-        evaluate: (state) => {
-          if (state.neadsOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent asked about PCP, specialists, and preferred hospital/facility during needs assessment.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not ask about the beneficiary's doctors or verify provider network status.",
-          };
-        },
+        evaluate: (s) =>
+          s.neadsOk
+            ? { score: 100, evidence: "Providers assessed." }
+            : { score: 0, evidence: "Not completed." },
       },
       {
-        id: "neads_medications",
+        id: "needs_medications",
         question:
-          "Did the agent ask about current medications (names and dosages) and preferred pharmacy?",
+          "Did the agent ask about medications (names, dosages) and preferred pharmacy?",
         points: 4,
-        evaluate: (state) => {
-          if (state.neadsOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent asked about current medications, dosages, and pharmacy preference during needs assessment.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not ask about the beneficiary's medications, dosages, or pharmacy. This is critical for formulary verification.",
-          };
-        },
+        evaluate: (s) =>
+          s.neadsOk
+            ? { score: 100, evidence: "Medications assessed." }
+            : { score: 0, evidence: "Not completed." },
       },
       {
-        id: "neads_summary_recap",
+        id: "needs_recap",
         question:
-          "Did the agent summarize collected needs and confirm with the beneficiary before recommending a plan?",
+          "Did the agent summarize/recap needs before recommending a plan?",
         points: 3,
-        evaluate: (state) => {
-          if (state.neadsOk)
+        evaluate: (s) => {
+          if (s.neadsOk && s.sobOk)
+            return { score: 100, evidence: "Recap performed." };
+          if (s.neadsOk)
             return {
-              score: 100,
-              evidence:
-                "Agent completed the NEADS assessment, which includes summarizing findings and confirming with the beneficiary before plan selection.",
+              score: 75,
+              evidence: "NEADS done, plan not yet presented.",
             };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not complete the needs assessment recap. Must summarize doctors, medications, pharmacy, and priorities before recommending a plan.",
-          };
+          return { score: 0, evidence: "Recap not performed." };
         },
       },
     ],
   },
 
-  // ════════════════════════════════════════════════════
-  // 6) PRESENTATION / SUMMARY OF BENEFITS
-  // ════════════════════════════════════════════════════
+  /* ──────────── 6) PRESENTATION / SOB ──────────── */
   {
-    name: "Summary of Benefits",
-    icon: "📋",
-    description: "Review of Summary of Benefits before enrollment",
-    cmsRef: "42 CFR § 422.111; 42 CFR § 422.2274(c)(9)(i)",
+    name: "Presentation / SOB",
+    icon: "📊",
+    description: "Plan benefits, network, coverage impact, disclosures",
+    cmsRef: "42 CFR § 422.111; MMCM CH 2: 40.3",
     weight: 13,
     questions: [
       {
         id: "sob_review",
         question:
-          "Did the agent review the Summary of Benefits prior to completion of enrollment? (Premium, deductibles, copays, network, drug coverage, extra benefits)",
+          "Was the SOB reviewed (premium, deductible, MOOP, copays, drugs, extras)?",
         points: 4,
-        evaluate: (state) => {
-          if (state.sobOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent reviewed plan benefits including premium, deductibles, copays, network type, drug coverage, and additional benefits before enrollment.",
-            };
-          if (state.neadsOk)
-            return {
-              score: 25,
-              evidence:
-                "NEADS was completed but SOB review was not finished. Agent must present actual plan benefits, costs, and coverage details.",
-            };
+        evaluate: (s) => {
+          if (!s.sobOk) return { score: 0, evidence: "SOB not completed." };
+          const c = s.sobChecks || {};
+          const d = Object.values(c).filter(Boolean).length;
+          const t = Object.keys(c).length || 1;
+          const p = Math.round((d / t) * 100);
+          if (p >= 90)
+            return { score: 100, evidence: `SOB complete — ${d}/${t} items.` };
+          if (p >= 60)
+            return { score: 75, evidence: `SOB partial — ${d}/${t} items.` };
           return {
-            score: 0,
-            evidence:
-              "Summary of Benefits was not reviewed with the beneficiary before enrollment.",
+            score: 50,
+            evidence: `SOB marked done but ${d}/${t} items.`,
           };
         },
       },
       {
-        id: "sob_network_review",
+        id: "sob_network",
         question:
-          "Did the agent offer to review (1) provider/specialist network status, (2) prescription coverage and pharmacy network, (3) preferred hospital network, and (4) preferred facility network?",
+          "Was network status offered for provider, pharmacy, hospital?",
         points: 4,
-        evaluate: (state) => {
-          if (state.sobOk && state.neadsOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent assessed providers during NEADS and reviewed plan network coverage during SOB presentation.",
-            };
-          if (state.neadsOk)
-            return {
-              score: 50,
-              evidence:
-                "Agent asked about providers during NEADS but did not complete full SOB review to confirm network coverage, pharmacy network, hospital, and facility status.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not offer comprehensive review of provider network status, pharmacy coverage, hospital, or facility network.",
-          };
-        },
+        evaluate: (s) =>
+          s.sobOk
+            ? { score: 100, evidence: "Network review included." }
+            : s.neadsOk
+            ? { score: 50, evidence: "NEADS done, SOB pending." }
+            : { score: 0, evidence: "Not performed." },
       },
       {
         id: "sob_coverage_impact",
         question:
-          "Did the agent explain how enrolling will affect current coverage including being disenrolled from their current plan? (Coverage changes, coordination of benefits, TRICARE/VA interactions)",
+          "Was the coverage impact explained? (Plan replaces Original Medicare)",
         points: 3,
-        evaluate: (state) => {
-          if (state.enrollOk)
-            return {
-              score: 100,
-              evidence:
-                "Enrollment section completed. Agent stated that enrolling replaces current coverage and the plan is subject to Medicare approval.",
-            };
-          if (state.sobOk)
-            return {
-              score: 50,
-              evidence:
-                "SOB was reviewed but enrollment section not yet completed. Agent must clearly explain that this plan replaces Original Medicare before completing enrollment.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not explain how enrollment affects current coverage. Must state the plan replaces current Medicare coverage.",
-          };
-        },
+        evaluate: (s) =>
+          s.enrollOk
+            ? { score: 100, evidence: "Coverage impact explained." }
+            : s.sobOk
+            ? { score: 75, evidence: "SOB done — likely discussed." }
+            : { score: 0, evidence: "Not explained." },
       },
       {
-        id: "sob_all_disclosures",
-        question:
-          "Did the agent read all required disclosures for the determined plan of interest? (MA disclaimer, Part B premium, cancellation rights, EOC mention)",
+        id: "sob_disclosures",
+        question: "Were all required SOB disclosures read?",
         points: 4,
-        evaluate: (state) => {
-          if (state.sobOk)
-            return {
-              score: 100,
-              evidence:
-                "Agent completed SOB review including cancellation rights, SOB/EOC delivery information, and carrier contact details.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not read all required plan disclosures. Must cover: cancellation rights, SOB/EOC delivery, Part B premium, and carrier contact information.",
-          };
-        },
+        evaluate: (s) =>
+          s.enrollOk
+            ? { score: 100, evidence: "All disclosures given." }
+            : s.sobOk
+            ? { score: 75, evidence: "SOB done — likely covered." }
+            : { score: 0, evidence: "Not completed." },
       },
     ],
   },
 
-  // ════════════════════════════════════════════════════
-  // 7) CONSENT FOR ENROLLMENT
-  // ════════════════════════════════════════════════════
+  /* ──────────── 7) CONSENT FOR ENROLLMENT ──────────── */
   {
     name: "Consent for Enrollment",
     icon: "✍️",
-    description: "Confirmation of enrollment readiness and plan details",
-    cmsRef: "42 CFR § 422.2274(c)(9)(i); MMCM CH 2: 40.1.3, 40.2, 40.4.1",
+    description:
+      "Plan confirmation, verbal consent, Medicare approval qualifier",
+    cmsRef: "42 CFR § 422.2274(a); MMCM CH 2: 40.3.5",
     weight: 10,
     questions: [
       {
-        id: "consent_plan_name",
-        question:
-          "Did the agent confirm the caller was ready to complete enrollment by stating the full plan name, type, and effective date?",
+        id: "consent_plan_confirmed",
+        question: "Were full plan name, type, and effective date confirmed?",
         points: 4,
-        evaluate: (state) => {
-          if (state.enrollOk) {
-            const hasPlanName =
-              state.notes?.planName && state.notes.planName.trim().length > 0;
-            const hasEffDate =
-              state.notes?.effectiveDate &&
-              state.notes.effectiveDate.trim().length > 0;
-            if (hasPlanName && hasEffDate)
-              return {
-                score: 100,
-                evidence: `Agent confirmed enrollment in "${state.notes.planName}" with effective date ${state.notes.effectiveDate}.`,
-              };
-            if (hasPlanName || hasEffDate)
-              return {
-                score: 66,
-                evidence:
-                  "Enrollment completed but plan name or effective date may not have been fully confirmed. Agent must state the full plan name including plan type and effective date.",
-              };
-            return {
-              score: 50,
-              evidence:
-                "Enrollment was marked complete but plan name and effective date were not entered. Agent should have stated the full plan name, plan type, and effective date subject to Medicare approval.",
-            };
-          }
-          return {
-            score: 0,
-            evidence:
-              "Enrollment was not completed. Agent must state full plan name, plan type, and effective date before enrolling.",
-          };
-        },
-      },
-      {
-        id: "consent_verbal_consent",
-        question:
-          "Did the agent obtain explicit verbal consent to proceed with enrollment? ('Would you like to proceed?')",
-        points: 4,
-        evaluate: (state) => {
-          if (state.enrollOk)
+        evaluate: (s) => {
+          if (!s.enrollOk)
+            return { score: 0, evidence: "Enrollment not completed." };
+          const hp = s.notes?.planName?.trim().length > 3;
+          const hd = s.notes?.effectiveDate?.trim().length > 3;
+          if (hp && hd)
             return {
               score: 100,
-              evidence:
-                "Enrollment was completed. Agent asked the beneficiary to confirm they wish to proceed with enrollment.",
+              evidence: `"${s.notes.planName}" effective ${s.notes.effectiveDate}.`,
             };
+          if (hp || hd)
+            return { score: 66, evidence: "Plan or date may be incomplete." };
           return {
-            score: 0,
-            evidence:
-              "Verbal consent for enrollment was not obtained. Agent must ask 'Would you like to proceed?' and receive affirmative consent.",
+            score: 50,
+            evidence: "Enrollment done but details not entered.",
           };
         },
       },
       {
-        id: "consent_effective_date_conditional",
+        id: "consent_verbal",
+        question: "Was explicit verbal consent obtained?",
+        points: 4,
+        evaluate: (s) =>
+          s.enrollOk
+            ? { score: 100, evidence: "Verbal consent obtained." }
+            : { score: 0, evidence: "Not obtained." },
+      },
+      {
+        id: "consent_subject_to_approval",
         question:
-          "Did the agent state the effective date as 'subject to approval by Medicare' (not guaranteed)?",
+          "Was effective date stated as 'subject to approval by Medicare'?",
         points: 3,
-        evaluate: (state) => {
-          if (state.enrollOk)
-            return {
-              score: 100,
-              evidence:
-                "Enrollment completed. Script includes 'subject to approval by Medicare' language for the effective date.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not complete enrollment. Must state the proposed effective date is subject to approval by Medicare, not guaranteed.",
-          };
-        },
+        evaluate: (s) =>
+          s.enrollOk
+            ? { score: 100, evidence: "Medicare approval qualifier given." }
+            : { score: 0, evidence: "Not delivered." },
       },
     ],
   },
 
-  // ════════════════════════════════════════════════════
-  // 8) CALL CLOSING
-  // ════════════════════════════════════════════════════
+  /* ──────────── 8) CALL CLOSING ──────────── */
   {
     name: "Call Closing",
     icon: "📞",
-    description: "Score of call closing",
-    cmsRef: "42 CFR § 422.111(h)(1); MMCM CH 2: 40.2, 40.4.1",
+    description: "Confirmation number, carrier info, rights, next steps",
+    cmsRef: "MMCM CH 2: 40.4.1; 42 CFR § 422.111(h)(1)",
     weight: 10,
     questions: [
       {
-        id: "closing_confirmation_number",
-        question:
-          "Did the agent provide a confirmation/application number for the enrollment?",
+        id: "closing_confirmation",
+        question: "Was the confirmation/application number provided?",
         points: 3,
-        evaluate: (state) => {
-          const hasCode =
-            state.notes?.enrollmentCode &&
-            state.notes.enrollmentCode.trim().length > 0;
-          if (hasCode)
-            return {
-              score: 100,
-              evidence: `Enrollment confirmation number provided: ${state.notes.enrollmentCode}.`,
-            };
-          if (state.enrollOk)
-            return {
-              score: 25,
-              evidence:
-                "Enrollment was completed but no confirmation/application number was entered. Agent must read back the application number after submission.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "No confirmation number provided — enrollment not completed.",
-          };
+        evaluate: (s) => {
+          if (!s.enrollOk)
+            return { score: 0, evidence: "Enrollment not completed." };
+          return s.notes?.enrollmentCode?.trim().length >= 4
+            ? {
+                score: 100,
+                evidence: `Confirmation: ${s.notes.enrollmentCode}`,
+              }
+            : {
+                score: 50,
+                evidence: "Enrollment done but number not entered.",
+              };
         },
       },
       {
         id: "closing_carrier_number",
         question:
-          "Did the agent provide the carrier's customer service number (and TTY if available)?",
+          "Was the carrier customer service number provided (with TTY)?",
         points: 3,
-        evaluate: (state) => {
-          // If enrollment is complete, the script includes carrier number
-          if (state.enrollOk)
-            return {
-              score: 100,
-              evidence:
-                "Enrollment section completed. Script includes providing carrier's customer service phone number and TTY.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not reach the enrollment section where carrier customer service number is provided. Must give beneficiary a toll-free number with TTY service.",
-          };
-        },
+        evaluate: (s) =>
+          s.enrollOk
+            ? { score: 100, evidence: "Carrier number included." }
+            : { score: 0, evidence: "Not provided." },
       },
       {
-        id: "closing_eoc_rights",
-        question:
-          "Did the agent mention EOC, cancellation rights, and appeal rights during wrap-up?",
+        id: "closing_rights",
+        question: "Were EOC, cancellation rights, and appeal rights mentioned?",
         points: 2,
-        evaluate: (state) => {
-          // Wrap-up section covers these — but there's no explicit gate for it
-          // If enrollment is complete and we've passed that point, give credit
-          if (state.enrollOk)
-            return {
-              score: 100,
-              evidence:
-                "Enrollment completed and wrap-up section is accessible. Script includes EOC, cancellation rights, appeal rights, and 5-Star rating disclosures.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Wrap-up disclosures not reached. Must mention EOC, right to cancel, right to appeal, and Medicare 5-Star rating system.",
-          };
-        },
+        evaluate: (s) =>
+          s.enrollOk
+            ? { score: 100, evidence: "Rights disclosed." }
+            : { score: 0, evidence: "Not disclosed." },
       },
       {
         id: "closing_next_steps",
-        question:
-          "Did the agent explain next steps? (Welcome packet, ID card timeline, callback number)",
+        question: "Were next steps explained?",
         points: 2,
-        evaluate: (state) => {
-          if (state.enrollOk)
-            return {
-              score: 100,
-              evidence:
-                "Enrollment section completed. Script includes mail timeline (7-10 business days), online access, and callback number.",
-            };
-          return {
-            score: 0,
-            evidence:
-              "Agent did not reach the enrollment completion section. Must explain welcome packet arrival, ID card timeline, and provide a callback number.",
-          };
-        },
+        evaluate: (s) =>
+          s.enrollOk
+            ? { score: 100, evidence: "Next steps explained." }
+            : { score: 0, evidence: "Not explained." },
       },
     ],
   },
 
-  // ════════════════════════════════════════════════════
-  // 9) CONSUMER EXPERIENCE
-  // ════════════════════════════════════════════════════
+  /* ──────────── 9) CONSUMER EXPERIENCE ──────────── */
   {
     name: "Consumer Experience",
-    icon: "🤝",
-    description: "Overall consumer interaction quality",
-    cmsRef: "CMS Quality Standards; Industry Best Practices",
+    icon: "⭐",
+    description: "Call duration, section order, warning volume",
+    cmsRef: "MMCM CH 2: 10.7",
     weight: 5,
     questions: [
       {
         id: "cx_call_duration",
-        question:
-          "Was the call duration adequate for a compliant enrollment? (≥ 8 minutes)",
+        question: "Was call duration adequate? (≥8 minutes)",
         points: 3,
-        evaluate: (state) => {
-          const mins = getCallDurationMin(state);
-          if (mins >= 15)
-            return {
-              score: 100,
-              evidence: `Call duration: ${Math.round(
-                mins
-              )} minutes — thorough enrollment conversation.`,
-            };
-          if (mins >= 8)
-            return {
-              score: 100,
-              evidence: `Call duration: ${Math.round(
-                mins
-              )} minutes — adequate for compliant enrollment.`,
-            };
-          if (mins >= 5)
-            return {
-              score: 50,
-              evidence: `Call duration: ${Math.round(
-                mins
-              )} minutes — short for a full enrollment. Speed-to-enroll may be a concern.`,
-            };
-          if (mins > 0)
-            return {
-              score: 0,
-              evidence: `Call duration: ${Math.round(
-                mins
-              )} minutes — too short for a compliant enrollment. CMS auditors flag speed-to-enroll under 8 minutes.`,
-            };
-          return {
-            score: 0,
-            evidence: "Call timer was not started — cannot assess duration.",
-          };
+        evaluate: (s) => {
+          const d = getCallDurationMin(s);
+          if (d >= 8)
+            return { score: 100, evidence: `${d.toFixed(1)}min — adequate.` };
+          if (d >= 5)
+            return { score: 50, evidence: `${d.toFixed(1)}min — short.` };
+          if (d > 0)
+            return { score: 25, evidence: `${d.toFixed(1)}min — too short.` };
+          return { score: 0, evidence: "Timer not started." };
         },
       },
       {
         id: "cx_section_order",
-        question: "Were all sections completed in proper CMS-compliant order?",
+        question: "Were sections completed in proper order?",
         points: 3,
-        evaluate: (state) => {
-          const ts = state.sectionTimestamps || {};
-          const sectionNums = Object.keys(ts)
+        evaluate: (s) => {
+          const ts = s.sectionTimestamps || {};
+          const ns = Object.keys(ts)
             .map(Number)
             .filter((n) => ts[n]?.start)
             .sort((a, b) => ts[a].start - ts[b].start);
-          if (sectionNums.length < 2)
-            return {
-              score: 100,
-              evidence:
-                "Section order check — insufficient data (likely early in call).",
-            };
-          let inOrder = true;
-          for (let i = 1; i < sectionNums.length; i++) {
-            if (sectionNums[i] < sectionNums[i - 1]) {
-              inOrder = false;
-              break;
-            }
+          if (ns.length < 2) return { score: 100, evidence: "Early in call." };
+          for (let i = 1; i < ns.length; i++) {
+            if (ns[i] < ns[i - 1])
+              return { score: 50, evidence: "Out of order." };
           }
-          if (inOrder)
-            return {
-              score: 100,
-              evidence:
-                "All sections were completed in proper sequential order.",
-            };
-          return {
-            score: 50,
-            evidence:
-              "Sections were completed out of the standard order. While not always a violation, CMS expects a logical flow from disclosure through enrollment.",
-          };
+          return { score: 100, evidence: "Proper order." };
         },
       },
       {
         id: "cx_warnings_volume",
-        question:
-          "Were compliance warnings minimal during the call? (Low AI co-pilot intervention needed)",
+        question: "Were compliance warnings minimal?",
         points: 2,
-        evaluate: (_state, entries) => {
-          const warns = entries.filter(
-            (e) => e.level === "warn" || e.level === "critical"
+        evaluate: (_s, e) => {
+          const w = e.filter(
+            (x) => x.level === "warn" || x.level === "critical"
           );
-          if (warns.length === 0)
-            return {
-              score: 100,
-              evidence: "No compliance warnings triggered — clean call.",
-            };
-          if (warns.length <= 2)
-            return {
-              score: 75,
-              evidence: `${warns.length} warning(s) triggered during the call — within acceptable range.`,
-            };
-          if (warns.length <= 5)
-            return {
-              score: 50,
-              evidence: `${warns.length} warnings triggered — indicates multiple compliance gaps that needed correction.`,
-            };
-          return {
-            score: 25,
-            evidence: `${warns.length} warnings triggered — significant compliance concerns throughout the call.`,
-          };
+          if (w.length === 0)
+            return { score: 100, evidence: "No warnings — clean call." };
+          if (w.length <= 2)
+            return { score: 75, evidence: `${w.length} warning(s).` };
+          if (w.length <= 5)
+            return { score: 50, evidence: `${w.length} warnings.` };
+          return { score: 25, evidence: `${w.length} warnings — significant.` };
         },
       },
     ],
@@ -986,69 +626,68 @@ const CATEGORIES = [
 ];
 
 /* ═══════════════════════════════════════════════════════════════
-     MAIN SCORING FUNCTION
+     MAIN SCORING FUNCTION — DUAL LAYER
      ═══════════════════════════════════════════════════════════════ */
 
-/**
- * scoreCompliance — Evaluate the session against all 9 categories.
- *
- * @param {object} scriptState    — The full script reducer state
- * @param {array}  copilotEntries — Array of copilot log entries
- * @returns {object} Full compliance report
- */
-export function scoreCompliance(scriptState, copilotEntries = []) {
+export function scoreCompliance(
+  scriptState,
+  copilotEntries = [],
+  transcript = ""
+) {
+  const analysis = transcript ? analyzeTranscript(transcript) : null;
   const categories = [];
-  let totalWeightedScore = 0;
-  let totalWeight = 0;
-  let totalPassed = 0;
-  let totalQuestions = 0;
+  let twS = 0;
+  let tW = 0;
+  let tP = 0;
+  let tQ = 0;
   const allFlags = [];
 
   for (const cat of CATEGORIES) {
-    let catPointsEarned = 0;
-    let catPointsMax = 0;
-    const questionResults = [];
+    let cpE = 0;
+    let cpM = 0;
+    const qR = [];
 
     for (const q of cat.questions) {
-      const { score, evidence } = q.evaluate(scriptState, copilotEntries);
-      const earned = Math.round((score / 100) * q.points * 100) / 100;
-      catPointsEarned += earned;
-      catPointsMax += q.points;
-      totalQuestions++;
+      const gr = q.evaluate(scriptState, copilotEntries);
+      const te = analysis ? getTranscriptEvidence(q.id, analysis) : null;
+      const m = analysis
+        ? mergeScores(gr, te)
+        : { score: gr.score, evidence: gr.evidence, source: "gate" };
+      const earned = Math.round((m.score / 100) * q.points * 100) / 100;
+      cpE += earned;
+      cpM += q.points;
+      tQ++;
 
-      const passed = score >= 75; // 75%+ = passed
-      if (passed) totalPassed++;
+      const passed = m.score >= 75;
+      if (passed) tP++;
 
-      questionResults.push({
+      qR.push({
         id: q.id,
         question: q.question,
         points: q.points,
         earned: Math.round(earned * 100) / 100,
-        score, // 0-100 percentage
+        score: m.score,
         passed,
-        evidence,
+        evidence: m.evidence,
+        source: m.source,
+        transcriptConfidence: te?.confidence || 0,
+        hasTranscriptEvidence: te?.hasTranscriptEvidence || false,
       });
 
-      if (score < 75) {
+      if (m.score < 75) {
         allFlags.push({
           id: q.id,
           question: q.question,
           category: cat.name,
-          score,
-          evidence,
-          severity: score === 0 ? "high" : score < 50 ? "medium" : "low",
+          score: m.score,
+          evidence: m.evidence,
+          source: m.source,
+          severity: m.score === 0 ? "high" : m.score < 50 ? "medium" : "low",
         });
       }
     }
 
-    const catScore =
-      catPointsMax > 0
-        ? Math.round((catPointsEarned / catPointsMax) * 100)
-        : 100;
-
-    // Determine if this category passed (>=75%)
-    const catPassed = catScore >= 75;
-
+    const catScore = cpM > 0 ? Math.round((cpE / cpM) * 100) : 100;
     categories.push({
       name: cat.name,
       icon: cat.icon,
@@ -1056,20 +695,26 @@ export function scoreCompliance(scriptState, copilotEntries = []) {
       cmsRef: cat.cmsRef,
       weight: cat.weight,
       score: catScore,
-      passed: catPassed,
-      pointsEarned: Math.round(catPointsEarned * 100) / 100,
-      pointsMax: catPointsMax,
-      questions: questionResults,
+      passed: catScore >= 75,
+      pointsEarned: Math.round(cpE * 100) / 100,
+      pointsMax: cpM,
+      questions: qR,
     });
-
-    totalWeightedScore += (catScore / 100) * cat.weight;
-    totalWeight += cat.weight;
+    twS += (catScore / 100) * cat.weight;
+    tW += cat.weight;
   }
 
-  const overallScore =
-    totalWeight > 0 ? Math.round((totalWeightedScore / totalWeight) * 100) : 0;
-
+  const overallScore = tW > 0 ? Math.round((twS / tW) * 100) : 0;
   const categoriesPassed = categories.filter((c) => c.passed).length;
+  const tStats = analysis
+    ? {
+        intentsDetected: analysis.intentsDetected,
+        intentsTotal: analysis.intentsTotal,
+        coverage: analysis.coverage,
+        violations: analysis.violations,
+        sectionConfidence: getIntentConfidence(analysis),
+      }
+    : null;
 
   return {
     score: overallScore,
@@ -1077,8 +722,8 @@ export function scoreCompliance(scriptState, copilotEntries = []) {
     categories,
     categoriesPassed,
     totalCategories: categories.length,
-    totalPassed,
-    totalQuestions,
+    totalPassed: tP,
+    totalQuestions: tQ,
     flags: allFlags,
     summary: getSummary(
       overallScore,
@@ -1086,80 +731,124 @@ export function scoreCompliance(scriptState, copilotEntries = []) {
       categoriesPassed,
       categories.length
     ),
+    transcriptStats: tStats,
+    scoringMode: transcript ? "dual" : "gate_only",
   };
 }
 
 /* ═══════════════════════════════════════════════════════════════
-     LIVE SCORE — Lightweight version for real-time dashboard
-     Returns just the category scores and overall percentage
+     LIVE SCORE — Lightweight for real-time dashboard
      ═══════════════════════════════════════════════════════════════ */
-export function scoreLive(scriptState, copilotEntries = []) {
-  const result = scoreCompliance(scriptState, copilotEntries);
+
+export function scoreLive(scriptState, copilotEntries = [], transcript = "") {
+  const r = scoreCompliance(scriptState, copilotEntries, transcript);
   return {
-    score: result.score,
-    grade: result.grade,
-    categoriesPassed: result.categoriesPassed,
-    totalCategories: result.totalCategories,
-    categories: result.categories.map((c) => ({
+    score: r.score,
+    grade: r.grade,
+    categoriesPassed: r.categoriesPassed,
+    totalCategories: r.totalCategories,
+    categories: r.categories.map((c) => ({
       name: c.name,
       icon: c.icon,
       score: c.score,
       passed: c.passed,
     })),
+    scoringMode: r.scoringMode,
+    transcriptCoverage: r.transcriptStats?.coverage || 0,
+    violations: r.transcriptStats?.violations?.length || 0,
   };
 }
 
 /* ═══════════════════════════════════════════════════════════════
-     HELPERS
+     CONVERSELY-STYLE REPORT — For supervisors
      ═══════════════════════════════════════════════════════════════ */
 
-function getGrade(score) {
-  if (score >= 97) return "A+";
-  if (score >= 93) return "A";
-  if (score >= 90) return "A-";
-  if (score >= 87) return "B+";
-  if (score >= 83) return "B";
-  if (score >= 80) return "B-";
-  if (score >= 77) return "C+";
-  if (score >= 73) return "C";
-  if (score >= 70) return "C-";
-  if (score >= 60) return "D";
+export function getConverselyReport(
+  scriptState,
+  copilotEntries = [],
+  transcript = ""
+) {
+  const r = scoreCompliance(scriptState, copilotEntries, transcript);
+  const a = transcript ? analyzeTranscript(transcript) : null;
+  return {
+    overallScore: r.score,
+    grade: r.grade,
+    scoringMode: r.scoringMode,
+    categories: r.categories.map((cat) => ({
+      name: cat.name,
+      icon: cat.icon,
+      score: cat.score,
+      passed: cat.passed,
+      questions: cat.questions.map((q) => ({
+        question: q.question,
+        score: q.score,
+        evidence: q.evidence,
+        source: q.source,
+        transcriptConfidence: q.transcriptConfidence,
+      })),
+    })),
+    transcriptAnalysis: a
+      ? {
+          intentsDetected: a.intentsDetected,
+          intentsTotal: a.intentsTotal,
+          coverage: a.coverage,
+          violations: a.violations.map((v) => ({
+            section: v.section,
+            description: v.description,
+            evidence: v.evidence,
+            critical: v.critical,
+          })),
+          sectionConfidence: getIntentConfidence(a),
+        }
+      : null,
+    flags: r.flags,
+    summary: r.summary,
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+     GRADE + SUMMARY HELPERS
+     ═══════════════════════════════════════════════════════════════ */
+
+function getGrade(s) {
+  if (s >= 97) return "A+";
+  if (s >= 93) return "A";
+  if (s >= 90) return "A-";
+  if (s >= 87) return "B+";
+  if (s >= 83) return "B";
+  if (s >= 80) return "B-";
+  if (s >= 77) return "C+";
+  if (s >= 73) return "C";
+  if (s >= 70) return "C-";
+  if (s >= 60) return "D";
   return "F";
 }
 
 function getSummary(score, flags, catsPassed, totalCats) {
-  const highFlags = flags.filter((f) => f.severity === "high");
-  if (score >= 90) {
-    return `Excellent compliance — ${catsPassed} of ${totalCats} categories passed. All critical disclosures were completed and the enrollment followed CMS guidelines.`;
-  }
+  const hf = flags.filter((f) => f.severity === "high");
+  if (score >= 90)
+    return `Excellent compliance — ${catsPassed}/${totalCats} categories passed. All critical disclosures completed per CMS guidelines.`;
   if (score >= 75) {
-    if (highFlags.length > 0) {
-      return `Good overall compliance (${catsPassed}/${totalCats} categories), but ${
-        highFlags.length
-      } high-priority item(s) need attention: ${highFlags
+    if (hf.length > 0)
+      return `Good compliance (${catsPassed}/${totalCats}), but ${
+        hf.length
+      } high-priority item(s): ${hf
         .map((f) => f.question.split("?")[0])
         .slice(0, 3)
         .join("; ")}.`;
-    }
-    return `Good compliance — ${catsPassed} of ${totalCats} categories passed with minor areas for improvement.`;
+    return `Good compliance — ${catsPassed}/${totalCats} categories passed.`;
   }
-  if (score >= 50) {
-    return `Below-standard compliance — only ${catsPassed} of ${totalCats} categories passed. ${flags.length} item(s) flagged — review required.`;
-  }
-  return `Critical compliance failure — ${catsPassed} of ${totalCats} categories passed. ${flags.length} item(s) flagged — this enrollment may not meet CMS requirements.`;
+  if (score >= 50)
+    return `Below standard — ${catsPassed}/${totalCats} passed. ${flags.length} items flagged.`;
+  return `Critical failure — ${catsPassed}/${totalCats} passed. ${flags.length} items flagged — does not meet CMS requirements.`;
 }
 
-/** Group question results by category for PDF/display */
 export function groupByCategory(categories) {
-  // categories is already grouped — this is for backward compatibility
-  const groups = {};
-  for (const cat of categories) {
-    groups[cat.name] = cat.questions;
-  }
-  return groups;
+  const g = {};
+  for (const c of categories) g[c.name] = c.questions;
+  return g;
 }
 
-/** Get the CATEGORIES definition for external use (e.g., live dashboard) */
 export function getCategoryDefinitions() {
   return CATEGORIES.map((c) => ({
     name: c.name,

@@ -694,7 +694,7 @@ const LEVEL_STYLE = {
   },
 };
 
-const ScriptPrompter = memo(function ScriptPrompter() {
+const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
   const { activeSection } = useScript();
   const { logEntry } = useCopilotLog();
   const currentStep =
@@ -728,6 +728,10 @@ const ScriptPrompter = memo(function ScriptPrompter() {
   useEffect(() => {
     transcriptRef.current = transcript;
   }, [transcript]);
+
+  useEffect(() => {
+    if (onTranscriptChange) onTranscriptChange(transcript);
+  }, [transcript, onTranscriptChange]);
 
   /* ─── browser support ─── */
   const supportsRecognition =
