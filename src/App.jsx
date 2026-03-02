@@ -7,8 +7,9 @@ import SessionSummary from "./components/SessionSummary";
 import { ScriptProvider } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import "./styles.css";
+import { SignedIn, SignedOut, SignIn } from "@clerk/clerk-react";
 
-const LOGIN_DISABLED = import.meta.env.DEV;
+const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
 /* ─── ModeToggle ─────────────────────────────────────────────────────────── */
 function ModeToggle({ mode, onChange }) {
@@ -27,7 +28,6 @@ function ModeToggle({ mode, onChange }) {
         userSelect: "none",
       }}
     >
-      {/* MA label */}
       <span
         style={{
           fontSize: 11,
@@ -43,7 +43,6 @@ function ModeToggle({ mode, onChange }) {
         MA
       </span>
 
-      {/* Toggle pill */}
       <div
         onClick={() => onChange(isMS ? "ma" : "medsup")}
         role="switch"
@@ -87,7 +86,6 @@ function ModeToggle({ mode, onChange }) {
         />
       </div>
 
-      {/* MedSup label */}
       <span
         style={{
           fontSize: 11,
@@ -107,26 +105,24 @@ function ModeToggle({ mode, onChange }) {
   );
 }
 
-/* ─── App ────────────────────────────────────────────────────────────────── */
-export default function App() {
+/* ─── AppContent (the actual app) ────────────────────────────────────────── */
+function AppContent() {
   const [tab, setTab] = useState("script");
-  const [mode, setMode] = useState("ma"); // "ma" | "medsup"
+  const [mode, setMode] = useState("ma");
 
   return (
     <>
       <div className="viewport-bg" />
       <div className="app-shell">
         <div className="app">
-          {/* Header: true-centered logo + right-pinned mode toggle */}
           <div
             style={{
               position: "relative",
               width: "100%",
-              height: 86, // tweak if you want
+              height: 86,
               marginBottom: 4,
             }}
           >
-            {/* Centered logo (always dead center) */}
             <div
               style={{
                 position: "absolute",
@@ -136,7 +132,7 @@ export default function App() {
                 display: "flex",
                 justifyContent: "center",
                 pointerEvents: "none",
-                zIndex: 50, // <-- add this
+                zIndex: 50,
               }}
             >
               <EnrollGenLogo
@@ -146,7 +142,6 @@ export default function App() {
               />
             </div>
 
-            {/* Right-pinned toggle */}
             <div
               style={{
                 position: "absolute",
@@ -162,7 +157,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Mode badge */}
           <div
             style={{
               display: "flex",
@@ -197,7 +191,6 @@ export default function App() {
             </span>
           </div>
 
-          {/* Tabs */}
           <div className="tabs">
             <button
               className={tab === "script" ? "tab active" : "tab"}
@@ -213,7 +206,6 @@ export default function App() {
             </button>
           </div>
 
-          {/* ── MA Mode ── */}
           {mode === "ma" && (
             <ScriptProvider>
               {tab === "script" && (
@@ -228,7 +220,6 @@ export default function App() {
             </ScriptProvider>
           )}
 
-          {/* ── Med Sup Mode ── */}
           {mode === "medsup" && (
             <MedSupProvider>
               {tab === "script" && <MedSupFlow />}
@@ -239,6 +230,34 @@ export default function App() {
           )}
         </div>
       </div>
+    </>
+  );
+}
+
+/* ─── App (with Clerk gate) ──────────────────────────────────────────────── */
+export default function App() {
+  if (LOGIN_DISABLED) {
+    return <AppContent />;
+  }
+
+  return (
+    <>
+      <SignedOut>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "100vh",
+            background: "#0c1017",
+          }}
+        >
+          <SignIn />
+        </div>
+      </SignedOut>
+      <SignedIn>
+        <AppContent />
+      </SignedIn>
     </>
   );
 }

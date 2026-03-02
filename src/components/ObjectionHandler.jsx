@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
+import { fetchWithClerk } from "../lib/clerkFetch";
 
 const QUICK_OBJECTIONS = [
   { label: "Not interested", text: "I'm not interested" },
@@ -21,6 +23,7 @@ export default function ObjectionHandler() {
   const [history, setHistory] = useState([]);
   const inputRef = useRef(null);
   const { logEntry } = useCopilotLog();
+  const { getToken } = useAuth();
 
   const handleSubmit = async (objectionText) => {
     const text = objectionText || input.trim();
@@ -30,7 +33,7 @@ export default function ObjectionHandler() {
     setResponse(null);
 
     try {
-      const resp = await fetch("/.netlify/functions/coach", {
+      const resp = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

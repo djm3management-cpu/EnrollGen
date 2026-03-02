@@ -2,6 +2,7 @@
 // Queries your plan database (Supabase example below)
 
 import { createClient } from "@supabase/supabase-js";
+import { requireClerkAuth } from "./_clerkAuth.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -9,6 +10,11 @@ const supabase = createClient(
 );
 
 export default async (req) => {
+  const auth = await requireClerkAuth(req);
+  if (auth.response) {
+    return auth.response;
+  }
+
   const url = new URL(req.url);
   const zip = url.searchParams.get("zip");
 
@@ -43,6 +49,8 @@ export default async (req) => {
     .select("*")
     .eq("county_fips", zipData.county_fips)
     .order("premium", { ascending: true });
+
+  console.log("Authenticated Clerk user:", auth.userId, "zip:", zip);
 
   return new Response(
     JSON.stringify({

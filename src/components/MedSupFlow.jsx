@@ -1,9 +1,7 @@
 /**
- * MedSupFlow.jsx
+ * MedSupFlow.jsx — Clean Med Sup Script Flow
+ * No objections. No agent instructions. Just script + gates.
  * Drop into: src/components/MedSupFlow.jsx
- *
- * The Med Sup script flow — rendered when mode === "medsup" in App.jsx.
- * Uses its own MedSupContext for state. ScriptContext/ScriptFlow are untouched.
  */
 
 import { useState, useRef, useEffect } from "react";
@@ -11,74 +9,24 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMedSup } from "../context/MedSupContext";
 import { MEDSUP_SECTIONS } from "../context/MedSupScript";
 
-/* ─── helpers ─────────────────────────────────────────────────────────────── */
-function formatDuration(ms) {
-  const sec = Math.round(ms / 1000);
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}m ${s}s`;
+function fmt(ms) {
+  const s = Math.round(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-function useElapsed(start) {
-  const [elapsed, setElapsed] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setElapsed(Date.now() - start), 1000);
-    return () => clearInterval(id);
-  }, [start]);
-  return elapsed;
-}
-
-/* ─── ComplianceBadge ──────────────────────────────────────────────────────── */
-function ComplianceBadge() {
-  return (
-    <span
-      style={{
-        fontSize: 10,
-        fontFamily: "var(--font-mono)",
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        background: "rgba(248,113,113,0.12)",
-        border: "1px solid rgba(248,113,113,0.35)",
-        color: "#f87171",
-        borderRadius: 4,
-        padding: "2px 7px",
-        marginLeft: 8,
-      }}
-    >
-      COMPLIANCE
-    </span>
-  );
-}
-
-/* ─── ScriptLine ───────────────────────────────────────────────────────────── */
-function ScriptLine({ text }) {
+function Say({ text }) {
   return (
     <div
       style={{
-        position: "relative",
-        background: "rgba(56,189,248,0.03)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderLeft: "3px solid rgba(56,189,248,0.4)",
-        borderRadius: "0 10px 10px 0",
-        padding: "13px 16px 13px 18px",
+        borderLeft: "2px solid rgba(56,189,248,0.3)",
+        padding: "10px 16px",
         marginBottom: 8,
+        borderRadius: "0 6px 6px 0",
       }}
     >
       <div
         style={{
-          fontSize: 11,
-          fontFamily: "var(--font-mono)",
-          color: "rgba(56,189,248,0.6)",
-          letterSpacing: "0.1em",
-          marginBottom: 5,
-        }}
-      >
-        AGENT SAYS
-      </div>
-      <div
-        style={{
-          color: "#c8d8f0",
+          color: "#c0d0e4",
           fontSize: 14,
           lineHeight: 1.65,
           fontStyle: "italic",
@@ -90,90 +38,54 @@ function ScriptLine({ text }) {
   );
 }
 
-/* ─── AgentNote ────────────────────────────────────────────────────────────── */
-function AgentNote({ text }) {
+function Gate({ label, done, onDo, onUndo }) {
   return (
     <div
       style={{
-        display: "flex",
-        gap: 8,
-        background: "rgba(255,255,255,0.015)",
-        border: "1px solid rgba(255,255,255,0.05)",
-        borderRadius: 8,
-        padding: "9px 13px",
-        marginBottom: 6,
-      }}
-    >
-      <span style={{ fontSize: 12, opacity: 0.5, flexShrink: 0 }}>⚑</span>
-      <span
-        style={{
-          fontSize: 12.5,
-          color: "var(--text-muted)",
-          lineHeight: 1.5,
-          fontStyle: "italic",
-        }}
-      >
-        {text}
-      </span>
-    </div>
-  );
-}
-
-/* ─── SectionGate ──────────────────────────────────────────────────────────── */
-function SectionGate({ label, completed, onComplete, onUndo }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
         marginTop: 16,
         paddingTop: 14,
-        borderTop: "1px solid rgba(255,255,255,0.06)",
+        borderTop: "1px solid rgba(255,255,255,0.04)",
       }}
     >
-      {completed ? (
-        <>
-          <span style={{ color: "var(--text-success)", fontSize: 13 }}>
-            ✅ {label}
-          </span>
+      {done ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span style={{ color: "#34d399", fontSize: 13 }}>✓ {label}</span>
           <button
             onClick={onUndo}
             style={{
-              marginLeft: "auto",
               fontSize: 11,
-              fontFamily: "var(--font-mono)",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: 6,
-              color: "var(--text-muted)",
+              color: "#4a5568",
               padding: "4px 10px",
               cursor: "pointer",
+              fontFamily: "inherit",
             }}
           >
-            ↩ Undo
+            ↩
           </button>
-        </>
+        </div>
       ) : (
         <button
-          onClick={onComplete}
+          onClick={onDo}
           style={{
-            background: "rgba(56,189,248,0.1)",
-            border: "1px solid rgba(56,189,248,0.3)",
+            width: "100%",
+            padding: "10px 16px",
             borderRadius: 8,
-            color: "var(--accent-cyan)",
-            padding: "9px 20px",
+            border: "1px solid rgba(56,189,248,0.25)",
+            background: "rgba(56,189,248,0.06)",
+            color: "#38bdf8",
             fontSize: 13,
             fontWeight: 600,
             cursor: "pointer",
-            width: "100%",
-            transition: "all 0.15s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = "rgba(56,189,248,0.18)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = "rgba(56,189,248,0.1)";
+            fontFamily: "inherit",
           }}
         >
           ✓ {label}
@@ -183,1020 +95,610 @@ function SectionGate({ label, completed, onComplete, onUndo }) {
   );
 }
 
-/* ─── CollapsibleMedSupSection ─────────────────────────────────────────────── */
-function CollapsibleMedSupSection({
-  sectionNum,
-  label,
-  isCompleted,
-  isActive,
-  duration,
-  children,
-}) {
-  if (!isCompleted || isActive) return children;
-
-  return (
-    <details className="completed-section">
-      <summary className="completed-section-summary">
-        <span className="completed-check">✅</span>
-        <span className="completed-label">{label}</span>
-        {duration && (
-          <span className="completed-time">{formatDuration(duration)}</span>
-        )}
-      </summary>
-      <div className="completed-section-body">{children}</div>
-    </details>
-  );
-}
-
-/* ─── Section 1 — Recording ────────────────────────────────────────────────── */
-function MedSupSectionRecording() {
-  const { state, dispatch, activeSection } = useMedSup();
-  const isActive = activeSection === 1;
-  const sec = MEDSUP_SECTIONS[0];
-
-  return (
-    <CollapsibleMedSupSection
-      sectionNum={1}
-      label="Recording Disclosure"
-      isCompleted={state.recordingOk}
-      isActive={isActive}
-      duration={
-        state.sectionTimestamps[1]
-          ? state.sectionTimestamps[1].end - state.sectionTimestamps[1].start
-          : null
-      }
-    >
-      <section
-        className={`card ${isActive ? "active-card" : ""}`}
-        style={isActive ? { borderColor: "var(--border-active)" } : {}}
-      >
-        <div
+function Card({ num, title, red, active, done, dur, children }) {
+  if (done && !active) {
+    return (
+      <details style={{ marginBottom: 10 }}>
+        <summary
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
-            marginBottom: 16,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--accent-cyan)",
-              background: "rgba(56,189,248,0.08)",
-              border: "1px solid rgba(56,189,248,0.2)",
-              borderRadius: 4,
-              padding: "3px 8px",
-            }}
-          >
-            01
-          </span>
-          <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-            Recording Disclosure
-          </h3>
-        </div>
-
-        {sec.script.map((line, i) => (
-          <ScriptLine key={i} text={line} />
-        ))}
-        {sec.notes.map((note, i) => (
-          <AgentNote key={i} text={note} />
-        ))}
-
-        <SectionGate
-          label="Recording consent confirmed"
-          completed={state.recordingOk}
-          onComplete={() => {
-            dispatch({ type: "START_SECTION", sectionNum: 1 });
-            dispatch({
-              type: "COMPLETE_SECTION",
-              key: "recordingOk",
-              sectionNum: 1,
-            });
-          }}
-          onUndo={() =>
-            dispatch({ type: "UNCOMPLETE_SECTION", key: "recordingOk" })
-          }
-        />
-      </section>
-    </CollapsibleMedSupSection>
-  );
-}
-
-/* ─── Section 2 — TPMO ─────────────────────────────────────────────────────── */
-function MedSupSectionTPMO() {
-  const { state, dispatch, activeSection } = useMedSup();
-  const isActive = activeSection === 2;
-
-  return (
-    <CollapsibleMedSupSection
-      sectionNum={2}
-      label="TPMO Disclosure"
-      isCompleted={state.tpmoOk}
-      isActive={isActive}
-      duration={
-        state.sectionTimestamps[2]
-          ? state.sectionTimestamps[2].end - state.sectionTimestamps[2].start
-          : null
-      }
-    >
-      <section
-        className={`card ${isActive ? "active-card" : ""}`}
-        style={isActive ? { borderColor: "rgba(248,113,113,0.4)" } : {}}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 12,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "#f87171",
-              background: "rgba(248,113,113,0.08)",
-              border: "1px solid rgba(248,113,113,0.25)",
-              borderRadius: 4,
-              padding: "3px 8px",
-            }}
-          >
-            02
-          </span>
-          <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-            TPMO Disclosure
-          </h3>
-          <ComplianceBadge />
-        </div>
-
-        <div
-          style={{
-            background: "rgba(248,113,113,0.06)",
-            border: "1px solid rgba(248,113,113,0.2)",
-            borderRadius: 8,
+            gap: 8,
             padding: "10px 14px",
-            marginBottom: 12,
-            fontSize: 12,
-            color: "#f87171",
-            fontFamily: "var(--font-mono)",
-            letterSpacing: "0.05em",
+            background: "rgba(52,211,153,0.03)",
+            border: "1px solid rgba(52,211,153,0.1)",
+            borderRadius: 10,
+            cursor: "pointer",
+            listStyle: "none",
+            fontSize: 13,
+            color: "#6b7a8d",
           }}
         >
-          🔴 READ VERBATIM — Do not paraphrase, summarize, or skip
-        </div>
-
-        <ScriptLine text="We do not offer every plan available in your area. Any information we provide is limited to those plans we do offer. Please contact Medicare.gov or 1-800-MEDICARE to get information on all of your options." />
-        <AgentNote text="Log 'TPMO delivered' in CRM immediately after reading." />
-
-        <SectionGate
-          label="TPMO delivered verbatim"
-          completed={state.tpmoOk}
-          onComplete={() => {
-            dispatch({ type: "START_SECTION", sectionNum: 2 });
-            dispatch({
-              type: "COMPLETE_SECTION",
-              key: "tpmoOk",
-              sectionNum: 2,
-            });
-          }}
-          onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "tpmoOk" })}
-        />
-      </section>
-    </CollapsibleMedSupSection>
-  );
-}
-
-/* ─── Section 3 — Qualification ────────────────────────────────────────────── */
-function MedSupSectionQual() {
-  const { state, dispatch, activeSection } = useMedSup();
-  const isActive = activeSection === 3;
-  const sec = MEDSUP_SECTIONS[2];
-
-  return (
-    <CollapsibleMedSupSection
-      sectionNum={3}
-      label="Qualification"
-      isCompleted={state.qualOk}
-      isActive={isActive}
-      duration={
-        state.sectionTimestamps[3]
-          ? state.sectionTimestamps[3].end - state.sectionTimestamps[3].start
-          : null
-      }
-    >
-      <section
-        className={`card ${isActive ? "active-card" : ""}`}
-        style={isActive ? { borderColor: "var(--border-active)" } : {}}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 16,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--accent-cyan)",
-              background: "rgba(56,189,248,0.08)",
-              border: "1px solid rgba(56,189,248,0.2)",
-              borderRadius: 4,
-              padding: "3px 8px",
-            }}
-          >
-            03
-          </span>
-          <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-            Qualification
-          </h3>
-          <span
-            style={{
-              fontSize: 11,
-              fontFamily: "var(--font-mono)",
-              color: "var(--text-muted)",
-              marginLeft: "auto",
-            }}
-          >
-            3 questions · ~90 sec
-          </span>
-        </div>
-
-        <div
-          style={{
-            background: "rgba(251,191,36,0.06)",
-            border: "1px solid rgba(251,191,36,0.2)",
-            borderRadius: 8,
-            padding: "10px 14px",
-            marginBottom: 14,
-            fontSize: 12.5,
-            color: "#fbbf24",
-          }}
-        >
-          ⚠ Do not skip — qualifies enrollment eligibility for every caller
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {[
-            { label: "Q1 — Age / Medicare Status", idx: 1 },
-            { label: "Q2 — State of Residence", idx: 2 },
-            { label: "Q3 — Current Coverage Type", idx: 3 },
-          ].map(({ label, idx }) => (
-            <div key={idx}>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontFamily: "var(--font-mono)",
-                  color: "var(--accent-cyan)",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  marginBottom: 6,
-                }}
-              >
-                {label}
-              </div>
-              <ScriptLine text={sec.script[idx]} />
-              <AgentNote text={sec.notes[idx - 1]} />
-            </div>
-          ))}
-        </div>
-
-        <ScriptLine text={sec.script[4]} />
-
-        <SectionGate
-          label="Caller qualified — Part A+B confirmed, state confirmed, coverage type known"
-          completed={state.qualOk}
-          onComplete={() => {
-            dispatch({ type: "START_SECTION", sectionNum: 3 });
-            dispatch({
-              type: "COMPLETE_SECTION",
-              key: "qualOk",
-              sectionNum: 3,
-            });
-          }}
-          onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "qualOk" })}
-        />
-      </section>
-    </CollapsibleMedSupSection>
-  );
-}
-
-/* ─── Section 4 — Branch ────────────────────────────────────────────────────── */
-function MedSupSectionBranch() {
-  const { state, dispatch, activeSection } = useMedSup();
-  const isActive = activeSection === 4;
-  const sec = MEDSUP_SECTIONS[3];
-  const [activeBranchId, setActiveBranchId] = useState(
-    state.selectedBranch || null
-  );
-
-  const activeBranch = sec.branches.find((b) => b.id === activeBranchId);
-
-  const selectBranch = (id) => {
-    setActiveBranchId(id);
-    dispatch({ type: "SELECT_BRANCH", branch: id });
-  };
-
-  return (
-    <CollapsibleMedSupSection
-      sectionNum={4}
-      label={
-        activeBranch
-          ? `Branch: ${activeBranch.label}`
-          : "Branch: Needs Discovery"
-      }
-      isCompleted={state.branchOk}
-      isActive={isActive}
-      duration={
-        state.sectionTimestamps[4]
-          ? state.sectionTimestamps[4].end - state.sectionTimestamps[4].start
-          : null
-      }
-    >
-      <section
-        className={`card ${isActive ? "active-card" : ""}`}
-        style={
-          isActive
-            ? {
-                borderColor: activeBranch
-                  ? `${activeBranch.color}55`
-                  : "var(--border-active)",
-              }
-            : {}
-        }
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 16,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: activeBranch ? activeBranch.color : "var(--accent-cyan)",
-              background: activeBranch
-                ? `${activeBranch.color}14`
-                : "rgba(56,189,248,0.08)",
-              border: `1px solid ${
-                activeBranch
-                  ? activeBranch.color + "33"
-                  : "rgba(56,189,248,0.2)"
-              }`,
-              borderRadius: 4,
-              padding: "3px 8px",
-              transition: "all 0.25s ease",
-            }}
-          >
-            04
-          </span>
-          <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-            Needs Discovery
-          </h3>
-          <span
-            style={{
-              fontSize: 11,
-              fontFamily: "var(--font-mono)",
-              color: "var(--text-muted)",
-              marginLeft: "auto",
-            }}
-          >
-            Select caller&apos;s branch
-          </span>
-        </div>
-
-        {/* Branch selector */}
-        {!activeBranch && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr",
-              gap: 8,
-              marginBottom: 16,
-            }}
-          >
-            {sec.branches.map((branch) => (
-              <button
-                key={branch.id}
-                onClick={() => selectBranch(branch.id)}
-                style={{
-                  background: `${branch.color}0a`,
-                  border: `1px solid ${branch.color}33`,
-                  borderLeft: `4px solid ${branch.color}`,
-                  borderRadius: 10,
-                  padding: "14px 16px",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  transition: "all 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = `${branch.color}18`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = `${branch.color}0a`;
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: branch.color,
-                    marginBottom: 4,
-                  }}
-                >
-                  {branch.label}
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-muted)",
-                    fontStyle: "italic",
-                  }}
-                >
-                  {branch.trigger}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Active branch content */}
-        {activeBranch && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeBranch.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+          <span style={{ color: "#34d399" }}>✓</span>
+          <span style={{ flex: 1 }}>{title}</span>
+          {dur && (
+            <span
+              style={{
+                fontSize: 11,
+                color: "#4a5568",
+                fontVariantNumeric: "tabular-nums",
+              }}
             >
-              {/* Branch header */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 14,
-                  padding: "10px 14px",
-                  background: `${activeBranch.color}0a`,
-                  border: `1px solid ${activeBranch.color}33`,
-                  borderRadius: 8,
-                }}
-              >
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: activeBranch.color,
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: activeBranch.color,
-                  }}
-                >
-                  {activeBranch.label}
-                </span>
-                {activeBranch.compliance && <ComplianceBadge />}
-                <button
-                  onClick={() => {
-                    setActiveBranchId(null);
-                    dispatch({ type: "SELECT_BRANCH", branch: null });
-                  }}
-                  style={{
-                    marginLeft: "auto",
-                    fontSize: 11,
-                    fontFamily: "var(--font-mono)",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 6,
-                    color: "var(--text-muted)",
-                    padding: "3px 9px",
-                    cursor: "pointer",
-                  }}
-                >
-                  ← Change
-                </button>
-              </div>
-
-              {activeBranch.script.map((line, i) => (
-                <ScriptLine key={i} text={line} />
-              ))}
-
-              {activeBranch.notes.map((note, i) => (
-                <AgentNote key={i} text={note} />
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        )}
-
-        <SectionGate
-          label="Branch completed — plan identified, quote given"
-          completed={state.branchOk}
-          onComplete={() => {
-            dispatch({ type: "START_SECTION", sectionNum: 4 });
-            dispatch({
-              type: "COMPLETE_SECTION",
-              key: "branchOk",
-              sectionNum: 4,
-            });
-          }}
-          onUndo={() =>
-            dispatch({ type: "UNCOMPLETE_SECTION", key: "branchOk" })
-          }
-        />
-      </section>
-    </CollapsibleMedSupSection>
-  );
-}
-
-/* ─── Section 5 — Objections (collapsible reference) ───────────────────────── */
-function MedSupSectionObjections() {
-  const sec = MEDSUP_SECTIONS[4];
-  const [open, setOpen] = useState(null);
-
+              {fmt(dur)}
+            </span>
+          )}
+        </summary>
+        <div style={{ paddingTop: 6 }}>{children}</div>
+      </details>
+    );
+  }
   return (
-    <section className="card" style={{ opacity: 0.9 }}>
+    <section
+      className={active ? "active-card" : ""}
+      style={{
+        background: active
+          ? "rgba(56,189,248,0.04)"
+          : "rgba(255,255,255,0.018)",
+        border: `1px solid ${
+          active ? "rgba(56,189,248,0.3)" : "rgba(255,255,255,0.05)"
+        }`,
+        borderRadius: 10,
+        padding: "20px 18px",
+        marginBottom: 10,
+      }}
+    >
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          marginBottom: 14,
+          gap: 8,
+          marginBottom: 16,
         }}
       >
         <span
           style={{
-            fontFamily: "var(--font-mono)",
             fontSize: 11,
-            color: "#fbbf24",
-            background: "rgba(251,191,36,0.08)",
-            border: "1px solid rgba(251,191,36,0.2)",
-            borderRadius: 4,
+            fontWeight: 700,
+            color: red ? "#f87171" : active ? "#38bdf8" : "#4a5568",
+            background: red
+              ? "rgba(248,113,113,0.08)"
+              : active
+              ? "rgba(56,189,248,0.08)"
+              : "rgba(255,255,255,0.03)",
+            border: `1px solid ${
+              red
+                ? "rgba(248,113,113,0.2)"
+                : active
+                ? "rgba(56,189,248,0.15)"
+                : "rgba(255,255,255,0.05)"
+            }`,
+            borderRadius: 5,
             padding: "3px 8px",
+            fontVariantNumeric: "tabular-nums",
           }}
         >
-          05
+          {String(num).padStart(2, "0")}
         </span>
-        <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-          Objection Handling
-        </h3>
-        <span
-          style={{
-            fontSize: 11,
-            fontFamily: "var(--font-mono)",
-            color: "var(--text-muted)",
-            marginLeft: "auto",
-          }}
-        >
-          Optional — use as needed
+        <span style={{ fontSize: 15, fontWeight: 600, color: "#dfe6f0" }}>
+          {title}
         </span>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {sec.objections.map((obj, i) => (
-          <div
-            key={i}
+        {red && (
+          <span
             style={{
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: 8,
-              overflow: "hidden",
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              background: "rgba(248,113,113,0.1)",
+              border: "1px solid rgba(248,113,113,0.25)",
+              color: "#f87171",
+              borderRadius: 4,
+              padding: "2px 7px",
+              marginLeft: "auto",
+              textTransform: "uppercase",
             }}
           >
-            <button
-              onClick={() => setOpen(open === i ? null : i)}
-              style={{
-                width: "100%",
-                background: "none",
-                border: "none",
-                padding: "11px 14px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                textAlign: "left",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 10,
-                  fontFamily: "var(--font-mono)",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  color: "#f87171",
-                  background: "rgba(248,113,113,0.08)",
-                  border: "1px solid rgba(248,113,113,0.2)",
-                  borderRadius: 3,
-                  padding: "2px 6px",
-                  flexShrink: 0,
-                }}
-              >
-                OBJECTION
-              </span>
-              <span
-                style={{
-                  fontSize: 13.5,
-                  color: "var(--text-primary)",
-                  fontWeight: 500,
-                  flex: 1,
-                }}
-              >
-                &ldquo;{obj.trigger}&rdquo;
-              </span>
-              <span
-                style={{
-                  color: "var(--text-muted)",
-                  fontSize: 12,
-                  transform: open === i ? "rotate(180deg)" : "none",
-                  transition: "transform 0.2s",
-                }}
-              >
-                ▾
-              </span>
-            </button>
-
-            {open === i && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                style={{ padding: "0 14px 14px" }}
-              >
-                <ScriptLine text={obj.response} />
-                {obj.tip && <AgentNote text={obj.tip} />}
-              </motion.div>
-            )}
-          </div>
-        ))}
+            Compliance
+          </span>
+        )}
       </div>
+      {children}
     </section>
   );
 }
 
-/* ─── Section 6 — Close & Enrollment ───────────────────────────────────────── */
-function MedSupSectionEnroll() {
+function S1() {
   const { state, dispatch, activeSection } = useMedSup();
-  const isActive = activeSection === 6;
-  const sec = MEDSUP_SECTIONS[5];
-  const [closeMode, setCloseMode] = useState("enroll"); // "enroll" | "followup"
-
+  const sec = MEDSUP_SECTIONS[0];
+  const d = state.sectionTimestamps[1];
   return (
-    <CollapsibleMedSupSection
-      sectionNum={6}
-      label="Close & Enrollment"
-      isCompleted={state.enrollOk}
-      isActive={isActive}
-      duration={
-        state.sectionTimestamps[6]
-          ? state.sectionTimestamps[6].end - state.sectionTimestamps[6].start
-          : null
-      }
+    <Card
+      num={1}
+      title="Recording Disclosure"
+      active={activeSection === 1}
+      done={state.recordingOk}
+      dur={d ? d.end - d.start : null}
     >
-      <section
-        className={`card ${isActive ? "active-card" : ""}`}
-        style={isActive ? { borderColor: "rgba(52,211,153,0.3)" } : {}}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 16,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "#34d399",
-              background: "rgba(52,211,153,0.08)",
-              border: "1px solid rgba(52,211,153,0.2)",
-              borderRadius: 4,
-              padding: "3px 8px",
-            }}
-          >
-            06
-          </span>
-          <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-            Close &amp; Enrollment
-          </h3>
-        </div>
-
-        {/* Close mode toggle */}
-        <div
-          style={{
-            display: "flex",
-            gap: 6,
-            marginBottom: 16,
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 8,
-            padding: 4,
-          }}
-        >
-          {[
-            { id: "enroll", label: "Enrolling Now" },
-            { id: "followup", label: "Follow-Up Needed" },
-          ].map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => setCloseMode(id)}
-              style={{
-                flex: 1,
-                padding: "7px 12px",
-                borderRadius: 6,
-                border: "none",
-                cursor: "pointer",
-                fontSize: 12.5,
-                fontWeight: 600,
-                transition: "all 0.15s ease",
-                background:
-                  closeMode === id
-                    ? id === "enroll"
-                      ? "rgba(52,211,153,0.15)"
-                      : "rgba(251,191,36,0.12)"
-                    : "transparent",
-                color:
-                  closeMode === id
-                    ? id === "enroll"
-                      ? "#34d399"
-                      : "#fbbf24"
-                    : "var(--text-muted)",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {closeMode === "enroll"
-          ? sec.script.map((line, i) => <ScriptLine key={i} text={line} />)
-          : sec.followUpScript.map((line, i) => (
-              <ScriptLine key={i} text={line} />
-            ))}
-
-        {sec.notes.map((note, i) => (
-          <AgentNote key={i} text={note} />
-        ))}
-
-        {/* CRM Checklist */}
-        <div
-          style={{
-            marginTop: 16,
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 10,
-            padding: "14px 16px",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 11,
-              fontFamily: "var(--font-mono)",
-              color: "var(--text-muted)",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              marginBottom: 10,
-            }}
-          >
-            CRM Log Checklist — complete within 5 min
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            {sec.crmChecklist.map((item) => {
-              const checked = state.crmChecked.includes(item);
-              return (
-                <label
-                  key={item}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 10,
-                    cursor: "pointer",
-                    fontSize: 13,
-                    color: checked
-                      ? "var(--text-muted)"
-                      : "var(--text-secondary)",
-                    textDecoration: checked ? "line-through" : "none",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => dispatch({ type: "TOGGLE_CRM_ITEM", item })}
-                    style={{ marginTop: 2, accentColor: "var(--accent-cyan)" }}
-                  />
-                  {item}
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        <SectionGate
-          label="Enrolled or follow-up scheduled and logged"
-          completed={state.enrollOk}
-          onComplete={() => {
-            dispatch({ type: "START_SECTION", sectionNum: 6 });
-            dispatch({
-              type: "COMPLETE_SECTION",
-              key: "enrollOk",
-              sectionNum: 6,
-            });
-          }}
-          onUndo={() =>
-            dispatch({ type: "UNCOMPLETE_SECTION", key: "enrollOk" })
-          }
-        />
-      </section>
-    </CollapsibleMedSupSection>
+      {sec.script.map((l, i) => (
+        <Say key={i} text={l} />
+      ))}
+      <Gate
+        label="Consent confirmed"
+        done={state.recordingOk}
+        onDo={() => {
+          dispatch({ type: "START_SECTION", sectionNum: 1 });
+          dispatch({
+            type: "COMPLETE_SECTION",
+            key: "recordingOk",
+            sectionNum: 1,
+          });
+        }}
+        onUndo={() =>
+          dispatch({ type: "UNCOMPLETE_SECTION", key: "recordingOk" })
+        }
+      />
+    </Card>
   );
 }
 
-/* ─── Section 7 — Wrap-Up ───────────────────────────────────────────────────── */
-function MedSupSectionWrapUp() {
+function S2() {
   const { state, dispatch, activeSection } = useMedSup();
-  const isActive = activeSection === 7;
-  const sec = MEDSUP_SECTIONS[6];
-
+  const d = state.sectionTimestamps[2];
   return (
-    <section
-      className={`card ${isActive ? "active-card" : ""}`}
-      style={
-        isActive
-          ? { borderColor: "rgba(248,113,113,0.4)" }
-          : { opacity: state.wrapOk ? 0.7 : 1 }
-      }
+    <Card
+      num={2}
+      title="TPMO Disclosure"
+      red
+      active={activeSection === 2}
+      done={state.tpmoOk}
+      dur={d ? d.end - d.start : null}
+    >
+      <div
+        style={{
+          background: "rgba(248,113,113,0.06)",
+          border: "1px solid rgba(248,113,113,0.15)",
+          borderRadius: 6,
+          padding: "8px 12px",
+          marginBottom: 12,
+          fontSize: 12,
+          color: "#f87171",
+        }}
+      >
+        Read verbatim — do not paraphrase
+      </div>
+      <Say text="We do not offer every plan available in your area. Any information we provide is limited to those plans we do offer. Please contact Medicare.gov or 1-800-MEDICARE to get information on all of your options." />
+      <Gate
+        label="TPMO delivered"
+        done={state.tpmoOk}
+        onDo={() => {
+          dispatch({ type: "START_SECTION", sectionNum: 2 });
+          dispatch({ type: "COMPLETE_SECTION", key: "tpmoOk", sectionNum: 2 });
+        }}
+        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "tpmoOk" })}
+      />
+    </Card>
+  );
+}
+
+function S3() {
+  const { state, dispatch, activeSection } = useMedSup();
+  const sec = MEDSUP_SECTIONS[2];
+  const d = state.sectionTimestamps[3];
+  return (
+    <Card
+      num={3}
+      title="Qualification"
+      active={activeSection === 3}
+      done={state.qualOk}
+      dur={d ? d.end - d.start : null}
+    >
+      {[1, 2, 3].map((idx) => (
+        <div key={idx} style={{ marginBottom: 10 }}>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: "#38bdf8",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              marginBottom: 4,
+              opacity: 0.6,
+            }}
+          >
+            Q{idx}
+          </div>
+          <Say text={sec.script[idx]} />
+        </div>
+      ))}
+      <Say text={sec.script[4]} />
+      <Gate
+        label="Caller qualified"
+        done={state.qualOk}
+        onDo={() => {
+          dispatch({ type: "START_SECTION", sectionNum: 3 });
+          dispatch({ type: "COMPLETE_SECTION", key: "qualOk", sectionNum: 3 });
+        }}
+        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "qualOk" })}
+      />
+    </Card>
+  );
+}
+
+function S4() {
+  const { state, dispatch, activeSection } = useMedSup();
+  const sec = MEDSUP_SECTIONS[3];
+  const [bid, setBid] = useState(state.selectedBranch || null);
+  const branch = sec.branches.find((b) => b.id === bid);
+  const d = state.sectionTimestamps[4];
+  return (
+    <Card
+      num={4}
+      title={branch ? branch.label : "Needs Discovery"}
+      active={activeSection === 4}
+      done={state.branchOk}
+      dur={d ? d.end - d.start : null}
+      red={branch?.compliance}
+    >
+      {!branch && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {sec.branches.map((b) => (
+            <button
+              key={b.id}
+              onClick={() => {
+                setBid(b.id);
+                dispatch({ type: "SELECT_BRANCH", branch: b.id });
+              }}
+              style={{
+                background: `${b.color}06`,
+                border: `1px solid ${b.color}20`,
+                borderLeft: `3px solid ${b.color}`,
+                borderRadius: 8,
+                padding: "12px 14px",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 600, color: b.color }}>
+                {b.label}
+              </div>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#6b7a8d",
+                  fontStyle: "italic",
+                  marginTop: 2,
+                }}
+              >
+                {b.trigger}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      {branch && (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={branch.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.15 }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 12,
+                padding: "8px 12px",
+                background: `${branch.color}08`,
+                border: `1px solid ${branch.color}18`,
+                borderRadius: 6,
+              }}
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: branch.color,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: branch.color,
+                  flex: 1,
+                }}
+              >
+                {branch.label}
+              </span>
+              <button
+                onClick={() => {
+                  setBid(null);
+                  dispatch({ type: "SELECT_BRANCH", branch: null });
+                }}
+                style={{
+                  fontSize: 11,
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 5,
+                  color: "#4a5568",
+                  padding: "3px 8px",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                Change
+              </button>
+            </div>
+            {branch.script.map((l, i) => (
+              <Say key={i} text={l} />
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      )}
+      <Gate
+        label="Branch completed"
+        done={state.branchOk}
+        onDo={() => {
+          dispatch({ type: "START_SECTION", sectionNum: 4 });
+          dispatch({
+            type: "COMPLETE_SECTION",
+            key: "branchOk",
+            sectionNum: 4,
+          });
+        }}
+        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "branchOk" })}
+      />
+    </Card>
+  );
+}
+
+function S6() {
+  const { state, dispatch, activeSection } = useMedSup();
+  const sec = MEDSUP_SECTIONS[5];
+  const [mode, setMode] = useState("enroll");
+  const d = state.sectionTimestamps[6];
+  return (
+    <Card
+      num={5}
+      title="Close & Enrollment"
+      active={activeSection === 6}
+      done={state.enrollOk}
+      dur={d ? d.end - d.start : null}
     >
       <div
         style={{
           display: "flex",
-          alignItems: "center",
-          gap: 10,
-          marginBottom: 12,
+          gap: 3,
+          marginBottom: 14,
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.04)",
+          borderRadius: 6,
+          padding: 3,
         }}
       >
-        <span
+        {[
+          { id: "enroll", label: "Enrolling", c: "#34d399" },
+          { id: "followup", label: "Follow-Up", c: "#fbbf24" },
+        ].map(({ id, label, c }) => (
+          <button
+            key={id}
+            onClick={() => setMode(id)}
+            style={{
+              flex: 1,
+              padding: "7px 12px",
+              borderRadius: 5,
+              border: "none",
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: "inherit",
+              background: mode === id ? `${c}12` : "transparent",
+              color: mode === id ? c : "#4a5568",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {(mode === "enroll" ? sec.script : sec.followUpScript).map((l, i) => (
+        <Say key={i} text={l} />
+      ))}
+      <div
+        style={{
+          marginTop: 14,
+          background: "rgba(255,255,255,0.012)",
+          border: "1px solid rgba(255,255,255,0.04)",
+          borderRadius: 8,
+          padding: "12px 14px",
+        }}
+      >
+        <div
           style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 11,
-            color: "#f87171",
-            background: "rgba(248,113,113,0.08)",
-            border: "1px solid rgba(248,113,113,0.25)",
-            borderRadius: 4,
-            padding: "3px 8px",
+            fontSize: 10,
+            fontWeight: 600,
+            color: "#4a5568",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            marginBottom: 8,
           }}
         >
-          07
-        </span>
-        <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-          Compliance Wrap-Up
-        </h3>
-        <ComplianceBadge />
+          CRM Log
+        </div>
+        {sec.crmChecklist.map((item) => {
+          const on = state.crmChecked.includes(item);
+          return (
+            <label
+              key={item}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 8,
+                cursor: "pointer",
+                fontSize: 13,
+                color: on ? "#4a5568" : "#6b7a8d",
+                textDecoration: on ? "line-through" : "none",
+                marginBottom: 4,
+                lineHeight: 1.5,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={on}
+                onChange={() => dispatch({ type: "TOGGLE_CRM_ITEM", item })}
+                style={{ marginTop: 3, accentColor: "#38bdf8" }}
+              />
+              {item}
+            </label>
+          );
+        })}
       </div>
+      <Gate
+        label="Enrolled or follow-up logged"
+        done={state.enrollOk}
+        onDo={() => {
+          dispatch({ type: "START_SECTION", sectionNum: 6 });
+          dispatch({
+            type: "COMPLETE_SECTION",
+            key: "enrollOk",
+            sectionNum: 6,
+          });
+        }}
+        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "enrollOk" })}
+      />
+    </Card>
+  );
+}
 
+function S7() {
+  const { state, dispatch, activeSection } = useMedSup();
+  const sec = MEDSUP_SECTIONS[6];
+  return (
+    <Card
+      num={6}
+      title="Compliance Wrap-Up"
+      red
+      active={activeSection === 7}
+      done={state.wrapOk}
+    >
       <div
         style={{
           background: "rgba(248,113,113,0.06)",
-          border: "1px solid rgba(248,113,113,0.2)",
-          borderRadius: 8,
-          padding: "10px 14px",
+          border: "1px solid rgba(248,113,113,0.15)",
+          borderRadius: 6,
+          padding: "8px 12px",
           marginBottom: 12,
           fontSize: 12,
           color: "#f87171",
-          fontFamily: "var(--font-mono)",
         }}
       >
-        🔴 MANDATORY on every call — TPMO must be re-delivered verbatim
+        Re-deliver TPMO verbatim before ending call
       </div>
-
-      {sec.script.map((line, i) => (
-        <ScriptLine key={i} text={line} />
+      {sec.script.map((l, i) => (
+        <Say key={i} text={l} />
       ))}
-      {sec.notes.map((note, i) => (
-        <AgentNote key={i} text={note} />
-      ))}
-
-      <SectionGate
-        label="Wrap-up complete, TPMO re-delivered"
-        completed={state.wrapOk}
-        onComplete={() => {
+      <Gate
+        label="Wrap-up complete"
+        done={state.wrapOk}
+        onDo={() => {
           dispatch({ type: "START_SECTION", sectionNum: 7 });
           dispatch({ type: "COMPLETE_SECTION", key: "wrapOk", sectionNum: 7 });
         }}
         onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "wrapOk" })}
       />
-
       {state.wrapOk && (
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           style={{
-            marginTop: 16,
+            marginTop: 18,
             textAlign: "center",
             padding: "20px",
-            background: "rgba(52,211,153,0.06)",
-            border: "1px solid rgba(52,211,153,0.2)",
-            borderRadius: 12,
+            background: "rgba(52,211,153,0.04)",
+            border: "1px solid rgba(52,211,153,0.12)",
+            borderRadius: 10,
           }}
         >
-          <div style={{ fontSize: 28, marginBottom: 6 }}>✅</div>
+          <div style={{ fontSize: 24, marginBottom: 6 }}>✓</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: "#34d399" }}>
             Call Complete
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: "var(--text-muted)",
-              marginTop: 4,
-            }}
-          >
-            All sections completed for this Med Sup call.
           </div>
           <button
             onClick={() => dispatch({ type: "RESET" })}
             style={{
-              marginTop: 14,
-              background: "rgba(52,211,153,0.1)",
-              border: "1px solid rgba(52,211,153,0.25)",
-              borderRadius: 8,
+              marginTop: 12,
+              background: "rgba(52,211,153,0.08)",
+              border: "1px solid rgba(52,211,153,0.2)",
+              borderRadius: 6,
               color: "#34d399",
               padding: "8px 20px",
               fontSize: 13,
-              cursor: "pointer",
               fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "inherit",
             }}
           >
-            Start New Call
+            New Call
           </button>
         </motion.div>
       )}
-    </section>
+    </Card>
   );
 }
 
-/* ─── Progress Bar ──────────────────────────────────────────────────────────── */
-function MedSupProgressBar() {
+function Progress() {
   const { state, activeSection } = useMedSup();
-  const total = 7;
-  const completed = [
-    state.recordingOk,
-    state.tpmoOk,
-    state.qualOk,
-    state.branchOk,
-    true, // objections optional
-    state.enrollOk,
-    state.wrapOk,
-  ].filter(Boolean).length;
-
-  const pct = Math.round((completed / total) * 100);
-
+  const steps = [
+    { k: "recordingOk", l: "Record" },
+    { k: "tpmoOk", l: "TPMO" },
+    { k: "qualOk", l: "Qualify" },
+    { k: "branchOk", l: "Discovery" },
+    { k: "enrollOk", l: "Enroll" },
+    { k: "wrapOk", l: "Wrap-Up" },
+  ];
+  const done = steps.filter((s) => state[s.k]).length;
+  const pct = Math.round((done / steps.length) * 100);
+  const activeIdx =
+    activeSection <= 4
+      ? activeSection - 1
+      : activeSection <= 5
+      ? 3
+      : activeSection - 2;
   return (
     <div
       style={{
-        marginBottom: 20,
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: 10,
+        marginBottom: 14,
         padding: "12px 16px",
+        background: "rgba(255,255,255,0.018)",
+        border: "1px solid rgba(255,255,255,0.04)",
+        borderRadius: 10,
       }}
     >
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
           marginBottom: 8,
         }}
       >
         <span
           style={{
-            fontSize: 11,
-            fontFamily: "var(--font-mono)",
-            color: "var(--text-muted)",
+            fontSize: 10,
+            fontWeight: 600,
+            color: "#4a5568",
             letterSpacing: "0.1em",
+            textTransform: "uppercase",
           }}
         >
-          MED SUP CALL — SECTION {activeSection} / {total}
+          Med Sup Call
         </span>
         <span
           style={{
             fontSize: 11,
-            fontFamily: "var(--font-mono)",
-            color: "var(--accent-cyan)",
+            fontWeight: 600,
+            color: "#38bdf8",
+            fontVariantNumeric: "tabular-nums",
           }}
         >
           {pct}%
@@ -1204,79 +706,48 @@ function MedSupProgressBar() {
       </div>
       <div
         style={{
-          height: 4,
-          background: "rgba(255,255,255,0.06)",
+          height: 3,
+          background: "rgba(255,255,255,0.04)",
           borderRadius: 2,
           overflow: "hidden",
+          marginBottom: 8,
         }}
       >
         <motion.div
-          style={{
-            height: "100%",
-            background: "var(--accent-cyan)",
-            borderRadius: 2,
-          }}
+          style={{ height: "100%", background: "#38bdf8", borderRadius: 2 }}
           animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
+          transition={{ duration: 0.3 }}
         />
       </div>
-      <div
-        style={{
-          display: "flex",
-          gap: 4,
-          marginTop: 8,
-          flexWrap: "wrap",
-        }}
-      >
-        {[
-          "Recording",
-          "TPMO",
-          "Qual",
-          "Branch",
-          "Objections",
-          "Enroll",
-          "Wrap-Up",
-        ].map((label, i) => {
-          const keys = [
-            "recordingOk",
-            "tpmoOk",
-            "qualOk",
-            "branchOk",
-            "objectionOk",
-            "enrollOk",
-            "wrapOk",
-          ];
-          const done = state[keys[i]];
-          const active = activeSection === i + 1;
+      <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+        {steps.map((s, i) => {
+          const d = state[s.k];
+          const a = i === activeIdx;
           return (
             <span
-              key={label}
+              key={s.k}
               style={{
                 fontSize: 10,
-                fontFamily: "var(--font-mono)",
+                fontWeight: 500,
                 padding: "2px 7px",
                 borderRadius: 4,
-                background: done
-                  ? "rgba(52,211,153,0.1)"
-                  : active
-                  ? "rgba(56,189,248,0.1)"
-                  : "rgba(255,255,255,0.03)",
-                color: done
-                  ? "#34d399"
-                  : active
-                  ? "var(--accent-cyan)"
-                  : "var(--text-muted)",
+                background: d
+                  ? "rgba(52,211,153,0.06)"
+                  : a
+                  ? "rgba(56,189,248,0.06)"
+                  : "rgba(255,255,255,0.015)",
+                color: d ? "#34d399" : a ? "#38bdf8" : "#4a5568",
                 border: `1px solid ${
-                  done
-                    ? "rgba(52,211,153,0.2)"
-                    : active
-                    ? "rgba(56,189,248,0.2)"
-                    : "rgba(255,255,255,0.05)"
+                  d
+                    ? "rgba(52,211,153,0.12)"
+                    : a
+                    ? "rgba(56,189,248,0.12)"
+                    : "rgba(255,255,255,0.03)"
                 }`,
               }}
             >
-              {done ? "✓ " : active ? "● " : ""}
-              {label}
+              {d ? "✓ " : a ? "● " : ""}
+              {s.l}
             </span>
           );
         })}
@@ -1285,40 +756,35 @@ function MedSupProgressBar() {
   );
 }
 
-/* ─── MedSupFlow (root export) ─────────────────────────────────────────────── */
 export default function MedSupFlow() {
-  const { state, activeSection } = useMedSup();
-
-  // Auto-scroll to active section
-  const prevActive = useRef(activeSection);
+  const { activeSection } = useMedSup();
+  const prev = useRef(activeSection);
   useEffect(() => {
-    if (activeSection !== prevActive.current) {
-      prevActive.current = activeSection;
-      requestAnimationFrame(() => {
+    if (activeSection !== prev.current) {
+      prev.current = activeSection;
+      requestAnimationFrame(() =>
         setTimeout(() => {
           const el = document.querySelector(".active-card");
           if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
-      });
+        }, 80)
+      );
     }
   }, [activeSection]);
 
   return (
     <motion.div
       className="flow"
-      initial={{ opacity: 0, y: 30, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
     >
-      <MedSupProgressBar />
-
-      <MedSupSectionRecording />
-      <MedSupSectionTPMO />
-      <MedSupSectionQual />
-      <MedSupSectionBranch />
-      <MedSupSectionObjections />
-      <MedSupSectionEnroll />
-      <MedSupSectionWrapUp />
+      <Progress />
+      <S1 />
+      <S2 />
+      <S3 />
+      <S4 />
+      <S6 />
+      <S7 />
     </motion.div>
   );
 }

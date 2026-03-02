@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { useScript } from "../context/ScriptContext";
 import { SECTION_LABELS } from "../context/scriptReducer";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
+import { fetchWithClerk } from "../lib/clerkFetch";
 /**
  * ScriptPrompter — AI Script Prompter with Speech Recognition
  *
@@ -697,6 +699,7 @@ const LEVEL_STYLE = {
 const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
   const { activeSection } = useScript();
   const { logEntry } = useCopilotLog();
+  const { getToken } = useAuth();
   const currentStep =
     SECTION_LABELS[activeSection] || `Section ${activeSection}`;
 
@@ -932,7 +935,7 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no extra te
 }`;
 
     try {
-      const response = await fetch("/.netlify/functions/coach", {
+      const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -994,7 +997,7 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no extra te
     } finally {
       setCoachingLoading(false);
     }
-  }, [currentStep, coachingLoading, showFloat, logEntry]);
+  }, [currentStep, coachingLoading, showFloat, logEntry, getToken]);
 
   /* ═══════════════════════════════════════════════════════════════
      ASK CO-PILOT — Agent types a question mid-call
@@ -1050,7 +1053,7 @@ RESPONSE RULES:
 - No markdown formatting — plain text only`;
 
     try {
-      const response = await fetch("/.netlify/functions/coach", {
+      const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1093,7 +1096,7 @@ RESPONSE RULES:
     } finally {
       setAskLoading(false);
     }
-  }, [askQuestion, askLoading, currentStep, logEntry]);
+  }, [askQuestion, askLoading, currentStep, logEntry, getToken]);
 
   const clearTranscript = () => {
     setTranscript("");

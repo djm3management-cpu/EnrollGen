@@ -1,5 +1,7 @@
 import { useState, memo, useCallback } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
+import { fetchWithClerk } from "../lib/clerkFetch";
 
 /**
  * SectionCoach — AI Coach with deep, section-specific compliance knowledge.
@@ -182,6 +184,7 @@ const SectionCoach = memo(function SectionCoach({ stepName, context = "" }) {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const { logEntry } = useCopilotLog();
+  const { getToken } = useAuth();
 
   const askCoach = useCallback(async () => {
     setLoading(true);
@@ -214,7 +217,7 @@ Rules:
 - Keep each item under 15 words`;
 
     try {
-      const response = await fetch("/.netlify/functions/coach", {
+      const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -265,7 +268,7 @@ Rules:
     } finally {
       setLoading(false);
     }
-  }, [stepName, context, logEntry]);
+  }, [stepName, context, logEntry, getToken]);
 
   const renderTip = () => {
     if (!tip) return null;
