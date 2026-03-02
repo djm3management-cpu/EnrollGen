@@ -14,6 +14,8 @@
     "@clerk/clerk-react": "^5.61.3",
     "@supabase/supabase-js": "^2.97.0",
     "framer-motion": "^12.34.1",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.575.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
