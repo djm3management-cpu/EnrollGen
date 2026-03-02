@@ -1,4 +1,22 @@
 import { useState, useMemo, useCallback, memo } from "react";
+import {
+  AlertTriangle,
+  BookOpen,
+  BriefcaseMedical,
+  Check,
+  CheckSquare,
+  ChevronDown,
+  ClipboardList,
+  FileSignature,
+  LayoutGrid,
+  List,
+  Megaphone,
+  Mic,
+  PhoneCall,
+  Scale,
+  ScrollText,
+  Star,
+} from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { scoreCompliance } from "../context/ComplianceScorer";
@@ -44,11 +62,28 @@ function getGradeColor(g) {
   if (g.startsWith("D")) return "#f97316";
   return "#ef4444";
 }
-function sourceIcon(src) {
-  if (src === "both") return "✓";
-  if (src === "transcript") return "🎙️";
-  if (src === "transcript_violation") return "⚠️";
-  return "☑️";
+function renderCategoryIcon(icon, color = "#cbd5e1", size = 16) {
+  const props = { size, color, strokeWidth: 2 };
+  const iconMap = {
+    "📣": <Megaphone {...props} />,
+    "📜": <ScrollText {...props} />,
+    "📋": <ClipboardList {...props} />,
+    "✅": <CheckSquare {...props} />,
+    "🩺": <BriefcaseMedical {...props} />,
+    "📊": <Scale {...props} />,
+    "✍️": <FileSignature {...props} />,
+    "📞": <PhoneCall {...props} />,
+    "⭐": <Star {...props} />,
+  };
+
+  return iconMap[icon] || <CheckSquare {...props} />;
+}
+function sourceIcon(src, color = "#cbd5e1") {
+  const props = { size: 12, color, strokeWidth: 2 };
+  if (src === "both") return <Check {...props} />;
+  if (src === "transcript") return <Mic {...props} />;
+  if (src === "transcript_violation") return <AlertTriangle {...props} />;
+  return <CheckSquare {...props} />;
 }
 function sourceLabel(src) {
   if (src === "both") return "Gate + Transcript";
@@ -125,8 +160,16 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
           borderLeft: `3px solid ${col}`,
         }}
       >
-        <span style={{ fontSize: "1em", width: 22, textAlign: "center" }}>
-          {cat.icon}
+        <span
+          style={{
+            width: 22,
+            height: 22,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {renderCategoryIcon(cat.icon, col, 15)}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
@@ -166,16 +209,14 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
             {cat.score}%
           </span>
         </div>
-        <span
+        <ChevronDown
+          size={14}
+          color="#475569"
           style={{
-            fontSize: "0.6em",
-            color: "#475569",
             transition: "transform 0.2s",
             transform: isExpanded ? "rotate(180deg)" : "rotate(0)",
           }}
-        >
-          ▼
-        </span>
+        />
       </div>
 
       {isExpanded && (
@@ -228,9 +269,15 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
                   </span>
                   <span
                     title={sourceLabel(q.source)}
-                    style={{ fontSize: "0.6em", opacity: 0.8 }}
+                    style={{
+                      opacity: 0.8,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minHeight: 12,
+                    }}
                   >
-                    {sourceIcon(q.source)}
+                    {sourceIcon(q.source, isViolation ? "#ef4444" : qc)}
                   </span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -268,8 +315,17 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
                         marginTop: 3,
                       }}
                     >
-                      <span style={{ fontSize: "0.55em", color: "#475569" }}>
-                        🎙️ Intent confidence:
+                      <span
+                        style={{
+                          fontSize: "0.55em",
+                          color: "#475569",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 3,
+                        }}
+                      >
+                        <Mic size={10} />
+                        Intent confidence:
                       </span>
                       <div
                         style={{
@@ -324,7 +380,12 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
                 paddingLeft: 4,
               }}
             >
-              📖 {cat.cmsRef}
+              <span
+                style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+              >
+                <BookOpen size={10} />
+                {cat.cmsRef}
+              </span>
             </div>
           )}
         </div>
@@ -390,9 +451,13 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   padding: "1px 6px",
                   borderRadius: 3,
                   fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
                 }}
               >
-                🎙️ LIVE TRANSCRIPT
+                <Mic size={10} />
+                LIVE TRANSCRIPT
               </span>
             )}
           </div>
@@ -419,16 +484,14 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             />
           ))}
         </div>
-        <span
+        <ChevronDown
+          size={15}
+          color="#475569"
           style={{
-            fontSize: "0.65em",
-            color: "#475569",
             transition: "transform 0.2s",
             transform: expanded ? "rotate(180deg)" : "rotate(0)",
           }}
-        >
-          ▼
-        </span>
+        />
       </div>
 
       {expanded && (
@@ -466,15 +529,25 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                         justifyContent: "space-between",
                       }}
                     >
-                      <span style={{ fontSize: "0.85em" }}>{cat.icon}</span>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {renderCategoryIcon(cat.icon, col, 15)}
+                      </span>
                       <span
                         style={{
                           fontSize: "0.65em",
                           fontWeight: 600,
                           color: cat.passed ? "#34d399" : "#475569",
+                          display: "inline-flex",
+                          alignItems: "center",
                         }}
                       >
-                        {cat.passed ? "✓" : "—"}
+                        {cat.passed ? <Check size={12} /> : null}
                       </span>
                     </div>
                     <div
@@ -529,7 +602,12 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 cursor: "pointer",
               }}
             >
-              {showDetail ? "◉ Grid" : "☰ Detail"}
+              <span
+                style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+              >
+                {showDetail ? <LayoutGrid size={12} /> : <List size={12} />}
+                {showDetail ? "Grid" : "Detail"}
+              </span>
             </button>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {result.transcriptStats?.violations?.length > 0 && (
@@ -538,9 +616,13 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                     fontSize: "0.6em",
                     color: "#ef4444",
                     fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
                   }}
                 >
-                  🚨 {result.transcriptStats.violations.length} violation
+                  <AlertTriangle size={11} />
+                  {result.transcriptStats.violations.length} violation
                   {result.transcriptStats.violations.length !== 1 ? "s" : ""}
                 </span>
               )}
@@ -550,9 +632,13 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                     fontSize: "0.6em",
                     color: "#f59e0b",
                     fontWeight: 600,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
                   }}
                 >
-                  ⚠ {result.flags.length} item
+                  <AlertTriangle size={11} />
+                  {result.flags.length} item
                   {result.flags.length !== 1 ? "s" : ""}
                 </span>
               )}
@@ -571,7 +657,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   marginBottom: 4,
                 }}
               >
-                <span style={{ fontSize: "0.8em" }}>⚖️</span>
+                <Scale size={13} color="#94a3b8" />
                 <span
                   style={{
                     fontSize: "0.72em",
@@ -625,7 +711,12 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   marginBottom: 4,
                 }}
               >
-                🚨 TRANSCRIPT VIOLATIONS DETECTED
+                <span
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                >
+                  <AlertTriangle size={13} />
+                  TRANSCRIPT VIOLATIONS DETECTED
+                </span>
               </div>
               {result.transcriptStats.violations.map((v, i) => (
                 <div
@@ -675,7 +766,12 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                     marginBottom: 4,
                   }}
                 >
-                  🚩 ITEMS REQUIRING ATTENTION
+                  <span
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    <AlertTriangle size={13} />
+                    ITEMS REQUIRING ATTENTION
+                  </span>
                 </div>
                 {result.flags.slice(0, 5).map((f) => (
                   <div

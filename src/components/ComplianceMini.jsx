@@ -1,4 +1,18 @@
 import { useState, useMemo, useEffect, useRef, memo } from "react";
+import {
+  AlertTriangle,
+  BriefcaseMedical,
+  CheckSquare,
+  FileSignature,
+  Megaphone,
+  Mic,
+  PhoneCall,
+  Scale,
+  ScrollText,
+  Star,
+  ClipboardList,
+  ChevronDown,
+} from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { scoreLive } from "../context/ComplianceScorer";
@@ -18,6 +32,23 @@ function getScoreColor(s) {
   if (s >= 50) return "#fbbf24";
   if (s >= 25) return "#f97316";
   return "#ef4444";
+}
+
+function renderCategoryIcon(icon, color = "#cbd5e1", size = 14) {
+  const props = { size, color, strokeWidth: 2 };
+  const iconMap = {
+    "📣": <Megaphone {...props} />,
+    "📜": <ScrollText {...props} />,
+    "📋": <ClipboardList {...props} />,
+    "✅": <CheckSquare {...props} />,
+    "🩺": <BriefcaseMedical {...props} />,
+    "📊": <Scale {...props} />,
+    "✍️": <FileSignature {...props} />,
+    "📞": <PhoneCall {...props} />,
+    "⭐": <Star {...props} />,
+  };
+
+  return iconMap[icon] || <CheckSquare {...props} />;
 }
 
 const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
@@ -113,16 +144,28 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
             </span>
             {isDual && (
               <span
-                style={{ fontSize: "0.5em", color: "#34d399", fontWeight: 600 }}
+                style={{
+                  color: "#34d399",
+                  fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                }}
               >
-                🎙️
+                <Mic size={11} />
               </span>
             )}
             {result.violations > 0 && (
               <span
-                style={{ fontSize: "0.5em", color: "#ef4444", fontWeight: 700 }}
+                style={{
+                  color: "#ef4444",
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 3,
+                }}
               >
-                🚨{result.violations}
+                <AlertTriangle size={11} />
+                {result.violations}
               </span>
             )}
           </div>
@@ -173,8 +216,17 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
                   {result.categoriesPassed}/{result.totalCategories} passed
                 </span>
                 {isDual && (
-                  <span style={{ fontSize: "0.5em", color: "#34d399" }}>
-                    🎙️ Live · {result.transcriptCoverage}% coverage
+                  <span
+                    style={{
+                      fontSize: "0.5em",
+                      color: "#34d399",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <Mic size={11} />
+                    Live · {result.transcriptCoverage}% coverage
                   </span>
                 )}
               </div>
@@ -193,12 +245,13 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
                 >
                   <span
                     style={{
-                      fontSize: "0.75em",
                       width: 18,
-                      textAlign: "center",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    {c.icon}
+                    {renderCategoryIcon(c.icon, col, 13)}
                   </span>
                   <div
                     style={{
@@ -260,7 +313,12 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
                   textAlign: "center",
                 }}
               >
-                🚨 {result.violations} violation
+                <span
+                  style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                >
+                  <AlertTriangle size={11} />
+                  {result.violations} violation
+                </span>
                 {result.violations !== 1 ? "s" : ""} detected in transcript
               </div>
             )}

@@ -505,55 +505,6 @@ function S6() {
       {(mode === "enroll" ? sec.script : sec.followUpScript).map((l, i) => (
         <Say key={i} text={l} />
       ))}
-      <div
-        style={{
-          marginTop: 14,
-          background: "rgba(255,255,255,0.012)",
-          border: "1px solid rgba(255,255,255,0.04)",
-          borderRadius: 8,
-          padding: "12px 14px",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            color: "#4a5568",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            marginBottom: 8,
-          }}
-        >
-          CRM Log
-        </div>
-        {sec.crmChecklist.map((item) => {
-          const on = state.crmChecked.includes(item);
-          return (
-            <label
-              key={item}
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 8,
-                cursor: "pointer",
-                fontSize: 13,
-                color: on ? "#4a5568" : "#6b7a8d",
-                textDecoration: on ? "line-through" : "none",
-                marginBottom: 4,
-                lineHeight: 1.5,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={on}
-                onChange={() => dispatch({ type: "TOGGLE_CRM_ITEM", item })}
-                style={{ marginTop: 3, accentColor: "#38bdf8" }}
-              />
-              {item}
-            </label>
-          );
-        })}
-      </div>
       <Gate
         label="Enrolled or follow-up logged"
         done={state.enrollOk}
