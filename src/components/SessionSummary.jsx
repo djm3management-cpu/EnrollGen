@@ -5,6 +5,7 @@ import { useScript } from "../context/ScriptContext";
 import { generateSessionSummary } from "../context/scriptReducer";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { scoreCompliance, groupByCategory } from "../context/ComplianceScorer";
+import { getDeterministicBlockers } from "../lib/deterministicBlockers";
 
 /* ═══════════════════════════════════════════════════
    LEVEL STYLES (matching ScriptPrompter)
@@ -500,7 +501,13 @@ function drawMetricCard(doc, x, y, width, title, value, accent) {
   doc.text(String(value), x + 6, y + 15);
 }
 
-function exportSessionSummaryPdf(summary, complianceResult, copilotEntries, warnings) {
+function exportSessionSummaryPdf(
+  summary,
+  complianceResult,
+  copilotEntries,
+  warnings,
+  blockers
+) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = 16;
   const scoreColor = getPdfScoreColor(complianceResult.score);
@@ -566,6 +573,34 @@ function exportSessionSummaryPdf(summary, complianceResult, copilotEntries, warn
   });
 
   y = doc.lastAutoTable.finalY + 8;
+  y = addSectionTitle(doc, "Deterministic Blockers", y);
+  if (blockers.length === 0) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(22, 163, 74);
+    doc.text("No deterministic blockers active at export time.", 14, y);
+    y += 8;
+  } else {
+    autoTable(doc, {
+      startY: y,
+      theme: "grid",
+      head: [["Severity", "Blocker", "Detail"]],
+      body: blockers.map((blocker) => [
+        blocker.severity.toUpperCase(),
+        blocker.label,
+        blocker.detail,
+      ]),
+      styles: { fontSize: 8.5, cellPadding: 2.5 },
+      headStyles: { fillColor: [254, 242, 242], textColor: [220, 38, 38] },
+      columnStyles: {
+        0: { cellWidth: 22, fontStyle: "bold" },
+        1: { cellWidth: 44, fontStyle: "bold" },
+      },
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  y = ensurePage(doc, y, 36);
   y = addSectionTitle(doc, "Optional Products", y);
   autoTable(doc, {
     startY: y,
@@ -835,12 +870,14 @@ export default React.memo(function SessionSummary() {
     const copilotEntries = getTranscript();
     const warnings = getWarnings();
     const complianceResult = scoreCompliance(state, copilotEntries);
+    const blockers = getDeterministicBlockers(state);
 
     exportSessionSummaryPdf(
       summary,
       complianceResult,
       copilotEntries,
-      warnings
+      warnings,
+      blockers
     );
   }, [state, getTranscript, getWarnings]);
 
@@ -848,6 +885,7 @@ export default React.memo(function SessionSummary() {
     const summary = generateSessionSummary(state);
     const copilotEntries = getTranscript();
     const complianceResult = scoreCompliance(state, copilotEntries);
+    const blockers = getDeterministicBlockers(state);
 
     const lines = [
       `Agent: ${summary.agentName}`,
@@ -857,9 +895,18 @@ export default React.memo(function SessionSummary() {
       `Confirmation #: ${summary.confirmationNumber}`,
       `SNP: ${summary.snpType}`,
       `Compliance Score: ${complianceResult.score}/100 (${complianceResult.grade})`,
-      "",
-      "Sections:",
     ];
+    if (blockers.length > 0) {
+      lines.push("");
+      lines.push("Deterministic Blockers:");
+      for (const blocker of blockers) {
+        lines.push(
+          `  [${blocker.severity.toUpperCase()}] ${blocker.label} — ${blocker.detail}`
+        );
+      }
+    }
+    lines.push("");
+    lines.push("Sections:");
     for (const s of summary.sections) {
       lines.push(
         `  ${s.completed ? "✔" : "✗"} ${s.section}: ${s.detail || "—"} (${s.duration})`
@@ -888,6 +935,7 @@ export default React.memo(function SessionSummary() {
   // Quick compliance preview
   const copilotEntries = getTranscript();
   const complianceResult = scoreCompliance(state, copilotEntries);
+  const blockers = getDeterministicBlockers(state);
   const scoreColor =
     complianceResult.score >= 90
       ? "#16a34a"
@@ -899,6 +947,18 @@ export default React.memo(function SessionSummary() {
     <div className="session-summary-bar">
       <span className="session-summary-label">
         📋 Enrollment complete — save your records
+        {blockers.length > 0 && (
+          <span
+            style={{
+              marginLeft: 12,
+              fontWeight: 700,
+              fontSize: "0.82em",
+              color: "#fca5a5",
+            }}
+          >
+            {blockers.length} blocker{blockers.length === 1 ? "" : "s"}
+          </span>
+        )}
         <span
           style={{
             marginLeft: 12,

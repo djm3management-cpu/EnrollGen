@@ -2,12 +2,23 @@ import React from "react";
 import { useScript } from "../context/ScriptContext";
 import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
+import { getDeterministicBlockers } from "../lib/deterministicBlockers";
 
 export default React.memo(function SectionEnrollment() {
   const { state, dispatch, activeSection, unlocked, enrollmentCodeOk } =
     useScript();
   const { sobOk, enrollOk, notes } = state;
   const isActive = activeSection === 7;
+  const blockers = getDeterministicBlockers(state);
+  const activeBlockers = blockers.filter(
+    (blocker) =>
+      blocker.id !== "recording_missing" &&
+      blocker.id !== "tpmo_missing" &&
+      blocker.id !== "tpmo_zip_missing" &&
+      blocker.id !== "tpmo_counts_missing" &&
+      blocker.id !== "soa_missing" &&
+      blocker.id !== "sob_missing"
+  );
 
   return (
     <section
@@ -73,13 +84,51 @@ export default React.memo(function SectionEnrollment() {
 
       <button
         className="primary"
-        disabled={!sobOk || enrollOk}
+        disabled={!sobOk || enrollOk || activeBlockers.length > 0}
         onClick={() =>
           dispatch({ type: "SET_GATE", field: "enrollOk", value: true })
         }
       >
         {enrollOk ? "✅ Enrollment Complete" : "Enrollment Complete"}
       </button>
+
+      {activeBlockers.length > 0 && (
+        <div
+          style={{
+            marginTop: 12,
+            border: "1px solid rgba(248,113,113,0.28)",
+            background: "rgba(127,29,29,0.16)",
+            borderRadius: 10,
+            padding: "10px 12px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "0.72rem",
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "#fca5a5",
+              marginBottom: 8,
+            }}
+          >
+            Submission Blockers
+          </div>
+          {activeBlockers.slice(0, 4).map((blocker) => (
+            <div
+              key={blocker.id}
+              style={{
+                fontSize: "0.82rem",
+                color: "#e8edf5",
+                lineHeight: 1.45,
+                marginTop: 6,
+              }}
+            >
+              <strong>{blocker.label}:</strong> {blocker.detail}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Enrollment Code + Green Check */}
       <div className="enrollment-code">

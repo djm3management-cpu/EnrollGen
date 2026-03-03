@@ -81,15 +81,14 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
   return (
     <div
       style={{
-        position: "sticky",
-        top: 52,
-        zIndex: 90,
+        position: "fixed",
+        top: 72,
+        right: 18,
+        zIndex: 96,
         display: "flex",
         justifyContent: "flex-end",
         pointerEvents: "none",
-        marginBottom: -40,
-        paddingRight: 4,
-        transform: "translateX(clamp(72px, 10vw, 140px))",
+        marginBottom: 0,
       }}
     >
       <div
