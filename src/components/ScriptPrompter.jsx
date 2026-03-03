@@ -3,7 +3,290 @@ import { useAuth } from "@clerk/clerk-react";
 import { useScript } from "../context/ScriptContext";
 import { SECTION_LABELS } from "../context/scriptReducer";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
+import {
+  getCmsKnowledgeForQuestion,
+  getCmsKnowledgeForSection,
+} from "../context/CopilotCmsKnowledge";
 import { fetchWithClerk } from "../lib/clerkFetch";
+
+function formatSectionDuration(timestamps, sectionNum) {
+  const ts = timestamps?.[sectionNum];
+  if (!ts?.start) return null;
+  const end = ts.end || Date.now();
+  const sec = Math.max(0, Math.round((end - ts.start) / 1000));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}m ${s}s`;
+}
+
+function buildSectionChecklistState(state, activeSection, unlocked) {
+  const base = {
+    activeSection,
+    currentLabel: SECTION_LABELS[activeSection] || `Section ${activeSection}`,
+    unlocked: {
+      current:
+        activeSection === 2.5 ? unlocked.s2_5 : unlocked[`s${String(activeSection).replace(".", "_")}`] ?? true,
+    },
+  };
+
+  if (activeSection === 1) {
+    return {
+      ...base,
+      gates: {
+        recordingOk: state.recordingOk,
+      },
+      fields: {
+        agentName: state.agentName || null,
+      },
+    };
+  }
+
+  if (activeSection === 2) {
+    return {
+      ...base,
+      gates: {
+        recordingOk: state.recordingOk,
+        tpmoOk: state.tpmoOk,
+      },
+      fields: {
+        tpmoZip: state.tpmoZip || null,
+        tpmoOrgs: state.tpmoOrgs || null,
+        tpmoPlans: state.tpmoPlans || null,
+      },
+    };
+  }
+
+  if (activeSection === 2.5) {
+    return {
+      ...base,
+      gates: {
+        tpmoOk: state.tpmoOk,
+        snpOk: state.snpOk,
+      },
+      fields: {
+        snpType: state.snpType || null,
+      },
+    };
+  }
+
+  if (activeSection === 3) {
+    return {
+      ...base,
+      gates: {
+        tpmoOk: state.tpmoOk,
+        snpOk: state.snpType ? state.snpOk : null,
+        soaOk: state.soaOk,
+      },
+    };
+  }
+
+  if (activeSection === 4) {
+    return {
+      ...base,
+      gates: {
+        soaOk: state.soaOk,
+        qualOk: state.qualOk,
+      },
+      checklist: state.preEnrollChecks,
+      fields: {
+        snpType: state.snpType || null,
+      },
+    };
+  }
+
+  if (activeSection === 5) {
+    return {
+      ...base,
+      gates: {
+        qualOk: state.qualOk,
+        neadsOk: state.neadsOk,
+      },
+      checklist: state.preEnrollChecks,
+    };
+  }
+
+  if (activeSection === 6) {
+    return {
+      ...base,
+      gates: {
+        neadsOk: state.neadsOk,
+        sobOk: state.sobOk,
+      },
+      checklist: state.sobChecks,
+      fields: {
+        partBReduction: state.partBReduction,
+      },
+    };
+  }
+
+  if (activeSection === 7) {
+    return {
+      ...base,
+      gates: {
+        sobOk: state.sobOk,
+        enrollOk: state.enrollOk,
+      },
+      checklist: state.enrollChecks,
+      fields: {
+        planName: state.notes.planName || null,
+        effectiveDate: state.notes.effectiveDate || null,
+        enrollmentCode: state.notes.enrollmentCode || null,
+      },
+    };
+  }
+
+  if (activeSection === 8) {
+    return {
+      ...base,
+      gates: {
+        enrollOk: state.enrollOk,
+      },
+      optionalProducts: {
+        hospitalIndemnity: {
+          active: state.hiActive,
+          consentOk: state.hiConsentOk,
+          discussed: state.hiDiscussed,
+        },
+        dentalVision: {
+          active: state.dvActive,
+          consentOk: state.dvConsentOk,
+          discussed: state.dvDiscussed,
+        },
+        finalExpense: {
+          active: state.feActive,
+          consentOk: state.feConsentOk,
+          discussed: state.feDiscussed,
+        },
+      },
+      fields: {
+        confirmation: state.notes.confirmation || null,
+      },
+    };
+  }
+
+  return base;
+}
+
+function buildCompletedSectionHistory(state) {
+  const ordered = [
+    [1, "recordingOk"],
+    [2, "tpmoOk"],
+    [2.5, "snpOk"],
+    [3, "soaOk"],
+    [4, "qualOk"],
+    [5, "neadsOk"],
+    [6, "sobOk"],
+    [7, "enrollOk"],
+  ];
+
+  return ordered
+    .filter(([sectionNum, field]) =>
+      sectionNum === 2.5 ? state.snpType && state[field] : state[field]
+    )
+    .map(([sectionNum, field]) => ({
+      section: sectionNum,
+      label: SECTION_LABELS[sectionNum],
+      completed: true,
+      duration: formatSectionDuration(state.sectionTimestamps, sectionNum),
+      endedAt: state.sectionTimestamps?.[sectionNum]?.end || null,
+      field,
+    }))
+    .slice(-3);
+}
+
+function buildDerivedSignals(state, activeSection, transcript, recentInterventions) {
+  const recentText = transcript.toLowerCase();
+  const currentTs = state.sectionTimestamps?.[activeSection] || {};
+
+  return {
+    transcriptLikelyStartedMidCall: Boolean(
+      activeSection > 1 || recentInterventions.length > 0
+    ),
+    transcriptLikelyStartedMidSection: Boolean(
+      currentTs.start && transcript.length > 0 && !currentTs.end
+    ),
+    agentMovedPastCurrentSection:
+      activeSection === 1
+        ? state.tpmoOk
+        : activeSection === 2
+        ? state.soaOk || state.snpOk
+        : activeSection === 2.5
+        ? state.soaOk
+        : activeSection === 3
+        ? state.qualOk
+        : activeSection === 4
+        ? state.neadsOk
+        : activeSection === 5
+        ? state.sobOk
+        : activeSection === 6
+        ? state.enrollOk
+        : activeSection === 7
+        ? Boolean(state.notes.confirmation || state.hiActive || state.dvActive || state.feActive)
+        : false,
+    likelyCoveredByParaphrase: {
+      tpmoCore:
+        recentText.includes("don't represent every plan") ||
+        recentText.includes("do not offer every plan"),
+      recordingConsent:
+        recentText.includes("recorded line") ||
+        recentText.includes("recorded for quality") ||
+        recentText.includes("okay if i continue") ||
+        recentText.includes("ok if i continue"),
+    },
+    planDataEntered: Boolean(state.notes.planName || state.notes.effectiveDate),
+    enrollmentIdEntered: Boolean(state.notes.enrollmentCode),
+    confirmationEntered: Boolean(state.notes.confirmation),
+  };
+}
+
+function normalizeIssueTag(tag) {
+  return (tag || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_ -]/g, "")
+    .replace(/[\s-]+/g, "_")
+    .slice(0, 64);
+}
+
+function shouldSuppressDuplicateIssue(messages, section, issueTag) {
+  if (!issueTag) return false;
+  return messages.some(
+    (entry) =>
+      entry.issueTag === issueTag &&
+      entry.section === section &&
+      (entry.level === "warn" ||
+        entry.level === "critical" ||
+        entry.level === "remind")
+  );
+}
+
+function downloadJson(filename, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function summarizeRetrievalTrace(trace) {
+  if (!trace) return null;
+  const topics = Array.isArray(trace.topics) ? trace.topics : [];
+  const scenarios = Array.isArray(trace.scenarios) ? trace.scenarios : [];
+  const sources = Array.isArray(trace.sources) ? trace.sources : [];
+
+  if (!topics.length && !scenarios.length && !sources.length) return null;
+
+  return {
+    topTopics: topics.slice(0, 2),
+    topScenarios: scenarios.slice(0, 1),
+    sourceCount: sources.length,
+  };
+}
 /**
  * ScriptPrompter — AI Script Prompter with Speech Recognition
  *
@@ -697,8 +980,16 @@ const LEVEL_STYLE = {
 };
 
 const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
-  const { activeSection } = useScript();
-  const { logEntry } = useCopilotLog();
+  const {
+    state,
+    activeSection,
+    unlocked,
+    preEnrollAllDone,
+    sobAllDone,
+    enrollAllDone,
+    enrollmentCodeOk,
+  } = useScript();
+  const { logEntry, setEntryFeedback, exportFeedbackDataset } = useCopilotLog();
   const { getToken } = useAuth();
   const currentStep =
     SECTION_LABELS[activeSection] || `Section ${activeSection}`;
@@ -840,12 +1131,88 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
     const newChars = fullTranscript.length - lastAnalyzedLength.current;
     if (newChars < MIN_NEW_CHARS) return;
 
+    const previousAnalyzedLength = lastAnalyzedLength.current;
     setCoachingLoading(true);
     lastAnalyzedLength.current = fullTranscript.length;
 
     // ── Build section-specific compliance context ──
     const sectionKey = currentStep;
     const knowledge = COMPLIANCE_KNOWLEDGE[sectionKey] || null;
+    const flowOrder = Object.values(SECTION_LABELS).join(" -> ");
+    const recentInterventions = messages
+      .filter((entry) =>
+        entry.level === "warn" ||
+        entry.level === "critical" ||
+        entry.level === "remind"
+      )
+      .slice(-3);
+    const recentInterventionText = recentInterventions
+      .map(
+        (entry, index) =>
+          `${index + 1}. [${entry.level}] ${entry.text.replace(/\s+/g, " ").slice(0, 220)}`
+      )
+      .join("\n");
+    const transcriptCurrentWindow = fullTranscript.slice(-1400);
+    const transcriptSinceLastAnalysis = fullTranscript
+      .slice(Math.max(0, previousAnalyzedLength - 800))
+      .trim();
+    const priorCompletedSections = buildCompletedSectionHistory(state);
+    const sectionChecklistState = buildSectionChecklistState(
+      state,
+      activeSection,
+      unlocked
+    );
+    const callMetadata = {
+      agentName: state.agentName || null,
+      snpType: state.snpType || null,
+      tpmoZip: state.tpmoZip || null,
+      tpmoOrgs: state.tpmoOrgs || null,
+      tpmoPlans: state.tpmoPlans || null,
+      partBReduction: state.partBReduction,
+      planName: state.notes.planName || null,
+      effectiveDate: state.notes.effectiveDate || null,
+      enrollmentCode: state.notes.enrollmentCode || null,
+      confirmation: state.notes.confirmation || null,
+      checklistCompletion: {
+        preEnrollAllDone,
+        sobAllDone,
+        enrollAllDone,
+        enrollmentCodeOk,
+      },
+    };
+    const derivedSignals = buildDerivedSignals(
+      state,
+      activeSection,
+      fullTranscript,
+      recentInterventions
+    );
+    const copilotContext = {
+      currentSection: {
+        number: activeSection,
+        label: sectionKey,
+      },
+      callMetadata,
+      sectionChecklistState,
+      priorCompletedSections,
+      recentInterventions: recentInterventions.map((entry) => ({
+        level: entry.level,
+        text: entry.text,
+        issueTag: entry.issueTag || "",
+        time: entry.ts,
+      })),
+      transcriptWindows: {
+        currentWindow: transcriptCurrentWindow,
+        sinceLastAnalysis: transcriptSinceLastAnalysis || transcriptCurrentWindow,
+        fullTranscriptTail: fullTranscript.slice(-2500),
+      },
+      derivedSignals,
+    };
+    const cmsKnowledge = getCmsKnowledgeForSection(sectionKey, copilotContext);
+    const retrievalTrace = {
+      topics: cmsKnowledge.topics.map((topic) => topic.id),
+      scenarios: cmsKnowledge.scenarios.map((scenario) => scenario.id),
+      sources: cmsKnowledge.sources.map((source) => source.id),
+    };
 
     let complianceContext = "";
     if (knowledge) {
@@ -885,11 +1252,31 @@ IMPLICATIONS — read carefully:
 - DO say "I didn't hear you ask for their verbal consent" or "Make sure you read the disclosure"
 - When the agent reads back information, confirms details, or paraphrases — that's GOOD compliance behavior. Acknowledge it by referencing their specific words.
 - Speech recognition is imperfect. Words may be garbled, truncated, or slightly wrong. If something SOUNDS CLOSE ENOUGH to a required phrase, GIVE THE AGENT CREDIT. Don't flag something as missing just because a word or two was garbled. Use semantic matching, not exact text matching.
+- The agent may have started speaking with the beneficiary BEFORE pressing record or before this transcript segment began. That means earlier required lines may have happened off-transcript. Absence in the visible transcript is NOT proof they were skipped.
+- Because the transcript may begin mid-call or mid-section, do NOT assume the first visible line is the true start of the section. Only warn when the agent is clearly moving forward without covering something, not merely because you did not hear the opening.
 
 ════════════════════════════════════════════════════════
 CURRENT SECTION: "${sectionKey}"
 ════════════════════════════════════════════════════════
+FULL FLOW REFERENCE:
+${flowOrder}
+
 ${complianceContext}
+${cmsKnowledge.promptBlock}
+${
+  recentInterventionText
+    ? `════════════════════════════════════════════════════════
+RECENT PRIOR INTERVENTIONS — DO NOT REPEAT THESE UNLESS THERE IS SUBSTANTIAL NEW CONTENT AND THE ISSUE STILL CLEARLY REMAINS:
+════════════════════════════════════════════════════════
+${recentInterventionText}
+`
+    : ""
+}
+════════════════════════════════════════════════════════
+STRUCTURED CALL CONTEXT — TREAT THIS AS RELIABLE APP STATE
+════════════════════════════════════════════════════════
+${JSON.stringify(copilotContext, null, 2)}
+
 ════════════════════════════════════════════════════════
 YOUR ROLE: SILENT COMPLIANCE SAFETY NET
 ════════════════════════════════════════════════════════
@@ -924,6 +1311,11 @@ CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
 - Do NOT flag individual words as missing if the agent's overall message semantically covers the requirement. "We don't represent every plan out there" covers "We do not offer every plan available in your area."
 - Do NOT repeatedly flag the same issue. If you already warned about something, don't warn again unless the agent has said significant new content and still hasn't addressed it.
 - ALWAYS look at the full context of the transcript before deciding something was missed. The agent may have covered it earlier in the transcript.
+- Before issuing a warn/remind, ask yourself: "Could this have happened before recording started or before this transcript chunk began?" If yes, bias toward silence unless the agent is clearly advancing past the requirement right now.
+- Prefer one high-quality intervention over multiple repetitive ones. Rewording the same warning is still repetition and should be avoided.
+- Use the structured checklist state to identify the exact unresolved item when possible. If app state says an item is already complete, do not warn that it is missing unless the transcript shows a clear contradiction.
+- Use prior completed sections and call metadata to understand progression. If a later section is already completed in app state, do not accuse the agent of still being stuck on an earlier section.
+- When you intervene, target the smallest missing piece, not a whole section, unless the whole section is clearly absent.
 
 ════════════════════════════════════════════════════════
 RESPONSE FORMAT
@@ -931,6 +1323,7 @@ RESPONSE FORMAT
 Respond with ONLY a valid JSON object — no markdown, no backticks, no extra text:
 {
   "level": "silent | tip | remind | warn | critical",
+  "issue_tag": "short_snake_case_issue_tag_or_empty_if_silent_or_tip",
   "message": "Your message here. Empty string if silent."
 }`;
 
@@ -945,9 +1338,16 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no extra te
           messages: [
             {
               role: "user",
-              content: `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words appear below. Speech recognition may have minor transcription errors.):\n\n"${fullTranscript.slice(
-                -2500
-              )}"`,
+              content: `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words appear below. Speech recognition may have minor transcription errors.)
+
+TRANSCRIPT WINDOW — MOST RECENT:
+"${transcriptCurrentWindow}"
+
+TRANSCRIPT WINDOW — SINCE LAST ANALYSIS:
+"${transcriptSinceLastAnalysis || transcriptCurrentWindow}"
+
+FULL TRANSCRIPT TAIL:
+"${fullTranscript.slice(-2500)}"`,
             },
           ],
         }),
@@ -960,17 +1360,31 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no extra te
         .trim();
 
       let level = "info",
-        message = "";
+        message = "",
+        issueTag = "";
       try {
         const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
         level = parsed.level || "info";
         message = parsed.message || "";
+        issueTag =
+          normalizeIssueTag(parsed.issue_tag) ||
+          normalizeIssueTag(message.split(/[.:!?]/)[0]);
       } catch {
         message = raw || "";
+        issueTag = normalizeIssueTag(message.split(/[.:!?]/)[0]);
       }
 
       // ── Silent or empty = no intervention needed ──
       if (level === "silent" || !message || !message.trim()) {
+        lastCoachingTime.current = Date.now();
+        setCoachingLoading(false);
+        return;
+      }
+
+      if (
+        (level === "warn" || level === "critical" || level === "remind") &&
+        shouldSuppressDuplicateIssue(messages, currentStep, issueTag)
+      ) {
         lastCoachingTime.current = Date.now();
         setCoachingLoading(false);
         return;
@@ -982,6 +1396,10 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no extra te
         id: Date.now(),
         level,
         text: message,
+        issueTag,
+        section: currentStep,
+        contextSnapshot: copilotContext,
+        retrievalTrace,
         ts: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -991,13 +1409,30 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no extra te
       showFloat(level, message);
       logEntry(LOG_TYPES.COPILOT_MSG, level, message, {
         section: currentStep,
+        issueTag,
+        contextSnapshot: copilotContext,
+        retrievalTrace,
       });
     } catch (err) {
       console.error("Coaching API error:", err);
     } finally {
       setCoachingLoading(false);
     }
-  }, [currentStep, coachingLoading, showFloat, logEntry, getToken]);
+  }, [
+    activeSection,
+    currentStep,
+    coachingLoading,
+    showFloat,
+    logEntry,
+    getToken,
+    messages,
+    state,
+    unlocked,
+    preEnrollAllDone,
+    sobAllDone,
+    enrollAllDone,
+    enrollmentCodeOk,
+  ]);
 
   /* ═══════════════════════════════════════════════════════════════
      ASK CO-PILOT — Agent types a question mid-call
@@ -1010,6 +1445,64 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no extra te
 
     const sectionKey = currentStep;
     const knowledge = COMPLIANCE_KNOWLEDGE[sectionKey] || null;
+    const recentTranscript = transcriptRef.current.trim().slice(-1500);
+    const recentInterventions = messages
+      .filter((entry) =>
+        entry.level === "warn" ||
+        entry.level === "critical" ||
+        entry.level === "remind"
+      )
+      .slice(-4);
+    const copilotContext = {
+      currentSection: {
+        number: activeSection,
+        label: sectionKey,
+      },
+      callMetadata: {
+        agentName: state.agentName || null,
+        snpType: state.snpType || null,
+        tpmoZip: state.tpmoZip || null,
+        tpmoOrgs: state.tpmoOrgs || null,
+        tpmoPlans: state.tpmoPlans || null,
+        partBReduction: state.partBReduction,
+        planName: state.notes.planName || null,
+        effectiveDate: state.notes.effectiveDate || null,
+        enrollmentCode: state.notes.enrollmentCode || null,
+        confirmation: state.notes.confirmation || null,
+      },
+      sectionChecklistState: buildSectionChecklistState(
+        state,
+        activeSection,
+        unlocked
+      ),
+      priorCompletedSections: buildCompletedSectionHistory(state),
+      recentInterventions: recentInterventions.map((entry) => ({
+        level: entry.level,
+        text: entry.text,
+        issueTag: entry.issueTag || "",
+        time: entry.ts,
+      })),
+      transcriptWindows: {
+        currentWindow: recentTranscript,
+        fullTranscriptTail: transcriptRef.current.trim().slice(-2500),
+      },
+      derivedSignals: buildDerivedSignals(
+        state,
+        activeSection,
+        transcriptRef.current.trim(),
+        recentInterventions
+      ),
+    };
+    const cmsKnowledge = getCmsKnowledgeForQuestion(
+      sectionKey,
+      question,
+      copilotContext
+    );
+    const retrievalTrace = {
+      topics: cmsKnowledge.topics.map((topic) => topic.id),
+      scenarios: cmsKnowledge.scenarios.map((scenario) => scenario.id),
+      sources: cmsKnowledge.sources.map((source) => source.id),
+    };
 
     let sectionContext = "";
     if (knowledge) {
@@ -1018,8 +1511,6 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no extra te
         .join("\n")}\n`;
     }
 
-    const recentTranscript = transcriptRef.current.trim().slice(-1500);
-
     const systemPrompt = `You are a knowledgeable Medicare compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer to their question.
 
 CRITICAL CONTEXT:
@@ -1027,11 +1518,15 @@ CRITICAL CONTEXT:
 - The agent is currently in the "${sectionKey}" section of the enrollment flow
 - They need a fast, practical answer they can use RIGHT NOW on this call
 ${sectionContext}
+${cmsKnowledge.promptBlock}
 ${
   recentTranscript
     ? `\nRecent agent transcript for context:\n"${recentTranscript}"\n`
     : ""
 }
+Structured app context:
+${JSON.stringify(copilotContext, null, 2)}
+
 YOUR CAPABILITIES — you can answer questions about:
 - CMS compliance rules and requirements for Medicare enrollment calls
 - Medicare Advantage plan details, benefits, and eligibility
@@ -1080,6 +1575,7 @@ RESPONSE RULES:
           id: Date.now(),
           level: "info",
           text: `❓ ${question}\n\n${raw}`,
+          retrievalTrace,
           ts: new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -1088,6 +1584,8 @@ RESPONSE RULES:
         setMessages((prev) => [...prev.slice(-19), entry]);
         logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, {
           section: currentStep,
+          contextSnapshot: copilotContext,
+          retrievalTrace,
         });
       }
       setAskQuestion("");
@@ -1096,7 +1594,17 @@ RESPONSE RULES:
     } finally {
       setAskLoading(false);
     }
-  }, [askQuestion, askLoading, currentStep, logEntry, getToken]);
+  }, [
+    askQuestion,
+    askLoading,
+    currentStep,
+    logEntry,
+    getToken,
+    activeSection,
+    messages,
+    state,
+    unlocked,
+  ]);
 
   const clearTranscript = () => {
     setTranscript("");
@@ -1107,6 +1615,69 @@ RESPONSE RULES:
     lastCoachingTime.current = 0;
     lastAnalyzedLength.current = 0;
   };
+
+  const exportReplayScenario = useCallback(() => {
+    const copilotEntries = messages.map((message) => ({
+      id: message.id,
+      level: message.level,
+      section: message.section || currentStep,
+      issueTag: message.issueTag || "",
+      text: message.text,
+      ts: message.ts,
+      retrievalSummary: summarizeRetrievalTrace(message.retrievalTrace),
+    }));
+    const retrievalOverview = {
+      topics: Array.from(
+        new Set(
+          messages.flatMap((message) =>
+            message.retrievalTrace?.topics?.slice(0, 2) || []
+          )
+        )
+      ).slice(0, 8),
+      scenarios: Array.from(
+        new Set(
+          messages.flatMap((message) =>
+            message.retrievalTrace?.scenarios?.slice(0, 1) || []
+          )
+        )
+      ).slice(0, 6),
+      totalSourcesReferenced: messages.reduce(
+        (sum, message) => sum + (message.retrievalTrace?.sources?.length || 0),
+        0
+      ),
+    };
+
+    downloadJson(`copilot-replay-${Date.now()}.json`, {
+      exportedAt: new Date().toISOString(),
+      currentSection: {
+        number: activeSection,
+        label: currentStep,
+      },
+      transcript,
+      appState: state,
+      unlocked,
+      retrievalOverview,
+      messages: copilotEntries,
+      feedbackDataset: exportFeedbackDataset(),
+    });
+  }, [
+    activeSection,
+    currentStep,
+    transcript,
+    state,
+    unlocked,
+    messages,
+    exportFeedbackDataset,
+  ]);
+
+  const exportFeedbackBundle = useCallback(() => {
+    downloadJson(`copilot-feedback-${Date.now()}.json`, {
+      exportedAt: new Date().toISOString(),
+      currentSection: currentStep,
+      transcriptTail: transcript.slice(-2500),
+      feedback: exportFeedbackDataset(),
+    });
+  }, [currentStep, transcript, exportFeedbackDataset]);
 
   /* ═══════ RENDER ═══════ */
   return (
@@ -1276,17 +1847,41 @@ RESPONSE RULES:
             <div className="prompter-coaching">
               <div
                 className="prompter-section-label"
-                style={{ display: "flex", alignItems: "center", gap: 8 }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                }}
               >
-                AI Co-Pilot
-                {coachingLoading && (
-                  <span
-                    className="prompter-pulse"
-                    style={{ fontSize: "0.7em" }}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  AI Co-Pilot
+                  {coachingLoading && (
+                    <span
+                      className="prompter-pulse"
+                      style={{ fontSize: "0.7em" }}
+                    >
+                      ● thinking…
+                    </span>
+                  )}
+                </span>
+                <span style={{ display: "inline-flex", gap: 6 }}>
+                  <button
+                    type="button"
+                    className="objection-copy-btn"
+                    onClick={exportReplayScenario}
                   >
-                    ● thinking…
-                  </span>
-                )}
+                    Export Replay
+                  </button>
+                  <button
+                    type="button"
+                    className="objection-copy-btn"
+                    onClick={exportFeedbackBundle}
+                  >
+                    Export Feedback
+                  </button>
+                </span>
               </div>
               <div
                 ref={feedRef}
@@ -1335,10 +1930,123 @@ RESPONSE RULES:
                             fontSize: "0.85em",
                             color: "#e8edf5",
                             lineHeight: 1.4,
+                            display: "block",
                           }}
                         >
                           {msg.text}
                         </span>
+                        {msg.issueTag && (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              marginTop: 6,
+                              fontSize: "0.62em",
+                              color: "#8fa4bc",
+                              border: "1px solid rgba(255,255,255,0.08)",
+                              borderRadius: 999,
+                              padding: "2px 7px",
+                            }}
+                          >
+                            {msg.issueTag}
+                          </span>
+                        )}
+                        {msg.retrievalTrace &&
+                          (msg.retrievalTrace.topics?.length ||
+                            msg.retrievalTrace.scenarios?.length ||
+                            msg.retrievalTrace.sources?.length) && (
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: 6,
+                                flexWrap: "wrap",
+                                marginTop: 6,
+                              }}
+                            >
+                              {msg.retrievalTrace.topics?.slice(0, 3).map((topicId) => (
+                                <span
+                                  key={topicId}
+                                  style={{
+                                    fontSize: "0.58em",
+                                    color: "#a5b4c7",
+                                    border: "1px solid rgba(255,255,255,0.06)",
+                                    borderRadius: 999,
+                                    padding: "2px 6px",
+                                    background: "rgba(255,255,255,0.03)",
+                                  }}
+                                >
+                                  topic:{topicId}
+                                </span>
+                              ))}
+                              {msg.retrievalTrace.scenarios?.slice(0, 2).map((scenarioId) => (
+                                <span
+                                  key={scenarioId}
+                                  style={{
+                                    fontSize: "0.58em",
+                                    color: "#93c5fd",
+                                    border: "1px solid rgba(147,197,253,0.12)",
+                                    borderRadius: 999,
+                                    padding: "2px 6px",
+                                    background: "rgba(59,130,246,0.08)",
+                                  }}
+                                >
+                                  sep:{scenarioId}
+                                </span>
+                              ))}
+                              {msg.retrievalTrace.sources?.length > 0 && (
+                                <span
+                                  style={{
+                                    fontSize: "0.58em",
+                                    color: "#8fa4bc",
+                                  }}
+                                >
+                                  {msg.retrievalTrace.sources.length} source
+                                  {msg.retrievalTrace.sources.length === 1 ? "" : "s"}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 6,
+                            flexWrap: "wrap",
+                            marginTop: 8,
+                          }}
+                        >
+                          {[
+                            ["correct", "Correct"],
+                            ["too_aggressive", "Too Aggressive"],
+                            ["missed_issue", "Missed Issue"],
+                            ["duplicate", "Duplicate"],
+                            ["wrong_section", "Wrong Section"],
+                          ].map(([verdict, label]) => (
+                            <button
+                              key={verdict}
+                              type="button"
+                              onClick={() => setEntryFeedback(msg.id, verdict)}
+                              style={{
+                                fontSize: "0.62em",
+                                borderRadius: 999,
+                                border:
+                                  msg.feedback?.verdict === verdict
+                                    ? "1px solid rgba(56,189,248,0.35)"
+                                    : "1px solid rgba(255,255,255,0.08)",
+                                background:
+                                  msg.feedback?.verdict === verdict
+                                    ? "rgba(56,189,248,0.1)"
+                                    : "rgba(255,255,255,0.03)",
+                                color:
+                                  msg.feedback?.verdict === verdict
+                                    ? "#7dd3fc"
+                                    : "#8fa4bc",
+                                padding: "3px 8px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                       <span
                         style={{

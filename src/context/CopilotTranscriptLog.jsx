@@ -4,6 +4,7 @@ import {
   useReducer,
   useCallback,
   useRef,
+  useEffect,
 } from "react";
 
 /**
@@ -35,6 +36,19 @@ export const LOG_TYPES = {
   SYSTEM_EVENT: "system_event", // Gate completions, section changes, etc.
 };
 
+const FEEDBACK_STORAGE_KEY = "enrollgen_copilot_feedback";
+
+function loadStoredEntries() {
+  try {
+    const raw = localStorage.getItem(FEEDBACK_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 /* ── Reducer ── */
 function logReducer(state, action) {
   switch (action.type) {
@@ -55,6 +69,22 @@ function logReducer(state, action) {
           },
         ],
       };
+    case "UPDATE_ENTRY_FEEDBACK":
+      return {
+        ...state,
+        entries: state.entries.map((entry) =>
+          entry.id === action.entryId
+            ? {
+                ...entry,
+                feedback: {
+                  verdict: action.verdict,
+                  note: action.note || "",
+                  updatedAt: new Date().toISOString(),
+                },
+              }
+            : entry
+        ),
+      };
     case "CLEAR":
       return { entries: [] };
     default:
@@ -66,9 +96,19 @@ function logReducer(state, action) {
 const CopilotLogContext = createContext(null);
 
 export function CopilotLogProvider({ children }) {
-  const [state, dispatch] = useReducer(logReducer, { entries: [] });
+  const [state, dispatch] = useReducer(logReducer, undefined, () => ({
+    entries: loadStoredEntries(),
+  }));
   const entriesRef = useRef(state.entries);
   entriesRef.current = state.entries;
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(state.entries));
+    } catch {
+      /* ignore */
+    }
+  }, [state.entries]);
 
   /**
    * logEntry — Add an entry to the transcript log.
@@ -109,6 +149,29 @@ export function CopilotLogProvider({ children }) {
     return entriesRef.current.filter((e) => e.logType === logType);
   }, []);
 
+  const setEntryFeedback = useCallback((entryId, verdict, note = "") => {
+    dispatch({
+      type: "UPDATE_ENTRY_FEEDBACK",
+      entryId,
+      verdict,
+      note,
+    });
+  }, []);
+
+  const exportFeedbackDataset = useCallback(() => {
+    return entriesRef.current
+      .filter((entry) => entry.logType === LOG_TYPES.COPILOT_MSG)
+      .map((entry) => ({
+        id: entry.id,
+        timestamp: entry.timestamp,
+        timeDisplay: entry.timeDisplay,
+        level: entry.level,
+        message: entry.message,
+        meta: entry.meta || {},
+        feedback: entry.feedback || null,
+      }));
+  }, []);
+
   /** Clear the log (for new sessions) */
   const clearLog = useCallback(() => {
     dispatch({ type: "CLEAR" });
@@ -123,6 +186,8 @@ export function CopilotLogProvider({ children }) {
         getWarnings,
         getAlerts,
         getByType,
+        setEntryFeedback,
+        exportFeedbackDataset,
         clearLog,
         LOG_TYPES,
       }}

@@ -1,0 +1,370 @@
+{
+  "dataset_records": 500,
+  "valid_records": 500,
+  "malformed_records": [],
+  "overall_pass_rate": 0.614,
+  "exact_match_rate": 0.614,
+  "intervention_level_accuracy": 1.0,
+  "blockSubmission_accuracy": 1.0,
+  "evidence_exact_match_rate": 0.922,
+  "per_rule": {
+    "CSNP_REQUIRES_CONDITION_CONTEXT": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "DSNP_REQUIRES_MEDICAID_VERIFICATION": {
+      "tp": 35,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "EFFECTIVE_DATE_GUARANTEE_MISMATCH": {
+      "tp": 37,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "ELIGIBILITY_PARTA_PARTB_REQUIRED": {
+      "tp": 23,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "SEP_TRIGGER_REQUIRED": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "SERVICE_AREA_REQUIRED": {
+      "tp": 23,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "SOA_BEFORE_MARKETING": {
+      "tp": 37,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "SUBMISSION_STATUS_OVERSTATEMENT": {
+      "tp": 49,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "TPMO_BEFORE_RECO": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "VALID_ELECTION_PERIOD_REQUIRED": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "per_category": {
+    "ANYTIME_ENROLL": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "APPROVAL_GUARANTEE": {
+      "tp": 36,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "CASH_GIVEBACK": {
+      "tp": 36,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "COST_GUARANTEE": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "IMMEDIATE_EFFECTIVE": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "NETWORK_PROMISE": {
+      "tp": 36,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "PRESSURE_LANGUAGE": {
+      "tp": 36,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "TPMO_CONTRADICTION": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "UNSUPPORTED_BEST": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "per_issue_tag": {
+    "anytime_enroll": {
+      "tp": 11,
+      "fp": 0,
+      "fn": 13,
+      "precision": 1.0,
+      "recall": 0.4583,
+      "f1": 0.6286
+    },
+    "approval_guarantee": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 26,
+      "precision": 1.0,
+      "recall": 0.2778,
+      "f1": 0.4348
+    },
+    "cash_giveback": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 26,
+      "precision": 1.0,
+      "recall": 0.2778,
+      "f1": 0.4348
+    },
+    "csnp_requires_condition_context": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "dsnp_requires_medicaid_verification": {
+      "tp": 35,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "effective_date_guarantee_mismatch": {
+      "tp": 37,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "eligibility_parta_partb_required": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 13,
+      "precision": 1.0,
+      "recall": 0.4348,
+      "f1": 0.6061
+    },
+    "needs_clarification_election_period": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "needs_clarification_medicaid_status": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "needs_clarification_move_date": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "needs_clarification_part_b_effective_date": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "network_promise": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 26,
+      "precision": 1.0,
+      "recall": 0.2778,
+      "f1": 0.4348
+    },
+    "pressure_language": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 26,
+      "precision": 1.0,
+      "recall": 0.2778,
+      "f1": 0.4348
+    },
+    "sep_trigger_required": {
+      "tp": 11,
+      "fp": 0,
+      "fn": 13,
+      "precision": 1.0,
+      "recall": 0.4583,
+      "f1": 0.6286
+    },
+    "service_area_required": {
+      "tp": 23,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "soa_before_marketing": {
+      "tp": 37,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "submission_status_overstatement": {
+      "tp": 23,
+      "fp": 0,
+      "fn": 26,
+      "precision": 1.0,
+      "recall": 0.4694,
+      "f1": 0.6389
+    },
+    "tpmo_before_reco": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "tpmo_contradiction": {
+      "tp": 11,
+      "fp": 0,
+      "fn": 13,
+      "precision": 1.0,
+      "recall": 0.4583,
+      "f1": 0.6286
+    },
+    "valid_election_period_required": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "top_20_mismatch_patterns": [
+    [
+      "wrong_intervention_evidence",
+      39
+    ],
+    [
+      "missing_issue_tag:pressure_language",
+      26
+    ],
+    [
+      "missing_issue_tag:network_promise",
+      26
+    ],
+    [
+      "missing_issue_tag:cash_giveback",
+      26
+    ],
+    [
+      "missing_issue_tag:approval_guarantee",
+      26
+    ],
+    [
+      "missing_issue_tag:submission_status_overstatement",
+      26
+    ],
+    [
+      "missing_issue_tag:sep_trigger_required",
+      13
+    ],
+    [
+      "missing_issue_tag:eligibility_parta_partb_required",
+      13
+    ],
+    [
+      "missing_issue_tag:anytime_enroll",
+      13
+    ],
+    [
+      "missing_issue_tag:tpmo_contradiction",
+      13
+    ]
+  ]
+}

@@ -89,6 +89,7 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
         pointerEvents: "none",
         marginBottom: -40,
         paddingRight: 4,
+        transform: "translateX(clamp(72px, 10vw, 140px))",
       }}
     >
       <div

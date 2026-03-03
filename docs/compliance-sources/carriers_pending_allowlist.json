@@ -1,0 +1,38 @@
+[
+  {
+    "carrier": "Humana",
+    "domain": "humana.com",
+    "example_urls": [
+      "https://www.humana.com/medicare/medicare-resources/part-b-giveback-benefit"
+    ],
+    "document_types_present": "Public Medicare education pages and operational explanations",
+    "notes": "Operationally relevant for Part B giveback processing language and beneficiary expectations. Should remain secondary authority only."
+  },
+  {
+    "carrier": "UnitedHealthcare",
+    "domain": "retiree.uhc.com",
+    "example_urls": [
+      "https://retiree.uhc.com/content/dam/retiree/pdf/lsufirst/2024/2024-PG-LSUFirst-12252.pdf"
+    ],
+    "document_types_present": "Public retiree plan guides and enrollment onboarding documents",
+    "notes": "Operationally relevant for post-submission timeline expectations, member ID mailing, and onboarding. Group-specific materials must not be generalized into compliance authority."
+  },
+  {
+    "carrier": "Wellcare",
+    "domain": "wellcare.com",
+    "example_urls": [
+      "https://www.wellcare.com/en/Providers/Medicare"
+    ],
+    "document_types_present": "Public provider resource pages and linked operational documents",
+    "notes": "Potentially useful for ID card effective-date workflow explanations. Requires manual review of linked public documents before any allowlisting."
+  },
+  {
+    "carrier": "Aetna",
+    "domain": "aetna.com",
+    "example_urls": [
+      "https://www.aetna.com/medicare/member-materials/print-materials.html"
+    ],
+    "document_types_present": "Public member materials and printed-plan document portals",
+    "notes": "Potential source of confirmation, enrollment, or ID card workflow material. Needs manual review because public materials vary by plan and market."
+  }
+]

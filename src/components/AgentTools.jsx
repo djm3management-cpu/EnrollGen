@@ -1,13 +1,28 @@
-import EnrollGenLogo from "./EnrollGenLogo";
 import { useState, useMemo } from "react";
+import {
+  Building2,
+  ChevronDown,
+  ChevronRight,
+  Circle,
+  Flame,
+  Heart,
+  Landmark,
+  Map,
+  Rocket,
+  RotateCw,
+  Search,
+  Shield,
+  X,
+} from "lucide-react";
 import ObjectionHandler from "./ObjectionHandler";
 import SEPLookup from "./SEPLookup";
-import ComplianceDashboard from "./ComplianceDashboard";
 import DailyVerse from "./DailyVerse";
+import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 
 /* ---- Collapsible Accordion ---- */
 function Accordion({
   title,
+  icon,
   children,
   defaultOpen = false,
   searchMatch = true,
@@ -25,10 +40,79 @@ function Accordion({
         aria-expanded={open}
         type="button"
       >
-        <span>{title}</span>
-        <span className="accordion-arrow">{open ? "▾" : "▸"}</span>
+        <span
+          style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+        >
+          {icon}
+          {title}
+        </span>
+        <span className="accordion-arrow">
+          {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+        </span>
       </button>
       {open && <div className="accordion-body">{children}</div>}
+    </div>
+  );
+}
+
+function renderCarrierIcon(type) {
+  const props = { size: 16, strokeWidth: 2 };
+  const iconMap = {
+    humana: <Circle {...props} color="#fbbf24" fill="#fbbf24" />,
+    uhc: <Circle {...props} color="#60a5fa" fill="#60a5fa" />,
+    sunfire: <Flame {...props} color="#f97316" />,
+    cms: <Landmark {...props} color="#cbd5e1" />,
+    aetna: <Building2 {...props} color="#60a5fa" />,
+    anthem: <Shield {...props} color="#60a5fa" />,
+    cigna: <Circle {...props} color="#34d399" fill="#34d399" />,
+    devoted: <Heart {...props} color="#f87171" />,
+    wellcare: <Circle {...props} color="#c084fc" fill="#c084fc" />,
+  };
+
+  return iconMap[type] || <Building2 {...props} color="#cbd5e1" />;
+}
+
+function SEPReference({ script }) {
+  return (
+    <div className="sep-reference">
+      <div className="sep-reference-header">
+        <div>
+          <h4>{script.title}</h4>
+          <p>{script.subtitle}</p>
+        </div>
+        <span className="sep-reference-badge">Internal Use Only</span>
+      </div>
+
+      <div className="sep-reference-note">{script.instructions}</div>
+
+      <div className="sep-reference-sections">
+        {script.sections.map((section) => (
+          <div key={section.id} className="sep-reference-section">
+            <div className="sep-reference-section-title">{section.name}</div>
+            <div className="sep-reference-items">
+              {section.items.map((item) => (
+                <article key={item.id} className="sep-reference-item">
+                  <div className="sep-reference-ask">{item.ask}</div>
+                  <div className="sep-reference-meta">
+                    <span className="sep-reference-label">Allowed actions</span>
+                    <ul className="sep-reference-actions">
+                      {item.allowed_actions.map((action) => (
+                        <li key={action}>{action}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="sep-reference-window">
+                    <span className="sep-reference-label">Enrollment window</span>
+                    <p>{item.window}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="sep-reference-footer">{script.footer}</div>
     </div>
   );
 }
@@ -38,43 +122,43 @@ const CARRIER_LINKS = [
   {
     name: "Humana MBI Lookup (Vantage)",
     url: "https://agentportal.humana.com/Vantage/apps/index.html?agenthome=-1#!/dual-eligibility-verification",
-    icon: "🟡",
+    icon: "humana",
   },
   {
     name: "UHC MBI Lookup (Jarvis)",
     url: "https://www.uhcjarvis.com/content/jarvis/en/secure/tools/eligibility_lookup.html",
-    icon: "🔵",
+    icon: "uhc",
   },
-  { name: "Sunfire", url: "https://app.sunfirematrix.com", icon: "🔥" },
+  { name: "Sunfire", url: "https://app.sunfirematrix.com", icon: "sunfire" },
   {
     name: "MARx (CMS)",
     url: "https://www.cms.gov/medicare/enrollment-renewal/providers-suppliers/internet-based-marx",
-    icon: "🏛️",
+    icon: "cms",
   },
   {
     name: "Aetna / Producer World",
     url: "https://www.aetna.com/producer.html",
-    icon: "🅰️",
+    icon: "aetna",
   },
   {
     name: "Anthem / Broker Connect",
     url: "https://www.anthem.com/broker/",
-    icon: "🔷",
+    icon: "anthem",
   },
-  { name: "Cigna / Brokers", url: "https://cignaforbrokers.com", icon: "🟢" },
+  { name: "Cigna / Brokers", url: "https://cignaforbrokers.com", icon: "cigna" },
   {
     name: "Devoted Agent Portal",
     url: "https://www.devoted.com/agents",
-    icon: "❤️",
+    icon: "devoted",
   },
-  { name: "Humana / Vantage", url: "https://www.humana.com/agent", icon: "🟡" },
-  { name: "UHC / Jarvis", url: "https://www.uhcjarvis.com", icon: "🔵" },
+  { name: "Humana / Vantage", url: "https://www.humana.com/agent", icon: "humana" },
+  { name: "UHC / Jarvis", url: "https://www.uhcjarvis.com", icon: "uhc" },
   {
     name: "WellCare / Broker Portal",
     url: "https://www.wellcare.com/broker",
-    icon: "🟣",
+    icon: "wellcare",
   },
-  { name: "Medicare.gov", url: "https://www.medicare.gov", icon: "🏛️" },
+  { name: "Medicare.gov", url: "https://www.medicare.gov", icon: "cms" },
 ];
 
 export default function AgentTools() {
@@ -129,9 +213,10 @@ export default function AgentTools() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="🔍 Search agent tools..."
+          placeholder="Search agent tools..."
           className="input-dark agent-tools-search-input"
         />
+        <Search size={16} className="agent-tools-search-icon" />
         {searchQuery && (
           <button
             className="agent-tools-search-clear"
@@ -139,7 +224,7 @@ export default function AgentTools() {
             title="Clear search"
             type="button"
           >
-            ✕
+            <X size={14} />
           </button>
         )}
       </div>
@@ -153,10 +238,19 @@ export default function AgentTools() {
       <ObjectionHandler />
       {/* 2) SEP LOOKUP NEXT (so it stays high on the page) */}
       {accordionMatches.sepLookup && <SEPLookup />}
-
+      {/* 6) SEPs */}
+      <Accordion
+        title="Medicare Advantage Special Enrollment Periods (SEPs)"
+        icon={<RotateCw size={16} />}
+        defaultOpen
+        searchMatch={accordionMatches.seps}
+      >
+        <SEPReference script={NGHS_SEP_SCRIPT} />
+      </Accordion>
       {/* 4) QUICK LINKS */}
       <Accordion
-        title="🚀 Carrier Quick Links"
+        title="Carrier Quick Links"
+        icon={<Rocket size={16} />}
         defaultOpen
         searchMatch={accordionMatches.links}
       >
@@ -169,54 +263,19 @@ export default function AgentTools() {
               rel="noreferrer"
               className="carrier-link-card"
             >
-              <span className="carrier-link-icon">{link.icon}</span>
+              <span className="carrier-link-icon">
+                {renderCarrierIcon(link.icon)}
+              </span>
               <span className="carrier-link-name">{link.name}</span>
             </a>
           ))}
         </div>
       </Accordion>
 
-      {/* 5) CORE EP */}
-      <Accordion
-        title="🗓️ Core Medicare Enrollment Periods"
-        defaultOpen
-        searchMatch={accordionMatches.core}
-      >
-        <ul>
-          <li>
-            <strong>AEP</strong> (Oct 15 – Dec 7): Change, drop, or enroll in
-            Medicare Advantage
-          </li>
-          <li>
-            <strong>OEP</strong> (Jan 1 – Mar 31): One MA plan change or drop to
-            Original Medicare
-          </li>
-          <li>
-            <strong>IEP</strong>: 7-month window around 65th birthday for
-            first-time enrollment
-          </li>
-        </ul>
-      </Accordion>
-
-      {/* 6) SEPs */}
-      <Accordion
-        title="🔁 Medicare Advantage Special Enrollment Periods (SEPs)"
-        searchMatch={accordionMatches.seps}
-      >
-        {/* keep your existing SEP content here */}
-      </Accordion>
-
-      {/* 7) DISASTER */}
-      <Accordion
-        title="🌪️ Disaster SEP Tracker"
-        searchMatch={accordionMatches.disaster}
-      >
-        {/* keep your existing Disaster content here */}
-      </Accordion>
-
       {/* 8) MAPS (LOWER because they are huge) */}
       <Accordion
-        title="🗺️ FEMA Disaster SEP Zones & Medicaid Map"
+        title="FEMA Disaster SEP Zones & Medicaid Map"
+        icon={<Map size={16} />}
         searchMatch={accordionMatches.maps}
       >
         {!mapsLoaded ? (
@@ -256,12 +315,6 @@ export default function AgentTools() {
       </Accordion>
 
       {/* 9) REFS */}
-      <Accordion
-        title="🔗 Quick Agent References"
-        searchMatch={accordionMatches.refs}
-      >
-        {/* keep your existing References content here */}
-      </Accordion>
 
       {/* 10) DAILY VERSE LAST */}
       <DailyVerse />

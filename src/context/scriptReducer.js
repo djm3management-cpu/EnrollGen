@@ -296,10 +296,99 @@ export function allChecked(obj) {
   return Object.values(obj).every(Boolean);
 }
 
+function formatSectionDuration(ts, nowTs) {
+  if (!ts?.start) return "—";
+  const end = ts.end || nowTs;
+  const sec = Math.max(0, Math.round((end - ts.start) / 1000));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}m ${s}s`;
+}
+
+function summarizeOptionalProducts(state) {
+  return {
+    hospitalIndemnity: state.hiDiscussed
+      ? "Discussed"
+      : state.hiActive
+      ? "Opened"
+      : "Skipped",
+    dentalVision: state.dvDiscussed
+      ? "Discussed"
+      : state.dvActive
+      ? "Opened"
+      : "Skipped",
+    finalExpense: state.feDiscussed
+      ? "Discussed"
+      : state.feActive
+      ? "Opened"
+      : "Skipped",
+  };
+}
+
+function buildSectionDetail(field, state, optionalProducts) {
+  switch (field) {
+    case "recordingOk":
+      return state.agentName
+        ? `Agent: ${state.agentName}`
+        : "Agent name not entered";
+    case "tpmoOk": {
+      const parts = [];
+      if (state.tpmoZip) parts.push(`ZIP ${state.tpmoZip}`);
+      if (state.tpmoOrgs) parts.push(`${state.tpmoOrgs} orgs`);
+      if (state.tpmoPlans) parts.push(`${state.tpmoPlans} plans`);
+      return parts.length ? parts.join(" • ") : "TPMO counts not entered";
+    }
+    case "snpOk":
+      return `${state.snpType || "SNP"} disclosure`;
+    case "soaOk":
+      return "POA/SOA permission confirmed";
+    case "qualOk":
+      return "Qualification questions completed";
+    case "neadsOk":
+      return "Needs assessment reviewed";
+    case "sobOk":
+      return state.partBReduction
+        ? "Plan reviewed • Part B reduction discussed"
+        : "Plan benefits reviewed";
+    case "enrollOk": {
+      const parts = [];
+      if (state.notes.planName) parts.push(state.notes.planName);
+      if (state.notes.effectiveDate)
+        parts.push(`Eff. ${state.notes.effectiveDate}`);
+      if (state.notes.enrollmentCode)
+        parts.push(`App ID ${state.notes.enrollmentCode}`);
+      return parts.length ? parts.join(" • ") : "Enrollment submitted";
+    }
+    case "wrapUp": {
+      const parts = [];
+      if (state.notes.confirmation)
+        parts.push(`Confirmation ${state.notes.confirmation}`);
+      if (optionalProducts.hospitalIndemnity !== "Skipped")
+        parts.push(`HI: ${optionalProducts.hospitalIndemnity}`);
+      if (optionalProducts.dentalVision !== "Skipped")
+        parts.push(`DV: ${optionalProducts.dentalVision}`);
+      if (optionalProducts.finalExpense !== "Skipped")
+        parts.push(`FE: ${optionalProducts.finalExpense}`);
+      return parts.length ? parts.join(" • ") : "No wrap-up notes entered";
+    }
+    default:
+      return "";
+  }
+}
+
 /* ---- Generate session summary ---- */
 export function generateSessionSummary(state) {
   const now = new Date();
+  const nowTs = now.getTime();
   const sessionStartDate = new Date(state.sessionStart);
+  const optionalProducts = summarizeOptionalProducts(state);
+  const wrapUpTouched = Boolean(
+    state.sectionTimestamps[8]?.start ||
+      state.notes.confirmation ||
+      state.hiActive ||
+      state.dvActive ||
+      state.feActive
+  );
 
   const completedSections = [];
   const sectionGates = [
@@ -310,6 +399,7 @@ export function generateSessionSummary(state) {
     { num: 5, field: "neadsOk", label: "NEADS Assessment" },
     { num: 6, field: "sobOk", label: "Plan Selection & SOB" },
     { num: 7, field: "enrollOk", label: "Enrollment" },
+    { num: 8, field: "wrapUp", label: "Wrap-Up" },
   ];
 
   if (state.snpType) {
@@ -322,17 +412,13 @@ export function generateSessionSummary(state) {
 
   for (const sg of sectionGates) {
     const ts = state.sectionTimestamps[sg.num];
-    let duration = "—";
-    if (ts && ts.start && ts.end) {
-      const sec = Math.round((ts.end - ts.start) / 1000);
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      duration = `${m}m ${s}s`;
-    }
+    const completed =
+      sg.field === "wrapUp" ? wrapUpTouched : Boolean(state[sg.field]);
     completedSections.push({
       section: sg.label,
-      completed: state[sg.field],
-      duration,
+      completed,
+      duration: formatSectionDuration(ts, nowTs),
+      detail: buildSectionDetail(sg.field, state, optionalProducts),
     });
   }
 
@@ -346,22 +432,6 @@ export function generateSessionSummary(state) {
     confirmationNumber: state.notes.confirmation || "(not entered)",
     snpType: state.snpType || "None",
     sections: completedSections,
-    optionalProducts: {
-      hospitalIndemnity: state.hiDiscussed
-        ? "Discussed"
-        : state.hiActive
-        ? "Opened"
-        : "Skipped",
-      dentalVision: state.dvDiscussed
-        ? "Discussed"
-        : state.dvActive
-        ? "Opened"
-        : "Skipped",
-      finalExpense: state.feDiscussed
-        ? "Discussed"
-        : state.feActive
-        ? "Opened"
-        : "Skipped",
-    },
+    optionalProducts,
   };
 }

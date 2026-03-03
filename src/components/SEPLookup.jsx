@@ -3348,8 +3348,16 @@ export default function SEPLookupTool() {
         {/* Empty */}
         {!results && !loading && (
           <div className="sep-empty">
-            <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>
-              🔍
+            <div
+              style={{
+                fontSize: 48,
+                marginBottom: 16,
+                opacity: 0.3,
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <IconSearch />
             </div>
             <div
               style={{

@@ -45,52 +45,36 @@ function Gate({ label, done, onDo, onUndo }) {
         marginTop: 16,
         paddingTop: 14,
         borderTop: "1px solid rgba(255,255,255,0.04)",
+        display: "flex",
+        justifyContent: "center",
       }}
     >
-      {done ? (
-        <div
+      <label
+        className="check"
+        style={{
+          justifyContent: "center",
+          width: "fit-content",
+          minWidth: 260,
+          padding: "10px 14px",
+          border: `1px solid ${
+            done ? "rgba(52,211,153,0.2)" : "rgba(56,189,248,0.15)"
+          }`,
+          background: done
+            ? "rgba(52,211,153,0.05)"
+            : "rgba(255,255,255,0.015)",
+          color: done ? "#34d399" : "#dfe6f0",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={done}
+          onChange={(e) => (e.target.checked ? onDo() : onUndo())}
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            margin: 0,
           }}
-        >
-          <span style={{ color: "#34d399", fontSize: 13 }}>✓ {label}</span>
-          <button
-            onClick={onUndo}
-            style={{
-              fontSize: 11,
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 6,
-              color: "#4a5568",
-              padding: "4px 10px",
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            ↩
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={onDo}
-          style={{
-            width: "100%",
-            padding: "10px 16px",
-            borderRadius: 8,
-            border: "1px solid rgba(56,189,248,0.25)",
-            background: "rgba(56,189,248,0.06)",
-            color: "#38bdf8",
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          ✓ {label}
-        </button>
-      )}
+        />
+        {label}
+      </label>
     </div>
   );
 }

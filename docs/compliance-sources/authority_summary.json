@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.1.0",
+  "primary_controls_compliance": true,
+  "secondary_operational_only": true,
+  "conflict_resolution_rule": "Primary federal authority overrides carrier guidance.",
+  "date_format": "YYYY-MM-DD",
+  "outdated_guidance_rule": "If a newer contract-year rule, CFR text, or CMS guidance exists, older guidance must be flagged and not treated as current controlling authority.",
+  "excerpt_rule": "Store only minimal rule-relevant excerpts of 150 words or fewer.",
+  "citation_rule": "Each source entry must include normalized publisher, URL, published_date when available, and date_accessed.",
+  "manual_review_required_for_secondary_domains": true,
+  "marketplace_scope_excluded": true,
+  "last_updated": "2026-03-03"
+}

@@ -289,6 +289,7 @@ function buildPrintHTML(summary, complianceResult, copilotEntries, warnings) {
         s.completed ? "✔" : "✗"
       }</td>
         <td>${s.section}</td>
+        <td>${s.detail || "—"}</td>
         <td>${s.duration}</td>
       </tr>`
     )
@@ -398,7 +399,7 @@ function buildPrintHTML(summary, complianceResult, copilotEntries, warnings) {
 
 <div class="section-header">Sections Completed</div>
 <table>
-  <thead><tr><th style="width:40px"></th><th>Section</th><th style="width:100px">Duration</th></tr></thead>
+  <thead><tr><th style="width:40px"></th><th>Section</th><th>Detail</th><th style="width:100px">Duration</th></tr></thead>
   <tbody>${sectionRows}</tbody>
 </table>
 
@@ -549,14 +550,19 @@ function exportSessionSummaryPdf(summary, complianceResult, copilotEntries, warn
   autoTable(doc, {
     startY: y,
     theme: "grid",
-    head: [["Status", "Section", "Duration"]],
+    head: [["Status", "Section", "Detail", "Duration"]],
     body: summary.sections.map((s) => [
       s.completed ? "Done" : "Missed",
       s.section,
+      s.detail || "—",
       s.duration,
     ]),
     styles: { fontSize: 9, cellPadding: 2.5 },
     headStyles: { fillColor: [240, 249, 255], textColor: [14, 165, 233] },
+    columnStyles: {
+      0: { cellWidth: 18, fontStyle: "bold" },
+      3: { cellWidth: 20, halign: "right" },
+    },
   });
 
   y = doc.lastAutoTable.finalY + 8;
@@ -855,7 +861,9 @@ export default React.memo(function SessionSummary() {
       "Sections:",
     ];
     for (const s of summary.sections) {
-      lines.push(`  ${s.completed ? "✔" : "✗"} ${s.section} (${s.duration})`);
+      lines.push(
+        `  ${s.completed ? "✔" : "✗"} ${s.section}: ${s.detail || "—"} (${s.duration})`
+      );
     }
     lines.push("");
     lines.push(

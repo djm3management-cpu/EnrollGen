@@ -1,4 +1,11 @@
 import { useState, useRef } from "react";
+import {
+  Copy,
+  CornerDownLeft,
+  MessageSquareQuote,
+  SendHorizontal,
+  Target,
+} from "lucide-react";
 import { useAuth } from "@clerk/clerk-react";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
@@ -114,7 +121,12 @@ Rules:
   return (
     <div className="objection-handler">
       <div className="objection-handler-header">
-        <span className="objection-handler-icon">🗣️</span>
+        <span
+          className="objection-handler-icon"
+          style={{ display: "inline-flex", alignItems: "center" }}
+        >
+          <MessageSquareQuote size={18} />
+        </span>
         <div>
           <h3 style={{ margin: 0, fontSize: "1em" }}>Objection Handler</h3>
           <span style={{ fontSize: "0.75em", opacity: 0.6 }}>
@@ -154,7 +166,7 @@ Rules:
           onClick={() => handleSubmit()}
           disabled={loading || !input.trim()}
         >
-          {loading ? "⏳" : "→"}
+          {loading ? "..." : <SendHorizontal size={15} />}
         </button>
       </div>
 
@@ -169,14 +181,26 @@ Rules:
         <div className="objection-response">
           {/* Main Rebuttal */}
           <div className="objection-rebuttal">
-            <div className="objection-rebuttal-label">💬 SAY THIS</div>
+            <div
+              className="objection-rebuttal-label"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <MessageSquareQuote size={13} />
+              SAY THIS
+            </div>
             <p className="objection-rebuttal-text">"{response.rebuttal}"</p>
           </div>
 
           {/* Follow-up */}
           {response.followup && (
             <div className="objection-followup">
-              <div className="objection-followup-label">↩ THEN ASK</div>
+              <div
+                className="objection-followup-label"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <CornerDownLeft size={13} />
+                THEN ASK
+              </div>
               <p className="objection-followup-text">"{response.followup}"</p>
             </div>
           )}
@@ -184,7 +208,13 @@ Rules:
           {/* Agent Tip */}
           {response.tip && (
             <div className="objection-tip">
-              <span className="objection-tip-label">🎯 AGENT TIP: </span>
+              <span
+                className="objection-tip-label"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <Target size={13} />
+                AGENT TIP:
+              </span>{" "}
               {response.tip}
             </div>
           )}
@@ -199,7 +229,10 @@ Rules:
               )
             }
           >
-            📋 Copy
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <Copy size={13} />
+              Copy
+            </span>
           </button>
         </div>
       )}
