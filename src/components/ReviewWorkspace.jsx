@@ -8,6 +8,39 @@ import {
   summarizeBlockers,
 } from "../lib/deterministicBlockers";
 
+const LEVEL_STYLES = {
+  info: {
+    text: "#7dd3fc",
+    bg: "rgba(14, 165, 233, 0.08)",
+    border: "rgba(14, 165, 233, 0.2)",
+    glow: "rgba(14, 165, 233, 0.14)",
+  },
+  tip: {
+    text: "#86efac",
+    bg: "rgba(34, 197, 94, 0.08)",
+    border: "rgba(34, 197, 94, 0.2)",
+    glow: "rgba(34, 197, 94, 0.14)",
+  },
+  remind: {
+    text: "#c4b5fd",
+    bg: "rgba(139, 92, 246, 0.1)",
+    border: "rgba(139, 92, 246, 0.22)",
+    glow: "rgba(139, 92, 246, 0.16)",
+  },
+  warn: {
+    text: "#fbbf24",
+    bg: "rgba(245, 158, 11, 0.1)",
+    border: "rgba(245, 158, 11, 0.24)",
+    glow: "rgba(245, 158, 11, 0.16)",
+  },
+  critical: {
+    text: "#fca5a5",
+    bg: "rgba(239, 68, 68, 0.11)",
+    border: "rgba(239, 68, 68, 0.24)",
+    glow: "rgba(239, 68, 68, 0.18)",
+  },
+};
+
 export default React.memo(function ReviewWorkspace() {
   const { state, activeSection } = useScript();
   const { entries, getWarnings } = useCopilotLog();
@@ -62,8 +95,14 @@ export default React.memo(function ReviewWorkspace() {
               style={{
                 borderRadius: 12,
                 border: "1px solid rgba(255,255,255,0.08)",
-                background: "rgba(255,255,255,0.03)",
+                background:
+                  label === "Critical"
+                    ? "linear-gradient(180deg, rgba(127,29,29,0.2), rgba(255,255,255,0.03))"
+                    : label === "Warnings"
+                    ? "linear-gradient(180deg, rgba(120,53,15,0.18), rgba(255,255,255,0.03))"
+                    : "linear-gradient(180deg, rgba(125,211,252,0.08), rgba(255,255,255,0.03))",
                 padding: "10px 12px",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
               }}
             >
               <div style={{ fontSize: "0.68rem", color: "#8fa4bc" }}>{label}</div>
@@ -86,8 +125,10 @@ export default React.memo(function ReviewWorkspace() {
           style={{
             borderRadius: 14,
             border: "1px solid rgba(255,255,255,0.08)",
-            background: "rgba(255,255,255,0.025)",
+            background:
+              "linear-gradient(180deg, rgba(18,27,41,0.92), rgba(10,15,24,0.92))",
             padding: 14,
+            boxShadow: "0 18px 34px rgba(0,0,0,0.18)",
           }}
         >
           <div style={{ fontSize: "0.78rem", fontWeight: 800, marginBottom: 10 }}>
@@ -100,7 +141,42 @@ export default React.memo(function ReviewWorkspace() {
           ) : (
             blockers.slice(0, 8).map((blocker) => (
               <div key={blocker.id} style={{ marginTop: 8, lineHeight: 1.45 }}>
-                <div style={{ fontSize: "0.84rem", color: "#eef5ff" }}>
+                <div
+                  style={{
+                    fontSize: "0.84rem",
+                    color: "#eef5ff",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "0.62rem",
+                      padding: "2px 7px",
+                      borderRadius: 999,
+                      color:
+                        blocker.severity === "critical"
+                          ? "#fecaca"
+                          : blocker.severity === "high"
+                          ? "#fde68a"
+                          : "#bfdbfe",
+                      background:
+                        blocker.severity === "critical"
+                          ? "rgba(239,68,68,0.14)"
+                          : blocker.severity === "high"
+                          ? "rgba(245,158,11,0.14)"
+                          : "rgba(59,130,246,0.14)",
+                      border:
+                        blocker.severity === "critical"
+                          ? "1px solid rgba(239,68,68,0.22)"
+                          : blocker.severity === "high"
+                          ? "1px solid rgba(245,158,11,0.22)"
+                          : "1px solid rgba(59,130,246,0.22)",
+                    }}
+                  >
+                    {blocker.severity}
+                  </span>
                   <strong>{blocker.label}</strong>
                 </div>
                 <div style={{ fontSize: "0.78rem", color: "#8fa4bc" }}>
@@ -127,8 +203,10 @@ export default React.memo(function ReviewWorkspace() {
           style={{
             borderRadius: 14,
             border: "1px solid rgba(255,255,255,0.08)",
-            background: "rgba(255,255,255,0.025)",
+            background:
+              "linear-gradient(180deg, rgba(18,27,41,0.92), rgba(10,15,24,0.92))",
             padding: 14,
+            boxShadow: "0 18px 34px rgba(0,0,0,0.18)",
           }}
         >
           <div style={{ fontSize: "0.78rem", fontWeight: 800, marginBottom: 10 }}>
@@ -143,11 +221,36 @@ export default React.memo(function ReviewWorkspace() {
               <div
                 key={entry.id}
                 onClick={() => setSelectedEntryId(entry.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedEntryId(entry.id);
+                  }
+                }}
                 style={{
                   marginTop: 8,
-                  paddingTop: 8,
-                  borderTop: "1px solid rgba(255,255,255,0.06)",
+                  padding: "10px 12px",
+                  borderRadius: 12,
+                  border:
+                    selectedEntryId === entry.id
+                      ? `1px solid ${
+                          (LEVEL_STYLES[entry.level] || LEVEL_STYLES.info).border
+                        }`
+                      : "1px solid rgba(255,255,255,0.06)",
+                  background:
+                    selectedEntryId === entry.id
+                      ? (LEVEL_STYLES[entry.level] || LEVEL_STYLES.info).bg
+                      : "rgba(255,255,255,0.025)",
+                  boxShadow:
+                    selectedEntryId === entry.id
+                      ? `0 10px 24px ${
+                          (LEVEL_STYLES[entry.level] || LEVEL_STYLES.info).glow
+                        }`
+                      : "none",
                   cursor: "pointer",
+                  transition: "all 0.2s ease",
                 }}
               >
                 <div
@@ -159,7 +262,16 @@ export default React.memo(function ReviewWorkspace() {
                     color: "#8fa4bc",
                   }}
                 >
-                  <span>{entry.level}</span>
+                  <span
+                    style={{
+                      color: (LEVEL_STYLES[entry.level] || LEVEL_STYLES.info).text,
+                      fontWeight: 800,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {entry.level}
+                  </span>
                   <span>{entry.timeDisplay || entry.ts || ""}</span>
                 </div>
                 <div style={{ fontSize: "0.82rem", color: "#eef5ff", marginTop: 4 }}>
@@ -181,9 +293,16 @@ export default React.memo(function ReviewWorkspace() {
           style={{
             marginTop: 14,
             borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.08)",
-            background: "rgba(255,255,255,0.025)",
+            border: `1px solid ${
+              (LEVEL_STYLES[selectedEntry.level] || LEVEL_STYLES.info).border
+            }`,
+            background: `linear-gradient(180deg, ${
+              (LEVEL_STYLES[selectedEntry.level] || LEVEL_STYLES.info).bg
+            }, rgba(10,15,24,0.92))`,
             padding: 14,
+            boxShadow: `0 20px 40px ${
+              (LEVEL_STYLES[selectedEntry.level] || LEVEL_STYLES.info).glow
+            }`,
           }}
         >
           <div
@@ -227,7 +346,16 @@ export default React.memo(function ReviewWorkspace() {
             }}
           >
             <div style={{ fontSize: "0.74rem", color: "#8fa4bc" }}>
-              <strong style={{ color: "#dbe7f3" }}>Level:</strong> {selectedEntry.level}
+              <strong style={{ color: "#dbe7f3" }}>Level:</strong>{" "}
+              <span
+                style={{
+                  color:
+                    (LEVEL_STYLES[selectedEntry.level] || LEVEL_STYLES.info).text,
+                  fontWeight: 800,
+                }}
+              >
+                {selectedEntry.level}
+              </span>
             </div>
             <div style={{ fontSize: "0.74rem", color: "#8fa4bc" }}>
               <strong style={{ color: "#dbe7f3" }}>Section:</strong> {selectedEntry.meta?.section || "—"}
