@@ -1,6 +1,8 @@
 import { supabase } from "./supabase";
 import { getQueryEmbedding } from "./embeddings";
 
+const DEFAULT_REAL_SYSTEMS = ["conversely", "enrollhere", "manual"];
+
 function formatCallDate(value) {
   if (!value) return "Unknown date";
   const date = new Date(value);
@@ -8,12 +10,26 @@ function formatCallDate(value) {
   return date.toLocaleDateString();
 }
 
+function normalizeSourceSystem(value) {
+  return (value || "").toString().trim().toLowerCase();
+}
+
+function classifySourceType(sourceSystem) {
+  const normalized = normalizeSourceSystem(sourceSystem);
+  if (!normalized) return "unknown";
+  if (normalized.includes("synthetic")) return "synthetic";
+  if (DEFAULT_REAL_SYSTEMS.includes(normalized)) return "real";
+  return "real";
+}
+
 function buildReferenceId(result, index) {
   const callDate = formatCallDate(result.call_date);
   const agent = result.agent_name || "Unknown Agent";
   const productLine = result.product_line || "Unknown Product";
   const disposition = result.disposition || "Unknown Disposition";
-  return `R${index + 1} · ${agent} · ${callDate} · ${productLine} · ${disposition}`;
+  const sourceTypeLabel =
+    result.sourceType === "synthetic" ? "SYNTHETIC" : "REAL";
+  return `R${index + 1} · ${sourceTypeLabel} · ${agent} · ${callDate} · ${productLine} · ${disposition}`;
 }
 
 function toContextBlock(results) {
@@ -58,6 +74,7 @@ export async function fetchTranscriptReferences({
   topics = null,
   matchCount = 5,
   similarityThreshold = 0.7,
+  realFirst = true,
 } = {}) {
   const normalizedQuery = (query || "").trim();
   if (!normalizedQuery) {
@@ -73,7 +90,7 @@ export async function fetchTranscriptReferences({
     const embedding = await getQueryEmbedding(normalizedQuery);
     const { data, error } = await supabase.rpc("search_transcript_chunks", {
       query_embedding: embedding,
-      match_count: matchCount,
+      match_count: Math.max(matchCount * 3, matchCount),
       filter_product_line: productLine,
       filter_carrier: carrier,
       filter_disposition: disposition,
@@ -83,7 +100,47 @@ export async function fetchTranscriptReferences({
 
     if (error) throw error;
 
-    const results = Array.isArray(data) ? data : [];
+    const initialResults = Array.isArray(data) ? data : [];
+    const transcriptIds = Array.from(
+      new Set(initialResults.map((row) => row.transcript_id).filter(Boolean))
+    );
+
+    let sourceSystemByTranscript = new Map();
+    if (transcriptIds.length > 0) {
+      const { data: transcriptMeta, error: transcriptMetaError } = await supabase
+        .from("call_transcripts")
+        .select("id, source_system")
+        .in("id", transcriptIds);
+
+      if (transcriptMetaError) {
+        throw transcriptMetaError;
+      }
+
+      sourceSystemByTranscript = new Map(
+        (transcriptMeta || []).map((row) => [row.id, row.source_system])
+      );
+    }
+
+    const decorated = initialResults.map((result) => {
+      const sourceSystem = sourceSystemByTranscript.get(result.transcript_id) || null;
+      return {
+        ...result,
+        source_system: sourceSystem,
+        sourceType: classifySourceType(sourceSystem),
+      };
+    });
+
+    let results = decorated;
+    if (realFirst) {
+      const realResults = decorated.filter((row) => row.sourceType !== "synthetic");
+      const syntheticResults = decorated.filter((row) => row.sourceType === "synthetic");
+      const selectedReal = realResults.slice(0, matchCount);
+      const remaining = Math.max(0, matchCount - selectedReal.length);
+      results = selectedReal.concat(syntheticResults.slice(0, remaining));
+    } else {
+      results = decorated.slice(0, matchCount);
+    }
+
     return {
       results,
       contextBlock: toContextBlock(results),

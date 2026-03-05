@@ -303,8 +303,62 @@ function summarizeRetrievalTrace(trace) {
    INTERVENTION TUNING CONSTANTS
    ═══════════════════════════════════════════════════════════════════ */
 const COACHING_DEBOUNCE_MS = 6000; // wait 6s of silence before analyzing
-const COACHING_COOLDOWN_MS = 20000; // minimum 20s between AI messages
-const MIN_NEW_CHARS = 120; // need ~120 new chars since last analysis
+const COACHING_COOLDOWN_MS = 30000; // minimum 30s between AI messages
+const MIN_NEW_CHARS = 180; // need more new content before analyzing
+const WARN_CONFIDENCE_FLOOR = 85;
+const REMIND_CONFIDENCE_FLOOR = 75;
+
+const HIGH_RISK_KEYWORDS = [
+  "mislead",
+  "guarantee",
+  "best plan",
+  "no cost",
+  "free",
+  "government",
+  "cms violation",
+  "illegal",
+  "pressure",
+  "threat",
+  "tricare",
+  "champva",
+  "disqual",
+  "not a government",
+];
+
+function isHighRiskIntervention(issueTag, message) {
+  const haystack = `${issueTag || ""} ${message || ""}`.toLowerCase();
+  return HIGH_RISK_KEYWORDS.some((keyword) => haystack.includes(keyword));
+}
+
+function shouldSuppressForNuance({
+  level,
+  issueTag,
+  message,
+  derivedSignals,
+}) {
+  if (level !== "warn" && level !== "remind") return false;
+  if (isHighRiskIntervention(issueTag, message)) return false;
+
+  // Do not push disclosure misses unless the call has clearly progressed.
+  if (!derivedSignals?.agentMovedPastCurrentSection) return true;
+
+  // If transcript likely already covers core paraphrases, avoid nudging.
+  const tag = (issueTag || "").toLowerCase();
+  if (
+    tag.includes("tpmo") &&
+    derivedSignals?.likelyCoveredByParaphrase?.tpmoCore
+  ) {
+    return true;
+  }
+  if (
+    (tag.includes("record") || tag.includes("consent")) &&
+    derivedSignals?.likelyCoveredByParaphrase?.recordingConsent
+  ) {
+    return true;
+  }
+
+  return false;
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    COMPLIANCE KNOWLEDGE MAP
@@ -1306,13 +1360,17 @@ ONLY break silence for:
 
 1. **COMPLIANCE VIOLATION (critical)**: Agent said something non-compliant, made an illegal claim, or violated CMS rules. Quote what they said and provide the exact correction.
 
-2. **MISSED REQUIRED DISCLOSURE (warn)**: Agent is moving forward but has not covered a required element for this section. Name the specific element missed and give the exact script language to say now.
+2. **MISSED REQUIRED DISCLOSURE (warn)**: Use this ONLY with high confidence. Agent must be clearly moving forward, the element must be materially missing, and the transcript must not contain a close paraphrase. Name the specific element missed and give the exact script language to say now.
 
-3. **IMPORTANT REMINDER (remind)**: Agent is deep into the section and a key required element hasn't been covered yet. They might be about to move on. Remind them specifically what to cover and suggest exact wording.
+3. **IMPORTANT REMINDER (remind)**: Use sparingly. Agent is clearly near transition and a key element is still likely uncovered. If uncertain, choose silent.
 
 4. **POSITIVE REINFORCEMENT (tip)**: Agent nailed a critical compliance element exceptionally well. ONLY use this occasionally (once every few minutes at most). MUST reference the SPECIFIC words or disclosure the agent said well and WHY it matters for compliance.
 
 5. **SILENCE (silent)**: Agent is doing fine, covering requirements correctly, or there's nothing actionable to say. THIS IS YOUR DEFAULT. Use this 70-80% of the time. When in doubt, choose silent.
+
+PRIORITY WEIGHTING:
+- Prioritize risky language and compliance-danger behaviors over missing-word disclosure checks.
+- Do not escalate on technical wording misses if the semantic intent appears covered.
 
 ════════════════════════════════════════════════════════
 RESPONSE QUALITY REQUIREMENTS
@@ -1336,6 +1394,7 @@ CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
 - Use the structured checklist state to identify the exact unresolved item when possible. If app state says an item is already complete, do not warn that it is missing unless the transcript shows a clear contradiction.
 - Use prior completed sections and call metadata to understand progression. If a later section is already completed in app state, do not accuse the agent of still being stuck on an earlier section.
 - When you intervene, target the smallest missing piece, not a whole section, unless the whole section is clearly absent.
+- Anchor interventions to the CURRENT call moment: reference what the agent is saying now and the current section's state instead of generic section reminders.
 
 ════════════════════════════════════════════════════════
 RESPONSE FORMAT
@@ -1344,6 +1403,7 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no extra te
 {
   "level": "silent | tip | remind | warn | critical",
   "issue_tag": "short_snake_case_issue_tag_or_empty_if_silent_or_tip",
+  "confidence": 0,
   "message": "Your message here. Empty string if silent."
 }`;
 
@@ -1381,11 +1441,14 @@ FULL TRANSCRIPT TAIL:
 
       let level = "info",
         message = "",
-        issueTag = "";
+        issueTag = "",
+        confidence = null;
       try {
         const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
         level = parsed.level || "info";
         message = parsed.message || "";
+        const parsedConfidence = Number(parsed.confidence);
+        confidence = Number.isFinite(parsedConfidence) ? parsedConfidence : null;
         issueTag =
           normalizeIssueTag(parsed.issue_tag) ||
           normalizeIssueTag(message.split(/[.:!?]/)[0]);
@@ -1404,6 +1467,40 @@ FULL TRANSCRIPT TAIL:
       if (
         (level === "warn" || level === "critical" || level === "remind") &&
         shouldSuppressDuplicateIssue(messages, currentStep, issueTag)
+      ) {
+        lastCoachingTime.current = Date.now();
+        setCoachingLoading(false);
+        return;
+      }
+
+      if (
+        (level === "warn" || level === "remind") &&
+        shouldSuppressForNuance({
+          level,
+          issueTag,
+          message,
+          derivedSignals,
+        })
+      ) {
+        lastCoachingTime.current = Date.now();
+        setCoachingLoading(false);
+        return;
+      }
+
+      if (
+        level === "warn" &&
+        confidence !== null &&
+        confidence < WARN_CONFIDENCE_FLOOR
+      ) {
+        lastCoachingTime.current = Date.now();
+        setCoachingLoading(false);
+        return;
+      }
+
+      if (
+        level === "remind" &&
+        confidence !== null &&
+        confidence < REMIND_CONFIDENCE_FLOOR
       ) {
         lastCoachingTime.current = Date.now();
         setCoachingLoading(false);

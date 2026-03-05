@@ -59,8 +59,6 @@ function buildScoreGaugeSVG(score, grade) {
    COMPLIANCE BREAKDOWN TABLE
    ═══════════════════════════════════════════════════ */
 function buildComplianceHTML(complianceResult) {
-  const grouped = groupByCategory(complianceResult.categories);
-
   let html = `
     <div style="page-break-before:always;"></div>
     <div class="section-header" style="margin-top:24px;">Compliance Assessment</div>
@@ -73,28 +71,33 @@ function buildComplianceHTML(complianceResult) {
       <strong>Summary:</strong> ${complianceResult.summary}
     </div>`;
 
-  for (const [category, items] of Object.entries(grouped)) {
+  for (const category of complianceResult.categories) {
     html += `
       <div style="margin-bottom:16px;">
         <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
           color:#0ea5e9;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">
-          ${category}
+          ${category.name} — ${category.score}% (${category.pointsEarned}/${category.pointsMax})
         </div>
         <table style="width:100%;border-collapse:collapse;">
           <tbody>`;
-    for (const item of items) {
-      const statusColor = item.passed ? "#16a34a" : "#dc2626";
-      const statusIcon = item.passed ? "✔" : "✗";
+    for (const item of category.questions) {
+      const statusColor =
+        item.score >= 85 ? "#16a34a" : item.score >= 60 ? "#d97706" : "#dc2626";
+      const statusIcon = item.score >= 85 ? "✔" : item.score >= 60 ? "△" : "✗";
+      const transcriptMeta =
+        item.hasTranscriptEvidence && item.transcriptConfidence
+          ? ` • transcript ${item.transcriptConfidence}%`
+          : "";
       html += `
             <tr>
               <td style="width:28px;padding:5px 6px;font-size:14px;font-weight:700;color:${statusColor};border-bottom:1px solid #f1f5f9;">${statusIcon}</td>
               <td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;">
-                <div style="font-size:12px;font-weight:600;color:#1a1a2e;">${item.label}</div>
-                <div style="font-size:10px;color:#666;margin-top:1px;">${item.detail}</div>
+                <div style="font-size:12px;font-weight:600;color:#1a1a2e;">${item.question}</div>
+                <div style="font-size:10px;color:#666;margin-top:1px;">${item.evidence} • source: ${item.source}${transcriptMeta}</div>
               </td>
               <td style="width:50px;padding:5px 6px;text-align:right;font-size:11px;font-weight:700;
                 color:${statusColor};border-bottom:1px solid #f1f5f9;">
-                ${item.earned}/${item.weight}
+                ${item.score}%
               </td>
             </tr>`;
     }
@@ -123,7 +126,7 @@ function buildComplianceHTML(complianceResult) {
             ${flag.severity}
           </span>
           <div style="font-size:11px;color:#1a1a2e;">
-            <strong>${flag.label}</strong> — ${flag.detail}
+            <strong>${flag.question}</strong> — ${flag.evidence}
           </div>
         </div>`;
     }
@@ -760,17 +763,17 @@ function exportSessionSummaryPdf(
     autoTable(doc, {
       startY: y + 2,
       theme: "grid",
-      head: [["Check", "Detail", "Score"]],
+      head: [["Score", "Question", "Rationale"]],
       body: items.map((item) => [
-        item.passed ? "Pass" : "Fail",
-        `${item.label}${item.detail ? ` - ${item.detail}` : ""}`,
-        `${item.earned}/${item.weight}`,
+        `${item.score}%`,
+        item.question,
+        `${item.evidence} (source: ${item.source})`,
       ]),
       styles: { fontSize: 8.5, cellPadding: 2 },
       headStyles: { fillColor: [240, 249, 255], textColor: [14, 165, 233] },
       columnStyles: {
-        0: { cellWidth: 18, fontStyle: "bold" },
-        2: { cellWidth: 20, halign: "right", fontStyle: "bold" },
+        0: { cellWidth: 20, fontStyle: "bold", halign: "right" },
+        1: { cellWidth: 72, fontStyle: "bold" },
       },
     });
     y = doc.lastAutoTable.finalY + 6;
@@ -785,7 +788,7 @@ function exportSessionSummaryPdf(
       head: [["Severity", "Flag"]],
       body: complianceResult.flags.map((flag) => [
         flag.severity.toUpperCase(),
-        `${flag.label} - ${flag.detail}`,
+        `${flag.question} - ${flag.evidence}`,
       ]),
       styles: { fontSize: 8.5, cellPadding: 2 },
       headStyles: { fillColor: [254, 242, 242], textColor: [220, 38, 38] },
@@ -923,7 +926,9 @@ export default React.memo(function SessionSummary() {
       lines.push("");
       lines.push("Compliance Flags:");
       for (const f of complianceResult.flags) {
-        lines.push(`  [${f.severity.toUpperCase()}] ${f.label} — ${f.detail}`);
+        lines.push(
+          `  [${f.severity.toUpperCase()}] ${f.question} — ${f.evidence}`
+        );
       }
     }
 
