@@ -1153,6 +1153,100 @@ input::placeholder {
 }
 
 /* ===============================
+   TRANSCRIPT UPLOAD
+================================ */
+.transcript-upload {
+  margin-top: 10px;
+}
+
+.transcript-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.transcript-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.transcript-upload-textarea {
+  min-height: 260px;
+}
+
+.transcript-upload-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+}
+
+.transcript-upload-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.transcript-upload-progress {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px;
+}
+
+.transcript-upload-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.transcript-upload-progress-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.transcript-upload-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-teal));
+  transition: width 0.2s ease;
+}
+
+.transcript-upload-error,
+.transcript-upload-success {
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+.transcript-upload-error {
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  background: rgba(248, 113, 113, 0.08);
+  color: #fecaca;
+}
+
+.transcript-upload-success {
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  background: rgba(52, 211, 153, 0.08);
+  color: #bbf7d0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+@media (max-width: 900px) {
+  .transcript-upload-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===============================
    LEGAL FOOTER
 ================================ */
 .legal-footer {

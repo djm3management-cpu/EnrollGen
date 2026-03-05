@@ -8,6 +8,7 @@ import {
   getCmsKnowledgeForSection,
 } from "../context/CopilotCmsKnowledge";
 import { fetchWithClerk } from "../lib/clerkFetch";
+import { fetchTranscriptReferences } from "../lib/transcriptSearch";
 
 function formatSectionDuration(timestamps, sectionNum) {
   const ts = timestamps?.[sectionNum];
@@ -1208,10 +1209,27 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
       derivedSignals,
     };
     const cmsKnowledge = getCmsKnowledgeForSection(sectionKey, copilotContext);
+    const transcriptReferenceQuery = [
+      `Section: ${sectionKey}`,
+      transcriptSinceLastAnalysis || transcriptCurrentWindow,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    const transcriptReferenceResult = await fetchTranscriptReferences({
+      query: transcriptReferenceQuery,
+      productLine: "MA",
+      matchCount: 5,
+      similarityThreshold: 0.7,
+    });
     const retrievalTrace = {
       topics: cmsKnowledge.topics.map((topic) => topic.id),
       scenarios: cmsKnowledge.scenarios.map((scenario) => scenario.id),
-      sources: cmsKnowledge.sources.map((source) => source.id),
+      sources: [
+        ...cmsKnowledge.sources.map((source) => `cms:${source.id}`),
+        ...transcriptReferenceResult.sources.map((source) => `call:${source}`),
+      ],
+      transcriptReferenceCount: transcriptReferenceResult.results.length,
+      transcriptReferenceError: transcriptReferenceResult.error || null,
     };
 
     let complianceContext = "";
@@ -1263,6 +1281,7 @@ ${flowOrder}
 
 ${complianceContext}
 ${cmsKnowledge.promptBlock}
+${transcriptReferenceResult.contextBlock}
 ${
   recentInterventionText
     ? `════════════════════════════════════════════════════════
@@ -1305,6 +1324,7 @@ Every non-silent response MUST:
 - For warn/critical: State WHAT was missed or wrong, WHY it's a compliance issue (reference CMS if relevant), and provide the EXACT SCRIPT LANGUAGE to say right now to fix it (2-4 sentences)
 - For remind: State what hasn't been covered yet and give the exact words to say (1-2 sentences)
 - For tip: Name the specific disclosure or phrase that was handled well and why CMS cares about it (1-2 sentences)
+- If you use transcript references, include bracket citations like [R1] or [R2] at the end of the message
 
 CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
 - Do NOT claim the agent "skipped an entire section" just because the transcript is limited. Speech recognition only captures what it picks up. If the agent IS in the right section and IS talking about relevant topics, they are likely covering the requirements.
@@ -1498,10 +1518,21 @@ FULL TRANSCRIPT TAIL:
       question,
       copilotContext
     );
+    const transcriptReferenceResult = await fetchTranscriptReferences({
+      query: [question, recentTranscript].filter(Boolean).join("\n\n"),
+      productLine: "MA",
+      matchCount: 5,
+      similarityThreshold: 0.7,
+    });
     const retrievalTrace = {
       topics: cmsKnowledge.topics.map((topic) => topic.id),
       scenarios: cmsKnowledge.scenarios.map((scenario) => scenario.id),
-      sources: cmsKnowledge.sources.map((source) => source.id),
+      sources: [
+        ...cmsKnowledge.sources.map((source) => `cms:${source.id}`),
+        ...transcriptReferenceResult.sources.map((source) => `call:${source}`),
+      ],
+      transcriptReferenceCount: transcriptReferenceResult.results.length,
+      transcriptReferenceError: transcriptReferenceResult.error || null,
     };
 
     let sectionContext = "";
@@ -1519,6 +1550,7 @@ CRITICAL CONTEXT:
 - They need a fast, practical answer they can use RIGHT NOW on this call
 ${sectionContext}
 ${cmsKnowledge.promptBlock}
+${transcriptReferenceResult.contextBlock}
 ${
   recentTranscript
     ? `\nRecent agent transcript for context:\n"${recentTranscript}"\n`
@@ -1545,6 +1577,7 @@ RESPONSE RULES:
 - If providing script language, put it in quotes so the agent can read it directly
 - If you don't know something specific (like a particular plan's formulary), say so and suggest where to check (Sunfire, carrier website, etc.)
 - Always prioritize CMS compliance in your answers
+- If transcript references are provided, cite them inline as [R1], [R2], etc.
 - No markdown formatting — plain text only`;
 
     try {

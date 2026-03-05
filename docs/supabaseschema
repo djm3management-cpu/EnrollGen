@@ -1,0 +1,629 @@
+# EnrollGen AI Copilot — Supabase Architecture
+
+## Overview
+
+Supabase Postgres + pgvector powers a searchable knowledge base of transcribed enrollment calls. EnrollGen's AI copilot queries this at runtime to surface relevant reference material for agents mid-call.
+
+**Data flow:**
+```
+Call Recording (Conversely/QA)
+  → Transcription (Whisper API)
+  → Chunking + Embedding (OpenAI/Anthropic)
+  → Supabase (Postgres + pgvector)
+  → EnrollGen Copilot (semantic search → context injection)
+```
+
+---
+
+## 1. Supabase SQL Migration
+
+Run this in the Supabase SQL Editor (or as a migration file).
+
+```sql
+-- ============================================
+-- ENROLLGEN CALL TRANSCRIPT KNOWLEDGE BASE
+-- ============================================
+
+-- Enable pgvector extension
+create extension if not exists vector;
+
+-- ============================================
+-- AGENTS TABLE
+-- ============================================
+create table public.agents (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text unique,
+  agency text default 'NGHS',
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+-- ============================================
+-- CALL TRANSCRIPTS (parent record per call)
+-- ============================================
+create table public.call_transcripts (
+  id uuid primary key default gen_random_uuid(),
+  agent_id uuid references public.agents(id),
+
+  -- Call metadata
+  call_date timestamptz not null,
+  duration_seconds integer,
+  direction text check (direction in ('inbound', 'outbound')),
+
+  -- Product / enrollment context
+  product_line text not null check (product_line in ('MA', 'MedSup', 'ACA', 'Ancillary')),
+  carrier text,                          -- e.g. 'UHC', 'Aetna', 'AmeriHealth'
+  plan_name text,                        -- e.g. 'AARP Medicare Advantage (HMO)'
+  enrollment_period text check (enrollment_period in ('AEP', 'OEP', 'SEP', 'IEP', 'OE')),
+
+  -- Outcome
+  disposition text check (disposition in (
+    'enrolled', 'not_enrolled', 'callback', 'transferred', 'dropped', 'complaint'
+  )),
+  compliance_passed boolean,             -- from Conversely QA score
+
+  -- Full transcript (raw text)
+  transcript_text text not null,
+
+  -- Source reference
+  source_system text default 'conversely', -- 'conversely', 'manual', 'ringba'
+  source_id text,                          -- external ID from source system
+  recording_url text,                      -- link to original recording if available
+
+  -- PHI flag — transcripts should be scrubbed before insert
+  phi_scrubbed boolean default false,
+
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- ============================================
+-- TRANSCRIPT CHUNKS (searchable segments)
+-- ============================================
+-- Each call is split into chunks for semantic search.
+-- Chunk size target: ~300-500 tokens with ~50 token overlap.
+create table public.transcript_chunks (
+  id uuid primary key default gen_random_uuid(),
+  transcript_id uuid references public.call_transcripts(id) on delete cascade,
+
+  -- Chunk content
+  chunk_index integer not null,          -- ordering within the transcript
+  chunk_text text not null,
+  speaker text,                          -- 'agent' or 'beneficiary' if diarized
+  
+  -- Topic tags (set during ingestion or post-processing)
+  topics text[] default '{}',            -- e.g. {'scope_of_appointment', 'plan_benefits', 'objection_handling'}
+
+  -- Vector embedding (OpenAI text-embedding-3-small = 1536 dims)
+  embedding vector(1536),
+
+  created_at timestamptz default now()
+);
+
+-- ============================================
+-- INDEXES
+-- ============================================
+
+-- Vector similarity search (IVFFlat — good for <1M rows; switch to HNSW at scale)
+create index idx_chunks_embedding on public.transcript_chunks
+  using ivfflat (embedding vector_cosine_ops)
+  with (lists = 100);
+
+-- Metadata filters (copilot will filter + vector search together)
+create index idx_transcripts_product on public.call_transcripts(product_line);
+create index idx_transcripts_carrier on public.call_transcripts(carrier);
+create index idx_transcripts_disposition on public.call_transcripts(disposition);
+create index idx_transcripts_date on public.call_transcripts(call_date desc);
+create index idx_chunks_transcript on public.transcript_chunks(transcript_id);
+create index idx_chunks_topics on public.transcript_chunks using gin(topics);
+
+-- ============================================
+-- RLS POLICIES
+-- ============================================
+alter table public.agents enable row level security;
+alter table public.call_transcripts enable row level security;
+alter table public.transcript_chunks enable row level security;
+
+-- Service role (ingestion pipeline) gets full access
+-- Authenticated users (agents) see only their own agency's calls
+create policy "Agents see own agency calls"
+  on public.call_transcripts for select
+  using (
+    agent_id in (
+      select id from public.agents
+      where agency = (
+        select agency from public.agents
+        where email = auth.jwt() ->> 'email'
+      )
+    )
+  );
+
+create policy "Chunks follow transcript access"
+  on public.transcript_chunks for select
+  using (
+    transcript_id in (
+      select id from public.call_transcripts  -- inherits from parent policy
+    )
+  );
+
+-- ============================================
+-- SEMANTIC SEARCH FUNCTION
+-- ============================================
+-- This is what EnrollGen's copilot calls.
+create or replace function search_transcript_chunks(
+  query_embedding vector(1536),
+  match_count int default 5,
+  filter_product_line text default null,
+  filter_carrier text default null,
+  filter_disposition text default null,
+  filter_topics text[] default null,
+  similarity_threshold float default 0.7
+)
+returns table (
+  chunk_id uuid,
+  transcript_id uuid,
+  chunk_text text,
+  speaker text,
+  topics text[],
+  similarity float,
+  -- joined metadata from parent
+  agent_name text,
+  call_date timestamptz,
+  product_line text,
+  carrier text,
+  disposition text,
+  compliance_passed boolean
+)
+language plpgsql
+as $$
+begin
+  return query
+  select
+    tc.id as chunk_id,
+    tc.transcript_id,
+    tc.chunk_text,
+    tc.speaker,
+    tc.topics,
+    1 - (tc.embedding <=> query_embedding) as similarity,
+    a.name as agent_name,
+    ct.call_date,
+    ct.product_line,
+    ct.carrier,
+    ct.disposition,
+    ct.compliance_passed
+  from public.transcript_chunks tc
+  join public.call_transcripts ct on tc.transcript_id = ct.id
+  join public.agents a on ct.agent_id = a.id
+  where
+    1 - (tc.embedding <=> query_embedding) > similarity_threshold
+    and (filter_product_line is null or ct.product_line = filter_product_line)
+    and (filter_carrier is null or ct.carrier = filter_carrier)
+    and (filter_disposition is null or ct.disposition = filter_disposition)
+    and (filter_topics is null or tc.topics && filter_topics) -- array overlap
+    and ct.phi_scrubbed = true  -- safety: only return scrubbed transcripts
+  order by tc.embedding <=> query_embedding
+  limit match_count;
+end;
+$$;
+```
+
+---
+
+## 2. Topic Taxonomy
+
+Standardized topic tags for chunking. Use these during ingestion to tag each chunk:
+
+| Tag | Description |
+|-----|-------------|
+| `scope_of_appointment` | SOA confirmation, CMS-required disclosures |
+| `plan_benefits` | Explaining plan features, copays, formulary |
+| `eligibility_verification` | Medicare/Medicaid status, LIS, Part A/B dates |
+| `enrollment_process` | Walking through enrollment steps, Sunfire |
+| `objection_handling` | Responding to hesitation or pushback |
+| `sep_qualification` | Verifying Special Enrollment Period eligibility |
+| `comparison` | Comparing plans side by side |
+| `compliance_disclosure` | Required disclaimers, recording notices |
+| `prescription_review` | Drug list, pharmacy preferences |
+| `provider_check` | Doctor/specialist network lookup |
+| `premium_cost` | Monthly cost, Part B giveback, IRMAA |
+| `closing` | Confirmation, recap, next steps |
+| `warm_transfer` | Handoff language, transfer protocols |
+
+---
+
+## 3. EnrollGen React Integration
+
+### 3a. Supabase Client Setup
+
+```javascript
+// src/lib/supabase.js
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+```
+
+### 3b. Embedding Helper
+
+```javascript
+// src/lib/embeddings.js
+
+// Generate embedding for a copilot query
+// Uses OpenAI — swap for Anthropic if/when embedding API is available
+export async function getQueryEmbedding(text) {
+  const response = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'text-embedding-3-small',
+      input: text,
+    }),
+  });
+
+  const data = await response.json();
+  return data.data[0].embedding; // 1536-dim vector
+}
+```
+
+### 3c. Copilot Search Hook
+
+```javascript
+// src/hooks/useCopilotSearch.js
+import { useState, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
+import { getQueryEmbedding } from '../lib/embeddings';
+
+export function useCopilotSearch() {
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const searchTranscripts = useCallback(async ({
+    query,
+    productLine = null,    // 'MA' | 'MedSup' | 'ACA' | 'Ancillary'
+    carrier = null,
+    disposition = null,    // 'enrolled' to bias toward successful calls
+    topics = null,         // ['objection_handling', 'closing']
+    matchCount = 5,
+    similarityThreshold = 0.7,
+  }) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 1. Generate embedding for the agent's question
+      const embedding = await getQueryEmbedding(query);
+
+      // 2. Call the Supabase RPC function
+      const { data, error: rpcError } = await supabase.rpc(
+        'search_transcript_chunks',
+        {
+          query_embedding: embedding,
+          match_count: matchCount,
+          filter_product_line: productLine,
+          filter_carrier: carrier,
+          filter_disposition: disposition,
+          filter_topics: topics,
+          similarity_threshold: similarityThreshold,
+        }
+      );
+
+      if (rpcError) throw rpcError;
+
+      setResults(data || []);
+      return data || [];
+    } catch (err) {
+      setError(err.message);
+      console.error('Copilot search error:', err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { results, loading, error, searchTranscripts };
+}
+```
+
+### 3d. Copilot Context Builder
+
+This is the key piece — it takes search results and formats them as context for the AI prompt that powers EnrollGen's copilot responses.
+
+```javascript
+// src/lib/copilotContext.js
+
+/**
+ * Builds a context block from transcript search results
+ * to inject into the copilot's system/user prompt.
+ */
+export function buildCopilotContext(searchResults) {
+  if (!searchResults || searchResults.length === 0) {
+    return '';
+  }
+
+  const contextBlocks = searchResults.map((result, i) => {
+    const meta = [
+      result.product_line,
+      result.carrier,
+      result.disposition,
+      result.compliance_passed ? 'compliant' : 'flagged',
+      new Date(result.call_date).toLocaleDateString(),
+    ].filter(Boolean).join(' | ');
+
+    return `--- Reference ${i + 1} [${meta}] ---
+Speaker: ${result.speaker || 'unknown'}
+Topics: ${(result.topics || []).join(', ')}
+${result.chunk_text}`;
+  });
+
+  return `
+<enrollment_call_references>
+The following are excerpts from real enrollment calls relevant to the current situation.
+Use these as reference for tone, compliance language, and handling approach.
+Do NOT read these verbatim — adapt to the current conversation.
+
+${contextBlocks.join('\n\n')}
+</enrollment_call_references>`;
+}
+```
+
+### 3e. Integration in EnrollGen's Copilot Component
+
+```javascript
+// Example: inside your existing copilot/script component
+import { useCopilotSearch } from '../hooks/useCopilotSearch';
+import { buildCopilotContext } from '../lib/copilotContext';
+
+function CopilotPanel({ currentMode, currentStep, agentQuery }) {
+  const { searchTranscripts, results, loading } = useCopilotSearch();
+
+  async function handleCopilotQuery(query) {
+    // Search for relevant transcript chunks
+    const searchResults = await searchTranscripts({
+      query: query,
+      productLine: currentMode, // 'MA' or 'MedSup' from EnrollGen's mode toggle
+      disposition: 'enrolled',  // bias toward successful calls
+      matchCount: 3,
+    });
+
+    // Build context for the AI prompt
+    const referenceContext = buildCopilotContext(searchResults);
+
+    // Now pass referenceContext into your AI completion call
+    // e.g., as part of the system prompt or user message
+    const copilotResponse = await callCopilotAI({
+      systemPrompt: `You are an enrollment assistant for NGHS agents.
+        Current product: ${currentMode}
+        Current script step: ${currentStep}
+        ${referenceContext}`,
+      userMessage: query,
+    });
+
+    return copilotResponse;
+  }
+
+  // ... render UI
+}
+```
+
+---
+
+## 4. Ingestion Pipeline (Node.js)
+
+Run this as a standalone script or serverless function to process new transcripts.
+
+```javascript
+// scripts/ingest-transcript.js
+import { createClient } from '@supabase/supabase-js';
+import OpenAI from 'openai';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY  // service role for writes
+);
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// --- Chunking ---
+function chunkTranscript(text, maxTokens = 400, overlap = 50) {
+  // Simple sentence-based chunking
+  // For production: use a proper tokenizer (tiktoken)
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const chunks = [];
+  let current = [];
+  let currentLen = 0;
+
+  for (const sentence of sentences) {
+    const sentenceLen = sentence.split(/\s+/).length; // rough token count
+    if (currentLen + sentenceLen > maxTokens && current.length > 0) {
+      chunks.push(current.join(' '));
+      // Keep last N words as overlap
+      const overlapText = current.join(' ').split(/\s+/).slice(-overlap).join(' ');
+      current = [overlapText, sentence];
+      currentLen = overlap + sentenceLen;
+    } else {
+      current.push(sentence);
+      currentLen += sentenceLen;
+    }
+  }
+  if (current.length > 0) chunks.push(current.join(' '));
+  return chunks;
+}
+
+// --- Speaker detection (basic) ---
+function detectSpeaker(chunkText) {
+  if (/^(agent|rep|advisor)/im.test(chunkText)) return 'agent';
+  if (/^(caller|member|beneficiary|customer)/im.test(chunkText)) return 'beneficiary';
+  return null;
+}
+
+// --- Topic tagging (keyword-based; upgrade to AI classification later) ---
+const TOPIC_RULES = [
+  { tag: 'scope_of_appointment', patterns: [/scope of appointment/i, /SOA/i, /permission to discuss/i] },
+  { tag: 'plan_benefits', patterns: [/copay/i, /deductible/i, /formulary/i, /benefit/i, /coverage/i] },
+  { tag: 'eligibility_verification', patterns: [/part [ab]/i, /medicaid/i, /LIS/i, /effective date/i] },
+  { tag: 'objection_handling', patterns: [/not sure/i, /think about it/i, /happy with/i, /don't want/i] },
+  { tag: 'sep_qualification', patterns: [/special enrollment/i, /SEP/i, /moved/i, /lost coverage/i] },
+  { tag: 'prescription_review', patterns: [/medication/i, /prescription/i, /pharmacy/i, /drug/i] },
+  { tag: 'provider_check', patterns: [/doctor/i, /specialist/i, /provider/i, /network/i] },
+  { tag: 'premium_cost', patterns: [/premium/i, /\$\d/i, /cost/i, /part b/i, /giveback/i] },
+  { tag: 'compliance_disclosure', patterns: [/recording/i, /cms/i, /disclaimer/i, /licensed/i] },
+  { tag: 'closing', patterns: [/confirm/i, /recap/i, /enrollment complete/i, /effective/i] },
+];
+
+function tagTopics(text) {
+  return TOPIC_RULES
+    .filter(rule => rule.patterns.some(p => p.test(text)))
+    .map(rule => rule.tag);
+}
+
+// --- Main ingestion ---
+export async function ingestTranscript({
+  agentId,
+  callDate,
+  durationSeconds,
+  direction,
+  productLine,
+  carrier,
+  planName,
+  enrollmentPeriod,
+  disposition,
+  compliancePassed,
+  transcriptText,
+  sourceSystem = 'conversely',
+  sourceId = null,
+  recordingUrl = null,
+}) {
+  // 1. Insert parent transcript record
+  const { data: transcript, error: txError } = await supabase
+    .from('call_transcripts')
+    .insert({
+      agent_id: agentId,
+      call_date: callDate,
+      duration_seconds: durationSeconds,
+      direction,
+      product_line: productLine,
+      carrier,
+      plan_name: planName,
+      enrollment_period: enrollmentPeriod,
+      disposition,
+      compliance_passed: compliancePassed,
+      transcript_text: transcriptText,
+      source_system: sourceSystem,
+      source_id: sourceId,
+      recording_url: recordingUrl,
+      phi_scrubbed: true, // ensure PHI is stripped BEFORE calling this
+    })
+    .select('id')
+    .single();
+
+  if (txError) throw txError;
+
+  // 2. Chunk the transcript
+  const chunks = chunkTranscript(transcriptText);
+
+  // 3. Generate embeddings for all chunks (batch)
+  const embeddingResponse = await openai.embeddings.create({
+    model: 'text-embedding-3-small',
+    input: chunks,
+  });
+
+  // 4. Insert chunks with embeddings
+  const chunkRecords = chunks.map((text, i) => ({
+    transcript_id: transcript.id,
+    chunk_index: i,
+    chunk_text: text,
+    speaker: detectSpeaker(text),
+    topics: tagTopics(text),
+    embedding: embeddingResponse.data[i].embedding,
+  }));
+
+  const { error: chunkError } = await supabase
+    .from('transcript_chunks')
+    .insert(chunkRecords);
+
+  if (chunkError) throw chunkError;
+
+  console.log(
+    `Ingested transcript ${transcript.id}: ${chunks.length} chunks`
+  );
+  return transcript.id;
+}
+```
+
+---
+
+## 5. PHI Scrubbing (Pre-Ingestion)
+
+**Critical for Medicare compliance.** Run this BEFORE ingestion.
+
+```javascript
+// scripts/scrub-phi.js
+
+const PHI_PATTERNS = [
+  // Medicare Beneficiary Identifier (MBI) — format: 1A12-B34-CD56
+  { pattern: /\d[A-Z]\d{2}-?[A-Z]\d{2}-?[A-Z]{2}\d{2}/gi, replacement: '[MBI_REDACTED]' },
+  // SSN
+  { pattern: /\b\d{3}-?\d{2}-?\d{4}\b/g, replacement: '[SSN_REDACTED]' },
+  // Phone numbers
+  { pattern: /\b\d{3}[-.)]\s?\d{3}[-.)]\s?\d{4}\b/g, replacement: '[PHONE_REDACTED]' },
+  // Dates of birth (common spoken formats)
+  { pattern: /\b(born|DOB|date of birth)[:\s]*([\d\/\-]+)/gi, replacement: '$1: [DOB_REDACTED]' },
+  // Street addresses (basic — enhance for production)
+  { pattern: /\b\d{1,5}\s+[\w\s]{2,30}(street|st|avenue|ave|road|rd|drive|dr|lane|ln|blvd|court|ct)\b/gi,
+    replacement: '[ADDRESS_REDACTED]' },
+  // Email
+  { pattern: /\b[\w.-]+@[\w.-]+\.\w{2,}\b/g, replacement: '[EMAIL_REDACTED]' },
+];
+
+export function scrubPHI(transcriptText) {
+  let scrubbed = transcriptText;
+  for (const { pattern, replacement } of PHI_PATTERNS) {
+    scrubbed = scrubbed.replace(pattern, replacement);
+  }
+  return scrubbed;
+}
+```
+
+---
+
+## 6. Environment Variables
+
+```bash
+# .env.local (EnrollGen frontend)
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...         # anon/public key (RLS enforced)
+VITE_OPENAI_API_KEY=sk-...            # for client-side embedding generation
+
+# .env (ingestion pipeline / server-side)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...       # service role key (bypasses RLS)
+OPENAI_API_KEY=sk-...
+```
+
+---
+
+## 7. Codex Integration Notes
+
+When handing this off to Codex for implementation:
+
+1. **Start with the SQL migration** — run the full SQL block in Supabase SQL Editor
+2. **Install deps** in EnrollGen: `npm install @supabase/supabase-js openai`
+3. **Wire up the Supabase client** (`src/lib/supabase.js`)
+4. **Add the search hook** to EnrollGen's existing React context architecture
+5. **Integrate `buildCopilotContext`** into whatever AI call powers the copilot
+6. **Build the ingestion pipeline** as a separate Node script (or Supabase Edge Function)
+7. **PHI scrubbing** must run before any transcript hits Supabase — no exceptions
+8. **Test with 5-10 real transcripts** first to tune similarity threshold and chunk size
+
+### Scaling Notes
+- Under ~100K chunks: IVFFlat index is fine
+- Over 100K: switch to HNSW index (`create index ... using hnsw`)
+- If embedding costs matter: `text-embedding-3-small` is cheapest at $0.02/1M tokens
+- Consider Supabase Edge Functions for the ingestion pipeline to keep it serverless

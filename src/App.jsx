@@ -11,6 +11,7 @@ import { SignedIn, SignedOut, SignIn } from "@clerk/clerk-react";
 const AgentTools = lazy(() => import("./components/AgentTools"));
 const SessionSummary = lazy(() => import("./components/SessionSummary"));
 const ReviewWorkspace = lazy(() => import("./components/ReviewWorkspace"));
+const TranscriptUpload = lazy(() => import("./components/TranscriptUpload"));
 
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const SUNFIRE_SEP_LABELS = [
@@ -192,7 +193,7 @@ function ModeToggle({ mode, onChange }) {
 
 function SepScriptSidebar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [openSection, setOpenSection] = useState(NGHS_SEP_SCRIPT.sections[0]?.id || null);
+  const [openSection, setOpenSection] = useState(null);
   const additionalSunfireSeps = getAdditionalSunfireSeps();
 
   return (
@@ -402,6 +403,12 @@ function AppContent() {
             >
               Agent Tools
             </button>
+            <button
+              className={tab === "upload" ? "tab active" : "tab"}
+              onClick={() => setTab("upload")}
+            >
+              Upload Transcript
+            </button>
             {mode === "ma" && (
               <button
                 className={tab === "review" ? "tab active" : "tab"}
@@ -437,6 +444,11 @@ function AppContent() {
                   <AgentTools />
                 </LazyPanel>
               </div>
+              <div style={{ display: tab === "upload" ? "block" : "none" }}>
+                <LazyPanel>
+                  <TranscriptUpload />
+                </LazyPanel>
+              </div>
             </ScriptProvider>
           )}
 
@@ -446,6 +458,11 @@ function AppContent() {
               <div style={{ display: tab === "tools" ? "block" : "none" }}>
                 <LazyPanel>
                   <AgentTools />
+                </LazyPanel>
+              </div>
+              <div style={{ display: tab === "upload" ? "block" : "none" }}>
+                <LazyPanel>
+                  <TranscriptUpload />
                 </LazyPanel>
               </div>
             </MedSupProvider>
