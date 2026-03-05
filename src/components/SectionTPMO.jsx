@@ -77,21 +77,21 @@ export default React.memo(function SectionTPMO() {
         </ScriptBox>
       )}
 
-      <label className="check">
-        <input
-          type="checkbox"
-          disabled={!recordingOk}
-          checked={tpmoOk}
-          onChange={(e) =>
+      <div className="section-next-action">
+        <button
+          className="primary"
+          disabled={!recordingOk || tpmoOk}
+          onClick={() =>
             dispatch({
               type: "SET_GATE",
               field: "tpmoOk",
-              value: e.target.checked,
+              value: true,
             })
           }
-        />
-        TPMO disclaimer read (verbatim)
-      </label>
+        >
+          {tpmoOk ? "✅ TPMO Complete" : "TPMO Complete"}
+        </button>
+      </div>
 
       <SectionCoach stepName="TPMO Disclaimer" />
 

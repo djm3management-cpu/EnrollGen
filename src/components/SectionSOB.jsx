@@ -57,15 +57,17 @@ export default React.memo(function SectionSOB() {
         </div>
       )}
 
-      <button
-        className="primary"
-        disabled={!neadsOk || sobOk}
-        onClick={() =>
-          dispatch({ type: "SET_GATE", field: "sobOk", value: true })
-        }
-      >
-        {sobOk ? "✅ Plan Reviewed" : "Plan Reviewed"}
-      </button>
+      <div className="section-next-action">
+        <button
+          className="primary"
+          disabled={!neadsOk || sobOk}
+          onClick={() =>
+            dispatch({ type: "SET_GATE", field: "sobOk", value: true })
+          }
+        >
+          {sobOk ? "✅ Plan Reviewed" : "Plan Reviewed"}
+        </button>
+      </div>
 
       <SectionCoach stepName="Plan Selection & SOB" />
 

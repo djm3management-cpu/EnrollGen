@@ -733,6 +733,12 @@ input::placeholder {
   transform: translateY(0);
 }
 
+.section-next-action {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
 /* ===============================
    ENROLLMENT CODE
 ================================ */

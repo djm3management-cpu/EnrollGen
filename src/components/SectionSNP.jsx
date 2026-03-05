@@ -55,20 +55,21 @@ export default React.memo(function SectionSNP() {
       )}
 
       {snpType && (
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={snpOk}
-            onChange={(e) =>
+        <div className="section-next-action">
+          <button
+            className="primary"
+            disabled={snpOk}
+            onClick={() =>
               dispatch({
                 type: "SET_GATE",
                 field: "snpOk",
-                value: e.target.checked,
+                value: true,
               })
             }
-          />
-          SNP disclosure read (verbatim)
-        </label>
+          >
+            {snpOk ? "✅ SNP Disclosure Complete" : "SNP Disclosure Complete"}
+          </button>
+        </div>
       )}
 
       {snpType && <SectionCoach stepName={`SNP Disclosure (${snpType})`} />}

@@ -31,21 +31,21 @@ export default React.memo(function SectionSOA() {
         </>
       )}
 
-      <label className="check">
-        <input
-          type="checkbox"
-          disabled={!unlocked.s3}
-          checked={soaOk}
-          onChange={(e) =>
+      <div className="section-next-action">
+        <button
+          className="primary"
+          disabled={!unlocked.s3 || soaOk}
+          onClick={() =>
             dispatch({
               type: "SET_GATE",
               field: "soaOk",
-              value: e.target.checked,
+              value: true,
             })
           }
-        />
-        POA & SOA completed / permission confirmed
-      </label>
+        >
+          {soaOk ? "✅ POA & SOA Complete" : "POA & SOA Complete"}
+        </button>
+      </div>
 
       <SectionCoach stepName="POA & Scope of Appointment" />
 

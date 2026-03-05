@@ -71,15 +71,17 @@ export default React.memo(function SectionEnrollment() {
         </label>
       </div>
 
-      <button
-        className="primary"
-        disabled={!sobOk || enrollOk}
-        onClick={() =>
-          dispatch({ type: "SET_GATE", field: "enrollOk", value: true })
-        }
-      >
-        {enrollOk ? "✅ Enrollment Complete" : "Enrollment Complete"}
-      </button>
+      <div className="section-next-action">
+        <button
+          className="primary"
+          disabled={!sobOk || enrollOk}
+          onClick={() =>
+            dispatch({ type: "SET_GATE", field: "enrollOk", value: true })
+          }
+        >
+          {enrollOk ? "✅ Enrollment Complete" : "Enrollment Complete"}
+        </button>
+      </div>
 
       {/* Enrollment Code + Green Check */}
       <div className="enrollment-code">

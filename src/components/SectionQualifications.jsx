@@ -42,21 +42,21 @@ If not available: Verify full legal name, date of birth, and Social Security Num
         </>
       )}
 
-      <label className="check">
-        <input
-          type="checkbox"
-          disabled={!soaOk}
-          checked={qualOk}
-          onChange={(e) =>
+      <div className="section-next-action">
+        <button
+          className="primary"
+          disabled={!soaOk || qualOk}
+          onClick={() =>
             dispatch({
               type: "SET_GATE",
               field: "qualOk",
-              value: e.target.checked,
+              value: true,
             })
           }
-        />
-        Qualifications completed
-      </label>
+        >
+          {qualOk ? "✅ Qualifications Complete" : "Qualifications Complete"}
+        </button>
+      </div>
 
       <SectionCoach stepName="Qualifications" />
 

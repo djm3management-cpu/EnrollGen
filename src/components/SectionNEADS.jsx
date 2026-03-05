@@ -36,15 +36,17 @@ export default React.memo(function SectionNEADS() {
         </ScriptBox>
       )}
 
-      <button
-        className="primary"
-        disabled={!qualOk || neadsOk}
-        onClick={() =>
-          dispatch({ type: "SET_GATE", field: "neadsOk", value: true })
-        }
-      >
-        {neadsOk ? "✅ NEADS Reviewed" : "NEADS Reviewed"}
-      </button>
+      <div className="section-next-action">
+        <button
+          className="primary"
+          disabled={!qualOk || neadsOk}
+          onClick={() =>
+            dispatch({ type: "SET_GATE", field: "neadsOk", value: true })
+          }
+        >
+          {neadsOk ? "✅ NEADS Reviewed" : "NEADS Reviewed"}
+        </button>
+      </div>
 
       <SectionCoach stepName="NEADS Assessment" />
 

@@ -29,10 +29,10 @@ function Say({ text }) {
           color: "#c0d0e4",
           fontSize: 14,
           lineHeight: 1.65,
-          fontStyle: "italic",
+          fontStyle: "normal",
         }}
       >
-        &ldquo;{text}&rdquo;
+        {text}
       </div>
     </div>
   );
@@ -348,7 +348,7 @@ function S4() {
                 style={{
                   fontSize: 12,
                   color: "#6b7a8d",
-                  fontStyle: "italic",
+                  fontStyle: "normal",
                   marginTop: 2,
                 }}
               >
@@ -409,7 +409,7 @@ function S4() {
                   color: "#4a5568",
                   padding: "3px 8px",
                   cursor: "pointer",
-                  fontFamily: "inherit",
+                  fontFamily: "var(--font-body)",
                 }}
               >
                 Change
@@ -477,7 +477,7 @@ function S6() {
               cursor: "pointer",
               fontSize: 12,
               fontWeight: 600,
-              fontFamily: "inherit",
+              fontFamily: "var(--font-body)",
               background: mode === id ? `${c}12` : "transparent",
               color: mode === id ? c : "#4a5568",
             }}
@@ -571,7 +571,7 @@ function S7() {
               fontSize: 13,
               fontWeight: 600,
               cursor: "pointer",
-              fontFamily: "inherit",
+              fontFamily: "var(--font-body)",
             }}
           >
             New Call
@@ -709,6 +709,7 @@ export default function MedSupFlow() {
   return (
     <motion.div
       className="flow"
+      style={{ fontFamily: "var(--font-body)" }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
