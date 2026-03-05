@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 printf "\n# local env\n.env\n.env.*\n" >> .gitignore
+.env
+.env.local
+.env.*

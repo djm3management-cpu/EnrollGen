@@ -97,6 +97,79 @@ function getAdditionalSunfireSeps() {
   });
 }
 
+function getSepOfficialExplanation(label) {
+  const normalized = normalizeSepText(label);
+
+  if (normalized.includes("weather related emergency")) {
+    return "Official SEP: For beneficiaries impacted by a CMS/FEMA-declared emergency or major disaster who could not make a valid election, a time-limited SEP allows one MA or Part D enrollment change tied to the disaster period.";
+  }
+  if (normalized.includes("loss of employer or union coverage")) {
+    return "Official SEP: When creditable employer or union coverage ends (or is reduced), the beneficiary may make one MA or Part D election around the loss-of-coverage window.";
+  }
+  if (normalized.includes("move outside of plan service area")) {
+    return "Official SEP: A permanent move out of the current plan service area allows the beneficiary to switch/join MA or Part D plans available at the new address.";
+  }
+  if (normalized.includes("5 star plan")) {
+    return "Official SEP: One time per year, a beneficiary may switch to an available 5-star MA, Cost, or Part D plan during the CMS 5-star SEP window.";
+  }
+  if (normalized.includes("required notices or accessible materials")) {
+    return "Official SEP: If a plan fails to provide required notices or accessible communications in a compliant way, CMS may grant an SEP to make a corrective election.";
+  }
+  if (normalized.includes("disenrollment to enroll in or maintain other creditable coverage")) {
+    return "Official SEP: Beneficiaries may disenroll from MA/Part D to enroll in or keep other creditable coverage, including certain employer, union, VA, or TRICARE-related coverage.";
+  }
+  if (normalized.includes("auto assignment by cms or state medicaid agency")) {
+    return "Official SEP: CMS/state auto-assignment actions for dual/LIS beneficiaries create a limited SEP to choose a more appropriate MA or Part D plan.";
+  }
+  if (normalized.includes("release from incarceration")) {
+    return "Official SEP: Individuals released from incarceration receive an SEP to enroll in coverage options available in their service area.";
+  }
+  if (normalized.includes("becoming lawfully present in the united states")) {
+    return "Official SEP: Newly lawfully present individuals can use an SEP to join MA or Part D once eligibility and lawful presence criteria are met.";
+  }
+  if (normalized.includes("loss of creditable prescription drug coverage")) {
+    return "Official SEP: Loss of other creditable prescription drug coverage triggers an SEP to join a Part D or MA-PD plan.";
+  }
+  if (normalized.includes("plan rated below 3 stars")) {
+    return "Official SEP: When a plan is identified by CMS as low-performing, affected members may receive an SEP to move to a higher-quality plan option.";
+  }
+  if (normalized.includes("institutionalized individual")) {
+    return "Official SEP: Beneficiaries who move into or reside in an institution (for example, nursing facility) may make monthly MA/Part D election changes while institutionalized.";
+  }
+  if (normalized.includes("move out of an institution")) {
+    return "Official SEP: Leaving an institution creates a limited SEP to change MA or Part D elections after discharge.";
+  }
+  if (normalized.includes("change in medicaid eligibility status")) {
+    return "Official SEP: Gaining, losing, or changing Medicaid eligibility creates SEP rights for MA/Part D election changes.";
+  }
+  if (normalized.includes("plan non renewal")) {
+    return "Official SEP: If a current plan is non-renewed, enrollees receive SEP rights to select replacement MA/Part D coverage.";
+  }
+  if (normalized.includes("gain loss or change in lis status")) {
+    return "Official SEP: Gaining, losing, or changing Low-Income Subsidy (LIS/Extra Help) status may trigger SEP election opportunities.";
+  }
+  if (normalized.includes("exceptional or other special circumstances")) {
+    return "Official SEP: CMS may authorize an SEP case-by-case for exceptional conditions when normal election rules would otherwise create harm.";
+  }
+  if (normalized.includes("enrollment in the pace")) {
+    return "Official SEP: Enrollment into PACE generally allows disenrollment from MA/Part D to coordinate coverage under PACE rules.";
+  }
+  if (normalized.includes("plan contract termination or state receivership")) {
+    return "Official SEP: Contract termination, state receivership, or similar plan-level failure creates SEP rights so members can transition coverage.";
+  }
+  if (normalized.includes("return to the united states after living abroad")) {
+    return "Official SEP: Returning to live in the U.S. after living abroad may trigger SEP eligibility for MA/Part D enrollment.";
+  }
+  if (normalized.includes("loss of special needs plan eligibility")) {
+    return "Official SEP: When a beneficiary loses D-SNP/C-SNP/I-SNP eligibility, CMS provides an SEP to move into an appropriate non-SNP option.";
+  }
+  if (normalized.includes("newly eligible for medicare due to part a and part b effective date")) {
+    return "Official SEP: Newly Medicare-eligible individuals can use initial election rights aligned to their Part A/Part B effective dates.";
+  }
+
+  return "Official SEP: Verify eligibility trigger date, allowable election type, and enrollment window before submitting.";
+}
+
 /* ─── ModeToggle ─────────────────────────────────────────────────────────── */
 function ModeToggle({ mode, onChange }) {
   const isMS = mode === "medsup";
@@ -194,6 +267,7 @@ function ModeToggle({ mode, onChange }) {
 function SepScriptSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [openSection, setOpenSection] = useState(null);
+  const [openAdditionalSep, setOpenAdditionalSep] = useState(null);
   const additionalSunfireSeps = getAdditionalSunfireSeps();
 
   return (
@@ -235,7 +309,7 @@ function SepScriptSidebar() {
                     )
                   }
                 >
-                  <span>Sunfire SEPs</span>
+                  <span>SEPs</span>
                   <span className="sep-sidebar-chevron">
                     {openSection === "sunfire-seps" ? "−" : "+"}
                   </span>
@@ -245,7 +319,25 @@ function SepScriptSidebar() {
                   <div className="sep-sidebar-panel">
                     {additionalSunfireSeps.map((label) => (
                       <div key={label} className="sep-sidebar-item">
-                        <div className="sep-sidebar-ask">{label}</div>
+                        <button
+                          type="button"
+                          className="sep-sidebar-item-toggle"
+                          onClick={() =>
+                            setOpenAdditionalSep((prev) =>
+                              prev === label ? null : label
+                            )
+                          }
+                        >
+                          <span className="sep-sidebar-ask">{label}</span>
+                          <span className="sep-sidebar-chevron">
+                            {openAdditionalSep === label ? "−" : "+"}
+                          </span>
+                        </button>
+                        {openAdditionalSep === label && (
+                          <div className="sep-sidebar-window">
+                            {getSepOfficialExplanation(label)}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
