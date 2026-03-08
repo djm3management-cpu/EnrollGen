@@ -1037,9 +1037,9 @@ const LEVEL_STYLE = {
   },
   critical: {
     icon: "✕",
-    color: "#FF4455",
-    bg: "rgba(255,68,85,0.08)",
-    border: "rgba(255,68,85,0.45)",
+    color: "#a855f7",
+    bg: "rgba(168,85,247,0.08)",
+    border: "rgba(168,85,247,0.45)",
   },
 };
 
@@ -1971,7 +1971,7 @@ RESPONSE RULES:
                 {
                   label: "COMPLIANCE",
                   value: `${compliance.score}/100`,
-                  color: compliance.score >= 80 ? "#00D166" : compliance.score >= 60 ? "#FFD700" : "#FF4455",
+                  color: compliance.score >= 90 ? "#a855f7" : compliance.score >= 80 ? "#00D166" : compliance.score >= 60 ? "#FFD700" : "#FF4455",
                 },
               ].map(({ label, value, color }, i, arr) => (
                 <div
@@ -2050,9 +2050,9 @@ RESPONSE RULES:
                 disabled={!transcript.trim() || coachingLoading}
                 onClick={requestCoaching}
                 style={{
-                  background: coachingLoading ? "rgba(232,0,45,0.08)" : "rgba(232,0,45,0.12)",
-                  border: "1px solid rgba(232,0,45,0.35)",
-                  color: "#E8002D",
+                  background: coachingLoading ? "rgba(168,85,247,0.08)" : "rgba(168,85,247,0.14)",
+                  border: "1px solid rgba(168,85,247,0.4)",
+                  color: "#a855f7",
                   borderRadius: 3,
                   padding: "4px 10px",
                   fontSize: "0.7rem",

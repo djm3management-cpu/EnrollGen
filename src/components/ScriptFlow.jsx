@@ -52,7 +52,25 @@ function CollapsibleSection({
   return (
     <details className="completed-section">
       <summary className="completed-section-summary">
-        <span className="completed-check">✅</span>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 20,
+            height: 20,
+            borderRadius: 4,
+            background: "rgba(168,85,247,0.15)",
+            border: "1px solid rgba(168,85,247,0.4)",
+            color: "#a855f7",
+            fontSize: "0.65rem",
+            fontWeight: 800,
+            fontFamily: "'IBM Plex Mono', monospace",
+            flexShrink: 0,
+          }}
+        >
+          {sectionNum}
+        </span>
         <span className="completed-label">{label}</span>
         {sectionTimestamps[sectionNum]?.start &&
           sectionTimestamps[sectionNum]?.end && (

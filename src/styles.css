@@ -113,6 +113,7 @@
   --accent-gold: #FFD700;       /* podium gold */
   --accent-red: #FF4455;        /* danger / violation */
   --accent-green: #00D166;      /* success / safe */
+  --color-fastest: #a855f7;    /* fastest lap purple — peak performance */
 
   /* Typography */
   --font-display: "Barlow Condensed", "DM Sans", sans-serif;
