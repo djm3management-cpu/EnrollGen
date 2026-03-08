@@ -274,21 +274,15 @@ Rules:
     }
   }, [stepName, context, logEntry, getToken]);
 
-  /* ─── Auto-trigger when this section becomes active ─── */
+  /* ─── Reset tip when section becomes inactive ─── */
   useEffect(() => {
     if (sectionNum === undefined) return;
     const isActive = String(activeSection) === String(sectionNum);
-    if (isActive && !hasAutoFiredRef.current && !loading) {
-      hasAutoFiredRef.current = true;
-      // Small delay so the section card finishes animating in
-      const t = setTimeout(() => askCoach(), 800);
-      return () => clearTimeout(t);
-    }
     if (!isActive) {
       hasAutoFiredRef.current = false;
       setTip(null);
     }
-  }, [activeSection, sectionNum, loading, askCoach]);
+  }, [activeSection, sectionNum]);
 
   const renderTip = () => {
     if (!tip) return null;
