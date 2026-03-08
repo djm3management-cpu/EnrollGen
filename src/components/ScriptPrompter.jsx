@@ -1270,6 +1270,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
       .filter(Boolean)
       .join("\n\n");
     const transcriptReferenceResult = await fetchTranscriptReferences({
+      getToken,
       query: transcriptReferenceQuery,
       productLine: "MA",
       matchCount: 5,
@@ -1616,6 +1617,7 @@ FULL TRANSCRIPT TAIL:
       copilotContext
     );
     const transcriptReferenceResult = await fetchTranscriptReferences({
+      getToken,
       query: [question, recentTranscript].filter(Boolean).join("\n\n"),
       productLine: "MA",
       matchCount: 5,

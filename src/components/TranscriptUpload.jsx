@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { supabase } from "../lib/supabase";
 import { ingestTranscript } from "../lib/transcriptIngestion";
 
@@ -47,6 +48,7 @@ function asFriendlyError(error) {
 }
 
 export default function TranscriptUpload() {
+  const { getToken } = useAuth();
   const [agents, setAgents] = useState([]);
   const [loadingAgents, setLoadingAgents] = useState(true);
   const [agentSelect, setAgentSelect] = useState("");
@@ -133,7 +135,7 @@ export default function TranscriptUpload() {
     setProgress({ stage: "starting", label: "Starting upload", percent: 1 });
 
     try {
-      const result = await ingestTranscript(form, setProgress);
+      const result = await ingestTranscript(form, setProgress, getToken);
       setSuccess(result);
       setForm(INITIAL_FORM);
       setAgentSelect("");

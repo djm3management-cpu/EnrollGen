@@ -206,10 +206,10 @@ async function insertTranscriptRecord(form, agentId, scrubbedText, durationSecon
   return data.id;
 }
 
-async function createChunkEmbeddings(chunks, onProgress) {
+async function createChunkEmbeddings(chunks, onProgress, getToken) {
   const embeddings = [];
   for (let i = 0; i < chunks.length; i += 1) {
-    const embedding = await getQueryEmbedding(chunks[i]);
+    const embedding = await getQueryEmbedding(chunks[i], getToken);
     embeddings.push(embedding);
     if (onProgress) {
       onProgress({
@@ -222,7 +222,7 @@ async function createChunkEmbeddings(chunks, onProgress) {
   return embeddings;
 }
 
-export async function ingestTranscript(form, onProgress) {
+export async function ingestTranscript(form, onProgress, getToken) {
   if (onProgress) onProgress({ stage: "scrub", label: "Scrubbing PHI", percent: 5 });
   const scrubbedText = scrubPhi(form.transcriptText || "");
 
@@ -251,7 +251,7 @@ export async function ingestTranscript(form, onProgress) {
     topics: detectTopics(chunkText),
   }));
 
-  const embeddings = await createChunkEmbeddings(chunks, onProgress);
+  const embeddings = await createChunkEmbeddings(chunks, onProgress, getToken);
 
   if (onProgress) onProgress({ stage: "insert_chunks", label: "Inserting transcript chunks", percent: 95 });
   const rows = chunkMeta.map((chunk, index) => ({

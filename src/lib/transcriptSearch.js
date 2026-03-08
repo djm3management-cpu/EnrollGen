@@ -67,6 +67,7 @@ function toCitationSources(results) {
 }
 
 export async function fetchTranscriptReferences({
+  getToken = null,
   query,
   productLine = null,
   carrier = null,
@@ -87,7 +88,7 @@ export async function fetchTranscriptReferences({
   }
 
   try {
-    const embedding = await getQueryEmbedding(normalizedQuery);
+    const embedding = await getQueryEmbedding(normalizedQuery, getToken);
     const { data, error } = await supabase.rpc("search_transcript_chunks", {
       query_embedding: embedding,
       match_count: Math.max(matchCount * 3, matchCount),
