@@ -3,6 +3,49 @@ import { useScript } from "../context/ScriptContext";
 import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
+function PreEnrollCheck({ state }) {
+  const gaps = [];
+  if (!state.recordingOk) gaps.push("Recording Disclosure not marked complete");
+  if (!state.tpmoOk) gaps.push("TPMO Disclaimer not marked complete");
+  if (!state.soaOk) gaps.push("Scope of Appointment not marked complete");
+  if (!state.qualOk) gaps.push("Qualifications not marked complete");
+  if (!state.neadsOk) gaps.push("NEADS Assessment not marked complete");
+  if (!state.sobOk) gaps.push("Plan Selection & SOB not marked complete");
+  if (!state.notes?.planName?.trim()) gaps.push("Plan name not entered");
+
+  if (gaps.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        background: "rgba(251,191,36,0.07)",
+        border: "1px solid rgba(251,191,36,0.35)",
+        borderRadius: 8,
+        padding: "10px 14px",
+        marginBottom: 12,
+        fontSize: "0.82em",
+      }}
+    >
+      <div
+        style={{
+          color: "#fbbf24",
+          fontWeight: 700,
+          fontSize: "0.78em",
+          letterSpacing: "0.08em",
+          marginBottom: 6,
+        }}
+      >
+        ⚠ PRE-ENROLLMENT CHECKLIST — {gaps.length} ITEM{gaps.length !== 1 ? "S" : ""} OPEN
+      </div>
+      <ul style={{ margin: 0, paddingLeft: 16, display: "flex", flexDirection: "column", gap: 3 }}>
+        {gaps.map((g) => (
+          <li key={g} style={{ color: "#fde68a" }}>{g}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default React.memo(function SectionEnrollment() {
   const { state, dispatch, activeSection, unlocked, enrollmentCodeOk } =
     useScript();
@@ -71,6 +114,8 @@ export default React.memo(function SectionEnrollment() {
         </label>
       </div>
 
+      {isActive && !enrollOk && <PreEnrollCheck state={state} />}
+
       <div className="section-next-action">
         <button
           className="primary"
@@ -118,7 +163,7 @@ export default React.memo(function SectionEnrollment() {
         )}
       </div>
 
-      <SectionCoach stepName="Enrollment" />
+      <SectionCoach stepName="Enrollment" sectionNum={7} />
 
       {!sobOk && <LockText>Locked until SOB Review is complete.</LockText>}
     </section>

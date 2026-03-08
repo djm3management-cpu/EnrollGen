@@ -48,7 +48,7 @@ export default React.memo(function SectionNEADS() {
         </button>
       </div>
 
-      <SectionCoach stepName="NEADS Assessment" />
+      <SectionCoach stepName="NEADS Assessment" sectionNum={5} />
 
       {!qualOk && (
         <LockText>Locked until Qualifications are complete.</LockText>

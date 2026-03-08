@@ -1,7 +1,8 @@
-import { useState, memo, useCallback } from "react";
+import { useState, useEffect, useRef, memo, useCallback } from "react";
 import { useAppAuth } from "../context/AuthContext";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
+import { useScript } from "../context/ScriptContext";
 
 /**
  * SectionCoach — AI Coach with deep, section-specific compliance knowledge.
@@ -179,12 +180,14 @@ OBJECTION RESPONSES:
 `,
 };
 
-const SectionCoach = memo(function SectionCoach({ stepName, context = "" }) {
+const SectionCoach = memo(function SectionCoach({ stepName, context = "", sectionNum }) {
   const [tip, setTip] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const { logEntry } = useCopilotLog();
   const { getToken } = useAppAuth();
+  const { activeSection } = useScript();
+  const hasAutoFiredRef = useRef(false);
 
   const askCoach = useCallback(async () => {
     setLoading(true);
@@ -221,8 +224,8 @@ Rules:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-5-20250929",
-          max_tokens: 400,
+          model: "claude-sonnet-4-6",
+          max_tokens: 450,
           system: systemPrompt,
           messages: [
             {
@@ -269,6 +272,22 @@ Rules:
       setLoading(false);
     }
   }, [stepName, context, logEntry, getToken]);
+
+  /* ─── Auto-trigger when this section becomes active ─── */
+  useEffect(() => {
+    if (sectionNum === undefined) return;
+    const isActive = String(activeSection) === String(sectionNum);
+    if (isActive && !hasAutoFiredRef.current && !loading) {
+      hasAutoFiredRef.current = true;
+      // Small delay so the section card finishes animating in
+      const t = setTimeout(() => askCoach(), 800);
+      return () => clearTimeout(t);
+    }
+    if (!isActive) {
+      hasAutoFiredRef.current = false;
+      setTip(null);
+    }
+  }, [activeSection, sectionNum, loading, askCoach]);
 
   const renderTip = () => {
     if (!tip) return null;

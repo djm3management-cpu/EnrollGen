@@ -69,7 +69,7 @@ export default React.memo(function SectionSOB() {
         </button>
       </div>
 
-      <SectionCoach stepName="Plan Selection & SOB" />
+      <SectionCoach stepName="Plan Selection & SOB" sectionNum={6} />
 
       {!neadsOk && <LockText>Locked until NEADS is complete.</LockText>}
     </section>

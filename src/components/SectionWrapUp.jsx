@@ -200,7 +200,7 @@ Coverage amounts, premiums, and underwriting requirements depend on the policy s
             discussedLabel="Final expense explained (non-Medicare)"
           />
 
-          <SectionCoach stepName="Wrap-Up" />
+          <SectionCoach stepName="Wrap-Up" sectionNum={8} />
         </>
       )}
 

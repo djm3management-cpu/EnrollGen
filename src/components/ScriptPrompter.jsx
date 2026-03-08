@@ -303,8 +303,16 @@ function summarizeRetrievalTrace(trace) {
    INTERVENTION TUNING CONSTANTS
    ═══════════════════════════════════════════════════════════════════ */
 const COACHING_DEBOUNCE_MS = 6000; // wait 6s of silence before analyzing
-const COACHING_COOLDOWN_MS = 30000; // minimum 30s between AI messages
 const MIN_NEW_CHARS = 180; // need more new content before analyzing
+// Per-level cooldown: critical re-alerts immediately; reminders wait longer
+const COOLDOWN_BY_LEVEL = {
+  critical: 0,
+  warn: 15000,
+  remind: 45000,
+  tip: 60000,
+  silent: 30000,
+  info: 30000,
+};
 const WARN_CONFIDENCE_FLOOR = 85;
 const REMIND_CONFIDENCE_FLOOR = 75;
 
@@ -1065,6 +1073,8 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
   const feedRef = useRef(null);
   const lastCoachingTime = useRef(0);
   const lastAnalyzedLength = useRef(0);
+  const lastInterventionLevel = useRef("silent");
+  const sectionTranscriptStartRef = useRef(0); // transcript.length when section started
 
   /* ═══════ Q&A search bar ═══════ */
   const [askQuestion, setAskQuestion] = useState("");
@@ -1081,6 +1091,11 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
   useEffect(() => {
     if (onTranscriptChange) onTranscriptChange(transcript);
   }, [transcript, onTranscriptChange]);
+
+  /* ─── reset section transcript window when section changes ─── */
+  useEffect(() => {
+    sectionTranscriptStartRef.current = transcriptRef.current.length;
+  }, [activeSection]);
 
   /* ─── browser support ─── */
   const supportsRecognition =
@@ -1178,9 +1193,10 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
     const fullTranscript = transcriptRef.current.trim();
     if (!fullTranscript || coachingLoading) return;
 
-    // ── Gate 1: Cooldown ──
+    // ── Gate 1: Cooldown (per last intervention level) ──
     const now = Date.now();
-    if (now - lastCoachingTime.current < COACHING_COOLDOWN_MS) return;
+    const cooldown = COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
+    if (now - lastCoachingTime.current < cooldown) return;
 
     // ── Gate 2: Minimum new content ──
     const newChars = fullTranscript.length - lastAnalyzedLength.current;
@@ -1207,7 +1223,9 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
           `${index + 1}. [${entry.level}] ${entry.text.replace(/\s+/g, " ").slice(0, 220)}`
       )
       .join("\n");
-    const transcriptCurrentWindow = fullTranscript.slice(-1400);
+    // Section-scoped window: everything the agent said since entering this section
+    const sectionTranscript = fullTranscript.slice(sectionTranscriptStartRef.current) || fullTranscript.slice(-1400);
+    const transcriptCurrentWindow = sectionTranscript.length > 200 ? sectionTranscript : fullTranscript.slice(-1400);
     const transcriptSinceLastAnalysis = fullTranscript
       .slice(Math.max(0, previousAnalyzedLength - 800))
       .trim();
@@ -1413,8 +1431,8 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no extra te
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-5-20250929",
-          max_tokens: 350,
+          model: "claude-sonnet-4-6",
+          max_tokens: 500,
           system: systemPrompt,
           messages: [
             {
@@ -1461,6 +1479,7 @@ FULL TRANSCRIPT TAIL:
       // ── Silent or empty = no intervention needed ──
       if (level === "silent" || !message || !message.trim()) {
         lastCoachingTime.current = Date.now();
+        lastInterventionLevel.current = "silent";
         setCoachingLoading(false);
         return;
       }
@@ -1509,6 +1528,7 @@ FULL TRANSCRIPT TAIL:
       }
 
       lastCoachingTime.current = Date.now();
+      lastInterventionLevel.current = level;
 
       const entry = {
         id: Date.now(),
@@ -1684,8 +1704,8 @@ RESPONSE RULES:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-5-20250929",
-          max_tokens: 400,
+          model: "claude-sonnet-4-6",
+          max_tokens: 500,
           system: systemPrompt,
           messages: [
             {

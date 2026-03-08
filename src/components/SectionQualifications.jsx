@@ -58,7 +58,7 @@ If not available: Verify full legal name, date of birth, and Social Security Num
         </button>
       </div>
 
-      <SectionCoach stepName="Qualifications" />
+      <SectionCoach stepName="Qualifications" sectionNum={4} />
 
       {!soaOk && (
         <LockText>

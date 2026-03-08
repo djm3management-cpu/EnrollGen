@@ -93,7 +93,7 @@ export default React.memo(function SectionTPMO() {
         </button>
       </div>
 
-      <SectionCoach stepName="TPMO Disclaimer" />
+      <SectionCoach stepName="TPMO Disclaimer" sectionNum={2} />
 
       {!recordingOk && (
         <LockText>Locked until Recording Disclosure is complete.</LockText>

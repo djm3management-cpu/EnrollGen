@@ -57,7 +57,7 @@ export default React.memo(function SectionRecording() {
         </button>
       </div>
 
-      <SectionCoach stepName="Recording Disclosure" />
+      <SectionCoach stepName="Recording Disclosure" sectionNum={1} />
 
       {!recordingOk && (
         <LockText>Complete Recording Disclosure to continue.</LockText>

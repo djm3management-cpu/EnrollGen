@@ -9,6 +9,8 @@ import {
 import { useAppAuth } from "../context/AuthContext";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
+import { useScript } from "../context/ScriptContext";
+import { SECTION_LABELS } from "../context/scriptReducer";
 
 const QUICK_OBJECTIONS = [
   { label: "Not interested", text: "I'm not interested" },
@@ -31,6 +33,8 @@ export default function ObjectionHandler() {
   const inputRef = useRef(null);
   const { logEntry } = useCopilotLog();
   const { getToken } = useAppAuth();
+  const { state, activeSection } = useScript();
+  const currentSection = SECTION_LABELS[activeSection] || `Section ${activeSection}`;
 
   const handleSubmit = async (objectionText) => {
     const text = objectionText || input.trim();
@@ -44,10 +48,16 @@ export default function ObjectionHandler() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-5-20250929",
-          max_tokens: 300,
+          model: "claude-sonnet-4-6",
+          max_tokens: 350,
           system: `You are a live call coach for Medicare insurance agents at New Gen Health Solutions.
 An agent is on a call right now and needs an exact rebuttal to say to the client.
+
+CALL CONTEXT (use this to tailor your response):
+- Current section: "${currentSection}"
+- Plan being discussed: ${state.notes?.planName || "not yet selected"}
+- Plan type / SNP: ${state.snpType || "standard MA"}
+- Agent name: ${state.agentName || "not set"}
 
 Respond with ONLY a valid JSON object — no extra text, no markdown:
 {
@@ -57,6 +67,7 @@ Respond with ONLY a valid JSON object — no extra text, no markdown:
 }
 
 Rules:
+- Tailor the rebuttal to the current section and plan context — not a generic response
 - "rebuttal" must be warm, natural, conversational — not robotic or salesy
 - "rebuttal" should acknowledge the objection before pivoting
 - "followup" should be an open-ended question that gets them talking

@@ -72,7 +72,7 @@ export default React.memo(function SectionSNP() {
         </div>
       )}
 
-      {snpType && <SectionCoach stepName={`SNP Disclosure (${snpType})`} />}
+      {snpType && <SectionCoach stepName={`SNP Disclosure (${snpType})`} sectionNum={2.5} />}
 
       {snpType && !snpOk && (
         <LockText>Complete SNP disclosure to continue.</LockText>

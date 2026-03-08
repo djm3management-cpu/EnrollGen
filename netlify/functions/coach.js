@@ -32,7 +32,7 @@ export default async (request) => {
     const body = await request.json().catch(() => ({}));
 
     if (!body.model) {
-      body.model = "claude-sonnet-4-5-20250929";
+      body.model = "claude-sonnet-4-6";
     }
 
     console.log("Authenticated Clerk user:", auth.userId);
