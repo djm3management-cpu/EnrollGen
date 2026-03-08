@@ -40,27 +40,27 @@ import { scoreCompliance } from "../context/ComplianceScorer";
  * Drop into: src/components/ComplianceDashboard.jsx
  */
 
-/* ── Color helpers ── */
+/* ── Color helpers — F1 HUD palette ── */
 function getScoreColor(s) {
-  if (s >= 90) return "#34d399";
-  if (s >= 75) return "#22c55e";
-  if (s >= 50) return "#fbbf24";
-  if (s >= 25) return "#f97316";
-  return "#ef4444";
+  if (s >= 90) return "#00D166";   // safety green
+  if (s >= 75) return "#00B050";
+  if (s >= 50) return "#FFD700";   // warning gold
+  if (s >= 25) return "#FF8C00";
+  return "#E8002D";                // danger red
 }
 function getScoreBg(s) {
-  if (s >= 90) return "rgba(52,211,153,0.1)";
-  if (s >= 75) return "rgba(34,197,94,0.08)";
-  if (s >= 50) return "rgba(251,191,36,0.08)";
-  if (s >= 25) return "rgba(249,115,22,0.08)";
-  return "rgba(239,68,68,0.08)";
+  if (s >= 90) return "rgba(0,209,102,0.08)";
+  if (s >= 75) return "rgba(0,176,80,0.07)";
+  if (s >= 50) return "rgba(255,215,0,0.07)";
+  if (s >= 25) return "rgba(255,140,0,0.07)";
+  return "rgba(232,0,45,0.07)";
 }
 function getGradeColor(g) {
-  if (g.startsWith("A")) return "#34d399";
-  if (g.startsWith("B")) return "#22c55e";
-  if (g.startsWith("C")) return "#fbbf24";
-  if (g.startsWith("D")) return "#f97316";
-  return "#ef4444";
+  if (g.startsWith("A")) return "#00D166";
+  if (g.startsWith("B")) return "#00B050";
+  if (g.startsWith("C")) return "#FFD700";
+  if (g.startsWith("D")) return "#FF8C00";
+  return "#E8002D";
 }
 function renderCategoryIcon(icon, color = "#cbd5e1", size = 16) {
   const props = { size, color, strokeWidth: 2 };
@@ -152,12 +152,12 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
           display: "flex",
           alignItems: "center",
           gap: 10,
-          padding: "8px 10px",
+          padding: "7px 10px",
           background: isExpanded ? bg : "transparent",
-          borderRadius: 6,
+          borderRadius: 3,
           cursor: "pointer",
-          transition: "background 0.15s",
-          borderLeft: `3px solid ${col}`,
+          transition: "background 0.12s",
+          borderLeft: `2px solid ${col}`,
         }}
       >
         <span
@@ -172,19 +172,20 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
           {renderCategoryIcon(cat.icon, col, 15)}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: "0.82em",
-              fontWeight: 600,
-              color: "#e2e8f0",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+          <div style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: "13px",
+            fontWeight: 700,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: "#D0D0E0",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}>
             {cat.name}
           </div>
-          <div style={{ fontSize: "0.63em", color: "#64748b", marginTop: 1 }}>
+          <div style={{ fontSize: "0.62em", color: "#3A3A4A", marginTop: 1 }}>
             {cat.description}
           </div>
         </div>
@@ -416,7 +417,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
 
   return (
     <section className="card" style={{ padding: 0, overflow: "hidden" }}>
-      {/* Header */}
+      {/* Header — F1 HUD bar */}
       <div
         onClick={() => setExpanded((p) => !p)}
         style={{
@@ -425,61 +426,75 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
           gap: 12,
           padding: "10px 14px",
           cursor: "pointer",
-          background: "rgba(255,255,255,0.02)",
-          borderBottom: expanded ? "1px solid rgba(255,255,255,0.06)" : "none",
+          background: "linear-gradient(180deg, rgba(20,2,4,0.8) 0%, rgba(12,1,2,0.6) 100%)",
+          borderBottom: expanded ? "1px solid rgba(232,0,45,0.15)" : "none",
+          borderRadius: expanded ? "5px 5px 0 0" : "5px",
         }}
       >
         <ScoreRing score={result.score} size={48} strokeWidth={4} />
         <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-            <span
-              style={{ fontSize: "0.95em", fontWeight: 700, color: "#e2e8f0" }}
-            >
-              Compliance Summary
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: "14px",
+              fontWeight: 700,
+              letterSpacing: "0.10em",
+              textTransform: "uppercase",
+              color: "#E0E0F0",
+            }}>
+              Compliance HUD
             </span>
-            <span
-              style={{ fontSize: "0.85em", fontWeight: 800, color: gradeColor }}
-            >
+            <span style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: "16px",
+              fontWeight: 800,
+              letterSpacing: "0.06em",
+              color: gradeColor,
+              textShadow: `0 0 10px ${gradeColor}60`,
+            }}>
               {result.grade}
             </span>
             {result.scoringMode === "dual" && (
-              <span
-                style={{
-                  fontSize: "0.55em",
-                  background: "rgba(52,211,153,0.15)",
-                  color: "#34d399",
-                  padding: "1px 6px",
-                  borderRadius: 3,
-                  fontWeight: 600,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
+              <span style={{
+                fontSize: "10px",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                letterSpacing: "0.10em",
+                background: "rgba(232,0,45,0.12)",
+                color: "#E8002D",
+                padding: "1px 7px",
+                borderRadius: 3,
+                border: "1px solid rgba(232,0,45,0.25)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                textTransform: "uppercase",
+              }}>
                 <Mic size={10} />
-                LIVE TRANSCRIPT
+                Live
               </span>
             )}
           </div>
-          <div style={{ fontSize: "0.68em", color: "#64748b", marginTop: 2 }}>
-            {result.categoriesPassed}/{result.totalCategories} categories ·{" "}
-            {result.totalPassed}/{result.totalQuestions} checks
+          <div style={{ fontSize: "0.68em", color: "#4A4A5A", marginTop: 3, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "0.02em" }}>
+            {result.categoriesPassed}/{result.totalCategories} SECTORS ·{" "}
+            {result.totalPassed}/{result.totalQuestions} CHECKS
             {result.transcriptStats &&
-              ` · ${result.transcriptStats.intentsDetected}/${result.transcriptStats.intentsTotal} intents detected`}
+              ` · ${result.transcriptStats.intentsDetected}/${result.transcriptStats.intentsTotal} INTENTS`}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 3 }}>
+        {/* Sector bars — F1 telemetry style */}
+        <div style={{ display: "flex", gap: 2, alignItems: "flex-end" }}>
           {result.categories.map((c) => (
             <div
               key={c.name}
               title={`${c.name}: ${c.score}%`}
               style={{
-                width: 6,
-                height: 20,
-                borderRadius: 2,
+                width: 5,
+                height: Math.max(8, Math.round(c.score / 100 * 24)),
+                borderRadius: 1,
                 background: getScoreColor(c.score),
-                opacity: 0.8,
-                transition: "all 0.3s",
+                boxShadow: `0 0 4px ${getScoreColor(c.score)}60`,
+                transition: "all 0.4s ease",
               }}
             />
           ))}
@@ -593,12 +608,16 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             <button
               onClick={() => setShowDetail((p) => !p)}
               style={{
-                background: "none",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 4,
+                background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 3,
                 padding: "3px 10px",
-                fontSize: "0.65em",
-                color: "#94a3b8",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: "11px",
+                fontWeight: 700,
+                letterSpacing: "0.10em",
+                textTransform: "uppercase",
+                color: "#6A6A7A",
                 cursor: "pointer",
               }}
             >
@@ -658,16 +677,15 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 }}
               >
                 <Scale size={13} color="#94a3b8" />
-                <span
-                  style={{
-                    fontSize: "0.72em",
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  CMS Compliance Calibration
+                <span style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  color: "#6A6A7A",
+                  letterSpacing: "0.10em",
+                  textTransform: "uppercase",
+                }}>
+                  CMS Compliance Telemetry
                 </span>
                 {result.scoringMode === "dual" && (
                   <span

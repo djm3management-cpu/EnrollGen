@@ -286,141 +286,131 @@ Rules:
 
   const renderTip = () => {
     if (!tip) return null;
-    if (tip.fallback) return <p style={{ margin: 0 }}>{tip.fallback}</p>;
+    if (tip.fallback) return <p style={{ margin: 0, color: "#B0B0C0" }}>{tip.fallback}</p>;
 
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        {tip.focus && (
-          <p
-            style={{
-              margin: 0,
-              color: "#a0c4ff",
+        {/* RACE ENGINEER COMMS HEADER */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          paddingBottom: "8px",
+          borderBottom: "1px solid rgba(232,0,45,0.15)",
+          marginBottom: "2px",
+        }}>
+          <div style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "#E8002D",
+            boxShadow: "0 0 6px rgba(232,0,45,0.8)",
+            animation: "prompter-pulse-anim 1.5s infinite",
+          }} />
+          <span style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: "11px",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "#E8002D",
+          }}>AI Co-Pilot · COMMS</span>
+          <div style={{ flex: 1 }} />
+          {tip.focus && (
+            <span style={{
+              fontSize: "11px",
+              color: "#888898",
               fontStyle: "italic",
-              fontSize: "0.9em",
-            }}
-          >
-            {tip.focus}
-          </p>
-        )}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "10px",
-          }}
-        >
+              maxWidth: "55%",
+              textAlign: "right",
+              lineHeight: 1.3,
+            }}>{tip.focus}</span>
+          )}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
           {tip.do?.length > 0 && (
-            <div
-              style={{
-                background: "rgba(46,204,113,0.1)",
-                border: "1px solid rgba(46,204,113,0.3)",
-                borderRadius: "6px",
-                padding: "10px",
-              }}
-            >
-              <div
-                style={{
-                  color: "#2ecc71",
-                  fontWeight: "bold",
-                  fontSize: "0.75em",
-                  letterSpacing: "0.08em",
-                  marginBottom: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <CheckCircle2 size={11} /> DO
+            <div style={{
+              background: "linear-gradient(180deg, rgba(0,209,102,0.06) 0%, rgba(0,150,70,0.03) 100%)",
+              border: "1px solid rgba(0,209,102,0.2)",
+              borderTop: "2px solid rgba(0,209,102,0.5)",
+              borderRadius: "4px",
+              padding: "10px",
+            }}>
+              <div style={{
+                color: "#00D166",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: "12px",
+                letterSpacing: "0.12em",
+                marginBottom: "7px",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                textTransform: "uppercase",
+              }}>
+                <CheckCircle2 size={11} /> Execute
               </div>
-              <ul
-                style={{
-                  margin: 0,
-                  paddingLeft: "16px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "4px",
-                }}
-              >
+              <ul style={{ margin: 0, paddingLeft: "14px", display: "flex", flexDirection: "column", gap: "5px" }}>
                 {tip.do.map((item, i) => (
-                  <li key={i} style={{ fontSize: "0.85em", lineHeight: 1.4 }}>
-                    {item}
-                  </li>
+                  <li key={i} style={{ fontSize: "0.83em", lineHeight: 1.4, color: "#C8C8D8" }}>{item}</li>
                 ))}
               </ul>
             </div>
           )}
           {tip.avoid?.length > 0 && (
-            <div
-              style={{
-                background: "rgba(231,76,60,0.1)",
-                border: "1px solid rgba(231,76,60,0.3)",
-                borderRadius: "6px",
-                padding: "10px",
-              }}
-            >
-              <div
-                style={{
-                  color: "#e74c3c",
-                  fontWeight: "bold",
-                  fontSize: "0.75em",
-                  letterSpacing: "0.08em",
-                  marginBottom: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <XCircle size={11} /> AVOID
+            <div style={{
+              background: "linear-gradient(180deg, rgba(255,68,85,0.06) 0%, rgba(180,20,30,0.03) 100%)",
+              border: "1px solid rgba(255,68,85,0.2)",
+              borderTop: "2px solid rgba(255,68,85,0.5)",
+              borderRadius: "4px",
+              padding: "10px",
+            }}>
+              <div style={{
+                color: "#FF4455",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: "12px",
+                letterSpacing: "0.12em",
+                marginBottom: "7px",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                textTransform: "uppercase",
+              }}>
+                <XCircle size={11} /> Abort
               </div>
-              <ul
-                style={{
-                  margin: 0,
-                  paddingLeft: "16px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "4px",
-                }}
-              >
+              <ul style={{ margin: 0, paddingLeft: "14px", display: "flex", flexDirection: "column", gap: "5px" }}>
                 {tip.avoid.map((item, i) => (
-                  <li key={i} style={{ fontSize: "0.85em", lineHeight: 1.4 }}>
-                    {item}
-                  </li>
+                  <li key={i} style={{ fontSize: "0.83em", lineHeight: 1.4, color: "#C8C8D8" }}>{item}</li>
                 ))}
               </ul>
             </div>
           )}
         </div>
         {tip.script_tip && (
-          <div
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "6px",
-              padding: "10px",
-            }}
-          >
-            <div
-              style={{
-                color: "#f39c12",
-                fontWeight: "bold",
-                fontSize: "0.75em",
-                letterSpacing: "0.08em",
-                marginBottom: "4px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <MessageSquare size={11} /> SAY THIS
+          <div style={{
+            background: "linear-gradient(180deg, rgba(255,215,0,0.05) 0%, rgba(140,110,0,0.03) 100%)",
+            border: "1px solid rgba(255,215,0,0.2)",
+            borderLeft: "3px solid #FFD700",
+            borderRadius: "4px",
+            padding: "10px 12px",
+          }}>
+            <div style={{
+              color: "#FFD700",
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              fontSize: "11px",
+              letterSpacing: "0.14em",
+              marginBottom: "5px",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              textTransform: "uppercase",
+            }}>
+              <MessageSquare size={11} /> Radio Script
             </div>
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.85em",
-                fontStyle: "italic",
-                lineHeight: 1.4,
-              }}
-            >
+            <p style={{ margin: 0, fontSize: "0.87em", fontStyle: "italic", lineHeight: 1.45, color: "#E8E8F0" }}>
               "{tip.script_tip}"
             </p>
           </div>
@@ -439,9 +429,9 @@ Rules:
           title="Get a compliance tip for this section from AI"
         >
           {loading ? (
-            <><Loader2 size={13} className="coach-spin" style={{ marginRight: 6 }} />Thinking…</>
+            <><Loader2 size={13} className="coach-spin" style={{ marginRight: 6 }} />Patching Through…</>
           ) : (
-            <><Sparkles size={13} style={{ marginRight: 6 }} />AI Assist</>
+            <><Sparkles size={13} style={{ marginRight: 6 }} />AI Co-Pilot</>
           )}
         </button>
         {tip && (

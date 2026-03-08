@@ -10,34 +10,34 @@ import {
 
 const LEVEL_STYLES = {
   info: {
-    text: "#7dd3fc",
-    bg: "rgba(14, 165, 233, 0.08)",
-    border: "rgba(14, 165, 233, 0.2)",
-    glow: "rgba(14, 165, 233, 0.14)",
+    text: "#E8002D",
+    bg: "rgba(232, 0, 45, 0.07)",
+    border: "rgba(232, 0, 45, 0.25)",
+    glow: "rgba(232, 0, 45, 0.12)",
   },
   tip: {
-    text: "#86efac",
-    bg: "rgba(34, 197, 94, 0.08)",
-    border: "rgba(34, 197, 94, 0.2)",
-    glow: "rgba(34, 197, 94, 0.14)",
+    text: "#00D166",
+    bg: "rgba(0, 209, 102, 0.07)",
+    border: "rgba(0, 209, 102, 0.22)",
+    glow: "rgba(0, 209, 102, 0.12)",
   },
   remind: {
-    text: "#c4b5fd",
-    bg: "rgba(139, 92, 246, 0.1)",
-    border: "rgba(139, 92, 246, 0.22)",
-    glow: "rgba(139, 92, 246, 0.16)",
+    text: "#ADADAD",
+    bg: "rgba(173, 173, 173, 0.07)",
+    border: "rgba(173, 173, 173, 0.2)",
+    glow: "rgba(173, 173, 173, 0.1)",
   },
   warn: {
-    text: "#fbbf24",
-    bg: "rgba(245, 158, 11, 0.1)",
-    border: "rgba(245, 158, 11, 0.24)",
-    glow: "rgba(245, 158, 11, 0.16)",
+    text: "#FFD700",
+    bg: "rgba(255, 215, 0, 0.08)",
+    border: "rgba(255, 215, 0, 0.28)",
+    glow: "rgba(255, 215, 0, 0.14)",
   },
   critical: {
-    text: "#fca5a5",
-    bg: "rgba(239, 68, 68, 0.11)",
-    border: "rgba(239, 68, 68, 0.24)",
-    glow: "rgba(239, 68, 68, 0.18)",
+    text: "#FF4455",
+    bg: "rgba(255, 68, 85, 0.1)",
+    border: "rgba(255, 68, 85, 0.3)",
+    glow: "rgba(255, 68, 85, 0.16)",
   },
 };
 
@@ -72,8 +72,8 @@ export default React.memo(function ReviewWorkspace() {
         <div>
           <div className="sep-sidebar-eyebrow">Review Workspace</div>
           <h2 style={{ margin: 0 }}>Post-Call Review</h2>
-          <div style={{ fontSize: "0.84rem", color: "#8fa4bc", marginTop: 4 }}>
-            Current section: {activeSection} · Compliance {compliance.score}/100
+          <div style={{ fontSize: "0.84rem", color: "#8fa4bc", marginTop: 4, fontFamily: "'IBM Plex Mono', monospace" }}>
+            SEC {activeSection} · COMPLIANCE {compliance.score}/100
           </div>
         </div>
         <div
@@ -93,20 +93,19 @@ export default React.memo(function ReviewWorkspace() {
             <div
               key={label}
               style={{
-                borderRadius: 12,
+                borderRadius: 4,
                 border: "1px solid rgba(255,255,255,0.08)",
-                background:
-                  label === "Critical"
-                    ? "linear-gradient(180deg, rgba(127,29,29,0.2), rgba(255,255,255,0.03))"
-                    : label === "Warnings"
-                    ? "linear-gradient(180deg, rgba(120,53,15,0.18), rgba(255,255,255,0.03))"
-                    : "linear-gradient(180deg, rgba(125,211,252,0.08), rgba(255,255,255,0.03))",
+                borderLeft: label === "Critical"
+                  ? "2px solid #FF4455"
+                  : label === "Warnings"
+                  ? "2px solid #FFD700"
+                  : "2px solid #E8002D",
+                background: "#121212",
                 padding: "10px 12px",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
               }}
             >
-              <div style={{ fontSize: "0.68rem", color: "#8fa4bc" }}>{label}</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#eef5ff" }}>
+              <div style={{ fontSize: "0.62rem", color: "#666", fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</div>
+              <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", fontFamily: "'IBM Plex Mono', monospace" }}>
                 {value}
               </div>
             </div>
@@ -123,15 +122,14 @@ export default React.memo(function ReviewWorkspace() {
       >
         <div
           style={{
-            borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.08)",
-            background:
-              "linear-gradient(180deg, rgba(18,27,41,0.92), rgba(10,15,24,0.92))",
+            borderRadius: 4,
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderLeft: "2px solid #E8002D",
+            background: "#111111",
             padding: 14,
-            boxShadow: "0 18px 34px rgba(0,0,0,0.18)",
           }}
         >
-          <div style={{ fontSize: "0.78rem", fontWeight: 800, marginBottom: 10 }}>
+          <div style={{ fontSize: "0.72rem", fontWeight: 800, marginBottom: 10, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: "#E8002D" }}>
             Deterministic Blockers
           </div>
           {blockers.length === 0 ? (
@@ -186,7 +184,7 @@ export default React.memo(function ReviewWorkspace() {
             ))
           )}
 
-          <div style={{ fontSize: "0.78rem", fontWeight: 800, margin: "16px 0 10px" }}>
+          <div style={{ fontSize: "0.72rem", fontWeight: 800, margin: "16px 0 10px", fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: "#ADADAD" }}>
             Session Snapshot
           </div>
           <div style={{ display: "grid", gap: 6, fontSize: "0.8rem", color: "#d7e2ef" }}>
@@ -201,16 +199,15 @@ export default React.memo(function ReviewWorkspace() {
 
         <div
           style={{
-            borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.08)",
-            background:
-              "linear-gradient(180deg, rgba(18,27,41,0.92), rgba(10,15,24,0.92))",
+            borderRadius: 4,
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderLeft: "2px solid #E8002D",
+            background: "#111111",
             padding: 14,
-            boxShadow: "0 18px 34px rgba(0,0,0,0.18)",
           }}
         >
-          <div style={{ fontSize: "0.78rem", fontWeight: 800, marginBottom: 10 }}>
-            Recent Co-Pilot Activity
+          <div style={{ fontSize: "0.72rem", fontWeight: 800, marginBottom: 10, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: "#E8002D" }}>
+            AI Co-Pilot Log
           </div>
           {recentCopilot.length === 0 ? (
             <div style={{ fontSize: "0.82rem", color: "#8fa4bc" }}>
@@ -230,27 +227,19 @@ export default React.memo(function ReviewWorkspace() {
                   }
                 }}
                 style={{
-                  marginTop: 8,
-                  padding: "10px 12px",
-                  borderRadius: 12,
-                  border:
-                    selectedEntryId === entry.id
-                      ? `1px solid ${
-                          (LEVEL_STYLES[entry.level] || LEVEL_STYLES.info).border
-                        }`
-                      : "1px solid rgba(255,255,255,0.06)",
+                  marginTop: 6,
+                  padding: "8px 10px",
+                  borderRadius: 3,
+                  borderTop: "1px solid rgba(255,255,255,0.05)",
+                  borderRight: "1px solid rgba(255,255,255,0.05)",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  borderLeft: `2px solid ${(LEVEL_STYLES[entry.level] || LEVEL_STYLES.info).border}`,
                   background:
                     selectedEntryId === entry.id
                       ? (LEVEL_STYLES[entry.level] || LEVEL_STYLES.info).bg
-                      : "rgba(255,255,255,0.025)",
-                  boxShadow:
-                    selectedEntryId === entry.id
-                      ? `0 10px 24px ${
-                          (LEVEL_STYLES[entry.level] || LEVEL_STYLES.info).glow
-                        }`
-                      : "none",
+                      : "#1a1a1a",
                   cursor: "pointer",
-                  transition: "all 0.2s ease",
+                  transition: "background 0.15s ease",
                 }}
               >
                 <div
@@ -258,23 +247,24 @@ export default React.memo(function ReviewWorkspace() {
                     display: "flex",
                     justifyContent: "space-between",
                     gap: 10,
-                    fontSize: "0.72rem",
-                    color: "#8fa4bc",
+                    marginBottom: 4,
                   }}
                 >
                   <span
                     style={{
+                      fontSize: "0.6rem",
                       color: (LEVEL_STYLES[entry.level] || LEVEL_STYLES.info).text,
                       fontWeight: 800,
-                      letterSpacing: "0.06em",
+                      letterSpacing: "0.1em",
                       textTransform: "uppercase",
+                      fontFamily: "'Barlow Condensed', sans-serif",
                     }}
                   >
-                    {entry.level}
+                    ◈ {entry.level}
                   </span>
-                  <span>{entry.timeDisplay || entry.ts || ""}</span>
+                  <span style={{ fontSize: "0.6rem", color: "#555", fontFamily: "'IBM Plex Mono', monospace" }}>{entry.timeDisplay || entry.ts || ""}</span>
                 </div>
-                <div style={{ fontSize: "0.82rem", color: "#eef5ff", marginTop: 4 }}>
+                <div style={{ fontSize: "0.8rem", color: "#d0d0d0", lineHeight: 1.4, fontFamily: "'IBM Plex Mono', monospace" }}>
                   {entry.message}
                 </div>
                 {entry.meta?.retrievalTrace && (
@@ -292,17 +282,11 @@ export default React.memo(function ReviewWorkspace() {
         <div
           style={{
             marginTop: 14,
-            borderRadius: 14,
-            border: `1px solid ${
-              (LEVEL_STYLES[selectedEntry.level] || LEVEL_STYLES.info).border
-            }`,
-            background: `linear-gradient(180deg, ${
-              (LEVEL_STYLES[selectedEntry.level] || LEVEL_STYLES.info).bg
-            }, rgba(10,15,24,0.92))`,
+            borderRadius: 4,
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderLeft: `2px solid ${(LEVEL_STYLES[selectedEntry.level] || LEVEL_STYLES.info).text}`,
+            background: "#111111",
             padding: 14,
-            boxShadow: `0 20px 40px ${
-              (LEVEL_STYLES[selectedEntry.level] || LEVEL_STYLES.info).glow
-            }`,
           }}
         >
           <div
@@ -311,69 +295,65 @@ export default React.memo(function ReviewWorkspace() {
               justifyContent: "space-between",
               gap: 12,
               alignItems: "center",
+              marginBottom: 12,
             }}
           >
-            <div style={{ fontSize: "0.78rem", fontWeight: 800 }}>
-              Replay Detail
+            <div style={{ fontSize: "0.72rem", fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: (LEVEL_STYLES[selectedEntry.level] || LEVEL_STYLES.info).text }}>
+              ◈ Replay Detail — {selectedEntry.level}
             </div>
             <button
               type="button"
               onClick={() => setSelectedEntryId(null)}
               style={{
-                border: "1px solid rgba(255,255,255,0.08)",
-                background: "rgba(255,255,255,0.04)",
-                color: "#c8d4e4",
-                borderRadius: 999,
-                padding: "6px 10px",
-                fontSize: "0.7rem",
+                border: "1px solid rgba(232,0,45,0.3)",
+                background: "transparent",
+                color: "#E8002D",
+                borderRadius: 3,
+                padding: "4px 10px",
+                fontSize: "0.65rem",
                 cursor: "pointer",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
               }}
             >
               Close
             </button>
           </div>
 
-          <div style={{ marginTop: 12, fontSize: "0.82rem", color: "#eef5ff" }}>
+          <div style={{ fontSize: "0.82rem", color: "#d0d0d0", lineHeight: 1.5, fontFamily: "'IBM Plex Mono', monospace", borderLeft: "2px solid #333", paddingLeft: 10, marginBottom: 12 }}>
             {selectedEntry.message}
           </div>
 
           <div
             style={{
-              marginTop: 10,
               display: "grid",
               gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-              gap: 8,
+              gap: 1,
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+              paddingTop: 8,
+              paddingBottom: 8,
+              marginBottom: 8,
             }}
           >
-            <div style={{ fontSize: "0.74rem", color: "#8fa4bc" }}>
-              <strong style={{ color: "#dbe7f3" }}>Level:</strong>{" "}
-              <span
-                style={{
-                  color:
-                    (LEVEL_STYLES[selectedEntry.level] || LEVEL_STYLES.info).text,
-                  fontWeight: 800,
-                }}
-              >
-                {selectedEntry.level}
-              </span>
-            </div>
-            <div style={{ fontSize: "0.74rem", color: "#8fa4bc" }}>
-              <strong style={{ color: "#dbe7f3" }}>Section:</strong> {selectedEntry.meta?.section || "—"}
-            </div>
-            <div style={{ fontSize: "0.74rem", color: "#8fa4bc" }}>
-              <strong style={{ color: "#dbe7f3" }}>Feedback:</strong> {selectedEntry.feedback?.verdict || "—"}
-            </div>
+            {[
+              ["LEVEL", selectedEntry.level],
+              ["SECTION", selectedEntry.meta?.section || "—"],
+              ["FEEDBACK", selectedEntry.feedback?.verdict || "—"],
+            ].map(([k, v]) => (
+              <div key={k} style={{ padding: "4px 8px" }}>
+                <div style={{ fontSize: "0.58rem", color: "#555", fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>{k}</div>
+                <div style={{ fontSize: "0.78rem", color: "#ffffff", fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700 }}>{v}</div>
+              </div>
+            ))}
           </div>
 
-          <div style={{ marginTop: 12, fontSize: "0.76rem", color: "#8fa4bc" }}>
-            Retrieval:
-            {" "}
-            {(selectedEntry.meta?.retrievalTrace?.topics || []).slice(0, 3).join(", ") || "—"}
+          <div style={{ fontSize: "0.7rem", color: "#555", fontFamily: "'IBM Plex Mono', monospace" }}>
+            RETRIEVAL: {(selectedEntry.meta?.retrievalTrace?.topics || []).slice(0, 3).join(", ") || "—"}
           </div>
-          <div style={{ marginTop: 4, fontSize: "0.76rem", color: "#8fa4bc" }}>
-            Sources:
-            {" "}
-            {(selectedEntry.meta?.retrievalTrace?.sources || []).slice(0, 4).join(", ") || "—"}
+          <div style={{ marginTop: 3, fontSize: "0.7rem", color: "#555", fontFamily: "'IBM Plex Mono', monospace" }}>
+            SOURCES: {(selectedEntry.meta?.retrievalTrace?.sources || []).slice(0, 4).join(", ") || "—"}
           </div>
         </div>
       )}

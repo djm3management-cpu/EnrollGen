@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, memo } from "react";
+import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
 import { useAppAuth } from "../context/AuthContext";
 import { useScript } from "../context/ScriptContext";
 import { SECTION_LABELS } from "../context/scriptReducer";
@@ -7,6 +7,7 @@ import {
   getCmsKnowledgeForQuestion,
   getCmsKnowledgeForSection,
 } from "../context/CopilotCmsKnowledge";
+import { scoreCompliance } from "../context/ComplianceScorer";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import { fetchTranscriptReferences } from "../lib/transcriptSearch";
 
@@ -1011,34 +1012,34 @@ const COMPLIANCE_KNOWLEDGE = {
 /* ── level → style map ── */
 const LEVEL_STYLE = {
   info: {
-    icon: "💡",
-    color: "#38bdf8",
-    bg: "rgba(56,189,248,0.08)",
-    border: "rgba(56,189,248,0.25)",
+    icon: "◈",
+    color: "#E8002D",
+    bg: "rgba(232,0,45,0.05)",
+    border: "rgba(232,0,45,0.3)",
   },
   remind: {
-    icon: "🔔",
-    color: "#a78bfa",
-    bg: "rgba(167,139,250,0.08)",
-    border: "rgba(167,139,250,0.25)",
+    icon: "◉",
+    color: "#ADADAD",
+    bg: "rgba(173,173,173,0.05)",
+    border: "rgba(173,173,173,0.25)",
   },
   tip: {
-    icon: "✅",
-    color: "#34d399",
-    bg: "rgba(52,211,153,0.08)",
-    border: "rgba(52,211,153,0.25)",
+    icon: "◆",
+    color: "#00D166",
+    bg: "rgba(0,209,102,0.05)",
+    border: "rgba(0,209,102,0.28)",
   },
   warn: {
-    icon: "⚠️",
-    color: "#fbbf24",
-    bg: "rgba(251,191,36,0.08)",
-    border: "rgba(251,191,36,0.35)",
+    icon: "▲",
+    color: "#FFD700",
+    bg: "rgba(255,215,0,0.06)",
+    border: "rgba(255,215,0,0.35)",
   },
   critical: {
-    icon: "🚨",
-    color: "#f87171",
-    bg: "rgba(248,113,113,0.1)",
-    border: "rgba(248,113,113,0.5)",
+    icon: "✕",
+    color: "#FF4455",
+    bg: "rgba(255,68,85,0.08)",
+    border: "rgba(255,68,85,0.45)",
   },
 };
 
@@ -1052,7 +1053,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
     enrollAllDone,
     enrollmentCodeOk,
   } = useScript();
-  const { logEntry, setEntryFeedback, exportFeedbackDataset } = useCopilotLog();
+  const { logEntry, setEntryFeedback, exportFeedbackDataset, entries } = useCopilotLog();
   const { getToken } = useAppAuth();
   const currentStep =
     SECTION_LABELS[activeSection] || `Section ${activeSection}`;
@@ -1060,6 +1061,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
   /* ═══════ speech recognition ═══════ */
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [transcriptRows, setTranscriptRows] = useState([]); // [{id, ts, text}]
   const [interimText, setInterimText] = useState("");
   const recognitionRef = useRef(null);
   const transcriptRef = useRef(""); // always current for async callbacks
@@ -1082,6 +1084,25 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
 
   /* ═══════ collapsible ═══════ */
   const [expanded, setExpanded] = useState(true);
+
+  /* ═══════ status bar ═══════ */
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const compliance = useMemo(() => scoreCompliance(state, entries), [state, entries]);
+
+  useEffect(() => {
+    const ts = state.sectionTimestamps?.[activeSection];
+    if (!ts?.start || ts?.end) { setElapsedSec(0); return; }
+    const tick = () => setElapsedSec(Math.floor((Date.now() - ts.start) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [state.sectionTimestamps, activeSection]);
+
+  const elapsedDisplay = useMemo(() => {
+    const m = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
+    const s = String(elapsedSec % 60).padStart(2, "0");
+    return `${m}:${s}`;
+  }, [elapsedSec]);
 
   /* ─── keep transcriptRef in sync ─── */
   useEffect(() => {
@@ -1124,6 +1145,8 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
       }
       if (newFinal) {
         setTranscript((prev) => prev + newFinal);
+        const rowTs = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        setTranscriptRows((prev) => [...prev.slice(-49), { id: Date.now(), ts: rowTs, text: newFinal.trim() }]);
         setInterimText("");
         clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(
@@ -1760,8 +1783,8 @@ RESPONSE RULES:
 
   const clearTranscript = () => {
     setTranscript("");
+    setTranscriptRows([]);
     setInterimText("");
-    setHighlightIdx(-1);
     setMessages([]);
     setFloatingAlert(null);
     lastCoachingTime.current = 0;
@@ -1888,14 +1911,25 @@ RESPONSE RULES:
         })()}
 
       <section className="card prompter-card">
-        {/* Header */}
+        {/* ── Collapsed Header / Collapse Toggle ── */}
         <div className="prompter-header" onClick={() => setExpanded((p) => !p)}>
           <div className="prompter-header-left">
-            <span className="prompter-mic-icon">{listening ? "🔴" : "⎇"}</span>
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: listening ? "#E8002D" : "#333",
+                boxShadow: listening ? "0 0 8px rgba(232,0,45,0.9)" : "none",
+                flexShrink: 0,
+                display: "inline-block",
+                transition: "all 0.3s",
+              }}
+            />
             <div>
-              <h2 style={{ margin: 0 }}>AI Co-Pilot</h2>
-              <span className="muted" style={{ fontSize: 12 }}>
-                {currentStep} · Real-time assistant
+              <h2 style={{ margin: 0 }}>CO-PILOT</h2>
+              <span className="muted" style={{ fontSize: 11, fontFamily: "'IBM Plex Mono', monospace" }}>
+                {currentStep}
               </span>
             </div>
           </div>
@@ -1904,295 +1938,403 @@ RESPONSE RULES:
 
         {expanded && (
           <div className="prompter-body">
-            {/* Controls */}
-            <div className="prompter-controls">
-              <button
-                className="primary prompter-listen-btn"
-                onClick={listening ? stopListening : startListening}
-                disabled={!supportsRecognition}
-                style={{
-                  background: listening ? "#e74c3c" : "#2ecc71",
-                  color: "#fff",
-                  borderColor: listening ? "#c0392b" : "#27ae60",
-                }}
-              >
-                {!supportsRecognition
-                  ? "Browser Not Supported"
-                  : listening
-                  ? "■  Stop Listening"
-                  : "●  Start Listening"}
-              </button>
-              <button className="primary" onClick={clearTranscript}>
-                Clear
-              </button>
-              <button
-                className="primary"
-                disabled={!transcript.trim() || coachingLoading}
-                onClick={requestCoaching}
-              >
-                {coachingLoading ? "Thinking…" : "Ask Co-Pilot"}
-              </button>
+
+            {/* ── STATUS BAR ── */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0,
+                background: "#0a0a0a",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 3,
+                marginBottom: 8,
+                overflow: "hidden",
+              }}
+            >
+              {[
+                {
+                  label: "STATUS",
+                  value: listening ? "● LIVE" : "○ STANDBY",
+                  color: listening ? "#00D166" : "#555",
+                },
+                {
+                  label: "SECTION",
+                  value: `${activeSection === 2.5 ? "SNP" : activeSection} · ${currentStep.toUpperCase()}`,
+                  color: "#ffffff",
+                },
+                {
+                  label: "ELAPSED",
+                  value: elapsedDisplay,
+                  color: elapsedSec > 300 ? "#FFD700" : "#ffffff",
+                },
+                {
+                  label: "COMPLIANCE",
+                  value: `${compliance.score}/100`,
+                  color: compliance.score >= 80 ? "#00D166" : compliance.score >= 60 ? "#FFD700" : "#FF4455",
+                },
+              ].map(({ label, value, color }, i, arr) => (
+                <div
+                  key={label}
+                  style={{
+                    flex: 1,
+                    padding: "5px 10px",
+                    borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                  }}
+                >
+                  <div style={{ fontSize: "0.55rem", color: "#444", fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>{label}</div>
+                  <div style={{ fontSize: "0.75rem", color, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
+                </div>
+              ))}
             </div>
 
-            {/* Quick Ask — compliance / meds / plans / eligibility */}
+            {/* ── CONTROL STRIP ── */}
             <div
               style={{
                 display: "flex",
                 gap: 6,
-                margin: "8px 0 4px",
+                alignItems: "center",
+                background: "#0a0a0a",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 3,
+                padding: "6px 8px",
+                marginBottom: 10,
+                flexWrap: "wrap",
               }}
             >
-              <input
-                value={askQuestion}
-                onChange={(e) => setAskQuestion(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    askCopilot();
-                  }
-                }}
-                placeholder="Ask about compliance, meds, plans, eligibility…"
-                disabled={askLoading}
-                style={{
-                  flex: 1,
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  borderRadius: 6,
-                  padding: "8px 12px",
-                  fontSize: "0.85em",
-                  color: "#e8edf5",
-                  outline: "none",
-                }}
-              />
+              {/* Mic toggle */}
               <button
-                className="primary"
-                onClick={askCopilot}
-                disabled={!askQuestion.trim() || askLoading}
+                onClick={listening ? stopListening : startListening}
+                disabled={!supportsRecognition}
                 style={{
-                  padding: "8px 14px",
-                  fontSize: "0.8em",
+                  background: listening ? "rgba(232,0,45,0.15)" : "rgba(0,209,102,0.1)",
+                  border: listening ? "1px solid rgba(232,0,45,0.5)" : "1px solid rgba(0,209,102,0.35)",
+                  color: listening ? "#E8002D" : "#00D166",
+                  borderRadius: 3,
+                  padding: "4px 10px",
+                  fontSize: "0.7rem",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  cursor: supportsRecognition ? "pointer" : "not-allowed",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.15s",
+                }}
+              >
+                {!supportsRecognition ? "NO MIC" : listening ? "■ STOP" : "● START"}
+              </button>
+
+              {/* Clear */}
+              <button
+                onClick={clearTranscript}
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "#666",
+                  borderRadius: 3,
+                  padding: "4px 10px",
+                  fontSize: "0.7rem",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                CLEAR
+              </button>
+
+              {/* Ask Co-Pilot */}
+              <button
+                disabled={!transcript.trim() || coachingLoading}
+                onClick={requestCoaching}
+                style={{
+                  background: coachingLoading ? "rgba(232,0,45,0.08)" : "rgba(232,0,45,0.12)",
+                  border: "1px solid rgba(232,0,45,0.35)",
+                  color: "#E8002D",
+                  borderRadius: 3,
+                  padding: "4px 10px",
+                  fontSize: "0.7rem",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  cursor: transcript.trim() && !coachingLoading ? "pointer" : "not-allowed",
+                  opacity: !transcript.trim() || coachingLoading ? 0.5 : 1,
                   whiteSpace: "nowrap",
                 }}
               >
-                {askLoading ? "…" : "Ask"}
+                {coachingLoading ? "ANALYZING…" : "◈ ANALYZE"}
               </button>
-            </div>
 
-            {/* Live Transcript */}
-            <div className="prompter-transcript">
-              <div className="prompter-section-label">Live Transcript</div>
-              <div className="prompter-transcript-text">
-                {transcript || (
-                  <span style={{ opacity: 0.4 }}>
-                    {listening
-                      ? "Listening… start speaking"
-                      : "Press Start Listening to begin"}
-                  </span>
-                )}
-                {interimText && (
-                  <span className="prompter-interim"> {interimText}</span>
-                )}
+              {/* Quick Ask input — inline */}
+              <div style={{ flex: 1, display: "flex", gap: 4, minWidth: 180 }}>
+                <input
+                  value={askQuestion}
+                  onChange={(e) => setAskQuestion(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askCopilot(); }
+                  }}
+                  placeholder="Ask compliance, meds, plans…"
+                  disabled={askLoading}
+                  style={{
+                    flex: 1,
+                    background: "#111",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 3,
+                    padding: "4px 8px",
+                    fontSize: "0.75rem",
+                    color: "#d0d0d0",
+                    outline: "none",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                  }}
+                />
+                <button
+                  onClick={askCopilot}
+                  disabled={!askQuestion.trim() || askLoading}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(232,0,45,0.3)",
+                    color: "#E8002D",
+                    borderRadius: 3,
+                    padding: "4px 10px",
+                    fontSize: "0.7rem",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 800,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    cursor: askQuestion.trim() && !askLoading ? "pointer" : "not-allowed",
+                    opacity: !askQuestion.trim() || askLoading ? 0.5 : 1,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {askLoading ? "…" : "ASK"}
+                </button>
               </div>
             </div>
 
-            {/* AI Co-Pilot Feed */}
-            <div className="prompter-coaching">
+            {/* ── TWO-COLUMN BODY ── */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "40% 1fr",
+                gap: 10,
+                alignItems: "start",
+              }}
+            >
+
+              {/* ── LEFT: LIVE TELEMETRY (race standings rows) ── */}
               <div
-                className="prompter-section-label"
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
+                  background: "#0a0a0a",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderLeft: "2px solid #ADADAD",
+                  borderRadius: 3,
+                  overflow: "hidden",
                 }}
               >
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                  AI Co-Pilot
-                  {coachingLoading && (
-                    <span
-                      className="prompter-pulse"
-                      style={{ fontSize: "0.7em" }}
-                    >
-                      ● thinking…
-                    </span>
+                {/* Panel header */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "5px 10px",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    background: "#0e0e0e",
+                  }}
+                >
+                  <span style={{ fontSize: "0.62rem", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAD" }}>
+                    Live Telemetry
+                  </span>
+                  <span style={{ fontSize: "0.58rem", color: "#444", fontFamily: "'IBM Plex Mono', monospace" }}>
+                    {transcriptRows.length} utterances
+                  </span>
+                </div>
+
+                {/* Row list */}
+                <div style={{ maxHeight: 280, overflowY: "auto" }}>
+                  {transcriptRows.length === 0 && !interimText && (
+                    <div style={{ padding: "12px 10px", fontSize: "0.75rem", color: "#333", fontFamily: "'IBM Plex Mono', monospace", fontStyle: "italic" }}>
+                      {listening ? "Listening…" : "Awaiting input"}
+                    </div>
                   )}
-                </span>
-                <span style={{ display: "inline-flex", gap: 6 }}>
-                  <button
-                    type="button"
-                    className="objection-copy-btn"
-                    onClick={exportReplayScenario}
-                  >
-                    Export Replay
-                  </button>
-                  <button
-                    type="button"
-                    className="objection-copy-btn"
-                    onClick={exportFeedbackBundle}
-                  >
-                    Export Feedback
-                  </button>
-                </span>
-              </div>
-              <div
-                ref={feedRef}
-                style={{
-                  maxHeight: 220,
-                  overflowY: "auto",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 6,
-                  paddingTop: 4,
-                }}
-              >
-                {messages.length === 0 && (
-                  <span style={{ opacity: 0.4, fontSize: "0.85em" }}>
-                    Co-pilot will give reminders and suggestions as you speak…
-                  </span>
-                )}
-                {messages.map((msg) => {
-                  const s = LEVEL_STYLE[msg.level] || LEVEL_STYLE.info;
-                  return (
+                  {transcriptRows.map((row, idx) => (
                     <div
-                      key={msg.id}
+                      key={row.id}
                       style={{
-                        display: "flex",
+                        display: "grid",
+                        gridTemplateColumns: "52px 1fr",
                         gap: 8,
-                        alignItems: "flex-start",
-                        background: s.bg,
-                        border: `1px solid ${s.border}`,
-                        borderRadius: 6,
-                        padding: "7px 10px",
-                        animation: "fadeIn 0.2s ease",
+                        padding: "5px 10px",
+                        borderBottom: "1px solid rgba(255,255,255,0.04)",
+                        alignItems: "baseline",
                       }}
                     >
-                      <span
+                      <span style={{ fontSize: "0.6rem", color: "#444", fontFamily: "'IBM Plex Mono', monospace", whiteSpace: "nowrap", flexShrink: 0 }}>
+                        {row.ts}
+                      </span>
+                      <span style={{ fontSize: "0.78rem", color: idx === transcriptRows.length - 1 ? "#e8e8e8" : "#888", fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1.4 }}>
+                        {row.text}
+                      </span>
+                    </div>
+                  ))}
+                  {interimText && (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "52px 1fr",
+                        gap: 8,
+                        padding: "5px 10px",
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.6rem", color: "#333", fontFamily: "'IBM Plex Mono', monospace" }}>…</span>
+                      <span className="prompter-interim" style={{ fontSize: "0.78rem", fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1.4 }}>
+                        {interimText}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── RIGHT: CO-PILOT FEED ── */}
+              <div
+                style={{
+                  background: "#0a0a0a",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderLeft: "2px solid #E8002D",
+                  borderRadius: 3,
+                  overflow: "hidden",
+                }}
+              >
+                {/* Panel header */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "5px 10px",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    background: "#0e0e0e",
+                    flexWrap: "wrap",
+                    gap: 6,
+                  }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#E8002D", boxShadow: "0 0 5px rgba(232,0,45,0.8)", display: "inline-block", flexShrink: 0 }} />
+                    <span style={{ fontSize: "0.62rem", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#E8002D" }}>
+                      Co-Pilot Feed
+                      {coachingLoading && <span style={{ marginLeft: 6, color: "#FFD700" }}>ANALYZING…</span>}
+                    </span>
+                  </span>
+                  <span style={{ display: "inline-flex", gap: 4 }}>
+                    <button type="button" className="objection-copy-btn" onClick={exportReplayScenario}>
+                      REPLAY
+                    </button>
+                    <button type="button" className="objection-copy-btn" onClick={exportFeedbackBundle}>
+                      FEEDBACK
+                    </button>
+                  </span>
+                </div>
+
+                {/* Messages */}
+                <div
+                  ref={feedRef}
+                  style={{
+                    maxHeight: 280,
+                    overflowY: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 0,
+                  }}
+                >
+                  {messages.length === 0 && (
+                    <div style={{ padding: "12px 10px", fontSize: "0.75rem", color: "#333", fontFamily: "'IBM Plex Mono', monospace", fontStyle: "italic" }}>
+                      Awaiting analysis…
+                    </div>
+                  )}
+                  {messages.map((msg) => {
+                    const s = LEVEL_STYLE[msg.level] || LEVEL_STYLE.info;
+                    return (
+                      <div
+                        key={msg.id}
                         style={{
-                          fontSize: "1em",
-                          lineHeight: 1.4,
-                          flexShrink: 0,
+                          borderBottom: "1px solid rgba(255,255,255,0.04)",
+                          borderLeft: `2px solid ${s.color}`,
+                          padding: "8px 10px",
+                          animation: "fadeIn 0.2s ease",
+                          background: "#0a0a0a",
                         }}
                       >
-                        {s.icon}
-                      </span>
-                      <div style={{ flex: 1 }}>
-                        <span
-                          style={{
-                            fontSize: "0.85em",
-                            color: "#e8edf5",
-                            lineHeight: 1.4,
-                            display: "block",
-                          }}
-                        >
+                        {/* Row header */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                          <span style={{ fontSize: "0.58rem", color: s.color, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                            {s.icon} {msg.level || "info"}
+                          </span>
+                          <span style={{ fontSize: "0.58rem", color: "#444", fontFamily: "'IBM Plex Mono', monospace" }}>{msg.ts}</span>
+                        </div>
+
+                        {/* Message text */}
+                        <div style={{ fontSize: "0.8rem", color: "#d0d0d0", lineHeight: 1.45, fontFamily: "'IBM Plex Mono', monospace" }}>
                           {msg.text}
-                        </span>
+                        </div>
+
+                        {/* Issue tag */}
                         {msg.issueTag && (
-                          <span
-                            style={{
-                              display: "inline-block",
-                              marginTop: 6,
-                              fontSize: "0.62em",
-                              color: "#8fa4bc",
-                              border: "1px solid rgba(255,255,255,0.08)",
-                              borderRadius: 999,
-                              padding: "2px 7px",
-                            }}
-                          >
+                          <span style={{ display: "inline-block", marginTop: 5, fontSize: "0.58rem", color: "#E8002D", border: "1px solid rgba(232,0,45,0.2)", borderRadius: 2, padding: "1px 5px", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", background: "rgba(232,0,45,0.04)" }}>
                             {msg.issueTag}
                           </span>
                         )}
-                        {msg.retrievalTrace &&
-                          (msg.retrievalTrace.topics?.length ||
-                            msg.retrievalTrace.scenarios?.length ||
-                            msg.retrievalTrace.sources?.length) && (
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: 6,
-                                flexWrap: "wrap",
-                                marginTop: 6,
-                              }}
-                            >
-                              {msg.retrievalTrace.topics?.slice(0, 3).map((topicId) => (
-                                <span
-                                  key={topicId}
-                                  style={{
-                                    fontSize: "0.58em",
-                                    color: "#a5b4c7",
-                                    border: "1px solid rgba(255,255,255,0.06)",
-                                    borderRadius: 999,
-                                    padding: "2px 6px",
-                                    background: "rgba(255,255,255,0.03)",
-                                  }}
-                                >
-                                  topic:{topicId}
-                                </span>
-                              ))}
-                              {msg.retrievalTrace.scenarios?.slice(0, 2).map((scenarioId) => (
-                                <span
-                                  key={scenarioId}
-                                  style={{
-                                    fontSize: "0.58em",
-                                    color: "#93c5fd",
-                                    border: "1px solid rgba(147,197,253,0.12)",
-                                    borderRadius: 999,
-                                    padding: "2px 6px",
-                                    background: "rgba(59,130,246,0.08)",
-                                  }}
-                                >
-                                  sep:{scenarioId}
-                                </span>
-                              ))}
-                              {msg.retrievalTrace.sources?.length > 0 && (
-                                <span
-                                  style={{
-                                    fontSize: "0.58em",
-                                    color: "#8fa4bc",
-                                  }}
-                                >
-                                  {msg.retrievalTrace.sources.length} source
-                                  {msg.retrievalTrace.sources.length === 1 ? "" : "s"}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 6,
-                            flexWrap: "wrap",
-                            marginTop: 8,
-                          }}
-                        >
+
+                        {/* Retrieval trace tags */}
+                        {msg.retrievalTrace && (msg.retrievalTrace.topics?.length || msg.retrievalTrace.scenarios?.length || msg.retrievalTrace.sources?.length) && (
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 5 }}>
+                            {msg.retrievalTrace.topics?.slice(0, 3).map((id) => (
+                              <span key={id} style={{ fontSize: "0.57rem", color: "#666", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 2, padding: "1px 5px", background: "rgba(255,255,255,0.02)", fontFamily: "'IBM Plex Mono', monospace" }}>
+                                topic:{id}
+                              </span>
+                            ))}
+                            {msg.retrievalTrace.scenarios?.slice(0, 2).map((id) => (
+                              <span key={id} style={{ fontSize: "0.57rem", color: "#E8002D", border: "1px solid rgba(232,0,45,0.15)", borderRadius: 2, padding: "1px 5px", background: "rgba(232,0,45,0.04)", fontFamily: "'IBM Plex Mono', monospace" }}>
+                                sep:{id}
+                              </span>
+                            ))}
+                            {msg.retrievalTrace.sources?.length > 0 && (
+                              <span style={{ fontSize: "0.57rem", color: "#555", fontFamily: "'IBM Plex Mono', monospace" }}>
+                                {msg.retrievalTrace.sources.length}src
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Feedback buttons */}
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
                           {[
-                            ["correct", "Correct"],
-                            ["too_aggressive", "Too Aggressive"],
-                            ["missed_issue", "Missed Issue"],
-                            ["duplicate", "Duplicate"],
-                            ["wrong_section", "Wrong Section"],
+                            ["correct", "✓"],
+                            ["too_aggressive", "AGGR"],
+                            ["missed_issue", "MISS"],
+                            ["duplicate", "DUP"],
+                            ["wrong_section", "SEC?"],
                           ].map(([verdict, label]) => (
                             <button
                               key={verdict}
                               type="button"
                               onClick={() => setEntryFeedback(msg.id, verdict)}
+                              title={verdict.replace(/_/g, " ")}
                               style={{
-                                fontSize: "0.62em",
-                                borderRadius: 999,
-                                border:
-                                  msg.feedback?.verdict === verdict
-                                    ? "1px solid rgba(56,189,248,0.35)"
-                                    : "1px solid rgba(255,255,255,0.08)",
-                                background:
-                                  msg.feedback?.verdict === verdict
-                                    ? "rgba(56,189,248,0.1)"
-                                    : "rgba(255,255,255,0.03)",
-                                color:
-                                  msg.feedback?.verdict === verdict
-                                    ? "#7dd3fc"
-                                    : "#8fa4bc",
-                                padding: "3px 8px",
+                                fontSize: "0.58rem",
+                                borderRadius: 2,
+                                border: msg.feedback?.verdict === verdict ? "1px solid rgba(232,0,45,0.4)" : "1px solid rgba(255,255,255,0.06)",
+                                background: msg.feedback?.verdict === verdict ? "rgba(232,0,45,0.1)" : "rgba(255,255,255,0.02)",
+                                color: msg.feedback?.verdict === verdict ? "#E8002D" : "#555",
+                                padding: "2px 6px",
                                 cursor: "pointer",
+                                fontFamily: "'Barlow Condensed', sans-serif",
+                                letterSpacing: "0.06em",
+                                textTransform: "uppercase",
+                                fontWeight: 700,
                               }}
                             >
                               {label}
@@ -2200,21 +2342,12 @@ RESPONSE RULES:
                           ))}
                         </div>
                       </div>
-                      <span
-                        style={{
-                          fontSize: "0.65em",
-                          color: "#5a6a80",
-                          flexShrink: 0,
-                          marginTop: 2,
-                        }}
-                      >
-                        {msg.ts}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
+
           </div>
         )}
       </section>

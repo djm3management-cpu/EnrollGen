@@ -228,7 +228,8 @@ export const SectionTimer = React.memo(function SectionTimer({
   const isDone = !!ts.end;
 
   return (
-    <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+    /* Stable right-anchored wrapper — never changes width, toast floats outside */
+    <div style={{ position: "relative", display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
       <span
         className={`section-timer ${
           isDanger && !isDone
@@ -238,6 +239,7 @@ export const SectionTimer = React.memo(function SectionTimer({
             : ""
         }`}
         title="Time in this section"
+        style={{ whiteSpace: "nowrap" }}
       >
         {isDanger && !isDone ? (
           <AlertCircle size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
@@ -248,8 +250,12 @@ export const SectionTimer = React.memo(function SectionTimer({
         )}
         {formatTime(elapsed)}
       </span>
+      {/* Toast floats below — absolutely positioned so it never affects h2 width */}
       {toast && !isDone && (
-        <span className={`section-timer-toast ${toast.level}`}>
+        <span
+          className={`section-timer-toast ${toast.level}`}
+          style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 10 }}
+        >
           {toast.msg}
         </span>
       )}

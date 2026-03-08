@@ -24,12 +24,12 @@
   width: 42px;
   height: 42px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, #162035 0%, #0f1724 100%);
-  border: 1px solid var(--border-active);
+  background: linear-gradient(180deg, #1A0508 0%, #0F0203 100%);
+  border: 1px solid rgba(232, 0, 45, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-cyan);
+  color: #E8002D;
   box-shadow: var(--shadow-btn);
 }
 
@@ -113,8 +113,8 @@
 }
 
 .sep-quick-zip-btn:hover {
-  color: var(--accent-cyan);
-  border-color: var(--border-active);
+  color: #E8002D;
+  border-color: rgba(232, 0, 45, 0.3);
   box-shadow: var(--shadow-btn);
   transform: translateY(-1px);
 }
@@ -222,7 +222,7 @@
 .sep-county-count {
   font-size: 13px;
   font-weight: 700;
-  color: var(--accent-teal);
+  color: #ADADAD;
   white-space: nowrap;
   font-family: var(--font-mono);
 }
@@ -288,11 +288,11 @@
 }
 
 .sep-plan-table tbody tr:hover td {
-  background: rgba(56, 189, 248, 0.03) !important;
+  background: rgba(232, 0, 45, 0.04) !important;
 }
 
 .sep-plan-table tbody tr.expanded {
-  background: rgba(56, 189, 248, 0.03);
+  background: rgba(232, 0, 45, 0.03);
 }
 
 .sep-plan-table td {
@@ -302,7 +302,7 @@
 /* ── Plan detail expanded row ── */
 .sep-plan-detail {
   padding: 0 14px 16px;
-  background: rgba(56, 189, 248, 0.02);
+  background: rgba(232, 0, 45, 0.02);
 }
 
 .sep-plan-benefits {
@@ -320,8 +320,8 @@
   border-radius: 50px;
   font-size: 11px;
   font-weight: 600;
-  background: rgba(45, 212, 191, 0.06);
-  border: 1px solid rgba(45, 212, 191, 0.15);
+  background: rgba(173, 173, 173, 0.06);
+  border: 1px solid rgba(173, 173, 173, 0.15);
   color: var(--accent-teal);
 }
 
@@ -367,12 +367,15 @@
 .sep-type-badge {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 50px;
+  border-radius: 3px;
   font-size: 10px;
   font-weight: 700;
-  color: var(--accent-cyan);
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.15);
+  font-family: "Barlow Condensed", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #E8002D;
+  background: rgba(232, 0, 45, 0.08);
+  border: 1px solid rgba(232, 0, 45, 0.2);
   margin-right: 3px;
 }
 
@@ -401,14 +404,14 @@
 }
 
 .sep-product-badge.ma {
-  color: var(--accent-cyan);
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #E8002D;
+  background: rgba(232, 0, 45, 0.10);
+  border: 1px solid rgba(232, 0, 45, 0.2);
 }
 .sep-product-badge.mapd {
-  color: var(--accent-teal);
-  background: rgba(45, 212, 191, 0.12);
-  border: 1px solid rgba(45, 212, 191, 0.2);
+  color: #ADADAD;
+  background: rgba(173, 173, 173, 0.10);
+  border: 1px solid rgba(173, 173, 173, 0.2);
 }
 .sep-product-badge.pdp {
   color: var(--accent-gold);
@@ -422,13 +425,13 @@
 }
 .sep-product-badge.dsnp {
   color: var(--accent-cyan);
-  background: rgba(56, 189, 248, 0.15);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: rgba(232, 0, 45, 0.15);
+  border: 1px solid rgba(232, 0, 45, 0.25);
 }
 .sep-product-badge.isnp {
   color: var(--accent-teal);
-  background: rgba(45, 212, 191, 0.15);
-  border: 1px solid rgba(45, 212, 191, 0.25);
+  background: rgba(173, 173, 173, 0.15);
+  border: 1px solid rgba(173, 173, 173, 0.25);
 }
 .sep-product-badge.csnp {
   color: var(--accent-gold);
@@ -476,7 +479,7 @@
 }
 
 .sep-sep-card.medicare {
-  border-color: rgba(56, 189, 248, 0.15);
+  border-color: rgba(232, 0, 45, 0.15);
 }
 
 .sep-sep-header {
@@ -492,7 +495,7 @@
 }
 
 .sep-sep-header:hover {
-  background: rgba(56, 189, 248, 0.02);
+  background: rgba(232, 0, 45, 0.02);
 }
 
 .sep-sep-card.expanded .sep-sep-header {
@@ -539,9 +542,9 @@
   border: 1px solid rgba(52, 211, 153, 0.2);
 }
 .sep-urgency-pill.info {
-  background: rgba(56, 189, 248, 0.06);
+  background: rgba(232, 0, 45, 0.06);
   color: var(--accent-cyan);
-  border: 1px solid rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(232, 0, 45, 0.15);
 }
 
 /* ── Category pills ── */
@@ -561,9 +564,9 @@
   border: 1px solid rgba(248, 113, 113, 0.15);
 }
 .sep-category-pill.medicare {
-  background: rgba(56, 189, 248, 0.06);
+  background: rgba(232, 0, 45, 0.06);
   color: var(--accent-cyan);
-  border: 1px solid rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(232, 0, 45, 0.15);
 }
 
 /* ── Days-left pill ── */
@@ -587,7 +590,7 @@
   border: 1px solid rgba(251, 191, 36, 0.2);
 }
 .sep-days-pill.normal {
-  background: rgba(56, 189, 248, 0.06);
+  background: rgba(232, 0, 45, 0.06);
   color: var(--text-muted);
   border: 1px solid var(--border-subtle);
 }
@@ -712,7 +715,7 @@
   margin-top: 24px;
   padding: 18px 22px;
   border-radius: var(--radius-md);
-  background: rgba(56, 189, 248, 0.03);
+  background: rgba(232, 0, 45, 0.03);
   border: 1px solid var(--border-subtle);
 }
 
@@ -736,8 +739,8 @@
 .sep-spinner {
   width: 48px;
   height: 48px;
-  border: 3px solid rgba(56, 189, 248, 0.15);
-  border-top-color: var(--accent-cyan);
+  border: 3px solid rgba(232, 0, 45, 0.15);
+  border-top-color: #E8002D;
   border-radius: 50%;
   margin: 0 auto 16px;
   animation: spin 0.8s linear infinite;
@@ -747,8 +750,8 @@
   display: inline-block;
   width: 18px;
   height: 18px;
-  border: 2.5px solid rgba(56, 189, 248, 0.2);
-  border-top-color: var(--accent-cyan);
+  border: 2.5px solid rgba(232, 0, 45, 0.2);
+  border-top-color: #E8002D;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -784,7 +787,7 @@
 }
 
 .sep-sub-table tbody tr:hover td {
-  background: rgba(56, 189, 248, 0.03);
+  background: rgba(232, 0, 45, 0.03);
 }
 
 .sep-sub-table td {

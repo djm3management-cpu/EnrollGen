@@ -179,22 +179,24 @@ function ModeToggle({ mode, onChange }) {
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 10,
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: 12,
-        padding: "6px 12px",
+        gap: 8,
+        background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 4,
+        padding: "5px 10px",
         userSelect: "none",
+        boxShadow: "inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04)",
       }}
     >
       <span
         style={{
-          fontSize: 11,
-          fontFamily: "var(--font-mono)",
-          fontWeight: 600,
-          letterSpacing: "0.08em",
-          color: !isMS ? "#38bdf8" : "var(--text-muted)",
-          transition: "color 0.25s ease",
+          fontSize: 12,
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontWeight: 700,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: !isMS ? "#E8002D" : "#3A3A4A",
+          transition: "color 0.2s ease",
           cursor: "pointer",
         }}
         onClick={() => onChange("ma")}
@@ -215,50 +217,46 @@ function ModeToggle({ mode, onChange }) {
         }}
         style={{
           position: "relative",
-          width: 44,
-          height: 24,
-          background: isMS ? "rgba(251,191,36,0.15)" : "rgba(56,189,248,0.12)",
-          border: `1px solid ${
-            isMS ? "rgba(251,191,36,0.35)" : "rgba(56,189,248,0.3)"
-          }`,
-          borderRadius: 12,
+          width: 40,
+          height: 20,
+          background: isMS ? "rgba(255,215,0,0.12)" : "rgba(232,0,45,0.12)",
+          border: `1px solid ${isMS ? "rgba(255,215,0,0.3)" : "rgba(232,0,45,0.3)"}`,
+          borderRadius: 3,
           cursor: "pointer",
-          transition: "all 0.25s ease",
+          transition: "all 0.2s ease",
           flexShrink: 0,
         }}
       >
         <div
           style={{
             position: "absolute",
-            top: 3,
-            left: isMS ? 22 : 3,
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            background: isMS ? "#fbbf24" : "#38bdf8",
-            boxShadow: `0 0 8px ${
-              isMS ? "rgba(251,191,36,0.5)" : "rgba(56,189,248,0.5)"
-            }`,
-            transition:
-              "left 0.25s cubic-bezier(.34,1.56,.64,1), background 0.25s ease, box-shadow 0.25s ease",
+            top: 2,
+            left: isMS ? 20 : 2,
+            width: 14,
+            height: 14,
+            borderRadius: 2,
+            background: isMS ? "#FFD700" : "#E8002D",
+            boxShadow: `0 0 8px ${isMS ? "rgba(255,215,0,0.6)" : "rgba(232,0,45,0.7)"}`,
+            transition: "left 0.2s cubic-bezier(.34,1.56,.64,1), background 0.2s ease, box-shadow 0.2s ease",
           }}
         />
       </div>
 
       <span
         style={{
-          fontSize: 11,
-          fontFamily: "var(--font-mono)",
-          fontWeight: 600,
-          letterSpacing: "0.08em",
-          color: isMS ? "#fbbf24" : "var(--text-muted)",
-          transition: "color 0.25s ease",
+          fontSize: 12,
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontWeight: 700,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: isMS ? "#FFD700" : "#3A3A4A",
+          transition: "color 0.2s ease",
           cursor: "pointer",
           whiteSpace: "nowrap",
         }}
         onClick={() => onChange("medsup")}
       >
-        MED SUP
+        Med Sup
       </span>
     </div>
   );
@@ -457,27 +455,27 @@ function AppContent() {
           >
             <span
               style={{
-                fontSize: 10,
-                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 700,
-                letterSpacing: "0.12em",
+                letterSpacing: "0.16em",
                 textTransform: "uppercase",
-                padding: "3px 10px",
-                borderRadius: 4,
-                background:
-                  mode === "medsup"
-                    ? "rgba(251,191,36,0.08)"
-                    : "rgba(56,189,248,0.08)",
-                border: `1px solid ${
-                  mode === "medsup"
-                    ? "rgba(251,191,36,0.25)"
-                    : "rgba(56,189,248,0.25)"
-                }`,
-                color: mode === "medsup" ? "#fbbf24" : "#38bdf8",
-                transition: "all 0.25s ease",
+                padding: "4px 14px",
+                borderRadius: 3,
+                background: mode === "medsup"
+                  ? "rgba(255,215,0,0.07)"
+                  : "rgba(232,0,45,0.07)",
+                border: `1px solid ${mode === "medsup"
+                  ? "rgba(255,215,0,0.2)"
+                  : "rgba(232,0,45,0.2)"}`,
+                borderTop: `2px solid ${mode === "medsup"
+                  ? "rgba(255,215,0,0.4)"
+                  : "rgba(232,0,45,0.4)"}`,
+                color: mode === "medsup" ? "#FFD700" : "#E8002D",
+                transition: "all 0.2s ease",
               }}
             >
-              INBOUND —{" "}
+              ● INBOUND —{" "}
               {mode === "medsup" ? "MEDICARE SUPPLEMENT" : "MEDICARE ADVANTAGE"}
             </span>
           </div>
