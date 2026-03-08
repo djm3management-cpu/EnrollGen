@@ -18,12 +18,13 @@ function PreEnrollCheck({ state }) {
   return (
     <div
       style={{
-        background: "rgba(251,191,36,0.07)",
-        border: "1px solid rgba(251,191,36,0.35)",
+        background: "rgba(251,191,36,0.12)",
+        border: "1px solid rgba(251,191,36,0.45)",
         borderRadius: 8,
-        padding: "10px 14px",
+        padding: "12px 16px",
         marginBottom: 12,
         fontSize: "0.82em",
+        boxShadow: "0 0 0 1px rgba(251,191,36,0.08)",
       }}
     >
       <div

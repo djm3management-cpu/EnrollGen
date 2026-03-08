@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Copy, Check, RotateCcw, AlertCircle, Clock, Timer } from "lucide-react";
 
 /* ===================== TIMER HELPERS ===================== */
 export function formatTime(ms) {
@@ -46,7 +47,11 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
           title="Copy to clipboard"
           aria-label="Copy script text"
         >
-          {copied ? "✓ Copied" : "⧉ Copy"}
+          {copied ? (
+            <><Check size={11} /> Copied</>
+          ) : (
+            <><Copy size={11} /> Copy</>
+          )}
         </button>
       </div>
       <div ref={textRef}>{children}</div>
@@ -141,7 +146,10 @@ export const MainTimer = React.memo(function MainTimer({
         </button>
       </div>
 
-      <p className="muted timer-notice">TPMO REQUIRED WITHIN 60 SECONDS 🕰️</p>
+      <p className="muted timer-notice">
+        <Clock size={11} style={{ verticalAlign: "middle", marginRight: 5 }} />
+        TPMO REQUIRED WITHIN 60 SECONDS
+      </p>
     </section>
   );
 });
@@ -231,7 +239,13 @@ export const SectionTimer = React.memo(function SectionTimer({
         }`}
         title="Time in this section"
       >
-        {isDanger && !isDone ? "🔴" : isWarn && !isDone ? "🟡" : "⏱"}{" "}
+        {isDanger && !isDone ? (
+          <AlertCircle size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+        ) : isWarn && !isDone ? (
+          <Clock size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+        ) : (
+          <Timer size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+        )}
         {formatTime(elapsed)}
       </span>
       {toast && !isDone && (
@@ -305,7 +319,8 @@ export const UndoButton = React.memo(function UndoButton({
 
   return (
     <button className="undo-btn" onClick={onUndo} title="Undo last action">
-      ↩ Undo
+      <RotateCcw size={13} style={{ verticalAlign: "middle", marginRight: 5 }} />
+      Undo
     </button>
   );
 });

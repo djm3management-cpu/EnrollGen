@@ -21,6 +21,7 @@ import ScriptPrompter from "./ScriptPrompter";
 import ComplianceMini from "./ComplianceMini";
 import ComplianceDashboard from "./ComplianceDashboard";
 import { motion, AnimatePresence } from "framer-motion";
+import DailyVerse from "./DailyVerse";
 
 /**
  * ScriptFlow v2 — Now with transcript pass-through for dual-layer scoring.
@@ -230,6 +231,9 @@ export default function ScriptFlow() {
 
       {/* ── Full Compliance Dashboard — transcript-aware, at the bottom ── */}
       <ComplianceDashboard transcript={transcript} />
+
+      {/* ── Daily Scripture — always visible at the bottom ── */}
+      <DailyVerse />
     </motion.div>
   );
 }

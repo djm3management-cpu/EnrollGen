@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, memo, useCallback } from "react";
+import { Sparkles, Loader2, ChevronUp, ChevronDown, MessageSquare, CheckCircle2, XCircle } from "lucide-react";
 import { useAppAuth } from "../context/AuthContext";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
@@ -330,9 +331,12 @@ Rules:
                   fontSize: "0.75em",
                   letterSpacing: "0.08em",
                   marginBottom: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
-                ✓ DO
+                <CheckCircle2 size={11} /> DO
               </div>
               <ul
                 style={{
@@ -367,9 +371,12 @@ Rules:
                   fontSize: "0.75em",
                   letterSpacing: "0.08em",
                   marginBottom: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
-                ✗ AVOID
+                <XCircle size={11} /> AVOID
               </div>
               <ul
                 style={{
@@ -405,9 +412,12 @@ Rules:
                 fontSize: "0.75em",
                 letterSpacing: "0.08em",
                 marginBottom: "4px",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
               }}
             >
-              💬 SAY THIS
+              <MessageSquare size={11} /> SAY THIS
             </div>
             <p
               style={{
@@ -434,14 +444,18 @@ Rules:
           disabled={loading}
           title="Get a compliance tip for this section from AI"
         >
-          {loading ? "⏳ Thinking…" : "⌬ AI Assist"}
+          {loading ? (
+            <><Loader2 size={13} className="coach-spin" style={{ marginRight: 6 }} />Thinking…</>
+          ) : (
+            <><Sparkles size={13} style={{ marginRight: 6 }} />AI Assist</>
+          )}
         </button>
         {tip && (
           <button
             className="section-coach-toggle"
             onClick={() => setExpanded((p) => !p)}
           >
-            {expanded ? "▲" : "▼"}
+            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
         )}
       </div>

@@ -51,8 +51,8 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 
   /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.04);
-  --border-default: rgba(255, 255, 255, 0.07);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.10);
   --border-active: rgba(56, 189, 248, 0.25);
   --border-accent: rgba(251, 191, 36, 0.4);
 
@@ -341,9 +341,9 @@ p {
   content: "";
   position: absolute;
   top: 0;
-  left: 12%;
-  right: 12%;
-  height: 2px;
+  left: 8%;
+  right: 8%;
+  height: 3px;
   bottom: auto;
   background: linear-gradient(
     90deg,
@@ -352,7 +352,7 @@ p {
     var(--accent-teal),
     transparent
   );
-  opacity: 0.5;
+  opacity: 1;
   border-radius: 0 0 4px 4px;
 }
 
@@ -362,9 +362,10 @@ p {
 
 /* Disabled */
 .card.disabled {
-  opacity: 0.4;
+  opacity: 0.55;
   pointer-events: none;
   box-shadow: none;
+  filter: saturate(0.4);
 }
 
 /* ===============================
@@ -667,9 +668,19 @@ input::placeholder {
 }
 
 .primary:disabled {
-  opacity: 0.3;
+  opacity: 0.55;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.primary:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.6);
+  outline-offset: 3px;
+}
+
+.secondary:focus-visible {
+  outline: 2px solid rgba(251, 191, 36, 0.6);
+  outline-offset: 3px;
 }
 
 .secondary {
@@ -2658,4 +2669,122 @@ html {
   max-width: 800px; /* try 680, 720, 760 */
   width: 100%;
   margin: 0 auto;
+}
+
+/* ===============================
+   ACCESSIBILITY — FOCUS RINGS
+================================ */
+button:focus-visible,
+.accordion-toggle:focus-visible,
+.copy-btn:focus-visible,
+.section-coach-btn:focus-visible,
+.section-coach-toggle:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.65);
+  outline-offset: 3px;
+}
+
+/* ===============================
+   REDUCED MOTION
+================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .viewport-bg {
+    animation: none !important;
+  }
+}
+
+/* ===============================
+   DAILY VERSE UPGRADE
+================================ */
+.daily-verse-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.daily-verse-refresh {
+  appearance: none;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--speed-fast) ease;
+  padding: 0;
+}
+
+.daily-verse-refresh:hover:not(:disabled) {
+  color: var(--accent-cyan);
+  border-color: rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.daily-verse-refresh:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.daily-verse-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0 8px;
+}
+
+.daily-verse-skeleton-line {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+}
+
+.daily-verse-skeleton-line.long  { width: 100%; }
+.daily-verse-skeleton-line.medium { width: 78%; }
+.daily-verse-skeleton-line.short  { width: 45%; height: 12px; }
+
+@keyframes shimmer {
+  0%   { background-position:  200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.daily-verse-fallback-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: var(--text-danger);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Spin animation for refresh icon */
+.verse-spin,
+.coach-spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
