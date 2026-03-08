@@ -389,27 +389,15 @@ p {
   transform: translateY(-1px);
 }
 
-/* Active Card — red racing stripe on top */
+/* Active Card — red glow border only, card stays dark */
 .active-card {
-  background:
-    repeating-linear-gradient(
-      45deg,
-      rgba(255, 255, 255, 0.010) 0px,
-      rgba(255, 255, 255, 0.010) 1px,
-      transparent 1px,
-      transparent 5px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 255, 255, 0.006) 0px,
-      rgba(255, 255, 255, 0.006) 1px,
-      transparent 1px,
-      transparent 5px
-    ),
-    linear-gradient(180deg, #180808 0%, #130505 50%, #0F0303 100%);
-  border-color: rgba(232, 0, 45, 0.25);
-  border-top-color: rgba(232, 0, 45, 0.5);
-  box-shadow: var(--shadow-active);
+  border-color: rgba(232, 0, 45, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(232, 0, 45, 0.25),
+    0 0 16px rgba(232, 0, 45, 0.18),
+    0 0 40px rgba(232, 0, 45, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* Red racing stripe on active card */
