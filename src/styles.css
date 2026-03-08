@@ -840,6 +840,31 @@ input::placeholder {
   margin-top: 14px;
 }
 
+.section-next-action .primary {
+  background: linear-gradient(180deg, #052810 0%, #021a08 100%);
+  color: #00D166;
+  border-color: rgba(0, 209, 102, 0.35);
+  border-top-color: rgba(0, 209, 102, 0.5);
+}
+
+.section-next-action .primary::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 209, 102, 0.5),
+    transparent
+  );
+}
+
+.section-next-action .primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #073d17 0%, #03220a 100%);
+  border-color: rgba(0, 209, 102, 0.6);
+  box-shadow:
+    0 0 14px rgba(0, 209, 102, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+  color: #00ff7f;
+}
+
 /* ===============================
    ENROLLMENT CODE
 ================================ */
