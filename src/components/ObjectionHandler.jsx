@@ -6,7 +6,7 @@ import {
   SendHorizontal,
   Target,
 } from "lucide-react";
-import { useAuth } from "@clerk/clerk-react";
+import { useAppAuth } from "../context/AuthContext";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 
@@ -30,7 +30,7 @@ export default function ObjectionHandler() {
   const [history, setHistory] = useState([]);
   const inputRef = useRef(null);
   const { logEntry } = useCopilotLog();
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
 
   const handleSubmit = async (objectionText) => {
     const text = objectionText || input.trim();

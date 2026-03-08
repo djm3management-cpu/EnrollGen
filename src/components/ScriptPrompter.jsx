@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useAppAuth } from "../context/AuthContext";
 import { useScript } from "../context/ScriptContext";
 import { SECTION_LABELS } from "../context/scriptReducer";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
@@ -1045,7 +1045,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
     enrollmentCodeOk,
   } = useScript();
   const { logEntry, setEntryFeedback, exportFeedbackDataset } = useCopilotLog();
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const currentStep =
     SECTION_LABELS[activeSection] || `Section ${activeSection}`;
 

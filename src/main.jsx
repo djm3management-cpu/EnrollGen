@@ -4,15 +4,18 @@ import App from "./App";
 import "./styles.css";
 import { CopilotLogProvider } from "./context/CopilotTranscriptLog";
 import { ClerkProvider } from "@clerk/clerk-react";
+import { AuthProvider } from "./context/AuthContext";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const CLERK_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
 function RootProviders() {
   return (
-    <CopilotLogProvider>
-      <App />
-    </CopilotLogProvider>
+    <AuthProvider>
+      <CopilotLogProvider>
+        <App />
+      </CopilotLogProvider>
+    </AuthProvider>
   );
 }
 

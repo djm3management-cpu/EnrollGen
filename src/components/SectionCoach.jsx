@@ -1,5 +1,5 @@
 import { useState, memo, useCallback } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useAppAuth } from "../context/AuthContext";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 
@@ -184,7 +184,7 @@ const SectionCoach = memo(function SectionCoach({ stepName, context = "" }) {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const { logEntry } = useCopilotLog();
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
 
   const askCoach = useCallback(async () => {
     setLoading(true);

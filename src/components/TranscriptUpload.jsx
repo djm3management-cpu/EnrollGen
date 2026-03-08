@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useAppAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import { ingestTranscript } from "../lib/transcriptIngestion";
 
@@ -48,7 +48,7 @@ function asFriendlyError(error) {
 }
 
 export default function TranscriptUpload() {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [agents, setAgents] = useState([]);
   const [loadingAgents, setLoadingAgents] = useState(true);
   const [agentSelect, setAgentSelect] = useState("");
