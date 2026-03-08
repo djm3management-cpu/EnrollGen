@@ -2154,7 +2154,7 @@ RESPONSE RULES:
                 </div>
 
                 {/* Row list */}
-                <div style={{ maxHeight: 280, overflowY: "auto" }}>
+                <div style={{ height: 250, overflowY: "auto" }}>
                   {transcriptRows.length === 0 && !interimText && (
                     <div style={{ padding: "12px 10px", fontSize: "0.75rem", color: "#333", fontFamily: "'IBM Plex Mono', monospace", fontStyle: "italic" }}>
                       {listening ? "Listening…" : "Awaiting input"}
@@ -2243,7 +2243,7 @@ RESPONSE RULES:
                 <div
                   ref={feedRef}
                   style={{
-                    maxHeight: 280,
+                    height: 250,
                     overflowY: "auto",
                     display: "flex",
                     flexDirection: "column",
