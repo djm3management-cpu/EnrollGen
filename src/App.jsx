@@ -399,6 +399,11 @@ function AppContent() {
   const [tab, setTab] = useState("script");
   const [mode, setMode] = useState("ma");
 
+  const handleModeChange = (newMode) => {
+    setMode(newMode);
+    setTab("script"); // reset tab on mode switch to avoid invalid tab state
+  };
+
   return (
     <>
       <div className="viewport-bg" />
@@ -442,7 +447,7 @@ function AppContent() {
                 alignItems: "center",
               }}
             >
-              <ModeToggle mode={mode} onChange={setMode} />
+              <ModeToggle mode={mode} onChange={handleModeChange} />
             </div>
           </div>
 
@@ -487,12 +492,14 @@ function AppContent() {
             >
               Script
             </button>
-            <button
-              className={tab === "tools" ? "tab active" : "tab"}
-              onClick={() => setTab("tools")}
-            >
-              Agent Tools
-            </button>
+            {mode === "ma" && (
+              <button
+                className={tab === "tools" ? "tab active" : "tab"}
+                onClick={() => setTab("tools")}
+              >
+                Agent Tools
+              </button>
+            )}
             <button
               className={tab === "upload" ? "tab active" : "tab"}
               onClick={() => setTab("upload")}
@@ -524,37 +531,32 @@ function AppContent() {
                   </div>
                 </>
               )}
-              <div style={{ display: tab === "review" ? "block" : "none" }}>
+              {tab === "review" && (
                 <LazyPanel>
                   <ReviewWorkspace />
                 </LazyPanel>
-              </div>
-              <div style={{ display: tab === "tools" ? "block" : "none" }}>
+              )}
+              {tab === "tools" && (
                 <LazyPanel>
                   <AgentTools />
                 </LazyPanel>
-              </div>
-              <div style={{ display: tab === "upload" ? "block" : "none" }}>
+              )}
+              {tab === "upload" && (
                 <LazyPanel>
                   <TranscriptUpload />
                 </LazyPanel>
-              </div>
+              )}
             </ScriptProvider>
           )}
 
           {mode === "medsup" && (
             <MedSupProvider>
               {tab === "script" && <MedSupFlow />}
-              <div style={{ display: tab === "tools" ? "block" : "none" }}>
-                <LazyPanel>
-                  <AgentTools />
-                </LazyPanel>
-              </div>
-              <div style={{ display: tab === "upload" ? "block" : "none" }}>
+              {tab === "upload" && (
                 <LazyPanel>
                   <TranscriptUpload />
                 </LazyPanel>
-              </div>
+              )}
             </MedSupProvider>
           )}
         </div>
