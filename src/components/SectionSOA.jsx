@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSOA() {
@@ -14,6 +14,7 @@ export default React.memo(function SectionSOA() {
         unlocked.s3 ? "" : "disabled"
       }`}
     >
+      <SectionToast sectionNum={3} timestamps={state.sectionTimestamps} />
       <h2>
         3) Power of Attorney & Scope of Appointment
         <SectionTimer sectionNum={3} timestamps={state.sectionTimestamps} />

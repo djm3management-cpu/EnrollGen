@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionRecording() {
@@ -10,6 +10,7 @@ export default React.memo(function SectionRecording() {
 
   return (
     <section className={`card ${isActive ? "active-card" : ""}`}>
+      <SectionToast sectionNum={1} timestamps={state.sectionTimestamps} />
       <h2>
         1) Recording Disclosure
         <SectionTimer sectionNum={1} timestamps={state.sectionTimestamps} />

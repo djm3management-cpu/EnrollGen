@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionTPMO() {
@@ -14,6 +14,7 @@ export default React.memo(function SectionTPMO() {
         unlocked.s2 ? "" : "disabled"
       }`}
     >
+      <SectionToast sectionNum={2} timestamps={state.sectionTimestamps} />
       <h2>
         2) TPMO Disclaimer & Federal Contracting Statement
         <SectionTimer sectionNum={2} timestamps={state.sectionTimestamps} />

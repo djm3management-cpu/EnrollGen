@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSOB() {
@@ -14,6 +14,7 @@ export default React.memo(function SectionSOB() {
         unlocked.s6 ? "" : "disabled"
       }`}
     >
+      <SectionToast sectionNum={6} timestamps={state.sectionTimestamps} />
       <h2>
         6) Plan Selection & Summary of Benefits
         <SectionTimer sectionNum={6} timestamps={state.sectionTimestamps} />

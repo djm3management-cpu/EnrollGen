@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 function PreEnrollCheck({ state }) {
@@ -59,6 +59,7 @@ export default React.memo(function SectionEnrollment() {
         unlocked.s7 ? "" : "disabled"
       }`}
     >
+      <SectionToast sectionNum={7} timestamps={state.sectionTimestamps} />
       <h2>
         7) Enrollment
         <SectionTimer sectionNum={7} timestamps={state.sectionTimestamps} />

@@ -404,31 +404,32 @@ p {
   transform: translateY(-1px);
 }
 
-/* Active Card — red glow border only, card stays dark */
+/* Active Card — white glow border, plain background (no carbon weave) */
 .active-card {
-  border-color: rgba(232, 0, 45, 0.5);
+  background: linear-gradient(180deg, #181818 0%, #111111 50%, #0E0E0E 100%);
+  border-color: rgba(255, 255, 255, 0.38);
   box-shadow:
-    0 0 0 1px rgba(232, 0, 45, 0.25),
-    0 0 16px rgba(232, 0, 45, 0.18),
-    0 0 40px rgba(232, 0, 45, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 0 18px rgba(255, 255, 255, 0.12),
+    0 0 50px rgba(255, 255, 255, 0.055),
     0 8px 24px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
-/* Red racing stripe on active card */
+/* White racing stripe on active card */
 .active-card::before {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(232, 0, 45, 0.4) 20%,
-    rgba(232, 0, 45, 0.8) 50%,
-    rgba(232, 0, 45, 0.4) 80%,
+    rgba(255, 255, 255, 0.22) 20%,
+    rgba(255, 255, 255, 0.52) 50%,
+    rgba(255, 255, 255, 0.22) 80%,
     transparent 100%
   );
   height: 2px;
 }
 
-/* Red glow bottom accent on active */
+/* White glow bottom accent on active */
 .active-card::after {
   content: "";
   position: absolute;
@@ -439,7 +440,7 @@ p {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(232, 0, 45, 0.15),
+    rgba(255, 255, 255, 0.13),
     transparent
   );
   pointer-events: none;

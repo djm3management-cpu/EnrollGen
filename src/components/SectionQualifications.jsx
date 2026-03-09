@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionQualifications() {
@@ -14,6 +14,7 @@ export default React.memo(function SectionQualifications() {
         unlocked.s4 ? "" : "disabled"
       }`}
     >
+      <SectionToast sectionNum={4} timestamps={state.sectionTimestamps} />
       <h2>
         4) Qualifications
         <SectionTimer sectionNum={4} timestamps={state.sectionTimestamps} />

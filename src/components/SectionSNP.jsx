@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSNP() {
@@ -12,6 +12,7 @@ export default React.memo(function SectionSNP() {
 
   return (
     <section className={`card ${isActive ? "active-card" : ""}`}>
+      <SectionToast sectionNum={2.5} timestamps={state.sectionTimestamps} />
       <h2>
         Special Needs Plan Disclosure
         <SectionTimer sectionNum={2.5} timestamps={state.sectionTimestamps} />

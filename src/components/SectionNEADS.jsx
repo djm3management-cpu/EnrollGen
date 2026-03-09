@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer } from "./SharedUI";
+import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionNEADS() {
@@ -14,6 +14,7 @@ export default React.memo(function SectionNEADS() {
         unlocked.s5 ? "" : "disabled"
       }`}
     >
+      <SectionToast sectionNum={5} timestamps={state.sectionTimestamps} />
       <h2>
         5) NEADS Assessment
         <SectionTimer sectionNum={5} timestamps={state.sectionTimestamps} />
