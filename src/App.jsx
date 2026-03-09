@@ -2,6 +2,8 @@ import { lazy, Suspense, useState } from "react";
 import EnrollGenLogo from "./components/EnrollGenLogo";
 import ScriptFlow from "./components/ScriptFlow";
 import MedSupFlow from "./components/MedSupFlow";
+import ACAScript from "./flows/aca/ACAScript";
+import U65Script from "./flows/u65/U65Script";
 import { ScriptProvider } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
@@ -170,95 +172,92 @@ function getSepOfficialExplanation(label) {
   return "Official SEP: Verify eligibility trigger date, allowable election type, and enrollment window before submitting.";
 }
 
-/* ─── ModeToggle ─────────────────────────────────────────────────────────── */
-function ModeToggle({ mode, onChange }) {
-  const isMS = mode === "medsup";
+/* ─── FlowSelector — 4-circle indicator panel ────────────────────────────── */
+const FLOWS = [
+  { id: "ma",     label: "MA",     color: "#E8002D", rgb: "232,0,45"   },
+  { id: "medsup", label: "SUP",    color: "#00D166", rgb: "0,209,102"  },
+  { id: "aca",    label: "ACA",    color: "#EAB308", rgb: "234,179,8"  },
+  { id: "u65",    label: "U65",    color: "#a855f7", rgb: "168,85,247" },
+];
 
+function FlowSelector({ mode, onChange }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 4,
-        padding: "5px 10px",
-        userSelect: "none",
-        boxShadow: "inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04)",
-      }}
-    >
-      <span
-        style={{
-          fontSize: 12,
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontWeight: 700,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          color: !isMS ? "#E8002D" : "#3A3A4A",
-          transition: "color 0.2s ease",
-          cursor: "pointer",
-        }}
-        onClick={() => onChange("ma")}
-      >
-        MA
-      </span>
-
+    <>
+      <style>{`
+        @keyframes flow-pulse {
+          0%   { box-shadow: 0 0 6px 2px var(--pulse-color); }
+          50%  { box-shadow: 0 0 14px 5px var(--pulse-color); }
+          100% { box-shadow: 0 0 6px 2px var(--pulse-color); }
+        }
+        .flow-circle-active {
+          animation: flow-pulse 2.4s ease-in-out infinite;
+        }
+      `}</style>
       <div
-        onClick={() => onChange(isMS ? "ma" : "medsup")}
-        role="switch"
-        aria-checked={isMS}
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onChange(isMS ? "ma" : "medsup");
-          }
-        }}
         style={{
-          position: "relative",
-          width: 40,
-          height: 20,
-          background: isMS ? "rgba(255,215,0,0.12)" : "rgba(232,0,45,0.12)",
-          border: `1px solid ${isMS ? "rgba(255,215,0,0.3)" : "rgba(232,0,45,0.3)"}`,
-          borderRadius: 3,
-          cursor: "pointer",
-          transition: "all 0.2s ease",
-          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
+          border: "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 8,
+          padding: "8px 16px",
+          userSelect: "none",
+          boxShadow: "inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03)",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: 2,
-            left: isMS ? 20 : 2,
-            width: 14,
-            height: 14,
-            borderRadius: 2,
-            background: isMS ? "#FFD700" : "#E8002D",
-            boxShadow: `0 0 8px ${isMS ? "rgba(255,215,0,0.6)" : "rgba(232,0,45,0.7)"}`,
-            transition: "left 0.2s cubic-bezier(.34,1.56,.64,1), background 0.2s ease, box-shadow 0.2s ease",
-          }}
-        />
+        {FLOWS.map((flow) => {
+          const active = mode === flow.id;
+          return (
+            <button
+              key={flow.id}
+              onClick={() => onChange(flow.id)}
+              title={flow.id === "ma" ? "Medicare Advantage" : flow.id === "medsup" ? "Medicare Supplement" : flow.id === "aca" ? "ACA On-Exchange" : "U65 Off-Exchange"}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 5,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                fontFamily: "var(--font-body)",
+              }}
+            >
+              <div
+                className={active ? "flow-circle-active" : ""}
+                style={{
+                  "--pulse-color": `rgba(${flow.rgb},0.55)`,
+                  width: 14,
+                  height: 14,
+                  borderRadius: "50%",
+                  background: active ? flow.color : `rgba(${flow.rgb},0.18)`,
+                  border: `1px solid ${active ? flow.color : `rgba(${flow.rgb},0.25)`}`,
+                  boxShadow: active ? `0 0 8px 2px rgba(${flow.rgb},0.5)` : "none",
+                  transition: "background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  color: active ? flow.color : `rgba(${flow.rgb},0.35)`,
+                  transition: "color 0.2s ease",
+                  textTransform: "uppercase",
+                  lineHeight: 1,
+                }}
+              >
+                {flow.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
-
-      <span
-        style={{
-          fontSize: 12,
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontWeight: 700,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          color: isMS ? "#FFD700" : "#3A3A4A",
-          transition: "color 0.2s ease",
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
-        onClick={() => onChange("medsup")}
-      >
-        Med Sup
-      </span>
-    </div>
+    </>
   );
 }
 
@@ -447,42 +446,40 @@ function AppContent() {
                 alignItems: "center",
               }}
             >
-              <ModeToggle mode={mode} onChange={handleModeChange} />
+              <FlowSelector mode={mode} onChange={handleModeChange} />
             </div>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: 8,
-            }}
-          >
-            <span
-              style={{
-                fontSize: 11,
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700,
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                padding: "4px 14px",
-                borderRadius: 3,
-                background: mode === "medsup"
-                  ? "rgba(255,215,0,0.07)"
-                  : "rgba(232,0,45,0.07)",
-                border: `1px solid ${mode === "medsup"
-                  ? "rgba(255,215,0,0.2)"
-                  : "rgba(232,0,45,0.2)"}`,
-                borderTop: `2px solid ${mode === "medsup"
-                  ? "rgba(255,215,0,0.4)"
-                  : "rgba(232,0,45,0.4)"}`,
-                color: mode === "medsup" ? "#FFD700" : "#E8002D",
-                transition: "all 0.2s ease",
-              }}
-            >
-              ● INBOUND —{" "}
-              {mode === "medsup" ? "MEDICARE SUPPLEMENT" : "MEDICARE ADVANTAGE"}
-            </span>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+            {(() => {
+              const flowMeta = {
+                ma:     { color: "#E8002D", rgb: "232,0,45",   label: "MEDICARE ADVANTAGE" },
+                medsup: { color: "#00D166", rgb: "0,209,102",  label: "MEDICARE SUPPLEMENT" },
+                aca:    { color: "#EAB308", rgb: "234,179,8",  label: "ACA ON-EXCHANGE" },
+                u65:    { color: "#a855f7", rgb: "168,85,247", label: "U65 OFF-EXCHANGE" },
+              };
+              const { color, rgb, label } = flowMeta[mode] || flowMeta.ma;
+              return (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    padding: "4px 14px",
+                    borderRadius: 3,
+                    background: `rgba(${rgb},0.07)`,
+                    border: `1px solid rgba(${rgb},0.2)`,
+                    borderTop: `2px solid rgba(${rgb},0.4)`,
+                    color,
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  ● INBOUND — {label}
+                </span>
+              );
+            })()}
           </div>
 
           <div className="tabs">
@@ -500,12 +497,14 @@ function AppContent() {
                 Agent Tools
               </button>
             )}
-            <button
-              className={tab === "upload" ? "tab active" : "tab"}
-              onClick={() => setTab("upload")}
-            >
-              Upload Transcript
-            </button>
+            {(mode === "ma" || mode === "medsup") && (
+              <button
+                className={tab === "upload" ? "tab active" : "tab"}
+                onClick={() => setTab("upload")}
+              >
+                Upload Transcript
+              </button>
+            )}
             {mode === "ma" && (
               <button
                 className={tab === "review" ? "tab active" : "tab"}
@@ -559,6 +558,10 @@ function AppContent() {
               )}
             </MedSupProvider>
           )}
+
+          {mode === "aca" && tab === "script" && <ACAScript />}
+
+          {mode === "u65" && tab === "script" && <U65Script />}
         </div>
       </div>
     </>
