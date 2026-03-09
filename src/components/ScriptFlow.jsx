@@ -3,6 +3,7 @@ import { useScript } from "../context/ScriptContext";
 import {
   MainTimer,
   ProgressBar,
+  SectorBar,
   UndoButton,
   StickyTimerBar,
   SectionTimer,
@@ -155,11 +156,7 @@ export default function ScriptFlow() {
         totalSections={TOTAL_SECTIONS}
       />
 
-      <ProgressBar
-        activeSection={activeSection}
-        totalSections={TOTAL_SECTIONS}
-        sectionLabels={SECTION_LABELS}
-      />
+      <SectorBar activeSection={activeSection} />
 
       <UndoButton
         undoHistory={state.undoHistory}

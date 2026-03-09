@@ -268,6 +268,40 @@ export function LockText({ children }) {
   return <p className="lock">{children}</p>;
 }
 
+/* ===================== F1 SECTOR BAR ===================== */
+const SECTORS = [
+  { num: 1,   abbr: "REC"    },
+  { num: 2,   abbr: "TPMO"   },
+  { num: 3,   abbr: "SOA"    },
+  { num: 4,   abbr: "QUAL"   },
+  { num: 5,   abbr: "NEADS"  },
+  { num: 6,   abbr: "SOB"    },
+  { num: 7,   abbr: "ENROLL" },
+  { num: 8,   abbr: "WRAP"   },
+];
+
+export const SectorBar = React.memo(function SectorBar({ activeSection }) {
+  function status(num) {
+    if (activeSection > num) return "done";
+    if (Math.floor(activeSection) === num) return "active";
+    return "pending";
+  }
+
+  return (
+    <div className="sector-bar">
+      {SECTORS.map(({ num, abbr }) => {
+        const s = status(num);
+        return (
+          <div key={num} className={`sector-block sector-block--${s}`}>
+            <span className="sector-block-num">{num}</span>
+            <span className="sector-block-abbr">{abbr}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+
 /* ===================== PROGRESS BAR ===================== */
 export const ProgressBar = React.memo(function ProgressBar({
   activeSection,

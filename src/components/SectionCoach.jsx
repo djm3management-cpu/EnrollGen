@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, memo, useCallback } from "react";
-import { Sparkles, Loader2, ChevronUp, ChevronDown, MessageSquare, CheckCircle2, XCircle } from "lucide-react";
+import { Sparkles, ChevronUp, ChevronDown, MessageSquare, CheckCircle2, XCircle } from "lucide-react";
 import { useAppAuth } from "../context/AuthContext";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
@@ -303,8 +303,8 @@ Rules:
             width: 6,
             height: 6,
             borderRadius: "50%",
-            background: "#E8002D",
-            boxShadow: "0 0 6px rgba(232,0,45,0.8)",
+            background: "#3B82F6",
+            boxShadow: "0 0 6px rgba(59,130,246,0.8)",
             animation: "prompter-pulse-anim 1.5s infinite",
           }} />
           <span style={{
@@ -313,7 +313,7 @@ Rules:
             fontWeight: 700,
             letterSpacing: "0.14em",
             textTransform: "uppercase",
-            color: "#E8002D",
+            color: "#3B82F6",
           }}>AI Co-Pilot · COMMS</span>
           <div style={{ flex: 1 }} />
           {tip.focus && (
@@ -429,7 +429,7 @@ Rules:
           title="Get a compliance tip for this section from AI"
         >
           {loading ? (
-            <><Loader2 size={13} className="coach-spin" style={{ marginRight: 6 }} />Patching Through…</>
+            <>Patching Through<span className="ai-dots"><span className="ai-dot" /><span className="ai-dot" /><span className="ai-dot" /></span></>
           ) : (
             <><Sparkles size={13} style={{ marginRight: 6 }} />AI Co-Pilot</>
           )}

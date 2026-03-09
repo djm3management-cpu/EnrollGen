@@ -452,13 +452,37 @@ ${buildTranscriptHTML(copilotEntries)}
 /* ═══════════════════════════════════════════════════
    HELPER
    ═══════════════════════════════════════════════════ */
-function escapeHtml(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+/* ── PDF THEME PALETTE ── */
+const PC = {
+  bg:       [5,  5,  5],
+  surface:  [13, 13, 13],
+  surface2: [19, 19, 19],
+  border:   [28, 28, 28],
+  red:      [232, 0,   45],
+  green:    [0,   209, 102],
+  gold:     [255, 215, 0],
+  orange:   [255, 140, 0],
+  white:    [230, 230, 230],
+  muted:    [110, 110, 110],
+  dim:      [50,  50,  50],
+};
+
+function fillBg(doc) {
+  doc.setFillColor(...PC.bg);
+  doc.rect(0, 0, 210, 300, "F");
+}
+
+function drawPageHeader(doc, subtitle = "Session Summary") {
+  doc.setFillColor(...PC.red);
+  doc.rect(0, 0, 210, 9, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text("ENROLLGEN", 6, 6);
+  doc.setTextColor(255, 200, 200);
+  doc.text(`· ${subtitle}`, 35, 6);
+  doc.setTextColor(255, 200, 200);
+  doc.text(`Generated: ${new Date().toLocaleString()}`, 204, 6, { align: "right" });
 }
 
 function addWrappedText(doc, text, x, y, options = {}) {
@@ -469,39 +493,55 @@ function addWrappedText(doc, text, x, y, options = {}) {
 }
 
 function addSectionTitle(doc, title, y) {
+  doc.setFillColor(...PC.red);
+  doc.rect(14, y - 3.5, 2, 5.5, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.setTextColor(14, 165, 233);
-  doc.text(title, 14, y);
+  doc.setFontSize(9);
+  doc.setTextColor(...PC.red);
+  doc.text(title.toUpperCase(), 18, y);
+  doc.setDrawColor(...PC.border);
+  doc.setLineWidth(0.25);
+  doc.line(14, y + 2, 196, y + 2);
   return y + 7;
 }
 
 function ensurePage(doc, y, needed = 20) {
-  if (y + needed <= 280) return y;
+  if (y + needed <= 278) return y;
   doc.addPage();
-  return 18;
+  fillBg(doc);
+  drawPageHeader(doc);
+  return 16;
 }
 
 function getPdfScoreColor(score) {
-  if (score >= 90) return [22, 163, 74];
-  if (score >= 75) return [217, 119, 6];
-  if (score >= 50) return [234, 88, 12];
-  return [220, 38, 38];
+  if (score >= 90) return PC.green;
+  if (score >= 75) return PC.gold;
+  if (score >= 50) return PC.orange;
+  return PC.red;
 }
 
 function drawMetricCard(doc, x, y, width, title, value, accent) {
-  doc.setDrawColor(226, 232, 240);
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(x, y, width, 20, 2, 2, "FD");
+  doc.setFillColor(...PC.surface);
+  doc.setDrawColor(...PC.border);
+  doc.roundedRect(x, y, width, 20, 1, 1, "FD");
   doc.setFillColor(...accent);
-  doc.rect(x, y, 2.5, 20, "F");
+  doc.rect(x, y, 2, 20, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(100, 116, 139);
-  doc.text(title, x + 6, y + 7);
+  doc.setFontSize(7);
+  doc.setTextColor(...PC.muted);
+  doc.text(title, x + 5, y + 6.5);
   doc.setFontSize(13);
-  doc.setTextColor(26, 26, 46);
-  doc.text(String(value), x + 6, y + 15);
+  doc.setTextColor(...PC.white);
+  doc.text(String(value), x + 5, y + 15);
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function exportSessionSummaryPdf(
@@ -512,66 +552,83 @@ function exportSessionSummaryPdf(
   blockers
 ) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  let y = 16;
   const scoreColor = getPdfScoreColor(complianceResult.score);
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.setTextColor(14, 165, 233);
-  doc.text("ENROLLGEN", 14, y);
-  doc.setTextColor(26, 26, 46);
-  doc.text("Session Summary", 64, y);
+  /* shared autoTable style defaults */
+  const tBase = () => ({
+    styles: {
+      fillColor: PC.surface,
+      textColor: PC.white,
+      lineColor: PC.border,
+      lineWidth: 0.2,
+      fontSize: 9,
+      cellPadding: 2.8,
+    },
+    headStyles: {
+      fillColor: [20, 3, 8],
+      textColor: PC.red,
+      fontStyle: "bold",
+      lineColor: [40, 5, 12],
+      lineWidth: 0.2,
+      fontSize: 8,
+      letterSpacing: 0.06,
+    },
+    alternateRowStyles: { fillColor: PC.surface2 },
+    didAddPage: () => { fillBg(doc); drawPageHeader(doc); },
+  });
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(102, 102, 102);
-  doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y + 7);
+  /* ── PAGE 1 ── */
+  fillBg(doc);
+  drawPageHeader(doc);
+  let y = 16;
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.setTextColor(26, 26, 46);
-  doc.text(
-    `Compliance Score: ${complianceResult.score}/100 (${complianceResult.grade})`,
-    14,
-    y + 16
-  );
+  /* Compliance score hero row */
+  const heroAccent = scoreColor;
+  drawMetricCard(doc, 14,  y, 42, "Overall Score",     `${complianceResult.score}/100`,                                        heroAccent);
+  drawMetricCard(doc, 60,  y, 42, "Grade",             complianceResult.grade,                                                  heroAccent);
+  drawMetricCard(doc, 106, y, 44, "Categories Passed", `${complianceResult.categoriesPassed}/${complianceResult.totalCategories}`, PC.red);
+  drawMetricCard(doc, 154, y, 42, "Checks Passed",     `${complianceResult.totalPassed}/${complianceResult.totalQuestions}`,     PC.red);
+  y += 26;
 
+  /* Agent info + enrollment details side-by-side */
+  y = addSectionTitle(doc, "Call Details", y);
   autoTable(doc, {
-    startY: y + 22,
-    theme: "grid",
-    head: [["Agent Information", "Value"], ["Enrollment Details", "Value"]],
+    ...tBase(),
+    startY: y,
+    head: [["Field", "Value", "Field", "Value"]],
     body: [
-      ["Agent Name", summary.agentName],
-      ["Session Start", summary.sessionStart],
-      ["Session End", summary.sessionEnd],
-      ["Plan Name", summary.planName],
-      ["Effective Date", summary.effectiveDate],
-      ["Enrollment Code", summary.enrollmentCode],
-      ["Confirmation #", summary.confirmationNumber],
-      ["SNP Type", summary.snpType],
+      ["Agent Name",     summary.agentName || "—",           "Plan Name",        summary.planName || "—"],
+      ["Session Start",  summary.sessionStart || "—",         "Effective Date",   summary.effectiveDate || "—"],
+      ["Session End",    summary.sessionEnd || "—",           "Enrollment Code",  summary.enrollmentCode || "—"],
+      ["SNP Type",       summary.snpType || "None",           "Confirmation #",   summary.confirmationNumber || "—"],
     ],
-    styles: { fontSize: 9, cellPadding: 2.5 },
-    headStyles: { fillColor: [240, 249, 255], textColor: [14, 165, 233] },
-    columnStyles: { 0: { fontStyle: "bold" } },
+    columnStyles: {
+      0: { fontStyle: "bold", cellWidth: 32, textColor: PC.muted },
+      2: { fontStyle: "bold", cellWidth: 32, textColor: PC.muted },
+    },
   });
 
   y = doc.lastAutoTable.finalY + 8;
   y = addSectionTitle(doc, "Sections Completed", y);
   autoTable(doc, {
+    ...tBase(),
     startY: y,
-    theme: "grid",
     head: [["Status", "Section", "Detail", "Duration"]],
     body: summary.sections.map((s) => [
-      s.completed ? "Done" : "Missed",
+      s.completed ? "DONE" : "MISSED",
       s.section,
       s.detail || "—",
       s.duration,
     ]),
-    styles: { fontSize: 9, cellPadding: 2.5 },
-    headStyles: { fillColor: [240, 249, 255], textColor: [14, 165, 233] },
+    didParseCell: (data) => {
+      if (data.section !== "body" || data.column.index !== 0) return;
+      const val = data.cell.text[0];
+      data.cell.styles.textColor = val === "DONE" ? PC.green : PC.red;
+      data.cell.styles.fontStyle = "bold";
+    },
     columnStyles: {
-      0: { cellWidth: 18, fontStyle: "bold" },
-      3: { cellWidth: 20, halign: "right" },
+      0: { cellWidth: 18 },
+      3: { cellWidth: 22, halign: "right" },
     },
   });
 
@@ -579,25 +636,20 @@ function exportSessionSummaryPdf(
   y = addSectionTitle(doc, "Deterministic Blockers", y);
   if (blockers.length === 0) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(22, 163, 74);
+    doc.setFontSize(9);
+    doc.setTextColor(...PC.green);
     doc.text("No deterministic blockers active at export time.", 14, y);
     y += 8;
   } else {
     autoTable(doc, {
+      ...tBase(),
       startY: y,
-      theme: "grid",
       head: [["Severity", "Blocker", "Detail"]],
-      body: blockers.map((blocker) => [
-        blocker.severity.toUpperCase(),
-        blocker.label,
-        blocker.detail,
-      ]),
-      styles: { fontSize: 8.5, cellPadding: 2.5 },
-      headStyles: { fillColor: [254, 242, 242], textColor: [220, 38, 38] },
+      body: blockers.map((b) => [b.severity.toUpperCase(), b.label, b.detail]),
+      headStyles: { ...tBase().headStyles, fillColor: [20, 5, 5], textColor: PC.red },
       columnStyles: {
-        0: { cellWidth: 22, fontStyle: "bold" },
-        1: { cellWidth: 44, fontStyle: "bold" },
+        0: { cellWidth: 22, fontStyle: "bold", textColor: PC.red },
+        1: { cellWidth: 46, fontStyle: "bold" },
       },
     });
     y = doc.lastAutoTable.finalY + 8;
@@ -606,135 +658,98 @@ function exportSessionSummaryPdf(
   y = ensurePage(doc, y, 36);
   y = addSectionTitle(doc, "Optional Products", y);
   autoTable(doc, {
+    ...tBase(),
     startY: y,
-    theme: "grid",
     head: [["Product", "Status"]],
     body: [
       ["Hospital Indemnity", summary.optionalProducts.hospitalIndemnity],
-      ["Dental & Vision", summary.optionalProducts.dentalVision],
-      ["Final Expense", summary.optionalProducts.finalExpense],
+      ["Dental & Vision",    summary.optionalProducts.dentalVision],
+      ["Final Expense",      summary.optionalProducts.finalExpense],
     ],
-    styles: { fontSize: 9, cellPadding: 2.5 },
-    headStyles: { fillColor: [240, 249, 255], textColor: [14, 165, 233] },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 50, textColor: PC.muted } },
   });
 
   y = ensurePage(doc, doc.lastAutoTable.finalY + 10, 40);
   y = addSectionTitle(doc, "Warnings & Alerts", y);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(26, 26, 46);
-
   if (warnings.length === 0) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...PC.green);
     doc.text("No warnings or critical alerts were triggered during this session.", 14, y);
     y += 8;
   } else {
+    const levelColor = { critical: PC.red, warn: PC.gold, remind: [180, 120, 255], tip: PC.green, info: PC.white };
     warnings.forEach((warning) => {
       y = ensurePage(doc, y, 18);
+      const lc = levelColor[warning.level] || PC.white;
       doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...lc);
       doc.text(
-        `${warning.level.toUpperCase()} - ${warning.timeDisplay}${warning.meta?.section ? ` - ${warning.meta.section}` : ""}`,
-        14,
-        y
+        `${warning.level.toUpperCase()}  ${warning.timeDisplay}${warning.meta?.section ? `  ·  ${warning.meta.section}` : ""}`,
+        14, y
       );
       doc.setFont("helvetica", "normal");
-      y = addWrappedText(doc, warning.message, 14, y + 5, { maxWidth: 180 });
+      doc.setFontSize(8.5);
+      doc.setTextColor(...PC.white);
+      y = addWrappedText(doc, warning.message, 14, y + 5, { maxWidth: 180, lineHeight: 4.5 });
       y += 3;
     });
   }
 
-  y = ensurePage(doc, y + 4, 50);
-  y = addSectionTitle(doc, "Compliance Assessment", y);
+  /* ── PAGE 2: COMPLIANCE ── */
+  doc.addPage();
+  fillBg(doc);
+  drawPageHeader(doc, "Compliance Assessment");
+  y = 16;
 
-  drawMetricCard(
-    doc,
-    14,
-    y,
-    42,
-    "Overall Score",
-    `${complianceResult.score}/100`,
-    scoreColor
-  );
-  drawMetricCard(
-    doc,
-    60,
-    y,
-    42,
-    "Grade",
-    complianceResult.grade,
-    scoreColor
-  );
-  drawMetricCard(
-    doc,
-    106,
-    y,
-    42,
-    "Categories Passed",
-    `${complianceResult.categoriesPassed}/${complianceResult.totalCategories}`,
-    [14, 165, 233]
-  );
-  drawMetricCard(
-    doc,
-    152,
-    y,
-    44,
-    "Checks Passed",
-    `${complianceResult.totalPassed}/${complianceResult.totalQuestions}`,
-    [14, 165, 233]
-  );
-  y += 27;
+  y = addSectionTitle(doc, "Compliance Assessment", y);
+  drawMetricCard(doc, 14,  y, 42, "Overall Score",     `${complianceResult.score}/100`,                                        scoreColor);
+  drawMetricCard(doc, 60,  y, 42, "Grade",             complianceResult.grade,                                                  scoreColor);
+  drawMetricCard(doc, 106, y, 44, "Categories Passed", `${complianceResult.categoriesPassed}/${complianceResult.totalCategories}`, PC.red);
+  drawMetricCard(doc, 154, y, 42, "Checks Passed",     `${complianceResult.totalPassed}/${complianceResult.totalQuestions}`,     PC.red);
+  y += 28;
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(26, 26, 46);
-  doc.text("Assessment Summary", 14, y);
+  doc.setFontSize(8.5);
+  doc.setTextColor(...PC.muted);
+  doc.text("ASSESSMENT SUMMARY", 14, y);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  y = addWrappedText(doc, complianceResult.summary, 14, y + 5, {
-    maxWidth: 182,
-    lineHeight: 4.5,
-  });
-  y += 2;
+  doc.setFontSize(9);
+  doc.setTextColor(...PC.white);
+  y = addWrappedText(doc, complianceResult.summary, 14, y + 5, { maxWidth: 182, lineHeight: 4.5 });
+  y += 4;
 
   if (complianceResult.transcriptStats) {
     y = ensurePage(doc, y + 2, 28);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(26, 26, 46);
-    doc.text("Live Transcript Summary", 14, y);
+    y = addSectionTitle(doc, "Live Transcript Summary", y);
     autoTable(doc, {
-      startY: y + 3,
-      theme: "grid",
-      head: [["Mode", "Coverage", "Intents", "Violations"]],
+      ...tBase(),
+      startY: y,
+      head: [["Mode", "Coverage", "Intents Detected", "Violations"]],
       body: [[
         complianceResult.scoringMode === "dual" ? "Gate + Transcript" : "Gate Only",
         `${complianceResult.transcriptStats.coverage}%`,
         `${complianceResult.transcriptStats.intentsDetected}/${complianceResult.transcriptStats.intentsTotal}`,
         String(complianceResult.transcriptStats.violations.length),
       ]],
-      styles: { fontSize: 8.5, cellPadding: 2.5 },
-      headStyles: { fillColor: [240, 249, 255], textColor: [14, 165, 233] },
     });
-    y = doc.lastAutoTable.finalY + 6;
+    y = doc.lastAutoTable.finalY + 8;
   }
 
   y = ensurePage(doc, y, 36);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(26, 26, 46);
-  doc.text("Category Overview", 14, y);
+  y = addSectionTitle(doc, "Category Overview", y);
   autoTable(doc, {
-    startY: y + 3,
-    theme: "grid",
+    ...tBase(),
+    startY: y,
     head: [["Category", "Description", "Score", "Points", "Status"]],
     body: complianceResult.categories.map((cat) => [
       cat.name,
       cat.description,
       `${cat.score}%`,
       `${cat.pointsEarned}/${cat.pointsMax}`,
-      cat.passed ? "Passed" : "Needs attention",
+      cat.passed ? "Passed" : "Review",
     ]),
-    styles: { fontSize: 8.5, cellPadding: 2.5 },
-    headStyles: { fillColor: [240, 249, 255], textColor: [14, 165, 233] },
     didParseCell: (data) => {
       if (data.section !== "body") return;
       const row = complianceResult.categories[data.row.index];
@@ -748,31 +763,40 @@ function exportSessionSummaryPdf(
       0: { cellWidth: 34, fontStyle: "bold" },
       2: { cellWidth: 18, halign: "right" },
       3: { cellWidth: 18, halign: "right" },
-      4: { cellWidth: 26 },
+      4: { cellWidth: 22 },
     },
   });
-  y = doc.lastAutoTable.finalY + 6;
+  y = doc.lastAutoTable.finalY + 8;
 
   const grouped = groupByCategory(complianceResult.categories);
   Object.entries(grouped).forEach(([category, items]) => {
-    y = ensurePage(doc, y, 24);
+    y = ensurePage(doc, y, 26);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(14, 165, 233);
-    doc.text(category, 14, y);
+    doc.setFontSize(8.5);
+    doc.setTextColor(...PC.muted);
+    doc.text(category.toUpperCase(), 14, y);
+    doc.setDrawColor(...PC.border);
+    doc.setLineWidth(0.2);
+    doc.line(14, y + 1.5, 196, y + 1.5);
     autoTable(doc, {
-      startY: y + 2,
-      theme: "grid",
+      ...tBase(),
+      startY: y + 4,
       head: [["Score", "Question", "Rationale"]],
       body: items.map((item) => [
         `${item.score}%`,
         item.question,
-        `${item.evidence} (source: ${item.source})`,
+        `${item.evidence} (${item.source})`,
       ]),
-      styles: { fontSize: 8.5, cellPadding: 2 },
-      headStyles: { fillColor: [240, 249, 255], textColor: [14, 165, 233] },
+      didParseCell: (data) => {
+        if (data.section !== "body" || data.column.index !== 0) return;
+        const item = items[data.row.index];
+        if (item) {
+          data.cell.styles.textColor = getPdfScoreColor(item.score);
+          data.cell.styles.fontStyle = "bold";
+        }
+      },
       columnStyles: {
-        0: { cellWidth: 20, fontStyle: "bold", halign: "right" },
+        0: { cellWidth: 20, halign: "right" },
         1: { cellWidth: 72, fontStyle: "bold" },
       },
     });
@@ -783,79 +807,92 @@ function exportSessionSummaryPdf(
     y = ensurePage(doc, y, 24);
     y = addSectionTitle(doc, `Compliance Flags (${complianceResult.flags.length})`, y);
     autoTable(doc, {
+      ...tBase(),
       startY: y,
-      theme: "grid",
       head: [["Severity", "Flag"]],
       body: complianceResult.flags.map((flag) => [
         flag.severity.toUpperCase(),
-        `${flag.question} - ${flag.evidence}`,
+        `${flag.question} — ${flag.evidence}`,
       ]),
-      styles: { fontSize: 8.5, cellPadding: 2 },
-      headStyles: { fillColor: [254, 242, 242], textColor: [220, 38, 38] },
-      columnStyles: { 0: { cellWidth: 24, fontStyle: "bold" } },
+      headStyles: { ...tBase().headStyles, textColor: PC.red },
+      columnStyles: {
+        0: { cellWidth: 24, fontStyle: "bold", textColor: PC.red },
+      },
     });
     y = doc.lastAutoTable.finalY + 6;
   }
 
   if (complianceResult.transcriptStats?.violations?.length > 0) {
     y = ensurePage(doc, y, 24);
-    y = addSectionTitle(
-      doc,
-      `Transcript Violations (${complianceResult.transcriptStats.violations.length})`,
-      y
-    );
+    y = addSectionTitle(doc, `Transcript Violations (${complianceResult.transcriptStats.violations.length})`, y);
     autoTable(doc, {
+      ...tBase(),
       startY: y,
-      theme: "grid",
       head: [["Section", "Evidence", "Severity"]],
-      body: complianceResult.transcriptStats.violations.map((violation) => [
-        violation.section,
-        violation.evidence || violation.description,
-        violation.critical ? "Critical" : "Warning",
+      body: complianceResult.transcriptStats.violations.map((v) => [
+        v.section,
+        v.evidence || v.description,
+        v.critical ? "Critical" : "Warning",
       ]),
-      styles: { fontSize: 8.5, cellPadding: 2.5 },
-      headStyles: { fillColor: [254, 242, 242], textColor: [220, 38, 38] },
+      headStyles: { ...tBase().headStyles, textColor: PC.red },
       columnStyles: {
         0: { cellWidth: 28, fontStyle: "bold" },
-        2: { cellWidth: 22, fontStyle: "bold" },
+        2: { cellWidth: 24, fontStyle: "bold", textColor: PC.red },
       },
     });
     y = doc.lastAutoTable.finalY + 6;
   }
 
-  y = ensurePage(doc, y, 30);
+  /* ── PAGE 3: AI CO-PILOT TRANSCRIPT ── */
+  doc.addPage();
+  fillBg(doc);
+  drawPageHeader(doc, "AI Co-Pilot Transcript");
+  y = 16;
   y = addSectionTitle(doc, "AI Co-Pilot Transcript", y);
 
   if (copilotEntries.length === 0) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(102, 102, 102);
+    doc.setFontSize(9);
+    doc.setTextColor(...PC.muted);
     doc.text("No AI Co-Pilot activity was recorded during this session.", 14, y);
   } else {
+    const levelColor = { critical: PC.red, warn: PC.gold, remind: [180, 120, 255], tip: PC.green, info: [100, 180, 255] };
     autoTable(doc, {
+      ...tBase(),
       startY: y,
-      theme: "grid",
       head: [["Time", "Source", "Level", "Message"]],
       body: copilotEntries.map((entry) => [
         entry.timeDisplay,
-        {
-          [LOG_TYPES.COPILOT_MSG]: "Co-Pilot",
-          [LOG_TYPES.FLOATING_ALERT]: "Alert",
-          [LOG_TYPES.SECTION_COACH]: "Coach",
-          [LOG_TYPES.OBJECTION]: "Objection",
-          [LOG_TYPES.SYSTEM_EVENT]: "System",
-        }[entry.logType] || "Unknown",
+        { [LOG_TYPES.COPILOT_MSG]: "Co-Pilot", [LOG_TYPES.FLOATING_ALERT]: "Alert",
+          [LOG_TYPES.SECTION_COACH]: "Coach",   [LOG_TYPES.OBJECTION]: "Objection",
+          [LOG_TYPES.SYSTEM_EVENT]: "System" }[entry.logType] || "Unknown",
         entry.level,
         `${entry.message}${entry.meta?.section ? ` (${entry.meta.section})` : ""}`,
       ]),
-      styles: { fontSize: 8, cellPadding: 2, overflow: "linebreak" },
-      headStyles: { fillColor: [240, 249, 255], textColor: [14, 165, 233] },
+      styles: { ...tBase().styles, fontSize: 8, overflow: "linebreak" },
+      didParseCell: (data) => {
+        if (data.section !== "body" || data.column.index !== 2) return;
+        const entry = copilotEntries[data.row.index];
+        if (entry) data.cell.styles.textColor = levelColor[entry.level] || PC.white;
+        data.cell.styles.fontStyle = "bold";
+      },
       columnStyles: {
         0: { cellWidth: 20 },
         1: { cellWidth: 22 },
-        2: { cellWidth: 18 },
+        2: { cellWidth: 20, fontStyle: "bold" },
       },
     });
+  }
+
+  /* footer on every page */
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...PC.dim);
+    doc.text("EnrollGen · New Gen Health Solutions · Local session only · Not for distribution", 14, 291);
+    doc.text(`Page ${i} of ${pageCount}`, 196, 291, { align: "right" });
   }
 
   doc.save(`enrollgen-session-summary-${Date.now()}.pdf`);

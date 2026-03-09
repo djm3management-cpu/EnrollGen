@@ -271,44 +271,58 @@ p {
    TABS — F1 DASHBOARD CONTROLS
 ================================ */
 .tabs {
-  display: inline-flex;
-  gap: 3px;
-  margin: 16px 0;
-  background: #0A0A0A;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 5px;
-  padding: 4px;
-  width: fit-content;
-  box-shadow: var(--shadow-inset);
+  display: flex;
+  gap: 0;
+  margin: 0 0 16px 0;
+  background: #080808;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
 }
 
 .tabs .tab {
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  color: var(--text-muted);
-  padding: 8px 20px;
+  border: none;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: #363636;
+  padding: 10px 22px;
   cursor: pointer;
   font-family: "Barlow Condensed", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  transition: all var(--speed-normal) ease;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
   position: relative;
+  white-space: nowrap;
 }
 
 .tabs .tab:hover {
-  color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.04);
+  color: #666;
+  background: rgba(255, 255, 255, 0.025);
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 .tabs .tab.active {
-  background: linear-gradient(180deg, #1A0508 0%, #110305 100%);
-  border-color: rgba(232, 0, 45, 0.3);
-  color: var(--accent-cyan);
-  font-weight: 700;
-  box-shadow: var(--shadow-btn), 0 0 12px rgba(232, 0, 45, 0.08);
+  background: rgba(232, 0, 45, 0.04);
+  border-top-color: #E8002D;
+  border-bottom-color: #080808;
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(232, 0, 45, 0.12);
+}
+
+.tabs .tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #080808;
 }
 
 /* ===============================
@@ -612,6 +626,24 @@ input::placeholder {
 .snp-buttons {
   display: flex;
   gap: 8px;
+}
+
+.snp-buttons .primary {
+  background: linear-gradient(180deg, #1a1500 0%, #0f0d00 100%);
+  color: #FFD700;
+  border-color: rgba(255, 215, 0, 0.25);
+  border-top-color: rgba(255, 215, 0, 0.4);
+}
+
+.snp-buttons .primary::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.5), transparent);
+}
+
+.snp-buttons .primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #241c00 0%, #151100 100%);
+  border-color: rgba(255, 215, 0, 0.5);
+  color: #ffe033;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.15), var(--shadow-btn-hover);
 }
 
 /* ===============================
@@ -1609,6 +1641,168 @@ input[type="file"]::file-selector-button:hover {
 }
 
 /* ===============================
+   PANEL EMPTY STATE
+================================ */
+.panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 12px;
+  margin: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+}
+
+.panel-empty-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.panel-empty-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  animation: dot-breathe 1.6s ease-in-out infinite;
+}
+
+.panel-empty-dot:nth-child(2) { animation-delay: 0.27s; }
+.panel-empty-dot:nth-child(3) { animation-delay: 0.54s; }
+
+/* gray — awaiting input */
+.panel-empty--input .panel-empty-dot {
+  background: #555;
+}
+
+/* red — awaiting AI analysis */
+.panel-empty--ai .panel-empty-dot {
+  background: rgba(232, 0, 45, 0.5);
+}
+
+/* green — listening */
+.panel-empty--listening .panel-empty-dot {
+  background: #00D166;
+}
+
+.panel-empty-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #333;
+}
+
+@keyframes dot-breathe {
+  0%, 100% { opacity: 0.2; transform: scale(0.75); }
+  50%       { opacity: 1;   transform: scale(1);    }
+}
+
+/* ===============================
+   AI LOADING DOTS (inline)
+================================ */
+.ai-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.ai-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #FFD700;
+  animation: dot-breathe 1.2s ease-in-out infinite;
+}
+
+.ai-dot:nth-child(2) { animation-delay: 0.2s; }
+.ai-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ===============================
+   F1 SECTOR TIMING BAR
+================================ */
+.sector-bar {
+  display: flex;
+  gap: 3px;
+  margin: 0 0 8px 0;
+}
+
+.sector-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 2px 4px;
+  border-radius: 2px;
+  border-top: 3px solid transparent;
+  transition: border-color 0.3s ease, background 0.3s ease;
+  min-width: 0;
+}
+
+.sector-block-num {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.52rem;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.sector-block-abbr {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ── PENDING — not yet reached ── */
+.sector-block--pending {
+  background: #111;
+  border-top-color: #2a2a2a;
+}
+.sector-block--pending .sector-block-num,
+.sector-block--pending .sector-block-abbr {
+  color: #444;
+}
+
+/* ── DONE — completed ── */
+.sector-block--done {
+  background: #051a0e;
+  border-top-color: #00D166;
+}
+.sector-block--done .sector-block-num,
+.sector-block--done .sector-block-abbr {
+  color: #00D166;
+}
+
+/* ── ACTIVE — currently in progress ── */
+.sector-block--active {
+  background: #1a0305;
+  border-top-color: #E8002D;
+  box-shadow: 0 0 8px rgba(232, 0, 45, 0.25);
+  animation: sector-pulse 1.2s ease-in-out infinite;
+}
+.sector-block--active .sector-block-num,
+.sector-block--active .sector-block-abbr {
+  color: #E8002D;
+}
+
+@keyframes sector-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(232, 0, 45, 0.2); }
+  50%       { box-shadow: 0 0 14px rgba(232, 0, 45, 0.5); }
+}
+
+/* ===============================
    SECTION COUNTER — F1 LAP INDICATOR
 ================================ */
 .progress-bar-info {
@@ -1859,10 +2053,29 @@ input[type="file"]::file-selector-button:hover {
   }
 }
 
+/* ─── TELEMETRY / CO-PILOT PANEL SCROLLBARS ─── */
+.panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 0, 45, 0.45) #111;
+}
+.panel-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.panel-scroll::-webkit-scrollbar-track {
+  background: #111;
+}
+.panel-scroll::-webkit-scrollbar-thumb {
+  background: rgba(232, 0, 45, 0.45);
+  border-radius: 3px;
+}
+.panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: #e10600;
+}
+
 /* ─── RACE ENGINEER COMMS PANEL ─── */
 .section-coach {
   margin-top: 12px;
-  border-top: 1px solid rgba(232, 0, 45, 0.15);
+  border-top: 1px solid rgba(59, 130, 246, 0.15);
   padding-top: 10px;
 }
 
@@ -1874,10 +2087,10 @@ input[type="file"]::file-selector-button:hover {
 
 .section-coach-btn {
   position: relative;
-  background: linear-gradient(180deg, #1A0508 0%, #0F0203 100%);
-  border: 1px solid rgba(232, 0, 45, 0.25);
-  border-top-color: rgba(232, 0, 45, 0.4);
-  color: #E8002D;
+  background: linear-gradient(180deg, #050d1a 0%, #020810 100%);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-top-color: rgba(59, 130, 246, 0.4);
+  color: #3B82F6;
   padding: 6px 16px;
   font-size: 12px;
   font-weight: 700;
@@ -1898,14 +2111,14 @@ input[type="file"]::file-selector-button:hover {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(232, 0, 45, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
   pointer-events: none;
 }
 
 .section-coach-btn:hover:not(:disabled) {
   box-shadow: var(--shadow-btn-hover);
   transform: translateY(-1px);
-  border-color: rgba(232, 0, 45, 0.45);
+  border-color: rgba(59, 130, 246, 0.45);
 }
 
 .section-coach-btn:disabled {
@@ -2652,16 +2865,16 @@ html {
   gap: 8px;
   padding: 8px 14px;
   border-radius: 4px;
-  border: 1px solid rgba(232, 0, 45, 0.25);
-  border-top: 2px solid rgba(232, 0, 45, 0.5);
-  background: linear-gradient(180deg, #1A0508 0%, #0A0202 100%);
-  color: #E8002D;
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-top: 2px solid rgba(255, 215, 0, 0.5);
+  background: linear-gradient(180deg, #1a1500 0%, #0a0900 100%);
+  color: #FFD700;
   font-family: "Barlow Condensed", sans-serif;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(232, 0, 45, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 215, 0, 0.08);
   cursor: pointer;
 }
 
@@ -2847,7 +3060,7 @@ button:focus-visible,
 .copy-btn:focus-visible,
 .section-coach-btn:focus-visible,
 .section-coach-toggle:focus-visible {
-  outline: 2px solid rgba(232, 0, 45, 0.65);
+  outline: 2px solid rgba(59, 130, 246, 0.65);
   outline-offset: 3px;
 }
 

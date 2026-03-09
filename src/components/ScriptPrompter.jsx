@@ -1392,6 +1392,17 @@ STRUCTURED CALL CONTEXT — TREAT THIS AS RELIABLE APP STATE
 ════════════════════════════════════════════════════════
 ${JSON.stringify(copilotContext, null, 2)}
 
+HOW TO USE THIS CONTEXT:
+- Inspect sectionChecklistState to see exactly which checklist items are complete vs. pending for the current section. If an item is marked complete, do NOT warn that it is missing. If an item is still pending and the agent appears to be moving on, flag it.
+- Use derivedSignals to detect broader patterns: pacing issues, repeated missed items, sections completed out of order, or unusual call progression.
+- Use priorCompletedSections to understand what the agent has already finished — do not accuse them of missing something from a completed section.
+- If callMetadata.agentName is null, the agent has not entered their name. Mention this once as a tip if a natural opportunity arises — do not force it.
+
+════════════════════════════════════════════════════════
+EMPTY OR SPARSE TRANSCRIPT:
+════════════════════════════════════════════════════════
+If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
+
 ════════════════════════════════════════════════════════
 YOUR ROLE: SILENT COMPLIANCE SAFETY NET
 ════════════════════════════════════════════════════════
@@ -1441,7 +1452,7 @@ CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
 ════════════════════════════════════════════════════════
 RESPONSE FORMAT
 ════════════════════════════════════════════════════════
-Respond with ONLY a valid JSON object — no markdown, no backticks, no extra text:
+Respond with ONLY a valid JSON object — no backticks, no wrapper text, no extra content outside the JSON. Your message field may use plain text only (no bold, no bullet points, no markdown — the UI renders plain text):
 {
   "level": "silent | tip | remind | warn | critical",
   "issue_tag": "short_snake_case_issue_tag_or_empty_if_silent_or_tip",
@@ -1714,13 +1725,22 @@ YOUR CAPABILITIES — you can answer questions about:
 - Disqualifying coverage types (TRICARE for Life, CHAMPVA, employer coverage)
 - How to handle specific client scenarios
 
+SCOPE RULE: If the question is not directly relevant to the current section or enrollment flow, answer it briefly and then redirect the agent back to completing the current section. Example: "Quick answer: [answer]. You're currently in ${sectionKey} — make sure to cover [key remaining item] before moving on."
+
+STRUCTURED CONTEXT USAGE:
+- Check sectionChecklistState for exactly what is complete and pending in the current section.
+- Use derivedSignals to understand call progression and any flagged patterns.
+- If callMetadata.agentName is null, note once that the agent should enter their name in settings.
+
+EMPTY TRANSCRIPT: If no transcript is available, answer based on the agent's question and current section context only. Do not speculate about what was or wasn't said on the call.
+
 RESPONSE RULES:
 - Keep answers concise and actionable — the agent is on a live call
 - If providing script language, put it in quotes so the agent can read it directly
 - If you don't know something specific (like a particular plan's formulary), say so and suggest where to check (Sunfire, carrier website, etc.)
 - Always prioritize CMS compliance in your answers
 - If transcript references are provided, cite them inline as [R1], [R2], etc.
-- No markdown formatting — plain text only`;
+- Minimize markdown in your response — avoid heavy formatting. Short bullet lists are acceptable when listing multiple items, but prefer plain sentences for single-point answers.`;
 
     try {
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
@@ -2120,7 +2140,8 @@ RESPONSE RULES:
                 display: "grid",
                 gridTemplateColumns: "40% 1fr",
                 gap: 10,
-                alignItems: "start",
+                alignItems: "stretch",
+                height: 220,
               }}
             >
 
@@ -2132,6 +2153,9 @@ RESPONSE RULES:
                   borderLeft: "2px solid #ADADAD",
                   borderRadius: 3,
                   overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  boxSizing: "border-box",
                 }}
               >
                 {/* Panel header */}
@@ -2154,10 +2178,15 @@ RESPONSE RULES:
                 </div>
 
                 {/* Row list */}
-                <div style={{ height: 250, overflowY: "auto" }}>
+                <div className="panel-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
                   {transcriptRows.length === 0 && !interimText && (
-                    <div style={{ padding: "12px 10px", fontSize: "0.75rem", color: "#333", fontFamily: "'IBM Plex Mono', monospace", fontStyle: "italic" }}>
-                      {listening ? "Listening…" : "Awaiting input"}
+                    <div className={`panel-empty ${listening ? "panel-empty--listening" : "panel-empty--input"}`}>
+                      <div className="panel-empty-dots">
+                        <span className="panel-empty-dot" />
+                        <span className="panel-empty-dot" />
+                        <span className="panel-empty-dot" />
+                      </div>
+                      <span className="panel-empty-label">{listening ? "Listening" : "Awaiting input"}</span>
                     </div>
                   )}
                   {transcriptRows.map((row, idx) => (
@@ -2207,6 +2236,9 @@ RESPONSE RULES:
                   borderLeft: "2px solid #E8002D",
                   borderRadius: 3,
                   overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  boxSizing: "border-box",
                 }}
               >
                 {/* Panel header */}
@@ -2226,7 +2258,13 @@ RESPONSE RULES:
                     <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#E8002D", boxShadow: "0 0 5px rgba(232,0,45,0.8)", display: "inline-block", flexShrink: 0 }} />
                     <span style={{ fontSize: "0.62rem", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#E8002D" }}>
                       Co-Pilot Feed
-                      {coachingLoading && <span style={{ marginLeft: 6, color: "#FFD700" }}>ANALYZING…</span>}
+                      {coachingLoading && (
+                        <span className="ai-dots">
+                          <span className="ai-dot" />
+                          <span className="ai-dot" />
+                          <span className="ai-dot" />
+                        </span>
+                      )}
                     </span>
                   </span>
                   <span style={{ display: "inline-flex", gap: 4 }}>
@@ -2242,8 +2280,10 @@ RESPONSE RULES:
                 {/* Messages */}
                 <div
                   ref={feedRef}
+                  className="panel-scroll"
                   style={{
-                    height: 250,
+                    flex: 1,
+                    minHeight: 0,
                     overflowY: "auto",
                     display: "flex",
                     flexDirection: "column",
@@ -2251,8 +2291,13 @@ RESPONSE RULES:
                   }}
                 >
                   {messages.length === 0 && (
-                    <div style={{ padding: "12px 10px", fontSize: "0.75rem", color: "#333", fontFamily: "'IBM Plex Mono', monospace", fontStyle: "italic" }}>
-                      Awaiting analysis…
+                    <div className="panel-empty panel-empty--ai">
+                      <div className="panel-empty-dots">
+                        <span className="panel-empty-dot" />
+                        <span className="panel-empty-dot" />
+                        <span className="panel-empty-dot" />
+                      </div>
+                      <span className="panel-empty-label">Awaiting analysis</span>
                     </div>
                   )}
                   {messages.map((msg) => {
