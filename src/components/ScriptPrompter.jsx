@@ -2389,6 +2389,14 @@ RESPONSE RULES:
                       </div>
                     );
                   })}
+                  {(coachingLoading || askLoading) && (
+                    <div className="copilot-spinner-wrap">
+                      <div className="copilot-spinner" />
+                      <span className="copilot-spinner-label">
+                        {coachingLoading ? "Analyzing…" : "Processing…"}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
