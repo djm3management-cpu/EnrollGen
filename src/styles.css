@@ -2068,8 +2068,21 @@ input[type="file"]::file-selector-button:hover {
    SCRIPT PROMPTER
 ================================ */
 .prompter-card {
-  border-color: var(--border-default);
+  border-color: rgba(255, 255, 255, 0.07);
   overflow: hidden;
+  background: linear-gradient(
+    155deg,
+    #1a1a1f 0%,
+    #111114 30%,
+    #0c0c0f 60%,
+    #08080a 100%
+  );
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.8),
+    0 8px 24px rgba(0, 0, 0, 0.6),
+    0 24px 56px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 80px rgba(232, 0, 45, 0.015);
 }
 
 .prompter-header {
