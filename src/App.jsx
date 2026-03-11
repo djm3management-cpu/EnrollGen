@@ -11,9 +11,13 @@ import "./styles.css";
 import { SignedIn, SignedOut, SignIn } from "@clerk/clerk-react";
 
 const AgentTools = lazy(() => import("./components/AgentTools"));
+const ObjectionHandler = lazy(() => import("./components/ObjectionHandler"));
+const SEPLookup = lazy(() => import("./components/SEPLookup"));
 const SessionSummary = lazy(() => import("./components/SessionSummary"));
 const ReviewWorkspace = lazy(() => import("./components/ReviewWorkspace"));
 const TranscriptUpload = lazy(() => import("./components/TranscriptUpload"));
+const DecisionTree = lazy(() => import("./components/DecisionTree"));
+const CarrierRef = lazy(() => import("./components/CarrierRef"));
 
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const SUNFIRE_SEP_LABELS = [
@@ -403,6 +407,10 @@ function AppContent() {
     setTab("script"); // reset tab on mode switch to avoid invalid tab state
   };
 
+  const handleLogoClick = () => {
+    window.location.reload();
+  };
+
   return (
     <>
       <div className="viewport-bg" />
@@ -424,7 +432,6 @@ function AppContent() {
                 transform: "translate(-50%, -50%)",
                 display: "flex",
                 justifyContent: "center",
-                pointerEvents: "none",
                 zIndex: 50,
               }}
             >
@@ -432,6 +439,8 @@ function AppContent() {
                 width={350}
                 className="app-logo"
                 style={{ margin: 0 }}
+                onClick={handleLogoClick}
+                title="Refresh and return to the main page"
               />
             </div>
 
@@ -497,6 +506,34 @@ function AppContent() {
                 Agent Tools
               </button>
             )}
+            {mode === "ma" && (
+              <button
+                className={tab === "sepTool" ? "tab active" : "tab"}
+                onClick={() => setTab("sepTool")}
+              >
+                SEP Tool
+              </button>
+            )}
+            {mode === "ma" && (
+              <button
+                className={tab === "objections" ? "tab active" : "tab"}
+                onClick={() => setTab("objections")}
+              >
+                Objections
+              </button>
+            )}
+            <button
+              className={tab === "decisionTree" ? "tab active" : "tab"}
+              onClick={() => setTab("decisionTree")}
+            >
+              Decision Tree
+            </button>
+            <button
+              className={tab === "carrierRef" ? "tab active" : "tab"}
+              onClick={() => setTab("carrierRef")}
+            >
+              Carrier Ref
+            </button>
             {(mode === "ma" || mode === "medsup") && (
               <button
                 className={tab === "upload" ? "tab active" : "tab"}
@@ -540,6 +577,16 @@ function AppContent() {
                   <AgentTools />
                 </LazyPanel>
               )}
+              {tab === "sepTool" && (
+                <LazyPanel>
+                  <SEPLookup />
+                </LazyPanel>
+              )}
+              {tab === "objections" && (
+                <LazyPanel>
+                  <ObjectionHandler />
+                </LazyPanel>
+              )}
               {tab === "upload" && (
                 <LazyPanel>
                   <TranscriptUpload />
@@ -562,6 +609,18 @@ function AppContent() {
           {mode === "aca" && tab === "script" && <ACAScript />}
 
           {mode === "u65" && tab === "script" && <U65Script />}
+
+          {tab === "decisionTree" && (
+            <LazyPanel>
+              <DecisionTree />
+            </LazyPanel>
+          )}
+
+          {tab === "carrierRef" && (
+            <LazyPanel>
+              <CarrierRef />
+            </LazyPanel>
+          )}
         </div>
       </div>
     </>

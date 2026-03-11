@@ -1,0 +1,211 @@
+// SAMPLE DATA — Replace with real carrier/plan details before production use
+
+export const CARRIER_DATA = [
+  // ─── MEDICARE ADVANTAGE ──────────────────────────────────────────────────
+  {
+    id: "aetna-ma-nj-2026",
+    carrier: "Aetna",
+    planName: "Aetna Medicare Eagle Plus (HMO)",
+    productLine: "MA",
+    states: ["NJ"],
+    premium: "$0/mo",
+    networkType: "HMO",
+    partBGiveback: "$50/mo",
+    keyBenefits: [
+      "$0 PCP copay",
+      "Dental + Vision included",
+      "OTC allowance $100/quarter",
+      "Part B premium giveback $50/mo",
+    ],
+    formularyLink: "https://example.com/aetna-nj-formulary",
+    providerSearchLink: "https://example.com/aetna-nj-providers",
+    enrollmentNotes:
+      "Available during AEP (Oct 15–Dec 7) and qualifying SEPs. SOA required prior to presentation.",
+  },
+  {
+    id: "uhc-ma-nj-2026",
+    carrier: "UnitedHealthcare",
+    planName: "AARP Medicare Advantage Choice Plan (PPO)",
+    productLine: "MA",
+    states: ["NJ"],
+    premium: "$0/mo",
+    networkType: "PPO",
+    partBGiveback: "N/A",
+    keyBenefits: [
+      "PPO — out-of-network access",
+      "Dental, vision, hearing included",
+      "Fitness benefit (Renew Active)",
+      "$50/quarter OTC allowance",
+    ],
+    formularyLink: "https://example.com/uhc-nj-formulary",
+    providerSearchLink: "https://example.com/uhc-nj-providers",
+    enrollmentNotes:
+      "AARP membership not required to enroll. SOA required. Confirm service area by zip.",
+  },
+  {
+    id: "humana-ma-pa-2026",
+    carrier: "Humana",
+    planName: "Humana Gold Plus (HMO)",
+    productLine: "MA",
+    states: ["PA"],
+    premium: "$0/mo",
+    networkType: "HMO",
+    partBGiveback: "$75/mo",
+    keyBenefits: [
+      "$0 PCP and specialist copay",
+      "Part B giveback $75/mo",
+      "Comprehensive dental (including dentures)",
+      "Transportation benefit — 24 rides/year",
+    ],
+    formularyLink: "https://example.com/humana-pa-formulary",
+    providerSearchLink: "https://example.com/humana-pa-providers",
+    enrollmentNotes:
+      "PCP selection required at enrollment. Referrals needed for specialists. SOA required.",
+  },
+
+  // ─── MEDICARE SUPPLEMENT ─────────────────────────────────────────────────
+  {
+    id: "bcbs-medsup-nj-2026",
+    carrier: "Horizon BCBS",
+    planName: "Medigap Plan G",
+    productLine: "MedSup",
+    states: ["NJ"],
+    premium: "$145–$185/mo (age/gender rated)",
+    networkType: "Any Medicare provider",
+    partBGiveback: "N/A",
+    keyBenefits: [
+      "Covers Part A & B coinsurance + hospital costs",
+      "Part A deductible covered",
+      "Skilled nursing facility coinsurance covered",
+      "No network restrictions — nationwide",
+    ],
+    formularyLink: "N/A — pair with standalone Part D",
+    providerSearchLink: "https://example.com/medicare-provider-search",
+    enrollmentNotes:
+      "Guaranteed issue at 65 during 6-month Medigap Open Enrollment. Medical underwriting applies outside OEP in NJ (NJ has some protections). Part D plan sold separately.",
+  },
+  {
+    id: "aetna-medsup-pa-2026",
+    carrier: "Aetna",
+    planName: "Medigap Plan N",
+    productLine: "MedSup",
+    states: ["PA"],
+    premium: "$95–$130/mo (age rated)",
+    networkType: "Any Medicare provider",
+    partBGiveback: "N/A",
+    keyBenefits: [
+      "Lower premium than Plan G",
+      "Copays: up to $20 office / $50 ER (waived if admitted)",
+      "Part A coinsurance and hospital costs",
+      "Part B excess charges not covered",
+    ],
+    formularyLink: "N/A — pair with standalone Part D",
+    providerSearchLink: "https://example.com/medicare-provider-search",
+    enrollmentNotes:
+      "Good fit for healthy clients comfortable with small copays. Part D required separately. Medical underwriting outside GI period in PA.",
+  },
+
+  // ─── ACA ON-EXCHANGE ─────────────────────────────────────────────────────
+  {
+    id: "amerihealth-aca-nj-2026",
+    carrier: "AmeriHealth NJ",
+    planName: "AmeriHealth Silver 70 HMO",
+    productLine: "ACA",
+    states: ["NJ"],
+    premium: "$320–$480/mo (before APTC)",
+    networkType: "HMO",
+    partBGiveback: "N/A",
+    keyBenefits: [
+      "Silver tier — eligible for Cost-Sharing Reductions (CSR) if income qualifies",
+      "Comprehensive EHB including Rx, mental health, maternity",
+      "Primary care copay $30 after deductible",
+      "Marketplace via Get Covered NJ",
+    ],
+    formularyLink: "https://example.com/amerihealth-nj-formulary",
+    providerSearchLink: "https://example.com/amerihealth-nj-providers",
+    enrollmentNotes:
+      "Enroll at NJ GetCoveredNJ.gov. Verify APTC eligibility via household income. SEP available for qualifying life events.",
+  },
+  {
+    id: "highmark-aca-va-2026",
+    carrier: "Highmark",
+    planName: "Highmark Blue Shield Gold PPO",
+    productLine: "ACA",
+    states: ["VA"],
+    premium: "$410–$590/mo (before APTC)",
+    networkType: "PPO",
+    partBGiveback: "N/A",
+    keyBenefits: [
+      "Gold tier — lower cost-sharing, higher premium",
+      "PPO — out-of-network access at higher cost",
+      "$1,500 individual deductible",
+      "Telehealth visits $0 copay",
+    ],
+    formularyLink: "https://example.com/highmark-va-formulary",
+    providerSearchLink: "https://example.com/highmark-va-providers",
+    enrollmentNotes:
+      "Enroll via Virginia marketplace (marketplace.virginia.gov). Confirm zip code is in service area. ACA SEP rules apply.",
+  },
+
+  // ─── U65 OFF-EXCHANGE ────────────────────────────────────────────────────
+  {
+    id: "enrollprime-u65-all-2026",
+    carrier: "Cigna (via AFI / EnrollPrime)",
+    planName: "EnrollPrime AFI PPO",
+    productLine: "U65",
+    states: ["NJ", "PA", "VA", "GA"],
+    premium: "$280–$650/mo (varies by age, tier, family size)",
+    networkType: "PPO (Cigna Open Access)",
+    partBGiveback: "N/A",
+    keyBenefits: [
+      "Cigna Open Access PPO — broad national network",
+      "Major medical coverage: hospital, surgical, physician",
+      "Rx included on select tiers",
+      "Ideal for individuals above 400% FPL or no subsidy access",
+    ],
+    formularyLink: "https://example.com/cigna-formulary",
+    providerSearchLink: "https://example.com/cigna-provider-search",
+    enrollmentNotes:
+      "Off-exchange — not ACA marketplace. No APTC available. Enroll directly via AFI/EnrollPrime platform. Year-round enrollment. Research Associate employment model may be required.",
+  },
+  {
+    id: "palic-hsp-gold-u65-all-2026",
+    carrier: "PALIC",
+    planName: "HSP Gold (Fixed-Benefit Indemnity)",
+    productLine: "U65",
+    states: ["NJ", "PA", "VA", "GA"],
+    premium: "$95–$220/mo (varies by age, single/family)",
+    networkType: "Indemnity (any provider)",
+    partBGiveback: "N/A",
+    keyBenefits: [
+      "Fixed cash benefit per covered service (not ACA major medical)",
+      "Hospital: up to $1,500/day confinement benefit",
+      "Surgical benefit schedule included",
+      "Significantly lower premium than major medical",
+    ],
+    formularyLink: "N/A",
+    providerSearchLink: "N/A — use any provider; plan pays set amounts",
+    enrollmentNotes:
+      "NOT ACA-compliant major medical. Disclose limitations clearly to client. Works as standalone budget plan or supplement. No open enrollment restrictions — year-round.",
+  },
+  {
+    id: "lifex-bhpi-u65-all-2026",
+    carrier: "BHPI / LIFE-X",
+    planName: "LIFE-X Group Health (Research Associate Model)",
+    productLine: "U65",
+    states: ["NJ", "PA", "VA", "GA"],
+    premium: "Group-rated — contact for quote (typically $220–$500/mo)",
+    networkType: "Group PPO",
+    partBGiveback: "N/A",
+    keyBenefits: [
+      "Association-based group health — minimum 2 members",
+      "Research Associate employment model enables group rates",
+      "Comprehensive group major medical benefits",
+      "Available year-round outside ACA open enrollment",
+    ],
+    formularyLink: "https://example.com/bhpi-formulary",
+    providerSearchLink: "https://example.com/bhpi-providers",
+    enrollmentNotes:
+      "Client must qualify for Research Associate status. Minimum group size 2. Contact BHPI/LIFE-X rep for current rates and underwriting guidelines.",
+  },
+];

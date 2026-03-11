@@ -157,7 +157,7 @@ export const MainTimer = React.memo(function MainTimer({
 /* ===================== SECTION TIMER THRESHOLDS ===================== */
 // Per-section time thresholds in seconds: [warn, danger]
 const SECTION_THRESHOLDS = {
-  1: [90, 180], // Recording Disclosure:  warn 1.5m, danger 3m
+  1: [45, 60], // Recording Disclosure:  warn 45s,  danger 1m
   2: [60, 120], // TPMO Disclaimer:       warn 1m,   danger 2m
   2.5: [60, 120], // SNP Disclosure:        warn 1m,   danger 2m
   3: [120, 240], // Scope of Appointment:  warn 2m,   danger 4m
@@ -192,18 +192,17 @@ export const SectionTimer = React.memo(function SectionTimer({
   const isDone = !!ts.end;
 
   return (
-    <div style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
+    <div className="section-timer-wrap">
       <span
         className={`section-timer ${isDanger && !isDone ? "section-timer-danger" : isWarn && !isDone ? "section-timer-warn" : ""}`}
         title="Time in this section"
-        style={{ whiteSpace: "nowrap" }}
       >
         {isDanger && !isDone ? (
-          <AlertCircle size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+          <AlertCircle size={12} />
         ) : isWarn && !isDone ? (
-          <Clock size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+          <Clock size={12} />
         ) : (
-          <Timer size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+          <Timer size={12} />
         )}
         {formatTime(elapsed)}
       </span>
@@ -219,8 +218,13 @@ export const SectionToast = React.memo(function SectionToast({
 }) {
   const ts = timestamps[sectionNum];
   const [elapsed, setElapsed] = useState(0);
-  const [alertShown, setAlertShown] = useState({ warn: false, danger: false });
+  const [alertShown, setAlertShown] = useState({
+    reminder: false,
+    warn: false,
+    danger: false,
+  });
   const [toast, setToast] = useState(null);
+  const clearToastTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!ts || !ts.start) return;
@@ -233,39 +237,53 @@ export const SectionToast = React.memo(function SectionToast({
     if (!ts?.start || ts?.end) return;
     const [warnSec, dangerSec] = SECTION_THRESHOLDS[sectionNum] || [120, 300];
     const sec = Math.floor(elapsed / 1000);
-    if (sec >= dangerSec && !alertShown.danger) {
+    const scheduleToastClear = (delayMs) => {
+      if (clearToastTimeoutRef.current) {
+        clearTimeout(clearToastTimeoutRef.current);
+      }
+      clearToastTimeoutRef.current = setTimeout(() => {
+        setToast(null);
+        clearToastTimeoutRef.current = null;
+      }, delayMs);
+    };
+    if (sectionNum === 1 && sec >= 10 && !alertShown.reminder) {
+      setAlertShown((p) => ({ ...p, reminder: true }));
+      setToast({ level: "warn", msg: "Read full disclosure" });
+      scheduleToastClear(3500);
+    } else if (sec >= dangerSec && !alertShown.danger) {
       setAlertShown((p) => ({ ...p, danger: true }));
       setToast({ level: "danger", msg: `Over ${dangerSec / 60}min — wrap up this section` });
-      setTimeout(() => setToast(null), 5000);
+      scheduleToastClear(5000);
     } else if (sec >= warnSec && !alertShown.warn) {
       setAlertShown((p) => ({ ...p, warn: true }));
       setToast({ level: "warn", msg: `${warnSec / 60}min — start moving forward` });
-      setTimeout(() => setToast(null), 4000);
+      scheduleToastClear(4000);
     }
   }, [elapsed, sectionNum, alertShown, ts]);
 
   useEffect(() => {
-    setAlertShown({ warn: false, danger: false });
+    setAlertShown({ reminder: false, warn: false, danger: false });
     setToast(null);
+    if (clearToastTimeoutRef.current) {
+      clearTimeout(clearToastTimeoutRef.current);
+      clearToastTimeoutRef.current = null;
+    }
   }, [ts?.start]);
+
+  useEffect(() => {
+    return () => {
+      if (clearToastTimeoutRef.current) {
+        clearTimeout(clearToastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!toast || !!ts?.end) return null;
 
   return (
-    <span
-      className={`section-timer-toast ${toast.level}`}
-      style={{
-        position: "absolute",
-        top: 0,
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        zIndex: 20,
-        whiteSpace: "nowrap",
-        pointerEvents: "none",
-      }}
-    >
-      {toast.msg}
-    </span>
+    <div className="section-timer-toast-anchor" aria-hidden="true">
+      <span className={`section-timer-toast ${toast.level}`}>{toast.msg}</span>
+    </div>
   );
 });
 
