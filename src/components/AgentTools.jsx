@@ -14,8 +14,6 @@ import {
   Shield,
   X,
 } from "lucide-react";
-import ObjectionHandler from "./ObjectionHandler";
-import SEPLookup from "./SEPLookup";
 import DailyVerse from "./DailyVerse";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 
@@ -180,9 +178,8 @@ export default function AgentTools() {
         disaster: true,
         refs: true,
         links: true,
-        sepLookup: true,
-      };
-    }
+    };
+  }
 
     return {
       maps: matchesSearch("FEMA Disaster SEP Zones Medicaid Map"),
@@ -198,9 +195,6 @@ export default function AgentTools() {
       ),
       links: matchesSearch(
         "Carrier Quick Links Sunfire MARx Aetna Anthem Cigna Devoted Humana UHC WellCare Medicare portal login"
-      ),
-      sepLookup: matchesSearch(
-        "SEP Lookup Tool zip code search carrier FEMA disaster Medicare Advantage plan codes contract ID PBP enrollment period UHC Aetna BCBS Cigna Humana Wellcare Molina Devoted Kaiser 5-star dual eligible D-SNP C-SNP grocery OTC flex card"
       ),
     };
   }, [q]);
@@ -235,9 +229,6 @@ export default function AgentTools() {
           <p>No results for "{searchQuery}"</p>
         </div>
       )}
-      <ObjectionHandler />
-      {/* 2) SEP LOOKUP NEXT (so it stays high on the page) */}
-      {accordionMatches.sepLookup && <SEPLookup />}
       {/* 6) SEPs */}
       <Accordion
         title="Medicare Advantage Special Enrollment Periods (SEPs)"

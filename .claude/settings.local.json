@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx react-scripts:*)",
       "Bash(npx vite:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git add src/components/EnrollGenLogo.jsx src/components/ScriptPrompter.jsx src/styles.css && git commit -m \"$\\(cat <<'EOF'\nUI polish: premium tabs, Co-Pilot spinner, command module logo\n\n- Top nav tabs: layered gunmetal gradient base, segmented column dividers,\n  active state with red top-bar glow, inset shadow depth, and neon text-shadow\n  so the selected tab locks in visually; hover brightens border and text\n- Co-Pilot feed: circular HUD spinner \\(copilot-spinner\\) appears while\n  coachingLoading or askLoading is true, hides on response; red neon arc\n  with box-shadow glow and pulsing label\n- EnrollGenLogo: animated scanline sweep and subtle pulsing red status glow\n  give the title block a command-module / tactical HUD feel\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push origin main)",
+      "Bash(git checkout:*)"
     ]
   }
 }

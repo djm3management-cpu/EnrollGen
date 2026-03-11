@@ -1,4 +1,12 @@
-export default function EnrollGenLogo({ width = 260, className = "" }) {
+export default function EnrollGenLogo({
+  width = 260,
+  className = "",
+  style,
+  onClick,
+  title,
+}) {
+  const Wrapper = onClick ? "button" : "div";
+
   return (
     <>
       <style>{`
@@ -26,12 +34,22 @@ export default function EnrollGenLogo({ width = 260, className = "" }) {
         }
       `}</style>
 
-      <div
+      <Wrapper
         className={className}
+        onClick={onClick}
+        title={title}
+        aria-label={title}
+        type={onClick ? "button" : undefined}
         style={{
           width: "100%",
           display: "flex",
           justifyContent: "center",
+          padding: 0,
+          margin: 0,
+          border: "none",
+          background: "transparent",
+          cursor: onClick ? "pointer" : "default",
+          ...style,
         }}
       >
         <div
@@ -93,7 +111,7 @@ export default function EnrollGenLogo({ width = 260, className = "" }) {
             }}
           />
         </div>
-      </div>
+      </Wrapper>
     </>
   );
 }

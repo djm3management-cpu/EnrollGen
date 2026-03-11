@@ -248,7 +248,7 @@ async function fetchLiveFemaDisasters() {
   const lookbackDate = new Date(now);
   lookbackDate.setMonth(lookbackDate.getMonth() - 12);
   const dateStr = lookbackDate.toISOString().split("T")[0];
-  const url = `https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries?$filter=declarationDate ge '${dateStr}' and declarationType eq 'DR'&$orderby=declarationDate desc&$top=1000&$select=disasterNumber,declarationDate,incidentType,declarationTitle,state,designatedArea,ihProgramDeclared,iaProgramDeclared,paProgramDeclared,incidentBeginDate,incidentEndDate`;
+  const url = `https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries?$filter=declarationDate ge '${dateStr}' and (declarationType eq 'DR' or declarationType eq 'FM')&$orderby=declarationDate desc&$top=1000&$select=disasterNumber,declarationType,declarationDate,incidentType,declarationTitle,state,designatedArea,ihProgramDeclared,iaProgramDeclared,paProgramDeclared,incidentBeginDate,incidentEndDate`;
   let apiResults = null;
   let apiFailed = false;
   try {
@@ -261,9 +261,11 @@ async function fetchLiveFemaDisasters() {
     records.forEach((r) => {
       const key = r.disasterNumber;
       if (!map[key]) {
+        const declarationType = r.declarationType || "DR";
         map[key] = {
-          id: `DR-${r.disasterNumber}`,
+          id: `${declarationType}-${r.disasterNumber}`,
           disasterNumber: r.disasterNumber,
+          declarationType,
           title: r.declarationTitle || "Unnamed Disaster",
           type: r.incidentType || "Other",
           state: r.state,
@@ -2521,6 +2523,7 @@ export default function SEPLookupTool() {
   const [selectedCounty, setSelectedCounty] = useState(null);
   const [countyList, setCountyList] = useState([]);
   const [countyLoading, setCountyLoading] = useState(false);
+  const [femaSource, setFemaSource] = useState("unknown");
   const femaCache = useRef({ data: null, fetchedAt: 0 });
 
   const loadPlansForCounty = useCallback(async (st, county) => {
@@ -2566,6 +2569,9 @@ export default function SEPLookupTool() {
           fetchedAt: now,
           apiFailed: r.apiFailed,
         };
+        setFemaSource(r.apiFailed ? "fallback" : "live");
+      } else {
+        setFemaSource(femaCache.current.apiFailed ? "fallback" : "live");
       }
       const st = getStateFromZip(cleanZip);
       const seps = getSEPsForZip(cleanZip, femaData);
@@ -3318,6 +3324,15 @@ export default function SEPLookupTool() {
                 Supabase, county-level precision). Premiums, benefits, and
                 service areas may vary — always verify on Medicare.gov. For
                 agent/broker use only.
+                {femaSource !== "unknown" && (
+                  <span
+                    className={`sep-fema-source-badge ${
+                      femaSource === "live" ? "live" : "fallback"
+                    }`}
+                  >
+                    {femaSource === "live" ? "Live FEMA" : "Fallback FEMA"}
+                  </span>
+                )}
               </p>
             </div>
           </div>

@@ -24,12 +24,12 @@
   width: 42px;
   height: 42px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, #1A0508 0%, #0F0203 100%);
-  border: 1px solid rgba(232, 0, 45, 0.3);
+  background: linear-gradient(180deg, #111620 0%, #0d1119 100%);
+  border: 1px solid rgba(173, 173, 173, 0.22);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #E8002D;
+  color: #ADADAD;
   box-shadow: var(--shadow-btn);
 }
 
@@ -56,6 +56,10 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  background: linear-gradient(180deg, #111620 0%, #0d1119 100%);
+  border: 1px solid rgba(173, 173, 173, 0.14);
+  border-radius: 16px;
+  box-shadow: var(--shadow-inset);
 }
 
 .sep-search-bar input {
@@ -81,6 +85,23 @@
   align-items: center;
   gap: 8px;
   white-space: nowrap;
+  background: linear-gradient(180deg, #1a1f28 0%, #111620 100%) !important;
+  border: 1px solid rgba(173, 173, 173, 0.18) !important;
+  border-top: 1px solid rgba(173, 173, 173, 0.18) !important;
+  color: #e4e7ec !important;
+  box-shadow: var(--shadow-btn) !important;
+}
+
+.sep-search-bar .primary:hover,
+.sep-search-bar .primary:focus-visible,
+.sep-search-bar .primary:active {
+  border: 1px solid rgba(173, 173, 173, 0.22) !important;
+  border-top: 1px solid rgba(173, 173, 173, 0.22) !important;
+  color: #ffffff !important;
+}
+
+.sep-search-bar .primary::before {
+  display: none !important;
 }
 
 /* ── Quick zip pills ── */
@@ -247,6 +268,19 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-family: var(--font-mono);
+}
+
+.sep-tool select {
+  background: linear-gradient(180deg, #0f141c 0%, #0b1017 100%);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-inset);
+}
+
+.sep-tool select option,
+.sep-tool select optgroup {
+  background: #0f141c;
+  color: #e7edf5;
 }
 
 /* ── Plan table ── */
@@ -728,6 +762,31 @@
 
 .sep-disclaimer strong {
   color: var(--text-secondary);
+}
+
+.sep-fema-source-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.sep-fema-source-badge.live {
+  color: #00D166;
+  background: rgba(0, 209, 102, 0.10);
+  border: 1px solid rgba(0, 209, 102, 0.2);
+}
+
+.sep-fema-source-badge.fallback {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.22);
 }
 
 /* ── Loading / Empty states ── */

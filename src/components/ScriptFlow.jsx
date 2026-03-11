@@ -245,7 +245,9 @@ export default function ScriptFlow() {
       <SectionWrapUp />
 
       {/* ── Full Compliance Dashboard — transcript-aware, at the bottom ── */}
-      <ComplianceDashboard transcript={transcript} />
+      <div id="compliance-hub">
+        <ComplianceDashboard transcript={transcript} />
+      </div>
 
       {/* ── Daily Scripture — always visible at the bottom ── */}
       <DailyVerse />
