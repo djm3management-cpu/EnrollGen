@@ -4,8 +4,9 @@ import { useState } from "react";
 const TREE = {
   q1: {
     id: "q1",
+    num: "01",
     question: "Is the client 65 or older, or currently Medicare-eligible?",
-    hint: "Medicare eligibility includes disability (SSDI) and ESRD, not just age 65+",
+    hint: "Medicare eligibility includes disability (SSDI) and ESRD — not just age 65+",
     answers: [
       { label: "Yes — 65+ or Medicare-eligible", next: "q2" },
       { label: "No — Under 65, not Medicare-eligible", next: "q5" },
@@ -13,8 +14,9 @@ const TREE = {
   },
   q2: {
     id: "q2",
+    num: "02",
     question: "Does the client currently have Medicare Parts A & B?",
-    hint: "Part A = hospital, Part B = medical — both are required before enrolling in MA or Med Sup",
+    hint: "Part A = hospital · Part B = medical — both required before enrolling in MA or Med Sup",
     answers: [
       { label: "Yes — enrolled in both Part A & B", next: "q3" },
       { label: "No — not yet enrolled in Medicare", next: "refer_medicare" },
@@ -30,36 +32,35 @@ const TREE = {
   },
   q3: {
     id: "q3",
+    num: "03",
     question: "What is the client primarily looking for in a Medicare plan?",
     answers: [
       {
-        label:
-          "Lower or $0 premium · bundled dental/vision/Rx · flexible on provider network",
+        label: "Lower or $0 premium · bundled dental/vision/Rx · flexible on provider network",
         next: "result_ma",
       },
       {
-        label:
-          "Freedom to see any doctor · predictable costs · willing to pay a higher monthly premium",
+        label: "Freedom to see any doctor · predictable costs · willing to pay a higher monthly premium",
         next: "q4",
       },
     ],
   },
   q4: {
     id: "q4",
+    num: "04",
     question: "Does the client want prescription drug (Rx) coverage included?",
     answers: [
       { label: "Yes — needs drug coverage", next: "result_medsup_pdp" },
       {
-        label:
-          "No — has other creditable coverage or is declining Part D",
+        label: "No — has other creditable coverage or is declining Part D",
         next: "result_medsup",
       },
     ],
   },
   q5: {
     id: "q5",
-    question:
-      "Does the client have access to employer or group health insurance?",
+    num: "05",
+    question: "Does the client have access to employer or group health insurance?",
     answers: [
       { label: "Yes — employer coverage is available", next: "q6" },
       { label: "No — no employer coverage available", next: "q7" },
@@ -67,23 +68,18 @@ const TREE = {
   },
   q6: {
     id: "q6",
-    question:
-      "Is the employer coverage affordable per ACA standards?",
-    hint:
-      "Affordable = employee-only premium < 8.39% of household income (2024 IRS threshold)",
+    num: "06",
+    question: "Is the employer coverage affordable per ACA standards?",
+    hint: "Affordable = employee-only premium < 8.39% of household income (2024 IRS threshold)",
     answers: [
-      {
-        label: "Yes — employer coverage is affordable",
-        next: "refer_employer",
-      },
+      { label: "Yes — employer coverage is affordable", next: "refer_employer" },
       { label: "No — coverage is unaffordable or inadequate", next: "q7" },
     ],
   },
   refer_employer: {
     id: "refer_employer",
     type: "refer",
-    message:
-      "Client likely not eligible for marketplace premium tax credits.",
+    message: "Client likely not eligible for marketplace premium tax credits.",
     detail:
       "Evaluate whether the employer plan meets their needs vs. off-exchange options. Client may still benefit from supplemental U65 products if the employer plan has high cost-sharing.",
     next: "q8",
@@ -91,19 +87,12 @@ const TREE = {
   },
   q7: {
     id: "q7",
-    question:
-      "What is the client's estimated household income relative to the Federal Poverty Level (FPL)?",
-    hint:
-      "100–400% FPL typically qualifies for premium tax credits. Below 138% FPL may qualify for Medicaid in expansion states (NJ, PA, VA). GA has not expanded Medicaid.",
+    num: "07",
+    question: "What is the client's estimated household income relative to the Federal Poverty Level (FPL)?",
+    hint: "100–400% FPL typically qualifies for premium tax credits. Below 138% FPL may qualify for Medicaid in expansion states (NJ, PA, VA). GA has not expanded Medicaid.",
     answers: [
-      {
-        label: "At or below 400% FPL — likely subsidy-eligible",
-        next: "result_aca",
-      },
-      {
-        label: "Above 400% FPL — not subsidy-eligible",
-        next: "q8",
-      },
+      { label: "At or below 400% FPL — likely subsidy-eligible", next: "result_aca" },
+      { label: "Above 400% FPL — not subsidy-eligible", next: "q8" },
       { label: "Unknown / Not sure", next: "refer_income" },
     ],
   },
@@ -114,35 +103,26 @@ const TREE = {
     detail:
       "Use healthcare.gov or the state marketplace income estimator to check subsidy eligibility. Do not assume — incorrect guidance can harm the client's coverage or tax situation.",
     branches: [
-      {
-        label: "Client is subsidy-eligible → ACA On-Exchange",
-        next: "result_aca",
-      },
-      {
-        label: "Client is not subsidy-eligible → U65 Off-Exchange",
-        next: "q8",
-      },
+      { label: "Client is subsidy-eligible → ACA On-Exchange", next: "result_aca" },
+      { label: "Client is not subsidy-eligible → U65 Off-Exchange", next: "q8" },
     ],
   },
   q8: {
     id: "q8",
+    num: "08",
     question: "Which U65 product structure fits the client best?",
-    hint:
-      "Client is under 65 and either above 400% FPL or has affordable employer coverage they want to supplement",
+    hint: "Client is under 65 and either above 400% FPL or has affordable employer coverage they want to supplement",
     answers: [
       {
-        label:
-          "PPO network · comprehensive major medical · broad access to specialists",
+        label: "PPO network · comprehensive major medical · broad access to specialists",
         next: "result_enrollprime",
       },
       {
-        label:
-          "Fixed-benefit indemnity · set dollar payout per service · lower premium",
+        label: "Fixed-benefit indemnity · set dollar payout per service · lower premium",
         next: "result_palic",
       },
       {
-        label:
-          "Self-employed or small group (2+ members) · wants group health plan",
+        label: "Self-employed or small group (2+ members) · wants group health plan",
         next: "result_lifex",
       },
     ],
@@ -155,7 +135,8 @@ const TREE = {
     productLine: "MA",
     color: "#E8002D",
     rgb: "232,0,45",
-    label: "Medicare Advantage (MA)",
+    label: "Medicare Advantage",
+    sublabel: "MA",
     bullets: [
       "Bundled coverage — medical, Rx, dental, and vision often in one plan",
       "Low or $0 monthly premium; cost-sharing through copays and coinsurance",
@@ -168,7 +149,8 @@ const TREE = {
     productLine: "MedSup",
     color: "#00D166",
     rgb: "0,209,102",
-    label: "Medicare Supplement + Standalone Part D (PDP)",
+    label: "Medicare Supplement + Part D",
+    sublabel: "MED SUP + PDP",
     bullets: [
       "Freedom to see any Medicare-accepting provider nationwide — no referrals needed",
       "Supplement covers Original Medicare gaps (deductibles, coinsurance, copays)",
@@ -181,7 +163,8 @@ const TREE = {
     productLine: "MedSup",
     color: "#00D166",
     rgb: "0,209,102",
-    label: "Medicare Supplement (no standalone Part D needed)",
+    label: "Medicare Supplement",
+    sublabel: "MED SUP",
     bullets: [
       "Total provider freedom — any Medicare-accepting physician or hospital, nationwide",
       "Predictable out-of-pocket costs with no network restrictions",
@@ -194,9 +177,10 @@ const TREE = {
     productLine: "ACA",
     color: "#EAB308",
     rgb: "234,179,8",
-    label: "ACA On-Exchange (State Marketplace)",
+    label: "ACA On-Exchange",
+    sublabel: "ACA MARKETPLACE",
     bullets: [
-      "NJ → Get Covered NJ · PA → Pennie · VA → marketplace.va.gov · GA → HealthCare.gov (FFM)",
+      "NJ → Get Covered NJ · PA → Pennie · VA → marketplace.va.gov · GA → HealthCare.gov",
       "Premium tax credits and cost-sharing reductions available based on household income",
       "All plans include Essential Health Benefits — comprehensive major medical coverage",
     ],
@@ -207,7 +191,8 @@ const TREE = {
     productLine: "U65",
     color: "#a855f7",
     rgb: "168,85,247",
-    label: "EnrollPrime / AFI PPO (Cigna)",
+    label: "EnrollPrime / AFI PPO",
+    sublabel: "U65 — CIGNA PPO",
     bullets: [
       "Broad Cigna Open Access PPO — access to major hospital systems and specialists",
       "Comprehensive major medical for individuals and families above the subsidy threshold",
@@ -220,7 +205,8 @@ const TREE = {
     productLine: "U65",
     color: "#a855f7",
     rgb: "168,85,247",
-    label: "PALIC HSP Gold (Fixed-Benefit Indemnity)",
+    label: "PALIC HSP Gold",
+    sublabel: "U65 — FIXED BENEFIT",
     bullets: [
       "Pays set dollar amounts per covered service — NOT ACA-compliant major medical",
       "Significantly lower premium; ideal as a standalone budget plan or supplement",
@@ -234,62 +220,76 @@ const TREE = {
     color: "#a855f7",
     rgb: "168,85,247",
     label: "LIFE-X / BHPI Group Health",
+    sublabel: "U65 — GROUP",
     bullets: [
       "Group health plan via Research Associate employment model — minimum 2 members",
       "Association-based structure may unlock better rates than the individual market",
-      "Designed for self-employed individuals and small businesses needing comprehensive group benefits",
+      "Designed for self-employed individuals and small businesses needing group benefits",
     ],
   },
 };
 
 const START_NODE = "q1";
 
-/* ─── Helpers ────────────────────────────────────────────────────────────── */
-function shortLabel(nodeId) {
-  const n = TREE[nodeId];
-  if (!n) return nodeId;
-  if (n.type === "result") return n.label;
-  if (n.type === "refer") return "Note";
-  // First 4 words of question
-  return n.question.split(" ").slice(0, 4).join(" ") + "…";
+/* ─── Step badge ─────────────────────────────────────────────────────────── */
+function StepBadge({ label, color = "#4a5568", bg = "rgba(255,255,255,0.03)", border = "rgba(255,255,255,0.05)" }) {
+  return (
+    <span
+      style={{
+        fontSize: 11,
+        fontWeight: 700,
+        fontFamily: "'Barlow Condensed', sans-serif",
+        letterSpacing: "0.08em",
+        color,
+        background: bg,
+        border: `1px solid ${border}`,
+        borderRadius: 4,
+        padding: "3px 8px",
+        flexShrink: 0,
+        textTransform: "uppercase",
+      }}
+    >
+      {label}
+    </span>
+  );
 }
 
-/* ─── Sub-components ─────────────────────────────────────────────────────── */
+/* ─── Question card ──────────────────────────────────────────────────────── */
 function QuestionCard({ node, onNavigate }) {
   const [hovered, setHovered] = useState(null);
+
   return (
     <div>
-      <div style={{ marginBottom: 28 }}>
+      {/* Question text */}
+      <p
+        style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 14,
+          fontWeight: 500,
+          color: "#c0d0e4",
+          lineHeight: 1.6,
+          margin: "0 0 6px",
+        }}
+      >
+        {node.question}
+      </p>
+      {node.hint && (
         <p
           style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
-            fontSize: "1.2rem",
-            letterSpacing: "0.02em",
-            color: "#F0F0F0",
-            lineHeight: 1.35,
-            margin: 0,
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 12,
+            color: "#4A4A5A",
+            lineHeight: 1.5,
+            margin: "0 0 18px",
           }}
         >
-          {node.question}
+          {node.hint}
         </p>
-        {node.hint && (
-          <p
-            style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: "0.75rem",
-              color: "#4A4A5A",
-              marginTop: 8,
-              marginBottom: 0,
-              lineHeight: 1.5,
-            }}
-          >
-            {node.hint}
-          </p>
-        )}
-      </div>
+      )}
+      {!node.hint && <div style={{ height: 14 }} />}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* Answer options — styled like script say-blocks */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {node.answers.map((ans, i) => {
           const isHov = hovered === i;
           return (
@@ -299,41 +299,45 @@ function QuestionCard({ node, onNavigate }) {
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
               style={{
-                background: isHov
-                  ? "rgba(232,0,45,0.07)"
-                  : "rgba(255,255,255,0.02)",
-                border: isHov
-                  ? "1px solid rgba(232,0,45,0.35)"
-                  : "1px solid rgba(255,255,255,0.09)",
-                borderLeft: "3px solid #E8002D",
-                borderRadius: 4,
-                padding: "14px 18px",
-                textAlign: "left",
-                cursor: "pointer",
-                color: isHov ? "#F0F0F0" : "#C0C0C0",
-                fontSize: "0.9rem",
-                fontFamily: "'DM Sans', sans-serif",
-                lineHeight: 1.45,
-                transition: "all 0.13s ease",
                 display: "flex",
                 alignItems: "flex-start",
-                gap: 14,
+                gap: 12,
+                width: "100%",
+                textAlign: "left",
+                background: isHov ? "rgba(232,0,45,0.04)" : "rgba(255,255,255,0.015)",
+                border: "1px solid transparent",
+                borderLeft: isHov ? "2px solid rgba(232,0,45,0.6)" : "2px solid rgba(255,255,255,0.08)",
+                borderRadius: "0 4px 4px 0",
+                padding: "10px 14px",
+                cursor: "pointer",
+                transition: "all 0.13s ease",
               }}
             >
               <span
                 style={{
                   fontFamily: "'Barlow Condensed', sans-serif",
                   fontWeight: 800,
-                  fontSize: "0.95rem",
-                  color: "#E8002D",
+                  fontSize: 13,
+                  color: isHov ? "#E8002D" : "#3A3A4A",
                   flexShrink: 0,
-                  lineHeight: 1.45,
-                  minWidth: 16,
+                  letterSpacing: "0.06em",
+                  lineHeight: 1.6,
+                  transition: "color 0.13s",
                 }}
               >
                 {String.fromCharCode(65 + i)}
               </span>
-              {ans.label}
+              <span
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 13.5,
+                  color: isHov ? "#dfe6f0" : "#8A8A9A",
+                  lineHeight: 1.6,
+                  transition: "color 0.13s",
+                }}
+              >
+                {ans.label}
+              </span>
             </button>
           );
         })}
@@ -342,81 +346,72 @@ function QuestionCard({ node, onNavigate }) {
   );
 }
 
+/* ─── Referral card ──────────────────────────────────────────────────────── */
 function ReferCard({ node, onNavigate, onReset }) {
   return (
     <div
       style={{
-        background: "rgba(255,215,0,0.04)",
-        border: "1px solid rgba(255,215,0,0.2)",
-        borderLeft: "3px solid #FFD700",
-        borderRadius: 4,
-        padding: "20px 22px",
+        background: "rgba(255,215,0,0.03)",
+        border: "1px solid rgba(255,215,0,0.15)",
+        borderLeft: "2px solid rgba(255,215,0,0.5)",
+        borderRadius: "0 4px 4px 0",
+        padding: "14px 16px",
       }}
     >
       <div
         style={{
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontWeight: 800,
-          fontSize: "0.65rem",
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
-          color: "#FFD700",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
           marginBottom: 10,
         }}
       >
-        ⚠ Agent Note
+        <StepBadge
+          label="Agent Note"
+          color="#b8950a"
+          bg="rgba(255,215,0,0.07)"
+          border="rgba(255,215,0,0.2)"
+        />
       </div>
+
       <p
         style={{
           fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 700,
-          fontSize: "1.1rem",
-          color: "#F0F0F0",
-          marginBottom: 10,
+          fontSize: 15,
+          color: "#dfe6f0",
+          margin: "0 0 8px",
           lineHeight: 1.35,
+          letterSpacing: "0.02em",
         }}
       >
         {node.message}
       </p>
+
       {node.detail && (
         <p
           style={{
             fontFamily: "'DM Sans', sans-serif",
-            fontSize: "0.83rem",
-            color: "#7A7A8A",
+            fontSize: 13,
+            color: "#5A5A6A",
             lineHeight: 1.55,
-            marginBottom: node.next || node.branches ? 20 : 0,
+            margin: node.next || node.branches ? "0 0 16px" : "0",
           }}
         >
           {node.detail}
         </p>
       )}
 
-      {/* Single "continue" next */}
       {node.next && (
         <button
           onClick={() => onNavigate(node.next, node.nextLabel || "Continue")}
-          style={{
-            background: "rgba(255,215,0,0.1)",
-            border: "1px solid rgba(255,215,0,0.35)",
-            borderRadius: 3,
-            padding: "8px 20px",
-            cursor: "pointer",
-            color: "#FFD700",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            fontSize: "0.75rem",
-            marginRight: 10,
-            marginBottom: 10,
-          }}
+          className="primary"
+          style={{ marginRight: 10, marginBottom: 10 }}
         >
           {node.nextLabel || "Continue →"}
         </button>
       )}
 
-      {/* Branch options */}
       {node.branches && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
           {node.branches.map((b, i) => (
@@ -424,17 +419,28 @@ function ReferCard({ node, onNavigate, onReset }) {
               key={i}
               onClick={() => onNavigate(b.next, b.label)}
               style={{
-                background: "rgba(255,215,0,0.05)",
-                border: "1px solid rgba(255,215,0,0.2)",
-                borderLeft: "3px solid rgba(255,215,0,0.4)",
-                borderRadius: 3,
-                padding: "10px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                background: "rgba(255,215,0,0.04)",
+                border: "1px solid transparent",
+                borderLeft: "2px solid rgba(255,215,0,0.35)",
+                borderRadius: "0 4px 4px 0",
+                padding: "9px 14px",
                 cursor: "pointer",
-                color: "#FFD700",
                 fontFamily: "'DM Sans', sans-serif",
-                fontSize: "0.85rem",
+                fontSize: 13,
+                color: "#8A8A9A",
                 textAlign: "left",
-                lineHeight: 1.4,
+                transition: "all 0.13s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#dfe6f0";
+                e.currentTarget.style.background = "rgba(255,215,0,0.07)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "#8A8A9A";
+                e.currentTarget.style.background = "rgba(255,215,0,0.04)";
               }}
             >
               {b.label}
@@ -449,15 +455,17 @@ function ReferCard({ node, onNavigate, onReset }) {
           background: "none",
           border: "none",
           cursor: "pointer",
-          color: "#4A4A5A",
+          color: "#3A3A4A",
           fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 700,
           letterSpacing: "0.1em",
           textTransform: "uppercase",
-          fontSize: "0.65rem",
-          padding: "4px 0",
-          marginTop: 4,
+          fontSize: 11,
+          padding: "6px 0 0",
+          display: "block",
         }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#6A6A7A")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#3A3A4A")}
       >
         ← Start Over
       </button>
@@ -465,69 +473,69 @@ function ReferCard({ node, onNavigate, onReset }) {
   );
 }
 
+/* ─── Result card ────────────────────────────────────────────────────────── */
 function ResultCard({ node, onReset }) {
   return (
     <div>
       <div
         style={{
-          background: `rgba(${node.rgb},0.06)`,
-          border: `1px solid rgba(${node.rgb},0.22)`,
-          borderTop: `3px solid ${node.color}`,
-          borderRadius: 4,
-          padding: "24px 26px",
+          background: `rgba(${node.rgb},0.04)`,
+          border: `1px solid rgba(${node.rgb},0.18)`,
+          borderLeft: `2px solid rgba(${node.rgb},0.7)`,
+          borderRadius: "0 4px 4px 0",
+          padding: "16px 18px",
           marginBottom: 16,
         }}
       >
-        <div
+        {/* Result badge row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <StepBadge
+            label="Recommended"
+            color={node.color}
+            bg={`rgba(${node.rgb},0.08)`}
+            border={`rgba(${node.rgb},0.25)`}
+          />
+          <span
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800,
+              fontSize: 10,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: `rgba(${node.rgb},0.5)`,
+            }}
+          >
+            {node.sublabel}
+          </span>
+        </div>
+
+        {/* Product name */}
+        <p
           style={{
             fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 800,
-            fontSize: "0.62rem",
-            letterSpacing: "0.2em",
+            fontWeight: 700,
+            fontSize: 22,
+            letterSpacing: "0.03em",
             textTransform: "uppercase",
             color: node.color,
-            opacity: 0.75,
-            marginBottom: 10,
-          }}
-        >
-          ✓ Recommended Product
-        </div>
-        <h2
-          style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.75rem",
-            letterSpacing: "0.03em",
-            color: node.color,
             lineHeight: 1.1,
-            marginBottom: 22,
-            margin: "0 0 22px",
+            margin: "0 0 16px",
           }}
         >
           {node.label}
-        </h2>
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 11 }}>
+        </p>
+
+        {/* Bullets */}
+        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
           {node.bullets.map((b, i) => (
-            <li
-              key={i}
-              style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
-            >
-              <span
-                style={{
-                  color: node.color,
-                  flexShrink: 0,
-                  marginTop: 3,
-                  fontSize: "0.7rem",
-                }}
-              >
-                ▸
-              </span>
+            <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <span style={{ color: node.color, flexShrink: 0, fontSize: 10, marginTop: 4, opacity: 0.7 }}>▸</span>
               <span
                 style={{
                   fontFamily: "'DM Sans', sans-serif",
-                  fontSize: "0.88rem",
-                  color: "#B8B8C8",
-                  lineHeight: 1.5,
+                  fontSize: 13,
+                  color: "#8A8A9A",
+                  lineHeight: 1.55,
                 }}
               >
                 {b}
@@ -537,33 +545,28 @@ function ResultCard({ node, onReset }) {
         </ul>
       </div>
 
-      <button
-        onClick={onReset}
-        style={{
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: 3,
-          padding: "9px 22px",
-          cursor: "pointer",
-          color: "#6A6A7A",
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontWeight: 700,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          fontSize: "0.7rem",
-          transition: "all 0.13s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.color = "#D0D0D0";
-          e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.color = "#6A6A7A";
-          e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-        }}
-      >
-        ↺ Start Over
-      </button>
+      <div className="section-next-action" style={{ justifyContent: "flex-start" }}>
+        <button
+          className="primary"
+          onClick={onReset}
+          style={{
+            background: "linear-gradient(180deg,#0e0e10 0%,#08080a 100%)",
+            color: "#6A6A7A",
+            borderColor: "rgba(255,255,255,0.1)",
+            borderTopColor: "rgba(255,255,255,0.15)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#dfe6f0";
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#6A6A7A";
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+          }}
+        >
+          ↺ Start Over
+        </button>
+      </div>
     </div>
   );
 }
@@ -571,7 +574,6 @@ function ResultCard({ node, onReset }) {
 /* ─── Main component ─────────────────────────────────────────────────────── */
 export default function DecisionTree() {
   const [current, setCurrent] = useState(START_NODE);
-  // path = [{ nodeId, answerLabel }, ...]
   const [path, setPath] = useState([]);
   const [animating, setAnimating] = useState(false);
 
@@ -584,7 +586,7 @@ export default function DecisionTree() {
       setPath((p) => [...p, { nodeId: current, answerLabel }]);
       setCurrent(nextId);
       setAnimating(false);
-    }, 170);
+    }, 150);
   };
 
   const goBack = (idx) => {
@@ -594,7 +596,7 @@ export default function DecisionTree() {
       setCurrent(path[idx].nodeId);
       setPath((p) => p.slice(0, idx));
       setAnimating(false);
-    }, 170);
+    }, 150);
   };
 
   const reset = () => {
@@ -604,15 +606,56 @@ export default function DecisionTree() {
       setCurrent(START_NODE);
       setPath([]);
       setAnimating(false);
-    }, 170);
+    }, 150);
   };
 
+  const currentNode = TREE[current];
+  const stepNum = path.length + 1;
+
   return (
-    <div className="card" style={{ maxWidth: 800, margin: "0 auto", background: "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)" }}>
-      {/* ── Header ── */}
-      <h2 style={{ margin: "0 0 20px", display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ color: "#E8002D" }}>◈</span>
-        Product Decision Tree
+    <div className="card" style={{ maxWidth: 760, margin: "0 auto", background: "linear-gradient(180deg,#181818 0%,#111111 50%,#0e0e0e 100%)" }}>
+
+      {/* ── Card header ── */}
+      <h2 style={{ marginBottom: 16 }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {currentNode?.num && !currentNode?.type && (
+            <StepBadge
+              label={currentNode.num}
+              color="#8A8A9A"
+              bg="rgba(255,255,255,0.03)"
+              border="rgba(255,255,255,0.07)"
+            />
+          )}
+          {currentNode?.type === "result" && (
+            <StepBadge
+              label="Result"
+              color={currentNode.color}
+              bg={`rgba(${currentNode.rgb},0.08)`}
+              border={`rgba(${currentNode.rgb},0.2)`}
+            />
+          )}
+          {currentNode?.type === "refer" && (
+            <StepBadge
+              label="Note"
+              color="#b8950a"
+              bg="rgba(255,215,0,0.07)"
+              border="rgba(255,215,0,0.2)"
+            />
+          )}
+          Product Decision Tree
+        </span>
+        <span
+          style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 700,
+            fontSize: 11,
+            letterSpacing: "0.1em",
+            color: "#2A2A3A",
+            textTransform: "uppercase",
+          }}
+        >
+          Step {stepNum}
+        </span>
       </h2>
 
       {/* ── Breadcrumb ── */}
@@ -623,113 +666,78 @@ export default function DecisionTree() {
             flexWrap: "wrap",
             alignItems: "center",
             gap: 4,
-            marginBottom: 22,
-            padding: "9px 14px",
-            background: "#0a0a0a",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 4,
+            marginBottom: 16,
+            paddingBottom: 14,
+            borderBottom: "1px solid rgba(255,255,255,0.04)",
           }}
         >
           <button
             onClick={reset}
-            style={crumbStyle(false)}
+            style={crumbBtn(false)}
           >
             Start
           </button>
-          {path.map((step, idx) => (
-            <span key={idx} style={{ display: "contents" }}>
-              <span
-                style={{
-                  color: "#2A2A3A",
-                  fontSize: "0.7rem",
-                  userSelect: "none",
-                  padding: "0 2px",
-                }}
-              >
-                ›
+          {path.map((step, idx) => {
+            const n = TREE[step.nodeId];
+            return (
+              <span key={idx} style={{ display: "contents" }}>
+                <span style={{ color: "#1E1E28", fontSize: 10, userSelect: "none" }}>›</span>
+                <button onClick={() => goBack(idx)} style={crumbBtn(idx === path.length - 1)}>
+                  {n?.num ?? "—"}
+                </button>
               </span>
-              <button
-                onClick={() => goBack(idx)}
-                style={crumbStyle(idx === path.length - 1)}
-                title={step.answerLabel}
-              >
-                {shortLabel(step.nodeId)}
-              </button>
-            </span>
-          ))}
-          <span style={{ color: "#2A2A3A", fontSize: "0.7rem", userSelect: "none", padding: "0 2px" }}>›</span>
+            );
+          })}
+          <span style={{ color: "#1E1E28", fontSize: 10, userSelect: "none" }}>›</span>
           <span
             style={{
               fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 700,
-              fontSize: "0.65rem",
+              fontSize: 11,
               letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#4A4A5A",
-              padding: "3px 8px",
-            }}
-          >
-            {node?.type === "result"
-              ? "Result"
-              : node?.type === "refer"
-              ? "Note"
-              : "Current"}
-          </span>
-        </div>
-      )}
-
-      {/* ── Animated content area ── */}
-      <div
-        style={{
-          opacity: animating ? 0 : 1,
-          transform: animating ? "translateY(8px)" : "translateY(0)",
-          transition: "opacity 0.17s ease, transform 0.17s ease",
-        }}
-      >
-        {node?.type === "result" ? (
-          <ResultCard node={node} onReset={reset} />
-        ) : node?.type === "refer" ? (
-          <ReferCard node={node} onNavigate={navigate} onReset={reset} />
-        ) : (
-          <QuestionCard node={node} onNavigate={navigate} />
-        )}
-      </div>
-
-      {/* ── Step counter ── */}
-      {node?.type !== "result" && (
-        <div style={{ marginTop: 22, textAlign: "right" }}>
-          <span
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700,
-              fontSize: "0.6rem",
-              letterSpacing: "0.14em",
               textTransform: "uppercase",
               color: "#2A2A3A",
             }}
           >
-            Step {path.length + 1}
+            {currentNode?.type === "result" ? "Result" : currentNode?.type === "refer" ? "Note" : currentNode?.num}
           </span>
         </div>
       )}
+
+      {/* ── Animated content ── */}
+      <div
+        style={{
+          opacity: animating ? 0 : 1,
+          transform: animating ? "translateY(6px)" : "translateY(0)",
+          transition: "opacity 0.15s ease, transform 0.15s ease",
+        }}
+      >
+        {currentNode?.type === "result" ? (
+          <ResultCard node={currentNode} onReset={reset} />
+        ) : currentNode?.type === "refer" ? (
+          <ReferCard node={currentNode} onNavigate={navigate} onReset={reset} />
+        ) : (
+          <QuestionCard node={currentNode} onNavigate={navigate} />
+        )}
+      </div>
     </div>
   );
 }
 
-function crumbStyle(isCurrent) {
+function crumbBtn(isCurrent) {
   return {
     background: "none",
     border: "none",
     cursor: isCurrent ? "default" : "pointer",
     fontFamily: "'Barlow Condensed', sans-serif",
     fontWeight: 700,
-    fontSize: "0.65rem",
+    fontSize: 11,
     letterSpacing: "0.08em",
     textTransform: "uppercase",
-    color: isCurrent ? "#5A5A6A" : "#E8002D",
-    padding: "3px 8px",
+    color: isCurrent ? "#3A3A4A" : "#E8002D",
+    padding: "2px 6px",
     borderRadius: 3,
-    transition: "color 0.13s",
-    opacity: isCurrent ? 1 : 0.85,
+    opacity: isCurrent ? 1 : 0.8,
+    transition: "opacity 0.13s",
   };
 }
