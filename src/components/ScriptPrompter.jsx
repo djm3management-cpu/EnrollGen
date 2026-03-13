@@ -1210,21 +1210,80 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
     [logEntry, currentStep]
   );
 
+  const pushCopilotFeedEntry = useCallback(
+    (level, text, extra = {}) => {
+      const entry = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        level,
+        text,
+        ts: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        ...extra,
+      };
+      setMessages((prev) => [...prev.slice(-19), entry]);
+      if (!extra.skipLog) {
+        logEntry(LOG_TYPES.COPILOT_MSG, level, text, {
+          section: extra.section || currentStep,
+          issueTag: extra.issueTag || "",
+          contextSnapshot: extra.contextSnapshot,
+          retrievalTrace: extra.retrievalTrace,
+        });
+      }
+      return entry;
+    },
+    [currentStep, logEntry]
+  );
+
   /* ═══════════════════════════════════════════════════════════════
      AI CO-PILOT — COMPLIANCE-FOCUSED REAL-TIME MONITOR
      ═══════════════════════════════════════════════════════════════ */
-  const requestCoaching = useCallback(async () => {
+  const requestCoaching = useCallback(async ({ manual = false } = {}) => {
     const fullTranscript = transcriptRef.current.trim();
-    if (!fullTranscript || coachingLoading) return;
+    if (!fullTranscript || coachingLoading) {
+      if (manual && !coachingLoading) {
+        pushCopilotFeedEntry(
+          "info",
+          "Analyze skipped. Start the transcript first so there is something to review.",
+          { section: currentStep }
+        );
+      }
+      return;
+    }
 
     // ── Gate 1: Cooldown (per last intervention level) ──
     const now = Date.now();
     const cooldown = COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
-    if (now - lastCoachingTime.current < cooldown) return;
+    const cooldownRemaining = cooldown - (now - lastCoachingTime.current);
+    if (cooldownRemaining > 0) {
+      if (manual) {
+        pushCopilotFeedEntry(
+          "info",
+          `Analyze skipped. Co-Pilot is in cooldown for another ${Math.ceil(
+            cooldownRemaining / 1000
+          )}s.`,
+          { section: currentStep }
+        );
+      }
+      return;
+    }
 
     // ── Gate 2: Minimum new content ──
     const newChars = fullTranscript.length - lastAnalyzedLength.current;
-    if (newChars < MIN_NEW_CHARS) return;
+    if (newChars < MIN_NEW_CHARS) {
+      if (manual) {
+        pushCopilotFeedEntry(
+          "info",
+          `Analyze skipped. Need at least ${MIN_NEW_CHARS} new characters since the last run; only ${Math.max(
+            0,
+            newChars
+          )} are available.`,
+          { section: currentStep }
+        );
+      }
+      return;
+    }
 
     const previousAnalyzedLength = lastAnalyzedLength.current;
     setCoachingLoading(true);
@@ -1515,6 +1574,13 @@ FULL TRANSCRIPT TAIL:
       if (level === "silent" || !message || !message.trim()) {
         lastCoachingTime.current = Date.now();
         lastInterventionLevel.current = "silent";
+        if (manual) {
+          pushCopilotFeedEntry(
+            "info",
+            "Analyze complete. No actionable compliance issues were found in the current transcript window.",
+            { section: currentStep, retrievalTrace }
+          );
+        }
         setCoachingLoading(false);
         return;
       }
@@ -1524,6 +1590,13 @@ FULL TRANSCRIPT TAIL:
         shouldSuppressDuplicateIssue(messages, currentStep, issueTag)
       ) {
         lastCoachingTime.current = Date.now();
+        if (manual) {
+          pushCopilotFeedEntry(
+            "info",
+            "Analyze complete. The issue found matches a recent co-pilot warning, so it was not repeated.",
+            { section: currentStep, issueTag, retrievalTrace }
+          );
+        }
         setCoachingLoading(false);
         return;
       }
@@ -1538,6 +1611,13 @@ FULL TRANSCRIPT TAIL:
         })
       ) {
         lastCoachingTime.current = Date.now();
+        if (manual) {
+          pushCopilotFeedEntry(
+            "info",
+            "Analyze complete. A possible warning was suppressed because the transcript context was too ambiguous to justify a new alert.",
+            { section: currentStep, issueTag, retrievalTrace }
+          );
+        }
         setCoachingLoading(false);
         return;
       }
@@ -1548,6 +1628,13 @@ FULL TRANSCRIPT TAIL:
         confidence < WARN_CONFIDENCE_FLOOR
       ) {
         lastCoachingTime.current = Date.now();
+        if (manual) {
+          pushCopilotFeedEntry(
+            "info",
+            "Analyze complete. A possible warning was below the confidence threshold, so Co-Pilot stayed quiet.",
+            { section: currentStep, issueTag, retrievalTrace }
+          );
+        }
         setCoachingLoading(false);
         return;
       }
@@ -1558,6 +1645,13 @@ FULL TRANSCRIPT TAIL:
         confidence < REMIND_CONFIDENCE_FLOOR
       ) {
         lastCoachingTime.current = Date.now();
+        if (manual) {
+          pushCopilotFeedEntry(
+            "info",
+            "Analyze complete. A reminder candidate was below the confidence threshold, so Co-Pilot stayed quiet.",
+            { section: currentStep, issueTag, retrievalTrace }
+          );
+        }
         setCoachingLoading(false);
         return;
       }
@@ -1565,29 +1659,22 @@ FULL TRANSCRIPT TAIL:
       lastCoachingTime.current = Date.now();
       lastInterventionLevel.current = level;
 
-      const entry = {
-        id: Date.now(),
-        level,
-        text: message,
+      pushCopilotFeedEntry(level, message, {
         issueTag,
         section: currentStep,
-        contextSnapshot: copilotContext,
-        retrievalTrace,
-        ts: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setMessages((prev) => [...prev.slice(-19), entry]);
-      showFloat(level, message);
-      logEntry(LOG_TYPES.COPILOT_MSG, level, message, {
-        section: currentStep,
-        issueTag,
         contextSnapshot: copilotContext,
         retrievalTrace,
       });
+      showFloat(level, message);
     } catch (err) {
       console.error("Coaching API error:", err);
+      if (manual) {
+        pushCopilotFeedEntry(
+          "info",
+          "Analyze failed. Co-Pilot could not reach the coaching service right now.",
+          { section: currentStep }
+        );
+      }
     } finally {
       setCoachingLoading(false);
     }
@@ -1596,7 +1683,7 @@ FULL TRANSCRIPT TAIL:
     currentStep,
     coachingLoading,
     showFloat,
-    logEntry,
+    pushCopilotFeedEntry,
     getToken,
     messages,
     state,
@@ -2089,7 +2176,7 @@ RESPONSE RULES:
               {/* Ask Co-Pilot */}
               <button
                 disabled={!transcript.trim() || coachingLoading}
-                onClick={requestCoaching}
+                onClick={() => requestCoaching({ manual: true })}
                 style={{
                   background: "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
                   border: "1px solid rgba(157,0,255,0.45)",
