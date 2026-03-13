@@ -2855,13 +2855,17 @@ html {
   z-index: 1;
 }
 
+.carrier-link-name {
+  color: var(--text-secondary);
+}
+
 .daily-verse-label {
   font-family: "Barlow Condensed", sans-serif;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #E8002D;
+  color: var(--text-secondary);
 }
 
 .daily-verse-text {

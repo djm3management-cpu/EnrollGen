@@ -70,7 +70,7 @@ const TREE = {
     id: "q6",
     num: "06",
     question: "Is the employer coverage affordable per ACA standards?",
-    hint: "Affordable = employee-only premium < 8.39% of household income (2024 IRS threshold)",
+    hint: "Affordable = employee-only premium at or below 9.96% of household income for plan years beginning in 2026.",
     answers: [
       { label: "Yes — employer coverage is affordable", next: "refer_employer" },
       { label: "No — coverage is unaffordable or inadequate", next: "q7" },
@@ -81,9 +81,9 @@ const TREE = {
     type: "refer",
     message: "Client likely not eligible for marketplace premium tax credits.",
     detail:
-      "Evaluate whether the employer plan meets their needs vs. off-exchange options. Client may still benefit from supplemental U65 products if the employer plan has high cost-sharing.",
-    next: "q8",
-    nextLabel: "Continue → Explore U65 Off-Exchange",
+      "Evaluate whether the employer plan meets their needs versus non-ACA alternatives. If they are considering anything off-market, start with state rules, underwriting risk, and product structure before comparing premium.",
+    next: "refer_u65_rules",
+    nextLabel: "Continue → Non-ACA Triage",
   },
   q7: {
     id: "q7",
@@ -104,26 +104,47 @@ const TREE = {
       "Use healthcare.gov or the state marketplace income estimator to check subsidy eligibility. Do not assume — incorrect guidance can harm the client's coverage or tax situation.",
     branches: [
       { label: "Client is subsidy-eligible → ACA On-Exchange", next: "result_aca" },
-      { label: "Client is not subsidy-eligible → U65 Off-Exchange", next: "q8" },
+      { label: "Client is not subsidy-eligible → Non-ACA Triage", next: "refer_u65_rules" },
+    ],
+  },
+  refer_u65_rules: {
+    id: "refer_u65_rules",
+    type: "refer",
+    message: "Start U65 by checking state rules and underwriting risk before quoting any off-market product.",
+    detail:
+      "There is no universal 'best' off-market plan. Non-ACA options can be short-term medical, fixed indemnity, reimbursement-style, or association/group-based, and the right answer changes by state, health history, and tolerance for coverage gaps.",
+    branches: [
+      {
+        label: "Client needs guaranteed issue or has major ongoing conditions → ACA first",
+        next: "result_aca",
+      },
+      {
+        label: "State allows non-ACA options and client can handle underwriting → continue",
+        next: "q8",
+      },
     ],
   },
   q8: {
     id: "q8",
     num: "08",
-    question: "Which U65 product structure fits the client best?",
-    hint: "Client is under 65 and either above 400% FPL or has affordable employer coverage they want to supplement",
+    question: "Which non-ACA product architecture fits the client best?",
+    hint: "Pick the lane first: temporary underwritten network plan, fixed indemnity, or association/group-style coverage.",
     answers: [
       {
-        label: "PPO network · comprehensive major medical · broad access to specialists",
+        label: "Healthy case · temporary bridge or broader-network underwritten option",
         next: "result_enrollprime",
       },
       {
-        label: "Fixed-benefit indemnity · set dollar payout per service · lower premium",
+        label: "Budget-first · accepts fixed cash benefits and non-ACA gaps",
         next: "result_palic",
       },
       {
-        label: "Self-employed or small group (2+ members) · wants group health plan",
+        label: "Self-employed / family / 2+ lives · association or group-style option",
         next: "result_lifex",
+      },
+      {
+        label: "State-specific Farm Bureau-style option may exist",
+        next: "result_farm_bureau",
       },
     ],
   },
@@ -191,12 +212,12 @@ const TREE = {
     productLine: "U65",
     color: "#a855f7",
     rgb: "168,85,247",
-    label: "EnrollPrime / AFI PPO",
-    sublabel: "U65 — CIGNA PPO",
+    label: "Underwritten Network Option",
+    sublabel: "U65 — PPO / BRIDGE",
     bullets: [
-      "Broad Cigna Open Access PPO — access to major hospital systems and specialists",
-      "Comprehensive major medical for individuals and families above the subsidy threshold",
-      "Year-round enrollment; no APTC but flexibility outside ACA marketplace constraints",
+      "Use this lane for healthier bridge cases that want a more familiar network story than indemnity products.",
+      "Verify state legality, underwriting, pre-existing condition handling, Rx, and true benefit structure before presenting it as value.",
+      "Examples in Carrier Ref include UnitedHealthcare Golden Rule, Pivot Health, and association-based PPO options such as EnrollPrime / AFI where available.",
     ],
   },
   result_palic: {
@@ -209,8 +230,8 @@ const TREE = {
     sublabel: "U65 — FIXED BENEFIT",
     bullets: [
       "Pays set dollar amounts per covered service — NOT ACA-compliant major medical",
-      "Significantly lower premium; ideal as a standalone budget plan or supplement",
-      "Disclose limitations clearly: client is responsible for costs above fixed benefit amounts",
+      "Best only when the client knowingly accepts a budget-first, scheduled-benefit structure",
+      "Disclose limitations clearly: client is responsible for costs above fixed benefit amounts and catastrophic exposure can remain significant",
     ],
   },
   result_lifex: {
@@ -222,9 +243,23 @@ const TREE = {
     label: "LIFE-X / BHPI Group Health",
     sublabel: "U65 — GROUP",
     bullets: [
-      "Group health plan via Research Associate employment model — minimum 2 members",
-      "Association-based structure may unlock better rates than the individual market",
-      "Designed for self-employed individuals and small businesses needing group benefits",
+      "Use this lane when a group-style or association-based structure fits better than STM or indemnity.",
+      "Qualification, participation, and ongoing program mechanics matter as much as premium.",
+      "Designed for self-employed cases or multi-life households that can satisfy the product rules.",
+    ],
+  },
+  result_farm_bureau: {
+    id: "result_farm_bureau",
+    type: "result",
+    productLine: "U65",
+    color: "#a855f7",
+    rgb: "168,85,247",
+    label: "Farm Bureau-Style State Option",
+    sublabel: "U65 — STATE SPECIFIC",
+    bullets: [
+      "This can be a strong lane in select states when a Farm Bureau or similar membership-based option is actually available.",
+      "Do not assume availability across states; verify membership rules, underwriting, network, and whether the product is true major medical or another non-ACA structure.",
+      "Use Carrier Ref to check the state-specific examples before positioning this as the best fit.",
     ],
   },
 };

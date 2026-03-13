@@ -233,36 +233,10 @@ export default function AgentTools() {
       <Accordion
         title="Medicare Advantage Special Enrollment Periods (SEPs)"
         icon={<RotateCw size={16} />}
-        defaultOpen
         searchMatch={accordionMatches.seps}
       >
         <SEPReference script={NGHS_SEP_SCRIPT} />
       </Accordion>
-      {/* 4) QUICK LINKS */}
-      <Accordion
-        title="Carrier Quick Links"
-        icon={<Rocket size={16} />}
-        defaultOpen
-        searchMatch={accordionMatches.links}
-      >
-        <div className="carrier-links-grid">
-          {CARRIER_LINKS.map((link) => (
-            <a
-              key={link.name}
-              href={link.url}
-              target="_blank"
-              rel="noreferrer"
-              className="carrier-link-card"
-            >
-              <span className="carrier-link-icon">
-                {renderCarrierIcon(link.icon)}
-              </span>
-              <span className="carrier-link-name">{link.name}</span>
-            </a>
-          ))}
-        </div>
-      </Accordion>
-
       {/* 8) MAPS (LOWER because they are huge) */}
       <Accordion
         title="FEMA Disaster SEP Zones & Medicaid Map"
@@ -303,6 +277,31 @@ export default function AgentTools() {
             />
           </>
         )}
+      </Accordion>
+
+      {/* 4) QUICK LINKS */}
+      <Accordion
+        title="Carrier Quick Links"
+        icon={<Rocket size={16} />}
+        defaultOpen
+        searchMatch={accordionMatches.links}
+      >
+        <div className="carrier-links-grid">
+          {CARRIER_LINKS.map((link) => (
+            <a
+              key={link.name}
+              href={link.url}
+              target="_blank"
+              rel="noreferrer"
+              className="carrier-link-card"
+            >
+              <span className="carrier-link-icon">
+                {renderCarrierIcon(link.icon)}
+              </span>
+              <span className="carrier-link-name">{link.name}</span>
+            </a>
+          ))}
+        </div>
       </Accordion>
 
       {/* 9) REFS */}
