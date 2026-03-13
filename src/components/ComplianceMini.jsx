@@ -82,7 +82,7 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
     <div
       style={{
         position: "fixed",
-        top: 72,
+        bottom: 84,
         right: 18,
         zIndex: 96,
         display: "flex",
@@ -95,13 +95,14 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
         onClick={() => setExpanded((p) => !p)}
         style={{
           pointerEvents: "auto",
-          background: expanded ? "rgba(15,23,42,0.97)" : "rgba(15,23,42,0.92)",
-          border: `1px solid ${scoreColor}30`,
-          borderRadius: expanded ? 10 : 8,
-          padding: expanded ? "8px 10px 10px" : "4px 10px",
+          background: "linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%)",
+          border: "1px solid rgba(255, 255, 255, 0.06)",
+          borderRadius: expanded ? 16 : 14,
+          padding: expanded ? "10px 12px 12px" : "10px 16px",
           cursor: "pointer",
           backdropFilter: "blur(12px)",
-          boxShadow: `0 2px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04)`,
+          boxShadow:
+            "inset 4px 4px 10px rgba(0, 0, 0, 0.42), inset -3px -3px 8px rgba(255, 255, 255, 0.02), 0 10px 24px rgba(0, 0, 0, 0.36)",
           transition: "all 0.25s ease",
           minWidth: expanded ? 210 : "auto",
           animation: pulse ? "compliancePulse 0.6s ease" : "none",
@@ -128,17 +129,17 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
             </div>
             <span
               style={{
-                fontSize: "0.82em",
+                fontSize: "0.8em",
                 fontWeight: 800,
                 color: scoreColor,
                 fontVariantNumeric: "tabular-nums",
-                letterSpacing: "-0.02em",
+                letterSpacing: "0.01em",
               }}
             >
               {result.score}%
             </span>
             <span
-              style={{ fontSize: "0.6em", color: "#64748b", fontWeight: 600 }}
+              style={{ fontSize: "0.65em", color: "#8fa4bc", fontWeight: 700 }}
             >
               {result.categoriesPassed}/{result.totalCategories}
             </span>

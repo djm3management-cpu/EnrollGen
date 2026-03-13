@@ -156,8 +156,12 @@ export default function ScriptFlow() {
         totalSections={TOTAL_SECTIONS}
       />
 
-      <SectorBar activeSection={activeSection} />
+      <div className="flow-shell">
+        <aside className="flow-rail">
+          <SectorBar activeSection={activeSection} />
+        </aside>
 
+        <div className="flow-main">
       <UndoButton
         undoHistory={state.undoHistory}
         onUndo={() => dispatch({ type: "UNDO_LAST_GATE" })}
@@ -251,6 +255,8 @@ export default function ScriptFlow() {
 
       {/* ── Daily Scripture — always visible at the bottom ── */}
       <DailyVerse />
+        </div>
+      </div>
     </motion.div>
   );
 }

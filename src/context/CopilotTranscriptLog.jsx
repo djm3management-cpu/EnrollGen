@@ -37,6 +37,7 @@ export const LOG_TYPES = {
 };
 
 const FEEDBACK_STORAGE_KEY = "enrollgen_copilot_feedback";
+const DEDUPE_WINDOW_MS = 15000;
 
 function loadStoredEntries() {
   try {
@@ -49,26 +50,90 @@ function loadStoredEntries() {
   }
 }
 
+function normalizeMessageForCompare(message) {
+  return (message || "")
+    .toString()
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function getEntrySection(entry) {
+  return entry?.meta?.section || "";
+}
+
+function areEntriesEquivalent(a, b) {
+  if (!a || !b) return false;
+
+  const aMessage = normalizeMessageForCompare(a.message);
+  const bMessage = normalizeMessageForCompare(b.message);
+  if (!aMessage || aMessage !== bMessage) return false;
+
+  if ((a.level || "info") !== (b.level || "info")) return false;
+  if (getEntrySection(a) !== getEntrySection(b)) return false;
+
+  const sameType = a.logType === b.logType;
+  const mirroredAlert =
+    [a.logType, b.logType].includes(LOG_TYPES.COPILOT_MSG) &&
+    [a.logType, b.logType].includes(LOG_TYPES.FLOATING_ALERT);
+
+  return sameType || mirroredAlert;
+}
+
+function isNearDuplicate(existingEntries, candidate) {
+  const candidateTs = new Date(candidate.timestamp).getTime();
+
+  return existingEntries.slice(-12).some((entry) => {
+    if (!areEntriesEquivalent(entry, candidate)) return false;
+
+    const entryTs = new Date(entry.timestamp).getTime();
+    if (!Number.isFinite(entryTs) || !Number.isFinite(candidateTs)) {
+      return true;
+    }
+
+    return Math.abs(candidateTs - entryTs) <= DEDUPE_WINDOW_MS;
+  });
+}
+
+function dedupeEntries(entries, { includeFloatingAlerts = true } = {}) {
+  const deduped = [];
+
+  for (const entry of entries || []) {
+    if (!includeFloatingAlerts && entry.logType === LOG_TYPES.FLOATING_ALERT) {
+      continue;
+    }
+
+    if (isNearDuplicate(deduped, entry)) continue;
+    deduped.push(entry);
+  }
+
+  return deduped;
+}
+
 /* ── Reducer ── */
 function logReducer(state, action) {
   switch (action.type) {
-    case "ADD_ENTRY":
+    case "ADD_ENTRY": {
+      const candidate = {
+        id: Date.now() + Math.random(),
+        timestamp: new Date().toISOString(),
+        timeDisplay: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+        ...action.payload,
+      };
+
+      if (isNearDuplicate(state.entries, candidate)) {
+        return state;
+      }
+
       return {
         ...state,
-        entries: [
-          ...state.entries,
-          {
-            id: Date.now() + Math.random(),
-            timestamp: new Date().toISOString(),
-            timeDisplay: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            }),
-            ...action.payload,
-          },
-        ],
+        entries: [...state.entries, candidate],
       };
+    }
     case "UPDATE_ENTRY_FEEDBACK":
       return {
         ...state,
@@ -127,12 +192,12 @@ export function CopilotLogProvider({ children }) {
 
   /** Get full transcript (all entries) */
   const getTranscript = useCallback(() => {
-    return entriesRef.current;
+    return dedupeEntries(entriesRef.current, { includeFloatingAlerts: false });
   }, []);
 
   /** Get only warn + critical entries (for the warnings section of the PDF) */
   const getWarnings = useCallback(() => {
-    return entriesRef.current.filter(
+    return dedupeEntries(entriesRef.current, { includeFloatingAlerts: false }).filter(
       (e) => e.level === "warn" || e.level === "critical"
     );
   }, []);

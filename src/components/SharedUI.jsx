@@ -298,31 +298,41 @@ const SECTORS = [
   { num: 2,   abbr: "TPMO"   },
   { num: 3,   abbr: "SOA"    },
   { num: 4,   abbr: "QUAL"   },
-  { num: 5,   abbr: "NEADS"  },
+  { num: 5,   abbr: "NEEDS"  },
   { num: 6,   abbr: "SOB"    },
   { num: 7,   abbr: "ENROLL" },
   { num: 8,   abbr: "WRAP"   },
 ];
 
 export const SectorBar = React.memo(function SectorBar({ activeSection }) {
+  const currentStep = Number.isInteger(activeSection)
+    ? activeSection
+    : Math.ceil(activeSection);
+
   function status(num) {
-    if (activeSection > num) return "done";
-    if (Math.floor(activeSection) === num) return "active";
+    if (num < currentStep) return "done";
+    if (num === currentStep) return "active";
     return "pending";
   }
 
   return (
-    <div className="sector-bar">
-      {SECTORS.map(({ num, abbr }) => {
+    <nav className="sector-bar" aria-label="Section progress">
+      {SECTORS.map(({ num, abbr }, index) => {
         const s = status(num);
         return (
-          <div key={num} className={`sector-block sector-block--${s}`}>
-            <span className="sector-block-num">{num}</span>
-            <span className="sector-block-abbr">{abbr}</span>
+          <div key={num} className={`sector-step sector-step--${s}`}>
+            <div className="sector-rail-node" aria-hidden="true">
+              <span className="sector-dot" />
+              {index < SECTORS.length - 1 && <span className="sector-connector" />}
+            </div>
+            <div className={`sector-block sector-block--${s}`}>
+              <span className="sector-block-num">{num}</span>
+              <span className="sector-block-abbr">{abbr}</span>
+            </div>
           </div>
         );
       })}
-    </div>
+    </nav>
   );
 });
 
@@ -440,7 +450,6 @@ export const StickyTimerBar = React.memo(function StickyTimerBar({
         isDanger ? "danger" : ""
       }`}
     >
-      <span className="sticky-timer-section">{sectionLabel}</span>
       <span
         className={`sticky-timer-display ${
           isDanger ? "timer-danger" : isWarning ? "timer-warning" : ""
@@ -448,6 +457,7 @@ export const StickyTimerBar = React.memo(function StickyTimerBar({
       >
         {display}
       </span>
+      <span className="sticky-timer-section">{sectionLabel}</span>
     </div>
   );
 });

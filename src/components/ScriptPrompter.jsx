@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { useAppAuth } from "../context/AuthContext";
 import { useScript } from "../context/ScriptContext";
 import { SECTION_LABELS } from "../context/scriptReducer";
@@ -1013,33 +1014,33 @@ const COMPLIANCE_KNOWLEDGE = {
 const LEVEL_STYLE = {
   info: {
     icon: "◈",
-    color: "#E8002D",
-    bg: "rgba(232,0,45,0.05)",
-    border: "rgba(232,0,45,0.3)",
+    color: "#FF2040",
+    bg: "rgba(255,32,64,0.07)",
+    border: "rgba(255,32,64,0.4)",
   },
   remind: {
     icon: "◉",
-    color: "#ADADAD",
-    bg: "rgba(173,173,173,0.05)",
-    border: "rgba(173,173,173,0.25)",
+    color: "#F3F4F6",
+    bg: "rgba(243,244,246,0.06)",
+    border: "rgba(243,244,246,0.2)",
   },
   tip: {
     icon: "◆",
-    color: "#00D166",
-    bg: "rgba(0,209,102,0.05)",
-    border: "rgba(0,209,102,0.28)",
+    color: "#00ff41",
+    bg: "rgba(0,255,65,0.07)",
+    border: "rgba(0,255,65,0.35)",
   },
   warn: {
     icon: "▲",
-    color: "#FFD700",
-    bg: "rgba(255,215,0,0.06)",
-    border: "rgba(255,215,0,0.35)",
+    color: "#FFE45C",
+    bg: "rgba(255,228,92,0.07)",
+    border: "rgba(255,228,92,0.38)",
   },
   critical: {
     icon: "✕",
-    color: "#a855f7",
-    bg: "rgba(168,85,247,0.08)",
-    border: "rgba(168,85,247,0.45)",
+    color: "#9D00FF",
+    bg: "rgba(157,0,255,0.09)",
+    border: "rgba(157,0,255,0.45)",
   },
 };
 
@@ -1889,38 +1890,56 @@ RESPONSE RULES:
                 top: 80,
                 right: 20,
                 zIndex: 9999,
-                maxWidth: 380,
+                maxWidth: 360,
                 width: "auto",
-                background: s.bg,
-                border: `2px solid ${s.border}`,
-                borderRadius: 10,
-                padding: "12px 16px",
+                background: "#0a0a0a",
+                borderLeft: `3px solid ${s.color}`,
+                borderTop: "1px solid rgba(255,255,255,0.07)",
+                borderRight: "1px solid rgba(255,255,255,0.07)",
+                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: 3,
+                padding: "10px 14px",
                 display: "flex",
                 alignItems: "flex-start",
                 gap: 10,
                 cursor: "pointer",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                boxShadow: "0 8px 40px rgba(0,0,0,0.7)",
                 animation: "slideDown 0.25s ease",
               }}
             >
-              <span style={{ fontSize: "1.3em", lineHeight: 1 }}>{s.icon}</span>
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  color: s.color,
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  paddingTop: 2,
+                  flexShrink: 0,
+                }}
+              >
+                {s.icon}
+              </span>
               <div style={{ flex: 1 }}>
                 <div
                   style={{
-                    fontSize: "0.7em",
-                    fontWeight: 700,
-                    letterSpacing: "0.08em",
+                    fontSize: "0.58rem",
+                    fontWeight: 800,
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
                     color: s.color,
-                    marginBottom: 3,
+                    marginBottom: 4,
                   }}
                 >
-                  {floatingAlert.level.toUpperCase()} — tap to dismiss
+                  {floatingAlert.level} — click to dismiss
                 </div>
                 <div
                   style={{
-                    fontSize: "0.9em",
-                    color: "#e8edf5",
-                    lineHeight: 1.4,
+                    fontSize: "0.8rem",
+                    color: "#d0d0d0",
+                    lineHeight: 1.45,
+                    fontFamily: "'IBM Plex Mono', monospace",
                   }}
                 >
                   {floatingAlert.text}
@@ -1939,8 +1958,8 @@ RESPONSE RULES:
                 width: 8,
                 height: 8,
                 borderRadius: "50%",
-                background: listening ? "#E8002D" : "#333",
-                boxShadow: listening ? "0 0 8px rgba(232,0,45,0.9)" : "none",
+                background: listening ? "#7fde9e" : "#2e2e38",
+                boxShadow: listening ? "0 0 6px rgba(127,222,158,0.7)" : "none",
                 flexShrink: 0,
                 display: "inline-block",
                 transition: "all 0.3s",
@@ -1963,20 +1982,20 @@ RESPONSE RULES:
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
+                alignItems: "stretch",
                 gap: 0,
-                background: "#0a0a0a",
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 3,
-                marginBottom: 8,
+                background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                borderRadius: 16,
                 overflow: "hidden",
+                boxShadow: "inset 4px 4px 9px rgba(0,0,0,0.42), inset -3px -3px 8px rgba(255,255,255,0.025)",
               }}
             >
               {[
                 {
                   label: "STATUS",
                   value: listening ? "● LIVE" : "○ STANDBY",
-                  color: listening ? "#00D166" : "#555",
+                  color: listening ? "#39FF88" : "#C7CEDA",
                 },
                 {
                   label: "SECTION",
@@ -1986,24 +2005,24 @@ RESPONSE RULES:
                 {
                   label: "ELAPSED",
                   value: elapsedDisplay,
-                  color: elapsedSec > 300 ? "#FFD700" : "#ffffff",
+                  color: elapsedSec > 300 ? "#FFE45C" : "#ffffff",
                 },
                 {
                   label: "COMPLIANCE",
                   value: `${compliance.score}/100`,
-                  color: compliance.score >= 90 ? "#a855f7" : compliance.score >= 80 ? "#00D166" : compliance.score >= 60 ? "#FFD700" : "#FF4455",
+                  color: compliance.score >= 90 ? "#9D00FF" : compliance.score >= 80 ? "#00ff41" : compliance.score >= 60 ? "#FFE45C" : "#FF2040",
                 },
               ].map(({ label, value, color }, i, arr) => (
                 <div
                   key={label}
                   style={{
                     flex: 1,
-                    padding: "5px 10px",
-                    borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                    padding: "8px 12px",
+                    borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                   }}
                 >
-                  <div style={{ fontSize: "0.55rem", color: "#444", fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>{label}</div>
-                  <div style={{ fontSize: "0.75rem", color, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
+                  <div style={{ fontSize: "0.66rem", color: "#7a7f8e", fontFamily: "var(--font-body)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3, lineHeight: 1.2 }}>{label}</div>
+                  <div style={{ fontSize: "0.84rem", color, fontFamily: "var(--font-body)", fontWeight: 700, letterSpacing: "0.01em", lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
                 </div>
               ))}
             </div>
@@ -2012,14 +2031,14 @@ RESPONSE RULES:
             <div
               style={{
                 display: "flex",
-                gap: 6,
+                gap: 8,
                 alignItems: "center",
-                background: "#0a0a0a",
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 3,
-                padding: "6px 8px",
-                marginBottom: 10,
+                background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                borderRadius: 16,
+                padding: "8px 10px",
                 flexWrap: "wrap",
+                boxShadow: "inset 4px 4px 9px rgba(0,0,0,0.42), inset -3px -3px 8px rgba(255,255,255,0.025)",
               }}
             >
               {/* Mic toggle */}
@@ -2027,19 +2046,21 @@ RESPONSE RULES:
                 onClick={listening ? stopListening : startListening}
                 disabled={!supportsRecognition}
                 style={{
-                  background: listening ? "rgba(232,0,45,0.15)" : "rgba(0,209,102,0.1)",
-                  border: listening ? "1px solid rgba(232,0,45,0.5)" : "1px solid rgba(0,209,102,0.35)",
-                  color: listening ? "#E8002D" : "#00D166",
-                  borderRadius: 3,
-                  padding: "4px 10px",
-                  fontSize: "0.7rem",
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 800,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                background: listening
+                    ? "linear-gradient(145deg, rgba(232,0,45,0.2) 0%, rgba(180,0,35,0.14) 100%)"
+                    : "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
+                  border: listening ? "1px solid rgba(232,0,45,0.28)" : "1px solid rgba(255,255,255,0.07)",
+                  color: listening ? "#FF8FA3" : "#00ff41",
+                  borderRadius: 50,
+                  padding: "5px 14px",
+                  fontSize: "0.72rem",
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: 700,
+                  letterSpacing: "0.03em",
                   cursor: supportsRecognition ? "pointer" : "not-allowed",
                   whiteSpace: "nowrap",
                   transition: "all 0.15s",
+                  boxShadow: "3px 3px 7px rgba(0,0,0,0.4), -2px -2px 5px rgba(255,255,255,0.025), inset 1px 1px 0 rgba(255,255,255,0.05)",
                 }}
               >
                 {!supportsRecognition ? "NO MIC" : listening ? "■ STOP" : "● START"}
@@ -2049,17 +2070,17 @@ RESPONSE RULES:
               <button
                 onClick={clearTranscript}
                 style={{
-                  background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
+                  border: "1px solid rgba(255,255,255,0.07)",
                   color: "#666",
-                  borderRadius: 3,
-                  padding: "4px 10px",
-                  fontSize: "0.7rem",
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  borderRadius: 50,
+                  padding: "5px 14px",
+                  fontSize: "0.72rem",
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: 600,
                   cursor: "pointer",
+                  boxShadow: "3px 3px 7px rgba(0,0,0,0.4), -2px -2px 5px rgba(255,255,255,0.025), inset 1px 1px 0 rgba(255,255,255,0.05)",
+                  transition: "all 0.15s",
                 }}
               >
                 CLEAR
@@ -2070,19 +2091,19 @@ RESPONSE RULES:
                 disabled={!transcript.trim() || coachingLoading}
                 onClick={requestCoaching}
                 style={{
-                  background: coachingLoading ? "rgba(168,85,247,0.08)" : "rgba(168,85,247,0.14)",
-                  border: "1px solid rgba(168,85,247,0.4)",
-                  color: "#a855f7",
-                  borderRadius: 3,
-                  padding: "4px 10px",
-                  fontSize: "0.7rem",
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 800,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  background: "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
+                  border: "1px solid rgba(157,0,255,0.45)",
+                  color: "#B84DFF",
+                  borderRadius: 50,
+                  padding: "5px 14px",
+                  fontSize: "0.72rem",
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: 700,
                   cursor: transcript.trim() && !coachingLoading ? "pointer" : "not-allowed",
-                  opacity: !transcript.trim() || coachingLoading ? 0.5 : 1,
+                  opacity: !transcript.trim() || coachingLoading ? 0.45 : 1,
                   whiteSpace: "nowrap",
+                  boxShadow: "3px 3px 7px rgba(0,0,0,0.4), -2px -2px 5px rgba(255,255,255,0.025), inset 1px 1px 0 rgba(255,255,255,0.05)",
+                  transition: "all 0.15s",
                 }}
               >
                 {coachingLoading ? "ANALYZING…" : "◈ ANALYZE"}
@@ -2096,40 +2117,41 @@ RESPONSE RULES:
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askCopilot(); }
                   }}
-                  placeholder="Ask compliance, meds, plans…"
+                  placeholder="Ask Co Pilot"
                   disabled={askLoading}
                   style={{
                     flex: 1,
-                    background: "#111",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 3,
-                    padding: "4px 8px",
-                    fontSize: "0.75rem",
-                    color: "#d0d0d0",
+                    background: "linear-gradient(145deg, rgba(18,18,22,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 12,
+                    padding: "5px 10px",
+                    fontSize: "0.78rem",
+                    color: "#c8cdd8",
                     outline: "none",
-                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontFamily: "'DM Sans', sans-serif",
+                    boxShadow: "inset 3px 3px 6px rgba(0,0,0,0.4), inset -2px -2px 5px rgba(255,255,255,0.018)",
                   }}
                 />
                 <button
                   onClick={askCopilot}
                   disabled={!askQuestion.trim() || askLoading}
                   style={{
-                    background: "transparent",
-                    border: "1px solid rgba(232,0,45,0.3)",
-                    color: "#E8002D",
-                    borderRadius: 3,
-                    padding: "4px 10px",
-                    fontSize: "0.7rem",
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 800,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
+                    background: "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    color: "#c8cdd8",
+                    borderRadius: 50,
+                    padding: "5px 14px",
+                    fontSize: "0.72rem",
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontWeight: 700,
                     cursor: askQuestion.trim() && !askLoading ? "pointer" : "not-allowed",
-                    opacity: !askQuestion.trim() || askLoading ? 0.5 : 1,
+                    opacity: !askQuestion.trim() || askLoading ? 0.45 : 1,
                     whiteSpace: "nowrap",
+                    boxShadow: "3px 3px 7px rgba(0,0,0,0.4), -2px -2px 5px rgba(255,255,255,0.025), inset 1px 1px 0 rgba(255,255,255,0.05)",
+                    transition: "all 0.15s",
                   }}
                 >
-                  {askLoading ? "…" : "ASK"}
+                  {askLoading ? "…" : <ArrowUpRight size={14} strokeWidth={2.2} />}
                 </button>
               </div>
             </div>
@@ -2148,14 +2170,14 @@ RESPONSE RULES:
               {/* ── LEFT: LIVE TELEMETRY (race standings rows) ── */}
               <div
                 style={{
-                  background: "#0a0a0a",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderLeft: "2px solid #ADADAD",
-                  borderRadius: 3,
+                  background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  borderRadius: 16,
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
                   boxSizing: "border-box",
+                  boxShadow: "inset 6px 6px 14px rgba(0,0,0,0.45), inset -4px -4px 10px rgba(255,255,255,0.02)",
                 }}
               >
                 {/* Panel header */}
@@ -2164,16 +2186,16 @@ RESPONSE RULES:
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    padding: "5px 10px",
-                    borderBottom: "1px solid rgba(255,255,255,0.05)",
-                    background: "#0e0e0e",
+                    padding: "7px 12px",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    background: "rgba(255,255,255,0.02)",
                   }}
                 >
-                  <span style={{ fontSize: "0.62rem", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAD" }}>
+                  <span style={{ fontSize: "0.68rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "0.04em", color: "#7a7f8e" }}>
                     Live Telemetry
                   </span>
-                  <span style={{ fontSize: "0.58rem", color: "#444", fontFamily: "'IBM Plex Mono', monospace" }}>
-                    {transcriptRows.length} utterances
+                  <span style={{ fontSize: "0.65rem", color: "#444", fontFamily: "'DM Sans', sans-serif" }}>
+                    {transcriptRows.length} lines
                   </span>
                 </div>
 
@@ -2204,7 +2226,7 @@ RESPONSE RULES:
                       <span style={{ fontSize: "0.6rem", color: "#444", fontFamily: "'IBM Plex Mono', monospace", whiteSpace: "nowrap", flexShrink: 0 }}>
                         {row.ts}
                       </span>
-                      <span style={{ fontSize: "0.78rem", color: idx === transcriptRows.length - 1 ? "#e8e8e8" : "#888", fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1.4 }}>
+                      <span style={{ fontSize: "0.8rem", color: idx === transcriptRows.length - 1 ? "#d8dce6" : "#6a6e7a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.45 }}>
                         {row.text}
                       </span>
                     </div>
@@ -2219,8 +2241,8 @@ RESPONSE RULES:
                         alignItems: "baseline",
                       }}
                     >
-                      <span style={{ fontSize: "0.6rem", color: "#333", fontFamily: "'IBM Plex Mono', monospace" }}>…</span>
-                      <span className="prompter-interim" style={{ fontSize: "0.78rem", fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1.4 }}>
+                      <span style={{ fontSize: "0.65rem", color: "#333", fontFamily: "'DM Sans', sans-serif" }}>…</span>
+                      <span className="prompter-interim" style={{ fontSize: "0.8rem", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.45 }}>
                         {interimText}
                       </span>
                     </div>
@@ -2231,14 +2253,14 @@ RESPONSE RULES:
               {/* ── RIGHT: CO-PILOT FEED ── */}
               <div
                 style={{
-                  background: "#0a0a0a",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderLeft: "2px solid #E8002D",
-                  borderRadius: 3,
+                  background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  borderRadius: 16,
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
                   boxSizing: "border-box",
+                  boxShadow: "inset 6px 6px 14px rgba(0,0,0,0.45), inset -4px -4px 10px rgba(255,255,255,0.02)",
                 }}
               >
                 {/* Panel header */}
@@ -2247,16 +2269,16 @@ RESPONSE RULES:
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    padding: "5px 10px",
-                    borderBottom: "1px solid rgba(255,255,255,0.05)",
-                    background: "#0e0e0e",
+                    padding: "7px 12px",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    background: "rgba(255,255,255,0.02)",
                     flexWrap: "wrap",
                     gap: 6,
                   }}
                 >
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#E8002D", boxShadow: "0 0 5px rgba(232,0,45,0.8)", display: "inline-block", flexShrink: 0 }} />
-                    <span style={{ fontSize: "0.62rem", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#E8002D" }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#9D00FF", boxShadow: "0 0 7px rgba(157,0,255,0.9)", display: "inline-block", flexShrink: 0 }} />
+                    <span style={{ fontSize: "0.68rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "0.04em", color: "#7a7f8e" }}>
                       Co-Pilot Feed
                       {coachingLoading && (
                         <span className="ai-dots">
@@ -2268,12 +2290,23 @@ RESPONSE RULES:
                     </span>
                   </span>
                   <span style={{ display: "inline-flex", gap: 4 }}>
-                    <button type="button" className="objection-copy-btn" onClick={exportReplayScenario}>
-                      REPLAY
-                    </button>
-                    <button type="button" className="objection-copy-btn" onClick={exportFeedbackBundle}>
-                      FEEDBACK
-                    </button>
+                    {[["REPLAY", exportReplayScenario], ["FEEDBACK", exportFeedbackBundle]].map(([label, fn]) => (
+                      <button key={label} type="button" onClick={fn} style={{
+                        background: "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        color: "#666",
+                        borderRadius: 50,
+                        padding: "3px 10px",
+                        fontSize: "0.62rem",
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        letterSpacing: "0.03em",
+                        boxShadow: "2px 2px 5px rgba(0,0,0,0.35), -1px -1px 3px rgba(255,255,255,0.02)",
+                      }}>
+                        {label}
+                      </button>
+                    ))}
                   </span>
                 </div>
 
@@ -2306,11 +2339,12 @@ RESPONSE RULES:
                       <div
                         key={msg.id}
                         style={{
-                          borderBottom: "1px solid rgba(255,255,255,0.04)",
-                          borderLeft: `2px solid ${s.color}`,
+                          margin: "5px 8px",
+                          borderRadius: 10,
                           padding: "8px 10px",
                           animation: "fadeIn 0.2s ease",
-                          background: "#0a0a0a",
+                          background: "rgba(255,255,255,0.028)",
+                          border: "1px solid rgba(255,255,255,0.05)",
                         }}
                       >
                         {/* Row header */}
@@ -2322,7 +2356,7 @@ RESPONSE RULES:
                         </div>
 
                         {/* Message text */}
-                        <div style={{ fontSize: "0.8rem", color: "#d0d0d0", lineHeight: 1.45, fontFamily: "'IBM Plex Mono', monospace" }}>
+                        <div style={{ fontSize: "0.82rem", color: "#c2c7d4", lineHeight: 1.55, fontFamily: "'DM Sans', sans-serif", fontWeight: 400 }}>
                           {msg.text}
                         </div>
 
@@ -2369,17 +2403,21 @@ RESPONSE RULES:
                               onClick={() => setEntryFeedback(msg.id, verdict)}
                               title={verdict.replace(/_/g, " ")}
                               style={{
-                                fontSize: "0.58rem",
-                                borderRadius: 2,
-                                border: msg.feedback?.verdict === verdict ? "1px solid rgba(232,0,45,0.4)" : "1px solid rgba(255,255,255,0.06)",
-                                background: msg.feedback?.verdict === verdict ? "rgba(232,0,45,0.1)" : "rgba(255,255,255,0.02)",
-                                color: msg.feedback?.verdict === verdict ? "#E8002D" : "#555",
-                                padding: "2px 6px",
+                                fontSize: "0.62rem",
+                                borderRadius: 50,
+                                border: msg.feedback?.verdict === verdict
+                                  ? "1px solid rgba(157,0,255,0.4)"
+                                  : "1px solid rgba(255,255,255,0.06)",
+                                background: msg.feedback?.verdict === verdict
+                                  ? "linear-gradient(145deg, rgba(157,0,255,0.18) 0%, rgba(100,0,180,0.12) 100%)"
+                                  : "linear-gradient(145deg, rgba(42,42,50,0.9) 0%, rgba(26,26,32,0.95) 100%)",
+                                color: msg.feedback?.verdict === verdict ? "#B84DFF" : "#555",
+                                padding: "2px 8px",
                                 cursor: "pointer",
-                                fontFamily: "'Barlow Condensed', sans-serif",
-                                letterSpacing: "0.06em",
-                                textTransform: "uppercase",
-                                fontWeight: 700,
+                                fontFamily: "'DM Sans', sans-serif",
+                                fontWeight: 600,
+                                boxShadow: "2px 2px 4px rgba(0,0,0,0.35), -1px -1px 3px rgba(255,255,255,0.018)",
+                                transition: "all 0.12s",
                               }}
                             >
                               {label}
