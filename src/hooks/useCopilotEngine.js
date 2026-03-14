@@ -1,0 +1,940 @@
+import { useState, useRef, useEffect, useCallback } from "react";
+import { SECTION_LABELS } from "../context/scriptReducer";
+import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
+import { useAppAuth } from "../context/AuthContext";
+import {
+  getCmsKnowledgeForQuestion,
+  getCmsKnowledgeForSection,
+} from "../context/CopilotCmsKnowledge";
+import { fetchWithClerk } from "../lib/clerkFetch";
+import { fetchTranscriptReferences } from "../lib/transcriptSearch";
+import {
+  COMPLIANCE_KNOWLEDGE,
+  COACHING_DEBOUNCE_MS,
+  MIN_NEW_CHARS,
+  COOLDOWN_BY_LEVEL,
+  WARN_CONFIDENCE_FLOOR,
+  REMIND_CONFIDENCE_FLOOR,
+  SECTION_SETTLE_MS,
+  HIGH_RISK_KEYWORDS,
+} from "../data/complianceKnowledge";
+
+/* ───────────────────────────────────────────────────────
+   HELPERS
+   ─────────────────────────────────────────────────────── */
+
+function formatSectionDuration(timestamps, sectionNum) {
+  const ts = timestamps?.[sectionNum];
+  if (!ts?.start) return null;
+  const end = ts.end || Date.now();
+  const sec = Math.max(0, Math.round((end - ts.start) / 1000));
+  return `${Math.floor(sec / 60)}m ${sec % 60}s`;
+}
+
+export function buildSectionChecklistState(state, activeSection, unlocked) {
+  const base = {
+    activeSection,
+    currentLabel: SECTION_LABELS[activeSection] || `Section ${activeSection}`,
+    unlocked: {
+      current:
+        activeSection === 2.5
+          ? unlocked.s2_5
+          : unlocked[`s${String(activeSection).replace(".", "_")}`] ?? true,
+    },
+  };
+
+  const sectionConfigs = {
+    1: {
+      gates: { recordingOk: state.recordingOk },
+      fields: { agentName: state.agentName || null },
+    },
+    2: {
+      gates: { recordingOk: state.recordingOk, tpmoOk: state.tpmoOk },
+      fields: {
+        tpmoZip: state.tpmoZip || null,
+        tpmoOrgs: state.tpmoOrgs || null,
+        tpmoPlans: state.tpmoPlans || null,
+      },
+    },
+    2.5: {
+      gates: { tpmoOk: state.tpmoOk, snpOk: state.snpOk },
+      fields: { snpType: state.snpType || null },
+    },
+    3: {
+      gates: {
+        tpmoOk: state.tpmoOk,
+        snpOk: state.snpType ? state.snpOk : null,
+        soaOk: state.soaOk,
+      },
+    },
+    4: {
+      gates: { soaOk: state.soaOk, qualOk: state.qualOk },
+      checklist: state.preEnrollChecks,
+      fields: { snpType: state.snpType || null },
+    },
+    5: {
+      gates: { qualOk: state.qualOk, neadsOk: state.neadsOk },
+      checklist: state.preEnrollChecks,
+    },
+    6: {
+      gates: { neadsOk: state.neadsOk, sobOk: state.sobOk },
+      checklist: state.sobChecks,
+      fields: { partBReduction: state.partBReduction },
+    },
+    7: {
+      gates: { sobOk: state.sobOk, enrollOk: state.enrollOk },
+      checklist: state.enrollChecks,
+      fields: {
+        planName: state.notes.planName || null,
+        effectiveDate: state.notes.effectiveDate || null,
+        enrollmentCode: state.notes.enrollmentCode || null,
+      },
+    },
+    8: {
+      gates: { enrollOk: state.enrollOk },
+      optionalProducts: {
+        hospitalIndemnity: {
+          active: state.hiActive,
+          consentOk: state.hiConsentOk,
+          discussed: state.hiDiscussed,
+        },
+        dentalVision: {
+          active: state.dvActive,
+          consentOk: state.dvConsentOk,
+          discussed: state.dvDiscussed,
+        },
+        finalExpense: {
+          active: state.feActive,
+          consentOk: state.feConsentOk,
+          discussed: state.feDiscussed,
+        },
+      },
+      fields: { confirmation: state.notes.confirmation || null },
+    },
+  };
+
+  return { ...base, ...(sectionConfigs[activeSection] || {}) };
+}
+
+function buildCompletedSectionHistory(state) {
+  const ordered = [
+    [1, "recordingOk"],
+    [2, "tpmoOk"],
+    [2.5, "snpOk"],
+    [3, "soaOk"],
+    [4, "qualOk"],
+    [5, "neadsOk"],
+    [6, "sobOk"],
+    [7, "enrollOk"],
+  ];
+  return ordered
+    .filter(([num, field]) =>
+      num === 2.5 ? state.snpType && state[field] : state[field]
+    )
+    .map(([num, field]) => ({
+      section: num,
+      label: SECTION_LABELS[num],
+      completed: true,
+      duration: formatSectionDuration(state.sectionTimestamps, num),
+      endedAt: state.sectionTimestamps?.[num]?.end || null,
+      field,
+    }))
+    .slice(-3);
+}
+
+function buildDerivedSignals(state, activeSection, transcript, recentInterventions) {
+  const recentText = transcript.toLowerCase();
+  const currentTs = state.sectionTimestamps?.[activeSection] || {};
+
+  return {
+    transcriptLikelyStartedMidCall: Boolean(
+      activeSection > 1 || recentInterventions.length > 0
+    ),
+    transcriptLikelyStartedMidSection: Boolean(
+      currentTs.start && transcript.length > 0 && !currentTs.end
+    ),
+    agentMovedPastCurrentSection:
+      activeSection === 1 ? state.tpmoOk
+        : activeSection === 2 ? state.soaOk || state.snpOk
+        : activeSection === 2.5 ? state.soaOk
+        : activeSection === 3 ? state.qualOk
+        : activeSection === 4 ? state.neadsOk
+        : activeSection === 5 ? state.sobOk
+        : activeSection === 6 ? state.enrollOk
+        : activeSection === 7
+          ? Boolean(state.notes.confirmation || state.hiActive || state.dvActive || state.feActive)
+        : false,
+    timeInSectionMs: currentTs.start ? Date.now() - currentTs.start : 0,
+    likelyCoveredByParaphrase: {
+      tpmoCore:
+        recentText.includes("don't represent every plan") ||
+        recentText.includes("do not offer every plan"),
+      recordingConsent:
+        recentText.includes("recorded line") ||
+        recentText.includes("recorded for quality") ||
+        recentText.includes("okay if i continue") ||
+        recentText.includes("ok if i continue"),
+    },
+    planDataEntered: Boolean(state.notes.planName || state.notes.effectiveDate),
+    enrollmentIdEntered: Boolean(state.notes.enrollmentCode),
+    confirmationEntered: Boolean(state.notes.confirmation),
+  };
+}
+
+function normalizeIssueTag(tag) {
+  return (tag || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_ -]/g, "")
+    .replace(/[\s-]+/g, "_")
+    .slice(0, 64);
+}
+
+function shouldSuppressDuplicateIssue(messages, section, issueTag) {
+  if (!issueTag) return false;
+  return messages.some(
+    (entry) =>
+      entry.issueTag === issueTag &&
+      entry.section === section &&
+      (entry.level === "warn" || entry.level === "critical" || entry.level === "remind")
+  );
+}
+
+function isHighRiskIntervention(issueTag, message) {
+  const haystack = `${issueTag || ""} ${message || ""}`.toLowerCase();
+  return HIGH_RISK_KEYWORDS.some((kw) => haystack.includes(kw));
+}
+
+function shouldSuppressForNuance({ level, issueTag, message, derivedSignals }) {
+  if (level !== "warn" && level !== "remind") return false;
+  if (isHighRiskIntervention(issueTag, message)) return false;
+
+  // Time-based suppression: only suppress if agent hasn't been in section long enough
+  // AND hasn't moved past. This replaces the old gate-only check.
+  const timeInSection = derivedSignals?.timeInSectionMs || 0;
+  const pastSection = derivedSignals?.agentMovedPastCurrentSection;
+
+  if (!pastSection && timeInSection < SECTION_SETTLE_MS) return true;
+
+  const tag = (issueTag || "").toLowerCase();
+  if (tag.includes("tpmo") && derivedSignals?.likelyCoveredByParaphrase?.tpmoCore) return true;
+  if (
+    (tag.includes("record") || tag.includes("consent")) &&
+    derivedSignals?.likelyCoveredByParaphrase?.recordingConsent
+  ) return true;
+
+  return false;
+}
+
+/* ───────────────────────────────────────────────────────
+   PROMPT BUILDERS
+   ─────────────────────────────────────────────────────── */
+
+function buildComplianceContext(knowledge) {
+  if (!knowledge) return "";
+  return `
+════════════════════════════════════════════════════════
+SECTION-SPECIFIC COMPLIANCE INTELLIGENCE
+════════════════════════════════════════════════════════
+
+VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING (or close paraphrases — speech recognition may garble words slightly):
+${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
+
+KEY PHRASES TO LISTEN FOR (if you hear these or close synonyms/paraphrases in the transcript, the agent IS covering the requirement — give them credit):
+${knowledge.keyPhrasesToListenFor.map((p) => `  • "${p}"`).join("\n")}
+
+REQUIRED COMPLIANCE ELEMENTS — every one of these MUST be covered in this section:
+${knowledge.requiredElements.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
+
+COMMON AGENT MISTAKES IN THIS SECTION (watch for these):
+${knowledge.commonMistakes.map((m) => `  ⚠ ${m}`).join("\n")}
+
+RED FLAGS — IF YOU DETECT ANY OF THESE, INTERVENE IMMEDIATELY (warn or critical):
+${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
+`;
+}
+
+function buildCoachingSystemPrompt({
+  sectionKey,
+  knowledge,
+  flowOrder,
+  cmsBlock,
+  transcriptRefBlock,
+  recentInterventionText,
+  copilotContextJson,
+  sectionEntry,
+}) {
+  const complianceContext = buildComplianceContext(knowledge);
+
+  return `You are an expert CMS Medicare enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required disclosure, or something the agent needs to correct RIGHT NOW.
+
+════════════════════════════════════════════════════════
+CRITICAL AUDIO CONSTRAINT — THIS IS NON-NEGOTIABLE
+════════════════════════════════════════════════════════
+You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words captured through their microphone. You have ZERO access to what the client/beneficiary says, asks, confirms, or agrees to.
+
+IMPLICATIONS — read carefully:
+- Evaluate compliance ONLY based on what the AGENT said or failed to say
+- When the agent repeats/confirms information ("So your Part B started March 2010..."), that tells you what the client likely said — grade the AGENT's handling, not the client's responses
+- NEVER say "the client didn't give consent" or "the client didn't confirm" — YOU CANNOT HEAR THE CLIENT
+- DO say "I didn't hear you ask for their verbal consent" or "Make sure you read the disclosure"
+- When the agent reads back information, confirms details, or paraphrases — that's GOOD compliance behavior. Acknowledge it by referencing their specific words.
+- Speech recognition is imperfect. Words may be garbled, truncated, or slightly wrong. If something SOUNDS CLOSE ENOUGH to a required phrase, GIVE THE AGENT CREDIT. Don't flag something as missing just because a word or two was garbled. Use semantic matching, not exact text matching.
+- The agent may have started speaking with the beneficiary BEFORE pressing record or before this transcript segment began. That means earlier required lines may have happened off-transcript. Absence in the visible transcript is NOT proof they were skipped.
+- Because the transcript may begin mid-call or mid-section, do NOT assume the first visible line is the true start of the section. Only warn when the agent is clearly moving forward without covering something, not merely because you did not hear the opening.
+
+════════════════════════════════════════════════════════
+CURRENT SECTION: "${sectionKey}"
+════════════════════════════════════════════════════════
+FULL FLOW REFERENCE:
+${flowOrder}
+
+${complianceContext}
+${cmsBlock}
+${transcriptRefBlock}
+${recentInterventionText ? `════════════════════════════════════════════════════════
+RECENT PRIOR INTERVENTIONS — DO NOT REPEAT THESE UNLESS THERE IS SUBSTANTIAL NEW CONTENT AND THE ISSUE STILL CLEARLY REMAINS:
+════════════════════════════════════════════════════════
+${recentInterventionText}
+` : ""}
+════════════════════════════════════════════════════════
+STRUCTURED CALL CONTEXT — TREAT THIS AS RELIABLE APP STATE
+════════════════════════════════════════════════════════
+${copilotContextJson}
+
+HOW TO USE THIS CONTEXT:
+- Inspect sectionChecklistState to see exactly which checklist items are complete vs. pending for the current section. If an item is marked complete, do NOT warn that it is missing. If an item is still pending and the agent appears to be moving on, flag it.
+- Use derivedSignals to detect broader patterns: pacing issues, repeated missed items, sections completed out of order, or unusual call progression.
+- Use priorCompletedSections to understand what the agent has already finished — do not accuse them of missing something from a completed section.
+- If callMetadata.agentName is null, the agent has not entered their name. Mention this once as a tip if a natural opportunity arises — do not force it.
+
+════════════════════════════════════════════════════════
+EMPTY OR SPARSE TRANSCRIPT:
+════════════════════════════════════════════════════════
+If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
+
+════════════════════════════════════════════════════════
+YOUR ROLE: SILENT COMPLIANCE SAFETY NET
+════════════════════════════════════════════════════════
+
+DEFAULT STATE: SILENT. You are monitoring, not commentating. You do NOT need to respond to every transcript update. Silence means everything is fine.
+
+ONLY break silence for:
+
+1. **COMPLIANCE VIOLATION (critical)**: Agent said something non-compliant, made an illegal claim, or violated CMS rules. Quote what they said and provide the exact correction.
+
+2. **MISSED REQUIRED DISCLOSURE (warn)**: Use this ONLY with high confidence. Agent must be clearly moving forward, the element must be materially missing, and the transcript must not contain a close paraphrase. Name the specific element missed and give the exact script language to say now.
+
+3. **IMPORTANT REMINDER (remind)**: Use sparingly. Agent is clearly near transition and a key element is still likely uncovered. If uncertain, choose silent.
+
+4. **POSITIVE REINFORCEMENT (tip)**: Agent nailed a critical compliance element exceptionally well. ONLY use this occasionally (once every few minutes at most). MUST reference the SPECIFIC words or disclosure the agent said well and WHY it matters for compliance.
+
+5. **SILENCE (silent)**: Agent is doing fine, covering requirements correctly, or there's nothing actionable to say. THIS IS YOUR DEFAULT. Use this 70-80% of the time. When in doubt, choose silent.
+
+PRIORITY WEIGHTING:
+- Prioritize risky language and compliance-danger behaviors over missing-word disclosure checks.
+- Do not escalate on technical wording misses if the semantic intent appears covered.
+
+════════════════════════════════════════════════════════
+RESPONSE QUALITY REQUIREMENTS
+════════════════════════════════════════════════════════
+
+Every non-silent response MUST:
+- QUOTE or PARAPHRASE the agent's actual words from the transcript (e.g., "When you said '...'", "You mentioned '...'", "I heard you say '...'")
+- Be SPECIFIC to this exact moment in the call — never generic
+- For warn/critical: State WHAT was missed or wrong, WHY it's a compliance issue (reference CMS if relevant), and provide the EXACT SCRIPT LANGUAGE to say right now to fix it (2-4 sentences)
+- For remind: State what hasn't been covered yet and give the exact words to say (1-2 sentences)
+- For tip: Name the specific disclosure or phrase that was handled well and why CMS cares about it (1-2 sentences)
+- If you use transcript references, include bracket citations like [R1] or [R2] at the end of the message
+
+CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
+- Do NOT claim the agent "skipped an entire section" just because the transcript is limited. Speech recognition only captures what it picks up. If the agent IS in the right section and IS talking about relevant topics, they are likely covering the requirements.
+- Do NOT flag individual words as missing if the agent's overall message semantically covers the requirement. "We don't represent every plan out there" covers "We do not offer every plan available in your area."
+- Do NOT repeatedly flag the same issue. If you already warned about something, don't warn again unless the agent has said significant new content and still hasn't addressed it.
+- ALWAYS look at the full context of the transcript before deciding something was missed. The agent may have covered it earlier in the transcript.
+- Before issuing a warn/remind, ask yourself: "Could this have happened before recording started or before this transcript chunk began?" If yes, bias toward silence unless the agent is clearly advancing past the requirement right now.
+- Prefer one high-quality intervention over multiple repetitive ones. Rewording the same warning is still repetition and should be avoided.
+- Use the structured checklist state to identify the exact unresolved item when possible. If app state says an item is already complete, do not warn that it is missing unless the transcript shows a clear contradiction.
+- Use prior completed sections and call metadata to understand progression. If a later section is already completed in app state, do not accuse the agent of still being stuck on an earlier section.
+- When you intervene, target the smallest missing piece, not a whole section, unless the whole section is clearly absent.
+- Anchor interventions to the CURRENT call moment: reference what the agent is saying now and the current section's state instead of generic section reminders.
+
+════════════════════════════════════════════════════════
+RESPONSE FORMAT
+════════════════════════════════════════════════════════
+Respond with ONLY a valid JSON object — no backticks, no wrapper text, no extra content outside the JSON. Your message field may use plain text only (no bold, no bullet points, no markdown — the UI renders plain text):
+{
+  "level": "silent | tip | remind | warn | critical",
+  "issue_tag": "short_snake_case_issue_tag_or_empty_if_silent_or_tip",
+  "confidence": 0,
+  "message": "Your message here. Empty string if silent."
+}`;
+}
+
+function buildAskSystemPrompt({ sectionKey, knowledge, cmsBlock, transcriptRefBlock, recentTranscript, copilotContextJson, isSpoken }) {
+  let sectionContext = "";
+  if (knowledge) {
+    sectionContext = `\nCurrent section: "${sectionKey}"\nRequired elements:\n${knowledge.requiredElements.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n`;
+  }
+
+  return `You are a knowledgeable Medicare compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer to their question.
+${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting their microphone (customer cannot hear). Answer it directly and concisely." : ""}
+CRITICAL CONTEXT:
+- You can ONLY hear the AGENT speaking (not the client)
+- The agent is currently in the "${sectionKey}" section of the enrollment flow
+- They need a fast, practical answer they can use RIGHT NOW on this call
+${sectionContext}
+${cmsBlock}
+${transcriptRefBlock}
+${recentTranscript ? `\nRecent agent transcript for context:\n"${recentTranscript.slice(-1000)}"\n` : ""}
+Structured app context:
+${copilotContextJson}
+
+YOUR CAPABILITIES — you can answer questions about:
+- CMS compliance rules and requirements for Medicare enrollment calls
+- Medicare Advantage plan details, benefits, and eligibility
+- Medication coverage, formulary questions, drug tiers
+- Provider network status and how to verify
+- Enrollment periods (AEP, OEP, SEP) and eligibility rules
+- Dual-eligible (DSNP), chronic condition (CSNP) requirements
+- Part B premium reduction / giveback rules
+- Scope of Appointment and TPMO requirements
+- What to say in specific situations (objection handling, compliance language)
+- Disqualifying coverage types (TRICARE for Life, CHAMPVA, employer coverage)
+- How to handle specific client scenarios
+
+SCOPE RULE: If the question is not directly relevant to the current section or enrollment flow, answer it briefly and then redirect the agent back to completing the current section. Example: "Quick answer: [answer]. You're currently in ${sectionKey} — make sure to cover [key remaining item] before moving on."
+
+STRUCTURED CONTEXT USAGE:
+- Check sectionChecklistState for exactly what is complete and pending in the current section.
+- Use derivedSignals to understand call progression and any flagged patterns.
+- If callMetadata.agentName is null, note once that the agent should enter their name in settings.
+
+EMPTY TRANSCRIPT: If no transcript is available, answer based on the agent's question and current section context only. Do not speculate about what was or wasn't said on the call.
+
+RESPONSE RULES:
+- Keep answers concise and actionable — the agent is on a live call
+- If providing script language, put it in quotes so the agent can read it directly
+- If you don't know something specific (like a particular plan's formulary), say so and suggest where to check (Sunfire, carrier website, etc.)
+- Always prioritize CMS compliance in your answers
+- If transcript references are provided, cite them inline as [R1], [R2], etc.
+- Minimize markdown in your response — avoid heavy formatting. Short bullet lists are acceptable when listing multiple items, but prefer plain sentences for single-point answers.`;
+}
+
+/* ───────────────────────────────────────────────────────
+   THE HOOK
+   ─────────────────────────────────────────────────────── */
+
+export function useCopilotEngine({
+  transcriptRef,
+  activeSection,
+  state,
+  unlocked,
+  preEnrollAllDone,
+  sobAllDone,
+  enrollAllDone,
+  enrollmentCodeOk,
+}) {
+  const currentStep = SECTION_LABELS[activeSection] || `Section ${activeSection}`;
+  const { logEntry, setEntryFeedback, exportFeedbackDataset, entries } = useCopilotLog();
+  const { getToken } = useAppAuth();
+
+  // Feed state
+  const [messages, setMessages] = useState([]);
+  const [coachingLoading, setCoachingLoading] = useState(false);
+  const [askLoading, setAskLoading] = useState(false);
+  const [floatingAlert, setFloatingAlert] = useState(null);
+  const [askQuestion, setAskQuestion] = useState("");
+
+  // Refs
+  const debounceRef = useRef(null);
+  const floatTimeout = useRef(null);
+  const feedRef = useRef(null);
+  const lastCoachingTime = useRef(0);
+  const lastAnalyzedLength = useRef(0);
+  const lastInterventionLevel = useRef("silent");
+  const sectionTranscriptStartRef = useRef(0);
+  const sectionCopilotFiredRef = useRef(new Set());
+  const sectionEntryTimerRef = useRef(null);
+  const prevSectionRef = useRef(activeSection);
+  const abortRef = useRef(null); // AbortController for in-flight requests
+
+  // Reset section transcript window on section change
+  useEffect(() => {
+    sectionTranscriptStartRef.current = transcriptRef.current.length;
+  }, [activeSection, transcriptRef]);
+
+  // Auto-scroll feed
+  useEffect(() => {
+    if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
+  }, [messages]);
+
+  // Show floating alert
+  const showFloat = useCallback((level, text) => {
+    if (level !== "warn" && level !== "critical") return;
+    clearTimeout(floatTimeout.current);
+    setFloatingAlert({ level, text });
+    logEntry(LOG_TYPES.FLOATING_ALERT, level, text, { section: currentStep });
+    floatTimeout.current = setTimeout(
+      () => setFloatingAlert(null),
+      level === "critical" ? 10000 : 6000
+    );
+  }, [logEntry, currentStep]);
+
+  // Push entry to feed
+  const pushFeedEntry = useCallback((level, text, extra = {}) => {
+    const entry = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      level,
+      text,
+      ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      ...extra,
+    };
+    setMessages((prev) => [...prev.slice(-19), entry]);
+    if (!extra.skipLog) {
+      logEntry(LOG_TYPES.COPILOT_MSG, level, text, {
+        section: extra.section || currentStep,
+        issueTag: extra.issueTag || "",
+        contextSnapshot: extra.contextSnapshot,
+        retrievalTrace: extra.retrievalTrace,
+      });
+    }
+    return entry;
+  }, [currentStep, logEntry]);
+
+  // Build shared copilot context object
+  const buildCopilotContext = useCallback((recentInterventions) => {
+    return {
+      currentSection: { number: activeSection, label: currentStep },
+      callMetadata: {
+        agentName: state.agentName || null,
+        snpType: state.snpType || null,
+        tpmoZip: state.tpmoZip || null,
+        tpmoOrgs: state.tpmoOrgs || null,
+        tpmoPlans: state.tpmoPlans || null,
+        partBReduction: state.partBReduction,
+        planName: state.notes.planName || null,
+        effectiveDate: state.notes.effectiveDate || null,
+        enrollmentCode: state.notes.enrollmentCode || null,
+        confirmation: state.notes.confirmation || null,
+      },
+      sectionChecklistState: buildSectionChecklistState(state, activeSection, unlocked),
+      priorCompletedSections: buildCompletedSectionHistory(state),
+      recentInterventions: recentInterventions.map((e) => ({
+        level: e.level,
+        text: e.text,
+        issueTag: e.issueTag || "",
+        time: e.ts,
+      })),
+      derivedSignals: buildDerivedSignals(
+        state,
+        activeSection,
+        transcriptRef.current.trim(),
+        recentInterventions
+      ),
+    };
+  }, [activeSection, currentStep, state, unlocked, transcriptRef]);
+
+  /* ═══════ COACHING — real-time compliance monitor ═══════ */
+  const requestCoaching = useCallback(async ({ manual = false, sectionEntry = false } = {}) => {
+    const fullTranscript = transcriptRef.current.trim();
+    if (!fullTranscript || coachingLoading) {
+      if (manual && !coachingLoading) {
+        pushFeedEntry("info", "Analyze skipped. Start the transcript first so there is something to review.", { section: currentStep });
+      }
+      return;
+    }
+
+    const knowledge = COMPLIANCE_KNOWLEDGE[currentStep] || null;
+
+    // Gates (bypassed for section entry)
+    if (!sectionEntry) {
+      const now = Date.now();
+      const cooldown = COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
+      if (now - lastCoachingTime.current < cooldown) {
+        if (manual) {
+          pushFeedEntry("info", `Analyze skipped. Co-Pilot is in cooldown for another ${Math.ceil((cooldown - (now - lastCoachingTime.current)) / 1000)}s.`, { section: currentStep });
+        }
+        return;
+      }
+      const newChars = fullTranscript.length - lastAnalyzedLength.current;
+      if (newChars < MIN_NEW_CHARS) {
+        if (manual) {
+          pushFeedEntry("info", `Analyze skipped. Need at least ${MIN_NEW_CHARS} new characters since the last run; only ${Math.max(0, newChars)} are available.`, { section: currentStep });
+        }
+        return;
+      }
+    }
+
+    // Cancel any in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const previousAnalyzedLength = lastAnalyzedLength.current;
+    setCoachingLoading(true);
+    lastAnalyzedLength.current = fullTranscript.length;
+
+    const sectionKey = currentStep;
+    const flowOrder = Object.values(SECTION_LABELS).join(" -> ");
+    const recentInterventions = messages
+      .filter((e) => e.level === "warn" || e.level === "critical" || e.level === "remind")
+      .slice(-3);
+
+    const recentInterventionText = recentInterventions
+      .map((e, i) => `${i + 1}. [${e.level}] ${e.text.replace(/\s+/g, " ").slice(0, 220)}`)
+      .join("\n");
+
+    const sectionTranscript = fullTranscript.slice(sectionTranscriptStartRef.current) || fullTranscript.slice(-1400);
+    const transcriptCurrentWindow = sectionTranscript.length > 200 ? sectionTranscript : fullTranscript.slice(-1400);
+    const transcriptSinceLastAnalysis = fullTranscript.slice(Math.max(0, previousAnalyzedLength - 800)).trim();
+
+    const copilotContext = buildCopilotContext(recentInterventions);
+    const derivedSignals = copilotContext.derivedSignals;
+
+    // Fetch CMS knowledge + transcript references
+    const cmsKnowledge = getCmsKnowledgeForSection(sectionKey, copilotContext);
+    let transcriptReferenceResult = { results: [], contextBlock: "", sources: [], error: null };
+    try {
+      transcriptReferenceResult = await fetchTranscriptReferences({
+        getToken,
+        query: transcriptCurrentWindow,
+        productLine: "MA",
+        matchCount: 5,
+        similarityThreshold: 0.72,
+      });
+    } catch { /* non-critical */ }
+
+    if (controller.signal.aborted) { setCoachingLoading(false); return; }
+
+    const retrievalTrace = {
+      topics: cmsKnowledge.topics.map((t) => t.id),
+      scenarios: cmsKnowledge.scenarios.map((s) => s.id),
+      sources: [
+        ...cmsKnowledge.sources.map((s) => `cms:${s.id}`),
+        ...transcriptReferenceResult.sources.map((s) => `call:${s}`),
+      ],
+      transcriptReferenceCount: transcriptReferenceResult.results.length,
+      transcriptReferenceError: transcriptReferenceResult.error || null,
+    };
+
+    const systemPrompt = buildCoachingSystemPrompt({
+      sectionKey,
+      knowledge,
+      flowOrder,
+      cmsBlock: cmsKnowledge.promptBlock,
+      transcriptRefBlock: transcriptReferenceResult.contextBlock,
+      recentInterventionText,
+      copilotContextJson: JSON.stringify(copilotContext, null, 2),
+      sectionEntry,
+    });
+
+    const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words appear below. Speech recognition may have minor transcription errors.)
+${sectionEntry ? `
+SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" section. This is your first look at this section. Provide a brief "info" level response: summarize the 2-3 most important compliance items to cover in this section, note any issues you see so far in the transcript, and give a short status. Keep it to 2-3 sentences. Use level "info" unless you spot an actual compliance issue. Do NOT return silent for a section entry analysis.
+` : ""}
+TRANSCRIPT WINDOW — MOST RECENT:
+"${transcriptCurrentWindow}"
+
+TRANSCRIPT WINDOW — SINCE LAST ANALYSIS:
+"${transcriptSinceLastAnalysis || transcriptCurrentWindow}"
+
+FULL TRANSCRIPT TAIL:
+"${fullTranscript.slice(-2500)}"`;
+
+    try {
+      const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 500,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userContent }],
+        }),
+        signal: controller.signal,
+      });
+
+      if (controller.signal.aborted) { setCoachingLoading(false); return; }
+
+      const data = await response.json();
+      const raw = data.content?.map((b) => (b.type === "text" ? b.text : "")).filter(Boolean).join("").trim();
+
+      let level = "info", message = "", issueTag = "", confidence = null;
+      try {
+        const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+        level = parsed.level || "info";
+        message = parsed.message || "";
+        const parsedConf = Number(parsed.confidence);
+        confidence = Number.isFinite(parsedConf) ? parsedConf : null;
+        issueTag = normalizeIssueTag(parsed.issue_tag) || normalizeIssueTag(message.split(/[.:!?]/)[0]);
+      } catch {
+        message = raw || "";
+        issueTag = normalizeIssueTag(message.split(/[.:!?]/)[0]);
+      }
+
+      // Silent or empty
+      if (level === "silent" || !message || !message.trim()) {
+        lastCoachingTime.current = Date.now();
+        lastInterventionLevel.current = "silent";
+        sectionCopilotFiredRef.current.add(activeSection);
+        if (manual || sectionEntry) {
+          pushFeedEntry(
+            "info",
+            sectionEntry
+              ? `Entered "${sectionKey}". ${knowledge ? `Key items: ${knowledge.requiredElements.slice(0, 3).join(", ")}. ` : ""}No issues detected so far.`
+              : "Analyze complete. No actionable compliance issues were found in the current transcript window.",
+            { section: currentStep, retrievalTrace }
+          );
+        }
+        setCoachingLoading(false);
+        return;
+      }
+
+      // Suppression checks
+      if (
+        (level === "warn" || level === "critical" || level === "remind") &&
+        shouldSuppressDuplicateIssue(messages, currentStep, issueTag)
+      ) {
+        lastCoachingTime.current = Date.now();
+        if (manual) pushFeedEntry("info", "Analyze complete. The issue found matches a recent co-pilot warning, so it was not repeated.", { section: currentStep, issueTag, retrievalTrace });
+        setCoachingLoading(false);
+        return;
+      }
+
+      if (
+        (level === "warn" || level === "remind") &&
+        shouldSuppressForNuance({ level, issueTag, message, derivedSignals })
+      ) {
+        lastCoachingTime.current = Date.now();
+        if (manual) pushFeedEntry("info", "Analyze complete. A possible warning was suppressed because the transcript context was too ambiguous to justify a new alert.", { section: currentStep, issueTag, retrievalTrace });
+        setCoachingLoading(false);
+        return;
+      }
+
+      if (level === "warn" && confidence !== null && confidence < WARN_CONFIDENCE_FLOOR) {
+        lastCoachingTime.current = Date.now();
+        if (manual) pushFeedEntry("info", "Analyze complete. A possible warning was below the confidence threshold, so Co-Pilot stayed quiet.", { section: currentStep, issueTag, retrievalTrace });
+        setCoachingLoading(false);
+        return;
+      }
+
+      if (level === "remind" && confidence !== null && confidence < REMIND_CONFIDENCE_FLOOR) {
+        lastCoachingTime.current = Date.now();
+        if (manual) pushFeedEntry("info", "Analyze complete. A reminder candidate was below the confidence threshold, so Co-Pilot stayed quiet.", { section: currentStep, issueTag, retrievalTrace });
+        setCoachingLoading(false);
+        return;
+      }
+
+      // Deliver intervention
+      lastCoachingTime.current = Date.now();
+      lastInterventionLevel.current = level;
+      sectionCopilotFiredRef.current.add(activeSection);
+      pushFeedEntry(level, message, { issueTag, section: currentStep, contextSnapshot: copilotContext, retrievalTrace });
+      showFloat(level, message);
+    } catch (err) {
+      if (err.name === "AbortError") { setCoachingLoading(false); return; }
+      console.error("Coaching API error:", err);
+      if (manual) pushFeedEntry("info", "Analyze failed. Co-Pilot could not reach the coaching service right now.", { section: currentStep });
+    } finally {
+      setCoachingLoading(false);
+    }
+  }, [
+    activeSection,
+    currentStep,
+    coachingLoading,
+    showFloat,
+    pushFeedEntry,
+    buildCopilotContext,
+    getToken,
+    messages,
+    state,
+    unlocked,
+    transcriptRef,
+    preEnrollAllDone,
+    sobAllDone,
+    enrollAllDone,
+    enrollmentCodeOk,
+  ]);
+
+  /* ═══════ ASK CO-PILOT — typed or spoken question ═══════ */
+  const askCopilot = useCallback(async (spokenQuestion) => {
+    const isSpoken = typeof spokenQuestion === "string";
+    const question = isSpoken ? spokenQuestion.trim() : askQuestion.trim();
+    if (!question || askLoading) return;
+
+    setAskLoading(true);
+    if (isSpoken) setAskQuestion(question); // show it in the input
+
+    // Cancel any in-flight coaching to avoid overlap
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const sectionKey = currentStep;
+    const knowledge = COMPLIANCE_KNOWLEDGE[sectionKey] || null;
+    const recentTranscript = transcriptRef.current.trim().slice(-1500);
+    const recentInterventions = messages
+      .filter((e) => e.level === "warn" || e.level === "critical" || e.level === "remind")
+      .slice(-4);
+    const copilotContext = buildCopilotContext(recentInterventions);
+
+    copilotContext.transcriptWindows = {
+      currentWindow: recentTranscript,
+      fullTranscriptTail: transcriptRef.current.trim().slice(-2500),
+    };
+
+    const cmsKnowledge = getCmsKnowledgeForQuestion(sectionKey, question, copilotContext);
+
+    let transcriptReferenceResult = { results: [], contextBlock: "", sources: [], error: null };
+    try {
+      transcriptReferenceResult = await fetchTranscriptReferences({
+        getToken,
+        query: [question, recentTranscript].filter(Boolean).join("\n\n"),
+        productLine: "MA",
+        matchCount: 5,
+        similarityThreshold: 0.7,
+      });
+    } catch { /* non-critical */ }
+
+    if (controller.signal.aborted) { setAskLoading(false); return; }
+
+    const retrievalTrace = {
+      topics: cmsKnowledge.topics.map((t) => t.id),
+      scenarios: cmsKnowledge.scenarios.map((s) => s.id),
+      sources: [
+        ...cmsKnowledge.sources.map((s) => `cms:${s.id}`),
+        ...transcriptReferenceResult.sources.map((s) => `call:${s}`),
+      ],
+      transcriptReferenceCount: transcriptReferenceResult.results.length,
+      transcriptReferenceError: transcriptReferenceResult.error || null,
+    };
+
+    const systemPrompt = buildAskSystemPrompt({
+      sectionKey,
+      knowledge,
+      cmsBlock: cmsKnowledge.promptBlock,
+      transcriptRefBlock: transcriptReferenceResult.contextBlock,
+      recentTranscript,
+      copilotContextJson: JSON.stringify(copilotContext, null, 2),
+      isSpoken,
+    });
+
+    try {
+      const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 500,
+          system: systemPrompt,
+          messages: [{ role: "user", content: question }],
+        }),
+        signal: controller.signal,
+      });
+
+      if (controller.signal.aborted) { setAskLoading(false); return; }
+
+      const data = await response.json();
+      const raw = data.content?.map((b) => (b.type === "text" ? b.text : "")).filter(Boolean).join("").trim();
+
+      if (raw) {
+        const prefix = isSpoken ? `🎙 "${question}"` : `❓ ${question}`;
+        const entry = {
+          id: Date.now(),
+          level: "info",
+          text: `${prefix}\n\n${raw}`,
+          retrievalTrace,
+          ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev.slice(-19), entry]);
+        logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, {
+          section: currentStep,
+          contextSnapshot: copilotContext,
+          retrievalTrace,
+        });
+      }
+      setAskQuestion("");
+    } catch (err) {
+      if (err.name === "AbortError") { setAskLoading(false); return; }
+      console.error("Ask Co-Pilot error:", err);
+    } finally {
+      setAskLoading(false);
+    }
+  }, [
+    askQuestion,
+    askLoading,
+    currentStep,
+    logEntry,
+    getToken,
+    activeSection,
+    messages,
+    state,
+    unlocked,
+    buildCopilotContext,
+    transcriptRef,
+  ]);
+
+  /* ═══════ Section-entry auto-analysis ═══════ */
+  useEffect(() => {
+    if (prevSectionRef.current === activeSection) return;
+    prevSectionRef.current = activeSection;
+    clearTimeout(sectionEntryTimerRef.current);
+    sectionEntryTimerRef.current = setTimeout(() => {
+      if (!sectionCopilotFiredRef.current.has(activeSection) && transcriptRef.current.trim().length > 0) {
+        requestCoaching({ manual: false, sectionEntry: true });
+      }
+    }, 12000);
+    return () => clearTimeout(sectionEntryTimerRef.current);
+  }, [activeSection, requestCoaching, transcriptRef]);
+
+  /* ═══════ Debounced coaching trigger ═══════ */
+  const scheduleCoaching = useCallback(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => requestCoaching(), COACHING_DEBOUNCE_MS);
+  }, [requestCoaching]);
+
+  /* ═══════ Clear everything ═══════ */
+  const clearFeed = useCallback(() => {
+    setMessages([]);
+    setFloatingAlert(null);
+    lastCoachingTime.current = 0;
+    lastAnalyzedLength.current = 0;
+    abortRef.current?.abort();
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => () => {
+    clearTimeout(debounceRef.current);
+    clearTimeout(floatTimeout.current);
+    clearTimeout(sectionEntryTimerRef.current);
+    abortRef.current?.abort();
+  }, []);
+
+  return {
+    // State
+    messages,
+    coachingLoading,
+    askLoading,
+    floatingAlert,
+    setFloatingAlert,
+    askQuestion,
+    setAskQuestion,
+    feedRef,
+    currentStep,
+
+    // Actions
+    requestCoaching,
+    askCopilot,
+    scheduleCoaching,
+    clearFeed,
+    pushFeedEntry,
+
+    // From log context (pass through)
+    setEntryFeedback,
+    exportFeedbackDataset,
+    logEntry,
+    entries,
+  };
+}

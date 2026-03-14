@@ -6,7 +6,18 @@
       "Bash(grep:*)",
       "Bash(git add src/components/EnrollGenLogo.jsx src/components/ScriptPrompter.jsx src/styles.css && git commit -m \"$\\(cat <<'EOF'\nUI polish: premium tabs, Co-Pilot spinner, command module logo\n\n- Top nav tabs: layered gunmetal gradient base, segmented column dividers,\n  active state with red top-bar glow, inset shadow depth, and neon text-shadow\n  so the selected tab locks in visually; hover brightens border and text\n- Co-Pilot feed: circular HUD spinner \\(copilot-spinner\\) appears while\n  coachingLoading or askLoading is true, hides on response; red neon arc\n  with box-shadow glow and pulsing label\n- EnrollGenLogo: animated scanline sweep and subtle pulsing red status glow\n  give the title block a command-module / tactical HUD feel\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git push origin main)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git push:*)",
+      "Bash(npm run:*)",
+      "WebSearch",
+      "Bash(node -e \"\nconst fs = require\\('fs'\\);\nconst src = fs.readFileSync\\('src/components/CarrierRef.jsx', 'utf8'\\);\nlet b=0, p=0, s=0;\nfor \\(const c of src\\) {\n  if \\(c==='{'\\) b++; if \\(c==='}'\\) b--;\n  if \\(c==='\\('\\) p++; if \\(c==='\\)'\\) p--;\n  if \\(c==='['\\) s++; if \\(c===']'\\) s--;\n  if \\(b<0||p<0||s<0\\) { console.log\\('NEGATIVE at', c\\); break; }\n}\nconsole.log\\('Braces:', b, 'Parens:', p, 'Brackets:', s\\);\nconsole.log\\(b===0&&p===0&&s===0 ? 'BALANCED' : 'IMBALANCED'\\);\nconsole.log\\('Lines:', src.split\\('\\\\n'\\).length\\);\n\")",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:unpkg.com)",
+      "Bash(curl -sL \"https://cdn.jsdelivr.net/npm/@svg-maps/usa@1.0.1/index.js\" -o /tmp/usa-map.js)",
+      "Read(//tmp/**)",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/jgoodall/us-maps/refs/heads/master/geojson/us-states.json\" -o /tmp/us-states.json 2>&1 && wc -c /tmp/us-states.json)",
+      "Bash(curl -sL \"https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json\" -o /tmp/us-topo.json 2>&1 && wc -c /tmp/us-topo.json)",
+      "Bash(cd /tmp && npm install --no-save topojson-client d3-geo 2>&1 | tail -3)"
     ]
   }
 }

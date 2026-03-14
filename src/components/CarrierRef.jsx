@@ -1,508 +1,237 @@
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
+import {
+  STATES,
+  MARKET_SEGMENTS,
+  TOOLS,
+  DATA_VERSION,
+} from "../data/stateCarrierData";
+import STATE_PATHS, { STATE_CENTROIDS } from "../data/usMapPaths";
 
-const STATES = [
-  "AL",
-  "AR",
-  "AZ",
-  "DE",
-  "FL",
-  "GA",
-  "IN",
-  "KS",
-  "KY",
-  "MI",
-  "MO",
-  "MS",
-  "NC",
-  "NJ",
-  "NY",
-  "OH",
-  "PA",
-  "SC",
-  "TN",
-  "TX",
-];
+const ACTIVE = new Set(Object.keys(STATES));
 
-const LINES = [
-  { id: "ACA", label: "ACA", color: "#FFE45C", rgb: "234,179,8" },
-  { id: "MedSup", label: "MED SUP", color: "#39FF88", rgb: "57,255,136" },
-  { id: "U65", label: "U65", color: "#C084FC", rgb: "192,132,252" },
-  { id: "MA", label: "MA", color: "#FF5A5A", rgb: "255,90,90" },
-];
-
-const STATE_MARKETPLACE_DATA = [
-  {
-    state: "AL",
-    name: "Alabama",
-    marketplace: "HealthCare.gov",
-    carriers: ["Blue Cross and Blue Shield of Alabama", "UnitedHealthcare", "Celtic / Ambetter", "Oscar Health"],
-    notes: "Oscar is new for 2026; Aetna exited after 2025.",
-    source: "https://www.healthinsurance.org/aca-marketplace/alabama/",
-  },
-  {
-    state: "AR",
-    name: "Arkansas",
-    marketplace: "HealthCare.gov (SBE-FP)",
-    carriers: ["Celtic Insurance Company (Ambetter)", "HMO Partners (Health Advantage)", "QCA Health Plan", "QualChoice Life and Health", "USAble Mutual (AR Blue Cross & Blue Shield)", "USAble HMO (Octave)"],
-    notes: "Six marketplace issuers continue for 2026.",
-    source: "https://www.healthinsurance.org/aca-marketplace/arkansas/",
-  },
-  {
-    state: "AZ",
-    name: "Arizona",
-    marketplace: "HealthCare.gov",
-    carriers: ["Cigna HealthCare of AZ", "Blue Cross Blue Shield of Arizona HMO", "Imperial Insurance", "Arizona Complete Health", "Oscar Health Plan", "UnitedHealthcare of Arizona", "Antidote Health Plan of Arizona"],
-    notes: "Aetna exited; BCBSAZ PPO ended and HMO continues.",
-    source: "https://www.healthinsurance.org/aca-marketplace/arizona/",
-  },
-  {
-    state: "DE",
-    name: "Delaware",
-    marketplace: "Delaware Marketplace",
-    carriers: ["AmeriHealth Caritas", "Highmark BCBSD", "Celtic"],
-    notes: "Aetna exited after 2025.",
-    source: "https://www.healthinsurance.org/aca-marketplace/delaware/",
-  },
-  {
-    state: "FL",
-    name: "Florida",
-    marketplace: "HealthCare.gov",
-    carriers: ["AmeriHealth Caritas", "AvMed", "Blue Cross Blue Shield of Florida", "Capital Health Plan", "Centene Venture Company Florida (Celtic / Ambetter)", "Cigna Health & Life", "Cigna Healthcare of Florida (HMO)", "Florida Health Care Plan", "Health First Commercial Plans", "Health Options (Florida Blue HMO)", "Molina Healthcare of Florida", "Oscar Insurance Company of Florida", "Sunshine State Health Plan", "UnitedHealthcare", "Simply Healthcare Plans (Wellpoint)", "Community Care Network (22 Health)"],
-    notes: "Community Care Network is new for 2026; Aetna exited.",
-    source: "https://www.healthinsurance.org/aca-marketplace/florida/",
-  },
-  {
-    state: "GA",
-    name: "Georgia",
-    marketplace: "Georgia Access",
-    carriers: ["Alliant", "Ambetter from Peach State Health Plan", "Anthem Blue Cross and Blue Shield", "CareSource", "Cigna", "Kaiser", "Oscar", "UnitedHealthcare"],
-    notes: "Aetna exited; Mending/Taro did not launch for 2026.",
-    source: "https://www.healthinsurance.org/aca-marketplace/georgia/",
-  },
-  {
-    state: "IN",
-    name: "Indiana",
-    marketplace: "HealthCare.gov",
-    carriers: ["Anthem", "CareSource", "Coordinated Care", "Cigna", "UnitedHealthcare"],
-    notes: "Aetna exited after 2025; five carriers remain.",
-    source: "https://www.healthinsurance.org/aca-marketplace/indiana/",
-  },
-  {
-    state: "KS",
-    name: "Kansas",
-    marketplace: "HealthCare.gov",
-    carriers: ["Ambetter from Sunflower Health Plan / Celtic", "Blue Cross and Blue Shield of Kansas City", "Blue Cross and Blue Shield of Kansas", "Medica", "Oscar", "UnitedHealthcare"],
-    notes: "Aetna exited after 2025.",
-    source: "https://www.healthinsurance.org/aca-marketplace/kansas/",
-  },
-  {
-    state: "KY",
-    name: "Kentucky",
-    marketplace: "Kynect",
-    carriers: ["Anthem", "Ambetter / WellCare", "Molina"],
-    notes: "CareSource exited after 2025.",
-    source: "https://www.healthinsurance.org/aca-marketplace/kentucky/",
-  },
-  {
-    state: "MI",
-    name: "Michigan",
-    marketplace: "HealthCare.gov",
-    carriers: ["Blue Care Network of Michigan", "Blue Cross Blue Shield of Michigan", "Oscar Insurance Company", "McLaren Health Plan Community", "Meridian Health Plan of Michigan", "Priority Health", "UnitedHealthcare Community Plan"],
-    notes: "UM Health/Michigan Care, HAP CareSource, and Molina exited after 2025.",
-    source: "https://www.healthinsurance.org/aca-marketplace/michigan/",
-  },
-  {
-    state: "MO",
-    name: "Missouri",
-    marketplace: "HealthCare.gov",
-    carriers: ["Blue Cross Blue Shield of Kansas City", "Celtic Insurance Company", "Cox Health Systems Insurance Company", "Healthy Alliance Life (Anthem)", "Medica Insurance Company", "Oscar Insurance Company", "Medica WellFirst", "United Healthcare Insurance Company"],
-    notes: "Aetna exited after 2025; Cigna had already left after 2023.",
-    source: "https://www.healthinsurance.org/aca-marketplace/missouri/",
-  },
-  {
-    state: "MS",
-    name: "Mississippi",
-    marketplace: "HealthCare.gov",
-    carriers: ["Oscar Health", "Ambetter / Magnolia", "Cigna", "Molina", "UnitedHealthcare"],
-    notes: "Oscar entered for 2026; Primewell exited. BCBSMS and Celtic are off-exchange only.",
-    source: "https://www.healthinsurance.org/aca-marketplace/mississippi/",
-  },
-  {
-    state: "NC",
-    name: "North Carolina",
-    marketplace: "HealthCare.gov",
-    carriers: ["Ambetter / Centene", "AmeriHealth Caritas", "Blue Cross and Blue Shield of NC", "Cigna", "Oscar", "UnitedHealthcare"],
-    notes: "Aetna, WellCare/Celtic, and CareSource exited after 2025.",
-    source: "https://www.healthinsurance.org/aca-marketplace/north-carolina/",
-  },
-  {
-    state: "NJ",
-    name: "New Jersey",
-    marketplace: "Get Covered NJ",
-    carriers: ["AmeriHealth Insurance Company of NJ", "Horizon Healthcare Services", "Oscar Health", "WellCare / Ambetter", "UnitedHealthcare"],
-    notes: "Aetna exited after 2025.",
-    source: "https://www.healthinsurance.org/aca-marketplace/new-jersey/",
-  },
-  {
-    state: "NY",
-    name: "New York",
-    marketplace: "NY State of Health",
-    carriers: ["CDPHP", "Emblem", "Anthem HP", "Excellus", "Fidelis", "Healthfirst", "Highmark Western and Northeastern New York", "Independent Health Benefits Corporation", "MetroPlus", "MVP", "Oscar", "UnitedHealthcare of New York"],
-    notes: "Twelve QHP insurers continue in 2026; county choice varies.",
-    source: "https://www.healthinsurance.org/aca-marketplace/new-york/",
-  },
-  {
-    state: "OH",
-    name: "Ohio",
-    marketplace: "HealthCare.gov",
-    carriers: ["Buckeye Community Health Plan", "CareSource Ohio", "Community Insurance Company (Anthem BCBS)", "Medical Health Insuring Corp. (MedMutual)", "Molina Healthcare of Ohio", "Oscar Buckeye State Insurance Corp", "Oscar Insurance Corporation of Ohio", "Paramount Insurance Company", "Summa Insurance Company", "UnitedHealthcare of Ohio", "Antidote Health Plan of Ohio"],
-    notes: "Aetna and AultCare exited after 2025.",
-    source: "https://www.healthinsurance.org/aca-marketplace/ohio/",
-  },
-  {
-    state: "PA",
-    name: "Pennsylvania",
-    marketplace: "Pennie",
-    carriers: ["Capital Advantage Assurance", "Geisinger Health Plan", "Geisinger Quality Options", "Highmark", "Highmark Benefits Group", "Highmark Coverage Advantage", "Keystone Health Plan East", "QCC Insurance Company", "UPMC Health Plan", "UPMC Health Options", "Ambetter", "Oscar Health", "Jefferson Health Plans HMO", "Jefferson Health Plans PPO"],
-    notes: "Pennsylvania Health & Wellness became Ambetter; UPMC branding updated for 2026.",
-    source: "https://www.healthinsurance.org/aca-marketplace/pennsylvania/",
-  },
-  {
-    state: "SC",
-    name: "South Carolina",
-    marketplace: "HealthCare.gov",
-    carriers: ["Blue Cross Blue Shield of SC", "Ambetter / Absolute Total Care", "Molina", "Select Health", "UnitedHealthcare", "InStil Health"],
-    notes: "All six carriers continue in 2026.",
-    source: "https://www.healthinsurance.org/aca-marketplace/south-carolina/",
-  },
-  {
-    state: "TN",
-    name: "Tennessee",
-    marketplace: "HealthCare.gov",
-    carriers: ["Blue Cross Blue Shield of Tennessee", "Cigna", "Oscar", "Celtic / Ambetter", "UnitedHealthcare", "Alliant Health Plans"],
-    notes: "All six 2025 carriers continue into 2026.",
-    source: "https://www.healthinsurance.org/aca-marketplace/tennessee/",
-  },
-  {
-    state: "TX",
-    name: "Texas",
-    marketplace: "HealthCare.gov",
-    carriers: ["Celtic / Ambetter", "Superior Health Plan / Ambetter", "Blue Cross Blue Shield of Texas", "CHRISTUS", "Community First Insurance Plans", "Community Health Choice", "Moda", "Molina", "Oscar", "Sendero", "Baylor Scott & White Health Plan", "UnitedHealthcare", "Cigna", "Imperial Insurance Companies", "Wellpoint", "Harbor Health"],
-    notes: "Harbor Health joined for 2026; Aetna exited after 2025.",
-    source: "https://www.healthinsurance.org/aca-marketplace/texas/",
-  },
-];
-
-const U65_STATE_RULES = [
-  {
-    id: "closed",
-    title: "ACA-first / tighter STM market",
-    states: ["NJ", "NY"],
-    notes: [
-      "Non-ACA lanes should be handled carefully here; treat ACA as the default baseline.",
-      "If using supplemental or non-ACA options, disclose structure and limitations before price.",
-    ],
-  },
-  {
-    id: "restricted",
-    title: "Restricted-duration examples",
-    states: ["DE"],
-    notes: [
-      "Short-term medical rules are tighter than open-market states.",
-      "Verify current duration and renewal rules before presenting STM as a bridge solution.",
-    ],
-  },
-  {
-    id: "open",
-    title: "Variable off-exchange market",
-    states: ["AL", "AR", "AZ", "FL", "GA", "IN", "KS", "KY", "MI", "MO", "MS", "NC", "OH", "PA", "SC", "TN", "TX"],
-    notes: [
-      "Off-exchange options can include STM, indemnity, cash-pay, and association-style lanes depending on underwriting and state rules.",
-      "Use live quoting tools to verify what is currently sellable before positioning one lane as best.",
-    ],
-  },
-];
-
-const U65_PROFILES = [
-  {
-    name: "UnitedHealthcare Golden Rule",
-    states: [],
-  },
-  {
-    name: "Pivot Health",
-    states: [],
-  },
-  {
-    name: "Sidecar Health",
-    states: [],
-  },
-  {
-    name: "Farm Bureau Health Plans",
-    states: ["AL", "IN", "KS", "MI", "MO", "OH", "TN", "TX"],
-  },
-  {
-    name: "Philadelphia American / New Era",
-    states: [],
-  },
-];
-
-const TOOLS = {
-  ACA: {
-    default: { name: "HealthCare.gov Plan Preview", url: "https://www.healthcare.gov/see-plans/" },
-    byState: {
-      GA: { name: "Georgia Access", url: "https://www.georgia-access.com/" },
-      KY: { name: "Kynect", url: "https://kynect.ky.gov/" },
-      NY: { name: "NY State of Health", url: "https://nystateofhealth.ny.gov/" },
-      NJ: { name: "Get Covered NJ", url: "https://www.getcoverednj.com/" },
-      PA: { name: "Pennie", url: "https://pennie.com/" },
-    },
-  },
-  MedSup: [
-    { name: "Medicare Plan Compare", url: "https://www.medicare.gov/plan-compare/" },
-    { name: "Anthem Broker Connect", url: "https://www.anthem.com/broker/" },
-  ],
-  U65: [
-    { name: "Pivot Health STM", url: "https://www.pivothealth.com/short-term-health-insurance" },
-    { name: "UHC Golden Rule", url: "https://www.uhone.com/health-insurance/short-term-health-insurance" },
-    { name: "Farm Bureau", url: "https://www.fbhealthplans.com/" },
-  ],
-  MA: [
-    { name: "CMS Plan Finder", url: "https://www.medicare.gov/plan-compare/" },
-    { name: "Sunfire Matrix", url: "https://app.sunfirematrix.com" },
-  ],
-};
-
-function FilterPill({ label, active, color, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        background: active ? `rgba(${color},0.12)` : "rgba(255,255,255,0.03)",
-        border: active ? `1px solid rgba(${color},0.45)` : "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 999,
-        padding: "6px 13px",
-        cursor: "pointer",
-        fontFamily: "'Barlow Condensed', sans-serif",
-        fontWeight: 700,
-        fontSize: "0.68rem",
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        color: active ? `rgb(${color})` : "#5A5A6A",
-        transition: "all 0.13s ease",
-      }}
-    >
-      {label}
-    </button>
-  );
+/* ── Helpers ──────────────────────────────────────────────────────── */
+function carriers(data, segId) {
+  if (segId === "ACA") return data.aca;
+  if (segId === "MA") return data.ma;
+  if (segId === "MedSup") return data.medSup;
+  return data.private;
 }
 
-function getLineMeta(id) {
-  return LINES.find((line) => line.id === id) || LINES[0];
+function notes(data, segId) {
+  if (segId === "ACA") return data.acaNotes;
+  if (segId === "MA") return data.maNotes;
+  if (segId === "MedSup") return data.medSupNotes;
+  return data.privateNotes;
 }
 
-function getMedSupSnapshot(state) {
-  if (state === "NY") {
-    return {
-      summary: "Strong Medigap market with unusually consumer-friendly rules.",
-      bullets: [
-        "Standardized Medigap plans are available through private carriers.",
-        "Use live quoting to compare price and carrier fit instead of assuming one carrier wins statewide.",
-      ],
-    };
+function segTools(code, segId) {
+  if (segId === "ACA") {
+    const tool = TOOLS.ACA.byState[code] || TOOLS.ACA.default;
+    return [tool];
   }
-
-  if (state === "NJ") {
-    return {
-      summary: "Established Medigap market with stronger protections than many states.",
-      bullets: [
-        "Standardized Medigap plans are available through private carriers.",
-        "Verify current rating and underwriting details carrier by carrier before recommending a switch.",
-      ],
-    };
-  }
-
-  return {
-    summary: "Standardized Medigap market sold by private carriers.",
-    bullets: [
-      "Plan letters are standardized, but carrier price and underwriting vary.",
-      "Outside guaranteed-issue windows, assume live underwriting and quote checks are needed.",
-    ],
-  };
-}
-
-function getU65Snapshot(state) {
-  const rule =
-    U65_STATE_RULES.find((item) => item.states.includes(state)) ||
-    U65_STATE_RULES.find((item) => item.id === "open");
-  const carriers = U65_PROFILES.filter(
-    (item) => item.states.length === 0 || item.states.includes(state)
-  ).map((item) => item.name);
-
-  const tools = TOOLS.U65.filter((tool) => {
-    if (tool.name === "Farm Bureau") {
-      return ["AL", "IN", "KS", "MI", "MO", "OH", "TN", "TX"].includes(state);
+  if (segId === "MA") return TOOLS.MA;
+  if (segId === "MedSup") return TOOLS.MedSup;
+  return TOOLS.Private.filter((t) => {
+    if (t.name === "Farm Bureau") {
+      return ["AL", "IN", "KS", "MI", "MO", "OH", "TN", "TX"].includes(code);
     }
     return true;
   });
-
-  return {
-    summary: rule?.title || "Variable off-exchange market",
-    bullets: [
-      ...(rule?.notes || []),
-      carriers.length
-        ? `Notable off-exchange lanes: ${carriers.join(", ")}.`
-        : "Use live off-exchange tools to confirm what is currently sellable in this state.",
-    ],
-    tools,
-  };
 }
 
-function getAcaTool(state) {
-  return TOOLS.ACA.byState[state] || TOOLS.ACA.default;
+function stateMatchesQuery(code, data, q) {
+  if (!q) return true;
+  const hay = [
+    code, data.name, data.marketplace,
+    ...data.aca, ...data.ma, ...data.medSup, ...data.private,
+    data.acaNotes, data.maNotes, data.medSupNotes, data.privateNotes,
+  ].join(" ").toLowerCase();
+  return hay.includes(q);
 }
 
-function SectorToolLink({ tool, color, rgb }) {
-  return (
-    <a
-      href={tool.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        borderRadius: 999,
-        padding: "4px 10px",
-        border: `1px solid rgba(${rgb},0.26)`,
-        background: `rgba(${rgb},0.08)`,
-        color,
-        textDecoration: "none",
-        fontFamily: "'Barlow Condensed', sans-serif",
-        fontWeight: 700,
-        fontSize: "0.58rem",
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-      }}
-    >
-      {tool.name}
-    </a>
-  );
-}
+/* Small northeast states that need external labels */
+const LABEL_OFFSETS = {
+  CT: [40, 2],
+  DC: [30, 12],
+  DE: [28, 8],
+  MA: [38, 0],
+  MD: [40, 18],
+  NH: [30, 0],
+  NJ: [24, 8],
+  RI: [28, 4],
+  VT: [30, -4],
+};
 
-function SectorRow({ sector }) {
+/* ── Segment Section (sidebar accordion) ──────────────────────────── */
+function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }) {
+  const [open, setOpen] = useState(startOpen);
+  const list = carriers(data, segId);
+  const note = notes(data, segId);
+  const tools = segTools(stateCode, segId);
+
   return (
     <div
       style={{
-        borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.06)",
-        background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
-        boxShadow:
-          "inset 4px 4px 10px rgba(0,0,0,0.34), inset -2px -2px 6px rgba(255,255,255,0.015)",
-        padding: "14px 16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
+        borderRadius: 14,
+        border: `1px solid rgba(${rgb}, ${open ? 0.25 : 0.1})`,
+        background: open
+          ? `linear-gradient(145deg, rgba(${rgb},0.06) 0%, rgba(10,10,12,0.99) 100%)`
+          : "rgba(17,17,17,0.7)",
+        boxShadow: open
+          ? `inset 4px 4px 10px rgba(0,0,0,0.34), inset -2px -2px 6px rgba(255,255,255,0.015), 0 0 20px rgba(${rgb},0.05)`
+          : "none",
+        transition: "all 0.2s ease",
+        overflow: "hidden",
       }}
     >
-      <div>
-        <div
-          style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 800,
-            fontSize: "0.74rem",
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: sector.color,
-            marginBottom: 3,
-          }}
-        >
-          {sector.title}
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "10px 14px",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          gap: 8,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: color,
+              boxShadow: `0 0 6px ${color}`,
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800,
+              fontSize: "0.72rem",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color,
+            }}
+          >
+            {label}
+          </span>
         </div>
-        <div style={{ fontSize: "0.8rem", color: "#D6DFE9", lineHeight: 1.45 }}>
-          {sector.summary}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              color: "rgba(255,255,255,0.5)",
+            }}
+          >
+            {list.length}
+          </span>
+          <span
+            style={{
+              fontSize: "0.6rem",
+              color: "#5A5A6A",
+              transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.15s ease",
+            }}
+          >
+            ▼
+          </span>
         </div>
-      </div>
+      </button>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {sector.bullets.map((bullet) => (
-          <div key={bullet} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: "0.77rem", color: "#AEB8C6", lineHeight: 1.5 }}>
-            <span style={{ color: sector.color, marginTop: 2 }}>•</span>
-            <span>{bullet}</span>
+      {open && (
+        <div style={{ padding: "0 14px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            {list.map((c) => (
+              <span
+                key={c}
+                style={{
+                  padding: "3px 9px",
+                  borderRadius: 999,
+                  background: `rgba(${rgb},0.1)`,
+                  border: `1px solid rgba(${rgb},0.2)`,
+                  fontSize: "0.7rem",
+                  color: "#D6DFE9",
+                  fontFamily: "'DM Sans', sans-serif",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {c}
+              </span>
+            ))}
           </div>
-        ))}
-      </div>
-
-      {sector.tools?.length ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
-          {sector.tools.map((tool) => (
-            <SectorToolLink key={tool.name} tool={tool} color={sector.color} rgb={sector.rgb} />
-          ))}
+          {note && (
+            <p style={{ margin: 0, fontSize: "0.74rem", color: "#8A8A9A", lineHeight: 1.5 }}>
+              {note}
+            </p>
+          )}
+          {tools.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 2 }}>
+              {tools.map((t) => (
+                <a
+                  key={t.name}
+                  href={t.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: "3px 9px",
+                    borderRadius: 999,
+                    border: `1px solid rgba(${rgb},0.25)`,
+                    background: `rgba(${rgb},0.08)`,
+                    color,
+                    textDecoration: "none",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700,
+                    fontSize: "0.56rem",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {t.name} ↗
+                </a>
+              ))}
+            </div>
+          )}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
 
-function StateMarketCard({ entry, activeLines }) {
-  const medSup = getMedSupSnapshot(entry.state);
-  const u65 = getU65Snapshot(entry.state);
-  const acaTool = getAcaTool(entry.state);
-  const maNote =
-    "Use the built-in SEP Lookup / CMS landscape data for county and zip-level MA availability.";
+/* ── State Sidebar ────────────────────────────────────────────────── */
+function StateSidebar({ code, onClose }) {
+  const data = STATES[code];
+  if (!data) return null;
 
-  const sectors = [
-    {
-      id: "ACA",
-      title: "ACA Marketplace",
-      ...getLineMeta("ACA"),
-      summary: `${entry.marketplace} · ${entry.carriers.length} carriers`,
-      bullets: [entry.notes, `Carriers: ${entry.carriers.join(", ")}.`],
-      tools: [acaTool],
-    },
-    {
-      id: "MedSup",
-      title: "Medicare Supplement",
-      ...getLineMeta("MedSup"),
-      summary: medSup.summary,
-      bullets: medSup.bullets,
-      tools: TOOLS.MedSup,
-    },
-    {
-      id: "U65",
-      title: "Off-Exchange / U65",
-      ...getLineMeta("U65"),
-      summary: u65.summary,
-      bullets: u65.bullets,
-      tools: u65.tools,
-    },
-    {
-      id: "MA",
-      title: "Medicare Advantage",
-      ...getLineMeta("MA"),
-      summary: "Database-backed MA landscape lives in SEP Lookup",
-      bullets: [
-        maNote,
-        "Use carrier portals only after the SEP Lookup / landscape result narrows the market.",
-      ],
-      tools: TOOLS.MA,
-    },
-  ].filter((sector) => activeLines.size === 0 || activeLines.has(sector.id));
+  const totalCarriers =
+    data.aca.length + data.ma.length + data.medSup.length + data.private.length;
 
   return (
-    <section
+    <aside
       className="card"
       style={{
-        padding: "18px 20px",
-        background: "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+        padding: "18px 16px",
+        background:
+          "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
         display: "flex",
         flexDirection: "column",
         gap: 12,
+        maxHeight: "calc(100vh - 180px)",
+        overflowY: "auto",
+        position: "sticky",
+        top: 14,
       }}
     >
       <div
         style={{
           display: "flex",
-          alignItems: "flex-start",
           justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
+          alignItems: "flex-start",
         }}
       >
         <div>
@@ -510,293 +239,780 @@ function StateMarketCard({ entry, activeLines }) {
             style={{
               fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 800,
-              fontSize: "0.58rem",
+              fontSize: "0.56rem",
               letterSpacing: "0.14em",
               textTransform: "uppercase",
               color: "#4A4A5A",
-              marginBottom: 4,
+              marginBottom: 3,
             }}
           >
-            {entry.state}
+            {code} · {data.marketplace}
           </div>
           <h3
             style={{
               margin: 0,
               color: "#F0F0F0",
-              fontSize: "1.08rem",
+              fontSize: "1.15rem",
               letterSpacing: "0.05em",
               textTransform: "uppercase",
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800,
             }}
           >
-            {entry.name}
+            {data.name}
           </h3>
         </div>
+        <button
+          onClick={onClose}
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 8,
+            color: "#8A8A9A",
+            cursor: "pointer",
+            padding: "4px 8px",
+            fontSize: "0.7rem",
+            fontFamily: "'DM Sans', sans-serif",
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+        {MARKET_SEGMENTS.map((seg) => {
+          const count = carriers(data, seg.id).length;
+          return (
+            <div
+              key={seg.id}
+              style={{
+                borderRadius: 10,
+                padding: "8px 6px",
+                border: `1px solid rgba(${seg.rgb},0.15)`,
+                background: `rgba(${seg.rgb},0.04)`,
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "1rem",
+                  fontWeight: 800,
+                  color: seg.color,
+                }}
+              >
+                {count}
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: "0.5rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "#5A5A6A",
+                  marginTop: 2,
+                }}
+              >
+                {seg.label}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div
+        style={{
+          textAlign: "center",
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: "0.68rem",
+          color: "#5A5A6A",
+        }}
+      >
+        {totalCarriers} total carriers
+      </div>
+
+      {MARKET_SEGMENTS.map((seg, i) => (
+        <SegmentSection
+          key={seg.id}
+          segId={seg.id}
+          color={seg.color}
+          rgb={seg.rgb}
+          label={seg.label}
+          stateCode={code}
+          data={data}
+          startOpen={i === 0}
+        />
+      ))}
+
+      {data.acaSource && (
         <a
-          href={entry.source}
+          href={data.acaSource}
           target="_blank"
           rel="noopener noreferrer"
           style={{
+            display: "block",
+            textAlign: "center",
+            padding: "6px 12px",
             borderRadius: 999,
-            padding: "5px 11px",
             border: "1px solid rgba(255,255,255,0.08)",
             background: "rgba(255,255,255,0.03)",
-            color: "#8E99A7",
+            color: "#6F7D8E",
             textDecoration: "none",
             fontFamily: "'Barlow Condensed', sans-serif",
             fontWeight: 700,
-            fontSize: "0.58rem",
+            fontSize: "0.56rem",
             letterSpacing: "0.1em",
             textTransform: "uppercase",
           }}
         >
-          ACA Source
+          ACA Marketplace Source ↗
         </a>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {sectors.map((sector) => (
-          <SectorRow key={sector.id} sector={sector} />
-        ))}
-      </div>
-    </section>
+      )}
+    </aside>
   );
 }
 
+/* ── Main Component ───────────────────────────────────────────────── */
 export default function CarrierRef() {
-  const [searchRaw, setSearchRaw] = useState("");
-  const [activeStates, setActiveStates] = useState(new Set());
-  const [activeLines, setActiveLines] = useState(new Set());
+  const [selected, setSelected] = useState(null);
+  const [hovered, setHovered] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [search, setSearch] = useState("");
+  const [activeSeg, setActiveSeg] = useState(null);
 
-  const visibleStates = useMemo(() => {
-    const query = searchRaw.toLowerCase().trim();
+  const query = search.toLowerCase().trim();
 
-    return STATE_MARKETPLACE_DATA.filter((entry) => {
-      if (activeStates.size > 0 && !activeStates.has(entry.state)) return false;
+  const matchedStates = useMemo(() => {
+    if (!query) return ACTIVE;
+    const matched = new Set();
+    for (const [code, data] of Object.entries(STATES)) {
+      if (stateMatchesQuery(code, data, query)) matched.add(code);
+    }
+    return matched;
+  }, [query]);
 
-      if (!query) return true;
+  const segSummary = useMemo(() => {
+    const sums = {};
+    for (const seg of MARKET_SEGMENTS) {
+      let total = 0;
+      for (const data of Object.values(STATES)) {
+        total += carriers(data, seg.id).length;
+      }
+      sums[seg.id] = total;
+    }
+    return sums;
+  }, []);
 
-      const medSup = getMedSupSnapshot(entry.state);
-      const u65 = getU65Snapshot(entry.state);
+  /* Determine fill/stroke for each state */
+  function stateStyle(code) {
+    const isActive = ACTIVE.has(code);
+    const isMatch = isActive && matchedStates.has(code);
+    const isSel = selected === code;
+    const isHov = hovered === code;
 
-      return [
-        entry.state,
-        entry.name,
-        entry.marketplace,
-        entry.notes,
-        ...entry.carriers,
-        medSup.summary,
-        ...medSup.bullets,
-        u65.summary,
-        ...u65.bullets,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
-    });
-  }, [searchRaw, activeStates]);
+    if (!isActive) {
+      return {
+        fill: "#141418",
+        stroke: "rgba(255,255,255,0.06)",
+        strokeWidth: 0.8,
+        cursor: "default",
+        filter: undefined,
+      };
+    }
 
-  const hasFilters = searchRaw.trim() || activeStates.size > 0 || activeLines.size > 0;
+    if (!isMatch && query) {
+      return {
+        fill: "#141418",
+        stroke: "rgba(255,255,255,0.04)",
+        strokeWidth: 0.8,
+        cursor: "default",
+        filter: undefined,
+      };
+    }
 
-  function toggleSetValue(setter, value) {
-    setter((previous) => {
-      const next = new Set(previous);
-      if (next.has(value)) next.delete(value);
-      else next.add(value);
-      return next;
-    });
+    const segColor = activeSeg
+      ? MARKET_SEGMENTS.find((s) => s.id === activeSeg)
+      : null;
+    const rgb = segColor ? segColor.rgb : "232,0,45";
+    const hex = segColor ? segColor.color : "#E8002D";
+
+    if (isSel) {
+      return {
+        fill: `rgba(${rgb},0.35)`,
+        stroke: hex,
+        strokeWidth: 2,
+        cursor: "pointer",
+        filter: "url(#map-glow)",
+      };
+    }
+    if (isHov) {
+      return {
+        fill: `rgba(${rgb},0.22)`,
+        stroke: `rgba(${rgb},0.7)`,
+        strokeWidth: 1.5,
+        cursor: "pointer",
+        filter: "url(#map-glow-subtle)",
+      };
+    }
+    return {
+      fill: `rgba(${rgb},0.1)`,
+      stroke: `rgba(${rgb},0.3)`,
+      strokeWidth: 1,
+      cursor: "pointer",
+      filter: undefined,
+    };
   }
 
   return (
     <div
       style={{
-        maxWidth: 1080,
+        maxWidth: 1320,
         margin: "0 auto",
         display: "flex",
         flexDirection: "column",
         gap: 14,
       }}
     >
-      <section
-        className="card"
+      {/* ── Map + Sidebar ── */}
+      <div
         style={{
-          padding: "18px 20px",
-          background: "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
-          display: "flex",
-          flexDirection: "column",
+          display: "grid",
+          gridTemplateColumns: selected ? "1fr 370px" : "1fr",
           gap: 14,
+          alignItems: "start",
+          transition: "grid-template-columns 0.2s ease",
         }}
       >
-        <div>
-          <h2 style={{ margin: "0 0 6px", display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ color: "#E8002D" }}>◈</span>
-            State Market Availability
-          </h2>
-          <p style={{ fontSize: "0.82rem", color: "#8E99A7", maxWidth: 760 }}>
-            State first, sector second. Each state card shows what an agent needs to know for ACA,
-            Med Supp, off-exchange, and MA without making them bounce between unrelated panels.
-          </p>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: 10,
-          }}
-        >
-          {[
-            ["States In View", visibleStates.length, "#D6DFE9"],
-            ["ACA States", visibleStates.length, "#FFE45C"],
-            ["Med Supp", visibleStates.length, "#39FF88"],
-            ["U65 + MA", visibleStates.length, "#C084FC"],
-          ].map(([label, value, color]) => (
-            <div
-              key={label}
-              style={{
-                borderRadius: 14,
-                padding: "12px 14px",
-                border: "1px solid rgba(255,255,255,0.06)",
-                background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
-                boxShadow:
-                  "inset 4px 4px 10px rgba(0,0,0,0.34), inset -2px -2px 6px rgba(255,255,255,0.015)",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "0.58rem",
-                  fontWeight: 800,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  color: "#5F6B7A",
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  marginBottom: 5,
-                }}
-              >
-                {label}
-              </div>
-              <div
-                style={{
-                  fontSize: "1.2rem",
-                  fontWeight: 800,
-                  color,
-                  fontFamily: "'IBM Plex Mono', monospace",
-                }}
-              >
-                {value}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ position: "relative" }}>
-          <span
-            style={{
-              position: "absolute",
-              left: 12,
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#3A3A4A",
-              fontSize: 14,
-              pointerEvents: "none",
-              lineHeight: 1,
-            }}
-          >
-            ⌕
-          </span>
-          <input
-            type="text"
-            value={searchRaw}
-            onChange={(event) => setSearchRaw(event.target.value)}
-            placeholder="Search state, carrier, market, or sector"
-            style={{ width: "100%", paddingLeft: 34 }}
-          />
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700,
-                fontSize: "0.6rem",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: "#3A3A4A",
-                minWidth: 52,
-              }}
-            >
-              State
-            </span>
-            {STATES.map((state) => (
-              <FilterPill
-                key={state}
-                label={state}
-                active={activeStates.has(state)}
-                color="138,138,154"
-                onClick={() => toggleSetValue(setActiveStates, state)}
-              />
-            ))}
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700,
-                fontSize: "0.6rem",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: "#3A3A4A",
-                minWidth: 52,
-              }}
-            >
-              Sector
-            </span>
-            {LINES.map((line) => (
-              <FilterPill
-                key={line.id}
-                label={line.label}
-                active={activeLines.has(line.id)}
-                color={line.rgb}
-                onClick={() => toggleSetValue(setActiveLines, line.id)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {hasFilters ? (
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button
-              className="copy-btn"
-              onClick={() => {
-                setSearchRaw("");
-                setActiveStates(new Set());
-                setActiveLines(new Set());
-              }}
-            >
-              Clear Filters
-            </button>
-          </div>
-        ) : null}
-      </section>
-
-      {visibleStates.length === 0 ? (
+        {/* Geographic SVG Map */}
         <section
           className="card"
           style={{
-            padding: "24px 20px",
-            textAlign: "center",
-            color: "#6F7D8E",
-            background: "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+            padding: "16px 20px 12px",
+            background:
+              "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+            overflow: "hidden",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
           }}
         >
-          No state market view matches the current search or filters.
+          {/* Search + segment filter */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <div
+              style={{ position: "relative", flex: "1 1 220px", maxWidth: 340 }}
+            >
+              <span
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#3A3A4A",
+                  fontSize: 14,
+                  pointerEvents: "none",
+                  lineHeight: 1,
+                }}
+              >
+                ⌕
+              </span>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search state or carrier"
+                style={{ width: "100%", paddingLeft: 34 }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {MARKET_SEGMENTS.map((seg) => (
+                <button
+                  key={seg.id}
+                  onClick={() =>
+                    setActiveSeg(activeSeg === seg.id ? null : seg.id)
+                  }
+                  style={{
+                    background:
+                      activeSeg === seg.id
+                        ? `rgba(${seg.rgb},0.14)`
+                        : "rgba(255,255,255,0.03)",
+                    border:
+                      activeSeg === seg.id
+                        ? `1px solid rgba(${seg.rgb},0.45)`
+                        : "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 999,
+                    padding: "5px 12px",
+                    cursor: "pointer",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700,
+                    fontSize: "0.64rem",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: activeSeg === seg.id ? seg.color : "#5A5A6A",
+                    transition: "all 0.13s ease",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: seg.color,
+                      marginRight: 6,
+                      verticalAlign: "middle",
+                      opacity: activeSeg === seg.id ? 1 : 0.4,
+                    }}
+                  />
+                  {seg.label}
+                  <span
+                    style={{
+                      marginLeft: 6,
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "0.58rem",
+                      opacity: 0.6,
+                    }}
+                  >
+                    {segSummary[seg.id]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <svg
+            viewBox="60 50 900 520"
+            style={{ width: "100%", height: "auto", display: "block" }}
+          >
+            <defs>
+              <filter id="map-glow">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <filter id="map-glow-subtle">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* Render all state shapes */}
+            {Object.entries(STATE_PATHS).map(([code, d]) => {
+              const style = stateStyle(code);
+              const isActive = ACTIVE.has(code);
+              const isMatch = isActive && matchedStates.has(code);
+
+              return (
+                <path
+                  key={code}
+                  d={d}
+                  fill={style.fill}
+                  stroke={style.stroke}
+                  strokeWidth={style.strokeWidth}
+                  strokeLinejoin="round"
+                  filter={style.filter}
+                  style={{
+                    cursor: style.cursor,
+                    transition: "fill 0.15s ease, stroke 0.15s ease",
+                  }}
+                  onClick={() => {
+                    if (isActive && isMatch)
+                      setSelected(selected === code ? null : code);
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isActive && isMatch) {
+                      setHovered(code);
+                      const rect = e.currentTarget.closest("svg").getBoundingClientRect();
+                      setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                    }
+                  }}
+                  onMouseMove={(e) => {
+                    if (isActive && isMatch) {
+                      const rect = e.currentTarget.closest("svg").getBoundingClientRect();
+                      setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                    }
+                  }}
+                  onMouseLeave={() => setHovered(null)}
+                />
+              );
+            })}
+
+            {/* State labels for active states */}
+            {Object.entries(STATE_CENTROIDS).map(([code, [cx, cy]]) => {
+              const isActive = ACTIVE.has(code);
+              const isMatch = isActive && matchedStates.has(code);
+              if (!isActive) return null;
+
+              const isSel = selected === code;
+              const isHov = hovered === code;
+              const offset = LABEL_OFFSETS[code];
+
+              const labelX = offset ? cx + offset[0] : cx;
+              const labelY = offset ? cy + offset[1] : cy;
+
+              return (
+                <g key={`label-${code}`} style={{ pointerEvents: "none" }}>
+                  {/* Leader line for offset labels */}
+                  {offset && (
+                    <line
+                      x1={cx}
+                      y1={cy}
+                      x2={labelX - 4}
+                      y2={labelY}
+                      stroke="rgba(255,255,255,0.15)"
+                      strokeWidth={0.6}
+                    />
+                  )}
+                  <text
+                    x={labelX}
+                    y={labelY}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill={
+                      !isMatch && query
+                        ? "#1A1A2A"
+                        : isSel
+                          ? "#FFFFFF"
+                          : isHov
+                            ? "#F0F0F0"
+                            : "#B8B8C8"
+                    }
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: 800,
+                      fontSize: isSel || isHov ? "11px" : "9px",
+                      letterSpacing: "0.06em",
+                      textShadow: isSel || isHov
+                        ? "0 0 6px rgba(0,0,0,0.8)"
+                        : "0 1px 2px rgba(0,0,0,0.9)",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {code}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+
+          {/* Hover tooltip */}
+          {hovered && STATES[hovered] && (
+            <div
+              style={{
+                position: "absolute",
+                left: mousePos.x + 14,
+                top: mousePos.y - 10,
+                pointerEvents: "none",
+                zIndex: 20,
+                background: "linear-gradient(145deg, rgba(22,22,28,0.97) 0%, rgba(12,12,14,0.98) 100%)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 12,
+                padding: "10px 14px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)",
+                minWidth: 160,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 800,
+                  fontSize: "0.82rem",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "#F0F0F0",
+                  marginBottom: 8,
+                }}
+              >
+                {STATES[hovered].name}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {MARKET_SEGMENTS.map((seg) => {
+                  const count = carriers(STATES[hovered], seg.id).length;
+                  return (
+                    <div
+                      key={seg.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 12,
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: seg.color,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontFamily: "'Barlow Condensed', sans-serif",
+                            fontWeight: 700,
+                            fontSize: "0.62rem",
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                            color: "#8A8A9A",
+                          }}
+                        >
+                          {seg.label}
+                        </span>
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          fontWeight: 700,
+                          fontSize: "0.72rem",
+                          color: seg.color,
+                        }}
+                      >
+                        {count}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Map legend bar */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 6,
+              flexWrap: "wrap",
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                fontSize: "0.65rem",
+                color: "#5A5A6A",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 14,
+                    height: 10,
+                    borderRadius: 3,
+                    background: "rgba(232,0,45,0.15)",
+                    border: "1px solid rgba(232,0,45,0.35)",
+                  }}
+                />
+                Active
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 14,
+                    height: 10,
+                    borderRadius: 3,
+                    background: "#141418",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                />
+                Inactive
+              </span>
+            </div>
+            <div
+              style={{
+                fontSize: "0.6rem",
+                color: "#3A3A4A",
+                fontFamily: "'IBM Plex Mono', monospace",
+              }}
+            >
+              {matchedStates.size} / {ACTIVE.size} states
+              {query ? ` matching "${search}"` : ""}
+            </div>
+          </div>
         </section>
-      ) : (
-        visibleStates.map((entry) => (
-          <StateMarketCard key={entry.state} entry={entry} activeLines={activeLines} />
-        ))
-      )}
+
+        {/* Sidebar */}
+        {selected && STATES[selected] && (
+          <StateSidebar code={selected} onClose={() => setSelected(null)} />
+        )}
+      </div>
+
+      {/* ── Bottom panels ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: 14,
+        }}
+      >
+        {/* Tools quick ref */}
+        <section
+          className="card"
+          style={{
+            padding: "16px 18px",
+            background:
+              "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          <h3
+            style={{
+              margin: 0,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800,
+              fontSize: "0.74rem",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "#8E99A7",
+            }}
+          >
+            Quick-Reference Tools
+          </h3>
+          {MARKET_SEGMENTS.map((seg) => {
+            const tools =
+              seg.id === "ACA"
+                ? [TOOLS.ACA.default]
+                : seg.id === "MA"
+                  ? TOOLS.MA
+                  : seg.id === "MedSup"
+                    ? TOOLS.MedSup
+                    : TOOLS.Private;
+            return (
+              <div
+                key={seg.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700,
+                    fontSize: "0.58rem",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: seg.color,
+                    minWidth: 60,
+                  }}
+                >
+                  {seg.label}
+                </span>
+                {tools.map((t) => (
+                  <a
+                    key={t.name}
+                    href={t.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: "3px 9px",
+                      borderRadius: 999,
+                      border: `1px solid rgba(${seg.rgb},0.2)`,
+                      background: `rgba(${seg.rgb},0.06)`,
+                      color: seg.color,
+                      textDecoration: "none",
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: 700,
+                      fontSize: "0.54rem",
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {t.name} ↗
+                  </a>
+                ))}
+              </div>
+            );
+          })}
+        </section>
+
+        {/* Data sources */}
+        <section
+          className="card"
+          style={{
+            padding: "16px 18px",
+            background:
+              "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          <h3
+            style={{
+              margin: 0,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800,
+              fontSize: "0.74rem",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "#8E99A7",
+            }}
+          >
+            Data Sources
+          </h3>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: 4 }}
+          >
+            {DATA_VERSION.sources.map((src) => (
+              <div
+                key={src}
+                style={{
+                  fontSize: "0.7rem",
+                  color: "#5A5A6A",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 6,
+                }}
+              >
+                <span style={{ color: "#3A3A4A", marginTop: 1 }}>•</span>
+                <span>{src}</span>
+              </div>
+            ))}
+          </div>
+          <div
+            style={{
+              marginTop: 4,
+              padding: "6px 10px",
+              borderRadius: 10,
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.05)",
+              fontSize: "0.62rem",
+              color: "#3A3A4A",
+              fontFamily: "'IBM Plex Mono', monospace",
+            }}
+          >
+            Last verified: {DATA_VERSION.lastUpdated}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
