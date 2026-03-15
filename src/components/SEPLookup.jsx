@@ -8,6 +8,7 @@ import { SEPCard, ProductBadge } from "./sep/SEPCard";
 import { PlanTable } from "./sep/PlanTable";
 import { StateMap } from "./sep/StateMap";
 import { CountyGrid } from "./sep/CountyGrid";
+import { FemaFeed } from "./sep/FemaFeed";
 import "../SEPLookupTool.css";
 
 export default function SEPLookupTool() {
@@ -18,20 +19,20 @@ export default function SEPLookupTool() {
     s.loadPlansForCounty(s.state, county);
   };
 
+  const showPlans = s.activeTab === "plans" &&
+    (s.searchedZip || (s.selectedState && s.selectedCounty && s.plans));
+  const showSeps = s.activeTab === "seps" && s.results;
+
   return (
     <div className="app-shell sep-tool">
       <div className="viewport-bg" />
       <div className="app sep-tool-inner">
-        {/* Header */}
-        <div className="sep-header">
-          <div className="sep-header-icon">
-            <Shield size={16} />
-          </div>
-          <div>
-            <h1>MA Intelligence</h1>
-            <p>Medicare Advantage Plans, SEPs & FEMA Disasters — Live Data</p>
-          </div>
-        </div>
+
+        {/* ═══ FEMA & Carrier Feed — top banner ═══ */}
+        <FemaFeed
+          femaDisasters={s.femaDisasters}
+          femaSource={s.femaSource}
+        />
 
         {/* Search */}
         <SearchBar
@@ -100,7 +101,7 @@ export default function SEPLookupTool() {
         {/* ═══ Content below map ═══ */}
         {s.hasView && !s.loading && (
           <div className="sep-below-map">
-            {/* County grid */}
+            {/* County grid (state-click or zip) */}
             {s.selectedState && s.countyList.length > 0 && (
               <CountyGrid
                 state={s.selectedState || s.state}
@@ -112,8 +113,8 @@ export default function SEPLookupTool() {
               />
             )}
 
-            {/* Stats bar (zip search) */}
-            {s.results && (
+            {/* Stats bar (zip search only) */}
+            {s.searchedZip && s.results && (
               <StatsBar
                 searchedZip={s.searchedZip}
                 state={s.state}
@@ -128,44 +129,30 @@ export default function SEPLookupTool() {
               />
             )}
 
-            {/* State-only header (no zip search) */}
+            {/* Tab bar for state-click flow (no zip) */}
             {!s.searchedZip && s.selectedState && (
-              <div className="sep-state-header">
-                <div className="sep-state-title">
-                  {s.selectedState}
-                  {s.selectedCounty && (
-                    <span className="sep-state-county"> — {s.selectedCounty} County</span>
-                  )}
-                </div>
-                <div className="sep-state-subtitle">
-                  {s.selectedCounty
-                    ? `${s.filteredPlans.length} plans available`
-                    : `Select a county above to view plans`}
-                </div>
-                <div className="tabs" style={{ marginTop: 12 }}>
-                  {s.selectedCounty && s.plans && s.plans.length > 0 && (
-                    <button
-                      className={`tab${s.activeTab === "plans" ? " active" : ""}`}
-                      onClick={() => s.setActiveTab("plans")}
-                    >
-                      Plans & Codes ({s.filteredPlans.length})
-                    </button>
-                  )}
-                  {s.results && (
-                    <button
-                      className={`tab${s.activeTab === "seps" ? " active" : ""}`}
-                      onClick={() => s.setActiveTab("seps")}
-                    >
-                      SEPs ({s.filtered?.length || 0})
-                    </button>
-                  )}
-                </div>
+              <div className="sep-tab-bar">
+                {s.selectedCounty && s.plans && s.plans.length > 0 && (
+                  <button
+                    className={`tab${s.activeTab === "plans" ? " active" : ""}`}
+                    onClick={() => s.setActiveTab("plans")}
+                  >
+                    Plans ({s.filteredPlans.length})
+                  </button>
+                )}
+                {s.results && (
+                  <button
+                    className={`tab${s.activeTab === "seps" ? " active" : ""}`}
+                    onClick={() => s.setActiveTab("seps")}
+                  >
+                    SEPs ({s.filtered?.length || 0})
+                  </button>
+                )}
               </div>
             )}
 
             {/* Plans Tab */}
-            {s.activeTab === "plans" && (
-              (s.searchedZip || (s.selectedState && s.selectedCounty && s.plans))) && (
+            {showPlans && (
               <>
                 <PlanTable
                   searchedZip={s.searchedZip}
@@ -219,8 +206,21 @@ export default function SEPLookupTool() {
               </>
             )}
 
+            {/* No county selected prompt */}
+            {!s.searchedZip && s.selectedState && !s.selectedCounty && s.activeTab === "plans" && (
+              <div className="sep-select-county-prompt">
+                <MapPin size={18} />
+                <div>
+                  <div className="sep-select-county-title">Select a county to view plans</div>
+                  <div className="sep-select-county-sub">
+                    Medicare plan availability is county-specific — pick one above to load {s.selectedState} plans from CMS.
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* SEPs Tab */}
-            {s.results && s.activeTab === "seps" && (
+            {showSeps && (
               <>
                 <div className="card sep-filter-bar">
                   <span className="sep-filter-label">

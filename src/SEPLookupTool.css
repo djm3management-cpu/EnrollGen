@@ -16,46 +16,11 @@
   overflow: hidden;
 }
 
-/* ── Header ── */
-.sep-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 4px;
-}
-
-.sep-header-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, #111620 0%, #0d1119 100%);
-  border: 1px solid rgba(173, 173, 173, 0.22);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ADADAD;
-  box-shadow: var(--shadow-btn);
-}
-
-.sep-header h1 {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.3px;
-}
-
-.sep-header p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
+/* (header removed — FemaFeed is the top element now) */
 
 /* ── Search bar ── */
 .sep-search-bar {
-  margin-top: 20px;
+  margin-top: 16px;
   padding: 6px;
   display: flex;
   gap: 8px;
@@ -210,47 +175,7 @@
   font-family: var(--font-mono);
 }
 
-/* ── County selector ── */
-.sep-county-card {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 14px 18px;
-  margin-bottom: 14px;
-}
-
-.sep-county-card.active {
-  border-color: var(--border-active);
-}
-
-.sep-county-card.pending {
-  border-color: rgba(251, 191, 36, 0.15);
-}
-
-.sep-county-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  color: var(--text-secondary);
-}
-
-.sep-county-label span {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-family: var(--font-mono);
-}
-
-.sep-county-count {
-  font-size: 13px;
-  font-weight: 700;
-  color: #ADADAD;
-  white-space: nowrap;
-  font-family: var(--font-mono);
-}
+/* (county card selector removed — CountyGrid handles selection) */
 
 /* ── Filter bar ── */
 .sep-filter-bar {
@@ -291,6 +216,7 @@
 .sep-plan-table-wrap {
   padding: 0;
   overflow: hidden;
+  margin-top: 12px;
 }
 
 .sep-plan-table-scroll {
@@ -690,13 +616,7 @@
   padding: 18px 22px;
 }
 
-/* ── County notice ── */
-.sep-county-notice {
-  text-align: center;
-  padding: 22px;
-  margin-bottom: 14px;
-  border-color: rgba(251, 191, 36, 0.15);
-}
+/* (county notice removed — replaced by sep-select-county-prompt) */
 
 /* ── Carrier grid ── */
 .sep-carrier-grid {
@@ -932,31 +852,42 @@
   margin-top: 24px;
 }
 
-/* ── State header (state-click entry, no zip) ── */
-.sep-state-header {
-  margin-bottom: 20px;
+/* ── Tab bar (state-click flow) ── */
+.sep-tab-bar {
+  display: flex;
+  gap: 4px;
+  margin: 16px 0;
+}
+
+/* ── Select-county prompt ── */
+.sep-select-county-prompt {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed rgba(251, 191, 36, 0.25);
+  background: rgba(251, 191, 36, 0.03);
+  color: var(--text-muted);
   margin-top: 8px;
 }
 
-.sep-state-title {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-primary);
-}
-
-.sep-state-county {
-  color: #E8002D;
+.sep-select-county-title {
+  font-size: 14px;
   font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 4px;
 }
 
-.sep-state-subtitle {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-top: 2px;
+.sep-select-county-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+  line-height: 1.5;
 }
+
+/* (state header removed — info now in map bar + tab bar) */
 
 /* ═══════════════════════════════════════════════════════════════════════
    COUNTY GRID PANEL — horizontal wrapping grid
@@ -1160,6 +1091,376 @@
 }
 .mono {
   font-family: var(--font-mono);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FEMA FEED — Horizontal top banner
+   ═══════════════════════════════════════════════════════════════════════ */
+.fema-feed-hz {
+  background: linear-gradient(180deg, #12182350 0%, #0f141c 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+
+.fema-feed-hz-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.fema-feed-hz-footnote {
+  margin-left: 10px;
+  opacity: 0.5;
+  font-size: 9px;
+}
+
+.fema-feed-hz-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.fema-feed-hz-columns > .fema-feed-hz-col:first-child {
+  border-right: 1px solid var(--border-subtle);
+}
+
+.fema-feed-hz-col {
+  padding: 0;
+  min-width: 0;
+}
+
+.fema-feed-hz-items {
+  padding: 4px 10px 8px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.fema-feed-hz-items::-webkit-scrollbar {
+  width: 4px;
+}
+.fema-feed-hz-items::-webkit-scrollbar-track {
+  background: transparent;
+}
+.fema-feed-hz-items::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.fema-feed-hz-empty {
+  padding: 20px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 760px) {
+  .fema-feed-hz-columns {
+    grid-template-columns: 1fr;
+  }
+  .fema-feed-hz-columns > .fema-feed-hz-col:first-child {
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .fema-feed-hz-items {
+    max-height: 200px;
+  }
+}
+
+.fema-feed-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.fema-feed-pulse {
+  color: #E8002D;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.fema-feed-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.fema-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.fema-dot.live {
+  background: #00D166;
+  box-shadow: 0 0 6px rgba(0, 209, 102, 0.4);
+}
+
+.fema-dot.fallback {
+  background: #fbbf24;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.4);
+}
+
+.fema-feed-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px 6px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.fema-feed-badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #E8002D;
+  background: rgba(232, 0, 45, 0.1);
+  border: 1px solid rgba(232, 0, 45, 0.2);
+  border-radius: 50px;
+  padding: 1px 8px;
+}
+
+.fema-feed-list {
+  padding: 4px 10px;
+}
+
+.fema-feed-item,
+.fema-feed-bulletin {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.fema-feed-item:hover,
+.fema-feed-bulletin:hover {
+  border-color: rgba(173, 173, 173, 0.2);
+}
+
+.fema-feed-item.has-sep {
+  border-left: 2px solid rgba(232, 0, 45, 0.5);
+}
+
+.fema-feed-item.pa-only {
+  border-left: 2px solid rgba(251, 191, 36, 0.4);
+}
+
+.fema-feed-item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 12px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary);
+  flex-wrap: wrap;
+}
+
+.fema-feed-item-header:hover {
+  background: rgba(232, 0, 45, 0.02);
+}
+
+.fema-feed-item-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.fema-feed-type {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.fema-feed-type.ia {
+  color: #E8002D;
+  background: rgba(232, 0, 45, 0.1);
+  border: 1px solid rgba(232, 0, 45, 0.2);
+}
+
+.fema-feed-type.pa {
+  color: var(--accent-gold);
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.fema-feed-state {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.fema-feed-time {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.fema-feed-item-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.fema-feed-item-body {
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.fema-feed-item-body p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fema-feed-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.fema-ongoing-tag {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #E8002D;
+  background: rgba(232, 0, 45, 0.1);
+  border: 1px solid rgba(232, 0, 45, 0.2);
+  border-radius: 3px;
+  padding: 0 5px;
+  margin-left: 4px;
+}
+
+.fema-feed-sep-window {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #E8002D;
+}
+
+.fema-feed-id {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.fema-feed-carrier-tag {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 7px;
+  border-radius: 3px;
+  border: 1px solid;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.fema-feed-states {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.fema-feed-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #E8002D;
+  text-decoration: none;
+  margin-top: 4px;
+}
+
+.fema-feed-link:hover {
+  text-decoration: underline;
+}
+
+.fema-feed-show-all {
+  display: block;
+  width: calc(100% - 20px);
+  margin: 2px 10px 8px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fema-feed-show-all:hover {
+  color: #E8002D;
+  border-color: rgba(232, 0, 45, 0.3);
+}
+
+.fema-feed-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-align: center;
+  opacity: 0.6;
 }
 
 /* ── Mobile fixes ── */

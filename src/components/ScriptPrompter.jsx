@@ -137,29 +137,39 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
       {/* ── Floating Alert ── */}
       {floatingAlert && (() => {
         const s = LEVEL_STYLE[floatingAlert.level] || LEVEL_STYLE.info;
+        const isPulse = !!floatingAlert.pulse;
         return (
           <div
             onClick={() => copilot.setFloatingAlert(null)}
             style={{
-              position: "fixed", top: 80, right: 20, zIndex: 9999, maxWidth: 360, width: "auto",
-              background: "#0a0a0a",
-              borderLeft: `3px solid ${s.color}`,
-              borderTop: "1px solid rgba(255,255,255,0.07)",
-              borderRight: "1px solid rgba(255,255,255,0.07)",
-              borderBottom: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 3, padding: "10px 14px",
-              display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.7)", animation: "slideDown 0.25s ease",
+              position: "fixed", top: 80, right: 20, zIndex: 9999, maxWidth: 420, width: "auto",
+              background: isPulse
+                ? "linear-gradient(145deg, rgba(157,0,255,0.12) 0%, rgba(10,10,12,0.99) 100%)"
+                : "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+              border: `1px solid ${s.border || "rgba(255,255,255,0.07)"}`,
+              borderLeftWidth: 4, borderLeftColor: s.color,
+              borderRadius: 14, padding: "14px 18px",
+              display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer",
+              boxShadow: isPulse
+                ? `14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 30px ${s.color}33`
+                : "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 20px rgba(0,0,0,0.5)",
+              animation: isPulse ? "slideDown 0.25s ease, alertPulse 1.5s ease-in-out 3" : "slideDown 0.25s ease",
+              backdropFilter: "blur(12px)",
             }}
           >
-            <span style={{ fontSize: "0.75rem", color: s.color, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, lineHeight: 1, paddingTop: 2, flexShrink: 0 }}>
+            <span style={{
+              fontSize: isPulse ? "1.1rem" : "0.85rem", color: s.color,
+              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, lineHeight: 1,
+              paddingTop: 2, flexShrink: 0,
+              animation: isPulse ? "iconFlash 0.8s ease-in-out 4" : "none",
+            }}>
               {s.icon}
             </span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "0.58rem", fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: s.color, marginBottom: 4 }}>
-                {floatingAlert.level} — click to dismiss
+              <div style={{ fontSize: isPulse ? "0.7rem" : "0.62rem", fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: s.color, marginBottom: 5 }}>
+                {floatingAlert.level === "critical" ? "CRITICAL ALERT" : "WARNING"} — tap to dismiss
               </div>
-              <div style={{ fontSize: "0.8rem", color: "#d0d0d0", lineHeight: 1.45, fontFamily: "'IBM Plex Mono', monospace" }}>
+              <div style={{ fontSize: "0.82rem", color: "#d0d0d0", lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif", fontWeight: isPulse ? 600 : 400 }}>
                 {floatingAlert.text}
               </div>
             </div>

@@ -876,6 +876,22 @@ FULL TRANSCRIPT TAIL:
     transcriptRef,
   ]);
 
+  /* ═══════ SOA section-entry alert ═══════ */
+  const soaFiredRef = useRef(false);
+  useEffect(() => {
+    if (activeSection === 3 && !soaFiredRef.current) {
+      soaFiredRef.current = true;
+      const soaMsg = "SCOPE OF APPOINTMENT — You MUST inform the beneficiary that this is the Scope of Appointment and confirm they understand what plan types will be discussed.";
+      pushFeedEntry("critical", soaMsg, { section: "POA & Scope of Appointment", issueTag: "SOA_DISCLOSURE" });
+      // Use a longer timeout so the agent can't miss it
+      clearTimeout(floatTimeout.current);
+      setFloatingAlert({ level: "critical", text: soaMsg, pulse: true });
+      logEntry(LOG_TYPES.FLOATING_ALERT, "critical", soaMsg, { section: "POA & Scope of Appointment" });
+      floatTimeout.current = setTimeout(() => setFloatingAlert(null), 15000);
+    }
+    if (activeSection !== 3) soaFiredRef.current = false;
+  }, [activeSection, pushFeedEntry, logEntry]);
+
   /* ═══════ Section-entry auto-analysis ═══════ */
   useEffect(() => {
     if (prevSectionRef.current === activeSection) return;

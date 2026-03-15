@@ -3,7 +3,7 @@
   Supports two entry flows: zip search and state map click.
 */
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { getStateFromZip, getCarriersForZip } from "../lib/sepGeo";
 import { fetchLiveFemaDisasters } from "../lib/sepFema";
 import { fetchCountiesForState, fetchPlansFromSupabase, fetchCountyPlanCounts, transformCmsPlan } from "../lib/sepCms";
@@ -33,8 +33,23 @@ export function useSEPLookup() {
   const [countyLoading, setCountyLoading] = useState(false);
   const [countyPlanCounts, setCountyPlanCounts] = useState({});
   const [femaSource, setFemaSource] = useState("unknown");
+  const [femaDisasters, setFemaDisasters] = useState([]);
   const femaCache = useRef({ data: null, fetchedAt: 0 });
   const countyCache = useRef({});
+
+  // Fetch FEMA data on mount so the feed populates immediately
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetchLiveFemaDisasters();
+        femaCache.current = { data: r.disasters, fetchedAt: Date.now(), apiFailed: r.apiFailed };
+        setFemaDisasters(r.disasters);
+        setFemaSource(r.apiFailed ? "fallback" : "live");
+      } catch (err) {
+        console.error("Initial FEMA fetch error:", err);
+      }
+    })();
+  }, []);
 
   const loadPlansForCounty = useCallback(async (st, county) => {
     if (!st || !county) return;
@@ -100,6 +115,7 @@ export function useSEPLookup() {
       } else {
         setFemaSource(femaCache.current.apiFailed ? "fallback" : "live");
       }
+      setFemaDisasters(femaData);
       const seps = getSEPsForState(stateCode, femaData);
       setResults(seps);
 
@@ -142,6 +158,7 @@ export function useSEPLookup() {
       } else {
         setFemaSource(femaCache.current.apiFailed ? "fallback" : "live");
       }
+      setFemaDisasters(femaData);
       const st = getStateFromZip(cleanZip);
       const seps = getSEPsForZip(cleanZip, femaData);
       const zipCarriers = getCarriersForZip(cleanZip);
@@ -248,7 +265,7 @@ export function useSEPLookup() {
     planFilterSnp, setPlanFilterSnp,
     planSearch, setPlanSearch,
     selectedCounty, setSelectedCounty, countyList,
-    countyLoading, countyPlanCounts, femaSource, inputRef,
+    countyLoading, countyPlanCounts, femaSource, femaDisasters, inputRef,
     handleSearch, handleKeyDown, handleStateClick, loadPlansForCounty,
     isValidZip, filtered, femaActive, state,
     selectedState, setSelectedState,

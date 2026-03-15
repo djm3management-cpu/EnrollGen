@@ -426,12 +426,12 @@ Rules:
           className="section-coach-btn"
           onClick={askCoach}
           disabled={loading}
-          title="Get a compliance tip for this section from AI"
+          title="Section Coach"
         >
           {loading ? (
-            <>Patching Through<span className="ai-dots"><span className="ai-dot" /><span className="ai-dot" /><span className="ai-dot" /></span></>
+            <span className="ai-dots"><span className="ai-dot" /><span className="ai-dot" /><span className="ai-dot" /></span>
           ) : (
-            <><Sparkles size={13} style={{ marginRight: 6 }} />AI Co-Pilot</>
+            <Sparkles size={14} />
           )}
         </button>
         {tip && (

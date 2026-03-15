@@ -212,79 +212,8 @@ export const SectionTimer = React.memo(function SectionTimer({
 
 /* ===================== SECTION TOAST ===================== */
 /* Rendered as first child of .card — positions itself centered on the card's top border */
-export const SectionToast = React.memo(function SectionToast({
-  sectionNum,
-  timestamps,
-}) {
-  const ts = timestamps[sectionNum];
-  const [elapsed, setElapsed] = useState(0);
-  const [alertShown, setAlertShown] = useState({
-    reminder: false,
-    warn: false,
-    danger: false,
-  });
-  const [toast, setToast] = useState(null);
-  const clearToastTimeoutRef = useRef(null);
-
-  useEffect(() => {
-    if (!ts || !ts.start) return;
-    if (ts.end) { setElapsed(ts.end - ts.start); return; }
-    const interval = setInterval(() => setElapsed(Date.now() - ts.start), 1000);
-    return () => clearInterval(interval);
-  }, [ts]);
-
-  useEffect(() => {
-    if (!ts?.start || ts?.end) return;
-    const [warnSec, dangerSec] = SECTION_THRESHOLDS[sectionNum] || [120, 300];
-    const sec = Math.floor(elapsed / 1000);
-    const scheduleToastClear = (delayMs) => {
-      if (clearToastTimeoutRef.current) {
-        clearTimeout(clearToastTimeoutRef.current);
-      }
-      clearToastTimeoutRef.current = setTimeout(() => {
-        setToast(null);
-        clearToastTimeoutRef.current = null;
-      }, delayMs);
-    };
-    if (sectionNum === 1 && sec >= 10 && !alertShown.reminder) {
-      setAlertShown((p) => ({ ...p, reminder: true }));
-      setToast({ level: "warn", msg: "Read full disclosure" });
-      scheduleToastClear(3500);
-    } else if (sec >= dangerSec && !alertShown.danger) {
-      setAlertShown((p) => ({ ...p, danger: true }));
-      setToast({ level: "danger", msg: `Over ${dangerSec / 60}min — wrap up this section` });
-      scheduleToastClear(5000);
-    } else if (sec >= warnSec && !alertShown.warn) {
-      setAlertShown((p) => ({ ...p, warn: true }));
-      setToast({ level: "warn", msg: `${warnSec / 60}min — start moving forward` });
-      scheduleToastClear(4000);
-    }
-  }, [elapsed, sectionNum, alertShown, ts]);
-
-  useEffect(() => {
-    setAlertShown({ reminder: false, warn: false, danger: false });
-    setToast(null);
-    if (clearToastTimeoutRef.current) {
-      clearTimeout(clearToastTimeoutRef.current);
-      clearToastTimeoutRef.current = null;
-    }
-  }, [ts?.start]);
-
-  useEffect(() => {
-    return () => {
-      if (clearToastTimeoutRef.current) {
-        clearTimeout(clearToastTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  if (!toast || !!ts?.end) return null;
-
-  return (
-    <div className="section-timer-toast-anchor" aria-hidden="true">
-      <span className={`section-timer-toast ${toast.level}`}>{toast.msg}</span>
-    </div>
-  );
+export const SectionToast = React.memo(function SectionToast() {
+  return null;
 });
 
 /* ===================== LOCK TEXT ===================== */

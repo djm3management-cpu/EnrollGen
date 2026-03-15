@@ -1,5 +1,5 @@
 import React from "react";
-import { Filter, X, MapPin, ChevronRight } from "lucide-react";
+import { Filter, X, ChevronRight } from "lucide-react";
 import { CARRIERS } from "../../data/sepCarriers";
 import { Stars, ProductBadge } from "./SEPCard";
 import { getStateFromZip } from "../../lib/sepGeo";
@@ -47,47 +47,6 @@ export function PlanTable({
 
   return (
     <>
-      {/* County selector */}
-      {countyList.length > 0 && (
-        <div className={`card sep-county-card ${selectedCounty ? "active" : "pending"}`}>
-          <div className="sep-county-label">
-            <MapPin size={14} />
-            <span>County</span>
-          </div>
-          <select
-            value={selectedCounty || ""}
-            onChange={async (e) => {
-              const c = e.target.value;
-              if (!c) return;
-              setSelectedCounty(c);
-              await loadPlansForCounty(state, c);
-            }}
-          >
-            {!selectedCounty && (
-              <option value="">— Select your county ({countyList.length} available) —</option>
-            )}
-            {countyList.map((c) => (
-              <option key={c} value={c}>{c} County</option>
-            ))}
-          </select>
-          {countyLoading && <span className="sep-spinner-sm" />}
-          {selectedCounty && plans && (
-            <span className="sep-county-count">{plans.length} plans</span>
-          )}
-        </div>
-      )}
-
-      {!selectedCounty && countyList.length > 0 && (
-        <div className="card sep-county-notice">
-          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--accent-gold)", marginBottom: 4 }}>
-            Select a county above to load plans from CMS database
-          </div>
-          <div className="muted" style={{ fontFamily: "var(--font-mono)" }}>
-            Medicare plan availability is county-specific. The CMS database has {countyList.length} counties for {state}.
-          </div>
-        </div>
-      )}
-
       {/* Filters */}
       <div className="card sep-filter-bar">
         <span className="sep-filter-label">

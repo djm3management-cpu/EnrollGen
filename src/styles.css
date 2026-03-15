@@ -972,27 +972,27 @@ input::placeholder {
 
 .section-next-action .primary {
   background: linear-gradient(180deg, #052810 0%, #021a08 100%);
-  color: #00D166;
-  border-color: rgba(0, 209, 102, 0.35);
-  border-top-color: rgba(0, 209, 102, 0.5);
+  color: #00ff41;
+  border-color: rgba(0, 255, 65, 0.25);
+  border-top-color: rgba(0, 255, 65, 0.4);
 }
 
 .section-next-action .primary::before {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(0, 209, 102, 0.5),
+    rgba(0, 255, 65, 0.45),
     transparent
   );
 }
 
 .section-next-action .primary:hover:not(:disabled) {
   background: linear-gradient(180deg, #073d17 0%, #03220a 100%);
-  border-color: rgba(0, 209, 102, 0.6);
+  border-color: rgba(0, 255, 65, 0.55);
   box-shadow:
-    0 0 14px rgba(0, 209, 102, 0.2),
+    0 0 14px rgba(0, 255, 65, 0.2),
     0 4px 12px rgba(0, 0, 0, 0.5);
-  color: #00ff7f;
+  color: #39ff6e;
 }
 
 /* ===============================
@@ -2310,21 +2310,23 @@ input[type="file"]::file-selector-button:hover {
 
 .section-coach-btn {
   position: relative;
-  background: linear-gradient(180deg, rgba(5, 13, 26, 0.72) 0%, rgba(2, 8, 16, 0.72) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.18);
-  border-top-color: rgba(59, 130, 246, 0.26);
-  color: rgba(59, 130, 246, 0.88);
-  padding: 6px 16px;
+  background: linear-gradient(180deg, rgba(157, 0, 255, 0.08) 0%, rgba(10, 10, 12, 0.72) 100%);
+  border: 1px solid rgba(157, 0, 255, 0.25);
+  border-top-color: rgba(157, 0, 255, 0.35);
+  color: #B84DFF;
+  padding: 7px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 12px;
   font-weight: 700;
-  font-family: "Barlow Condensed", sans-serif;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   cursor: pointer;
-  border-radius: var(--radius-md);
+  border-radius: 50%;
   box-shadow: var(--shadow-btn);
   transition: all 0.2s;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .section-coach-btn::before {
@@ -2334,14 +2336,44 @@ input[type="file"]::file-selector-button:hover {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(157, 0, 255, 0.5), transparent);
   pointer-events: none;
+  border-radius: 50%;
+}
+
+/* Tooltip on hover */
+.section-coach-btn::after {
+  content: "Section Coach";
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(10, 10, 12, 0.95);
+  border: 1px solid rgba(157, 0, 255, 0.3);
+  color: #B84DFF;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: "Barlow Condensed", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.section-coach-btn:hover::after {
+  opacity: 1;
 }
 
 .section-coach-btn:hover:not(:disabled) {
-  box-shadow: var(--shadow-btn-hover);
+  box-shadow: var(--shadow-btn-hover), 0 0 12px rgba(157, 0, 255, 0.2);
   transform: translateY(-1px);
-  border-color: rgba(59, 130, 246, 0.45);
+  border-color: rgba(157, 0, 255, 0.5);
+  color: #c77dff;
+  background: linear-gradient(180deg, rgba(157, 0, 255, 0.15) 0%, rgba(10, 10, 12, 0.72) 100%);
 }
 
 .section-coach-btn:disabled {
@@ -2513,12 +2545,22 @@ input[type="file"]::file-selector-button:hover {
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-12px);
+    transform: translateY(-12px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
+}
+
+@keyframes alertPulse {
+  0%, 100% { box-shadow: 14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 30px rgba(157,0,255,0.2); }
+  50% { box-shadow: 14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 50px rgba(157,0,255,0.45), 0 0 80px rgba(157,0,255,0.15); }
+}
+
+@keyframes iconFlash {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
 }
 
 html {

@@ -17,7 +17,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
   const recognitionRef = useRef(null);
   const internalRef = useRef("");
   const transcriptRef = externalTranscriptRef || internalRef;
-  const backoffRef = useRef(500); // exponential backoff for restarts
+  const backoffRef = useRef(300); // exponential backoff for restarts
   const onNewFinalRef = useRef(onNewFinal);
   const onSpokenQuestionRef = useRef(onSpokenQuestion);
 
@@ -34,7 +34,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
 
   const startListening = useCallback(() => {
     if (!supportsRecognition) return;
-    backoffRef.current = 500; // reset backoff on manual start
+    backoffRef.current = 300; // reset backoff on manual start
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SR();
@@ -83,22 +83,27 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     };
 
     recognition.onerror = (e) => {
-      console.error("SpeechRecognition error:", e.error);
-      if (e.error !== "no-speech") {
+      // no-speech and aborted are normal — don't log as errors
+      if (e.error !== "no-speech" && e.error !== "aborted") {
+        console.error("SpeechRecognition error:", e.error);
+      }
+      // Only truly stop for permission denial — everything else will auto-restart via onend
+      if (e.error === "not-allowed") {
         setListening(false);
+        recognitionRef.current = null;
       }
     };
 
     recognition.onend = () => {
       if (recognitionRef.current) {
-        // Exponential backoff restart: 500ms → 1s → 2s → 4s (cap 4s)
+        // Quick restart: 300ms → 600ms → 1.2s (cap 1.2s)
         const delay = backoffRef.current;
-        backoffRef.current = Math.min(delay * 2, 4000);
+        backoffRef.current = Math.min(delay * 2, 1200);
         setTimeout(() => {
           if (recognitionRef.current) {
             try {
               recognitionRef.current.start();
-              backoffRef.current = 500; // reset on successful restart
+              backoffRef.current = 300; // reset on successful restart
             } catch {
               /* already running */
             }
