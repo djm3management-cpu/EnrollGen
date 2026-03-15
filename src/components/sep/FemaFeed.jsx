@@ -1,69 +1,6 @@
 import React, { useState } from "react";
 import { AlertTriangle, Radio, ChevronDown, ChevronUp, MapPin, Clock, ExternalLink } from "lucide-react";
 
-/*
-  Carrier-specific FEMA SEP announcements.
-  Updated weekly — each entry is a carrier bulletin about disaster SEP activations.
-*/
-const CARRIER_BULLETINS = [
-  {
-    carrier: "UHC",
-    date: "2025-06-10",
-    title: "UHC Extends SEP Filing for DR-4856 (TX Severe Storms)",
-    body: "UnitedHealthcare is accepting enrollment forms for affected TX counties through Aug 31. Telephonic enrollment available via 1-877-596-3258.",
-    states: ["TX"],
-    link: "https://www.uhcprovider.com",
-  },
-  {
-    carrier: "Humana",
-    date: "2025-06-08",
-    title: "Humana Activates Disaster Response for Multiple States",
-    body: "Humana is waiving prior authorizations and extending Rx refills for members in FEMA-declared disaster areas. SEP enrollments accepted for all MA/MAPD plans.",
-    states: ["TX", "OK", "LA"],
-    link: "https://www.humana.com",
-  },
-  {
-    carrier: "Aetna",
-    date: "2025-06-05",
-    title: "Aetna/CVS Health FEMA Disaster SEP Processing Update",
-    body: "Aetna is processing disaster SEP enrollments for all active FEMA declarations. Applications can be submitted via agent portal or by calling 1-800-307-4830.",
-    states: [],
-    link: "https://www.aetna.com",
-  },
-  {
-    carrier: "BCBS",
-    date: "2025-05-28",
-    title: "BCBS Plans Extend Network Access in Disaster Areas",
-    body: "Blue Cross Blue Shield affiliates in affected states are providing expanded out-of-network access and waiving cost-sharing for disaster-impacted members.",
-    states: ["FL", "GA", "NC"],
-    link: "https://www.bcbs.com",
-  },
-  {
-    carrier: "Wellcare",
-    date: "2025-05-20",
-    title: "Wellcare/Centene FEMA SEP Enrollment Guidance",
-    body: "Wellcare is accepting telephonic and paper enrollments for disaster SEPs. Agent commissions apply per standard schedules. Contact your FMO for disaster enrollment kits.",
-    states: [],
-    link: "https://www.wellcare.com",
-  },
-  {
-    carrier: "CMS",
-    date: "2025-06-12",
-    title: "CMS Memo: FEMA SEP Documentation Requirements Reminder",
-    body: "CMS reminds plans that attestation of residence in a FEMA-declared area is sufficient for SEP verification. No additional documentation required from beneficiaries.",
-    states: [],
-    link: "https://www.cms.gov/medicare/enrollment-renewal/special-enrollment-periods",
-  },
-  {
-    carrier: "CMS",
-    date: "2025-05-15",
-    title: "CMS Updates County-Level SEP Designations for Q2 2025",
-    body: "New counties added to active disaster SEPs following FEMA amendments. Agents should verify county eligibility before enrollment submission.",
-    states: [],
-    link: "https://www.cms.gov",
-  },
-];
-
 function timeAgo(dateStr) {
   const d = new Date(dateStr);
   const now = new Date();
@@ -84,7 +21,7 @@ function carrierColor(c) {
   return map[c] || "#666";
 }
 
-export function FemaFeed({ femaDisasters = [], femaSource = "unknown" }) {
+export function FemaFeed({ femaDisasters = [], femaSource = "unknown", bulletins = [] }) {
   const [expandedItems, setExpandedItems] = useState({});
   const [showAllFema, setShowAllFema] = useState(false);
   const [showAllBulletins, setShowAllBulletins] = useState(false);
@@ -93,7 +30,7 @@ export function FemaFeed({ femaDisasters = [], femaSource = "unknown" }) {
     .sort((a, b) => new Date(b.declaredDate) - new Date(a.declaredDate));
 
   const displayDisasters = showAllFema ? sortedDisasters : sortedDisasters.slice(0, 4);
-  const displayBulletins = showAllBulletins ? CARRIER_BULLETINS : CARRIER_BULLETINS.slice(0, 4);
+  const displayBulletins = showAllBulletins ? bulletins : bulletins.slice(0, 4);
 
   const toggleItem = (id) =>
     setExpandedItems((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -230,9 +167,9 @@ export function FemaFeed({ femaDisasters = [], femaSource = "unknown" }) {
                 </div>
               );
             })}
-            {CARRIER_BULLETINS.length > 4 && (
+            {bulletins.length > 4 && (
               <button className="fema-feed-show-all" onClick={() => setShowAllBulletins(!showAllBulletins)}>
-                {showAllBulletins ? "Show fewer" : `Show all ${CARRIER_BULLETINS.length}`}
+                {showAllBulletins ? "Show fewer" : `Show all ${bulletins.length}`}
               </button>
             )}
           </div>

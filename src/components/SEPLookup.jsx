@@ -32,6 +32,7 @@ export default function SEPLookupTool() {
         <FemaFeed
           femaDisasters={s.femaDisasters}
           femaSource={s.femaSource}
+          bulletins={s.bulletins}
         />
 
         {/* Search */}

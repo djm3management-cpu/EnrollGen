@@ -132,7 +132,7 @@ export function SEPCard({ sep, isExpanded, onToggle }) {
                 <table className="sep-sub-table">
                   <thead>
                     <tr>
-                      {["Carrier", "Plan", "ID", "Type", "Stars", "Premium", "MOOP", "Grocery", "OTC", "Flex"].map((h) => (
+                      {["Carrier", "Plan", "ID", "Type", "Stars", "Premium", "MOOP"].map((h) => (
                         <th key={h} style={{ textAlign: h === "Premium" || h === "MOOP" ? "right" : "left" }}>{h}</th>
                       ))}
                     </tr>
@@ -160,15 +160,6 @@ export function SEPCard({ sep, isExpanded, onToggle }) {
                           </td>
                           <td className="text-right" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: 11 }}>
                             {p.moop ? `$${p.moop.toLocaleString()}` : "—"}
-                          </td>
-                          <td className="text-center" style={{ fontSize: 10, color: p.grocery ? "var(--accent-green)" : "var(--text-muted)", fontWeight: 600 }}>
-                            {p.grocery || "—"}
-                          </td>
-                          <td className="text-center" style={{ fontSize: 10, color: p.otc ? "var(--accent-gold)" : "var(--text-muted)", fontWeight: 600 }}>
-                            {p.otc || "—"}
-                          </td>
-                          <td className="text-center" style={{ fontSize: 10, color: p.flex ? "var(--accent-teal)" : "var(--text-muted)", fontWeight: 600 }}>
-                            {p.flex || "—"}
                           </td>
                         </tr>
                       );

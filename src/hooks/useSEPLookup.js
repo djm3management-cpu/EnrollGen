@@ -6,6 +6,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { getStateFromZip, getCarriersForZip } from "../lib/sepGeo";
 import { fetchLiveFemaDisasters } from "../lib/sepFema";
+import { fetchBulletins } from "../lib/sepBulletins";
 import { fetchCountiesForState, fetchPlansFromSupabase, fetchCountyPlanCounts, transformCmsPlan } from "../lib/sepCms";
 import { getCountyFromZip, getPlansForState } from "../data/sepPlanDb";
 import { getSEPsForZip, getSEPsForState } from "../lib/sepEngine";
@@ -34,19 +35,24 @@ export function useSEPLookup() {
   const [countyPlanCounts, setCountyPlanCounts] = useState({});
   const [femaSource, setFemaSource] = useState("unknown");
   const [femaDisasters, setFemaDisasters] = useState([]);
+  const [bulletins, setBulletins] = useState([]);
   const femaCache = useRef({ data: null, fetchedAt: 0 });
   const countyCache = useRef({});
 
-  // Fetch FEMA data on mount so the feed populates immediately
+  // Fetch FEMA data + bulletins on mount so the feed populates immediately
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetchLiveFemaDisasters();
+        const [r, b] = await Promise.all([
+          fetchLiveFemaDisasters(),
+          fetchBulletins(),
+        ]);
         femaCache.current = { data: r.disasters, fetchedAt: Date.now(), apiFailed: r.apiFailed };
         setFemaDisasters(r.disasters);
         setFemaSource(r.apiFailed ? "fallback" : "live");
+        setBulletins(b);
       } catch (err) {
-        console.error("Initial FEMA fetch error:", err);
+        console.error("Initial FEMA/bulletin fetch error:", err);
       }
     })();
   }, []);
@@ -265,7 +271,7 @@ export function useSEPLookup() {
     planFilterSnp, setPlanFilterSnp,
     planSearch, setPlanSearch,
     selectedCounty, setSelectedCounty, countyList,
-    countyLoading, countyPlanCounts, femaSource, femaDisasters, inputRef,
+    countyLoading, countyPlanCounts, femaSource, femaDisasters, bulletins, inputRef,
     handleSearch, handleKeyDown, handleStateClick, loadPlansForCounty,
     isValidZip, filtered, femaActive, state,
     selectedState, setSelectedState,

@@ -99,13 +99,13 @@ export function PlanTable({
           <table className="sep-plan-table">
             <thead>
               <tr>
-                {["Carrier", "Plan Name / ID", "Type", "Stars", "Premium", "MOOP", "Grocery", "OTC", "Flex Card", ""].map((h, i) => (
+                {["Carrier", "Plan Name / ID", "Type", "Stars", "Premium", "MOOP", ""].map((h, i) => (
                   <th
                     key={h + i}
                     style={{
                       textAlign: ["Premium", "MOOP"].includes(h)
                         ? "right"
-                        : ["Stars", "Grocery", "OTC", "Flex Card", ""].includes(h)
+                        : ["Stars", ""].includes(h)
                         ? "center"
                         : "left",
                     }}
@@ -149,22 +149,13 @@ export function PlanTable({
                         <td className="text-right nowrap" style={{ color: "var(--text-secondary)" }}>
                           {p.moop ? `$${p.moop.toLocaleString()}` : "—"}
                         </td>
-                        <td className="text-center" style={{ fontSize: 11, color: p.grocery ? "var(--accent-green)" : "var(--text-muted)", fontWeight: 600 }}>
-                          {p.grocery || "—"}
-                        </td>
-                        <td className="text-center" style={{ fontSize: 11, color: p.otc ? "var(--accent-gold)" : "var(--text-muted)", fontWeight: 600 }}>
-                          {p.otc || "—"}
-                        </td>
-                        <td className="text-center" style={{ fontSize: 11, color: p.flex ? "var(--accent-teal)" : "var(--text-muted)", fontWeight: 600 }}>
-                          {p.flex || "—"}
-                        </td>
                         <td style={{ color: "var(--text-muted)", transition: "transform 0.25s ease", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)" }}>
                           <ChevronRight size={16} />
                         </td>
                       </tr>
                       {isOpen && (
                         <tr>
-                          <td colSpan={10} style={{ padding: 0 }}>
+                          <td colSpan={7} style={{ padding: 0 }}>
                             <div className="sep-plan-detail">
                               <div className="sep-plan-benefits">
                                 {p.dental && <span className="sep-benefit-pill"><span>Dental</span></span>}
@@ -207,7 +198,7 @@ export function PlanTable({
                 })
               ) : (
                 <tr>
-                  <td colSpan={10} className="text-center muted" style={{ padding: "48px 24px" }}>
+                  <td colSpan={7} className="text-center muted" style={{ padding: "48px 24px" }}>
                     <div style={{ fontSize: 14, fontWeight: 600 }}>No plans match current filters</div>
                     <div style={{ fontSize: 12, marginTop: 4 }}>Try adjusting filters above.</div>
                   </td>
