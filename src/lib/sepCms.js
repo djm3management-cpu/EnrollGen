@@ -6,44 +6,77 @@
 import { supabase } from "./supabase";
 
 export async function fetchCountiesForState(state) {
-  const { data, error } = await supabase
-    .from("cms_plans_PY2026")
-    .select('"County Name"')
-    .eq("State Territory Abbreviation", state)
-    .neq("County Name", "All Counties")
-    .order('"County Name"');
-  if (error) {
-    console.error("Counties fetch error:", error);
-    return [];
+  // Supabase default limit is 1000 rows — large states have 10K+ plan×county rows.
+  // Paginate to collect all county names, then deduplicate.
+  const all = [];
+  const PAGE = 5000;
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("cms_plans_PY2026")
+      .select('"County Name"')
+      .eq("State Territory Abbreviation", state)
+      .neq("County Name", "All Counties")
+      .range(from, from + PAGE - 1);
+    if (error) {
+      console.error("Counties fetch error:", error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE) break;
+    from += PAGE;
   }
-  return [...new Set(data.map((r) => r["County Name"]))].sort();
+  return [...new Set(all.map((r) => r["County Name"]))].sort();
 }
 
 export async function fetchPlansFromSupabase(state, county) {
-  const { data, error } = await supabase
-    .from("cms_plans_PY2026")
-    .select("*")
-    .eq("State Territory Abbreviation", state)
-    .or(`County Name.eq.${county},County Name.eq.All Counties`)
-    .neq("Sanctioned Plan", "Yes");
-  if (error) {
-    console.error("Plans fetch error:", error);
-    return [];
+  const all = [];
+  const PAGE = 5000;
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("cms_plans_PY2026")
+      .select("*")
+      .eq("State Territory Abbreviation", state)
+      .or(`County Name.eq.${county},County Name.eq.All Counties`)
+      .neq("Sanctioned Plan", "Yes")
+      .range(from, from + PAGE - 1);
+    if (error) {
+      console.error("Plans fetch error:", error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE) break;
+    from += PAGE;
   }
-  return data;
+  return all;
 }
 
 export async function fetchCountyPlanCounts(state) {
-  const { data, error } = await supabase
-    .from("cms_plans_PY2026")
-    .select('"County Name", "Contract ID", "Plan ID"')
-    .eq("State Territory Abbreviation", state)
-    .neq("County Name", "All Counties")
-    .neq("Sanctioned Plan", "Yes");
-  if (error) {
-    console.error("County plan counts error:", error);
-    return {};
+  // Paginate to get all rows — large states exceed the 1000-row default.
+  const allData = [];
+  const PAGE = 5000;
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("cms_plans_PY2026")
+      .select('"County Name", "Contract ID", "Plan ID"')
+      .eq("State Territory Abbreviation", state)
+      .neq("County Name", "All Counties")
+      .neq("Sanctioned Plan", "Yes")
+      .range(from, from + PAGE - 1);
+    if (error) {
+      console.error("County plan counts error:", error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    allData.push(...data);
+    if (data.length < PAGE) break;
+    from += PAGE;
   }
+  const data = allData;
   const counts = {};
   const seen = {};
   for (const row of data) {
