@@ -1,5 +1,5 @@
 import React from "react";
-import { Shield, Search, AlertTriangle, Filter, X, Map } from "lucide-react";
+import { Shield, Search, AlertTriangle, Filter, X, Map, MapPin } from "lucide-react";
 import { useSEPLookup } from "../hooks/useSEPLookup";
 import { CARRIERS } from "../data/sepCarriers";
 import { SearchBar } from "./sep/SearchBar";
@@ -58,236 +58,230 @@ export default function SEPLookupTool() {
           </div>
         )}
 
-        {/* ═══ Landing: full-width map ═══ */}
-        {!s.hasView && !s.loading && (
-          <div className="sep-map-landing-wrap">
-            <div className="sep-map-landing-label">
-              <Map size={14} />
-              <span>Click a state to explore plans & SEPs</span>
-            </div>
+        {/* ═══ Map — always full-width ═══ */}
+        {!s.loading && (
+          <div className="sep-map-section">
+            {!s.hasView && (
+              <div className="sep-map-landing-label">
+                <Map size={14} />
+                <span>Click a state to explore plans & SEPs</span>
+              </div>
+            )}
+
+            {s.hasView && (
+              <div className="sep-map-active-label">
+                <MapPin size={13} />
+                <span>{s.selectedState || s.state}</span>
+                {s.selectedCounty && (
+                  <span className="sep-map-county-tag">{s.selectedCounty} County</span>
+                )}
+                <button
+                  className="sep-map-reset"
+                  onClick={() => s.handleStateClick(null)}
+                >
+                  <X size={12} /> Reset
+                </button>
+              </div>
+            )}
+
             <StateMap
-              selectedState={s.selectedState}
+              selectedState={s.selectedState || s.state}
               onStateClick={s.handleStateClick}
             />
-            <div className="sep-map-landing-hint">
-              Or enter a zip code above for carrier & SEP data
-            </div>
+
+            {!s.hasView && (
+              <div className="sep-map-landing-hint">
+                Or enter a zip code above for carrier & SEP data
+              </div>
+            )}
           </div>
         )}
 
-        {/* ═══ Active view: map sidebar + content ═══ */}
+        {/* ═══ Content below map ═══ */}
         {s.hasView && !s.loading && (
-          <div className="sep-layout-split">
-            {/* Left rail: compact map + county grid */}
-            <div className="sep-left-rail">
-              <div className="sep-map-sidebar">
-                <StateMap
-                  selectedState={s.selectedState || s.state}
-                  onStateClick={s.handleStateClick}
-                  compact
-                />
-              </div>
-              {s.selectedState && (
-                <CountyGrid
-                  state={s.selectedState || s.state}
-                  counties={s.countyList}
-                  planCounts={s.countyPlanCounts}
-                  selectedCounty={s.selectedCounty}
-                  onCountySelect={handleCountySelect}
-                  loading={s.countyLoading}
-                />
-              )}
-            </div>
+          <div className="sep-below-map">
+            {/* County grid */}
+            {s.selectedState && s.countyList.length > 0 && (
+              <CountyGrid
+                state={s.selectedState || s.state}
+                counties={s.countyList}
+                planCounts={s.countyPlanCounts}
+                selectedCounty={s.selectedCounty}
+                onCountySelect={handleCountySelect}
+                loading={s.countyLoading}
+              />
+            )}
 
-            {/* Right content */}
-            <div className="sep-right-content">
-              {/* Stats bar (only when zip searched) */}
-              {s.results && (
-                <StatsBar
+            {/* Stats bar (zip search) */}
+            {s.results && (
+              <StatsBar
+                searchedZip={s.searchedZip}
+                state={s.state}
+                selectedCounty={s.selectedCounty}
+                filtered={s.filtered}
+                plans={s.plans}
+                femaActive={s.femaActive}
+                carriers={s.carriers}
+                filteredPlans={s.filteredPlans}
+                activeTab={s.activeTab}
+                setActiveTab={s.setActiveTab}
+              />
+            )}
+
+            {/* State-only header (no zip search) */}
+            {!s.results && s.selectedState && (
+              <div className="sep-state-header">
+                <div className="sep-state-title">
+                  {s.selectedState}
+                  {s.selectedCounty && (
+                    <span className="sep-state-county"> — {s.selectedCounty} County</span>
+                  )}
+                </div>
+                <div className="sep-state-subtitle">
+                  {s.selectedCounty
+                    ? `${s.filteredPlans.length} plans available`
+                    : `Select a county above to view plans`}
+                </div>
+                {s.selectedCounty && s.plans && s.plans.length > 0 && (
+                  <div className="tabs" style={{ marginTop: 12 }}>
+                    <button
+                      className={`tab${s.activeTab === "plans" ? " active" : ""}`}
+                      onClick={() => s.setActiveTab("plans")}
+                    >
+                      Plans & Codes ({s.filteredPlans.length})
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Plans Tab */}
+            {((s.results && s.activeTab === "plans") ||
+              (!s.results && s.selectedState && s.selectedCounty && s.plans)) && (
+              <>
+                <PlanTable
                   searchedZip={s.searchedZip}
-                  state={s.state}
+                  countyList={s.countyList}
                   selectedCounty={s.selectedCounty}
-                  filtered={s.filtered}
+                  setSelectedCounty={s.setSelectedCounty}
+                  countyLoading={s.countyLoading}
                   plans={s.plans}
-                  femaActive={s.femaActive}
-                  carriers={s.carriers}
+                  loadPlansForCounty={s.loadPlansForCounty}
+                  planFilterCarrier={s.planFilterCarrier}
+                  setPlanFilterCarrier={s.setPlanFilterCarrier}
+                  planFilterType={s.planFilterType}
+                  setPlanFilterType={s.setPlanFilterType}
+                  planFilterSnp={s.planFilterSnp}
+                  setPlanFilterSnp={s.setPlanFilterSnp}
+                  planSearch={s.planSearch}
+                  setPlanSearch={s.setPlanSearch}
                   filteredPlans={s.filteredPlans}
-                  activeTab={s.activeTab}
-                  setActiveTab={s.setActiveTab}
+                  planCarrierOpts={s.planCarrierOpts}
+                  planTypeOpts={s.planTypeOpts}
+                  expandedPlans={s.expandedPlans}
+                  setExpandedPlans={s.setExpandedPlans}
                 />
-              )}
 
-              {/* State-only header (no zip search) */}
-              {!s.results && s.selectedState && (
-                <div className="sep-state-header">
-                  <div className="sep-state-title">
-                    {s.selectedState}
-                    {s.selectedCounty && (
-                      <span className="sep-state-county"> — {s.selectedCounty} County</span>
-                    )}
-                  </div>
-                  <div className="sep-state-subtitle">
-                    {s.selectedCounty
-                      ? `${s.filteredPlans.length} plans available`
-                      : `${s.countyList.length} counties · Select a county to view plans`}
-                  </div>
-                  {s.selectedCounty && s.plans && s.plans.length > 0 && (
-                    <div className="tabs" style={{ marginTop: 12 }}>
-                      <button
-                        className={`tab${s.activeTab === "plans" ? " active" : ""}`}
-                        onClick={() => s.setActiveTab("plans")}
-                      >
-                        Plans & Codes ({s.filteredPlans.length})
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Plans Tab */}
-              {((s.results && s.activeTab === "plans") ||
-                (!s.results && s.selectedState && s.selectedCounty && s.plans)) && (
-                <>
-                  <PlanTable
-                    searchedZip={s.searchedZip}
-                    countyList={s.countyList}
-                    selectedCounty={s.selectedCounty}
-                    setSelectedCounty={s.setSelectedCounty}
-                    countyLoading={s.countyLoading}
-                    plans={s.plans}
-                    loadPlansForCounty={s.loadPlansForCounty}
-                    planFilterCarrier={s.planFilterCarrier}
-                    setPlanFilterCarrier={s.setPlanFilterCarrier}
-                    planFilterType={s.planFilterType}
-                    setPlanFilterType={s.setPlanFilterType}
-                    planFilterSnp={s.planFilterSnp}
-                    setPlanFilterSnp={s.setPlanFilterSnp}
-                    planSearch={s.planSearch}
-                    setPlanSearch={s.setPlanSearch}
-                    filteredPlans={s.filteredPlans}
-                    planCarrierOpts={s.planCarrierOpts}
-                    planTypeOpts={s.planTypeOpts}
-                    expandedPlans={s.expandedPlans}
-                    setExpandedPlans={s.setExpandedPlans}
-                  />
-
-                  {/* Carriers grid (zip search only) */}
-                  {s.results && s.carriers.length > 0 && (
-                    <div className="card" style={{ marginTop: 28 }}>
-                      <h2>Carriers in {s.searchedZip} ({s.state})</h2>
-                      <div className="sep-carrier-grid">
-                        {s.carriers.map((c) => (
-                          <div key={c.key} className="sep-carrier-item" style={{ borderColor: `${c.color}30` }}>
-                            <div className="sep-carrier-stripe" style={{ background: c.color }} />
-                            {c.logo ? (
-                              <img
-                                src={c.logo}
-                                alt={c.abbr}
-                                className="sep-carrier-logo"
-                                onError={(e) => { e.target.style.display = "none"; }}
-                              />
-                            ) : null}
-                            <div className="sep-carrier-name">{c.abbr}</div>
-                            <div className="sep-carrier-full-name">{c.name}</div>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                              {c.products.map((p) => <ProductBadge key={p} product={p} />)}
-                            </div>
+                {/* Carriers grid (zip search only) */}
+                {s.results && s.carriers.length > 0 && (
+                  <div className="card" style={{ marginTop: 28 }}>
+                    <h2>Carriers in {s.searchedZip} ({s.state})</h2>
+                    <div className="sep-carrier-grid">
+                      {s.carriers.map((c) => (
+                        <div key={c.key} className="sep-carrier-item" style={{ borderColor: `${c.color}30` }}>
+                          <div className="sep-carrier-stripe" style={{ background: c.color }} />
+                          {c.logo ? (
+                            <img
+                              src={c.logo}
+                              alt={c.abbr}
+                              className="sep-carrier-logo"
+                              onError={(e) => { e.target.style.display = "none"; }}
+                            />
+                          ) : null}
+                          <div className="sep-carrier-name">{c.abbr}</div>
+                          <div className="sep-carrier-full-name">{c.name}</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                            {c.products.map((p) => <ProductBadge key={p} product={p} />)}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </>
-              )}
+                  </div>
+                )}
+              </>
+            )}
 
-              {/* No county selected prompt (state-only view) */}
-              {!s.results && s.selectedState && !s.selectedCounty && (
-                <div className="sep-select-county-prompt">
-                  <Map size={32} strokeWidth={1.2} />
-                  <div className="sep-prompt-text">
-                    Select a county from the left panel to view available Medicare Advantage plans
-                  </div>
-                  <div className="sep-prompt-sub">
-                    {s.countyList.length} counties in {s.selectedState} with plan data
-                  </div>
+            {/* SEPs Tab (zip search only) */}
+            {s.results && s.activeTab === "seps" && (
+              <>
+                <div className="card sep-filter-bar">
+                  <span className="sep-filter-label">
+                    <Filter size={16} /> Filter
+                  </span>
+                  <select value={s.filterCategory} onChange={(e) => s.setFilterCategory(e.target.value)}>
+                    <option value="all">All Categories</option>
+                    {s.allCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <select value={s.filterProduct} onChange={(e) => s.setFilterProduct(e.target.value)}>
+                    <option value="all">All Products</option>
+                    {s.allProducts.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  {(s.filterCategory !== "all" || s.filterProduct !== "all") && (
+                    <button className="undo-btn" onClick={() => { s.setFilterCategory("all"); s.setFilterProduct("all"); }}>
+                      <X size={14} /> Clear
+                    </button>
+                  )}
                 </div>
-              )}
 
-              {/* SEPs Tab (zip search only) */}
-              {s.results && s.activeTab === "seps" && (
-                <>
-                  {/* SEP Filters */}
-                  <div className="card sep-filter-bar">
-                    <span className="sep-filter-label">
-                      <Filter size={16} /> Filter
-                    </span>
-                    <select value={s.filterCategory} onChange={(e) => s.setFilterCategory(e.target.value)}>
-                      <option value="all">All Categories</option>
-                      {s.allCategories.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <select value={s.filterProduct} onChange={(e) => s.setFilterProduct(e.target.value)}>
-                      <option value="all">All Products</option>
-                      {s.allProducts.map((p) => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                    {(s.filterCategory !== "all" || s.filterProduct !== "all") && (
-                      <button className="undo-btn" onClick={() => { s.setFilterCategory("all"); s.setFilterProduct("all"); }}>
-                        <X size={14} /> Clear
-                      </button>
-                    )}
-                  </div>
-
-                  {/* FEMA Alert */}
-                  {s.femaActive.length > 0 && (
-                    <div className="card sep-fema-alert">
-                      <div style={{ color: "var(--accent-red)", flexShrink: 0, marginTop: 2 }}>
-                        <AlertTriangle size={16} />
+                {s.femaActive.length > 0 && (
+                  <div className="card sep-fema-alert">
+                    <div style={{ color: "var(--accent-red)", flexShrink: 0, marginTop: 2 }}>
+                      <AlertTriangle size={16} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>
+                        Active FEMA Disaster Declaration{s.femaActive.length > 1 ? "s" : ""} in This Area
                       </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>
-                          Active FEMA Disaster Declaration{s.femaActive.length > 1 ? "s" : ""} in This Area
-                        </div>
-                        <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                          {s.femaActive.map((f) => f.event).join("; ")} — 60-day SEP applies for affected beneficiaries.
-                        </div>
+                      <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                        {s.femaActive.map((f) => f.event).join("; ")} — 60-day SEP applies for affected beneficiaries.
                       </div>
                     </div>
-                  )}
-
-                  {/* SEP Cards */}
-                  <div className="flow">
-                    {s.filtered && s.filtered.length > 0 ? (
-                      s.filtered.map((sep) => (
-                        <SEPCard
-                          key={sep.id}
-                          sep={sep}
-                          isExpanded={!!s.expanded[sep.id]}
-                          onToggle={() => s.setExpanded((prev) => ({ ...prev, [sep.id]: !prev[sep.id] }))}
-                        />
-                      ))
-                    ) : (
-                      <div className="text-center muted" style={{ padding: "48px 24px" }}>
-                        <div style={{ fontSize: 16, fontWeight: 600 }}>No SEPs match current filters</div>
-                        <div style={{ fontSize: 13, marginTop: 8 }}>Try adjusting filters above.</div>
-                      </div>
-                    )}
                   </div>
-                </>
-              )}
+                )}
 
-              {/* Disclaimer */}
-              <div className="sep-disclaimer">
-                <p>
-                  <strong>Disclaimer:</strong> FEMA disaster data is fetched live from the OpenFEMA API with verified
-                  fallback data. Plan data is sourced from CMS Landscape Files for CY2026 (138K rows via Supabase,
-                  county-level precision). Premiums, benefits, and service areas may vary — always verify on Medicare.gov.
-                  For agent/broker use only.
-                  {s.femaSource !== "unknown" && (
-                    <span className={`sep-fema-source-badge ${s.femaSource === "live" ? "live" : "fallback"}`}>
-                      {s.femaSource === "live" ? "Live FEMA" : "Fallback FEMA"}
-                    </span>
+                <div className="flow">
+                  {s.filtered && s.filtered.length > 0 ? (
+                    s.filtered.map((sep) => (
+                      <SEPCard
+                        key={sep.id}
+                        sep={sep}
+                        isExpanded={!!s.expanded[sep.id]}
+                        onToggle={() => s.setExpanded((prev) => ({ ...prev, [sep.id]: !prev[sep.id] }))}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center muted" style={{ padding: "48px 24px" }}>
+                      <div style={{ fontSize: 16, fontWeight: 600 }}>No SEPs match current filters</div>
+                      <div style={{ fontSize: 13, marginTop: 8 }}>Try adjusting filters above.</div>
+                    </div>
                   )}
-                </p>
-              </div>
+                </div>
+              </>
+            )}
+
+            {/* Disclaimer */}
+            <div className="sep-disclaimer">
+              <p>
+                <strong>Disclaimer:</strong> FEMA disaster data is fetched live from the OpenFEMA API with verified
+                fallback data. Plan data is sourced from CMS Landscape Files for CY2026 (138K rows via Supabase,
+                county-level precision). Premiums, benefits, and service areas may vary — always verify on Medicare.gov.
+                For agent/broker use only.
+                {s.femaSource !== "unknown" && (
+                  <span className={`sep-fema-source-badge ${s.femaSource === "live" ? "live" : "fallback"}`}>
+                    {s.femaSource === "live" ? "Live FEMA" : "Fallback FEMA"}
+                  </span>
+                )}
+              </p>
             </div>
           </div>
         )}

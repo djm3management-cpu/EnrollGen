@@ -81,6 +81,12 @@ export function useSEPLookup() {
     setPlanSearch("");
     setActiveTab("plans");
 
+    if (!stateCode) {
+      setCountyList([]);
+      setCountyPlanCounts({});
+      return;
+    }
+
     // Check cache
     if (countyCache.current[stateCode]) {
       const cached = countyCache.current[stateCode];
