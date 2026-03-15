@@ -4,6 +4,7 @@ import {
   MARKET_SEGMENTS,
   TOOLS,
   DATA_VERSION,
+  CARRIER_URLS,
 } from "../data/stateCarrierData";
 import STATE_PATHS, { STATE_CENTROIDS } from "../data/usMapPaths";
 
@@ -14,6 +15,8 @@ function carriers(data, segId) {
   if (segId === "ACA") return data.aca;
   if (segId === "MA") return data.ma;
   if (segId === "MedSup") return data.medSup;
+  if (segId === "HI") return data.hi;
+  if (segId === "DVH") return data.dvh;
   return data.private;
 }
 
@@ -21,6 +24,8 @@ function notes(data, segId) {
   if (segId === "ACA") return data.acaNotes;
   if (segId === "MA") return data.maNotes;
   if (segId === "MedSup") return data.medSupNotes;
+  if (segId === "HI") return data.hiNotes;
+  if (segId === "DVH") return data.dvhNotes;
   return data.privateNotes;
 }
 
@@ -31,6 +36,8 @@ function segTools(code, segId) {
   }
   if (segId === "MA") return TOOLS.MA;
   if (segId === "MedSup") return TOOLS.MedSup;
+  if (segId === "HI") return TOOLS.HI;
+  if (segId === "DVH") return TOOLS.DVH;
   return TOOLS.Private.filter((t) => {
     if (t.name === "Farm Bureau") {
       return ["AL", "IN", "KS", "MI", "MO", "OH", "TN", "TX"].includes(code);
@@ -43,8 +50,8 @@ function stateMatchesQuery(code, data, q) {
   if (!q) return true;
   const hay = [
     code, data.name, data.marketplace,
-    ...data.aca, ...data.ma, ...data.medSup, ...data.private,
-    data.acaNotes, data.maNotes, data.medSupNotes, data.privateNotes,
+    ...data.aca, ...data.ma, ...data.medSup, ...data.private, ...data.hi, ...data.dvh,
+    data.acaNotes, data.maNotes, data.medSupNotes, data.privateNotes, data.hiNotes, data.dvhNotes,
   ].join(" ").toLowerCase();
   return hay.includes(q);
 }
@@ -147,23 +154,58 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
       {open && (
         <div style={{ padding: "0 14px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-            {list.map((c) => (
-              <span
-                key={c}
-                style={{
-                  padding: "3px 9px",
-                  borderRadius: 999,
-                  background: `rgba(${rgb},0.1)`,
-                  border: `1px solid rgba(${rgb},0.2)`,
-                  fontSize: "0.7rem",
-                  color: "#D6DFE9",
-                  fontFamily: "'DM Sans', sans-serif",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {c}
-              </span>
-            ))}
+            {list.map((c) => {
+              const url = CARRIER_URLS[c];
+              return url ? (
+                <a
+                  key={c}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: "3px 9px",
+                    borderRadius: 999,
+                    background: `rgba(${rgb},0.1)`,
+                    border: `1px solid rgba(${rgb},0.2)`,
+                    fontSize: "0.7rem",
+                    color: "#D6DFE9",
+                    fontFamily: "'DM Sans', sans-serif",
+                    whiteSpace: "nowrap",
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = `rgba(${rgb},0.22)`;
+                    e.currentTarget.style.borderColor = `rgba(${rgb},0.4)`;
+                    e.currentTarget.style.color = "#FFFFFF";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = `rgba(${rgb},0.1)`;
+                    e.currentTarget.style.borderColor = `rgba(${rgb},0.2)`;
+                    e.currentTarget.style.color = "#D6DFE9";
+                  }}
+                >
+                  {c} ↗
+                </a>
+              ) : (
+                <span
+                  key={c}
+                  style={{
+                    padding: "3px 9px",
+                    borderRadius: 999,
+                    background: `rgba(${rgb},0.1)`,
+                    border: `1px solid rgba(${rgb},0.2)`,
+                    fontSize: "0.7rem",
+                    color: "#D6DFE9",
+                    fontFamily: "'DM Sans', sans-serif",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {c}
+                </span>
+              );
+            })}
           </div>
           {note && (
             <p style={{ margin: 0, fontSize: "0.74rem", color: "#8A8A9A", lineHeight: 1.5 }}>
@@ -209,7 +251,7 @@ function StateSidebar({ code, onClose }) {
   if (!data) return null;
 
   const totalCarriers =
-    data.aca.length + data.ma.length + data.medSup.length + data.private.length;
+    data.aca.length + data.ma.length + data.medSup.length + data.private.length + data.hi.length + data.dvh.length;
 
   return (
     <aside
@@ -280,7 +322,7 @@ function StateSidebar({ code, onClose }) {
       </div>
 
       {/* Stats row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
         {MARKET_SEGMENTS.map((seg) => {
           const count = carriers(data, seg.id).length;
           return (
@@ -855,7 +897,7 @@ export default function CarrierRef() {
 
         {/* Sidebar */}
         {selected && STATES[selected] && (
-          <StateSidebar code={selected} onClose={() => setSelected(null)} />
+          <StateSidebar key={selected} code={selected} onClose={() => setSelected(null)} />
         )}
       </div>
 
@@ -900,7 +942,11 @@ export default function CarrierRef() {
                   ? TOOLS.MA
                   : seg.id === "MedSup"
                     ? TOOLS.MedSup
-                    : TOOLS.Private;
+                    : seg.id === "HI"
+                      ? TOOLS.HI
+                      : seg.id === "DVH"
+                        ? TOOLS.DVH
+                        : TOOLS.Private;
             return (
               <div
                 key={seg.id}
