@@ -206,5 +206,4 @@ export default async () => {
 // Run every Sunday at 6:00 AM UTC
 export const config = {
   schedule: "0 6 * * 0",
-  path: "/api/sync-bulletins",
 };
