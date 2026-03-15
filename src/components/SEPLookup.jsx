@@ -28,8 +28,8 @@ export default function SEPLookupTool() {
             <Shield size={16} />
           </div>
           <div>
-            <h1>SEP Lookup Tool</h1>
-            <p>Medicare Advantage Plans & Active SEPs — Live Data</p>
+            <h1>MA Intelligence</h1>
+            <p>Medicare Advantage Plans, SEPs & FEMA Disasters — Live Data</p>
           </div>
         </div>
 
@@ -129,7 +129,7 @@ export default function SEPLookupTool() {
             )}
 
             {/* State-only header (no zip search) */}
-            {!s.results && s.selectedState && (
+            {!s.searchedZip && s.selectedState && (
               <div className="sep-state-header">
                 <div className="sep-state-title">
                   {s.selectedState}
@@ -142,22 +142,30 @@ export default function SEPLookupTool() {
                     ? `${s.filteredPlans.length} plans available`
                     : `Select a county above to view plans`}
                 </div>
-                {s.selectedCounty && s.plans && s.plans.length > 0 && (
-                  <div className="tabs" style={{ marginTop: 12 }}>
+                <div className="tabs" style={{ marginTop: 12 }}>
+                  {s.selectedCounty && s.plans && s.plans.length > 0 && (
                     <button
                       className={`tab${s.activeTab === "plans" ? " active" : ""}`}
                       onClick={() => s.setActiveTab("plans")}
                     >
                       Plans & Codes ({s.filteredPlans.length})
                     </button>
-                  </div>
-                )}
+                  )}
+                  {s.results && (
+                    <button
+                      className={`tab${s.activeTab === "seps" ? " active" : ""}`}
+                      onClick={() => s.setActiveTab("seps")}
+                    >
+                      SEPs ({s.filtered?.length || 0})
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Plans Tab */}
-            {((s.results && s.activeTab === "plans") ||
-              (!s.results && s.selectedState && s.selectedCounty && s.plans)) && (
+            {s.activeTab === "plans" && (
+              (s.searchedZip || (s.selectedState && s.selectedCounty && s.plans))) && (
               <>
                 <PlanTable
                   searchedZip={s.searchedZip}
@@ -211,7 +219,7 @@ export default function SEPLookupTool() {
               </>
             )}
 
-            {/* SEPs Tab (zip search only) */}
+            {/* SEPs Tab */}
             {s.results && s.activeTab === "seps" && (
               <>
                 <div className="card sep-filter-bar">

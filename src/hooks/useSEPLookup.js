@@ -8,7 +8,7 @@ import { getStateFromZip, getCarriersForZip } from "../lib/sepGeo";
 import { fetchLiveFemaDisasters } from "../lib/sepFema";
 import { fetchCountiesForState, fetchPlansFromSupabase, fetchCountyPlanCounts, transformCmsPlan } from "../lib/sepCms";
 import { getCountyFromZip, getPlansForState } from "../data/sepPlanDb";
-import { getSEPsForZip } from "../lib/sepEngine";
+import { getSEPsForZip, getSEPsForState } from "../lib/sepEngine";
 
 export function useSEPLookup() {
   const [zip, setZip] = useState("");
@@ -87,23 +87,36 @@ export function useSEPLookup() {
       return;
     }
 
-    // Check cache
-    if (countyCache.current[stateCode]) {
-      const cached = countyCache.current[stateCode];
-      setCountyList(cached.counties);
-      setCountyPlanCounts(cached.counts);
-      return;
-    }
-
     setCountyLoading(true);
     try {
-      const [counties, counts] = await Promise.all([
-        fetchCountiesForState(stateCode),
-        fetchCountyPlanCounts(stateCode),
-      ]);
+      // Fetch FEMA + SEPs for this state
+      let femaData = femaCache.current.data;
+      const now = Date.now();
+      if (!femaData || now - femaCache.current.fetchedAt > 30 * 60 * 1000) {
+        const r = await fetchLiveFemaDisasters();
+        femaData = r.disasters;
+        femaCache.current = { data: femaData, fetchedAt: now, apiFailed: r.apiFailed };
+        setFemaSource(r.apiFailed ? "fallback" : "live");
+      } else {
+        setFemaSource(femaCache.current.apiFailed ? "fallback" : "live");
+      }
+      const seps = getSEPsForState(stateCode, femaData);
+      setResults(seps);
+
+      // Fetch counties (use cache if available)
+      let counties, counts;
+      if (countyCache.current[stateCode]) {
+        counties = countyCache.current[stateCode].counties;
+        counts = countyCache.current[stateCode].counts;
+      } else {
+        [counties, counts] = await Promise.all([
+          fetchCountiesForState(stateCode),
+          fetchCountyPlanCounts(stateCode),
+        ]);
+        countyCache.current[stateCode] = { counties, counts };
+      }
       setCountyList(counties);
       setCountyPlanCounts(counts);
-      countyCache.current[stateCode] = { counties, counts };
     } catch (err) {
       console.error("State click error:", err);
       setCountyList([]);

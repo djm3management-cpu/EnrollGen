@@ -511,7 +511,7 @@ function AppContent() {
                 className={tab === "sepTool" ? "tab active" : "tab"}
                 onClick={() => setTab("sepTool")}
               >
-                SEP Tool
+                MA Intelligence
               </button>
             )}
             {mode === "ma" && (
