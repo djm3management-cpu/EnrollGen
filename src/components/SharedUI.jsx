@@ -233,7 +233,7 @@ const SECTORS = [
   { num: 8,   abbr: "WRAP"   },
 ];
 
-export const SectorBar = React.memo(function SectorBar({ activeSection }) {
+export const SectorBar = React.memo(function SectorBar({ activeSection, onSectionClick }) {
   const currentStep = Number.isInteger(activeSection)
     ? activeSection
     : Math.ceil(activeSection);
@@ -244,12 +244,26 @@ export const SectorBar = React.memo(function SectorBar({ activeSection }) {
     return "pending";
   }
 
+  function handleClick(num, s) {
+    if (s !== "done" || !onSectionClick) return;
+    onSectionClick(num);
+  }
+
   return (
     <nav className="sector-bar" aria-label="Section progress">
       {SECTORS.map(({ num, abbr }, index) => {
         const s = status(num);
+        const clickable = s === "done" && !!onSectionClick;
         return (
-          <div key={num} className={`sector-step sector-step--${s}`}>
+          <div
+            key={num}
+            className={`sector-step sector-step--${s}${clickable ? " sector-step--clickable" : ""}`}
+            onClick={() => handleClick(num, s)}
+            role={clickable ? "button" : undefined}
+            tabIndex={clickable ? 0 : undefined}
+            onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") handleClick(num, s); } : undefined}
+            title={clickable ? `Go back to Section ${num}: ${abbr}` : undefined}
+          >
             <div className="sector-rail-node" aria-hidden="true">
               <span className="sector-dot" />
               {index < SECTORS.length - 1 && <span className="sector-connector" />}

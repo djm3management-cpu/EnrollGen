@@ -47,11 +47,11 @@ function CollapsibleSection({
   sectionTimestamps,
 }) {
   if (!isCompleted || isActive) {
-    return children;
+    return <div data-section={sectionNum}>{children}</div>;
   }
 
   return (
-    <details className="completed-section">
+    <details className="completed-section" data-section={sectionNum}>
       <summary className="completed-section-summary">
         <span
           style={{
@@ -118,6 +118,19 @@ export default function ScriptFlow() {
     }
   }, [activeSection]);
 
+  // Click a completed section in the rail to scroll back to it
+  const handleSectionClick = useCallback((sectionNum) => {
+    const el = document.querySelector(`[data-section="${sectionNum}"]`);
+    if (!el) return;
+    // If it's a collapsed <details>, open it
+    if (el.tagName === "DETAILS" && !el.open) {
+      el.open = true;
+    }
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
+
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
     (e) => {
@@ -158,7 +171,7 @@ export default function ScriptFlow() {
 
       <div className="flow-shell">
         <aside className="flow-rail">
-          <SectorBar activeSection={activeSection} />
+          <SectorBar activeSection={activeSection} onSectionClick={handleSectionClick} />
         </aside>
 
         <div className="flow-main">

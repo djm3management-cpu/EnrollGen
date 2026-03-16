@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   ObjectionHandler.css — Claymorphic Dark Theme
-   Matches the F1 pit wall design system in styles.css
+   ObjectionHandler.css — 3-Column Tactical Layout
+   Claymorphic Dark Theme, F1 pit wall design system
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* ── Container ── */
@@ -40,61 +40,11 @@
   font-size: 1.4em;
 }
 
-/* ── Quick objection pills ── */
-.objection-quick-btns {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.objection-quick-btn {
-  position: relative;
-  background: linear-gradient(180deg, #181b20 0%, #101318 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #cfd6df;
-  border-radius: 50px;
-  padding: 5px 14px;
-  font-size: 0.78em;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: var(--font-body);
-  white-space: nowrap;
-  box-shadow: var(--shadow-btn);
-  overflow: hidden;
-}
-
-.objection-quick-btn::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
-  pointer-events: none;
-}
-
-.objection-quick-btn:hover:not(:disabled) {
-  box-shadow: var(--shadow-btn-hover);
-  transform: translateY(-2px);
-  color: #f5f7fb;
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-.objection-quick-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
 /* ── Input row ── */
 .objection-input-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   position: relative;
   z-index: 1;
 }
@@ -139,80 +89,469 @@
   gap: 8px;
 }
 
-/* ── Response card ── */
-.objection-response {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  animation: fadeIn 0.25s ease;
+/* ══════════════════════════════════════════════════════════════════════
+   3-COLUMN LAYOUT
+   ═══════════════════════════════════════════════════════════════════ */
+
+.objection-3col {
+  display: grid;
+  grid-template-columns: 200px 1fr 260px;
+  gap: 14px;
   position: relative;
   z-index: 1;
+  min-height: 400px;
 }
 
-/* ── Rebuttal ── */
-.objection-rebuttal {
-  background: rgba(232, 0, 45, 0.04);
-  border: 1px solid rgba(232, 0, 45, 0.15);
-  border-left: 2px solid rgba(232, 0, 45, 0.4);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-}
-
-.objection-rebuttal-label {
+/* ── Column label ── */
+.objection-col-label {
   font-family: "Barlow Condensed", sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #E8002D;
-  margin-bottom: 6px;
+  color: var(--text-muted);
   text-transform: uppercase;
-  display: inline-flex;
+  margin-bottom: 10px;
+  display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.objection-rebuttal-text {
+/* ══════════════════════════════════════════════════════════════════════
+   LEFT COLUMN — Category List
+   ═══════════════════════════════════════════════════════════════════ */
+
+.objection-categories {
+  border-right: 1px solid var(--border-subtle);
+  padding-right: 12px;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.objection-cat-group {
+  margin-bottom: 4px;
+}
+
+.objection-cat-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.8em;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.objection-cat-btn:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+}
+
+.objection-cat-btn.active {
+  background: rgba(232, 0, 45, 0.06);
+  border-color: rgba(232, 0, 45, 0.2);
+  color: var(--text-primary);
+}
+
+.objection-cat-count {
+  margin-left: auto;
+  font-size: 0.8em;
+  opacity: 0.4;
+  font-family: "Barlow Condensed", sans-serif;
+}
+
+.objection-cat-items {
+  padding-left: 12px;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  border-left: 1px solid rgba(232, 0, 45, 0.12);
+  margin-left: 16px;
+}
+
+.objection-item-btn {
+  width: 100%;
+  display: block;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.76em;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.objection-item-btn:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+}
+
+.objection-item-btn.active {
+  background: rgba(232, 0, 45, 0.08);
+  border-color: rgba(232, 0, 45, 0.25);
+  color: #E8002D;
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CENTER COLUMN — Objection Analysis
+   ═══════════════════════════════════════════════════════════════════ */
+
+.objection-analysis {
+  padding: 0 8px;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.objection-analysis-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.4;
+  gap: 12px;
+  text-align: center;
+  font-size: 0.85em;
+}
+
+.objection-analysis-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.objection-trigger-quote {
+  font-size: 1.05em;
+  font-style: italic;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* ── Mode toggle (one-liner / full) ── */
+.objection-mode-toggle {
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-subtle);
+  border-radius: 50px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.objection-mode-btn {
+  padding: 4px 12px;
+  font-size: 0.7em;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.objection-mode-btn.active {
+  background: rgba(232, 0, 45, 0.15);
+  color: #E8002D;
+}
+
+.objection-mode-btn:hover:not(.active) {
+  color: var(--text-secondary);
+}
+
+/* ── Diagnosis blocks ── */
+.objection-dx-block {
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  animation: fadeIn 0.2s ease;
+}
+
+.objection-dx-label {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+}
+
+.objection-dx-label.rebuttal-label { color: #E8002D; }
+.objection-dx-label.question-label { color: var(--text-warning); }
+.objection-dx-label.alt-label { color: #60a5fa; }
+.objection-dx-label.compliance-label { color: #f59e0b; }
+.objection-dx-label.exit-label { color: #6b7280; }
+
+.objection-dx-text {
   margin: 0;
-  font-size: 0.95em;
-  line-height: 1.6;
+  font-size: 0.82em;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.objection-dx-quote {
+  margin: 0;
+  font-size: 0.85em;
+  line-height: 1.55;
   color: var(--text-primary);
   font-style: italic;
 }
 
-/* ── Follow-up ── */
-.objection-followup {
-  background: rgba(251, 191, 36, 0.04);
-  border: 1px solid rgba(251, 191, 36, 0.12);
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
+/* Rebuttal block accent */
+.objection-dx-rebuttal {
+  background: rgba(232, 0, 45, 0.03);
+  border-color: rgba(232, 0, 45, 0.12);
+  border-left: 2px solid rgba(232, 0, 45, 0.35);
 }
 
-.objection-followup-label {
-  font-size: 0.7em;
-  letter-spacing: 0.05em;
-  color: var(--text-warning);
-  font-weight: 600;
-  margin-bottom: 4px;
+/* Question block accent */
+.objection-dx-question {
+  background: rgba(251, 191, 36, 0.03);
+  border-color: rgba(251, 191, 36, 0.1);
+}
+
+/* Alternative block accent */
+.objection-dx-alt {
+  background: rgba(96, 165, 250, 0.03);
+  border-color: rgba(96, 165, 250, 0.1);
+}
+
+/* Compliance block accent */
+.objection-dx-compliance {
+  background: rgba(245, 158, 11, 0.03);
+  border-color: rgba(245, 158, 11, 0.1);
+}
+
+/* Exit block */
+.objection-dx-exit {
+  background: rgba(107, 114, 128, 0.04);
+  border-color: rgba(107, 114, 128, 0.1);
+  opacity: 0.8;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   RIGHT COLUMN — Rebuttal Panel / Response Tree
+   ═══════════════════════════════════════════════════════════════════ */
+
+.objection-rebuttal-panel {
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 12px;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.objection-rebuttal-panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.4;
+  gap: 12px;
+  text-align: center;
+  font-size: 0.85em;
+}
+
+/* ── Decision tree ── */
+.objection-tree {
+  margin-bottom: 16px;
+}
+
+.objection-tree-label {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  display: inline-flex;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.objection-tree-branch {
+  margin-bottom: 4px;
+}
+
+.objection-tree-trigger {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.76em;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.objection-tree-trigger:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.objection-tree-trigger.expanded {
+  background: rgba(232, 0, 45, 0.04);
+  border-color: rgba(232, 0, 45, 0.15);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.objection-tree-if {
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #E8002D;
+  flex-shrink: 0;
+  font-size: 0.9em;
+}
+
+.objection-tree-client {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.objection-tree-response {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(232, 0, 45, 0.1);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  animation: fadeIn 0.15s ease;
+}
+
+.objection-tree-say {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.78em;
+  color: var(--text-primary);
+  font-style: italic;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.objection-tree-say svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #E8002D;
+}
+
+.objection-tree-next {
+  display: flex;
   align-items: center;
   gap: 6px;
+  font-size: 0.7em;
+  color: #00D166;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
-.objection-followup-text {
-  margin: 0;
-  font-size: 0.88em;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  font-style: italic;
+.objection-tree-next svg {
+  flex-shrink: 0;
 }
 
-/* ── Agent tip ── */
-.objection-tip {
-  font-size: 0.8em;
-  color: var(--text-muted);
+/* ── Quick copy buttons ── */
+.objection-quick-copy {
+  margin-bottom: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.objection-copy-line {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.72em;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 3px;
+}
+
+.objection-copy-line:hover {
+  background: rgba(232, 0, 45, 0.06);
+  border-color: rgba(232, 0, 45, 0.2);
+  color: var(--text-primary);
+}
+
+.objection-copy-line svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.objection-copied-toast {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72em;
+  color: #00D166;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 4px 0;
+  animation: fadeIn 0.15s ease;
+}
+
+/* ── AI Section in right panel ── */
+.objection-ai-section {
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.objection-ai-rebuttal {
+  background: rgba(232, 0, 45, 0.03);
+  border: 1px solid rgba(232, 0, 45, 0.12);
+  border-left: 2px solid rgba(232, 0, 45, 0.35);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+
+.objection-ai-followup {
+  background: rgba(251, 191, 36, 0.03);
+  border: 1px solid rgba(251, 191, 36, 0.1);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+
+.objection-ai-tip {
+  font-size: 0.78em;
+  color: var(--text-muted);
+  padding: 4px 8px;
   border-left: 2px solid rgba(52, 211, 153, 0.3);
+  margin-bottom: 8px;
 }
 
 .objection-tip-label {
@@ -223,81 +562,61 @@
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
-/* ── Copy button ── */
-.objection-copy-btn {
-  position: relative;
-  background: #0e0e0e;
-  border: 1px solid rgba(232, 0, 45, 0.4);
-  color: #E8002D;
-  padding: 4px 12px;
-  font-size: 0.72em;
-  cursor: pointer;
-  border-radius: 3px;
-  align-self: flex-start;
-  transition: all 0.15s;
-  font-family: "Barlow Condensed", sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+/* ══════════════════════════════════════════════════════════════════════
+   RESPONSIVE — stack on narrow screens
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  .objection-3col {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .objection-categories {
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-right: 0;
+    padding-bottom: 12px;
+    max-height: 200px;
+  }
+
+  .objection-cat-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-left: none;
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  .objection-item-btn {
+    width: auto;
+    display: inline-block;
+  }
+
+  .objection-rebuttal-panel {
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+    padding-left: 0;
+    padding-top: 12px;
+    max-height: none;
+  }
+
+  .objection-analysis {
+    max-height: none;
+  }
 }
 
-.objection-copy-btn:hover {
-  background: rgba(232, 0, 45, 0.08);
-  border-color: rgba(232, 0, 45, 0.7);
-  color: #ff3355;
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── History ── */
-.objection-history {
-  margin-top: 12px;
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 10px;
-  position: relative;
-  z-index: 1;
-}
-
-.objection-history-label {
-  font-size: 0.7em;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-}
-
-.objection-history-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: background 0.15s;
-  font-size: 0.78em;
-}
-
-.objection-history-item:hover {
-  background: var(--bg-elevated);
-}
-
-.objection-history-q {
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 120px;
-}
-
-.objection-history-arrow {
-  color: var(--text-accent);
-  flex-shrink: 0;
-}
-
-.objection-history-a {
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* ── Legacy quick buttons (hidden in new layout but kept for custom input) ── */
+.objection-quick-btns {
+  display: none;
 }

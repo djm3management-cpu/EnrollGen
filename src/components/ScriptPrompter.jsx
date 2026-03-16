@@ -138,6 +138,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
       {floatingAlert && (() => {
         const s = LEVEL_STYLE[floatingAlert.level] || LEVEL_STYLE.info;
         const isPulse = !!floatingAlert.pulse;
+        const isFading = !!floatingAlert.fading;
         return (
           <div
             onClick={() => copilot.setFloatingAlert(null)}
@@ -153,7 +154,9 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
               boxShadow: isPulse
                 ? `14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 30px ${s.color}33`
                 : "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 20px rgba(0,0,0,0.5)",
-              animation: isPulse ? "slideDown 0.25s ease, alertPulse 1.5s ease-in-out 3" : "slideDown 0.25s ease",
+              animation: isFading
+                ? "floatFadeOut 3s ease forwards"
+                : isPulse ? "slideDown 0.25s ease, alertPulse 1.5s ease-in-out 3" : "slideDown 0.25s ease",
               backdropFilter: "blur(12px)",
             }}
           >

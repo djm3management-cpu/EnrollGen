@@ -1982,6 +1982,25 @@ input[type="file"]::file-selector-button:hover {
   color: rgba(232, 0, 45, 0.65);
 }
 
+/* clickable completed sections */
+.sector-step--clickable {
+  cursor: pointer;
+}
+.sector-step--clickable .sector-block {
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.sector-step--clickable:hover .sector-block {
+  background: rgba(232, 0, 45, 0.08);
+  border-color: rgba(232, 0, 45, 0.35);
+  transform: translateX(2px);
+}
+.sector-step--clickable:hover .sector-block-abbr {
+  color: #E8002D;
+}
+.sector-step--clickable:hover .sector-dot {
+  box-shadow: 0 0 8px rgba(232, 0, 45, 0.7);
+}
+
 /* active — green */
 .sector-step--active .sector-dot {
   width: 9px;
@@ -2556,6 +2575,12 @@ input[type="file"]::file-selector-button:hover {
 @keyframes alertPulse {
   0%, 100% { box-shadow: 14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 30px rgba(157,0,255,0.2); }
   50% { box-shadow: 14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 50px rgba(157,0,255,0.45), 0 0 80px rgba(157,0,255,0.15); }
+}
+
+@keyframes floatFadeOut {
+  0% { opacity: 1; transform: translateY(0); }
+  70% { opacity: 0.3; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
 }
 
 @keyframes iconFlash {

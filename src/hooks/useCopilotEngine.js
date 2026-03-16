@@ -450,6 +450,7 @@ export function useCopilotEngine({
   // Refs
   const debounceRef = useRef(null);
   const floatTimeout = useRef(null);
+  const floatFadeTimeout = useRef(null);
   const feedRef = useRef(null);
   const lastCoachingTime = useRef(0);
   const lastAnalyzedLength = useRef(0);
@@ -470,17 +471,25 @@ export function useCopilotEngine({
     if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
   }, [messages]);
 
+  // Dismiss floating alert with a long fade-out, then remove
+  const dismissFloat = useCallback((delay) => {
+    clearTimeout(floatTimeout.current);
+    clearTimeout(floatFadeTimeout.current);
+    floatTimeout.current = setTimeout(() => {
+      setFloatingAlert((prev) => prev ? { ...prev, fading: true } : null);
+      floatFadeTimeout.current = setTimeout(() => setFloatingAlert(null), 3000);
+    }, delay);
+  }, []);
+
   // Show floating alert
   const showFloat = useCallback((level, text) => {
     if (level !== "warn" && level !== "critical") return;
     clearTimeout(floatTimeout.current);
+    clearTimeout(floatFadeTimeout.current);
     setFloatingAlert({ level, text });
     logEntry(LOG_TYPES.FLOATING_ALERT, level, text, { section: currentStep });
-    floatTimeout.current = setTimeout(
-      () => setFloatingAlert(null),
-      level === "critical" ? 10000 : 6000
-    );
-  }, [logEntry, currentStep]);
+    dismissFloat(level === "critical" ? 7000 : 4000);
+  }, [logEntry, currentStep, dismissFloat]);
 
   // Push entry to feed
   const pushFeedEntry = useCallback((level, text, extra = {}) => {
@@ -883,14 +892,15 @@ FULL TRANSCRIPT TAIL:
       soaFiredRef.current = true;
       const soaMsg = "SCOPE OF APPOINTMENT — You MUST inform the beneficiary that this is the Scope of Appointment and confirm they understand what plan types will be discussed.";
       pushFeedEntry("critical", soaMsg, { section: "POA & Scope of Appointment", issueTag: "SOA_DISCLOSURE" });
-      // Use a longer timeout so the agent can't miss it
+      // Use a longer timeout so the agent can't miss it — 7s visible + 3s fade = 10s total
       clearTimeout(floatTimeout.current);
+      clearTimeout(floatFadeTimeout.current);
       setFloatingAlert({ level: "critical", text: soaMsg, pulse: true });
       logEntry(LOG_TYPES.FLOATING_ALERT, "critical", soaMsg, { section: "POA & Scope of Appointment" });
-      floatTimeout.current = setTimeout(() => setFloatingAlert(null), 15000);
+      dismissFloat(7000);
     }
     if (activeSection !== 3) soaFiredRef.current = false;
-  }, [activeSection, pushFeedEntry, logEntry]);
+  }, [activeSection, pushFeedEntry, logEntry, dismissFloat]);
 
   /* ═══════ Section-entry auto-analysis ═══════ */
   useEffect(() => {

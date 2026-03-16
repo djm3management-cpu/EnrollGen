@@ -1,17 +1,27 @@
+import { useState } from "react";
 import { MessageSquareQuote } from "lucide-react";
 import { useObjectionHandler } from "../hooks/useObjectionHandler";
+import { OBJECTION_CATEGORIES } from "../data/objectionData";
 import "../ObjectionHandler.css";
-import { QuickButtons } from "./objection/QuickButtons";
+import { CategoryList } from "./objection/CategoryList";
+import { ObjectionAnalysis } from "./objection/ObjectionAnalysis";
+import { RebuttalPanel } from "./objection/RebuttalPanel";
 import { ObjectionInput } from "./objection/ObjectionInput";
-import { ResponseCard } from "./objection/ResponseCard";
-import { RebuttalHistory } from "./objection/RebuttalHistory";
 
 export default function ObjectionHandler() {
   const {
     input, setInput, response, setResponse,
-    loading, history, inputRef,
+    loading, inputRef,
     handleSubmit, copyRebuttal,
   } = useObjectionHandler();
+
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedObjection, setSelectedObjection] = useState(null);
+
+  const handleSelectObjection = (obj) => {
+    setSelectedObjection(obj);
+    setResponse(null); // clear AI response when switching to structured data
+  };
 
   return (
     <div className="objection-handler">
@@ -22,13 +32,12 @@ export default function ObjectionHandler() {
         <div>
           <h3 style={{ margin: 0, fontSize: "1em" }}>Objection Handler</h3>
           <span style={{ fontSize: "0.75em", opacity: 0.6 }}>
-            Type what the client said &rarr; get exact rebuttal
+            Select an objection or type what the client said
           </span>
         </div>
       </div>
 
-      <QuickButtons onSelect={handleSubmit} disabled={loading} />
-
+      {/* Custom input row — always visible above the 3 columns */}
       <ObjectionInput
         input={input}
         setInput={setInput}
@@ -37,15 +46,28 @@ export default function ObjectionHandler() {
         inputRef={inputRef}
       />
 
-      {loading && (
-        <div className="objection-loading">
-          <span className="prompter-pulse">&bull;</span> Getting rebuttal...
-        </div>
-      )}
+      {/* 3-column tactical layout */}
+      <div className="objection-3col">
+        {/* Left — categories + objection list */}
+        <CategoryList
+          categories={OBJECTION_CATEGORIES}
+          selectedCategory={selectedCategory}
+          selectedObjection={selectedObjection}
+          onSelectCategory={setSelectedCategory}
+          onSelectObjection={handleSelectObjection}
+        />
 
-      {!loading && <ResponseCard response={response} onCopy={copyRebuttal} />}
+        {/* Center — selected objection analysis */}
+        <ObjectionAnalysis objection={selectedObjection} />
 
-      <RebuttalHistory history={history} onSelect={setResponse} />
+        {/* Right — response tree + copy + AI response */}
+        <RebuttalPanel
+          objection={selectedObjection}
+          aiResponse={response}
+          aiLoading={loading}
+          onCopy={copyRebuttal}
+        />
+      </div>
     </div>
   );
 }
