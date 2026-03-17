@@ -627,7 +627,7 @@ function AppContent() {
                 className={tab === "upload" ? "tab active" : "tab"}
                 onClick={() => setTab("upload")}
               >
-                Upload Transcript
+                Upload
               </button>
             )}
             {mode === "ma" && (
