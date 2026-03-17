@@ -8,7 +8,7 @@ import { ScriptProvider } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
 import "./styles.css";
-import { SignedIn, SignedOut, SignIn } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
 
 const AgentTools = lazy(() => import("./components/AgentTools"));
 const ObjectionHandler = lazy(() => import("./components/ObjectionHandler"));
@@ -18,6 +18,7 @@ const ReviewWorkspace = lazy(() => import("./components/ReviewWorkspace"));
 const TranscriptUpload = lazy(() => import("./components/TranscriptUpload"));
 const DecisionTree = lazy(() => import("./components/DecisionTree"));
 const CarrierRef = lazy(() => import("./components/CarrierRef"));
+const CallHistory = lazy(() => import("./components/CallHistory"));
 
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const SUNFIRE_SEP_LABELS = [
@@ -397,6 +398,73 @@ function LazyPanel({ children }) {
   );
 }
 
+/* ─── ProfileBar ─────────────────────────────────────────────────────────── */
+function ProfileBar() {
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
+
+  if (!isLoaded || !user) return null;
+
+  const displayName =
+    user.publicMetadata?.agentName || user.fullName || user.firstName || "Agent";
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: 8,
+        padding: "6px 12px",
+        userSelect: "none",
+        boxShadow:
+          "inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03)",
+      }}
+    >
+      <img
+        src={user.imageUrl}
+        alt=""
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: "50%",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}
+      />
+      <span
+        style={{
+          fontSize: 12,
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontWeight: 600,
+          letterSpacing: "0.05em",
+          color: "#c8d6e5",
+        }}
+      >
+        {displayName}
+      </span>
+      <button
+        onClick={() => signOut()}
+        style={{
+          background: "none",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 4,
+          color: "#556677",
+          fontSize: 10,
+          fontFamily: "'Barlow Condensed', sans-serif",
+          padding: "2px 8px",
+          cursor: "pointer",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        Out
+      </button>
+    </div>
+  );
+}
+
 /* ─── AppContent (the actual app) ────────────────────────────────────────── */
 function AppContent() {
   const [tab, setTab] = useState("script");
@@ -443,6 +511,20 @@ function AppContent() {
                 title="Refresh and return to the main page"
               />
             </div>
+
+            {!LOGIN_DISABLED && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  zIndex: 10,
+                }}
+              >
+                <ProfileBar />
+              </div>
+            )}
 
             <div
               style={{
@@ -534,6 +616,12 @@ function AppContent() {
             >
               Carrier Ref
             </button>
+            <button
+              className={tab === "history" ? "tab active" : "tab"}
+              onClick={() => setTab("history")}
+            >
+              My Calls
+            </button>
             {(mode === "ma" || mode === "medsup") && (
               <button
                 className={tab === "upload" ? "tab active" : "tab"}
@@ -619,6 +707,12 @@ function AppContent() {
           {tab === "carrierRef" && (
             <LazyPanel>
               <CarrierRef />
+            </LazyPanel>
+          )}
+
+          {tab === "history" && (
+            <LazyPanel>
+              <CallHistory />
             </LazyPanel>
           )}
         </div>
