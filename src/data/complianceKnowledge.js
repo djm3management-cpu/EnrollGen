@@ -689,6 +689,19 @@ export const COOLDOWN_BY_LEVEL = {
 export const WARN_CONFIDENCE_FLOOR = 85;
 export const REMIND_CONFIDENCE_FLOOR = 75;
 
+// Per-section confidence overrides — lower thresholds for CMS audit triggers
+export const SECTION_CONFIDENCE_OVERRIDES = {
+  "Recording Disclosure":    { warn: 75, remind: 65 },
+  "TPMO Disclaimer":         { warn: 75, remind: 65 },
+  "SNP Disclosure":          { warn: 78, remind: 68 },
+  "POA & Scope of Appointment": { warn: 75, remind: 65 },
+  "Qualifications":          { warn: 85, remind: 75 },
+  "NEADS Assessment":        { warn: 88, remind: 80 },
+  "Plan Selection & SOB":    { warn: 82, remind: 72 },
+  "Enrollment":              { warn: 80, remind: 70 },
+  "Wrap-Up":                 { warn: 90, remind: 82 },
+};
+
 // Time-in-section threshold: don't suppress until agent has been in section this long
 export const SECTION_SETTLE_MS = 45000;
 

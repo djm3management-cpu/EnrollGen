@@ -15,6 +15,7 @@ import {
   COOLDOWN_BY_LEVEL,
   WARN_CONFIDENCE_FLOOR,
   REMIND_CONFIDENCE_FLOOR,
+  SECTION_CONFIDENCE_OVERRIDES,
   SECTION_SETTLE_MS,
   HIGH_RISK_KEYWORDS,
 } from "../data/complianceKnowledge";
@@ -287,7 +288,7 @@ IMPLICATIONS — read carefully:
 ════════════════════════════════════════════════════════
 CURRENT SECTION: "${sectionKey}"
 ════════════════════════════════════════════════════════
-FULL FLOW REFERENCE:
+FLOW POSITION (previous → current → next):
 ${flowOrder}
 
 ${complianceContext}
@@ -392,17 +393,22 @@ Structured app context:
 ${copilotContextJson}
 
 YOUR CAPABILITIES — you can answer questions about:
-- CMS compliance rules and requirements for Medicare enrollment calls
-- Medicare Advantage plan details, benefits, and eligibility
-- Medication coverage, formulary questions, drug tiers
-- Provider network status and how to verify
+- CMS compliance rules and requirements
+- MA plan types, general benefits structure, eligibility
 - Enrollment periods (AEP, OEP, SEP) and eligibility rules
 - Dual-eligible (DSNP), chronic condition (CSNP) requirements
 - Part B premium reduction / giveback rules
 - Scope of Appointment and TPMO requirements
-- What to say in specific situations (objection handling, compliance language)
-- Disqualifying coverage types (TRICARE for Life, CHAMPVA, employer coverage)
-- How to handle specific client scenarios
+- Objection handling and compliance language
+- Disqualifying coverage types (TRICARE, CHAMPVA, employer)
+- How to handle specific client scenarios on the call
+
+HARD BOUNDARY — DO NOT ANSWER (no live data access):
+- Specific drug formulary or tier info for any plan -> tell agent to check Sunfire or carrier formulary tool
+- Whether a specific provider is in-network for a plan -> tell agent to use Sunfire provider search or call carrier
+- Specific premium, copay, or cost-sharing amounts -> tell agent to verify in Sunfire or plan SOB
+- Pharmacy-specific coverage (preferred vs standard, mail order) -> direct to Sunfire or carrier formulary
+Do NOT guess or approximate any plan-specific data. Always redirect to the authoritative tool.
 
 SCOPE RULE: If the question is not directly relevant to the current section or enrollment flow, answer it briefly and then redirect the agent back to completing the current section. Example: "Quick answer: [answer]. You're currently in ${sectionKey} — make sure to cover [key remaining item] before moving on."
 
@@ -416,10 +422,10 @@ EMPTY TRANSCRIPT: If no transcript is available, answer based on the agent's que
 RESPONSE RULES:
 - Keep answers concise and actionable — the agent is on a live call
 - If providing script language, put it in quotes so the agent can read it directly
-- If you don't know something specific (like a particular plan's formulary), say so and suggest where to check (Sunfire, carrier website, etc.)
 - Always prioritize CMS compliance in your answers
+- For any plan-specific data question, follow the HARD BOUNDARY rules above
 - If transcript references are provided, cite them inline as [R1], [R2], etc.
-- Minimize markdown in your response — avoid heavy formatting. Short bullet lists are acceptable when listing multiple items, but prefer plain sentences for single-point answers.`;
+- Use plain text only — no bold, no bullet points, no markdown. The UI renders plain text, so formatting characters show as literal symbols. Separate multiple items with numbered lines or semicolons.`;
 }
 
 /* ───────────────────────────────────────────────────────
@@ -435,6 +441,7 @@ export function useCopilotEngine({
   sobAllDone,
   enrollAllDone,
   enrollmentCodeOk,
+  logComplianceFlag,
 }) {
   const currentStep = SECTION_LABELS[activeSection] || `Section ${activeSection}`;
   const { logEntry, setEntryFeedback, exportFeedbackDataset, entries } = useCopilotLog();
@@ -586,7 +593,12 @@ export function useCopilotEngine({
     lastAnalyzedLength.current = fullTranscript.length;
 
     const sectionKey = currentStep;
-    const flowOrder = Object.values(SECTION_LABELS).join(" -> ");
+    const sectionKeys = Object.keys(SECTION_LABELS).map(Number).sort((a, b) => a - b);
+    const currentIdx = sectionKeys.indexOf(activeSection);
+    const neighborKeys = sectionKeys.slice(Math.max(0, currentIdx - 1), currentIdx + 2);
+    const flowOrder = neighborKeys
+      .map((k) => `${k === activeSection ? ">>>" : "   "} ${k}: ${SECTION_LABELS[k]}`)
+      .join("\n");
     const recentInterventions = messages
       .filter((e) => e.level === "warn" || e.level === "critical" || e.level === "remind")
       .slice(-3);
@@ -595,9 +607,8 @@ export function useCopilotEngine({
       .map((e, i) => `${i + 1}. [${e.level}] ${e.text.replace(/\s+/g, " ").slice(0, 220)}`)
       .join("\n");
 
-    const sectionTranscript = fullTranscript.slice(sectionTranscriptStartRef.current) || fullTranscript.slice(-1400);
-    const transcriptCurrentWindow = sectionTranscript.length > 200 ? sectionTranscript : fullTranscript.slice(-1400);
-    const transcriptSinceLastAnalysis = fullTranscript.slice(Math.max(0, previousAnalyzedLength - 800)).trim();
+    const sectionTranscript = fullTranscript.slice(sectionTranscriptStartRef.current) || fullTranscript.slice(-2000);
+    const transcriptSinceLastAnalysis = fullTranscript.slice(previousAnalyzedLength).trim();
 
     const copilotContext = buildCopilotContext(recentInterventions);
     const derivedSignals = copilotContext.derivedSignals;
@@ -608,7 +619,7 @@ export function useCopilotEngine({
     try {
       transcriptReferenceResult = await fetchTranscriptReferences({
         getToken,
-        query: transcriptCurrentWindow,
+        query: transcriptSinceLastAnalysis || sectionTranscript.slice(-1400),
         productLine: "MA",
         matchCount: 5,
         similarityThreshold: 0.72,
@@ -643,14 +654,11 @@ export function useCopilotEngine({
 ${sectionEntry ? `
 SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" section. This is your first look at this section. Provide a brief "info" level response: summarize the 2-3 most important compliance items to cover in this section, note any issues you see so far in the transcript, and give a short status. Keep it to 2-3 sentences. Use level "info" unless you spot an actual compliance issue. Do NOT return silent for a section entry analysis.
 ` : ""}
-TRANSCRIPT WINDOW — MOST RECENT:
-"${transcriptCurrentWindow}"
+NEW SPEECH SINCE LAST ANALYSIS:
+"${transcriptSinceLastAnalysis}"
 
-TRANSCRIPT WINDOW — SINCE LAST ANALYSIS:
-"${transcriptSinceLastAnalysis || transcriptCurrentWindow}"
-
-FULL TRANSCRIPT TAIL:
-"${fullTranscript.slice(-2500)}"`;
+SECTION CONTEXT (rolling window for current section):
+"${(sectionTranscript || fullTranscript.slice(-2000)).slice(-2000)}"`;
 
     try {
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
@@ -722,14 +730,18 @@ FULL TRANSCRIPT TAIL:
         return;
       }
 
-      if (level === "warn" && confidence !== null && confidence < WARN_CONFIDENCE_FLOOR) {
+      const sectionOverrides = SECTION_CONFIDENCE_OVERRIDES[currentStep] || {};
+      const effectiveWarnFloor = sectionOverrides.warn ?? WARN_CONFIDENCE_FLOOR;
+      const effectiveRemindFloor = sectionOverrides.remind ?? REMIND_CONFIDENCE_FLOOR;
+
+      if (level === "warn" && confidence !== null && confidence < effectiveWarnFloor) {
         lastCoachingTime.current = Date.now();
         if (manual) pushFeedEntry("info", "Analyze complete. A possible warning was below the confidence threshold, so Co-Pilot stayed quiet.", { section: currentStep, issueTag, retrievalTrace });
         setCoachingLoading(false);
         return;
       }
 
-      if (level === "remind" && confidence !== null && confidence < REMIND_CONFIDENCE_FLOOR) {
+      if (level === "remind" && confidence !== null && confidence < effectiveRemindFloor) {
         lastCoachingTime.current = Date.now();
         if (manual) pushFeedEntry("info", "Analyze complete. A reminder candidate was below the confidence threshold, so Co-Pilot stayed quiet.", { section: currentStep, issueTag, retrievalTrace });
         setCoachingLoading(false);
@@ -742,6 +754,11 @@ FULL TRANSCRIPT TAIL:
       sectionCopilotFiredRef.current.add(activeSection);
       pushFeedEntry(level, message, { issueTag, section: currentStep, contextSnapshot: copilotContext, retrievalTrace });
       showFloat(level, message);
+
+      // Persist to session tracking (warn/critical/remind only)
+      if ((level === "warn" || level === "critical" || level === "remind") && logComplianceFlag) {
+        logComplianceFlag(currentStep, level, issueTag, confidence, message);
+      }
     } catch (err) {
       if (err.name === "AbortError") { setCoachingLoading(false); return; }
       console.error("Coaching API error:", err);
@@ -765,6 +782,7 @@ FULL TRANSCRIPT TAIL:
     sobAllDone,
     enrollAllDone,
     enrollmentCodeOk,
+    logComplianceFlag,
   ]);
 
   /* ═══════ ASK CO-PILOT — typed or spoken question ═══════ */

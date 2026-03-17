@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useScript } from "../context/ScriptContext";
+import { useSessionTracker } from "../hooks/useSessionTracker";
 import {
   MainTimer,
   ProgressBar,
@@ -98,6 +99,31 @@ function formatDuration(ms) {
 export default function ScriptFlow() {
   const { state, dispatch, activeSection } = useScript();
   const prevSectionRef = useRef(activeSection);
+  const session = useSessionTracker();
+  const scoredSectionsRef = useRef(new Set());
+
+  // Start session on mount
+  useEffect(() => {
+    session.startSession("ma");
+    return () => { session.endSession(prevSectionRef.current, false); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Log section scores when a section gate completes (section changes forward)
+  const prevScoreSection = useRef(activeSection);
+  useEffect(() => {
+    const prev = prevScoreSection.current;
+    if (activeSection !== prev && activeSection > prev) {
+      prevScoreSection.current = activeSection;
+      const ts = state.sectionTimestamps[prev];
+      const dur = ts?.start && ts?.end ? Math.round((ts.end - ts.start) / 1000) : null;
+      const label = SECTION_LABELS[prev] || `Section ${prev}`;
+      if (!scoredSectionsRef.current.has(prev)) {
+        scoredSectionsRef.current.add(prev);
+        session.logSectionScore(prev, label, true, dur, null, null);
+      }
+    }
+  }, [activeSection, state.sectionTimestamps, session]);
 
   // ── Shared transcript state ──
   // ScriptPrompter writes to this, ComplianceMini/Dashboard read it
@@ -184,7 +210,7 @@ export default function ScriptFlow() {
       <ComplianceMini transcript={transcript} />
 
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}
-      <ScriptPrompter onTranscriptChange={setTranscript} />
+      <ScriptPrompter onTranscriptChange={setTranscript} logComplianceFlag={session.logComplianceFlag} />
 
       {/* Sequential enrollment flow sections */}
       <CollapsibleSection

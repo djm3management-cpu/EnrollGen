@@ -33,7 +33,7 @@ function summarizeRetrievalTrace(trace) {
    COMPONENT
    ═══════════════════════════════════════════════════════════════════ */
 
-const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
+const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logComplianceFlag }) {
   const {
     state,
     activeSection,
@@ -57,6 +57,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange }) {
     sobAllDone,
     enrollAllDone,
     enrollmentCodeOk,
+    logComplianceFlag,
   });
 
   /* ─── Speech recognition ─── */
