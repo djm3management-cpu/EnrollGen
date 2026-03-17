@@ -417,7 +417,7 @@ function ProfileBar() {
         background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
         border: "1px solid rgba(255,255,255,0.07)",
         borderRadius: 8,
-        padding: "6px 12px",
+        padding: "8px 16px",
         userSelect: "none",
         boxShadow:
           "inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03)",
@@ -427,15 +427,15 @@ function ProfileBar() {
         src={user.imageUrl}
         alt=""
         style={{
-          width: 28,
-          height: 28,
+          width: 34,
+          height: 34,
           borderRadius: "50%",
           border: "1px solid rgba(255,255,255,0.1)",
         }}
       />
       <span
         style={{
-          fontSize: 12,
+          fontSize: 14,
           fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 600,
           letterSpacing: "0.05em",
@@ -451,15 +451,15 @@ function ProfileBar() {
           border: "1px solid rgba(255,255,255,0.08)",
           borderRadius: 4,
           color: "#556677",
-          fontSize: 10,
+          fontSize: 9,
           fontFamily: "'Barlow Condensed', sans-serif",
-          padding: "2px 8px",
+          padding: "2px 7px",
           cursor: "pointer",
           letterSpacing: "0.08em",
           textTransform: "uppercase",
         }}
       >
-        Out
+        Sign Out
       </button>
     </div>
   );
