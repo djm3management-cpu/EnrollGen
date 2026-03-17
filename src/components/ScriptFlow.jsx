@@ -206,8 +206,8 @@ export default function ScriptFlow() {
         onUndo={() => dispatch({ type: "UNDO_LAST_GATE" })}
       />
 
-      {/* ── Floating Compliance Mini — transcript-aware ── */}
-      <ComplianceMini transcript={transcript} />
+      {/* ── Floating Compliance Mini — transcript-aware (hidden for now) ── */}
+      {/* <ComplianceMini transcript={transcript} /> */}
 
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}
       <ScriptPrompter onTranscriptChange={setTranscript} logComplianceFlag={session.logComplianceFlag} />
