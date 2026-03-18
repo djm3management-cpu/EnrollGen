@@ -564,23 +564,26 @@ export function useCopilotEngine({
 
     const knowledge = COMPLIANCE_KNOWLEDGE[currentStep] || null;
 
-    // Gates (bypassed for section entry)
-    if (!sectionEntry) {
+    // Gates (bypassed for manual and section entry)
+    if (!sectionEntry && !manual) {
       const now = Date.now();
       const cooldown = COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
       if (now - lastCoachingTime.current < cooldown) {
-        if (manual) {
-          pushFeedEntry("info", `Analyze skipped. Co-Pilot is in cooldown for another ${Math.ceil((cooldown - (now - lastCoachingTime.current)) / 1000)}s.`, { section: currentStep });
-        }
         return;
       }
       const newChars = fullTranscript.length - lastAnalyzedLength.current;
       if (newChars < MIN_NEW_CHARS) {
-        if (manual) {
-          pushFeedEntry("info", `Analyze skipped. Need at least ${MIN_NEW_CHARS} new characters since the last run; only ${Math.max(0, newChars)} are available.`, { section: currentStep });
-        }
         return;
       }
+    }
+    if (manual) {
+      const now = Date.now();
+      const cooldown = COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
+      if (now - lastCoachingTime.current < cooldown) {
+        pushFeedEntry("info", `Analyze skipped. Co-Pilot is in cooldown for another ${Math.ceil((cooldown - (now - lastCoachingTime.current)) / 1000)}s.`, { section: currentStep });
+        return;
+      }
+      // Manual analyze bypasses MIN_NEW_CHARS — agent explicitly requested it
     }
 
     // Cancel any in-flight request

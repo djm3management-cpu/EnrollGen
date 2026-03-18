@@ -674,7 +674,7 @@ export const LEVEL_STYLE = {
 
 /* Intervention tuning constants */
 export const COACHING_DEBOUNCE_MS = 6000;
-export const MIN_NEW_CHARS = 180;
+export const MIN_NEW_CHARS = 80;
 export const MAX_TRANSCRIPT_LENGTH = 15000; // cap rolling transcript
 
 export const COOLDOWN_BY_LEVEL = {
