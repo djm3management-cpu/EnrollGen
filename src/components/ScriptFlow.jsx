@@ -101,11 +101,25 @@ export default function ScriptFlow() {
   const prevSectionRef = useRef(activeSection);
   const session = useSessionTracker();
   const scoredSectionsRef = useRef(new Set());
+  const [callStarted, setCallStarted] = useState(false);
 
-  // Start session on mount
+  // Start session only after agent clicks Start Call
+  const sessionStartedRef = useRef(false);
   useEffect(() => {
+    if (!callStarted || sessionStartedRef.current) return;
+    sessionStartedRef.current = true;
     session.startSession("ma");
-    return () => { session.endSession(prevSectionRef.current, false); };
+    dispatch({ type: "MARK_SECTION_START", section: 1 });
+    dispatch({ type: "START_TIMER" });
+  }, [callStarted, session, dispatch]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (sessionStartedRef.current) {
+        session.endSession(prevSectionRef.current, false);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -212,7 +226,31 @@ export default function ScriptFlow() {
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}
       <ScriptPrompter onTranscriptChange={setTranscript} logComplianceFlag={session.logComplianceFlag} />
 
+      {/* Start Call gate — timer and session don't begin until clicked */}
+      {!callStarted && (
+        <section className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
+          <button
+            className="primary"
+            onClick={() => setCallStarted(true)}
+            style={{
+              fontSize: 15,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              padding: "10px 36px",
+            }}
+          >
+            Start Call
+          </button>
+          <p className="muted" style={{ marginTop: 10, fontSize: 11 }}>
+            Timer begins when you click Start Call
+          </p>
+        </section>
+      )}
+
       {/* Sequential enrollment flow sections */}
+      {callStarted && (
       <CollapsibleSection
         sectionNum={1}
         label="Recording Disclosure"
@@ -222,6 +260,7 @@ export default function ScriptFlow() {
       >
         <SectionRecording />
       </CollapsibleSection>
+      )}
 
       <CollapsibleSection
         sectionNum={2}

@@ -47,11 +47,8 @@ export function ScriptProvider({ children }) {
     }
   }, [activeSection]);
 
-  // Mark initial section start
-  useEffect(() => {
-    dispatch({ type: "MARK_SECTION_START", section: activeSection });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Initial section start is now triggered by the Start Call button in ScriptFlow
+  // (via dispatch({ type: "MARK_SECTION_START", section: 1 }))
 
   const value = useMemo(
     () => ({
