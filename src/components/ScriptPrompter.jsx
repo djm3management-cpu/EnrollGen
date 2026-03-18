@@ -72,6 +72,12 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
     if (onTranscriptChange) onTranscriptChange(speech.transcript);
   }, [speech.transcript, onTranscriptChange]);
 
+  /* ─── Auto-scroll telemetry ─── */
+  const telemetryRef = useRef(null);
+  useEffect(() => {
+    if (telemetryRef.current) telemetryRef.current.scrollTop = telemetryRef.current.scrollHeight;
+  }, [speech.transcriptRows, speech.interimText]);
+
   /* ─── UI state ─── */
   const [expanded, setExpanded] = useState(true);
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -324,7 +330,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
                   <span style={{ fontSize: "0.65rem", color: "#444", fontFamily: "'DM Sans', sans-serif" }}>{transcriptRows.length} lines</span>
                 </div>
 
-                <div className="panel-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                <div ref={telemetryRef} className="panel-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
                   {transcriptRows.length === 0 && !interimText && (
                     <div className={`panel-empty ${listening ? "panel-empty--listening" : "panel-empty--input"}`}>
                       <div className="panel-empty-dots">
