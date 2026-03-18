@@ -1,5 +1,59 @@
-// U65Script.js — U65 Off-Exchange Script Flow Data
+// U65Data.js — U65 Off-Exchange Script Flow Data
 // Gates 0–7 per u65-aca-spec.md Section 3.2
+// Two products only: EnrollPrime / AFI Association PPO, PALIC HSP Gold Edition
+
+export const FPL_2026 = {
+  1: 15650,
+  2: 21150,
+  3: 26650,
+  4: 32150,
+  5: 37650,
+  6: 43150,
+  perAdditional: 5500,
+};
+
+export const AGE_BAND_ACA_ESTIMATES = [
+  { min: 21, max: 29, low: 350, high: 450 },
+  { min: 30, max: 39, low: 400, high: 550 },
+  { min: 40, max: 49, low: 500, high: 700 },
+  { min: 50, max: 59, low: 700, high: 1000 },
+  { min: 60, max: 64, low: 900, high: 1400 },
+];
+
+export function getFplThreshold(householdSize) {
+  if (householdSize <= 6) return FPL_2026[householdSize] || FPL_2026[1];
+  return FPL_2026[6] + (householdSize - 6) * FPL_2026.perAdditional;
+}
+
+export function calcFplPercent(householdSize, annualIncome) {
+  const threshold = getFplThreshold(householdSize);
+  return Math.round((annualIncome / threshold) * 100);
+}
+
+export function getAcaEstimate(age) {
+  const band = AGE_BAND_ACA_ESTIMATES.find((b) => age >= b.min && age <= b.max);
+  if (!band) return { low: 500, high: 900 };
+  return { low: band.low, high: band.high };
+}
+
+export function getProductRecommendation(uwRisk) {
+  if (uwRisk === "low") {
+    return [
+      { id: "palic", priority: 1, reason: "Healthy + budget-conscious = PALIC HSP Gold best value. First-dollar benefits, $0 outpatient deductible." },
+      { id: "enrollprime", priority: 2, reason: "Wants PPO breadth + traditional copay/coinsurance via Cigna." },
+    ];
+  }
+  if (uwRisk === "moderate") {
+    return [
+      { id: "enrollprime", priority: 1, reason: "Moderate risk — verify UW with O'Neill. Cigna PPO may be more flexible." },
+      { id: "palic", priority: 2, reason: "May face rate-up or pre-ex exclusions — disclose 12-month waiting period." },
+    ];
+  }
+  return [
+    { id: "aca_pivot", priority: 1, reason: "High UW risk — ACA is guaranteed issue. Pivot to ACA flow if in OEP/SEP window." },
+    { id: "enrollprime", priority: 2, reason: "Long shot — verify with O'Neill if any options exist." },
+  ];
+}
 
 export const U65_GATES = [
   {
@@ -74,13 +128,13 @@ export const U65_GATES = [
       {
         level: "MODERATE",
         profile: "Controlled conditions (managed diabetes, hypertension on meds), tobacco use, BMI concerns",
-        path: "PALIC may rate up or exclude. LIFE-X may be better path. EnrollPrime — verify UW with O'Neill.",
+        path: "EnrollPrime — verify UW with O'Neill. PALIC may rate up or apply pre-ex exclusion.",
         color: "#fbbf24",
       },
       {
         level: "HIGH",
         profile: "Active cancer, recent cardiac events, insulin-dependent diabetes with complications, multiple chronic conditions",
-        path: "PALIC likely decline. LIFE-X (GI options) or health sharing. If in SEP window, ACA is guaranteed issue → pivot back to ACA flow.",
+        path: "Off-exchange products likely decline. ACA is guaranteed issue → pivot to ACA flow if in OEP/SEP window.",
         color: "#f87171",
       },
     ],
@@ -103,7 +157,7 @@ export const U65_GATES = [
     key: "gate3Ok",
     label: "Product Presentation",
     compliance: true,
-    mandatoryDisclosure: "MANDATORY DISCLOSURE — Must be given BEFORE presenting any product details: These plans are NOT minimum essential coverage. They are NOT a substitute for ACA-compliant major medical insurance. Pre-existing condition limitations may apply. Benefits are [fixed-dollar / association group / employer group] and may not cover all healthcare costs.",
+    mandatoryDisclosure: "These plans are NOT minimum essential coverage. They are NOT a substitute for ACA-compliant major medical insurance. Pre-existing condition limitations may apply.",
     products: {
       enrollprime: {
         id: "enrollprime",
@@ -147,32 +201,6 @@ export const U65_GATES = [
           "Fixed-benefit payout structure explained clearly",
         ],
       },
-      lifex: {
-        id: "lifex",
-        label: "LIFE-X / BHPI Group Health",
-        when: "uwRisk is moderate-high (GI/simplified options available), client wants group-style coverage, comfortable with Research Associate model, any utilization level.",
-        script: [
-          "The third option is a group health plan through LIFE-X. This one works a little differently. You'd become a Research Associate with LIFE-X — that means you complete a short monthly health activity through their online dashboard, and in return you get access to employer-sponsored group health benefits.",
-          "The coverage is administered by BHPI, which has been around since 1981, and the network is through Anthem. Pharmacy is through Proact. The plan provides traditional group medical benefits — not fixed-dollar payouts like the PALIC plan.",
-          "I want to be transparent about how this works. LIFE-X is structured as an employer group benefit, not a traditional insurance policy you'd buy on your own. The Research Associate model is legitimate, but it is newer and different from what most people are used to. The upside is the pricing is very competitive and they offer options for people with health conditions.",
-          "One thing to know: you'll get 1095-B and 1095-C tax forms, which is the same as you'd get from a large employer plan. And you do have COBRA rights if you leave.",
-        ],
-        contacts: [
-          "Agent support: (307) 452-5055",
-          "BHPI member support: (844) 580-2474",
-          "Proact Rx support: (877) 635-9545",
-        ],
-        keyPoints: [
-          "Age-banded pricing — same rate regardless of household composition",
-          "Must maintain monthly PHD activities + timely premium payments",
-        ],
-        compliance: "LIFE-X is a newer product with a novel structure. Agent must clearly explain the Research Associate model. Coverage depends on LIFE-X continuing operations. This is NOT a traditional insurance policy.",
-        checklist: [
-          "Research Associate model explained",
-          "BHPI/TPA structure disclosed",
-          "Non-traditional plan nature disclosed",
-        ],
-      },
     },
     checklist: [
       "NOT MEC disclosure given to client",
@@ -187,7 +215,7 @@ export const U65_GATES = [
     label: "Comparison & Selection",
     compliance: false,
     script: [
-      "So to summarize your options: [recap 1–2 best-fit products with monthly premiums, key features, and trade-offs].",
+      "So to summarize your options: [recap best-fit products with monthly premiums, key features, and trade-offs].",
       "Which direction feels right for you?",
     ],
     commonQA: [
@@ -197,7 +225,7 @@ export const U65_GATES = [
       },
       {
         q: "What happens if I get really sick?",
-        a: "Honestly address coverage limits. For PALIC: fixed-dollar payouts may not cover full costs. For LIFE-X: group medical benefits with coverage terms. For EnrollPrime: PPO with coinsurance structure.",
+        a: "Honestly address coverage limits. For PALIC: fixed-dollar payouts may not cover full costs. For EnrollPrime: PPO with coinsurance structure — review the plan's out-of-pocket max.",
       },
       {
         q: "Can I still get marketplace coverage later?",
@@ -247,13 +275,32 @@ export const U65_GATES = [
     label: "Application & Enrollment",
     compliance: false,
     script: {
-      general: "Let's get your application started. I'm going to pull up the enrollment portal. [Open appropriate platform]",
+      general: "Let's get your application started. I'm going to pull up the enrollment portal.",
       palic: "I need to go through the health questions on the application. These are the underwriting questions the insurance company uses to evaluate your application. Please answer as accurately as possible — any misrepresentation could result in claims being denied later.",
-      lifex: "I'm going to set you up as a Research Associate with LIFE-X. You'll need to create your Personal Health Dashboard account and complete an initial health activity. I'll walk you through it.",
-      submitted: "Your application has been submitted. [For PALIC: subject to underwriting approval, typically 3–7 business days.] [For EnrollPrime/LIFE-X: typically effective on the first of the following month.]",
+      submitted: "Your application has been submitted. [For PALIC: subject to underwriting approval, typically 3–7 business days.] [For EnrollPrime: typically effective on the first of the following month.]",
       confirm: "Your confirmation/application number is [number]. Your anticipated effective date is [date]. Your monthly premium is $[amount] and the first payment is due by [date].",
     },
-    platformNote: "Enrollment platform by product: EnrollPrime → enrollprime.com (back office: 1enrollment.com/manage) | PALIC → New Era Life portal (apps.neweralife.com/site) | LIFE-X → LIFE-X enrollment portal (direct from agent support)",
+    platforms: {
+      enrollprime: {
+        label: "EnrollPrime / AFI",
+        portal: "enrollprime.com",
+        backOffice: "1enrollment.com/manage",
+        links: [
+          { label: "Enrollment Portal", url: "https://enrollprime.com" },
+          { label: "Back Office", url: "https://1enrollment.com/manage" },
+        ],
+      },
+      palic: {
+        label: "PALIC HSP Gold",
+        portal: "apps.neweralife.com/site",
+        links: [
+          { label: "Enrollment Portal", url: "https://apps.neweralife.com/site" },
+          { label: "Network Lookup", url: "https://myfirsthealth.com" },
+          { label: "Healthcare PALs", url: "#" },
+          { label: "Medical Bill Eraser", url: "#" },
+        ],
+      },
+    },
     notes: [
       "COMPLIANCE: For PALIC — Application is medically underwritten. Agent must read UW questions verbatim. Do not coach or help the client minimize conditions. Honest answers protect the client.",
       "COMPLIANCE: For PALIC — Do NOT tell the client they are approved until underwriting confirmation is received. Say 'submitted and pending review.'",
@@ -281,11 +328,10 @@ export const U65_GATES = [
       "I'm going to check in with you in [timeframe] to make sure everything is set up. What's the best number and time to reach you?",
       "Is there anything else I can help with? [Pause] Thank you for trusting New Gen Health Solutions. We're here for you anytime. Have a great day!",
     ],
-    nextStepsByProduct: [
-      "EnrollPrime: Client will receive welcome materials from the association. Cigna ID card arrives by mail.",
-      "PALIC: UW decision in 3–7 days. If approved, First Health ID card and Healthcare PALs info mailed. Preventive benefits start 60 days after effective date.",
-      "LIFE-X: Client must activate PHD dashboard and complete first research activity. Anthem network ID card arrives. Proact Rx card separate.",
-    ],
+    nextStepsByProduct: {
+      enrollprime: "Welcome materials from AFI, Cigna PPO ID card by mail.",
+      palic: "UW decision 3–7 days. If approved: First Health ID, Healthcare PALs, Medical Bill Eraser enrollment. Preventive benefits start 60 days after effective.",
+    },
     checklist: [
       "Coverage recap provided",
       "Next steps explained (UW timeline, ID cards, payments)",

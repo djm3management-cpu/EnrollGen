@@ -1,10 +1,12 @@
 /**
  * U65Checklist.jsx — U65 Off-Exchange compliance checklist
- * All items from spec Section 3.2 gate checklists
+ * Two products only: EnrollPrime + PALIC
  */
 
 import { useState } from "react";
 import { useU65 } from "./U65Context";
+
+const ACCENT = "#a855f7";
 
 const CHECKLIST_ITEMS = [
   // Gate 0
@@ -25,10 +27,6 @@ const CHECKLIST_ITEMS = [
   // Gate 3 PALIC-specific
   { key: "preExWaitingPeriodDisclosed", label: "Pre-existing condition exclusion period disclosed (12 months) — PALIC", gate: 3 },
   { key: "fixedBenefitExplained", label: "Fixed-benefit payout structure explained clearly — PALIC", gate: 3 },
-  // Gate 3 LIFE-X specific
-  { key: "researchAssociateExplained", label: "Research Associate model explained — LIFE-X", gate: 3 },
-  { key: "bhpiStructureDisclosed", label: "BHPI/TPA structure disclosed — LIFE-X", gate: 3 },
-  { key: "nonTraditionalDisclosed", label: "Non-traditional plan nature disclosed — LIFE-X", gate: 3 },
   // Gate 4
   { key: "productComparisonReviewed", label: "Product comparison reviewed with client", gate: 4 },
   { key: "clientQuestionsAddressed", label: "Client questions addressed", gate: 4 },
@@ -76,47 +74,21 @@ export default function U65Checklist() {
   );
 
   return (
-    <div
-      style={{
-        marginTop: 16,
-        padding: "18px 18px",
-        background: "rgba(255,255,255,0.018)",
-        border: "1px solid rgba(255,255,255,0.05)",
-        borderRadius: 10,
-        fontFamily: "var(--font-body)",
-      }}
-    >
+    <div style={{ marginTop: 16, padding: "18px 18px", background: "rgba(255,255,255,0.018)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 10, fontFamily: "var(--font-body)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: "#dfe6f0" }}>U65 Compliance Checklist</span>
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: pct === 100 ? "#34d399" : "#a855f7",
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
+        <span style={{ fontSize: 12, fontWeight: 600, color: pct === 100 ? "#34d399" : ACCENT, fontVariantNumeric: "tabular-nums" }}>
           {completed}/{total}
         </span>
       </div>
 
       <div style={{ height: 3, background: "rgba(255,255,255,0.04)", borderRadius: 2, overflow: "hidden", marginBottom: 14 }}>
-        <div style={{ height: "100%", background: pct === 100 ? "#34d399" : "#a855f7", borderRadius: 2, width: `${pct}%`, transition: "width 0.3s" }} />
+        <div style={{ height: "100%", background: pct === 100 ? "#34d399" : ACCENT, borderRadius: 2, width: `${pct}%`, transition: "width 0.3s" }} />
       </div>
 
       {criticalMissing.length > 0 && (
-        <div
-          style={{
-            marginBottom: 14,
-            padding: "9px 12px",
-            background: "rgba(248,113,113,0.06)",
-            border: "1px solid rgba(248,113,113,0.2)",
-            borderRadius: 7,
-            fontSize: 11,
-            color: "#f87171",
-          }}
-        >
-          🚨 Critical disclosures not yet checked: {criticalMissing.map((i) => i.label).join(" · ")}
+        <div style={{ marginBottom: 14, padding: "9px 12px", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 7, fontSize: 11, color: "#f87171" }}>
+          Critical disclosures not yet checked: {criticalMissing.map((i) => i.label).join(" · ")}
         </div>
       )}
 
@@ -128,31 +100,12 @@ export default function U65Checklist() {
               {GATE_LABELS[gateNum]}
             </div>
             {items.map((item) => (
-              <label
-                key={item.key}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 8,
-                  padding: "5px 2px",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  color: localChecks[item.key] ? "#34d399" : item.critical ? "#f87171" : "#8fa4bc",
-                  lineHeight: 1.4,
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={!!localChecks[item.key]}
-                  onChange={() => toggle(item.key)}
-                  style={{ marginTop: 1, flexShrink: 0 }}
-                />
+              <label key={item.key} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 2px", cursor: "pointer", fontSize: 12, color: localChecks[item.key] ? "#34d399" : item.critical ? "#f87171" : "#8fa4bc", lineHeight: 1.4 }}>
+                <input type="checkbox" checked={!!localChecks[item.key]} onChange={() => toggle(item.key)} style={{ marginTop: 1, flexShrink: 0 }} />
                 <span style={{ textDecoration: localChecks[item.key] ? "line-through" : "none", opacity: localChecks[item.key] ? 0.6 : 1 }}>
                   {item.label}
                   {item.critical && !localChecks[item.key] && (
-                    <span style={{ marginLeft: 6, fontSize: 10, background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: 3, padding: "1px 5px" }}>
-                      REQUIRED
-                    </span>
+                    <span style={{ marginLeft: 6, fontSize: 10, background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: 3, padding: "1px 5px" }}>REQUIRED</span>
                   )}
                 </span>
               </label>
@@ -163,7 +116,7 @@ export default function U65Checklist() {
 
       {pct === 100 && (
         <div style={{ marginTop: 8, padding: "10px", textAlign: "center", background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.15)", borderRadius: 7, fontSize: 13, color: "#34d399", fontWeight: 700 }}>
-          ✓ All compliance items complete
+          All compliance items complete
         </div>
       )}
     </div>

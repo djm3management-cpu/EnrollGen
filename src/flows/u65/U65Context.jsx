@@ -1,4 +1,5 @@
 import { createContext, useContext, useReducer, useMemo } from "react";
+import { calcFplPercent, getFplThreshold, getAcaEstimate, getProductRecommendation } from "./U65Data";
 
 const U65Context = createContext(null);
 
@@ -13,16 +14,36 @@ const initialState = {
   gate6Ok: false,
   gate7Ok: false,
 
+  // call started gate
+  callStarted: false,
+
   // entry source — controls Gate 0 script variant
   entrySource: null, // 'direct' | 'aca_transition'
 
   // selected products to present in Gate 3
-  selectedProducts: [], // ['enrollprime', 'palic', 'lifex']
+  selectedProducts: [], // ['enrollprime', 'palic']
 
   // UW risk level — set during Gate 2
   uwRisk: null, // null | 'low' | 'moderate' | 'high'
 
-  // client profile (from spec Section 3.1)
+  // product recommendation — derived after UW risk set
+  productRecommendation: null,
+
+  // NOT-MEC disclosure acknowledged — lockgate for G3
+  mecDisclosureAcknowledged: false,
+
+  // subsidy cliff calculator
+  subsidyCalc: {
+    householdSize: null,
+    annualIncome: null,
+    clientAge: null,
+    fplPercent: null,
+    aboveCliff: null,
+    fplThreshold: null,
+    acaEstimate: null,
+  },
+
+  // client profile
   clientProfile: {
     name: null,
     dob: null,
@@ -49,7 +70,7 @@ const initialState = {
     enrollmentPlatform: null,
   },
 
-  // derived signals (from spec Section 3.1)
+  // derived signals
   derivedSignals: {
     subsidyCliffClient: false,
     uwRisk: "unknown",
@@ -61,7 +82,7 @@ const initialState = {
     ancillaryNeeded: false,
   },
 
-  // checklist (from spec Section 3.1)
+  // checklist
   checklist: {
     identityVerified: false,
     consentRecorded: false,
@@ -79,6 +100,13 @@ const initialState = {
     followUpScheduled: false,
   },
 
+  // follow-up tracker
+  followUp: {
+    date: "",
+    method: "call", // 'call' | 'text' | 'email'
+    notes: "",
+  },
+
   gateHistory: [],
   sectionTimestamps: {},
   callStart: null,
@@ -87,13 +115,66 @@ const initialState = {
 function reducer(state, action) {
   switch (action.type) {
     case "START_CALL":
-      return { ...state, callStart: Date.now() };
+      return { ...state, callStarted: true, callStart: Date.now() };
 
     case "SET_ENTRY_SOURCE":
       return { ...state, entrySource: action.source };
 
-    case "SET_UW_RISK":
-      return { ...state, uwRisk: action.risk };
+    case "SET_UW_RISK": {
+      const rec = getProductRecommendation(action.risk);
+      return {
+        ...state,
+        uwRisk: action.risk,
+        productRecommendation: rec,
+        // Auto-select top recommended products (skip aca_pivot)
+        selectedProducts: rec.filter((r) => r.id !== "aca_pivot").map((r) => r.id),
+      };
+    }
+
+    case "ACK_MEC_DISCLOSURE":
+      return { ...state, mecDisclosureAcknowledged: true };
+
+    case "SET_SUBSIDY_CALC": {
+      const { householdSize, annualIncome, clientAge } = action;
+      const hs = householdSize || state.subsidyCalc.householdSize;
+      const ai = annualIncome || state.subsidyCalc.annualIncome;
+      const age = clientAge || state.subsidyCalc.clientAge;
+
+      if (!hs || !ai) {
+        return {
+          ...state,
+          subsidyCalc: { ...state.subsidyCalc, householdSize: hs, annualIncome: ai, clientAge: age },
+        };
+      }
+
+      const fplThreshold = getFplThreshold(hs);
+      const fplPercent = calcFplPercent(hs, ai);
+      const aboveCliff = fplPercent > 400;
+      const acaEstimate = age ? getAcaEstimate(age) : null;
+
+      return {
+        ...state,
+        subsidyCalc: {
+          householdSize: hs,
+          annualIncome: ai,
+          clientAge: age,
+          fplPercent,
+          aboveCliff,
+          fplThreshold,
+          acaEstimate,
+        },
+        derivedSignals: {
+          ...state.derivedSignals,
+          subsidyCliffClient: aboveCliff,
+        },
+      };
+    }
+
+    case "SET_FOLLOW_UP":
+      return {
+        ...state,
+        followUp: { ...state.followUp, ...action.payload },
+      };
 
     case "TOGGLE_PRODUCT": {
       const p = action.product;
@@ -125,6 +206,7 @@ function reducer(state, action) {
 
     case "START_SECTION": {
       const { sectionNum } = action;
+      if (state.sectionTimestamps[sectionNum]?.start) return state;
       return {
         ...state,
         sectionTimestamps: {
@@ -153,7 +235,7 @@ function reducer(state, action) {
       };
 
     case "RESET":
-      return { ...initialState, callStart: Date.now() };
+      return { ...initialState };
 
     default:
       return state;
@@ -173,10 +255,7 @@ function getActiveGate(state) {
 }
 
 export function U65Provider({ children }) {
-  const [state, dispatch] = useReducer(reducer, {
-    ...initialState,
-    callStart: Date.now(),
-  });
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const activeGate = useMemo(() => getActiveGate(state), [state]);
 
