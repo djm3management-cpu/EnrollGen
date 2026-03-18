@@ -140,18 +140,22 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
         const s = LEVEL_STYLE[floatingAlert.level] || LEVEL_STYLE.info;
         const isPulse = !!floatingAlert.pulse;
         const isFading = !!floatingAlert.fading;
+        const isAlert = floatingAlert.level === "warn" || floatingAlert.level === "critical";
+        const floatLabel = { critical: "CRITICAL ALERT", warn: "WARNING", tip: "TIP", remind: "REMINDER", info: "CO-PILOT" }[floatingAlert.level] || "CO-PILOT";
         return (
           <div
             onClick={() => copilot.setFloatingAlert(null)}
             style={{
-              position: "fixed", top: 80, right: 20, zIndex: 9999, maxWidth: 420, width: "auto",
+              position: "fixed", top: 80, right: 20, zIndex: 9999, maxWidth: isAlert ? 420 : 340, width: "auto",
               background: isPulse
                 ? "linear-gradient(145deg, rgba(157,0,255,0.12) 0%, rgba(10,10,12,0.99) 100%)"
-                : "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+                : isAlert
+                  ? "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)"
+                  : "linear-gradient(145deg, rgba(21,21,26,0.92) 0%, rgba(10,10,12,0.94) 100%)",
               border: `1px solid ${s.border || "rgba(255,255,255,0.07)"}`,
-              borderLeftWidth: 4, borderLeftColor: s.color,
-              borderRadius: 14, padding: "14px 18px",
-              display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer",
+              borderLeftWidth: isAlert ? 4 : 3, borderLeftColor: s.color,
+              borderRadius: isAlert ? 14 : 10, padding: isAlert ? "14px 18px" : "10px 14px",
+              display: "flex", alignItems: "flex-start", gap: isAlert ? 12 : 8, cursor: "pointer",
               boxShadow: isPulse
                 ? `14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 30px ${s.color}33`
                 : "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 20px rgba(0,0,0,0.5)",
@@ -162,7 +166,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
             }}
           >
             <span style={{
-              fontSize: isPulse ? "1.1rem" : "0.85rem", color: s.color,
+              fontSize: isPulse ? "1.1rem" : isAlert ? "0.85rem" : "0.75rem", color: s.color,
               fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, lineHeight: 1,
               paddingTop: 2, flexShrink: 0,
               animation: isPulse ? "iconFlash 0.8s ease-in-out 4" : "none",
@@ -170,10 +174,10 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
               {s.icon}
             </span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: isPulse ? "0.7rem" : "0.62rem", fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: s.color, marginBottom: 5 }}>
-                {floatingAlert.level === "critical" ? "CRITICAL ALERT" : "WARNING"} — tap to dismiss
+              <div style={{ fontSize: isPulse ? "0.7rem" : isAlert ? "0.62rem" : "0.58rem", fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: s.color, marginBottom: isAlert ? 5 : 3 }}>
+                {floatLabel} — tap to dismiss
               </div>
-              <div style={{ fontSize: "0.82rem", color: "#d0d0d0", lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif", fontWeight: isPulse ? 600 : 400 }}>
+              <div style={{ fontSize: isAlert ? "0.82rem" : "0.76rem", color: "#d0d0d0", lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif", fontWeight: isPulse ? 600 : 400 }}>
                 {floatingAlert.text}
               </div>
             </div>

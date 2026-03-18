@@ -490,12 +490,12 @@ export function useCopilotEngine({
 
   // Show floating alert
   const showFloat = useCallback((level, text) => {
-    if (level !== "warn" && level !== "critical") return;
     clearTimeout(floatTimeout.current);
     clearTimeout(floatFadeTimeout.current);
     setFloatingAlert({ level, text });
     logEntry(LOG_TYPES.FLOATING_ALERT, level, text, { section: currentStep });
-    dismissFloat(level === "critical" ? 7000 : 4000);
+    const duration = level === "critical" ? 7000 : level === "warn" ? 4000 : 5000;
+    dismissFloat(duration);
   }, [logEntry, currentStep, dismissFloat]);
 
   // Push entry to feed
