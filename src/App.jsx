@@ -413,7 +413,7 @@ function ProfileBar() {
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 10,
+        gap: 14,
         background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
         border: "1px solid rgba(255,255,255,0.07)",
         borderRadius: 8,
@@ -427,15 +427,15 @@ function ProfileBar() {
         src={user.imageUrl}
         alt=""
         style={{
-          width: 34,
-          height: 34,
+          width: 28,
+          height: 28,
           borderRadius: "50%",
           border: "1px solid rgba(255,255,255,0.1)",
         }}
       />
       <span
         style={{
-          fontSize: 14,
+          fontSize: 12,
           fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 600,
           letterSpacing: "0.05em",
