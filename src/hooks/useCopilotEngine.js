@@ -675,6 +675,17 @@ SECTION CONTEXT (rolling window for current section):
 
       if (controller.signal.aborted) { setCoachingLoading(false); return; }
 
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        console.error("Coaching API HTTP error:", response.status, errText);
+        const alreadyWarned = messages.some((m) => m.text?.includes("could not reach the coaching service"));
+        if (manual || !alreadyWarned) {
+          pushFeedEntry("info", `Co-Pilot returned an error (HTTP ${response.status}). Check that the Netlify function is running and ANTHROPIC_API_KEY is set.`, { section: currentStep });
+        }
+        setCoachingLoading(false);
+        return;
+      }
+
       const data = await response.json();
       const raw = data.content?.map((b) => (b.type === "text" ? b.text : "")).filter(Boolean).join("").trim();
 
@@ -762,7 +773,10 @@ SECTION CONTEXT (rolling window for current section):
     } catch (err) {
       if (err.name === "AbortError") { setCoachingLoading(false); return; }
       console.error("Coaching API error:", err);
-      if (manual) pushFeedEntry("info", "Analyze failed. Co-Pilot could not reach the coaching service right now.", { section: currentStep });
+      const alreadyWarned = messages.some((m) => m.text?.includes("could not reach the coaching service"));
+      if (manual || !alreadyWarned) {
+        pushFeedEntry("info", "Co-Pilot could not reach the coaching service. If running locally, use 'netlify dev' instead of 'npm run dev'.", { section: currentStep });
+      }
     } finally {
       setCoachingLoading(false);
     }
@@ -863,6 +877,14 @@ SECTION CONTEXT (rolling window for current section):
 
       if (controller.signal.aborted) { setAskLoading(false); return; }
 
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        console.error("Ask Co-Pilot HTTP error:", response.status, errText);
+        pushFeedEntry("info", `Co-Pilot returned an error (HTTP ${response.status}). Check that the Netlify function is running and ANTHROPIC_API_KEY is set.`, { section: currentStep });
+        setAskLoading(false);
+        return;
+      }
+
       const data = await response.json();
       const raw = data.content?.map((b) => (b.type === "text" ? b.text : "")).filter(Boolean).join("").trim();
 
@@ -886,6 +908,7 @@ SECTION CONTEXT (rolling window for current section):
     } catch (err) {
       if (err.name === "AbortError") { setAskLoading(false); return; }
       console.error("Ask Co-Pilot error:", err);
+      pushFeedEntry("info", "Co-Pilot could not reach the coaching service. If running locally, use 'netlify dev' instead of 'npm run dev'.", { section: currentStep });
     } finally {
       setAskLoading(false);
     }

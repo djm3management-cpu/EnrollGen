@@ -618,8 +618,26 @@ const INTENT_MAP = {
         "unlimited coverage",
       ];
 
+      const normalizedT = normalize(t);
+      const benignContexts = [
+        "find the best",
+        "help you find",
+        "best plan for you",
+        "best plan for your",
+        "best option for",
+        "best fit for",
+        "what works best",
+        "best thing to do",
+        "your best option",
+        "best suited",
+        "best match",
+      ];
       for (const phrase of superlatives) {
-        if (normalize(t).includes(normalize(phrase))) {
+        const np = normalize(phrase);
+        if (!normalizedT.includes(np)) continue;
+        if (benignContexts.some((ctx) => normalizedT.includes(normalize(ctx)))) continue;
+        const regex = new RegExp(`\\b${np.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+        if (regex.test(normalizedT)) {
           violations.push(`Superlative: "${phrase}"`);
         }
       }
@@ -796,16 +814,28 @@ const INTENT_MAP = {
         "permission to discuss",
       ];
       const planPhrases = [
-        "the plan",
-        "this plan",
-        "plan name",
-        "benefits include",
-        "premium is",
-        "deductible is",
-        "here's what the plan",
-        "copay",
+        "let me tell you about this plan",
+        "the plan includes",
         "the plan offers",
+        "benefits include",
+        "your premium would be",
+        "the premium is",
+        "your copay would be",
+        "the deductible is",
+        "here's what the plan covers",
+        "this plan gives you",
+        "with this plan you get",
+        "monthly premium",
+        "plan benefits are",
+        "let me go over the benefits",
       ];
+      if (normalize(t).length < 200) {
+        return {
+          detected: true,
+          confidence: 50,
+          evidence: "Transcript too short to determine SOA timing reliably",
+        };
+      }
       const result = appearsBeforeInTranscript(t, soaPhrases, planPhrases);
       if (result === null) {
         return {
