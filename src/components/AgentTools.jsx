@@ -401,7 +401,6 @@ export default function AgentTools() {
         icon={<Scale size={15} />}
         searchMatch={matches.refs}
         color="#FFD700"
-        defaultOpen
       >
         <LinkGrid items={OFFICIAL_REFS} />
       </Section>

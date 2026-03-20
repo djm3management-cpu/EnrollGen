@@ -6,7 +6,7 @@
 /* ── Container ── */
 .objection-handler {
   position: relative;
-  background: linear-gradient(180deg, #12182350 0%, #0f141c 100%);
+  background: linear-gradient(180deg, rgba(18, 24, 35, 0.24) 0%, rgba(15, 20, 28, 0.88) 100%);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   padding: 18px;

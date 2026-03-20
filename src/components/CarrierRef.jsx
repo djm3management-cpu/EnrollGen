@@ -255,7 +255,7 @@ function StateSidebar({ code, onClose }) {
 
   return (
     <aside
-      className="card"
+      className="card carrier-ref-sidebar"
       style={{
         padding: "18px 16px",
         background:
@@ -263,10 +263,6 @@ function StateSidebar({ code, onClose }) {
         display: "flex",
         flexDirection: "column",
         gap: 12,
-        maxHeight: "calc(100vh - 180px)",
-        overflowY: "auto",
-        position: "sticky",
-        top: 14,
       }}
     >
       <div
@@ -519,12 +515,10 @@ export default function CarrierRef() {
     >
       {/* ── Map + Sidebar ── */}
       <div
+        className="carrier-ref-layout"
         style={{
-          display: "grid",
-          gridTemplateColumns: selected ? "1fr 370px" : "1fr",
           gap: 14,
           alignItems: "start",
-          transition: "grid-template-columns 0.2s ease",
         }}
       >
         {/* Geographic SVG Map */}

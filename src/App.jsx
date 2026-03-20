@@ -1,24 +1,39 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, startTransition } from "react";
 import EnrollGenLogo from "./components/EnrollGenLogo";
-import ScriptFlow from "./components/ScriptFlow";
-import MedSupFlow from "./components/MedSupFlow";
-import ACAScript from "./flows/aca/ACAScript";
-import U65Script from "./flows/u65/U65Script";
 import { ScriptProvider } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
-import "./styles.css";
 import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
 
-const AgentTools = lazy(() => import("./components/AgentTools"));
-const ObjectionHandler = lazy(() => import("./components/ObjectionHandler"));
-const SEPLookup = lazy(() => import("./components/SEPLookup"));
-const SessionSummary = lazy(() => import("./components/SessionSummary"));
-const ReviewWorkspace = lazy(() => import("./components/ReviewWorkspace"));
-const TranscriptUpload = lazy(() => import("./components/TranscriptUpload"));
-const DecisionTree = lazy(() => import("./components/DecisionTree"));
-const CarrierRef = lazy(() => import("./components/CarrierRef"));
-const CallHistory = lazy(() => import("./components/CallHistory"));
+const loadScriptFlow = () => import("./components/ScriptFlow");
+const loadMedSupFlow = () => import("./components/MedSupFlow");
+const loadACAScript = () => import("./flows/aca/ACAScript");
+const loadU65Script = () => import("./flows/u65/U65Script");
+const loadAgentTools = () => import("./components/AgentTools");
+const loadObjectionHandler = () => import("./components/ObjectionHandler");
+const loadSEPLookup = () => import("./components/SEPLookup");
+const loadSessionSummary = () => import("./components/SessionSummary");
+const loadReviewWorkspace = () => import("./components/ReviewWorkspace");
+const loadTranscriptUpload = () => import("./components/TranscriptUpload");
+const loadDecisionTree = () => import("./components/DecisionTree");
+const loadCarrierRef = () => import("./components/CarrierRef");
+const loadCallHistory = () => import("./components/CallHistory");
+const loadDailyVerse = () => import("./components/DailyVerse");
+
+const ScriptFlow = lazy(loadScriptFlow);
+const MedSupFlow = lazy(loadMedSupFlow);
+const ACAScript = lazy(loadACAScript);
+const U65Script = lazy(loadU65Script);
+const AgentTools = lazy(loadAgentTools);
+const ObjectionHandler = lazy(loadObjectionHandler);
+const SEPLookup = lazy(loadSEPLookup);
+const SessionSummary = lazy(loadSessionSummary);
+const ReviewWorkspace = lazy(loadReviewWorkspace);
+const TranscriptUpload = lazy(loadTranscriptUpload);
+const DecisionTree = lazy(loadDecisionTree);
+const CarrierRef = lazy(loadCarrierRef);
+const CallHistory = lazy(loadCallHistory);
+const DailyVerse = lazy(loadDailyVerse);
 
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const SUNFIRE_SEP_LABELS = [
@@ -398,6 +413,19 @@ function LazyPanel({ children }) {
   );
 }
 
+function AppTabButton({ activeTab, tabId, onSelect, onPreload, children }) {
+  return (
+    <button
+      className={activeTab === tabId ? "tab active" : "tab"}
+      onClick={() => onSelect(tabId)}
+      onMouseEnter={onPreload}
+      onFocus={onPreload}
+    >
+      {children}
+    </button>
+  );
+}
+
 /* ─── ProfileBar ─────────────────────────────────────────────────────────── */
 function ProfileBar() {
   const { user, isLoaded } = useUser();
@@ -470,9 +498,77 @@ function AppContent() {
   const [tab, setTab] = useState("script");
   const [mode, setMode] = useState("ma");
 
+  const preloadScriptForMode = (targetMode) => {
+    if (targetMode === "ma") {
+      loadScriptFlow();
+      loadSessionSummary();
+      loadDailyVerse();
+      return;
+    }
+    if (targetMode === "medsup") {
+      loadMedSupFlow();
+      return;
+    }
+    if (targetMode === "aca") {
+      loadACAScript();
+      return;
+    }
+    if (targetMode === "u65") {
+      loadU65Script();
+    }
+  };
+
+  const preloadTab = (targetTab, targetMode = mode) => {
+    if (targetTab === "script") {
+      preloadScriptForMode(targetMode);
+      return;
+    }
+    if (targetTab === "tools" && targetMode === "ma") {
+      loadAgentTools();
+      return;
+    }
+    if (targetTab === "sepTool" && targetMode === "ma") {
+      loadSEPLookup();
+      return;
+    }
+    if (targetTab === "objections" && targetMode === "ma") {
+      loadObjectionHandler();
+      return;
+    }
+    if (targetTab === "review" && targetMode === "ma") {
+      loadReviewWorkspace();
+      return;
+    }
+    if (targetTab === "upload" && (targetMode === "ma" || targetMode === "medsup")) {
+      loadTranscriptUpload();
+      return;
+    }
+    if (targetTab === "decisionTree") {
+      loadDecisionTree();
+      return;
+    }
+    if (targetTab === "carrierRef") {
+      loadCarrierRef();
+      return;
+    }
+    if (targetTab === "history") {
+      loadCallHistory();
+    }
+  };
+
   const handleModeChange = (newMode) => {
-    setMode(newMode);
-    setTab("script"); // reset tab on mode switch to avoid invalid tab state
+    preloadScriptForMode(newMode);
+    startTransition(() => {
+      setMode(newMode);
+      setTab("script");
+    });
+  };
+
+  const handleTabChange = (nextTab) => {
+    preloadTab(nextTab);
+    startTransition(() => {
+      setTab(nextTab);
+    });
   };
 
   const handleLogoClick = () => {
@@ -574,69 +670,87 @@ function AppContent() {
           </div>
 
           <div className="tabs">
-            <button
-              className={tab === "script" ? "tab active" : "tab"}
-              onClick={() => setTab("script")}
+            <AppTabButton
+              activeTab={tab}
+              tabId="script"
+              onSelect={handleTabChange}
+              onPreload={() => preloadTab("script")}
             >
               Script
-            </button>
+            </AppTabButton>
             {mode === "ma" && (
-              <button
-                className={tab === "tools" ? "tab active" : "tab"}
-                onClick={() => setTab("tools")}
+              <AppTabButton
+                activeTab={tab}
+                tabId="tools"
+                onSelect={handleTabChange}
+                onPreload={() => preloadTab("tools")}
               >
                 Agent Tools
-              </button>
+              </AppTabButton>
             )}
             {mode === "ma" && (
-              <button
-                className={tab === "sepTool" ? "tab active" : "tab"}
-                onClick={() => setTab("sepTool")}
+              <AppTabButton
+                activeTab={tab}
+                tabId="sepTool"
+                onSelect={handleTabChange}
+                onPreload={() => preloadTab("sepTool")}
               >
                 MA Intelligence
-              </button>
+              </AppTabButton>
             )}
             {mode === "ma" && (
-              <button
-                className={tab === "objections" ? "tab active" : "tab"}
-                onClick={() => setTab("objections")}
+              <AppTabButton
+                activeTab={tab}
+                tabId="objections"
+                onSelect={handleTabChange}
+                onPreload={() => preloadTab("objections")}
               >
                 Objections
-              </button>
+              </AppTabButton>
             )}
-            <button
-              className={tab === "decisionTree" ? "tab active" : "tab"}
-              onClick={() => setTab("decisionTree")}
+            <AppTabButton
+              activeTab={tab}
+              tabId="decisionTree"
+              onSelect={handleTabChange}
+              onPreload={() => preloadTab("decisionTree")}
             >
               Decision Tree
-            </button>
-            <button
-              className={tab === "carrierRef" ? "tab active" : "tab"}
-              onClick={() => setTab("carrierRef")}
+            </AppTabButton>
+            <AppTabButton
+              activeTab={tab}
+              tabId="carrierRef"
+              onSelect={handleTabChange}
+              onPreload={() => preloadTab("carrierRef")}
             >
               Carrier Ref
-            </button>
-            <button
-              className={tab === "history" ? "tab active" : "tab"}
-              onClick={() => setTab("history")}
+            </AppTabButton>
+            <AppTabButton
+              activeTab={tab}
+              tabId="history"
+              onSelect={handleTabChange}
+              onPreload={() => preloadTab("history")}
             >
               My Calls
-            </button>
+            </AppTabButton>
             {(mode === "ma" || mode === "medsup") && (
-              <button
-                className={tab === "upload" ? "tab active" : "tab"}
-                onClick={() => setTab("upload")}
+              <AppTabButton
+                activeTab={tab}
+                tabId="upload"
+                onSelect={handleTabChange}
+                onPreload={() => preloadTab("upload")}
               >
                 Upload
-              </button>
+              </AppTabButton>
             )}
             {mode === "ma" && (
-              <button
-                className={tab === "review" ? "tab active" : "tab"}
-                onClick={() => setTab("review")}
+              <AppTabButton
+                activeTab={tab}
+                tabId="review"
+                onSelect={handleTabChange}
+                onPreload={() => preloadTab("review")}
               >
                 Review
-              </button>
+              </AppTabButton>
             )}
           </div>
 
@@ -647,9 +761,14 @@ function AppContent() {
                   <SepScriptSidebar />
                   <div className="main-script-layout">
                     <div className="main-script-primary">
-                      <ScriptFlow />
+                      <LazyPanel>
+                        <ScriptFlow />
+                      </LazyPanel>
                       <LazyPanel>
                         <SessionSummary />
+                      </LazyPanel>
+                      <LazyPanel>
+                        <DailyVerse />
                       </LazyPanel>
                     </div>
                   </div>
@@ -685,7 +804,11 @@ function AppContent() {
 
           {mode === "medsup" && (
             <MedSupProvider>
-              {tab === "script" && <MedSupFlow />}
+              {tab === "script" && (
+                <LazyPanel>
+                  <MedSupFlow />
+                </LazyPanel>
+              )}
               {tab === "upload" && (
                 <LazyPanel>
                   <TranscriptUpload />
@@ -694,9 +817,17 @@ function AppContent() {
             </MedSupProvider>
           )}
 
-          {mode === "aca" && tab === "script" && <ACAScript />}
+          {mode === "aca" && tab === "script" && (
+            <LazyPanel>
+              <ACAScript />
+            </LazyPanel>
+          )}
 
-          {mode === "u65" && tab === "script" && <U65Script />}
+          {mode === "u65" && tab === "script" && (
+            <LazyPanel>
+              <U65Script />
+            </LazyPanel>
+          )}
 
           {tab === "decisionTree" && (
             <LazyPanel>

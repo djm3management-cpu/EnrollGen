@@ -17,7 +17,18 @@
       "Read(//tmp/**)",
       "Bash(curl -sL \"https://raw.githubusercontent.com/jgoodall/us-maps/refs/heads/master/geojson/us-states.json\" -o /tmp/us-states.json 2>&1 && wc -c /tmp/us-states.json)",
       "Bash(curl -sL \"https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json\" -o /tmp/us-topo.json 2>&1 && wc -c /tmp/us-topo.json)",
-      "Bash(cd /tmp && npm install --no-save topojson-client d3-geo 2>&1 | tail -3)"
+      "Bash(cd /tmp && npm install --no-save topojson-client d3-geo 2>&1 | tail -3)",
+      "Bash(find:*)",
+      "Bash(node:*)",
+      "Bash(git add:*)",
+      "WebFetch(domain:www.cms.gov)",
+      "Bash(curl:*)",
+      "Bash(unzip:*)",
+      "Bash(rm:*)",
+      "Bash(npm list:*)",
+      "Bash(npm install:*)",
+      "Bash(ls:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

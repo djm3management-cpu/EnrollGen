@@ -290,7 +290,7 @@ function StepBadge({ label, color = "#4a5568", bg = "rgba(255,255,255,0.03)", bo
 }
 
 /* ─── Question card ──────────────────────────────────────────────────────── */
-function QuestionCard({ node, onNavigate }) {
+function QuestionCard({ node, selectedAnswer, stepIndex, onNavigate, isCurrent }) {
   const [hovered, setHovered] = useState(null);
 
   return (
@@ -323,14 +323,32 @@ function QuestionCard({ node, onNavigate }) {
       )}
       {!node.hint && <div style={{ height: 14 }} />}
 
+      {!isCurrent && selectedAnswer && (
+        <div
+          style={{
+            marginBottom: 14,
+            padding: "8px 12px",
+            borderRadius: 8,
+            background: "rgba(232,0,45,0.05)",
+            border: "1px solid rgba(232,0,45,0.14)",
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 12,
+            color: "#cfd8e3",
+          }}
+        >
+          Selected: {selectedAnswer}
+        </div>
+      )}
+
       {/* Answer options — styled like script say-blocks */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {node.answers.map((ans, i) => {
           const isHov = hovered === i;
+          const isSelected = selectedAnswer === ans.label;
           return (
             <button
               key={i}
-              onClick={() => onNavigate(ans.next, ans.label)}
+              onClick={() => onNavigate(node.id, ans.next, ans.label, stepIndex)}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
               style={{
@@ -339,9 +357,17 @@ function QuestionCard({ node, onNavigate }) {
                 gap: 12,
                 width: "100%",
                 textAlign: "left",
-                background: isHov ? "rgba(232,0,45,0.04)" : "rgba(255,255,255,0.015)",
+                background: isSelected
+                  ? "rgba(232,0,45,0.08)"
+                  : isHov
+                    ? "rgba(232,0,45,0.04)"
+                    : "rgba(255,255,255,0.015)",
                 border: "1px solid transparent",
-                borderLeft: isHov ? "2px solid rgba(232,0,45,0.6)" : "2px solid rgba(255,255,255,0.08)",
+                borderLeft: isSelected
+                  ? "2px solid rgba(232,0,45,0.75)"
+                  : isHov
+                    ? "2px solid rgba(232,0,45,0.6)"
+                    : "2px solid rgba(255,255,255,0.08)",
                 borderRadius: "0 4px 4px 0",
                 padding: "10px 14px",
                 cursor: "pointer",
@@ -353,7 +379,7 @@ function QuestionCard({ node, onNavigate }) {
                   fontFamily: "'Barlow Condensed', sans-serif",
                   fontWeight: 800,
                   fontSize: 13,
-                  color: isHov ? "#E8002D" : "#3A3A4A",
+                  color: isSelected ? "#ff536f" : isHov ? "#E8002D" : "#3A3A4A",
                   flexShrink: 0,
                   letterSpacing: "0.06em",
                   lineHeight: 1.6,
@@ -366,7 +392,7 @@ function QuestionCard({ node, onNavigate }) {
                 style={{
                   fontFamily: "'DM Sans', sans-serif",
                   fontSize: 13.5,
-                  color: isHov ? "#dfe6f0" : "#8A8A9A",
+                  color: isSelected ? "#eef4fb" : isHov ? "#dfe6f0" : "#8A8A9A",
                   lineHeight: 1.6,
                   transition: "color 0.13s",
                 }}
@@ -382,7 +408,7 @@ function QuestionCard({ node, onNavigate }) {
 }
 
 /* ─── Referral card ──────────────────────────────────────────────────────── */
-function ReferCard({ node, onNavigate, onReset }) {
+function ReferCard({ node, selectedAnswer, stepIndex, onNavigate, onReset, isCurrent }) {
   return (
     <div
       style={{
@@ -437,9 +463,26 @@ function ReferCard({ node, onNavigate, onReset }) {
         </p>
       )}
 
+      {!isCurrent && selectedAnswer && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "8px 12px",
+            borderRadius: 8,
+            background: "rgba(255,215,0,0.05)",
+            border: "1px solid rgba(255,215,0,0.14)",
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 12,
+            color: "#d9dfb0",
+          }}
+        >
+          Selected: {selectedAnswer}
+        </div>
+      )}
+
       {node.next && (
         <button
-          onClick={() => onNavigate(node.next, node.nextLabel || "Continue")}
+          onClick={() => onNavigate(node.id, node.next, node.nextLabel || "Continue", stepIndex)}
           className="primary"
           style={{ marginRight: 10, marginBottom: 10 }}
         >
@@ -452,20 +495,20 @@ function ReferCard({ node, onNavigate, onReset }) {
           {node.branches.map((b, i) => (
             <button
               key={i}
-              onClick={() => onNavigate(b.next, b.label)}
+              onClick={() => onNavigate(node.id, b.next, b.label, stepIndex)}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
-                background: "rgba(255,215,0,0.04)",
+                background: selectedAnswer === b.label ? "rgba(255,215,0,0.08)" : "rgba(255,215,0,0.04)",
                 border: "1px solid transparent",
-                borderLeft: "2px solid rgba(255,215,0,0.35)",
+                borderLeft: selectedAnswer === b.label ? "2px solid rgba(255,215,0,0.65)" : "2px solid rgba(255,215,0,0.35)",
                 borderRadius: "0 4px 4px 0",
                 padding: "9px 14px",
                 cursor: "pointer",
                 fontFamily: "'DM Sans', sans-serif",
                 fontSize: 13,
-                color: "#8A8A9A",
+                color: selectedAnswer === b.label ? "#f0f3d7" : "#8A8A9A",
                 textAlign: "left",
                 transition: "all 0.13s",
               }}
@@ -610,73 +653,43 @@ function ResultCard({ node, onReset }) {
 export default function DecisionTree() {
   const [current, setCurrent] = useState(START_NODE);
   const [path, setPath] = useState([]);
-  const [animating, setAnimating] = useState(false);
+  const currentNode = TREE[current];
 
-  const node = TREE[current];
-
-  const navigate = (nextId, answerLabel) => {
-    if (animating || !TREE[nextId]) return;
-    setAnimating(true);
-    setTimeout(() => {
-      setPath((p) => [...p, { nodeId: current, answerLabel }]);
-      setCurrent(nextId);
-      setAnimating(false);
-    }, 150);
-  };
-
-  const goBack = (idx) => {
-    if (animating) return;
-    setAnimating(true);
-    setTimeout(() => {
-      setCurrent(path[idx].nodeId);
-      setPath((p) => p.slice(0, idx));
-      setAnimating(false);
-    }, 150);
+  const navigate = (fromNodeId, nextId, answerLabel, stepIndex) => {
+    if (!TREE[nextId]) return;
+    setPath((prev) => [
+      ...prev.slice(0, stepIndex),
+      { nodeId: fromNodeId, answerLabel },
+    ]);
+    setCurrent(nextId);
   };
 
   const reset = () => {
-    if (animating) return;
-    setAnimating(true);
-    setTimeout(() => {
-      setCurrent(START_NODE);
-      setPath([]);
-      setAnimating(false);
-    }, 150);
+    setCurrent(START_NODE);
+    setPath([]);
   };
 
-  const currentNode = TREE[current];
-  const stepNum = path.length + 1;
+  const steps = [
+    ...path.map((step, idx) => ({
+      node: TREE[step.nodeId],
+      selectedAnswer: step.answerLabel,
+      stepIndex: idx,
+      isCurrent: false,
+    })),
+    {
+      node: currentNode,
+      selectedAnswer: null,
+      stepIndex: path.length,
+      isCurrent: true,
+    },
+  ];
+
+  const stepNum = steps.filter((step) => !step.node?.type).length;
 
   return (
     <div className="card" style={{ maxWidth: 760, margin: "0 auto", background: "linear-gradient(180deg,#181818 0%,#111111 50%,#0e0e0e 100%)" }}>
-
-      {/* ── Card header ── */}
       <h2 style={{ marginBottom: 16 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {currentNode?.num && !currentNode?.type && (
-            <StepBadge
-              label={currentNode.num}
-              color="#8A8A9A"
-              bg="rgba(255,255,255,0.03)"
-              border="rgba(255,255,255,0.07)"
-            />
-          )}
-          {currentNode?.type === "result" && (
-            <StepBadge
-              label="Result"
-              color={currentNode.color}
-              bg={`rgba(${currentNode.rgb},0.08)`}
-              border={`rgba(${currentNode.rgb},0.2)`}
-            />
-          )}
-          {currentNode?.type === "refer" && (
-            <StepBadge
-              label="Note"
-              color="#b8950a"
-              bg="rgba(255,215,0,0.07)"
-              border="rgba(255,215,0,0.2)"
-            />
-          )}
           Product Decision Tree
         </span>
         <span
@@ -693,86 +706,96 @@ export default function DecisionTree() {
         </span>
       </h2>
 
-      {/* ── Breadcrumb ── */}
-      {path.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: 4,
-            marginBottom: 16,
-            paddingBottom: 14,
-            borderBottom: "1px solid rgba(255,255,255,0.04)",
-          }}
-        >
-          <button
-            onClick={reset}
-            style={crumbBtn(false)}
-          >
-            Start
-          </button>
-          {path.map((step, idx) => {
-            const n = TREE[step.nodeId];
-            return (
-              <span key={idx} style={{ display: "contents" }}>
-                <span style={{ color: "#1E1E28", fontSize: 10, userSelect: "none" }}>›</span>
-                <button onClick={() => goBack(idx)} style={crumbBtn(idx === path.length - 1)}>
-                  {n?.num ?? "—"}
-                </button>
-              </span>
-            );
-          })}
-          <span style={{ color: "#1E1E28", fontSize: 10, userSelect: "none" }}>›</span>
-          <span
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {steps.map(({ node, selectedAnswer, stepIndex, isCurrent }) => (
+          <div
+            key={`${node.id}-${stepIndex}-${isCurrent ? "current" : "history"}`}
             style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700,
-              fontSize: 11,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#2A2A3A",
+              borderRadius: 14,
+              border: isCurrent
+                ? "1px solid rgba(255,255,255,0.08)"
+                : "1px solid rgba(255,255,255,0.05)",
+              background: isCurrent
+                ? "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(8,8,10,0.45) 100%)"
+                : "linear-gradient(180deg, rgba(255,255,255,0.015) 0%, rgba(8,8,10,0.32) 100%)",
+              padding: "16px 18px",
+              boxShadow: isCurrent ? "0 10px 24px rgba(0,0,0,0.18)" : "none",
             }}
           >
-            {currentNode?.type === "result" ? "Result" : currentNode?.type === "refer" ? "Note" : currentNode?.num}
-          </span>
-        </div>
-      )}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                marginBottom: 14,
+              }}
+            >
+              <StepBadge
+                label={node?.type === "result" ? "Result" : node?.type === "refer" ? "Note" : node?.num}
+                color={
+                  node?.type === "result"
+                    ? node.color
+                    : node?.type === "refer"
+                      ? "#b8950a"
+                      : isCurrent
+                        ? "#c0d0e4"
+                        : "#7f8b99"
+                }
+                bg={
+                  node?.type === "result"
+                    ? `rgba(${node.rgb},0.08)`
+                    : node?.type === "refer"
+                      ? "rgba(255,215,0,0.07)"
+                      : "rgba(255,255,255,0.03)"
+                }
+                border={
+                  node?.type === "result"
+                    ? `rgba(${node.rgb},0.2)`
+                    : node?.type === "refer"
+                      ? "rgba(255,215,0,0.2)"
+                      : "rgba(255,255,255,0.07)"
+                }
+              />
+              {!isCurrent && (
+                <span
+                  style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700,
+                    fontSize: 10,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "#4d5966",
+                  }}
+                >
+                  Completed
+                </span>
+              )}
+            </div>
 
-      {/* ── Animated content ── */}
-      <div
-        style={{
-          opacity: animating ? 0 : 1,
-          transform: animating ? "translateY(6px)" : "translateY(0)",
-          transition: "opacity 0.15s ease, transform 0.15s ease",
-        }}
-      >
-        {currentNode?.type === "result" ? (
-          <ResultCard node={currentNode} onReset={reset} />
-        ) : currentNode?.type === "refer" ? (
-          <ReferCard node={currentNode} onNavigate={navigate} onReset={reset} />
-        ) : (
-          <QuestionCard node={currentNode} onNavigate={navigate} />
-        )}
+            {node?.type === "result" ? (
+              <ResultCard node={node} onReset={reset} />
+            ) : node?.type === "refer" ? (
+              <ReferCard
+                node={node}
+                selectedAnswer={selectedAnswer}
+                stepIndex={stepIndex}
+                onNavigate={navigate}
+                onReset={reset}
+                isCurrent={isCurrent}
+              />
+            ) : (
+              <QuestionCard
+                node={node}
+                selectedAnswer={selectedAnswer}
+                stepIndex={stepIndex}
+                onNavigate={navigate}
+                isCurrent={isCurrent}
+              />
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
-}
-
-function crumbBtn(isCurrent) {
-  return {
-    background: "none",
-    border: "none",
-    cursor: isCurrent ? "default" : "pointer",
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontWeight: 700,
-    fontSize: 11,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase",
-    color: isCurrent ? "#3A3A4A" : "#E8002D",
-    padding: "2px 6px",
-    borderRadius: 3,
-    opacity: isCurrent ? 1 : 0.8,
-    transition: "opacity 0.13s",
-  };
 }

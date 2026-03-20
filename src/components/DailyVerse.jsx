@@ -27,6 +27,23 @@ const FALLBACK_VERSE = {
   reference: "Philippians 4:13",
 };
 
+const ORIGINAL_SOURCE = {
+  OT: {
+    module: "wlc",
+    label: "Westminster Leningrad Codex",
+    shortLabel: "WLC Hebrew",
+  },
+  NT: {
+    module: "tr",
+    label: "Textus Receptus",
+    shortLabel: "TR Greek",
+  },
+};
+
+function normalizeOriginalText(text = "") {
+  return text.replace(/\s+/g, " ").trim();
+}
+
 export default function DailyVerse() {
   const [verse, setVerse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +52,8 @@ export default function DailyVerse() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [commentaryOpen, setCommentaryOpen] = useState(false);
   const [bookData, setBookData] = useState(null);
+  const [originalVerse, setOriginalVerse] = useState(null);
+  const [originalLoading, setOriginalLoading] = useState(false);
   const dropdownRef = useRef(null);
 
   const fetchVerse = useCallback(
@@ -43,6 +62,7 @@ export default function DailyVerse() {
       setLoading(true);
       setError(false);
       setCommentaryOpen(false);
+      setOriginalVerse(null);
       try {
         const res = await fetch(
           `https://bible-api.com/?random=verse&translation=${t}`
@@ -67,6 +87,54 @@ export default function DailyVerse() {
     fetchVerse();
   }, [fetchVerse]);
 
+  useEffect(() => {
+    const testament = bookData?.testament;
+    const reference = verse?.reference;
+
+    if (!testament || !reference || !ORIGINAL_SOURCE[testament]) {
+      setOriginalVerse(null);
+      setOriginalLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const source = ORIGINAL_SOURCE[testament];
+
+    async function fetchOriginalVerse() {
+      setOriginalLoading(true);
+      setOriginalVerse(null);
+      try {
+        const params = new URLSearchParams({
+          bible: source.module,
+          reference,
+          data_format: "minimal",
+          markup: "none",
+        });
+        const res = await fetch(
+          `https://puredove.ca/path/to/biblesupersearch_api/public/api?${params.toString()}`,
+          { signal: controller.signal }
+        );
+        if (!res.ok) throw new Error("Original language API error");
+        const data = await res.json();
+        const text = data?.results?.[source.module]?.[0]?.text;
+        setOriginalVerse(text ? normalizeOriginalText(text) : null);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Original verse fetch failed", err);
+          setOriginalVerse(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setOriginalLoading(false);
+        }
+      }
+    }
+
+    fetchOriginalVerse();
+
+    return () => controller.abort();
+  }, [bookData?.testament, verse?.reference]);
+
   /* close dropdown on outside click */
   useEffect(() => {
     const handler = (e) => {
@@ -87,6 +155,7 @@ export default function DailyVerse() {
   const currentTrans = TRANSLATIONS.find((t) => t.id === translation);
   const isOT = bookData?.testament === "OT";
   const isNT = bookData?.testament === "NT";
+  const originalSource = bookData?.testament ? ORIGINAL_SOURCE[bookData.testament] : null;
 
   return (
     <div className="dv-card">
@@ -152,6 +221,19 @@ export default function DailyVerse() {
       ) : (
         <>
           <p className="dv-text">&ldquo;{verse.text.trim()}&rdquo;</p>
+          {originalSource && (
+            <div className="dv-original-block">
+              <div className="dv-original-head">
+                <span>{originalSource.label}</span>
+                <span className="dv-original-tag">{originalSource.shortLabel}</span>
+              </div>
+              <p className={`dv-original-text${isOT ? " is-hebrew" : ""}`}>
+                {originalLoading
+                  ? "Loading original text..."
+                  : originalVerse || "Original text unavailable for this verse."}
+              </p>
+            </div>
+          )}
           <div className="dv-ref">
             — {verse.reference}{" "}
             <span className="dv-trans-tag">
