@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useScript } from "../context/ScriptContext";
 import { useSessionTracker } from "../hooks/useSessionTracker";
+import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import {
   MainTimer,
   ProgressBar,
@@ -97,6 +98,7 @@ function formatDuration(ms) {
 
 export default function ScriptFlow() {
   const { state, dispatch, activeSection } = useScript();
+  const { clearLog } = useCopilotLog();
   const prevSectionRef = useRef(activeSection);
   const session = useSessionTracker();
   const scoredSectionsRef = useRef(new Set());
@@ -107,10 +109,11 @@ export default function ScriptFlow() {
   useEffect(() => {
     if (!callStarted || sessionStartedRef.current) return;
     sessionStartedRef.current = true;
+    clearLog();
     session.startSession("ma");
     dispatch({ type: "MARK_SECTION_START", section: 1 });
     dispatch({ type: "START_TIMER" });
-  }, [callStarted, session, dispatch]);
+  }, [callStarted, clearLog, session, dispatch]);
 
   // Cleanup on unmount
   useEffect(() => {

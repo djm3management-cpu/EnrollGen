@@ -36,19 +36,8 @@ export const LOG_TYPES = {
   SYSTEM_EVENT: "system_event", // Gate completions, section changes, etc.
 };
 
-const FEEDBACK_STORAGE_KEY = "enrollgen_copilot_feedback";
 const DEDUPE_WINDOW_MS = 15000;
-
-function loadStoredEntries() {
-  try {
-    const raw = localStorage.getItem(FEEDBACK_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
+const LEGACY_LOG_STORAGE_KEY = "enrollgen_copilot_feedback";
 
 function normalizeMessageForCompare(message) {
   return (message || "")
@@ -161,19 +150,17 @@ function logReducer(state, action) {
 const CopilotLogContext = createContext(null);
 
 export function CopilotLogProvider({ children }) {
-  const [state, dispatch] = useReducer(logReducer, undefined, () => ({
-    entries: loadStoredEntries(),
-  }));
+  const [state, dispatch] = useReducer(logReducer, { entries: [] });
   const entriesRef = useRef(state.entries);
   entriesRef.current = state.entries;
 
   useEffect(() => {
     try {
-      localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(state.entries));
+      localStorage.removeItem(LEGACY_LOG_STORAGE_KEY);
     } catch {
       /* ignore */
     }
-  }, [state.entries]);
+  }, []);
 
   /**
    * logEntry — Add an entry to the transcript log.
