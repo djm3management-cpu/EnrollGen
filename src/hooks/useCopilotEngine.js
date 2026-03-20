@@ -192,6 +192,34 @@ function normalizeIssueTag(tag) {
     .slice(0, 64);
 }
 
+async function readErrorDetail(response) {
+  const raw = await response.text().catch(() => "");
+  if (!raw) return "";
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed.detail || parsed.error || raw;
+  } catch {
+    return raw;
+  }
+}
+
+function getCopilotHttpErrorMessage(status, detail) {
+  if (status === 401) {
+    return "Co-Pilot is not authorized. Sign in with Clerk, or if you are running locally with auth disabled set DISABLE_CLERK_AUTH=true for Netlify functions too.";
+  }
+
+  if (status === 500 && /api key/i.test(detail || "")) {
+    return "Co-Pilot is not configured yet. Set ANTHROPIC_API_KEY for the Netlify function runtime.";
+  }
+
+  if (detail) {
+    return `Co-Pilot returned an error (HTTP ${status}): ${detail}`;
+  }
+
+  return `Co-Pilot returned an error (HTTP ${status}). Check that the Netlify function is running and ANTHROPIC_API_KEY is set.`;
+}
+
 function shouldSuppressDuplicateIssue(messages, section, issueTag) {
   if (!issueTag) return false;
   return messages.some(
@@ -679,11 +707,11 @@ SECTION CONTEXT (rolling window for current section):
       if (controller.signal.aborted) { setCoachingLoading(false); return; }
 
       if (!response.ok) {
-        const errText = await response.text().catch(() => "");
-        console.error("Coaching API HTTP error:", response.status, errText);
+        const detail = await readErrorDetail(response);
+        console.error("Coaching API HTTP error:", response.status, detail);
         const alreadyWarned = messages.some((m) => m.text?.includes("could not reach the coaching service"));
         if (manual || !alreadyWarned) {
-          pushFeedEntry("info", `Co-Pilot returned an error (HTTP ${response.status}). Check that the Netlify function is running and ANTHROPIC_API_KEY is set.`, { section: currentStep });
+          pushFeedEntry("info", getCopilotHttpErrorMessage(response.status, detail), { section: currentStep });
         }
         setCoachingLoading(false);
         return;
@@ -881,9 +909,9 @@ SECTION CONTEXT (rolling window for current section):
       if (controller.signal.aborted) { setAskLoading(false); return; }
 
       if (!response.ok) {
-        const errText = await response.text().catch(() => "");
-        console.error("Ask Co-Pilot HTTP error:", response.status, errText);
-        pushFeedEntry("info", `Co-Pilot returned an error (HTTP ${response.status}). Check that the Netlify function is running and ANTHROPIC_API_KEY is set.`, { section: currentStep });
+        const detail = await readErrorDetail(response);
+        console.error("Ask Co-Pilot HTTP error:", response.status, detail);
+        pushFeedEntry("info", getCopilotHttpErrorMessage(response.status, detail), { section: currentStep });
         setAskLoading(false);
         return;
       }

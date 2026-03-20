@@ -26,8 +26,15 @@ function getBearerToken(request) {
   return header.slice(7).trim() || null;
 }
 
+function isAuthBypassed() {
+  return (
+    process.env.DISABLE_CLERK_AUTH === "true" ||
+    process.env.VITE_DISABLE_CLERK_AUTH === "true"
+  );
+}
+
 export async function requireClerkAuth(request) {
-  if (process.env.DISABLE_CLERK_AUTH === "true") {
+  if (isAuthBypassed()) {
     return { userId: "dev-bypass", sessionId: null };
   }
 
