@@ -1,6 +1,41 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MAX_TRANSCRIPT_LENGTH } from "../data/complianceKnowledge";
 
+const QUESTION_START_RE =
+  /^(who|what|when|where|why|how|which|can|could|would|will|should|do|does|did|is|are|am|have|has|had|may)\b/i;
+
+function capTranscript(value) {
+  if (value.length <= MAX_TRANSCRIPT_LENGTH) return value;
+  const trimmed = value.slice(value.length - MAX_TRANSCRIPT_LENGTH);
+  const firstSpace = trimmed.indexOf(" ");
+  return firstSpace > 0 ? trimmed.slice(firstSpace + 1) : trimmed;
+}
+
+function normalizeUtterance(value) {
+  return (value || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractSpokenQuestion(lastChunk, transcript) {
+  const candidates = [lastChunk, transcript.slice(-220)]
+    .map(normalizeUtterance)
+    .filter(Boolean);
+
+  for (const candidate of candidates) {
+    const segments = candidate
+      .split(/[.!]\s+|\n+/)
+      .map(normalizeUtterance)
+      .filter(Boolean);
+    const segment = segments.at(-1) || candidate;
+    if (segment.length > 10 && (segment.includes("?") || QUESTION_START_RE.test(segment))) {
+      return segment.endsWith("?") ? segment : `${segment}?`;
+    }
+  }
+
+  return "";
+}
+
 /**
  * useSpeechRecognition — manages browser speech recognition with:
  * - Automatic restart with exponential backoff on errors
@@ -18,6 +53,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
   const internalRef = useRef("");
   const transcriptRef = externalTranscriptRef || internalRef;
   const backoffRef = useRef(300); // exponential backoff for restarts
+  const lastFinalChunkRef = useRef("");
   const onNewFinalRef = useRef(onNewFinal);
   const onSpokenQuestionRef = useRef(onSpokenQuestion);
 
@@ -56,17 +92,10 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
         }
       }
       if (newFinal) {
-        setTranscript((prev) => {
-          const updated = prev + newFinal;
-          // Rolling cap: keep only the last MAX_TRANSCRIPT_LENGTH chars
-          if (updated.length > MAX_TRANSCRIPT_LENGTH) {
-            // Trim at a word boundary
-            const trimmed = updated.slice(updated.length - MAX_TRANSCRIPT_LENGTH);
-            const firstSpace = trimmed.indexOf(" ");
-            return firstSpace > 0 ? trimmed.slice(firstSpace + 1) : trimmed;
-          }
-          return updated;
-        });
+        const updatedTranscript = capTranscript(`${transcriptRef.current || ""}${newFinal}`);
+        transcriptRef.current = updatedTranscript;
+        lastFinalChunkRef.current = newFinal.trim();
+        setTranscript(updatedTranscript);
         const rowTs = new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -126,31 +155,22 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     setListening(false);
 
     // Detect spoken questions on mute
-    const recentText = transcriptRef.current.trim().slice(-400);
-    if (recentText && recentText.includes("?")) {
-      const lastChunks = recentText.split(/[.!]\s+/).slice(-3).join(" ").trim();
-      if (lastChunks.includes("?")) {
-        const lastQMark = lastChunks.lastIndexOf("?");
-        const beforeQ = lastChunks.slice(0, lastQMark + 1);
-        const sentences = beforeQ.split(/(?<=[.!?])\s+/);
-        const qSentences = [];
-        for (let i = sentences.length - 1; i >= 0; i--) {
-          qSentences.unshift(sentences[i]);
-          if (qSentences.join(" ").length > 20) break;
-        }
-        const spokenQuestion = qSentences.join(" ").trim();
-        if (spokenQuestion.length > 10) {
-          onSpokenQuestionRef.current?.(spokenQuestion);
-        }
-      }
+    const spokenQuestion = extractSpokenQuestion(
+      lastFinalChunkRef.current,
+      transcriptRef.current.trim()
+    );
+    if (spokenQuestion) {
+      onSpokenQuestionRef.current?.(spokenQuestion);
     }
   }, []);
 
   const clearTranscript = useCallback(() => {
+    transcriptRef.current = "";
+    lastFinalChunkRef.current = "";
     setTranscript("");
     setTranscriptRows([]);
     setInterimText("");
-  }, []);
+  }, [transcriptRef]);
 
   // Cleanup on unmount
   useEffect(() => () => {

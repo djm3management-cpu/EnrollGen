@@ -20,6 +20,9 @@ import {
   HIGH_RISK_KEYWORDS,
 } from "../data/complianceKnowledge";
 
+const LIVE_VOICE_TRIGGER_CHARS = 24;
+const LIVE_VOICE_DEBOUNCE_MS = 1800;
+
 /* ───────────────────────────────────────────────────────
    HELPERS
    ─────────────────────────────────────────────────────── */
@@ -581,7 +584,11 @@ export function useCopilotEngine({
   }, [activeSection, currentStep, state, unlocked, transcriptRef]);
 
   /* ═══════ COACHING — real-time compliance monitor ═══════ */
-  const requestCoaching = useCallback(async ({ manual = false, sectionEntry = false } = {}) => {
+  const requestCoaching = useCallback(async ({
+    manual = false,
+    sectionEntry = false,
+    forceShortChunk = false,
+  } = {}) => {
     const fullTranscript = transcriptRef.current.trim();
     if (!fullTranscript || coachingLoading) {
       if (manual && !coachingLoading) {
@@ -600,7 +607,7 @@ export function useCopilotEngine({
         return;
       }
       const newChars = fullTranscript.length - lastAnalyzedLength.current;
-      if (newChars < MIN_NEW_CHARS) {
+      if (!forceShortChunk && newChars < MIN_NEW_CHARS) {
         return;
       }
     }
@@ -735,6 +742,7 @@ SECTION CONTEXT (rolling window for current section):
 
       // Silent or empty
       if (level === "silent" || !message || !message.trim()) {
+        const firstSilentPassThisSection = !sectionCopilotFiredRef.current.has(activeSection);
         lastCoachingTime.current = Date.now();
         lastInterventionLevel.current = "silent";
         sectionCopilotFiredRef.current.add(activeSection);
@@ -745,6 +753,12 @@ SECTION CONTEXT (rolling window for current section):
               ? `Entered "${sectionKey}". ${knowledge ? `Key items: ${knowledge.requiredElements.slice(0, 3).join(", ")}. ` : ""}No issues detected so far.`
               : "Analyze complete. No actionable compliance issues were found in the current transcript window.",
             { section: currentStep, retrievalTrace }
+          );
+        } else if (firstSilentPassThisSection) {
+          pushFeedEntry(
+            "info",
+            "Live speech analyzed. No action needed right now.",
+            { section: currentStep, retrievalTrace, skipLog: true }
           );
         }
         setCoachingLoading(false);
@@ -988,9 +1002,15 @@ SECTION CONTEXT (rolling window for current section):
   }, [activeSection, requestCoaching, transcriptRef]);
 
   /* ═══════ Debounced coaching trigger ═══════ */
-  const scheduleCoaching = useCallback(() => {
+  const scheduleCoaching = useCallback((newFinal = "") => {
+    const normalizedChunk = (newFinal || "").replace(/\s+/g, " ").trim();
+    const forceShortChunk = normalizedChunk.length >= LIVE_VOICE_TRIGGER_CHARS;
+    const debounceMs = forceShortChunk ? LIVE_VOICE_DEBOUNCE_MS : COACHING_DEBOUNCE_MS;
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => requestCoaching(), COACHING_DEBOUNCE_MS);
+    debounceRef.current = setTimeout(
+      () => requestCoaching({ forceShortChunk }),
+      debounceMs
+    );
   }, [requestCoaching]);
 
   /* ═══════ Clear everything ═══════ */
