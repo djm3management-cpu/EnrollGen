@@ -1,6 +1,34 @@
 import { requireClerkAuth } from "./_clerkAuth.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
+const AI_REQUEST_TIMEOUT_MS = 45000;
+
+function jsonResponse(status, payload) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: JSON_HEADERS,
+  });
+}
+
+async function readJsonResponse(response) {
+  const raw = await response.text().catch(() => "");
+
+  if (!raw) {
+    return { data: {}, raw: "" };
+  }
+
+  try {
+    return { data: JSON.parse(raw), raw };
+  } catch {
+    return {
+      data: {
+        error: "Invalid AI response",
+        detail: raw.slice(0, 2000),
+      },
+      raw,
+    };
+  }
+}
 
 export default async (request) => {
   if (request.method !== "POST") {
@@ -29,43 +57,69 @@ export default async (request) => {
   }
 
   try {
-    const body = await request.json().catch(() => ({}));
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return jsonResponse(400, {
+        error: "Invalid request body",
+        detail: "The coach function expects a valid JSON payload.",
+      });
+    }
 
     if (!body.model) {
       body.model = "claude-sonnet-4-6";
     }
 
+    if (!Array.isArray(body.messages) || body.messages.length === 0) {
+      return jsonResponse(400, {
+        error: "Invalid request body",
+        detail: "The coach function requires a non-empty messages array.",
+      });
+    }
+
     console.log("Authenticated Clerk user:", auth.userId);
     console.log("Calling Anthropic API with model:", body.model);
 
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify(body),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), AI_REQUEST_TIMEOUT_MS);
 
-    const data = await resp.json();
-
-    if (!resp.ok) {
-      console.error("Anthropic API error:", resp.status, JSON.stringify(data));
+    let resp;
+    try {
+      resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        return jsonResponse(504, {
+          error: "AI request timed out",
+          detail: `Anthropic did not respond within ${AI_REQUEST_TIMEOUT_MS / 1000} seconds.`,
+        });
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
 
-    return new Response(JSON.stringify(data), {
-      status: resp.status,
-      headers: JSON_HEADERS,
-    });
+    const { data, raw } = await readJsonResponse(resp);
+
+    if (!resp.ok) {
+      console.error("Anthropic API error:", resp.status, raw || JSON.stringify(data));
+    }
+
+    return jsonResponse(resp.status, data);
   } catch (error) {
     console.error("coach function error:", error);
-    return new Response(
-      JSON.stringify({ error: "AI request failed", detail: String(error) }),
-      {
-        status: 500,
-        headers: JSON_HEADERS,
-      }
-    );
+    return jsonResponse(500, {
+      error: "AI request failed",
+      detail: error?.message || String(error),
+    });
   }
 };

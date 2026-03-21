@@ -38,10 +38,6 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
     state,
     activeSection,
     unlocked,
-    preEnrollAllDone,
-    sobAllDone,
-    enrollAllDone,
-    enrollmentCodeOk,
   } = useScript();
 
   // Shared transcriptRef — created here, passed to both hooks
@@ -53,10 +49,6 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
     activeSection,
     state,
     unlocked,
-    preEnrollAllDone,
-    sobAllDone,
-    enrollAllDone,
-    enrollmentCodeOk,
     logComplianceFlag,
   });
 
