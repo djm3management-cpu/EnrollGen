@@ -55,6 +55,8 @@ export default function ACAChecklist() {
   const { state, dispatch } = useACA();
   const [localChecks, setLocalChecks] = useState({});
 
+  if (!state.callStarted) return null;
+
   const toggle = (key) => {
     setLocalChecks((prev) => ({ ...prev, [key]: !prev[key] }));
   };

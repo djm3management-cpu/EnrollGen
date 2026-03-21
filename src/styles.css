@@ -572,6 +572,12 @@ p {
   border-bottom: 1px solid rgba(232, 0, 45, 0.15);
 }
 
+.prompter-card h2 {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
 /* Title text truncates; timer never shifts */
 .card h2 > :first-child {
   min-width: 0;
@@ -2591,7 +2597,8 @@ input[type="file"]::file-selector-button:hover {
 
 @keyframes floatFadeOut {
   0% { opacity: 1; transform: translateY(0); }
-  70% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 0.45; transform: translateY(0); }
+  85% { opacity: 0.12; transform: translateY(-4px); }
   100% { opacity: 0; transform: translateY(-8px); }
 }
 

@@ -4,9 +4,12 @@ import { ScriptProvider } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
 import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
+import { BookOpen } from "lucide-react";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
+const loadMedSupCopilot = () => import("./components/MedSupCopilot");
+const loadMedSupAiCopilot = () => import("./components/MedSupAiCopilot");
 const loadACAScript = () => import("./flows/aca/ACAScript");
 const loadU65Script = () => import("./flows/u65/U65Script");
 const loadAgentTools = () => import("./components/AgentTools");
@@ -22,6 +25,8 @@ const loadDailyVerse = () => import("./components/DailyVerse");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
+const MedSupCopilot = lazy(loadMedSupCopilot);
+const MedSupAiCopilot = lazy(loadMedSupAiCopilot);
 const ACAScript = lazy(loadACAScript);
 const U65Script = lazy(loadU65Script);
 const AgentTools = lazy(loadAgentTools);
@@ -34,6 +39,38 @@ const DecisionTree = lazy(loadDecisionTree);
 const CarrierRef = lazy(loadCarrierRef);
 const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
+
+/* ── Daily Verse accordion wrapper for main flow ── */
+function DailyVerseAccordion() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginTop: 10, marginBottom: 8, display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <button
+        onClick={() => setOpen((p) => !p)}
+        title="Daily Scripture"
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: open
+            ? "linear-gradient(145deg, rgba(157,0,255,0.12) 0%, rgba(42,42,50,0.95) 100%)"
+            : "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
+          border: open ? "1px solid rgba(157,0,255,0.25)" : "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 50, width: 36, height: 36, cursor: "pointer",
+          boxShadow: "3px 3px 7px rgba(0,0,0,0.4), -2px -2px 5px rgba(255,255,255,0.025), inset 1px 1px 0 rgba(255,255,255,0.05)",
+          transition: "all 0.15s",
+        }}
+      >
+        <BookOpen size={16} strokeWidth={2} style={{ color: open ? "#B84DFF" : "#7a7f8e" }} />
+      </button>
+      {open && (
+        <div style={{ marginTop: 6 }}>
+          <Suspense fallback={<div style={{ color: "#8fa4bc", fontSize: "0.9rem", padding: 12 }}>Loading…</div>}>
+            <DailyVerse />
+          </Suspense>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const SUNFIRE_SEP_LABELS = [
@@ -507,6 +544,8 @@ function AppContent() {
     }
     if (targetMode === "medsup") {
       loadMedSupFlow();
+      loadMedSupAiCopilot();
+      loadMedSupCopilot();
       return;
     }
     if (targetMode === "aca") {
@@ -767,9 +806,7 @@ function AppContent() {
                       <LazyPanel>
                         <SessionSummary />
                       </LazyPanel>
-                      <LazyPanel>
-                        <DailyVerse />
-                      </LazyPanel>
+                      <DailyVerseAccordion />
                     </div>
                   </div>
                 </>
@@ -806,6 +843,8 @@ function AppContent() {
             <MedSupProvider>
               {tab === "script" && (
                 <LazyPanel>
+                  <MedSupAiCopilot />
+                  <MedSupCopilot />
                   <MedSupFlow />
                 </LazyPanel>
               )}

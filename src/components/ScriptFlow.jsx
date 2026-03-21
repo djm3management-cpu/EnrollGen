@@ -253,6 +253,7 @@ export default function ScriptFlow() {
 
       {/* Sequential enrollment flow sections */}
       {callStarted && (
+      <>
       <CollapsibleSection
         sectionNum={1}
         label="Recording Disclosure"
@@ -262,7 +263,6 @@ export default function ScriptFlow() {
       >
         <SectionRecording />
       </CollapsibleSection>
-      )}
 
       <CollapsibleSection
         sectionNum={2}
@@ -332,6 +332,8 @@ export default function ScriptFlow() {
       <div id="compliance-hub">
         <ComplianceDashboard transcript={transcript} />
       </div>
+      </>
+      )}
         </div>
       </div>
     </motion.div>

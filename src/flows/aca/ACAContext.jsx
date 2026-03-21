@@ -68,6 +68,9 @@ const initialState = {
     followUpScheduled: false,
   },
 
+  // call started gate
+  callStarted: false,
+
   gateHistory: [],
   sectionTimestamps: {},
   callStart: null,
@@ -76,7 +79,7 @@ const initialState = {
 function reducer(state, action) {
   switch (action.type) {
     case "START_CALL":
-      return { ...state, callStart: Date.now() };
+      return { ...state, callStarted: true, callStart: Date.now() };
 
     case "SET_ENROLLMENT_PERIOD":
       return { ...state, enrollmentPeriod: action.period };

@@ -682,8 +682,8 @@ export const COOLDOWN_BY_LEVEL = {
   warn: 15000,
   remind: 45000,
   tip: 60000,
-  silent: 30000,
-  info: 30000,
+  silent: 4000,
+  info: 4000,
 };
 
 export const WARN_CONFIDENCE_FLOOR = 85;

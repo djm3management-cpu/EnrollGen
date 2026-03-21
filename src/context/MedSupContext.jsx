@@ -19,6 +19,9 @@ const initialState = {
   // CRM checklist
   crmChecked: [],
 
+  // call started gate
+  callStarted: false,
+
   // timestamps
   sectionTimestamps: {},
   callStart: null,
@@ -27,7 +30,7 @@ const initialState = {
 function reducer(state, action) {
   switch (action.type) {
     case "START_CALL":
-      return { ...state, callStart: Date.now() };
+      return { ...state, callStarted: true, callStart: Date.now() };
 
     case "COMPLETE_SECTION": {
       const { key, sectionNum } = action;

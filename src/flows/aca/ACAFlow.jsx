@@ -663,7 +663,7 @@ function Progress() {
 
 // ─── ACAFlow (main export) ────────────────────────────────────────────────────
 export default function ACAFlow() {
-  const { activeGate } = useACA();
+  const { state, dispatch, activeGate } = useACA();
   const prev = useRef(activeGate);
 
   useEffect(() => {
@@ -687,13 +687,28 @@ export default function ACAFlow() {
       transition={{ duration: 0.3 }}
     >
       <Progress />
-      <G0 />
-      <G1 />
-      <G2 />
-      <G3 />
-      <G4 />
-      <G5 />
-      <G6 />
+
+      {!state.callStarted ? (
+        <section style={{ background: `rgba(234,179,8,0.04)`, border: `1px solid rgba(234,179,8,0.2)`, borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
+          <button className="primary" onClick={() => dispatch({ type: "START_CALL" })} style={{
+            fontSize: 15, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
+            background: `linear-gradient(145deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05))`, border: `1px solid rgba(234,179,8,0.3)`, color: ACCENT, borderRadius: 8, cursor: "pointer",
+          }}>
+            Start Call
+          </button>
+          <p style={{ marginTop: 10, fontSize: 11, color: "#4a5568" }}>Timer begins when you click Start Call</p>
+        </section>
+      ) : (
+        <>
+          <G0 />
+          <G1 />
+          <G2 />
+          <G3 />
+          <G4 />
+          <G5 />
+          <G6 />
+        </>
+      )}
     </motion.div>
   );
 }

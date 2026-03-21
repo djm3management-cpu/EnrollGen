@@ -62,6 +62,8 @@ export default function U65Checklist() {
   const { state } = useU65();
   const [localChecks, setLocalChecks] = useState({});
 
+  if (!state.callStarted) return null;
+
   const toggle = (key) => setLocalChecks((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const gateNums = [...new Set(CHECKLIST_ITEMS.map((i) => i.gate))];

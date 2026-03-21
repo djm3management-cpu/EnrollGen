@@ -1,145 +1,57 @@
-import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
+/**
+ * U65Copilot.jsx — U65 Off-Exchange AI Co-Pilot UI
+ * Real-time speech compliance monitor for private health products enrollment.
+ * Layout matches MA Co-Pilot (ScriptPrompter).
+ */
+
+import { memo, useState, useRef, useCallback, useEffect } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { useScript } from "../context/ScriptContext";
-import { scoreCompliance } from "../context/ComplianceScorer";
+import { useU65 } from "../flows/u65/U65Context";
+import { useU65CopilotEngine } from "../hooks/useU65CopilotEngine";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
-import { useCopilotEngine } from "../hooks/useCopilotEngine";
-import { LEVEL_STYLE } from "../data/complianceKnowledge";
+import { U65_LEVEL_STYLE } from "../data/u65ComplianceKnowledge";
 
-/* ═══════════════════════════════════════════════════════════════════
-   UTILITY
-   ═══════════════════════════════════════════════════════════════════ */
-
-function downloadJson(filename, data) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function summarizeRetrievalTrace(trace) {
-  if (!trace) return null;
-  const topics = Array.isArray(trace.topics) ? trace.topics : [];
-  const scenarios = Array.isArray(trace.scenarios) ? trace.scenarios : [];
-  const sources = Array.isArray(trace.sources) ? trace.sources : [];
-  if (!topics.length && !scenarios.length && !sources.length) return null;
-  return { topTopics: topics.slice(0, 2), topScenarios: scenarios.slice(0, 1), sourceCount: sources.length };
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   COMPONENT
-   ═══════════════════════════════════════════════════════════════════ */
-
-const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logComplianceFlag }) {
-  const {
-    state,
-    activeSection,
-    unlocked,
-  } = useScript();
-
-  // Shared transcriptRef — created here, passed to both hooks
+const U65Copilot = memo(function U65Copilot() {
+  const { state, activeGate } = useU65();
   const transcriptRef = useRef("");
 
-  /* ─── Copilot engine (coaching, ask, feed) ─── */
-  const copilot = useCopilotEngine({
-    transcriptRef,
-    activeSection,
-    state,
-    unlocked,
-    logComplianceFlag,
-  });
-
-  /* ─── Speech recognition ─── */
+  const copilot = useU65CopilotEngine({ transcriptRef, activeGate, state });
   const speech = useSpeechRecognition({
     onNewFinal: copilot.scheduleCoaching,
     onSpokenQuestion: copilot.askCopilot,
     externalTranscriptRef: transcriptRef,
   });
 
-  // Forward transcript changes to parent
-  useEffect(() => {
-    if (onTranscriptChange) onTranscriptChange(speech.transcript);
-  }, [speech.transcript, onTranscriptChange]);
-
-  /* ─── Auto-scroll telemetry ─── */
-  const telemetryRef = useRef(null);
-  useEffect(() => {
-    if (telemetryRef.current) telemetryRef.current.scrollTop = telemetryRef.current.scrollHeight;
-  }, [speech.transcriptRows, speech.interimText]);
-
-  /* ─── UI state ─── */
   const [expanded, setExpanded] = useState(true);
   const [elapsedSec, setElapsedSec] = useState(0);
-  const compliance = useMemo(() => scoreCompliance(state, copilot.entries), [state, copilot.entries]);
+  const telemetryRef = useRef(null);
 
-  // Section elapsed timer
   useEffect(() => {
-    const ts = state.sectionTimestamps?.[activeSection];
-    if (!ts?.start || ts?.end) { setElapsedSec(0); return; }
-    const tick = () => setElapsedSec(Math.floor((Date.now() - ts.start) / 1000));
-    tick();
-    const id = setInterval(tick, 1000);
+    if (!state.callStart) return;
+    const id = setInterval(() => setElapsedSec(Math.round((Date.now() - state.callStart) / 1000)), 1000);
     return () => clearInterval(id);
-  }, [state.sectionTimestamps, activeSection]);
+  }, [state.callStart]);
 
-  const elapsedDisplay = useMemo(() => {
-    const m = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
-    const s = String(elapsedSec % 60).padStart(2, "0");
-    return `${m}:${s}`;
-  }, [elapsedSec]);
-
-  /* ─── Clear all ─── */
   const clearAll = useCallback(() => {
     speech.clearTranscript();
     copilot.clearFeed();
   }, [speech, copilot]);
 
-  /* ─── Exports ─── */
-  const exportReplayScenario = useCallback(() => {
-    const copilotEntries = copilot.messages.map((msg) => ({
-      id: msg.id, level: msg.level, section: msg.section || copilot.currentStep,
-      issueTag: msg.issueTag || "", text: msg.text, ts: msg.ts,
-      retrievalSummary: summarizeRetrievalTrace(msg.retrievalTrace),
-    }));
-    const retrievalOverview = {
-      topics: Array.from(new Set(copilot.messages.flatMap((m) => m.retrievalTrace?.topics?.slice(0, 2) || []))).slice(0, 8),
-      scenarios: Array.from(new Set(copilot.messages.flatMap((m) => m.retrievalTrace?.scenarios?.slice(0, 1) || []))).slice(0, 6),
-      totalSourcesReferenced: copilot.messages.reduce((sum, m) => sum + (m.retrievalTrace?.sources?.length || 0), 0),
-    };
-    downloadJson(`copilot-replay-${Date.now()}.json`, {
-      exportedAt: new Date().toISOString(),
-      currentSection: { number: activeSection, label: copilot.currentStep },
-      transcript: speech.transcript, appState: state, unlocked, retrievalOverview,
-      messages: copilotEntries, feedbackDataset: copilot.exportFeedbackDataset(),
-    });
-  }, [activeSection, copilot, speech.transcript, state, unlocked]);
-
-  const exportFeedbackBundle = useCallback(() => {
-    downloadJson(`copilot-feedback-${Date.now()}.json`, {
-      exportedAt: new Date().toISOString(),
-      currentSection: copilot.currentStep,
-      transcriptTail: speech.transcript.slice(-2500),
-      feedback: copilot.exportFeedbackDataset(),
-    });
-  }, [copilot, speech.transcript]);
-
-  /* ─── Destructure for render ─── */
-  const { currentStep, messages, coachingLoading, askLoading, floatingAlert, askQuestion } = copilot;
+  const { currentStep, messages, coachingLoading, askLoading, floatingAlert, askQuestion, complianceScore } = copilot;
   const { listening, transcript, transcriptRows, interimText, supportsRecognition } = speech;
 
-  /* ═══════ RENDER ═══════ */
+  const elapsedStr = `${Math.floor(elapsedSec / 60)}:${String(elapsedSec % 60).padStart(2, "0")}`;
+  const scoreColor = complianceScore.score >= 90 ? "#9D00FF" : complianceScore.score >= 80 ? "#00ff41" : complianceScore.score >= 60 ? "#FFE45C" : "#FF2040";
+
   return (
     <>
       {/* ── Floating Alert ── */}
       {floatingAlert && (() => {
-        const s = LEVEL_STYLE[floatingAlert.level] || LEVEL_STYLE.info;
+        const s = U65_LEVEL_STYLE[floatingAlert.level] || U65_LEVEL_STYLE.info;
         const isPulse = !!floatingAlert.pulse;
         const isFading = !!floatingAlert.fading;
         const isAlert = floatingAlert.level === "warn" || floatingAlert.level === "critical";
-        const floatLabel = { critical: "CRITICAL ALERT", warn: "WARNING", tip: "TIP", remind: "REMINDER", info: "CO-PILOT" }[floatingAlert.level] || "CO-PILOT";
+        const floatLabel = { critical: "CRITICAL ALERT", warn: "WARNING", tip: "TIP", remind: "REMINDER", info: "U65 CO-PILOT" }[floatingAlert.level] || "U65 CO-PILOT";
         return (
           <div
             onClick={() => copilot.setFloatingAlert(null)}
@@ -194,7 +106,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
               flexShrink: 0, display: "inline-block", transition: "all 0.3s",
             }} />
             <div>
-              <h2 style={{ margin: 0 }}>MA CO-PILOT</h2>
+              <h2 style={{ margin: 0 }}>U65 CO-PILOT</h2>
               <span className="muted" style={{ fontSize: 11, fontFamily: "'IBM Plex Mono', monospace" }}>{currentStep}</span>
             </div>
           </div>
@@ -213,9 +125,9 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
             }}>
               {[
                 { label: "STATUS", value: listening ? "● LIVE" : "○ STANDBY", color: listening ? "#39FF88" : "#C7CEDA" },
-                { label: "SECTION", value: `${activeSection === 2.5 ? "SNP" : activeSection} · ${currentStep.toUpperCase()}`, color: "#ffffff" },
-                { label: "ELAPSED", value: elapsedDisplay, color: elapsedSec > 300 ? "#FFE45C" : "#ffffff" },
-                { label: "COMPLIANCE", value: `${compliance.score}/100`, color: compliance.score >= 90 ? "#9D00FF" : compliance.score >= 80 ? "#00ff41" : compliance.score >= 60 ? "#FFE45C" : "#FF2040" },
+                { label: "GATE", value: `G${activeGate} · ${currentStep.toUpperCase()}`, color: "#ffffff" },
+                { label: "ELAPSED", value: elapsedStr, color: elapsedSec > 300 ? "#FFE45C" : "#ffffff" },
+                { label: "COMPLIANCE", value: `${complianceScore.score}/100`, color: scoreColor },
               ].map(({ label, value, color }, i, arr) => (
                 <div key={label} style={{ flex: 1, padding: "8px 12px", borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
                   <div style={{ fontSize: "0.66rem", color: "#7a7f8e", fontFamily: "var(--font-body)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3, lineHeight: 1.2 }}>{label}</div>
@@ -232,7 +144,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
               boxShadow: "inset 4px 4px 9px rgba(0,0,0,0.42), inset -3px -3px 8px rgba(255,255,255,0.025)",
             }}>
               <button
-                onClick={listening ? speech.stopListening : speech.startListening}
+                onClick={listening ? speech.stop : speech.start}
                 disabled={!supportsRecognition}
                 style={{
                   background: listening
@@ -278,7 +190,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
                   value={askQuestion}
                   onChange={(e) => copilot.setAskQuestion(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); copilot.askCopilot(); } }}
-                  placeholder="Ask Co Pilot"
+                  placeholder="Ask U65 Co-Pilot"
                   disabled={askLoading}
                   style={{
                     flex: 1, background: "linear-gradient(145deg, rgba(18,18,22,0.98) 0%, rgba(10,10,12,0.99) 100%)",
@@ -356,25 +268,14 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
                 <div style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "7px 12px", borderBottom: "1px solid rgba(255,255,255,0.04)",
-                  background: "rgba(255,255,255,0.02)", flexWrap: "wrap", gap: 6,
+                  background: "rgba(255,255,255,0.02)",
                 }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                     <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#9D00FF", boxShadow: "0 0 7px rgba(157,0,255,0.9)", display: "inline-block", flexShrink: 0 }} />
                     <span style={{ fontSize: "0.68rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "0.04em", color: "#7a7f8e" }}>
-                      Co-Pilot Feed
+                      U65 Co-Pilot Feed
                       {coachingLoading && (<span className="ai-dots"><span className="ai-dot" /><span className="ai-dot" /><span className="ai-dot" /></span>)}
                     </span>
-                  </span>
-                  <span style={{ display: "inline-flex", gap: 4 }}>
-                    {[["REPLAY", exportReplayScenario], ["FEEDBACK", exportFeedbackBundle]].map(([label, fn]) => (
-                      <button key={label} type="button" onClick={fn} style={{
-                        background: "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
-                        border: "1px solid rgba(255,255,255,0.07)", color: "#666", borderRadius: 50,
-                        padding: "3px 10px", fontSize: "0.62rem", fontFamily: "'DM Sans', sans-serif",
-                        fontWeight: 600, cursor: "pointer", letterSpacing: "0.03em",
-                        boxShadow: "2px 2px 5px rgba(0,0,0,0.35), -1px -1px 3px rgba(255,255,255,0.02)",
-                      }}>{label}</button>
-                    ))}
                   </span>
                 </div>
 
@@ -386,7 +287,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
                     </div>
                   )}
                   {messages.map((msg) => {
-                    const s = LEVEL_STYLE[msg.level] || LEVEL_STYLE.info;
+                    const s = U65_LEVEL_STYLE[msg.level] || U65_LEVEL_STYLE.info;
                     return (
                       <div key={msg.id} style={{ margin: "5px 8px", borderRadius: 10, padding: "8px 10px", animation: "fadeIn 0.2s ease", background: "rgba(255,255,255,0.028)", border: "1px solid rgba(255,255,255,0.05)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, gap: 8 }}>
@@ -397,31 +298,6 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
                         {msg.issueTag && (
                           <span style={{ display: "inline-block", marginTop: 5, fontSize: "0.58rem", color: "#E8002D", border: "1px solid rgba(232,0,45,0.2)", borderRadius: 2, padding: "1px 5px", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", background: "rgba(232,0,45,0.04)" }}>{msg.issueTag}</span>
                         )}
-                        {msg.retrievalTrace && (msg.retrievalTrace.topics?.length || msg.retrievalTrace.scenarios?.length || msg.retrievalTrace.sources?.length) && (
-                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 5 }}>
-                            {msg.retrievalTrace.topics?.slice(0, 3).map((id) => (
-                              <span key={id} style={{ fontSize: "0.57rem", color: "#666", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 2, padding: "1px 5px", background: "rgba(255,255,255,0.02)", fontFamily: "'IBM Plex Mono', monospace" }}>topic:{id}</span>
-                            ))}
-                            {msg.retrievalTrace.scenarios?.slice(0, 2).map((id) => (
-                              <span key={id} style={{ fontSize: "0.57rem", color: "#E8002D", border: "1px solid rgba(232,0,45,0.15)", borderRadius: 2, padding: "1px 5px", background: "rgba(232,0,45,0.04)", fontFamily: "'IBM Plex Mono', monospace" }}>sep:{id}</span>
-                            ))}
-                            {msg.retrievalTrace.sources?.length > 0 && (
-                              <span style={{ fontSize: "0.57rem", color: "#555", fontFamily: "'IBM Plex Mono', monospace" }}>{msg.retrievalTrace.sources.length}src</span>
-                            )}
-                          </div>
-                        )}
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
-                          {[["correct", "✓"], ["too_aggressive", "AGGR"], ["missed_issue", "MISS"], ["duplicate", "DUP"], ["wrong_section", "SEC?"]].map(([verdict, label]) => (
-                            <button key={verdict} type="button" onClick={() => copilot.setEntryFeedback(msg.id, verdict)} title={verdict.replace(/_/g, " ")} style={{
-                              fontSize: "0.62rem", borderRadius: 50,
-                              border: msg.feedback?.verdict === verdict ? "1px solid rgba(157,0,255,0.4)" : "1px solid rgba(255,255,255,0.06)",
-                              background: msg.feedback?.verdict === verdict ? "linear-gradient(145deg, rgba(157,0,255,0.18) 0%, rgba(100,0,180,0.12) 100%)" : "linear-gradient(145deg, rgba(42,42,50,0.9) 0%, rgba(26,26,32,0.95) 100%)",
-                              color: msg.feedback?.verdict === verdict ? "#B84DFF" : "#555",
-                              padding: "2px 8px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
-                              boxShadow: "2px 2px 4px rgba(0,0,0,0.35), -1px -1px 3px rgba(255,255,255,0.018)", transition: "all 0.12s",
-                            }}>{label}</button>
-                          ))}
-                        </div>
                       </div>
                     );
                   })}
@@ -435,6 +311,30 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
               </div>
             </div>
 
+            {/* ── SCORE SUMMARY (shown when call complete) ── */}
+            {state.gate7Ok && (
+              <div style={{
+                background: `linear-gradient(145deg, ${scoreColor}08, ${scoreColor}03)`,
+                border: `1px solid ${scoreColor}22`,
+                borderRadius: 14, padding: "16px 20px",
+                display: "flex", alignItems: "center", gap: 16,
+              }}>
+                <div style={{ textAlign: "center", minWidth: 70 }}>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: scoreColor, fontFamily: "'IBM Plex Mono', monospace" }}>
+                    {complianceScore.score}%
+                  </div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: scoreColor, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em" }}>
+                    {complianceScore.grade}
+                  </div>
+                </div>
+                <div style={{ flex: 1, fontSize: 12, color: "#8fa4bc", lineHeight: 1.6 }}>
+                  <div><strong style={{ color: "#dfe6f0" }}>Gates completed:</strong> {complianceScore.completed}/{complianceScore.totalGates}</div>
+                  {complianceScore.warns > 0 && <div style={{ color: "#fbbf24" }}>Warnings: {complianceScore.warns} (-{complianceScore.warns * 3}pts)</div>}
+                  {complianceScore.criticals > 0 && <div style={{ color: "#ef4444" }}>Critical alerts: {complianceScore.criticals} (-{complianceScore.criticals * 8}pts)</div>}
+                  {complianceScore.penalty === 0 && <div style={{ color: "#4ade80" }}>No compliance penalties</div>}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -442,4 +342,4 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
   );
 });
 
-export default ScriptPrompter;
+export default U65Copilot;

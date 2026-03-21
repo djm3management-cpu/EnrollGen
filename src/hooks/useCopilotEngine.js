@@ -696,7 +696,7 @@ export function useCopilotEngine({
     clearTimeout(floatFadeTimeout.current);
     floatTimeout.current = setTimeout(() => {
       setFloatingAlert((prev) => prev ? { ...prev, fading: true } : null);
-      floatFadeTimeout.current = setTimeout(() => setFloatingAlert(null), 3000);
+      floatFadeTimeout.current = setTimeout(() => setFloatingAlert(null), 5000);
     }, delay);
   }, []);
 

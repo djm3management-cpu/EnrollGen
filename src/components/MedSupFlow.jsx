@@ -18,7 +18,7 @@ function Say({ text }) {
   return (
     <div
       style={{
-        borderLeft: "2px solid rgba(56,189,248,0.3)",
+        borderLeft: "2px solid rgba(74,222,128,0.3)",
         padding: "10px 16px",
         marginBottom: 8,
         borderRadius: "0 6px 6px 0",
@@ -57,7 +57,7 @@ function Gate({ label, done, onDo, onUndo }) {
           minWidth: 260,
           padding: "10px 14px",
           border: `1px solid ${
-            done ? "rgba(52,211,153,0.2)" : "rgba(56,189,248,0.15)"
+            done ? "rgba(52,211,153,0.2)" : "rgba(74,222,128,0.15)"
           }`,
           background: done
             ? "rgba(52,211,153,0.05)"
@@ -121,10 +121,10 @@ function Card({ num, title, red, active, done, dur, children }) {
       className={active ? "active-card" : ""}
       style={{
         background: active
-          ? "rgba(56,189,248,0.04)"
+          ? "rgba(74,222,128,0.04)"
           : "rgba(255,255,255,0.018)",
         border: `1px solid ${
-          active ? "rgba(56,189,248,0.3)" : "rgba(255,255,255,0.05)"
+          active ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.05)"
         }`,
         borderRadius: 10,
         padding: "20px 18px",
@@ -143,17 +143,17 @@ function Card({ num, title, red, active, done, dur, children }) {
           style={{
             fontSize: 11,
             fontWeight: 700,
-            color: red ? "#f87171" : active ? "#38bdf8" : "#4a5568",
+            color: red ? "#f87171" : active ? "#4ade80" : "#4a5568",
             background: red
               ? "rgba(248,113,113,0.08)"
               : active
-              ? "rgba(56,189,248,0.08)"
+              ? "rgba(74,222,128,0.08)"
               : "rgba(255,255,255,0.03)",
             border: `1px solid ${
               red
                 ? "rgba(248,113,113,0.2)"
                 : active
-                ? "rgba(56,189,248,0.15)"
+                ? "rgba(74,222,128,0.15)"
                 : "rgba(255,255,255,0.05)"
             }`,
             borderRadius: 5,
@@ -281,7 +281,7 @@ function S3() {
             style={{
               fontSize: 10,
               fontWeight: 600,
-              color: "#38bdf8",
+              color: "#4ade80",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
               marginBottom: 4,
@@ -632,7 +632,7 @@ function Progress() {
           style={{
             fontSize: 11,
             fontWeight: 600,
-            color: "#38bdf8",
+            color: "#4ade80",
             fontVariantNumeric: "tabular-nums",
           }}
         >
@@ -649,7 +649,7 @@ function Progress() {
         }}
       >
         <motion.div
-          style={{ height: "100%", background: "#38bdf8", borderRadius: 2 }}
+          style={{ height: "100%", background: "#4ade80", borderRadius: 2 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.3 }}
         />
@@ -669,14 +669,14 @@ function Progress() {
                 background: d
                   ? "rgba(52,211,153,0.06)"
                   : a
-                  ? "rgba(56,189,248,0.06)"
+                  ? "rgba(74,222,128,0.06)"
                   : "rgba(255,255,255,0.015)",
-                color: d ? "#34d399" : a ? "#38bdf8" : "#4a5568",
+                color: d ? "#34d399" : a ? "#4ade80" : "#4a5568",
                 border: `1px solid ${
                   d
                     ? "rgba(52,211,153,0.12)"
                     : a
-                    ? "rgba(56,189,248,0.12)"
+                    ? "rgba(74,222,128,0.12)"
                     : "rgba(255,255,255,0.03)"
                 }`,
               }}
@@ -692,7 +692,7 @@ function Progress() {
 }
 
 export default function MedSupFlow() {
-  const { activeSection } = useMedSup();
+  const { state, dispatch, activeSection } = useMedSup();
   const prev = useRef(activeSection);
   useEffect(() => {
     if (activeSection !== prev.current) {
@@ -715,12 +715,27 @@ export default function MedSupFlow() {
       transition={{ duration: 0.3 }}
     >
       <Progress />
-      <S1 />
-      <S2 />
-      <S3 />
-      <S4 />
-      <S6 />
-      <S7 />
+
+      {!state.callStarted ? (
+        <section style={{ background: "rgba(74,222,128,0.04)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
+          <button className="primary" onClick={() => dispatch({ type: "START_CALL" })} style={{
+            fontSize: 15, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
+            background: "linear-gradient(145deg, rgba(74,222,128,0.15), rgba(74,222,128,0.05))", border: "1px solid rgba(74,222,128,0.3)", color: "#4ade80", borderRadius: 8, cursor: "pointer",
+          }}>
+            Start Call
+          </button>
+          <p style={{ marginTop: 10, fontSize: 11, color: "#4a5568" }}>Timer begins when you click Start Call</p>
+        </section>
+      ) : (
+        <>
+          <S1 />
+          <S2 />
+          <S3 />
+          <S4 />
+          <S6 />
+          <S7 />
+        </>
+      )}
     </motion.div>
   );
 }
