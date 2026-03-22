@@ -1,13 +1,29 @@
 /**
  * useAcaCopilotEngine.js — ACA Marketplace compliance copilot engine
- * Adapted from useCopilotEngine.js for ACA On-Exchange enrollment flows.
- * Simplified: no SNP, no SOA pulse, no unlocked gates, ACA-specific prompts.
+ * Refactored to use the shared useCopilotEngineCore hook for common
+ * infrastructure (feed state, floating alerts, service-issue handling,
+ * debounced scheduling, periodic review, section-entry analysis, cleanup).
+ *
+ * This file retains all ACA-specific prompt builders, context builders,
+ * requestCoaching / askCopilot implementations, subsidy alert, and
+ * compliance score calculation.
  */
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
-import { useAppAuth } from "../context/AuthContext";
+import { useCallback, useMemo, useEffect, useRef } from "react";
+import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
+import {
+  useCopilotEngineCore,
+  normalizeIssueTag,
+  shouldSuppressDuplicateIssue,
+  readErrorDetail,
+  getCopilotHttpErrorMessage,
+  parseAnthropicResponse,
+  parseCoachingJson,
+  buildTranscriptWindows,
+  formatSectionDuration,
+  makeIsHighRisk,
+} from "./useCopilotEngineCore";
 import {
   ACA_COMPLIANCE_KNOWLEDGE,
   ACA_SECTION_LABELS,
@@ -18,26 +34,20 @@ import {
   ACA_REMIND_CONFIDENCE_FLOOR,
   ACA_SECTION_CONFIDENCE_OVERRIDES,
   ACA_HIGH_RISK_KEYWORDS,
+  ACA_SECTION_SETTLE_MS,
 } from "../data/acaComplianceKnowledge";
 
-const LIVE_VOICE_TRIGGER_CHARS = 24;
-const LIVE_VOICE_DEBOUNCE_MS = 1800;
-const SILENT_HEARTBEAT_MS = 8000;
-const PERIODIC_CONTEXT_CHECK_MS = 90000;
-const PERIODIC_SIGNATURE_TAIL_CHARS = 320;
-const SERVICE_ISSUE_POPUP_COOLDOWN_MS = 60000;
-
 /* ───────────────────────────────────────────────────────
-   HELPERS
+   CONSTANTS
    ─────────────────────────────────────────────────────── */
 
-function formatGateDuration(timestamps, gateNum) {
-  const ts = timestamps?.[gateNum];
-  if (!ts?.start) return null;
-  const end = ts.end || Date.now();
-  const sec = Math.max(0, Math.round((end - ts.start) / 1000));
-  return `${Math.floor(sec / 60)}m ${sec % 60}s`;
-}
+const PERIODIC_SIGNATURE_TAIL_CHARS = 320;
+
+/* ───────────────────────────────────────────────────────
+   PRODUCT-SPECIFIC HELPERS
+   ─────────────────────────────────────────────────────── */
+
+const isHighRisk = makeIsHighRisk(ACA_HIGH_RISK_KEYWORDS);
 
 function buildAcaChecklistState(state, activeGate) {
   const label = ACA_SECTION_LABELS[activeGate] || `Gate ${activeGate}`;
@@ -70,11 +80,11 @@ function buildCompletedGateHistory(state) {
     .filter(([num, field]) =>
       num === 1 ? state.enrollmentPeriod === "SEP" && state[field] : state[field]
     )
-    .map(([num, field]) => ({
+    .map(([num]) => ({
       gate: num,
       label: ACA_SECTION_LABELS[num],
       completed: true,
-      duration: formatGateDuration(state.sectionTimestamps, num),
+      duration: formatSectionDuration(state.sectionTimestamps, num),
     }))
     .slice(-3);
 }
@@ -112,29 +122,6 @@ function buildAcaDerivedSignals(state, activeGate, transcript, recentInterventio
   };
 }
 
-function normalizeIssueTag(tag) {
-  return (tag || "")
-    .toString().trim().toLowerCase()
-    .replace(/[^a-z0-9_ -]/g, "")
-    .replace(/[\s-]+/g, "_")
-    .slice(0, 64);
-}
-
-function shouldSuppressDuplicateIssue(messages, section, issueTag) {
-  if (!issueTag) return false;
-  return messages.some(
-    (entry) =>
-      entry.issueTag === issueTag &&
-      entry.section === section &&
-      (entry.level === "warn" || entry.level === "critical" || entry.level === "remind")
-  );
-}
-
-function isHighRisk(issueTag, message) {
-  const haystack = `${issueTag || ""} ${message || ""}`.toLowerCase();
-  return ACA_HIGH_RISK_KEYWORDS.some((kw) => haystack.includes(kw));
-}
-
 function shouldSuppressForNuance({ level, issueTag, message, derivedSignals }) {
   if (level !== "warn" && level !== "remind") return false;
   if (isHighRisk(issueTag, message)) return false;
@@ -150,24 +137,10 @@ function shouldSuppressForNuance({ level, issueTag, message, derivedSignals }) {
   return false;
 }
 
-async function readErrorDetail(response) {
-  try {
-    const data = await response.json();
-    return data?.detail || data?.error || JSON.stringify(data);
-  } catch {
-    return `HTTP ${response.status}`;
-  }
-}
-
-function getCopilotHttpErrorMessage(status, detail) {
-  if (status === 401) return "Co-Pilot is not authorized. Sign in with Clerk, or if running locally set DISABLE_CLERK_AUTH=true.";
-  if (status === 500 && detail?.includes("API key")) return "Co-Pilot is not configured yet. Set ANTHROPIC_API_KEY for the Netlify function runtime.";
-  return `Co-Pilot returned an error (HTTP ${status}). Check that the Netlify function is running and ANTHROPIC_API_KEY is set.`;
-}
-
-function buildPeriodicContextSignature({ activeGate, currentStep, transcript, state }) {
+function buildPeriodicContextSignature({ activeSection, currentStep, transcript, state }) {
   return JSON.stringify({
-    activeGate, currentStep,
+    activeGate: activeSection,
+    currentStep,
     transcriptLength: transcript.length,
     transcriptTail: transcript.slice(-PERIODIC_SIGNATURE_TAIL_CHARS),
     gates: {
@@ -184,16 +157,6 @@ function buildPeriodicFallbackMessage({ sectionKey, transcriptWindow }) {
     return `You're in "${sectionKey}". Keep moving through the required compliance items for this section.`;
   }
   return `Still in "${sectionKey}". Based on what I'm hearing, you're on track. Make sure all required elements are covered before moving to the next gate.`;
-}
-
-async function abortable(promise, signal) {
-  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
-    }),
-  ]);
 }
 
 /* ───────────────────────────────────────────────────────
@@ -388,91 +351,41 @@ RESPONSE RULES:
 export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
   const currentStep = ACA_SECTION_LABELS[activeGate] || `Gate ${activeGate}`;
   const knowledge = ACA_COMPLIANCE_KNOWLEDGE[currentStep] || null;
-  const { logEntry, setEntryFeedback, exportFeedbackDataset, entries } = useCopilotLog();
-  const { getToken } = useAppAuth();
 
-  // Feed state
-  const [messages, setMessages] = useState([]);
-  const [coachingLoading, setCoachingLoading] = useState(false);
-  const [askLoading, setAskLoading] = useState(false);
-  const [floatingAlert, setFloatingAlert] = useState(null);
-  const [askQuestion, setAskQuestion] = useState("");
+  /* ─── Core hook ─── */
+  const {
+    messages, setMessages, coachingLoading, setCoachingLoading,
+    askLoading, setAskLoading, floatingAlert, setFloatingAlert,
+    askQuestion, setAskQuestion, feedRef,
+    messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel,
+    sectionTranscriptStartRef, sectionCopilotFiredRef,
+    lastSilentHeartbeatRef, lastPeriodicContextSignatureRef,
+    coachingAbortRef, askAbortRef, requestCoachingRef,
+    floatTimeout, floatFadeTimeout,
+    pushFeedEntry, showFloat, dismissFloat, surfaceServiceIssue, clearServiceIssue,
+    scheduleCoaching, clearFeed,
+    getToken, logEntry, setEntryFeedback, exportFeedbackDataset, entries,
+    silentHeartbeatMs,
+  } = useCopilotEngineCore({
+    transcriptRef,
+    activeSection: activeGate,
+    currentStep,
+    state,
+    config: {
+      coachingDebounceMs: ACA_COACHING_DEBOUNCE_MS,
+    },
+    buildContextSignature: buildPeriodicContextSignature,
+  });
 
-  // Refs
-  const messagesRef = useRef([]);
-  const debounceRef = useRef(null);
-  const floatTimeout = useRef(null);
-  const floatFadeTimeout = useRef(null);
-  const feedRef = useRef(null);
-  const lastCoachingTime = useRef(0);
-  const lastAnalyzedLength = useRef(0);
-  const lastInterventionLevel = useRef("silent");
-  const sectionTranscriptStartRef = useRef(0);
-  const sectionCopilotFiredRef = useRef(new Set());
-  const sectionEntryTimerRef = useRef(null);
-  const prevGateRef = useRef(activeGate);
-  const coachingAbortRef = useRef(null);
-  const askAbortRef = useRef(null);
-  const lastSilentHeartbeatRef = useRef(0);
-  const lastPeriodicContextSignatureRef = useRef("");
-  const requestCoachingRef = useRef(null);
-  const lastServiceIssueRef = useRef({ message: "", at: 0 });
-  const periodicInputsRef = useRef({ activeGate, currentStep, state, coachingLoading });
+  const emptyRetrievalTrace = {
+    topics: [],
+    scenarios: [],
+    sources: [],
+    transcriptReferenceCount: 0,
+    transcriptReferenceError: null,
+  };
 
-  // Reset section transcript on gate change
-  useEffect(() => { sectionTranscriptStartRef.current = transcriptRef.current.length; }, [activeGate, transcriptRef]);
-  useEffect(() => { messagesRef.current = messages; }, [messages]);
-  useEffect(() => { periodicInputsRef.current = { activeGate, currentStep, state, coachingLoading }; }, [activeGate, currentStep, state, coachingLoading]);
-  useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [messages]);
-
-  // Dismiss floating alert
-  const dismissFloat = useCallback((delay) => {
-    clearTimeout(floatTimeout.current);
-    clearTimeout(floatFadeTimeout.current);
-    floatTimeout.current = setTimeout(() => {
-      setFloatingAlert((prev) => prev ? { ...prev, fading: true } : null);
-      floatFadeTimeout.current = setTimeout(() => setFloatingAlert(null), 5000);
-    }, delay);
-  }, []);
-
-  const showFloat = useCallback((level, text) => {
-    clearTimeout(floatTimeout.current);
-    clearTimeout(floatFadeTimeout.current);
-    setFloatingAlert({ level, text });
-    logEntry(LOG_TYPES.FLOATING_ALERT, level, text, { section: currentStep });
-    const duration = level === "critical" ? 7000 : level === "warn" ? 4000 : 5000;
-    dismissFloat(duration);
-  }, [logEntry, currentStep, dismissFloat]);
-
-  const clearServiceIssue = useCallback(() => { lastServiceIssueRef.current = { message: "", at: 0 }; }, []);
-
-  const surfaceServiceIssue = useCallback((message, { force = false } = {}) => {
-    const now = Date.now();
-    const prev = lastServiceIssueRef.current;
-    const shouldShow = force || message !== prev.message || now - prev.at >= SERVICE_ISSUE_POPUP_COOLDOWN_MS;
-    lastServiceIssueRef.current = { message, at: now };
-    if (shouldShow) showFloat("warn", message);
-  }, [showFloat]);
-
-  // Push entry to feed
-  const pushFeedEntry = useCallback((level, text, extra = {}) => {
-    const entry = {
-      id: Date.now() + Math.floor(Math.random() * 1000),
-      level, text,
-      ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      ...extra,
-    };
-    setMessages((prev) => [...prev.slice(-19), entry]);
-    if (!extra.skipLog) {
-      logEntry(LOG_TYPES.COPILOT_MSG, level, text, {
-        section: extra.section || currentStep,
-        issueTag: extra.issueTag || "",
-      });
-    }
-    return entry;
-  }, [currentStep, logEntry]);
-
-  // Build copilot context
+  /* ─── Build copilot context ─── */
   const buildCopilotContext = useCallback((recentInterventions) => {
     return {
       currentGate: { number: activeGate, label: currentStep },
@@ -496,7 +409,10 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
     const fullTranscript = transcriptRef.current.trim();
     if (!fullTranscript || coachingLoading) {
       if (manual && !coachingLoading) {
-        pushFeedEntry("info", "Analyze skipped. Start the transcript first.", { section: currentStep });
+        pushFeedEntry("info", "Analyze skipped. Start the transcript first.", {
+          section: currentStep,
+          retrievalTrace: emptyRetrievalTrace,
+        });
       }
       return;
     }
@@ -504,7 +420,7 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
     const sectionKey = currentStep;
     const reviewMode = periodic ? "periodic" : "live";
 
-    // Gates
+    // Cooldown / minimum-chars gates
     if (!sectionEntry && !manual && !periodic) {
       const now = Date.now();
       const cooldown = ACA_COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
@@ -516,7 +432,10 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
       const now = Date.now();
       const cooldown = ACA_COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
       if (now - lastCoachingTime.current < cooldown) {
-        pushFeedEntry("info", `Analyze skipped. Co-Pilot is in cooldown for another ${Math.ceil((cooldown - (now - lastCoachingTime.current)) / 1000)}s.`, { section: currentStep });
+        pushFeedEntry("info", `Analyze skipped. Co-Pilot is in cooldown for another ${Math.ceil((cooldown - (now - lastCoachingTime.current)) / 1000)}s.`, {
+          section: currentStep,
+          retrievalTrace: emptyRetrievalTrace,
+        });
         return;
       }
     }
@@ -545,13 +464,12 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
       .map((e, i) => `${i + 1}. [${e.level}] ${e.text.replace(/\s+/g, " ").slice(0, 220)}`)
       .join("\n");
 
-    const sectionTranscript = fullTranscript.slice(sectionTranscriptStartRef.current) || fullTranscript.slice(-2200);
-    const transcriptSinceLastAnalysis = fullTranscript.slice(previousAnalyzedLength).trim();
-    const periodicWindow = (sectionTranscript || fullTranscript.slice(-2200)).slice(-2200);
-    const analysisWindow = periodic ? periodicWindow : (sectionTranscript || fullTranscript.slice(-2000)).slice(-2000);
-    const newSpeechWindow = periodic
-      ? (transcriptSinceLastAnalysis || periodicWindow.slice(-900)).trim()
-      : transcriptSinceLastAnalysis;
+    const { analysisWindow, newSpeechWindow } = buildTranscriptWindows({
+      fullTranscript,
+      previousAnalyzedLength,
+      sectionStart: sectionTranscriptStartRef.current,
+      periodic,
+    });
 
     const copilotContext = buildCopilotContext(recentInterventions);
     const derivedSignals = copilotContext.derivedSignals;
@@ -596,27 +514,16 @@ SECTION CONTEXT (rolling window):
         const errorMessage = getCopilotHttpErrorMessage(response.status, detail);
         console.error("ACA Coaching API error:", response.status, detail);
         const alreadyWarned = liveMessages.some((m) => m.text === errorMessage);
-        if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep });
+        if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: emptyRetrievalTrace });
         surfaceServiceIssue(errorMessage, { force: manual || periodic });
         return;
       }
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = data.content?.map((b) => (b.type === "text" ? b.text : "")).filter(Boolean).join("").trim();
+      const raw = parseAnthropicResponse(data);
 
-      let level = "info", message = "", issueTag = "", confidence = null;
-      try {
-        const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
-        level = parsed.level || "info";
-        message = parsed.message || "";
-        const parsedConf = Number(parsed.confidence);
-        confidence = Number.isFinite(parsedConf) ? parsedConf : null;
-        issueTag = normalizeIssueTag(parsed.issue_tag) || normalizeIssueTag(message.split(/[.:!?]/)[0]);
-      } catch {
-        message = raw || "";
-        issueTag = normalizeIssueTag(message.split(/[.:!?]/)[0]);
-      }
+      let { level, message, issueTag, confidence } = parseCoachingJson(raw);
 
       if (periodic) {
         if (level === "info") level = "tip";
@@ -632,7 +539,7 @@ SECTION CONTEXT (rolling window):
       if (!periodic && (level === "silent" || !message?.trim())) {
         const firstSilent = !sectionCopilotFiredRef.current.has(activeGate);
         const now = Date.now();
-        const shouldHeartbeat = firstSilent || now - lastSilentHeartbeatRef.current >= SILENT_HEARTBEAT_MS;
+        const shouldHeartbeat = firstSilent || now - lastSilentHeartbeatRef.current >= silentHeartbeatMs;
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = now;
         lastInterventionLevel.current = "silent";
@@ -642,35 +549,37 @@ SECTION CONTEXT (rolling window):
             sectionEntry
               ? `Entered "${sectionKey}". ${knowledge ? `Key items: ${knowledge.requiredElements.slice(0, 3).join(", ")}. ` : ""}No issues detected.`
               : "Analyze complete. No actionable compliance issues found.",
-            { section: currentStep }
+            { section: currentStep, retrievalTrace: emptyRetrievalTrace }
           );
         } else if (shouldHeartbeat) {
           lastSilentHeartbeatRef.current = now;
           pushFeedEntry("info",
             firstSilent ? "Live speech analyzed. No action needed." : "Still listening. No intervention needed.",
-            { section: currentStep, skipLog: true }
+            { section: currentStep, skipLog: true, retrievalTrace: emptyRetrievalTrace }
           );
         }
         return;
       }
 
-      // Suppression
+      // Suppression: duplicate issue
       if (!periodic && (level === "warn" || level === "critical" || level === "remind") &&
           shouldSuppressDuplicateIssue(liveMessages, currentStep, issueTag)) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning — not repeated.", { section: currentStep, issueTag });
+        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning — not repeated.", { section: currentStep, issueTag, retrievalTrace: emptyRetrievalTrace });
         return;
       }
 
+      // Suppression: nuance
       if (!periodic && (level === "warn" || level === "remind") &&
           shouldSuppressForNuance({ level, issueTag, message, derivedSignals })) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed — context too ambiguous.", { section: currentStep, issueTag });
+        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed — context too ambiguous.", { section: currentStep, issueTag, retrievalTrace: emptyRetrievalTrace });
         return;
       }
 
+      // Confidence thresholds
       const sectionOverrides = ACA_SECTION_CONFIDENCE_OVERRIDES[currentStep] || {};
       const effectiveWarnFloor = sectionOverrides.warn ?? ACA_WARN_CONFIDENCE_FLOOR;
       const effectiveRemindFloor = sectionOverrides.remind ?? ACA_REMIND_CONFIDENCE_FLOOR;
@@ -682,7 +591,7 @@ SECTION CONTEXT (rolling window):
         } else {
           lastAnalyzedLength.current = targetAnalyzedLength;
           lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Warning below confidence threshold.", { section: currentStep, issueTag });
+          if (manual) pushFeedEntry("info", "Analyze complete. Warning below confidence threshold.", { section: currentStep, issueTag, retrievalTrace: emptyRetrievalTrace });
           return;
         }
       }
@@ -694,7 +603,7 @@ SECTION CONTEXT (rolling window):
         } else {
           lastAnalyzedLength.current = targetAnalyzedLength;
           lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Reminder below confidence threshold.", { section: currentStep, issueTag });
+          if (manual) pushFeedEntry("info", "Analyze complete. Reminder below confidence threshold.", { section: currentStep, issueTag, retrievalTrace: emptyRetrievalTrace });
           return;
         }
       }
@@ -705,37 +614,23 @@ SECTION CONTEXT (rolling window):
       lastInterventionLevel.current = level;
       sectionCopilotFiredRef.current.add(activeGate);
       if (periodic && periodicSignature) lastPeriodicContextSignatureRef.current = periodicSignature;
-      pushFeedEntry(level, message, { issueTag, section: currentStep });
+      pushFeedEntry(level, message, { issueTag, section: currentStep, retrievalTrace: emptyRetrievalTrace });
       showFloat(level, message);
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("ACA Coaching error:", err);
       const errorMessage = "Co-Pilot could not reach the coaching service. If running locally, use 'netlify dev' instead of 'npm run dev'.";
       const alreadyWarned = liveMessages.some((m) => m.text === errorMessage);
-      if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep });
+      if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: emptyRetrievalTrace });
       surfaceServiceIssue(errorMessage, { force: manual || periodic });
     } finally {
       if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
       setCoachingLoading(false);
     }
-  }, [activeGate, currentStep, coachingLoading, knowledge, showFloat, pushFeedEntry, buildCopilotContext, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue]);
+  }, [activeGate, currentStep, coachingLoading, knowledge, showFloat, pushFeedEntry, buildCopilotContext, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs]);
 
-  // Store latest requestCoaching for periodic timer
+  // Wire requestCoachingRef so core's periodic timer and section-entry logic can call it
   useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching]);
-
-  // Periodic 90-second review
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      const transcript = transcriptRef.current.trim();
-      if (!transcript) return;
-      const { activeGate: pGate, currentStep: pStep, state: pState, coachingLoading: pLoading } = periodicInputsRef.current;
-      if (pLoading) return;
-      const signature = buildPeriodicContextSignature({ activeGate: pGate, currentStep: pStep, transcript, state: pState });
-      if (signature === lastPeriodicContextSignatureRef.current) return;
-      requestCoachingRef.current?.({ periodic: true, periodicSignature: signature });
-    }, PERIODIC_CONTEXT_CHECK_MS);
-    return () => clearInterval(intervalId);
-  }, [transcriptRef]);
 
   /* ═══════ ASK ═══════ */
   const askCopilot = useCallback(async (spokenQuestion) => {
@@ -787,14 +682,14 @@ SECTION CONTEXT (rolling window):
       if (!response.ok) {
         const detail = await readErrorDetail(response);
         const errorMessage = getCopilotHttpErrorMessage(response.status, detail);
-        pushFeedEntry("info", errorMessage, { section: currentStep });
+        pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: emptyRetrievalTrace });
         surfaceServiceIssue(errorMessage, { force: true });
         return;
       }
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = data.content?.map((b) => (b.type === "text" ? b.text : "")).filter(Boolean).join("").trim();
+      const raw = parseAnthropicResponse(data);
 
       if (raw) {
         const prefix = isSpoken ? `"${question}"` : `? ${question}`;
@@ -810,13 +705,13 @@ SECTION CONTEXT (rolling window):
       if (err.name === "AbortError") return;
       console.error("ACA Ask error:", err);
       const errorMessage = "Co-Pilot could not reach the coaching service.";
-      pushFeedEntry("info", errorMessage, { section: currentStep });
+      pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: emptyRetrievalTrace });
       surfaceServiceIssue(errorMessage, { force: true });
     } finally {
       if (askAbortRef.current === controller) askAbortRef.current = null;
       setAskLoading(false);
     }
-  }, [askQuestion, askLoading, currentStep, knowledge, logEntry, getToken, buildCopilotContext, transcriptRef, pushFeedEntry, clearServiceIssue, surfaceServiceIssue]);
+  }, [askQuestion, askLoading, currentStep, knowledge, logEntry, getToken, buildCopilotContext, transcriptRef, pushFeedEntry, clearServiceIssue, surfaceServiceIssue, messagesRef, askAbortRef, setAskLoading, setAskQuestion, setMessages]);
 
   /* ═══════ Subsidy gate entry alert ═══════ */
   const subsidyFiredRef = useRef(false);
@@ -824,7 +719,7 @@ SECTION CONTEXT (rolling window):
     if (activeGate === 2 && !subsidyFiredRef.current) {
       subsidyFiredRef.current = true;
       const msg = "INCOME ASSESSMENT — You MUST accurately determine household size and income. 2026 subsidy cliff: clients above 400% FPL have NO APTC. Never coach clients to misrepresent income.";
-      pushFeedEntry("warn", msg, { section: "Household & Income Assessment", issueTag: "SUBSIDY_GATE_ENTRY" });
+      pushFeedEntry("warn", msg, { section: "Household & Income Assessment", issueTag: "SUBSIDY_GATE_ENTRY", retrievalTrace: emptyRetrievalTrace });
       clearTimeout(floatTimeout.current);
       clearTimeout(floatFadeTimeout.current);
       setFloatingAlert({ level: "warn", text: msg, pulse: true });
@@ -832,54 +727,7 @@ SECTION CONTEXT (rolling window):
       dismissFloat(7000);
     }
     if (activeGate !== 2) subsidyFiredRef.current = false;
-  }, [activeGate, pushFeedEntry, logEntry, dismissFloat]);
-
-  /* ═══════ Section-entry auto-analysis ═══════ */
-  useEffect(() => {
-    if (prevGateRef.current === activeGate) return;
-    prevGateRef.current = activeGate;
-    clearTimeout(sectionEntryTimerRef.current);
-    sectionEntryTimerRef.current = setTimeout(() => {
-      if (!sectionCopilotFiredRef.current.has(activeGate) && transcriptRef.current.trim().length > 0) {
-        requestCoaching({ manual: false, sectionEntry: true });
-      }
-    }, 12000);
-    return () => clearTimeout(sectionEntryTimerRef.current);
-  }, [activeGate, requestCoaching, transcriptRef]);
-
-  /* ═══════ Debounced coaching trigger ═══════ */
-  const scheduleCoaching = useCallback((newFinal = "") => {
-    const normalizedChunk = (newFinal || "").replace(/\s+/g, " ").trim();
-    const forceShortChunk = normalizedChunk.length >= LIVE_VOICE_TRIGGER_CHARS;
-    const debounceMs = forceShortChunk ? LIVE_VOICE_DEBOUNCE_MS : ACA_COACHING_DEBOUNCE_MS;
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => requestCoaching({ forceShortChunk }), debounceMs);
-  }, [requestCoaching]);
-
-  /* ═══════ Clear ═══════ */
-  const clearFeed = useCallback(() => {
-    setMessages([]);
-    setFloatingAlert(null);
-    lastCoachingTime.current = 0;
-    lastAnalyzedLength.current = 0;
-    lastInterventionLevel.current = "silent";
-    lastSilentHeartbeatRef.current = 0;
-    lastPeriodicContextSignatureRef.current = "";
-    sectionCopilotFiredRef.current = new Set();
-    coachingAbortRef.current?.abort();
-    askAbortRef.current?.abort();
-    clearServiceIssue();
-  }, [clearServiceIssue]);
-
-  // Cleanup
-  useEffect(() => () => {
-    clearTimeout(debounceRef.current);
-    clearTimeout(floatTimeout.current);
-    clearTimeout(floatFadeTimeout.current);
-    clearTimeout(sectionEntryTimerRef.current);
-    coachingAbortRef.current?.abort();
-    askAbortRef.current?.abort();
-  }, []);
+  }, [activeGate, pushFeedEntry, logEntry, dismissFloat, floatTimeout, floatFadeTimeout, setFloatingAlert]);
 
   /* ═══════ Compliance score ═══════ */
   const complianceScore = useMemo(() => {
@@ -910,10 +758,8 @@ SECTION CONTEXT (rolling window):
     askQuestion, setAskQuestion,
     feedRef, currentStep,
     complianceScore,
-
     requestCoaching, askCopilot, scheduleCoaching,
     clearFeed, pushFeedEntry,
-
     setEntryFeedback, exportFeedbackDataset, logEntry, entries,
   };
 }

@@ -1,43 +1,27 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { SECTION_LABELS } from "../context/scriptReducer";
-import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
-import { useAppAuth } from "../context/AuthContext";
-import {
-  getCmsKnowledgeForQuestion,
-  getCmsKnowledgeForSection,
-} from "../context/CopilotCmsKnowledge";
+import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
+import { getCmsKnowledgeForQuestion, getCmsKnowledgeForSection } from "../context/CopilotCmsKnowledge";
 import { fetchTranscriptReferences } from "../lib/transcriptSearch";
 import {
-  COMPLIANCE_KNOWLEDGE,
-  COACHING_DEBOUNCE_MS,
-  MIN_NEW_CHARS,
-  COOLDOWN_BY_LEVEL,
-  WARN_CONFIDENCE_FLOOR,
-  REMIND_CONFIDENCE_FLOOR,
-  SECTION_CONFIDENCE_OVERRIDES,
-  SECTION_SETTLE_MS,
-  HIGH_RISK_KEYWORDS,
+  useCopilotEngineCore,
+  normalizeIssueTag, shouldSuppressDuplicateIssue,
+  readErrorDetail, getCopilotHttpErrorMessage,
+  parseAnthropicResponse, parseCoachingJson, buildTranscriptWindows,
+  formatSectionDuration, makeIsHighRisk, abortable,
+} from "./useCopilotEngineCore";
+import {
+  COMPLIANCE_KNOWLEDGE, COACHING_DEBOUNCE_MS, MIN_NEW_CHARS,
+  COOLDOWN_BY_LEVEL, WARN_CONFIDENCE_FLOOR, REMIND_CONFIDENCE_FLOOR,
+  SECTION_CONFIDENCE_OVERRIDES, SECTION_SETTLE_MS, HIGH_RISK_KEYWORDS,
 } from "../data/complianceKnowledge";
 
-const LIVE_VOICE_TRIGGER_CHARS = 24;
-const LIVE_VOICE_DEBOUNCE_MS = 1800;
-const SILENT_HEARTBEAT_MS = 8000;
-const PERIODIC_CONTEXT_CHECK_MS = 90000;
 const PERIODIC_SIGNATURE_TAIL_CHARS = 320;
-const SERVICE_ISSUE_POPUP_COOLDOWN_MS = 60000;
 
 /* ───────────────────────────────────────────────────────
    HELPERS
    ─────────────────────────────────────────────────────── */
-
-function formatSectionDuration(timestamps, sectionNum) {
-  const ts = timestamps?.[sectionNum];
-  if (!ts?.start) return null;
-  const end = ts.end || Date.now();
-  const sec = Math.max(0, Math.round((end - ts.start) / 1000));
-  return `${Math.floor(sec / 60)}m ${sec % 60}s`;
-}
 
 export function buildSectionChecklistState(state, activeSection, unlocked) {
   const base = {
@@ -189,16 +173,6 @@ function buildDerivedSignals(state, activeSection, transcript, recentInterventio
   };
 }
 
-function normalizeIssueTag(tag) {
-  return (tag || "")
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_ -]/g, "")
-    .replace(/[\s-]+/g, "_")
-    .slice(0, 64);
-}
-
 function resolveSectionKnowledge(sectionKey, state) {
   if (sectionKey === "SNP Disclosure") {
     const snpType = (state?.snpType || "").toUpperCase();
@@ -285,79 +259,7 @@ function buildPeriodicFallbackMessage({ sectionKey, transcriptWindow }) {
   return `You're on track in ${sectionKey}. Keep the current disclosure tight and finish the required points before you move on.`;
 }
 
-function createAbortError() {
-  try {
-    return new DOMException("The request was aborted.", "AbortError");
-  } catch {
-    const error = new Error("The request was aborted.");
-    error.name = "AbortError";
-    return error;
-  }
-}
-
-function abortable(promise, signal) {
-  if (!signal) return promise;
-  if (signal.aborted) return Promise.reject(createAbortError());
-
-  return new Promise((resolve, reject) => {
-    const onAbort = () => reject(createAbortError());
-    signal.addEventListener("abort", onAbort, { once: true });
-
-    promise.then(
-      (value) => {
-        signal.removeEventListener("abort", onAbort);
-        resolve(value);
-      },
-      (error) => {
-        signal.removeEventListener("abort", onAbort);
-        reject(error);
-      }
-    );
-  });
-}
-
-async function readErrorDetail(response) {
-  const raw = await response.text().catch(() => "");
-  if (!raw) return "";
-
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed.detail || parsed.error || raw;
-  } catch {
-    return raw;
-  }
-}
-
-function getCopilotHttpErrorMessage(status, detail) {
-  if (status === 401) {
-    return "Co-Pilot is not authorized. Sign in with Clerk, or if you are running locally with auth disabled set DISABLE_CLERK_AUTH=true for Netlify functions too.";
-  }
-
-  if (status === 500 && /api key/i.test(detail || "")) {
-    return "Co-Pilot is not configured yet. Set ANTHROPIC_API_KEY for the Netlify function runtime.";
-  }
-
-  if (detail) {
-    return `Co-Pilot returned an error (HTTP ${status}): ${detail}`;
-  }
-
-  return `Co-Pilot returned an error (HTTP ${status}). Check that the Netlify function is running and ANTHROPIC_API_KEY is set.`;
-}
-
-function shouldSuppressDuplicateIssue(messages, section, issueTag) {
-  if (!issueTag) return false;
-  return messages.some(
-    (entry) =>
-      entry.issueTag === issueTag &&
-      entry.section === section &&
-      (entry.level === "warn" || entry.level === "critical" || entry.level === "remind")
-  );
-}
-
-function isHighRiskIntervention(issueTag, message) {
-  const haystack = `${issueTag || ""} ${message || ""}`.toLowerCase();
-  return HIGH_RISK_KEYWORDS.some((kw) => haystack.includes(kw));
-}
+const isHighRiskIntervention = makeIsHighRisk(HIGH_RISK_KEYWORDS);
 
 function shouldSuppressForNuance({ level, issueTag, message, derivedSignals }) {
   if (level !== "warn" && level !== "remind") return false;
@@ -411,9 +313,9 @@ ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 function buildCoachingModeGuidance(reviewMode) {
   if (reviewMode === "periodic") {
     return `
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+═══════════════════════════════════════════════════════
 YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+═══════════════════════════════════════════════════════
 This is a scheduled 90-second review. You MUST respond with either encouragement or correction.
 
 Return rules for this mode:
@@ -426,9 +328,9 @@ Return rules for this mode:
   }
 
   return `
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+═══════════════════════════════════════════════════════
 YOUR ROLE: SILENT COMPLIANCE SAFETY NET
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+═══════════════════════════════════════════════════════
 
 DEFAULT STATE: SILENT. You are monitoring, not commentating. You do NOT need to respond to every transcript update. Silence means everything is fine.
 
@@ -631,123 +533,30 @@ export function useCopilotEngine({
   logComplianceFlag,
 }) {
   const currentStep = SECTION_LABELS[activeSection] || `Section ${activeSection}`;
-  const { logEntry, setEntryFeedback, exportFeedbackDataset, entries } = useCopilotLog();
-  const { getToken } = useAppAuth();
 
-  // Feed state
-  const [messages, setMessages] = useState([]);
-  const [coachingLoading, setCoachingLoading] = useState(false);
-  const [askLoading, setAskLoading] = useState(false);
-  const [floatingAlert, setFloatingAlert] = useState(null);
-  const [askQuestion, setAskQuestion] = useState("");
-
-  // Refs
-  const messagesRef = useRef([]);
-  const debounceRef = useRef(null);
-  const floatTimeout = useRef(null);
-  const floatFadeTimeout = useRef(null);
-  const feedRef = useRef(null);
-  const lastCoachingTime = useRef(0);
-  const lastAnalyzedLength = useRef(0);
-  const lastInterventionLevel = useRef("silent");
-  const sectionTranscriptStartRef = useRef(0);
-  const sectionCopilotFiredRef = useRef(new Set());
-  const sectionEntryTimerRef = useRef(null);
-  const prevSectionRef = useRef(activeSection);
-  const coachingAbortRef = useRef(null);
-  const askAbortRef = useRef(null);
-  const lastSilentHeartbeatRef = useRef(0);
-  const lastPeriodicContextSignatureRef = useRef("");
-  const requestCoachingRef = useRef(null);
-  const lastServiceIssueRef = useRef({ message: "", at: 0 });
-  const periodicInputsRef = useRef({
+  const {
+    messages, setMessages, coachingLoading, setCoachingLoading,
+    askLoading, setAskLoading, floatingAlert, setFloatingAlert,
+    askQuestion, setAskQuestion, feedRef,
+    messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel,
+    sectionTranscriptStartRef, sectionCopilotFiredRef,
+    lastSilentHeartbeatRef, lastPeriodicContextSignatureRef,
+    coachingAbortRef, askAbortRef, requestCoachingRef,
+    floatTimeout, floatFadeTimeout,
+    pushFeedEntry, showFloat, dismissFloat, surfaceServiceIssue, clearServiceIssue,
+    scheduleCoaching, clearFeed,
+    getToken, logEntry, setEntryFeedback, exportFeedbackDataset, entries,
+    silentHeartbeatMs,
+  } = useCopilotEngineCore({
+    transcriptRef,
     activeSection,
     currentStep,
     state,
-    coachingLoading,
+    config: {
+      coachingDebounceMs: COACHING_DEBOUNCE_MS,
+    },
+    buildContextSignature: buildPeriodicContextSignature,
   });
-
-  // Reset section transcript window on section change
-  useEffect(() => {
-    sectionTranscriptStartRef.current = transcriptRef.current.length;
-  }, [activeSection, transcriptRef]);
-
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
-
-  useEffect(() => {
-    periodicInputsRef.current = {
-      activeSection,
-      currentStep,
-      state,
-      coachingLoading,
-    };
-  }, [activeSection, currentStep, state, coachingLoading]);
-
-  // Auto-scroll feed
-  useEffect(() => {
-    if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
-  }, [messages]);
-
-  // Dismiss floating alert with a long fade-out, then remove
-  const dismissFloat = useCallback((delay) => {
-    clearTimeout(floatTimeout.current);
-    clearTimeout(floatFadeTimeout.current);
-    floatTimeout.current = setTimeout(() => {
-      setFloatingAlert((prev) => prev ? { ...prev, fading: true } : null);
-      floatFadeTimeout.current = setTimeout(() => setFloatingAlert(null), 5000);
-    }, delay);
-  }, []);
-
-  // Show floating alert
-  const showFloat = useCallback((level, text) => {
-    clearTimeout(floatTimeout.current);
-    clearTimeout(floatFadeTimeout.current);
-    setFloatingAlert({ level, text });
-    logEntry(LOG_TYPES.FLOATING_ALERT, level, text, { section: currentStep });
-    const duration = level === "critical" ? 7000 : level === "warn" ? 4000 : 5000;
-    dismissFloat(duration);
-  }, [logEntry, currentStep, dismissFloat]);
-
-  const clearServiceIssue = useCallback(() => {
-    lastServiceIssueRef.current = { message: "", at: 0 };
-  }, []);
-
-  const surfaceServiceIssue = useCallback((message, { force = false } = {}) => {
-    const now = Date.now();
-    const previous = lastServiceIssueRef.current;
-    const shouldShow =
-      force ||
-      message !== previous.message ||
-      now - previous.at >= SERVICE_ISSUE_POPUP_COOLDOWN_MS;
-
-    lastServiceIssueRef.current = { message, at: now };
-    if (shouldShow) {
-      showFloat("warn", message);
-    }
-  }, [showFloat]);
-
-  // Push entry to feed
-  const pushFeedEntry = useCallback((level, text, extra = {}) => {
-    const entry = {
-      id: Date.now() + Math.floor(Math.random() * 1000),
-      level,
-      text,
-      ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      ...extra,
-    };
-    setMessages((prev) => [...prev.slice(-19), entry]);
-    if (!extra.skipLog) {
-      logEntry(LOG_TYPES.COPILOT_MSG, level, text, {
-        section: extra.section || currentStep,
-        issueTag: extra.issueTag || "",
-        contextSnapshot: extra.contextSnapshot,
-        retrievalTrace: extra.retrievalTrace,
-      });
-    }
-    return entry;
-  }, [currentStep, logEntry]);
 
   // Build shared copilot context object
   const buildCopilotContext = useCallback((recentInterventions) => {
@@ -848,15 +657,12 @@ export function useCopilotEngine({
       .map((e, i) => `${i + 1}. [${e.level}] ${e.text.replace(/\s+/g, " ").slice(0, 220)}`)
       .join("\n");
 
-    const sectionTranscript = fullTranscript.slice(sectionTranscriptStartRef.current) || fullTranscript.slice(-2200);
-    const transcriptSinceLastAnalysis = fullTranscript.slice(previousAnalyzedLength).trim();
-    const periodicWindow = (sectionTranscript || fullTranscript.slice(-2200)).slice(-2200);
-    const analysisWindow = periodic
-      ? periodicWindow
-      : (sectionTranscript || fullTranscript.slice(-2000)).slice(-2000);
-    const newSpeechWindow = periodic
-      ? (transcriptSinceLastAnalysis || periodicWindow.slice(-900)).trim()
-      : transcriptSinceLastAnalysis;
+    const { analysisWindow, newSpeechWindow } = buildTranscriptWindows({
+      fullTranscript,
+      previousAnalyzedLength,
+      sectionStart: sectionTranscriptStartRef.current,
+      periodic,
+    });
 
     const copilotContext = buildCopilotContext(recentInterventions);
     const derivedSignals = copilotContext.derivedSignals;
@@ -950,20 +756,9 @@ SECTION CONTEXT (rolling window for current section):
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = data.content?.map((b) => (b.type === "text" ? b.text : "")).filter(Boolean).join("").trim();
+      const raw = parseAnthropicResponse(data);
 
-      let level = "info", message = "", issueTag = "", confidence = null;
-      try {
-        const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
-        level = parsed.level || "info";
-        message = parsed.message || "";
-        const parsedConf = Number(parsed.confidence);
-        confidence = Number.isFinite(parsedConf) ? parsedConf : null;
-        issueTag = normalizeIssueTag(parsed.issue_tag) || normalizeIssueTag(message.split(/[.:!?]/)[0]);
-      } catch {
-        message = raw || "";
-        issueTag = normalizeIssueTag(message.split(/[.:!?]/)[0]);
-      }
+      let { level, message, issueTag, confidence } = parseCoachingJson(raw);
 
       if (periodic) {
         if (level === "info") level = "tip";
@@ -984,7 +779,7 @@ SECTION CONTEXT (rolling window for current section):
         const now = Date.now();
         const shouldEmitHeartbeat =
           firstSilentPassThisSection ||
-          now - lastSilentHeartbeatRef.current >= SILENT_HEARTBEAT_MS;
+          now - lastSilentHeartbeatRef.current >= silentHeartbeatMs;
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = now;
         lastInterventionLevel.current = "silent";
@@ -1112,44 +907,15 @@ SECTION CONTEXT (rolling window for current section):
     logComplianceFlag,
     clearServiceIssue,
     surfaceServiceIssue,
+    silentHeartbeatMs,
   ]);
 
-  /* ═══════ ASK CO-PILOT — typed or spoken question ═══════ */
+  // Wire requestCoachingRef so core's section-entry and periodic timers can call it
   useEffect(() => {
     requestCoachingRef.current = requestCoaching;
   }, [requestCoaching]);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      const transcript = transcriptRef.current.trim();
-      if (!transcript) return;
-
-      const {
-        activeSection: periodicSection,
-        currentStep: periodicStep,
-        state: periodicState,
-        coachingLoading: periodicLoading,
-      } = periodicInputsRef.current;
-
-      if (periodicLoading) return;
-
-      const signature = buildPeriodicContextSignature({
-        activeSection: periodicSection,
-        currentStep: periodicStep,
-        transcript,
-        state: periodicState,
-      });
-
-      if (signature === lastPeriodicContextSignatureRef.current) {
-        return;
-      }
-
-      requestCoachingRef.current?.({ periodic: true, periodicSignature: signature });
-    }, PERIODIC_CONTEXT_CHECK_MS);
-
-    return () => clearInterval(intervalId);
-  }, [transcriptRef]);
-
+  /* ═══════ ASK CO-PILOT — typed or spoken question ═══════ */
   const askCopilot = useCallback(async (spokenQuestion) => {
     const isSpoken = typeof spokenQuestion === "string";
     const question = isSpoken ? spokenQuestion.trim() : askQuestion.trim();
@@ -1249,7 +1015,7 @@ SECTION CONTEXT (rolling window for current section):
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = data.content?.map((b) => (b.type === "text" ? b.text : "")).filter(Boolean).join("").trim();
+      const raw = parseAnthropicResponse(data);
 
       if (raw) {
         const prefix = isSpoken ? `🎙 "${question}"` : `❓ ${question}`;
@@ -1311,79 +1077,13 @@ SECTION CONTEXT (rolling window for current section):
     if (activeSection !== 3) soaFiredRef.current = false;
   }, [activeSection, pushFeedEntry, logEntry, dismissFloat]);
 
-  /* ═══════ Section-entry auto-analysis ═══════ */
-  useEffect(() => {
-    if (prevSectionRef.current === activeSection) return;
-    prevSectionRef.current = activeSection;
-    clearTimeout(sectionEntryTimerRef.current);
-    sectionEntryTimerRef.current = setTimeout(() => {
-      if (!sectionCopilotFiredRef.current.has(activeSection) && transcriptRef.current.trim().length > 0) {
-        requestCoaching({ manual: false, sectionEntry: true });
-      }
-    }, 12000);
-    return () => clearTimeout(sectionEntryTimerRef.current);
-  }, [activeSection, requestCoaching, transcriptRef]);
-
-  /* ═══════ Debounced coaching trigger ═══════ */
-  const scheduleCoaching = useCallback((newFinal = "") => {
-    const normalizedChunk = (newFinal || "").replace(/\s+/g, " ").trim();
-    const forceShortChunk = normalizedChunk.length >= LIVE_VOICE_TRIGGER_CHARS;
-    const debounceMs = forceShortChunk ? LIVE_VOICE_DEBOUNCE_MS : COACHING_DEBOUNCE_MS;
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(
-      () => requestCoaching({ forceShortChunk }),
-      debounceMs
-    );
-  }, [requestCoaching]);
-
-  /* ═══════ Clear everything ═══════ */
-  const clearFeed = useCallback(() => {
-    setMessages([]);
-    setFloatingAlert(null);
-    lastCoachingTime.current = 0;
-    lastAnalyzedLength.current = 0;
-    lastInterventionLevel.current = "silent";
-    lastSilentHeartbeatRef.current = 0;
-    lastPeriodicContextSignatureRef.current = "";
-    sectionCopilotFiredRef.current = new Set();
-    coachingAbortRef.current?.abort();
-    askAbortRef.current?.abort();
-    clearServiceIssue();
-  }, [clearServiceIssue]);
-
-  // Cleanup on unmount
-  useEffect(() => () => {
-    clearTimeout(debounceRef.current);
-    clearTimeout(floatTimeout.current);
-    clearTimeout(floatFadeTimeout.current);
-    clearTimeout(sectionEntryTimerRef.current);
-    coachingAbortRef.current?.abort();
-    askAbortRef.current?.abort();
-  }, []);
-
   return {
-    // State
-    messages,
-    coachingLoading,
-    askLoading,
-    floatingAlert,
-    setFloatingAlert,
-    askQuestion,
-    setAskQuestion,
-    feedRef,
-    currentStep,
-
-    // Actions
-    requestCoaching,
-    askCopilot,
-    scheduleCoaching,
-    clearFeed,
-    pushFeedEntry,
-
-    // From log context (pass through)
-    setEntryFeedback,
-    exportFeedbackDataset,
-    logEntry,
-    entries,
+    messages, coachingLoading, askLoading,
+    floatingAlert, setFloatingAlert,
+    askQuestion, setAskQuestion,
+    feedRef, currentStep,
+    requestCoaching, askCopilot, scheduleCoaching,
+    clearFeed, pushFeedEntry,
+    setEntryFeedback, exportFeedbackDataset, logEntry, entries,
   };
 }
