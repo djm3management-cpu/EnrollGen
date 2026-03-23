@@ -188,6 +188,8 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     transcriptRows,
     interimText,
     supportsRecognition,
+    start: startListening,
+    stop: stopListening,
     startListening,
     stopListening,
     clearTranscript,
