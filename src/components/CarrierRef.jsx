@@ -467,43 +467,41 @@ export default function CarrierRef() {
 
   useEffect(() => {
     if (!selected) return;
-    if (acaIssuers[selected]) return;
+    if (Object.prototype.hasOwnProperty.call(acaIssuers, selected)) return;
+
+    // FFE issuer scans on qhp_landscape_2026 time out for large states.
+    // Keep expansion-state Carrier Ref stable by only doing live issuer fetches
+    // against the smaller SBE tables.
+    if (!SBE_TABLES[selected]) {
+      setAcaIssuers((prev) => ({ ...prev, [selected]: [] }));
+      return;
+    }
 
     (async () => {
       try {
         const issuers = new Set();
 
-        if (SBE_TABLES[selected]) {
-          const { data } = await supabase
-            .from(SBE_TABLES[selected])
-            .select("issuer_id")
-            .eq("market_coverage", "Individual");
-          if (data) {
-            for (const r of data) if (r.issuer_id) issuers.add(String(r.issuer_id));
-          }
-        } else {
-          let from = 0;
-          while (true) {
-            const { data } = await supabase
-              .from("qhp_landscape_2026")
-              .select("issuer_name")
-              .eq("state_code", selected)
-              .range(from, from + 999);
-            if (!data || data.length === 0) break;
-            for (const r of data) if (r.issuer_name) issuers.add(r.issuer_name);
-            if (data.length < 1000) break;
-            from += 1000;
-          }
+        const { data, error } = await supabase
+          .from(SBE_TABLES[selected])
+          .select("issuer_id")
+          .eq("market_coverage", "Individual");
+
+        if (error) throw error;
+
+        if (data) {
+          for (const r of data) if (r.issuer_id) issuers.add(String(r.issuer_id));
         }
 
         setAcaIssuers((prev) => ({ ...prev, [selected]: [...issuers].sort() }));
       } catch (err) {
         console.error("[CarrierRef] ACA issuer fetch error:", err);
+        setAcaIssuers((prev) => ({ ...prev, [selected]: [] }));
       }
     })();
-  }, [selected]);
+  }, [selected, acaIssuers]);
 
   const query = search.toLowerCase().trim();
+  const selectedAcaTool = selected ? (TOOLS.ACA.byState[selected] || TOOLS.ACA.default) : TOOLS.ACA.default;
 
   const matchedStates = useMemo(() => {
     if (!query) return ACTIVE;
@@ -977,7 +975,9 @@ export default function CarrierRef() {
                 {hovered}
               </div>
               <div style={{ fontSize: "0.65rem", color: "#8A8A9A" }}>
-                ACA data available{acaIssuers[hovered] ? ` · ${acaIssuers[hovered].length} issuers` : ""} · Click for details
+                {SBE_TABLES[hovered]
+                  ? `ACA issuer list${acaIssuers[hovered]?.length ? ` · ${acaIssuers[hovered].length} issuers` : ""} · Click for details`
+                  : "Marketplace overview · Click for details"}
               </div>
             </div>
           )}
@@ -1101,28 +1101,75 @@ export default function CarrierRef() {
               </button>
             </div>
 
-            <div style={{
-              borderRadius: 10, padding: "12px 14px",
-              border: "1px solid rgba(249,115,22,0.15)",
-              background: "rgba(249,115,22,0.04)",
-              textAlign: "center",
-            }}>
+            {SBE_TABLES[selected] ? (
               <div style={{
-                fontFamily: "'IBM Plex Mono', monospace", fontSize: "1.4rem",
-                fontWeight: 800, color: "#F97316",
+                borderRadius: 10, padding: "12px 14px",
+                border: "1px solid rgba(249,115,22,0.15)",
+                background: "rgba(249,115,22,0.04)",
+                textAlign: "center",
               }}>
-                {acaIssuers[selected]?.length || 0}
+                <div style={{
+                  fontFamily: "'IBM Plex Mono', monospace", fontSize: "1.4rem",
+                  fontWeight: 800, color: "#F97316",
+                }}>
+                  {acaIssuers[selected]?.length || 0}
+                </div>
+                <div style={{
+                  fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.56rem",
+                  fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
+                  color: "#5A5A6A", marginTop: 2,
+                }}>
+                  ACA Issuers
+                </div>
               </div>
+            ) : (
               <div style={{
-                fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.56rem",
-                fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
-                color: "#5A5A6A", marginTop: 2,
+                borderRadius: 14,
+                border: "1px solid rgba(249,115,22,0.18)",
+                background: "rgba(249,115,22,0.04)",
+                padding: "12px 14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
               }}>
-                ACA Issuers
+                <div style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 800,
+                  fontSize: "0.68rem",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#F97316",
+                }}>
+                  Marketplace Lookup
+                </div>
+                <div style={{ fontSize: "0.72rem", color: "#8A8A9A", lineHeight: 1.55 }}>
+                  Live issuer scans are disabled here to avoid QHP table timeouts. Use the marketplace link below for current carriers and plan details.
+                </div>
+                <a
+                  href={selectedAcaTool.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    alignSelf: "flex-start",
+                    padding: "5px 10px",
+                    borderRadius: 999,
+                    border: "1px solid rgba(249,115,22,0.25)",
+                    background: "rgba(249,115,22,0.08)",
+                    color: "#F97316",
+                    textDecoration: "none",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700,
+                    fontSize: "0.6rem",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {selectedAcaTool.name} ↗
+                </a>
               </div>
-            </div>
+            )}
 
-            {acaIssuers[selected]?.length > 0 && (
+            {SBE_TABLES[selected] && acaIssuers[selected]?.length > 0 && (
               <div style={{
                 borderRadius: 14, border: "1px solid rgba(249,115,22,0.25)",
                 background: "linear-gradient(145deg, rgba(249,115,22,0.06) 0%, rgba(10,10,12,0.99) 100%)",

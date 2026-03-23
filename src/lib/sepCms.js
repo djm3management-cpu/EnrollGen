@@ -6,7 +6,7 @@
   those functions.
 */
 
-import { supabase } from "./supabase";
+import { supabaseCms } from "./supabase";
 
 const CMS_TABLE = "cms_plans_PY2026";
 const PAGE_SIZE = 5000;
@@ -30,7 +30,7 @@ async function fetchPagedRows(makeQuery) {
 
 async function fetchCountiesDirect(state) {
   const rows = await fetchPagedRows((from, to) =>
-    supabase
+    supabaseCms
       .from(CMS_TABLE)
       .select('"County Name"')
       .eq("State Territory Abbreviation", state)
@@ -43,7 +43,7 @@ async function fetchCountiesDirect(state) {
 
 async function fetchPlansDirect(state, county) {
   return fetchPagedRows((from, to) =>
-    supabase
+    supabaseCms
       .from(CMS_TABLE)
       .select("*")
       .eq("State Territory Abbreviation", state)
@@ -55,7 +55,7 @@ async function fetchPlansDirect(state, county) {
 
 async function fetchCountyPlanCountsDirect(state) {
   const rows = await fetchPagedRows((from, to) =>
-    supabase
+    supabaseCms
       .from(CMS_TABLE)
       .select('"County Name", "Contract ID", "Plan ID"')
       .eq("State Territory Abbreviation", state)
@@ -85,7 +85,7 @@ async function fetchCountyPlanCountsDirect(state) {
 export async function fetchCountiesForState(state) {
   if (!state) return [];
 
-  const { data, error } = await supabase.rpc("get_counties_for_state", { p_state: state });
+  const { data, error } = await supabaseCms.rpc("get_counties_for_state", { p_state: state });
   if (!error && data?.length) {
     return data.map((r) => r.county_name).filter(Boolean);
   }
@@ -105,7 +105,7 @@ export async function fetchCountiesForState(state) {
 export async function fetchPlansFromSupabase(state, county) {
   if (!state || !county) return [];
 
-  const { data, error } = await supabase.rpc("get_plans_for_county", { p_state: state, p_county: county });
+  const { data, error } = await supabaseCms.rpc("get_plans_for_county", { p_state: state, p_county: county });
   if (!error && data?.length) {
     return data;
   }
@@ -125,7 +125,7 @@ export async function fetchPlansFromSupabase(state, county) {
 export async function fetchCountyPlanCounts(state) {
   if (!state) return {};
 
-  const { data, error } = await supabase.rpc("get_county_plan_counts", { p_state: state });
+  const { data, error } = await supabaseCms.rpc("get_county_plan_counts", { p_state: state });
   if (!error && data?.length) {
     const counts = {};
     for (const row of data) {
