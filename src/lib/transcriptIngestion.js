@@ -1,4 +1,4 @@
-import { supabaseTranscripts as supabase } from "./supabaseTranscripts";
+import { supabase } from "./supabase";
 import { getQueryEmbedding } from "./embeddings";
 
 const TOPIC_KEYWORDS = {
