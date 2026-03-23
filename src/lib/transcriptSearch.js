@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabaseTranscripts as supabase } from "./supabaseTranscripts";
 import { getQueryEmbedding } from "./embeddings";
 
 const DEFAULT_REAL_SYSTEMS = ["conversely", "enrollhere", "manual"];
