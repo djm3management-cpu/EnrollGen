@@ -22,6 +22,7 @@ const loadDecisionTree = () => import("./components/DecisionTree");
 const loadCarrierRef = () => import("./components/CarrierRef");
 const loadCallHistory = () => import("./components/CallHistory");
 const loadDailyVerse = () => import("./components/DailyVerse");
+const loadACAIntelligence = () => import("./components/ACAIntelligence");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -39,6 +40,7 @@ const DecisionTree = lazy(loadDecisionTree);
 const CarrierRef = lazy(loadCarrierRef);
 const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
+const ACAIntelligence = lazy(loadACAIntelligence);
 
 /* ── Daily Verse accordion wrapper for main flow ── */
 function DailyVerseAccordion() {
@@ -590,6 +592,10 @@ function AppContent() {
       loadCarrierRef();
       return;
     }
+    if (targetTab === "acaIntel") {
+      loadACAIntelligence();
+      return;
+    }
     if (targetTab === "history") {
       loadCallHistory();
     }
@@ -747,6 +753,16 @@ function AppContent() {
                 Objections
               </AppTabButton>
             )}
+            {mode === "aca" && (
+              <AppTabButton
+                activeTab={tab}
+                tabId="acaIntel"
+                onSelect={handleTabChange}
+                onPreload={() => preloadTab("acaIntel")}
+              >
+                ACA Intelligence
+              </AppTabButton>
+            )}
             <AppTabButton
               activeTab={tab}
               tabId="decisionTree"
@@ -859,6 +875,12 @@ function AppContent() {
           {mode === "aca" && tab === "script" && (
             <LazyPanel>
               <ACAScript />
+            </LazyPanel>
+          )}
+
+          {mode === "aca" && tab === "acaIntel" && (
+            <LazyPanel>
+              <ACAIntelligence />
             </LazyPanel>
           )}
 

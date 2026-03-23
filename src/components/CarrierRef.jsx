@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   STATES,
   MARKET_SEGMENTS,
@@ -7,8 +7,13 @@ import {
   CARRIER_URLS,
 } from "../data/stateCarrierData";
 import STATE_PATHS, { STATE_CENTROIDS } from "../data/usMapPaths";
+import { supabase } from "../lib/supabase";
 
 const ACTIVE = new Set(Object.keys(STATES));
+
+/* SBE states with their own tables (not in qhp_landscape_2026) */
+const SBE_TABLES = { NJ: "sbe_plans_nj_2025", PA: "sbe_plans_pa_2025", VA: "sbe_plans_va_2025" };
+
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 function carriers(data, segId) {
@@ -246,7 +251,7 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
 }
 
 /* ── State Sidebar ────────────────────────────────────────────────── */
-function StateSidebar({ code, onClose }) {
+function StateSidebar({ code, onClose, acaIssuers }) {
   const data = STATES[code];
   if (!data) return null;
 
@@ -384,6 +389,34 @@ function StateSidebar({ code, onClose }) {
         />
       ))}
 
+      {acaIssuers?.length > 0 && (
+        <div style={{
+          borderRadius: 14, border: "1px solid rgba(249,115,22,0.2)",
+          background: "rgba(249,115,22,0.03)", padding: "10px 14px",
+        }}>
+          <div style={{
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
+            fontSize: "0.62rem", letterSpacing: "0.1em", textTransform: "uppercase",
+            color: "#F97316", marginBottom: 8,
+          }}>
+            Live ACA Issuers ({acaIssuers.length})
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {acaIssuers.map((iss) => (
+              <span key={iss} style={{
+                padding: "2px 8px", borderRadius: 999,
+                background: "rgba(249,115,22,0.08)",
+                border: "1px solid rgba(249,115,22,0.15)",
+                fontSize: "0.64rem", color: "#D6DFE9",
+                fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
+              }}>
+                {iss}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {data.acaSource && (
         <a
           href={data.acaSource}
@@ -420,6 +453,56 @@ export default function CarrierRef() {
   const [search, setSearch] = useState("");
   const [activeSeg, setActiveSeg] = useState(null);
 
+  /* Every state on the map that is NOT in NGHS ACTIVE = orange expansion state */
+  const acaExpansionStates = useMemo(() => {
+    const set = new Set();
+    for (const code of Object.keys(STATE_PATHS)) {
+      if (!ACTIVE.has(code)) set.add(code);
+    }
+    return set;
+  }, []);
+
+  /* ACA issuers cache — fetched on-demand when a state is selected */
+  const [acaIssuers, setAcaIssuers] = useState({});
+
+  useEffect(() => {
+    if (!selected) return;
+    if (acaIssuers[selected]) return;
+
+    (async () => {
+      try {
+        const issuers = new Set();
+
+        if (SBE_TABLES[selected]) {
+          const { data } = await supabase
+            .from(SBE_TABLES[selected])
+            .select("issuer_id")
+            .eq("market_coverage", "Individual");
+          if (data) {
+            for (const r of data) if (r.issuer_id) issuers.add(String(r.issuer_id));
+          }
+        } else {
+          let from = 0;
+          while (true) {
+            const { data } = await supabase
+              .from("qhp_landscape_2026")
+              .select("issuer_name")
+              .eq("state_code", selected)
+              .range(from, from + 999);
+            if (!data || data.length === 0) break;
+            for (const r of data) if (r.issuer_name) issuers.add(r.issuer_name);
+            if (data.length < 1000) break;
+            from += 1000;
+          }
+        }
+
+        setAcaIssuers((prev) => ({ ...prev, [selected]: [...issuers].sort() }));
+      } catch (err) {
+        console.error("[CarrierRef] ACA issuer fetch error:", err);
+      }
+    })();
+  }, [selected]);
+
   const query = search.toLowerCase().trim();
 
   const matchedStates = useMemo(() => {
@@ -446,9 +529,41 @@ export default function CarrierRef() {
   /* Determine fill/stroke for each state */
   function stateStyle(code) {
     const isActive = ACTIVE.has(code);
+    const isExpansion = acaExpansionStates.has(code);
     const isMatch = isActive && matchedStates.has(code);
     const isSel = selected === code;
     const isHov = hovered === code;
+
+    /* Expansion states (non-NGHS with ACA data): orange tint */
+    if (!isActive && isExpansion) {
+      const sel = selected === code;
+      const hov = hovered === code;
+      if (sel) {
+        return {
+          fill: "rgba(249,115,22,0.35)",
+          stroke: "#F97316",
+          strokeWidth: 2,
+          cursor: "pointer",
+          filter: "url(#map-glow)",
+        };
+      }
+      if (hov) {
+        return {
+          fill: "rgba(249,115,22,0.22)",
+          stroke: "rgba(249,115,22,0.7)",
+          strokeWidth: 1.5,
+          cursor: "pointer",
+          filter: "url(#map-glow-subtle)",
+        };
+      }
+      return {
+        fill: "rgba(249,115,22,0.08)",
+        stroke: "rgba(249,115,22,0.25)",
+        strokeWidth: 0.8,
+        cursor: "pointer",
+        filter: undefined,
+      };
+    }
 
     if (!isActive) {
       return {
@@ -651,7 +766,9 @@ export default function CarrierRef() {
             {Object.entries(STATE_PATHS).map(([code, d]) => {
               const style = stateStyle(code);
               const isActive = ACTIVE.has(code);
+              const isExpansion = acaExpansionStates.has(code);
               const isMatch = isActive && matchedStates.has(code);
+              const isClickable = (isActive && isMatch) || isExpansion;
 
               return (
                 <path
@@ -667,18 +784,18 @@ export default function CarrierRef() {
                     transition: "fill 0.15s ease, stroke 0.15s ease",
                   }}
                   onClick={() => {
-                    if (isActive && isMatch)
+                    if (isClickable)
                       setSelected(selected === code ? null : code);
                   }}
                   onMouseEnter={(e) => {
-                    if (isActive && isMatch) {
+                    if (isClickable) {
                       setHovered(code);
                       const rect = e.currentTarget.closest("svg").getBoundingClientRect();
                       setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
                     }
                   }}
                   onMouseMove={(e) => {
-                    if (isActive && isMatch) {
+                    if (isClickable) {
                       const rect = e.currentTarget.closest("svg").getBoundingClientRect();
                       setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
                     }
@@ -746,7 +863,7 @@ export default function CarrierRef() {
             })}
           </svg>
 
-          {/* Hover tooltip */}
+          {/* Hover tooltip — NGHS active states */}
           {hovered && STATES[hovered] && (
             <div
               style={{
@@ -829,6 +946,42 @@ export default function CarrierRef() {
             </div>
           )}
 
+          {/* Hover tooltip — expansion states (ACA data only) */}
+          {hovered && !STATES[hovered] && acaExpansionStates.has(hovered) && (
+            <div
+              style={{
+                position: "absolute",
+                left: mousePos.x + 14,
+                top: mousePos.y - 10,
+                pointerEvents: "none",
+                zIndex: 20,
+                background: "linear-gradient(145deg, rgba(22,22,28,0.97) 0%, rgba(12,12,14,0.98) 100%)",
+                border: "1px solid rgba(249,115,22,0.2)",
+                borderRadius: 12,
+                padding: "10px 14px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)",
+                minWidth: 140,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 800,
+                  fontSize: "0.82rem",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "#F97316",
+                  marginBottom: 4,
+                }}
+              >
+                {hovered}
+              </div>
+              <div style={{ fontSize: "0.65rem", color: "#8A8A9A" }}>
+                ACA data available{acaIssuers[hovered] ? ` · ${acaIssuers[hovered].length} issuers` : ""} · Click for details
+              </div>
+            </div>
+          )}
+
           {/* Map legend bar */}
           <div
             style={{
@@ -869,6 +1022,19 @@ export default function CarrierRef() {
                     width: 14,
                     height: 10,
                     borderRadius: 3,
+                    background: "rgba(249,115,22,0.12)",
+                    border: "1px solid rgba(249,115,22,0.35)",
+                  }}
+                />
+                ACA Data
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 14,
+                    height: 10,
+                    borderRadius: 3,
                     background: "#141418",
                     border: "1px solid rgba(255,255,255,0.08)",
                   }}
@@ -889,9 +1055,112 @@ export default function CarrierRef() {
           </div>
         </section>
 
-        {/* Sidebar */}
+        {/* Sidebar — NGHS active states */}
         {selected && STATES[selected] && (
-          <StateSidebar key={selected} code={selected} onClose={() => setSelected(null)} />
+          <StateSidebar key={selected} code={selected} onClose={() => setSelected(null)} acaIssuers={acaIssuers[selected]} />
+        )}
+
+        {/* Sidebar — ACA expansion states (not in NGHS) */}
+        {selected && !STATES[selected] && acaExpansionStates.has(selected) && (
+          <aside
+            className="card carrier-ref-sidebar"
+            style={{
+              padding: "18px 16px",
+              background: "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <div style={{
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
+                  fontSize: "0.56rem", letterSpacing: "0.14em", textTransform: "uppercase",
+                  color: "#F97316", marginBottom: 3,
+                }}>
+                  {selected} · {SBE_TABLES[selected] ? "State-Based Exchange" : "Federal Exchange"}
+                </div>
+                <h3 style={{
+                  margin: 0, color: "#F0F0F0", fontSize: "1.15rem",
+                  letterSpacing: "0.05em", textTransform: "uppercase",
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
+                }}>
+                  ACA Market Data
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelected(null)}
+                style={{
+                  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 8, color: "#8A8A9A", cursor: "pointer",
+                  padding: "4px 8px", fontSize: "0.7rem", fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{
+              borderRadius: 10, padding: "12px 14px",
+              border: "1px solid rgba(249,115,22,0.15)",
+              background: "rgba(249,115,22,0.04)",
+              textAlign: "center",
+            }}>
+              <div style={{
+                fontFamily: "'IBM Plex Mono', monospace", fontSize: "1.4rem",
+                fontWeight: 800, color: "#F97316",
+              }}>
+                {acaIssuers[selected]?.length || 0}
+              </div>
+              <div style={{
+                fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.56rem",
+                fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
+                color: "#5A5A6A", marginTop: 2,
+              }}>
+                ACA Issuers
+              </div>
+            </div>
+
+            {acaIssuers[selected]?.length > 0 && (
+              <div style={{
+                borderRadius: 14, border: "1px solid rgba(249,115,22,0.25)",
+                background: "linear-gradient(145deg, rgba(249,115,22,0.06) 0%, rgba(10,10,12,0.99) 100%)",
+                padding: "12px 14px",
+              }}>
+                <div style={{
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
+                  fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase",
+                  color: "#F97316", marginBottom: 10,
+                }}>
+                  Issuers
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                  {acaIssuers[selected].map((iss) => (
+                    <span
+                      key={iss}
+                      style={{
+                        padding: "3px 9px", borderRadius: 999,
+                        background: "rgba(249,115,22,0.1)",
+                        border: "1px solid rgba(249,115,22,0.2)",
+                        fontSize: "0.7rem", color: "#D6DFE9",
+                        fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
+                      }}
+                    >
+                      {iss}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{
+              fontSize: "0.62rem", color: "#3A3A4A", textAlign: "center",
+              fontFamily: "'IBM Plex Mono', monospace",
+            }}>
+              Not an active NGHS state · ACA data only
+            </div>
+          </aside>
         )}
       </div>
 

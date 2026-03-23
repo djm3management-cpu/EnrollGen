@@ -9,7 +9,7 @@
  * compliance score calculation.
  */
 
-import { useCallback, useMemo, useEffect, useRef } from "react";
+import { useCallback, useMemo, useEffect, useRef, useState } from "react";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import {
@@ -24,6 +24,7 @@ import {
   formatSectionDuration,
   makeIsHighRisk,
 } from "./useCopilotEngineCore";
+import { lookupPlanSummary, formatPlanSummaryForPrompt } from "../lib/acaPlanLookup";
 import {
   ACA_COMPLIANCE_KNOWLEDGE,
   ACA_SECTION_LABELS,
@@ -261,6 +262,7 @@ HOW TO USE THIS CONTEXT:
 - Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
 - Use derivedSignals for broader patterns: subsidyCliffRisk, medicaidLikely, csrEligible, sepValid, sepExpiringSoon.
 - Use priorCompletedGates to understand what the agent has already finished.
+- If planData is present, use it to ground your coaching with real market data (plan counts, premium/deductible ranges by metal tier). Do NOT quote exact dollar amounts to the agent — use ranges and tier comparisons.
 
 ════════════════════════════════════════════════════════
 EMPTY OR SPARSE TRANSCRIPT:
@@ -331,11 +333,10 @@ YOUR CAPABILITIES:
 - Enrollment process compliance
 
 HARD BOUNDARY — DO NOT ANSWER:
-- Specific plan premiums or costs → tell agent to check exchange platform
 - Whether a specific provider is in-network → direct to plan's provider directory
 - Specific drug formulary/tier info → direct to plan's formulary tool
 - Exact subsidy amounts → tell agent to run calculation on exchange platform
-Do NOT guess plan-specific data. Always redirect to the authoritative tool.
+If planData is present in the context, you CAN reference plan counts and premium/deductible ranges by metal tier. Do NOT invent specific plan names or exact costs beyond what the data shows.
 
 RESPONSE RULES:
 - Keep answers concise and actionable
@@ -377,6 +378,22 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
     buildContextSignature: buildPeriodicContextSignature,
   });
 
+  /* ─── Plan data lookup (fires once at Gate 4+) ─── */
+  const [planSummary, setPlanSummary] = useState(null);
+  const planFetchedRef = useRef(false);
+  useEffect(() => {
+    if (activeGate >= 4 && !planFetchedRef.current) {
+      planFetchedRef.current = true;
+      const stCode = state.stateCode || state.state || "";
+      const county = state.county || state.countyName || "";
+      if (stCode) {
+        lookupPlanSummary(stCode, county).then((s) => {
+          if (s) setPlanSummary(s);
+        });
+      }
+    }
+  }, [activeGate, state.stateCode, state.state, state.county, state.countyName]);
+
   const emptyRetrievalTrace = {
     topics: [],
     scenarios: [],
@@ -398,8 +415,9 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
       derivedSignals: buildAcaDerivedSignals(
         state, activeGate, transcriptRef.current.trim(), recentInterventions
       ),
+      ...(planSummary ? { planData: formatPlanSummaryForPrompt(planSummary) } : {}),
     };
-  }, [activeGate, currentStep, state, transcriptRef]);
+  }, [activeGate, currentStep, state, transcriptRef, planSummary]);
 
   /* ═══════ COACHING ═══════ */
   const requestCoaching = useCallback(async ({

@@ -12,7 +12,8 @@
  *   - Two products: EnrollPrime/AFI (PPO) and PALIC HSP Gold (indemnity)
  */
 
-import { useCallback, useMemo, useEffect, useRef } from "react";
+import { useCallback, useMemo, useEffect, useRef, useState } from "react";
+import { lookupAcaBenchmark, formatBenchmarkForPrompt } from "../lib/acaBenchmarkLookup";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import {
@@ -277,6 +278,7 @@ HOW TO USE THIS CONTEXT:
 - selectedProducts shows what the agent has selected to present.
 - mecDisclosureAcknowledged indicates if the mandatory NOT-MEC disclosure has been given.
 - derivedSignals.subsidyCliffClient, cobraActive, aetnaExitAffected provide client situation context.
+- If acaBenchmark is present, it contains real ACA Silver benchmark and Bronze premiums for the client's area. Use this to coach the agent on concrete subsidy cliff comparisons: "Without enhanced PTCs, ACA costs $X/mo vs. off-exchange at $Y/mo." Do NOT read raw numbers to the agent — frame them as talking points.
 
 ════════════════════════════════════════════════════════
 EMPTY OR SPARSE TRANSCRIPT:
@@ -451,6 +453,20 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
     if (activeGate !== 3) highRiskFiredRef.current = false;
   }, [activeGate, state.uwRisk, showFloat]);
 
+  /* ─── ACA benchmark lookup (fires once when location is captured) ─── */
+  const [acaBenchmark, setAcaBenchmark] = useState(null);
+  const benchmarkFetchedRef = useRef(false);
+  const clientState = state.clientProfile?.state;
+  const clientCounty = state.clientProfile?.county;
+  useEffect(() => {
+    if (clientState && !benchmarkFetchedRef.current) {
+      benchmarkFetchedRef.current = true;
+      lookupAcaBenchmark(clientState, clientCounty).then((b) => {
+        if (b) setAcaBenchmark(b);
+      });
+    }
+  }, [clientState, clientCounty]);
+
   /* ═══════ COACHING ═══════ */
   const requestCoaching = useCallback(async ({
     manual = false, sectionEntry = false, forceShortChunk = false,
@@ -514,6 +530,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
       checklistState: buildU65ChecklistState(state, activeGate),
       priorCompletedGates: buildCompletedGateHistory(state),
       derivedSignals,
+      ...(acaBenchmark ? { acaBenchmark: formatBenchmarkForPrompt(acaBenchmark) } : {}),
     };
     const copilotContextJson = JSON.stringify(copilotContext, null, 2);
 
@@ -651,7 +668,7 @@ SECTION CONTEXT (rolling window):
       if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
       setCoachingLoading(false);
     }
-  }, [activeGate, currentStep, coachingLoading, knowledge, showFloat, pushFeedEntry, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, silentHeartbeatMs, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading]);
+  }, [activeGate, currentStep, coachingLoading, knowledge, showFloat, pushFeedEntry, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, silentHeartbeatMs, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, acaBenchmark]);
 
   // Store latest requestCoaching for core's periodic timer and section-entry
   useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching, requestCoachingRef]);

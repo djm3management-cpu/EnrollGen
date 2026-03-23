@@ -16,6 +16,7 @@ import {
   parseAnthropicResponse, parseCoachingJson, buildTranscriptWindows,
   formatSectionDuration, makeIsHighRisk,
 } from "./useCopilotEngineCore";
+import { medicare2026, stateGIRules } from "../data/medicareReference2026";
 import {
   MEDSUP_COMPLIANCE_KNOWLEDGE, MEDSUP_SECTION_LABELS,
   MEDSUP_COACHING_DEBOUNCE_MS, MEDSUP_MIN_NEW_CHARS, MEDSUP_COOLDOWN_BY_LEVEL,
@@ -188,6 +189,21 @@ IMPORTANT MED SUP CONTEXT:
 - Agent cannot guarantee acceptance when underwriting is required
 - Replacement/switching compliance: cannot misrepresent benefits of switching carriers
 
+2026 MEDICARE COST-SHARING REFERENCE (use these verified CMS numbers):
+- Part A deductible: $1,736 | Part B deductible: $283 | Part B premium: $202.90/mo
+- Part A coinsurance days 61-90: $434/day | Lifetime reserve: $868/day
+- SNF coinsurance days 21-100: $217/day
+- Plan G covers: Part A deductible + Part A/B coinsurance + Part B excess + foreign travel emergency
+- Plan N covers: same as G minus Part B excess charges, with $20 office / $50 ER copays
+- High-deductible Plan G: $2,950 deductible before benefits kick in
+- Plan K OOP limit: $8,000 | Plan L OOP limit: $4,000
+- Part D OOP cap: $2,100 | Part D max deductible: $615 | Insulin cap: $35/mo
+
+STATE GI RULES (included in structured context as stateGIRules):
+- Year-round GI (no UW): CT, ME, MA, NJ, NY
+- Birthday rule states (annual 30-day window): CA, ID, IL, LA, NV, OK, OR
+- Federal OEP only: all other states — 6 months from Part B effective date at 65
+
 ════════════════════════════════════════════════════════
 CRITICAL AUDIO CONSTRAINT — NON-NEGOTIABLE
 ════════════════════════════════════════════════════════
@@ -221,6 +237,8 @@ HOW TO USE THIS CONTEXT:
 - Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
 - Use derivedSignals for broader patterns: timeInSectionMs, selectedBranch, likelyCoveredByParaphrase.
 - Use priorCompletedSections to understand what the agent has already finished.
+- medicareReference contains verified 2026 CMS cost-sharing amounts. Use these to coach the agent with accurate dollar figures when explaining what Medigap covers.
+- stateGIRules contains state-specific GI rules. If the agent mentions a state, check whether that state has year-round GI, a birthday rule, or federal OEP only — and coach accordingly.
 
 ════════════════════════════════════════════════════════
 EMPTY OR SPARSE TRANSCRIPT:
@@ -284,9 +302,9 @@ YOUR CAPABILITIES:
 - Medicare Supplement (Medigap) plan details and standardized benefits
 - Guaranteed Issue rights and qualifying events
 - Medigap Open Enrollment Period rules (6 months from Part B effective)
-- State-specific Medigap protections
+- State-specific Medigap protections (stateGIRules in context)
 - Underwriting requirements and disclosure rules
-- Plan comparison (G vs N vs HDG)
+- Plan comparison (G vs N vs HDG) with verified 2026 CMS cost-sharing numbers (medicareReference in context)
 - Replacement/switching compliance requirements
 - TPMO disclosure requirements
 
@@ -294,7 +312,7 @@ HARD BOUNDARY — DO NOT ANSWER:
 - Specific premium quotes → tell agent to check carrier rating tool
 - Whether a specific doctor accepts Medicare → direct to Medicare.gov provider lookup
 - Specific carrier underwriting criteria → direct to carrier guidelines
-Do NOT guess carrier-specific data. Always redirect to the authoritative tool.
+You CAN answer Medicare cost-sharing questions using the medicareReference data in context (Part A/B deductibles, coinsurance, MOOP limits). These are verified 2026 CMS numbers.
 
 RESPONSE RULES:
 - Keep answers concise and actionable
@@ -347,6 +365,8 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state }) 
       derivedSignals: buildDerivedSignals(
         state, activeSection, transcriptRef.current.trim(), recentInterventions
       ),
+      medicareReference: medicare2026,
+      stateGIRules,
     };
   }, [activeSection, currentStep, state, transcriptRef]);
 
