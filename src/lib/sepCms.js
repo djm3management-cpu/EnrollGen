@@ -1,39 +1,149 @@
 /*
   CMS / Supabase integration for SEP Lookup.
   Fetches county lists and plan data from cms_plans_PY2026.
+  Prefer RPC helpers when available, but fall back to direct table queries
+  so the county grid still works if the active Supabase project is missing
+  those functions.
 */
 
 import { supabase } from "./supabase";
 
+const CMS_TABLE = "cms_plans_PY2026";
+const PAGE_SIZE = 5000;
+
+async function fetchPagedRows(makeQuery) {
+  const rows = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await makeQuery(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+
+    rows.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+
+  return rows;
+}
+
+async function fetchCountiesDirect(state) {
+  const rows = await fetchPagedRows((from, to) =>
+    supabase
+      .from(CMS_TABLE)
+      .select('"County Name"')
+      .eq("State Territory Abbreviation", state)
+      .neq("County Name", "All Counties")
+      .range(from, to)
+  );
+
+  return [...new Set(rows.map((row) => row["County Name"]).filter(Boolean))].sort();
+}
+
+async function fetchPlansDirect(state, county) {
+  return fetchPagedRows((from, to) =>
+    supabase
+      .from(CMS_TABLE)
+      .select("*")
+      .eq("State Territory Abbreviation", state)
+      .in("County Name", [county, "All Counties"])
+      .neq("Sanctioned Plan", "Yes")
+      .range(from, to)
+  );
+}
+
+async function fetchCountyPlanCountsDirect(state) {
+  const rows = await fetchPagedRows((from, to) =>
+    supabase
+      .from(CMS_TABLE)
+      .select('"County Name", "Contract ID", "Plan ID"')
+      .eq("State Territory Abbreviation", state)
+      .neq("County Name", "All Counties")
+      .neq("Sanctioned Plan", "Yes")
+      .range(from, to)
+  );
+
+  const counts = {};
+  const seenByCounty = {};
+
+  for (const row of rows) {
+    const county = row["County Name"];
+    const key = `${row["Contract ID"]}-${row["Plan ID"]}`;
+    if (!county) continue;
+
+    if (!seenByCounty[county]) seenByCounty[county] = new Set();
+    if (seenByCounty[county].has(key)) continue;
+
+    seenByCounty[county].add(key);
+    counts[county] = (counts[county] || 0) + 1;
+  }
+
+  return counts;
+}
+
 export async function fetchCountiesForState(state) {
+  if (!state) return [];
+
   const { data, error } = await supabase.rpc("get_counties_for_state", { p_state: state });
+  if (!error && data?.length) {
+    return data.map((r) => r.county_name).filter(Boolean);
+  }
+
   if (error) {
-    console.error("Counties fetch error:", error);
+    console.warn("Counties RPC failed, falling back to direct query:", error);
+  }
+
+  try {
+    return await fetchCountiesDirect(state);
+  } catch (fallbackError) {
+    console.error("Counties fetch error:", fallbackError);
     return [];
   }
-  return (data || []).map((r) => r.county_name);
 }
 
 export async function fetchPlansFromSupabase(state, county) {
+  if (!state || !county) return [];
+
   const { data, error } = await supabase.rpc("get_plans_for_county", { p_state: state, p_county: county });
+  if (!error && data?.length) {
+    return data;
+  }
+
   if (error) {
-    console.error("Plans fetch error:", error);
+    console.warn("Plans RPC failed, falling back to direct query:", error);
+  }
+
+  try {
+    return await fetchPlansDirect(state, county);
+  } catch (fallbackError) {
+    console.error("Plans fetch error:", fallbackError);
     return [];
   }
-  return data || [];
 }
 
 export async function fetchCountyPlanCounts(state) {
+  if (!state) return {};
+
   const { data, error } = await supabase.rpc("get_county_plan_counts", { p_state: state });
+  if (!error && data?.length) {
+    const counts = {};
+    for (const row of data) {
+      counts[row.county_name] = Number(row.plan_count);
+    }
+    return counts;
+  }
+
   if (error) {
-    console.error("County plan counts error:", error);
+    console.warn("County counts RPC failed, falling back to direct query:", error);
+  }
+
+  try {
+    return await fetchCountyPlanCountsDirect(state);
+  } catch (fallbackError) {
+    console.error("County plan counts error:", fallbackError);
     return {};
   }
-  const counts = {};
-  for (const row of data || []) {
-    counts[row.county_name] = Number(row.plan_count);
-  }
-  return counts;
 }
 
 export function mapCarrierKey(parentOrg, contractName, orgMarketing) {
