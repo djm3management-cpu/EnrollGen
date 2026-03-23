@@ -27,11 +27,11 @@ function parseCSVLine(line) {
 
 (async () => {
   const client = new Client({
-    host: "db.nrycpjspndvcxpnhuuun.supabase.co",
+    host: "db.qzjtagnpklaxefwurorc.supabase.co",
     port: 5432,
     database: "postgres",
     user: "postgres",
-    password: "Attackoftheshow@1213",
+    password: process.env.SUPABASE_DB_PASSWORD,
     ssl: { rejectUnauthorized: false },
   });
   await client.connect();
