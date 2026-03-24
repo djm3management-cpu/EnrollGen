@@ -411,8 +411,12 @@ export default function AgentTools() {
 
       {matches.assist && (
         <div className="at-priority-tools">
-          <ObjectionHandler />
-          <DecisionTree singleCardMode embedded />
+          <Section title="Objection Handler" icon={<Shield size={15} />} searchMatch color="#f97316">
+            <ObjectionHandler />
+          </Section>
+          <Section title="Product Decision Tree" icon={<Zap size={15} />} searchMatch color="#a855f7">
+            <DecisionTree singleCardMode embedded />
+          </Section>
         </div>
       )}
 

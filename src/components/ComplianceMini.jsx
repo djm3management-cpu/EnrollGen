@@ -16,6 +16,7 @@ import {
 import { useScript } from "../context/ScriptContext";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { scoreLive } from "../context/ComplianceScorer";
+import { SECTION_LABELS } from "../context/scriptReducer";
 
 /**
  * ComplianceMini v2 — Floating score badge with transcript awareness
@@ -51,10 +52,10 @@ function renderCategoryIcon(icon, color = "#cbd5e1", size = 14) {
   return iconMap[icon] || <CheckSquare {...props} />;
 }
 
-const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
+const ComplianceMini = memo(function ComplianceMini({ transcript = "", activeSection = 1 }) {
   const { state } = useScript();
   const { entries } = useCopilotLog();
-  const [expanded, setExpanded] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [pulse, setPulse] = useState(false);
   const prevScoreRef = useRef(null);
 
@@ -77,83 +78,121 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
 
   const scoreColor = getScoreColor(result.score);
   const isDual = result.scoringMode === "dual";
+  const currentStep = Number.isInteger(activeSection)
+    ? activeSection
+    : Math.ceil(activeSection);
+  const sectionLabel = SECTION_LABELS[currentStep] || `Section ${currentStep}`;
 
   return (
     <div
       style={{
-        position: "fixed",
-        bottom: 84,
-        right: 18,
-        zIndex: 96,
-        display: "flex",
-        justifyContent: "flex-end",
-        pointerEvents: "none",
-        marginBottom: 0,
+        pointerEvents: "auto",
       }}
     >
       <div
-        onClick={() => setExpanded((p) => !p)}
         style={{
           pointerEvents: "auto",
           background: "linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%)",
           border: "1px solid rgba(255, 255, 255, 0.06)",
-          borderRadius: expanded ? 16 : 14,
-          padding: expanded ? "10px 12px 12px" : "10px 16px",
-          cursor: "pointer",
+          borderRadius: 16,
+          padding: "12px 14px 14px",
           backdropFilter: "blur(12px)",
           boxShadow:
             "inset 4px 4px 10px rgba(0, 0, 0, 0.42), inset -3px -3px 8px rgba(255, 255, 255, 0.02), 0 10px 24px rgba(0, 0, 0, 0.36)",
           transition: "all 0.25s ease",
-          minWidth: expanded ? 210 : "auto",
+          width: 230,
           animation: pulse ? "compliancePulse 0.6s ease" : "none",
         }}
       >
-        {/* Collapsed */}
-        {!expanded && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {result.categories.map((c) => (
-                <div
-                  key={c.name}
-                  title={`${c.name}: ${c.score}%`}
-                  style={{
-                    width: 4,
-                    height: 14,
-                    borderRadius: 1.5,
-                    background: getScoreColor(c.score),
-                    opacity: 0.85,
-                    transition: "all 0.4s",
-                  }}
-                />
-              ))}
-            </div>
+        {/* Section indicator */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginBottom: 10,
+            paddingBottom: 8,
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "#00ff41",
+              boxShadow: "0 0 6px rgba(0,255,65,0.6)",
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              fontSize: "0.68em",
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "#00ff41",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {currentStep}. {sectionLabel}
+          </span>
+        </div>
+
+        {/* Header — score + toggle */}
+        <div
+          onClick={() => setCollapsed((p) => !p)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            cursor: "pointer",
+            marginBottom: collapsed ? 0 : 8,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, marginRight: 8 }}>
             <span
               style={{
-                fontSize: "0.8em",
+                fontSize: "0.72em",
                 fontWeight: 800,
                 color: scoreColor,
                 fontVariantNumeric: "tabular-nums",
-                letterSpacing: "0.01em",
+                minWidth: 30,
               }}
             >
               {result.score}%
             </span>
-            <span
-              style={{ fontSize: "0.65em", color: "#8fa4bc", fontWeight: 700 }}
+            <div
+              style={{
+                flex: 1,
+                height: 6,
+                borderRadius: 3,
+                background: "rgba(255,255,255,0.06)",
+                overflow: "hidden",
+              }}
             >
+              <div
+                style={{
+                  width: `${result.score}%`,
+                  height: "100%",
+                  borderRadius: 3,
+                  background: `linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #34d399 100%)`,
+                  backgroundSize: "200% 100%",
+                  backgroundPosition: `${100 - result.score}% 0`,
+                  transition: "width 0.6s ease, background-position 0.6s ease",
+                }}
+              />
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: "0.58em", color: "#64748b" }}>
               {result.categoriesPassed}/{result.totalCategories}
             </span>
             {isDual && (
-              <span
-                style={{
-                  color: "#34d399",
-                  fontWeight: 600,
-                  display: "inline-flex",
-                  alignItems: "center",
-                }}
-              >
-                <Mic size={11} />
-              </span>
+              <Mic size={11} style={{ color: "#34d399" }} />
             )}
             {result.violations > 0 && (
               <span
@@ -162,76 +201,28 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
                   fontWeight: 700,
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 3,
+                  gap: 2,
+                  fontSize: "0.65em",
                 }}
               >
-                <AlertTriangle size={11} />
+                <AlertTriangle size={10} />
                 {result.violations}
               </span>
             )}
-          </div>
-        )}
-
-        {/* Expanded */}
-        {expanded && (
-          <div>
-            <div
+            <ChevronDown
+              size={12}
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 8,
+                color: "#64748b",
+                transition: "transform 0.2s",
+                transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
               }}
-            >
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                <span
-                  style={{
-                    fontSize: "1.2em",
-                    fontWeight: 800,
-                    color: scoreColor,
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {result.score}%
-                </span>
-                <span
-                  style={{
-                    fontSize: "0.75em",
-                    fontWeight: 700,
-                    color: scoreColor,
-                    opacity: 0.7,
-                  }}
-                >
-                  {result.grade}
-                </span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  gap: 1,
-                }}
-              >
-                <span style={{ fontSize: "0.58em", color: "#64748b" }}>
-                  {result.categoriesPassed}/{result.totalCategories} passed
-                </span>
-                {isDual && (
-                  <span
-                    style={{
-                      fontSize: "0.5em",
-                      color: "#34d399",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <Mic size={11} />
-                    Live · {result.transcriptCoverage}% coverage
-                  </span>
-                )}
-              </div>
-            </div>
+            />
+          </div>
+        </div>
+
+        {/* Category breakdown */}
+        {!collapsed && (
+          <div>
             {result.categories.map((c) => {
               const col = getScoreColor(c.score);
               return (
@@ -301,6 +292,21 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
                 </div>
               );
             })}
+            {isDual && (
+              <div
+                style={{
+                  marginTop: 4,
+                  fontSize: "0.5em",
+                  color: "#34d399",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <Mic size={10} />
+                Live · {result.transcriptCoverage}% coverage
+              </div>
+            )}
             {result.violations > 0 && (
               <div
                 style={{
@@ -318,9 +324,8 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "" }) {
                   style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                 >
                   <AlertTriangle size={11} />
-                  {result.violations} violation
+                  {result.violations} violation{result.violations !== 1 ? "s" : ""} detected
                 </span>
-                {result.violations !== 1 ? "s" : ""} detected in transcript
               </div>
             )}
           </div>

@@ -20,7 +20,7 @@ CALL CONTEXT (use this to tailor your response):
 - Plan type / SNP: ${state.snpType || "standard MA"}
 - Agent name: ${state.agentName || "not set"}
 
-Respond with ONLY a valid JSON object — no extra text, no markdown:
+Respond with ONLY a valid JSON object. No extra text, no backticks, no wrapper.
 {
   "rebuttal": "The exact word-for-word sentence the agent should say right now.",
   "followup": "A follow-up question to re-engage the client after the rebuttal.",
@@ -28,12 +28,12 @@ Respond with ONLY a valid JSON object — no extra text, no markdown:
 }
 
 Rules:
-- Tailor the rebuttal to the current section and plan context — not a generic response
-- "rebuttal" must be warm, natural, conversational — not robotic or salesy
-- "rebuttal" should acknowledge the objection before pivoting
-- "followup" should be an open-ended question that gets them talking
-- "tip" is private coaching for the agent — short, under 10 words
-- No markdown, no asterisks, plain text only`;
+Tailor the rebuttal to the current section and plan context, not a generic response.
+The rebuttal must be warm, natural, conversational, not robotic or salesy.
+The rebuttal should acknowledge the objection before pivoting.
+The followup should be an open-ended question that gets them talking.
+The tip is private coaching for the agent, short, under 10 words.
+CRITICAL FORMATTING: Plain text only. No markdown, no asterisks, no dashes, no bullet points, no emojis, no special characters. Write natural conversational sentences.`;
 }
 
 const FALLBACK_REBUTTAL =

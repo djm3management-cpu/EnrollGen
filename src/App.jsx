@@ -1,10 +1,10 @@
-import { lazy, Suspense, useState, startTransition } from "react";
+import { lazy, Suspense, useState, useEffect, useRef, useCallback, startTransition } from "react";
 import EnrollGenLogo from "./components/EnrollGenLogo";
 import { ScriptProvider } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
 import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Menu, X } from "lucide-react";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
@@ -534,6 +534,28 @@ function ProfileBar() {
 function AppContent() {
   const [tab, setTab] = useState("script");
   const [mode, setMode] = useState("ma");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarRef = useRef(null);
+
+  // Close sidebar on outside click (mobile)
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const handler = (e) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+        setSidebarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [sidebarOpen]);
+
+  // Close sidebar on Escape
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const handler = (e) => { if (e.key === "Escape") setSidebarOpen(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [sidebarOpen]);
   const activeTab = COMPLIANCE_HUB_TAB_IDS.has(tab)
     ? "complianceHub"
     : AGENT_TOOLS_TAB_IDS.has(tab)
@@ -635,182 +657,95 @@ function AppContent() {
     <>
       <div className="viewport-bg" />
       <div className="app-shell">
-        <div className="app">
-          <div
-            style={{
-              position: "relative",
-              width: "100%",
-              height: 72,
-              marginBottom: 2,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                left: "50%",
-                top: "50%",
-                transform: "translate(-50%, -50%)",
-                display: "flex",
-                justifyContent: "center",
-                zIndex: 50,
-              }}
-            >
-              <EnrollGenLogo
-                width={230}
-                className="app-logo"
-                style={{ margin: 0 }}
-                onClick={handleLogoClick}
-                title="Refresh and return to the main page"
-              />
-            </div>
+        {/* ── HAMBURGER BUTTON (visible <1024px) ── */}
+        <button
+          className="sidebar-hamburger"
+          onClick={() => setSidebarOpen((p) => !p)}
+          aria-label="Toggle navigation"
+        >
+          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
 
-            {!LOGIN_DISABLED && (
-              <div
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  zIndex: 10,
-                }}
-              >
-                <ProfileBar />
-              </div>
-            )}
+        {/* Scrim behind sidebar on mobile */}
+        {sidebarOpen && <div className="sidebar-scrim" onClick={() => setSidebarOpen(false)} />}
 
-            <div
-              style={{
-                position: "absolute",
-                right: 0,
-                top: "50%",
-                transform: "translateY(-50%)",
-                zIndex: 10,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <FlowSelector mode={mode} onChange={handleModeChange} />
-            </div>
+        {/* ── LEFT SIDEBAR ── */}
+        <aside ref={sidebarRef} className={`app-sidebar${sidebarOpen ? " mobile-open" : ""}`}>
+          <div className="sidebar-top">
+            <EnrollGenLogo
+              width={150}
+              className="sidebar-logo"
+              style={{ margin: 0 }}
+              onClick={handleLogoClick}
+              title="Refresh and return to the main page"
+            />
+
+            <FlowSelector mode={mode} onChange={handleModeChange} />
+
           </div>
 
-          <div style={{ display: "none", justifyContent: "center", marginBottom: 8 }}>
-            {(() => {
-              const flowMeta = {
-                ma:     { color: "#E8002D", rgb: "232,0,45",   label: "MEDICARE ADVANTAGE" },
-                medsup: { color: "#00D166", rgb: "0,209,102",  label: "MEDICARE SUPPLEMENT" },
-                aca:    { color: "#EAB308", rgb: "234,179,8",  label: "ACA ON-EXCHANGE" },
-                u65:    { color: "#a855f7", rgb: "168,85,247", label: "U65 OFF-EXCHANGE" },
-              };
-              const { color, rgb, label } = flowMeta[mode] || flowMeta.ma;
-              return (
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 700,
-                    letterSpacing: "0.16em",
-                    textTransform: "uppercase",
-                    padding: "4px 14px",
-                    borderRadius: 3,
-                    background: `rgba(${rgb},0.07)`,
-                    border: `1px solid rgba(${rgb},0.2)`,
-                    borderTop: `2px solid rgba(${rgb},0.4)`,
-                    color,
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  ● INBOUND — {label}
-                </span>
-              );
-            })()}
-          </div>
-
-          <div style={{ display: "none", justifyContent: "center", marginBottom: 8 }}>
-            {(() => {
-              const flowMeta = {
-                ma:     { color: "#E8002D", rgb: "232,0,45",   label: "MEDICARE ADVANTAGE" },
-                medsup: { color: "#00D166", rgb: "0,209,102",  label: "MEDICARE SUPPLEMENT" },
-                aca:    { color: "#EAB308", rgb: "234,179,8",  label: "ACA ON-EXCHANGE" },
-                u65:    { color: "#a855f7", rgb: "168,85,247", label: "U65 OFF-EXCHANGE" },
-              };
-              const { color, rgb, label } = flowMeta[mode] || flowMeta.ma;
-              return (
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 700,
-                    letterSpacing: "0.16em",
-                    textTransform: "uppercase",
-                    padding: "4px 14px",
-                    borderRadius: 3,
-                    background: `rgba(${rgb},0.07)`,
-                    border: `1px solid rgba(${rgb},0.2)`,
-                    borderTop: `2px solid rgba(${rgb},0.4)`,
-                    color,
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  {label}
-                </span>
-              );
-            })()}
-          </div>
-
-          <div className="tabs">
-            <AppTabButton
-              activeTab={activeTab}
-              tabId="script"
-              onSelect={handleTabChange}
-              onPreload={() => preloadTab("script")}
+          <nav className="sidebar-nav">
+            <button
+              className={`sidebar-tab${activeTab === "script" ? " active" : ""}`}
+              onClick={() => { handleTabChange("script"); setSidebarOpen(false); }}
+              onMouseEnter={() => preloadTab("script")}
+              data-tab-label="Script"
             >
-              Script
-            </AppTabButton>
+              <span className="sidebar-tab-text">Script</span>
+            </button>
             {mode === "ma" && (
-              <AppTabButton
-                activeTab={activeTab}
-                tabId="tools"
-                onSelect={handleTabChange}
-                onPreload={() => preloadTab("tools")}
+              <button
+                className={`sidebar-tab${activeTab === "tools" ? " active" : ""}`}
+                onClick={() => { handleTabChange("tools"); setSidebarOpen(false); }}
+                onMouseEnter={() => preloadTab("tools")}
+                data-tab-label="Tools"
               >
-                Agent Tools
-              </AppTabButton>
+                <span className="sidebar-tab-text">Agent Tools</span>
+              </button>
             )}
             {mode === "ma" && (
-              <AppTabButton
-                activeTab={activeTab}
-                tabId="sepTool"
-                onSelect={handleTabChange}
-                onPreload={() => preloadTab("sepTool")}
+              <button
+                className={`sidebar-tab${activeTab === "sepTool" ? " active" : ""}`}
+                onClick={() => { handleTabChange("sepTool"); setSidebarOpen(false); }}
+                onMouseEnter={() => preloadTab("sepTool")}
+                data-tab-label="Intel"
               >
-                Intelligence
-              </AppTabButton>
+                <span className="sidebar-tab-text">Intelligence</span>
+              </button>
             )}
             {mode === "aca" && (
-              <AppTabButton
-                activeTab={activeTab}
-                tabId="acaIntel"
-                onSelect={handleTabChange}
-                onPreload={() => preloadTab("acaIntel")}
+              <button
+                className={`sidebar-tab${activeTab === "acaIntel" ? " active" : ""}`}
+                onClick={() => { handleTabChange("acaIntel"); setSidebarOpen(false); }}
+                onMouseEnter={() => preloadTab("acaIntel")}
+                data-tab-label="ACA"
               >
-                ACA Intelligence
-              </AppTabButton>
+                <span className="sidebar-tab-text">ACA Intelligence</span>
+              </button>
             )}
-            <AppTabButton
-              activeTab={activeTab}
-              tabId="complianceHub"
-              onSelect={handleTabChange}
-              onPreload={() => preloadTab("complianceHub")}
+            <button
+              className={`sidebar-tab${activeTab === "complianceHub" ? " active" : ""}`}
+              onClick={() => { handleTabChange("complianceHub"); setSidebarOpen(false); }}
+              onMouseEnter={() => preloadTab("complianceHub")}
+              data-tab-label="Comply"
             >
-              Compliance Hub
-            </AppTabButton>
-          </div>
+              <span className="sidebar-tab-text">Compliance Hub</span>
+            </button>
+          </nav>
 
+          {!LOGIN_DISABLED && (
+            <div className="sidebar-profile">
+              <ProfileBar />
+            </div>
+          )}
+        </aside>
+
+        {/* ── CENTER CONTENT ── */}
+        <main className="app-center">
           {mode === "ma" && (
             <ScriptProvider>
               {activeTab === "script" && (
                 <>
-                  <SepScriptSidebar />
                   <div className="main-script-layout">
                     <div className="main-script-primary">
                       <LazyPanel>
@@ -906,7 +841,7 @@ function AppContent() {
               <CallHistory />
             </LazyPanel>
           )}
-        </div>
+        </main>
       </div>
     </>
   );

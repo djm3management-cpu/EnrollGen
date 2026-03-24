@@ -52,6 +52,7 @@ export function FemaFeed({
   const [showAllFema, setShowAllFema] = useState(false);
   const [showAllNews, setShowAllNews] = useState(false);
   const [showAllBulletins, setShowAllBulletins] = useState(false);
+  const [rightTab, setRightTab] = useState("news");
 
   const sortedDisasters = [...femaDisasters].sort(
     (a, b) => new Date(b.declaredDate) - new Date(a.declaredDate)
@@ -247,15 +248,30 @@ export function FemaFeed({
 
         <div className="fema-feed-hz-col">
           <div className="fema-feed-stack">
-            <div className="fema-feed-stack-section">
-              <div className="fema-feed-section-label">
+            <div className="fema-feed-tabs">
+              <button
+                className={`fema-feed-tab${rightTab === "news" ? " active" : ""}`}
+                onClick={() => setRightTab("news")}
+              >
                 <ExternalLink size={11} />
                 Live News
                 {liveNews.length > 0 && (
                   <span className="fema-feed-badge">{liveNews.length}</span>
                 )}
-              </div>
+              </button>
+              <button
+                className={`fema-feed-tab${rightTab === "bulletins" ? " active" : ""}`}
+                onClick={() => setRightTab("bulletins")}
+              >
+                <ExternalLink size={11} />
+                Bulletins
+                {bulletins.length > 0 && (
+                  <span className="fema-feed-badge">{bulletins.length}</span>
+                )}
+              </button>
+            </div>
 
+            {rightTab === "news" && (
               <div className="fema-feed-hz-items fema-feed-stack-items">
                 {displayNews.length === 0 && (
                   <div className="fema-feed-hz-empty">
@@ -274,17 +290,9 @@ export function FemaFeed({
                   </button>
                 )}
               </div>
-            </div>
+            )}
 
-            <div className="fema-feed-stack-section">
-              <div className="fema-feed-section-label">
-                <ExternalLink size={11} />
-                MA Carrier News & CMS Bulletins
-                {bulletins.length > 0 && (
-                  <span className="fema-feed-badge">{bulletins.length}</span>
-                )}
-              </div>
-
+            {rightTab === "bulletins" && (
               <div className="fema-feed-hz-items fema-feed-stack-items">
                 {displayBulletins.length === 0 && (
                   <div className="fema-feed-hz-empty">
@@ -303,7 +311,7 @@ export function FemaFeed({
                   </button>
                 )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

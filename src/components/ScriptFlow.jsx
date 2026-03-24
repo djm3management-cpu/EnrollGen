@@ -1,15 +1,21 @@
 import { useEffect, useRef, useCallback, useState } from "react";
+import { RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import ObjectionMini from "./ObjectionMini";
 import { useScript } from "../context/ScriptContext";
 import { useSessionTracker } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
+import { scoreLive } from "../context/ComplianceScorer";
 import {
   MainTimer,
   ProgressBar,
-  SectorBar,
-  UndoButton,
   StickyTimerBar,
   SectionTimer,
 } from "./SharedUI";
+import ComplianceMini from "./ComplianceMini";
+import CopilotMiniFloat from "./CopilotMiniFloat";
+import CallerInfo from "./CallerInfo";
+import CallTimer from "./CallTimer";
+import QuickNotes from "./QuickNotes";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
 import SectionRecording from "./SectionRecording";
 import SectionTPMO from "./SectionTPMO";
@@ -21,7 +27,6 @@ import SectionSOB from "./SectionSOB";
 import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
 import ScriptPrompter from "./ScriptPrompter";
-import ComplianceMini from "./ComplianceMini";
 import ComplianceDashboard from "./ComplianceDashboard";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -46,6 +51,8 @@ function CollapsibleSection({
   isActive,
   children,
   sectionTimestamps,
+  canUndo,
+  onUndo,
 }) {
   if (!isCompleted || isActive) {
     return <div data-section={sectionNum}>{children}</div>;
@@ -83,6 +90,15 @@ function CollapsibleSection({
               )}
             </span>
           )}
+        {canUndo && (
+          <button
+            className="section-undo-btn"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUndo(); }}
+            title="Undo last action"
+          >
+            <RotateCcw size={11} />
+          </button>
+        )}
       </summary>
       <div className="completed-section-body">{children}</div>
     </details>
@@ -94,6 +110,78 @@ function formatDuration(ms) {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return `${m}m ${s}s`;
+}
+
+/* ---- Responsive right rail with toggle for ≤1400px ---- */
+function RightRail({ transcript, activeSection, state, callStarted, onQuickNotes }) {
+  const [open, setOpen] = useState(false);
+  const railRef = useRef(null);
+  const { entries } = useCopilotLog();
+
+  const result = scoreLive(state, entries, transcript);
+  const currentStep = Number.isInteger(activeSection)
+    ? activeSection
+    : Math.ceil(activeSection);
+  const sectionLabel = SECTION_LABELS[currentStep] || `Section ${currentStep}`;
+
+  // Close overlay on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (railRef.current && !railRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
+  return (
+    <>
+      {/* Always-visible rail for >1400px (CSS hides the toggle, shows this) */}
+      <div className="right-rail-full">
+        <CallTimer startTime={state.tpmoStart} />
+        <CallerInfo />
+        <QuickNotes onNotesChange={onQuickNotes} />
+        <ObjectionMini />
+        <CopilotMiniFloat />
+        <ComplianceMini transcript={transcript} activeSection={activeSection} />
+      </div>
+
+      {/* Toggle tab for ≤1400px (CSS hides on >1400) */}
+      <button
+        className="right-rail-toggle"
+        onClick={() => setOpen((p) => !p)}
+        title="Toggle compliance rail"
+      >
+        <span className="right-rail-toggle-score">{result.score}%</span>
+        <span className="right-rail-toggle-section">{currentStep}. {sectionLabel}</span>
+        {open ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+      </button>
+
+      {/* Scrim + overlay for ≤1400px */}
+      {open && <div className="right-rail-scrim" onClick={() => setOpen(false)} />}
+      <div
+        ref={railRef}
+        className={`right-rail-overlay${open ? " open" : ""}`}
+      >
+        <CallTimer startTime={state.tpmoStart} />
+        <CallerInfo />
+        <QuickNotes onNotesChange={onQuickNotes} />
+        <ObjectionMini />
+        <CopilotMiniFloat />
+        <ComplianceMini transcript={transcript} activeSection={activeSection} />
+      </div>
+    </>
+  );
 }
 
 export default function ScriptFlow() {
@@ -144,6 +232,10 @@ export default function ScriptFlow() {
   // ── Shared transcript state ──
   // ScriptPrompter writes to this, ComplianceMini/Dashboard read it
   const [transcript, setTranscript] = useState("");
+
+  // ── Quick notes — persists into wrap-up ──
+  const quickNotesRef = useRef("");
+  const handleQuickNotes = useCallback((val) => { quickNotesRef.current = val; }, []);
 
   // Auto-scroll to active section when it changes
   useEffect(() => {
@@ -211,19 +303,11 @@ export default function ScriptFlow() {
         totalSections={TOTAL_SECTIONS}
       />
 
+      {/* Right rail — responsive: always visible >1400, overlay ≤1400 */}
+      <RightRail transcript={transcript} activeSection={activeSection} state={state} callStarted={callStarted} onQuickNotes={handleQuickNotes} />
+
       <div className="flow-shell">
-        <aside className="flow-rail">
-          <SectorBar activeSection={activeSection} onSectionClick={handleSectionClick} />
-        </aside>
-
         <div className="flow-main">
-      <UndoButton
-        undoHistory={state.undoHistory}
-        onUndo={() => dispatch({ type: "UNDO_LAST_GATE" })}
-      />
-
-      {/* ── Floating Compliance Mini — transcript-aware (hidden for now) ── */}
-      {/* <ComplianceMini transcript={transcript} /> */}
 
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}
       <ScriptPrompter onTranscriptChange={setTranscript} logComplianceFlag={session.logComplianceFlag} />
@@ -254,12 +338,22 @@ export default function ScriptFlow() {
       {/* Sequential enrollment flow sections */}
       {callStarted && (
       <>
+      {(() => {
+        const undoSection = state.undoHistory.length > 0 &&
+          (Date.now() - state.undoHistory[state.undoHistory.length - 1].timestamp) < 30000
+          ? Math.floor(activeSection) - 1
+          : null;
+        const handleUndo = () => dispatch({ type: "UNDO_LAST_GATE" });
+        return (
+          <>
       <CollapsibleSection
         sectionNum={1}
         label="Recording Disclosure"
         isCompleted={state.recordingOk}
         isActive={activeSection === 1}
         sectionTimestamps={ts}
+        canUndo={undoSection === 1}
+        onUndo={handleUndo}
       >
         <SectionRecording />
       </CollapsibleSection>
@@ -270,6 +364,8 @@ export default function ScriptFlow() {
         isCompleted={state.tpmoOk}
         isActive={activeSection === 2}
         sectionTimestamps={ts}
+        canUndo={undoSection === 2}
+        onUndo={handleUndo}
       >
         <SectionTPMO />
       </CollapsibleSection>
@@ -282,6 +378,8 @@ export default function ScriptFlow() {
         isCompleted={state.soaOk}
         isActive={activeSection === 3}
         sectionTimestamps={ts}
+        canUndo={undoSection === 3}
+        onUndo={handleUndo}
       >
         <SectionSOA />
       </CollapsibleSection>
@@ -292,6 +390,8 @@ export default function ScriptFlow() {
         isCompleted={state.qualOk}
         isActive={activeSection === 4}
         sectionTimestamps={ts}
+        canUndo={undoSection === 4}
+        onUndo={handleUndo}
       >
         <SectionQualifications />
       </CollapsibleSection>
@@ -302,6 +402,8 @@ export default function ScriptFlow() {
         isCompleted={state.neadsOk}
         isActive={activeSection === 5}
         sectionTimestamps={ts}
+        canUndo={undoSection === 5}
+        onUndo={handleUndo}
       >
         <SectionNEADS />
       </CollapsibleSection>
@@ -312,6 +414,8 @@ export default function ScriptFlow() {
         isCompleted={state.sobOk}
         isActive={activeSection === 6}
         sectionTimestamps={ts}
+        canUndo={undoSection === 6}
+        onUndo={handleUndo}
       >
         <SectionSOB />
       </CollapsibleSection>
@@ -322,9 +426,14 @@ export default function ScriptFlow() {
         isCompleted={state.enrollOk}
         isActive={activeSection === 7}
         sectionTimestamps={ts}
+        canUndo={undoSection === 7}
+        onUndo={handleUndo}
       >
         <SectionEnrollment />
       </CollapsibleSection>
+          </>
+        );
+      })()}
 
       <SectionWrapUp />
 

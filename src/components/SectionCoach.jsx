@@ -204,7 +204,7 @@ ${sectionKnowledge}
 ${context ? `ADDITIONAL CONTEXT:\n${context}\n` : ""}
 
 INSTRUCTIONS:
-Respond with ONLY a valid JSON object — no extra text, no markdown, no backticks:
+Respond with ONLY a valid JSON object. No extra text, no backticks, no wrapper.
 {
   "focus": "One sentence about the real challenge in this section right now.",
   "do": ["Specific action 1", "Specific action 2", "Specific action 3"],
@@ -213,12 +213,12 @@ Respond with ONLY a valid JSON object — no extra text, no markdown, no backtic
 }
 
 Rules:
-- Every item must be specific to THIS section — nothing generic like "stay on script" or "be compliant"
-- "do" items are things the agent should do RIGHT NOW on the call
-- "avoid" items are real mistakes agents make in this exact section
-- "script_tip" is a real sentence the agent can read directly to the client
-- No markdown, no asterisks, no bullet characters — plain text only
-- Keep each item under 15 words`;
+Every item must be specific to THIS section. Nothing generic like "stay on script" or "be compliant".
+The do items are things the agent should do RIGHT NOW on the call.
+The avoid items are real mistakes agents make in this exact section.
+The script_tip is a real sentence the agent can read directly to the client.
+Keep each item under 15 words.
+CRITICAL FORMATTING: Plain text only. No markdown, no asterisks, no dashes, no bullet points, no emojis, no special characters. Write natural conversational sentences.`;
 
     try {
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {

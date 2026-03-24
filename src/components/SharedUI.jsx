@@ -233,7 +233,10 @@ const SECTORS = [
   { num: 8,   abbr: "WRAP"   },
 ];
 
-export const SectorBar = React.memo(function SectorBar({ activeSection, onSectionClick }) {
+export const STAGE_SECTORS = SECTORS.filter(s => s.num >= 2);
+
+export const SectorBar = React.memo(function SectorBar({ activeSection, onSectionClick, sectors }) {
+  const displaySectors = sectors || SECTORS;
   const currentStep = Number.isInteger(activeSection)
     ? activeSection
     : Math.ceil(activeSection);
@@ -251,7 +254,7 @@ export const SectorBar = React.memo(function SectorBar({ activeSection, onSectio
 
   return (
     <nav className="sector-bar" aria-label="Section progress">
-      {SECTORS.map(({ num, abbr }, index) => {
+      {displaySectors.map(({ num, abbr }, index) => {
         const s = status(num);
         const clickable = s === "done" && !!onSectionClick;
         return (
@@ -266,7 +269,7 @@ export const SectorBar = React.memo(function SectorBar({ activeSection, onSectio
           >
             <div className="sector-rail-node" aria-hidden="true">
               <span className="sector-dot" />
-              {index < SECTORS.length - 1 && <span className="sector-connector" />}
+              {index < displaySectors.length - 1 && <span className="sector-connector" />}
             </div>
             <div className={`sector-block sector-block--${s}`}>
               <span className="sector-block-num">{num}</span>

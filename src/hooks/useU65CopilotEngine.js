@@ -313,7 +313,7 @@ CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
 ════════════════════════════════════════════════════════
 RESPONSE FORMAT
 ════════════════════════════════════════════════════════
-Respond with ONLY a valid JSON object:
+Respond with ONLY a valid JSON object. No backticks, no wrapper text. Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences:
 {
   "level": "silent | info | tip | remind | warn | critical",
   "issue_tag": "short_snake_case_tag_or_empty",
@@ -361,7 +361,7 @@ RESPONSE RULES:
 - Keep answers concise and actionable
 - Put script language in quotes so agent can read it directly
 - Always prioritize compliance — especially NOT-MEC disclosure and UW honesty
-- Use plain text only — no bold, no bullet points, no markdown`;
+Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.`;
 }
 
 /* ───────────────────────────────────────────────────────
