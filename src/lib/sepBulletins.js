@@ -94,6 +94,9 @@ const CARRIER_PRIORITY = {
 };
 
 let bulletinCache = { data: null, fetchedAt: 0 };
+let syncAttemptPromise = null;
+let syncAttemptedAt = 0;
+const SYNC_RETRY_TTL = 15 * 60 * 1000;
 
 function normalizeHost(url) {
   if (!url) return "";
@@ -188,6 +191,53 @@ function normalizeRows(rows) {
     .sort(sortBulletins);
 }
 
+async function queryBulletins() {
+  const { data, error } = await supabase
+    .from("bulletins")
+    .select("carrier, title, body, states, link, published_at, source_id")
+    .order("published_at", { ascending: false })
+    .limit(80);
+
+  if (error) throw error;
+  return data || [];
+}
+
+function hasRecentBulletins(rows) {
+  if (!rows.length) return false;
+  const latest = rows[0]?.published_at;
+  if (!latest) return false;
+  const ageMs = Date.now() - new Date(latest).getTime();
+  return Number.isFinite(ageMs) && ageMs <= 7 * 24 * 60 * 60 * 1000;
+}
+
+async function triggerBulletinSync() {
+  if (typeof fetch !== "function") return false;
+
+  const now = Date.now();
+  if (syncAttemptPromise) return syncAttemptPromise;
+  if (now - syncAttemptedAt < SYNC_RETRY_TTL) return false;
+
+  syncAttemptedAt = now;
+  syncAttemptPromise = (async () => {
+    try {
+      const response = await fetch("/api/sync-bulletins", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Cache-Control": "no-cache",
+        },
+      });
+      return response.ok;
+    } catch {
+      return false;
+    } finally {
+      syncAttemptPromise = null;
+    }
+  })();
+
+  return syncAttemptPromise;
+}
+
 export async function fetchBulletins() {
   const now = Date.now();
   if (bulletinCache.data && now - bulletinCache.fetchedAt < CACHE_TTL) {
@@ -195,15 +245,16 @@ export async function fetchBulletins() {
   }
 
   try {
-    const { data, error } = await supabase
-      .from("bulletins")
-      .select("carrier, title, body, states, link, published_at, source_id")
-      .order("published_at", { ascending: false })
-      .limit(80);
+    let data = await queryBulletins();
 
-    if (error) throw error;
+    if (!data.length || !hasRecentBulletins(data)) {
+      const syncOk = await triggerBulletinSync();
+      if (syncOk) {
+        data = await queryBulletins();
+      }
+    }
 
-    if (data && data.length > 0) {
+    if (data.length > 0) {
       const mapped = normalizeRows(
         data.map((row) => ({
           carrier: row.carrier,

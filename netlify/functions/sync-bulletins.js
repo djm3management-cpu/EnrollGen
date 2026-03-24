@@ -6,11 +6,6 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
 const LOOKBACK_DAYS = 45;
 const MAX_ITEMS_PER_FEED = 18;
 
@@ -379,6 +374,24 @@ function buildSourceId(feed, item, publishedAt) {
 }
 
 export default async () => {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("[sync-bulletins] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+    return new Response(
+      JSON.stringify({
+        error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
   console.log("[sync-bulletins] Starting daily bulletin sync...");
 
   let totalInserted = 0;
