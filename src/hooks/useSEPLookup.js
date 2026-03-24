@@ -7,6 +7,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { getStateFromZip, getCarriersForZip } from "../lib/sepGeo";
 import { fetchLiveFemaDisasters } from "../lib/sepFema";
 import { fetchBulletins } from "../lib/sepBulletins";
+import { fetchLiveNews } from "../lib/sepLiveNews";
 import { fetchCountiesForState, fetchPlansFromSupabase, fetchCountyPlanCounts, transformCmsPlan } from "../lib/sepCms";
 import { getCountyFromZip, getPlansForState } from "../data/sepPlanDb";
 import { getSEPsForZip, getSEPsForState } from "../lib/sepEngine";
@@ -36,13 +37,15 @@ export function useSEPLookup() {
   const [femaSource, setFemaSource] = useState("unknown");
   const [femaDisasters, setFemaDisasters] = useState([]);
   const [bulletins, setBulletins] = useState([]);
+  const [liveNews, setLiveNews] = useState([]);
   const femaCache = useRef({ data: null, fetchedAt: 0 });
   const countyCache = useRef({});
 
   const loadTopFeed = useCallback(async () => {
-    const [r, b] = await Promise.all([
+    const [r, b, n] = await Promise.all([
       fetchLiveFemaDisasters(),
       fetchBulletins(),
+      fetchLiveNews(),
     ]);
     femaCache.current = {
       data: r.disasters,
@@ -53,6 +56,7 @@ export function useSEPLookup() {
       disasters: r.disasters,
       source: r.apiFailed ? "fallback" : "live",
       bulletins: b,
+      liveNews: n,
     };
   }, []);
 
@@ -67,6 +71,7 @@ export function useSEPLookup() {
         setFemaDisasters(next.disasters);
         setFemaSource(next.source);
         setBulletins(next.bulletins);
+        setLiveNews(next.liveNews);
       } catch (err) {
         console.error("Top feed refresh error:", err);
       }
@@ -306,7 +311,7 @@ export function useSEPLookup() {
     planFilterSnp, setPlanFilterSnp,
     planSearch, setPlanSearch,
     selectedCounty, setSelectedCounty, countyList,
-    countyLoading, countyPlanCounts, femaSource, femaDisasters, bulletins, inputRef,
+    countyLoading, countyPlanCounts, femaSource, femaDisasters, bulletins, liveNews, inputRef,
     handleSearch, handleKeyDown, handleStateClick, loadPlansForCounty,
     isValidZip, filtered, femaActive, state,
     selectedState, setSelectedState,

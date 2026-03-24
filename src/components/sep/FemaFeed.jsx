@@ -45,10 +45,12 @@ function carrierColor(carrier) {
 export function FemaFeed({
   femaDisasters = [],
   femaSource = "unknown",
+  liveNews = [],
   bulletins = [],
 }) {
   const [expandedItems, setExpandedItems] = useState({});
   const [showAllFema, setShowAllFema] = useState(false);
+  const [showAllNews, setShowAllNews] = useState(false);
   const [showAllBulletins, setShowAllBulletins] = useState(false);
 
   const sortedDisasters = [...femaDisasters].sort(
@@ -58,12 +60,81 @@ export function FemaFeed({
   const displayDisasters = showAllFema
     ? sortedDisasters
     : sortedDisasters.slice(0, 4);
+  const displayNews = showAllNews
+    ? liveNews
+    : liveNews.slice(0, 6);
   const displayBulletins = showAllBulletins
     ? bulletins
     : bulletins.slice(0, 8);
 
   const toggleItem = (id) =>
     setExpandedItems((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const renderFeedItems = (items) =>
+    items.map((item) => {
+      const itemKey = item.sourceId || `${item.carrier}-${item.title}`;
+      const isOpen = expandedItems[itemKey];
+
+      return (
+        <div key={itemKey} className="fema-feed-bulletin">
+          <button
+            className="fema-feed-item-header"
+            onClick={() => toggleItem(itemKey)}
+          >
+            <div className="fema-feed-item-top">
+              <span
+                className="fema-feed-carrier-tag"
+                style={{
+                  borderColor: carrierColor(item.carrier),
+                  color: carrierColor(item.carrier),
+                }}
+              >
+                {item.carrier}
+              </span>
+              {item.kindLabel && (
+                <span className={`fema-feed-kind ${item.kindTone || "news"}`}>
+                  {item.kindLabel}
+                </span>
+              )}
+              <span className="fema-feed-source-label">
+                {item.sourceLabel}
+              </span>
+              {item.states?.length > 0 && (
+                <span className="fema-feed-states">
+                  {item.states.slice(0, 4).join(", ")}
+                  {item.states.length > 4 ? ` +${item.states.length - 4}` : ""}
+                </span>
+              )}
+              <span className="fema-feed-time">{timeAgo(item.date)}</span>
+            </div>
+            <div className="fema-feed-item-title">{item.title}</div>
+            {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </button>
+          {isOpen && (
+            <div className="fema-feed-item-body">
+              <div className="fema-feed-detail">
+                <ExternalLink size={10} />
+                <span>
+                  {item.sourceLabel}
+                  {item.sourceHost ? ` | ${item.sourceHost}` : ""}
+                </span>
+              </div>
+              <p>{item.body}</p>
+              {item.link && (
+                <a
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="fema-feed-link"
+                >
+                  Open source <ExternalLink size={10} />
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    });
 
   return (
     <div className="fema-feed-hz">
@@ -175,97 +246,64 @@ export function FemaFeed({
         </div>
 
         <div className="fema-feed-hz-col">
-          <div className="fema-feed-section-label">
-            <ExternalLink size={11} />
-            MA Carrier News & CMS Bulletins
-            {bulletins.length > 0 && (
-              <span className="fema-feed-badge">{bulletins.length}</span>
-            )}
-          </div>
-
-          <div className="fema-feed-hz-items">
-            {displayBulletins.length === 0 && (
-              <div className="fema-feed-hz-empty">
-                No MA carrier or CMS bulletin data is available yet.
+          <div className="fema-feed-stack">
+            <div className="fema-feed-stack-section">
+              <div className="fema-feed-section-label">
+                <ExternalLink size={11} />
+                Live News
+                {liveNews.length > 0 && (
+                  <span className="fema-feed-badge">{liveNews.length}</span>
+                )}
               </div>
-            )}
 
-            {displayBulletins.map((bulletin) => {
-              const itemKey = bulletin.sourceId || `${bulletin.carrier}-${bulletin.title}`;
-              const isOpen = expandedItems[itemKey];
-              return (
-                <div key={itemKey} className="fema-feed-bulletin">
+              <div className="fema-feed-hz-items fema-feed-stack-items">
+                {displayNews.length === 0 && (
+                  <div className="fema-feed-hz-empty">
+                    No live MA news is available yet.
+                  </div>
+                )}
+
+                {renderFeedItems(displayNews)}
+
+                {liveNews.length > 6 && (
                   <button
-                    className="fema-feed-item-header"
-                    onClick={() => toggleItem(itemKey)}
+                    className="fema-feed-show-all"
+                    onClick={() => setShowAllNews(!showAllNews)}
                   >
-                    <div className="fema-feed-item-top">
-                      <span
-                        className="fema-feed-carrier-tag"
-                        style={{
-                          borderColor: carrierColor(bulletin.carrier),
-                          color: carrierColor(bulletin.carrier),
-                        }}
-                      >
-                        {bulletin.carrier}
-                      </span>
-                      <span
-                        className={`fema-feed-kind ${bulletin.kindTone || "news"}`}
-                      >
-                        {bulletin.kindLabel || "Update"}
-                      </span>
-                      <span className="fema-feed-source-label">
-                        {bulletin.sourceLabel}
-                      </span>
-                      {bulletin.states.length > 0 && (
-                        <span className="fema-feed-states">
-                          {bulletin.states.slice(0, 4).join(", ")}
-                          {bulletin.states.length > 4
-                            ? ` +${bulletin.states.length - 4}`
-                            : ""}
-                        </span>
-                      )}
-                      <span className="fema-feed-time">
-                        {timeAgo(bulletin.date)}
-                      </span>
-                    </div>
-                    <div className="fema-feed-item-title">{bulletin.title}</div>
-                    {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    {showAllNews ? "Show fewer" : `Show all ${liveNews.length}`}
                   </button>
-                  {isOpen && (
-                    <div className="fema-feed-item-body">
-                      <div className="fema-feed-detail">
-                        <ExternalLink size={10} />
-                        <span>
-                          {bulletin.sourceLabel}
-                          {bulletin.sourceHost ? ` | ${bulletin.sourceHost}` : ""}
-                        </span>
-                      </div>
-                      <p>{bulletin.body}</p>
-                      {bulletin.link && (
-                        <a
-                          href={bulletin.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="fema-feed-link"
-                        >
-                          Open source <ExternalLink size={10} />
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                )}
+              </div>
+            </div>
 
-            {bulletins.length > 8 && (
-              <button
-                className="fema-feed-show-all"
-                onClick={() => setShowAllBulletins(!showAllBulletins)}
-              >
-                {showAllBulletins ? "Show fewer" : `Show all ${bulletins.length}`}
-              </button>
-            )}
+            <div className="fema-feed-stack-section">
+              <div className="fema-feed-section-label">
+                <ExternalLink size={11} />
+                MA Carrier News & CMS Bulletins
+                {bulletins.length > 0 && (
+                  <span className="fema-feed-badge">{bulletins.length}</span>
+                )}
+              </div>
+
+              <div className="fema-feed-hz-items fema-feed-stack-items">
+                {displayBulletins.length === 0 && (
+                  <div className="fema-feed-hz-empty">
+                    No MA carrier or CMS bulletin data is available yet.
+                  </div>
+                )}
+
+                {renderFeedItems(displayBulletins)}
+
+                {bulletins.length > 8 && (
+                  <button
+                    className="fema-feed-show-all"
+                    onClick={() => setShowAllBulletins(!showAllBulletins)}
+                  >
+                    {showAllBulletins ? "Show fewer" : `Show all ${bulletins.length}`}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
