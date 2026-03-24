@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { ClipboardCheck } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { generateSessionSummary } from "../context/scriptReducer";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
@@ -986,13 +987,31 @@ export default React.memo(function SessionSummary() {
       : "#dc2626";
 
   return (
-    <div className="session-summary-bar">
-      <span className="session-summary-label">
-        📋 Enrollment complete — save your records
+    <div
+      className="session-summary-bar"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: 12,
+        padding: "14px 18px",
+      }}
+    >
+      <span
+        className="session-summary-label"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        <ClipboardCheck size={16} style={{ color: "#94a3b8", flexShrink: 0 }} />
+        <span>Enrollment complete — save your records</span>
         {blockers.length > 0 && (
           <span
             style={{
-              marginLeft: 12,
               fontWeight: 700,
               fontSize: "0.82em",
               color: "#fca5a5",
@@ -1003,7 +1022,6 @@ export default React.memo(function SessionSummary() {
         )}
         <span
           style={{
-            marginLeft: 12,
             fontWeight: 800,
             fontSize: "1.1em",
             color: scoreColor,
@@ -1016,12 +1034,12 @@ export default React.memo(function SessionSummary() {
           {complianceResult.score}/100 {complianceResult.grade}
         </span>
       </span>
-      <div className="session-summary-actions">
-        <button className="primary" onClick={handleCopyToClipboard}>
-          📄 Copy Summary
+      <div style={{ display: "flex", gap: 10 }}>
+        <button className="btn-clay" onClick={handleCopyToClipboard}>
+          Copy Summary
         </button>
-        <button className="primary session-summary-pdf-btn" onClick={handlePDF}>
-          ⬇️ Download PDF
+        <button className="btn-clay" onClick={handlePDF}>
+          Download PDF
         </button>
       </div>
     </div>

@@ -21,7 +21,7 @@ function OptionalProduct({
     <>
       {!isActive && (
         <div className="optional-product-trigger">
-          <button className="primary" onClick={onActivate}>
+          <button className="btn-clay" onClick={onActivate}>
             {buttonLabel}
           </button>
         </div>

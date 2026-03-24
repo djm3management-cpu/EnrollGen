@@ -21,6 +21,7 @@ const loadCarrierRef = () => import("./components/CarrierRef");
 const loadCallHistory = () => import("./components/CallHistory");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
+const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -37,6 +38,7 @@ const CarrierRef = lazy(loadCarrierRef);
 const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
+const ComplianceDashboard = lazy(loadComplianceDashboard);
 const COMPLIANCE_HUB_TAB_IDS = new Set(["complianceHub", "history", "upload", "review"]);
 const AGENT_TOOLS_TAB_IDS = new Set(["tools", "objections", "decisionTree"]);
 
@@ -761,6 +763,9 @@ function AppContent() {
               )}
               {activeTab === "complianceHub" && (
                 <>
+                  <LazyPanel>
+                    <ComplianceDashboard />
+                  </LazyPanel>
                   <LazyPanel>
                     <ReviewWorkspace />
                   </LazyPanel>

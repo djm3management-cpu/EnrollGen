@@ -1317,6 +1317,51 @@ input::placeholder {
   outline-offset: 3px;
 }
 
+/* ── Grey claymorphic button ── */
+.btn-clay {
+  position: relative;
+  background: linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%);
+  color: #94a3b8;
+  border: 1px solid rgba(255,255,255,0.07);
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow:
+    3px 3px 6px rgba(0,0,0,0.35),
+    -2px -2px 4px rgba(255,255,255,0.025),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  transition: all 0.15s ease;
+  overflow: hidden;
+}
+
+.btn-clay:hover {
+  color: #e2e8f0;
+  background: linear-gradient(145deg, rgba(50,50,58,0.95) 0%, rgba(32,32,38,0.98) 100%);
+  box-shadow:
+    3px 3px 6px rgba(0,0,0,0.4),
+    -2px -2px 4px rgba(255,255,255,0.03),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  transform: translateY(-1px);
+}
+
+.btn-clay:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 2px 2px 5px rgba(0,0,0,0.3),
+    inset -2px -2px 4px rgba(255,255,255,0.02);
+}
+
+.btn-clay:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .secondary {
   position: relative;
   background: linear-gradient(180deg, #141200 0%, #0C0B00 100%);
