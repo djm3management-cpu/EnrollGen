@@ -39,23 +39,58 @@ export function useSEPLookup() {
   const femaCache = useRef({ data: null, fetchedAt: 0 });
   const countyCache = useRef({});
 
-  // Fetch FEMA data + bulletins on mount so the feed populates immediately
-  useEffect(() => {
-    (async () => {
-      try {
-        const [r, b] = await Promise.all([
-          fetchLiveFemaDisasters(),
-          fetchBulletins(),
-        ]);
-        femaCache.current = { data: r.disasters, fetchedAt: Date.now(), apiFailed: r.apiFailed };
-        setFemaDisasters(r.disasters);
-        setFemaSource(r.apiFailed ? "fallback" : "live");
-        setBulletins(b);
-      } catch (err) {
-        console.error("Initial FEMA/bulletin fetch error:", err);
-      }
-    })();
+  const loadTopFeed = useCallback(async () => {
+    const [r, b] = await Promise.all([
+      fetchLiveFemaDisasters(),
+      fetchBulletins(),
+    ]);
+    femaCache.current = {
+      data: r.disasters,
+      fetchedAt: Date.now(),
+      apiFailed: r.apiFailed,
+    };
+    return {
+      disasters: r.disasters,
+      source: r.apiFailed ? "fallback" : "live",
+      bulletins: b,
+    };
   }, []);
+
+  // Fetch FEMA data + bulletins on mount and refresh periodically so the feed stays current.
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncTopFeed = async () => {
+      try {
+        const next = await loadTopFeed();
+        if (cancelled) return;
+        setFemaDisasters(next.disasters);
+        setFemaSource(next.source);
+        setBulletins(next.bulletins);
+      } catch (err) {
+        console.error("Top feed refresh error:", err);
+      }
+    };
+
+    syncTopFeed();
+
+    const intervalId = window.setInterval(syncTopFeed, 6 * 60 * 60 * 1000);
+    const handleVisibilityRefresh = () => {
+      if (document.visibilityState === "visible") {
+        syncTopFeed();
+      }
+    };
+
+    window.addEventListener("focus", handleVisibilityRefresh);
+    document.addEventListener("visibilitychange", handleVisibilityRefresh);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleVisibilityRefresh);
+      document.removeEventListener("visibilitychange", handleVisibilityRefresh);
+    };
+  }, [loadTopFeed]);
 
   const loadPlansForCounty = useCallback(async (st, county) => {
     if (!st || !county) return;

@@ -72,6 +72,18 @@
   font-size: 0.82rem;
 }
 
+.at-priority-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.dt-embedded {
+  max-width: none;
+  margin: 0;
+}
+
 /* ── Section (accordion) ── */
 .at-section {
   position: relative;

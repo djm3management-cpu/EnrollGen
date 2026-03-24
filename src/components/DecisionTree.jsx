@@ -650,7 +650,7 @@ function ResultCard({ node, onReset }) {
 }
 
 /* ─── Main component ─────────────────────────────────────────────────────── */
-export default function DecisionTree() {
+export default function DecisionTree({ singleCardMode = false, embedded = false }) {
   const [current, setCurrent] = useState(START_NODE);
   const [path, setPath] = useState([]);
   const currentNode = TREE[current];
@@ -659,7 +659,7 @@ export default function DecisionTree() {
     if (!TREE[nextId]) return;
     setPath((prev) => [
       ...prev.slice(0, stepIndex),
-      { nodeId: fromNodeId, answerLabel },
+      { nodeId: fromNodeId, answerLabel, nextId },
     ]);
     setCurrent(nextId);
   };
@@ -667,6 +667,14 @@ export default function DecisionTree() {
   const reset = () => {
     setCurrent(START_NODE);
     setPath([]);
+  };
+
+  const goBack = () => {
+    if (!path.length) return;
+    const trimmed = path.slice(0, -1);
+    const previousNodeId = trimmed.length ? trimmed[trimmed.length - 1].nextId : START_NODE;
+    setPath(trimmed);
+    setCurrent(previousNodeId);
   };
 
   const steps = [
@@ -685,6 +693,173 @@ export default function DecisionTree() {
   ];
 
   const stepNum = steps.filter((step) => !step.node?.type).length;
+  const currentStepLabel =
+    currentNode?.type === "result"
+      ? "Result"
+      : currentNode?.type === "refer"
+        ? "Agent Note"
+        : `Step ${stepNum}`;
+  const lastAnswer = path[path.length - 1]?.answerLabel || "";
+
+  if (singleCardMode) {
+    return (
+      <div
+        className={embedded ? "card dt-embedded" : "card"}
+        style={{
+          maxWidth: embedded ? "none" : 760,
+          margin: embedded ? 0 : "0 auto",
+          background: "linear-gradient(180deg,#181818 0%,#111111 50%,#0e0e0e 100%)",
+        }}
+      >
+        <h2 style={{ marginBottom: 16 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            Product Decision Tree
+          </span>
+          <span
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              fontSize: 11,
+              letterSpacing: "0.1em",
+              color: "#2A2A3A",
+              textTransform: "uppercase",
+            }}
+          >
+            {currentStepLabel}
+          </span>
+        </h2>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+            marginBottom: 14,
+          }}
+        >
+          <StepBadge
+            label={currentNode?.type === "result" ? "Recommended" : currentNode?.type === "refer" ? "Agent Note" : currentNode?.num}
+            color={
+              currentNode?.type === "result"
+                ? currentNode.color
+                : currentNode?.type === "refer"
+                  ? "#b8950a"
+                  : "#c0d0e4"
+            }
+            bg={
+              currentNode?.type === "result"
+                ? `rgba(${currentNode.rgb},0.08)`
+                : currentNode?.type === "refer"
+                  ? "rgba(255,215,0,0.07)"
+                  : "rgba(255,255,255,0.03)"
+            }
+            border={
+              currentNode?.type === "result"
+                ? `rgba(${currentNode.rgb},0.2)`
+                : currentNode?.type === "refer"
+                  ? "rgba(255,215,0,0.2)"
+                  : "rgba(255,255,255,0.07)"
+            }
+          />
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {path.length > 0 && (
+              <button
+                type="button"
+                onClick={goBack}
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 8,
+                  color: "#c0d0e4",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  padding: "7px 12px",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                Back
+              </button>
+            )}
+            {path.length > 0 && (
+              <button
+                type="button"
+                onClick={reset}
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 8,
+                  color: "#7f8b99",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  padding: "7px 12px",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
+        {lastAnswer && (
+          <div
+            style={{
+              marginBottom: 14,
+              padding: "9px 12px",
+              borderRadius: 10,
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.05)",
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 12,
+              color: "#8A8A9A",
+            }}
+          >
+            Last selection: <span style={{ color: "#dfe6f0" }}>{lastAnswer}</span>
+          </div>
+        )}
+
+        <div
+          style={{
+            borderRadius: 14,
+            border: "1px solid rgba(255,255,255,0.08)",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(8,8,10,0.45) 100%)",
+            padding: "16px 18px",
+            boxShadow: "0 10px 24px rgba(0,0,0,0.18)",
+          }}
+        >
+          {currentNode?.type === "result" ? (
+            <ResultCard node={currentNode} onReset={reset} />
+          ) : currentNode?.type === "refer" ? (
+            <ReferCard
+              node={currentNode}
+              selectedAnswer={null}
+              stepIndex={path.length}
+              onNavigate={navigate}
+              onReset={reset}
+              isCurrent
+            />
+          ) : (
+            <QuestionCard
+              node={currentNode}
+              selectedAnswer={null}
+              stepIndex={path.length}
+              onNavigate={navigate}
+              isCurrent
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card" style={{ maxWidth: 760, margin: "0 auto", background: "linear-gradient(180deg,#181818 0%,#111111 50%,#0e0e0e 100%)" }}>

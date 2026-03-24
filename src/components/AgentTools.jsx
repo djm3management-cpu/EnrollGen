@@ -21,6 +21,8 @@ import {
   Zap,
 } from "lucide-react";
 import DailyVerse from "./DailyVerse";
+import DecisionTree from "./DecisionTree";
+import ObjectionHandler from "./ObjectionHandler";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 import "../AgentTools.css";
 
@@ -360,8 +362,20 @@ export default function AgentTools() {
   const m = (text) => !q || text.toLowerCase().includes(q);
 
   const matches = useMemo(() => {
-    if (!q) return { refs: true, enroll: true, provider: true, carrier: true, utils: true, seps: true, maps: true };
+    if (!q) {
+      return {
+        assist: true,
+        refs: true,
+        enroll: true,
+        provider: true,
+        carrier: true,
+        utils: true,
+        seps: true,
+        maps: true,
+      };
+    }
     return {
+      assist: m("objection handler rebuttal decision tree product triage routing medicare aca u65 medsup plan fit"),
       refs: m("federal register ecfr regulation compliance marketing guidelines hpms manual cms rules"),
       enroll: m("enrollment eligibility plan compare medicaid extra help ssa fema 1800 medicare disenrollment"),
       provider: m("care compare npi oig exclusion pharmacy prescription provider drug"),
@@ -393,6 +407,13 @@ export default function AgentTools() {
 
       {q && !Object.values(matches).some(Boolean) && (
         <div className="at-no-results">No results for "{search}"</div>
+      )}
+
+      {matches.assist && (
+        <div className="at-priority-tools">
+          <ObjectionHandler />
+          <DecisionTree singleCardMode embedded />
+        </div>
       )}
 
       {/* ═══ 1. OFFICIAL REFERENCES ═══ */}

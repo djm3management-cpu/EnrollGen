@@ -1,4 +1,4 @@
--- Bulletins table for carrier & CMS updates (auto-populated weekly)
+-- Bulletins table for carrier & CMS updates (auto-populated daily)
 CREATE TABLE IF NOT EXISTS bulletins (
   id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   carrier       TEXT NOT NULL,                -- e.g. "UHC", "CMS", "Humana"
