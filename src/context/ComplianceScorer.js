@@ -13,6 +13,10 @@ import {
   analyzeTranscript,
   getTranscriptEvidence,
   getIntentConfidence,
+  analyzeCustomerSentiment,
+  detectCustomerObjections,
+  verifyCustomerAcknowledgments,
+  detectMisleadingClaimEvidence,
 } from "./TranscriptAnalyzer";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -858,4 +862,105 @@ export function getCategoryDefinitions() {
     weight: c.weight,
     questionCount: c.questions.length,
   }));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+     CUSTOMER CONFIRMATION SCORING — Two-Sided Compliance
+     When customer audio is available, this layer scores whether
+     the customer acknowledged/confirmed critical disclosures.
+     ═══════════════════════════════════════════════════════════════ */
+
+const AGENT_WEIGHT = 0.6;
+const CUSTOMER_WEIGHT = 0.4;
+
+/**
+ * scoreCustomerConfirmation — Analyzes customer audio for acknowledgments,
+ * objections, and potential misleading claim evidence.
+ *
+ * @param {string} customerText - flat customer transcript text
+ * @param {Array} mergedTranscript - chronological merged entries
+ * @param {Object} agentAnalysis - result from analyzeTranscript(agentText)
+ * @returns {Object} customerConfirmation scoring result
+ */
+export function scoreCustomerConfirmation(customerText, mergedTranscript, agentAnalysis) {
+  if (!customerText || !customerText.trim()) {
+    return {
+      score: 0,
+      grade: "N/A",
+      sentiment: { sentiment: "neutral", confidence: 0, evidence: "No customer audio." },
+      objections: [],
+      acknowledgments: { disclosures: [], score: 0, total: 0, acknowledged: 0 },
+      misleadingFlags: [],
+      silentEnrollment: false,
+      available: false,
+    };
+  }
+
+  const sentiment = analyzeCustomerSentiment(customerText);
+  const objections = detectCustomerObjections(customerText);
+  const acknowledgments = verifyCustomerAcknowledgments(mergedTranscript, agentAnalysis);
+  const misleadingFlags = detectMisleadingClaimEvidence(customerText);
+
+  // Detect "silent enrollment" — agent moved through enrollment steps
+  // but customer never verbally confirmed
+  const enrollmentDisclosure = acknowledgments.disclosures.find((d) => d.id === "enrollment_confirmed");
+  const silentEnrollment = enrollmentDisclosure
+    ? enrollmentDisclosure.agentSaid && !enrollmentDisclosure.customerAcknowledged
+    : false;
+
+  // Score: acknowledgment percentage, penalized by critical flags
+  let score = acknowledgments.score;
+  if (misleadingFlags.length > 0) score = Math.max(0, score - 30 * misleadingFlags.length);
+  if (silentEnrollment) score = Math.max(0, score - 20);
+  score = Math.max(0, Math.min(100, score));
+
+  return {
+    score,
+    grade: getGrade(score),
+    sentiment,
+    objections,
+    acknowledgments,
+    misleadingFlags,
+    silentEnrollment,
+    available: true,
+  };
+}
+
+/**
+ * scoreTwoSided — Combined agent + customer compliance score.
+ * Falls back gracefully to agent-only when customer audio isn't available.
+ *
+ * @param {Object} scriptState - enrollment form state
+ * @param {Array} copilotEntries - copilot feed messages
+ * @param {string} agentTranscript - agent-only transcript text
+ * @param {string} customerText - customer-only flat transcript
+ * @param {Array} mergedTranscript - chronological merged entries
+ * @returns {Object} enhanced compliance result with customer layer
+ */
+export function scoreTwoSided(scriptState, copilotEntries, agentTranscript, customerText, mergedTranscript) {
+  const agentResult = scoreCompliance(scriptState, copilotEntries, agentTranscript);
+
+  if (!customerText || !customerText.trim()) {
+    return {
+      ...agentResult,
+      customerConfirmation: null,
+      overallTwoSidedScore: null,
+      scoringMode: agentResult.scoringMode,
+    };
+  }
+
+  const agentAnalysis = agentTranscript ? analyzeTranscript(agentTranscript) : null;
+  const customerConfirmation = scoreCustomerConfirmation(customerText, mergedTranscript, agentAnalysis);
+
+  // Weighted combination: 60% agent, 40% customer confirmation
+  const overallTwoSidedScore = Math.round(
+    agentResult.score * AGENT_WEIGHT + customerConfirmation.score * CUSTOMER_WEIGHT
+  );
+
+  return {
+    ...agentResult,
+    customerConfirmation,
+    overallTwoSidedScore,
+    scoringMode: "two_sided",
+  };
 }

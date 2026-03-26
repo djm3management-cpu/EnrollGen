@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
-import { scoreCompliance } from "../context/ComplianceScorer";
+import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useCopilotEngine } from "../hooks/useCopilotEngine";
+import { useCustomerAudio } from "../hooks/useCustomerAudio";
+import { useMergedTranscript } from "../hooks/useMergedTranscript";
+import CustomerAudioCapture from "./CustomerAudioCapture";
 import { LEVEL_STYLE } from "../data/complianceKnowledge";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -43,6 +46,31 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
   // Shared transcriptRef — created here, passed to both hooks
   const transcriptRef = useRef("");
 
+  /* ─── Customer audio capture (opt-in via getDisplayMedia + Deepgram) ─── */
+  const customerAudio = useCustomerAudio();
+
+  /* ─── Speech recognition (agent mic) ─── */
+  // Defined before copilot so we can pass transcriptRows to merged transcript
+  const speechRef = useRef(null);
+  const speech = useSpeechRecognition({
+    onNewFinal: (text) => speechRef.current?.scheduleCoaching?.(text),
+    onSpokenQuestion: (q) => speechRef.current?.askCopilot?.(q),
+    externalTranscriptRef: transcriptRef,
+  });
+
+  /* ─── Merged transcript (agent + customer) ─── */
+  const {
+    mergedTranscript,
+    formattedTranscript,
+    customerFlatTranscript,
+    recentCustomerSpeech,
+    hasCustomerAudio,
+  } = useMergedTranscript({
+    agentTranscriptRows: speech.transcriptRows,
+    customerTranscript: customerAudio.customerTranscript,
+    isCustomerCapturing: customerAudio.isCapturing,
+  });
+
   /* ─── Copilot engine (coaching, ask, feed) ─── */
   const copilot = useCopilotEngine({
     transcriptRef,
@@ -50,14 +78,15 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
     state,
     unlocked,
     logComplianceFlag,
+    hasCustomerAudio,
+    formattedTranscript,
+    recentCustomerSpeech,
   });
 
-  /* ─── Speech recognition ─── */
-  const speech = useSpeechRecognition({
-    onNewFinal: copilot.scheduleCoaching,
-    onSpokenQuestion: copilot.askCopilot,
-    externalTranscriptRef: transcriptRef,
-  });
+  // Wire speech callbacks to copilot (deferred to avoid circular init)
+  useEffect(() => {
+    speechRef.current = copilot;
+  }, [copilot]);
 
   // Forward transcript changes to parent
   useEffect(() => {
@@ -73,7 +102,12 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
   /* ─── UI state ─── */
   const [expanded, setExpanded] = useState(true);
   const [elapsedSec, setElapsedSec] = useState(0);
-  const compliance = useMemo(() => scoreCompliance(state, copilot.entries), [state, copilot.entries]);
+  const compliance = useMemo(() => {
+    if (hasCustomerAudio && customerFlatTranscript) {
+      return scoreTwoSided(state, copilot.entries, speech.transcript, customerFlatTranscript, mergedTranscript);
+    }
+    return scoreCompliance(state, copilot.entries);
+  }, [state, copilot.entries, hasCustomerAudio, customerFlatTranscript, mergedTranscript, speech.transcript]);
 
   // Section elapsed timer
   useEffect(() => {
@@ -94,8 +128,9 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
   /* ─── Clear all ─── */
   const clearAll = useCallback(() => {
     speech.clearTranscript();
+    customerAudio.clearTranscript();
     copilot.clearFeed();
-  }, [speech, copilot]);
+  }, [speech, customerAudio, copilot]);
 
   /* ─── Exports ─── */
   const exportReplayScenario = useCallback(() => {
@@ -216,6 +251,11 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
                 { label: "SECTION", value: `${activeSection === 2.5 ? "SNP" : activeSection} · ${currentStep.toUpperCase()}`, color: "#ffffff" },
                 { label: "ELAPSED", value: elapsedDisplay, color: elapsedSec > 300 ? "#FFE45C" : "#ffffff" },
                 { label: "COMPLIANCE", value: `${compliance.score}/100`, color: compliance.score >= 90 ? "#9D00FF" : compliance.score >= 80 ? "#00ff41" : compliance.score >= 60 ? "#FFE45C" : "#FF2040" },
+                ...(compliance.customerConfirmation?.available ? [{
+                  label: "CUST. CONFIRM",
+                  value: `${compliance.customerConfirmation.score}/100`,
+                  color: compliance.customerConfirmation.score >= 80 ? "#00ff41" : compliance.customerConfirmation.score >= 60 ? "#FFE45C" : "#FF2040",
+                }] : []),
               ].map(({ label, value, color }, i, arr) => (
                 <div key={label} style={{ flex: 1, padding: "8px 12px", borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
                   <div style={{ fontSize: "0.66rem", color: "#7a7f8e", fontFamily: "var(--font-body)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3, lineHeight: 1.2 }}>{label}</div>
@@ -257,6 +297,15 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
               }}>
                 CLEAR
               </button>
+
+              <CustomerAudioCapture
+                isCapturing={customerAudio.isCapturing}
+                audioLevel={customerAudio.audioLevel}
+                error={customerAudio.error}
+                onStart={customerAudio.startCapture}
+                onStop={customerAudio.stopCapture}
+                hasDeepgramKey={!!import.meta.env.VITE_DEEPGRAM_API_KEY}
+              />
 
               <button
                 disabled={!transcript.trim() || coachingLoading}
@@ -318,12 +367,16 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "7px 12px", borderBottom: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.02)",
                 }}>
-                  <span style={{ fontSize: "0.68rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "0.04em", color: "#7a7f8e" }}>Live Telemetry</span>
-                  <span style={{ fontSize: "0.65rem", color: "#444", fontFamily: "'DM Sans', sans-serif" }}>{transcriptRows.length} lines</span>
+                  <span style={{ fontSize: "0.68rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "0.04em", color: "#7a7f8e" }}>
+                    Live Telemetry{hasCustomerAudio ? " (Dual)" : ""}
+                  </span>
+                  <span style={{ fontSize: "0.65rem", color: "#444", fontFamily: "'DM Sans', sans-serif" }}>
+                    {hasCustomerAudio ? `${mergedTranscript.length} merged` : `${transcriptRows.length} lines`}
+                  </span>
                 </div>
 
                 <div ref={telemetryRef} className="panel-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-                  {transcriptRows.length === 0 && !interimText && (
+                  {transcriptRows.length === 0 && !interimText && !hasCustomerAudio && (
                     <div className={`panel-empty ${listening ? "panel-empty--listening" : "panel-empty--input"}`}>
                       <div className="panel-empty-dots">
                         <span className="panel-empty-dot" /><span className="panel-empty-dot" /><span className="panel-empty-dot" />
@@ -331,12 +384,32 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
                       <span className="panel-empty-label">{listening ? "Listening" : "Awaiting input"}</span>
                     </div>
                   )}
-                  {transcriptRows.map((row, idx) => (
-                    <div key={row.id} style={{ display: "grid", gridTemplateColumns: "58px 1fr", gap: 6, padding: "5px 10px", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "start" }}>
-                      <span style={{ fontSize: "0.58rem", color: "#444", fontFamily: "'IBM Plex Mono', monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1.45, paddingTop: 2 }}>{row.ts}</span>
-                      <span style={{ fontSize: "0.8rem", color: idx === transcriptRows.length - 1 ? "#d8dce6" : "#6a6e7a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.45, overflowWrap: "break-word", minWidth: 0 }}>{row.text}</span>
-                    </div>
-                  ))}
+                  {hasCustomerAudio ? (
+                    /* ── DUAL MODE: interleaved agent + customer rows ── */
+                    mergedTranscript.filter((e) => e.isFinal).map((entry, idx, arr) => {
+                      const isCustomer = entry.speaker === "customer";
+                      const ts = new Date(entry.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+                      return (
+                        <div key={`${entry.speaker}-${entry.timestamp}-${idx}`} style={{ display: "grid", gridTemplateColumns: "58px 1fr", gap: 6, padding: "5px 10px", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "start", borderLeft: isCustomer ? "2px solid rgba(0,168,255,0.4)" : "2px solid transparent" }}>
+                          <span style={{ fontSize: "0.58rem", color: "#444", fontFamily: "'IBM Plex Mono', monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1.45, paddingTop: 2 }}>{ts}</span>
+                          <span style={{ fontSize: "0.8rem", color: idx === arr.length - 1 ? "#d8dce6" : isCustomer ? "#66b3ff" : "#6a6e7a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.45, overflowWrap: "break-word", minWidth: 0 }}>
+                            <span style={{ fontSize: "0.6rem", fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.06em", color: isCustomer ? "#00A8FF" : "#7a7f8e", marginRight: 4 }}>
+                              {isCustomer ? "CUST" : "AGT"}
+                            </span>
+                            {entry.text}
+                          </span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    /* ── AGENT-ONLY MODE: existing rows ── */
+                    transcriptRows.map((row, idx) => (
+                      <div key={row.id} style={{ display: "grid", gridTemplateColumns: "58px 1fr", gap: 6, padding: "5px 10px", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "start" }}>
+                        <span style={{ fontSize: "0.58rem", color: "#444", fontFamily: "'IBM Plex Mono', monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1.45, paddingTop: 2 }}>{row.ts}</span>
+                        <span style={{ fontSize: "0.8rem", color: idx === transcriptRows.length - 1 ? "#d8dce6" : "#6a6e7a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.45, overflowWrap: "break-word", minWidth: 0 }}>{row.text}</span>
+                      </div>
+                    ))
+                  )}
                   {interimText && (
                     <div style={{ display: "grid", gridTemplateColumns: "58px 1fr", gap: 6, padding: "5px 10px", alignItems: "start" }}>
                       <span style={{ fontSize: "0.58rem", color: "#333", fontFamily: "'DM Sans', sans-serif", paddingTop: 2 }}>…</span>

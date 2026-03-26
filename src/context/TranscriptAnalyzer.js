@@ -2014,3 +2014,252 @@ export function getIntentMap() {
 export function getIntentCount() {
   return Object.keys(INTENT_MAP).length;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+     CUSTOMER AUDIO ANALYSIS — Two-Sided Compliance
+     These functions analyze the customer's side of the conversation
+     when dual audio capture is active.
+     ═══════════════════════════════════════════════════════════════ */
+
+const CUSTOMER_ACKNOWLEDGMENT_PHRASES = [
+  "yes", "yeah", "yep", "correct", "right", "that's right",
+  "i understand", "i got it", "okay", "ok", "sure", "makes sense",
+  "i agree", "sounds good", "go ahead", "that's fine", "i see",
+  "absolutely", "of course", "understood", "uh huh", "mm hmm",
+  "that's correct", "you're right", "i'm okay with that",
+  "i acknowledge", "i consent", "yes i do", "yes please",
+  "i want to", "let's do it", "sign me up", "i'd like to enroll",
+  "yes i want to enroll", "i confirm", "that works",
+];
+
+const CUSTOMER_CONFUSION_PHRASES = [
+  "i don't understand", "i'm confused", "what do you mean",
+  "can you explain", "say that again", "i'm not sure",
+  "what does that mean", "i don't get it", "huh", "what",
+  "run that by me again", "could you repeat", "i'm lost",
+  "that doesn't make sense", "what's the difference",
+  "i thought", "wait", "hold on", "slow down",
+  "can you go over that again", "i need to think about it",
+];
+
+const CUSTOMER_OBJECTION_PHRASES = [
+  "that's too expensive", "i can't afford", "too much",
+  "i'm not sure about this", "i need to think", "let me think",
+  "i want to talk to", "i need to talk to my",
+  "my doctor", "my children", "my spouse", "my family",
+  "i don't want", "i'm not interested", "no thanks",
+  "not right now", "maybe later", "call me back",
+  "i already have", "i'm happy with", "i don't need",
+  "that sounds like a lot", "is there anything cheaper",
+  "what about my current plan", "i like my plan",
+  "i was told", "but you said", "you told me",
+  "that's not what i heard", "that's different from",
+];
+
+const CUSTOMER_COST_PHRASES = [
+  "how much", "what does it cost", "what's the premium",
+  "what do i pay", "is it free", "no cost", "no premium",
+  "what about copays", "deductible", "out of pocket",
+  "monthly payment", "monthly cost", "affordable",
+  "taken out of my check", "social security",
+];
+
+const CUSTOMER_HEALTH_PHRASES = [
+  "diabetes", "heart", "cardiac", "blood pressure", "hypertension",
+  "copd", "cancer", "kidney", "dialysis", "insulin",
+  "medication", "prescription", "pills", "doctor visits",
+  "hospital", "surgery", "condition", "chronic", "disability",
+  "arthritis", "oxygen", "inhaler", "pain", "specialist",
+  "i take", "i'm on", "i have", "i was diagnosed",
+];
+
+const MISLEADING_CLAIM_PHRASES = [
+  "you said it was free", "you told me no cost",
+  "you said there's no network", "you promised",
+  "but you said", "you told me i could keep",
+  "you said any doctor", "you said everything is covered",
+  "you guaranteed", "you said no copay",
+  "you said no deductible", "that's not what you said",
+  "you said it covers everything",
+];
+
+/**
+ * Analyze customer sentiment from their utterances.
+ * Returns: { sentiment, confidence, evidence }
+ */
+export function analyzeCustomerSentiment(customerText) {
+  if (!customerText || !customerText.trim()) {
+    return { sentiment: "neutral", confidence: 0, evidence: "No customer speech detected." };
+  }
+
+  const norm = normalize(customerText);
+  let positiveCount = 0;
+  let negativeCount = 0;
+  let confusedCount = 0;
+  const evidence = [];
+
+  // Check acknowledgments (positive)
+  for (const phrase of CUSTOMER_ACKNOWLEDGMENT_PHRASES) {
+    if (norm.includes(normalize(phrase))) {
+      positiveCount++;
+      if (evidence.length < 3) evidence.push(phrase);
+    }
+  }
+
+  // Check confusion (negative-ish)
+  for (const phrase of CUSTOMER_CONFUSION_PHRASES) {
+    if (norm.includes(normalize(phrase))) {
+      confusedCount++;
+      if (evidence.length < 3) evidence.push(phrase);
+    }
+  }
+
+  // Check objections (negative)
+  for (const phrase of CUSTOMER_OBJECTION_PHRASES) {
+    if (norm.includes(normalize(phrase))) {
+      negativeCount++;
+      if (evidence.length < 3) evidence.push(phrase);
+    }
+  }
+
+  const total = positiveCount + negativeCount + confusedCount;
+  if (total === 0) return { sentiment: "neutral", confidence: 30, evidence: "No clear sentiment indicators." };
+
+  if (confusedCount > positiveCount && confusedCount > negativeCount) {
+    return { sentiment: "confused", confidence: Math.min(95, 50 + confusedCount * 15), evidence: `Customer expressed confusion: "${evidence.join('", "')}"` };
+  }
+  if (negativeCount > positiveCount) {
+    return { sentiment: "negative", confidence: Math.min(95, 50 + negativeCount * 15), evidence: `Customer expressed objections: "${evidence.join('", "')}"` };
+  }
+  if (positiveCount > 0) {
+    return { sentiment: "positive", confidence: Math.min(95, 50 + positiveCount * 10), evidence: `Customer acknowledged/agreed: "${evidence.join('", "')}"` };
+  }
+  return { sentiment: "neutral", confidence: 30, evidence: "Mixed signals." };
+}
+
+/**
+ * Detect customer objections from their utterances.
+ * Returns array of { type, phrase, severity }
+ */
+export function detectCustomerObjections(customerText) {
+  if (!customerText || !customerText.trim()) return [];
+  const norm = normalize(customerText);
+  const objections = [];
+
+  const objectionTypes = [
+    { type: "cost_concern", phrases: ["too expensive", "can't afford", "too much", "anything cheaper", "is it free", "no cost"], severity: "medium" },
+    { type: "decision_delay", phrases: ["need to think", "let me think", "call me back", "maybe later", "not right now"], severity: "low" },
+    { type: "third_party_consultation", phrases: ["talk to my", "my spouse", "my children", "my family", "my doctor"], severity: "low" },
+    { type: "disinterest", phrases: ["not interested", "don't want", "no thanks", "don't need"], severity: "high" },
+    { type: "current_plan_loyalty", phrases: ["happy with", "i like my plan", "already have", "current plan"], severity: "medium" },
+    { type: "misleading_claim_detected", phrases: MISLEADING_CLAIM_PHRASES, severity: "critical" },
+  ];
+
+  for (const { type, phrases, severity } of objectionTypes) {
+    for (const phrase of phrases) {
+      if (norm.includes(normalize(phrase))) {
+        objections.push({ type, phrase, severity });
+        break; // One match per type is enough
+      }
+    }
+  }
+
+  return objections;
+}
+
+/**
+ * Cross-reference: for each required disclosure the agent made,
+ * did the customer verbally acknowledge it?
+ *
+ * Takes the merged transcript (speaker-labeled) and the list of
+ * required disclosure intents that were detected in the agent's speech.
+ *
+ * Returns: { disclosures: [{ id, agentSaid, customerAcknowledged, evidence }], score }
+ */
+export function verifyCustomerAcknowledgments(mergedTranscript, agentAnalysis) {
+  if (!mergedTranscript || !mergedTranscript.length || !agentAnalysis) {
+    return { disclosures: [], score: 0, total: 0 };
+  }
+
+  // Key disclosures that need customer acknowledgment for CMS compliance
+  const REQUIRED_ACKNOWLEDGMENTS = [
+    { id: "soa_consent", agentIntents: ["soa_obtained", "soa_verbal"], label: "Scope of Appointment consent" },
+    { id: "recording_consent", agentIntents: ["recording_disclosed", "recording_consent_given"], label: "Call recording consent" },
+    { id: "plan_type_acknowledged", agentIntents: ["plan_type_disclosed", "hmo_explained", "ppo_explained"], label: "Plan type disclosure" },
+    { id: "premium_acknowledged", agentIntents: ["premium_disclosed", "cost_disclosed"], label: "Premium/cost disclosure" },
+    { id: "network_acknowledged", agentIntents: ["network_restrictions", "provider_network_explained"], label: "Network restrictions" },
+    { id: "enrollment_confirmed", agentIntents: ["enrollment_review", "enrollment_confirmation"], label: "Enrollment confirmation" },
+  ];
+
+  // Get customer-only text segments that follow each agent disclosure
+  const disclosures = [];
+  let acknowledged = 0;
+
+  for (const req of REQUIRED_ACKNOWLEDGMENTS) {
+    // Check if agent made this disclosure
+    const agentMadeDisclosure = agentAnalysis.intentsDetected?.some(
+      (intent) => req.agentIntents.some((ai) => intent.startsWith(ai) || intent.includes(ai))
+    );
+
+    if (!agentMadeDisclosure) {
+      disclosures.push({ id: req.id, label: req.label, agentSaid: false, customerAcknowledged: false, evidence: "Agent has not made this disclosure yet." });
+      continue;
+    }
+
+    // Find customer speech that follows agent disclosure areas
+    // Simple approach: check if any customer speech contains acknowledgment phrases
+    const customerTexts = mergedTranscript
+      .filter((e) => e.speaker === "customer" && e.isFinal)
+      .map((e) => e.text);
+    const customerCombined = normalize(customerTexts.join(" "));
+
+    const customerAcknowledged = CUSTOMER_ACKNOWLEDGMENT_PHRASES.some(
+      (phrase) => customerCombined.includes(normalize(phrase))
+    );
+
+    if (customerAcknowledged) acknowledged++;
+
+    disclosures.push({
+      id: req.id,
+      label: req.label,
+      agentSaid: true,
+      customerAcknowledged,
+      evidence: customerAcknowledged
+        ? "Customer verbally acknowledged this disclosure."
+        : "Agent made disclosure but no clear customer acknowledgment detected.",
+    });
+  }
+
+  const total = disclosures.filter((d) => d.agentSaid).length;
+  const score = total > 0 ? Math.round((acknowledged / total) * 100) : 0;
+
+  return { disclosures, score, total, acknowledged };
+}
+
+/**
+ * Detect potential evidence that the agent made misleading statements,
+ * based on what the customer says ("you told me...", "but you said...").
+ */
+export function detectMisleadingClaimEvidence(customerText) {
+  if (!customerText || !customerText.trim()) return [];
+  const norm = normalize(customerText);
+  const flags = [];
+
+  for (const phrase of MISLEADING_CLAIM_PHRASES) {
+    const p = normalize(phrase);
+    const idx = norm.indexOf(p);
+    if (idx !== -1) {
+      // Extract surrounding context (up to 60 chars after the match)
+      const contextEnd = Math.min(norm.length, idx + p.length + 60);
+      const context = norm.slice(idx, contextEnd).trim();
+      flags.push({
+        phrase,
+        context,
+        severity: "critical",
+        evidence: `Customer said: "${context}" — investigate potential misleading agent statement.`,
+      });
+    }
+  }
+
+  return flags;
+}

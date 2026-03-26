@@ -347,21 +347,25 @@ ONLY break silence for:
 5. **SILENCE (silent)**: Agent is doing fine, covering requirements correctly, or there's nothing actionable to say. THIS IS YOUR DEFAULT. Use this 70-80% of the time. When in doubt, choose silent.`;
 }
 
-function buildCoachingSystemPrompt({
-  sectionKey,
-  knowledge,
-  flowOrder,
-  cmsBlock,
-  transcriptRefBlock,
-  recentInterventionText,
-  copilotContextJson,
-  reviewMode = "live",
-}) {
-  const complianceContext = buildComplianceContext(knowledge);
-
-  return `You are an expert CMS Medicare enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required disclosure, or something the agent needs to correct RIGHT NOW.
-
+function buildAudioConstraintBlock(hasCustomerAudio) {
+  if (hasCustomerAudio) {
+    return `════════════════════════════════════════════════════════
+DUAL AUDIO MODE — AGENT + CUSTOMER
 ════════════════════════════════════════════════════════
+You can hear BOTH the agent and the customer. The transcript below includes lines labeled AGENT: and CUSTOMER:. Use the customer's responses to provide more accurate, contextual coaching.
+
+DUAL AUDIO IMPLICATIONS:
+- When the customer expresses confusion, objections, or asks questions, coach the agent on how to respond effectively and compliantly.
+- When the customer confirms understanding or agreement, note compliance checkpoints that have been satisfied by the customer's own words.
+- Track whether required disclosures were BOTH delivered by the agent AND acknowledged by the customer — this is the gold standard for CMS compliance.
+- If the customer says something that contradicts what the agent said ("you told me it was free", "but you said there's no network"), flag this as a potential compliance violation immediately.
+- When the customer verbally confirms enrollment, verify that ALL required disclosures were made BEFORE that point.
+- If the customer mentions pre-existing conditions, medications, or other coverage, flag for plan suitability review.
+- Speech recognition is imperfect for BOTH speakers. Words may be garbled or truncated. If something SOUNDS CLOSE ENOUGH, give credit. Use semantic matching, not exact text matching.
+- The call may have started before capture began. Absence in the transcript is not proof of omission.`;
+  }
+
+  return `════════════════════════════════════════════════════════
 CRITICAL AUDIO CONSTRAINT — THIS IS NON-NEGOTIABLE
 ════════════════════════════════════════════════════════
 You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words captured through their microphone. You have ZERO access to what the client/beneficiary says, asks, confirms, or agrees to.
@@ -374,7 +378,26 @@ IMPLICATIONS — read carefully:
 - When the agent reads back information, confirms details, or paraphrases — that's GOOD compliance behavior. Acknowledge it by referencing their specific words.
 - Speech recognition is imperfect. Words may be garbled, truncated, or slightly wrong. If something SOUNDS CLOSE ENOUGH to a required phrase, GIVE THE AGENT CREDIT. Don't flag something as missing just because a word or two was garbled. Use semantic matching, not exact text matching.
 - The agent may have started speaking with the beneficiary BEFORE pressing record or before this transcript segment began. That means earlier required lines may have happened off-transcript. Absence in the visible transcript is NOT proof they were skipped.
-- Because the transcript may begin mid-call or mid-section, do NOT assume the first visible line is the true start of the section. Only warn when the agent is clearly moving forward without covering something, not merely because you did not hear the opening.
+- Because the transcript may begin mid-call or mid-section, do NOT assume the first visible line is the true start of the section. Only warn when the agent is clearly moving forward without covering something, not merely because you did not hear the opening.`;
+}
+
+function buildCoachingSystemPrompt({
+  sectionKey,
+  knowledge,
+  flowOrder,
+  cmsBlock,
+  transcriptRefBlock,
+  recentInterventionText,
+  copilotContextJson,
+  reviewMode = "live",
+  hasCustomerAudio = false,
+}) {
+  const complianceContext = buildComplianceContext(knowledge);
+  const audioBlock = buildAudioConstraintBlock(hasCustomerAudio);
+
+  return `You are an expert CMS Medicare enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required disclosure, or something the agent needs to correct RIGHT NOW.
+
+${audioBlock}
 
 ════════════════════════════════════════════════════════
 CURRENT SECTION: "${sectionKey}"
@@ -466,22 +489,32 @@ Respond with ONLY a valid JSON object. No backticks, no wrapper text, no extra c
 }`;
 }
 
-function buildAskSystemPrompt({ sectionKey, knowledge, cmsBlock, transcriptRefBlock, recentTranscript, copilotContextJson, isSpoken }) {
+function buildAskSystemPrompt({ sectionKey, knowledge, cmsBlock, transcriptRefBlock, recentTranscript, copilotContextJson, isSpoken, hasCustomerAudio = false, recentCustomerSpeech = "" }) {
   let sectionContext = "";
   if (knowledge) {
     sectionContext = `\nCurrent section: "${sectionKey}"\nRequired elements:\n${knowledge.requiredElements.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n`;
   }
 
+  const audioContext = hasCustomerAudio
+    ? `- You can hear BOTH the agent and the customer (dual audio mode)
+- The transcript includes speaker labels (AGENT: / CUSTOMER:)
+- Use the customer's recent statements to give more contextual answers`
+    : "- You can ONLY hear the AGENT speaking (not the client)";
+
+  const customerContext = hasCustomerAudio && recentCustomerSpeech
+    ? `\nRecent customer speech for context:\n"${recentCustomerSpeech}"\n`
+    : "";
+
   return `You are a knowledgeable Medicare compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer to their question.
 ${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting their microphone (customer cannot hear). Answer it directly and concisely." : ""}
 CRITICAL CONTEXT:
-- You can ONLY hear the AGENT speaking (not the client)
+${audioContext}
 - The agent is currently in the "${sectionKey}" section of the enrollment flow
 - They need a fast, practical answer they can use RIGHT NOW on this call
 ${sectionContext}
 ${cmsBlock}
 ${transcriptRefBlock}
-${recentTranscript ? `\nRecent agent transcript for context:\n"${recentTranscript.slice(-1000)}"\n` : ""}
+${recentTranscript ? `\nRecent agent transcript for context:\n"${recentTranscript.slice(-1000)}"\n` : ""}${customerContext}
 Structured app context:
 ${copilotContextJson}
 
@@ -531,6 +564,9 @@ export function useCopilotEngine({
   state,
   unlocked,
   logComplianceFlag,
+  hasCustomerAudio = false,
+  formattedTranscript = "",
+  recentCustomerSpeech = "",
 }) {
   const currentStep = SECTION_LABELS[activeSection] || `Section ${activeSection}`;
 
@@ -712,9 +748,18 @@ export function useCopilotEngine({
       recentInterventionText,
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
       reviewMode,
+      hasCustomerAudio,
     });
 
-    const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words appear below. Speech recognition may have minor transcription errors.)
+    const transcriptLabel = hasCustomerAudio
+      ? "DUAL TRANSCRIPT — AGENT + CUSTOMER (lines labeled AGENT: or CUSTOMER:. Speech recognition may have minor errors for both speakers.)"
+      : "AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words appear below. Speech recognition may have minor transcription errors.)";
+
+    const dualTranscriptBlock = hasCustomerAudio && formattedTranscript
+      ? `\nFULL CONVERSATION (speaker-labeled, chronological):\n"${formattedTranscript.slice(-3000)}"\n`
+      : "";
+
+    const userContent = `${transcriptLabel}
 ${sectionEntry ? `
 SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" section. This is your first look at this section. Provide a brief "info" level response: summarize the 2-3 most important compliance items to cover in this section, note any issues you see so far in the transcript, and give a short status. Keep it to 2-3 sentences. Use level "info" unless you spot an actual compliance issue. Do NOT return silent for a section entry analysis.
 ` : ""}
@@ -725,7 +770,7 @@ NEW SPEECH SINCE LAST ANALYSIS:
 "${newSpeechWindow}"
 
 SECTION CONTEXT (rolling window for current section):
-"${analysisWindow}"`;
+"${analysisWindow}"${dualTranscriptBlock}`;
 
     try {
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
@@ -987,6 +1032,8 @@ SECTION CONTEXT (rolling window for current section):
       recentTranscript,
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
       isSpoken,
+      hasCustomerAudio,
+      recentCustomerSpeech,
     });
 
     try {
