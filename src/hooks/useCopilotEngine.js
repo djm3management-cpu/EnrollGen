@@ -480,7 +480,19 @@ CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
 ════════════════════════════════════════════════════════
 RESPONSE FORMAT
 ════════════════════════════════════════════════════════
-Respond with ONLY a valid JSON object. No backticks, no wrapper text, no extra content outside the JSON. Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences. Separate thoughts with periods, never with dashes or symbols:
+Respond with ONLY a valid JSON object. No backticks, no wrapper text, no extra content outside the JSON.
+
+RESPONSE FORMAT RULES FOR THE MESSAGE FIELD:
+- Respond ONLY in plain, conversational English
+- NEVER include JSON, code, or structured data in the message
+- NEVER include confidence scores, percentages, or numeric ratings
+- NEVER include topic tags, intent labels, or classification metadata
+- NEVER reference internal analysis functions or scoring systems
+- Write as if you are a senior agent whispering advice during a live call
+- Keep messages short: 1-3 sentences for coaching, up to 5 for ask responses
+- No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters
+- Write natural conversational sentences. Separate thoughts with periods, never with dashes or symbols
+
 {
   "level": "silent | info | tip | remind | warn | critical",
   "issue_tag": "short_snake_case_issue_tag_or_empty_if_silent_or_tip",
@@ -551,7 +563,17 @@ RESPONSE RULES:
 - Always prioritize CMS compliance in your answers
 - For any plan-specific data question, follow the HARD BOUNDARY rules above
 - If transcript references are provided, cite them inline as [R1], [R2], etc.
-Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences. Separate multiple items with numbered lines or semicolons, never with dashes or symbols.`;
+
+RESPONSE FORMAT RULES:
+- Respond ONLY in plain, conversational English
+- NEVER include JSON, code, or structured data in your response
+- NEVER include confidence scores, percentages, or numeric ratings
+- NEVER include topic tags, intent labels, or classification metadata
+- NEVER reference internal analysis functions or scoring systems
+- Write as if you are a senior agent whispering advice during a live call
+- Keep responses short: 1-5 sentences max
+- No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters
+- Write natural conversational sentences. Separate multiple items with numbered lines or semicolons, never with dashes or symbols.`;
 }
 
 /* ───────────────────────────────────────────────────────

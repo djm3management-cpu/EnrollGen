@@ -6,7 +6,6 @@ import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useCopilotEngine } from "../hooks/useCopilotEngine";
 import { useCustomerAudio } from "../hooks/useCustomerAudio";
 import { useMergedTranscript } from "../hooks/useMergedTranscript";
-import CustomerAudioCapture from "./CustomerAudioCapture";
 import { LEVEL_STYLE } from "../data/complianceKnowledge";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -102,6 +101,30 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, onMerg
   useEffect(() => {
     if (onListeningChange) onListeningChange(speech.listening);
   }, [speech.listening, onListeningChange]);
+
+  /* ─── Unified START / STOP handler (Fix 1 + Fix 2) ─── */
+  const customerAudioEnabled =
+    import.meta.env.VITE_ENABLE_CUSTOMER_AUDIO !== "false" &&
+    !!import.meta.env.VITE_DEEPGRAM_API_KEY;
+
+  const handleStart = useCallback(async () => {
+    // 1) Start agent mic FIRST — must be transcribing before tab share dialog
+    speech.startListening();
+    if (!customerAudioEnabled) return;
+    // 2) Small delay to ensure agent audio is flowing
+    await new Promise((r) => setTimeout(r, 200));
+    // 3) Prompt for customer audio — silent fallback if denied
+    try {
+      await customerAudio.startCapture();
+    } catch (e) {
+      console.log("Customer audio skipped:", e?.message || e);
+    }
+  }, [speech, customerAudio, customerAudioEnabled]);
+
+  const handleStop = useCallback(() => {
+    speech.stopListening();
+    if (customerAudio.isCapturing) customerAudio.stopCapture();
+  }, [speech, customerAudio]);
 
   /* ─── Auto-scroll telemetry ─── */
   const telemetryRef = useRef(null);
@@ -257,7 +280,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, onMerg
               boxShadow: "inset 4px 4px 9px rgba(0,0,0,0.42), inset -3px -3px 8px rgba(255,255,255,0.025)",
             }}>
               {[
-                { label: "STATUS", value: listening ? "● LIVE" : "○ STANDBY", color: listening ? "#39FF88" : "#C7CEDA" },
+                { label: "STATUS", value: listening ? (hasCustomerAudio ? "● LIVE (Dual)" : "● LIVE") : "○ STANDBY", color: listening ? "#39FF88" : "#C7CEDA" },
                 { label: "SECTION", value: `${activeSection === 2.5 ? "SNP" : activeSection} · ${currentStep.toUpperCase()}`, color: "#ffffff" },
                 { label: "ELAPSED", value: elapsedDisplay, color: elapsedSec > 300 ? "#FFE45C" : "#ffffff" },
                 { label: "COMPLIANCE", value: `${compliance.score}/100`, color: compliance.score >= 90 ? "#9D00FF" : compliance.score >= 80 ? "#00ff41" : compliance.score >= 60 ? "#FFE45C" : "#FF2040" },
@@ -282,7 +305,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, onMerg
               boxShadow: "inset 4px 4px 9px rgba(0,0,0,0.42), inset -3px -3px 8px rgba(255,255,255,0.025)",
             }}>
               <button
-                onClick={listening ? speech.stopListening : speech.startListening}
+                onClick={listening ? handleStop : handleStart}
                 disabled={!supportsRecognition}
                 style={{
                   background: listening
@@ -308,14 +331,38 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, onMerg
                 CLEAR
               </button>
 
-              <CustomerAudioCapture
-                isCapturing={customerAudio.isCapturing}
-                audioLevel={customerAudio.audioLevel}
-                error={customerAudio.error}
-                onStart={customerAudio.startCapture}
-                onStop={customerAudio.stopCapture}
-                hasDeepgramKey={!!import.meta.env.VITE_DEEPGRAM_API_KEY}
-              />
+              {/* Read-only customer audio status indicator */}
+              {customerAudio.isCapturing && (
+                <div style={{ display: "flex", alignItems: "center", gap: 3,
+                  background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+                  border: "1px solid rgba(0,255,65,0.15)", borderRadius: 50, padding: "4px 10px",
+                  boxShadow: "inset 3px 3px 6px rgba(0,0,0,0.4), inset -2px -2px 5px rgba(255,255,255,0.018)",
+                }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#00ff41", flexShrink: 0,
+                    boxShadow: "0 0 6px rgba(0,255,65,0.7)", animation: "customerPulse 1.5s ease-in-out infinite",
+                  }} />
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: 1, height: 12 }}>
+                    {[0.1, 0.25, 0.4, 0.55, 0.7, 0.85].map((threshold, i) => (
+                      <div key={i} style={{ width: 2, height: 3 + i * 1.5, borderRadius: 1,
+                        background: customerAudio.audioLevel > threshold ? "#00ff41" : "rgba(255,255,255,0.08)",
+                        transition: "background 0.1s",
+                      }} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: "0.62rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
+                    letterSpacing: "0.04em", color: "#00ff41", whiteSpace: "nowrap",
+                  }}>
+                    CUSTOMER LIVE
+                  </span>
+                </div>
+              )}
+              {customerAudio.error && (
+                <span style={{ fontSize: "0.6rem", color: "#FF8FA3", fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
+                  maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }} title={customerAudio.error}>
+                  {customerAudio.error.length > 40 ? customerAudio.error.slice(0, 37) + "…" : customerAudio.error}
+                </span>
+              )}
 
               <button
                 disabled={!transcript.trim() || coachingLoading}
@@ -477,34 +524,6 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, onMerg
                           <span style={{ fontSize: "0.55rem", color: "#444", fontFamily: "'IBM Plex Mono', monospace", whiteSpace: "nowrap", flexShrink: 0 }}>{msg.ts}</span>
                         </div>
                         <div style={{ fontSize: "0.82rem", color: "#c2c7d4", lineHeight: 1.55, fontFamily: "'DM Sans', sans-serif", fontWeight: 400, overflowWrap: "break-word" }}>{msg.text}</div>
-                        {msg.issueTag && (
-                          <span style={{ display: "inline-block", marginTop: 5, fontSize: "0.58rem", color: "#E8002D", border: "1px solid rgba(232,0,45,0.2)", borderRadius: 2, padding: "1px 5px", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", background: "rgba(232,0,45,0.04)" }}>{msg.issueTag}</span>
-                        )}
-                        {msg.retrievalTrace && (msg.retrievalTrace.topics?.length || msg.retrievalTrace.scenarios?.length || msg.retrievalTrace.sources?.length) && (
-                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 5 }}>
-                            {msg.retrievalTrace.topics?.slice(0, 3).map((id) => (
-                              <span key={id} style={{ fontSize: "0.57rem", color: "#666", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 2, padding: "1px 5px", background: "rgba(255,255,255,0.02)", fontFamily: "'IBM Plex Mono', monospace" }}>topic:{id}</span>
-                            ))}
-                            {msg.retrievalTrace.scenarios?.slice(0, 2).map((id) => (
-                              <span key={id} style={{ fontSize: "0.57rem", color: "#E8002D", border: "1px solid rgba(232,0,45,0.15)", borderRadius: 2, padding: "1px 5px", background: "rgba(232,0,45,0.04)", fontFamily: "'IBM Plex Mono', monospace" }}>sep:{id}</span>
-                            ))}
-                            {msg.retrievalTrace.sources?.length > 0 && (
-                              <span style={{ fontSize: "0.57rem", color: "#555", fontFamily: "'IBM Plex Mono', monospace" }}>{msg.retrievalTrace.sources.length}src</span>
-                            )}
-                          </div>
-                        )}
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
-                          {[["correct", "✓"], ["too_aggressive", "AGGR"], ["missed_issue", "MISS"], ["duplicate", "DUP"], ["wrong_section", "SEC?"]].map(([verdict, label]) => (
-                            <button key={verdict} type="button" onClick={() => copilot.setEntryFeedback(msg.id, verdict)} title={verdict.replace(/_/g, " ")} style={{
-                              fontSize: "0.62rem", borderRadius: 50,
-                              border: msg.feedback?.verdict === verdict ? "1px solid rgba(157,0,255,0.4)" : "1px solid rgba(255,255,255,0.06)",
-                              background: msg.feedback?.verdict === verdict ? "linear-gradient(145deg, rgba(157,0,255,0.18) 0%, rgba(100,0,180,0.12) 100%)" : "linear-gradient(145deg, rgba(42,42,50,0.9) 0%, rgba(26,26,32,0.95) 100%)",
-                              color: msg.feedback?.verdict === verdict ? "#B84DFF" : "#555",
-                              padding: "2px 8px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
-                              boxShadow: "2px 2px 4px rgba(0,0,0,0.35), -1px -1px 3px rgba(255,255,255,0.018)", transition: "all 0.12s",
-                            }}>{label}</button>
-                          ))}
-                        </div>
                       </div>
                     );
                   })}

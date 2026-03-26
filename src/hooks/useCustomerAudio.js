@@ -126,9 +126,11 @@ export function useCustomerAudio() {
         // Discard video track
         stream.getVideoTracks().forEach((track) => track.stop());
       } catch (err) {
-        const msg = err.name === "NotAllowedError"
-          ? "Tab sharing was denied. Please try again and select your dialer tab."
-          : `Could not capture tab audio: ${err.message}`;
+        // Re-throw user denial so unified START handler can catch silently
+        if (err.name === "NotAllowedError") {
+          throw new Error("Tab sharing was denied by user.");
+        }
+        const msg = `Could not capture tab audio: ${err.message}`;
         setError(msg);
         return;
       }
@@ -138,8 +140,7 @@ export function useCustomerAudio() {
     const audioTracks = stream.getAudioTracks();
     if (audioTracks.length === 0) {
       stream.getTracks().forEach((t) => t.stop());
-      setError("No audio track in the shared tab. Make sure to check 'Share tab audio' when selecting.");
-      return;
+      throw new Error("No audio track in the shared tab. Make sure to check 'Share tab audio' when selecting.");
     }
 
     mediaStreamRef.current = stream;
