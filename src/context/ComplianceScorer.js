@@ -883,7 +883,11 @@ const CUSTOMER_WEIGHT = 0.4;
  * @returns {Object} customerConfirmation scoring result
  */
 export function scoreCustomerConfirmation(customerText, mergedTranscript, agentAnalysis) {
-  if (!customerText || !customerText.trim()) {
+  const safeCustomerText = typeof customerText === "string" ? customerText : "";
+  const safeMerged = Array.isArray(mergedTranscript) ? mergedTranscript : [];
+  const safeAnalysis = agentAnalysis && typeof agentAnalysis === "object" ? agentAnalysis : null;
+
+  if (!safeCustomerText.trim()) {
     return {
       score: 0,
       grade: "N/A",
@@ -896,10 +900,10 @@ export function scoreCustomerConfirmation(customerText, mergedTranscript, agentA
     };
   }
 
-  const sentiment = analyzeCustomerSentiment(customerText);
-  const objections = detectCustomerObjections(customerText);
-  const acknowledgments = verifyCustomerAcknowledgments(mergedTranscript, agentAnalysis);
-  const misleadingFlags = detectMisleadingClaimEvidence(customerText);
+  const sentiment = analyzeCustomerSentiment(safeCustomerText);
+  const objections = detectCustomerObjections(safeCustomerText);
+  const acknowledgments = verifyCustomerAcknowledgments(safeMerged, safeAnalysis);
+  const misleadingFlags = detectMisleadingClaimEvidence(safeCustomerText);
 
   // Detect "silent enrollment" — agent moved through enrollment steps
   // but customer never verbally confirmed
@@ -938,9 +942,14 @@ export function scoreCustomerConfirmation(customerText, mergedTranscript, agentA
  * @returns {Object} enhanced compliance result with customer layer
  */
 export function scoreTwoSided(scriptState, copilotEntries, agentTranscript, customerText, mergedTranscript) {
-  const agentResult = scoreCompliance(scriptState, copilotEntries, agentTranscript);
+  const safeAgentTranscript = typeof agentTranscript === "string" ? agentTranscript : "";
+  const safeCustomerText = typeof customerText === "string" ? customerText : "";
+  const safeMerged = Array.isArray(mergedTranscript) ? mergedTranscript : [];
+  const safeCopilot = Array.isArray(copilotEntries) ? copilotEntries : [];
 
-  if (!customerText || !customerText.trim()) {
+  const agentResult = scoreCompliance(scriptState, safeCopilot, safeAgentTranscript);
+
+  if (!safeCustomerText.trim()) {
     return {
       ...agentResult,
       customerConfirmation: null,
@@ -949,8 +958,8 @@ export function scoreTwoSided(scriptState, copilotEntries, agentTranscript, cust
     };
   }
 
-  const agentAnalysis = agentTranscript ? analyzeTranscript(agentTranscript) : null;
-  const customerConfirmation = scoreCustomerConfirmation(customerText, mergedTranscript, agentAnalysis);
+  const agentAnalysis = safeAgentTranscript ? analyzeTranscript(safeAgentTranscript) : null;
+  const customerConfirmation = scoreCustomerConfirmation(safeCustomerText, safeMerged, agentAnalysis);
 
   // Weighted combination: 60% agent, 40% customer confirmation
   const overallTwoSidedScore = Math.round(

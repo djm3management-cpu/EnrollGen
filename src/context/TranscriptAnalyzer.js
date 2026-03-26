@@ -2177,8 +2177,8 @@ export function detectCustomerObjections(customerText) {
  * Returns: { disclosures: [{ id, agentSaid, customerAcknowledged, evidence }], score }
  */
 export function verifyCustomerAcknowledgments(mergedTranscript, agentAnalysis) {
-  if (!mergedTranscript || !mergedTranscript.length || !agentAnalysis) {
-    return { disclosures: [], score: 0, total: 0 };
+  if (!Array.isArray(mergedTranscript) || !mergedTranscript.length || !agentAnalysis) {
+    return { disclosures: [], score: 0, total: 0, acknowledged: 0 };
   }
 
   // Key disclosures that need customer acknowledgment for CMS compliance
@@ -2197,7 +2197,13 @@ export function verifyCustomerAcknowledgments(mergedTranscript, agentAnalysis) {
 
   for (const req of REQUIRED_ACKNOWLEDGMENTS) {
     // Check if agent made this disclosure
-    const agentMadeDisclosure = agentAnalysis.intentsDetected?.some(
+    // agentAnalysis.results is a map of intentId → { detected, ... }
+    // agentAnalysis.intentsDetected is a count (number), NOT an array
+    const analysisResults = agentAnalysis.results || {};
+    const detectedIntentIds = Object.keys(analysisResults).filter(
+      (id) => analysisResults[id]?.detected
+    );
+    const agentMadeDisclosure = detectedIntentIds.some(
       (intent) => req.agentIntents.some((ai) => intent.startsWith(ai) || intent.includes(ai))
     );
 
@@ -2208,9 +2214,10 @@ export function verifyCustomerAcknowledgments(mergedTranscript, agentAnalysis) {
 
     // Find customer speech that follows agent disclosure areas
     // Simple approach: check if any customer speech contains acknowledgment phrases
-    const customerTexts = mergedTranscript
-      .filter((e) => e.speaker === "customer" && e.isFinal)
-      .map((e) => e.text);
+    const safeTranscript = Array.isArray(mergedTranscript) ? mergedTranscript : [];
+    const customerTexts = safeTranscript
+      .filter((e) => e && e.speaker === "customer" && e.isFinal)
+      .map((e) => e.text || "");
     const customerCombined = normalize(customerTexts.join(" "));
 
     const customerAcknowledged = CUSTOMER_ACKNOWLEDGMENT_PHRASES.some(
