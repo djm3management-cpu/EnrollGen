@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { RotateCcw, ChevronLeft, ChevronRight, Clock, User, StickyNote, Zap, MessageSquare, ShieldCheck, Radio } from "lucide-react";
-import ObjectionMini from "./ObjectionMini";
+import { RotateCcw, ChevronLeft, ChevronRight, User, MessageSquare, ShieldCheck, Radio, Search } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useSessionTracker } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
@@ -12,12 +11,11 @@ import {
   SectionTimer,
 } from "./SharedUI";
 import ComplianceMini from "./ComplianceMini";
-import CopilotMiniFloat from "./CopilotMiniFloat";
+import CopilotFeedMini from "./CopilotFeedMini";
+import AskCopilotMini from "./AskCopilotMini";
 import CallerInfo from "./CallerInfo";
-import CallTimer from "./CallTimer";
-import QuickNotes from "./QuickNotes";
 import CollapsibleWidget from "./CollapsibleWidget";
-import MiniLiveTranscript from "./MiniLiveTranscript";
+import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
 import SectionRecording from "./SectionRecording";
 import SectionTPMO from "./SectionTPMO";
@@ -115,42 +113,42 @@ function formatDuration(ms) {
 }
 
 /* ---- Shared widget stack — used by both full rail and overlay ---- */
-function RailWidgets({ transcript, activeSection, state, onQuickNotes, mergedEntries, listening }) {
+function RailWidgets({ transcript, activeSection, state, mergedEntries, listening }) {
   return (
     <>
-      <CollapsibleWidget title="Call Timer" icon={<Clock size={11} />} accentColor="#34d399">
-        <CallTimer startTime={state.tpmoStart} />
+      <CollapsibleWidget
+        title="Live Transcript"
+        icon={<Radio size={11} />}
+        accentColor="#39FF88"
+        headerRight={<TranscriptTimer startTime={state.tpmoStart} />}
+      >
+        <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
       </CollapsibleWidget>
 
-      <CollapsibleWidget title="Live Transcript" icon={<Radio size={11} />} accentColor="#39FF88">
-        <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
+      <CollapsibleWidget title="Co-Pilot Feed" icon={<MessageSquare size={11} />} accentColor="#9D00FF">
+        <CopilotFeedMini />
+      </CollapsibleWidget>
+
+      <CollapsibleWidget title="Ask Co-Pilot" icon={<Search size={11} />} accentColor="#a855f7">
+        <AskCopilotMini />
       </CollapsibleWidget>
 
       <CollapsibleWidget title="Caller Info" icon={<User size={11} />} accentColor="#fb923c" defaultCollapsed>
         <CallerInfo />
       </CollapsibleWidget>
 
-      <CollapsibleWidget title="Quick Notes" icon={<StickyNote size={11} />} accentColor="#60a5fa" defaultCollapsed>
-        <QuickNotes onNotesChange={onQuickNotes} />
-      </CollapsibleWidget>
-
-      <CollapsibleWidget title="Objection Handler" icon={<Zap size={11} />} accentColor="#fb923c">
-        <ObjectionMini />
-      </CollapsibleWidget>
-
-      <CollapsibleWidget title="Co-Pilot Q&A" icon={<MessageSquare size={11} />} accentColor="#9D00FF">
-        <CopilotMiniFloat />
-      </CollapsibleWidget>
-
       <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="#E8002D">
         <ComplianceMini transcript={transcript} activeSection={activeSection} />
       </CollapsibleWidget>
+
+      {/* DISABLED: ObjectionHandler — re-enable when ready */}
+      {/* DISABLED: QuickNotes — re-enable when ready */}
     </>
   );
 }
 
 /* ---- Responsive right rail with toggle for ≤1400px ---- */
-function RightRail({ transcript, activeSection, state, callStarted, onQuickNotes, mergedEntries, listening }) {
+function RightRail({ transcript, activeSection, state, callStarted, mergedEntries, listening }) {
   const [open, setOpen] = useState(false);
   const railRef = useRef(null);
   const { entries } = useCopilotLog();
@@ -181,7 +179,7 @@ function RightRail({ transcript, activeSection, state, callStarted, onQuickNotes
     return () => document.removeEventListener("keydown", handler);
   }, [open]);
 
-  const widgetProps = { transcript, activeSection, state, onQuickNotes, mergedEntries, listening };
+  const widgetProps = { transcript, activeSection, state, mergedEntries, listening };
 
   return (
     <>
@@ -337,7 +335,7 @@ export default function ScriptFlow() {
       />
 
       {/* Right rail — responsive: always visible >1400, overlay ≤1400 */}
-      <RightRail transcript={transcript} activeSection={activeSection} state={state} callStarted={callStarted} onQuickNotes={handleQuickNotes} mergedEntries={mergedTranscriptEntries} listening={isListening} />
+      <RightRail transcript={transcript} activeSection={activeSection} state={state} callStarted={callStarted} mergedEntries={mergedTranscriptEntries} listening={isListening} />
 
       <div className="flow-shell">
         <div className="flow-main">

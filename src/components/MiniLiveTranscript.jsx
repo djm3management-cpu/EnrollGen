@@ -3,15 +3,55 @@ import { useRef, useEffect, useState, memo } from "react";
 /**
  * MiniLiveTranscript — Compact live transcript panel for the right rail.
  * Mirrors the Live Telemetry from ScriptPrompter in a smaller, always-visible format.
- *
- * Features:
- * - Interleaved AGT/CUST labels with color coding
- * - Auto-scroll with pause-on-manual-scroll (resumes within ~50px of bottom)
- * - Fixed height ~160px with its own internal scrollbar
- * - Subtle fade-in animation on new entries
+ * Now includes an embedded call timer in the CollapsibleWidget header via headerRight.
  */
 
 const AUTO_SCROLL_THRESHOLD = 50; // px from bottom to re-enable auto-scroll
+
+function getTimerColor(seconds) {
+  if (seconds < 900) return "#34d399";   // green < 15 min
+  if (seconds < 1500) return "#fbbf24";  // yellow 15-25 min
+  return "#ef4444";                       // red 25+ min
+}
+
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const mm = String(m).padStart(2, "0");
+  const ss = String(s).padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+/** Inline timer element for use in CollapsibleWidget headerRight */
+export const TranscriptTimer = memo(function TranscriptTimer({ startTime }) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!startTime) return;
+    const tick = () => setElapsed(Math.floor((Date.now() - startTime) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startTime]);
+
+  if (!startTime) return null;
+
+  const color = getTimerColor(elapsed);
+  return (
+    <span style={{
+      fontFamily: "'IBM Plex Mono', monospace",
+      fontSize: "0.62rem",
+      fontWeight: 700,
+      color,
+      fontVariantNumeric: "tabular-nums",
+      letterSpacing: "0.03em",
+      transition: "color 0.4s ease",
+    }}>
+      {formatTime(elapsed)}
+    </span>
+  );
+});
 
 const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = [], listening = false }) {
   const scrollRef = useRef(null);
