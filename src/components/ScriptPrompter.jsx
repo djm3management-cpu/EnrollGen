@@ -36,7 +36,7 @@ function summarizeRetrievalTrace(trace) {
    COMPONENT
    ═══════════════════════════════════════════════════════════════════ */
 
-const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logComplianceFlag }) {
+const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, onMergedTranscriptChange, onListeningChange, logComplianceFlag }) {
   const {
     state,
     activeSection,
@@ -92,6 +92,16 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, logCom
   useEffect(() => {
     if (onTranscriptChange) onTranscriptChange(speech.transcript);
   }, [speech.transcript, onTranscriptChange]);
+
+  // Forward merged transcript entries for MiniLiveTranscript in the right rail
+  useEffect(() => {
+    if (onMergedTranscriptChange) onMergedTranscriptChange(mergedTranscript);
+  }, [mergedTranscript, onMergedTranscriptChange]);
+
+  // Forward listening state
+  useEffect(() => {
+    if (onListeningChange) onListeningChange(speech.listening);
+  }, [speech.listening, onListeningChange]);
 
   /* ─── Auto-scroll telemetry ─── */
   const telemetryRef = useRef(null);

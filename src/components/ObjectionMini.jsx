@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, memo } from "react";
-import { Send, Loader2, ShieldAlert } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { useAppAuth } from "../context/AuthContext";
 import { fetchWithClerk } from "../lib/clerkFetch";
 
@@ -81,46 +81,7 @@ const ObjectionMini = memo(function ObjectionMini() {
   );
 
   return (
-    <div
-      style={{
-        background:
-          "linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%)",
-        border: "1px solid rgba(255, 255, 255, 0.06)",
-        borderRadius: 16,
-        padding: "10px 12px 12px",
-        backdropFilter: "blur(12px)",
-        boxShadow: "0 10px 24px rgba(0, 0, 0, 0.36)",
-        width: 230,
-        marginBottom: 8,
-        pointerEvents: "auto",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          marginBottom: 8,
-          paddingBottom: 6,
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-        }}
-      >
-        <ShieldAlert size={12} style={{ color: "#f97316" }} />
-        <span
-          style={{
-            fontSize: "0.68em",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "#f97316",
-          }}
-        >
-          Objections
-        </span>
-      </div>
-
+    <div style={{ padding: "6px 10px 8px" }}>
       {/* Answer area */}
       {answer && (
         <div

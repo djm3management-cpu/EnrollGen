@@ -32,16 +32,7 @@ const CallTimer = memo(function CallTimer({ startTime }) {
   return (
     <div
       style={{
-        background:
-          "linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%)",
-        border: "1px solid rgba(255, 255, 255, 0.06)",
-        borderRadius: 16,
-        padding: "10px 14px",
-        backdropFilter: "blur(12px)",
-        boxShadow: "0 10px 24px rgba(0, 0, 0, 0.36)",
-        width: 230,
-        marginBottom: 8,
-        pointerEvents: "auto",
+        padding: "8px 12px",
         display: "flex",
         alignItems: "center",
         gap: 10,

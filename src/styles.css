@@ -576,6 +576,42 @@ p {
   align-items: flex-end;
 }
 
+/* Scrollable widget container inside full rail */
+.right-rail-full > .right-rail-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: auto;
+}
+
+/* Dark-themed thin scrollbar for right rail containers */
+.right-rail-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+.right-rail-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.right-rail-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.right-rail-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 3px;
+}
+.right-rail-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+@keyframes miniTranscriptFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Toggle tab: hidden >1400px, visible ≤1400px */
 .right-rail-toggle {
   display: none;

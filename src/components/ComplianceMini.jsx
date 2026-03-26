@@ -84,23 +84,11 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "", activeSec
   const sectionLabel = SECTION_LABELS[currentStep] || `Section ${currentStep}`;
 
   return (
-    <div
-      style={{
-        pointerEvents: "auto",
-      }}
-    >
+    <div>
       <div
         style={{
-          pointerEvents: "auto",
-          background: "linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%)",
-          border: "1px solid rgba(255, 255, 255, 0.06)",
-          borderRadius: 16,
-          padding: "12px 14px 14px",
-          backdropFilter: "blur(12px)",
-          boxShadow:
-            "inset 4px 4px 10px rgba(0, 0, 0, 0.42), inset -3px -3px 8px rgba(255, 255, 255, 0.02), 0 10px 24px rgba(0, 0, 0, 0.36)",
+          padding: "8px 10px 10px",
           transition: "all 0.25s ease",
-          width: 230,
           animation: pulse ? "compliancePulse 0.6s ease" : "none",
         }}
       >

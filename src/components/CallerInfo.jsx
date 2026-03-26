@@ -1,5 +1,4 @@
 import { useState, memo } from "react";
-import { User } from "lucide-react";
 
 const FIELDS = [
   { key: "name", label: "Name", placeholder: "Caller name" },
@@ -15,55 +14,7 @@ const CallerInfo = memo(function CallerInfo() {
     setValues((prev) => ({ ...prev, [key]: val }));
 
   return (
-    <div
-      style={{
-        background:
-          "linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%)",
-        border: "1px solid rgba(255, 255, 255, 0.06)",
-        borderRadius: 16,
-        padding: "8px 12px 10px",
-        backdropFilter: "blur(12px)",
-        boxShadow: "0 10px 24px rgba(0, 0, 0, 0.36)",
-        width: 230,
-        marginBottom: 8,
-        pointerEvents: "auto",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          marginBottom: 6,
-          paddingBottom: 5,
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-        }}
-      >
-        <User size={11} style={{ color: "#f97316" }} />
-        <span
-          style={{
-            fontSize: "0.64em",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "#f97316",
-          }}
-        >
-          Caller Info
-        </span>
-        <span
-          style={{
-            marginLeft: "auto",
-            fontSize: "0.46em",
-            color: "#475569",
-            fontFamily: "'Inter', sans-serif",
-          }}
-        >
-          local only
-        </span>
-      </div>
-
+    <div style={{ padding: "6px 10px 8px" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
         {FIELDS.map((f) => (
           <div
