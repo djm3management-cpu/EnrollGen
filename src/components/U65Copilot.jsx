@@ -217,7 +217,7 @@ const U65Copilot = memo(function U65Copilot() {
             </div>
 
             {/* ── TWO-COLUMN BODY ── */}
-            <div style={{ display: "grid", gridTemplateColumns: "40% 1fr", gap: 10, alignItems: "stretch", height: 220 }}>
+            <div className="prompter-two-column">
 
               {/* ── LEFT: LIVE TELEMETRY ── */}
               <div style={{

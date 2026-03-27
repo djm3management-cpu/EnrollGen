@@ -416,9 +416,10 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
   const gradeColor = getGradeColor(result.grade);
 
   return (
-    <section className="card" style={{ padding: 0, overflow: "hidden" }}>
+    <section className="card compliance-dashboard" style={{ padding: 0, overflow: "hidden" }}>
       {/* Header — F1 HUD bar */}
       <div
+        className="compliance-dashboard-header"
         onClick={() => setExpanded((p) => !p)}
         style={{
           display: "flex",
@@ -513,14 +514,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
         <div style={{ padding: "6px 8px 10px" }}>
           {/* Grid view */}
           {!showDetail && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr",
-                gap: 6,
-                marginBottom: 8,
-              }}
-            >
+            <div className="compliance-dashboard-grid" style={{ marginBottom: 8 }}>
               {result.categories.map((cat) => {
                 const col = getScoreColor(cat.score);
                 return (

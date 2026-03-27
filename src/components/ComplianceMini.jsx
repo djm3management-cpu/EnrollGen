@@ -52,7 +52,11 @@ function renderCategoryIcon(icon, color = "#cbd5e1", size = 14) {
   return iconMap[icon] || <CheckSquare {...props} />;
 }
 
-const ComplianceMini = memo(function ComplianceMini({ transcript = "", activeSection = 1 }) {
+const ComplianceMini = memo(function ComplianceMini({
+  transcript = "",
+  activeSection = 1,
+  result: providedResult,
+}) {
   const { state } = useScript();
   const { entries } = useCopilotLog();
   const [collapsed, setCollapsed] = useState(false);
@@ -60,8 +64,8 @@ const ComplianceMini = memo(function ComplianceMini({ transcript = "", activeSec
   const prevScoreRef = useRef(null);
 
   const result = useMemo(
-    () => scoreLive(state, entries, transcript),
-    [state, entries, transcript]
+    () => providedResult ?? scoreLive(state, entries, transcript),
+    [providedResult, state, entries, transcript]
   );
 
   useEffect(() => {

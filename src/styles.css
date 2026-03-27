@@ -968,7 +968,7 @@ p {
 }
 
 .active-card h2 {
-  color: var(--accent-cyan);
+  color: var(--text-primary);
 }
 
 .carrier-ref-layout {
@@ -3781,6 +3781,33 @@ html {
   min-width: 0;
 }
 
+.compliance-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.review-workspace-stats {
+  grid-template-columns: repeat(4, minmax(90px, 1fr));
+}
+
+.review-workspace-grid {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+}
+
+.prompter-two-column {
+  display: grid;
+  grid-template-columns: minmax(220px, 40%) minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+  min-height: 220px;
+}
+
+.deferred-compliance-panel {
+  content-visibility: auto;
+  contain-intrinsic-size: 540px;
+}
+
 .sep-sidebar-launcher {
   position: fixed;
   right: 18px;
@@ -3974,6 +4001,38 @@ html {
     width: auto;
   }
 }
+
+@media (max-width: 980px) {
+  .review-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .compliance-dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .review-workspace-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .prompter-two-column {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .compliance-dashboard-header {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 520px) {
+  .compliance-dashboard-grid,
+  .review-workspace-stats {
+    grid-template-columns: 1fr;
+  }
+}
 .sep-tool .sep-tool-inner {
   max-width: 800px; /* try 680, 720, 760 */
   width: 100%;
@@ -4005,6 +4064,47 @@ button:focus-visible,
   }
   .viewport-bg {
     animation: none !important;
+  }
+}
+
+@media (max-width: 1024px), (pointer: coarse) {
+  .viewport-bg {
+    animation: none;
+    background-size:
+      4px 4px, 4px 4px,
+      72px 72px, 72px 72px,
+      100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  }
+
+  .right-rail-toggle,
+  .right-rail-overlay,
+  .sidebar-hamburger,
+  .sep-sidebar-launcher,
+  .sep-sidebar-card,
+  .sticky-timer-bar,
+  .app-header {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .right-rail-scrim,
+  .sidebar-scrim {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .flow-circle-active,
+  .sidebar-rec-dot {
+    animation: none !important;
+    box-shadow: none !important;
+  }
+
+  .right-rail-toggle,
+  .sidebar-hamburger,
+  .sep-sidebar-launcher,
+  .sep-sidebar-card,
+  .sticky-timer-bar {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
   }
 }
 

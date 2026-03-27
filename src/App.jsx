@@ -1,6 +1,6 @@
-import { lazy, Suspense, useState, useEffect, useRef, useCallback, startTransition } from "react";
+import { lazy, Suspense, useState, useEffect, useRef, startTransition } from "react";
 import EnrollGenLogo from "./components/EnrollGenLogo";
-import { ScriptProvider } from "./context/ScriptContext";
+import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
 import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
@@ -452,6 +452,20 @@ function LazyPanel({ children }) {
   );
 }
 
+function SessionSummarySlot() {
+  const { state } = useScript();
+
+  if (!state.enrollOk) {
+    return null;
+  }
+
+  return (
+    <LazyPanel>
+      <SessionSummary />
+    </LazyPanel>
+  );
+}
+
 function AppTabButton({ activeTab, tabId, onSelect, onPreload, children }) {
   return (
     <button
@@ -567,8 +581,6 @@ function AppContent() {
   const preloadScriptForMode = (targetMode) => {
     if (targetMode === "ma") {
       loadScriptFlow();
-      loadSessionSummary();
-      loadDailyVerse();
       return;
     }
     if (targetMode === "medsup") {
@@ -753,9 +765,7 @@ function AppContent() {
                       <LazyPanel>
                         <ScriptFlow />
                       </LazyPanel>
-                      <LazyPanel>
-                        <SessionSummary />
-                      </LazyPanel>
+                      <SessionSummarySlot />
                       <DailyVerseAccordion />
                     </div>
                   </div>

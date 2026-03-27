@@ -1,4 +1,13 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+  useState,
+} from "react";
 import { RotateCcw, ChevronLeft, ChevronRight, User, MessageSquare, ShieldCheck, Radio, Search } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useSessionTracker } from "../hooks/useSessionTracker";
@@ -27,8 +36,9 @@ import SectionSOB from "./SectionSOB";
 import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
 import ScriptPrompter from "./ScriptPrompter";
-import ComplianceDashboard from "./ComplianceDashboard";
 import { motion, AnimatePresence } from "framer-motion";
+
+const ComplianceDashboard = lazy(() => import("./ComplianceDashboard"));
 
 /**
  * ScriptFlow v2 — Now with transcript pass-through for dual-layer scoring.
@@ -113,7 +123,14 @@ function formatDuration(ms) {
 }
 
 /* ---- Shared widget stack — used by both full rail and overlay ---- */
-function RailWidgets({ transcript, activeSection, state, mergedEntries, listening }) {
+function RailWidgets({
+  transcript,
+  activeSection,
+  state,
+  mergedEntries,
+  listening,
+  result,
+}) {
   return (
     <>
       <CollapsibleWidget
@@ -138,7 +155,11 @@ function RailWidgets({ transcript, activeSection, state, mergedEntries, listenin
       </CollapsibleWidget>
 
       <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="#E8002D">
-        <ComplianceMini transcript={transcript} activeSection={activeSection} />
+        <ComplianceMini
+          transcript={transcript}
+          activeSection={activeSection}
+          result={result}
+        />
       </CollapsibleWidget>
 
       {/* DISABLED: ObjectionHandler — re-enable when ready */}
@@ -148,20 +169,47 @@ function RailWidgets({ transcript, activeSection, state, mergedEntries, listenin
 }
 
 /* ---- Responsive right rail with toggle for ≤1400px ---- */
-function RightRail({ transcript, activeSection, state, callStarted, mergedEntries, listening }) {
+function RightRail({
+  transcript,
+  activeSection,
+  state,
+  mergedEntries,
+  listening,
+  result,
+}) {
   const [open, setOpen] = useState(false);
+  const [isCompactRail, setIsCompactRail] = useState(() =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 1400px)").matches
+  );
   const railRef = useRef(null);
-  const { entries } = useCopilotLog();
-
-  const result = scoreLive(state, entries, transcript);
   const currentStep = Number.isInteger(activeSection)
     ? activeSection
     : Math.ceil(activeSection);
   const sectionLabel = SECTION_LABELS[currentStep] || `Section ${currentStep}`;
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia("(max-width: 1400px)");
+    const handleChange = (event) => setIsCompactRail(event.matches);
+
+    setIsCompactRail(mediaQuery.matches);
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, []);
+
   // Close overlay on outside click
   useEffect(() => {
-    if (!open) return;
+    if (!open || !isCompactRail) return;
     const handler = (e) => {
       if (railRef.current && !railRef.current.contains(e.target)) {
         setOpen(false);
@@ -169,28 +217,43 @@ function RightRail({ transcript, activeSection, state, callStarted, mergedEntrie
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+  }, [open, isCompactRail]);
 
   // Close on Escape
   useEffect(() => {
-    if (!open) return;
+    if (!open || !isCompactRail) return;
     const handler = (e) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [open]);
+  }, [open, isCompactRail]);
 
-  const widgetProps = { transcript, activeSection, state, mergedEntries, listening };
+  useEffect(() => {
+    if (!isCompactRail && open) {
+      setOpen(false);
+    }
+  }, [isCompactRail, open]);
 
-  return (
-    <>
-      {/* Always-visible rail for >1400px (CSS hides the toggle, shows this) */}
+  const widgetProps = {
+    transcript,
+    activeSection,
+    state,
+    mergedEntries,
+    listening,
+    result,
+  };
+
+  if (!isCompactRail) {
+    return (
       <div className="right-rail-full">
         <div className="right-rail-scroll">
           <RailWidgets {...widgetProps} />
         </div>
       </div>
+    );
+  }
 
-      {/* Toggle tab for ≤1400px (CSS hides on >1400) */}
+  return (
+    <>
       <button
         className="right-rail-toggle"
         onClick={() => setOpen((p) => !p)}
@@ -201,21 +264,76 @@ function RightRail({ transcript, activeSection, state, callStarted, mergedEntrie
         {open ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
 
-      {/* Scrim + overlay for ≤1400px */}
       {open && <div className="right-rail-scrim" onClick={() => setOpen(false)} />}
       <div
         ref={railRef}
         className={`right-rail-overlay${open ? " open" : ""}`}
       >
-        <RailWidgets {...widgetProps} />
+        {open ? <RailWidgets {...widgetProps} /> : null}
       </div>
     </>
   );
 }
 
+function DeferredComplianceDashboard({ transcript }) {
+  const anchorRef = useRef(null);
+  const [shouldRender, setShouldRender] = useState(false);
+
+  useEffect(() => {
+    if (shouldRender) {
+      return undefined;
+    }
+
+    const anchor = anchorRef.current;
+    if (!anchor) {
+      return undefined;
+    }
+
+    if (!("IntersectionObserver" in window)) {
+      setShouldRender(true);
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldRender(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "320px 0px" }
+    );
+
+    observer.observe(anchor);
+    return () => observer.disconnect();
+  }, [shouldRender]);
+
+  return (
+    <div
+      id="compliance-hub"
+      ref={anchorRef}
+      className="deferred-compliance-panel"
+    >
+      {shouldRender ? (
+        <Suspense
+          fallback={
+            <div className="card" style={{ marginTop: 14 }}>
+              <div style={{ color: "#8fa4bc", fontSize: "0.9rem" }}>
+                Loadingâ€¦
+              </div>
+            </div>
+          }
+        >
+          <ComplianceDashboard transcript={transcript} />
+        </Suspense>
+      ) : null}
+    </div>
+  );
+}
+
 export default function ScriptFlow() {
   const { state, dispatch, activeSection } = useScript();
-  const { clearLog } = useCopilotLog();
+  const { clearLog, entries } = useCopilotLog();
   const prevSectionRef = useRef(activeSection);
   const session = useSessionTracker();
   const scoredSectionsRef = useRef(new Set());
@@ -263,6 +381,11 @@ export default function ScriptFlow() {
   const [transcript, setTranscript] = useState("");
   const [mergedTranscriptEntries, setMergedTranscriptEntries] = useState([]);
   const [isListening, setIsListening] = useState(false);
+  const deferredTranscript = useDeferredValue(transcript);
+  const liveCompliance = useMemo(
+    () => scoreLive(state, entries, deferredTranscript),
+    [state, entries, deferredTranscript]
+  );
 
   // ── Quick notes — persists into wrap-up ──
   const quickNotesRef = useRef("");
@@ -335,7 +458,14 @@ export default function ScriptFlow() {
       />
 
       {/* Right rail — responsive: always visible >1400, overlay ≤1400 */}
-      <RightRail transcript={transcript} activeSection={activeSection} state={state} callStarted={callStarted} mergedEntries={mergedTranscriptEntries} listening={isListening} />
+      <RightRail
+        transcript={deferredTranscript}
+        activeSection={activeSection}
+        state={state}
+        mergedEntries={mergedTranscriptEntries}
+        listening={isListening}
+        result={liveCompliance}
+      />
 
       <div className="flow-shell">
         <div className="flow-main">
@@ -469,9 +599,7 @@ export default function ScriptFlow() {
       <SectionWrapUp />
 
       {/* ── Full Compliance Dashboard — transcript-aware, at the bottom ── */}
-      <div id="compliance-hub">
-        <ComplianceDashboard transcript={transcript} />
-      </div>
+      <DeferredComplianceDashboard transcript={deferredTranscript} />
       </>
       )}
         </div>

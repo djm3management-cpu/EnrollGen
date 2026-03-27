@@ -1,6 +1,4 @@
-import React, { useCallback } from "react";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import React, { useCallback, useState } from "react";
 import { ClipboardCheck } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { generateSessionSummary } from "../context/scriptReducer";
@@ -18,6 +16,22 @@ const LEVEL_COLORS = {
   warn: { text: "#d97706", bg: "#fffbeb", border: "#fcd34d", icon: "⚠️" },
   critical: { text: "#dc2626", bg: "#fef2f2", border: "#fca5a5", icon: "🚨" },
 };
+
+let pdfRuntimePromise;
+
+function loadPdfRuntime() {
+  if (!pdfRuntimePromise) {
+    pdfRuntimePromise = Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]).then(([jspdfModule, autoTableModule]) => ({
+      jsPDF: jspdfModule.jsPDF,
+      autoTable: autoTableModule.default,
+    }));
+  }
+
+  return pdfRuntimePromise;
+}
 
 /* ═══════════════════════════════════════════════════
    COMPLIANCE SCORE GAUGE (SVG)
@@ -550,8 +564,10 @@ function exportSessionSummaryPdf(
   complianceResult,
   copilotEntries,
   warnings,
-  blockers
+  blockers,
+  pdfRuntime
 ) {
+  const { jsPDF, autoTable } = pdfRuntime;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const scoreColor = getPdfScoreColor(complianceResult.score);
 
@@ -905,22 +921,36 @@ function exportSessionSummaryPdf(
 export default React.memo(function SessionSummary() {
   const { state } = useScript();
   const { getTranscript, getWarnings } = useCopilotLog();
+  const [exportingPdf, setExportingPdf] = useState(false);
 
-  const handlePDF = useCallback(() => {
+  const handlePDF = useCallback(async () => {
+    if (exportingPdf) {
+      return;
+    }
+
+    setExportingPdf(true);
+
     const summary = generateSessionSummary(state);
     const copilotEntries = getTranscript();
     const warnings = getWarnings();
     const complianceResult = scoreCompliance(state, copilotEntries);
     const blockers = getDeterministicBlockers(state);
 
-    exportSessionSummaryPdf(
-      summary,
-      complianceResult,
-      copilotEntries,
-      warnings,
-      blockers
-    );
-  }, [state, getTranscript, getWarnings]);
+    try {
+      const pdfRuntime = await loadPdfRuntime();
+
+      exportSessionSummaryPdf(
+        summary,
+        complianceResult,
+        copilotEntries,
+        warnings,
+        blockers,
+        pdfRuntime
+      );
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [state, getTranscript, getWarnings, exportingPdf]);
 
   const handleCopyToClipboard = useCallback(() => {
     const summary = generateSessionSummary(state);
@@ -1038,8 +1068,8 @@ export default React.memo(function SessionSummary() {
         <button className="btn-clay" onClick={handleCopyToClipboard}>
           Copy Summary
         </button>
-        <button className="btn-clay" onClick={handlePDF}>
-          Download PDF
+        <button className="btn-clay" onClick={handlePDF} disabled={exportingPdf}>
+          {exportingPdf ? "Preparing PDF..." : "Download PDF"}
         </button>
       </div>
     </div>

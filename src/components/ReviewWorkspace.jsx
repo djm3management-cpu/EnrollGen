@@ -77,11 +77,11 @@ export default React.memo(function ReviewWorkspace() {
           </div>
         </div>
         <div
+          className="review-workspace-stats"
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(90px, 1fr))",
             gap: 8,
-            minWidth: "min(100%, 420px)",
+            width: "min(100%, 420px)",
           }}
         >
           {[
@@ -114,9 +114,9 @@ export default React.memo(function ReviewWorkspace() {
       </div>
 
       <div
+        className="review-workspace-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "1.1fr 0.9fr",
           gap: 14,
         }}
       >
