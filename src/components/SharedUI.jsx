@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Copy, Check, RotateCcw, AlertCircle, Clock, Timer } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Copy, Check, RotateCcw, AlertCircle, Clock, Timer, Pencil } from "lucide-react";
 
 /* ===================== TIMER HELPERS ===================== */
 export function formatTime(ms) {
@@ -9,14 +9,47 @@ export function formatTime(ms) {
   return `${m}:${s}`;
 }
 
+function extractScriptText(node) {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(extractScriptText).join("");
+  if (React.isValidElement(node)) return extractScriptText(node.props.children);
+  return "";
+}
+
 /* ===================== SCRIPT BOX (with copy button) ===================== */
 export const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
   const [copied, setCopied] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const textRef = useRef(null);
+  const sourceText = useMemo(() => extractScriptText(children), [children]);
+  const [draftText, setDraftText] = useState(sourceText);
+
+  const syncEditorHeight = useCallback(() => {
+    const editor = textRef.current;
+    if (!editor) return;
+    editor.style.height = "0px";
+    editor.style.height = `${editor.scrollHeight}px`;
+  }, []);
+
+  useEffect(() => {
+    if (!isDirty) setDraftText(sourceText);
+  }, [sourceText, isDirty]);
+
+  useEffect(() => {
+    syncEditorHeight();
+  }, [draftText, syncEditorHeight]);
+
+  useEffect(() => {
+    if (!isEditing || !textRef.current) return;
+    textRef.current.focus();
+    const end = textRef.current.value.length;
+    textRef.current.setSelectionRange(end, end);
+  }, [isEditing]);
 
   const handleCopy = useCallback(() => {
-    const text =
-      textRef.current?.innerText || textRef.current?.textContent || "";
+    const text = draftText.trim() ? draftText : sourceText;
     navigator.clipboard
       .writeText(text)
       .then(() => {
@@ -24,37 +57,57 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
         setTimeout(() => setCopied(false), 1800);
       })
       .catch(() => {
-        // Fallback for older browsers
-        const range = document.createRange();
-        range.selectNodeContents(textRef.current);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        textRef.current?.focus();
+        textRef.current?.select();
         document.execCommand("copy");
-        sel.removeAllRanges();
         setCopied(true);
         setTimeout(() => setCopied(false), 1800);
       });
-  }, []);
+  }, [draftText, sourceText]);
 
   return (
     <div className={`script-box ${verbatim ? "verbatim" : ""}`}>
       <div className="script-box-header">
         {verbatim && <div className="verbatim-label">READ VERBATIM</div>}
-        <button
-          className="copy-btn"
-          onClick={handleCopy}
-          title="Copy to clipboard"
-          aria-label="Copy script text"
-        >
-          {copied ? (
-            <><Check size={11} /> Copied</>
-          ) : (
-            <><Copy size={11} /> Copy</>
-          )}
-        </button>
+        <div className="script-box-actions">
+          <button
+            className={`copy-btn script-action-btn ${isEditing ? "is-active" : ""}`}
+            onClick={() => setIsEditing((current) => !current)}
+            title={isEditing ? "Finish editing script text" : "Edit script text"}
+            aria-label={isEditing ? "Finish editing script text" : "Edit script text"}
+          >
+            {isEditing ? (
+              <><Check size={11} /> Done</>
+            ) : (
+              <><Pencil size={11} /> Edit</>
+            )}
+          </button>
+          <button
+            className="copy-btn"
+            onClick={handleCopy}
+            title="Copy to clipboard"
+            aria-label="Copy script text"
+          >
+            {copied ? (
+              <><Check size={11} /> Copied</>
+            ) : (
+              <><Copy size={11} /> Copy</>
+            )}
+          </button>
+        </div>
       </div>
-      <div ref={textRef}>{children}</div>
+      <textarea
+        ref={textRef}
+        className={`script-box-editor ${isEditing ? "is-editing" : ""}`}
+        value={draftText}
+        onChange={(e) => {
+          setDraftText(e.target.value);
+          setIsDirty(true);
+        }}
+        readOnly={!isEditing}
+        spellCheck={false}
+        aria-label="Editable script text"
+      />
     </div>
   );
 });

@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, memo } from "react";
+import PanelIdleSpinner from "./PanelIdleSpinner";
 
 /**
  * MiniLiveTranscript — Compact live transcript panel for the right rail.
@@ -90,19 +91,11 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
         }}
       >
         {finals.length === 0 && (
-          <div style={{
-            display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", height: "100%", gap: 6, opacity: 0.4,
-          }}>
-            <div style={{ display: "flex", gap: 4 }}>
-              <span style={{ width: 4, height: 4, borderRadius: "50%", background: listening ? "#39FF88" : "#333", animation: listening ? "customerPulse 1.5s ease-in-out infinite" : "none" }} />
-              <span style={{ width: 4, height: 4, borderRadius: "50%", background: listening ? "#39FF88" : "#333", animation: listening ? "customerPulse 1.5s ease-in-out infinite 0.2s" : "none" }} />
-              <span style={{ width: 4, height: 4, borderRadius: "50%", background: listening ? "#39FF88" : "#333", animation: listening ? "customerPulse 1.5s ease-in-out infinite 0.4s" : "none" }} />
-            </div>
-            <span style={{ fontSize: "0.6rem", fontFamily: "'DM Sans', sans-serif", color: "#555" }}>
-              {listening ? "Listening..." : "Awaiting speech"}
-            </span>
-          </div>
+          <PanelIdleSpinner
+            variant="telemetry"
+            compact
+            active={listening}
+          />
         )}
         {finals.map((entry, idx) => {
           const isCustomer = entry.speaker === "customer";

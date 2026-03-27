@@ -7,6 +7,7 @@ import { useCopilotEngine } from "../hooks/useCopilotEngine";
 import { useCustomerAudio } from "../hooks/useCustomerAudio";
 import { useMergedTranscript } from "../hooks/useMergedTranscript";
 import { LEVEL_STYLE } from "../data/complianceKnowledge";
+import PanelIdleSpinner from "./PanelIdleSpinner";
 
 /* ═══════════════════════════════════════════════════════════════════
    UTILITY
@@ -139,7 +140,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, onMerg
     if (hasCustomerAudio && customerFlatTranscript) {
       return scoreTwoSided(state, copilot.entries, speech.transcript, customerFlatTranscript, mergedTranscript);
     }
-    return scoreCompliance(state, copilot.entries);
+    return scoreCompliance(state, copilot.entries, speech.transcript);
   }, [state, copilot.entries, hasCustomerAudio, customerFlatTranscript, mergedTranscript, speech.transcript]);
 
   // Section elapsed timer
@@ -434,12 +435,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, onMerg
 
                 <div ref={telemetryRef} className="panel-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
                   {transcriptRows.length === 0 && !interimText && !hasCustomerAudio && (
-                    <div className={`panel-empty ${listening ? "panel-empty--listening" : "panel-empty--input"}`}>
-                      <div className="panel-empty-dots">
-                        <span className="panel-empty-dot" /><span className="panel-empty-dot" /><span className="panel-empty-dot" />
-                      </div>
-                      <span className="panel-empty-label">{listening ? "Listening" : "Awaiting input"}</span>
-                    </div>
+                    <PanelIdleSpinner variant="telemetry" active={listening} />
                   )}
                   {hasCustomerAudio ? (
                     /* ── DUAL MODE: interleaved agent + customer rows ── */
@@ -510,10 +506,7 @@ const ScriptPrompter = memo(function ScriptPrompter({ onTranscriptChange, onMerg
 
                 <div ref={copilot.feedRef} className="panel-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
                   {messages.length === 0 && (
-                    <div className="panel-empty panel-empty--ai">
-                      <div className="panel-empty-dots"><span className="panel-empty-dot" /><span className="panel-empty-dot" /><span className="panel-empty-dot" /></div>
-                      <span className="panel-empty-label">Awaiting analysis</span>
-                    </div>
+                    <PanelIdleSpinner variant="copilot" />
                   )}
                   {messages.map((msg) => {
                     const s = LEVEL_STYLE[msg.level] || LEVEL_STYLE.info;

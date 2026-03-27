@@ -1,5 +1,6 @@
 import { useRef, useEffect, memo } from "react";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
+import PanelIdleSpinner from "./PanelIdleSpinner";
 
 function levelColor(level) {
   if (level === "critical") return "#ef4444";
@@ -36,14 +37,7 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
         }}
       >
         {recentEntries.length === 0 && (
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            height: "100%", opacity: 0.4,
-          }}>
-            <span style={{ fontSize: "0.6rem", fontFamily: "'DM Sans', sans-serif", color: "#555" }}>
-              Awaiting coaching...
-            </span>
-          </div>
+          <PanelIdleSpinner variant="copilot" compact />
         )}
         {recentEntries.map((entry) => (
           <div

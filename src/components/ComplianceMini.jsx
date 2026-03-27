@@ -81,7 +81,8 @@ const ComplianceMini = memo(function ComplianceMini({
   }, [result.score]);
 
   const scoreColor = getScoreColor(result.score);
-  const isDual = result.scoringMode === "dual";
+  const isDual =
+    result.scoringMode === "dual" || result.scoringMode === "two_sided";
   const currentStep = Number.isInteger(activeSection)
     ? activeSection
     : Math.ceil(activeSection);

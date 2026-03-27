@@ -12,7 +12,7 @@ import { RotateCcw, ChevronLeft, ChevronRight, User, MessageSquare, ShieldCheck,
 import { useScript } from "../context/ScriptContext";
 import { useSessionTracker } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
-import { scoreLive } from "../context/ComplianceScorer";
+import { scoreLive, scoreLiveTwoSided } from "../context/ComplianceScorer";
 import {
   MainTimer,
   ProgressBar,
@@ -22,7 +22,7 @@ import {
 import ComplianceMini from "./ComplianceMini";
 import CopilotFeedMini from "./CopilotFeedMini";
 import AskCopilotMini from "./AskCopilotMini";
-import CallerInfo from "./CallerInfo";
+import AncillaryFlowWidget from "./AncillaryFlowWidget";
 import CollapsibleWidget from "./CollapsibleWidget";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
@@ -36,9 +36,58 @@ import SectionSOB from "./SectionSOB";
 import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
 import ScriptPrompter from "./ScriptPrompter";
+import AncillaryPopupManager from "./ancillary/AncillaryPopupManager";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ComplianceDashboard = lazy(() => import("./ComplianceDashboard"));
+
+const FULL_RAIL_STYLE = {
+  position: "fixed",
+  top: 14,
+  right: 18,
+  bottom: 18,
+  zIndex: 96,
+  pointerEvents: "none",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-end",
+};
+
+const FULL_RAIL_SCROLL_STYLE = {
+  flex: 1,
+  minHeight: 0,
+  overflowY: "auto",
+  overflowX: "hidden",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-end",
+  pointerEvents: "auto",
+};
+
+const COMPACT_RAIL_TOGGLE_STYLE = {
+  position: "fixed",
+  right: 0,
+  top: "50%",
+  transform: "translateY(-50%)",
+  zIndex: 97,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 6,
+};
+
+const COMPACT_RAIL_OVERLAY_STYLE = {
+  position: "fixed",
+  top: 0,
+  right: 0,
+  bottom: 0,
+  zIndex: 98,
+  width: 268,
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "flex-end",
+  gap: 8,
+};
 
 /**
  * ScriptFlow v2 — Now with transcript pass-through for dual-layer scoring.
@@ -150,8 +199,8 @@ function RailWidgets({
         <AskCopilotMini />
       </CollapsibleWidget>
 
-      <CollapsibleWidget title="Caller Info" icon={<User size={11} />} accentColor="#fb923c" defaultCollapsed>
-        <CallerInfo />
+      <CollapsibleWidget title="Ancillary Flow" icon={<User size={11} />} accentColor="#fb923c">
+        <AncillaryFlowWidget />
       </CollapsibleWidget>
 
       <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="#E8002D">
@@ -244,8 +293,8 @@ function RightRail({
 
   if (!isCompactRail) {
     return (
-      <div className="right-rail-full">
-        <div className="right-rail-scroll">
+      <div className="right-rail-full" style={FULL_RAIL_STYLE}>
+        <div className="right-rail-scroll" style={FULL_RAIL_SCROLL_STYLE}>
           <RailWidgets {...widgetProps} />
         </div>
       </div>
@@ -256,6 +305,7 @@ function RightRail({
     <>
       <button
         className="right-rail-toggle"
+        style={COMPACT_RAIL_TOGGLE_STYLE}
         onClick={() => setOpen((p) => !p)}
         title="Toggle compliance rail"
       >
@@ -268,6 +318,10 @@ function RightRail({
       <div
         ref={railRef}
         className={`right-rail-overlay${open ? " open" : ""}`}
+        style={{
+          ...COMPACT_RAIL_OVERLAY_STYLE,
+          display: open ? "flex" : "none",
+        }}
       >
         {open ? <RailWidgets {...widgetProps} /> : null}
       </div>
@@ -275,7 +329,11 @@ function RightRail({
   );
 }
 
-function DeferredComplianceDashboard({ transcript }) {
+function DeferredComplianceDashboard({
+  transcript,
+  customerTranscript = "",
+  mergedTranscript = [],
+}) {
   const anchorRef = useRef(null);
   const [shouldRender, setShouldRender] = useState(false);
 
@@ -324,7 +382,11 @@ function DeferredComplianceDashboard({ transcript }) {
             </div>
           }
         >
-          <ComplianceDashboard transcript={transcript} />
+          <ComplianceDashboard
+            transcript={transcript}
+            customerTranscript={customerTranscript}
+            mergedTranscript={mergedTranscript}
+          />
         </Suspense>
       ) : null}
     </div>
@@ -335,6 +397,8 @@ export default function ScriptFlow() {
   const { state, dispatch, activeSection } = useScript();
   const { clearLog, entries } = useCopilotLog();
   const prevSectionRef = useRef(activeSection);
+  const flowShellRef = useRef(null);
+  const flowMainRef = useRef(null);
   const session = useSessionTracker();
   const scoredSectionsRef = useRef(new Set());
   const [callStarted, setCallStarted] = useState(false);
@@ -382,9 +446,29 @@ export default function ScriptFlow() {
   const [mergedTranscriptEntries, setMergedTranscriptEntries] = useState([]);
   const [isListening, setIsListening] = useState(false);
   const deferredTranscript = useDeferredValue(transcript);
+  const customerTranscript = useMemo(
+    () =>
+      mergedTranscriptEntries
+        .filter(
+          (entry) =>
+            entry.speaker === "customer" && entry.isFinal && entry.text.trim()
+        )
+        .map((entry) => entry.text)
+        .join(" "),
+    [mergedTranscriptEntries]
+  );
   const liveCompliance = useMemo(
-    () => scoreLive(state, entries, deferredTranscript),
-    [state, entries, deferredTranscript]
+    () =>
+      customerTranscript
+        ? scoreLiveTwoSided(
+            state,
+            entries,
+            deferredTranscript,
+            customerTranscript,
+            mergedTranscriptEntries
+          )
+        : scoreLive(state, entries, deferredTranscript),
+    [state, entries, deferredTranscript, customerTranscript, mergedTranscriptEntries]
   );
 
   // ── Quick notes — persists into wrap-up ──
@@ -467,8 +551,14 @@ export default function ScriptFlow() {
         result={liveCompliance}
       />
 
-      <div className="flow-shell">
-        <div className="flow-main">
+      <div className="flow-shell" ref={flowShellRef}>
+        <AncillaryPopupManager
+          activeSection={activeSection}
+          callStarted={callStarted}
+          anchorRef={flowMainRef}
+          containerRef={flowShellRef}
+        />
+        <div className="flow-main" ref={flowMainRef}>
 
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}
       <ScriptPrompter onTranscriptChange={setTranscript} onMergedTranscriptChange={setMergedTranscriptEntries} onListeningChange={setIsListening} logComplianceFlag={session.logComplianceFlag} />
@@ -599,7 +689,11 @@ export default function ScriptFlow() {
       <SectionWrapUp />
 
       {/* ── Full Compliance Dashboard — transcript-aware, at the bottom ── */}
-      <DeferredComplianceDashboard transcript={deferredTranscript} />
+      <DeferredComplianceDashboard
+        transcript={deferredTranscript}
+        customerTranscript={customerTranscript}
+        mergedTranscript={mergedTranscriptEntries}
+      />
       </>
       )}
         </div>

@@ -22,17 +22,44 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
   const contentRef = useRef(null);
   const [contentHeight, setContentHeight] = useState("auto");
 
-  // Measure content for smooth transition
+  // Keep the wrapper height in sync when inner widget content changes.
   useEffect(() => {
-    if (contentRef.current) {
-      const observer = new ResizeObserver(() => {
-        if (contentRef.current && !collapsed) {
-          setContentHeight(contentRef.current.scrollHeight + "px");
-        }
-      });
-      observer.observe(contentRef.current);
-      return () => observer.disconnect();
+    if (!contentRef.current || collapsed) {
+      return undefined;
     }
+
+    const container = contentRef.current;
+    const syncHeight = () => {
+      setContentHeight(container.scrollHeight + "px");
+    };
+    const attachResizeTargets = (observer) => {
+      observer.observe(container);
+
+      Array.from(container.children).forEach((child) => {
+        observer.observe(child);
+      });
+    };
+
+    syncHeight();
+
+    const resizeObserver = new ResizeObserver(syncHeight);
+    attachResizeTargets(resizeObserver);
+
+    const mutationObserver = new MutationObserver(() => {
+      resizeObserver.disconnect();
+      attachResizeTargets(resizeObserver);
+      syncHeight();
+    });
+    mutationObserver.observe(container, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
   }, [collapsed]);
 
   // Update height when collapsed state changes

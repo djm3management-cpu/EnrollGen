@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
-import { scoreCompliance } from "../context/ComplianceScorer";
+import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
 
 /**
  * ComplianceDashboard v2 — Dual-Layer Live Compliance Scoring
@@ -398,6 +398,8 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
 /* ═══════ MAIN ═══════ */
 const ComplianceDashboard = memo(function ComplianceDashboard({
   transcript = "",
+  customerTranscript = "",
+  mergedTranscript = [],
 }) {
   const { state } = useScript();
   const { entries } = useCopilotLog();
@@ -406,14 +408,25 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
   const [showDetail, setShowDetail] = useState(false);
 
   const result = useMemo(
-    () => scoreCompliance(state, entries, transcript),
-    [state, entries, transcript]
+    () =>
+      customerTranscript
+        ? scoreTwoSided(
+            state,
+            entries,
+            transcript,
+            customerTranscript,
+            mergedTranscript
+          )
+        : scoreCompliance(state, entries, transcript),
+    [state, entries, transcript, customerTranscript, mergedTranscript]
   );
   const toggleCat = useCallback(
     (n) => setExpandedCats((p) => ({ ...p, [n]: !p[n] })),
     []
   );
   const gradeColor = getGradeColor(result.grade);
+  const isLiveScored =
+    result.scoringMode === "dual" || result.scoringMode === "two_sided";
 
   return (
     <section className="card compliance-dashboard" style={{ padding: 0, overflow: "hidden" }}>
@@ -455,7 +468,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             }}>
               {result.grade}
             </span>
-            {result.scoringMode === "dual" && (
+            {isLiveScored && (
               <span style={{
                 fontSize: "10px",
                 fontFamily: "'Barlow Condensed', sans-serif",
@@ -681,7 +694,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 }}>
                   CMS Compliance Telemetry
                 </span>
-                {result.scoringMode === "dual" && (
+                {isLiveScored && (
                   <span
                     style={{
                       fontSize: "0.55em",

@@ -746,20 +746,45 @@ export function scoreCompliance(
 
 export function scoreLive(scriptState, copilotEntries = [], transcript = "") {
   const r = scoreCompliance(scriptState, copilotEntries, transcript);
+  return toLiveResult(r);
+}
+
+export function scoreLiveTwoSided(
+  scriptState,
+  copilotEntries = [],
+  agentTranscript = "",
+  customerText = "",
+  mergedTranscript = []
+) {
+  const r = scoreTwoSided(
+    scriptState,
+    copilotEntries,
+    agentTranscript,
+    customerText,
+    mergedTranscript
+  );
+  return toLiveResult(r);
+}
+
+function toLiveResult(result) {
+  const topLineScore = result.overallTwoSidedScore ?? result.score;
   return {
-    score: r.score,
-    grade: r.grade,
-    categoriesPassed: r.categoriesPassed,
-    totalCategories: r.totalCategories,
-    categories: r.categories.map((c) => ({
+    score: topLineScore,
+    agentScore: result.agentScore ?? result.score,
+    grade: getGrade(topLineScore),
+    categoriesPassed: result.categoriesPassed,
+    totalCategories: result.totalCategories,
+    categories: result.categories.map((c) => ({
       name: c.name,
       icon: c.icon,
       score: c.score,
       passed: c.passed,
     })),
-    scoringMode: r.scoringMode,
-    transcriptCoverage: r.transcriptStats?.coverage || 0,
-    violations: r.transcriptStats?.violations?.length || 0,
+    scoringMode: result.scoringMode,
+    transcriptCoverage: result.transcriptStats?.coverage || 0,
+    violations: result.transcriptStats?.violations?.length || 0,
+    customerConfirmation: result.customerConfirmation ?? null,
+    overallTwoSidedScore: result.overallTwoSidedScore ?? null,
   };
 }
 
@@ -952,6 +977,7 @@ export function scoreTwoSided(scriptState, copilotEntries, agentTranscript, cust
   if (!safeCustomerText.trim()) {
     return {
       ...agentResult,
+      agentScore: agentResult.score,
       customerConfirmation: null,
       overallTwoSidedScore: null,
       scoringMode: agentResult.scoringMode,
@@ -968,8 +994,17 @@ export function scoreTwoSided(scriptState, copilotEntries, agentTranscript, cust
 
   return {
     ...agentResult,
+    score: overallTwoSidedScore,
+    grade: getGrade(overallTwoSidedScore),
+    agentScore: agentResult.score,
     customerConfirmation,
     overallTwoSidedScore,
+    summary: getSummary(
+      overallTwoSidedScore,
+      agentResult.flags,
+      agentResult.categoriesPassed,
+      agentResult.totalCategories
+    ),
     scoringMode: "two_sided",
   };
 }

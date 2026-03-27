@@ -10,6 +10,7 @@ import { useU65 } from "../flows/u65/U65Context";
 import { useU65CopilotEngine } from "../hooks/useU65CopilotEngine";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { U65_LEVEL_STYLE } from "../data/u65ComplianceKnowledge";
+import PanelIdleSpinner from "./PanelIdleSpinner";
 
 const U65Copilot = memo(function U65Copilot() {
   const { state, activeGate } = useU65();
@@ -236,12 +237,7 @@ const U65Copilot = memo(function U65Copilot() {
 
                 <div ref={telemetryRef} className="panel-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
                   {transcriptRows.length === 0 && !interimText && (
-                    <div className={`panel-empty ${listening ? "panel-empty--listening" : "panel-empty--input"}`}>
-                      <div className="panel-empty-dots">
-                        <span className="panel-empty-dot" /><span className="panel-empty-dot" /><span className="panel-empty-dot" />
-                      </div>
-                      <span className="panel-empty-label">{listening ? "Listening" : "Awaiting input"}</span>
-                    </div>
+                    <PanelIdleSpinner variant="telemetry" active={listening} />
                   )}
                   {transcriptRows.map((row, idx) => (
                     <div key={row.id} style={{ display: "grid", gridTemplateColumns: "58px 1fr", gap: 6, padding: "5px 10px", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "start" }}>
@@ -281,10 +277,7 @@ const U65Copilot = memo(function U65Copilot() {
 
                 <div ref={copilot.feedRef} className="panel-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
                   {messages.length === 0 && (
-                    <div className="panel-empty panel-empty--ai">
-                      <div className="panel-empty-dots"><span className="panel-empty-dot" /><span className="panel-empty-dot" /><span className="panel-empty-dot" /></div>
-                      <span className="panel-empty-label">Awaiting analysis</span>
-                    </div>
+                    <PanelIdleSpinner variant="copilot" />
                   )}
                   {messages.map((msg) => {
                     const s = U65_LEVEL_STYLE[msg.level] || U65_LEVEL_STYLE.info;
