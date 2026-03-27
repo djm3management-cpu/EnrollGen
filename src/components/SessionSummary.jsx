@@ -745,7 +745,15 @@ function exportSessionSummaryPdf(
       startY: y,
       head: [["Mode", "Coverage", "Intents Detected", "Violations"]],
       body: [[
-        complianceResult.scoringMode === "dual" ? "Gate + Transcript" : "Gate Only",
+        complianceResult.scoringMode === "strict_two_sided"
+          ? "Strict Transcript + Customer"
+          : complianceResult.scoringMode === "strict_transcript"
+          ? "Strict Transcript"
+          : complianceResult.scoringMode === "inactive"
+          ? "Mic Off / No Transcript"
+          : complianceResult.scoringMode === "dual"
+          ? "Gate + Transcript"
+          : "Gate Only",
         `${complianceResult.transcriptStats.coverage}%`,
         `${complianceResult.transcriptStats.intentsDetected}/${complianceResult.transcriptStats.intentsTotal}`,
         String(complianceResult.transcriptStats.violations.length),

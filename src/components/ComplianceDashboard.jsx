@@ -82,13 +82,22 @@ function sourceIcon(src, color = "#cbd5e1") {
   const props = { size: 12, color, strokeWidth: 2 };
   if (src === "both") return <Check {...props} />;
   if (src === "transcript") return <Mic {...props} />;
-  if (src === "transcript_violation") return <AlertTriangle {...props} />;
+  if (
+    src === "transcript_violation" ||
+    src === "hard_gate" ||
+    src === "insufficient_transcript"
+  ) {
+    return <AlertTriangle {...props} />;
+  }
   return <CheckSquare {...props} />;
 }
 function sourceLabel(src) {
   if (src === "both") return "Gate + Transcript";
   if (src === "transcript") return "Transcript";
   if (src === "transcript_violation") return "VIOLATION";
+  if (src === "hard_gate") return "Hard Gate";
+  if (src === "insufficient_transcript") return "Insufficient Transcript";
+  if (src === "inactive") return "Mic Off";
   return "Gate";
 }
 
@@ -231,7 +240,10 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
         >
           {cat.questions.map((q) => {
             const qc = getScoreColor(q.score);
-            const isViolation = q.source === "transcript_violation";
+            const isViolation =
+              q.source === "transcript_violation" ||
+              q.source === "hard_gate" ||
+              q.source === "insufficient_transcript";
             return (
               <div
                 key={q.id}
@@ -425,8 +437,20 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
     []
   );
   const gradeColor = getGradeColor(result.grade);
-  const isLiveScored =
-    result.scoringMode === "dual" || result.scoringMode === "two_sided";
+  const isTranscriptScored =
+    result.scoringMode !== "gate_only" && result.scoringMode !== "inactive";
+  const modeLabel =
+    result.scoringMode === "strict_two_sided"
+      ? "Strict Transcript + Customer"
+      : result.scoringMode === "strict_transcript"
+      ? "Strict Transcript"
+      : result.scoringMode === "inactive"
+      ? "Mic Off / No Transcript"
+      : result.scoringMode === "two_sided"
+      ? "Two-Sided"
+      : result.scoringMode === "dual"
+      ? "Gate + Transcript"
+      : "Gate Only";
 
   return (
     <section className="card compliance-dashboard" style={{ padding: 0, overflow: "hidden" }}>
@@ -468,7 +492,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             }}>
               {result.grade}
             </span>
-            {isLiveScored && (
+            {isTranscriptScored && (
               <span style={{
                 fontSize: "10px",
                 fontFamily: "'Barlow Condensed', sans-serif",
@@ -485,7 +509,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 textTransform: "uppercase",
               }}>
                 <Mic size={10} />
-                Live
+                Strict
               </span>
             )}
           </div>
@@ -694,7 +718,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 }}>
                   CMS Compliance Telemetry
                 </span>
-                {isLiveScored && (
+                {isTranscriptScored && (
                   <span
                     style={{
                       fontSize: "0.55em",
@@ -702,7 +726,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                       marginLeft: "auto",
                     }}
                   >
-                    Dual-layer: gate + transcript
+                    {modeLabel}
                   </span>
                 )}
               </div>

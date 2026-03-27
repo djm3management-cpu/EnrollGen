@@ -81,8 +81,8 @@ const ComplianceMini = memo(function ComplianceMini({
   }, [result.score]);
 
   const scoreColor = getScoreColor(result.score);
-  const isDual =
-    result.scoringMode === "dual" || result.scoringMode === "two_sided";
+  const isTranscriptScored =
+    result.scoringMode !== "gate_only" && result.scoringMode !== "inactive";
   const currentStep = Number.isInteger(activeSection)
     ? activeSection
     : Math.ceil(activeSection);
@@ -184,7 +184,7 @@ const ComplianceMini = memo(function ComplianceMini({
             <span style={{ fontSize: "0.58em", color: "#64748b" }}>
               {result.categoriesPassed}/{result.totalCategories}
             </span>
-            {isDual && (
+            {isTranscriptScored && (
               <Mic size={11} style={{ color: "#34d399" }} />
             )}
             {result.violations > 0 && (
@@ -285,7 +285,7 @@ const ComplianceMini = memo(function ComplianceMini({
                 </div>
               );
             })}
-            {isDual && (
+            {isTranscriptScored && (
               <div
                 style={{
                   marginTop: 4,
@@ -297,7 +297,7 @@ const ComplianceMini = memo(function ComplianceMini({
                 }}
               >
                 <Mic size={10} />
-                Live · {result.transcriptCoverage}% coverage
+                Strict · {result.transcriptCoverage}% coverage
               </div>
             )}
             {result.violations > 0 && (
