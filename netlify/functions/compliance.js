@@ -21,7 +21,6 @@
 
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { createClient } from "@supabase/supabase-js";
-import { generateScorecard } from "../../src/compliance/engine/ScorecardGenerator.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const AI_TIMEOUT_MS = 120000; // 2 min for classification calls
@@ -98,19 +97,9 @@ export default async (request) => {
       return json(201, data);
     }
 
-    // POST /calls/:id/score — trigger scoring
+    // POST /calls/:id/score — redirect to background scoring
     if (parts[0] === "calls" && parts[2] === "score" && method === "POST") {
-      const callId = parts[1];
-      const { data: callRecord, error } = await sb
-        .from("call_records").select("*").eq("id", callId).single();
-      if (error || !callRecord) return json(404, { error: "Call not found" });
-
-      const result = await generateScorecard({
-        supabase: sb,
-        callRecord,
-        callLLM: callClaude,
-      });
-      return json(200, result);
+      return json(202, { message: "Use /.netlify/functions/score-call-background for async scoring" });
     }
 
     // GET /calls/:id/scorecard
@@ -295,6 +284,15 @@ export default async (request) => {
       return json(200, data);
     }
 
+    // GET /calibration/runs — list all calibration runs
+    if (parts[0] === "calibration" && parts[1] === "runs" && method === "GET") {
+      const { data } = await sb
+        .from("calibration_runs")
+        .select("*")
+        .order("created_at", { ascending: false });
+      return json(200, data || []);
+    }
+
     // POST /calibration/start — start a calibration run
     if (parts[0] === "calibration" && parts[1] === "start" && method === "POST") {
       const body = await request.json();
@@ -311,12 +309,117 @@ export default async (request) => {
       return json(201, { run_id: run.id, status: "processing", total_calls: call_ids.length });
     }
 
-    // GET /calibration/:id — get calibration run status
+    // GET /calibration/:id — full calibration report
     if (parts[0] === "calibration" && parts[1] && !parts[2] && method === "GET") {
+      const runId = parts[1];
       const { data: run } = await sb
-        .from("calibration_runs").select("*").eq("id", parts[1]).single();
+        .from("calibration_runs").select("*").eq("id", runId).single();
       if (!run) return json(404, { error: "Calibration run not found" });
-      return json(200, run);
+
+      // Get calls linked to this run via metadata
+      const { data: calls } = await sb
+        .from("call_records")
+        .select("id, agent_name, metadata")
+        .filter("metadata->>calibration_run_id", "eq", runId);
+
+      const callIds = (calls || []).map(c => c.id);
+      if (callIds.length === 0) {
+        return json(200, { run, totalScored: 0, scorecards: [], overridesCount: 0, topCallsForReview: [], weakestIntents: [] });
+      }
+
+      // Get scorecards for these calls
+      const { data: scorecards } = await sb
+        .from("compliance_scorecards")
+        .select("id, call_id, overall_score, overall_grade, pass_fail, auto_fail_triggered, category_scores, risk_level")
+        .in("call_id", callIds);
+
+      const cards = scorecards || [];
+      const scorecardIds = cards.map(s => s.id);
+
+      // Get scorecard items for confidence data
+      const { data: items } = scorecardIds.length > 0
+        ? await sb.from("scorecard_items")
+            .select("scorecard_id, confidence, category, question_text")
+            .in("scorecard_id", scorecardIds)
+        : { data: [] };
+
+      // Compute avg confidence per scorecard
+      const confByScorecard = {};
+      for (const item of (items || [])) {
+        if (!confByScorecard[item.scorecard_id]) confByScorecard[item.scorecard_id] = [];
+        if (item.confidence != null) confByScorecard[item.scorecard_id].push(item.confidence);
+      }
+      const avgConfMap = {};
+      for (const [sid, confs] of Object.entries(confByScorecard)) {
+        avgConfMap[sid] = confs.length > 0 ? confs.reduce((a, b) => a + b, 0) / confs.length : 0;
+      }
+
+      // Confidence tiers
+      let highConf = 0, medConf = 0, lowConf = 0;
+      for (const avg of Object.values(avgConfMap)) {
+        if (avg >= 0.85) highConf++;
+        else if (avg >= 0.70) medConf++;
+        else lowConf++;
+      }
+
+      // Build top calls for review (lowest confidence first)
+      const callMetaMap = {};
+      for (const c of (calls || [])) {
+        callMetaMap[c.id] = { agent_name: c.agent_name, filename: c.metadata?.source_filename || null };
+      }
+
+      const topCallsForReview = cards
+        .map(sc => ({
+          call_id: sc.call_id,
+          scorecard_id: sc.id,
+          filename: callMetaMap[sc.call_id]?.filename || null,
+          agent_name: callMetaMap[sc.call_id]?.agent_name || 'Unknown',
+          overall_score: sc.overall_score,
+          overall_grade: sc.overall_grade,
+          avg_confidence: avgConfMap[sc.id] || 0,
+          auto_fail_triggered: sc.auto_fail_triggered,
+        }))
+        .sort((a, b) => a.avg_confidence - b.avg_confidence)
+        .slice(0, 20);
+
+      // Weakest intents — aggregate from intent_detections
+      const { data: detections } = await sb
+        .from("intent_detections")
+        .select("intent_code, confidence")
+        .in("call_id", callIds)
+        .eq("detected", true);
+
+      const intentAgg = {};
+      for (const d of (detections || [])) {
+        if (!intentAgg[d.intent_code]) intentAgg[d.intent_code] = { total: 0, count: 0 };
+        intentAgg[d.intent_code].total += d.confidence || 0;
+        intentAgg[d.intent_code].count++;
+      }
+      const weakestIntents = Object.entries(intentAgg)
+        .map(([code, agg]) => ({ intent_code: code, question: code.replace(/_/g, ' '), avg_confidence: agg.total / agg.count }))
+        .sort((a, b) => a.avg_confidence - b.avg_confidence)
+        .slice(0, 15);
+
+      // Override count
+      const { count: overridesCount } = await sb
+        .from("calibration_overrides")
+        .select("*", { count: "exact", head: true })
+        .eq("calibration_run_id", runId);
+
+      // Update run counts
+      run.high_confidence_count = highConf;
+      run.medium_confidence_count = medConf;
+      run.low_confidence_count = lowConf;
+      run.total_calls = callIds.length;
+
+      return json(200, {
+        run,
+        totalScored: cards.length,
+        scorecards: cards,
+        overridesCount: overridesCount || 0,
+        topCallsForReview,
+        weakestIntents,
+      });
     }
 
     // POST /calibration/:id/override — submit spot-check override

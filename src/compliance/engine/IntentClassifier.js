@@ -4,7 +4,7 @@
  * classifies against 152 MA compliance intents, returns structured detections.
  */
 
-import { ALL_INTENTS, INTENT_CATEGORIES } from '../intents/index.js';
+import { ALL_INTENTS } from '../intents/index.js';
 import { INTENT_CLASSIFICATION_SYSTEM, buildClassificationPrompt } from '../prompts/intent-classification.js';
 import { redactTranscriptSegments } from './PHIRedactor.js';
 
@@ -82,92 +82,87 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress 
   let aggregatedSentiment = { agent: 'unknown', beneficiary: 'unknown' };
   const detectedIntentCodes = new Set();
 
-  const categories = Object.keys(INTENT_CATEGORIES);
-  const totalWork = categories.length * redactedSegments.length;
+  const totalWork = redactedSegments.length;
   let completed = 0;
 
-  for (const category of categories) {
-    const categoryIntents = INTENT_CATEGORIES[category];
-    if (!categoryIntents || categoryIntents.length === 0) continue;
+  // Process all intents per segment (batched) instead of per-category
+  for (const segment of redactedSegments) {
+    try {
+      const prompt = buildClassificationPrompt({
+        intents: ALL_INTENTS,
+        segment,
+        context: {
+          ...callContext,
+          detected_intents: [...detectedIntentCodes],
+          sequence_position: allDetections.filter(d => d.detected).length,
+        },
+      });
 
-    for (const segment of redactedSegments) {
-      try {
-        const prompt = buildClassificationPrompt({
-          intents: categoryIntents,
-          segment,
-          context: {
-            ...callContext,
-            detected_intents: [...detectedIntentCodes],
-            sequence_position: allDetections.filter(d => d.detected).length,
-          },
-        });
+      const raw = await callLLM(INTENT_CLASSIFICATION_SYSTEM, prompt);
+      const parsed = parseClassificationResponse(raw);
 
-        const raw = await callLLM(INTENT_CLASSIFICATION_SYSTEM, prompt);
-        const parsed = parseClassificationResponse(raw);
+      if (parsed?.detections) {
+        for (const det of parsed.detections) {
+          const intent = ALL_INTENTS.find(i => i.intent_code === det.intent_code);
+          if (!intent) continue;
 
-        if (parsed?.detections) {
-          for (const det of parsed.detections) {
-            const intent = categoryIntents.find(i => i.intent_code === det.intent_code);
-            if (!intent) continue;
-
-            // Keep the highest-confidence detection per intent
-            const existing = allDetections.find(d => d.intent_code === det.intent_code);
-            if (existing) {
-              if (det.detected && det.confidence > (existing.confidence || 0)) {
-                Object.assign(existing, {
-                  detected: det.detected,
-                  confidence: det.confidence,
-                  speaker: det.speaker,
-                  transcript_segment: det.evidence_text || segment.text.slice(0, 500),
-                  segment_start_ms: segment.start_ms,
-                  segment_end_ms: segment.end_ms,
-                  sequence_position_actual: det.sequence_position,
-                  anti_pattern_match: det.anti_pattern || false,
-                  anti_pattern_detail: det.anti_pattern_detail || null,
-                  llm_reasoning: det.reasoning,
-                  detection_method: 'intent_classifier',
-                });
-              }
-            } else {
-              allDetections.push({
-                intent_id: null, // resolved at DB insert time
-                intent_code: det.intent_code,
+          // Keep the highest-confidence detection per intent
+          const existing = allDetections.find(d => d.intent_code === det.intent_code);
+          if (existing) {
+            if (det.detected && det.confidence > (existing.confidence || 0)) {
+              Object.assign(existing, {
                 detected: det.detected,
-                confidence: det.confidence || 0,
-                detection_method: 'intent_classifier',
-                speaker: det.speaker || 'unknown',
+                confidence: det.confidence,
+                speaker: det.speaker,
                 transcript_segment: det.evidence_text || segment.text.slice(0, 500),
                 segment_start_ms: segment.start_ms,
                 segment_end_ms: segment.end_ms,
                 sequence_position_actual: det.sequence_position,
-                sequence_violation: false,
-                sequence_violation_detail: null,
                 anti_pattern_match: det.anti_pattern || false,
                 anti_pattern_detail: det.anti_pattern_detail || null,
                 llm_reasoning: det.reasoning,
+                detection_method: 'intent_classifier',
               });
+            }
+          } else {
+            allDetections.push({
+              intent_id: null,
+              intent_code: det.intent_code,
+              detected: det.detected,
+              confidence: det.confidence || 0,
+              detection_method: 'intent_classifier',
+              speaker: det.speaker || 'unknown',
+              transcript_segment: det.evidence_text || segment.text.slice(0, 500),
+              segment_start_ms: segment.start_ms,
+              segment_end_ms: segment.end_ms,
+              sequence_position_actual: det.sequence_position,
+              sequence_violation: false,
+              sequence_violation_detail: null,
+              anti_pattern_match: det.anti_pattern || false,
+              anti_pattern_detail: det.anti_pattern_detail || null,
+              llm_reasoning: det.reasoning,
+            });
 
-              if (det.detected) {
-                detectedIntentCodes.add(det.intent_code);
-              }
+            if (det.detected) {
+              detectedIntentCodes.add(det.intent_code);
             }
           }
         }
-
-        if (parsed?.risk_indicators?.length) {
-          allRiskIndicators.push(...parsed.risk_indicators);
-        }
-        if (parsed?.sentiment) {
-          aggregatedSentiment = parsed.sentiment;
-        }
-      } catch (err) {
-        console.error(`Classification error for ${category} segment ${segment.start_ms}:`, err);
       }
 
-      completed++;
-      if (onProgress) {
-        onProgress(Math.round((completed / totalWork) * 100), `Classifying ${category}...`);
+      if (parsed?.risk_indicators?.length) {
+        allRiskIndicators.push(...parsed.risk_indicators);
       }
+      if (parsed?.sentiment) {
+        aggregatedSentiment = parsed.sentiment;
+      }
+    } catch (err) {
+      console.error(`Classification error for segment ${segment.start_ms}:`, err);
+    }
+
+    completed++;
+    if (onProgress) {
+      onProgress(Math.round((completed / totalWork) * 100), `Classifying segment ${completed}/${totalWork}...`);
     }
   }
 

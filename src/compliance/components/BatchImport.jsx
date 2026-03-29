@@ -11,6 +11,7 @@ import { fetchWithClerk } from '../../lib/clerkFetch.js';
 const API_GDRIVE = '/.netlify/functions/gdrive';
 const API_TRANSCRIBE = '/.netlify/functions/transcribe';
 const API_COMPLIANCE = '/.netlify/functions/compliance';
+const API_SCORE_BG = '/.netlify/functions/score-call-background';
 
 const STATUS = {
   IDLE: 'idle',
@@ -173,22 +174,51 @@ const BatchImport = memo(function BatchImport({ onComplete }) {
         continue;
       }
 
-      // Step 3: Score via compliance engine
+      // Step 3: Score via background function + poll for completion
       try {
         item.step = STEP.SCORING;
         setProcessing([...items]);
 
-        const scoreRes = await fetchWithClerk(getToken, `${API_COMPLIANCE}/calls/${item.callId}/score`, {
+        // Trigger background scoring (returns 202 immediately)
+        await fetchWithClerk(getToken, API_SCORE_BG, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ callId: item.callId }),
         });
-        const scoreData = await scoreRes.json();
-        if (!scoreRes.ok) throw new Error(scoreData.error || 'Scoring failed');
 
-        item.scorecardId = scoreData.scorecard?.id;
-        item.score = scoreData.scorecard?.overall_score;
-        item.grade = scoreData.scorecard?.overall_grade;
-        item.step = STEP.DONE;
+        // Poll for scorecard completion
+        const maxWait = 300000; // 5 minutes max
+        const pollInterval = 4000;
+        const startTime = Date.now();
+        let scorecard = null;
+
+        while (!scorecard && Date.now() - startTime < maxWait) {
+          await new Promise(r => setTimeout(r, pollInterval));
+          if (abortRef.current) break;
+
+          try {
+            const pollRes = await fetchWithClerk(getToken, `${API_COMPLIANCE}/calls/${item.callId}/scorecard`);
+            if (pollRes.ok) {
+              const data = await pollRes.json();
+              if (data && data.id) scorecard = data;
+            }
+          } catch { /* keep polling */ }
+        }
+
+        // Also check if scoring failed (error stored in call metadata)
+        if (!scorecard && !abortRef.current) {
+          const callRes = await fetchWithClerk(getToken, `${API_COMPLIANCE}/calls/${item.callId}/scorecard`);
+          if (!callRes.ok) throw new Error('Scoring timed out — check function logs');
+        }
+
+        if (scorecard) {
+          item.scorecardId = scorecard.id;
+          item.score = scorecard.overall_score;
+          item.grade = scorecard.overall_grade;
+          item.step = STEP.DONE;
+        } else if (!abortRef.current) {
+          throw new Error('Scoring timed out after 5 minutes');
+        }
       } catch (err) {
         item.step = STEP.ERROR;
         item.error = `Score: ${err.message}`;
