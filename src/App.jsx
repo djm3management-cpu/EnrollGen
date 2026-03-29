@@ -22,6 +22,7 @@ const loadCallHistory = () => import("./components/CallHistory");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
+const loadCalibrationDashboard = () => import("./compliance/components/CalibrationDashboard");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -39,6 +40,7 @@ const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
+const CalibrationDashboard = lazy(loadCalibrationDashboard);
 const COMPLIANCE_HUB_TAB_IDS = new Set(["complianceHub", "history", "upload", "review"]);
 const AGENT_TOOLS_TAB_IDS = new Set(["tools", "objections", "decisionTree"]);
 
@@ -606,6 +608,7 @@ function AppContent() {
       }
       if (targetMode === "ma") {
         loadReviewWorkspace();
+        loadCalibrationDashboard();
       }
       return;
     }
@@ -775,6 +778,9 @@ function AppContent() {
                 <>
                   <LazyPanel>
                     <ComplianceDashboard />
+                  </LazyPanel>
+                  <LazyPanel>
+                    <CalibrationDashboard />
                   </LazyPanel>
                   <LazyPanel>
                     <ReviewWorkspace />
