@@ -21,6 +21,7 @@
 
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { createClient } from "@supabase/supabase-js";
+import { generateScorecard } from "../../src/compliance/engine/ScorecardGenerator.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const AI_TIMEOUT_MS = 120000; // 2 min for classification calls
@@ -104,8 +105,6 @@ export default async (request) => {
         .from("call_records").select("*").eq("id", callId).single();
       if (error || !callRecord) return json(404, { error: "Call not found" });
 
-      // Dynamic import to keep cold starts fast
-      const { generateScorecard } = await import("../../src/compliance/engine/ScorecardGenerator.js");
       const result = await generateScorecard({
         supabase: sb,
         callRecord,
