@@ -8,7 +8,7 @@ import {
   useCallback,
   useState,
 } from "react";
-import { RotateCcw, ChevronLeft, ChevronRight, User, MessageSquare, ShieldCheck, Radio, Search } from "lucide-react";
+import { RotateCcw, ChevronLeft, ChevronRight, MessageSquare, ShieldCheck, Radio, Search } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useSessionTracker } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
@@ -22,7 +22,7 @@ import {
 import ComplianceMini from "./ComplianceMini";
 import CopilotFeedMini from "./CopilotFeedMini";
 import AskCopilotMini from "./AskCopilotMini";
-import AncillaryFlowWidget from "./AncillaryFlowWidget";
+
 import CollapsibleWidget from "./CollapsibleWidget";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
@@ -58,9 +58,10 @@ const FULL_RAIL_SCROLL_STYLE = {
   minHeight: 0,
   overflowY: "auto",
   overflowX: "hidden",
+  width: 250,
   display: "flex",
   flexDirection: "column",
-  alignItems: "flex-end",
+  alignItems: "stretch",
   pointerEvents: "auto",
 };
 
@@ -197,10 +198,6 @@ function RailWidgets({
 
       <CollapsibleWidget title="Ask Co-Pilot" icon={<Search size={11} />} accentColor="#a855f7">
         <AskCopilotMini />
-      </CollapsibleWidget>
-
-      <CollapsibleWidget title="Ancillary Flow" icon={<User size={11} />} accentColor="#fb923c">
-        <AncillaryFlowWidget />
       </CollapsibleWidget>
 
       <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="#E8002D">

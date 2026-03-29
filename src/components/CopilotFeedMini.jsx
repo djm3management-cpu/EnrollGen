@@ -1,4 +1,4 @@
-import { useRef, useEffect, memo } from "react";
+import { useRef, useEffect, useState, memo } from "react";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import PanelIdleSpinner from "./PanelIdleSpinner";
 
@@ -10,20 +10,35 @@ function levelColor(level) {
   return "#94a3b8";
 }
 
+const AUTO_SCROLL_THRESHOLD = 50;
+
 const CopilotFeedMini = memo(function CopilotFeedMini() {
   const { entries } = useCopilotLog();
   const feedRef = useRef(null);
+  const [userScrolled, setUserScrolled] = useState(false);
 
   const recentEntries = entries
     .filter((e) => e.logType === LOG_TYPES.COPILOT_MSG)
     .slice(-8);
 
-  // Auto-scroll feed on new entries
+  // Detect manual scroll — pause auto-scroll when user scrolls up
   useEffect(() => {
-    if (feedRef.current) {
+    const el = feedRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      setUserScrolled(distFromBottom > AUTO_SCROLL_THRESHOLD);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Auto-scroll feed on new entries (unless user scrolled up)
+  useEffect(() => {
+    if (!userScrolled && feedRef.current) {
       feedRef.current.scrollTop = feedRef.current.scrollHeight;
     }
-  }, [recentEntries.length]);
+  }, [recentEntries.length, userScrolled]);
 
   return (
     <div style={{ padding: "0 0 6px" }}>
@@ -31,7 +46,8 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
         ref={feedRef}
         className="right-rail-scroll"
         style={{
-          height: 150,
+          minHeight: 64,
+          maxHeight: 150,
           overflowY: "auto",
           padding: "4px 8px",
         }}

@@ -85,7 +85,8 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
         ref={scrollRef}
         className="right-rail-scroll"
         style={{
-          height: 160,
+          minHeight: 64,
+          maxHeight: 160,
           overflowY: "auto",
           padding: "0 8px",
         }}
