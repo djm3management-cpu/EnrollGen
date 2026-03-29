@@ -47,7 +47,7 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
         className="right-rail-scroll"
         style={{
           minHeight: 64,
-          maxHeight: 150,
+          maxHeight: "calc(40vh - 60px)",
           overflowY: "auto",
           padding: "4px 8px",
         }}

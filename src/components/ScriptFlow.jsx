@@ -8,7 +8,7 @@ import {
   useCallback,
   useState,
 } from "react";
-import { RotateCcw, ChevronLeft, ChevronRight, MessageSquare, ShieldCheck, Radio, Search } from "lucide-react";
+import { RotateCcw, ChevronLeft, ChevronRight, MessageSquare, ShieldCheck, Radio } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useSessionTracker } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
@@ -172,6 +172,22 @@ function formatDuration(ms) {
   return `${m}m ${s}s`;
 }
 
+/* ---- pill button shared style ---- */
+const PILL_BASE = {
+  flex: 1,
+  borderRadius: 50,
+  padding: "4px 0",
+  fontSize: "0.58rem",
+  fontFamily: "'Barlow Condensed', sans-serif",
+  fontWeight: 700,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  border: "1px solid rgba(255,255,255,0.07)",
+  cursor: "pointer",
+  transition: "all 0.15s",
+  background: "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
+};
+
 /* ---- Shared widget stack — used by both full rail and overlay ---- */
 function RailWidgets({
   transcript,
@@ -180,9 +196,66 @@ function RailWidgets({
   mergedEntries,
   listening,
   result,
+  copilotHandlersRef,
+  coachingLoading,
 }) {
+  const supportsRecognition = typeof window !== "undefined" &&
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+  const hasTranscript = !!transcript.trim();
+
   return (
     <>
+      {/* ── Copilot Control Strip ── */}
+      <div style={{
+        width: "100%", minWidth: 230, pointerEvents: "auto",
+        background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+        border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16,
+        backdropFilter: "blur(12px)", boxShadow: "0 10px 24px rgba(0,0,0,0.36)",
+        padding: "8px 10px 4px", marginBottom: 6,
+      }}>
+        <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+          <button
+            onClick={() => { const h = copilotHandlersRef.current; if (listening) h.handleStop?.(); else h.handleStart?.(); }}
+            disabled={!supportsRecognition}
+            style={{
+              ...PILL_BASE,
+              background: listening
+                ? "linear-gradient(145deg, rgba(232,0,45,0.2) 0%, rgba(180,0,35,0.14) 100%)"
+                : PILL_BASE.background,
+              border: listening ? "1px solid rgba(232,0,45,0.28)" : PILL_BASE.border,
+              color: listening ? "#FF8FA3" : "#00ff41",
+              cursor: supportsRecognition ? "pointer" : "not-allowed",
+            }}
+          >
+            {!supportsRecognition ? "NO MIC" : listening ? "■ STOP" : "● START"}
+          </button>
+          <button
+            onClick={() => copilotHandlersRef.current.clearAll?.()}
+            style={{ ...PILL_BASE, color: "#666" }}
+          >
+            CLEAR
+          </button>
+          <button
+            onClick={() => copilotHandlersRef.current.requestCoaching?.()}
+            disabled={!hasTranscript || coachingLoading}
+            style={{
+              ...PILL_BASE,
+              border: "1px solid rgba(157,0,255,0.45)",
+              color: "#B84DFF",
+              cursor: hasTranscript && !coachingLoading ? "pointer" : "not-allowed",
+              opacity: !hasTranscript || coachingLoading ? 0.45 : 1,
+            }}
+          >
+            {coachingLoading ? "ANALYZING…" : "◈ ANALYZE"}
+          </button>
+        </div>
+        <AskCopilotMini />
+      </div>
+
+      {/* ── Thin divider ── */}
+      <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 6 }} />
+
+      {/* ── Live Transcript ── */}
       <CollapsibleWidget
         title="Live Transcript"
         icon={<Radio size={11} />}
@@ -192,14 +265,12 @@ function RailWidgets({
         <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
       </CollapsibleWidget>
 
+      {/* ── Co-Pilot Feed ── */}
       <CollapsibleWidget title="Co-Pilot Feed" icon={<MessageSquare size={11} />} accentColor="#9D00FF">
         <CopilotFeedMini />
       </CollapsibleWidget>
 
-      <CollapsibleWidget title="Ask Co-Pilot" icon={<Search size={11} />} accentColor="#a855f7">
-        <AskCopilotMini />
-      </CollapsibleWidget>
-
+      {/* ── Compliance ── */}
       <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="#E8002D">
         <ComplianceMini
           transcript={transcript}
@@ -207,9 +278,6 @@ function RailWidgets({
           result={result}
         />
       </CollapsibleWidget>
-
-      {/* DISABLED: ObjectionHandler — re-enable when ready */}
-      {/* DISABLED: QuickNotes — re-enable when ready */}
     </>
   );
 }
@@ -222,6 +290,8 @@ function RightRail({
   mergedEntries,
   listening,
   result,
+  copilotHandlersRef,
+  coachingLoading,
 }) {
   const [open, setOpen] = useState(false);
   const [isCompactRail, setIsCompactRail] = useState(() =>
@@ -286,6 +356,8 @@ function RightRail({
     mergedEntries,
     listening,
     result,
+    copilotHandlersRef,
+    coachingLoading,
   };
 
   if (!isCompactRail) {
@@ -442,6 +514,8 @@ export default function ScriptFlow() {
   const [transcript, setTranscript] = useState("");
   const [mergedTranscriptEntries, setMergedTranscriptEntries] = useState([]);
   const [isListening, setIsListening] = useState(false);
+  const [coachingLoading, setCoachingLoading] = useState(false);
+  const copilotHandlersRef = useRef({});
   const deferredTranscript = useDeferredValue(transcript);
   const customerTranscript = useMemo(
     () =>
@@ -546,6 +620,8 @@ export default function ScriptFlow() {
         mergedEntries={mergedTranscriptEntries}
         listening={isListening}
         result={liveCompliance}
+        copilotHandlersRef={copilotHandlersRef}
+        coachingLoading={coachingLoading}
       />
 
       <div className="flow-shell" ref={flowShellRef}>
@@ -558,7 +634,7 @@ export default function ScriptFlow() {
         <div className="flow-main" ref={flowMainRef}>
 
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}
-      <ScriptPrompter onTranscriptChange={setTranscript} onMergedTranscriptChange={setMergedTranscriptEntries} onListeningChange={setIsListening} logComplianceFlag={session.logComplianceFlag} />
+      <ScriptPrompter onTranscriptChange={setTranscript} onMergedTranscriptChange={setMergedTranscriptEntries} onListeningChange={setIsListening} logComplianceFlag={session.logComplianceFlag} controlsRef={copilotHandlersRef} onCoachingLoadingChange={setCoachingLoading} />
 
       {/* Start Call gate — timer and session don't begin until clicked */}
       {!callStarted && (
