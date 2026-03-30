@@ -29,6 +29,7 @@ const AI_TIMEOUT_MS = 120000; // 2 min for classification calls
 const NOT_APPLICABLE_RESULT = "na";
 const LEGACY_NOT_APPLICABLE_RESULT = "not_applicable";
 const INSUFFICIENT_PASS_FAIL = "N/A";
+const LEGACY_INSUFFICIENT_PASS_FAIL = "INSUFFICIENT";
 
 function json(status, data) {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
@@ -125,6 +126,10 @@ function isNotApplicableResult(result) {
   return result === NOT_APPLICABLE_RESULT || result === LEGACY_NOT_APPLICABLE_RESULT;
 }
 
+function isInsufficientPassFail(status) {
+  return status === INSUFFICIENT_PASS_FAIL || status === LEGACY_INSUFFICIENT_PASS_FAIL;
+}
+
 function determineCorrectiveBucket(overallScore, autoFail, categoryScores) {
   if (autoFail) return "CRITICAL_VIOLATIONS";
 
@@ -174,6 +179,18 @@ async function upsertInBatches(sb, table, rows, chunkSize = 250) {
     const { error } = await sb.from(table).upsert(chunk, { onConflict: "id" });
     if (error) {
       throw new Error(`${table} upsert failed: ${error.message}`);
+    }
+  }
+}
+
+async function insertInBatches(sb, table, rows, chunkSize = 250) {
+  if (!rows || rows.length === 0) return;
+
+  const chunks = chunkArray(rows, chunkSize);
+  for (const chunk of chunks) {
+    const { error } = await sb.from(table).insert(chunk);
+    if (error) {
+      throw new Error(`${table} insert failed: ${error.message}`);
     }
   }
 }
@@ -236,6 +253,8 @@ function areJsonValuesEqual(left, right) {
 
 function itemNeedsUpdate(current, next) {
   return (
+    (current.intent_id ?? null) !== (next.intent_id ?? null) ||
+    (current.detection_id ?? null) !== (next.detection_id ?? null) ||
     current.result !== next.result ||
     Number(current.points_earned ?? 0) !== Number(next.points_earned ?? 0) ||
     Number(current.points_possible ?? 0) !== Number(next.points_possible ?? 0) ||
@@ -286,6 +305,8 @@ function evaluateRecalculatedItem({
     return {
       row: {
         ...item,
+        intent_id: item.intent_id ?? templateItem?.intent_id ?? null,
+        detection_id: detection?.id ?? item.detection_id ?? null,
         result: NOT_APPLICABLE_RESULT,
         points_earned: 0,
         points_possible: 0,
@@ -318,6 +339,8 @@ function evaluateRecalculatedItem({
     return {
       row: {
         ...item,
+        intent_id: item.intent_id ?? templateItem?.intent_id ?? null,
+        detection_id: detection?.id ?? item.detection_id ?? null,
         result: NOT_APPLICABLE_RESULT,
         points_earned: 0,
         points_possible: 0,
@@ -358,6 +381,8 @@ function evaluateRecalculatedItem({
     return {
       row: {
         ...item,
+        intent_id: item.intent_id ?? templateItem?.intent_id ?? null,
+        detection_id: detection?.id ?? item.detection_id ?? null,
         result: item.result,
         points_earned: pointsEarned,
         points_possible: pointsPossible,
@@ -428,6 +453,8 @@ function evaluateRecalculatedItem({
   return {
     row: {
       ...item,
+      intent_id: item.intent_id ?? templateItem?.intent_id ?? null,
+      detection_id: detection?.id ?? item.detection_id ?? null,
       result,
       points_earned: pointsEarned,
       points_possible: pointsPossibleBase,
@@ -946,16 +973,16 @@ export default async (request) => {
         selectInBatches(
           sb,
           "scoring_template_items",
-          "id",
-          allItems.map((item) => item.template_item_id),
+          "template_id",
+          workItems.map((item) => item.scorecard.template_id),
           "id, intent_id, question_text, category, points_possible, is_auto_fail, display_order, template_id"
         ),
         selectInBatches(
           sb,
           "intent_detections",
-          "id",
-          allItems.map((item) => item.detection_id),
-          "id, intent_code, detected, confidence, anti_pattern_match, anti_pattern_detail, llm_reasoning, transcript_segment, segment_start_ms, sequence_violation, sequence_violation_detail, manually_overridden, override_reason"
+          "call_id",
+          workItems.map((item) => item.call.id),
+          "id, call_id, intent_id, intent_code, detected, confidence, anti_pattern_match, anti_pattern_detail, llm_reasoning, transcript_segment, segment_start_ms, sequence_violation, sequence_violation_detail, manually_overridden, override_reason"
         ),
         selectInBatches(
           sb,
@@ -967,13 +994,35 @@ export default async (request) => {
       ]);
 
       const templateItemById = {};
+      const templateItemsByTemplateId = {};
       for (const templateItem of templateItems) {
         templateItemById[templateItem.id] = templateItem;
+        if (!templateItemsByTemplateId[templateItem.template_id]) {
+          templateItemsByTemplateId[templateItem.template_id] = [];
+        }
+        templateItemsByTemplateId[templateItem.template_id].push(templateItem);
+      }
+      for (const items of Object.values(templateItemsByTemplateId)) {
+        items.sort((left, right) => Number(left.display_order ?? 0) - Number(right.display_order ?? 0));
       }
 
       const detectionById = {};
+      const detectionByCallAndIntentId = {};
+      const detectionByCallAndIntentCode = {};
       for (const detection of detections) {
         detectionById[detection.id] = detection;
+        if (detection.call_id && detection.intent_id) {
+          const intentKey = `${detection.call_id}:${detection.intent_id}`;
+          if (!detectionByCallAndIntentId[intentKey] || Number(detection.confidence ?? 0) > Number(detectionByCallAndIntentId[intentKey].confidence ?? 0)) {
+            detectionByCallAndIntentId[intentKey] = detection;
+          }
+        }
+        if (detection.call_id && detection.intent_code) {
+          const codeKey = `${detection.call_id}:${detection.intent_code}`;
+          if (!detectionByCallAndIntentCode[codeKey] || Number(detection.confidence ?? 0) > Number(detectionByCallAndIntentCode[codeKey].confidence ?? 0)) {
+            detectionByCallAndIntentCode[codeKey] = detection;
+          }
+        }
       }
 
       const templateById = {};
@@ -982,15 +1031,41 @@ export default async (request) => {
       }
 
       const itemUpdates = [];
+      const itemInserts = [];
       const scorecardUpdates = [];
 
       for (const workItem of workItems) {
         const { call, direction, isShortCall, scorecard } = workItem;
-        const scorecardItems = (itemsByScorecard[scorecard.id] || [])
+        const existingScorecardItems = (itemsByScorecard[scorecard.id] || [])
           .slice()
           .sort((left, right) => Number(left.display_order ?? 0) - Number(right.display_order ?? 0));
+        const templateScorecardItems = (templateItemsByTemplateId[scorecard.template_id] || []).map((templateItem) => ({
+          id: null,
+          scorecard_id: scorecard.id,
+          template_item_id: templateItem.id,
+          intent_id: templateItem.intent_id,
+          detection_id: null,
+          question_text: templateItem.question_text,
+          category: templateItem.category,
+          result: "fail",
+          points_earned: 0,
+          points_possible: templateItem.points_possible,
+          confidence: 0,
+          is_auto_fail: Boolean(templateItem.is_auto_fail),
+          auto_fail_triggered: false,
+          notes: null,
+          evidence_text: null,
+          evidence_timestamp_ms: null,
+          display_order: templateItem.display_order,
+        }));
+        const rebuildMissingItems = !isShortCall && existingScorecardItems.length === 0 && templateScorecardItems.length > 0;
+        const scorecardItems = existingScorecardItems.length > 0
+          ? existingScorecardItems
+          : rebuildMissingItems
+          ? templateScorecardItems
+          : [];
 
-        if (!isShortCall && scorecardItems.length === 0) {
+        if (!isShortCall && scorecardItems.length === 0 && !isInsufficientPassFail(scorecard.pass_fail) && scorecard.overall_grade !== "N/A") {
           results.push({
             call_id: call.id,
             scorecard_id: scorecard.id,
@@ -1010,9 +1085,51 @@ export default async (request) => {
         const riskFlags = [];
         const coachingNotes = [];
 
+        const isExistingInsufficient = isInsufficientPassFail(scorecard.pass_fail) || scorecard.overall_grade === "N/A";
+
+        if (scorecardItems.length === 0 && isExistingInsufficient) {
+          const nextScorecard = {
+            ...scorecard,
+            overall_score: 0,
+            overall_grade: "N/A",
+            total_points_earned: 0,
+            total_points_possible: 0,
+            pass_fail: INSUFFICIENT_PASS_FAIL,
+            auto_fail_triggered: false,
+            auto_fail_reasons: [],
+            category_scores: {},
+            risk_level: "low",
+            risk_flags: ["Insufficient scorecard - no line items available"],
+            sequence_violations: 0,
+            coaching_notes: ["Existing scorecard has no line items, retained as insufficient"],
+            corrective_actions_needed: false,
+            updated_at: now,
+          };
+
+          if (scorecardNeedsUpdate(scorecard, nextScorecard)) {
+            scorecardUpdates.push(nextScorecard);
+          }
+
+          results.push({
+            call_id: call.id,
+            scorecard_id: scorecard.id,
+            direction,
+            short: true,
+            grade: "N/A",
+            pass_fail: "INSUFFICIENT",
+          });
+          continue;
+        }
+
         for (const item of scorecardItems) {
           const templateItem = templateItemById[item.template_item_id] || null;
-          const detection = detectionById[item.detection_id] || null;
+          const fallbackIntentId = templateItem?.intent_id || item.intent_id || null;
+          const fallbackIntentCode = (fallbackIntentId && intentById[fallbackIntentId]?.intent_code) || null;
+          const detection =
+            detectionById[item.detection_id] ||
+            (fallbackIntentId ? detectionByCallAndIntentId[`${call.id}:${fallbackIntentId}`] : null) ||
+            (fallbackIntentCode ? detectionByCallAndIntentCode[`${call.id}:${fallbackIntentCode}`] : null) ||
+            null;
           const intentMeta =
             (detection?.intent_code && intentByCode[detection.intent_code]) ||
             (templateItem?.intent_id && intentById[templateItem.intent_id]) ||
@@ -1028,7 +1145,9 @@ export default async (request) => {
             isShortCall,
           });
 
-          if (itemNeedsUpdate(item, recalculated.row)) {
+          if (!item.id && rebuildMissingItems) {
+            itemInserts.push(recalculated.row);
+          } else if (itemNeedsUpdate(item, recalculated.row)) {
             itemUpdates.push(recalculated.row);
           }
 
@@ -1134,6 +1253,7 @@ export default async (request) => {
       }
 
       await Promise.all([
+        insertInBatches(sb, "scorecard_items", itemInserts, 500),
         upsertInBatches(sb, "scorecard_items", itemUpdates, 500),
         upsertInBatches(sb, "compliance_scorecards", scorecardUpdates, 100),
         updateInBatches(sb, "call_records", callUpdates, 100),
