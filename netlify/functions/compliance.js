@@ -163,13 +163,21 @@ async function upsertInBatches(sb, table, rows, chunkSize = 250) {
   if (!rows || rows.length === 0) return;
 
   const chunks = chunkArray(rows, chunkSize);
-  const responses = await Promise.all(
-    chunks.map((chunk) => sb.from(table).upsert(chunk, { onConflict: "id" }))
-  );
+  for (const chunk of chunks) {
+    const responses = await Promise.all(
+      chunk.map((row) => {
+        if (!row?.id) {
+          throw new Error(`${table} update failed: missing id`);
+        }
+        const { id, ...updates } = row;
+        return sb.from(table).update(updates).eq("id", id);
+      })
+    );
 
-  for (const response of responses) {
-    if (response.error) {
-      throw new Error(`${table} upsert failed: ${response.error.message}`);
+    for (const response of responses) {
+      if (response.error) {
+        throw new Error(`${table} update failed: ${response.error.message}`);
+      }
     }
   }
 }
@@ -808,7 +816,7 @@ export default async (request) => {
         }
       }
 
-      // 3. Batch update short calls
+      // 3. Exit early if there are no scorecards to recalculate
       const scorecardIds = workItems.map((item) => item.scorecard.id);
       if (scorecardIds.length === 0) {
         await upsertInBatches(sb, "call_records", callUpdates, 100);
