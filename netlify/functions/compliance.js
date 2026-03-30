@@ -188,7 +188,15 @@ async function insertInBatches(sb, table, rows, chunkSize = 250) {
 
   const chunks = chunkArray(rows, chunkSize);
   for (const chunk of chunks) {
-    const { error } = await sb.from(table).insert(chunk);
+    const sanitizedChunk = chunk.map((row) => {
+      if (row?.id == null) {
+        const { id, ...insertRow } = row;
+        return insertRow;
+      }
+      return row;
+    });
+
+    const { error } = await sb.from(table).insert(sanitizedChunk);
     if (error) {
       throw new Error(`${table} insert failed: ${error.message}`);
     }
