@@ -111,6 +111,269 @@ function recalcGrade(score, autoFail) {
   return 'F';
 }
 
+function recalcRiskLevel(score, autoFail, sequenceViolations) {
+  if (autoFail || score < 60) return "critical";
+  if (score < 70 || sequenceViolations > 3) return "high";
+  if (score < 85 || sequenceViolations > 1) return "medium";
+  return "low";
+}
+
+function determineCorrectiveBucket(overallScore, autoFail, categoryScores) {
+  if (autoFail) return "CRITICAL_VIOLATIONS";
+
+  const majorFails = Object.values(categoryScores || {}).reduce((sum, cat) => {
+    if (!cat || !cat.possible) return sum;
+    return sum + (cat.earned / cat.possible < 0.5 ? 1 : 0);
+  }, 0);
+
+  if (overallScore < 70 || majorFails >= 3) return "MAJOR_DEFICIENCIES";
+  if (overallScore < 85) return "COACHING_OPPORTUNITIES";
+  if (overallScore < 93) return "MINOR_IMPROVEMENTS";
+  return null;
+}
+
+function chunkArray(items, chunkSize = 250) {
+  const chunks = [];
+  for (let i = 0; i < items.length; i += chunkSize) {
+    chunks.push(items.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
+async function selectInBatches(sb, table, column, values, select, chunkSize = 250) {
+  const uniqueValues = [...new Set((values || []).filter(Boolean))];
+  if (uniqueValues.length === 0) return [];
+
+  const chunks = chunkArray(uniqueValues, chunkSize);
+  const responses = await Promise.all(
+    chunks.map((chunk) => sb.from(table).select(select).in(column, chunk))
+  );
+
+  const rows = [];
+  for (const response of responses) {
+    if (response.error) {
+      throw new Error(`${table} select failed: ${response.error.message}`);
+    }
+    rows.push(...(response.data || []));
+  }
+  return rows;
+}
+
+async function upsertInBatches(sb, table, rows, chunkSize = 250) {
+  if (!rows || rows.length === 0) return;
+
+  const chunks = chunkArray(rows, chunkSize);
+  const responses = await Promise.all(
+    chunks.map((chunk) => sb.from(table).upsert(chunk, { onConflict: "id" }))
+  );
+
+  for (const response of responses) {
+    if (response.error) {
+      throw new Error(`${table} upsert failed: ${response.error.message}`);
+    }
+  }
+}
+
+function buildCategoryScoresWithPct(categoryScores) {
+  return Object.fromEntries(
+    Object.entries(categoryScores).map(([category, scores]) => [
+      category,
+      {
+        ...scores,
+        pct: scores.possible > 0
+          ? Math.round((scores.earned / scores.possible) * 100)
+          : 0,
+      },
+    ])
+  );
+}
+
+function evaluateRecalculatedItem({
+  item,
+  templateItem,
+  detection,
+  intentMeta,
+  direction,
+  isShortCall,
+}) {
+  const questionText = item.question_text || templateItem?.question_text || "Unknown question";
+  const category = item.category || templateItem?.category || "Uncategorized";
+  const pointsPossibleBase = Number(
+    templateItem?.points_possible ?? item.points_possible ?? 0
+  );
+  const isAutoFail = Boolean(templateItem?.is_auto_fail ?? item.is_auto_fail);
+  const baseEvidenceText = detection?.transcript_segment ?? item.evidence_text ?? null;
+  const baseEvidenceTimestamp = detection?.segment_start_ms ?? item.evidence_timestamp_ms ?? null;
+
+  if (isShortCall) {
+    return {
+      row: {
+        id: item.id,
+        result: "not_applicable",
+        points_earned: 0,
+        points_possible: 0,
+        confidence: 0,
+        auto_fail_triggered: false,
+        notes: "Short call - insufficient for scoring",
+        evidence_text: baseEvidenceText,
+        evidence_timestamp_ms: baseEvidenceTimestamp,
+      },
+      aggregate: {
+        questionText,
+        category,
+        result: "not_applicable",
+        pointsEarned: 0,
+        pointsPossible: 0,
+        autoFailTriggered: false,
+        riskFlag: null,
+        coachingNote: null,
+        sequenceViolation: false,
+      },
+    };
+  }
+
+  const subcategory = (intentMeta?.subcategory || "").toUpperCase();
+  const directionExcluded =
+    (subcategory === "OUTBOUND" && direction !== "outbound") ||
+    (subcategory === "INBOUND" && direction !== "inbound");
+
+  if (directionExcluded) {
+    return {
+      row: {
+        id: item.id,
+        result: "not_applicable",
+        points_earned: 0,
+        points_possible: 0,
+        confidence: 0,
+        auto_fail_triggered: false,
+        notes: `Not applicable - ${subcategory} intent on ${direction} call`,
+        evidence_text: baseEvidenceText,
+        evidence_timestamp_ms: baseEvidenceTimestamp,
+      },
+      aggregate: {
+        questionText,
+        category,
+        result: "not_applicable",
+        pointsEarned: 0,
+        pointsPossible: 0,
+        autoFailTriggered: false,
+        riskFlag: null,
+        coachingNote: null,
+        sequenceViolation: false,
+      },
+    };
+  }
+
+  const manualOverride =
+    Boolean(detection?.manually_overridden) &&
+    ["pass", "fail", "partial"].includes(item.result);
+
+  if (manualOverride) {
+    const pointsPossible = pointsPossibleBase;
+    const pointsEarned =
+      item.result === "pass"
+        ? pointsPossible
+        : item.result === "partial"
+        ? Math.floor(pointsPossible * 0.5)
+        : 0;
+    const autoFailTriggered = Boolean(isAutoFail && item.result === "fail");
+
+    return {
+      row: {
+        id: item.id,
+        result: item.result,
+        points_earned: pointsEarned,
+        points_possible: pointsPossible,
+        confidence: Number(item.confidence ?? detection?.confidence ?? 0),
+        auto_fail_triggered: autoFailTriggered,
+        notes: item.notes || detection?.override_reason || detection?.llm_reasoning || null,
+        evidence_text: item.evidence_text ?? baseEvidenceText,
+        evidence_timestamp_ms: item.evidence_timestamp_ms ?? baseEvidenceTimestamp,
+      },
+      aggregate: {
+        questionText,
+        category,
+        result: item.result,
+        pointsEarned,
+        pointsPossible,
+        autoFailTriggered,
+        riskFlag: autoFailTriggered ? `Auto-fail: ${questionText}` : null,
+        coachingNote: null,
+        sequenceViolation: false,
+      },
+    };
+  }
+
+  let result = "fail";
+  let pointsEarned = 0;
+  let notes = detection?.llm_reasoning || item.notes || null;
+  let coachingNote = null;
+  let riskFlag = null;
+  let sequenceViolation = false;
+  const confidence = Number(detection?.confidence || 0);
+
+  if (!detection || !detection.detected) {
+    if (isAutoFail) {
+      riskFlag = `Auto-fail: ${questionText}`;
+    }
+    coachingNote = `Missing: ${questionText}`;
+  } else if (detection.anti_pattern_match) {
+    notes = detection.llm_reasoning || detection.anti_pattern_detail || notes;
+    coachingNote = `Anti-pattern flagged for: ${questionText} - ${detection.anti_pattern_detail || "Review transcript"}`;
+    riskFlag = `Anti-pattern detected: ${questionText}`;
+  } else if (confidence >= 0.9) {
+    if (detection.sequence_violation) {
+      result = "partial";
+      pointsEarned = Math.floor(pointsPossibleBase * 0.5);
+      notes = detection.llm_reasoning || detection.sequence_violation_detail || notes;
+      coachingNote = `Sequence violation: ${questionText} - ${detection.sequence_violation_detail}`;
+      sequenceViolation = true;
+    } else {
+      result = "pass";
+      pointsEarned = pointsPossibleBase;
+    }
+  } else if (confidence >= 0.7) {
+    result = "pass";
+    pointsEarned = pointsPossibleBase;
+  } else if (confidence >= 0.5) {
+    result = "partial";
+    pointsEarned = Math.floor(pointsPossibleBase * 0.5);
+    coachingNote = `Low confidence (${(confidence * 100).toFixed(0)}%): ${questionText} - needs manual review`;
+  } else if (isAutoFail) {
+    riskFlag = `Auto-fail: ${questionText}`;
+  }
+
+  const autoFailTriggered = Boolean(isAutoFail && result === "fail");
+  if (autoFailTriggered && !riskFlag) {
+    riskFlag = `Auto-fail: ${questionText}`;
+  }
+
+  return {
+    row: {
+      id: item.id,
+      result,
+      points_earned: pointsEarned,
+      points_possible: pointsPossibleBase,
+      confidence,
+      auto_fail_triggered: autoFailTriggered,
+      notes,
+      evidence_text: baseEvidenceText,
+      evidence_timestamp_ms: baseEvidenceTimestamp,
+    },
+    aggregate: {
+      questionText,
+      category,
+      result,
+      pointsEarned,
+      pointsPossible: pointsPossibleBase,
+      autoFailTriggered,
+      riskFlag,
+      coachingNote,
+      sequenceViolation,
+    },
+  };
+}
+
 export default async (request) => {
   const auth = await requireClerkAuth(request);
   if (auth.response) return auth.response;
@@ -476,60 +739,288 @@ export default async (request) => {
       // Batched approach — minimize DB round-trips to stay under 10s limit
 
       // 1. Fetch all data upfront in parallel
-      const [callsRes, outRes, inRes, scorecardsRes] = await Promise.all([
-        sb.from("call_records").select("id, transcript_diarized, call_duration_seconds").not("transcript_diarized", "is", null),
-        sb.from("compliance_intents").select("intent_code").eq("subcategory", "OUTBOUND"),
-        sb.from("compliance_intents").select("intent_code").eq("subcategory", "INBOUND"),
-        sb.from("compliance_scorecards").select("id, call_id"),
+      const [callsRes, scorecardsRes, intentsRes] = await Promise.all([
+        sb
+          .from("call_records")
+          .select("id, transcript_diarized, call_duration_seconds")
+          .not("transcript_diarized", "is", null),
+        sb
+          .from("compliance_scorecards")
+          .select("id, call_id, template_id"),
+        sb
+          .from("compliance_intents")
+          .select("id, intent_code, subcategory"),
       ]);
 
-      const eligibleCalls = (callsRes.data || []).filter(c => Array.isArray(c.transcript_diarized) && c.transcript_diarized.length > 0);
-      const outboundCodes = new Set((outRes.data || []).map(i => i.intent_code));
-      const inboundCodes = new Set((inRes.data || []).map(i => i.intent_code));
-      const scorecardMap = {};
-      for (const sc of (scorecardsRes.data || [])) { scorecardMap[sc.call_id] = sc.id; }
+      if (callsRes.error) throw new Error(`call_records select failed: ${callsRes.error.message}`);
+      if (scorecardsRes.error) throw new Error(`compliance_scorecards select failed: ${scorecardsRes.error.message}`);
+      if (intentsRes.error) throw new Error(`compliance_intents select failed: ${intentsRes.error.message}`);
 
-      // 2. Detect directions and classify calls
-      const shortCallIds = [];
-      const normalCalls = []; // { call, direction, scorecardId }
-      const directionUpdates = []; // { id, direction }
+      const eligibleCalls = (callsRes.data || []).filter(
+        (call) => Array.isArray(call.transcript_diarized) && call.transcript_diarized.length > 0
+      );
+      const scorecardsByCall = {};
+      for (const scorecard of (scorecardsRes.data || [])) {
+        if (!scorecardsByCall[scorecard.call_id]) scorecardsByCall[scorecard.call_id] = [];
+        scorecardsByCall[scorecard.call_id].push(scorecard);
+      }
+
+      const intentById = {};
+      const intentByCode = {};
+      for (const intent of (intentsRes.data || [])) {
+        intentById[intent.id] = intent;
+        intentByCode[intent.intent_code] = intent;
+      }
+
+      const now = new Date().toISOString();
+      const callUpdates = [];
+      const workItems = [];
       const results = [];
 
       for (const call of eligibleCalls) {
         const direction = detectCallDirection(call.transcript_diarized);
-        directionUpdates.push({ id: call.id, direction });
-        const isShort = (call.call_duration_seconds || 0) < 120;
+        const isShortCall = (call.call_duration_seconds || 0) < 120;
 
-        if (isShort) {
-          shortCallIds.push(call.id);
-          results.push({ call_id: call.id, direction, short: true, grade: "N/A" });
-        } else if (scorecardMap[call.id]) {
-          normalCalls.push({ call, direction, scorecardId: scorecardMap[call.id] });
-        } else {
-          results.push({ call_id: call.id, direction, skipped: true, reason: "no scorecard" });
+        callUpdates.push({
+          id: call.id,
+          call_direction: direction,
+          updated_at: now,
+        });
+
+        const scorecards = scorecardsByCall[call.id] || [];
+        if (scorecards.length === 0) {
+          results.push({
+            call_id: call.id,
+            direction,
+            skipped: true,
+            reason: "no scorecard",
+          });
+          continue;
+        }
+
+        for (const scorecard of scorecards) {
+          workItems.push({
+            call,
+            direction,
+            isShortCall,
+            scorecard,
+          });
         }
       }
 
       // 3. Batch update short calls
-      if (shortCallIds.length > 0) {
-        await sb.from("compliance_scorecards").update({
-          overall_grade: "N/A", pass_fail: "INSUFFICIENT", overall_score: 0,
+      const scorecardIds = workItems.map((item) => item.scorecard.id);
+      if (scorecardIds.length === 0) {
+        await upsertInBatches(sb, "call_records", callUpdates, 100);
+        return json(200, { recalculated: 0, results }); /*
           risk_flags: ["Short call — insufficient for scoring"],
-        }).in("call_id", shortCallIds);
+      */
       }
 
-      // 4. Fetch ALL scorecard items for normal calls in one query
-      const normalScorecardIds = normalCalls.map(c => c.scorecardId);
-      const { data: allItemsRaw } = normalScorecardIds.length > 0
-        ? await sb.from("scorecard_items").select("id, scorecard_id, intent_code, result, points_earned, points_possible, is_auto_fail, auto_fail_triggered").in("scorecard_id", normalScorecardIds)
-        : { data: [] };
-
-      // Group items by scorecard
+      // 4. Fetch scorecard items for all scorecards in one query
+      const allItems = await selectInBatches(
+        sb,
+        "scorecard_items",
+        "scorecard_id",
+        scorecardIds,
+        "id, scorecard_id, template_item_id, intent_id, detection_id, question_text, category, result, points_earned, points_possible, confidence, is_auto_fail, auto_fail_triggered, notes, evidence_text, evidence_timestamp_ms, display_order"
+      );
       const itemsByScorecard = {};
-      for (const item of (allItemsRaw || [])) {
+      for (const item of allItems) {
         if (!itemsByScorecard[item.scorecard_id]) itemsByScorecard[item.scorecard_id] = [];
         itemsByScorecard[item.scorecard_id].push(item);
       }
+
+      const [templateItems, detections, templates] = await Promise.all([
+        selectInBatches(
+          sb,
+          "scoring_template_items",
+          "id",
+          allItems.map((item) => item.template_item_id),
+          "id, intent_id, question_text, category, points_possible, is_auto_fail, display_order, template_id"
+        ),
+        selectInBatches(
+          sb,
+          "intent_detections",
+          "id",
+          allItems.map((item) => item.detection_id),
+          "id, intent_code, detected, confidence, anti_pattern_match, anti_pattern_detail, llm_reasoning, transcript_segment, segment_start_ms, sequence_violation, sequence_violation_detail, manually_overridden, override_reason"
+        ),
+        selectInBatches(
+          sb,
+          "scoring_templates",
+          "id",
+          workItems.map((item) => item.scorecard.template_id),
+          "id, passing_threshold"
+        ),
+      ]);
+
+      const templateItemById = {};
+      for (const templateItem of templateItems) {
+        templateItemById[templateItem.id] = templateItem;
+      }
+
+      const detectionById = {};
+      for (const detection of detections) {
+        detectionById[detection.id] = detection;
+      }
+
+      const templateById = {};
+      for (const template of templates) {
+        templateById[template.id] = template;
+      }
+
+      const itemUpdates = [];
+      const scorecardUpdates = [];
+
+      for (const workItem of workItems) {
+        const { call, direction, isShortCall, scorecard } = workItem;
+        const scorecardItems = itemsByScorecard[scorecard.id] || [];
+
+        if (!isShortCall && scorecardItems.length === 0) {
+          results.push({
+            call_id: call.id,
+            scorecard_id: scorecard.id,
+            direction,
+            skipped: true,
+            reason: "no scorecard items",
+          });
+          continue;
+        }
+
+        let totalEarned = 0;
+        let totalPossible = 0;
+        let autoFailTriggered = false;
+        let sequenceViolations = 0;
+        const autoFailReasons = [];
+        const categoryScores = {};
+        const riskFlags = [];
+        const coachingNotes = [];
+
+        for (const item of scorecardItems) {
+          const templateItem = templateItemById[item.template_item_id] || null;
+          const detection = detectionById[item.detection_id] || null;
+          const intentMeta =
+            (detection?.intent_code && intentByCode[detection.intent_code]) ||
+            (templateItem?.intent_id && intentById[templateItem.intent_id]) ||
+            (item.intent_id && intentById[item.intent_id]) ||
+            null;
+
+          const recalculated = evaluateRecalculatedItem({
+            item,
+            templateItem,
+            detection,
+            intentMeta,
+            direction,
+            isShortCall,
+          });
+
+          itemUpdates.push(recalculated.row);
+
+          const aggregate = recalculated.aggregate;
+          if (aggregate.result === "not_applicable") continue;
+
+          totalEarned += aggregate.pointsEarned;
+          totalPossible += aggregate.pointsPossible;
+
+          if (!categoryScores[aggregate.category]) {
+            categoryScores[aggregate.category] = { earned: 0, possible: 0 };
+          }
+          categoryScores[aggregate.category].earned += aggregate.pointsEarned;
+          categoryScores[aggregate.category].possible += aggregate.pointsPossible;
+
+          if (aggregate.autoFailTriggered) {
+            autoFailTriggered = true;
+            autoFailReasons.push(aggregate.questionText);
+          }
+          if (aggregate.riskFlag) riskFlags.push(aggregate.riskFlag);
+          if (aggregate.coachingNote) coachingNotes.push(aggregate.coachingNote);
+          if (aggregate.sequenceViolation) sequenceViolations++;
+        }
+
+        if (isShortCall) {
+          scorecardUpdates.push({
+            id: scorecard.id,
+            overall_score: 0,
+            overall_grade: "N/A",
+            total_points_earned: 0,
+            total_points_possible: 0,
+            pass_fail: "INSUFFICIENT",
+            auto_fail_triggered: false,
+            auto_fail_reasons: [],
+            category_scores: {},
+            risk_level: "low",
+            risk_flags: ["Short call - insufficient for scoring"],
+            sequence_violations: 0,
+            coaching_notes: ["Short call flagged as insufficient during retroactive recalculation"],
+            corrective_actions_needed: false,
+            updated_at: now,
+          });
+
+          results.push({
+            call_id: call.id,
+            scorecard_id: scorecard.id,
+            direction,
+            short: true,
+            grade: "N/A",
+            pass_fail: "INSUFFICIENT",
+          });
+          continue;
+        }
+
+        const categoryScoresWithPct = buildCategoryScoresWithPct(categoryScores);
+        const overallScore = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
+        const roundedScore = Math.round(overallScore * 100) / 100;
+        const grade = recalcGrade(roundedScore, autoFailTriggered);
+        const passingThreshold = Number(templateById[scorecard.template_id]?.passing_threshold ?? 85);
+        const passFail = autoFailTriggered ? "FAIL" : (roundedScore >= passingThreshold ? "PASS" : "FAIL");
+        const riskLevel = recalcRiskLevel(roundedScore, autoFailTriggered, sequenceViolations);
+        const correctiveBucket = determineCorrectiveBucket(
+          roundedScore,
+          autoFailTriggered,
+          categoryScoresWithPct
+        );
+
+        scorecardUpdates.push({
+          id: scorecard.id,
+          overall_score: roundedScore,
+          overall_grade: grade,
+          total_points_earned: totalEarned,
+          total_points_possible: totalPossible,
+          pass_fail: passFail,
+          auto_fail_triggered: autoFailTriggered,
+          auto_fail_reasons: [...new Set(autoFailReasons)],
+          category_scores: categoryScoresWithPct,
+          risk_level: riskLevel,
+          risk_flags: [...new Set(riskFlags)],
+          sequence_violations: sequenceViolations,
+          coaching_notes: [...new Set(coachingNotes)],
+          corrective_actions_needed: correctiveBucket !== null,
+          updated_at: now,
+        });
+
+        results.push({
+          call_id: call.id,
+          scorecard_id: scorecard.id,
+          direction,
+          score: roundedScore,
+          grade,
+          pass_fail: passFail,
+          auto_fail: autoFailTriggered,
+        });
+      }
+
+      await Promise.all([
+        upsertInBatches(sb, "scorecard_items", itemUpdates, 500),
+        upsertInBatches(sb, "compliance_scorecards", scorecardUpdates, 100),
+        upsertInBatches(sb, "call_records", callUpdates, 100),
+      ]);
+
+      const recalculatedCallCount = new Set(
+        results.filter((result) => !result.skipped).map((result) => result.call_id)
+      ).size;
+
+      return json(200, { recalculated: recalculatedCallCount, results }); /*
 
       // 5. Collect IDs for batch direction-exclusion updates
       const outboundExcludeIds = [];
@@ -591,6 +1082,7 @@ export default async (request) => {
       await Promise.all([...scorecardUpdates, ...dirPromises]);
 
       return json(200, { recalculated: results.length, results });
+      */
     }
 
     // GET /agents — agent profiles aggregation
