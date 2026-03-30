@@ -23,6 +23,8 @@ const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 const loadCalibrationDashboard = () => import("./compliance/components/CalibrationDashboard");
+const loadComplianceHub = () => import("./compliance/components/ComplianceHub");
+const loadComplianceStatusPanel = () => import("./compliance/components/ComplianceStatusPanel");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -41,6 +43,8 @@ const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
 const CalibrationDashboard = lazy(loadCalibrationDashboard);
+const ComplianceHub = lazy(loadComplianceHub);
+const ComplianceStatusPanel = lazy(loadComplianceStatusPanel);
 const COMPLIANCE_HUB_TAB_IDS = new Set(["complianceHub", "history", "upload", "review"]);
 const AGENT_TOOLS_TAB_IDS = new Set(["tools", "objections", "decisionTree"]);
 
@@ -602,13 +606,11 @@ function AppContent() {
 
   const preloadTab = (targetTab, targetMode = mode) => {
     if (COMPLIANCE_HUB_TAB_IDS.has(targetTab)) {
-      loadCallHistory();
-      if (targetMode === "ma" || targetMode === "medsup") {
-        loadTranscriptUpload();
-      }
       if (targetMode === "ma") {
-        loadReviewWorkspace();
-        loadCalibrationDashboard();
+        loadComplianceHub();
+      } else {
+        loadCallHistory();
+        if (targetMode === "medsup") loadTranscriptUpload();
       }
       return;
     }
@@ -750,6 +752,14 @@ function AppContent() {
             </button>
           </nav>
 
+          {mode === "ma" && activeTab === "script" && (
+            <div style={{ padding: '0 12px', marginTop: 'auto', marginBottom: 8 }}>
+              <Suspense fallback={null}>
+                <ComplianceStatusPanel isLiveCall={false} callDuration={0} />
+              </Suspense>
+            </div>
+          )}
+
           {!LOGIN_DISABLED && (
             <div className="sidebar-profile">
               <ProfileBar />
@@ -775,23 +785,9 @@ function AppContent() {
                 </>
               )}
               {activeTab === "complianceHub" && (
-                <>
-                  <LazyPanel>
-                    <ComplianceDashboard />
-                  </LazyPanel>
-                  <LazyPanel>
-                    <CalibrationDashboard />
-                  </LazyPanel>
-                  <LazyPanel>
-                    <ReviewWorkspace />
-                  </LazyPanel>
-                  <LazyPanel>
-                    <CallHistory />
-                  </LazyPanel>
-                  <LazyPanel>
-                    <TranscriptUpload />
-                  </LazyPanel>
-                </>
+                <LazyPanel>
+                  <ComplianceHub />
+                </LazyPanel>
               )}
               {activeTab === "tools" && (
                 <LazyPanel>

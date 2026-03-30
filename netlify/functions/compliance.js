@@ -17,6 +17,8 @@
  *   POST   /compliance/calibration/start          — Start calibration run
  *   GET    /compliance/calibration/:id            — Get calibration run status
  *   POST   /compliance/calibration/:id/override   — Submit spot-check override
+ *   POST   /compliance/recalculate                — Retroactive score recalculation
+ *   GET    /compliance/agents                     — Agent profiles aggregation
  */
 
 import { requireClerkAuth } from "./_clerkAuth.js";
@@ -77,6 +79,36 @@ function parsePath(url) {
     : u.pathname.replace(/^\/api\/compliance/, "");
   const parts = path.split("/").filter(Boolean);
   return { parts, searchParams: u.searchParams };
+}
+
+function detectCallDirection(diarized) {
+  if (!diarized || diarized.length === 0) return 'inbound';
+  const firstMinute = diarized.filter(u => (u.start_ms || 0) < 60000);
+  const text = firstMinute.map(u => (u.text || '')).join(' ').toLowerCase();
+
+  const outPatterns = [/permission to contact/, /ptc.{0,20}(on file|valid)/, /i('m| am) (calling|reaching out) (you|to follow)/, /following up on (your|the) request/, /you (filled out|submitted).{0,30}(form|request)/, /gave us.{0,15}permission/];
+  const inPatterns = [/thank you for calling/, /thanks for calling/, /how (can|may) i help/, /transfer(red)?/, /warm transfer/, /i was (told|informed)/, /calling (about|regarding) my/, /i('m| am) interested in/, /you('ve| have) reached/];
+
+  let outScore = 0, inScore = 0;
+  for (const p of outPatterns) if (p.test(text)) outScore++;
+  for (const p of inPatterns) if (p.test(text)) inScore++;
+
+  return (outScore >= 2 && outScore > inScore) ? 'outbound' : 'inbound';
+}
+
+function recalcGrade(score, autoFail) {
+  if (autoFail) return 'F';
+  if (score >= 97) return 'A+';
+  if (score >= 93) return 'A';
+  if (score >= 90) return 'A-';
+  if (score >= 87) return 'B+';
+  if (score >= 83) return 'B';
+  if (score >= 80) return 'B-';
+  if (score >= 77) return 'C+';
+  if (score >= 73) return 'C';
+  if (score >= 70) return 'C-';
+  if (score >= 60) return 'D';
+  return 'F';
 }
 
 export default async (request) => {
@@ -168,7 +200,7 @@ export default async (request) => {
 
       let query = sb
         .from("compliance_scorecards")
-        .select("*, call_records(agent_name, call_start, carrier_name, product_type)")
+        .select("*, call_records(agent_name, call_start, carrier_name, product_type, call_direction, metadata)")
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -180,10 +212,12 @@ export default async (request) => {
       return json(200, data || []);
     }
 
-    // GET /scorecards/:id — scorecard detail
+    // GET /scorecards/:id — scorecard detail with call record data
     if (parts[0] === "scorecards" && parts[1] && method === "GET") {
       const { data: scorecard } = await sb
-        .from("compliance_scorecards").select("*").eq("id", parts[1]).single();
+        .from("compliance_scorecards")
+        .select("*, call_records(recording_url, transcript_diarized, agent_name, call_direction, call_duration_seconds, metadata)")
+        .eq("id", parts[1]).single();
       if (!scorecard) return json(404, { error: "Not found" });
 
       const { data: items } = await sb
@@ -435,6 +469,206 @@ export default async (request) => {
       await sb.rpc("increment_calibration_overrides", { run_id: parts[1] });
 
       return json(201, data);
+    }
+
+    // POST /recalculate — retroactive score recalculation for existing scored calls
+    if (parts[0] === "recalculate" && !parts[1] && method === "POST") {
+      // Fetch all call_records that have transcript_diarized
+      const { data: calls } = await sb
+        .from("call_records")
+        .select("id, transcript_diarized, call_duration_seconds")
+        .not("transcript_diarized", "is", null);
+
+      const eligibleCalls = (calls || []).filter(c =>
+        Array.isArray(c.transcript_diarized) && c.transcript_diarized.length > 0
+      );
+
+      // Fetch direction-specific intent codes
+      const { data: outboundIntents } = await sb
+        .from("compliance_intents")
+        .select("intent_code")
+        .eq("subcategory", "OUTBOUND");
+      const outboundCodes = new Set((outboundIntents || []).map(i => i.intent_code));
+
+      const { data: inboundIntents } = await sb
+        .from("compliance_intents")
+        .select("intent_code")
+        .eq("subcategory", "INBOUND");
+      const inboundCodes = new Set((inboundIntents || []).map(i => i.intent_code));
+
+      const results = [];
+
+      for (const call of eligibleCalls) {
+        const direction = detectCallDirection(call.transcript_diarized);
+        const isShort = (call.call_duration_seconds || 0) < 120;
+
+        if (isShort) {
+          // Short call — mark as insufficient
+          await sb.from("compliance_scorecards").update({
+            overall_grade: "N/A",
+            pass_fail: "INSUFFICIENT",
+            overall_score: 0,
+            risk_flags: ["Short call — insufficient for scoring"],
+          }).eq("call_id", call.id);
+
+          await sb.from("call_records").update({ call_direction: direction }).eq("id", call.id);
+
+          results.push({ call_id: call.id, direction, short: true, grade: "N/A" });
+          continue;
+        }
+
+        // Fetch scorecard for this call
+        const { data: scorecard } = await sb
+          .from("compliance_scorecards")
+          .select("id")
+          .eq("call_id", call.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (!scorecard) {
+          results.push({ call_id: call.id, direction, skipped: true, reason: "no scorecard" });
+          await sb.from("call_records").update({ call_direction: direction }).eq("id", call.id);
+          continue;
+        }
+
+        // Fetch scorecard items
+        const { data: items } = await sb
+          .from("scorecard_items")
+          .select("*")
+          .eq("scorecard_id", scorecard.id);
+
+        const allItems = items || [];
+
+        // Update direction-excluded items
+        for (const item of allItems) {
+          const isOutboundIntent = outboundCodes.has(item.intent_code);
+          const isInboundIntent = inboundCodes.has(item.intent_code);
+          const excluded =
+            (isOutboundIntent && direction === "inbound") ||
+            (isInboundIntent && direction === "outbound");
+
+          if (excluded) {
+            await sb.from("scorecard_items").update({
+              result: "not_applicable",
+              points_earned: 0,
+              points_possible: 0,
+              auto_fail_triggered: false,
+              notes: excluded && isOutboundIntent
+                ? "Not applicable — OUTBOUND intent on inbound call"
+                : "Not applicable — INBOUND intent on outbound call",
+            }).eq("id", item.id);
+
+            item.result = "not_applicable";
+            item.points_earned = 0;
+            item.points_possible = 0;
+            item.auto_fail_triggered = false;
+          }
+        }
+
+        // Recalculate totals
+        const totalEarned = allItems.reduce((sum, i) => sum + (i.points_earned || 0), 0);
+        const totalPossible = allItems
+          .filter(i => i.result !== "not_applicable")
+          .reduce((sum, i) => sum + (i.points_possible || 0), 0);
+        const overallScore = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
+
+        // Check auto_fail — only on items that are NOT direction-excluded
+        const autoFail = allItems.some(i =>
+          i.result === "fail" &&
+          i.auto_fail_triggered &&
+          i.result !== "not_applicable"
+        );
+
+        const grade = recalcGrade(overallScore, autoFail);
+        const passFail = autoFail ? "FAIL" : (overallScore >= 70 ? "PASS" : "FAIL");
+
+        await sb.from("compliance_scorecards").update({
+          overall_score: Math.round(overallScore * 100) / 100,
+          overall_grade: grade,
+          pass_fail: passFail,
+          auto_fail_triggered: autoFail,
+        }).eq("id", scorecard.id);
+
+        await sb.from("call_records").update({ call_direction: direction }).eq("id", call.id);
+
+        results.push({
+          call_id: call.id,
+          scorecard_id: scorecard.id,
+          direction,
+          score: Math.round(overallScore * 100) / 100,
+          grade,
+          pass_fail: passFail,
+          auto_fail: autoFail,
+        });
+      }
+
+      return json(200, { recalculated: results.length, results });
+    }
+
+    // GET /agents — agent profiles aggregation
+    if (parts[0] === "agents" && !parts[1] && method === "GET") {
+      const { data: scorecards } = await sb
+        .from("compliance_scorecards")
+        .select("id, overall_score, pass_fail, auto_fail_triggered, category_scores, call_records(agent_name, agent_id, call_direction, metadata)");
+
+      const cards = scorecards || [];
+
+      // Group by agent_name
+      const agentMap = {};
+      for (const card of cards) {
+        const agentName = card.call_records?.agent_name || "Unknown";
+        if (!agentMap[agentName]) {
+          agentMap[agentName] = {
+            agent_name: agentName,
+            agent_id: card.call_records?.agent_id || null,
+            calls: [],
+          };
+        }
+        agentMap[agentName].calls.push(card);
+      }
+
+      // Build agent profiles
+      const agents = Object.values(agentMap).map(agent => {
+        const total = agent.calls.length;
+        const avgScore = total > 0
+          ? agent.calls.reduce((sum, c) => sum + Number(c.overall_score || 0), 0) / total
+          : 0;
+        const passCount = agent.calls.filter(c => c.pass_fail === "PASS").length;
+        const autoFailCount = agent.calls.filter(c => c.auto_fail_triggered).length;
+
+        // Top 5 failing categories
+        const catFails = {};
+        for (const card of agent.calls) {
+          for (const [cat, scores] of Object.entries(card.category_scores || {})) {
+            if (!catFails[cat]) catFails[cat] = { earned: 0, possible: 0 };
+            catFails[cat].earned += scores.earned || 0;
+            catFails[cat].possible += scores.possible || 0;
+          }
+        }
+        const topFailingCategories = Object.entries(catFails)
+          .map(([cat, s]) => ({
+            category: cat,
+            pct: s.possible > 0 ? Math.round((s.earned / s.possible) * 100) : 100,
+          }))
+          .sort((a, b) => a.pct - b.pct)
+          .slice(0, 5);
+
+        return {
+          agent_name: agent.agent_name,
+          agent_id: agent.agent_id,
+          call_count: total,
+          avg_score: Math.round(avgScore * 100) / 100,
+          pass_rate: total > 0 ? Math.round((passCount / total) * 100) : 0,
+          auto_fail_count: autoFailCount,
+          top_failing_categories: topFailingCategories,
+        };
+      });
+
+      // Sort by call count descending
+      agents.sort((a, b) => b.call_count - a.call_count);
+
+      return json(200, agents);
     }
 
     return json(404, { error: "Not found", path: parts.join("/") });
