@@ -46,7 +46,12 @@ const OverrideForm = memo(function OverrideForm({ item, scorecardId, calibration
     fail: '#FF4455',
     partial: '#FFD700',
     na: '#555',
+    not_applicable: '#555',
   };
+
+  const resultLabel = item.result === 'na' || item.result === 'not_applicable'
+    ? 'N/A'
+    : item.result.toUpperCase();
 
   return (
     <div style={{ background: 'var(--bg-card)', borderRadius: 10, padding: '20px', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -61,7 +66,7 @@ const OverrideForm = memo(function OverrideForm({ item, scorecardId, calibration
         </div>
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.78rem' }}>
-            AI Result: <span style={{ fontWeight: 700, color: resultColor[item.result] || '#555' }}>{item.result.toUpperCase()}</span>
+            AI Result: <span style={{ fontWeight: 700, color: resultColor[item.result] || '#555' }}>{resultLabel}</span>
           </span>
           <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
             Confidence: <span style={{ fontFamily: 'var(--font-mono)' }}>{((item.confidence || 0) * 100).toFixed(0)}%</span>
@@ -115,7 +120,7 @@ const OverrideForm = memo(function OverrideForm({ item, scorecardId, calibration
       {action === 'confirm' && (
         <div style={{ marginTop: 12 }}>
           <div style={{ fontSize: '0.85rem', color: '#00D166', fontWeight: 600, marginBottom: 10 }}>
-            Confirming AI scored this correctly as {item.result.toUpperCase()}.
+            Confirming AI scored this correctly as {resultLabel}.
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={handleSubmit} disabled={submitting} style={submitBtnStyle('#00D166')}>

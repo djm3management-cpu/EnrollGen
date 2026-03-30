@@ -9,6 +9,14 @@ import { fetchWithClerk } from '../../lib/clerkFetch.js';
 
 const API = '/.netlify/functions/compliance';
 
+function isInsufficientStatus(status) {
+  return status === 'N/A' || status === 'INSUFFICIENT';
+}
+
+function displayPassFail(status) {
+  return isInsufficientStatus(status) ? 'INSUFFICIENT' : status;
+}
+
 const ComplianceOverview = memo(function ComplianceOverview() {
   const { getToken } = useAuth();
   const [data, setData] = useState(null);
@@ -167,16 +175,16 @@ const ComplianceOverview = memo(function ComplianceOverview() {
                       {sc.created_at ? new Date(sc.created_at).toLocaleDateString() : '—'}
                     </td>
                     <td style={{ ...tdStyle, color: scoreColor(sc.overall_score), fontWeight: 600 }}>
-                      {sc.overall_score?.toFixed(1)}%
+                      {isInsufficientStatus(sc.pass_fail) ? '-' : `${sc.overall_score?.toFixed(1)}%`}
                     </td>
                     <td style={{ ...tdStyle, fontWeight: 700, fontFamily: 'var(--font-display)' }}>{sc.overall_grade}</td>
                     <td style={tdStyle}>
                       <span style={{
                         padding: '2px 8px', borderRadius: 4, fontSize: '0.72rem', fontWeight: 600,
-                        background: sc.pass_fail === 'PASS' ? 'rgba(0,209,102,0.12)' : sc.pass_fail === 'INSUFFICIENT' ? 'rgba(255,255,255,0.06)' : 'rgba(255,68,85,0.12)',
-                        color: sc.pass_fail === 'PASS' ? '#00D166' : sc.pass_fail === 'INSUFFICIENT' ? 'var(--text-muted)' : '#FF4455',
+                        background: sc.pass_fail === 'PASS' ? 'rgba(0,209,102,0.12)' : isInsufficientStatus(sc.pass_fail) ? 'rgba(255,255,255,0.06)' : 'rgba(255,68,85,0.12)',
+                        color: sc.pass_fail === 'PASS' ? '#00D166' : isInsufficientStatus(sc.pass_fail) ? 'var(--text-muted)' : '#FF4455',
                       }}>
-                        {sc.pass_fail}
+                        {displayPassFail(sc.pass_fail)}
                       </span>
                     </td>
                     <td style={tdStyle}>

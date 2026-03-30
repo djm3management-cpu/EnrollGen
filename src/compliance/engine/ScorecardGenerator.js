@@ -77,7 +77,7 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
         overall_grade: 'N/A',
         total_points_earned: 0,
         total_points_possible: 0,
-        pass_fail: 'INSUFFICIENT',
+        pass_fail: 'N/A',
         auto_fail_triggered: false,
         auto_fail_reasons: [],
         category_scores: {},

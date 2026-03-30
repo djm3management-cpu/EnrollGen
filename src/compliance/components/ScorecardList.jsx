@@ -10,6 +10,14 @@ import ScorecardDetail from './ScorecardDetail.jsx';
 
 const API = '/.netlify/functions/compliance';
 
+function isInsufficientStatus(status) {
+  return status === 'N/A' || status === 'INSUFFICIENT';
+}
+
+function displayPassFail(status) {
+  return isInsufficientStatus(status) ? 'INSUFFICIENT' : status;
+}
+
 const ScorecardList = memo(function ScorecardList() {
   const { getToken } = useAuth();
   const [scorecards, setScorecards] = useState([]);
@@ -41,7 +49,7 @@ const ScorecardList = memo(function ScorecardList() {
     if (filter === 'all') return true;
     if (filter === 'pass') return sc.pass_fail === 'PASS';
     if (filter === 'fail') return sc.pass_fail === 'FAIL';
-    if (filter === 'insufficient') return sc.pass_fail === 'INSUFFICIENT';
+    if (filter === 'insufficient') return isInsufficientStatus(sc.pass_fail);
     return true;
   });
 
@@ -67,7 +75,7 @@ const ScorecardList = memo(function ScorecardList() {
               letterSpacing: '0.06em',
             }}
           >
-            {f === 'all' ? `All (${scorecards.length})` : `${f} (${scorecards.filter(sc => f === 'pass' ? sc.pass_fail === 'PASS' : f === 'fail' ? sc.pass_fail === 'FAIL' : sc.pass_fail === 'INSUFFICIENT').length})`}
+            {f === 'all' ? `All (${scorecards.length})` : `${f} (${scorecards.filter(sc => f === 'pass' ? sc.pass_fail === 'PASS' : f === 'fail' ? sc.pass_fail === 'FAIL' : isInsufficientStatus(sc.pass_fail)).length})`}
           </button>
         ))}
       </div>
@@ -120,7 +128,7 @@ const ScorecardList = memo(function ScorecardList() {
                       </span>
                     </td>
                     <td style={{ ...tdStyle, color: scoreColor(sc.overall_score), fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '1rem' }}>
-                      {sc.pass_fail === 'INSUFFICIENT' ? '—' : `${sc.overall_score?.toFixed(1)}%`}
+                      {isInsufficientStatus(sc.pass_fail) ? '—' : `${sc.overall_score?.toFixed(1)}%`}
                     </td>
                     <td style={{ ...tdStyle, fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '1rem' }}>
                       {sc.overall_grade}
@@ -128,10 +136,10 @@ const ScorecardList = memo(function ScorecardList() {
                     <td style={tdStyle}>
                       <span style={{
                         padding: '3px 10px', borderRadius: 4, fontSize: '0.72rem', fontWeight: 700,
-                        background: sc.pass_fail === 'PASS' ? 'rgba(0,209,102,0.12)' : sc.pass_fail === 'INSUFFICIENT' ? 'rgba(255,255,255,0.06)' : 'rgba(255,68,85,0.12)',
-                        color: sc.pass_fail === 'PASS' ? '#00D166' : sc.pass_fail === 'INSUFFICIENT' ? 'var(--text-muted)' : '#FF4455',
+                        background: sc.pass_fail === 'PASS' ? 'rgba(0,209,102,0.12)' : isInsufficientStatus(sc.pass_fail) ? 'rgba(255,255,255,0.06)' : 'rgba(255,68,85,0.12)',
+                        color: sc.pass_fail === 'PASS' ? '#00D166' : isInsufficientStatus(sc.pass_fail) ? 'var(--text-muted)' : '#FF4455',
                       }}>
-                        {sc.pass_fail}
+                        {displayPassFail(sc.pass_fail)}
                       </span>
                     </td>
                     <td style={tdStyle}>

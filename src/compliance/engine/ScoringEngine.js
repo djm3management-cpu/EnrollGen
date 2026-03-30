@@ -75,7 +75,7 @@ export function scoreCall({ detections, templateItems, template }) {
         intent_code: detection?.intent_code || item.intent_code,
         question_text: item.question_text,
         category: item.category,
-        result: 'not_applicable',
+        result: 'na',
         points_earned: 0,
         points_possible: 0,
         confidence: 0,

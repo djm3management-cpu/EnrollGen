@@ -14,6 +14,7 @@ const RESULT_COLORS = {
   pass: '#00D166',
   fail: '#FF4455',
   partial: '#FFD700',
+  na: '#555',
   not_applicable: '#555',
 };
 
@@ -21,8 +22,17 @@ const RESULT_LABELS = {
   pass: 'PASS',
   fail: 'FAIL',
   partial: 'PARTIAL',
+  na: 'N/A',
   not_applicable: 'N/A',
 };
+
+function isInsufficientStatus(status) {
+  return status === 'N/A' || status === 'INSUFFICIENT';
+}
+
+function displayPassFail(status) {
+  return isInsufficientStatus(status) ? 'INSUFFICIENT' : status;
+}
 
 const ScorecardDetail = memo(function ScorecardDetail({ scorecardId, onBack }) {
   const { getToken } = useAuth();
@@ -58,7 +68,8 @@ const ScorecardDetail = memo(function ScorecardDetail({ scorecardId, onBack }) {
   const items = scorecard.items || [];
   const categories = [...new Set(items.map(i => i.category).filter(Boolean))];
   const callRec = scorecard.call_records || {};
-  const gradeColor = scorecard.pass_fail === 'PASS' ? '#00D166' : scorecard.pass_fail === 'INSUFFICIENT' ? 'var(--text-muted)' : '#FF4455';
+  const insufficient = isInsufficientStatus(scorecard.pass_fail);
+  const gradeColor = scorecard.pass_fail === 'PASS' ? '#00D166' : insufficient ? 'var(--text-muted)' : '#FF4455';
   const catScores = scorecard.category_scores || {};
 
   return (
@@ -82,7 +93,7 @@ const ScorecardDetail = memo(function ScorecardDetail({ scorecardId, onBack }) {
           <div style={{ textAlign: 'center' }}>
             <div style={metaLabelStyle}>Score</div>
             <div style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: gradeColor, lineHeight: 1 }}>
-              {scorecard.pass_fail === 'INSUFFICIENT' ? '—' : `${scorecard.overall_score?.toFixed(1)}%`}
+              {insufficient ? '—' : `${scorecard.overall_score?.toFixed(1)}%`}
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>
@@ -93,10 +104,10 @@ const ScorecardDetail = memo(function ScorecardDetail({ scorecardId, onBack }) {
           </div>
           <div style={{
             padding: '6px 16px', borderRadius: 6, fontWeight: 700, fontSize: '0.85rem', fontFamily: 'var(--font-display)',
-            background: scorecard.pass_fail === 'PASS' ? 'rgba(0,209,102,0.15)' : scorecard.pass_fail === 'INSUFFICIENT' ? 'rgba(255,255,255,0.06)' : 'rgba(255,68,85,0.15)',
+            background: scorecard.pass_fail === 'PASS' ? 'rgba(0,209,102,0.15)' : insufficient ? 'rgba(255,255,255,0.06)' : 'rgba(255,68,85,0.15)',
             color: gradeColor, border: `1px solid ${gradeColor}33`,
           }}>
-            {scorecard.pass_fail}
+            {displayPassFail(scorecard.pass_fail)}
           </div>
         </div>
       </div>
@@ -168,7 +179,7 @@ const ScorecardDetail = memo(function ScorecardDetail({ scorecardId, onBack }) {
             );
           })}
 
-          {items.length === 0 && scorecard.pass_fail === 'INSUFFICIENT' && (
+          {items.length === 0 && insufficient && (
             <div style={{ ...miniCardStyle, textAlign: 'center', padding: 30, color: 'var(--text-muted)' }}>
               Call was too short for compliance scoring. No line items generated.
             </div>

@@ -26,6 +26,9 @@ import { createClient } from "@supabase/supabase-js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const AI_TIMEOUT_MS = 120000; // 2 min for classification calls
+const NOT_APPLICABLE_RESULT = "na";
+const LEGACY_NOT_APPLICABLE_RESULT = "not_applicable";
+const INSUFFICIENT_PASS_FAIL = "N/A";
 
 function json(status, data) {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
@@ -116,6 +119,10 @@ function recalcRiskLevel(score, autoFail, sequenceViolations) {
   if (score < 70 || sequenceViolations > 3) return "high";
   if (score < 85 || sequenceViolations > 1) return "medium";
   return "low";
+}
+
+function isNotApplicableResult(result) {
+  return result === NOT_APPLICABLE_RESULT || result === LEGACY_NOT_APPLICABLE_RESULT;
 }
 
 function determineCorrectiveBucket(overallScore, autoFail, categoryScores) {
@@ -279,7 +286,7 @@ function evaluateRecalculatedItem({
     return {
       row: {
         ...item,
-        result: "not_applicable",
+        result: NOT_APPLICABLE_RESULT,
         points_earned: 0,
         points_possible: 0,
         confidence: 0,
@@ -291,7 +298,7 @@ function evaluateRecalculatedItem({
       aggregate: {
         questionText,
         category,
-        result: "not_applicable",
+        result: NOT_APPLICABLE_RESULT,
         pointsEarned: 0,
         pointsPossible: 0,
         autoFailTriggered: false,
@@ -311,7 +318,7 @@ function evaluateRecalculatedItem({
     return {
       row: {
         ...item,
-        result: "not_applicable",
+        result: NOT_APPLICABLE_RESULT,
         points_earned: 0,
         points_possible: 0,
         confidence: 0,
@@ -323,7 +330,7 @@ function evaluateRecalculatedItem({
       aggregate: {
         questionText,
         category,
-        result: "not_applicable",
+        result: NOT_APPLICABLE_RESULT,
         pointsEarned: 0,
         pointsPossible: 0,
         autoFailTriggered: false,
@@ -1026,7 +1033,7 @@ export default async (request) => {
           }
 
           const aggregate = recalculated.aggregate;
-          if (aggregate.result === "not_applicable") continue;
+          if (isNotApplicableResult(aggregate.result)) continue;
 
           totalEarned += aggregate.pointsEarned;
           totalPossible += aggregate.pointsPossible;
@@ -1053,7 +1060,7 @@ export default async (request) => {
             overall_grade: "N/A",
             total_points_earned: 0,
             total_points_possible: 0,
-            pass_fail: "INSUFFICIENT",
+            pass_fail: INSUFFICIENT_PASS_FAIL,
             auto_fail_triggered: false,
             auto_fail_reasons: [],
             category_scores: {},

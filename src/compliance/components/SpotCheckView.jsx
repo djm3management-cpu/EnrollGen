@@ -15,8 +15,17 @@ const RESULT_COLORS = {
   fail: '#FF4455',
   partial: '#FFD700',
   na: '#555',
+  not_applicable: '#555',
   manual: '#a855f7',
 };
+
+function isInsufficientStatus(status) {
+  return status === 'N/A' || status === 'INSUFFICIENT';
+}
+
+function displayPassFail(status) {
+  return isInsufficientStatus(status) ? 'INSUFFICIENT' : status;
+}
 
 const SpotCheckView = memo(function SpotCheckView({ callId, scorecardId, calibrationRunId, onBack }) {
   const { getToken } = useAuth();
@@ -87,7 +96,8 @@ const SpotCheckView = memo(function SpotCheckView({ callId, scorecardId, calibra
 
   const items = scorecard?.items || [];
   const categories = [...new Set(items.map(i => i.category))];
-  const gradeColor = scorecard?.pass_fail === 'PASS' ? '#00D166' : '#FF4455';
+  const insufficient = isInsufficientStatus(scorecard?.pass_fail);
+  const gradeColor = scorecard?.pass_fail === 'PASS' ? '#00D166' : insufficient ? 'var(--text-muted)' : '#FF4455';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-deep)', color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>
@@ -105,7 +115,7 @@ const SpotCheckView = memo(function SpotCheckView({ callId, scorecardId, calibra
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display)', letterSpacing: '0.08em' }}>Score</div>
             <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: gradeColor, lineHeight: 1 }}>
-              {scorecard?.overall_score?.toFixed(1)}%
+              {insufficient ? '—' : `${scorecard?.overall_score?.toFixed(1)}%`}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
@@ -114,8 +124,8 @@ const SpotCheckView = memo(function SpotCheckView({ callId, scorecardId, calibra
               {scorecard?.overall_grade}
             </div>
           </div>
-          <div style={{ padding: '4px 12px', borderRadius: 6, fontWeight: 700, fontSize: '0.8rem', fontFamily: 'var(--font-display)', background: scorecard?.pass_fail === 'PASS' ? 'rgba(0,209,102,0.15)' : 'rgba(255,68,85,0.15)', color: gradeColor, border: `1px solid ${gradeColor}33` }}>
-            {scorecard?.pass_fail}
+          <div style={{ padding: '4px 12px', borderRadius: 6, fontWeight: 700, fontSize: '0.8rem', fontFamily: 'var(--font-display)', background: scorecard?.pass_fail === 'PASS' ? 'rgba(0,209,102,0.15)' : insufficient ? 'rgba(255,255,255,0.06)' : 'rgba(255,68,85,0.15)', color: gradeColor, border: `1px solid ${gradeColor}33` }}>
+            {displayPassFail(scorecard?.pass_fail)}
           </div>
         </div>
       </div>
