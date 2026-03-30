@@ -164,6 +164,18 @@ async function upsertInBatches(sb, table, rows, chunkSize = 250) {
 
   const chunks = chunkArray(rows, chunkSize);
   for (const chunk of chunks) {
+    const { error } = await sb.from(table).upsert(chunk, { onConflict: "id" });
+    if (error) {
+      throw new Error(`${table} upsert failed: ${error.message}`);
+    }
+  }
+}
+
+async function updateInBatches(sb, table, rows, chunkSize = 250) {
+  if (!rows || rows.length === 0) return;
+
+  const chunks = chunkArray(rows, chunkSize);
+  for (const chunk of chunks) {
     const responses = await Promise.all(
       chunk.map((row) => {
         if (!row?.id) {
@@ -196,6 +208,56 @@ function buildCategoryScoresWithPct(categoryScores) {
   );
 }
 
+function normalizeComparableValue(value) {
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeComparableValue(entry));
+  }
+  if (value && typeof value === "object") {
+    return Object.keys(value)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = normalizeComparableValue(value[key]);
+        return acc;
+      }, {});
+  }
+  return value ?? null;
+}
+
+function areJsonValuesEqual(left, right) {
+  return JSON.stringify(normalizeComparableValue(left)) === JSON.stringify(normalizeComparableValue(right));
+}
+
+function itemNeedsUpdate(current, next) {
+  return (
+    current.result !== next.result ||
+    Number(current.points_earned ?? 0) !== Number(next.points_earned ?? 0) ||
+    Number(current.points_possible ?? 0) !== Number(next.points_possible ?? 0) ||
+    Number(current.confidence ?? 0) !== Number(next.confidence ?? 0) ||
+    Boolean(current.auto_fail_triggered) !== Boolean(next.auto_fail_triggered) ||
+    (current.notes ?? null) !== (next.notes ?? null) ||
+    (current.evidence_text ?? null) !== (next.evidence_text ?? null) ||
+    Number(current.evidence_timestamp_ms ?? 0) !== Number(next.evidence_timestamp_ms ?? 0)
+  );
+}
+
+function scorecardNeedsUpdate(current, next) {
+  return (
+    Number(current.overall_score ?? 0) !== Number(next.overall_score ?? 0) ||
+    (current.overall_grade ?? null) !== (next.overall_grade ?? null) ||
+    Number(current.total_points_earned ?? 0) !== Number(next.total_points_earned ?? 0) ||
+    Number(current.total_points_possible ?? 0) !== Number(next.total_points_possible ?? 0) ||
+    (current.pass_fail ?? null) !== (next.pass_fail ?? null) ||
+    Boolean(current.auto_fail_triggered) !== Boolean(next.auto_fail_triggered) ||
+    !areJsonValuesEqual(current.auto_fail_reasons || [], next.auto_fail_reasons || []) ||
+    !areJsonValuesEqual(current.category_scores || {}, next.category_scores || {}) ||
+    (current.risk_level ?? null) !== (next.risk_level ?? null) ||
+    !areJsonValuesEqual(current.risk_flags || [], next.risk_flags || []) ||
+    Number(current.sequence_violations ?? 0) !== Number(next.sequence_violations ?? 0) ||
+    !areJsonValuesEqual(current.coaching_notes || [], next.coaching_notes || []) ||
+    Boolean(current.corrective_actions_needed) !== Boolean(next.corrective_actions_needed)
+  );
+}
+
 function evaluateRecalculatedItem({
   item,
   templateItem,
@@ -216,7 +278,7 @@ function evaluateRecalculatedItem({
   if (isShortCall) {
     return {
       row: {
-        id: item.id,
+        ...item,
         result: "not_applicable",
         points_earned: 0,
         points_possible: 0,
@@ -248,7 +310,7 @@ function evaluateRecalculatedItem({
   if (directionExcluded) {
     return {
       row: {
-        id: item.id,
+        ...item,
         result: "not_applicable",
         points_earned: 0,
         points_possible: 0,
@@ -288,7 +350,7 @@ function evaluateRecalculatedItem({
 
     return {
       row: {
-        id: item.id,
+        ...item,
         result: item.result,
         points_earned: pointsEarned,
         points_possible: pointsPossible,
@@ -358,7 +420,7 @@ function evaluateRecalculatedItem({
 
   return {
     row: {
-      id: item.id,
+      ...item,
       result,
       points_earned: pointsEarned,
       points_possible: pointsPossibleBase,
@@ -747,28 +809,57 @@ export default async (request) => {
       // Batched approach — minimize DB round-trips to stay under 10s limit
 
       // 1. Fetch all data upfront in parallel
-      const [callsRes, scorecardsRes, intentsRes] = await Promise.all([
-        sb
-          .from("call_records")
-          .select("id, transcript_diarized, call_duration_seconds")
-          .not("transcript_diarized", "is", null),
+      const [scorecardsRes, intentsRes] = await Promise.all([
         sb
           .from("compliance_scorecards")
-          .select("id, call_id, template_id"),
+          .select("id, call_id, template_id, overall_score, overall_grade, total_points_earned, total_points_possible, pass_fail, auto_fail_triggered, auto_fail_reasons, category_scores, risk_level, risk_flags, sequence_violations, coaching_notes, corrective_actions_needed"),
         sb
           .from("compliance_intents")
           .select("id, intent_code, subcategory"),
       ]);
 
-      if (callsRes.error) throw new Error(`call_records select failed: ${callsRes.error.message}`);
       if (scorecardsRes.error) throw new Error(`compliance_scorecards select failed: ${scorecardsRes.error.message}`);
       if (intentsRes.error) throw new Error(`compliance_intents select failed: ${intentsRes.error.message}`);
 
-      const eligibleCalls = (callsRes.data || []).filter(
-        (call) => Array.isArray(call.transcript_diarized) && call.transcript_diarized.length > 0
+      const scorecards = scorecardsRes.data || [];
+      const results = [];
+      if (scorecards.length === 0) {
+        return json(200, { recalculated: 0, results });
+      }
+
+      const calls = await selectInBatches(
+        sb,
+        "call_records",
+        "id",
+        scorecards.map((scorecard) => scorecard.call_id),
+        "id, call_direction, transcript_diarized, call_duration_seconds"
       );
+
+      const callById = {};
+      for (const call of calls) {
+        callById[call.id] = call;
+      }
       const scorecardsByCall = {};
-      for (const scorecard of (scorecardsRes.data || [])) {
+      for (const scorecard of scorecards) {
+        if (!scorecard.call_id) {
+          results.push({
+            scorecard_id: scorecard.id,
+            skipped: true,
+            reason: "missing call_id",
+          });
+          continue;
+        }
+
+        if (!callById[scorecard.call_id]) {
+          results.push({
+            call_id: scorecard.call_id,
+            scorecard_id: scorecard.id,
+            skipped: true,
+            reason: "call not found",
+          });
+          continue;
+        }
+
         if (!scorecardsByCall[scorecard.call_id]) scorecardsByCall[scorecard.call_id] = [];
         scorecardsByCall[scorecard.call_id].push(scorecard);
       }
@@ -783,27 +874,32 @@ export default async (request) => {
       const now = new Date().toISOString();
       const callUpdates = [];
       const workItems = [];
-      const results = [];
 
-      for (const call of eligibleCalls) {
+      for (const call of calls) {
+        const scorecards = scorecardsByCall[call.id] || [];
+        if (scorecards.length === 0) continue;
+
+        if (!Array.isArray(call.transcript_diarized) || call.transcript_diarized.length === 0) {
+          for (const scorecard of scorecards) {
+            results.push({
+              call_id: call.id,
+              scorecard_id: scorecard.id,
+              skipped: true,
+              reason: "missing transcript",
+            });
+          }
+          continue;
+        }
+
         const direction = detectCallDirection(call.transcript_diarized);
         const isShortCall = (call.call_duration_seconds || 0) < 120;
 
-        callUpdates.push({
-          id: call.id,
-          call_direction: direction,
-          updated_at: now,
-        });
-
-        const scorecards = scorecardsByCall[call.id] || [];
-        if (scorecards.length === 0) {
-          results.push({
-            call_id: call.id,
-            direction,
-            skipped: true,
-            reason: "no scorecard",
+        if ((call.call_direction ?? null) !== direction) {
+          callUpdates.push({
+            id: call.id,
+            call_direction: direction,
+            updated_at: now,
           });
-          continue;
         }
 
         for (const scorecard of scorecards) {
@@ -819,7 +915,7 @@ export default async (request) => {
       // 3. Exit early if there are no scorecards to recalculate
       const scorecardIds = workItems.map((item) => item.scorecard.id);
       if (scorecardIds.length === 0) {
-        await upsertInBatches(sb, "call_records", callUpdates, 100);
+        await updateInBatches(sb, "call_records", callUpdates, 100);
         return json(200, { recalculated: 0, results }); /*
           risk_flags: ["Short call — insufficient for scoring"],
       */
@@ -883,7 +979,9 @@ export default async (request) => {
 
       for (const workItem of workItems) {
         const { call, direction, isShortCall, scorecard } = workItem;
-        const scorecardItems = itemsByScorecard[scorecard.id] || [];
+        const scorecardItems = (itemsByScorecard[scorecard.id] || [])
+          .slice()
+          .sort((left, right) => Number(left.display_order ?? 0) - Number(right.display_order ?? 0));
 
         if (!isShortCall && scorecardItems.length === 0) {
           results.push({
@@ -923,7 +1021,9 @@ export default async (request) => {
             isShortCall,
           });
 
-          itemUpdates.push(recalculated.row);
+          if (itemNeedsUpdate(item, recalculated.row)) {
+            itemUpdates.push(recalculated.row);
+          }
 
           const aggregate = recalculated.aggregate;
           if (aggregate.result === "not_applicable") continue;
@@ -947,8 +1047,8 @@ export default async (request) => {
         }
 
         if (isShortCall) {
-          scorecardUpdates.push({
-            id: scorecard.id,
+          const nextScorecard = {
+            ...scorecard,
             overall_score: 0,
             overall_grade: "N/A",
             total_points_earned: 0,
@@ -963,7 +1063,11 @@ export default async (request) => {
             coaching_notes: ["Short call flagged as insufficient during retroactive recalculation"],
             corrective_actions_needed: false,
             updated_at: now,
-          });
+          };
+
+          if (scorecardNeedsUpdate(scorecard, nextScorecard)) {
+            scorecardUpdates.push(nextScorecard);
+          }
 
           results.push({
             call_id: call.id,
@@ -989,23 +1093,27 @@ export default async (request) => {
           categoryScoresWithPct
         );
 
-        scorecardUpdates.push({
-          id: scorecard.id,
+        const nextScorecard = {
+          ...scorecard,
           overall_score: roundedScore,
           overall_grade: grade,
           total_points_earned: totalEarned,
           total_points_possible: totalPossible,
           pass_fail: passFail,
           auto_fail_triggered: autoFailTriggered,
-          auto_fail_reasons: [...new Set(autoFailReasons)],
+          auto_fail_reasons: [...new Set(autoFailReasons)].sort(),
           category_scores: categoryScoresWithPct,
           risk_level: riskLevel,
-          risk_flags: [...new Set(riskFlags)],
+          risk_flags: [...new Set(riskFlags)].sort(),
           sequence_violations: sequenceViolations,
-          coaching_notes: [...new Set(coachingNotes)],
+          coaching_notes: [...new Set(coachingNotes)].sort(),
           corrective_actions_needed: correctiveBucket !== null,
           updated_at: now,
-        });
+        };
+
+        if (scorecardNeedsUpdate(scorecard, nextScorecard)) {
+          scorecardUpdates.push(nextScorecard);
+        }
 
         results.push({
           call_id: call.id,
@@ -1021,11 +1129,11 @@ export default async (request) => {
       await Promise.all([
         upsertInBatches(sb, "scorecard_items", itemUpdates, 500),
         upsertInBatches(sb, "compliance_scorecards", scorecardUpdates, 100),
-        upsertInBatches(sb, "call_records", callUpdates, 100),
+        updateInBatches(sb, "call_records", callUpdates, 100),
       ]);
 
       const recalculatedCallCount = new Set(
-        results.filter((result) => !result.skipped).map((result) => result.call_id)
+        results.filter((result) => !result.skipped).map((result) => result.call_id).filter(Boolean)
       ).size;
 
       return json(200, { recalculated: recalculatedCallCount, results }); /*
