@@ -60,6 +60,41 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     });
   }
 
+  // 3a. Short-call filter — calls under 2 min are flagged as insufficient
+  const callDurationS = callRecord.call_duration_seconds
+    || (diarized.length > 0 ? Math.max(...diarized.map(u => (u.end_ms || 0))) / 1000 : 0);
+
+  if (callDurationS > 0 && callDurationS < 120) {
+    progress(90, 'Short call — insufficient for scoring');
+    const { data: scorecard } = await supabase
+      .from('compliance_scorecards')
+      .insert({
+        call_id: callRecord.id,
+        template_id: template.id,
+        thread_id: callRecord.thread_id,
+        is_thread_composite: false,
+        overall_score: 0,
+        overall_grade: 'N/A',
+        total_points_earned: 0,
+        total_points_possible: 0,
+        pass_fail: 'INSUFFICIENT',
+        auto_fail_triggered: false,
+        auto_fail_reasons: [],
+        category_scores: {},
+        risk_level: 'low',
+        risk_flags: [`Call duration ${Math.round(callDurationS)}s — insufficient for compliance scoring (minimum 120s)`],
+        sequence_violations: 0,
+        sentiment_summary: {},
+        coaching_notes: [`Short call (${Math.round(callDurationS)}s) flagged as insufficient rather than scored at 0%`],
+        corrective_actions_needed: false,
+      })
+      .select()
+      .single();
+
+    progress(100, 'Scorecard complete (insufficient call)');
+    return { scorecard, scorecardItems: [], detections: [], correctiveActions: [], avgConfidence: 0, isShortCall: true };
+  }
+
   // 4. Classify intents
   progress(15, 'Classifying intents...');
   const classificationResult = await classifyCall({
@@ -139,6 +174,17 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     })
     .select()
     .single();
+
+  // Update call record with detected direction if classifier overrode it
+  if (classificationResult.detectedDirection) {
+    await supabase.from('call_records').update({
+      call_direction: classificationResult.detectedDirection,
+      metadata: {
+        ...(callRecord.metadata || {}),
+        direction_detected_from: 'transcript_analysis',
+      },
+    }).eq('id', callRecord.id);
+  }
 
   // 8. Insert scorecard line items
   const itemRows = scoreResult.scorecard_items.map(item => ({

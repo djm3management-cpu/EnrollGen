@@ -66,6 +66,29 @@ export function scoreCall({ detections, templateItems, template }) {
 
     let result, pointsEarned;
 
+    // Direction-excluded intents are N/A — don't count against the score
+    if (detection?.direction_excluded) {
+      scorecardItems.push({
+        template_item_id: item.id,
+        intent_id: item.intent_id,
+        detection_id: detection?.id || null,
+        intent_code: detection?.intent_code || item.intent_code,
+        question_text: item.question_text,
+        category: item.category,
+        result: 'not_applicable',
+        points_earned: 0,
+        points_possible: 0,
+        confidence: 0,
+        is_auto_fail: item.is_auto_fail,
+        auto_fail_triggered: false,
+        notes: detection.llm_reasoning,
+        evidence_text: null,
+        evidence_timestamp_ms: null,
+        display_order: item.display_order || 0,
+      });
+      continue;
+    }
+
     if (!detection || !detection.detected) {
       if (item.is_auto_fail) {
         autoFailTriggered = true;
