@@ -41,7 +41,23 @@ const ComplianceOverview = memo(function ComplianceOverview() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
-      const result = await res.json();
+
+      const contentType = res.headers.get('content-type') || '';
+      let result;
+
+      if (contentType.includes('application/json')) {
+        result = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(
+          `Recalculate request failed with ${res.status}: ${text.slice(0, 200).replace(/\s+/g, ' ').trim() || 'Non-JSON response'}`
+        );
+      }
+
+      if (!res.ok) {
+        throw new Error(result?.error || `Recalculate request failed with ${res.status}`);
+      }
+
       setRecalcResult(result);
       // Refresh dashboard after recalc
       await load();
