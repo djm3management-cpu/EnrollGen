@@ -473,135 +473,122 @@ export default async (request) => {
 
     // POST /recalculate — retroactive score recalculation for existing scored calls
     if (parts[0] === "recalculate" && !parts[1] && method === "POST") {
-      // Fetch all call_records that have transcript_diarized
-      const { data: calls } = await sb
-        .from("call_records")
-        .select("id, transcript_diarized, call_duration_seconds")
-        .not("transcript_diarized", "is", null);
+      // Batched approach — minimize DB round-trips to stay under 10s limit
 
-      const eligibleCalls = (calls || []).filter(c =>
-        Array.isArray(c.transcript_diarized) && c.transcript_diarized.length > 0
-      );
+      // 1. Fetch all data upfront in parallel
+      const [callsRes, outRes, inRes, scorecardsRes] = await Promise.all([
+        sb.from("call_records").select("id, transcript_diarized, call_duration_seconds").not("transcript_diarized", "is", null),
+        sb.from("compliance_intents").select("intent_code").eq("subcategory", "OUTBOUND"),
+        sb.from("compliance_intents").select("intent_code").eq("subcategory", "INBOUND"),
+        sb.from("compliance_scorecards").select("id, call_id"),
+      ]);
 
-      // Fetch direction-specific intent codes
-      const { data: outboundIntents } = await sb
-        .from("compliance_intents")
-        .select("intent_code")
-        .eq("subcategory", "OUTBOUND");
-      const outboundCodes = new Set((outboundIntents || []).map(i => i.intent_code));
+      const eligibleCalls = (callsRes.data || []).filter(c => Array.isArray(c.transcript_diarized) && c.transcript_diarized.length > 0);
+      const outboundCodes = new Set((outRes.data || []).map(i => i.intent_code));
+      const inboundCodes = new Set((inRes.data || []).map(i => i.intent_code));
+      const scorecardMap = {};
+      for (const sc of (scorecardsRes.data || [])) { scorecardMap[sc.call_id] = sc.id; }
 
-      const { data: inboundIntents } = await sb
-        .from("compliance_intents")
-        .select("intent_code")
-        .eq("subcategory", "INBOUND");
-      const inboundCodes = new Set((inboundIntents || []).map(i => i.intent_code));
-
+      // 2. Detect directions and classify calls
+      const shortCallIds = [];
+      const normalCalls = []; // { call, direction, scorecardId }
+      const directionUpdates = []; // { id, direction }
       const results = [];
 
       for (const call of eligibleCalls) {
         const direction = detectCallDirection(call.transcript_diarized);
+        directionUpdates.push({ id: call.id, direction });
         const isShort = (call.call_duration_seconds || 0) < 120;
 
         if (isShort) {
-          // Short call — mark as insufficient
-          await sb.from("compliance_scorecards").update({
-            overall_grade: "N/A",
-            pass_fail: "INSUFFICIENT",
-            overall_score: 0,
-            risk_flags: ["Short call — insufficient for scoring"],
-          }).eq("call_id", call.id);
-
-          await sb.from("call_records").update({ call_direction: direction }).eq("id", call.id);
-
+          shortCallIds.push(call.id);
           results.push({ call_id: call.id, direction, short: true, grade: "N/A" });
-          continue;
-        }
-
-        // Fetch scorecard for this call
-        const { data: scorecard } = await sb
-          .from("compliance_scorecards")
-          .select("id")
-          .eq("call_id", call.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (!scorecard) {
+        } else if (scorecardMap[call.id]) {
+          normalCalls.push({ call, direction, scorecardId: scorecardMap[call.id] });
+        } else {
           results.push({ call_id: call.id, direction, skipped: true, reason: "no scorecard" });
-          await sb.from("call_records").update({ call_direction: direction }).eq("id", call.id);
-          continue;
         }
+      }
 
-        // Fetch scorecard items
-        const { data: items } = await sb
-          .from("scorecard_items")
-          .select("*")
-          .eq("scorecard_id", scorecard.id);
+      // 3. Batch update short calls
+      if (shortCallIds.length > 0) {
+        await sb.from("compliance_scorecards").update({
+          overall_grade: "N/A", pass_fail: "INSUFFICIENT", overall_score: 0,
+          risk_flags: ["Short call — insufficient for scoring"],
+        }).in("call_id", shortCallIds);
+      }
 
-        const allItems = items || [];
+      // 4. Fetch ALL scorecard items for normal calls in one query
+      const normalScorecardIds = normalCalls.map(c => c.scorecardId);
+      const { data: allItemsRaw } = normalScorecardIds.length > 0
+        ? await sb.from("scorecard_items").select("id, scorecard_id, intent_code, result, points_earned, points_possible, is_auto_fail, auto_fail_triggered").in("scorecard_id", normalScorecardIds)
+        : { data: [] };
 
-        // Update direction-excluded items
-        for (const item of allItems) {
-          const isOutboundIntent = outboundCodes.has(item.intent_code);
-          const isInboundIntent = inboundCodes.has(item.intent_code);
-          const excluded =
-            (isOutboundIntent && direction === "inbound") ||
-            (isInboundIntent && direction === "outbound");
+      // Group items by scorecard
+      const itemsByScorecard = {};
+      for (const item of (allItemsRaw || [])) {
+        if (!itemsByScorecard[item.scorecard_id]) itemsByScorecard[item.scorecard_id] = [];
+        itemsByScorecard[item.scorecard_id].push(item);
+      }
 
-          if (excluded) {
-            await sb.from("scorecard_items").update({
-              result: "not_applicable",
-              points_earned: 0,
-              points_possible: 0,
-              auto_fail_triggered: false,
-              notes: excluded && isOutboundIntent
-                ? "Not applicable — OUTBOUND intent on inbound call"
-                : "Not applicable — INBOUND intent on outbound call",
-            }).eq("id", item.id);
+      // 5. Collect IDs for batch direction-exclusion updates
+      const outboundExcludeIds = [];
+      const inboundExcludeIds = [];
 
+      for (const { call, direction, scorecardId } of normalCalls) {
+        const items = itemsByScorecard[scorecardId] || [];
+        for (const item of items) {
+          const isOut = outboundCodes.has(item.intent_code);
+          const isIn = inboundCodes.has(item.intent_code);
+          if ((isOut && direction === "inbound") || (isIn && direction === "outbound")) {
+            if (isOut) outboundExcludeIds.push(item.id);
+            else inboundExcludeIds.push(item.id);
             item.result = "not_applicable";
             item.points_earned = 0;
             item.points_possible = 0;
             item.auto_fail_triggered = false;
           }
         }
-
-        // Recalculate totals
-        const totalEarned = allItems.reduce((sum, i) => sum + (i.points_earned || 0), 0);
-        const totalPossible = allItems
-          .filter(i => i.result !== "not_applicable")
-          .reduce((sum, i) => sum + (i.points_possible || 0), 0);
-        const overallScore = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
-
-        // Check auto_fail — only on items that are NOT direction-excluded
-        const autoFail = allItems.some(i =>
-          i.result === "fail" &&
-          i.auto_fail_triggered &&
-          i.result !== "not_applicable"
-        );
-
-        const grade = recalcGrade(overallScore, autoFail);
-        const passFail = autoFail ? "FAIL" : (overallScore >= 70 ? "PASS" : "FAIL");
-
-        await sb.from("compliance_scorecards").update({
-          overall_score: Math.round(overallScore * 100) / 100,
-          overall_grade: grade,
-          pass_fail: passFail,
-          auto_fail_triggered: autoFail,
-        }).eq("id", scorecard.id);
-
-        await sb.from("call_records").update({ call_direction: direction }).eq("id", call.id);
-
-        results.push({
-          call_id: call.id,
-          scorecard_id: scorecard.id,
-          direction,
-          score: Math.round(overallScore * 100) / 100,
-          grade,
-          pass_fail: passFail,
-          auto_fail: autoFail,
-        });
       }
+
+      // 6. Batch update excluded items (2 queries max)
+      const excludePromises = [];
+      if (outboundExcludeIds.length > 0) {
+        excludePromises.push(sb.from("scorecard_items").update({
+          result: "not_applicable", points_earned: 0, points_possible: 0, auto_fail_triggered: false,
+          notes: "Not applicable — OUTBOUND intent on inbound call",
+        }).in("id", outboundExcludeIds));
+      }
+      if (inboundExcludeIds.length > 0) {
+        excludePromises.push(sb.from("scorecard_items").update({
+          result: "not_applicable", points_earned: 0, points_possible: 0, auto_fail_triggered: false,
+          notes: "Not applicable — INBOUND intent on outbound call",
+        }).in("id", inboundExcludeIds));
+      }
+      await Promise.all(excludePromises);
+
+      // 7. Recalculate scores and batch update scorecards
+      const scorecardUpdates = [];
+      for (const { call, direction, scorecardId } of normalCalls) {
+        const items = itemsByScorecard[scorecardId] || [];
+        const totalEarned = items.reduce((s, i) => s + (i.points_earned || 0), 0);
+        const totalPossible = items.filter(i => i.result !== "not_applicable").reduce((s, i) => s + (i.points_possible || 0), 0);
+        const score = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
+        const autoFail = items.some(i => i.result === "fail" && i.auto_fail_triggered);
+        const grade = recalcGrade(score, autoFail);
+        const passFail = autoFail ? "FAIL" : (score >= 70 ? "PASS" : "FAIL");
+        const rounded = Math.round(score * 100) / 100;
+
+        scorecardUpdates.push(sb.from("compliance_scorecards").update({
+          overall_score: rounded, overall_grade: grade, pass_fail: passFail, auto_fail_triggered: autoFail,
+        }).eq("id", scorecardId));
+
+        results.push({ call_id: call.id, scorecard_id: scorecardId, direction, score: rounded, grade, pass_fail: passFail, auto_fail: autoFail });
+      }
+
+      // 8. Batch update call directions + scorecards in parallel
+      const dirPromises = directionUpdates.map(u => sb.from("call_records").update({ call_direction: u.direction }).eq("id", u.id));
+      await Promise.all([...scorecardUpdates, ...dirPromises]);
 
       return json(200, { recalculated: results.length, results });
     }
