@@ -532,27 +532,7 @@ function AppTabButton({ activeTab, tabId, onSelect, onPreload, children }) {
 }
 
 function loadBackgroundSelection() {
-  if (typeof window === "undefined") {
-    return "charcoal";
-  }
-
-  try {
-    const stored = window.localStorage.getItem(BACKGROUND_SELECTION_STORAGE_KEY);
-    if (stored === "clean" || stored === "classic") {
-      return "charcoal";
-    }
-
-    if (
-      stored === "charcoal" ||
-      LANDSCAPE_BACKDROPS.some((backdrop) => backdrop.id === stored)
-    ) {
-      return stored;
-    }
-
-    return "charcoal";
-  } catch {
-    return "charcoal";
-  }
+  return "charcoal";
 }
 
 /* ─── ProfileBar ─────────────────────────────────────────────────────────── */

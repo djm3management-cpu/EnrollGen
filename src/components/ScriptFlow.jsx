@@ -17,7 +17,6 @@ import {
   MainTimer,
   ProgressBar,
   StickyTimerBar,
-  SectionTimer,
 } from "./SharedUI";
 import ComplianceMini from "./ComplianceMini";
 import CopilotFeedMini from "./CopilotFeedMini";
@@ -116,6 +115,11 @@ function CollapsibleSection({
   canUndo,
   onUndo,
 }) {
+  // Future (not yet active, not completed) sections are hidden
+  if (!isCompleted && !isActive) {
+    return null;
+  }
+
   if (!isCompleted || isActive) {
     return <div data-section={sectionNum}>{children}</div>;
   }
@@ -773,7 +777,7 @@ export default function ScriptFlow() {
         );
       })()}
 
-      <SectionWrapUp />
+      {activeSection >= 8 && <SectionWrapUp />}
 
       {/* ── Full Compliance Dashboard — transcript-aware, at the bottom ── */}
       <DeferredComplianceDashboard

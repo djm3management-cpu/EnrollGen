@@ -1,6 +1,11 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
+import {
+  ScriptBox,
+  LockText,
+  SectionAdvanceButton,
+  SectionToast,
+} from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionNEADS() {
@@ -17,7 +22,6 @@ export default React.memo(function SectionNEADS() {
       <SectionToast sectionNum={5} timestamps={state.sectionTimestamps} />
       <h2>
         5) NEADS Assessment
-        <SectionTimer sectionNum={5} timestamps={state.sectionTimestamps} />
       </h2>
 
       {unlocked.s5 && (
@@ -38,15 +42,14 @@ export default React.memo(function SectionNEADS() {
       )}
 
       <div className="section-next-action">
-        <button
-          className="primary"
+        <SectionAdvanceButton
           disabled={!qualOk || neadsOk}
+          ariaLabel="Mark NEADS reviewed"
+          title="Mark NEADS reviewed"
           onClick={() =>
             dispatch({ type: "SET_GATE", field: "neadsOk", value: true })
           }
-        >
-          {neadsOk ? "✅ NEADS Reviewed" : "NEADS Reviewed"}
-        </button>
+        />
       </div>
 
       <SectionCoach stepName="NEADS Assessment" sectionNum={5} />

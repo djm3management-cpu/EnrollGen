@@ -1,6 +1,11 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
+import {
+  ScriptBox,
+  LockText,
+  SectionAdvanceButton,
+  SectionToast,
+} from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionTPMO() {
@@ -17,7 +22,6 @@ export default React.memo(function SectionTPMO() {
       <SectionToast sectionNum={2} timestamps={state.sectionTimestamps} />
       <h2>
         2) TPMO Disclaimer & Federal Contracting Statement
-        <SectionTimer sectionNum={2} timestamps={state.sectionTimestamps} />
       </h2>
 
       <div className="field-group">
@@ -79,9 +83,10 @@ export default React.memo(function SectionTPMO() {
       )}
 
       <div className="section-next-action">
-        <button
-          className="primary"
+        <SectionAdvanceButton
           disabled={!recordingOk || tpmoOk}
+          ariaLabel="Mark TPMO complete"
+          title="Mark TPMO complete"
           onClick={() =>
             dispatch({
               type: "SET_GATE",
@@ -89,9 +94,7 @@ export default React.memo(function SectionTPMO() {
               value: true,
             })
           }
-        >
-          {tpmoOk ? "✅ TPMO Complete" : "TPMO Complete"}
-        </button>
+        />
       </div>
 
       <SectionCoach stepName="TPMO Disclaimer" sectionNum={2} />

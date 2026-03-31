@@ -1,6 +1,11 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
+import {
+  ScriptBox,
+  LockText,
+  SectionAdvanceButton,
+  SectionToast,
+} from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSOA() {
@@ -17,7 +22,6 @@ export default React.memo(function SectionSOA() {
       <SectionToast sectionNum={3} timestamps={state.sectionTimestamps} />
       <h2>
         3) Power of Attorney & Scope of Appointment
-        <SectionTimer sectionNum={3} timestamps={state.sectionTimestamps} />
       </h2>
 
       {unlocked.s3 && isActive && (
@@ -33,9 +37,10 @@ export default React.memo(function SectionSOA() {
       )}
 
       <div className="section-next-action">
-        <button
-          className="primary"
+        <SectionAdvanceButton
           disabled={!unlocked.s3 || soaOk}
+          ariaLabel="Mark POA and SOA complete"
+          title="Mark POA and SOA complete"
           onClick={() =>
             dispatch({
               type: "SET_GATE",
@@ -43,9 +48,7 @@ export default React.memo(function SectionSOA() {
               value: true,
             })
           }
-        >
-          {soaOk ? "✅ POA & SOA Complete" : "POA & SOA Complete"}
-        </button>
+        />
       </div>
 
       <SectionCoach stepName="POA & Scope of Appointment" sectionNum={3} />

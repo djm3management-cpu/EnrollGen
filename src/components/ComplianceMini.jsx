@@ -17,6 +17,7 @@ import { useScript } from "../context/ScriptContext";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { scoreLive } from "../context/ComplianceScorer";
 import { SECTION_LABELS } from "../context/scriptReducer";
+import { SectionTimer } from "./SharedUI";
 
 /**
  * ComplianceMini v2 — Floating score badge with transcript awareness
@@ -129,10 +130,17 @@ const ComplianceMini = memo(function ComplianceMini({
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              flex: 1,
+              minWidth: 0,
             }}
           >
             {currentStep}. {sectionLabel}
           </span>
+          <SectionTimer
+            sectionNum={activeSection}
+            timestamps={state.sectionTimestamps}
+            variant="inline"
+          />
         </div>
 
         {/* Header — score + toggle */}

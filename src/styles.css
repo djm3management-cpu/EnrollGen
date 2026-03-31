@@ -1873,6 +1873,19 @@ input::placeholder {
   color: #39ff6e;
 }
 
+.section-next-action .section-complete-btn {
+  min-width: 48px;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.section-next-action .section-complete-btn svg {
+  display: block;
+}
+
 /* ===============================
    ENROLLMENT CODE
 ================================ */
@@ -3640,6 +3653,10 @@ input[type="file"]::file-selector-button:hover {
   flex-shrink: 0;
 }
 
+.section-timer-wrap--inline {
+  margin-left: 12px;
+}
+
 .section-timer {
   display: inline-flex;
   align-items: center;
@@ -3654,6 +3671,23 @@ input[type="file"]::file-selector-button:hover {
   font-size: 0.78em;
   color: var(--text-muted);
   transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+}
+
+.section-timer--inline {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.7em;
+  color: #7f93a8;
+}
+
+.section-timer--inline.section-timer-warn,
+.section-timer--inline.section-timer-danger {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  animation: none;
 }
 
 .section-timer-warn {

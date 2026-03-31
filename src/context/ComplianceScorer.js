@@ -18,6 +18,7 @@ import {
   verifyCustomerAcknowledgments,
   detectMisleadingClaimEvidence,
 } from "./TranscriptAnalyzer";
+import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 
 /* ═══════════════════════════════════════════════════════════════
      HELPERS
@@ -1770,17 +1771,7 @@ export function getConverselyReport(
      ═══════════════════════════════════════════════════════════════ */
 
 function getGrade(s) {
-  if (s >= 97) return "A+";
-  if (s >= 93) return "A";
-  if (s >= 90) return "A-";
-  if (s >= 87) return "B+";
-  if (s >= 83) return "B";
-  if (s >= 80) return "B-";
-  if (s >= 77) return "C+";
-  if (s >= 73) return "C";
-  if (s >= 70) return "C-";
-  if (s >= 60) return "D";
-  return "F";
+  return calculateServerGrade(s);
 }
 
 function getSummary(score, flags, catsPassed, totalCats) {

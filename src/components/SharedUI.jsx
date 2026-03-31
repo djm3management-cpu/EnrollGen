@@ -225,6 +225,7 @@ const SECTION_THRESHOLDS = {
 export const SectionTimer = React.memo(function SectionTimer({
   sectionNum,
   timestamps,
+  variant = "pill",
 }) {
   const ts = timestamps[sectionNum];
   const [elapsed, setElapsed] = useState(0);
@@ -243,20 +244,25 @@ export const SectionTimer = React.memo(function SectionTimer({
   const isDanger = sec >= dangerSec;
   const isWarn = sec >= warnSec && !isDanger;
   const isDone = !!ts.end;
+  const isInline = variant === "inline";
+  const timerClassName = `section-timer${
+    isInline ? " section-timer--inline" : ""
+  } ${isDanger && !isDone ? "section-timer-danger" : isWarn && !isDone ? "section-timer-warn" : ""}`;
 
   return (
-    <div className="section-timer-wrap">
+    <div className={`section-timer-wrap${isInline ? " section-timer-wrap--inline" : ""}`}>
       <span
-        className={`section-timer ${isDanger && !isDone ? "section-timer-danger" : isWarn && !isDone ? "section-timer-warn" : ""}`}
+        className={timerClassName}
         title="Time in this section"
       >
-        {isDanger && !isDone ? (
-          <AlertCircle size={12} />
-        ) : isWarn && !isDone ? (
-          <Clock size={12} />
-        ) : (
-          <Timer size={12} />
-        )}
+        {!isInline &&
+          (isDanger && !isDone ? (
+            <AlertCircle size={12} />
+          ) : isWarn && !isDone ? (
+            <Clock size={12} />
+          ) : (
+            <Timer size={12} />
+          ))}
         {formatTime(elapsed)}
       </span>
     </div>
@@ -273,6 +279,28 @@ export const SectionToast = React.memo(function SectionToast() {
 export function LockText({ children }) {
   return <p className="lock">{children}</p>;
 }
+
+export const SectionAdvanceButton = React.memo(function SectionAdvanceButton({
+  disabled,
+  onClick,
+  ariaLabel,
+  title,
+}) {
+  const accessibleLabel = ariaLabel || "Mark section complete";
+
+  return (
+    <button
+      type="button"
+      className="primary section-complete-btn"
+      disabled={disabled}
+      onClick={onClick}
+      aria-label={accessibleLabel}
+      title={title || accessibleLabel}
+    >
+      <Check size={18} strokeWidth={2.8} aria-hidden="true" />
+    </button>
+  );
+});
 
 /* ===================== F1 SECTOR BAR ===================== */
 const SECTORS = [

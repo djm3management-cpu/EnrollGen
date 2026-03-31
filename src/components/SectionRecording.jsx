@@ -1,6 +1,11 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
+import {
+  ScriptBox,
+  LockText,
+  SectionAdvanceButton,
+  SectionToast,
+} from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionRecording() {
@@ -13,7 +18,6 @@ export default React.memo(function SectionRecording() {
       <SectionToast sectionNum={1} timestamps={state.sectionTimestamps} />
       <h2>
         1) Recording Disclosure
-        <SectionTimer sectionNum={1} timestamps={state.sectionTimestamps} />
       </h2>
 
       <div className="field-group">
@@ -41,9 +45,10 @@ export default React.memo(function SectionRecording() {
       </ScriptBox>
 
       <div className="section-next-action">
-        <button
-          className="primary"
+        <SectionAdvanceButton
           disabled={recordingOk}
+          ariaLabel="Mark Recording Disclosure complete"
+          title="Mark Recording Disclosure complete"
           onClick={() =>
             dispatch({
               type: "SET_GATE",
@@ -51,11 +56,7 @@ export default React.memo(function SectionRecording() {
               value: true,
             })
           }
-        >
-          {recordingOk
-            ? "✅ Recording Disclosure Complete"
-            : "Recording Disclosure Complete"}
-        </button>
+        />
       </div>
 
       <SectionCoach stepName="Recording Disclosure" sectionNum={1} />

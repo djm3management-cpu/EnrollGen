@@ -25,6 +25,7 @@ import {
   makeIsHighRisk,
 } from "./useCopilotEngineCore";
 import { lookupPlanSummary, formatPlanSummaryForPrompt } from "../lib/acaPlanLookup";
+import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import {
   ACA_COMPLIANCE_KNOWLEDGE,
   ACA_SECTION_LABELS,
@@ -763,9 +764,7 @@ SECTION CONTEXT (rolling window):
 
     const gateScore = Math.round((completed / totalGates) * 100);
     const score = Math.max(0, gateScore - penalty);
-    const grade = score >= 95 ? "A+" : score >= 90 ? "A" : score >= 85 ? "A-"
-      : score >= 80 ? "B+" : score >= 75 ? "B" : score >= 70 ? "B-"
-      : score >= 65 ? "C+" : score >= 60 ? "C" : score >= 50 ? "D" : "F";
+    const grade = calculateServerGrade(score);
 
     return { score, grade, completed, totalGates, warns, criticals, penalty };
   }, [state, entries]);

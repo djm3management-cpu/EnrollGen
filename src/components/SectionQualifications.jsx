@@ -1,6 +1,11 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
+import {
+  ScriptBox,
+  LockText,
+  SectionAdvanceButton,
+  SectionToast,
+} from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionQualifications() {
@@ -17,7 +22,6 @@ export default React.memo(function SectionQualifications() {
       <SectionToast sectionNum={4} timestamps={state.sectionTimestamps} />
       <h2>
         4) Qualifications
-        <SectionTimer sectionNum={4} timestamps={state.sectionTimestamps} />
       </h2>
 
       {unlocked.s4 && (
@@ -44,9 +48,10 @@ If not available: Verify full legal name, date of birth, and Social Security Num
       )}
 
       <div className="section-next-action">
-        <button
-          className="primary"
+        <SectionAdvanceButton
           disabled={!soaOk || qualOk}
+          ariaLabel="Mark Qualifications complete"
+          title="Mark Qualifications complete"
           onClick={() =>
             dispatch({
               type: "SET_GATE",
@@ -54,9 +59,7 @@ If not available: Verify full legal name, date of birth, and Social Security Num
               value: true,
             })
           }
-        >
-          {qualOk ? "✅ Qualifications Complete" : "Qualifications Complete"}
-        </button>
+        />
       </div>
 
       <SectionCoach stepName="Qualifications" sectionNum={4} />

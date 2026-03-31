@@ -1,6 +1,11 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
+import {
+  ScriptBox,
+  LockText,
+  SectionAdvanceButton,
+  SectionToast,
+} from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 function PreEnrollCheck({ state }) {
@@ -36,11 +41,22 @@ function PreEnrollCheck({ state }) {
           marginBottom: 6,
         }}
       >
-        ⚠ PRE-ENROLLMENT CHECKLIST — {gaps.length} ITEM{gaps.length !== 1 ? "S" : ""} OPEN
+        âš  PRE-ENROLLMENT CHECKLIST â€” {gaps.length} ITEM
+        {gaps.length !== 1 ? "S" : ""} OPEN
       </div>
-      <ul style={{ margin: 0, paddingLeft: 16, display: "flex", flexDirection: "column", gap: 3 }}>
+      <ul
+        style={{
+          margin: 0,
+          paddingLeft: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+        }}
+      >
         {gaps.map((g) => (
-          <li key={g} style={{ color: "#fde68a" }}>{g}</li>
+          <li key={g} style={{ color: "#fde68a" }}>
+            {g}
+          </li>
         ))}
       </ul>
     </div>
@@ -62,7 +78,6 @@ export default React.memo(function SectionEnrollment() {
       <SectionToast sectionNum={7} timestamps={state.sectionTimestamps} />
       <h2>
         7) Enrollment
-        <SectionTimer sectionNum={7} timestamps={state.sectionTimestamps} />
       </h2>
 
       {unlocked.s7 && (
@@ -119,15 +134,14 @@ export default React.memo(function SectionEnrollment() {
       {isActive && !enrollOk && <PreEnrollCheck state={state} />}
 
       <div className="section-next-action">
-        <button
-          className="primary"
+        <SectionAdvanceButton
           disabled={!sobOk || enrollOk}
+          ariaLabel="Mark enrollment complete"
+          title="Mark enrollment complete"
           onClick={() =>
             dispatch({ type: "SET_GATE", field: "enrollOk", value: true })
           }
-        >
-          {enrollOk ? "✅ Enrollment Complete" : "Enrollment Complete"}
-        </button>
+        />
       </div>
 
       {/* Enrollment Code + Green Check */}
@@ -154,7 +168,7 @@ export default React.memo(function SectionEnrollment() {
               }`}
               title="Entered"
             >
-              ✅
+              âœ…
             </span>
           </div>
         </label>

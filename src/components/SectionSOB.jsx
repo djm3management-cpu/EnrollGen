@@ -1,6 +1,11 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
+import {
+  ScriptBox,
+  LockText,
+  SectionAdvanceButton,
+  SectionToast,
+} from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSOB() {
@@ -17,7 +22,6 @@ export default React.memo(function SectionSOB() {
       <SectionToast sectionNum={6} timestamps={state.sectionTimestamps} />
       <h2>
         6) Plan Selection & Summary of Benefits
-        <SectionTimer sectionNum={6} timestamps={state.sectionTimestamps} />
       </h2>
 
       {unlocked.s6 && (
@@ -48,7 +52,7 @@ export default React.memo(function SectionSOB() {
 
           {partBReduction && (
             <ScriptBox verbatim>
-              {`"This plan includes a Part B premium reduction. There may be a delay — it can take one or more payment cycles to take effect."
+              {`"This plan includes a Part B premium reduction. There may be a delay â€” it can take one or more payment cycles to take effect."
 
 "If your Part B premium comes out of Social Security, the reduction will show as an increase in your Social Security payment. If you pay Part B directly, you will receive a credit on your statement."
 
@@ -59,15 +63,14 @@ export default React.memo(function SectionSOB() {
       )}
 
       <div className="section-next-action">
-        <button
-          className="primary"
+        <SectionAdvanceButton
           disabled={!neadsOk || sobOk}
+          ariaLabel="Mark plan reviewed"
+          title="Mark plan reviewed"
           onClick={() =>
             dispatch({ type: "SET_GATE", field: "sobOk", value: true })
           }
-        >
-          {sobOk ? "✅ Plan Reviewed" : "Plan Reviewed"}
-        </button>
+        />
       </div>
 
       <SectionCoach stepName="Plan Selection & SOB" sectionNum={6} />

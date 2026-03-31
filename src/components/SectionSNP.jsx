@@ -1,6 +1,11 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
+import {
+  ScriptBox,
+  LockText,
+  SectionAdvanceButton,
+  SectionToast,
+} from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSNP() {
@@ -15,7 +20,6 @@ export default React.memo(function SectionSNP() {
       <SectionToast sectionNum={2.5} timestamps={state.sectionTimestamps} />
       <h2>
         Special Needs Plan Disclosure
-        <SectionTimer sectionNum={2.5} timestamps={state.sectionTimestamps} />
       </h2>
 
       {!snpType && (
@@ -57,9 +61,10 @@ export default React.memo(function SectionSNP() {
 
       {snpType && (
         <div className="section-next-action">
-          <button
-            className="primary"
+          <SectionAdvanceButton
             disabled={snpOk}
+            ariaLabel="Mark SNP disclosure complete"
+            title="Mark SNP disclosure complete"
             onClick={() =>
               dispatch({
                 type: "SET_GATE",
@@ -67,13 +72,16 @@ export default React.memo(function SectionSNP() {
                 value: true,
               })
             }
-          >
-            {snpOk ? "✅ SNP Disclosure Complete" : "SNP Disclosure Complete"}
-          </button>
+          />
         </div>
       )}
 
-      {snpType && <SectionCoach stepName={`SNP Disclosure (${snpType})`} sectionNum={2.5} />}
+      {snpType && (
+        <SectionCoach
+          stepName={`SNP Disclosure (${snpType})`}
+          sectionNum={2.5}
+        />
+      )}
 
       {snpType && !snpOk && (
         <LockText>Complete SNP disclosure to continue.</LockText>

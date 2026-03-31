@@ -14,6 +14,7 @@
 
 import { useCallback, useMemo, useEffect, useRef, useState } from "react";
 import { lookupAcaBenchmark, formatBenchmarkForPrompt } from "../lib/acaBenchmarkLookup";
+import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import {
@@ -758,9 +759,7 @@ SECTION CONTEXT (rolling window):
 
     const gateScore = Math.round((completed / totalGates) * 100);
     const score = Math.max(0, gateScore - penalty);
-    const grade = score >= 95 ? "A+" : score >= 90 ? "A" : score >= 85 ? "A-"
-      : score >= 80 ? "B+" : score >= 75 ? "B" : score >= 70 ? "B-"
-      : score >= 65 ? "C+" : score >= 60 ? "C" : score >= 50 ? "D" : "F";
+    const grade = calculateServerGrade(score);
 
     return { score, grade, completed, totalGates, warns, criticals, penalty };
   }, [state, entries]);

@@ -1,6 +1,6 @@
 import React from "react";
 import { useScript } from "../context/ScriptContext";
-import { ScriptBox, LockText, SectionTimer, SectionToast } from "./SharedUI";
+import { ScriptBox, LockText, SectionToast } from "./SharedUI";
 import SectionCoach from "./SectionCoach";
 
 /* ---- Optional Product Sub-section ---- */
@@ -92,7 +92,6 @@ export default React.memo(function SectionWrapUp() {
       <SectionToast sectionNum={8} timestamps={state.sectionTimestamps} />
       <h2>
         8) Wrap-Up
-        <SectionTimer sectionNum={8} timestamps={state.sectionTimestamps} />
       </h2>
 
       {unlocked.s8 && (

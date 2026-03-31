@@ -415,7 +415,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
 }) {
   const { state } = useScript();
   const { entries } = useCopilotLog();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [expandedCats, setExpandedCats] = useState({});
   const [showDetail, setShowDetail] = useState(false);
 
@@ -453,7 +453,16 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
       : "Gate Only";
 
   return (
-    <section className="card compliance-dashboard" style={{ padding: 0, overflow: "hidden" }}>
+    <section
+      className="card compliance-dashboard"
+      style={{
+        padding: 0,
+        overflow: "hidden",
+        border: "1px solid rgba(255,255,255,0.11)",
+        boxShadow:
+          "0 0 0 1px rgba(255,255,255,0.035), 0 0 18px rgba(255,255,255,0.045), 0 10px 24px rgba(0,0,0,0.28)",
+      }}
+    >
       {/* Header — F1 HUD bar */}
       <div
         className="compliance-dashboard-header"
@@ -482,16 +491,18 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             }}>
               Compliance HUD
             </span>
-            <span style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: "16px",
-              fontWeight: 800,
-              letterSpacing: "0.06em",
-              color: gradeColor,
-              textShadow: `0 0 10px ${gradeColor}60`,
-            }}>
-              {result.grade}
-            </span>
+            {expanded && (
+              <span style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: "16px",
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                color: gradeColor,
+                textShadow: `0 0 10px ${gradeColor}60`,
+              }}>
+                {result.grade}
+              </span>
+            )}
             {isTranscriptScored && (
               <span style={{
                 fontSize: "10px",

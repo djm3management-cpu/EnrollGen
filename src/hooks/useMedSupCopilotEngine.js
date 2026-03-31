@@ -9,6 +9,7 @@
 import { useCallback, useMemo, useEffect, useRef } from "react";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
+import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import {
   useCopilotEngineCore,
   normalizeIssueTag, shouldSuppressDuplicateIssue,
@@ -720,9 +721,7 @@ SECTION CONTEXT (rolling window):
 
     const sectionScore = Math.round((completed / totalSections) * 100);
     const score = Math.max(0, sectionScore - penalty);
-    const grade = score >= 95 ? "A+" : score >= 90 ? "A" : score >= 85 ? "A-"
-      : score >= 80 ? "B+" : score >= 75 ? "B" : score >= 70 ? "B-"
-      : score >= 65 ? "C+" : score >= 60 ? "C" : score >= 50 ? "D" : "F";
+    const grade = calculateServerGrade(score);
 
     return { score, grade, completed, totalSections, warns, criticals, penalty };
   }, [state, entries]);
