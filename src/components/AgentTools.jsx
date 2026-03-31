@@ -20,7 +20,6 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import DailyVerse from "./DailyVerse";
 import DecisionTree from "./DecisionTree";
 import ObjectionHandler from "./ObjectionHandler";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
@@ -570,7 +569,6 @@ export default function AgentTools() {
       </Section>
 
       {/* ═══ DAILY VERSE ═══ */}
-      <DailyVerse />
     </div>
   );
 }

@@ -37,8 +37,9 @@ import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
 import ScriptPrompter from "./ScriptPrompter";
 import AncillaryPopupManager from "./ancillary/AncillaryPopupManager";
+import CopilotStartPopupManager from "./ancillary/CopilotStartPopupManager";
 import DevotedPopupManager from "./ancillary/DevotedPopupManager";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const ComplianceDashboard = lazy(() => import("./ComplianceDashboard"));
 
@@ -213,6 +214,7 @@ function RailWidgets({
         border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16,
         backdropFilter: "blur(12px)", boxShadow: "0 10px 24px rgba(0,0,0,0.36)",
         padding: "8px 10px 4px", marginBottom: 6,
+        overflow: "hidden",
       }}>
         <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
           <button
@@ -658,25 +660,16 @@ export default function ScriptFlow() {
       <ScriptPrompter onTranscriptChange={setTranscript} onMergedTranscriptChange={setMergedTranscriptEntries} onListeningChange={setIsListening} logComplianceFlag={session.logComplianceFlag} controlsRef={copilotHandlersRef} onCoachingLoadingChange={setCoachingLoading} />
 
       {/* Start Call gate — timer and session don't begin until clicked */}
+      <CopilotStartPopupManager callStarted={callStarted} />
+
       {!callStarted && (
-        <section className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
+        <section className="start-call-gate">
           <button
-            className="primary"
+            className="start-call-button"
             onClick={() => setCallStarted(true)}
-            style={{
-              fontSize: 15,
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              padding: "10px 36px",
-            }}
           >
-            Start Call
+            Start
           </button>
-          <p className="muted" style={{ marginTop: 10, fontSize: 11 }}>
-            Timer begins when you click Start Call
-          </p>
         </section>
       )}
 

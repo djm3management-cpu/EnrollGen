@@ -48,6 +48,24 @@ const ComplianceHub = lazy(loadComplianceHub);
 const ComplianceStatusPanel = lazy(loadComplianceStatusPanel);
 const COMPLIANCE_HUB_TAB_IDS = new Set(["complianceHub", "history", "upload", "review"]);
 const AGENT_TOOLS_TAB_IDS = new Set(["tools", "objections", "decisionTree"]);
+const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v2";
+const LANDSCAPE_BACKDROPS = [
+  {
+    id: "valley",
+    label: "Sunset peaks",
+    imageUrl: "https://images.pexels.com/photos/290538/pexels-photo-290538.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2160&w=3840",
+  },
+  {
+    id: "meadow",
+    label: "Wildflower meadow",
+    imageUrl: "https://images.pexels.com/photos/13914984/pexels-photo-13914984.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2160&w=3840",
+  },
+  {
+    id: "cliffs",
+    label: "Coastal cliffs",
+    imageUrl: "https://images.pexels.com/photos/34793159/pexels-photo-34793159.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2160&w=3840",
+  },
+];
 
 /* ── Daily Verse accordion wrapper for main flow ── */
 function DailyVerseAccordion() {
@@ -510,6 +528,30 @@ function AppTabButton({ activeTab, tabId, onSelect, onPreload, children }) {
   );
 }
 
+function loadBackgroundSelection() {
+  if (typeof window === "undefined") {
+    return "charcoal";
+  }
+
+  try {
+    const stored = window.localStorage.getItem(BACKGROUND_SELECTION_STORAGE_KEY);
+    if (stored === "clean" || stored === "classic") {
+      return "charcoal";
+    }
+
+    if (
+      stored === "charcoal" ||
+      LANDSCAPE_BACKDROPS.some((backdrop) => backdrop.id === stored)
+    ) {
+      return stored;
+    }
+
+    return "charcoal";
+  } catch {
+    return "charcoal";
+  }
+}
+
 /* ─── ProfileBar ─────────────────────────────────────────────────────────── */
 function ProfileBar() {
   const { user, isLoaded } = useUser();
@@ -582,6 +624,7 @@ function AppContent() {
   const [tab, setTab] = useState("script");
   const [mode, setMode] = useState("ma");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [backgroundSelection, setBackgroundSelection] = useState(loadBackgroundSelection);
   const sidebarRef = useRef(null);
 
   // Close sidebar on outside click (mobile)
@@ -603,6 +646,40 @@ function AppContent() {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [sidebarOpen]);
+
+  useEffect(() => {
+    const selectedLandscape = LANDSCAPE_BACKDROPS.find(
+      (backdrop) => backdrop.id === backgroundSelection
+    );
+    document.body.dataset.bgMode = selectedLandscape ? "landscape" : "clean";
+
+    try {
+      window.localStorage.setItem(
+        BACKGROUND_SELECTION_STORAGE_KEY,
+        backgroundSelection
+      );
+    } catch {
+      // Ignore storage failures; the UI still works for the current session.
+    }
+
+    if (selectedLandscape) {
+      document.body.dataset.bgScene = selectedLandscape.id;
+      document.body.style.setProperty(
+        "--viewport-landscape-image",
+        `url("${selectedLandscape.imageUrl}")`
+      );
+    } else {
+      delete document.body.dataset.bgScene;
+      document.body.style.removeProperty("--viewport-landscape-image");
+    }
+
+    return () => {
+      delete document.body.dataset.bgMode;
+      delete document.body.dataset.bgScene;
+      document.body.style.removeProperty("--viewport-landscape-image");
+    };
+  }, [backgroundSelection]);
+
   const activeTab = COMPLIANCE_HUB_TAB_IDS.has(tab)
     ? "complianceHub"
     : AGENT_TOOLS_TAB_IDS.has(tab)
@@ -669,6 +746,10 @@ function AppContent() {
       loadACAIntelligence();
       return;
     }
+    if (targetTab === "verse") {
+      loadDailyVerse();
+      return;
+    }
   };
 
   const handleModeChange = (newMode) => {
@@ -695,6 +776,10 @@ function AppContent() {
 
   const handleLogoClick = () => {
     window.location.reload();
+  };
+
+  const selectBackground = (nextSelection) => {
+    setBackgroundSelection(nextSelection);
   };
 
   return (
@@ -775,21 +860,61 @@ function AppContent() {
             >
               <span className="sidebar-tab-text">Compliance Hub</span>
             </button>
+            <button
+              className={`sidebar-tab${activeTab === "verse" ? " active" : ""}`}
+              onClick={() => { handleTabChange("verse"); setSidebarOpen(false); }}
+              onMouseEnter={() => preloadTab("verse")}
+              data-tab-label="Verse"
+            >
+              <span className="sidebar-tab-text">Daily Verse</span>
+            </button>
           </nav>
 
-          {mode === "ma" && activeTab === "script" && (
-            <div style={{ padding: '0 12px', marginTop: 'auto', marginBottom: 8 }}>
-              <Suspense fallback={null}>
-                <ComplianceStatusPanel isLiveCall={false} callDuration={0} />
-              </Suspense>
-            </div>
-          )}
+          <div className="sidebar-utility-stack">
+            <div className="sidebar-bg-selector-row">
+              <button
+                type="button"
+                className={`sidebar-bg-toggle${
+                  backgroundSelection === "charcoal" ? " is-active" : ""
+                }`}
+                onClick={() => selectBackground("charcoal")}
+                aria-label="Use the charcoal background"
+                title="Use the charcoal background"
+              >
+                <span className="sidebar-bg-toggle-core" aria-hidden="true" />
+              </button>
 
-          {!LOGIN_DISABLED && (
-            <div className="sidebar-profile">
-              <ProfileBar />
+              {LANDSCAPE_BACKDROPS.map((backdrop) => (
+                <button
+                  key={backdrop.id}
+                  type="button"
+                  className={`sidebar-bg-landscape-button${
+                    backgroundSelection === backdrop.id ? " is-active" : ""
+                  }`}
+                  onClick={() => selectBackground(backdrop.id)}
+                  aria-label={`Use the ${backdrop.label} background`}
+                  title={backdrop.label}
+                  style={{
+                    backgroundImage: `linear-gradient(160deg, rgba(7, 9, 12, 0.12) 0%, rgba(7, 9, 12, 0.38) 100%), url("${backdrop.imageUrl}")`,
+                  }}
+                />
+              ))}
             </div>
-          )}
+
+            {mode === "ma" && activeTab === "script" && (
+              <div className="sidebar-compliance-slot">
+                <Suspense fallback={null}>
+                  <ComplianceStatusPanel isLiveCall={false} callDuration={0} />
+                </Suspense>
+              </div>
+            )}
+
+            {!LOGIN_DISABLED && (
+              <div className="sidebar-profile">
+                <ProfileBar />
+              </div>
+            )}
+          </div>
         </aside>
 
         {/* ── CENTER CONTENT ── */}
@@ -804,7 +929,6 @@ function AppContent() {
                         <ScriptFlow />
                       </LazyPanel>
                       <SessionSummarySlot />
-                      <DailyVerseAccordion />
                     </div>
                   </div>
                 </>
@@ -873,6 +997,12 @@ function AppContent() {
           {activeTab === "carrierRef" && mode !== "ma" && (
             <LazyPanel>
               <CarrierRef />
+            </LazyPanel>
+          )}
+
+          {activeTab === "verse" && (
+            <LazyPanel>
+              <DailyVerse />
             </LazyPanel>
           )}
 
