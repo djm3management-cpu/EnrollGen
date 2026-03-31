@@ -464,6 +464,7 @@ function DeferredComplianceDashboard({
 }
 
 export default function ScriptFlow() {
+  const STACKED_POPUP_OFFSET = 190;
   const { state, dispatch, activeSection } = useScript();
   const { clearLog, entries } = useCopilotLog();
   const prevSectionRef = useRef(activeSection);
@@ -473,6 +474,7 @@ export default function ScriptFlow() {
   const scoredSectionsRef = useRef(new Set());
   const [callStarted, setCallStarted] = useState(false);
   const [devotedPopupVisible, setDevotedPopupVisible] = useState(false);
+  const [ancillaryPopupVisible, setAncillaryPopupVisible] = useState(false);
 
   // Start session only after agent clicks Start Call
   const sessionStartedRef = useRef(false);
@@ -632,15 +634,24 @@ export default function ScriptFlow() {
           transcript={transcript}
           anchorRef={flowMainRef}
           onVisibilityChange={setDevotedPopupVisible}
+          dockOffsetY={
+            devotedPopupVisible && ancillaryPopupVisible
+              ? -STACKED_POPUP_OFFSET
+              : 0
+          }
         />
-        {!devotedPopupVisible ? (
-          <AncillaryPopupManager
-            activeSection={activeSection}
-            callStarted={callStarted}
-            anchorRef={flowMainRef}
-            containerRef={flowShellRef}
-          />
-        ) : null}
+        <AncillaryPopupManager
+          activeSection={activeSection}
+          callStarted={callStarted}
+          anchorRef={flowMainRef}
+          containerRef={flowShellRef}
+          onVisibilityChange={setAncillaryPopupVisible}
+          dockOffsetY={
+            devotedPopupVisible && ancillaryPopupVisible
+              ? STACKED_POPUP_OFFSET
+              : 0
+          }
+        />
         <div className="flow-main" ref={flowMainRef}>
 
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}

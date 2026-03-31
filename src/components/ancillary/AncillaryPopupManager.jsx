@@ -94,6 +94,8 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
   anchorRef,
   containerRef,
   followUpContext = null,
+  dockOffsetY = 0,
+  onVisibilityChange,
 }) {
   const { state } = useScript();
   const popupRef = useRef(null);
@@ -121,6 +123,10 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
   const isVisible = callStarted && popupKey && !activeDismissed;
   const popupCopy = popupKey ? ANCILLARY_POPUP_COPY[popupKey] : null;
   const popupIcon = popupCopy ? POPUP_ICON_MAP[popupCopy.icon] ?? null : null;
+
+  useEffect(() => {
+    onVisibilityChange?.(Boolean(isVisible));
+  }, [isVisible, onVisibilityChange]);
 
   const recapItems = useMemo(
     () => buildRecapItems(state, ancillaryState),
@@ -164,7 +170,8 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
       anchorRect.top +
       cardRect.height / 2 -
       popupHeight / 2 +
-      POPUP_VERTICAL_OFFSET;
+      POPUP_VERTICAL_OFFSET +
+      dockOffsetY;
     const maxTop = Math.max(POPUP_MIN_TOP, anchor.offsetHeight - popupHeight);
     const nextTop = clamp(rawTop, POPUP_MIN_TOP, maxTop);
 
@@ -174,7 +181,7 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
       left: `${-(POPUP_WIDTH + POPUP_GAP)}px`,
       width: `${POPUP_WIDTH}px`,
     });
-  }, [anchorRef, popupKey]);
+  }, [anchorRef, dockOffsetY, popupKey]);
 
   useEffect(() => {
     if (!isVisible || typeof window === "undefined") {
