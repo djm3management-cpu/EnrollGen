@@ -6,9 +6,6 @@ import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
 import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
 import { BookOpen, Menu, X } from "lucide-react";
 import DevotedPopupManager from "./components/ancillary/DevotedPopupManager";
-import sunsetPeaksBg from "./assets/backgrounds/sunset-peaks.jpg";
-import wildflowerMeadowBg from "./assets/backgrounds/wildflower-meadow.jpg";
-import coastalCliffsBg from "./assets/backgrounds/coastal-cliffs.jpg";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
@@ -55,18 +52,21 @@ const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v2";
 const LANDSCAPE_BACKDROPS = [
   {
     id: "valley",
-    label: "Sunset peaks",
-    imageUrl: sunsetPeaksBg,
+    label: "Rainier meadow",
+    imageUrl:
+      "https://images.unsplash.com/photo-1756211007534-5bcda2178a6b?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=3840",
   },
   {
     id: "meadow",
-    label: "Wildflower meadow",
-    imageUrl: wildflowerMeadowBg,
+    label: "Sunrise bloom",
+    imageUrl:
+      "https://images.unsplash.com/photo-1769051579016-c7ad4d61fd9a?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=3840",
   },
   {
     id: "cliffs",
-    label: "Coastal cliffs",
-    imageUrl: coastalCliffsBg,
+    label: "Coastal morning",
+    imageUrl:
+      "https://images.unsplash.com/photo-1768848977007-f6b79b5643e2?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=3840",
   },
 ];
 
