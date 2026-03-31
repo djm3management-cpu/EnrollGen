@@ -13,7 +13,9 @@ import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { ACA_LEVEL_STYLE } from "../data/acaComplianceKnowledge";
 import PanelIdleSpinner from "./PanelIdleSpinner";
 
-const AcaCopilot = memo(function AcaCopilot() {
+const AcaCopilot = memo(function AcaCopilot({
+  onTranscriptChange,
+}) {
   const { state, activeGate } = useACA();
   const transcriptRef = useRef("");
 
@@ -33,6 +35,10 @@ const AcaCopilot = memo(function AcaCopilot() {
     const id = setInterval(() => setElapsedSec(Math.round((Date.now() - state.callStart) / 1000)), 1000);
     return () => clearInterval(id);
   }, [state.callStart]);
+
+  useEffect(() => {
+    onTranscriptChange?.(speech.transcript);
+  }, [onTranscriptChange, speech.transcript]);
 
   const clearAll = useCallback(() => {
     speech.clearTranscript();

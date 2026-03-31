@@ -37,6 +37,7 @@ import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
 import ScriptPrompter from "./ScriptPrompter";
 import AncillaryPopupManager from "./ancillary/AncillaryPopupManager";
+import DevotedPopupManager from "./ancillary/DevotedPopupManager";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ComplianceDashboard = lazy(() => import("./ComplianceDashboard"));
@@ -471,6 +472,7 @@ export default function ScriptFlow() {
   const session = useSessionTracker();
   const scoredSectionsRef = useRef(new Set());
   const [callStarted, setCallStarted] = useState(false);
+  const [devotedPopupVisible, setDevotedPopupVisible] = useState(false);
 
   // Start session only after agent clicks Start Call
   const sessionStartedRef = useRef(false);
@@ -625,12 +627,20 @@ export default function ScriptFlow() {
       />
 
       <div className="flow-shell" ref={flowShellRef}>
-        <AncillaryPopupManager
-          activeSection={activeSection}
+        <DevotedPopupManager
           callStarted={callStarted}
+          transcript={transcript}
           anchorRef={flowMainRef}
-          containerRef={flowShellRef}
+          onVisibilityChange={setDevotedPopupVisible}
         />
+        {!devotedPopupVisible ? (
+          <AncillaryPopupManager
+            activeSection={activeSection}
+            callStarted={callStarted}
+            anchorRef={flowMainRef}
+            containerRef={flowShellRef}
+          />
+        ) : null}
         <div className="flow-main" ref={flowMainRef}>
 
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}

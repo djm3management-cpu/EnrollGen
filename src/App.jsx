@@ -1,10 +1,11 @@
 import { lazy, Suspense, useState, useEffect, useRef, startTransition } from "react";
 import EnrollGenLogo from "./components/EnrollGenLogo";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
-import { MedSupProvider } from "./context/MedSupContext";
+import { MedSupProvider, useMedSup } from "./context/MedSupContext";
 import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
 import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
 import { BookOpen, Menu, X } from "lucide-react";
+import DevotedPopupManager from "./components/ancillary/DevotedPopupManager";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
@@ -472,6 +473,30 @@ function SessionSummarySlot() {
   );
 }
 
+function MedSupScriptWorkspace() {
+  const { state } = useMedSup();
+  const [transcript, setTranscript] = useState("");
+  const flowShellRef = useRef(null);
+  const flowMainRef = useRef(null);
+
+  return (
+    <>
+      <MedSupAiCopilot onTranscriptChange={setTranscript} />
+      <MedSupCopilot />
+      <div className="flow-shell" ref={flowShellRef}>
+        <DevotedPopupManager
+          callStarted={state.callStarted}
+          transcript={transcript}
+          anchorRef={flowMainRef}
+        />
+        <div className="flow-main" ref={flowMainRef}>
+          <MedSupFlow />
+        </div>
+      </div>
+    </>
+  );
+}
+
 function AppTabButton({ activeTab, tabId, onSelect, onPreload, children }) {
   return (
     <button
@@ -811,9 +836,7 @@ function AppContent() {
             <MedSupProvider>
               {activeTab === "script" && (
                 <LazyPanel>
-                  <MedSupAiCopilot />
-                  <MedSupCopilot />
-                  <MedSupFlow />
+                  <MedSupScriptWorkspace />
                 </LazyPanel>
               )}
               {activeTab === "complianceHub" && (

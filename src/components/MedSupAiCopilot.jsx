@@ -12,7 +12,9 @@ import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { MEDSUP_LEVEL_STYLE } from "../data/medSupComplianceKnowledge";
 import PanelIdleSpinner from "./PanelIdleSpinner";
 
-const MedSupAiCopilot = memo(function MedSupAiCopilot() {
+const MedSupAiCopilot = memo(function MedSupAiCopilot({
+  onTranscriptChange,
+}) {
   const { state, activeSection } = useMedSup();
   const transcriptRef = useRef("");
 
@@ -32,6 +34,10 @@ const MedSupAiCopilot = memo(function MedSupAiCopilot() {
     const id = setInterval(() => setElapsedSec(Math.round((Date.now() - state.callStart) / 1000)), 1000);
     return () => clearInterval(id);
   }, [state.callStart]);
+
+  useEffect(() => {
+    onTranscriptChange?.(speech.transcript);
+  }, [onTranscriptChange, speech.transcript]);
 
   const clearAll = useCallback(() => {
     speech.clearTranscript();

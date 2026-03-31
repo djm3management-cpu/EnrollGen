@@ -12,7 +12,9 @@ import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { U65_LEVEL_STYLE } from "../data/u65ComplianceKnowledge";
 import PanelIdleSpinner from "./PanelIdleSpinner";
 
-const U65Copilot = memo(function U65Copilot() {
+const U65Copilot = memo(function U65Copilot({
+  onTranscriptChange,
+}) {
   const { state, activeGate } = useU65();
   const transcriptRef = useRef("");
 
@@ -32,6 +34,10 @@ const U65Copilot = memo(function U65Copilot() {
     const id = setInterval(() => setElapsedSec(Math.round((Date.now() - state.callStart) / 1000)), 1000);
     return () => clearInterval(id);
   }, [state.callStart]);
+
+  useEffect(() => {
+    onTranscriptChange?.(speech.transcript);
+  }, [onTranscriptChange, speech.transcript]);
 
   const clearAll = useCallback(() => {
     speech.clearTranscript();
