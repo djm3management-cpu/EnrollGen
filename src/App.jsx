@@ -6,6 +6,9 @@ import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
 import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
 import { BookOpen, Menu, X } from "lucide-react";
 import DevotedPopupManager from "./components/ancillary/DevotedPopupManager";
+import sunsetPeaksBg from "./assets/backgrounds/sunset-peaks.jpg";
+import wildflowerMeadowBg from "./assets/backgrounds/wildflower-meadow.jpg";
+import coastalCliffsBg from "./assets/backgrounds/coastal-cliffs.jpg";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
@@ -53,17 +56,17 @@ const LANDSCAPE_BACKDROPS = [
   {
     id: "valley",
     label: "Sunset peaks",
-    imageUrl: "https://images.pexels.com/photos/290538/pexels-photo-290538.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2160&w=3840",
+    imageUrl: sunsetPeaksBg,
   },
   {
     id: "meadow",
     label: "Wildflower meadow",
-    imageUrl: "https://images.pexels.com/photos/13914984/pexels-photo-13914984.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2160&w=3840",
+    imageUrl: wildflowerMeadowBg,
   },
   {
     id: "cliffs",
     label: "Coastal cliffs",
-    imageUrl: "https://images.pexels.com/photos/34793159/pexels-photo-34793159.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2160&w=3840",
+    imageUrl: coastalCliffsBg,
   },
 ];
 
