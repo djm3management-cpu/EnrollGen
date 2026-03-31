@@ -629,6 +629,22 @@ function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [backgroundSelection, setBackgroundSelection] = useState(loadBackgroundSelection);
   const sidebarRef = useRef(null);
+  const selectedLandscape = LANDSCAPE_BACKDROPS.find(
+    (backdrop) => backdrop.id === backgroundSelection
+  );
+  const viewportBackgroundStyle = selectedLandscape
+    ? {
+        background: `
+          linear-gradient(154deg, rgba(4, 6, 8, 0.88) 0%, rgba(5, 7, 10, 0.74) 32%, rgba(4, 5, 7, 0.84) 58%, rgba(3, 4, 6, 0.92) 100%),
+          radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 18%, transparent 34%),
+          radial-gradient(circle at 78% 14%, rgba(255, 214, 153, 0.14) 0%, rgba(255, 214, 153, 0.03) 18%, transparent 34%),
+          url("${selectedLandscape.imageUrl}")
+        `,
+        backgroundSize: "100% 100%, 100% 100%, 100% 100%, cover",
+        backgroundPosition: "center, center, center, center",
+        animation: "ambientShiftClean 22s ease-in-out infinite alternate",
+      }
+    : undefined;
 
   // Close sidebar on outside click (mobile)
   useEffect(() => {
@@ -651,9 +667,6 @@ function AppContent() {
   }, [sidebarOpen]);
 
   useEffect(() => {
-    const selectedLandscape = LANDSCAPE_BACKDROPS.find(
-      (backdrop) => backdrop.id === backgroundSelection
-    );
     document.body.dataset.bgMode = selectedLandscape ? "landscape" : "clean";
 
     try {
@@ -665,23 +678,10 @@ function AppContent() {
       // Ignore storage failures; the UI still works for the current session.
     }
 
-    if (selectedLandscape) {
-      document.body.dataset.bgScene = selectedLandscape.id;
-      document.body.style.setProperty(
-        "--viewport-landscape-image",
-        `url("${selectedLandscape.imageUrl}")`
-      );
-    } else {
-      delete document.body.dataset.bgScene;
-      document.body.style.removeProperty("--viewport-landscape-image");
-    }
-
     return () => {
       delete document.body.dataset.bgMode;
-      delete document.body.dataset.bgScene;
-      document.body.style.removeProperty("--viewport-landscape-image");
     };
-  }, [backgroundSelection]);
+  }, [backgroundSelection, selectedLandscape]);
 
   const activeTab = COMPLIANCE_HUB_TAB_IDS.has(tab)
     ? "complianceHub"
@@ -787,7 +787,7 @@ function AppContent() {
 
   return (
     <>
-      <div className="viewport-bg" />
+      <div className="viewport-bg" style={viewportBackgroundStyle} />
       <div className="app-shell">
         {/* ── HAMBURGER BUTTON (visible <1024px) ── */}
         <button
