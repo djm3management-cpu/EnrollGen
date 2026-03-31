@@ -52,21 +52,21 @@ const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v2";
 const LANDSCAPE_BACKDROPS = [
   {
     id: "valley",
-    label: "Rainier meadow",
+    label: "Mountain lake",
     imageUrl:
-      "https://images.unsplash.com/photo-1756211007534-5bcda2178a6b?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=3840",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Lake_Mountain_Landscape.jpg/3840px-Lake_Mountain_Landscape.jpg",
   },
   {
     id: "meadow",
-    label: "Sunrise bloom",
+    label: "Blooming meadow",
     imageUrl:
-      "https://images.unsplash.com/photo-1769051579016-c7ad4d61fd9a?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=3840",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Blooming_Mountain_Meadow_%2852582038680%29.jpg/3840px-Blooming_Mountain_Meadow_%2852582038680%29.jpg",
   },
   {
     id: "cliffs",
-    label: "Coastal morning",
+    label: "Coastal sunset",
     imageUrl:
-      "https://images.unsplash.com/photo-1768848977007-f6b79b5643e2?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=3840",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Coastal_Landscape_With_Colorful_Sunset_%2846324576151%29.jpg/3840px-Coastal_Landscape_With_Colorful_Sunset_%2846324576151%29.jpg",
   },
 ];
 

@@ -7,7 +7,7 @@ const POPUP_WIDTH = 280;
 const RIGHT_RAIL_WIDTH = 250;
 const RIGHT_RAIL_MARGIN = 18;
 const POPUP_RIGHT_GAP = 18;
-const POPUP_TOP = 92;
+const POPUP_TOP = 14;
 
 function shouldInline() {
   if (typeof window === "undefined") {
@@ -28,18 +28,6 @@ const CopilotStartPopupManager = memo(function CopilotStartPopupManager({
       setVisible(false);
     }
   }, [callStarted]);
-
-  useEffect(() => {
-    if (!visible || callStarted) {
-      return undefined;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setVisible(false);
-    }, 30000);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [visible, callStarted]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
