@@ -1,0 +1,549 @@
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { useACA } from "./ACAContext";
+import { STATE_ACA_GATES } from "./StateACAData";
+import FplCalculatorPanel from "../../components/FplCalculatorPanel";
+
+const ACCENT = "#EAB308";
+
+function fmt(ms) {
+  const s = Math.round(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+function Say({ text }) {
+  return (
+    <div
+      style={{
+        borderLeft: "2px solid rgba(234,179,8,0.3)",
+        padding: "10px 16px",
+        marginBottom: 8,
+        borderRadius: "0 6px 6px 0",
+      }}
+    >
+      <div style={{ color: "#c0d0e4", fontSize: 14, lineHeight: 1.65 }}>
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function Note({ text }) {
+  return (
+    <div
+      style={{
+        borderLeft: "2px solid rgba(234,179,8,0.2)",
+        padding: "7px 12px",
+        marginBottom: 6,
+        borderRadius: "0 5px 5px 0",
+        background: "rgba(234,179,8,0.03)",
+      }}
+    >
+      <div
+        style={{
+          color: "#8fa4bc",
+          fontSize: 12,
+          lineHeight: 1.5,
+          fontStyle: "italic",
+        }}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function ComplianceBanner({ text }) {
+  return (
+    <div
+      style={{
+        background: "rgba(248,113,113,0.06)",
+        border: "1px solid rgba(248,113,113,0.2)",
+        borderRadius: 6,
+        padding: "9px 13px",
+        marginBottom: 10,
+        fontSize: 12,
+        color: "#f87171",
+        lineHeight: 1.5,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+function Gate({ label, done, onDo, onUndo }) {
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        paddingTop: 14,
+        borderTop: "1px solid rgba(255,255,255,0.04)",
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
+      <label
+        className="check"
+        style={{
+          justifyContent: "center",
+          width: "fit-content",
+          minWidth: 260,
+          padding: "10px 14px",
+          border: `1px solid ${
+            done ? "rgba(52,211,153,0.2)" : "rgba(234,179,8,0.15)"
+          }`,
+          background: done ? "rgba(52,211,153,0.05)" : "rgba(255,255,255,0.015)",
+          color: done ? "#34d399" : "#dfe6f0",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={done}
+          onChange={(e) => (e.target.checked ? onDo() : onUndo())}
+          style={{ margin: 0 }}
+        />
+        {label}
+      </label>
+    </div>
+  );
+}
+
+function Card({ num, title, active, done, dur, children }) {
+  if (done && !active) {
+    return (
+      <details style={{ marginBottom: 10 }}>
+        <summary
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 14px",
+            background: "rgba(52,211,153,0.03)",
+            border: "1px solid rgba(52,211,153,0.1)",
+            borderRadius: 10,
+            cursor: "pointer",
+            listStyle: "none",
+            fontSize: 13,
+            color: "#6b7a8d",
+          }}
+        >
+          <span style={{ color: "#34d399" }}>✓</span>
+          <span style={{ flex: 1 }}>
+            <span
+              style={{
+                fontWeight: 700,
+                color: "#4a5568",
+                marginRight: 8,
+                fontSize: 11,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              G{String(num).padStart(2, "0")}
+            </span>
+            {title}
+          </span>
+          {dur && (
+            <span
+              style={{
+                fontSize: 11,
+                color: "#4a5568",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {fmt(dur)}
+            </span>
+          )}
+        </summary>
+        <div style={{ paddingTop: 6 }}>{children}</div>
+      </details>
+    );
+  }
+
+  return (
+    <section
+      className={active ? "active-card" : ""}
+      style={{
+        background: active ? "rgba(234,179,8,0.04)" : "rgba(255,255,255,0.018)",
+        border: `1px solid ${
+          active ? "rgba(234,179,8,0.3)" : "rgba(255,255,255,0.05)"
+        }`,
+        borderRadius: 10,
+        padding: "20px 18px",
+        marginBottom: 10,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: active ? ACCENT : "#4a5568",
+            background: active
+              ? "rgba(234,179,8,0.08)"
+              : "rgba(255,255,255,0.03)",
+            border: `1px solid ${
+              active ? "rgba(234,179,8,0.2)" : "rgba(255,255,255,0.05)"
+            }`,
+            borderRadius: 5,
+            padding: "3px 8px",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          G{String(num).padStart(2, "0")}
+        </span>
+        <span style={{ fontSize: 15, fontWeight: 600, color: "#dfe6f0" }}>
+          {title}
+        </span>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function ReviewPoints({ points }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, marginBottom: 12 }}>
+      {points.map((point) => (
+        <div
+          key={point}
+          style={{
+            padding: "8px 10px",
+            borderRadius: 7,
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.05)",
+            fontSize: 11,
+            color: "#c0d0e4",
+          }}
+        >
+          {point}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StateGate({ gate, active, done, children }) {
+  const { dispatch, state } = useACA();
+  const duration = state.sectionTimestamps[gate.num];
+
+  return (
+    <Card
+      num={gate.num}
+      title={gate.title}
+      active={active}
+      done={done}
+      dur={duration?.end ? duration.end - duration.start : null}
+    >
+      {gate.script.map((line) => (
+        <Say key={line} text={line} />
+      ))}
+      {children}
+      {gate.notes.map((note) => (
+        <Note key={note} text={note} />
+      ))}
+      <Gate
+        label={gate.gate}
+        done={done}
+        onDo={() => {
+          dispatch({ type: "START_SECTION", sectionNum: gate.num });
+          dispatch({ type: "COMPLETE_SECTION", key: gate.key, sectionNum: gate.num });
+        }}
+        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: gate.key })}
+      />
+    </Card>
+  );
+}
+
+function G2Extra() {
+  const [fplTool, setFplTool] = useState({
+    householdSize: null,
+    annualIncome: null,
+    clientAge: null,
+  });
+
+  return (
+    <>
+      <ComplianceBanner text="Client consent is required before you enter any minimum working income on the quote." />
+      <FplCalculatorPanel
+        title="FPL Chart Reference"
+        accentColor={ACCENT}
+        accentRgb="234,179,8"
+        fields={fplTool}
+        onFieldChange={(field, value) =>
+          setFplTool((prev) => ({ ...prev, [field]: value }))
+        }
+      />
+    </>
+  );
+}
+
+function Progress() {
+  const { state, activeGate } = useACA();
+  const steps = [
+    { k: "gate0Ok", l: "Open" },
+    { k: "gate1Ok", l: "Profile" },
+    { k: "gate2Ok", l: "Income" },
+    { k: "gate3Ok", l: "Needs" },
+    { k: "gate4Ok", l: "Plans" },
+    { k: "gate5Ok", l: "Login" },
+    { k: "gate6Ok", l: "Close" },
+  ];
+  const done = steps.filter((step) => state[step.k]).length;
+  const pct = Math.round((done / steps.length) * 100);
+
+  return (
+    <div
+      style={{
+        marginBottom: 14,
+        padding: "12px 16px",
+        background: "rgba(255,255,255,0.018)",
+        border: "1px solid rgba(255,255,255,0.04)",
+        borderRadius: 10,
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            color: "#4a5568",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+          }}
+        >
+          State ACA
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: ACCENT,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {pct}%
+        </span>
+      </div>
+      <div
+        style={{
+          height: 3,
+          background: "rgba(255,255,255,0.04)",
+          borderRadius: 2,
+          overflow: "hidden",
+          marginBottom: 8,
+        }}
+      >
+        <motion.div
+          style={{ height: "100%", background: ACCENT, borderRadius: 2 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.3 }}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+        {steps.map((step, index) => {
+          const isDone = state[step.k];
+          const isActive = index === activeGate;
+          return (
+            <span
+              key={step.k}
+              style={{
+                fontSize: 10,
+                fontWeight: 500,
+                padding: "2px 7px",
+                borderRadius: 4,
+                background: isDone
+                  ? "rgba(52,211,153,0.06)"
+                  : isActive
+                    ? "rgba(234,179,8,0.06)"
+                    : "rgba(255,255,255,0.015)",
+                color: isDone ? "#34d399" : isActive ? ACCENT : "#4a5568",
+                border: `1px solid ${
+                  isDone
+                    ? "rgba(52,211,153,0.12)"
+                    : isActive
+                      ? "rgba(234,179,8,0.15)"
+                      : "rgba(255,255,255,0.03)"
+                }`,
+              }}
+            >
+              {isDone ? "✓ " : isActive ? "• " : ""}
+              {step.l}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default function StateACAFlow() {
+  const { state, dispatch, activeGate } = useACA();
+  const prev = useRef(activeGate);
+
+  useEffect(() => {
+    if (activeGate !== prev.current) {
+      prev.current = activeGate;
+      requestAnimationFrame(() =>
+        setTimeout(() => {
+          const el = document.querySelector(".active-card");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80)
+      );
+    }
+  }, [activeGate]);
+
+  return (
+    <motion.div
+      className="flow"
+      style={{ fontFamily: "var(--font-body)" }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Progress />
+
+      {!state.callStarted ? (
+        <section
+          style={{
+            background: "rgba(234,179,8,0.04)",
+            border: "1px solid rgba(234,179,8,0.2)",
+            borderRadius: 10,
+            padding: "28px 20px",
+            textAlign: "center",
+            marginBottom: 10,
+          }}
+        >
+          <button
+            className="primary"
+            onClick={() => dispatch({ type: "START_CALL" })}
+            style={{
+              fontSize: 15,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              padding: "10px 36px",
+              background:
+                "linear-gradient(145deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05))",
+              border: "1px solid rgba(234,179,8,0.3)",
+              color: ACCENT,
+              borderRadius: 8,
+              cursor: "pointer",
+            }}
+          >
+            Start Call
+          </button>
+          <p style={{ marginTop: 10, fontSize: 11, color: "#4a5568" }}>
+            Timer begins when you click Start Call
+          </p>
+        </section>
+      ) : (
+        <>
+          <StateGate
+            gate={STATE_ACA_GATES[0]}
+            active={activeGate === 0}
+            done={state.gate0Ok}
+          >
+            <ComplianceBanner text="If the client confirms employer coverage, Medicaid, or similar active coverage, do not continue this state ACA quoting flow." />
+          </StateGate>
+
+          <StateGate
+            gate={STATE_ACA_GATES[1]}
+            active={activeGate === 1}
+            done={state.gate1Ok}
+          />
+
+          <StateGate
+            gate={STATE_ACA_GATES[2]}
+            active={activeGate === 2}
+            done={state.gate2Ok}
+          >
+            <G2Extra />
+          </StateGate>
+
+          <StateGate
+            gate={STATE_ACA_GATES[3]}
+            active={activeGate === 3}
+            done={state.gate3Ok}
+          />
+
+          <StateGate
+            gate={STATE_ACA_GATES[4]}
+            active={activeGate === 4}
+            done={state.gate4Ok}
+          >
+            <ReviewPoints
+              points={[
+                "Monthly premium",
+                "Deductible",
+                "PCP copay",
+                "Specialist copay",
+                "Rx copays",
+              ]}
+            />
+          </StateGate>
+
+          <StateGate
+            gate={STATE_ACA_GATES[5]}
+            active={activeGate === 5}
+            done={state.gate5Ok}
+          />
+
+          <StateGate
+            gate={STATE_ACA_GATES[6]}
+            active={activeGate === 6}
+            done={state.gate6Ok}
+          >
+            <ReviewPoints
+              points={[
+                "Selected plan confirmed",
+                "Pricing reviewed again",
+                "Login is the next action",
+                "Application details ready",
+              ]}
+            />
+            {state.gate6Ok && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  marginTop: 18,
+                  textAlign: "center",
+                  padding: "20px",
+                  background: "rgba(52,211,153,0.04)",
+                  border: "1px solid rgba(52,211,153,0.12)",
+                  borderRadius: 10,
+                }}
+              >
+                <div style={{ fontSize: 24, marginBottom: 6 }}>✓</div>
+                <div
+                  style={{ fontSize: 16, fontWeight: 700, color: "#34d399" }}
+                >
+                  State ACA Flow Complete
+                </div>
+                <button
+                  onClick={() => dispatch({ type: "RESET" })}
+                  style={{
+                    marginTop: 12,
+                    background: "rgba(52,211,153,0.08)",
+                    border: "1px solid rgba(52,211,153,0.2)",
+                    borderRadius: 6,
+                    color: "#34d399",
+                    padding: "8px 20px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: "var(--font-body)",
+                  }}
+                >
+                  New Call
+                </button>
+              </motion.div>
+            )}
+          </StateGate>
+        </>
+      )}
+    </motion.div>
+  );
+}

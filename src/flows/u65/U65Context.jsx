@@ -136,14 +136,26 @@ function reducer(state, action) {
 
     case "SET_SUBSIDY_CALC": {
       const { householdSize, annualIncome, clientAge } = action;
-      const hs = householdSize || state.subsidyCalc.householdSize;
-      const ai = annualIncome || state.subsidyCalc.annualIncome;
-      const age = clientAge || state.subsidyCalc.clientAge;
+      const hs = householdSize ?? state.subsidyCalc.householdSize;
+      const ai = annualIncome ?? state.subsidyCalc.annualIncome;
+      const age = clientAge ?? state.subsidyCalc.clientAge;
 
       if (!hs || !ai) {
         return {
           ...state,
-          subsidyCalc: { ...state.subsidyCalc, householdSize: hs, annualIncome: ai, clientAge: age },
+          subsidyCalc: {
+            householdSize: hs,
+            annualIncome: ai,
+            clientAge: age,
+            fplPercent: null,
+            aboveCliff: null,
+            fplThreshold: hs ? getFplThreshold(hs) : null,
+            acaEstimate: age ? getAcaEstimate(age) : null,
+          },
+          derivedSignals: {
+            ...state.derivedSignals,
+            subsidyCliffClient: false,
+          },
         };
       }
 

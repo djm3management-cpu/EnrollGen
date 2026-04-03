@@ -1,80 +1,78 @@
-import { createContext, useContext, useReducer, useMemo } from "react";
+import { createContext, useContext, useMemo, useReducer } from "react";
 
 const ACAContext = createContext(null);
 
-const initialState = {
-  // gate completion flags
-  gate0Ok: false,
-  gate1Ok: false,
-  gate2Ok: false,
-  gate3Ok: false,
-  gate4Ok: false,
-  gate5Ok: false,
-  gate6Ok: false,
+function createInitialState(flowVariant = "core") {
+  return {
+    flowVariant,
 
-  // enrollment period — controls Gate 1 conditional rendering
-  enrollmentPeriod: null, // null | 'OEP' | 'SEP'
+    gate0Ok: false,
+    gate1Ok: false,
+    gate2Ok: false,
+    gate3Ok: false,
+    gate4Ok: false,
+    gate5Ok: false,
+    gate6Ok: false,
 
-  // client profile (from spec Section 2.1)
-  clientProfile: {
-    name: null,
-    dob: null,
-    age: null,
-    state: null,
-    county: null,
-    householdSize: null,
-    householdIncome: null,
-    fpl: null,
-    subsidyEligible: null,
-    estimatedAPTC: null,
-    currentCoverage: null,
+    // Used by the core ACA flow to determine whether Gate 1 is conditional.
     enrollmentPeriod: null,
-    sepType: null,
-    sepDate: null,
-    sepWindowEnd: null,
-    planPreference: null,
-    csr: null,
-    selectedPlan: null,
-    existingProviders: [],
-    rxList: [],
-    immigrationStatus: null,
-    tobaccoUse: null,
-  },
 
-  // derived signals (from spec Section 2.1)
-  derivedSignals: {
-    subsidyCliffRisk: false,
-    medicaidLikely: false,
-    csrEligible: false,
-    sepValid: false,
-    sepExpiringSoon: false,
-    planMismatch: false,
-    stateBased: false,
-  },
+    clientProfile: {
+      name: null,
+      dob: null,
+      age: null,
+      state: null,
+      county: null,
+      householdSize: null,
+      householdIncome: null,
+      fpl: null,
+      subsidyEligible: null,
+      estimatedAPTC: null,
+      currentCoverage: null,
+      enrollmentPeriod: null,
+      sepType: null,
+      sepDate: null,
+      sepWindowEnd: null,
+      planPreference: null,
+      csr: null,
+      selectedPlan: null,
+      existingProviders: [],
+      rxList: [],
+      immigrationStatus: null,
+      tobaccoUse: null,
+    },
 
-  // checklist (from spec Section 2.1)
-  checklist: {
-    identityVerified: false,
-    consentRecorded: false,
-    incomeDocumented: false,
-    sepDocumented: false,
-    subsidyDisclosed: false,
-    planBenefitsReviewed: false,
-    networkChecked: false,
-    rxFormularyChecked: false,
-    effectiveDateConfirmed: false,
-    enrollmentSubmitted: false,
-    confirmationNumberRecorded: false,
-    followUpScheduled: false,
-  },
+    derivedSignals: {
+      subsidyCliffRisk: false,
+      medicaidLikely: false,
+      csrEligible: false,
+      sepValid: false,
+      sepExpiringSoon: false,
+      planMismatch: false,
+      stateBased: false,
+    },
 
-  // call started gate
-  callStarted: false,
+    checklist: {
+      identityVerified: false,
+      consentRecorded: false,
+      incomeDocumented: false,
+      sepDocumented: false,
+      subsidyDisclosed: false,
+      planBenefitsReviewed: false,
+      networkChecked: false,
+      rxFormularyChecked: false,
+      effectiveDateConfirmed: false,
+      enrollmentSubmitted: false,
+      confirmationNumberRecorded: false,
+      followUpScheduled: false,
+    },
 
-  gateHistory: [],
-  sectionTimestamps: {},
-  callStart: null,
-};
+    callStarted: false,
+    gateHistory: [],
+    sectionTimestamps: {},
+    callStart: null,
+  };
+}
 
 function reducer(state, action) {
   switch (action.type) {
@@ -131,7 +129,7 @@ function reducer(state, action) {
       };
 
     case "RESET":
-      return { ...initialState, callStart: Date.now() };
+      return createInitialState(state.flowVariant);
 
     default:
       return state;
@@ -140,20 +138,28 @@ function reducer(state, action) {
 
 function getActiveGate(state) {
   if (!state.gate0Ok) return 0;
+
+  if (state.flowVariant === "state") {
+    if (!state.gate1Ok) return 1;
+    if (!state.gate2Ok) return 2;
+    if (!state.gate3Ok) return 3;
+    if (!state.gate4Ok) return 4;
+    if (!state.gate5Ok) return 5;
+    if (!state.gate6Ok) return 6;
+    return 7;
+  }
+
   if (state.enrollmentPeriod === "SEP" && !state.gate1Ok) return 1;
   if (!state.gate2Ok) return 2;
   if (!state.gate3Ok) return 3;
   if (!state.gate4Ok) return 4;
   if (!state.gate5Ok) return 5;
   if (!state.gate6Ok) return 6;
-  return 7; // complete
+  return 7;
 }
 
-export function ACAProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, {
-    ...initialState,
-    callStart: Date.now(),
-  });
+export function ACAProvider({ children, variant = "core" }) {
+  const [state, dispatch] = useReducer(reducer, createInitialState(variant));
 
   const activeGate = useMemo(() => getActiveGate(state), [state]);
 
