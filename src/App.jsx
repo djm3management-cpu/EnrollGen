@@ -4,7 +4,7 @@ import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider, useMedSup } from "./context/MedSupContext";
 import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
 import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
-import { BookOpen, Menu, Shuffle, X } from "lucide-react";
+import { BookOpen, ChevronDown, Menu, Shuffle, X } from "lucide-react";
 import DevotedPopupManager from "./components/ancillary/DevotedPopupManager";
 import { wallpapers } from "./config/wallpapers";
 
@@ -25,7 +25,6 @@ const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 const loadCalibrationDashboard = () => import("./compliance/components/CalibrationDashboard");
 const loadComplianceHub = () => import("./compliance/components/ComplianceHub");
-const loadComplianceStatusPanel = () => import("./compliance/components/ComplianceStatusPanel");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -44,10 +43,9 @@ const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
 const CalibrationDashboard = lazy(loadCalibrationDashboard);
 const ComplianceHub = lazy(loadComplianceHub);
-const ComplianceStatusPanel = lazy(loadComplianceStatusPanel);
 const COMPLIANCE_HUB_TAB_IDS = new Set(["complianceHub", "history", "upload", "review"]);
 const AGENT_TOOLS_TAB_IDS = new Set(["tools", "objections", "decisionTree"]);
-const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v2";
+const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
 
 /* ── Daily Verse accordion wrapper for main flow ── */
 function DailyVerseAccordion() {
@@ -605,6 +603,7 @@ function AppContent() {
   const [mode, setMode] = useState("ma");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [backgroundSelection, setBackgroundSelection] = useState(loadBackgroundSelection);
+  const [wallpaperPickerOpen, setWallpaperPickerOpen] = useState(false);
   const sidebarRef = useRef(null);
   const selectedWallpaper =
     wallpapers.find((wallpaper) => wallpaper.id === backgroundSelection) || wallpapers[0];
@@ -746,6 +745,7 @@ function AppContent() {
 
   const selectBackground = (nextSelection) => {
     setBackgroundSelection(nextSelection);
+    setWallpaperPickerOpen(false);
   };
 
   const selectRandomWallpaper = () => {
@@ -859,53 +859,71 @@ function AppContent() {
           </nav>
 
           <div className="sidebar-utility-stack">
-            <div className="sidebar-bg-selector-row">
+            <div className={`sidebar-wallpaper-selector${wallpaperPickerOpen ? " is-open" : ""}`}>
               <button
                 type="button"
-                className="sidebar-bg-random-button"
-                onClick={selectRandomWallpaper}
-                aria-label="Pick a random wallpaper"
-                title="Random wallpaper"
+                className="sidebar-wallpaper-toggle"
+                onClick={() => setWallpaperPickerOpen((open) => !open)}
+                aria-expanded={wallpaperPickerOpen}
+                aria-controls="sidebar-wallpaper-panel"
               >
-                <Shuffle size={14} strokeWidth={2.1} />
+                <div className="sidebar-wallpaper-selector-copy">
+                  <span className="sidebar-wallpaper-selector-label">Wallpaper</span>
+                  <span className="sidebar-wallpaper-selector-active">
+                    {selectedWallpaper?.label || "Default"}
+                  </span>
+                </div>
+                <span className="sidebar-wallpaper-toggle-icon" aria-hidden="true">
+                  <ChevronDown size={14} strokeWidth={2.2} />
+                </span>
               </button>
 
-              {wallpapers.map((wallpaper) => (
-                <button
-                  key={wallpaper.id}
-                  type="button"
-                  className={`sidebar-bg-thumb${
-                    backgroundSelection === wallpaper.id ? " is-active" : ""
-                  }`}
-                  onClick={() => selectBackground(wallpaper.id)}
-                  aria-label={`Use the ${wallpaper.label} wallpaper`}
-                  title={wallpaper.label}
-                >
-                  {wallpaper.thumbUrl ? (
-                    <img
-                      className="sidebar-bg-thumb-image"
-                      src={wallpaper.thumbUrl}
-                      alt=""
-                      aria-hidden="true"
-                      decoding="async"
-                    />
-                  ) : (
-                    <span className="sidebar-bg-thumb-none" aria-hidden="true" />
-                  )}
-                </button>
-              ))}
-            </div>
+              {wallpaperPickerOpen && (
+                <div className="sidebar-wallpaper-panel" id="sidebar-wallpaper-panel">
+                  <div className="sidebar-wallpaper-panel-header">
+                    <span className="sidebar-wallpaper-panel-hint">
+                      Pick a background
+                    </span>
+                    <button
+                      type="button"
+                      className="sidebar-wallpaper-random"
+                      onClick={selectRandomWallpaper}
+                      aria-label="Pick a random wallpaper"
+                      title="Random wallpaper"
+                    >
+                      <Shuffle size={12} strokeWidth={2.1} />
+                    </button>
+                  </div>
 
-            {mode === "ma" && (
-              <div
-                className="sidebar-compliance-slot"
-                style={getTabDisplayStyle(activeTab === "script")}
-              >
-                <Suspense fallback={null}>
-                  <ComplianceStatusPanel isLiveCall={false} callDuration={0} />
-                </Suspense>
-              </div>
-            )}
+                  <div className="sidebar-wallpaper-grid">
+                    {wallpapers.map((wallpaper) => (
+                      <button
+                        key={wallpaper.id}
+                        type="button"
+                        className={`sidebar-wallpaper-tile${
+                          backgroundSelection === wallpaper.id ? " is-active" : ""
+                        }`}
+                        onClick={() => selectBackground(wallpaper.id)}
+                        aria-label={`Use the ${wallpaper.label} wallpaper`}
+                        title={wallpaper.label}
+                      >
+                        {wallpaper.thumbUrl ? (
+                          <img
+                            className="sidebar-wallpaper-tile-image"
+                            src={wallpaper.thumbUrl}
+                            alt=""
+                            aria-hidden="true"
+                            decoding="async"
+                          />
+                        ) : (
+                          <span className="sidebar-wallpaper-tile-none" aria-hidden="true" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {!LOGIN_DISABLED && (
               <div className="sidebar-profile">
