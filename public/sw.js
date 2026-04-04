@@ -4,9 +4,17 @@
    ===================================================== */
 
 const CACHE_NAME = "enrollgen-v1";
+const isLocalhost =
+  self.location.hostname === "localhost" ||
+  self.location.hostname === "127.0.0.1";
 
 // Install — pre-cache app shell
 self.addEventListener("install", (event) => {
+  if (isLocalhost) {
+    self.skipWaiting();
+    return;
+  }
+
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(["/", "/index.html"]);
@@ -17,6 +25,17 @@ self.addEventListener("install", (event) => {
 
 // Activate — clean old caches
 self.addEventListener("activate", (event) => {
+  if (isLocalhost) {
+    event.waitUntil(
+      caches
+        .keys()
+        .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+        .then(() => self.registration.unregister())
+    );
+    self.clients.claim();
+    return;
+  }
+
   event.waitUntil(
     caches
       .keys()
@@ -36,6 +55,7 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET and chrome-extension requests
   if (event.request.method !== "GET") return;
   if (event.request.url.startsWith("chrome-extension")) return;
+  if (isLocalhost) return;
 
   event.respondWith(
     fetch(event.request)

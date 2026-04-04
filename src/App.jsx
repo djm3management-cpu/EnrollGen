@@ -4,8 +4,9 @@ import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider, useMedSup } from "./context/MedSupContext";
 import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
 import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
-import { BookOpen, Menu, X } from "lucide-react";
+import { BookOpen, Menu, Shuffle, X } from "lucide-react";
 import DevotedPopupManager from "./components/ancillary/DevotedPopupManager";
+import { wallpapers } from "./config/wallpapers";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
@@ -47,26 +48,6 @@ const ComplianceStatusPanel = lazy(loadComplianceStatusPanel);
 const COMPLIANCE_HUB_TAB_IDS = new Set(["complianceHub", "history", "upload", "review"]);
 const AGENT_TOOLS_TAB_IDS = new Set(["tools", "objections", "decisionTree"]);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v2";
-const LANDSCAPE_BACKDROPS = [
-  {
-    id: "valley",
-    label: "Mountain lake",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Lake_Mountain_Landscape.jpg/3840px-Lake_Mountain_Landscape.jpg",
-  },
-  {
-    id: "meadow",
-    label: "Blooming meadow",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Blooming_Mountain_Meadow_%2852582038680%29.jpg/3840px-Blooming_Mountain_Meadow_%2852582038680%29.jpg",
-  },
-  {
-    id: "cliffs",
-    label: "Coastal sunset",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Coastal_Landscape_With_Colorful_Sunset_%2846324576151%29.jpg/3840px-Coastal_Landscape_With_Colorful_Sunset_%2846324576151%29.jpg",
-  },
-];
 
 /* ── Daily Verse accordion wrapper for main flow ── */
 function DailyVerseAccordion() {
@@ -478,6 +459,10 @@ function LazyPanel({ children }) {
   );
 }
 
+function getTabDisplayStyle(isActive) {
+  return { display: isActive ? "block" : "none" };
+}
+
 function SessionSummarySlot() {
   const { state } = useScript();
 
@@ -529,7 +514,22 @@ function AppTabButton({ activeTab, tabId, onSelect, onPreload, children }) {
 }
 
 function loadBackgroundSelection() {
-  return "charcoal";
+  const fallbackId = wallpapers[0]?.id || "none";
+
+  if (typeof window === "undefined") {
+    return fallbackId;
+  }
+
+  try {
+    const storedId = window.localStorage.getItem(BACKGROUND_SELECTION_STORAGE_KEY);
+    if (wallpapers.some((wallpaper) => wallpaper.id === storedId)) {
+      return storedId;
+    }
+  } catch {
+    // Ignore storage failures and use the default background.
+  }
+
+  return fallbackId;
 }
 
 /* ─── ProfileBar ─────────────────────────────────────────────────────────── */
@@ -606,22 +606,9 @@ function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [backgroundSelection, setBackgroundSelection] = useState(loadBackgroundSelection);
   const sidebarRef = useRef(null);
-  const selectedLandscape = LANDSCAPE_BACKDROPS.find(
-    (backdrop) => backdrop.id === backgroundSelection
-  );
-  const viewportBackgroundStyle = selectedLandscape
-    ? {
-        background: `
-          linear-gradient(154deg, rgba(4, 6, 8, 0.88) 0%, rgba(5, 7, 10, 0.74) 32%, rgba(4, 5, 7, 0.84) 58%, rgba(3, 4, 6, 0.92) 100%),
-          radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 18%, transparent 34%),
-          radial-gradient(circle at 78% 14%, rgba(255, 214, 153, 0.14) 0%, rgba(255, 214, 153, 0.03) 18%, transparent 34%),
-          url("${selectedLandscape.imageUrl}")
-        `,
-        backgroundSize: "100% 100%, 100% 100%, 100% 100%, cover",
-        backgroundPosition: "center, center, center, center",
-        animation: "ambientShiftClean 22s ease-in-out infinite alternate",
-      }
-    : undefined;
+  const selectedWallpaper =
+    wallpapers.find((wallpaper) => wallpaper.id === backgroundSelection) || wallpapers[0];
+  const wallpaperChoices = wallpapers.filter((wallpaper) => wallpaper.url);
 
   // Close sidebar on outside click (mobile)
   useEffect(() => {
@@ -644,12 +631,12 @@ function AppContent() {
   }, [sidebarOpen]);
 
   useEffect(() => {
-    document.body.dataset.bgMode = selectedLandscape ? "landscape" : "clean";
+    document.body.dataset.bgMode = selectedWallpaper?.url ? "wallpaper" : "clean";
 
     try {
       window.localStorage.setItem(
         BACKGROUND_SELECTION_STORAGE_KEY,
-        backgroundSelection
+        selectedWallpaper?.id || wallpapers[0]?.id || "none"
       );
     } catch {
       // Ignore storage failures; the UI still works for the current session.
@@ -658,7 +645,7 @@ function AppContent() {
     return () => {
       delete document.body.dataset.bgMode;
     };
-  }, [backgroundSelection, selectedLandscape]);
+  }, [selectedWallpaper?.id, selectedWallpaper?.url]);
 
   const activeTab = COMPLIANCE_HUB_TAB_IDS.has(tab)
     ? "complianceHub"
@@ -761,9 +748,31 @@ function AppContent() {
     setBackgroundSelection(nextSelection);
   };
 
+  const selectRandomWallpaper = () => {
+    const candidates = wallpaperChoices.filter(
+      (wallpaper) => wallpaper.id !== selectedWallpaper?.id
+    );
+    const source = candidates.length ? candidates : wallpaperChoices;
+    if (!source.length) return;
+    const randomWallpaper =
+      source[Math.floor(Math.random() * source.length)];
+    setBackgroundSelection(randomWallpaper.id);
+  };
+
   return (
     <>
-      <div className="viewport-bg" style={viewportBackgroundStyle} />
+      <div className="viewport-bg">
+        {selectedWallpaper?.url ? (
+          <img
+            key={selectedWallpaper.id}
+            className="viewport-wallpaper-image"
+            src={selectedWallpaper.url}
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+          />
+        ) : null}
+      </div>
       <div className="app-shell">
         {/* ── HAMBURGER BUTTON (visible <1024px) ── */}
         <button
@@ -853,35 +862,45 @@ function AppContent() {
             <div className="sidebar-bg-selector-row">
               <button
                 type="button"
-                className={`sidebar-bg-toggle${
-                  backgroundSelection === "charcoal" ? " is-active" : ""
-                }`}
-                onClick={() => selectBackground("charcoal")}
-                aria-label="Use the charcoal background"
-                title="Use the charcoal background"
+                className="sidebar-bg-random-button"
+                onClick={selectRandomWallpaper}
+                aria-label="Pick a random wallpaper"
+                title="Random wallpaper"
               >
-                <span className="sidebar-bg-toggle-core" aria-hidden="true" />
+                <Shuffle size={14} strokeWidth={2.1} />
               </button>
 
-              {LANDSCAPE_BACKDROPS.map((backdrop) => (
+              {wallpapers.map((wallpaper) => (
                 <button
-                  key={backdrop.id}
+                  key={wallpaper.id}
                   type="button"
-                  className={`sidebar-bg-landscape-button${
-                    backgroundSelection === backdrop.id ? " is-active" : ""
+                  className={`sidebar-bg-thumb${
+                    backgroundSelection === wallpaper.id ? " is-active" : ""
                   }`}
-                  onClick={() => selectBackground(backdrop.id)}
-                  aria-label={`Use the ${backdrop.label} background`}
-                  title={backdrop.label}
-                  style={{
-                    backgroundImage: `linear-gradient(160deg, rgba(7, 9, 12, 0.12) 0%, rgba(7, 9, 12, 0.38) 100%), url("${backdrop.imageUrl}")`,
-                  }}
-                />
+                  onClick={() => selectBackground(wallpaper.id)}
+                  aria-label={`Use the ${wallpaper.label} wallpaper`}
+                  title={wallpaper.label}
+                >
+                  {wallpaper.thumbUrl ? (
+                    <img
+                      className="sidebar-bg-thumb-image"
+                      src={wallpaper.thumbUrl}
+                      alt=""
+                      aria-hidden="true"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span className="sidebar-bg-thumb-none" aria-hidden="true" />
+                  )}
+                </button>
               ))}
             </div>
 
-            {mode === "ma" && activeTab === "script" && (
-              <div className="sidebar-compliance-slot">
+            {mode === "ma" && (
+              <div
+                className="sidebar-compliance-slot"
+                style={getTabDisplayStyle(activeTab === "script")}
+              >
                 <Suspense fallback={null}>
                   <ComplianceStatusPanel isLiveCall={false} callDuration={0} />
                 </Suspense>
@@ -900,96 +919,104 @@ function AppContent() {
         <main className="app-center">
           {mode === "ma" && (
             <ScriptProvider>
-              {activeTab === "script" && (
-                <>
-                  <div className="main-script-layout">
-                    <div className="main-script-primary">
-                      <LazyPanel>
-                        <ScriptFlow />
-                      </LazyPanel>
-                      <SessionSummarySlot />
-                    </div>
-                  </div>
-                </>
-              )}
-              {activeTab === "complianceHub" && (
+              <div
+                className="main-script-layout"
+                style={getTabDisplayStyle(activeTab === "script")}
+              >
+                <div className="main-script-primary">
+                  <LazyPanel>
+                    <ScriptFlow />
+                  </LazyPanel>
+                  <SessionSummarySlot />
+                </div>
+              </div>
+              <div style={getTabDisplayStyle(activeTab === "complianceHub")}>
                 <LazyPanel>
                   <ComplianceHub />
                 </LazyPanel>
-              )}
-              {activeTab === "tools" && (
+              </div>
+              <div style={getTabDisplayStyle(activeTab === "tools")}>
                 <LazyPanel>
                   <AgentTools />
                 </LazyPanel>
-              )}
-              {activeTab === "sepTool" && (
-                <>
-                  <LazyPanel>
-                    <SEPLookup />
-                  </LazyPanel>
-                  <LazyPanel>
-                    <CarrierRef />
-                  </LazyPanel>
-                </>
-              )}
+              </div>
+              <div style={getTabDisplayStyle(activeTab === "sepTool")}>
+                <LazyPanel>
+                  <SEPLookup />
+                </LazyPanel>
+                <LazyPanel>
+                  <CarrierRef />
+                </LazyPanel>
+              </div>
             </ScriptProvider>
           )}
 
           {mode === "medsup" && (
             <MedSupProvider>
-              {activeTab === "script" && (
+              <div style={getTabDisplayStyle(activeTab === "script")}>
                 <LazyPanel>
                   <MedSupScriptWorkspace />
                 </LazyPanel>
-              )}
-              {activeTab === "complianceHub" && (
-                <>
-                  <LazyPanel>
-                    <CallHistory />
-                  </LazyPanel>
-                  <LazyPanel>
-                    <TranscriptUpload />
-                  </LazyPanel>
-                </>
-              )}
+              </div>
+              <div style={getTabDisplayStyle(activeTab === "complianceHub")}>
+                <LazyPanel>
+                  <CallHistory />
+                </LazyPanel>
+                <LazyPanel>
+                  <TranscriptUpload />
+                </LazyPanel>
+              </div>
             </MedSupProvider>
           )}
 
-          {mode === "aca" && activeTab === "script" && (
-            <LazyPanel>
-              <ACAScript />
-            </LazyPanel>
+          {mode === "aca" && (
+            <>
+              <div style={getTabDisplayStyle(activeTab === "script")}>
+                <LazyPanel>
+                  <ACAScript />
+                </LazyPanel>
+              </div>
+              <div style={getTabDisplayStyle(activeTab === "acaIntel")}>
+                <LazyPanel>
+                  <ACAIntelligence />
+                </LazyPanel>
+              </div>
+              <div style={getTabDisplayStyle(activeTab === "complianceHub")}>
+                <LazyPanel>
+                  <CallHistory />
+                </LazyPanel>
+              </div>
+            </>
           )}
 
-          {mode === "aca" && activeTab === "acaIntel" && (
-            <LazyPanel>
-              <ACAIntelligence />
-            </LazyPanel>
+          {mode === "u65" && (
+            <>
+              <div style={getTabDisplayStyle(activeTab === "script")}>
+                <LazyPanel>
+                  <U65Script />
+                </LazyPanel>
+              </div>
+              <div style={getTabDisplayStyle(activeTab === "complianceHub")}>
+                <LazyPanel>
+                  <CallHistory />
+                </LazyPanel>
+              </div>
+            </>
           )}
 
-          {mode === "u65" && activeTab === "script" && (
-            <LazyPanel>
-              <U65Script />
-            </LazyPanel>
+          {mode !== "ma" && (
+            <div style={getTabDisplayStyle(activeTab === "carrierRef")}>
+              <LazyPanel>
+                <CarrierRef />
+              </LazyPanel>
+            </div>
           )}
 
-          {activeTab === "carrierRef" && mode !== "ma" && (
-            <LazyPanel>
-              <CarrierRef />
-            </LazyPanel>
-          )}
-
-          {activeTab === "verse" && (
+          <div style={getTabDisplayStyle(activeTab === "verse")}>
             <LazyPanel>
               <DailyVerse />
             </LazyPanel>
-          )}
-
-          {(mode === "aca" || mode === "u65") && activeTab === "complianceHub" && (
-            <LazyPanel>
-              <CallHistory />
-            </LazyPanel>
-          )}
+          </div>
         </main>
       </div>
     </>

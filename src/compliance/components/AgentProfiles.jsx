@@ -4,13 +4,13 @@
  */
 
 import { memo, useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAppAuth } from '../../context/AuthContext';
 import { fetchWithClerk } from '../../lib/clerkFetch.js';
 
 const API = '/.netlify/functions/compliance';
 
 const AgentProfiles = memo(function AgentProfiles() {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState(null);

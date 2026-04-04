@@ -3,7 +3,7 @@ import { MessageSquare } from "lucide-react";
 import AncillaryPopup from "./AncillaryPopup";
 
 const DESKTOP_BREAKPOINT = 1400;
-const POPUP_WIDTH = 280;
+const POPUP_WIDTH = 196;
 const RIGHT_RAIL_WIDTH = 250;
 const RIGHT_RAIL_MARGIN = 18;
 const POPUP_RIGHT_GAP = 18;
@@ -51,8 +51,8 @@ const CopilotStartPopupManager = memo(function CopilotStartPopupManager({
     <div
       className={
         inline
-          ? "ancillary-popup-dock ancillary-popup-dock--inline"
-          : "copilot-setup-popup-dock"
+          ? "copilot-setup-popup-shell ancillary-popup-dock ancillary-popup-dock--inline"
+          : "copilot-setup-popup-shell copilot-setup-popup-dock"
       }
       style={
         inline
@@ -68,8 +68,8 @@ const CopilotStartPopupManager = memo(function CopilotStartPopupManager({
     >
       <AncillaryPopup
         popupKey="copilot-start-setup"
-        icon={<MessageSquare size={16} strokeWidth={2.2} />}
-        title="COPILOT START CHECK"
+        icon={<MessageSquare size={14} strokeWidth={2.25} />}
+        title="START CHECK"
         collapsed={false}
         onExpand={() => {}}
         onDismiss={() => setVisible(false)}
@@ -77,17 +77,17 @@ const CopilotStartPopupManager = memo(function CopilotStartPopupManager({
         inline={inline}
       >
         <p className="ancillary-popup-copy">
-          Before you begin the call, set Copilot first.
+          Set Copilot before the call.
         </p>
         <div className="copilot-setup-popup-note-list ancillary-popup-note-list ancillary-popup-note-list--compact">
           <div className="ancillary-popup-note copilot-setup-popup-note">
-            Press <strong>Start</strong> in Copilot.
+            Open <strong>Copilot Start</strong>.
           </div>
           <div className="ancillary-popup-note copilot-setup-popup-note">
-            Select <strong>NGHS GOHIGHLEVEL</strong>.
+            Pick <strong>NGHS GOHIGHLEVEL</strong>.
           </div>
           <div className="ancillary-popup-note copilot-setup-popup-note">
-            Then click the red <strong>START</strong> button.
+            Hit the orange <strong>START</strong>.
           </div>
         </div>
       </AncillaryPopup>

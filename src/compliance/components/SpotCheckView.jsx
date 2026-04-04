@@ -4,7 +4,7 @@
  */
 
 import { memo, useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAppAuth } from '../../context/AuthContext';
 import { fetchWithClerk } from '../../lib/clerkFetch.js';
 import OverrideForm from './OverrideForm.jsx';
 
@@ -28,7 +28,7 @@ function displayPassFail(status) {
 }
 
 const SpotCheckView = memo(function SpotCheckView({ callId, scorecardId, calibrationRunId, onBack }) {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [scorecard, setScorecard] = useState(null);
   const [callRecord, setCallRecord] = useState(null);
   const [loading, setLoading] = useState(true);

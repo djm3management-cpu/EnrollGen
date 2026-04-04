@@ -57,6 +57,7 @@ export const initialState = {
 
   // Agent & TPMO fields — auto-filled from localStorage
   agentName: persisted.agentName || "",
+  callDirection: "inbound",
   tpmoZip: "",
   tpmoOrgs: persisted.tpmoOrgs || "",
   tpmoPlans: persisted.tpmoPlans || "",
@@ -424,6 +425,7 @@ export function generateSessionSummary(state) {
 
   return {
     agentName: state.agentName || "(not entered)",
+    callDirection: state.callDirection || "inbound",
     sessionStart: sessionStartDate.toLocaleString(),
     sessionEnd: now.toLocaleString(),
     planName: state.notes.planName || "(not entered)",

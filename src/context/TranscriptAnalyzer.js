@@ -107,6 +107,82 @@ function appearsBeforeInTranscript(transcript, phrasesA, phrasesB) {
   return resultA.position < resultB.position;
 }
 
+function getAgentStatements(transcript) {
+  const lines = String(transcript || "")
+    .split(/\r?\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const agentLines = lines
+    .filter((line) => !/^(customer|caller|client|beneficiary|member)\s*:/i.test(line))
+    .map((line) => line.replace(/^(agent|rep|representative|advisor|broker)\s*:\s*/i, ""));
+
+  const sourceLines = agentLines.length > 0 ? agentLines : lines;
+  return sourceLines
+    .flatMap((line) => line.split(/(?<=[.?!])\s+/))
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function isQuestionLikeStatement(statement) {
+  const trimmed = String(statement || "").trim();
+  if (!trimmed) return false;
+  if (trimmed.includes("?")) return true;
+
+  const normalized = normalize(trimmed);
+  return /^(what|which|who|when|where|why|how|can|could|would|will|do|does|did|is|are|am|should|may)\b/.test(
+    normalized
+  );
+}
+
+function stripToken(token) {
+  return token.replace(/^[^a-z0-9]+|[^a-z0-9]+$/gi, "");
+}
+
+function findComparativeClaimViolations(transcript) {
+  const triggerWords = ["best", "lowest", "guaranteed"];
+  const targetWords = [
+    "plan",
+    "plans",
+    "rate",
+    "rates",
+    "premium",
+    "premiums",
+    "price",
+    "prices",
+    "coverage",
+  ];
+  const violations = [];
+
+  for (const statement of getAgentStatements(transcript)) {
+    if (isQuestionLikeStatement(statement)) continue;
+
+    const words = normalize(statement)
+      .split(/\s+/)
+      .map(stripToken)
+      .filter(Boolean);
+
+    for (let index = 0; index < words.length; index += 1) {
+      if (!triggerWords.includes(words[index])) continue;
+
+      const windowStart = Math.max(0, index - 5);
+      const windowEnd = Math.min(words.length - 1, index + 5);
+      const nearbyTarget = words
+        .slice(windowStart, windowEnd + 1)
+        .some((word) => targetWords.includes(word));
+
+      if (!nearbyTarget) continue;
+
+      violations.push(
+        `Comparative claim: "${statement.trim().replace(/\s+/g, " ")}"`
+      );
+      break;
+    }
+  }
+
+  return violations;
+}
+
 /* ═══════════════════════════════════════════════════════════════
      INTENT MAP — 150+ Medicare Enrollment Intents
      Organized by compliance category, mirroring Conversely AI's
@@ -581,20 +657,7 @@ const INTENT_MAP = {
     section: "Required Disclosures",
     description: "No misleading or unsubstantiated claims detected",
     detect: (t) => {
-      const violations = [];
-      const superlatives = [
-        "best plan",
-        "the best",
-        "number one",
-        "#1",
-        "top rated",
-        "most popular",
-        "everyone loves",
-        "guaranteed to save",
-        "you will save",
-        "save you money",
-        "definitely save",
-      ];
+      const violations = [...findComparativeClaimViolations(t)];
       const pressure = [
         "you need to enroll today",
         "offer expires",
@@ -617,37 +680,14 @@ const INTENT_MAP = {
         "no limitations",
         "unlimited coverage",
       ];
-
       const normalizedT = normalize(t);
-      const benignContexts = [
-        "find the best",
-        "help you find",
-        "best plan for you",
-        "best plan for your",
-        "best option for",
-        "best fit for",
-        "what works best",
-        "best thing to do",
-        "your best option",
-        "best suited",
-        "best match",
-      ];
-      for (const phrase of superlatives) {
-        const np = normalize(phrase);
-        if (!normalizedT.includes(np)) continue;
-        if (benignContexts.some((ctx) => normalizedT.includes(normalize(ctx)))) continue;
-        const regex = new RegExp(`\\b${np.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
-        if (regex.test(normalizedT)) {
-          violations.push(`Superlative: "${phrase}"`);
-        }
-      }
       for (const phrase of pressure) {
-        if (normalize(t).includes(normalize(phrase))) {
+        if (normalizedT.includes(normalize(phrase))) {
           violations.push(`Pressure tactic: "${phrase}"`);
         }
       }
       for (const phrase of misleading) {
-        if (normalize(t).includes(normalize(phrase))) {
+        if (normalizedT.includes(normalize(phrase))) {
           violations.push(`Misleading claim: "${phrase}"`);
         }
       }

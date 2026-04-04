@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react";
 import { useScript } from "../context/ScriptContext";
+import { useLiveCall } from "../context/LiveCallContext";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { generateSessionSummary } from "../context/scriptReducer";
-import { scoreCompliance } from "../context/ComplianceScorer";
+import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
 import {
   getDeterministicBlockers,
   summarizeBlockers,
@@ -44,10 +45,29 @@ const LEVEL_STYLES = {
 export default React.memo(function ReviewWorkspace() {
   const { state, activeSection } = useScript();
   const { entries, getWarnings } = useCopilotLog();
+  const { liveCall } = useLiveCall();
   const [selectedEntryId, setSelectedEntryId] = useState(null);
 
   const summary = useMemo(() => generateSessionSummary(state), [state]);
-  const compliance = useMemo(() => scoreCompliance(state, entries), [state, entries]);
+  const compliance = useMemo(() => {
+    const scoringOptions = {
+      callStarted: liveCall.callStarted || state.enrollOk,
+      callDirection: state.callDirection || liveCall.callDirection,
+      mergedTranscript: liveCall.mergedTranscript,
+      customerText: liveCall.customerTranscript,
+    };
+
+    return liveCall.customerTranscript
+      ? scoreTwoSided(
+          state,
+          entries,
+          liveCall.transcript,
+          liveCall.customerTranscript,
+          liveCall.mergedTranscript,
+          scoringOptions
+        )
+      : scoreCompliance(state, entries, liveCall.transcript, scoringOptions);
+  }, [state, entries, liveCall]);
   const blockers = useMemo(() => getDeterministicBlockers(state), [state]);
   const blockerSummary = useMemo(() => summarizeBlockers(blockers), [blockers]);
   const warnings = getWarnings();

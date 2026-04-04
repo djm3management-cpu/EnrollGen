@@ -4,7 +4,7 @@
  */
 
 import { memo, useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAppAuth } from '../../context/AuthContext';
 import { fetchWithClerk } from '../../lib/clerkFetch.js';
 import ScorecardDetail from './ScorecardDetail.jsx';
 
@@ -19,7 +19,7 @@ function displayPassFail(status) {
 }
 
 const ScorecardList = memo(function ScorecardList() {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [scorecards, setScorecards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);

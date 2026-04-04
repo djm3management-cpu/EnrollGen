@@ -4,7 +4,7 @@
  */
 
 import { memo, useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAppAuth } from '../../context/AuthContext';
 import { fetchWithClerk } from '../../lib/clerkFetch.js';
 import SpotCheckView from './SpotCheckView.jsx';
 import BatchImport from './BatchImport.jsx';
@@ -18,7 +18,7 @@ const TIER_COLORS = {
 };
 
 const CalibrationDashboard = memo(function CalibrationDashboard() {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [runs, setRuns] = useState([]);
   const [activeRun, setActiveRun] = useState(null);
   const [report, setReport] = useState(null);

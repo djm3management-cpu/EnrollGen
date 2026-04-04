@@ -4,7 +4,7 @@
  */
 
 import { memo, useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAppAuth } from '../../context/AuthContext';
 import { fetchWithClerk } from '../../lib/clerkFetch.js';
 
 const API = '/.netlify/functions/compliance';
@@ -18,7 +18,7 @@ function displayPassFail(status) {
 }
 
 const ComplianceOverview = memo(function ComplianceOverview() {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [data, setData] = useState(null);
   const [scorecards, setScorecards] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +85,21 @@ const ComplianceOverview = memo(function ComplianceOverview() {
 
   return (
     <div style={{ padding: '24px 28px' }}>
+      {!(d.total_calls || 0) && scorecards.length === 0 && (
+        <div
+          style={{
+            ...cardStyle,
+            marginBottom: 20,
+            padding: "18px 20px",
+            color: "var(--text-muted)",
+            textAlign: "center",
+            fontSize: "0.9rem",
+          }}
+        >
+          No calls scored yet
+        </div>
+      )}
+
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
         <StatCard label="Total Calls" value={d.total_calls || 0} />

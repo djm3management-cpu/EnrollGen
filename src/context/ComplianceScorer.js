@@ -37,11 +37,314 @@ function getCallDurationMin(state) {
   return ((state.callEndTime || Date.now()) - state.tpmoStart) / 60000;
 }
 
+function normalizeEvidenceText(text = "") {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeScoringOptions(options = {}) {
+  const mergedTranscript = Array.isArray(options.mergedTranscript)
+    ? options.mergedTranscript
+    : [];
+  return {
+    callDirection: options.callDirection || "inbound",
+    callStarted: options.callStarted ?? true,
+    customerText:
+      typeof options.customerText === "string" ? options.customerText : "",
+    mergedTranscript,
+  };
+}
+
+function getFinalMergedEntries(options = {}) {
+  return normalizeScoringOptions(options).mergedTranscript
+    .filter((entry) => entry && (entry.text || "").trim())
+    .filter((entry) => entry.isFinal !== false)
+    .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+}
+
+function matchesPhrase(text, phrases = []) {
+  const normalized = normalizeEvidenceText(text);
+  return phrases.some((phrase) =>
+    normalized.includes(normalizeEvidenceText(phrase))
+  );
+}
+
+function findAgentEntry(entries, matcher) {
+  return entries.find(
+    (entry) =>
+      String(entry.speaker || "agent").toLowerCase() !== "customer" &&
+      matcher(entry)
+  );
+}
+
+function findCustomerAffirmationAfterTimestamp(entries, timestamp) {
+  const affirmativePhrases = [
+    "yes",
+    "yeah",
+    "yep",
+    "correct",
+    "right",
+    "okay",
+    "ok",
+    "sure",
+    "go ahead",
+    "i agree",
+    "i consent",
+    "that is fine",
+    "that's fine",
+    "sounds good",
+    "that works",
+  ];
+
+  return entries.find((entry) => {
+    if (String(entry.speaker || "").toLowerCase() !== "customer") return false;
+    if ((entry.timestamp || 0) < timestamp) return false;
+    if ((entry.timestamp || 0) - timestamp > 30000) return false;
+    return matchesPhrase(entry.text, affirmativePhrases);
+  });
+}
+
+function buildConsentTranscriptEvidence(kind, options = {}) {
+  const entries = getFinalMergedEntries(options);
+  if (entries.length === 0) return null;
+
+  const config =
+    kind === "recording"
+      ? {
+          label: "Recording consent",
+          phrases: [
+            "this call is being recorded",
+            "this call may be recorded",
+            "call is being recorded",
+            "recorded line",
+            "recorded for quality",
+            "quality and training",
+            "may i continue",
+            "is that okay",
+            "are you okay with that",
+            "do you consent",
+          ],
+        }
+      : {
+          label: "Enrollment consent",
+          phrases: [
+            "would you like to proceed",
+            "ready to enroll",
+            "do you want to proceed",
+            "do you agree to enroll",
+            "do you authorize",
+            "do i have your permission",
+            "want me to submit",
+            "like me to submit",
+            "are you ready to",
+          ],
+        };
+
+  const agentEntry = findAgentEntry(entries, (entry) =>
+    matchesPhrase(entry.text, config.phrases)
+  );
+  if (!agentEntry) return null;
+
+  const customerAck = findCustomerAffirmationAfterTimestamp(
+    entries,
+    agentEntry.timestamp || 0
+  );
+
+  if (customerAck) {
+    return {
+      hasTranscriptEvidence: true,
+      confidence: 95,
+      evidence: `${config.label} confirmed: "${agentEntry.text}" • customer acknowledged "${customerAck.text}"`,
+      intents: [],
+    };
+  }
+
+  return {
+    hasTranscriptEvidence: true,
+    confidence: 58,
+    evidence: `${config.label} request detected: "${agentEntry.text}" • customer acknowledgment not yet detected`,
+    intents: [],
+  };
+}
+
+function buildTpmoTimingEvidence(scriptState, options = {}) {
+  const entries = getFinalMergedEntries(options);
+  if (entries.length === 0) return null;
+
+  const numberWords =
+    "(?:\\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)";
+  const countRegex = new RegExp(
+    `${numberWords}\\s+(?:organizations?|carriers?).{0,48}${numberWords}\\s+plans?`,
+    "i"
+  );
+  const fallbackPhrases = [
+    "we do not offer every plan",
+    "not every plan available",
+    "represent",
+    "organizations and plans",
+    "plans available",
+  ];
+
+  const agentEntry = findAgentEntry(entries, (entry) => {
+    const normalized = normalizeEvidenceText(entry.text);
+    return (
+      countRegex.test(normalized) ||
+      (matchesPhrase(normalized, fallbackPhrases) &&
+        normalized.includes("plan") &&
+        normalized.includes("organization"))
+    );
+  });
+
+  if (!agentEntry) return null;
+
+  const callStartTs =
+    entries[0]?.timestamp || scriptState?.sectionTimestamps?.[1]?.start || 0;
+  const elapsedSec = Math.max(
+    0,
+    Math.round(((agentEntry.timestamp || callStartTs) - callStartTs) / 1000)
+  );
+
+  return {
+    hasTranscriptEvidence: true,
+    confidence: elapsedSec <= 90 ? 96 : 58,
+    evidence:
+      elapsedSec <= 90
+        ? `TPMO disclaimer detected ${elapsedSec}s into the call.`
+        : `TPMO disclaimer detected ${elapsedSec}s into the call, after the 90-second target.`,
+    intents: [],
+  };
+}
+
+function buildSubjectToApprovalEvidence(analysis) {
+  const result = analysis?.results?.effective_date_stated;
+  if (!result) return null;
+  if (
+    result.detected &&
+    !String(result.evidence || "")
+      .toLowerCase()
+      .includes("missing")
+  ) {
+    return {
+      hasTranscriptEvidence: true,
+      confidence: result.confidence || 95,
+      evidence: result.evidence,
+      intents: ["effective_date_stated"],
+    };
+  }
+
+  return {
+    hasTranscriptEvidence: false,
+    confidence: 0,
+    evidence: result.evidence,
+    intents: ["effective_date_stated"],
+  };
+}
+
+function getQuestionTranscriptEvidence(
+  questionId,
+  scriptState,
+  analysis,
+  options = {}
+) {
+  if (questionId === "opening_recording_consent") {
+    return (
+      buildConsentTranscriptEvidence("recording", options) ||
+      getTranscriptEvidence(questionId, analysis)
+    );
+  }
+
+  if (questionId === "consent_verbal") {
+    return (
+      buildConsentTranscriptEvidence("enrollment", options) ||
+      getTranscriptEvidence(questionId, analysis)
+    );
+  }
+
+  if (questionId === "disclosures_tpmo_timing") {
+    return buildTpmoTimingEvidence(scriptState, options);
+  }
+
+  if (questionId === "consent_subject_to_approval") {
+    return buildSubjectToApprovalEvidence(analysis);
+  }
+
+  return getTranscriptEvidence(questionId, analysis);
+}
+
+const DUAL_SOURCE_QUESTION_IDS = new Set([
+  "opening_agent_id",
+  "opening_beneficiary_name",
+  "opening_recording_consent",
+  "disclosures_tpmo",
+  "disclosures_tpmo_timing",
+  "soa_poa_check",
+  "soa_not_obligated",
+  "soa_products_permission",
+  "elig_decision_authority",
+  "elig_parts_ab",
+  "elig_election_period",
+  "elig_disqualifying",
+  "elig_reason",
+  "elig_priorities",
+  "needs_providers",
+  "needs_medications",
+  "needs_recap",
+  "sob_review",
+  "sob_network",
+  "sob_coverage_impact",
+  "sob_disclosures",
+  "consent_plan_confirmed",
+  "consent_verbal",
+  "consent_subject_to_approval",
+  "closing_confirmation",
+  "closing_carrier_number",
+  "closing_rights",
+  "closing_next_steps",
+]);
+
+const DIRECT_METADATA_QUESTION_IDS = new Set([
+  "disclosures_snp",
+  "disclosures_no_misleading",
+  "cx_call_duration",
+  "cx_section_order",
+  "cx_warnings_volume",
+]);
+
+const OUTBOUND_ONLY_QUESTION_IDS = new Set([]);
+
+function singleSourceScore(value) {
+  if (value >= 95) return 70;
+  if (value >= 80) return 64;
+  if (value >= 65) return 58;
+  if (value >= 45) return 48;
+  if (value > 0) return 35;
+  return 0;
+}
+
+function confirmedScore(value) {
+  if (value >= 95) return 100;
+  if (value >= 85) return 92;
+  if (value >= 75) return 86;
+  if (value >= 60) return 80;
+  return 72;
+}
+
 /**
  * mergeScores — Combine gate score with transcript evidence.
  * Violations override. Otherwise higher score wins.
  */
-function mergeScores(gateResult, te) {
+function mergeScores(questionId, gateResult, te) {
+  if (gateResult?.notApplicable) {
+    return {
+      score: 100,
+      evidence: gateResult.evidence,
+      source: "not_applicable",
+    };
+  }
+
   if (!te || !te.hasTranscriptEvidence) {
     if (te && te.violation)
       return {
@@ -49,6 +352,18 @@ function mergeScores(gateResult, te) {
         evidence: te.evidence,
         source: "transcript_violation",
       };
+
+    if (DUAL_SOURCE_QUESTION_IDS.has(questionId)) {
+      return {
+        score: singleSourceScore(gateResult.score),
+        evidence:
+          te?.evidence && te.evidence !== gateResult.evidence
+            ? `${gateResult.evidence} Transcript check: ${te.evidence}`
+            : gateResult.evidence,
+        source: gateResult.score > 0 ? "gate_partial" : "gate",
+      };
+    }
+
     return {
       score: gateResult.score,
       evidence: gateResult.evidence,
@@ -59,29 +374,36 @@ function mergeScores(gateResult, te) {
     return { score: 0, evidence: te.evidence, source: "transcript_violation" };
 
   const gs = gateResult.score;
-  const ts =
-    te.confidence >= 90
-      ? 100
-      : te.confidence >= 75
-      ? 85
-      : te.confidence >= 60
-      ? 66
-      : te.confidence >= 40
-      ? 50
-      : te.confidence >= 20
-      ? 25
-      : 0;
-  const fs = Math.max(gs, ts);
+  const ts = DIRECT_METADATA_QUESTION_IDS.has(questionId)
+    ? confirmedScore(te.confidence)
+    : singleSourceScore(te.confidence);
+  const dualSource = DUAL_SOURCE_QUESTION_IDS.has(questionId);
+  const hasGateEvidence = gs > 0;
+  const hasTranscriptEvidence = ts > 0;
+  const fs =
+    dualSource && hasGateEvidence && hasTranscriptEvidence
+      ? Math.max(confirmedScore(Math.max(gs, te.confidence)), gs, ts)
+      : Math.max(gs, ts);
 
   let ev = "";
-  if (gs > 0 && ts > 0) ev = "✓ Verified: " + te.evidence;
-  else if (ts > gs) ev = "🎙️ Detected in transcript: " + te.evidence;
+  if (dualSource && hasGateEvidence && hasTranscriptEvidence) {
+    ev = `Verified by script flow + transcript: ${te.evidence}`;
+  } else if (ts > gs) ev = "Detected in transcript: " + te.evidence;
   else ev = gateResult.evidence;
 
   return {
     score: fs,
     evidence: ev,
-    source: gs > 0 && ts > 0 ? "both" : ts > gs ? "transcript" : "gate",
+    source:
+      dualSource && hasGateEvidence && hasTranscriptEvidence
+        ? "both"
+        : ts > gs
+        ? dualSource
+          ? "transcript_partial"
+          : "transcript"
+        : dualSource && gs > 0
+        ? "gate_partial"
+        : "gate",
   };
 }
 
@@ -185,15 +507,15 @@ const CATEGORIES = [
           "Was the TPMO disclaimer read within the first minute of the call?",
         points: 3,
         evaluate: (s) => {
-          const w = sectionCompletedWithinMs(s, 2, 120000);
+          const w = sectionCompletedWithinMs(s, 2, 90000);
           if (w === null)
-            return { score: 75, evidence: "Timing data unavailable." };
+            return { score: 35, evidence: "TPMO timing data unavailable yet." };
           return w
-            ? { score: 100, evidence: "TPMO within first 2 minutes." }
+            ? { score: 65, evidence: "TPMO completed within the first 90 seconds." }
             : {
-                score: 25,
+                score: 45,
                 evidence:
-                  "TPMO NOT within first 2 minutes — CMS requires first minute.",
+                  "TPMO completed after the first 90 seconds.",
               };
         },
       },
@@ -203,9 +525,13 @@ const CATEGORIES = [
         points: 3,
         evaluate: (s) => {
           if (!s.snpType)
-            return { score: 100, evidence: "No SNP — not required." };
+            return {
+              score: 100,
+              evidence: "No SNP selected — disclosure not required.",
+              notApplicable: true,
+            };
           return s.snpOk
-            ? { score: 100, evidence: `${s.snpType} disclosure completed.` }
+            ? { score: 70, evidence: `${s.snpType} disclosure completed.` }
             : {
                 score: 0,
                 evidence: `${s.snpType} selected but disclosure NOT completed.`,
@@ -226,7 +552,10 @@ const CATEGORIES = [
                 x.message?.includes("guarantee"))
           );
           return v.length === 0
-            ? { score: 100, evidence: "No misleading claims detected." }
+            ? {
+                score: 60,
+                evidence: "No misleading claims detected in local warnings.",
+              }
             : {
                 score: 0,
                 evidence: `${v.length} violation(s): ${v[0]?.message?.slice(
@@ -582,12 +911,15 @@ const CATEGORIES = [
         points: 3,
         evaluate: (s) => {
           const d = getCallDurationMin(s);
+          if (d > 60)
+            return {
+              score: 60,
+              evidence: `${d.toFixed(1)}min — unusually long call, review for friction.`,
+            };
           if (d >= 8)
             return { score: 100, evidence: `${d.toFixed(1)}min — adequate.` };
-          if (d >= 5)
-            return { score: 50, evidence: `${d.toFixed(1)}min — short.` };
           if (d > 0)
-            return { score: 25, evidence: `${d.toFixed(1)}min — too short.` };
+            return { score: 0, evidence: `${d.toFixed(1)}min — too short.` };
           return { score: 0, evidence: "Timer not started." };
         },
       },
@@ -617,13 +949,11 @@ const CATEGORIES = [
           const w = e.filter(
             (x) => x.level === "warn" || x.level === "critical"
           );
-          if (w.length === 0)
-            return { score: 100, evidence: "No warnings — clean call." };
           if (w.length <= 2)
-            return { score: 75, evidence: `${w.length} warning(s).` };
+            return { score: 100, evidence: `${w.length} warning(s) — within tolerance.` };
           if (w.length <= 5)
-            return { score: 50, evidence: `${w.length} warnings.` };
-          return { score: 25, evidence: `${w.length} warnings — significant.` };
+            return { score: 60, evidence: `${w.length} warnings — review recommended.` };
+          return { score: 0, evidence: `${w.length} warnings — excessive.` };
         },
       },
     ],
@@ -637,8 +967,13 @@ const CATEGORIES = [
 function scoreComplianceLegacy(
   scriptState,
   copilotEntries = [],
-  transcript = ""
+  transcript = "",
+  options = {}
 ) {
+  const scoringOptions = normalizeScoringOptions({
+    ...options,
+    callDirection: options.callDirection || scriptState?.callDirection || "inbound",
+  });
   const analysis = transcript ? analyzeTranscript(transcript) : null;
   const categories = [];
   let twS = 0;
@@ -653,10 +988,32 @@ function scoreComplianceLegacy(
     const qR = [];
 
     for (const q of cat.questions) {
+      if (
+        OUTBOUND_ONLY_QUESTION_IDS.has(q.id) &&
+        scoringOptions.callDirection !== "outbound"
+      ) {
+        qR.push({
+          id: q.id,
+          question: q.question,
+          points: q.points,
+          earned: q.points,
+          score: 100,
+          passed: true,
+          skipped: true,
+          evidence: "Skipped for inbound calls.",
+          source: "direction_skip",
+          transcriptConfidence: 0,
+          hasTranscriptEvidence: false,
+        });
+        continue;
+      }
+
       const gr = q.evaluate(scriptState, copilotEntries);
-      const te = analysis ? getTranscriptEvidence(q.id, analysis) : null;
+      const te = analysis
+        ? getQuestionTranscriptEvidence(q.id, scriptState, analysis, scoringOptions)
+        : null;
       const m = analysis
-        ? mergeScores(gr, te)
+        ? mergeScores(q.id, gr, te)
         : { score: gr.score, evidence: gr.evidence, source: "gate" };
       const earned = Math.round((m.score / 100) * q.points * 100) / 100;
       cpE += earned;
@@ -738,6 +1095,7 @@ function scoreComplianceLegacy(
     ),
     transcriptStats: tStats,
     scoringMode: transcript ? "dual" : "gate_only",
+    callDirection: scoringOptions.callDirection,
   };
 }
 
@@ -1668,15 +2026,25 @@ function scoreComplianceStrictTranscript(scriptState, copilotEntries = [], trans
   };
 }
 
-export function scoreCompliance(scriptState, copilotEntries = [], transcript = "") {
-  if (typeof transcript === "string" && transcript.trim()) {
-    return scoreComplianceStrictTranscript(scriptState, copilotEntries, transcript);
+export function scoreCompliance(
+  scriptState,
+  copilotEntries = [],
+  transcript = "",
+  options = {}
+) {
+  if (!options.callStarted && !(transcript || "").trim()) {
+    return scoreComplianceInactive();
   }
-  return scoreComplianceInactive();
+  return scoreComplianceLegacy(scriptState, copilotEntries, transcript, options);
 }
 
-export function scoreLive(scriptState, copilotEntries = [], transcript = "") {
-  const r = scoreCompliance(scriptState, copilotEntries, transcript);
+export function scoreLive(
+  scriptState,
+  copilotEntries = [],
+  transcript = "",
+  options = {}
+) {
+  const r = scoreCompliance(scriptState, copilotEntries, transcript, options);
   return toLiveResult(r);
 }
 
@@ -1685,14 +2053,16 @@ export function scoreLiveTwoSided(
   copilotEntries = [],
   agentTranscript = "",
   customerText = "",
-  mergedTranscript = []
+  mergedTranscript = [],
+  options = {}
 ) {
   const r = scoreTwoSided(
     scriptState,
     copilotEntries,
     agentTranscript,
     customerText,
-    mergedTranscript
+    mergedTranscript,
+    options
   );
   return toLiveResult(r);
 }
@@ -1726,9 +2096,10 @@ function toLiveResult(result) {
 export function getConverselyReport(
   scriptState,
   copilotEntries = [],
-  transcript = ""
+  transcript = "",
+  options = {}
 ) {
-  const r = scoreCompliance(scriptState, copilotEntries, transcript);
+  const r = scoreCompliance(scriptState, copilotEntries, transcript, options);
   const a = transcript ? analyzeTranscript(transcript) : null;
   return {
     overallScore: r.score,
@@ -1903,20 +2274,28 @@ export function scoreCustomerConfirmation(customerText, mergedTranscript, agentA
  * @param {Array} mergedTranscript - chronological merged entries
  * @returns {Object} enhanced compliance result with customer layer
  */
-export function scoreTwoSided(scriptState, copilotEntries, agentTranscript, customerText, mergedTranscript) {
+export function scoreTwoSided(
+  scriptState,
+  copilotEntries,
+  agentTranscript,
+  customerText,
+  mergedTranscript,
+  options = {}
+) {
   const safeAgentTranscript = typeof agentTranscript === "string" ? agentTranscript : "";
   const safeCustomerText = typeof customerText === "string" ? customerText : "";
   const safeMerged = Array.isArray(mergedTranscript) ? mergedTranscript : [];
   const safeCopilot = Array.isArray(copilotEntries) ? copilotEntries : [];
-  const combinedTranscript = buildMergedSpeakerTranscript(
-    safeMerged,
-    safeAgentTranscript,
-    safeCustomerText
-  );
   const agentResult = scoreCompliance(
     scriptState,
     safeCopilot,
-    combinedTranscript || safeAgentTranscript
+    safeAgentTranscript,
+    {
+      ...options,
+      mergedTranscript: safeMerged,
+      customerText: safeCustomerText,
+      callDirection: options.callDirection || scriptState?.callDirection || "inbound",
+    }
   );
 
   if (!safeCustomerText.trim()) {
@@ -1937,9 +2316,6 @@ export function scoreTwoSided(scriptState, copilotEntries, agentTranscript, cust
     agentScore: agentResult.score,
     customerConfirmation,
     overallTwoSidedScore: agentResult.score,
-    scoringMode:
-      agentResult.scoringMode === "strict_transcript"
-        ? "strict_two_sided"
-        : "two_sided",
+    scoringMode: "two_sided",
   };
 }

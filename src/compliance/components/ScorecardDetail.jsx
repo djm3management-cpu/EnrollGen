@@ -5,7 +5,7 @@
  */
 
 import { memo, useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAppAuth } from '../../context/AuthContext';
 import { fetchWithClerk } from '../../lib/clerkFetch.js';
 
 const API = '/.netlify/functions/compliance';
@@ -35,7 +35,7 @@ function displayPassFail(status) {
 }
 
 const ScorecardDetail = memo(function ScorecardDetail({ scorecardId, onBack }) {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [scorecard, setScorecard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedCategory, setExpandedCategory] = useState(null);

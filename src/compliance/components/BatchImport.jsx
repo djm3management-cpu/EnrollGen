@@ -5,7 +5,7 @@
  */
 
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAppAuth } from '../../context/AuthContext';
 import { fetchWithClerk } from '../../lib/clerkFetch.js';
 
 const API_GDRIVE = '/.netlify/functions/gdrive';
@@ -60,7 +60,7 @@ function parseFilenameMetadata(filename) {
 }
 
 const BatchImport = memo(function BatchImport({ onComplete }) {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [status, setStatus] = useState(STATUS.IDLE);
   const [folderUrl, setFolderUrl] = useState('https://drive.google.com/drive/folders/1X2leRVJTClHt39TJ_SKt2m6n-nF9I9lT');
   const [files, setFiles] = useState([]);

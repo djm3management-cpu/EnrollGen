@@ -1,0 +1,198 @@
+{
+  "title": "Citizenship & Immigration Document Field Reference",
+  "description": "Agent reference for identifying document types, locating key numbers, and entering correct fields during ACA enrollment. Based on NYSOH Assistor resource.",
+  "citizenshipStatuses": [
+    {
+      "status": "Naturalized Citizen",
+      "documentTypes": [
+        {
+          "type": "Naturalization Certificate",
+          "image": "naturalization-certificate.png",
+          "fields": [
+            { "field": "Alien #", "aka": "USCIS Registration No.", "location": "Upper right area, labeled 'USCIS Registration No.'", "format": "7-9 digits, numbers only, no letters or dashes" },
+            { "field": "Naturalization Certificate #", "location": "Top right corner, labeled 'No.'", "format": "7-12 digits, found above alien number" }
+          ]
+        },
+        {
+          "type": "Certificate of Citizenship",
+          "image": "certificate-of-citizenship.png",
+          "fields": [
+            { "field": "Alien #", "aka": "CIS Registration No.", "location": "Upper right area, labeled 'CIS Registration No.'", "format": "7-9 digits, numbers only" },
+            { "field": "Citizenship Certificate #", "location": "Top right corner, labeled 'No.'", "format": "7-12 digits, alphanumeric (e.g. A2767194)" }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "Immigrant Non-Citizen",
+      "documentTypes": [
+        {
+          "type": "Temporary I-551 Stamp (on Passport or I-94 Arrival/Departure Record)",
+          "image": "i551-stamp-on-passport.png",
+          "secondaryImage": "foreign-passport-sample.png",
+          "fields": [
+            { "field": "Alien #", "location": "On the I-551 stamp in passport", "format": "7-9 digits" },
+            { "field": "Foreign Passport #", "location": "Passport bio page, upper right", "format": "Alphanumeric" }
+          ]
+        },
+        {
+          "type": "I-327 (Reentry Permit)",
+          "image": "i327-reentry-permit.png",
+          "fields": [
+            { "field": "Alien #", "aka": "Personal No.", "location": "Data page, labeled 'Personal No./No. personnel'", "format": "7-9 digits" },
+            { "field": "Alien Expiration Date", "location": "Data page, labeled 'Date of Expiration'", "format": "MM-DD-YYYY" }
+          ]
+        },
+        {
+          "type": "I-551 Permanent Resident Card",
+          "image": "i551-permanent-resident-card-front.png",
+          "backImage": "i551-permanent-resident-card-back.png",
+          "fields": [
+            { "field": "Alien #", "aka": "USCIS#", "location": "Front of card, labeled 'USCIS#'", "format": "9 digits with dashes (e.g. 000-000-000)" },
+            { "field": "Receipt #", "location": "Back of card, in machine-readable zone (MRZ), starts with 3-letter code (e.g. LIN)", "format": "13 characters alphanumeric" },
+            { "field": "Alien Expiration Date", "location": "Front of card, labeled 'Card Expires'", "format": "MM-DD-YYYY" }
+          ]
+        },
+        {
+          "type": "I-571 (Refugee Travel Document)",
+          "image": "i571-refugee-travel-doc.png",
+          "fields": [
+            { "field": "Alien #", "aka": "File Number", "location": "Data page, upper right, labeled 'File Number/Numéro de Dossier'", "format": "7-9 digits, starts with A" },
+            { "field": "Alien Expiration Date", "location": "Data page, labeled 'Date of Expiration'", "format": "MM-DD-YYYY" }
+          ]
+        },
+        {
+          "type": "Machine Readable Visa (With Temporary I-551 language)",
+          "image": "machine-readable-immigrant-visa.png",
+          "fields": [
+            { "field": "Alien #", "aka": "Registration Number", "location": "Right side of visa, labeled 'Registration Number'", "format": "7-9 digits" },
+            { "field": "Visa #", "location": "Bottom right, below 'IV Expires On'", "format": "8 digits" },
+            { "field": "Foreign Passport #", "aka": "Passport Number", "location": "Left side, labeled 'Passport Number'", "format": "Alphanumeric" },
+            { "field": "Foreign Passport Expiration Date", "format": "MM-DD-YYYY" },
+            { "field": "Foreign Passport Country Of Issuance", "location": "Derived from visa issuing post or nationality" }
+          ]
+        },
+        {
+          "type": "I-94 Arrival/Departure Record",
+          "images": ["i94-electronic-record.png", "i94-paper-card.png"],
+          "note": "Can be electronic (retrieved from cbp.gov/I94) or paper card stapled in passport",
+          "fields": [
+            { "field": "I94 #", "location": "Electronic: labeled 'Admission (I-94) Record Number'. Paper: top of card, labeled 'Departure Number'", "format": "11 digits" },
+            { "field": "SEVISID #", "location": "Only if applicable (student/exchange visitor)", "format": "Alphanumeric" },
+            { "field": "I94 Expiration Date", "location": "Electronic: labeled 'Admit Until Date'. Paper: admission stamp date", "format": "MM-DD-YYYY" }
+          ]
+        },
+        {
+          "type": "I-94 Arrival/Departure Record in Unexpired Foreign Passport",
+          "images": ["i94-departure-record.png", "australian-passport.png"],
+          "fields": [
+            { "field": "I94 #", "location": "On I-94 card or electronic record", "format": "11 digits" },
+            { "field": "SEVISID #", "location": "If applicable" },
+            { "field": "Visa #", "location": "If applicable" },
+            { "field": "Foreign Passport #", "location": "Passport bio page, upper right, labeled 'Document No.'", "format": "Alphanumeric" },
+            { "field": "Foreign Passport Expiration Date", "location": "Passport bio page, labeled 'Date of Expiry'", "format": "MM-DD-YYYY" },
+            { "field": "Foreign Passport Country Of Issuance", "location": "Passport bio page or cover" }
+          ]
+        },
+        {
+          "type": "I-766 (Employment Authorization Card)",
+          "image": "i766-employment-authorization-card.png",
+          "fields": [
+            { "field": "Alien #", "aka": "USCIS#", "location": "Front of card, labeled 'USCIS#'", "format": "9 digits with dashes" },
+            { "field": "Receipt #", "aka": "Card#", "location": "Front of card, labeled 'Card#', starts with 3-letter code (e.g. SRC)", "format": "13 characters alphanumeric" },
+            { "field": "Alien Expiration Date", "location": "Front of card, labeled 'Card Expires'", "format": "MM-DD-YYYY" }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "Non-Immigrant Visa Holder",
+      "documentTypes": [
+        {
+          "type": "DS2019 (Certificate of eligibility for Exchange Visitor (J-1) Status)",
+          "image": "ds2019-exchange-visitor.png",
+          "fields": [
+            { "field": "I94 #", "location": "Not on DS-2019; retrieve from cbp.gov/I94" },
+            { "field": "SEVISID #", "location": "Upper right of form, barcode area", "format": "Alphanumeric (e.g. N0000147766)" },
+            { "field": "Foreign Passport #", "location": "Not on DS-2019; from passport bio page" }
+          ]
+        },
+        {
+          "type": "I-20 (Certificate of Eligibility for Nonimmigrant (F-1) Student Status)",
+          "image": "i20-student-status.png",
+          "fields": [
+            { "field": "I94 #", "location": "Not on I-20; retrieve from cbp.gov/I94" },
+            { "field": "SEVISID #", "aka": "SEVIS ID", "location": "Top of form, labeled 'SEVIS ID'", "format": "Alphanumeric (e.g. N0004720633)" },
+            { "field": "Foreign Passport #", "location": "Not on I-20; from passport bio page" }
+          ]
+        },
+        {
+          "type": "I-766 (Employment Authorization Card)",
+          "image": "i766-employment-authorization-card.png",
+          "fields": [
+            { "field": "Alien #", "aka": "USCIS#", "location": "Front of card, labeled 'USCIS#'", "format": "9 digits with dashes" },
+            { "field": "Receipt #", "aka": "Card#", "location": "Front of card, labeled 'Card#'", "format": "13 characters alphanumeric" },
+            { "field": "Alien Expiration Date", "location": "Front of card, labeled 'Card Expires'", "format": "MM-DD-YYYY" }
+          ]
+        },
+        {
+          "type": "I-94 Arrival/Departure Record",
+          "images": ["i94-electronic-record.png", "i94-paper-card.png"],
+          "fields": [
+            { "field": "I94 #", "format": "11 digits" },
+            { "field": "SEVISID #", "location": "If applicable" },
+            { "field": "I94 Expiration Date", "format": "MM-DD-YYYY" }
+          ]
+        },
+        {
+          "type": "I-94 Arrival/Departure Record in Unexpired Foreign Passport",
+          "images": ["i94-departure-record.png", "australian-passport.png"],
+          "fields": [
+            { "field": "I94 #", "format": "11 digits" },
+            { "field": "SEVISID #" },
+            { "field": "Visa #" },
+            { "field": "Foreign Passport #" },
+            { "field": "Foreign Passport Expiration Date", "format": "MM-DD-YYYY" },
+            { "field": "Foreign Passport Country Of Issuance" }
+          ]
+        },
+        {
+          "type": "Machine Readable Visa (With Temporary I-551 language)",
+          "image": "machine-readable-immigrant-visa.png",
+          "fields": [
+            { "field": "Alien #", "aka": "Registration Number" },
+            { "field": "Visa #" },
+            { "field": "Foreign Passport #" },
+            { "field": "Foreign Passport Expiration Date", "format": "MM-DD-YYYY" },
+            { "field": "Foreign Passport Country Of Issuance" }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "Other",
+      "note": "For Immigrant Non-Citizen: includes I-797A Notice of Action and other documents. If no Alien# or I94#, leave all boxes blank — documents will be requested after application submission.",
+      "documentTypes": [
+        {
+          "type": "Other",
+          "image": "i797a-notice-of-action.png",
+          "secondaryImage": "foreign-passport-malaysia.png",
+          "note": "If I-94 number is entered, system auto-generates Foreign Passport # field",
+          "fields": [
+            { "field": "Alien #", "location": "If available" },
+            { "field": "I94 #", "location": "On I-797A or I-94 record" },
+            { "field": "SEVISID #", "location": "If applicable" },
+            { "field": "Foreign Passport #", "location": "Auto-appears when I94# entered" },
+            { "field": "Document Description", "location": "Free text field to describe the document type", "example": "I-797A, Notice" }
+          ]
+        }
+      ]
+    }
+  ],
+  "generalNotes": {
+    "alienNumber": "Also called USCIS #, Registration Number, or CIS Registration No. Found on most immigration documents. Numbers only, no letters or dashes.",
+    "certificateNumbers": "Located in upper right corner of Naturalization Certificate or Certificate of Citizenship. Must be 7-12 digits.",
+    "i94Retrieval": "Electronic I-94 records can be retrieved at www.cbp.gov/I94",
+    "sevisId": "Only applicable for F-1 students (I-20) and J-1 exchange visitors (DS-2019)"
+  }
+}

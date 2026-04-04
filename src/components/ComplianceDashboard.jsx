@@ -412,6 +412,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
   transcript = "",
   customerTranscript = "",
   mergedTranscript = [],
+  result: providedResult = null,
 }) {
   const { state } = useScript();
   const { entries } = useCopilotLog();
@@ -421,16 +422,32 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
 
   const result = useMemo(
     () =>
-      customerTranscript
+      providedResult ??
+      (customerTranscript
         ? scoreTwoSided(
             state,
             entries,
             transcript,
             customerTranscript,
-            mergedTranscript
+            mergedTranscript,
+            {
+              callStarted: true,
+              callDirection: state.callDirection,
+            }
           )
-        : scoreCompliance(state, entries, transcript),
-    [state, entries, transcript, customerTranscript, mergedTranscript]
+        : scoreCompliance(state, entries, transcript, {
+            callStarted: true,
+            callDirection: state.callDirection,
+            mergedTranscript,
+          })),
+    [
+      providedResult,
+      state,
+      entries,
+      transcript,
+      customerTranscript,
+      mergedTranscript,
+    ]
   );
   const toggleCat = useCallback(
     (n) => setExpandedCats((p) => ({ ...p, [n]: !p[n] })),

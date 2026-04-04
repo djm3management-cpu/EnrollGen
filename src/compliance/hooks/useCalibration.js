@@ -3,13 +3,13 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAppAuth } from '../../context/AuthContext';
 import { fetchWithClerk } from '../../lib/clerkFetch.js';
 
 const API = '/.netlify/functions/compliance';
 
 export function useCalibration(runId) {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [run, setRun] = useState(null);
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -83,7 +83,7 @@ export function useCalibration(runId) {
 }
 
 export function useScorecard(scorecardId) {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [scorecard, setScorecard] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -100,7 +100,7 @@ export function useScorecard(scorecardId) {
 }
 
 export function useDashboard(days = 30) {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
 

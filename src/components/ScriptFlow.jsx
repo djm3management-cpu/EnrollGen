@@ -1,7 +1,6 @@
 import {
   lazy,
   Suspense,
-  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -12,7 +11,8 @@ import { RotateCcw, ChevronLeft, ChevronRight, MessageSquare, ShieldCheck, Radio
 import { useScript } from "../context/ScriptContext";
 import { useSessionTracker } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
-import { scoreLive, scoreLiveTwoSided } from "../context/ComplianceScorer";
+import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
+import { useLiveCall } from "../context/LiveCallContext";
 import {
   MainTimer,
   ProgressBar,
@@ -90,6 +90,11 @@ const COMPACT_RAIL_OVERLAY_STYLE = {
   justifyContent: "flex-end",
   gap: 8,
 };
+
+const CALL_DIRECTION_OPTIONS = [
+  { label: "Inbound", value: "inbound" },
+  { label: "Outbound", value: "outbound" },
+];
 
 /**
  * ScriptFlow v2 — Now with transcript pass-through for dual-layer scoring.
@@ -176,6 +181,20 @@ function formatDuration(ms) {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return `${m}m ${s}s`;
+}
+
+function useDebouncedValue(value, delayMs) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedValue(value);
+    }, delayMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [value, delayMs]);
+
+  return debouncedValue;
 }
 
 /* ---- pill button shared style ---- */
@@ -409,6 +428,7 @@ function DeferredComplianceDashboard({
   transcript,
   customerTranscript = "",
   mergedTranscript = [],
+  result = null,
 }) {
   const anchorRef = useRef(null);
   const [shouldRender, setShouldRender] = useState(false);
@@ -462,6 +482,7 @@ function DeferredComplianceDashboard({
             transcript={transcript}
             customerTranscript={customerTranscript}
             mergedTranscript={mergedTranscript}
+            result={result}
           />
         </Suspense>
       ) : null}
@@ -473,6 +494,7 @@ export default function ScriptFlow() {
   const STACKED_POPUP_OFFSET = 190;
   const { state, dispatch, activeSection } = useScript();
   const { clearLog, entries } = useCopilotLog();
+  const { updateLiveCall, resetLiveCall } = useLiveCall();
   const prevSectionRef = useRef(activeSection);
   const flowShellRef = useRef(null);
   const flowMainRef = useRef(null);
@@ -526,7 +548,6 @@ export default function ScriptFlow() {
   const [isListening, setIsListening] = useState(false);
   const [coachingLoading, setCoachingLoading] = useState(false);
   const copilotHandlersRef = useRef({});
-  const deferredTranscript = useDeferredValue(transcript);
   const customerTranscript = useMemo(
     () =>
       mergedTranscriptEntries
@@ -538,19 +559,74 @@ export default function ScriptFlow() {
         .join(" "),
     [mergedTranscriptEntries]
   );
-  const liveCompliance = useMemo(
-    () =>
-      customerTranscript
-        ? scoreLiveTwoSided(
+  const debouncedTranscript = useDebouncedValue(transcript, 5000);
+  const debouncedCustomerTranscript = useDebouncedValue(customerTranscript, 5000);
+  const debouncedMergedTranscriptEntries = useDebouncedValue(
+    mergedTranscriptEntries,
+    5000
+  );
+  const liveComplianceResult = useMemo(
+    () => {
+      const scoringOptions = {
+        callStarted,
+        callDirection: state.callDirection,
+        mergedTranscript: debouncedMergedTranscriptEntries,
+        customerText: debouncedCustomerTranscript,
+      };
+
+      if (!callStarted) {
+        return scoreCompliance(state, entries, "", scoringOptions);
+      }
+
+      return debouncedCustomerTranscript
+        ? scoreTwoSided(
             state,
             entries,
-            deferredTranscript,
-            customerTranscript,
-            mergedTranscriptEntries
+            debouncedTranscript,
+            debouncedCustomerTranscript,
+            debouncedMergedTranscriptEntries,
+            scoringOptions
           )
-        : scoreLive(state, entries, deferredTranscript),
-    [state, entries, deferredTranscript, customerTranscript, mergedTranscriptEntries]
+        : scoreCompliance(state, entries, debouncedTranscript, scoringOptions);
+    },
+    [
+      callStarted,
+      state,
+      entries,
+      debouncedTranscript,
+      debouncedCustomerTranscript,
+      debouncedMergedTranscriptEntries,
+    ]
   );
+
+  useEffect(() => {
+    updateLiveCall({
+      callStarted,
+      callDirection: state.callDirection,
+      activeSection,
+      transcript,
+      customerTranscript,
+      mergedTranscript: mergedTranscriptEntries,
+      isListening,
+      complianceResult: liveComplianceResult,
+    });
+  }, [
+    updateLiveCall,
+    callStarted,
+    state.callDirection,
+    activeSection,
+    transcript,
+    customerTranscript,
+    mergedTranscriptEntries,
+    isListening,
+    liveComplianceResult,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      resetLiveCall();
+    };
+  }, [resetLiveCall]);
 
   // ── Quick notes — persists into wrap-up ──
   const quickNotesRef = useRef("");
@@ -624,12 +700,12 @@ export default function ScriptFlow() {
 
       {/* Right rail — responsive: always visible >1400, overlay ≤1400 */}
       <RightRail
-        transcript={deferredTranscript}
+        transcript={transcript}
         activeSection={activeSection}
         state={state}
         mergedEntries={mergedTranscriptEntries}
         listening={isListening}
-        result={liveCompliance}
+        result={liveComplianceResult}
         copilotHandlersRef={copilotHandlersRef}
         coachingLoading={coachingLoading}
       />
@@ -668,12 +744,40 @@ export default function ScriptFlow() {
 
       {!callStarted && (
         <section className="start-call-gate">
-          <button
-            className="start-call-button"
-            onClick={() => setCallStarted(true)}
-          >
-            Start
-          </button>
+          <div className="start-call-gate-stack">
+            <div className="start-call-direction-label">Call Direction</div>
+            <div
+              className="start-call-direction-toggle"
+              role="radiogroup"
+              aria-label="Call direction"
+            >
+              {CALL_DIRECTION_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`start-call-direction-button${
+                    state.callDirection === option.value ? " is-active" : ""
+                  }`}
+                  aria-pressed={state.callDirection === option.value}
+                  onClick={() =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "callDirection",
+                      value: option.value,
+                    })
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <button
+              className="start-call-button"
+              onClick={() => setCallStarted(true)}
+            >
+              Start
+            </button>
+          </div>
         </section>
       )}
 
@@ -781,9 +885,10 @@ export default function ScriptFlow() {
 
       {/* ── Full Compliance Dashboard — transcript-aware, at the bottom ── */}
       <DeferredComplianceDashboard
-        transcript={deferredTranscript}
+        transcript={debouncedTranscript}
         customerTranscript={customerTranscript}
         mergedTranscript={mergedTranscriptEntries}
+        result={liveComplianceResult}
       />
       </>
       )}

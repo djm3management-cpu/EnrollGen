@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./styles.css";
 import { CopilotLogProvider } from "./context/CopilotTranscriptLog";
+import { LiveCallProvider } from "./context/LiveCallContext";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -13,7 +14,9 @@ function RootProviders() {
   return (
     <AuthProvider>
       <CopilotLogProvider>
-        <App />
+        <LiveCallProvider>
+          <App />
+        </LiveCallProvider>
       </CopilotLogProvider>
     </AuthProvider>
   );
@@ -58,9 +61,32 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </React.StrictMode>
 );
 
-// Register service worker for offline capability
+// Keep service workers out of Vite dev so localhost doesn't serve a stale shell.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
+    if (import.meta.env.DEV) {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) =>
+          Promise.all(registrations.map((registration) => registration.unregister()))
+        )
+        .catch(() => {});
+
+      if ("caches" in window) {
+        caches
+          .keys()
+          .then((keys) =>
+            Promise.all(
+              keys
+                .filter((key) => key.startsWith("enrollgen-"))
+                .map((key) => caches.delete(key))
+            )
+          )
+          .catch(() => {});
+      }
+      return;
+    }
+
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }

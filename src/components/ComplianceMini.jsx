@@ -84,6 +84,9 @@ const ComplianceMini = memo(function ComplianceMini({
   const scoreColor = getScoreColor(result.score);
   const isTranscriptScored =
     result.scoringMode !== "gate_only" && result.scoringMode !== "inactive";
+  const violationCount =
+    result.transcriptStats?.violations?.length ??
+    (typeof result.violations === "number" ? result.violations : 0);
   const currentStep = Number.isInteger(activeSection)
     ? activeSection
     : Math.ceil(activeSection);
@@ -195,7 +198,7 @@ const ComplianceMini = memo(function ComplianceMini({
             {isTranscriptScored && (
               <Mic size={11} style={{ color: "#34d399" }} />
             )}
-            {result.violations > 0 && (
+            {violationCount > 0 && (
               <span
                 style={{
                   color: "#ef4444",
@@ -207,7 +210,7 @@ const ComplianceMini = memo(function ComplianceMini({
                 }}
               >
                 <AlertTriangle size={10} />
-                {result.violations}
+                {violationCount}
               </span>
             )}
             <ChevronDown

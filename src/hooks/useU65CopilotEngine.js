@@ -32,6 +32,23 @@ import {
 } from "../data/u65ComplianceKnowledge";
 
 const PERIODIC_SIGNATURE_TAIL_CHARS = 320;
+const CITIZENSHIP_REFERENCE_PATTERNS = [
+  /\bgreen card\b/i,
+  /\bvisa\b/i,
+  /\bnaturaliz(?:ed|ation)\b/i,
+  /\bcitizenship\b/i,
+  /\bimmigration status\b/i,
+  /\balien (?:number|#)\b/i,
+  /\bi[- ]?94\b/i,
+  /\buscis\b/i,
+  /\bpermanent resident\b/i,
+];
+const CITIZENSHIP_REFERENCE_MESSAGE =
+  "Citizenship or immigration docs sound relevant. Open Agent Tools > Citizenship & Immigration Docs for document numbers and field locations.";
+
+function hasCitizenshipReferenceTrigger(text) {
+  return CITIZENSHIP_REFERENCE_PATTERNS.some((pattern) => pattern.test(text));
+}
 
 /* ───────────────────────────────────────────────────────
    HELPERS
@@ -412,6 +429,29 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
     // Config
     silentHeartbeatMs,
   } = core;
+
+  const immigrationReferenceSuggestedRef = useRef(false);
+  const transcriptSnapshot = transcriptRef.current.trim().slice(-2000);
+
+  useEffect(() => {
+    immigrationReferenceSuggestedRef.current = false;
+  }, [state.callStart]);
+
+  useEffect(() => {
+    if (!state.callStarted) {
+      immigrationReferenceSuggestedRef.current = false;
+      return;
+    }
+    if (immigrationReferenceSuggestedRef.current || !transcriptSnapshot) return;
+    if (!hasCitizenshipReferenceTrigger(transcriptSnapshot)) return;
+
+    immigrationReferenceSuggestedRef.current = true;
+    pushFeedEntry("tip", CITIZENSHIP_REFERENCE_MESSAGE, {
+      section: currentStep,
+      issueTag: "CITIZENSHIP_DOC_REFERENCE",
+    });
+    showFloat("tip", CITIZENSHIP_REFERENCE_MESSAGE);
+  }, [state.callStarted, transcriptSnapshot, currentStep, pushFeedEntry, showFloat]);
 
   /* ═══════ Gate-entry alerts (separate refs, NOT sectionCopilotFiredRef) ═══════ */
 

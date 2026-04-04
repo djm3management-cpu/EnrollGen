@@ -1,9 +1,14 @@
 import React, { useCallback, useState } from "react";
 import { ClipboardCheck } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
+import { useLiveCall } from "../context/LiveCallContext";
 import { generateSessionSummary } from "../context/scriptReducer";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
-import { scoreCompliance, groupByCategory } from "../context/ComplianceScorer";
+import {
+  scoreCompliance,
+  scoreTwoSided,
+  groupByCategory,
+} from "../context/ComplianceScorer";
 import { getDeterministicBlockers } from "../lib/deterministicBlockers";
 
 /* ═══════════════════════════════════════════════════
@@ -928,8 +933,31 @@ function exportSessionSummaryPdf(
    ═══════════════════════════════════════════════════ */
 export default React.memo(function SessionSummary() {
   const { state } = useScript();
-  const { getTranscript, getWarnings } = useCopilotLog();
+  const { liveCall } = useLiveCall();
+  const { entries, getTranscript, getWarnings } = useCopilotLog();
   const [exportingPdf, setExportingPdf] = useState(false);
+
+  const buildComplianceResult = useCallback(() => {
+    const scoringOptions = {
+      callStarted: liveCall.callStarted || state.enrollOk,
+      callDirection: state.callDirection || liveCall.callDirection,
+      mergedTranscript: liveCall.mergedTranscript,
+      customerText: liveCall.customerTranscript,
+    };
+
+    if (liveCall.customerTranscript) {
+      return scoreTwoSided(
+        state,
+        entries,
+        liveCall.transcript,
+        liveCall.customerTranscript,
+        liveCall.mergedTranscript,
+        scoringOptions
+      );
+    }
+
+    return scoreCompliance(state, entries, liveCall.transcript, scoringOptions);
+  }, [state, entries, liveCall]);
 
   const handlePDF = useCallback(async () => {
     if (exportingPdf) {
@@ -941,7 +969,7 @@ export default React.memo(function SessionSummary() {
     const summary = generateSessionSummary(state);
     const copilotEntries = getTranscript();
     const warnings = getWarnings();
-    const complianceResult = scoreCompliance(state, copilotEntries);
+    const complianceResult = buildComplianceResult();
     const blockers = getDeterministicBlockers(state);
 
     try {
@@ -958,12 +986,17 @@ export default React.memo(function SessionSummary() {
     } finally {
       setExportingPdf(false);
     }
-  }, [state, getTranscript, getWarnings, exportingPdf]);
+  }, [
+    state,
+    getTranscript,
+    getWarnings,
+    exportingPdf,
+    buildComplianceResult,
+  ]);
 
   const handleCopyToClipboard = useCallback(() => {
     const summary = generateSessionSummary(state);
-    const copilotEntries = getTranscript();
-    const complianceResult = scoreCompliance(state, copilotEntries);
+    const complianceResult = buildComplianceResult();
     const blockers = getDeterministicBlockers(state);
 
     const lines = [
@@ -1009,13 +1042,12 @@ export default React.memo(function SessionSummary() {
     }
 
     navigator.clipboard.writeText(lines.join("\n"));
-  }, [state, getTranscript]);
+  }, [state, buildComplianceResult]);
 
   if (!state.enrollOk) return null;
 
   // Quick compliance preview
-  const copilotEntries = getTranscript();
-  const complianceResult = scoreCompliance(state, copilotEntries);
+  const complianceResult = buildComplianceResult();
   const blockers = getDeterministicBlockers(state);
   const scoreColor =
     complianceResult.score >= 90
