@@ -9,7 +9,6 @@ import DevotedPopupManager from "./components/ancillary/DevotedPopupManager";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
-const loadMedSupCopilot = () => import("./components/MedSupCopilot");
 const loadMedSupAiCopilot = () => import("./components/MedSupAiCopilot");
 const loadACAScript = () => import("./flows/aca/ACAScript");
 const loadU65Script = () => import("./flows/u65/U65Script");
@@ -29,7 +28,6 @@ const loadComplianceStatusPanel = () => import("./compliance/components/Complian
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
-const MedSupCopilot = lazy(loadMedSupCopilot);
 const MedSupAiCopilot = lazy(loadMedSupAiCopilot);
 const ACAScript = lazy(loadACAScript);
 const U65Script = lazy(loadU65Script);
@@ -262,8 +260,8 @@ function getSepOfficialExplanation(label) {
 /* ─── FlowSelector — 4-circle indicator panel ────────────────────────────── */
 const FLOWS = [
   { id: "ma",     label: "MA",     color: "#E8002D", rgb: "232,0,45"   },
-  { id: "medsup", label: "SUP",    color: "#00D166", rgb: "0,209,102"  },
   { id: "aca",    label: "ACA",    color: "#EAB308", rgb: "234,179,8"  },
+  { id: "medsup", label: "SUP",    color: "#00D166", rgb: "0,209,102"  },
   { id: "u65",    label: "U65",    color: "#a855f7", rgb: "168,85,247" },
 ];
 
@@ -503,7 +501,6 @@ function MedSupScriptWorkspace() {
   return (
     <>
       <MedSupAiCopilot onTranscriptChange={setTranscript} />
-      <MedSupCopilot />
       <div className="flow-shell" ref={flowShellRef}>
         <DevotedPopupManager
           callStarted={state.callStarted}
@@ -677,7 +674,6 @@ function AppContent() {
     if (targetMode === "medsup") {
       loadMedSupFlow();
       loadMedSupAiCopilot();
-      loadMedSupCopilot();
       return;
     }
     if (targetMode === "aca") {

@@ -96,6 +96,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
         transcriptRef.current = updatedTranscript;
         lastFinalChunkRef.current = newFinal.trim();
         setTranscript(updatedTranscript);
+        const rowTimestamp = new Date().toISOString();
         const rowTs = new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -103,7 +104,12 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
         });
         setTranscriptRows((prev) => [
           ...prev.slice(-49),
-          { id: Date.now(), ts: rowTs, text: newFinal.trim() },
+          {
+            id: Date.now(),
+            ts: rowTs,
+            timestamp: rowTimestamp,
+            text: newFinal.trim(),
+          },
         ]);
         setInterimText("");
         onNewFinalRef.current?.(newFinal);

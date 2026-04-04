@@ -4,7 +4,7 @@
  * Follows MedSupFlow.jsx architecture patterns
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useACA } from "./ACAContext";
 import { ACA_GATES } from "./ACAData";
@@ -34,22 +34,8 @@ function Say({ text }) {
   );
 }
 
-function Note({ text }) {
-  return (
-    <div
-      style={{
-        borderLeft: "2px solid rgba(251,191,36,0.25)",
-        padding: "7px 12px",
-        marginBottom: 6,
-        borderRadius: "0 5px 5px 0",
-        background: "rgba(251,191,36,0.03)",
-      }}
-    >
-      <div style={{ color: "#92855a", fontSize: 12, lineHeight: 1.5, fontStyle: "italic" }}>
-        {text}
-      </div>
-    </div>
-  );
+function Note() {
+  return null;
 }
 
 function ComplianceBanner({ text }) {
@@ -271,19 +257,19 @@ function G0() {
             </button>
           ))}
         </div>
-        {state.enrollmentPeriod === "SEP" && (
+        {false && state.enrollmentPeriod === "SEP" && (
           <div style={{ marginTop: 6, fontSize: 11, color: "#EAB308", opacity: 0.7 }}>
             → Gate 1 (SEP Qualification) will be required before proceeding
           </div>
         )}
-        {state.enrollmentPeriod === "OEP" && (
+        {false && state.enrollmentPeriod === "OEP" && (
           <div style={{ marginTop: 6, fontSize: 11, color: "#34d399", opacity: 0.7 }}>
             → SEP Gate will be skipped — proceed directly to Income Assessment
           </div>
         )}
       </div>
 
-      {gate.notes.map((n, i) => <Note key={i} text={n} />)}
+      {false && gate.notes.map((n, i) => <Note key={i} text={n} />)}
 
       <Gate
         label="Identity verified — consent obtained"
@@ -317,9 +303,9 @@ function G1() {
         transition={{ duration: 0.2 }}
       >
         <Card num={1} title="SEP Qualification" active={activeGate === 1} done={state.gate1Ok} dur={d ? d.end - d.start : null}>
-          <div style={{ fontSize: 11, color: ACCENT, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12 }}>
+          {false && <div style={{ fontSize: 11, color: ACCENT, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12 }}>
             Conditional Gate — shown because enrollment period is SEP
-          </div>
+          </div>}
 
           {gate.script.map((l, i) => <Say key={i} text={l} />)}
 
@@ -351,8 +337,8 @@ function G1() {
             </div>
           </div>
 
-          {gate.notes.map((n, i) => <ComplianceBanner key={i} text={n} />)}
-          {gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
+          {false && gate.notes.map((n, i) => <ComplianceBanner key={i} text={n} />)}
+          {false && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
 
           <Gate
             label="SEP event verified — within 60-day window"
@@ -379,7 +365,7 @@ function G2() {
     <Card num={2} title="Household & Income Assessment" active={activeGate === 2} done={state.gate2Ok} dur={d ? d.end - d.start : null}>
       {gate.script.map((l, i) => <Say key={i} text={l} />)}
 
-      <ComplianceBanner text={gate.subsidyNote} />
+      {false && <ComplianceBanner text={gate.subsidyNote} />}
 
       <div style={{ marginTop: 10, marginBottom: 10 }}>
         <div style={{ fontSize: 10, fontWeight: 600, color: "#4a5568", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
@@ -398,10 +384,9 @@ function G2() {
             </thead>
             <tbody>
               {gate.fplTable.map((row, i) => {
-                const isCliff = row.range.includes("400%");
                 return (
-                  <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)", background: isCliff ? "rgba(248,113,113,0.03)" : "transparent" }}>
-                    <td style={{ padding: "7px 10px", color: isCliff ? "#f87171" : ACCENT, fontWeight: isCliff ? 700 : 400, whiteSpace: "nowrap" }}>{row.range}</td>
+                  <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                    <td style={{ padding: "7px 10px", color: ACCENT, fontWeight: 400, whiteSpace: "nowrap" }}>{row.range}</td>
                     <td style={{ padding: "7px 10px", color: "#c0d0e4" }}>{row.subsidy}</td>
                     <td style={{ padding: "7px 10px", color: "#8fa4bc" }}>{row.csr}</td>
                     <td style={{ padding: "7px 10px", color: "#8fa4bc", fontSize: 11 }}>{row.action}</td>
@@ -416,9 +401,9 @@ function G2() {
       <Say text={gate.subsidyEligibleScript} />
       <Say text={gate.noSubsidyScript} />
 
-      {gate.notes.map((n, i) => <Note key={i} text={n} />)}
+      {false && gate.notes.map((n, i) => <Note key={i} text={n} />)}
       <div style={{ marginTop: 8 }}>
-        {gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
+        {false && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
       </div>
 
       <Gate
@@ -455,9 +440,9 @@ function G3() {
         ))}
       </div>
 
-      {gate.notes.map((n, i) => <Note key={i} text={n} />)}
+      {false && gate.notes.map((n, i) => <Note key={i} text={n} />)}
       <div style={{ marginTop: 8 }}>
-        {gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
+        {false && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
       </div>
 
       <Gate
@@ -482,7 +467,7 @@ function G4() {
   return (
     <Card num={4} title="Plan Presentation & Selection" active={activeGate === 4} done={state.gate4Ok} dur={d ? d.end - d.start : null}>
       {gate.script.map((l, i) => <Say key={i} text={l} />)}
-      {gate.notes.map((n, i) => (
+      {false && gate.notes.map((n, i) => (
         n.startsWith("COMPLIANCE:") ? <ComplianceBanner key={i} text={n} /> : <Note key={i} text={n} />
       ))}
 
@@ -507,14 +492,14 @@ function G5() {
 
   return (
     <Card num={5} title="Enrollment & Submission" active={activeGate === 5} done={state.gate5Ok} dur={d ? d.end - d.start : null}>
-      <div style={{ fontSize: 11, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12, color: ACCENT }}>
+      {false && <div style={{ fontSize: 11, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12, color: ACCENT }}>
         {gate.exchangeNote}
-      </div>
+      </div>}
 
       {gate.script.map((l, i) => <Say key={i} text={l} />)}
-      {gate.notes.map((n, i) => <ComplianceBanner key={i} text={n} />)}
+      {false && gate.notes.map((n, i) => <ComplianceBanner key={i} text={n} />)}
       <div style={{ marginTop: 8 }}>
-        {gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
+        {false && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
       </div>
 
       <Gate

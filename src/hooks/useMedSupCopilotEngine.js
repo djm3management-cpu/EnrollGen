@@ -39,7 +39,8 @@ function buildMedSupChecklistState(state, activeSection) {
     1: { gates: { recordingOk: state.recordingOk } },
     2: { gates: { tpmoOk: state.tpmoOk } },
     3: { gates: { qualOk: state.qualOk } },
-    4: { gates: { branchOk: state.branchOk }, fields: { selectedBranch: state.selectedBranch } },
+    4: { gates: { discoveryOk: state.discoveryOk } },
+    5: { gates: { quoteOk: state.quoteOk } },
     6: { gates: { enrollOk: state.enrollOk } },
     7: { gates: { wrapOk: state.wrapOk } },
   };
@@ -53,7 +54,7 @@ function buildMedSupChecklistState(state, activeSection) {
 function buildCompletedSectionHistory(state) {
   const ordered = [
     [1, "recordingOk"], [2, "tpmoOk"], [3, "qualOk"],
-    [4, "branchOk"], [6, "enrollOk"], [7, "wrapOk"],
+    [4, "discoveryOk"], [5, "quoteOk"], [6, "enrollOk"], [7, "wrapOk"],
   ];
   return ordered
     .filter(([, field]) => state[field])
@@ -71,7 +72,6 @@ function buildDerivedSignals(state, activeSection, transcript) {
   const currentTs = state.sectionTimestamps?.[activeSection] || {};
   return {
     timeInSectionMs: currentTs.start ? Date.now() - currentTs.start : 0,
-    selectedBranch: state.selectedBranch,
     likelyCoveredByParaphrase: {
       recordingConsent:
         recentText.includes("recorded line") ||
@@ -103,7 +103,8 @@ function buildPeriodicContextSignature({ activeSection, currentStep, transcript,
     transcriptTail: transcript.slice(-PERIODIC_SIGNATURE_TAIL_CHARS),
     gates: {
       recordingOk: state.recordingOk, tpmoOk: state.tpmoOk, qualOk: state.qualOk,
-      branchOk: state.branchOk, enrollOk: state.enrollOk, wrapOk: state.wrapOk,
+      discoveryOk: state.discoveryOk, quoteOk: state.quoteOk,
+      enrollOk: state.enrollOk, wrapOk: state.wrapOk,
     },
   });
 }
@@ -236,7 +237,7 @@ ${copilotContextJson}
 
 HOW TO USE THIS CONTEXT:
 - Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
-- Use derivedSignals for broader patterns: timeInSectionMs, selectedBranch, likelyCoveredByParaphrase.
+- Use derivedSignals for broader patterns: timeInSectionMs and likelyCoveredByParaphrase.
 - Use priorCompletedSections to understand what the agent has already finished.
 - medicareReference contains verified 2026 CMS cost-sharing amounts. Use these to coach the agent with accurate dollar figures when explaining what Medigap covers.
 - stateGIRules contains state-specific GI rules. If the agent mentions a state, check whether that state has year-round GI, a birthday rule, or federal OEP only — and coach accordingly.
@@ -709,10 +710,10 @@ SECTION CONTEXT (rolling window):
 
   /* ═══════ Compliance score ═══════ */
   const complianceScore = useMemo(() => {
-    const totalSections = 6; // recording, tpmo, qual, branch, enroll, wrap
+    const totalSections = 7; // recording, tpmo, qual, discovery, quote, enroll, wrap
     const completed = [
       state.recordingOk, state.tpmoOk, state.qualOk,
-      state.branchOk, state.enrollOk, state.wrapOk,
+      state.discoveryOk, state.quoteOk, state.enrollOk, state.wrapOk,
     ].filter(Boolean).length;
 
     const warns = entries.filter((e) => e.level === "warn").length;

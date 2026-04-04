@@ -1,5 +1,4 @@
 import { createContext, useContext, useReducer, useMemo } from "react";
-import { MEDSUP_SECTIONS } from "./MedSupScript";
 
 const MedSupContext = createContext(null);
 
@@ -8,16 +7,10 @@ const initialState = {
   recordingOk: false,
   tpmoOk: false,
   qualOk: false,
-  branchOk: false,
-  objectionOk: true, // optional — pre-checked
+  discoveryOk: false,
+  quoteOk: false,
   enrollOk: false,
   wrapOk: false,
-
-  // branch selection
-  selectedBranch: null, // "branch-a" | "branch-b" | "branch-c"
-
-  // CRM checklist
-  crmChecked: [],
 
   // call started gate
   callStarted: false,
@@ -65,20 +58,6 @@ function reducer(state, action) {
     case "UNCOMPLETE_SECTION":
       return { ...state, [action.key]: false };
 
-    case "SELECT_BRANCH":
-      return { ...state, selectedBranch: action.branch };
-
-    case "TOGGLE_CRM_ITEM": {
-      const item = action.item;
-      const already = state.crmChecked.includes(item);
-      return {
-        ...state,
-        crmChecked: already
-          ? state.crmChecked.filter((i) => i !== item)
-          : [...state.crmChecked, item],
-      };
-    }
-
     case "RESET":
       return { ...initialState };
 
@@ -92,8 +71,9 @@ function getActiveSection(state) {
   if (!state.recordingOk) return 1;
   if (!state.tpmoOk) return 2;
   if (!state.qualOk) return 3;
-  if (!state.branchOk) return 4;
-  if (!state.enrollOk) return 6; // skip optional objections
+  if (!state.discoveryOk) return 4;
+  if (!state.quoteOk) return 5;
+  if (!state.enrollOk) return 6;
   if (!state.wrapOk) return 7;
   return 8; // complete
 }

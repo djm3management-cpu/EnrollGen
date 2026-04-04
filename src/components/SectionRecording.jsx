@@ -41,7 +41,7 @@ export default React.memo(function SectionRecording() {
       <ScriptBox verbatim>
         {`"Thank you for calling New Gen Health Solutions. My name is ${
           agentName || "[First & Last Name]"
-        }. I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?" "Please know our call will be recorded for quality and training purposes; is it ok if I continue?" "So (Client's Name), we are reaching out because it is Open Enrollment and unfortunately a lot of people made changes to their Medicare Advantage plans during the Annual Enrollment Period and were misinformed about their doctors being covered, prescription cost, and the benefits of the plan. I want to make sure you are receiving all of the benefits you are ENTITLED to like the grocery benefit & part B giveback as well as making sure you can see ALL of your doctors.`}
+        }. I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?" "Please know our call will be recorded for quality and training purposes; is it ok if I continue?" "So (Client's Name), we are reaching out to review your current Medicare coverage and see if you may qualify for a Special Enrollment Period, because provider networks, prescription costs, and plan benefits can change during the year. I want to make sure your plan is still meeting your needs and review any benefits that may be available to you based on your eligibility and location.`}
       </ScriptBox>
 
       <div className="section-next-action">

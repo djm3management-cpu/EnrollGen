@@ -10,10 +10,10 @@ export const ACA_GATES = [
     compliance: false,
     script: [
       "Hi, this is [Agent Name] with New Gen Health Solutions. Am I speaking with [Client Name]?",
-      "Great. I'm a licensed health insurance agent and I'll be helping you find the best marketplace health plan for your situation. Before we get started, I need to let you know this call may be recorded for quality and compliance purposes. Is that okay?",
+      "Great. I'm a licensed health insurance agent and Ill be helping you review your health coverage options. Before we get started, I need to let you know this call may be recorded for quality and compliance purposes. Is that okay?",
       "Perfect. Let me verify a few things. Can you confirm your full legal name and date of birth?",
-      "And what state do you live in?",
-      "Are you looking for coverage for open enrollment, or did you have a recent life event — like losing other coverage, getting married, having a baby, or moving?",
+      "And can you confirm your state and ZIP code?",
+      "I also need to confirm whether youve had a recent qualifying life event that may make you eligible for coverage, such as losing other coverage, moving, getting married, or having a baby.",
     ],
     notes: [
       "If consent is declined: explain recording is required per NGHS compliance policy and offer a secure online enrollment link instead.",

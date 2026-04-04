@@ -1,11 +1,10 @@
 /**
- * MedSupFlow.jsx — Clean Med Sup Script Flow
- * No objections. No agent instructions. Just script + gates.
- * Drop into: src/components/MedSupFlow.jsx
+ * MedSupFlow.jsx
+ * Straight-through Medicare Supplement script flow.
  */
 
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRef, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useMedSup } from "../context/MedSupContext";
 import { MEDSUP_SECTIONS } from "../context/MedSupScript";
 
@@ -69,9 +68,7 @@ function Gate({ label, done, onDo, onUndo }) {
           type="checkbox"
           checked={done}
           onChange={(e) => (e.target.checked ? onDo() : onUndo())}
-          style={{
-            margin: 0,
-          }}
+          style={{ margin: 0 }}
         />
         {label}
       </label>
@@ -116,6 +113,7 @@ function Card({ num, title, red, active, done, dur, children }) {
       </details>
     );
   }
+
   return (
     <section
       className={active ? "active-card" : ""}
@@ -190,359 +188,37 @@ function Card({ num, title, red, active, done, dur, children }) {
   );
 }
 
-function S1() {
+function SectionCard({ section }) {
   const { state, dispatch, activeSection } = useMedSup();
-  const sec = MEDSUP_SECTIONS[0];
-  const d = state.sectionTimestamps[1];
+  const done = state[section.key];
+  const d = state.sectionTimestamps[section.num];
+
   return (
     <Card
-      num={1}
-      title="Recording Disclosure"
-      active={activeSection === 1}
-      done={state.recordingOk}
+      num={section.num}
+      title={section.label}
+      red={section.compliance}
+      active={activeSection === section.num}
+      done={done}
       dur={d ? d.end - d.start : null}
     >
-      {sec.script.map((l, i) => (
-        <Say key={i} text={l} />
+      {section.script.map((line, idx) => (
+        <Say key={`${section.id}-${idx}`} text={line} />
       ))}
       <Gate
-        label="Consent confirmed"
-        done={state.recordingOk}
+        label={section.gate}
+        done={done}
         onDo={() => {
-          dispatch({ type: "START_SECTION", sectionNum: 1 });
+          dispatch({ type: "START_SECTION", sectionNum: section.num });
           dispatch({
             type: "COMPLETE_SECTION",
-            key: "recordingOk",
-            sectionNum: 1,
+            key: section.key,
+            sectionNum: section.num,
           });
         }}
-        onUndo={() =>
-          dispatch({ type: "UNCOMPLETE_SECTION", key: "recordingOk" })
-        }
+        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: section.key })}
       />
-    </Card>
-  );
-}
-
-function S2() {
-  const { state, dispatch, activeSection } = useMedSup();
-  const d = state.sectionTimestamps[2];
-  return (
-    <Card
-      num={2}
-      title="TPMO Disclosure"
-      red
-      active={activeSection === 2}
-      done={state.tpmoOk}
-      dur={d ? d.end - d.start : null}
-    >
-      <div
-        style={{
-          background: "rgba(248,113,113,0.06)",
-          border: "1px solid rgba(248,113,113,0.15)",
-          borderRadius: 6,
-          padding: "8px 12px",
-          marginBottom: 12,
-          fontSize: 12,
-          color: "#f87171",
-        }}
-      >
-        Read verbatim — do not paraphrase
-      </div>
-      <Say text="We do not offer every plan available in your area. Any information we provide is limited to those plans we do offer. Please contact Medicare.gov or 1-800-MEDICARE to get information on all of your options." />
-      <Gate
-        label="TPMO delivered"
-        done={state.tpmoOk}
-        onDo={() => {
-          dispatch({ type: "START_SECTION", sectionNum: 2 });
-          dispatch({ type: "COMPLETE_SECTION", key: "tpmoOk", sectionNum: 2 });
-        }}
-        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "tpmoOk" })}
-      />
-    </Card>
-  );
-}
-
-function S3() {
-  const { state, dispatch, activeSection } = useMedSup();
-  const sec = MEDSUP_SECTIONS[2];
-  const d = state.sectionTimestamps[3];
-  return (
-    <Card
-      num={3}
-      title="Qualification"
-      active={activeSection === 3}
-      done={state.qualOk}
-      dur={d ? d.end - d.start : null}
-    >
-      {[1, 2, 3].map((idx) => (
-        <div key={idx} style={{ marginBottom: 10 }}>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: "#4ade80",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              marginBottom: 4,
-              opacity: 0.6,
-            }}
-          >
-            Q{idx}
-          </div>
-          <Say text={sec.script[idx]} />
-        </div>
-      ))}
-      <Say text={sec.script[4]} />
-      <Gate
-        label="Caller qualified"
-        done={state.qualOk}
-        onDo={() => {
-          dispatch({ type: "START_SECTION", sectionNum: 3 });
-          dispatch({ type: "COMPLETE_SECTION", key: "qualOk", sectionNum: 3 });
-        }}
-        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "qualOk" })}
-      />
-    </Card>
-  );
-}
-
-function S4() {
-  const { state, dispatch, activeSection } = useMedSup();
-  const sec = MEDSUP_SECTIONS[3];
-  const [bid, setBid] = useState(state.selectedBranch || null);
-  const branch = sec.branches.find((b) => b.id === bid);
-  const d = state.sectionTimestamps[4];
-  return (
-    <Card
-      num={4}
-      title={branch ? branch.label : "Needs Discovery"}
-      active={activeSection === 4}
-      done={state.branchOk}
-      dur={d ? d.end - d.start : null}
-      red={branch?.compliance}
-    >
-      {!branch && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {sec.branches.map((b) => (
-            <button
-              key={b.id}
-              onClick={() => {
-                setBid(b.id);
-                dispatch({ type: "SELECT_BRANCH", branch: b.id });
-              }}
-              style={{
-                background: `${b.color}06`,
-                border: `1px solid ${b.color}20`,
-                borderLeft: `3px solid ${b.color}`,
-                borderRadius: 8,
-                padding: "12px 14px",
-                cursor: "pointer",
-                textAlign: "left",
-              }}
-            >
-              <div style={{ fontSize: 13, fontWeight: 600, color: b.color }}>
-                {b.label}
-              </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#6b7a8d",
-                  fontStyle: "normal",
-                  marginTop: 2,
-                }}
-              >
-                {b.trigger}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-      {branch && (
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={branch.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.15 }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 12,
-                padding: "8px 12px",
-                background: `${branch.color}08`,
-                border: `1px solid ${branch.color}18`,
-                borderRadius: 6,
-              }}
-            >
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: branch.color,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: branch.color,
-                  flex: 1,
-                }}
-              >
-                {branch.label}
-              </span>
-              <button
-                onClick={() => {
-                  setBid(null);
-                  dispatch({ type: "SELECT_BRANCH", branch: null });
-                }}
-                style={{
-                  fontSize: 11,
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 5,
-                  color: "#4a5568",
-                  padding: "3px 8px",
-                  cursor: "pointer",
-                  fontFamily: "var(--font-body)",
-                }}
-              >
-                Change
-              </button>
-            </div>
-            {branch.script.map((l, i) => (
-              <Say key={i} text={l} />
-            ))}
-          </motion.div>
-        </AnimatePresence>
-      )}
-      <Gate
-        label="Branch completed"
-        done={state.branchOk}
-        onDo={() => {
-          dispatch({ type: "START_SECTION", sectionNum: 4 });
-          dispatch({
-            type: "COMPLETE_SECTION",
-            key: "branchOk",
-            sectionNum: 4,
-          });
-        }}
-        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "branchOk" })}
-      />
-    </Card>
-  );
-}
-
-function S6() {
-  const { state, dispatch, activeSection } = useMedSup();
-  const sec = MEDSUP_SECTIONS[5];
-  const [mode, setMode] = useState("enroll");
-  const d = state.sectionTimestamps[6];
-  return (
-    <Card
-      num={5}
-      title="Close & Enrollment"
-      active={activeSection === 6}
-      done={state.enrollOk}
-      dur={d ? d.end - d.start : null}
-    >
-      <div
-        style={{
-          display: "flex",
-          gap: 3,
-          marginBottom: 14,
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.04)",
-          borderRadius: 6,
-          padding: 3,
-        }}
-      >
-        {[
-          { id: "enroll", label: "Enrolling", c: "#34d399" },
-          { id: "followup", label: "Follow-Up", c: "#fbbf24" },
-        ].map(({ id, label, c }) => (
-          <button
-            key={id}
-            onClick={() => setMode(id)}
-            style={{
-              flex: 1,
-              padding: "7px 12px",
-              borderRadius: 5,
-              border: "none",
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: "var(--font-body)",
-              background: mode === id ? `${c}12` : "transparent",
-              color: mode === id ? c : "#4a5568",
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {(mode === "enroll" ? sec.script : sec.followUpScript).map((l, i) => (
-        <Say key={i} text={l} />
-      ))}
-      <Gate
-        label="Enrolled or follow-up logged"
-        done={state.enrollOk}
-        onDo={() => {
-          dispatch({ type: "START_SECTION", sectionNum: 6 });
-          dispatch({
-            type: "COMPLETE_SECTION",
-            key: "enrollOk",
-            sectionNum: 6,
-          });
-        }}
-        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "enrollOk" })}
-      />
-    </Card>
-  );
-}
-
-function S7() {
-  const { state, dispatch, activeSection } = useMedSup();
-  const sec = MEDSUP_SECTIONS[6];
-  return (
-    <Card
-      num={6}
-      title="Compliance Wrap-Up"
-      red
-      active={activeSection === 7}
-      done={state.wrapOk}
-    >
-      <div
-        style={{
-          background: "rgba(248,113,113,0.06)",
-          border: "1px solid rgba(248,113,113,0.15)",
-          borderRadius: 6,
-          padding: "8px 12px",
-          marginBottom: 12,
-          fontSize: 12,
-          color: "#f87171",
-        }}
-      >
-        Re-deliver TPMO verbatim before ending call
-      </div>
-      {sec.script.map((l, i) => (
-        <Say key={i} text={l} />
-      ))}
-      <Gate
-        label="Wrap-up complete"
-        done={state.wrapOk}
-        onDo={() => {
-          dispatch({ type: "START_SECTION", sectionNum: 7 });
-          dispatch({ type: "COMPLETE_SECTION", key: "wrapOk", sectionNum: 7 });
-        }}
-        onUndo={() => dispatch({ type: "UNCOMPLETE_SECTION", key: "wrapOk" })}
-      />
-      {state.wrapOk && (
+      {section.key === "wrapOk" && done && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -588,18 +264,15 @@ function Progress() {
     { k: "recordingOk", l: "Record" },
     { k: "tpmoOk", l: "TPMO" },
     { k: "qualOk", l: "Qualify" },
-    { k: "branchOk", l: "Discovery" },
+    { k: "discoveryOk", l: "Discovery" },
+    { k: "quoteOk", l: "Quote" },
     { k: "enrollOk", l: "Enroll" },
-    { k: "wrapOk", l: "Wrap-Up" },
+    { k: "wrapOk", l: "Wrap" },
   ];
   const done = steps.filter((s) => state[s.k]).length;
   const pct = Math.round((done / steps.length) * 100);
-  const activeIdx =
-    activeSection <= 4
-      ? activeSection - 1
-      : activeSection <= 5
-      ? 3
-      : activeSection - 2;
+  const activeIdx = Math.min(Math.max(activeSection - 1, 0), steps.length - 1);
+
   return (
     <div
       style={{
@@ -655,34 +328,34 @@ function Progress() {
         />
       </div>
       <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-        {steps.map((s, i) => {
-          const d = state[s.k];
-          const a = i === activeIdx;
+        {steps.map((step, idx) => {
+          const isDone = state[step.k];
+          const isActive = idx === activeIdx;
           return (
             <span
-              key={s.k}
+              key={step.k}
               style={{
                 fontSize: 10,
                 fontWeight: 500,
                 padding: "2px 7px",
                 borderRadius: 4,
-                background: d
+                background: isDone
                   ? "rgba(52,211,153,0.06)"
-                  : a
+                  : isActive
                   ? "rgba(74,222,128,0.06)"
                   : "rgba(255,255,255,0.015)",
-                color: d ? "#34d399" : a ? "#4ade80" : "#4a5568",
+                color: isDone ? "#34d399" : isActive ? "#4ade80" : "#4a5568",
                 border: `1px solid ${
-                  d
+                  isDone
                     ? "rgba(52,211,153,0.12)"
-                    : a
+                    : isActive
                     ? "rgba(74,222,128,0.12)"
                     : "rgba(255,255,255,0.03)"
                 }`,
               }}
             >
-              {d ? "✓ " : a ? "● " : ""}
-              {s.l}
+              {isDone ? "✓ " : isActive ? "● " : ""}
+              {step.l}
             </span>
           );
         })}
@@ -694,6 +367,7 @@ function Progress() {
 export default function MedSupFlow() {
   const { state, dispatch, activeSection } = useMedSup();
   const prev = useRef(activeSection);
+
   useEffect(() => {
     if (activeSection !== prev.current) {
       prev.current = activeSection;
@@ -717,23 +391,45 @@ export default function MedSupFlow() {
       <Progress />
 
       {!state.callStarted ? (
-        <section style={{ background: "rgba(74,222,128,0.04)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
-          <button className="primary" onClick={() => dispatch({ type: "START_CALL" })} style={{
-            fontSize: 15, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
-            background: "linear-gradient(145deg, rgba(74,222,128,0.15), rgba(74,222,128,0.05))", border: "1px solid rgba(74,222,128,0.3)", color: "#4ade80", borderRadius: 8, cursor: "pointer",
-          }}>
+        <section
+          style={{
+            background: "rgba(74,222,128,0.04)",
+            border: "1px solid rgba(74,222,128,0.2)",
+            borderRadius: 10,
+            padding: "28px 20px",
+            textAlign: "center",
+            marginBottom: 10,
+          }}
+        >
+          <button
+            className="primary"
+            onClick={() => dispatch({ type: "START_CALL" })}
+            style={{
+              fontSize: 15,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              padding: "10px 36px",
+              background:
+                "linear-gradient(145deg, rgba(74,222,128,0.15), rgba(74,222,128,0.05))",
+              border: "1px solid rgba(74,222,128,0.3)",
+              color: "#4ade80",
+              borderRadius: 8,
+              cursor: "pointer",
+            }}
+          >
             Start Call
           </button>
-          <p style={{ marginTop: 10, fontSize: 11, color: "#4a5568" }}>Timer begins when you click Start Call</p>
+          <p style={{ marginTop: 10, fontSize: 11, color: "#4a5568" }}>
+            Timer begins when you click Start Call
+          </p>
         </section>
       ) : (
         <>
-          <S1 />
-          <S2 />
-          <S3 />
-          <S4 />
-          <S6 />
-          <S7 />
+          {MEDSUP_SECTIONS.map((section) => (
+            <SectionCard key={section.id} section={section} />
+          ))}
         </>
       )}
     </motion.div>
