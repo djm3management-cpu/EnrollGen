@@ -10,7 +10,7 @@
   font-family: var(--font-body);
   color: var(--text-primary);
   position: relative;
-  background: linear-gradient(180deg, #141414 0%, #0e0e0e 100%);
+  background: transparent;
   border-radius: 22px;
   padding: 18px 0;
   overflow: visible;
@@ -1624,7 +1624,7 @@
 }
 
 /* ── Zoom & overflow safety ── */
-.app.sep-tool-inner {
+.sep-tool-inner {
   width: min(100%, 1320px);
   max-width: 1320px;
   margin: 0 auto;

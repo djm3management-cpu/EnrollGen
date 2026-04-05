@@ -7,7 +7,6 @@ import { useRef, useState } from "react";
 import { U65Provider } from "./U65Context";
 import { useU65 } from "./U65Context";
 import U65Flow from "./U65Flow";
-import U65Checklist from "./U65Checklist";
 import U65Copilot from "../../components/U65Copilot";
 import DevotedPopupManager from "../../components/ancillary/DevotedPopupManager";
 
@@ -30,7 +29,6 @@ function U65ScriptBody() {
           <U65Flow />
         </div>
       </div>
-      <U65Checklist />
     </>
   );
 }

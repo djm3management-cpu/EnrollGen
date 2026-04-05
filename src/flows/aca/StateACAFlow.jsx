@@ -160,6 +160,10 @@ function Card({ num, title, active, done, dur, children }) {
     );
   }
 
+  if (!done && !active) {
+    return null;
+  }
+
   return (
     <section
       className={active ? "active-card" : ""}

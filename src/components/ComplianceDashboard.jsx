@@ -49,11 +49,11 @@ function getScoreColor(s) {
   return "#E8002D";                // danger red
 }
 function getScoreBg(s) {
-  if (s >= 90) return "rgba(0,209,102,0.08)";
-  if (s >= 75) return "rgba(0,176,80,0.07)";
-  if (s >= 50) return "rgba(255,215,0,0.07)";
-  if (s >= 25) return "rgba(255,140,0,0.07)";
-  return "rgba(232,0,45,0.07)";
+  if (s >= 90) return "rgba(0,209,102,0.16)";
+  if (s >= 75) return "rgba(0,176,80,0.14)";
+  if (s >= 50) return "rgba(255,215,0,0.15)";
+  if (s >= 25) return "rgba(255,140,0,0.15)";
+  return "rgba(232,0,45,0.15)";
 }
 function getGradeColor(g) {
   if (g.startsWith("A")) return "#00D166";
@@ -151,12 +151,13 @@ function ScoreRing({ score, size = 48, strokeWidth = 4 }) {
 
 /* ── Category row ── */
 const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
+  const canToggle = typeof onToggle === "function";
   const col = getScoreColor(cat.score);
   const bg = getScoreBg(cat.score);
   return (
     <div style={{ marginBottom: 2 }}>
       <div
-        onClick={onToggle}
+        onClick={canToggle ? onToggle : undefined}
         style={{
           display: "flex",
           alignItems: "center",
@@ -164,7 +165,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
           padding: "7px 10px",
           background: isExpanded ? bg : "transparent",
           borderRadius: 3,
-          cursor: "pointer",
+          cursor: canToggle ? "pointer" : "default",
           transition: "background 0.12s",
           borderLeft: `2px solid ${col}`,
         }}
@@ -413,6 +414,9 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
   customerTranscript = "",
   mergedTranscript = [],
   result: providedResult = null,
+  forceExpanded = false,
+  forceShowDetail = false,
+  forceExpandAllCategories = false,
 }) {
   const { state } = useScript();
   const { entries } = useCopilotLog();
@@ -456,6 +460,8 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
   const gradeColor = getGradeColor(result.grade);
   const isTranscriptScored =
     result.scoringMode !== "gate_only" && result.scoringMode !== "inactive";
+  const isExpanded = forceExpanded || expanded;
+  const showDetailView = forceShowDetail || showDetail;
   const modeLabel =
     result.scoringMode === "strict_two_sided"
       ? "Strict Transcript + Customer"
@@ -475,24 +481,20 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
       style={{
         padding: 0,
         overflow: "hidden",
-        border: "1px solid rgba(255,255,255,0.11)",
-        boxShadow:
-          "0 0 0 1px rgba(255,255,255,0.035), 0 0 18px rgba(255,255,255,0.045), 0 10px 24px rgba(0,0,0,0.28)",
       }}
     >
       {/* Header — F1 HUD bar */}
       <div
         className="compliance-dashboard-header"
-        onClick={() => setExpanded((p) => !p)}
+        onClick={forceExpanded ? undefined : () => setExpanded((p) => !p)}
         style={{
           display: "flex",
           alignItems: "center",
           gap: 12,
           padding: "10px 14px",
-          cursor: "pointer",
-          background: "linear-gradient(180deg, rgba(20,2,4,0.8) 0%, rgba(12,1,2,0.6) 100%)",
-          borderBottom: expanded ? "1px solid rgba(232,0,45,0.15)" : "none",
-          borderRadius: expanded ? "5px 5px 0 0" : "5px",
+          cursor: forceExpanded ? "default" : "pointer",
+          borderBottom: isExpanded ? "1px solid rgba(232,0,45,0.15)" : "none",
+          borderRadius: isExpanded ? "5px 5px 0 0" : "5px",
         }}
       >
         <ScoreRing score={result.score} size={48} strokeWidth={4} />
@@ -508,7 +510,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             }}>
               Compliance HUD
             </span>
-            {expanded && (
+            {isExpanded && (
               <span style={{
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontSize: "16px",
@@ -570,15 +572,15 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
           color="#475569"
           style={{
             transition: "transform 0.2s",
-            transform: expanded ? "rotate(180deg)" : "rotate(0)",
+            transform: isExpanded ? "rotate(180deg)" : "rotate(0)",
           }}
         />
       </div>
 
-      {expanded && (
-        <div style={{ padding: "6px 8px 10px" }}>
+      {isExpanded && (
+        <div className="compliance-dashboard-body">
           {/* Grid view */}
-          {!showDetail && (
+          {!showDetailView && (
             <div className="compliance-dashboard-grid" style={{ marginBottom: 8 }}>
               {result.categories.map((cat) => {
                 const col = getScoreColor(cat.score);
@@ -658,35 +660,37 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: forceShowDetail ? "flex-end" : "space-between",
               alignItems: "center",
               marginBottom: 4,
               padding: "0 4px",
             }}
           >
-            <button
-              onClick={() => setShowDetail((p) => !p)}
-              style={{
-                background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 3,
-                padding: "3px 10px",
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: "11px",
-                fontWeight: 700,
-                letterSpacing: "0.10em",
-                textTransform: "uppercase",
-                color: "#6A6A7A",
-                cursor: "pointer",
-              }}
-            >
-              <span
-                style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+            {!forceShowDetail && (
+              <button
+                onClick={() => setShowDetail((p) => !p)}
+                style={{
+                  background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 3,
+                  padding: "3px 10px",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  letterSpacing: "0.10em",
+                  textTransform: "uppercase",
+                  color: "#6A6A7A",
+                  cursor: "pointer",
+                }}
               >
-                {showDetail ? <LayoutGrid size={12} /> : <List size={12} />}
-                {showDetail ? "Grid" : "Detail"}
-              </span>
-            </button>
+                <span
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+                >
+                  {showDetail ? <LayoutGrid size={12} /> : <List size={12} />}
+                  {showDetail ? "Grid" : "Detail"}
+                </span>
+              </button>
+            )}
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {result.transcriptStats?.violations?.length > 0 && (
                 <span
@@ -724,7 +728,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
           </div>
 
           {/* Detail view */}
-          {showDetail && (
+          {showDetailView && (
             <div>
               <div
                 style={{
@@ -762,15 +766,17 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 <CategoryRow
                   key={cat.name}
                   cat={cat}
-                  isExpanded={!!expandedCats[cat.name]}
-                  onToggle={() => toggleCat(cat.name)}
+                  isExpanded={forceExpandAllCategories || !!expandedCats[cat.name]}
+                  onToggle={
+                    forceExpandAllCategories ? undefined : () => toggleCat(cat.name)
+                  }
                 />
               ))}
             </div>
           )}
 
           {/* Violations panel */}
-          {showDetail && result.transcriptStats?.violations?.length > 0 && (
+          {showDetailView && result.transcriptStats?.violations?.length > 0 && (
             <div
               style={{
                 marginTop: 8,
@@ -823,7 +829,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
           )}
 
           {/* Flags panel */}
-          {showDetail &&
+          {showDetailView &&
             result.flags.length > 0 &&
             !result.transcriptStats?.violations?.length && (
               <div

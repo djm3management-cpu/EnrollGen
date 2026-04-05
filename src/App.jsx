@@ -2,6 +2,7 @@ import { lazy, Suspense, useState, useEffect, useRef, startTransition } from "re
 import EnrollGenLogo from "./components/EnrollGenLogo";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider, useMedSup } from "./context/MedSupContext";
+import { useLiveCall } from "./context/LiveCallContext";
 import { NGHS_SEP_SCRIPT } from "./context/SEPScript";
 import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
 import { BookOpen, ChevronDown, Menu, Shuffle, X } from "lucide-react";
@@ -23,8 +24,6 @@ const loadCallHistory = () => import("./components/CallHistory");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
-const loadCalibrationDashboard = () => import("./compliance/components/CalibrationDashboard");
-const loadComplianceHub = () => import("./compliance/components/ComplianceHub");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -41,11 +40,13 @@ const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
-const CalibrationDashboard = lazy(loadCalibrationDashboard);
-const ComplianceHub = lazy(loadComplianceHub);
 const COMPLIANCE_HUB_TAB_IDS = new Set(["complianceHub", "history", "upload", "review"]);
 const AGENT_TOOLS_TAB_IDS = new Set(["tools", "objections", "decisionTree"]);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
+
+function modeSupportsAgentTools(mode) {
+  return mode === "ma" || mode === "aca";
+}
 
 /* ── Daily Verse accordion wrapper for main flow ── */
 function DailyVerseAccordion() {
@@ -475,6 +476,24 @@ function SessionSummarySlot() {
   );
 }
 
+function MainFlowComplianceHubTab() {
+  const { liveCall } = useLiveCall();
+
+  return (
+    <LazyPanel>
+      <ComplianceDashboard
+        transcript={liveCall.transcript}
+        customerTranscript={liveCall.customerTranscript}
+        mergedTranscript={liveCall.mergedTranscript}
+        result={liveCall.complianceResult}
+        forceExpanded
+        forceShowDetail
+        forceExpandAllCategories
+      />
+    </LazyPanel>
+  );
+}
+
 function MedSupScriptWorkspace() {
   const { state } = useMedSup();
   const [transcript, setTranscript] = useState("");
@@ -674,14 +693,14 @@ function AppContent() {
   const preloadTab = (targetTab, targetMode = mode) => {
     if (COMPLIANCE_HUB_TAB_IDS.has(targetTab)) {
       if (targetMode === "ma") {
-        loadComplianceHub();
+        loadComplianceDashboard();
       } else {
         loadCallHistory();
         if (targetMode === "medsup") loadTranscriptUpload();
       }
       return;
     }
-    if (AGENT_TOOLS_TAB_IDS.has(targetTab) && targetMode === "ma") {
+    if (AGENT_TOOLS_TAB_IDS.has(targetTab) && modeSupportsAgentTools(targetMode)) {
       loadAgentTools();
       return;
     }
@@ -689,7 +708,7 @@ function AppContent() {
       preloadScriptForMode(targetMode);
       return;
     }
-    if (targetTab === "tools" && targetMode === "ma") {
+    if (targetTab === "tools" && modeSupportsAgentTools(targetMode)) {
       loadAgentTools();
       return;
     }
@@ -810,7 +829,7 @@ function AppContent() {
             >
               <span className="sidebar-tab-text">Script</span>
             </button>
-            {mode === "ma" && (
+            {modeSupportsAgentTools(mode) && (
               <button
                 className={`sidebar-tab${activeTab === "tools" ? " active" : ""}`}
                 onClick={() => { handleTabChange("tools"); setSidebarOpen(false); }}
@@ -949,9 +968,7 @@ function AppContent() {
                 </div>
               </div>
               <div style={getTabDisplayStyle(activeTab === "complianceHub")}>
-                <LazyPanel>
-                  <ComplianceHub />
-                </LazyPanel>
+                <MainFlowComplianceHubTab />
               </div>
               <div style={getTabDisplayStyle(activeTab === "tools")}>
                 <LazyPanel>
@@ -992,6 +1009,11 @@ function AppContent() {
               <div style={getTabDisplayStyle(activeTab === "script")}>
                 <LazyPanel>
                   <ACAScript />
+                </LazyPanel>
+              </div>
+              <div style={getTabDisplayStyle(activeTab === "tools")}>
+                <LazyPanel>
+                  <AgentTools />
                 </LazyPanel>
               </div>
               <div style={getTabDisplayStyle(activeTab === "acaIntel")}>

@@ -24,9 +24,8 @@ export default function SEPLookupTool() {
   const showSeps = s.activeTab === "seps" && s.results;
 
   return (
-    <div className="app-shell sep-tool">
-      <div className="viewport-bg" />
-      <div className="app sep-tool-inner">
+    <div className="sep-tool">
+      <div className="sep-tool-inner">
 
         {/* ═══ FEMA & Carrier Feed — top banner ═══ */}
         <FemaFeed

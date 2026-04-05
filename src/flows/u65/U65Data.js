@@ -1,6 +1,4 @@
-// U65Data.js — U65 Off-Exchange Script Flow Data
-// Gates 0–7 per u65-aca-spec.md Section 3.2
-// Two products only: EnrollPrime / AFI Association PPO, PALIC HSP Gold Edition
+// U65Data.js - U65 Off-Exchange script flow data
 
 export const FPL_2026 = {
   1: 15650,
@@ -39,19 +37,51 @@ export function getAcaEstimate(age) {
 export function getProductRecommendation(uwRisk) {
   if (uwRisk === "low") {
     return [
-      { id: "palic", priority: 1, reason: "Healthy + budget-conscious = PALIC HSP Gold best value. First-dollar benefits, $0 outpatient deductible." },
-      { id: "enrollprime", priority: 2, reason: "Wants PPO breadth + traditional copay/coinsurance via Cigna." },
+      {
+        id: "palic",
+        priority: 1,
+        reason:
+          "Healthy and budget-conscious clients often fit best in a lower-cost fixed-benefit option.",
+      },
+      {
+        id: "enrollprime",
+        priority: 2,
+        reason:
+          "Clients who want broader PPO access may still prefer the EnrollPrime path.",
+      },
     ];
   }
+
   if (uwRisk === "moderate") {
     return [
-      { id: "enrollprime", priority: 1, reason: "Moderate risk — verify UW with O'Neill. Cigna PPO may be more flexible." },
-      { id: "palic", priority: 2, reason: "May face rate-up or pre-ex exclusions — disclose 12-month waiting period." },
+      {
+        id: "enrollprime",
+        priority: 1,
+        reason:
+          "Moderate-risk clients may fit better in the PPO-style option depending on underwriting.",
+      },
+      {
+        id: "palic",
+        priority: 2,
+        reason:
+          "A lower-cost fixed-benefit option may still be worth reviewing if expectations are set clearly.",
+      },
     ];
   }
+
   return [
-    { id: "aca_pivot", priority: 1, reason: "High UW risk — ACA is guaranteed issue. Pivot to ACA flow if in OEP/SEP window." },
-    { id: "enrollprime", priority: 2, reason: "Long shot — verify with O'Neill if any options exist." },
+    {
+      id: "aca_pivot",
+      priority: 1,
+      reason:
+        "Higher-risk clients may need to pivot back to ACA-compliant coverage if off-exchange underwriting is not realistic.",
+    },
+    {
+      id: "enrollprime",
+      priority: 2,
+      reason:
+        "If anything off-exchange remains workable, the PPO-style path is the cleaner fallback to review.",
+    },
   ];
 }
 
@@ -60,211 +90,62 @@ export const U65_GATES = [
     id: "u65-0",
     num: 0,
     key: "gate0Ok",
-    label: "Opening & Verification",
-    compliance: false,
-    script: {
-      transition: "[ACA Transition] So based on your income, the marketplace plans are going to be pretty expensive without a subsidy. The good news is there are several off-exchange options that could save you a lot of money while still giving you solid coverage. Let me walk you through what's available.",
-      direct: [
-        "Hi, this is [Agent Name] with New Gen Health Solutions. Am I speaking with [Client Name]?",
-        "I'm a licensed health insurance agent. I understand you're looking for health coverage options. Before we get started, I need to let you know this call may be recorded for quality and compliance purposes. Is that okay?",
-      ],
-    },
-    notes: [
-      "If entrySource is 'aca_transition': skip identity verification (already done) and begin with the transition script.",
-      "If entrySource is 'direct': use the standard opening.",
+    label: "Opening",
+    script: [
+      "\"Hi, this is [Agent Name] with New Gen Health Solutions. Am I speaking with [Client Name]? I'm a licensed health insurance agent. I understand you're looking for health coverage options. This call may be recorded for quality and compliance purposes - is that okay?\"",
     ],
-    checklist: [
-      "Identity verified (name + DOB confirmed)",
-      "Call recording consent obtained",
-    ],
-    gate: "Identity verified — consent obtained",
+    gate: "Opening complete",
   },
   {
     id: "u65-1",
     num: 1,
     key: "gate1Ok",
     label: "Situation Assessment",
-    compliance: false,
     script: [
-      "Tell me a little about your situation. What kind of coverage do you have right now, if any?",
-      "And are you self-employed, a W-2 employee, or somewhere in between?",
-      "Have you looked at marketplace plans? What was the pricing like?",
+      "\"Tell me about your situation - what kind of coverage do you have right now, if any? Are you self-employed, W-2, or somewhere in between? Have you looked at marketplace plans yet, and what was the pricing like?\"",
     ],
-    situationNote: "Common scenarios: No coverage (subsidy cliff, uninsured) | COBRA (expensive, about to expire) | Lost Aetna individual market plan (Aetna exited 17 states for 2026 including NJ) | Employer dropped coverage or went to part-time | Aging off parent's plan (turning 26)",
-    employmentNote: "Employment type affects product fit: self-employed/1099 are prime off-exchange candidates. W-2 workers should verify no employer coverage available first.",
-    anchorNote: "If they've already seen unsubsidized ACA pricing, use it as an anchor: 'Yeah, $X/month is pretty common for someone your age without a subsidy. Let me show you what we can do off-exchange.'",
-    signals: [
-      "subsidyCliffClient → true if confirmed > 400% FPL",
-      "cobraActive → true if currently on COBRA",
-      "aetnaExitAffected → true if lost Aetna individual coverage",
-    ],
-    checklist: [
-      "Current coverage status documented",
-      "Employment type documented",
-      "Coverage gap reason understood",
-    ],
-    gate: "Situation assessed — coverage gap reason clear",
+    gate: "Situation assessed",
   },
   {
     id: "u65-2",
     num: 2,
     key: "gate2Ok",
-    label: "Health Profile & Underwriting Pre-Screen",
-    compliance: false,
-    complianceNote: "NEVER guarantee acceptance. Always say 'subject to underwriting approval' for medically underwritten products.",
+    label: "Health Profile",
     script: [
-      "I need to ask some health questions to figure out which products will be the best fit. How would you describe your overall health?",
-      "Are you currently being treated for any ongoing conditions? Things like diabetes, heart disease, cancer, COPD, or anything that requires regular medication or specialist care?",
-      "Have you been hospitalized or had any surgeries in the last 2 years?",
-      "Do you use any tobacco products?",
+      "\"I need to ask a few health questions to figure out which products fit. How would you describe your overall health? Are you being treated for any ongoing conditions - diabetes, heart disease, anything requiring regular meds or specialists? Any hospitalizations or surgeries in the last two years? Any tobacco use?\"",
     ],
-    uwRiskMatrix: [
-      {
-        level: "LOW",
-        profile: "No conditions, no meds, no tobacco, no recent hospitalizations",
-        path: "All products available. PALIC HSP Gold likely best value. EnrollPrime AFI PPO also strong option.",
-        color: "#34d399",
-      },
-      {
-        level: "MODERATE",
-        profile: "Controlled conditions (managed diabetes, hypertension on meds), tobacco use, BMI concerns",
-        path: "EnrollPrime — verify UW with O'Neill. PALIC may rate up or apply pre-ex exclusion.",
-        color: "#fbbf24",
-      },
-      {
-        level: "HIGH",
-        profile: "Active cancer, recent cardiac events, insulin-dependent diabetes with complications, multiple chronic conditions",
-        path: "Off-exchange products likely decline. ACA is guaranteed issue → pivot to ACA flow if in OEP/SEP window.",
-        color: "#f87171",
-      },
-    ],
-    signals: [
-      "uwRisk → low | moderate | high",
-      "medicalUWRequired → true (set based on product path)",
-      "productFit → derived recommendation based on uwRisk + budget + preferences",
-    ],
-    checklist: [
-      "Health status assessed",
-      "Pre-existing conditions documented",
-      "Tobacco use documented",
-      "UW pre-screen completed",
-    ],
-    gate: "Health profile complete — UW risk assessed",
+    gate: "Health profile complete",
   },
   {
     id: "u65-3",
     num: 3,
     key: "gate3Ok",
-    label: "Product Presentation",
-    compliance: true,
-    mandatoryDisclosure: "These plans are NOT minimum essential coverage. They are NOT a substitute for ACA-compliant major medical insurance. Pre-existing condition limitations may apply.",
-    products: {
-      enrollprime: {
-        id: "enrollprime",
-        label: "EnrollPrime / AFI Association PPO",
-        when: "uwRisk is low-moderate, client wants PPO network access, moderate-to-high utilization expected, comfortable with association group model.",
-        script: [
-          "The first option I want to show you is a group PPO plan through an association called AFI. It's not a marketplace plan, but it's real major medical PPO coverage through the Cigna network. You'd have copays for doctor visits, a deductible, and coinsurance — similar structure to what you might have had through an employer.",
-          "Because it's a group plan through an association, the pricing tends to be more competitive than individual market plans, especially for people in your situation who don't qualify for a subsidy.",
-          "Let me pull up a quote for you. [Access EnrollPrime portal at enrollprime.com]",
-        ],
-        keyPoints: [
-          "Cigna PPO network — large national network",
-          "Group plan structure — not individually rated the same way as ACA",
-          "Agent manages enrollment through 1enrollment.com/manage back office",
-          "Must verify state/county availability with O'Neill Marketing",
-        ],
-        compliance: "EnrollPrime/AFI is NOT ACA-compliant and NOT minimum essential coverage. Do not describe it as equivalent to employer-sponsored or marketplace coverage.",
-      },
-      palic: {
-        id: "palic",
-        label: "PALIC HSP Gold Edition",
-        when: "uwRisk is LOW, client is budget-conscious, healthy, wants first-dollar benefits, low-to-moderate utilization. This is a fixed-benefit indemnity plan.",
-        script: [
-          "The next option is a fixed-benefit health plan from Philadelphia American Life — it's called the HSP Gold Edition. This works differently from a traditional plan. Instead of copays and coinsurance, you get set dollar amounts for each type of service.",
-          "For example, a doctor visit pays $[amount], an ER visit pays $[amount], surgery pays $[amount]. The big advantage is there's no deductible for outpatient services — you get first-dollar benefits from day one. And the monthly premiums are significantly lower than ACA plans.",
-          "The plan uses the First Health network — that's over 926,000 providers and 6,100 hospitals nationwide. Let me check that your doctors are in-network. [Check myfirsthealth.com]",
-          "There are also some really helpful extras: Healthcare PALs is a concierge service that helps you find quality care, and Medical Bill Eraser negotiates down any big out-of-pocket bills — they average a 62% reduction on balances over $2,500.",
-          "I do want to be upfront — this is a fixed-benefit plan, so the payouts are set amounts. For routine care, those amounts usually cover most of the bill. But for a major hospitalization or surgery, you'd likely have out-of-pocket costs beyond what the plan pays. It's designed more for everyday healthcare than catastrophic coverage.",
-          "Also, there's a 12-month waiting period on any pre-existing conditions. After 12 months, they're covered. And the plan does require medical underwriting, so acceptance isn't guaranteed.",
-        ],
-        tiers: [
-          { feature: "Calendar Year Max", value: "$250,000", plus: "$500,000", preferred: "$1,000,000" },
-          { feature: "Lifetime Maximum", value: "$5,000,000", plus: "$5,000,000", preferred: "$5,000,000" },
-          { feature: "Outpatient Deductible", value: "$0 (first-dollar)", plus: "$0 (first-dollar)", preferred: "$0 (first-dollar)" },
-          { feature: "Network", value: "First Health PPO", plus: "First Health PPO", preferred: "First Health PPO" },
-          { feature: "Inpatient Deductible Options", value: "$100–$10,000", plus: "$100–$10,000", preferred: "$100–$10,000" },
-        ],
-        compliance: "CRITICAL: PALIC is medically underwritten. Full health questions required. Some conditions are rated up or declined. The 12-month pre-existing condition exclusion must be disclosed. Fixed-benefit plans pay set dollar amounts, NOT a percentage of charges. Client may have significant out-of-pocket costs for major events.",
-        checklist: [
-          "Pre-existing condition exclusion period disclosed (12 months)",
-          "Fixed-benefit payout structure explained clearly",
-        ],
-      },
-    },
-    checklist: [
-      "NOT MEC disclosure given to client",
-      "NOT a substitute for major medical disclosure given",
+    label: "Disclosure + Product Presentation",
+    script: [
+      "\"Before I show you options - these plans are not minimum essential coverage, not a substitute for ACA-compliant major medical, and pre-existing condition limitations may apply.\"",
     ],
-    gate: "Products presented — disclosures given",
+    directions: [
+      "Then present best-fit products based on health profile and budget.",
+    ],
+    gate: "Product presentation complete",
   },
   {
     id: "u65-4",
     num: 4,
     key: "gate4Ok",
     label: "Comparison & Selection",
-    compliance: false,
     script: [
-      "So to summarize your options: [recap best-fit products with monthly premiums, key features, and trade-offs].",
-      "Which direction feels right for you?",
+      "\"So here's what makes sense for you - [recap products, premiums, key differences]. Which direction feels right?\"",
     ],
-    commonQA: [
-      {
-        q: "Is this real insurance?",
-        a: "These are legitimate health benefit plans, but they are not ACA marketplace plans. They each work differently — [explain the specific product structure].",
-      },
-      {
-        q: "What happens if I get really sick?",
-        a: "Honestly address coverage limits. For PALIC: fixed-dollar payouts may not cover full costs. For EnrollPrime: PPO with coinsurance structure — review the plan's out-of-pocket max.",
-      },
-      {
-        q: "Can I still get marketplace coverage later?",
-        a: "Yes, during the next Open Enrollment Period you can always go back to the marketplace. And if you have a qualifying life event, you could enroll through a Special Enrollment Period.",
-      },
-    ],
-    checklist: [
-      "Product comparison reviewed with client",
-      "Client questions addressed",
-      "Product selected: ___________",
-    ],
-    gate: "Product selected",
+    gate: "Selection complete",
   },
   {
     id: "u65-5",
     num: 5,
     key: "gate5Ok",
-    label: "Ancillary / Supplemental Stack",
-    compliance: false,
+    label: "Ancillary",
     script: [
-      "Now that we have your core health plan set, I always recommend considering a couple of supplemental products that can fill in gaps — especially with off-exchange plans. These are usually very affordable.",
-      "Given that you went with [selected product], I'd especially recommend [accident plan / critical illness / hospital indemnity] to round out your coverage. The cost is usually just [range] per month.",
-    ],
-    ancillaryTable: [
-      { product: "Accident Plan", why: "First-dollar cash for ER, ambulance, fractures. Pairs well with all off-exchange plans.", carriers: "Liberty Bankers, Chubb, Aflac" },
-      { product: "Critical Illness / Cancer", why: "Lump-sum payout on diagnosis. Covers income gap + out-of-pocket on core plan.", carriers: "PALIC Specified Disease, Aflac, Allstate Benefits" },
-      { product: "Hospital Indemnity", why: "Daily cash benefit during hospitalization. Essential with PALIC to supplement fixed benefits.", carriers: "Liberty Bankers Hospital Indemnity Plus, Aflac" },
-      { product: "Dental & Vision", why: "Standalone coverage — most off-exchange plans don't include dental/vision.", carriers: "Solstice, Ameritas, VSP" },
-      { product: "Telemedicine", why: "24/7 virtual visits for $0–$15. Reduces unnecessary ER/urgent care usage.", carriers: "Bundled with many plans or standalone" },
-    ],
-    notes: [
-      "COMPLIANCE: Ancillary products must be presented as supplemental, not as replacements for major medical coverage.",
-    ],
-    signals: [
-      "ancillaryNeeded → true/false based on core plan gaps",
-    ],
-    checklist: [
-      "Ancillary products discussed with client",
-      "Ancillary products selected (if any): ___________",
+      "\"Now that we have your core plan, I'd recommend looking at [accident/critical illness/hospital indemnity/dental-vision] to fill in gaps. Usually just [price range] per month.\"",
     ],
     gate: "Ancillary discussion complete",
   },
@@ -272,72 +153,20 @@ export const U65_GATES = [
     id: "u65-6",
     num: 6,
     key: "gate6Ok",
-    label: "Application & Enrollment",
-    compliance: false,
-    script: {
-      general: "Let's get your application started. I'm going to pull up the enrollment portal.",
-      palic: "I need to go through the health questions on the application. These are the underwriting questions the insurance company uses to evaluate your application. Please answer as accurately as possible — any misrepresentation could result in claims being denied later.",
-      submitted: "Your application has been submitted. [For PALIC: subject to underwriting approval, typically 3–7 business days.] [For EnrollPrime: typically effective on the first of the following month.]",
-      confirm: "Your confirmation/application number is [number]. Your anticipated effective date is [date]. Your monthly premium is $[amount] and the first payment is due by [date].",
-    },
-    platforms: {
-      enrollprime: {
-        label: "EnrollPrime / AFI",
-        portal: "enrollprime.com",
-        backOffice: "1enrollment.com/manage",
-        links: [
-          { label: "Enrollment Portal", url: "https://enrollprime.com" },
-          { label: "Back Office", url: "https://1enrollment.com/manage" },
-        ],
-      },
-      palic: {
-        label: "PALIC HSP Gold",
-        portal: "apps.neweralife.com/site",
-        links: [
-          { label: "Enrollment Portal", url: "https://apps.neweralife.com/site" },
-          { label: "Network Lookup", url: "https://myfirsthealth.com" },
-          { label: "Healthcare PALs", url: "#" },
-          { label: "Medical Bill Eraser", url: "#" },
-        ],
-      },
-    },
-    notes: [
-      "COMPLIANCE: For PALIC — Application is medically underwritten. Agent must read UW questions verbatim. Do not coach or help the client minimize conditions. Honest answers protect the client.",
-      "COMPLIANCE: For PALIC — Do NOT tell the client they are approved until underwriting confirmation is received. Say 'submitted and pending review.'",
+    label: "Enrollment",
+    script: [
+      "\"Let's get your application started. Your confirmation number is [number], effective date is [date], monthly premium is $[amount], first payment due by [date].\"",
     ],
-    checklist: [
-      "Application completed accurately",
-      "UW questions answered honestly (PALIC only)",
-      "Application submitted",
-      "Confirmation/application number: ___________",
-      "Anticipated effective date: ___________",
-      "Premium and payment date disclosed",
-    ],
-    gate: "Application submitted — confirmation number recorded",
+    gate: "Enrollment complete",
   },
   {
     id: "u65-7",
     num: 7,
     key: "gate7Ok",
-    label: "Closing & Follow-Up",
-    compliance: false,
+    label: "Closing",
     script: [
-      "Great, let me recap what we've done today. You're [enrolled in / have applied for] [Product Name]. [If PALIC: Your application is pending underwriting review and you should hear back within about a week.] Your monthly premium is $[amount] and coverage [will start / is expected to start] on [date].",
-      "[If ancillary added] You also added [ancillary product] for an additional $[amount]/month.",
-      "A few important things to remember: [product-specific first premium payment instructions]. If you need to see a doctor before your ID card arrives, [provide product-specific temp ID instructions].",
-      "I'm going to check in with you in [timeframe] to make sure everything is set up. What's the best number and time to reach you?",
-      "Is there anything else I can help with? [Pause] Thank you for trusting New Gen Health Solutions. We're here for you anytime. Have a great day!",
+      "\"To recap - you're [enrolled in / applied for] [Product Name] at $[amount]/month, coverage starts [date]. I'll check in with you in [timeframe] to make sure everything's set up. What's the best number and time to reach you? Anything else I can help with? Thank you for trusting New Gen Health Solutions.\"",
     ],
-    nextStepsByProduct: {
-      enrollprime: "Welcome materials from AFI, Cigna PPO ID card by mail.",
-      palic: "UW decision 3–7 days. If approved: First Health ID, Healthcare PALs, Medical Bill Eraser enrollment. Preventive benefits start 60 days after effective.",
-    },
-    checklist: [
-      "Coverage recap provided",
-      "Next steps explained (UW timeline, ID cards, payments)",
-      "Follow-up scheduled: Date _________ Method _________",
-      "Client confirmed understanding",
-    ],
-    gate: "Call closed — follow-up scheduled",
+    gate: "Closing complete",
   },
 ];

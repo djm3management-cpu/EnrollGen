@@ -20,8 +20,8 @@ const ACA_FLOW_OPTIONS = [
   },
   {
     id: "core",
-    label: "ACA",
-    title: "ACA Core",
+    label: "FFM",
+    title: "FFM",
     color: "#8fa4bc",
     rgb: "143,164,188",
   },
