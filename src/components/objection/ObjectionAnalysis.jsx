@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Brain, MessageSquareQuote, HelpCircle, CornerDownRight,
-  AlertTriangle, XCircle, GitBranch,
+  AlertTriangle, XCircle,
 } from "lucide-react";
 
 export function ObjectionAnalysis({ objection }) {

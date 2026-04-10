@@ -14,7 +14,6 @@ import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import {
   useCopilotEngineCore,
-  normalizeIssueTag,
   shouldSuppressDuplicateIssue,
   readErrorDetail,
   getCopilotHttpErrorMessage,

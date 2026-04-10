@@ -1,4 +1,3 @@
-import React from "react";
 import { SendHorizontal } from "lucide-react";
 
 export function ObjectionInput({ input, setInput, onSubmit, loading, inputRef }) {

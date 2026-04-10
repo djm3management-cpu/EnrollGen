@@ -41,7 +41,7 @@ function PreEnrollCheck({ state }) {
           marginBottom: 6,
         }}
       >
-        âš  PRE-ENROLLMENT CHECKLIST â€” {gaps.length} ITEM
+        PRE-ENROLLMENT CHECKLIST - {gaps.length} ITEM
         {gaps.length !== 1 ? "S" : ""} OPEN
       </div>
       <ul
@@ -168,7 +168,7 @@ export default React.memo(function SectionEnrollment() {
               }`}
               title="Entered"
             >
-              âœ…
+              Ã¢Å“â€¦
             </span>
           </div>
         </label>

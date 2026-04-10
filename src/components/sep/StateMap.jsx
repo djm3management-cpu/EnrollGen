@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import STATE_PATHS, { STATE_CENTROIDS } from "../../data/usMapPaths";
 
 const ALL_STATES = new Set(Object.keys(STATE_PATHS));

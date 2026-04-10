@@ -34,8 +34,6 @@ const mono = { fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700 };
 
 export default function ACAIntelligence() {
   const [zip, setZip] = useState("");
-  const [stateCode, setStateCode] = useState("");
-  const [county, setCounty] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
@@ -51,9 +49,7 @@ export default function ACAIntelligence() {
     try {
       const st = getStateFromZip(z);
       if (!st || st === "Unknown") { setError("Invalid zip code"); setLoading(false); return; }
-      setStateCode(st);
-      const co = getCountyFromZip(z);
-      setCounty(co || "");
+      const countyName = getCountyFromZip(z);
 
       let rows;
       if (SBE_STATES[st]) {
@@ -75,7 +71,7 @@ export default function ACAIntelligence() {
           .from("qhp_landscape_2026")
           .select("metal_level, plan_marketing_name, plan_type, issuer_name, plan_id_standard_component, premium_adult_individual_age_27, medical_deductible_individual_standard, medical_maximum_out_of_pocket_individual_standard");
         q = q.eq("state_code", st);
-        if (co) q = q.ilike("county_name", co);
+        if (countyName) q = q.ilike("county_name", countyName);
 
         const { data: d, error: e } = await q;
         if (e) throw e;
@@ -86,10 +82,14 @@ export default function ACAIntelligence() {
           deductible: parseDollar(r.medical_deductible_individual_standard),
           moop: parseDollar(r.medical_maximum_out_of_pocket_individual_standard),
         }));
-        setSource(co ? `FFE — ${st}, ${co} County` : `FFE — ${st} (all counties)`);
+        setSource(countyName ? `FFE — ${st}, ${countyName} County` : `FFE — ${st} (all counties)`);
       }
 
-      if (!rows.length) { setError(`No plans found for ${st}${co ? `, ${co} County` : ""}`); setLoading(false); return; }
+      if (!rows.length) {
+        setError(`No plans found for ${st}${countyName ? `, ${countyName} County` : ""}`);
+        setLoading(false);
+        return;
+      }
       setData(rows);
     } catch (err) {
       console.error("[ACAIntelligence]", err);

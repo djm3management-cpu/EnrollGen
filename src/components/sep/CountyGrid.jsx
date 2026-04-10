@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { MapPin, Search } from "lucide-react";
 
 export function CountyGrid({

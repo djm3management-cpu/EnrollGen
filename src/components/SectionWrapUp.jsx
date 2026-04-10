@@ -5,7 +5,6 @@ import SectionCoach from "./SectionCoach";
 
 /* ---- Optional Product Sub-section ---- */
 function OptionalProduct({
-  title,
   buttonLabel,
   isActive,
   consentOk,
@@ -126,7 +125,6 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
 
           {/* ===== OPTIONAL HOSPITAL INDEMNITY ===== */}
           <OptionalProduct
-            title="Hospital Indemnity"
             buttonLabel="Optional Hospital Indemnity"
             isActive={hiActive}
             consentOk={hiConsentOk}
@@ -151,7 +149,6 @@ Coverage, benefit amounts, and eligibility depend on the policy terms."`}
 
           {/* ===== OPTIONAL DENTAL & VISION ===== */}
           <OptionalProduct
-            title="Dental & Vision"
             buttonLabel="Optional Dental & Vision"
             isActive={dvActive}
             consentOk={dvConsentOk}
@@ -176,7 +173,6 @@ It may help with routine dental and vision expenses such as exams, cleanings, fi
 
           {/* ===== OPTIONAL FINAL EXPENSE ===== */}
           <OptionalProduct
-            title="Final Expense"
             buttonLabel="Optional Final Expense"
             isActive={feActive}
             consentOk={feConsentOk}

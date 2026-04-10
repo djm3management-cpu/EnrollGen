@@ -25,7 +25,6 @@ import { requireClerkAuth } from "./_clerkAuth.js";
 import { createClient } from "@supabase/supabase-js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
-const AI_TIMEOUT_MS = 120000; // 2 min for classification calls
 const NOT_APPLICABLE_RESULT = "na";
 const LEGACY_NOT_APPLICABLE_RESULT = "not_applicable";
 const INSUFFICIENT_PASS_FAIL = "N/A";
@@ -40,38 +39,6 @@ function getSupabase() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !key) throw new Error("Supabase env vars not configured");
   return createClient(url, key);
-}
-
-async function callClaude(system, user) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-
-  try {
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4096,
-        system,
-        messages: [{ role: "user", content: user }],
-      }),
-      signal: controller.signal,
-    });
-
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error?.message || `API error ${resp.status}`);
-    return data.content?.map(b => b.type === "text" ? b.text : "").join("") || "";
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 function parsePath(url) {
@@ -190,7 +157,8 @@ async function insertInBatches(sb, table, rows, chunkSize = 250) {
   for (const chunk of chunks) {
     const sanitizedChunk = chunk.map((row) => {
       if (row?.id == null) {
-        const { id, ...insertRow } = row;
+        const insertRow = { ...row };
+        delete insertRow.id;
         return insertRow;
       }
       return row;
@@ -535,7 +503,6 @@ export default async (request) => {
       const body = await request.json();
       const { scorecard_item_id, new_result, reason } = body;
 
-      const pointsMap = { pass: null, fail: 0, partial: null }; // null = recalc from template
       const { data: item } = await sb
         .from("scorecard_items")
         .select("*")

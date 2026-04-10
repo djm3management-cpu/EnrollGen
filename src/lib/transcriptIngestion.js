@@ -76,7 +76,7 @@ export function scrubPhi(rawText) {
     .replace(/\b\d[A-Z]\d{2}-?[A-Z]\d{2}-?[A-Z]{2}\d{2}\b/g, "[MBI_REDACTED]")
     .replace(/\b\d{3}-?\d{2}-?\d{4}\b/g, "[SSN_REDACTED]")
     .replace(/\b\d{3}[-.)]\s?\d{3}[-.)]\s?\d{4}\b/g, "[PHONE_REDACTED]")
-    .replace(/(born|DOB|date of birth)[:\s]*([\d/\-]+)/gi, "$1: [DOB_REDACTED]")
+    .replace(/(born|DOB|date of birth)[:\s]*([\d/-]+)/gi, "$1: [DOB_REDACTED]")
     .replace(/[\w.-]+@[\w.-]+\.\w{2,}/g, "[EMAIL_REDACTED]");
 }
 

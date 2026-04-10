@@ -52,8 +52,6 @@ export default async (request) => {
     dgUrl.searchParams.set("utterances", "true");
     dgUrl.searchParams.set("detect_language", "true");
 
-    console.log(`Transcribing: ${audioUrl.slice(0, 80)}...`);
-
     const dgResp = await fetch(dgUrl.toString(), {
       method: "POST",
       headers: {

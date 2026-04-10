@@ -1,4 +1,3 @@
-import React from "react";
 import { ChevronRight, Clock, Shield, MapPin, Star as StarIcon } from "lucide-react";
 import { CARRIERS } from "../../data/sepCarriers";
 

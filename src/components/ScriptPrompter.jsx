@@ -100,8 +100,8 @@ const ScriptPrompter = memo(function ScriptPrompter({
     await new Promise((r) => setTimeout(r, 200));
     try {
       await customerAudio.startCapture();
-    } catch (e) {
-      console.log("Customer audio skipped:", e?.message || e);
+    } catch {
+      return;
     }
   }, [speech, customerAudio, customerAudioEnabled]);
 

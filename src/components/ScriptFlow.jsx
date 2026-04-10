@@ -14,8 +14,6 @@ import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
 import { useLiveCall } from "../context/LiveCallContext";
 import {
-  MainTimer,
-  ProgressBar,
   StickyTimerBar,
 } from "./SharedUI";
 import ComplianceMini from "./ComplianceMini";
@@ -522,7 +520,6 @@ export default function ScriptFlow() {
         session.endSession(prevSectionRef.current, false);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Log section scores when a section gate completes (section changes forward)
@@ -629,9 +626,6 @@ export default function ScriptFlow() {
   }, [resetLiveCall]);
 
   // ── Quick notes — persists into wrap-up ──
-  const quickNotesRef = useRef("");
-  const handleQuickNotes = useCallback((val) => { quickNotesRef.current = val; }, []);
-
   // Auto-scroll to active section when it changes
   useEffect(() => {
     if (activeSection !== prevSectionRef.current) {
@@ -648,18 +642,6 @@ export default function ScriptFlow() {
   }, [activeSection]);
 
   // Click a completed section in the rail to scroll back to it
-  const handleSectionClick = useCallback((sectionNum) => {
-    const el = document.querySelector(`[data-section="${sectionNum}"]`);
-    if (!el) return;
-    // If it's a collapsed <details>, open it
-    if (el.tagName === "DETAILS" && !el.open) {
-      el.open = true;
-    }
-    requestAnimationFrame(() => {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }, []);
-
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
     (e) => {
@@ -726,7 +708,6 @@ export default function ScriptFlow() {
           activeSection={activeSection}
           callStarted={callStarted}
           anchorRef={flowMainRef}
-          containerRef={flowShellRef}
           onVisibilityChange={setAncillaryPopupVisible}
           dockOffsetY={
             devotedPopupVisible && ancillaryPopupVisible

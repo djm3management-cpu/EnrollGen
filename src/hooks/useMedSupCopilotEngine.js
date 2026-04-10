@@ -12,7 +12,7 @@ import { fetchWithClerk } from "../lib/clerkFetch";
 import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import {
   useCopilotEngineCore,
-  normalizeIssueTag, shouldSuppressDuplicateIssue,
+  shouldSuppressDuplicateIssue,
   readErrorDetail, getCopilotHttpErrorMessage,
   parseAnthropicResponse, parseCoachingJson, buildTranscriptWindows,
   formatSectionDuration, makeIsHighRisk,
@@ -340,8 +340,7 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state }) 
     sectionTranscriptStartRef, sectionCopilotFiredRef,
     lastSilentHeartbeatRef, lastPeriodicContextSignatureRef,
     coachingAbortRef, askAbortRef, requestCoachingRef,
-    floatTimeout, floatFadeTimeout,
-    pushFeedEntry, showFloat, dismissFloat, surfaceServiceIssue, clearServiceIssue,
+    pushFeedEntry, showFloat, surfaceServiceIssue, clearServiceIssue,
     scheduleCoaching, clearFeed,
     getToken, logEntry, setEntryFeedback, exportFeedbackDataset, entries,
     silentHeartbeatMs,

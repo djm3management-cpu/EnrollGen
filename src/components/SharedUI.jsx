@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Copy, Check, RotateCcw, AlertCircle, Clock, Timer, Pencil } from "lucide-react";
+import { Copy, Check, AlertCircle, Clock, Timer, Pencil } from "lucide-react";
 
 /* ===================== TIMER HELPERS ===================== */
 export function formatTime(ms) {
@@ -112,101 +112,6 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
   );
 });
 
-/* ===================== CHECK ITEM (with keyboard support) ===================== */
-export const CheckItem = React.memo(function CheckItem({
-  value,
-  label,
-  onChange,
-  disabled,
-}) {
-  const handleKeyDown = useCallback(
-    (e) => {
-      if (disabled) return;
-      if (e.key === " " || e.key === "Enter") {
-        e.preventDefault();
-        onChange(!value);
-      }
-    },
-    [disabled, onChange, value]
-  );
-
-  return (
-    <label
-      className={`check ${disabled ? "disabledRow" : ""}`}
-      tabIndex={disabled ? -1 : 0}
-      onKeyDown={handleKeyDown}
-      role="checkbox"
-      aria-checked={value}
-      aria-disabled={disabled}
-    >
-      <input
-        type="checkbox"
-        checked={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-        tabIndex={-1}
-      />
-      {label}
-    </label>
-  );
-});
-
-/* ===================== MAIN TIMER (sticky) ===================== */
-export const MainTimer = React.memo(function MainTimer({
-  running,
-  startTime,
-  onStart,
-  onReset,
-}) {
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    if (!running) {
-      setElapsed(0);
-      return;
-    }
-    if (!startTime) return;
-
-    const interval = setInterval(() => {
-      setElapsed(Date.now() - startTime);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [running, startTime]);
-
-  const display = formatTime(elapsed);
-  const isWarning = elapsed > 50000 && elapsed <= 60000;
-  const isDanger = elapsed > 60000;
-
-  return (
-    <section className="card timer-card" id="main-timer">
-      <h2 style={{ justifyContent: "center" }}>
-        <span
-          className={`digital ${isWarning ? "timer-warning" : ""} ${
-            isDanger ? "timer-danger" : ""
-          }`}
-        >
-          {display}
-        </span>
-      </h2>
-
-      <div className="timer-controls">
-        <button className="primary" onClick={onStart}>
-          Start Timer
-        </button>
-        <button className="primary" onClick={onReset}>
-          Reset Timer
-        </button>
-      </div>
-
-      <p className="muted timer-notice">
-        <Clock size={11} style={{ verticalAlign: "middle", marginRight: 5 }} />
-        TPMO REQUIRED WITHIN 60 SECONDS
-      </p>
-    </section>
-  );
-});
-
 /* ===================== SECTION TIMER THRESHOLDS ===================== */
 // Per-section time thresholds in seconds: [warn, danger]
 const SECTION_THRESHOLDS = {
@@ -303,136 +208,12 @@ export const SectionAdvanceButton = React.memo(function SectionAdvanceButton({
 });
 
 /* ===================== F1 SECTOR BAR ===================== */
-const SECTORS = [
-  { num: 1,   abbr: "REC"    },
-  { num: 2,   abbr: "TPMO"   },
-  { num: 3,   abbr: "SOA"    },
-  { num: 4,   abbr: "QUAL"   },
-  { num: 5,   abbr: "NEEDS"  },
-  { num: 6,   abbr: "SOB"    },
-  { num: 7,   abbr: "ENROLL" },
-  { num: 8,   abbr: "WRAP"   },
-];
-
-export const STAGE_SECTORS = SECTORS.filter(s => s.num >= 2);
-
-export const SectorBar = React.memo(function SectorBar({ activeSection, onSectionClick, sectors }) {
-  const displaySectors = sectors || SECTORS;
-  const currentStep = Number.isInteger(activeSection)
-    ? activeSection
-    : Math.ceil(activeSection);
-
-  function status(num) {
-    if (num < currentStep) return "done";
-    if (num === currentStep) return "active";
-    return "pending";
-  }
-
-  function handleClick(num, s) {
-    if (s !== "done" || !onSectionClick) return;
-    onSectionClick(num);
-  }
-
-  return (
-    <nav className="sector-bar" aria-label="Section progress">
-      {displaySectors.map(({ num, abbr }, index) => {
-        const s = status(num);
-        const clickable = s === "done" && !!onSectionClick;
-        return (
-          <div
-            key={num}
-            className={`sector-step sector-step--${s}${clickable ? " sector-step--clickable" : ""}`}
-            onClick={() => handleClick(num, s)}
-            role={clickable ? "button" : undefined}
-            tabIndex={clickable ? 0 : undefined}
-            onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") handleClick(num, s); } : undefined}
-            title={clickable ? `Go back to Section ${num}: ${abbr}` : undefined}
-          >
-            <div className="sector-rail-node" aria-hidden="true">
-              <span className="sector-dot" />
-              {index < displaySectors.length - 1 && <span className="sector-connector" />}
-            </div>
-            <div className={`sector-block sector-block--${s}`}>
-              <span className="sector-block-num">{num}</span>
-              <span className="sector-block-abbr">{abbr}</span>
-            </div>
-          </div>
-        );
-      })}
-    </nav>
-  );
-});
-
-/* ===================== PROGRESS BAR ===================== */
-export const ProgressBar = React.memo(function ProgressBar({
-  activeSection,
-  totalSections,
-  sectionLabels,
-}) {
-  // Map active section to progress number (handle SNP 2.5)
-  let currentStep;
-  if (activeSection <= 2) currentStep = activeSection;
-  else if (activeSection === 2.5) currentStep = 2.5;
-  else currentStep = activeSection;
-
-  // Calculate percentage — section 8 = 100%
-  const pct = Math.min(
-    100,
-    Math.round((Math.max(1, currentStep - 1) / (totalSections - 1)) * 100)
-  );
-  const sectionLabel =
-    sectionLabels[activeSection] || `Section ${activeSection}`;
-
-  // Determine integer section for display
-  const displayNum = activeSection === 2.5 ? "SNP" : Math.floor(activeSection);
-
-  return (
-    <div className="progress-bar-info">
-      <div className="section-counter">
-        {displayNum === "SNP" ? (
-          <span className="section-snp">SNP</span>
-        ) : (
-          <>
-            <span className="section-current">{displayNum}</span>
-            <span className="section-divider">/</span>
-            <span className="section-total">{totalSections}</span>
-          </>
-        )}
-      </div>
-
-      <div className="section-title">{sectionLabel}</div>
-    </div>
-  );
-});
-
-/* ===================== UNDO BUTTON ===================== */
-export const UndoButton = React.memo(function UndoButton({
-  undoHistory,
-  onUndo,
-}) {
-  if (undoHistory.length === 0) return null;
-
-  const lastEntry = undoHistory[undoHistory.length - 1];
-  const timeSince = Date.now() - lastEntry.timestamp;
-
-  // Only show undo for recent actions (within 30 seconds)
-  if (timeSince > 30000) return null;
-
-  return (
-    <button className="undo-btn" onClick={onUndo} title="Undo last action">
-      <RotateCcw size={13} style={{ verticalAlign: "middle", marginRight: 5 }} />
-      Undo
-    </button>
-  );
-});
-
 /* ===================== STICKY TIMER BAR ===================== */
 export const StickyTimerBar = React.memo(function StickyTimerBar({
   running,
   startTime,
   activeSection,
   sectionLabels,
-  totalSections,
 }) {
   const [elapsed, setElapsed] = useState(0);
   const [visible, setVisible] = useState(false);

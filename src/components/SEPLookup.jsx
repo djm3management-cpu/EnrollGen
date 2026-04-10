@@ -1,7 +1,5 @@
-import React from "react";
-import { Shield, Search, AlertTriangle, Filter, X, Map, MapPin } from "lucide-react";
+import { AlertTriangle, Filter, X, Map, MapPin } from "lucide-react";
 import { useSEPLookup } from "../hooks/useSEPLookup";
-import { CARRIERS } from "../data/sepCarriers";
 import { SearchBar } from "./sep/SearchBar";
 import { StatsBar } from "./sep/StatsBar";
 import { SEPCard, ProductBadge } from "./sep/SEPCard";
@@ -156,13 +154,6 @@ export default function SEPLookupTool() {
             {showPlans && (
               <>
                 <PlanTable
-                  searchedZip={s.searchedZip}
-                  countyList={s.countyList}
-                  selectedCounty={s.selectedCounty}
-                  setSelectedCounty={s.setSelectedCounty}
-                  countyLoading={s.countyLoading}
-                  plans={s.plans}
-                  loadPlansForCounty={s.loadPlansForCounty}
                   planFilterCarrier={s.planFilterCarrier}
                   setPlanFilterCarrier={s.setPlanFilterCarrier}
                   planFilterType={s.planFilterType}

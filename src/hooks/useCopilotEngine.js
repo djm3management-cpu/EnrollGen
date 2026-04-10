@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { SECTION_LABELS } from "../context/scriptReducer";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
@@ -6,7 +6,7 @@ import { getCmsKnowledgeForQuestion, getCmsKnowledgeForSection } from "../contex
 import { fetchTranscriptReferences } from "../lib/transcriptSearch";
 import {
   useCopilotEngineCore,
-  normalizeIssueTag, shouldSuppressDuplicateIssue,
+  shouldSuppressDuplicateIssue,
   readErrorDetail, getCopilotHttpErrorMessage,
   parseAnthropicResponse, parseCoachingJson, buildTranscriptWindows,
   formatSectionDuration, makeIsHighRisk, abortable,

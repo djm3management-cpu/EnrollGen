@@ -50,8 +50,6 @@ export default async (req) => {
     .eq("county_fips", zipData.county_fips)
     .order("premium", { ascending: true });
 
-  console.log("Authenticated Clerk user:", auth.userId, "zip:", zip);
-
   return new Response(
     JSON.stringify({
       source: "cms-database",

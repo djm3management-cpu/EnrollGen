@@ -1,8 +1,7 @@
 import React from "react";
 import { Filter, X, ChevronRight } from "lucide-react";
 import { CARRIERS } from "../../data/sepCarriers";
-import { Stars, ProductBadge } from "./SEPCard";
-import { getStateFromZip } from "../../lib/sepGeo";
+import { Stars } from "./SEPCard";
 
 function CarrierLogo({ carrierKey, size = 20 }) {
   const c = CARRIERS[carrierKey] || {};
@@ -34,8 +33,6 @@ function CarrierLogo({ carrierKey, size = 20 }) {
 }
 
 export function PlanTable({
-  searchedZip, countyList, selectedCounty, setSelectedCounty,
-  countyLoading, plans, loadPlansForCounty,
   planFilterCarrier, setPlanFilterCarrier,
   planFilterType, setPlanFilterType,
   planFilterSnp, setPlanFilterSnp,
@@ -43,8 +40,6 @@ export function PlanTable({
   filteredPlans, planCarrierOpts, planTypeOpts,
   expandedPlans, setExpandedPlans,
 }) {
-  const state = getStateFromZip(searchedZip);
-
   return (
     <>
       {/* Filters */}

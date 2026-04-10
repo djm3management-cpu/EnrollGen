@@ -78,9 +78,6 @@ export default async (request) => {
       });
     }
 
-    console.log("Authenticated Clerk user:", auth.userId);
-    console.log("Calling Anthropic API with model:", body.model);
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), AI_REQUEST_TIMEOUT_MS);
 

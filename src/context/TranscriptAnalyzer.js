@@ -2096,23 +2096,6 @@ const CUSTOMER_OBJECTION_PHRASES = [
   "that's not what i heard", "that's different from",
 ];
 
-const CUSTOMER_COST_PHRASES = [
-  "how much", "what does it cost", "what's the premium",
-  "what do i pay", "is it free", "no cost", "no premium",
-  "what about copays", "deductible", "out of pocket",
-  "monthly payment", "monthly cost", "affordable",
-  "taken out of my check", "social security",
-];
-
-const CUSTOMER_HEALTH_PHRASES = [
-  "diabetes", "heart", "cardiac", "blood pressure", "hypertension",
-  "copd", "cancer", "kidney", "dialysis", "insulin",
-  "medication", "prescription", "pills", "doctor visits",
-  "hospital", "surgery", "condition", "chronic", "disability",
-  "arthritis", "oxygen", "inhaler", "pain", "specialist",
-  "i take", "i'm on", "i have", "i was diagnosed",
-];
-
 const MISLEADING_CLAIM_PHRASES = [
   "you said it was free", "you told me no cost",
   "you said there's no network", "you promised",

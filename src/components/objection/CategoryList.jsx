@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Shield, ThumbsUp, DollarSign, Stethoscope, Clock,
 } from "lucide-react";

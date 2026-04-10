@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   GitBranch, Copy, CheckCheck, MessageSquareQuote,
   CornerDownLeft, Target, ArrowRight,
 } from "lucide-react";
 
-function TreeBranch({ branch, index }) {
+function TreeBranch({ branch }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -61,12 +61,12 @@ export function RebuttalPanel({ objection, aiResponse, aiLoading, onCopy }) {
       </div>
 
       {/* Decision tree */}
-      <div className="objection-tree">
-        <div className="objection-tree-label">What do they say next?</div>
-        {objection.tree.map((branch, i) => (
-          <TreeBranch key={i} branch={branch} index={i} />
-        ))}
-      </div>
+        <div className="objection-tree">
+          <div className="objection-tree-label">What do they say next?</div>
+          {objection.tree.map((branch, i) => (
+            <TreeBranch key={i} branch={branch} />
+          ))}
+        </div>
 
       {/* Quick copy section */}
       <div className="objection-quick-copy">

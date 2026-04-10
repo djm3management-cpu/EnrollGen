@@ -19,7 +19,7 @@ import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import {
   useCopilotEngineCore,
-  normalizeIssueTag, shouldSuppressDuplicateIssue,
+  shouldSuppressDuplicateIssue,
   readErrorDetail, getCopilotHttpErrorMessage,
   parseAnthropicResponse, parseCoachingJson, buildTranscriptWindows,
   formatSectionDuration, makeIsHighRisk,
@@ -141,7 +141,7 @@ function buildU65DerivedSignals(state, activeGate, transcript) {
   };
 }
 
-function shouldSuppressForNuance({ level, issueTag, message, derivedSignals, activeGate }) {
+function shouldSuppressForNuance({ level, issueTag, message, derivedSignals }) {
   if (level !== "warn" && level !== "remind") return false;
   if (isHighRisk(issueTag, message)) return false;
 
@@ -659,7 +659,7 @@ SECTION CONTEXT (rolling window):
         return;
       }
       if (!periodic && (level === "warn" || level === "remind") &&
-          shouldSuppressForNuance({ level, issueTag, message, derivedSignals, activeGate })) {
+          shouldSuppressForNuance({ level, issueTag, message, derivedSignals })) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
         if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed — context too ambiguous.", { section: currentStep, issueTag, retrievalTrace });
@@ -728,10 +728,6 @@ SECTION CONTEXT (rolling window):
 
     const sectionKey = currentStep;
     const recentTranscript = transcriptRef.current.trim().slice(-1500);
-    const liveMessages = messagesRef.current;
-    const recentInterventions = liveMessages
-      .filter((e) => e.level === "warn" || e.level === "critical" || e.level === "remind")
-      .slice(-4);
     const copilotContext = {
       checklistState: buildU65ChecklistState(state, activeGate),
       priorCompletedGates: buildCompletedGateHistory(state),

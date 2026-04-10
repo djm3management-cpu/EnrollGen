@@ -6,7 +6,6 @@
 
 import { classifyCall } from './IntentClassifier.js';
 import { scoreCall, calculateAverageConfidence } from './ScoringEngine.js';
-import { redactPHI } from './PHIRedactor.js';
 
 /**
  * Generate a complete compliance scorecard for a call.
@@ -274,7 +273,7 @@ function buildCorrectiveDescription(scoreResult) {
   }
 
   const weakCategories = Object.entries(scoreResult.category_scores)
-    .filter(([_, s]) => s.pct < 70)
+    .filter(([, s]) => s.pct < 70)
     .sort((a, b) => a[1].pct - b[1].pct);
 
   if (weakCategories.length > 0) {

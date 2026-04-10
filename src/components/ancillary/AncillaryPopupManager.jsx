@@ -92,7 +92,6 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
   activeSection,
   callStarted,
   anchorRef,
-  containerRef,
   followUpContext = null,
   dockOffsetY = 0,
   onVisibilityChange,

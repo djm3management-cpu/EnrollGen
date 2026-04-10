@@ -54,6 +54,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
   const transcriptRef = externalTranscriptRef || internalRef;
   const backoffRef = useRef(300); // exponential backoff for restarts
   const lastFinalChunkRef = useRef("");
+  const restartTimeoutRef = useRef(null);
   const onNewFinalRef = useRef(onNewFinal);
   const onSpokenQuestionRef = useRef(onSpokenQuestion);
 
@@ -134,7 +135,8 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
         // Quick restart: 300ms → 600ms → 1.2s (cap 1.2s)
         const delay = backoffRef.current;
         backoffRef.current = Math.min(delay * 2, 1200);
-        setTimeout(() => {
+        window.clearTimeout(restartTimeoutRef.current);
+        restartTimeoutRef.current = window.setTimeout(() => {
           if (recognitionRef.current) {
             try {
               recognitionRef.current.start();
@@ -153,6 +155,8 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
   }, [supportsRecognition]);
 
   const stopListening = useCallback(() => {
+    window.clearTimeout(restartTimeoutRef.current);
+    restartTimeoutRef.current = null;
     if (recognitionRef.current) {
       recognitionRef.current.onend = null;
       recognitionRef.current.stop();
@@ -180,6 +184,8 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
 
   // Cleanup on unmount
   useEffect(() => () => {
+    window.clearTimeout(restartTimeoutRef.current);
+    restartTimeoutRef.current = null;
     if (recognitionRef.current) {
       recognitionRef.current.onend = null;
       recognitionRef.current.stop();

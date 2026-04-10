@@ -8,12 +8,6 @@ import { ALL_INTENTS } from '../intents/index.js';
 import { INTENT_CLASSIFICATION_SYSTEM, buildClassificationPrompt } from '../prompts/intent-classification.js';
 import { redactTranscriptSegments } from './PHIRedactor.js';
 
-const CONFIDENCE_THRESHOLDS = {
-  HIGH: 0.90,
-  MEDIUM: 0.70,
-  LOW: 0.50,
-};
-
 const SEGMENT_WINDOW_MS = 45000; // 45-second windows
 const SEGMENT_OVERLAP_MS = 15000; // 15-second overlap
 const SHORT_CALL_THRESHOLD_S = 120; // calls under 2 min are "insufficient"
@@ -137,7 +131,6 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress 
 
   // Detect call direction from transcript (defaults to inbound)
   const detectedDirection = detectCallDirection(diarized);
-  console.log(`[IntentClassifier] Detected call direction: ${detectedDirection}`);
 
   // Check for short calls
   const callDurationS = diarized.length > 0

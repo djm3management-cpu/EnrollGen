@@ -1,4 +1,3 @@
-import React from "react";
 import { Search } from "lucide-react";
 
 const QUICK_ZIPS = ["33601", "77002", "28801", "40502", "90001"];

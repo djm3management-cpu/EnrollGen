@@ -4,7 +4,6 @@
  * sequence violations, category weights, and grading scale.
  */
 
-import { CATEGORY_WEIGHTS } from '../intents/index.js';
 import { calculateServerGrade } from '../shared/serverGradeScale.js';
 
 export function calculateGrade(score, autoFail) {
