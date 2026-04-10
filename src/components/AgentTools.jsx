@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  BookOpen,
   Building2,
   CalendarDays,
   CheckSquare,
@@ -23,6 +24,7 @@ import {
 import DecisionTree from "./DecisionTree";
 import ObjectionHandler from "./ObjectionHandler";
 import TrainingGuides from "./TrainingGuides";
+import SEPGuide2026 from "./SEPGuide2026";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 import "../AgentTools.css";
 
@@ -354,6 +356,14 @@ const TOOL_GROUPS = [
         description: "Internal SEP script, qualifying events, and enrollment window guidance.",
         icon: <RotateCw size={16} />,
         badge: "hot",
+      },
+      {
+        id: "sep-guide-2026",
+        title: "2026 SEP Guide",
+        description: "State-by-state INT, PAP, CSNP, and DST guide with mandatory disclosures and bonus tracking.",
+        icon: <BookOpen size={16} />,
+        badge: "new",
+        color: "#2196F3",
       },
     ],
   },
@@ -1223,6 +1233,8 @@ export default function AgentTools() {
         return <QuickUtilitiesPanel />;
       case "ma-seps":
         return <SEPReference script={NGHS_SEP_SCRIPT} />;
+      case "sep-guide-2026":
+        return <SEPGuide2026 />;
       default:
         return null;
     }
@@ -1275,7 +1287,7 @@ export default function AgentTools() {
             <div className="at-group-label">{group.label}</div>
             <div className="at-card-grid">
               {group.tools.map((tool) => (
-                <ToolCard key={tool.id} tool={{ ...tool, color: group.color }} onOpen={setSelectedToolId} />
+                <ToolCard key={tool.id} tool={{ color: group.color, ...tool }} onOpen={setSelectedToolId} />
               ))}
             </div>
           </section>

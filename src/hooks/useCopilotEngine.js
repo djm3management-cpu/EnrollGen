@@ -323,7 +323,7 @@ Return rules for this mode:
 - NEVER return "silent" or "info"
 - If the agent is compliant and on pace, return level "tip" with a short encouraging message
 - If the agent needs course correction, return "remind", "warn", or "critical" based on severity
-- Keep the message to 1-2 short sentences because it will appear in a popup
+- Keep the message to 1 sentence (max 2). The agent only glances at the popup for a second mid-call.
 - Anchor the message to specific words the agent recently said whenever possible`;
   }
 
@@ -457,12 +457,15 @@ PRIORITY WEIGHTING:
 RESPONSE QUALITY REQUIREMENTS
 ════════════════════════════════════════════════════════
 
+CRITICAL: The agent can only GLANCE at the popup for a moment during a live call. Every response MUST be extremely short.
+
 Every non-silent response MUST:
-- QUOTE or PARAPHRASE the agent's actual words from the transcript (e.g., "When you said '...'", "You mentioned '...'", "I heard you say '...'")
+- Be 1-2 sentences MAX. No exceptions. The agent cannot read more than ~25 words at a glance.
+- QUOTE or PARAPHRASE the agent's actual words from the transcript when relevant
 - Be SPECIFIC to this exact moment in the call — never generic
-- For warn/critical: State WHAT was missed or wrong, WHY it's a compliance issue (reference CMS if relevant), and provide the EXACT SCRIPT LANGUAGE to say right now to fix it (2-4 sentences)
-- For remind: State what hasn't been covered yet and give the exact words to say (1-2 sentences)
-- For tip: Name the specific disclosure or phrase that was handled well and why CMS cares about it (1-2 sentences)
+- For warn/critical: State WHAT was missed and give the EXACT FIX in one sentence. Example: "You skipped recording consent. Say: 'This call is being recorded for quality purposes.'"
+- For remind: Name the missing item and give the exact words in one sentence
+- For tip: Name the specific thing done well in one sentence
 - If you use transcript references, include bracket citations like [R1] or [R2] at the end of the message
 
 CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
@@ -489,7 +492,7 @@ RESPONSE FORMAT RULES FOR THE MESSAGE FIELD:
 - NEVER include topic tags, intent labels, or classification metadata
 - NEVER reference internal analysis functions or scoring systems
 - Write as if you are a senior agent whispering advice during a live call
-- Keep messages short: 1-3 sentences for coaching, up to 5 for ask responses
+- Keep messages EXTREMELY short: 1-2 sentences MAXIMUM for coaching (the agent glances at a popup mid-call), up to 3 for ask responses
 - No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters
 - Write natural conversational sentences. Separate thoughts with periods, never with dashes or symbols
 
@@ -571,7 +574,7 @@ RESPONSE FORMAT RULES:
 - NEVER include topic tags, intent labels, or classification metadata
 - NEVER reference internal analysis functions or scoring systems
 - Write as if you are a senior agent whispering advice during a live call
-- Keep responses short: 1-5 sentences max
+- Keep responses very short: 1-3 sentences max. The agent is mid-call and can only glance at the answer.
 - No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters
 - Write natural conversational sentences. Separate multiple items with numbered lines or semicolons, never with dashes or symbols.`;
 }
@@ -800,7 +803,7 @@ SECTION CONTEXT (rolling window for current section):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 500,
+          max_tokens: 200,
           system: systemPrompt,
           messages: [{ role: "user", content: userContent }],
         }),
@@ -1064,7 +1067,7 @@ SECTION CONTEXT (rolling window for current section):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 500,
+          max_tokens: 300,
           system: systemPrompt,
           messages: [{ role: "user", content: question }],
         }),

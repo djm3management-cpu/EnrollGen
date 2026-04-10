@@ -22,6 +22,7 @@ const loadCallHistory = () => import("./components/CallHistory");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
+const loadLeaderboard = () => import("./components/Leaderboard");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -37,6 +38,7 @@ const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
+const Leaderboard = lazy(loadLeaderboard);
 const COMPLIANCE_HUB_TAB_IDS = new Set(["complianceHub", "history", "upload", "review"]);
 const AGENT_TOOLS_TAB_IDS = new Set(["tools", "objections", "decisionTree"]);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
@@ -408,6 +410,10 @@ function AppContent() {
       loadACAIntelligence();
       return;
     }
+    if (targetTab === "leaderboard") {
+      loadLeaderboard();
+      return;
+    }
     if (targetTab === "verse") {
       loadDailyVerse();
       return;
@@ -544,6 +550,14 @@ function AppContent() {
               data-tab-label="Comply"
             >
               <span className="sidebar-tab-text">Compliance Hub</span>
+            </button>
+            <button
+              className={`sidebar-tab${activeTab === "leaderboard" ? " active" : ""}`}
+              onClick={() => { handleTabChange("leaderboard"); setSidebarOpen(false); }}
+              onMouseEnter={() => preloadTab("leaderboard")}
+              data-tab-label="Board"
+            >
+              <span className="sidebar-tab-text">Leaderboard</span>
             </button>
             <button
               className={`sidebar-tab${activeTab === "verse" ? " active" : ""}`}
@@ -729,6 +743,12 @@ function AppContent() {
               </LazyPanel>
             </div>
           )}
+
+          <div style={getTabDisplayStyle(activeTab === "leaderboard")}>
+            <LazyPanel>
+              <Leaderboard />
+            </LazyPanel>
+          </div>
 
           <div style={getTabDisplayStyle(activeTab === "verse")}>
             <LazyPanel>
