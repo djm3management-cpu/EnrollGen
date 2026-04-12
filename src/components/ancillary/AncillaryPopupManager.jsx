@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import {
   ArrowUpRight,
   Banknote,
@@ -17,19 +17,7 @@ import {
   buildRecapItems,
   calculateSupplementalTotal,
 } from "./ancillaryPopupData";
-
-const POPUP_WIDTH = 280;
-const POPUP_GAP = 20;
-const POPUP_MIN_TOP = 28;
-const POPUP_VERTICAL_OFFSET = 22;
-const FALLBACK_HEIGHTS = {
-  A: 322,
-  B: 292,
-  C: 322,
-  "D-recap": 308,
-  "D-lastchance": 258,
-  E: 336,
-};
+import { useLeftRailManager } from "../leftRail/LeftRailManager";
 
 const POPUP_ICON_MAP = {
   target: <Target size={16} strokeWidth={2.2} />,
@@ -39,10 +27,6 @@ const POPUP_ICON_MAP = {
   "circle-alert": <CircleAlert size={16} strokeWidth={2.2} />,
   "phone-call": <PhoneCall size={16} strokeWidth={2.2} />,
 };
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
 
 function formatDisplayDate(value) {
   if (!value) {
@@ -91,25 +75,19 @@ function fillFollowUpQuote(template, followUpContext, scriptState) {
 const AncillaryPopupManager = memo(function AncillaryPopupManager({
   activeSection,
   callStarted,
-  anchorRef,
   followUpContext = null,
-  dockOffsetY = 0,
-  onVisibilityChange,
 }) {
   const { state } = useScript();
-  const popupRef = useRef(null);
-  const [inline, setInline] = useState(false);
-  const [dockStyle, setDockStyle] = useState(null);
+  const { showLeftRail, dismissLeftRail } = useLeftRailManager();
+  const previousPopupIdRef = useRef(null);
   const {
     ancillaryState,
     popupKey,
     activeDismissed,
-    activeCollapsed,
     portalProducts,
     seedMentions,
     noteInteraction,
     dismissPopup,
-    expandPopup,
     toggleTrigger,
     openPortalProduct,
     markFollowUpComplete,
@@ -123,10 +101,6 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
   const popupCopy = popupKey ? ANCILLARY_POPUP_COPY[popupKey] : null;
   const popupIcon = popupCopy ? POPUP_ICON_MAP[popupCopy.icon] ?? null : null;
 
-  useEffect(() => {
-    onVisibilityChange?.(Boolean(isVisible));
-  }, [isVisible, onVisibilityChange]);
-
   const recapItems = useMemo(
     () => buildRecapItems(state, ancillaryState),
     [state, ancillaryState]
@@ -136,118 +110,29 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
     [ancillaryState.ancillaryEnrolled]
   );
 
-  const updateDock = useCallback(() => {
-    if (!anchorRef?.current || !popupKey) {
-      return;
-    }
-
-    const anchor = anchorRef.current;
-    const anchorRect = anchor.getBoundingClientRect();
-    const spaceToViewportLeft = anchorRect.left - 24;
-    const shouldInline =
-      window.innerWidth <= 1320 ||
-      spaceToViewportLeft < POPUP_WIDTH + POPUP_GAP;
-
-    if (shouldInline) {
-      setInline(true);
-      setDockStyle(null);
-      return;
-    }
-
-    const activeCard = anchor.querySelector(".active-card");
-    if (!activeCard) {
-      setInline(true);
-      setDockStyle(null);
-      return;
-    }
-
-    const popupHeight =
-      popupRef.current?.offsetHeight || FALLBACK_HEIGHTS[popupKey] || 280;
-    const cardRect = activeCard.getBoundingClientRect();
-    const rawTop =
-      cardRect.top -
-      anchorRect.top +
-      cardRect.height / 2 -
-      popupHeight / 2 +
-      POPUP_VERTICAL_OFFSET +
-      dockOffsetY;
-    const maxTop = Math.max(POPUP_MIN_TOP, anchor.offsetHeight - popupHeight);
-    const nextTop = clamp(rawTop, POPUP_MIN_TOP, maxTop);
-
-    setInline(false);
-    setDockStyle({
-      top: `${Math.round(nextTop)}px`,
-      left: `${-(POPUP_WIDTH + POPUP_GAP)}px`,
-      width: `${POPUP_WIDTH}px`,
-    });
-  }, [anchorRef, dockOffsetY, popupKey]);
-
-  useEffect(() => {
-    if (!isVisible || typeof window === "undefined") {
-      return undefined;
-    }
-
-    let rafId = 0;
-    const schedule = () => {
-      window.cancelAnimationFrame(rafId);
-      rafId = window.requestAnimationFrame(updateDock);
-    };
-
-    schedule();
-
-    const resizeObserver = new ResizeObserver(schedule);
-    const anchor = anchorRef?.current;
-    const popup = popupRef.current;
-    const activeCard = anchor?.querySelector(".active-card");
-
-    if (anchor) resizeObserver.observe(anchor);
-    if (popup) resizeObserver.observe(popup);
-    if (activeCard) resizeObserver.observe(activeCard);
-
-    window.addEventListener("resize", schedule);
-    window.addEventListener("scroll", schedule, { passive: true });
-
-    return () => {
-      window.cancelAnimationFrame(rafId);
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", schedule);
-      window.removeEventListener("scroll", schedule);
-    };
-  }, [
-    isVisible,
-    anchorRef,
-    updateDock,
-    popupKey,
-    activeCollapsed,
-  ]);
-
-  if (!isVisible || !popupCopy) {
-    return null;
-  }
-
   const followUpName = followUpContext?.clientName || "Client";
   const followUpPlan =
     followUpContext?.planName || state.notes?.planName || "Plan pending";
   const followUpEnrollmentDate =
     followUpContext?.enrollmentDate || state.sectionTimestamps?.[7]?.end || null;
 
-  return (
-    <div
-      className={`ancillary-popup-dock${
-        inline ? " ancillary-popup-dock--inline" : ""
-      }`}
-      style={inline ? undefined : dockStyle || undefined}
-    >
+  const panel = useMemo(() => {
+    if (!popupCopy || !popupKey) {
+      return null;
+    }
+
+    return (
       <AncillaryPopup
-        ref={popupRef}
         popupKey={popupKey}
         icon={popupIcon}
         title={popupCopy.title}
-        collapsed={activeCollapsed}
-        onExpand={expandPopup}
-        onDismiss={dismissPopup}
+        collapsed={false}
+        onExpand={() => {}}
+        onDismiss={() => {
+          dismissPopup();
+          dismissLeftRail(`ancillary-${popupKey}`);
+        }}
         onInteract={noteInteraction}
-        inline={inline}
       >
         {popupKey === "A" ? (
           <>
@@ -396,6 +281,7 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
               onClick={() => {
                 noteInteraction();
                 markFollowUpComplete();
+                dismissLeftRail("ancillary-E");
               }}
             >
               Mark Complete
@@ -403,8 +289,67 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
           </>
         ) : null}
       </AncillaryPopup>
-    </div>
+    );
+  }, [
+    ancillaryState.triggersDetected,
+    dismissLeftRail,
+    dismissPopup,
+    followUpContext,
+    followUpEnrollmentDate,
+    followUpName,
+    followUpPlan,
+    markFollowUpComplete,
+    noteInteraction,
+    openPortalProduct,
+    popupCopy,
+    popupIcon,
+    popupKey,
+    portalProducts,
+    recapItems,
+    seedMentions,
+    state,
+    supplementalTotal,
+    toggleTrigger,
+  ]);
+
+  useEffect(() => {
+    const previousPopupId = previousPopupIdRef.current;
+
+    if (!isVisible || !popupKey || !panel || !popupCopy) {
+      if (previousPopupId) {
+        dismissLeftRail(previousPopupId);
+      }
+      previousPopupIdRef.current = null;
+      return;
+    }
+
+    const nextPopupId = `ancillary-${popupKey}`;
+    if (previousPopupId && previousPopupId !== nextPopupId) {
+      dismissLeftRail(previousPopupId);
+    }
+
+    showLeftRail({
+      id: nextPopupId,
+      priority: 1,
+      title: popupCopy.title,
+      shortLabel: "ANCILLARY",
+      icon: popupIcon,
+      color: "#d29922",
+      component: panel,
+    });
+    previousPopupIdRef.current = nextPopupId;
+  }, [dismissLeftRail, isVisible, panel, popupCopy, popupIcon, popupKey, showLeftRail]);
+
+  useEffect(
+    () => () => {
+      if (previousPopupIdRef.current) {
+        dismissLeftRail(previousPopupIdRef.current);
+      }
+    },
+    [dismissLeftRail]
   );
+
+  return null;
 });
 
 export default AncillaryPopupManager;

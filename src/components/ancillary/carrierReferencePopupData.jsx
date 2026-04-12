@@ -1,8 +1,10 @@
 export const CARRIER_REFERENCE_POPUPS = [
   {
     id: "devoted",
+    label: "Devoted",
+    handleLabel: "DEVOTED",
     popupTitle: "DEVOTED HEALTH QUICK REFERENCE",
-    triggerPattern: /\bdevoted\b/gi,
+    aliases: ["devoted", "devoted health"],
     sections: [
       {
         id: "app",
@@ -52,8 +54,10 @@ export const CARRIER_REFERENCE_POPUPS = [
   },
   {
     id: "humana",
+    label: "Humana",
+    handleLabel: "HUMANA",
     popupTitle: "HUMANA QUICK REFERENCE",
-    triggerPattern: /\bhumana\b/gi,
+    aliases: ["humana"],
     sections: [
       {
         id: "app",
@@ -124,9 +128,71 @@ export const CARRIER_REFERENCE_POPUPS = [
     ],
   },
   {
+    id: "aetna",
+    label: "Aetna",
+    handleLabel: "AETNA",
+    popupTitle: "AETNA QUICK REFERENCE",
+    aliases: ["aetna"],
+    sections: [
+      {
+        id: "portal",
+        title: "Section A: Aetna Member Portal & App",
+        notes: [
+          <>
+            Members can manage plan details through the <strong>Aetna member
+            portal</strong> and the <strong>Aetna Health</strong> app.
+          </>,
+          <>
+            Use the portal for digital ID cards, claim status, doctor search,
+            and extra-benefit balance lookups when the plan supports them.
+          </>,
+          <>
+            Confirm plan-specific extras inside the Summary of Benefits before
+            promising any allowance amount.
+          </>,
+        ],
+      },
+      {
+        id: "extras",
+        title: "Section B: OTC / Flex Benefit Reminder",
+        notes: [
+          <>
+            Many Aetna MA plans include OTC, grocery, dental, transport, or
+            other supplemental credits, but availability varies heavily by
+            county and plan.
+          </>,
+          <>
+            Use the official plan materials to confirm whether balances are
+            monthly, quarterly, or annual.
+          </>,
+          <>
+            If the beneficiary asks about card categories, anchor the answer to
+            the exact plan, not the carrier generally.
+          </>,
+        ],
+      },
+      {
+        id: "agent",
+        title: "Section C: Agent Workflow",
+        notes: [
+          <>
+            Enrollment and eligibility checks typically route through{" "}
+            <strong>Producer World</strong> and connected broker platforms.
+          </>,
+          <>
+            Verify MBI, election code, and any required SEP documentation
+            before you submit.
+          </>,
+        ],
+      },
+    ],
+  },
+  {
     id: "uhc",
+    label: "UnitedHealthcare",
+    handleLabel: "UHC",
     popupTitle: "UNITEDHEALTHCARE QUICK REFERENCE",
-    triggerPattern: /\bunitedhealthcare\b|\buhc\b|\bunited\b/gi,
+    aliases: ["unitedhealthcare", "united healthcare", "uhc"],
     sections: [
       {
         id: "ucard",
@@ -187,7 +253,7 @@ export const CARRIER_REFERENCE_POPUPS = [
         title: "Section C: Renew Active Fitness",
         notes: [
           <>
-            <strong>Renew Active</strong> is UHC's fitness program and has
+            <strong>Renew Active</strong> is UHC&apos;s fitness program and has
             replaced SilverSneakers on many plans.
           </>,
           <>
@@ -204,8 +270,10 @@ export const CARRIER_REFERENCE_POPUPS = [
   },
   {
     id: "anthem",
+    label: "Anthem / Elevance / Wellpoint",
+    handleLabel: "ANTHEM",
     popupTitle: "ANTHEM / ELEVANCE QUICK REFERENCE",
-    triggerPattern: /\banthem\b|\belevance\b/gi,
+    aliases: ["anthem", "elevance", "wellpoint"],
     sections: [
       {
         id: "sydney",
@@ -258,9 +326,88 @@ export const CARRIER_REFERENCE_POPUPS = [
     ],
   },
   {
+    id: "braven",
+    label: "Braven",
+    handleLabel: "BRAVEN",
+    popupTitle: "BRAVEN QUICK REFERENCE",
+    aliases: ["braven", "braven health"],
+    sections: [
+      {
+        id: "portal",
+        title: "Section A: Member Access",
+        notes: [
+          <>
+            Use Braven member materials and the carrier portal to confirm
+            digital ID cards, provider search, and plan documents after
+            enrollment.
+          </>,
+          <>
+            Anchor benefit descriptions to the exact county plan because Braven
+            extras vary by market and product.
+          </>,
+        ],
+      },
+      {
+        id: "market",
+        title: "Section B: Market Reminder",
+        notes: [
+          <>
+            Braven is commonly presented in New Jersey markets, so verify
+            footprint, network, and any Horizon-linked service details before
+            positioning the plan.
+          </>,
+          <>
+            Confirm OTC, flex, dental, and transportation language from the SOB
+            rather than carrier-level shorthand.
+          </>,
+        ],
+      },
+    ],
+  },
+  {
+    id: "clover",
+    label: "Clover",
+    handleLabel: "CLOVER",
+    popupTitle: "CLOVER QUICK REFERENCE",
+    aliases: ["clover", "clover health"],
+    sections: [
+      {
+        id: "portal",
+        title: "Section A: Member Portal",
+        notes: [
+          <>
+            Members can use <strong>cloverhealth.com</strong> resources and plan
+            materials for provider lookup, claims review, and member support.
+          </>,
+          <>
+            Confirm whether the beneficiary&apos;s plan includes an app, OTC
+            program, or rewards feature before presenting it as a standard
+            carrier-wide benefit.
+          </>,
+        ],
+      },
+      {
+        id: "network",
+        title: "Section B: Plan Verification Reminder",
+        notes: [
+          <>
+            Clover plan extras, provider participation, and formulary strength
+            are market-specific. Stay with the exact plan documents once the
+            enrollment decision is made.
+          </>,
+          <>
+            Reconfirm PCPs, specialists, and pharmacies before submission.
+          </>,
+        ],
+      },
+    ],
+  },
+  {
     id: "zing",
+    label: "Zing",
+    handleLabel: "ZING",
     popupTitle: "ZING HEALTH QUICK REFERENCE",
-    triggerPattern: /\bzing\b/gi,
+    aliases: ["zing", "zing health"],
     sections: [
       {
         id: "portal",
@@ -321,7 +468,7 @@ export const CARRIER_REFERENCE_POPUPS = [
           </>,
           <>
             It is a smaller carrier, so confirm network availability in the
-            beneficiary's county before presenting it.
+            beneficiary&apos;s county before presenting it.
           </>,
           <>
             Broker support: <strong>brokers@myzinghealth.com</strong> or{" "}
@@ -333,8 +480,10 @@ export const CARRIER_REFERENCE_POPUPS = [
   },
   {
     id: "healthspring",
+    label: "Cigna / HealthSpring",
+    handleLabel: "CIGNA",
     popupTitle: "HEALTHSPRING QUICK REFERENCE",
-    triggerPattern: /\bhealthspring\b|\bcigna\s+medicare\b/gi,
+    aliases: ["healthspring", "cigna", "cigna medicare"],
     sections: [
       {
         id: "transition",
@@ -342,8 +491,8 @@ export const CARRIER_REFERENCE_POPUPS = [
         notes: [
           <>
             <strong>Cigna Healthcare Medicare</strong> officially rebranded to{" "}
-            <strong>HealthSpring</strong> after HCSC acquired Cigna's Medicare
-            business in <strong>March 2025</strong>.
+            <strong>HealthSpring</strong> after HCSC acquired Cigna&apos;s
+            Medicare business in <strong>March 2025</strong>.
           </>,
           <>The plans stayed the same, but the brand name changed.</>,
           <>
@@ -356,8 +505,10 @@ export const CARRIER_REFERENCE_POPUPS = [
   },
   {
     id: "wellcare",
+    label: "Wellcare",
+    handleLabel: "WELLCARE",
     popupTitle: "WELLCARE QUICK REFERENCE",
-    triggerPattern: /\bwellcare\b/gi,
+    aliases: ["wellcare", "well care"],
     sections: [
       {
         id: "spendables",

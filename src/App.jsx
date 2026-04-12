@@ -1,12 +1,25 @@
-import { lazy, Suspense, useState, useEffect, useRef, startTransition } from "react";
+import {
+  lazy,
+  Suspense,
+  startTransition,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import EnrollGenLogo from "./components/EnrollGenLogo";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
-import { MedSupProvider, useMedSup } from "./context/MedSupContext";
+import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
-import { SignedIn, SignedOut, SignIn, useUser, useClerk } from "@clerk/clerk-react";
-import { ChevronDown, Menu, Shuffle, X } from "lucide-react";
-import DevotedPopupManager from "./components/ancillary/DevotedPopupManager";
+import { SignedIn, SignedOut, SignIn, useClerk, useUser } from "@clerk/clerk-react";
+import { ChevronDown, Shuffle, X } from "lucide-react";
 import { wallpapers } from "./config/wallpapers";
+import {
+  LeftRail,
+  LeftRailProvider,
+  useLeftRailManager,
+} from "./components/leftRail/LeftRailManager";
+import SEPQualifier from "./components/leftRail/SEPQualifier";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
@@ -39,24 +52,21 @@ const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
 const Leaderboard = lazy(loadLeaderboard);
-const COMPLIANCE_HUB_TAB_IDS = new Set(["complianceHub", "history", "upload", "review"]);
-const AGENT_TOOLS_TAB_IDS = new Set(["tools", "objections", "decisionTree"]);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
+const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
 function modeSupportsAgentTools(mode) {
   return mode === "ma" || mode === "aca";
 }
 
-/* ── Daily Verse accordion wrapper for main flow ── */
-const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const FLOWS = [
-  { id: "ma",     label: "MA",     color: "#E8002D", rgb: "232,0,45"   },
-  { id: "aca",    label: "ACA",    color: "#EAB308", rgb: "234,179,8"  },
-  { id: "medsup", label: "SUP",    color: "#00D166", rgb: "0,209,102"  },
-  { id: "u65",    label: "U65",    color: "#a855f7", rgb: "168,85,247" },
+  { id: "ma", label: "MA", color: "#E8002D", rgb: "232,0,45" },
+  { id: "aca", label: "ACA", color: "#EAB308", rgb: "234,179,8" },
+  { id: "medsup", label: "SUP", color: "#00D166", rgb: "0,209,102" },
+  { id: "u65", label: "U65", color: "#a855f7", rgb: "168,85,247" },
 ];
 
-function FlowSelector({ mode, onChange }) {
+function FlowSelector({ mode, onChange, compact = false }) {
   return (
     <>
       <style>{`
@@ -73,13 +83,14 @@ function FlowSelector({ mode, onChange }) {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 14,
+          gap: compact ? 10 : 14,
           background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
           border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 8,
-          padding: "8px 16px",
+          borderRadius: compact ? 999 : 8,
+          padding: compact ? "5px 10px" : "8px 16px",
           userSelect: "none",
           boxShadow: "inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03)",
+          flexShrink: 0,
         }}
       >
         {FLOWS.map((flow) => {
@@ -88,12 +99,20 @@ function FlowSelector({ mode, onChange }) {
             <button
               key={flow.id}
               onClick={() => onChange(flow.id)}
-              title={flow.id === "ma" ? "Medicare Advantage" : flow.id === "medsup" ? "Medicare Supplement" : flow.id === "aca" ? "ACA On-Exchange" : "U65 Off-Exchange"}
+              title={
+                flow.id === "ma"
+                  ? "Medicare Advantage"
+                  : flow.id === "medsup"
+                    ? "Medicare Supplement"
+                    : flow.id === "aca"
+                      ? "ACA On-Exchange"
+                      : "U65 Off-Exchange"
+              }
               style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: 5,
+                gap: compact ? 3 : 5,
                 background: "none",
                 border: "none",
                 cursor: "pointer",
@@ -105,8 +124,8 @@ function FlowSelector({ mode, onChange }) {
                 className={active ? "flow-circle-active" : ""}
                 style={{
                   "--pulse-color": `rgba(${flow.rgb},0.55)`,
-                  width: 14,
-                  height: 14,
+                  width: compact ? 10 : 14,
+                  height: compact ? 10 : 14,
                   borderRadius: "50%",
                   background: active ? flow.color : `rgba(${flow.rgb},0.18)`,
                   border: `1px solid ${active ? flow.color : `rgba(${flow.rgb},0.25)`}`,
@@ -117,7 +136,7 @@ function FlowSelector({ mode, onChange }) {
               />
               <span
                 style={{
-                  fontSize: 9,
+                  fontSize: compact ? 8 : 9,
                   fontWeight: 700,
                   letterSpacing: "0.1em",
                   fontFamily: "'Barlow Condensed', sans-serif",
@@ -142,17 +161,13 @@ function LazyPanel({ children }) {
     <Suspense
       fallback={
         <div className="card" style={{ marginTop: 14 }}>
-          <div style={{ color: "#8fa4bc", fontSize: "0.9rem" }}>Loading…</div>
+          <div style={{ color: "#8fa4bc", fontSize: "0.9rem" }}>Loading...</div>
         </div>
       }
     >
       {children}
     </Suspense>
   );
-}
-
-function getTabDisplayStyle(isActive) {
-  return { display: isActive ? "block" : "none" };
 }
 
 function SessionSummarySlot() {
@@ -169,7 +184,7 @@ function SessionSummarySlot() {
   );
 }
 
-function MainFlowComplianceHubTab() {
+function MainFlowComplianceHubPanel() {
   const { liveCall } = useLiveCall();
 
   return (
@@ -188,21 +203,11 @@ function MainFlowComplianceHubTab() {
 }
 
 function MedSupScriptWorkspace() {
-  const { state } = useMedSup();
-  const [transcript, setTranscript] = useState("");
-  const flowShellRef = useRef(null);
-  const flowMainRef = useRef(null);
-
   return (
     <>
-      <MedSupAiCopilot onTranscriptChange={setTranscript} />
-      <div className="flow-shell" ref={flowShellRef}>
-        <DevotedPopupManager
-          callStarted={state.callStarted}
-          transcript={transcript}
-          anchorRef={flowMainRef}
-        />
-        <div className="flow-main" ref={flowMainRef}>
+      <MedSupAiCopilot onTranscriptChange={() => {}} />
+      <div className="flow-shell">
+        <div className="flow-main">
           <MedSupFlow />
         </div>
       </div>
@@ -229,104 +234,72 @@ function loadBackgroundSelection() {
   return fallbackId;
 }
 
-/* ─── ProfileBar ─────────────────────────────────────────────────────────── */
-function ProfileBar() {
+function ProfileChip() {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
 
-  if (!isLoaded || !user) return null;
+  if (!isLoaded || !user) {
+    return null;
+  }
 
   const displayName =
     user.publicMetadata?.agentName || user.fullName || user.firstName || "Agent";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
-        border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: 8,
-        padding: "8px 16px",
-        userSelect: "none",
-        boxShadow:
-          "inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03)",
-      }}
-    >
-      <img
-        src={user.imageUrl}
-        alt=""
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          border: "1px solid rgba(255,255,255,0.1)",
-        }}
-      />
-      <span
-        style={{
-          fontSize: 12,
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontWeight: 600,
-          letterSpacing: "0.05em",
-          color: "#c8d6e5",
-        }}
-      >
-        {displayName}
-      </span>
-      <button
-        onClick={() => signOut()}
-        style={{
-          background: "none",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 4,
-          color: "#556677",
-          fontSize: 9,
-          fontFamily: "'Barlow Condensed', sans-serif",
-          padding: "2px 7px",
-          cursor: "pointer",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-        }}
-      >
+    <div className="top-bar-profile">
+      <img src={user.imageUrl} alt="" className="top-bar-profile-avatar" />
+      <span className="top-bar-profile-name">{displayName}</span>
+      <button type="button" className="top-bar-profile-signout" onClick={() => signOut()}>
         Sign Out
       </button>
     </div>
   );
 }
 
-/* ─── AppContent (the actual app) ────────────────────────────────────────── */
-function AppContent() {
-  const [tab, setTab] = useState("script");
+function getTabsForMode(mode) {
+  const tabs = [{ id: "script", label: "Script" }];
+
+  if (modeSupportsAgentTools(mode)) {
+    tabs.push({ id: "tools", label: "Agent Tools" });
+  }
+
+  if (mode === "ma") {
+    tabs.push({ id: "sepTool", label: "Intelligence" });
+  }
+
+  if (mode === "aca") {
+    tabs.push({ id: "acaIntel", label: "ACA Intelligence" });
+  }
+
+  tabs.push({ id: "complianceHub", label: "Compliance Hub" });
+  tabs.push({ id: "leaderboard", label: "Leaderboard" });
+  tabs.push({ id: "verse", label: "Daily Verse" });
+
+  return tabs;
+}
+
+function AppShell() {
   const [mode, setMode] = useState("ma");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openPanel, setOpenPanel] = useState(null);
   const [backgroundSelection, setBackgroundSelection] = useState(loadBackgroundSelection);
   const [wallpaperPickerOpen, setWallpaperPickerOpen] = useState(false);
-  const sidebarRef = useRef(null);
+  const topBarRef = useRef(null);
+  const overlayRef = useRef(null);
+  const hasAutoOpenedSepRef = useRef(false);
+
+  const {
+    railWidth,
+    hasLeftRailItem,
+    showLeftRail,
+    expandLeftRail,
+    minimizeLeftRail,
+    dismissLeftRail,
+  } = useLeftRailManager();
+
   const selectedWallpaper =
     wallpapers.find((wallpaper) => wallpaper.id === backgroundSelection) || wallpapers[0];
   const wallpaperChoices = wallpapers.filter((wallpaper) => wallpaper.url);
-
-  // Close sidebar on outside click (mobile)
-  useEffect(() => {
-    if (!sidebarOpen) return;
-    const handler = (e) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-        setSidebarOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [sidebarOpen]);
-
-  // Close sidebar on Escape
-  useEffect(() => {
-    if (!sidebarOpen) return;
-    const handler = (e) => { if (e.key === "Escape") setSidebarOpen(false); };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [sidebarOpen]);
+  const navTabs = useMemo(() => getTabsForMode(mode), [mode]);
 
   useEffect(() => {
     document.body.dataset.bgMode = selectedWallpaper?.url ? "wallpaper" : "clean";
@@ -345,15 +318,65 @@ function AppContent() {
     };
   }, [selectedWallpaper?.id, selectedWallpaper?.url]);
 
-  const activeTab = COMPLIANCE_HUB_TAB_IDS.has(tab)
-    ? "complianceHub"
-    : AGENT_TOOLS_TAB_IDS.has(tab)
-      ? "tools"
-      : tab;
+  useEffect(() => {
+    if (mode !== "ma" && hasLeftRailItem("sep-qualifier")) {
+      dismissLeftRail("sep-qualifier");
+    }
+  }, [dismissLeftRail, hasLeftRailItem, mode]);
+
+  useEffect(() => {
+    if (mode !== "ma" || hasAutoOpenedSepRef.current) {
+      return;
+    }
+
+    hasAutoOpenedSepRef.current = true;
+    showLeftRail({
+      id: "sep-qualifier",
+      priority: 3,
+      title: "SEP QUALIFIER",
+      shortLabel: "SEP QUALIFIER",
+      color: "#e53e3e",
+      component: (
+        <SEPQualifier onMinimize={() => minimizeLeftRail("sep-qualifier")} />
+      ),
+    });
+  }, [minimizeLeftRail, mode, showLeftRail]);
+
+  useEffect(() => {
+    if (!openPanel && !wallpaperPickerOpen) {
+      return undefined;
+    }
+
+    const handleMouseDown = (event) => {
+      const target = event.target;
+      if (overlayRef.current?.contains(target) || topBarRef.current?.contains(target)) {
+        return;
+      }
+
+      setOpenPanel(null);
+      setWallpaperPickerOpen(false);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpenPanel(null);
+        setWallpaperPickerOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openPanel, wallpaperPickerOpen]);
 
   const preloadScriptForMode = (targetMode) => {
     if (targetMode === "ma") {
       loadScriptFlow();
+      loadSessionSummary();
       return;
     }
     if (targetMode === "medsup") {
@@ -370,53 +393,41 @@ function AppContent() {
     }
   };
 
-  const preloadTab = (targetTab, targetMode = mode) => {
-    if (COMPLIANCE_HUB_TAB_IDS.has(targetTab)) {
-      if (targetMode === "ma") {
-        loadComplianceDashboard();
-      } else {
-        loadCallHistory();
-        if (targetMode === "medsup") loadTranscriptUpload();
-      }
-      return;
-    }
-    if (AGENT_TOOLS_TAB_IDS.has(targetTab) && modeSupportsAgentTools(targetMode)) {
-      loadAgentTools();
-      return;
-    }
-    if (targetTab === "script") {
+  const preloadPanel = (panelId, targetMode = mode) => {
+    if (panelId === "script") {
       preloadScriptForMode(targetMode);
       return;
     }
-    if (targetTab === "tools" && modeSupportsAgentTools(targetMode)) {
+    if (panelId === "tools" && modeSupportsAgentTools(targetMode)) {
       loadAgentTools();
       return;
     }
-    if (targetTab === "sepTool" && targetMode === "ma") {
+    if (panelId === "sepTool" && targetMode === "ma") {
       loadSEPLookup();
       loadCarrierRef();
       return;
     }
-    if (targetTab === "carrierRef") {
-      if (targetMode === "ma") {
-        loadSEPLookup();
-        loadCarrierRef();
-        return;
-      }
-      loadCarrierRef();
-      return;
-    }
-    if (targetTab === "acaIntel") {
+    if (panelId === "acaIntel") {
       loadACAIntelligence();
       return;
     }
-    if (targetTab === "leaderboard") {
+    if (panelId === "complianceHub") {
+      if (targetMode === "ma") {
+        loadComplianceDashboard();
+      } else {
+        loadCallHistory();
+        if (targetMode === "medsup") {
+          loadTranscriptUpload();
+        }
+      }
+      return;
+    }
+    if (panelId === "leaderboard") {
       loadLeaderboard();
       return;
     }
-    if (targetTab === "verse") {
+    if (panelId === "verse") {
       loadDailyVerse();
-      return;
     }
   };
 
@@ -424,21 +435,20 @@ function AppContent() {
     preloadScriptForMode(newMode);
     startTransition(() => {
       setMode(newMode);
-      setTab("script");
+      setOpenPanel(null);
+      setWallpaperPickerOpen(false);
     });
   };
 
-  const handleTabChange = (nextTab) => {
-    const normalizedTab = COMPLIANCE_HUB_TAB_IDS.has(nextTab)
-      ? "complianceHub"
-      : AGENT_TOOLS_TAB_IDS.has(nextTab)
-        ? "tools"
-        : nextTab === "carrierRef" && mode === "ma"
-          ? "sepTool"
-        : nextTab;
-    preloadTab(normalizedTab);
+  const handleTabToggle = (tabId) => {
+    if (tabId === "script") {
+      setOpenPanel(null);
+      return;
+    }
+
+    preloadPanel(tabId);
     startTransition(() => {
-      setTab(normalizedTab);
+      setOpenPanel((current) => (current === tabId ? null : tabId));
     });
   };
 
@@ -456,10 +466,103 @@ function AppContent() {
       (wallpaper) => wallpaper.id !== selectedWallpaper?.id
     );
     const source = candidates.length ? candidates : wallpaperChoices;
-    if (!source.length) return;
-    const randomWallpaper =
-      source[Math.floor(Math.random() * source.length)];
+    if (!source.length) {
+      return;
+    }
+
+    const randomWallpaper = source[Math.floor(Math.random() * source.length)];
     setBackgroundSelection(randomWallpaper.id);
+  };
+
+  const openSepQualifier = () => {
+    if (hasLeftRailItem("sep-qualifier")) {
+      expandLeftRail("sep-qualifier");
+      return;
+    }
+
+    showLeftRail({
+      id: "sep-qualifier",
+      priority: 3,
+      title: "SEP QUALIFIER",
+      shortLabel: "SEP QUALIFIER",
+      color: "#e53e3e",
+      component: (
+        <SEPQualifier onMinimize={() => minimizeLeftRail("sep-qualifier")} />
+      ),
+    });
+  };
+
+  const sepLauncher =
+    mode === "ma" && !hasLeftRailItem("sep-qualifier") ? (
+      <button
+        type="button"
+        className="left-rail-handle left-rail-handle-launcher"
+        onClick={openSepQualifier}
+      >
+        <span className="left-rail-handle-pip" style={{ background: "#e53e3e" }} />
+        <span className="left-rail-handle-text">SEP QUALIFIER</span>
+      </button>
+    ) : null;
+
+  const activeTabId = openPanel || "script";
+
+  const renderOverlayContent = () => {
+    switch (openPanel) {
+      case "tools":
+        return (
+          <LazyPanel>
+            <AgentTools />
+          </LazyPanel>
+        );
+      case "sepTool":
+        return (
+          <div className="top-panel-stack">
+            <LazyPanel>
+              <SEPLookup />
+            </LazyPanel>
+            <LazyPanel>
+              <CarrierRef />
+            </LazyPanel>
+          </div>
+        );
+      case "acaIntel":
+        return (
+          <LazyPanel>
+            <ACAIntelligence />
+          </LazyPanel>
+        );
+      case "complianceHub":
+        if (mode === "ma") {
+          return <MainFlowComplianceHubPanel />;
+        }
+
+        return (
+          <div className="top-panel-stack">
+            <LazyPanel>
+              <CallHistory />
+            </LazyPanel>
+            {mode === "medsup" ? (
+              <LazyPanel>
+                <TranscriptUpload />
+              </LazyPanel>
+            ) : null}
+          </div>
+        );
+      case "leaderboard":
+        return (
+          <LazyPanel>
+            <Leaderboard />
+          </LazyPanel>
+        );
+      case "verse":
+        return (
+          <LazyPanel>
+            <DailyVerse />
+          </LazyPanel>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -476,292 +579,166 @@ function AppContent() {
           />
         ) : null}
       </div>
-      <div className="app-shell">
-        {/* ── HAMBURGER BUTTON (visible <1024px) ── */}
-        <button
-          className="sidebar-hamburger"
-          onClick={() => setSidebarOpen((p) => !p)}
-          aria-label="Toggle navigation"
-        >
-          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
 
-        {/* Scrim behind sidebar on mobile */}
-        {sidebarOpen && <div className="sidebar-scrim" onClick={() => setSidebarOpen(false)} />}
-
-        {/* ── LEFT SIDEBAR ── */}
-        <aside ref={sidebarRef} className={`app-sidebar${sidebarOpen ? " mobile-open" : ""}`}>
-          <div className="sidebar-top">
+      <div
+        className="app-shell app-shell-modern"
+        style={{ "--left-rail-width": `${railWidth}px` }}
+      >
+        <header ref={topBarRef} className="top-bar-shell">
+          <div className="top-bar-brand">
             <EnrollGenLogo
-              width={150}
-              className="sidebar-logo"
+              width={118}
+              className="top-bar-logo"
               style={{ margin: 0 }}
               onClick={handleLogoClick}
               title="Refresh and return to the main page"
             />
-
-            <FlowSelector mode={mode} onChange={handleModeChange} />
-
+            <FlowSelector mode={mode} onChange={handleModeChange} compact />
           </div>
 
-          <nav className="sidebar-nav">
-            <button
-              className={`sidebar-tab${activeTab === "script" ? " active" : ""}`}
-              onClick={() => { handleTabChange("script"); setSidebarOpen(false); }}
-              onMouseEnter={() => preloadTab("script")}
-              data-tab-label="Script"
-            >
-              <span className="sidebar-tab-text">Script</span>
-            </button>
-            {modeSupportsAgentTools(mode) && (
+          <nav className="top-bar-tabs" aria-label="Workspace tabs">
+            {navTabs.map((tab) => (
               <button
-                className={`sidebar-tab${activeTab === "tools" ? " active" : ""}`}
-                onClick={() => { handleTabChange("tools"); setSidebarOpen(false); }}
-                onMouseEnter={() => preloadTab("tools")}
-                data-tab-label="Tools"
+                key={tab.id}
+                type="button"
+                className={`top-bar-tab${activeTabId === tab.id ? " is-active" : ""}`}
+                onClick={() => handleTabToggle(tab.id)}
+                onMouseEnter={() => preloadPanel(tab.id)}
               >
-                <span className="sidebar-tab-text">Agent Tools</span>
+                {tab.label}
               </button>
-            )}
-            {mode === "ma" && (
-              <button
-                className={`sidebar-tab${activeTab === "sepTool" ? " active" : ""}`}
-                onClick={() => { handleTabChange("sepTool"); setSidebarOpen(false); }}
-                onMouseEnter={() => preloadTab("sepTool")}
-                data-tab-label="Intel"
-              >
-                <span className="sidebar-tab-text">Intelligence</span>
-              </button>
-            )}
-            {mode === "aca" && (
-              <button
-                className={`sidebar-tab${activeTab === "acaIntel" ? " active" : ""}`}
-                onClick={() => { handleTabChange("acaIntel"); setSidebarOpen(false); }}
-                onMouseEnter={() => preloadTab("acaIntel")}
-                data-tab-label="ACA"
-              >
-                <span className="sidebar-tab-text">ACA Intelligence</span>
-              </button>
-            )}
-            <button
-              className={`sidebar-tab${activeTab === "complianceHub" ? " active" : ""}`}
-              onClick={() => { handleTabChange("complianceHub"); setSidebarOpen(false); }}
-              onMouseEnter={() => preloadTab("complianceHub")}
-              data-tab-label="Comply"
-            >
-              <span className="sidebar-tab-text">Compliance Hub</span>
-            </button>
-            <button
-              className={`sidebar-tab${activeTab === "leaderboard" ? " active" : ""}`}
-              onClick={() => { handleTabChange("leaderboard"); setSidebarOpen(false); }}
-              onMouseEnter={() => preloadTab("leaderboard")}
-              data-tab-label="Board"
-            >
-              <span className="sidebar-tab-text">Leaderboard</span>
-            </button>
-            <button
-              className={`sidebar-tab${activeTab === "verse" ? " active" : ""}`}
-              onClick={() => { handleTabChange("verse"); setSidebarOpen(false); }}
-              onMouseEnter={() => preloadTab("verse")}
-              data-tab-label="Verse"
-            >
-              <span className="sidebar-tab-text">Daily Verse</span>
-            </button>
+            ))}
           </nav>
 
-          <div className="sidebar-utility-stack">
-            <div className={`sidebar-wallpaper-selector${wallpaperPickerOpen ? " is-open" : ""}`}>
+          <div className="top-bar-utilities">
+            <div className={`top-bar-wallpaper${wallpaperPickerOpen ? " is-open" : ""}`}>
               <button
                 type="button"
-                className="sidebar-wallpaper-toggle"
+                className="top-bar-wallpaper-toggle"
                 onClick={() => setWallpaperPickerOpen((open) => !open)}
-                aria-expanded={wallpaperPickerOpen}
-                aria-controls="sidebar-wallpaper-panel"
               >
-                <div className="sidebar-wallpaper-selector-copy">
-                  <span className="sidebar-wallpaper-selector-label">Wallpaper</span>
-                  <span className="sidebar-wallpaper-selector-active">
-                    {selectedWallpaper?.label || "Default"}
-                  </span>
-                </div>
-                <span className="sidebar-wallpaper-toggle-icon" aria-hidden="true">
-                  <ChevronDown size={14} strokeWidth={2.2} />
+                <span className="top-bar-wallpaper-label">
+                  {selectedWallpaper?.label || "Wallpaper"}
                 </span>
+                <ChevronDown size={13} />
               </button>
 
-              {wallpaperPickerOpen && (
-                <div className="sidebar-wallpaper-panel" id="sidebar-wallpaper-panel">
-                  <div className="sidebar-wallpaper-panel-header">
-                    <span className="sidebar-wallpaper-panel-hint">
-                      Pick a background
-                    </span>
+              {wallpaperPickerOpen ? (
+                <div className="top-bar-wallpaper-panel">
+                  <div className="top-bar-wallpaper-head">
+                    <span>Background</span>
                     <button
                       type="button"
-                      className="sidebar-wallpaper-random"
+                      className="top-bar-wallpaper-random"
                       onClick={selectRandomWallpaper}
-                      aria-label="Pick a random wallpaper"
                       title="Random wallpaper"
                     >
-                      <Shuffle size={12} strokeWidth={2.1} />
+                      <Shuffle size={12} />
                     </button>
                   </div>
 
-                  <div className="sidebar-wallpaper-grid">
+                  <div className="top-bar-wallpaper-grid">
                     {wallpapers.map((wallpaper) => (
                       <button
                         key={wallpaper.id}
                         type="button"
-                        className={`sidebar-wallpaper-tile${
+                        className={`top-bar-wallpaper-tile${
                           backgroundSelection === wallpaper.id ? " is-active" : ""
                         }`}
                         onClick={() => selectBackground(wallpaper.id)}
-                        aria-label={`Use the ${wallpaper.label} wallpaper`}
                         title={wallpaper.label}
                       >
                         {wallpaper.thumbUrl ? (
                           <img
-                            className="sidebar-wallpaper-tile-image"
+                            className="top-bar-wallpaper-image"
                             src={wallpaper.thumbUrl}
                             alt=""
                             aria-hidden="true"
                             decoding="async"
                           />
                         ) : (
-                          <span className="sidebar-wallpaper-tile-none" aria-hidden="true" />
+                          <span className="top-bar-wallpaper-fallback" aria-hidden="true" />
                         )}
                       </button>
                     ))}
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
 
-            {!LOGIN_DISABLED && (
-              <div className="sidebar-profile">
-                <ProfileBar />
-              </div>
-            )}
+            {!LOGIN_DISABLED ? <ProfileChip /> : null}
           </div>
-        </aside>
+        </header>
 
-        {/* ── CENTER CONTENT ── */}
-        <main className="app-center">
-          {mode === "ma" && (
-            <ScriptProvider>
-              <div
-                className="main-script-layout"
-                style={getTabDisplayStyle(activeTab === "script")}
+        <LeftRail launcher={sepLauncher} />
+
+        {openPanel ? (
+          <div ref={overlayRef} className="top-panel-overlay">
+            <div className="top-panel-header">
+              <div className="top-panel-title">
+                {navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
+              </div>
+              <button
+                type="button"
+                className="top-panel-close"
+                onClick={() => setOpenPanel(null)}
               >
-                <div className="main-script-primary">
-                  <LazyPanel>
-                    <ScriptFlow />
-                  </LazyPanel>
-                  <SessionSummarySlot />
-                </div>
-              </div>
-              <div style={getTabDisplayStyle(activeTab === "complianceHub")}>
-                <MainFlowComplianceHubTab />
-              </div>
-              <div style={getTabDisplayStyle(activeTab === "tools")}>
-                <LazyPanel>
-                  <AgentTools />
-                </LazyPanel>
-              </div>
-              <div style={getTabDisplayStyle(activeTab === "sepTool")}>
-                <LazyPanel>
-                  <SEPLookup />
-                </LazyPanel>
-                <LazyPanel>
-                  <CarrierRef />
-                </LazyPanel>
-              </div>
-            </ScriptProvider>
-          )}
+                <X size={15} />
+              </button>
+            </div>
+            <div className="top-panel-body">{renderOverlayContent()}</div>
+          </div>
+        ) : null}
 
-          {mode === "medsup" && (
-            <MedSupProvider>
-              <div style={getTabDisplayStyle(activeTab === "script")}>
+        <div className="app-workspace">
+          <main className="app-center">
+            {mode === "ma" ? (
+              <ScriptProvider>
+                <div className="main-script-layout">
+                  <div className="main-script-primary">
+                    <LazyPanel>
+                      <ScriptFlow />
+                    </LazyPanel>
+                    <SessionSummarySlot />
+                  </div>
+                </div>
+              </ScriptProvider>
+            ) : null}
+
+            {mode === "medsup" ? (
+              <MedSupProvider>
                 <LazyPanel>
                   <MedSupScriptWorkspace />
                 </LazyPanel>
-              </div>
-              <div style={getTabDisplayStyle(activeTab === "complianceHub")}>
-                <LazyPanel>
-                  <CallHistory />
-                </LazyPanel>
-                <LazyPanel>
-                  <TranscriptUpload />
-                </LazyPanel>
-              </div>
-            </MedSupProvider>
-          )}
+              </MedSupProvider>
+            ) : null}
 
-          {mode === "aca" && (
-            <>
-              <div style={getTabDisplayStyle(activeTab === "script")}>
-                <LazyPanel>
-                  <ACAScript />
-                </LazyPanel>
-              </div>
-              <div style={getTabDisplayStyle(activeTab === "tools")}>
-                <LazyPanel>
-                  <AgentTools />
-                </LazyPanel>
-              </div>
-              <div style={getTabDisplayStyle(activeTab === "acaIntel")}>
-                <LazyPanel>
-                  <ACAIntelligence />
-                </LazyPanel>
-              </div>
-              <div style={getTabDisplayStyle(activeTab === "complianceHub")}>
-                <LazyPanel>
-                  <CallHistory />
-                </LazyPanel>
-              </div>
-            </>
-          )}
-
-          {mode === "u65" && (
-            <>
-              <div style={getTabDisplayStyle(activeTab === "script")}>
-                <LazyPanel>
-                  <U65Script />
-                </LazyPanel>
-              </div>
-              <div style={getTabDisplayStyle(activeTab === "complianceHub")}>
-                <LazyPanel>
-                  <CallHistory />
-                </LazyPanel>
-              </div>
-            </>
-          )}
-
-          {mode !== "ma" && (
-            <div style={getTabDisplayStyle(activeTab === "carrierRef")}>
+            {mode === "aca" ? (
               <LazyPanel>
-                <CarrierRef />
+                <ACAScript />
               </LazyPanel>
-            </div>
-          )}
+            ) : null}
 
-          <div style={getTabDisplayStyle(activeTab === "leaderboard")}>
-            <LazyPanel>
-              <Leaderboard />
-            </LazyPanel>
-          </div>
-
-          <div style={getTabDisplayStyle(activeTab === "verse")}>
-            <LazyPanel>
-              <DailyVerse />
-            </LazyPanel>
-          </div>
-        </main>
+            {mode === "u65" ? (
+              <LazyPanel>
+                <U65Script />
+              </LazyPanel>
+            ) : null}
+          </main>
+        </div>
       </div>
     </>
   );
 }
 
-/* ─── App (with Clerk gate) ──────────────────────────────────────────────── */
+function AppContent() {
+  return (
+    <LeftRailProvider>
+      <AppShell />
+    </LeftRailProvider>
+  );
+}
+
 export default function App() {
   if (LOGIN_DISABLED) {
     return <AppContent />;

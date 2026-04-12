@@ -42,7 +42,7 @@ const ComplianceDashboard = lazy(() => import("./ComplianceDashboard"));
 
 const FULL_RAIL_STYLE = {
   position: "fixed",
-  top: 14,
+  top: "calc(var(--top-bar-height) + 12px)",
   right: 18,
   bottom: 18,
   zIndex: 96,
@@ -78,7 +78,7 @@ const COMPACT_RAIL_TOGGLE_STYLE = {
 
 const COMPACT_RAIL_OVERLAY_STYLE = {
   position: "fixed",
-  top: 0,
+  top: "calc(var(--top-bar-height) + 8px)",
   right: 0,
   bottom: 0,
   zIndex: 98,
@@ -489,18 +489,13 @@ function DeferredComplianceDashboard({
 }
 
 export default function ScriptFlow() {
-  const STACKED_POPUP_OFFSET = 190;
   const { state, dispatch, activeSection } = useScript();
   const { clearLog, entries } = useCopilotLog();
   const { updateLiveCall, resetLiveCall } = useLiveCall();
   const prevSectionRef = useRef(activeSection);
-  const flowShellRef = useRef(null);
-  const flowMainRef = useRef(null);
   const session = useSessionTracker();
   const scoredSectionsRef = useRef(new Set());
   const [callStarted, setCallStarted] = useState(false);
-  const [devotedPopupVisible, setDevotedPopupVisible] = useState(false);
-  const [ancillaryPopupVisible, setAncillaryPopupVisible] = useState(false);
 
   // Start session only after agent clicks Start Call
   const sessionStartedRef = useRef(false);
@@ -692,30 +687,17 @@ export default function ScriptFlow() {
         coachingLoading={coachingLoading}
       />
 
-      <div className="flow-shell" ref={flowShellRef}>
+      <div className="flow-shell">
         <DevotedPopupManager
           callStarted={callStarted}
           transcript={transcript}
-          anchorRef={flowMainRef}
-          onVisibilityChange={setDevotedPopupVisible}
-          dockOffsetY={
-            devotedPopupVisible && ancillaryPopupVisible
-              ? -STACKED_POPUP_OFFSET
-              : 0
-          }
+          mergedTranscript={mergedTranscriptEntries}
         />
         <AncillaryPopupManager
           activeSection={activeSection}
           callStarted={callStarted}
-          anchorRef={flowMainRef}
-          onVisibilityChange={setAncillaryPopupVisible}
-          dockOffsetY={
-            devotedPopupVisible && ancillaryPopupVisible
-              ? STACKED_POPUP_OFFSET
-              : 0
-          }
         />
-        <div className="flow-main" ref={flowMainRef}>
+        <div className="flow-main">
 
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}
       <ScriptPrompter onTranscriptChange={setTranscript} onMergedTranscriptChange={setMergedTranscriptEntries} onListeningChange={setIsListening} logComplianceFlag={session.logComplianceFlag} controlsRef={copilotHandlersRef} onCoachingLoadingChange={setCoachingLoading} />

@@ -1,14 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
 import { CARRIER_REFERENCE_POPUPS } from "./carrierReferencePopupData";
 
-const STORAGE_KEY = "enrollgen_carrier_reference_popup_v1";
+const STORAGE_KEY = "enrollgen_carrier_reference_popup_v2";
 
 const EMPTY_STATE = {
-  activeCarrierId: null,
+  activeCarrierIds: [],
   dismissedCarriers: {},
-  collapsedCarriers: {},
-  lastInteractedAt: {},
+  triggeredCarriers: {},
 };
+
+const ENROLLMENT_INTENT_PATTERNS = [
+  (carrierPattern) =>
+    `(?:today\\s+)?i(?:\\s+am|'m)?\\s+(?:going\\s+to\\s+)?(?:enroll(?:ing)?\\s+you|sign(?:ing)?\\s+you\\s+up|put(?:ting)?\\s+you|place(?:ing)?\\s+you)\\s+(?:in|into|with)\\s+(?:the\\s+)?${carrierPattern}(?:\\s+plan)?`,
+  (carrierPattern) =>
+    `we(?:\\s+are|'re)?\\s+(?:going\\s+to\\s+)?(?:go\\s+with|move\\s+forward\\s+with|enroll\\s+you\\s+in|put\\s+you\\s+in|do)\\s+(?:the\\s+)?${carrierPattern}(?:\\s+plan)?`,
+  (carrierPattern) =>
+    `let(?:\\s+us|'s)\\s+(?:get\\s+you\\s+signed\\s+up\\s+with|go\\s+ahead\\s+with|go\\s+with|do)\\s+(?:the\\s+)?${carrierPattern}(?:\\s+plan)?`,
+  (carrierPattern) =>
+    `we(?:\\s+will|'ll)\\s+do\\s+(?:the\\s+)?${carrierPattern}(?:\\s+plan)?`,
+];
 
 function loadStoredState() {
   if (typeof window === "undefined") {
@@ -25,24 +35,16 @@ function loadStoredState() {
     return {
       ...EMPTY_STATE,
       ...parsed,
-      activeCarrierId:
-        typeof parsed?.activeCarrierId === "string"
-          ? parsed.activeCarrierId
-          : null,
+      activeCarrierIds: Array.isArray(parsed?.activeCarrierIds)
+        ? parsed.activeCarrierIds
+        : [],
       dismissedCarriers:
-        parsed?.dismissedCarriers &&
-        typeof parsed.dismissedCarriers === "object"
+        parsed?.dismissedCarriers && typeof parsed.dismissedCarriers === "object"
           ? parsed.dismissedCarriers
           : {},
-      collapsedCarriers:
-        parsed?.collapsedCarriers &&
-        typeof parsed.collapsedCarriers === "object"
-          ? parsed.collapsedCarriers
-          : {},
-      lastInteractedAt:
-        parsed?.lastInteractedAt &&
-        typeof parsed.lastInteractedAt === "object"
-          ? parsed.lastInteractedAt
+      triggeredCarriers:
+        parsed?.triggeredCarriers && typeof parsed.triggeredCarriers === "object"
+          ? parsed.triggeredCarriers
           : {},
     };
   } catch {
@@ -50,44 +52,77 @@ function loadStoredState() {
   }
 }
 
-function getLastMatchIndex(text, pattern) {
-  const flags = pattern.flags.includes("g")
-    ? pattern.flags
-    : `${pattern.flags}g`;
-  const regex = new RegExp(pattern.source, flags);
-  let lastMatchIndex = -1;
-
-  for (const match of text.matchAll(regex)) {
-    if (typeof match.index === "number") {
-      lastMatchIndex = match.index;
-    }
-  }
-
-  return lastMatchIndex;
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function findLatestCarrierId(transcript) {
-  if (!transcript?.trim()) {
-    return null;
+function normalizeText(value) {
+  return (value || "")
+    .toLowerCase()
+    .replace(/[’]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildAliasPattern(aliases = []) {
+  return `(?:${aliases
+    .map((alias) => normalizeText(alias))
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .map((alias) => escapeRegex(alias).replace(/\s+/g, "\\s+"))
+    .join("|")})`;
+}
+
+function splitTranscriptIntoUtterances(transcript) {
+  return String(transcript || "")
+    .split(/[.!?\n]+/)
+    .map((utterance) => utterance.trim())
+    .filter(Boolean);
+}
+
+function carrierWasSelectedInUtterance(utterance, aliases) {
+  const normalizedUtterance = normalizeText(utterance);
+  if (!normalizedUtterance) {
+    return false;
   }
 
-  let latestCarrierId = null;
-  let latestMatchIndex = -1;
+  const carrierPattern = buildAliasPattern(aliases);
+  if (!carrierPattern || carrierPattern === "(?:)") {
+    return false;
+  }
 
-  CARRIER_REFERENCE_POPUPS.forEach((popup) => {
-    const matchIndex = getLastMatchIndex(transcript, popup.triggerPattern);
-    if (matchIndex > latestMatchIndex) {
-      latestMatchIndex = matchIndex;
-      latestCarrierId = popup.id;
-    }
+  return ENROLLMENT_INTENT_PATTERNS.some((patternBuilder) =>
+    new RegExp(patternBuilder(carrierPattern), "i").test(normalizedUtterance)
+  );
+}
+
+function findTriggeredCarrierIds({ transcript, mergedTranscript }) {
+  const agentUtterances = Array.isArray(mergedTranscript) && mergedTranscript.length
+    ? mergedTranscript
+        .filter(
+          (entry) =>
+            entry?.speaker === "agent" && entry?.isFinal && entry?.text?.trim()
+        )
+        .map((entry) => entry.text)
+    : splitTranscriptIntoUtterances(transcript);
+
+  const matches = new Set();
+
+  agentUtterances.forEach((utterance) => {
+    CARRIER_REFERENCE_POPUPS.forEach((popup) => {
+      if (carrierWasSelectedInUtterance(utterance, popup.aliases)) {
+        matches.add(popup.id);
+      }
+    });
   });
 
-  return latestCarrierId;
+  return [...matches];
 }
 
 export default function useCarrierReferencePopup({
   callStarted,
   transcript,
+  mergedTranscript = [],
 }) {
   const [popupState, setPopupState] = useState(loadStoredState);
 
@@ -100,127 +135,65 @@ export default function useCarrierReferencePopup({
   }, [popupState]);
 
   useEffect(() => {
-    if (!callStarted || !transcript?.trim()) {
+    if (!callStarted) {
       return;
     }
 
-    const nextCarrierId = findLatestCarrierId(transcript);
-    if (!nextCarrierId) {
+    const matchedCarrierIds = findTriggeredCarrierIds({
+      transcript,
+      mergedTranscript,
+    });
+
+    if (!matchedCarrierIds.length) {
       return;
     }
 
     setPopupState((prev) => {
-      if (prev.activeCarrierId === nextCarrierId) {
+      let changed = false;
+      const nextActiveCarrierIds = [...prev.activeCarrierIds];
+      const nextTriggeredCarriers = { ...prev.triggeredCarriers };
+
+      matchedCarrierIds.forEach((carrierId) => {
+        if (nextTriggeredCarriers[carrierId]) {
+          return;
+        }
+
+        nextTriggeredCarriers[carrierId] = true;
+        nextActiveCarrierIds.push(carrierId);
+        changed = true;
+      });
+
+      if (!changed) {
         return prev;
       }
 
       return {
         ...prev,
-        activeCarrierId: nextCarrierId,
-        collapsedCarriers: {
-          ...prev.collapsedCarriers,
-          [nextCarrierId]: false,
-        },
-        lastInteractedAt: {
-          ...prev.lastInteractedAt,
-          [nextCarrierId]: Date.now(),
-        },
+        activeCarrierIds: nextActiveCarrierIds,
+        triggeredCarriers: nextTriggeredCarriers,
       };
     });
-  }, [callStarted, transcript]);
+  }, [callStarted, transcript, mergedTranscript]);
 
-  const activeCarrierId = popupState.activeCarrierId;
-  const isVisible =
-    callStarted &&
-    Boolean(activeCarrierId) &&
-    !popupState.dismissedCarriers[activeCarrierId];
-  const collapsed = activeCarrierId
-    ? Boolean(popupState.collapsedCarriers[activeCarrierId])
-    : false;
-  const lastInteractedAt = activeCarrierId
-    ? popupState.lastInteractedAt[activeCarrierId] ?? 0
-    : 0;
-
-  useEffect(() => {
-    if (!isVisible || collapsed || !activeCarrierId) {
-      return undefined;
-    }
-
-    const timerId = window.setTimeout(() => {
-      setPopupState((prev) => ({
-        ...prev,
-        collapsedCarriers: {
-          ...prev.collapsedCarriers,
-          [activeCarrierId]: true,
-        },
-      }));
-    }, 30000);
-
-    return () => window.clearTimeout(timerId);
-  }, [activeCarrierId, collapsed, isVisible, lastInteractedAt]);
-
-  const noteInteraction = useCallback(() => {
+  const dismissCarrier = useCallback((carrierId) => {
     setPopupState((prev) => {
-      if (!prev.activeCarrierId) {
+      if (!carrierId || !prev.activeCarrierIds.includes(carrierId)) {
         return prev;
       }
 
       return {
         ...prev,
-        collapsedCarriers: {
-          ...prev.collapsedCarriers,
-          [prev.activeCarrierId]: false,
-        },
-        lastInteractedAt: {
-          ...prev.lastInteractedAt,
-          [prev.activeCarrierId]: Date.now(),
-        },
-      };
-    });
-  }, []);
-
-  const dismissPopup = useCallback(() => {
-    setPopupState((prev) => {
-      if (!prev.activeCarrierId) {
-        return prev;
-      }
-
-      return {
-        ...prev,
+        activeCarrierIds: prev.activeCarrierIds.filter((id) => id !== carrierId),
         dismissedCarriers: {
           ...prev.dismissedCarriers,
-          [prev.activeCarrierId]: true,
-        },
-      };
-    });
-  }, []);
-
-  const expandPopup = useCallback(() => {
-    setPopupState((prev) => {
-      if (!prev.activeCarrierId) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        collapsedCarriers: {
-          ...prev.collapsedCarriers,
-          [prev.activeCarrierId]: false,
-        },
-        lastInteractedAt: {
-          ...prev.lastInteractedAt,
-          [prev.activeCarrierId]: Date.now(),
+          [carrierId]: true,
         },
       };
     });
   }, []);
 
   return {
-    activeCarrierId,
-    isVisible,
-    collapsed,
-    noteInteraction,
-    dismissPopup,
-    expandPopup,
+    activeCarrierIds: popupState.activeCarrierIds,
+    dismissCarrier,
   };
 }
