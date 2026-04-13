@@ -672,28 +672,28 @@ function AppShell() {
 
         <LeftRail launcher={sepLauncher} />
 
-        {openPanel ? (
-          <div ref={overlayRef} className="top-panel-overlay">
-            <div className="top-panel-header">
-              <div className="top-panel-title">
-                {navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
+        {mode === "ma" ? (
+          <ScriptProvider>
+            {openPanel ? (
+              <div ref={overlayRef} className="top-panel-overlay">
+                <div className="top-panel-header">
+                  <div className="top-panel-title">
+                    {navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
+                  </div>
+                  <button
+                    type="button"
+                    className="top-panel-close"
+                    onClick={() => setOpenPanel(null)}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+                <div className="top-panel-body">{renderOverlayContent()}</div>
               </div>
-              <button
-                type="button"
-                className="top-panel-close"
-                onClick={() => setOpenPanel(null)}
-              >
-                <X size={15} />
-              </button>
-            </div>
-            <div className="top-panel-body">{renderOverlayContent()}</div>
-          </div>
-        ) : null}
+            ) : null}
 
-        <div className="app-workspace">
-          <main className="app-center">
-            {mode === "ma" ? (
-              <ScriptProvider>
+            <div className="app-workspace">
+              <main className="app-center">
                 <div className="main-script-layout">
                   <div className="main-script-primary">
                     <LazyPanel>
@@ -702,30 +702,54 @@ function AppShell() {
                     <SessionSummarySlot />
                   </div>
                 </div>
-              </ScriptProvider>
+              </main>
+            </div>
+          </ScriptProvider>
+        ) : (
+          <>
+            {openPanel ? (
+              <div ref={overlayRef} className="top-panel-overlay">
+                <div className="top-panel-header">
+                  <div className="top-panel-title">
+                    {navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
+                  </div>
+                  <button
+                    type="button"
+                    className="top-panel-close"
+                    onClick={() => setOpenPanel(null)}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+                <div className="top-panel-body">{renderOverlayContent()}</div>
+              </div>
             ) : null}
 
-            {mode === "medsup" ? (
-              <MedSupProvider>
-                <LazyPanel>
-                  <MedSupScriptWorkspace />
-                </LazyPanel>
-              </MedSupProvider>
-            ) : null}
+            <div className="app-workspace">
+              <main className="app-center">
+                {mode === "medsup" ? (
+                  <MedSupProvider>
+                    <LazyPanel>
+                      <MedSupScriptWorkspace />
+                    </LazyPanel>
+                  </MedSupProvider>
+                ) : null}
 
-            {mode === "aca" ? (
-              <LazyPanel>
-                <ACAScript />
-              </LazyPanel>
-            ) : null}
+                {mode === "aca" ? (
+                  <LazyPanel>
+                    <ACAScript />
+                  </LazyPanel>
+                ) : null}
 
-            {mode === "u65" ? (
-              <LazyPanel>
-                <U65Script />
-              </LazyPanel>
-            ) : null}
-          </main>
-        </div>
+                {mode === "u65" ? (
+                  <LazyPanel>
+                    <U65Script />
+                  </LazyPanel>
+                ) : null}
+              </main>
+            </div>
+          </>
+        )}
       </div>
     </>
   );

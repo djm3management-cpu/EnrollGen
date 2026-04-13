@@ -94,6 +94,8 @@ const CALL_DIRECTION_OPTIONS = [
   { label: "Outbound", value: "outbound" },
 ];
 
+const SHOW_MAIN_FLOW_COMPLIANCE_HUD = false;
+
 /**
  * ScriptFlow v2 — Now with transcript pass-through for dual-layer scoring.
  *
@@ -847,12 +849,14 @@ export default function ScriptFlow() {
       {activeSection >= 8 && <SectionWrapUp />}
 
       {/* ── Full Compliance Dashboard — transcript-aware, at the bottom ── */}
-      <DeferredComplianceDashboard
-        transcript={debouncedTranscript}
-        customerTranscript={customerTranscript}
-        mergedTranscript={mergedTranscriptEntries}
-        result={liveComplianceResult}
-      />
+      {SHOW_MAIN_FLOW_COMPLIANCE_HUD ? (
+        <DeferredComplianceDashboard
+          transcript={debouncedTranscript}
+          customerTranscript={customerTranscript}
+          mergedTranscript={mergedTranscriptEntries}
+          result={liveComplianceResult}
+        />
+      ) : null}
       </>
       )}
         </div>
