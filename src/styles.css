@@ -5842,8 +5842,11 @@ body[data-bg-mode="classic"] .viewport-bg {
 .sep-qualifier-script-card,
 .sep-qualifier-warning-card,
 .sep-qualifier-stop-card,
+.sep-qualifier-shortcut-panel,
+.sep-qualifier-no-sep-card,
 .sep-qualifier-detail-card,
 .sep-qualifier-category-card,
+.sep-qualifier-shortcut-card,
 .sep-qualifier-subtype-card,
 .sep-qualifier-question-block {
   border-radius: 16px;
@@ -5857,6 +5860,8 @@ body[data-bg-mode="classic"] .viewport-bg {
 .sep-qualifier-script-card,
 .sep-qualifier-warning-card,
 .sep-qualifier-stop-card,
+.sep-qualifier-shortcut-panel,
+.sep-qualifier-no-sep-card,
 .sep-qualifier-question-block {
   padding: 16px;
 }
@@ -5930,6 +5935,10 @@ body[data-bg-mode="classic"] .viewport-bg {
   color: #f0f6fc;
 }
 
+.sep-qualifier-none-button {
+  width: 100%;
+}
+
 .sep-qualifier-script-card.is-say {
   border-color: rgba(229, 62, 62, 0.18);
 }
@@ -5951,11 +5960,100 @@ body[data-bg-mode="classic"] .viewport-bg {
 }
 
 .sep-qualifier-warning-card {
-  border-left: 4px solid #d29922;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sep-qualifier-warning-card.is-inline {
   margin-top: -2px;
+}
+
+.sep-qualifier-shortcut-panel,
+.sep-qualifier-shortcut-header,
+.sep-qualifier-shortcut-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.sep-qualifier-shortcut-panel,
+.sep-qualifier-shortcut-list {
+  gap: 10px;
+}
+
+.sep-qualifier-shortcut-header {
+  gap: 6px;
+}
+
+.sep-qualifier-shortcut-label,
+.sep-qualifier-shortcut-index {
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.sep-qualifier-shortcut-label {
+  color: #ff6f6f;
+  font-size: 0.76rem;
+}
+
+.sep-qualifier-shortcut-intro,
+.sep-qualifier-shortcut-instruction {
+  margin: 0;
+  color: #c9d1d9;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.sep-qualifier-shortcut-instruction {
+  color: #8b949e;
+}
+
+.sep-qualifier-shortcut-card {
+  width: 100%;
+  padding: 12px 14px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sep-qualifier-shortcut-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sep-qualifier-shortcut-index {
+  color: #8b949e;
+  font-size: 0.68rem;
+}
+
+.sep-qualifier-shortcut-category {
+  color: color-mix(in srgb, var(--sep-question-color) 78%, white);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sep-qualifier-shortcut-text,
+.sep-qualifier-shortcut-note {
+  display: block;
+}
+
+.sep-qualifier-shortcut-text {
+  color: #f0f6fc;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.sep-qualifier-shortcut-note {
+  margin-top: 8px;
+  color: #8b949e;
+  font-size: 0.8rem;
+  line-height: 1.45;
 }
 
 .sep-qualifier-warning-title {
@@ -5967,8 +6065,15 @@ body[data-bg-mode="classic"] .viewport-bg {
 }
 
 .sep-qualifier-stop-card {
-  border-left: 4px solid #e53e3e;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
   color: #ffb4b4;
+}
+
+.sep-qualifier-no-sep-card {
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffb4b4;
+  font-size: 0.88rem;
+  line-height: 1.55;
 }
 
 .sep-qualifier-question-label {
@@ -6029,7 +6134,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   padding: 16px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 4px solid var(--sep-state-accent, #d29922);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
   background:
     linear-gradient(180deg, rgba(28, 35, 51, 0.98) 0%, rgba(19, 25, 38, 0.98) 100%);
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
@@ -6300,7 +6405,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   margin: 0;
   padding: 12px 14px;
   border-radius: 12px;
-  border-left: 3px solid #58a6ff;
+  border: 1px solid rgba(88, 166, 255, 0.18);
   background: rgba(88, 166, 255, 0.08);
   color: #d6e8ff;
   font-size: 0.88rem;
@@ -6592,10 +6697,20 @@ body[data-bg-mode="classic"] .viewport-bg {
 
   .sep-state-card-header {
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .sep-state-card-badges {
     justify-content: flex-start;
+  }
+
+  .sep-qualifier-subtype-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sep-qualifier-shortcut-card-head {
+    flex-wrap: wrap;
   }
 }
 

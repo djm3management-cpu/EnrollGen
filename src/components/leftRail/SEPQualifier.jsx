@@ -17,6 +17,7 @@ import {
 import {
   SEP_QUALIFIER_CATEGORIES,
   SEP_QUALIFIER_CATEGORY_MAP,
+  SEP_QUALIFIER_QUESTIONS,
 } from "../../data/sepQualifierData";
 import {
   getStateSepInfo,
@@ -38,6 +39,9 @@ const OPENER_SCRIPT =
 
 const VERIFICATION_SCRIPT =
   "Has anything changed in your life recently - like moving, losing other coverage, leaving an employer plan, or gaining Medicaid? Or were you affected by a recent natural disaster?";
+
+const NO_SEP_NOTICE =
+  "If none of these apply, the client does not currently have a Special Enrollment Period. They can enroll during AEP (Oct 15 - Dec 7) or OEP (Jan 1 - Mar 31 for existing MA members). Set a follow-up callback.";
 
 const CATEGORY_ICON_MAP = {
   house: House,
@@ -278,6 +282,8 @@ export default function SEPQualifier({ onMinimize }) {
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedSubtypeId, setSelectedSubtypeId] = useState("");
   const [expandedStateSections, setExpandedStateSections] = useState({});
+  const [usedQuestionShortcut, setUsedQuestionShortcut] = useState(false);
+  const [showNoSepNotice, setShowNoSepNotice] = useState(false);
 
   const selectedCategory = selectedCategoryId
     ? SEP_QUALIFIER_CATEGORY_MAP[selectedCategoryId]
@@ -307,6 +313,18 @@ export default function SEPQualifier({ onMinimize }) {
     if (selectedSubtypeId || stageIndex >= 5) unlocked.add(5);
     return unlocked;
   }, [selectedCategoryId, selectedSubtypeId, stageIndex]);
+  const visibleStages = useMemo(
+    () =>
+      STAGES.reduce((stageList, stage, index) => {
+        if (usedQuestionShortcut && stageIndex >= 4 && stage.id === "select") {
+          return stageList;
+        }
+
+        stageList.push({ ...stage, index });
+        return stageList;
+      }, []),
+    [stageIndex, usedQuestionShortcut]
+  );
 
   useEffect(() => {
     if (!stateSepInfo?.sections?.length) {
@@ -326,16 +344,31 @@ export default function SEPQualifier({ onMinimize }) {
     setSelectedCategoryId("");
     setSelectedSubtypeId("");
     setExpandedStateSections({});
+    setUsedQuestionShortcut(false);
+    setShowNoSepNotice(false);
   };
 
   const goToStage = (nextStage) => {
     if (!unlockedStages.has(nextStage)) {
       return;
     }
+    if (nextStage === 3) {
+      setUsedQuestionShortcut(false);
+    }
     setStageIndex(nextStage);
   };
 
   const handleCategorySelect = (categoryId) => {
+    setUsedQuestionShortcut(false);
+    setShowNoSepNotice(false);
+    setSelectedCategoryId(categoryId);
+    setSelectedSubtypeId("");
+    setStageIndex(4);
+  };
+
+  const handleQuestionShortcut = (categoryId) => {
+    setUsedQuestionShortcut(true);
+    setShowNoSepNotice(false);
     setSelectedCategoryId(categoryId);
     setSelectedSubtypeId("");
     setStageIndex(4);
@@ -347,6 +380,7 @@ export default function SEPQualifier({ onMinimize }) {
   };
 
   const handleStateChange = (event) => {
+    setShowNoSepNotice(false);
     setResidentState(event.target.value.toUpperCase());
   };
 
@@ -386,13 +420,13 @@ export default function SEPQualifier({ onMinimize }) {
       </header>
 
       <div className="sep-qualifier-breadcrumbs">
-        {STAGES.map((stage, index) => (
+        {visibleStages.map((stage) => (
           <button
             key={stage.id}
             type="button"
-            className={`sep-qualifier-crumb${index === stageIndex ? " is-active" : ""}`}
-            onClick={() => goToStage(index)}
-            disabled={!unlockedStages.has(index)}
+            className={`sep-qualifier-crumb${stage.index === stageIndex ? " is-active" : ""}`}
+            onClick={() => goToStage(stage.index)}
+            disabled={!unlockedStages.has(stage.index)}
           >
             {stage.label}
           </button>
@@ -456,14 +490,20 @@ export default function SEPQualifier({ onMinimize }) {
                 <button
                   type="button"
                   className={`sep-qualifier-toggle${hasPartAandB === true ? " is-active" : ""}`}
-                  onClick={() => setHasPartAandB(true)}
+                  onClick={() => {
+                    setShowNoSepNotice(false);
+                    setHasPartAandB(true);
+                  }}
                 >
                   YES
                 </button>
                 <button
                   type="button"
                   className={`sep-qualifier-toggle${hasPartAandB === false ? " is-active is-danger" : ""}`}
-                  onClick={() => setHasPartAandB(false)}
+                  onClick={() => {
+                    setShowNoSepNotice(false);
+                    setHasPartAandB(false);
+                  }}
                 >
                   NO
                 </button>
@@ -496,19 +536,75 @@ export default function SEPQualifier({ onMinimize }) {
               </div>
             </div>
 
-            <div className="sep-qualifier-script-card is-ask">
-              <div className="sep-qualifier-script-label">ASK</div>
-              <p>{VERIFICATION_SCRIPT}</p>
-            </div>
+            {canAdvanceToCategory ? (
+              <div className="sep-qualifier-shortcut-panel">
+                <div className="sep-qualifier-shortcut-header">
+                  <div className="sep-qualifier-shortcut-label">ASK THESE QUESTIONS</div>
+                  <p className="sep-qualifier-shortcut-intro">{VERIFICATION_SCRIPT}</p>
+                  <p className="sep-qualifier-shortcut-instruction">
+                    Run through these quickly. When they say yes to one, tap it.
+                  </p>
+                </div>
+
+                <div className="sep-qualifier-shortcut-list">
+                  {SEP_QUALIFIER_QUESTIONS.map((question, index) => {
+                    const category = SEP_QUALIFIER_CATEGORY_MAP[question.categoryId];
+
+                    return (
+                      <button
+                        key={question.id}
+                        type="button"
+                        className="sep-qualifier-shortcut-card"
+                        style={{
+                          "--sep-question-color": category?.color || "#8b949e",
+                        }}
+                        onClick={() => handleQuestionShortcut(question.categoryId)}
+                      >
+                        <div className="sep-qualifier-shortcut-card-head">
+                          <span className="sep-qualifier-shortcut-index">Q{index + 1}</span>
+                          <span className="sep-qualifier-shortcut-category">
+                            {category?.label || "SEP"}
+                          </span>
+                        </div>
+                        <span className="sep-qualifier-shortcut-text">{question.prompt}</span>
+                        {question.note ? (
+                          <span className="sep-qualifier-shortcut-note">{question.note}</span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
 
             <button
               type="button"
               className="sep-qualifier-primary"
-              onClick={() => setStageIndex(3)}
+              onClick={() => {
+                setUsedQuestionShortcut(false);
+                setShowNoSepNotice(false);
+                setStageIndex(3);
+              }}
               disabled={!canAdvanceToCategory}
             >
               SELECT SEP CATEGORY
             </button>
+
+            {canAdvanceToCategory ? (
+              <>
+                <button
+                  type="button"
+                  className="sep-qualifier-secondary sep-qualifier-none-button"
+                  onClick={() => setShowNoSepNotice((currentValue) => !currentValue)}
+                >
+                  NONE OF THESE APPLY
+                </button>
+
+                {showNoSepNotice ? (
+                  <div className="sep-qualifier-no-sep-card">{NO_SEP_NOTICE}</div>
+                ) : null}
+              </>
+            ) : null}
           </div>
         ) : null}
 
@@ -536,12 +632,6 @@ export default function SEPQualifier({ onMinimize }) {
                 ))}
               </div>
 
-              <StateInfoCard
-                stateSepInfo={stateSepInfo}
-                femaEndStatus={femaEndStatus}
-                expandedStateSections={expandedStateSections}
-                onToggleSection={toggleStateSection}
-              />
             </div>
           ) : null}
 
@@ -551,7 +641,7 @@ export default function SEPQualifier({ onMinimize }) {
               <button
                 type="button"
                 className="sep-qualifier-back"
-                onClick={() => setStageIndex(3)}
+                onClick={() => setStageIndex(usedQuestionShortcut ? 2 : 3)}
               >
                 <ArrowLeft size={14} />
                 Back
@@ -580,6 +670,13 @@ export default function SEPQualifier({ onMinimize }) {
                 </button>
               ))}
             </div>
+
+            <StateInfoCard
+              stateSepInfo={stateSepInfo}
+              femaEndStatus={femaEndStatus}
+              expandedStateSections={expandedStateSections}
+              onToggleSection={toggleStateSection}
+            />
           </div>
         ) : null}
 

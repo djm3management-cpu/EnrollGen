@@ -273,6 +273,56 @@ export const SEP_QUALIFIER_CATEGORIES = [
   },
 ];
 
+export const SEP_QUALIFIER_QUESTIONS = [
+  {
+    id: "q-new-to-medicare",
+    categoryId: "new-to-medicare",
+    prompt:
+      "Are you new to Medicare? Did you recently turn 65 or just get your Part B started?",
+  },
+  {
+    id: "q-move",
+    categoryId: "move",
+    prompt:
+      "Have you moved recently - to a new address, a new county, or back to the US from another country?",
+  },
+  {
+    id: "q-lost-coverage",
+    categoryId: "lost-coverage",
+    prompt:
+      "Did you recently lose any health coverage - like leaving a job, losing Medicaid, COBRA ending, or your current plan getting discontinued?",
+  },
+  {
+    id: "q-dual-lis",
+    categoryId: "dual-lis",
+    prompt:
+      "Do you have Medicaid in addition to Medicare? Or do you get Extra Help paying for your prescriptions?",
+    note:
+      "If yes, check their Medicaid level - QMB+, SLMB+, or FBDE qualifies for monthly INT election.",
+  },
+  {
+    id: "q-institution",
+    categoryId: "institution",
+    prompt:
+      "Are you currently in or did you recently leave a nursing home, rehab facility, or long-term care? Or were you recently released from incarceration?",
+  },
+  {
+    id: "q-disaster",
+    categoryId: "disaster",
+    prompt:
+      "Were you affected by a recent natural disaster - hurricane, flood, wildfire, severe storm - that prevented you from making a plan change when you were supposed to?",
+    note: "Check FEMA.gov to verify their county is in an active declaration.",
+  },
+  {
+    id: "q-other",
+    categoryId: "other",
+    prompt:
+      "Are you unhappy with your current plan? Is your plan rated poorly, or were you misled when you signed up?",
+    note:
+      "Covers 5-star enrollment, low-performing plan, contract violations, Medigap trial right, first MA within 12 months.",
+  },
+];
+
 export const SEP_QUALIFIER_CATEGORY_MAP = Object.fromEntries(
   SEP_QUALIFIER_CATEGORIES.map((category) => [category.id, category])
 );
