@@ -6346,6 +6346,7 @@ body[data-bg-mode="classic"] .viewport-bg {
 .sep-state-section-panel {
   display: grid;
   grid-template-rows: 0fr;
+  overflow: hidden;
   transition: grid-template-rows 180ms ease;
 }
 
@@ -6354,11 +6355,21 @@ body[data-bg-mode="classic"] .viewport-bg {
 }
 
 .sep-state-section-panel-inner {
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 0 14px 14px;
+  padding: 0 14px 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease, visibility 120ms ease, padding 180ms ease;
+}
+
+.sep-state-section-panel.is-open .sep-state-section-panel-inner {
+  padding-bottom: 14px;
+  opacity: 1;
+  visibility: visible;
 }
 
 .sep-state-program-grid,

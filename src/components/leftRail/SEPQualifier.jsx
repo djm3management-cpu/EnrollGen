@@ -333,7 +333,7 @@ export default function SEPQualifier({ onMinimize }) {
     }
 
     setExpandedStateSections(
-      Object.fromEntries(stateSepInfo.sections.map((section) => [section.id, true]))
+      Object.fromEntries(stateSepInfo.sections.map((section) => [section.id, false]))
     );
   }, [stateSepInfo]);
 
