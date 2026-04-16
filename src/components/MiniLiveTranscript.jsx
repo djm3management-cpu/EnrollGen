@@ -107,9 +107,6 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
         )}
         {finals.map((entry, idx) => {
           const isCustomer = entry.speaker === "customer";
-          const ts = new Date(entry.timestamp).toLocaleTimeString([], {
-            hour: "2-digit", minute: "2-digit", second: "2-digit",
-          });
           return (
             <div
               key={`${entry.speaker}-${entry.timestamp}-${idx}`}
@@ -123,17 +120,6 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
                 paddingLeft: 4,
               }}
             >
-              <span style={{
-                fontSize: "0.52rem",
-                color: "#3a3a44",
-                fontFamily: "'IBM Plex Mono', monospace",
-                whiteSpace: "nowrap",
-                lineHeight: 1.6,
-                flexShrink: 0,
-                minWidth: 48,
-              }}>
-                {ts}
-              </span>
               <span style={{
                 fontSize: "0.7rem",
                 color: idx === finals.length - 1
@@ -150,9 +136,9 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
                   fontFamily: "'Barlow Condensed', sans-serif",
                   letterSpacing: "0.06em",
                   color: isCustomer ? "#00A8FF" : "#666",
-                  marginRight: 3,
+                  marginRight: 5,
                 }}>
-                  {isCustomer ? "CUST" : "AGT"}
+                  {isCustomer ? "CUSTOMER" : "AGENT"}
                 </span>
                 {entry.text}
               </span>
