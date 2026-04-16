@@ -1833,6 +1833,38 @@ input::placeholder {
   display: block;
 }
 
+.copilot-call-timer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 52px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(145deg, rgba(32, 32, 38, 0.92) 0%, rgba(12, 12, 14, 0.98) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.copilot-call-timer--warning {
+  color: #fbbf24;
+}
+
+.copilot-call-timer--billable {
+  color: var(--accent-green);
+}
+
+.copilot-call-timer--pulse {
+  animation: copilot-call-timer-pulse 0.3s ease;
+}
+
 /* ===============================
    ENROLLMENT CODE
 ================================ */
@@ -2992,6 +3024,12 @@ input[type="file"]::file-selector-button:hover {
   50%       { opacity: 0.75; }
 }
 
+@keyframes copilot-call-timer-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.38; }
+  100% { opacity: 1; }
+}
+
 .copilot-spinner-wrap {
   display: flex;
   align-items: center;
@@ -3021,6 +3059,38 @@ input[type="file"]::file-selector-button:hover {
   text-transform: uppercase;
   color: rgba(232, 0, 45, 0.5);
   animation: copilot-spin-label 1.4s ease-in-out infinite;
+}
+
+.copilot-call-timer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 52px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(145deg, rgba(32, 32, 38, 0.92) 0%, rgba(12, 12, 14, 0.98) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.copilot-call-timer--warning {
+  color: #fbbf24;
+}
+
+.copilot-call-timer--billable {
+  color: var(--accent-green);
+}
+
+.copilot-call-timer--pulse {
+  animation: copilot-call-timer-pulse 0.3s ease;
 }
 
 /* ===============================

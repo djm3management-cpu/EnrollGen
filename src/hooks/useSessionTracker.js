@@ -3,6 +3,10 @@ import { useAppAuth } from "../context/AuthContext";
 import { getAuthSupabase } from "../lib/supabase";
 
 const DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
+const EMPTY_SESSION_METADATA = {
+  agentId: null,
+  sessionId: null,
+};
 
 const noop = () => {};
 const STUB = {
@@ -12,6 +16,31 @@ const STUB = {
   logComplianceFlag: noop,
   logSectionScore: noop,
 };
+let activeSessionMetadata = { ...EMPTY_SESSION_METADATA };
+
+function setActiveSessionMetadata(patch) {
+  activeSessionMetadata = {
+    ...activeSessionMetadata,
+    ...patch,
+  };
+}
+
+export function getActiveSessionMetadata() {
+  return activeSessionMetadata;
+}
+
+export async function waitForActiveSessionMetadata(timeoutMs = 1500) {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    if (activeSessionMetadata.agentId && activeSessionMetadata.sessionId) {
+      return activeSessionMetadata;
+    }
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 50));
+  }
+
+  return activeSessionMetadata;
+}
 
 export function useSessionTracker() {
   const { getToken } = useAppAuth();
@@ -40,6 +69,7 @@ export function useSessionTracker() {
         .single();
       if (data) {
         agentIdRef.current = data.id;
+        setActiveSessionMetadata({ agentId: data.id });
         return data.id;
       }
       // Auto-create agent row if missing (RLS lets user insert their own)
@@ -53,6 +83,7 @@ export function useSessionTracker() {
           .single();
         if (insertErr) throw insertErr;
         agentIdRef.current = inserted.id;
+        setActiveSessionMetadata({ agentId: inserted.id });
         return inserted.id;
       }
       if (error) throw error;
@@ -70,6 +101,7 @@ export function useSessionTracker() {
       const sb = getAuthSupabase(token);
       const agentId = await resolveAgentId(sb, token);
       if (!agentId) return;
+      setActiveSessionMetadata({ agentId });
 
       const { data, error } = await sb
         .from("sessions")
@@ -79,6 +111,7 @@ export function useSessionTracker() {
       if (error) throw error;
       sessionIdRef.current = data.id;
       startedAtRef.current = Date.now();
+      setActiveSessionMetadata({ sessionId: data.id });
     } catch (err) {
       console.error("[SessionTracker] startSession:", err);
     }
@@ -105,6 +138,7 @@ export function useSessionTracker() {
         .eq("id", sessionIdRef.current);
       if (error) throw error;
       sessionIdRef.current = null;
+      setActiveSessionMetadata({ sessionId: null });
     } catch (err) {
       console.error("[SessionTracker] endSession:", err);
     }
@@ -158,7 +192,10 @@ export function useSessionTracker() {
     }
   }, [getToken]);
 
-  if (DISABLED) return STUB;
+  if (DISABLED) {
+    activeSessionMetadata = { ...EMPTY_SESSION_METADATA };
+    return STUB;
+  }
 
   return {
     sessionId: sessionIdRef.current,

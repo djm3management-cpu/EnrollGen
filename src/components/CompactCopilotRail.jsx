@@ -4,6 +4,7 @@ import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import AskCopilotMini from "./AskCopilotMini";
 import CopilotFeedMini from "./CopilotFeedMini";
 import CollapsibleWidget from "./CollapsibleWidget";
+import CallTimer from "./copilot/CallTimer";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 
 const FULL_RAIL_STYLE = {
@@ -197,6 +198,8 @@ function RailWidgets({
           overflow: "hidden",
         }}
       >
+        <CallTimer fallbackStartTime={startTime} />
+
         <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
           <button
             onClick={onToggleListening}

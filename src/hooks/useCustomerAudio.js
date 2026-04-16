@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useCallStore } from "../stores/callStore";
+import { waitForActiveSessionMetadata } from "./useSessionTracker";
 
 /**
  * useCustomerAudio — captures customer audio from a shared browser tab
@@ -167,6 +169,13 @@ export function useCustomerAudio() {
     wsRef.current = ws;
 
     ws.onopen = () => {
+      void (async () => {
+        const { agentId, sessionId } = await waitForActiveSessionMetadata();
+        if (ws.readyState === WebSocket.OPEN) {
+          useCallStore.getState().startCall(agentId, sessionId);
+        }
+      })();
+
       // Wire up audio processing once WebSocket is ready
       processor.onaudioprocess = (e) => {
         const inputData = e.inputBuffer.getChannelData(0);
@@ -231,6 +240,8 @@ export function useCustomerAudio() {
     };
 
     ws.onclose = (event) => {
+      void useCallStore.getState().endCall();
+
       // Only set error if we didn't initiate the close
       if (isCapturing && !cleaningUpRef.current && event.code !== 1000) {
         setError("Deepgram connection closed unexpectedly. You may need to restart capture.");

@@ -21,6 +21,7 @@ import CopilotFeedMini from "./CopilotFeedMini";
 import AskCopilotMini from "./AskCopilotMini";
 
 import CollapsibleWidget from "./CollapsibleWidget";
+import CallTimer from "./copilot/CallTimer";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
 import SectionRecording from "./SectionRecording";
@@ -34,7 +35,6 @@ import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
 import ScriptPrompter from "./ScriptPrompter";
 import AncillaryPopupManager from "./ancillary/AncillaryPopupManager";
-import CopilotStartPopupManager from "./ancillary/CopilotStartPopupManager";
 import DevotedPopupManager from "./ancillary/DevotedPopupManager";
 import { motion } from "framer-motion";
 
@@ -239,6 +239,8 @@ function RailWidgets({
         padding: "8px 10px 4px", marginBottom: 6,
         overflow: "hidden",
       }}>
+        <CallTimer fallbackStartTime={state.tpmoStart} />
+
         <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
           <button
             onClick={() => { const h = copilotHandlersRef.current; if (listening) h.handleStop?.(); else h.handleStart?.(); }}
@@ -705,8 +707,6 @@ export default function ScriptFlow() {
       <ScriptPrompter onTranscriptChange={setTranscript} onMergedTranscriptChange={setMergedTranscriptEntries} onListeningChange={setIsListening} logComplianceFlag={session.logComplianceFlag} controlsRef={copilotHandlersRef} onCoachingLoadingChange={setCoachingLoading} />
 
       {/* Start Call gate — timer and session don't begin until clicked */}
-      <CopilotStartPopupManager callStarted={callStarted} />
-
       {!callStarted && (
         <section className="start-call-gate">
           <div className="start-call-gate-stack">
