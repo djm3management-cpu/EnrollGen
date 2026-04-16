@@ -11,6 +11,8 @@ function levelColor(level) {
 }
 
 const AUTO_SCROLL_THRESHOLD = 50;
+const FEED_PANEL_HEIGHT = 212;
+const MAX_FEED_ENTRIES = 16;
 
 const CopilotFeedMini = memo(function CopilotFeedMini() {
   const { entries } = useCopilotLog();
@@ -19,7 +21,7 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
 
   const recentEntries = entries
     .filter((e) => e.logType === LOG_TYPES.COPILOT_MSG)
-    .slice(-8);
+    .slice(-MAX_FEED_ENTRIES);
 
   // Detect manual scroll — pause auto-scroll when user scrolls up
   useEffect(() => {
@@ -36,9 +38,13 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
   // Auto-scroll feed on new entries (unless user scrolled up)
   useEffect(() => {
     if (!userScrolled && feedRef.current) {
-      feedRef.current.scrollTop = feedRef.current.scrollHeight;
+      window.requestAnimationFrame(() => {
+        if (feedRef.current) {
+          feedRef.current.scrollTop = feedRef.current.scrollHeight;
+        }
+      });
     }
-  }, [recentEntries.length, userScrolled]);
+  }, [recentEntries.at(-1)?.id, userScrolled]);
 
   return (
     <div style={{ padding: "0 0 6px" }}>
@@ -46,8 +52,7 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
         ref={feedRef}
         className="right-rail-scroll"
         style={{
-          minHeight: 64,
-          maxHeight: "calc(40vh - 60px)",
+          height: FEED_PANEL_HEIGHT,
           overflowY: "auto",
           padding: "4px 8px",
         }}

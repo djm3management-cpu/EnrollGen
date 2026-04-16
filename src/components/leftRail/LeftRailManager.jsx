@@ -16,7 +16,7 @@ const PANEL_TRANSITION = {
   ease: [0.16, 1, 0.3, 1],
 };
 
-const DESKTOP_RAIL_WIDTH = 400;
+const DESKTOP_RAIL_WIDTH = 340;
 
 function sortRailItems(itemsById) {
   return Object.values(itemsById).sort((a, b) => {

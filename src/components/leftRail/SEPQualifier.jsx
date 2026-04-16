@@ -25,15 +25,6 @@ import {
   STATE_SEP_TYPE_META,
 } from "../../data/stateSepData";
 
-const STAGES = [
-  { id: "home", label: "HOME" },
-  { id: "script", label: "SCRIPT" },
-  { id: "verify", label: "VERIFY" },
-  { id: "select", label: "SELECT" },
-  { id: "narrow", label: "NARROW" },
-  { id: "result", label: "RESULT" },
-];
-
 const OPENER_SCRIPT =
   "Before I can help you look at plan options, I need to make sure you're eligible to make a change right now. Outside of the annual enrollment period, Medicare only allows changes during what's called a Special Enrollment Period. I'm going to ask you a few quick questions to see if you qualify - should only take about a minute.";
 
@@ -304,27 +295,6 @@ export default function SEPQualifier({ onMinimize }) {
     () => getFemaEndStatus(stateSepInfo?.femaEnd),
     [stateSepInfo?.femaEnd]
   );
-  const unlockedStages = useMemo(() => {
-    const unlocked = new Set([0]);
-    if (stageIndex >= 1) unlocked.add(1);
-    if (stageIndex >= 2) unlocked.add(2);
-    if (stageIndex >= 3) unlocked.add(3);
-    if (selectedCategoryId || stageIndex >= 4) unlocked.add(4);
-    if (selectedSubtypeId || stageIndex >= 5) unlocked.add(5);
-    return unlocked;
-  }, [selectedCategoryId, selectedSubtypeId, stageIndex]);
-  const visibleStages = useMemo(
-    () =>
-      STAGES.reduce((stageList, stage, index) => {
-        if (usedQuestionShortcut && stageIndex >= 4 && stage.id === "select") {
-          return stageList;
-        }
-
-        stageList.push({ ...stage, index });
-        return stageList;
-      }, []),
-    [stageIndex, usedQuestionShortcut]
-  );
 
   useEffect(() => {
     if (!stateSepInfo?.sections?.length) {
@@ -346,16 +316,6 @@ export default function SEPQualifier({ onMinimize }) {
     setExpandedStateSections({});
     setUsedQuestionShortcut(false);
     setShowNoSepNotice(false);
-  };
-
-  const goToStage = (nextStage) => {
-    if (!unlockedStages.has(nextStage)) {
-      return;
-    }
-    if (nextStage === 3) {
-      setUsedQuestionShortcut(false);
-    }
-    setStageIndex(nextStage);
   };
 
   const handleCategorySelect = (categoryId) => {
@@ -391,17 +351,14 @@ export default function SEPQualifier({ onMinimize }) {
     }));
   };
 
-  const currentStage = STAGES[stageIndex];
   const canAdvanceToCategory = hasPartAandB === true && normalizedState.length >= 2;
 
   return (
     <section className="sep-qualifier">
       <header className="sep-qualifier-header">
         <div className="sep-qualifier-header-main">
-          <span className="sep-qualifier-dot" aria-hidden="true" />
           <div className="sep-qualifier-header-copy">
             <div className="sep-qualifier-title">SEP QUALIFIER</div>
-            <div className="sep-qualifier-stage-pill">{currentStage.label}</div>
           </div>
         </div>
 
@@ -419,28 +376,10 @@ export default function SEPQualifier({ onMinimize }) {
         </div>
       </header>
 
-      <div className="sep-qualifier-breadcrumbs">
-        {visibleStages.map((stage) => (
-          <button
-            key={stage.id}
-            type="button"
-            className={`sep-qualifier-crumb${stage.index === stageIndex ? " is-active" : ""}`}
-            onClick={() => goToStage(stage.index)}
-            disabled={!unlockedStages.has(stage.index)}
-          >
-            {stage.label}
-          </button>
-        ))}
-      </div>
-
       <div className="sep-qualifier-body">
         {stageIndex === 0 ? (
           <div className="sep-qualifier-stage">
             <div className="sep-qualifier-intro-card">
-              <h3 className="sep-qualifier-heading">SEP Qualification</h3>
-              <p className="sep-qualifier-copy">
-                Run the qualification in under 60 seconds before you present plans.
-              </p>
               <button
                 type="button"
                 className="sep-qualifier-primary"

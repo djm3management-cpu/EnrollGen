@@ -8,6 +8,8 @@ import PanelIdleSpinner from "./PanelIdleSpinner";
  */
 
 const AUTO_SCROLL_THRESHOLD = 50; // px from bottom to re-enable auto-scroll
+const TRANSCRIPT_PANEL_HEIGHT = 212;
+const MAX_TRANSCRIPT_ENTRIES = 24;
 
 function getTimerColor(seconds) {
   if (seconds < 900) return "#34d399";   // green < 15 min
@@ -73,11 +75,17 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
   // Auto-scroll to bottom on new entries (unless user scrolled up)
   useEffect(() => {
     if (!userScrolled && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      window.requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
     }
-  }, [mergedEntries, userScrolled]);
+  }, [mergedEntries.at(-1)?.timestamp, userScrolled]);
 
-  const finals = mergedEntries.filter((e) => e.isFinal && e.text?.trim());
+  const finals = mergedEntries
+    .filter((e) => e.isFinal && e.text?.trim())
+    .slice(-MAX_TRANSCRIPT_ENTRIES);
 
   return (
     <div style={{ padding: "0 0 6px" }}>
@@ -85,8 +93,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
         ref={scrollRef}
         className="right-rail-scroll"
         style={{
-          minHeight: 64,
-          maxHeight: "calc(40vh - 60px)",
+          height: TRANSCRIPT_PANEL_HEIGHT,
           overflowY: "auto",
           padding: "0 8px",
         }}

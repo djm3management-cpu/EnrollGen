@@ -2,7 +2,6 @@ import {
   memo,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { Building2, ChevronDown, Heart } from "lucide-react";
@@ -12,6 +11,10 @@ import {
 } from "./carrierReferencePopupData";
 import useCarrierReferencePopup from "./useCarrierReferencePopup";
 import { useLeftRailManager } from "../leftRail/LeftRailManager";
+
+const LEGACY_CARRIER_RAIL_IDS = Object.keys(CARRIER_REFERENCE_POPUPS_BY_ID).map(
+  (carrierId) => `carrier-${carrierId}`
+);
 
 function buildExpandedSections(sections = []) {
   return Object.fromEntries(sections.map((section) => [section.id, false]));
@@ -61,14 +64,13 @@ const CarrierReferencePopupManager = memo(function CarrierReferencePopupManager(
   transcript,
   mergedTranscript = [],
 }) {
-  const { showLeftRail, dismissLeftRail } = useLeftRailManager();
+  const { dismissLeftRail } = useLeftRailManager();
   const { activeCarrierIds, dismissCarrier } = useCarrierReferencePopup({
     callStarted,
     transcript,
     mergedTranscript,
   });
   const [expandedSectionsByCarrier, setExpandedSectionsByCarrier] = useState({});
-  const previousCarrierIdsRef = useRef([]);
 
   useEffect(() => {
     setExpandedSectionsByCarrier((prev) => {
@@ -87,6 +89,14 @@ const CarrierReferencePopupManager = memo(function CarrierReferencePopupManager(
     });
   }, [activeCarrierIds]);
 
+  useEffect(() => {
+    LEGACY_CARRIER_RAIL_IDS.forEach((id) => dismissLeftRail(id));
+
+    return () => {
+      LEGACY_CARRIER_RAIL_IDS.forEach((id) => dismissLeftRail(id));
+    };
+  }, [dismissLeftRail]);
+
   const toggleSection = (carrierId, sectionId) => {
     setExpandedSectionsByCarrier((prev) => ({
       ...prev,
@@ -99,98 +109,60 @@ const CarrierReferencePopupManager = memo(function CarrierReferencePopupManager(
 
   const carrierPanels = useMemo(
     () =>
-      Object.fromEntries(
-        activeCarrierIds
-          .map((carrierId) => {
-            const carrier = CARRIER_REFERENCE_POPUPS_BY_ID[carrierId];
-            if (!carrier) {
-              return null;
-            }
+      activeCarrierIds
+        .map((carrierId) => {
+          const carrier = CARRIER_REFERENCE_POPUPS_BY_ID[carrierId];
+          if (!carrier) {
+            return null;
+          }
 
-            return [
-              carrierId,
-              (
-                <AncillaryPopup
-                  popupKey={`carrier-reference-${carrier.id}`}
-                  icon={getPopupIcon(carrier.id)}
-                  title={carrier.popupTitle}
-                  collapsed={false}
-                  onExpand={() => {}}
-                  onDismiss={() => {
-                    dismissCarrier(carrier.id);
-                    dismissLeftRail(`carrier-${carrier.id}`);
-                  }}
-                  onInteract={() => {}}
-                >
-                  <div className="ancillary-popup-accordion-list">
-                    {carrier.sections.map((section) => (
-                      <CarrierAccordionSection
-                        key={section.id}
-                        title={section.title}
-                        open={Boolean(expandedSectionsByCarrier[carrier.id]?.[section.id])}
-                        onToggle={() => toggleSection(carrier.id, section.id)}
-                      >
-                        <div className="ancillary-popup-note-list ancillary-popup-note-list--compact">
-                          {section.notes.map((note, index) => (
-                            <div
-                              key={`${section.id}-${index}`}
-                              className="ancillary-popup-note"
-                            >
-                              {note}
-                            </div>
-                          ))}
+          return (
+            <AncillaryPopup
+              key={carrier.id}
+              popupKey={`carrier-reference-${carrier.id}`}
+              icon={getPopupIcon(carrier.id)}
+              title={carrier.popupTitle}
+              collapsed={false}
+              onExpand={() => {}}
+              onDismiss={() => {
+                dismissCarrier(carrier.id);
+              }}
+              onInteract={() => {}}
+              inline
+            >
+              <div className="ancillary-popup-accordion-list">
+                {carrier.sections.map((section) => (
+                  <CarrierAccordionSection
+                    key={section.id}
+                    title={section.title}
+                    open={Boolean(expandedSectionsByCarrier[carrier.id]?.[section.id])}
+                    onToggle={() => toggleSection(carrier.id, section.id)}
+                  >
+                    <div className="ancillary-popup-note-list ancillary-popup-note-list--compact">
+                      {section.notes.map((note, index) => (
+                        <div
+                          key={`${section.id}-${index}`}
+                          className="ancillary-popup-note"
+                        >
+                          {note}
                         </div>
-                      </CarrierAccordionSection>
-                    ))}
-                  </div>
-                </AncillaryPopup>
-              ),
-            ];
-          })
-          .filter(Boolean)
-      ),
-    [activeCarrierIds, dismissCarrier, dismissLeftRail, expandedSectionsByCarrier]
+                      ))}
+                    </div>
+                  </CarrierAccordionSection>
+                ))}
+              </div>
+            </AncillaryPopup>
+          );
+        })
+        .filter(Boolean),
+    [activeCarrierIds, dismissCarrier, expandedSectionsByCarrier]
   );
 
-  useEffect(() => {
-    const nextCarrierIds = new Set(activeCarrierIds);
+  if (!carrierPanels.length) {
+    return null;
+  }
 
-    previousCarrierIdsRef.current.forEach((carrierId) => {
-      if (!nextCarrierIds.has(carrierId)) {
-        dismissLeftRail(`carrier-${carrierId}`);
-      }
-    });
-
-    activeCarrierIds.forEach((carrierId) => {
-      const carrier = CARRIER_REFERENCE_POPUPS_BY_ID[carrierId];
-      if (!carrier) {
-        return;
-      }
-
-      showLeftRail({
-        id: `carrier-${carrier.id}`,
-        priority: 2,
-        title: carrier.popupTitle,
-        shortLabel: carrier.handleLabel || carrier.label || carrier.id,
-        icon: getPopupIcon(carrier.id),
-        color: "#58a6ff",
-        component: carrierPanels[carrier.id],
-      });
-    });
-
-    previousCarrierIdsRef.current = activeCarrierIds;
-  }, [activeCarrierIds, carrierPanels, dismissLeftRail, showLeftRail]);
-
-  useEffect(
-    () => () => {
-      previousCarrierIdsRef.current.forEach((carrierId) => {
-        dismissLeftRail(`carrier-${carrierId}`);
-      });
-    },
-    [dismissLeftRail]
-  );
-
-  return null;
+  return <>{carrierPanels}</>;
 });
 
 export default CarrierReferencePopupManager;

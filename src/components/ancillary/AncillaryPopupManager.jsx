@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo } from "react";
 import {
   ArrowUpRight,
   Banknote,
@@ -27,6 +27,15 @@ const POPUP_ICON_MAP = {
   "circle-alert": <CircleAlert size={16} strokeWidth={2.2} />,
   "phone-call": <PhoneCall size={16} strokeWidth={2.2} />,
 };
+
+const LEGACY_ANCILLARY_RAIL_IDS = [
+  "ancillary-A",
+  "ancillary-B",
+  "ancillary-C",
+  "ancillary-D-recap",
+  "ancillary-D-lastchance",
+  "ancillary-E",
+];
 
 function formatDisplayDate(value) {
   if (!value) {
@@ -78,16 +87,17 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
   followUpContext = null,
 }) {
   const { state } = useScript();
-  const { showLeftRail, dismissLeftRail } = useLeftRailManager();
-  const previousPopupIdRef = useRef(null);
+  const { dismissLeftRail } = useLeftRailManager();
   const {
     ancillaryState,
     popupKey,
     activeDismissed,
+    activeCollapsed,
     portalProducts,
     seedMentions,
     noteInteraction,
     dismissPopup,
+    expandPopup,
     toggleTrigger,
     openPortalProduct,
     markFollowUpComplete,
@@ -116,24 +126,21 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
   const followUpEnrollmentDate =
     followUpContext?.enrollmentDate || state.sectionTimestamps?.[7]?.end || null;
 
-  const panel = useMemo(() => {
+  useEffect(() => {
+    LEGACY_ANCILLARY_RAIL_IDS.forEach((id) => dismissLeftRail(id));
+
+    return () => {
+      LEGACY_ANCILLARY_RAIL_IDS.forEach((id) => dismissLeftRail(id));
+    };
+  }, [dismissLeftRail]);
+
+  const popupBody = useMemo(() => {
     if (!popupCopy || !popupKey) {
       return null;
     }
 
     return (
-      <AncillaryPopup
-        popupKey={popupKey}
-        icon={popupIcon}
-        title={popupCopy.title}
-        collapsed={false}
-        onExpand={() => {}}
-        onDismiss={() => {
-          dismissPopup();
-          dismissLeftRail(`ancillary-${popupKey}`);
-        }}
-        onInteract={noteInteraction}
-      >
+      <>
         {popupKey === "A" ? (
           <>
             <p className="ancillary-popup-copy">{popupCopy.intro}</p>
@@ -281,19 +288,16 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
               onClick={() => {
                 noteInteraction();
                 markFollowUpComplete();
-                dismissLeftRail("ancillary-E");
               }}
             >
               Mark Complete
             </button>
           </>
         ) : null}
-      </AncillaryPopup>
+      </>
     );
   }, [
     ancillaryState.triggersDetected,
-    dismissLeftRail,
-    dismissPopup,
     followUpContext,
     followUpEnrollmentDate,
     followUpName,
@@ -312,44 +316,24 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
     toggleTrigger,
   ]);
 
-  useEffect(() => {
-    const previousPopupId = previousPopupIdRef.current;
+  if (!isVisible || !popupKey || !popupCopy || !popupBody) {
+    return null;
+  }
 
-    if (!isVisible || !popupKey || !panel || !popupCopy) {
-      if (previousPopupId) {
-        dismissLeftRail(previousPopupId);
-      }
-      previousPopupIdRef.current = null;
-      return;
-    }
-
-    const nextPopupId = `ancillary-${popupKey}`;
-    if (previousPopupId && previousPopupId !== nextPopupId) {
-      dismissLeftRail(previousPopupId);
-    }
-
-    showLeftRail({
-      id: nextPopupId,
-      priority: 1,
-      title: popupCopy.title,
-      shortLabel: "ANCILLARY",
-      icon: popupIcon,
-      color: "#d29922",
-      component: panel,
-    });
-    previousPopupIdRef.current = nextPopupId;
-  }, [dismissLeftRail, isVisible, panel, popupCopy, popupIcon, popupKey, showLeftRail]);
-
-  useEffect(
-    () => () => {
-      if (previousPopupIdRef.current) {
-        dismissLeftRail(previousPopupIdRef.current);
-      }
-    },
-    [dismissLeftRail]
+  return (
+    <AncillaryPopup
+      popupKey={popupKey}
+      icon={popupIcon}
+      title={popupCopy.title}
+      collapsed={activeCollapsed}
+      onExpand={expandPopup}
+      onDismiss={dismissPopup}
+      onInteract={noteInteraction}
+      inline
+    >
+      {popupBody}
+    </AncillaryPopup>
   );
-
-  return null;
 });
 
 export default AncillaryPopupManager;

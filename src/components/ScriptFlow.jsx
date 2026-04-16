@@ -89,11 +89,6 @@ const COMPACT_RAIL_OVERLAY_STYLE = {
   gap: 8,
 };
 
-const CALL_DIRECTION_OPTIONS = [
-  { label: "Inbound", value: "inbound" },
-  { label: "Outbound", value: "outbound" },
-];
-
 const SHOW_MAIN_FLOW_COMPLIANCE_HUD = false;
 
 /**
@@ -692,15 +687,17 @@ export default function ScriptFlow() {
       />
 
       <div className="flow-shell">
-        <DevotedPopupManager
-          callStarted={callStarted}
-          transcript={transcript}
-          mergedTranscript={mergedTranscriptEntries}
-        />
-        <AncillaryPopupManager
-          activeSection={activeSection}
-          callStarted={callStarted}
-        />
+        <div className="left-floating-popup-stack">
+          <DevotedPopupManager
+            callStarted={callStarted}
+            transcript={transcript}
+            mergedTranscript={mergedTranscriptEntries}
+          />
+          <AncillaryPopupManager
+            activeSection={activeSection}
+            callStarted={callStarted}
+          />
+        </div>
         <div className="flow-main">
 
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}
@@ -710,32 +707,6 @@ export default function ScriptFlow() {
       {!callStarted && (
         <section className="start-call-gate">
           <div className="start-call-gate-stack">
-            <div className="start-call-direction-label">Call Direction</div>
-            <div
-              className="start-call-direction-toggle"
-              role="radiogroup"
-              aria-label="Call direction"
-            >
-              {CALL_DIRECTION_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`start-call-direction-button${
-                    state.callDirection === option.value ? " is-active" : ""
-                  }`}
-                  aria-pressed={state.callDirection === option.value}
-                  onClick={() =>
-                    dispatch({
-                      type: "SET_FIELD",
-                      field: "callDirection",
-                      value: option.value,
-                    })
-                  }
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
             <button
               className="start-call-button"
               onClick={() => setCallStarted(true)}
