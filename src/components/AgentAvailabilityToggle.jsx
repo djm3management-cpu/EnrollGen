@@ -18,8 +18,13 @@ const STATUS_MAP = Object.fromEntries(
 );
 
 const KNOWN_AGENT_ID_MAP = new Map([
-  ["markendres", "Mark Endres"],
-  ["miguelmejia", "Miguel Mejia"],
+  ["markendres", "mark_endres"],
+  ["miguel", "miguel_mejia"],
+  ["miguelmejia", "miguel_mejia"],
+  ["m3", "mark_endres"],
+  ["nghscontracting", "mark_endres"],
+  ["nghs", "mark_endres"],
+  ["michaelshlomos", "mark_endres"],
 ]);
 
 const TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
