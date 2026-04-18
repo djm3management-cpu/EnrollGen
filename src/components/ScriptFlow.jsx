@@ -19,6 +19,7 @@ import {
 import ComplianceMini from "./ComplianceMini";
 import CopilotFeedMini from "./CopilotFeedMini";
 import AskCopilotMini from "./AskCopilotMini";
+import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
 
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
@@ -225,6 +226,8 @@ function RailWidgets({
 
   return (
     <>
+      <AgentAvailabilityToggle />
+
       {/* ── Copilot Control Strip ── */}
       <div style={{
         width: "100%", minWidth: 230, pointerEvents: "auto",

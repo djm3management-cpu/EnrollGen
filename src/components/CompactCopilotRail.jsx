@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, MessageSquare, Radio } from "lucide-react";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import AskCopilotMini from "./AskCopilotMini";
 import CopilotFeedMini from "./CopilotFeedMini";
+import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
@@ -182,6 +183,8 @@ function RailWidgets({
 
   return (
     <>
+      <AgentAvailabilityToggle />
+
       <div
         style={{
           width: "100%",

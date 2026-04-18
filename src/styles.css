@@ -966,6 +966,146 @@ p {
   to { opacity: 1; }
 }
 
+.agent-availability-panel {
+  width: 100%;
+  min-width: 230px;
+  margin-bottom: 6px;
+  padding: 7px 8px 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+  overflow: hidden;
+  transition: border-color 0.18s ease, opacity 0.18s ease;
+}
+
+.agent-availability-panel.is-saving {
+  opacity: 0.9;
+}
+
+.agent-availability-panel.is-disabled {
+  opacity: 0.66;
+}
+
+.agent-availability-panel.is-error {
+  border-color: rgba(234, 179, 8, 0.28);
+}
+
+.agent-availability-header,
+.agent-availability-current,
+.agent-availability-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.agent-availability-header {
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.agent-availability-current {
+  gap: 6px;
+  min-width: 0;
+}
+
+.agent-availability-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--availability-color, #555e6e);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--availability-color, #555e6e) 65%, transparent);
+  flex-shrink: 0;
+}
+
+.agent-availability-dot.is-available::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 1px solid color-mix(in srgb, var(--availability-color, #00ff87) 52%, transparent);
+  animation: availabilityPulse 1.4s ease-out infinite;
+}
+
+.agent-availability-status,
+.agent-availability-since,
+.agent-availability-btn {
+  font-family: "Barlow Condensed", sans-serif;
+  text-transform: uppercase;
+}
+
+.agent-availability-status {
+  color: #f0f6fc;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+
+.agent-availability-since {
+  color: #7b8493;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.agent-availability-buttons {
+  gap: 4px;
+}
+
+.agent-availability-btn {
+  flex: 1;
+  min-height: 22px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #6f7786;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.agent-availability-btn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #c9d1d9;
+}
+
+.agent-availability-btn.is-active {
+  color: var(--availability-color, #f0f6fc);
+  border-color: color-mix(in srgb, var(--availability-color, #f0f6fc) 42%, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, var(--availability-color, #f0f6fc) 12%, rgba(255, 255, 255, 0.02));
+  box-shadow: inset 0 0 16px color-mix(in srgb, var(--availability-color, #f0f6fc) 14%, transparent);
+}
+
+.agent-availability-btn:disabled {
+  cursor: not-allowed;
+}
+
+@keyframes availabilityPulse {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.75);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
 /* Toggle tab: hidden >1400px, visible ≤1400px */
 .right-rail-toggle {
   display: none;
