@@ -13,7 +13,7 @@ export default React.memo(function SectionSNP() {
   const { tpmoOk, snpType, snpOk } = state;
   const isActive = activeSection === 2.5;
 
-  if (!tpmoOk) return null;
+  if (!tpmoOk || !isActive || !snpType) return null;
 
   return (
     <section className={`card ${isActive ? "active-card" : ""}`}>
@@ -21,23 +21,6 @@ export default React.memo(function SectionSNP() {
       <h2>
         Special Needs Plan Disclosure
       </h2>
-
-      {!snpType && (
-        <div className="snp-buttons">
-          <button
-            className="primary"
-            onClick={() => dispatch({ type: "SET_SNP_TYPE", value: "DSNP" })}
-          >
-            Dual Eligible (D-SNP)
-          </button>
-          <button
-            className="primary"
-            onClick={() => dispatch({ type: "SET_SNP_TYPE", value: "CSNP" })}
-          >
-            Chronic Condition (C-SNP)
-          </button>
-        </div>
-      )}
 
       {snpType === "DSNP" && (
         <ScriptBox verbatim>

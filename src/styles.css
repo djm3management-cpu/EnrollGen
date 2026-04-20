@@ -822,11 +822,27 @@ p {
   cursor: pointer;
 }
 
+.ancillary-popup-pill--with-label {
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 14px;
+}
+
 .ancillary-popup-pill-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
+}
+
+.ancillary-popup-pill-label {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .ancillary-popup-accordion-list {
@@ -1372,99 +1388,53 @@ p {
     0 1px 3px rgba(0, 0, 0, 0.7),
     0 6px 16px rgba(0, 0, 0, 0.6),
     0 16px 40px rgba(0, 0, 0, 0.4);
-  transition: box-shadow var(--speed-normal) ease,
-    transform var(--speed-normal) ease;
+  transition: none;
 }
 
-/* Top silver specular line */
 .card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.08) 30%,
-    rgba(255, 255, 255, 0.12) 50%,
-    rgba(255, 255, 255, 0.08) 70%,
-    transparent 100%
-  );
-  border-radius: 16px 16px 0 0;
-  pointer-events: none;
+  display: none;
 }
 
-/* Bottom edge edge */
 .card::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 5%;
-  right: 5%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.03),
-    transparent
-  );
-  pointer-events: none;
+  display: none;
 }
 
 .card:hover {
   box-shadow:
     inset 6px 6px 14px rgba(0, 0, 0, 0.45),
-    inset -4px -4px 10px rgba(255, 255, 255, 0.025),
-    0 2px 4px rgba(0, 0, 0, 0.65),
-    0 10px 24px rgba(232, 0, 45, 0.08),
-    0 24px 52px rgba(0, 0, 0, 0.5);
-  transform: translateY(-1px);
+    inset -4px -4px 10px rgba(255, 255, 255, 0.02),
+    0 1px 3px rgba(0, 0, 0, 0.7),
+    0 6px 16px rgba(0, 0, 0, 0.6),
+    0 16px 40px rgba(0, 0, 0, 0.4);
+  transform: none;
 }
 
 /* Active Card — white glow border, plain background (no carbon weave) */
 .active-card {
-  background: linear-gradient(180deg, #181818 0%, #111111 50%, #0E0E0E 100%);
-  border-color: rgba(255, 255, 255, 0.38);
+  background:
+    linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
-  box-shadow:
-    inset 6px 6px 14px rgba(0, 0, 0, 0.45),
-    inset -4px -4px 10px rgba(255, 255, 255, 0.025),
-    0 0 0 1px rgba(255, 255, 255, 0.16),
-    0 0 18px rgba(255, 255, 255, 0.12),
-    0 0 50px rgba(255, 255, 255, 0.055),
-    0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
 }
 
-/* White racing stripe on active card */
+.active-card:hover {
+  background:
+    linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.36);
+  transform: none;
+}
+
+/* Active cards use the same clean surface treatment as the copilot widgets */
 .active-card::before {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.22) 20%,
-    rgba(255, 255, 255, 0.52) 50%,
-    rgba(255, 255, 255, 0.22) 80%,
-    transparent 100%
-  );
-  height: 2px;
+  display: none;
 }
 
-/* White glow bottom accent on active */
 .active-card::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 5%;
-  right: 5%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.13),
-    transparent
-  );
-  pointer-events: none;
+  display: none;
 }
 
 .active-card h2 {
@@ -1500,8 +1470,8 @@ p {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(232, 0, 45, 0.15);
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .prompter-card h2 {
@@ -1668,29 +1638,6 @@ input::placeholder {
 .tpmo-inputs {
   display: flex;
   gap: 8px;
-}
-
-.snp-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.snp-buttons .primary {
-  background: linear-gradient(180deg, #1a1500 0%, #0f0d00 100%);
-  color: #FFD700;
-  border-color: rgba(255, 215, 0, 0.25);
-  border-top-color: rgba(255, 215, 0, 0.4);
-}
-
-.snp-buttons .primary::before {
-  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.5), transparent);
-}
-
-.snp-buttons .primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #241c00 0%, #151100 100%);
-  border-color: rgba(255, 215, 0, 0.5);
-  color: #ffe033;
-  box-shadow: 0 0 14px rgba(255, 215, 0, 0.15), var(--shadow-btn-hover);
 }
 
 /* ===============================
@@ -2127,6 +2074,11 @@ input::placeholder {
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.07);
   border-left: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+.active-card .script-box {
+  max-height: none;
+  overflow: visible;
 }
 
 .script-box.verbatim * {
@@ -3481,6 +3433,40 @@ input[type="file"]::file-selector-button:hover {
 }
 
 /* ===============================
+   FLOW BACK BUTTON
+================================ */
+.flow-card-nav {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.flow-back-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%);
+  color: var(--text-primary);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+  transition: none;
+}
+
+.flow-back-button svg {
+  flex-shrink: 0;
+}
+
+/* ===============================
    UNDO BUTTON — ANGULAR CONTROL
 ================================ */
 .undo-btn {
@@ -3526,27 +3512,6 @@ input[type="file"]::file-selector-button:hover {
 .undo-btn:active {
   transform: translateY(0);
   box-shadow: var(--shadow-btn-pressed);
-}
-
-.section-undo-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 8px;
-  padding: 3px;
-  background: none;
-  border: 1px solid rgba(255, 68, 85, 0.2);
-  border-radius: 4px;
-  color: rgba(255, 68, 85, 0.6);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-  flex-shrink: 0;
-}
-
-.section-undo-btn:hover {
-  color: #ff4455;
-  border-color: rgba(255, 68, 85, 0.45);
-  background: rgba(255, 68, 85, 0.08);
 }
 
 /* ===============================
@@ -3718,7 +3683,7 @@ input[type="file"]::file-selector-button:hover {
 /* ─── RACE ENGINEER COMMS PANEL ─── */
 .section-coach {
   margin-top: 12px;
-  border-top: 1px solid rgba(59, 130, 246, 0.15);
+  border-top: none;
   padding-top: 10px;
 }
 
@@ -5516,6 +5481,8 @@ body[data-bg-mode="classic"] .viewport-bg {
   flex: 1 1 auto;
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .top-bar-tabs::-webkit-scrollbar {
@@ -5530,6 +5497,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   color: #8b949e;
   padding: 0 12px;
   height: calc(var(--top-bar-height) - 1px);
+  flex: 0 0 auto;
   font-family: "Barlow Condensed", sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
@@ -5606,12 +5574,15 @@ body[data-bg-mode="classic"] .viewport-bg {
   top: calc(100% + 10px);
   right: 0;
   width: 238px;
+  max-width: calc(100vw - 24px);
+  max-height: min(70vh, 360px);
   padding: 12px;
   border-radius: 16px;
   border: 1px solid #30363d;
   background:
     linear-gradient(180deg, rgba(22, 27, 34, 0.98) 0%, rgba(13, 17, 23, 0.98) 100%);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.38);
+  overflow-y: auto;
 }
 
 .top-bar-wallpaper-head {
@@ -5684,6 +5655,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  max-width: 100%;
   padding: 0 10px 0 4px;
   height: 30px;
   border-radius: 999px;
@@ -5762,18 +5734,22 @@ body[data-bg-mode="classic"] .viewport-bg {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 14px 16px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .top-panel-title {
+  min-width: 0;
   color: #f0f6fc;
   font-family: "Barlow Condensed", sans-serif;
   font-size: 0.92rem;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .top-panel-close {
@@ -5793,6 +5769,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 16px 18px 18px;
 }
 
@@ -6834,9 +6811,18 @@ body[data-bg-mode="classic"] .viewport-bg {
     justify-content: space-between;
   }
 
+  .top-bar-utilities {
+    flex-wrap: wrap;
+  }
+
   .top-bar-tabs {
     order: 3;
     padding-bottom: 2px;
+  }
+
+  .app-workspace {
+    padding-left: 18px !important;
+    padding-right: 18px;
   }
 
   .top-bar-tab {
@@ -6860,6 +6846,11 @@ body[data-bg-mode="classic"] .viewport-bg {
 }
 
 @media (max-width: 768px) {
+  .app-workspace {
+    padding-left: 12px !important;
+    padding-right: 12px;
+  }
+
   .top-bar-shell {
     padding-inline: 10px;
   }
@@ -6867,6 +6858,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   .top-bar-brand,
   .top-bar-utilities {
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   .top-bar-logo {
@@ -6882,6 +6874,10 @@ body[data-bg-mode="classic"] .viewport-bg {
   .top-panel-overlay {
     left: 12px;
     right: 12px;
+  }
+
+  .top-panel-body {
+    padding: 14px;
   }
 
   .left-rail {
@@ -6915,6 +6911,21 @@ body[data-bg-mode="classic"] .viewport-bg {
 
   .sep-qualifier-shortcut-card-head {
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-bar-shell {
+    padding-inline: 8px;
+  }
+
+  .top-bar-tab {
+    padding: 0 8px;
+    font-size: 0.74rem;
+  }
+
+  .top-bar-wallpaper-panel {
+    right: -4px;
   }
 }
 

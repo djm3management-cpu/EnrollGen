@@ -325,6 +325,7 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
       popupKey={popupKey}
       icon={popupIcon}
       title={popupCopy.title}
+      collapsedLabel={popupCopy.collapsedLabel}
       collapsed={activeCollapsed}
       onExpand={expandPopup}
       onDismiss={dismissPopup}

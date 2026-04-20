@@ -181,8 +181,8 @@ export const SectionToast = React.memo(function SectionToast() {
 });
 
 /* ===================== LOCK TEXT ===================== */
-export function LockText({ children }) {
-  return <p className="lock">{children}</p>;
+export function LockText() {
+  return null;
 }
 
 export const SectionAdvanceButton = React.memo(function SectionAdvanceButton({

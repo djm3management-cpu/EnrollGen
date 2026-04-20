@@ -13,6 +13,7 @@ const AncillaryPopup = memo(
       popupKey,
       icon,
       title,
+      collapsedLabel,
       collapsed,
       onExpand,
       onDismiss,
@@ -31,6 +32,8 @@ const AncillaryPopup = memo(
             ref={ref}
             className={`ancillary-popup-pill${
               inline ? " ancillary-popup-pill--inline" : ""
+            }${
+              collapsedLabel ? " ancillary-popup-pill--with-label" : ""
             }`}
             initial={{ opacity: 0, x: -20, scale: 0.94 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -43,6 +46,11 @@ const AncillaryPopup = memo(
             <span className="ancillary-popup-pill-icon" aria-hidden="true">
               {icon}
             </span>
+            {collapsedLabel ? (
+              <span className="ancillary-popup-pill-label">
+                {collapsedLabel}
+              </span>
+            ) : null}
           </motion.button>
         ) : (
           <motion.aside

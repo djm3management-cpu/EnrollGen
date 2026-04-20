@@ -42,7 +42,7 @@ export const ANCILLARY_PORTAL_PRODUCTS = {
     title: "Standalone Dental",
     recapName: "Standalone Dental",
     carrier: "Delta Dental",
-    href: "https://www.deltadental.com/",
+    href: "https://enrollment.ncd.com/544128",
     detail: "3 min, no health questions",
   },
   "critical-illness": {
@@ -77,6 +77,7 @@ export const ANCILLARY_POPUP_COPY = {
   B: {
     icon: "banknote",
     title: "PLANT THE SEED",
+    collapsedLabel: "Ancillary",
     intro:
       "When you get to the inpatient hospital copays in the Summary of Benefits, say:",
     quote: `"So this plan has a [copay amount] per day copay for hospital stays. If you were admitted for 5 days that could be over a thousand dollars out of pocket.
@@ -87,6 +88,7 @@ The good news is we can cover that gap for about a dollar a day. I'll show you t
   C: {
     icon: "send",
     title: "AFTER YOU SUBMIT",
+    collapsedLabel: "Ancillary",
     intro:
       "Once the Medicare Advantage enrollment is confirmed, transition to ancillary:",
     quote: `"Your plan is confirmed! Remember that hospital benefit we talked about? Let me pull that up for you - only takes about 5 minutes."`,
@@ -105,6 +107,7 @@ The good news is we can cover that gap for about a dollar a day. I'll show you t
   "D-lastchance": {
     icon: "circle-alert",
     title: "ONE MORE TRY",
+    collapsedLabel: "Ancillary",
     intro: "Before you wrap up:",
     quote: `"One last thing before we go - that hospital benefit I mentioned is about a dollar a day and there are no health questions to answer. Can I get that set up for you real quick?"`,
     footer:

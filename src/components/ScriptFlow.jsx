@@ -7,7 +7,7 @@ import {
   useCallback,
   useState,
 } from "react";
-import { RotateCcw, ChevronLeft, ChevronRight, MessageSquare, ShieldCheck, Radio } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, MessageSquare, ShieldCheck, Radio } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useSessionTracker } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
@@ -108,75 +108,14 @@ const SHOW_MAIN_FLOW_COMPLIANCE_HUD = false;
 /* ---- Collapsible wrapper for completed sections ---- */
 function CollapsibleSection({
   sectionNum,
-  label,
-  isCompleted,
   isActive,
   children,
-  sectionTimestamps,
-  canUndo,
-  onUndo,
 }) {
-  // Future (not yet active, not completed) sections are hidden
-  if (!isCompleted && !isActive) {
+  if (!isActive) {
     return null;
   }
 
-  if (!isCompleted || isActive) {
-    return <div data-section={sectionNum}>{children}</div>;
-  }
-
-  return (
-    <details className="completed-section" data-section={sectionNum}>
-      <summary className="completed-section-summary">
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 20,
-            height: 20,
-            borderRadius: 4,
-            background: "rgba(168,85,247,0.15)",
-            border: "1px solid rgba(168,85,247,0.4)",
-            color: "#a855f7",
-            fontSize: "0.65rem",
-            fontWeight: 800,
-            fontFamily: "'IBM Plex Mono', monospace",
-            flexShrink: 0,
-          }}
-        >
-          {sectionNum}
-        </span>
-        <span className="completed-label">{label}</span>
-        {sectionTimestamps[sectionNum]?.start &&
-          sectionTimestamps[sectionNum]?.end && (
-            <span className="completed-time">
-              {formatDuration(
-                sectionTimestamps[sectionNum].end -
-                  sectionTimestamps[sectionNum].start
-              )}
-            </span>
-          )}
-        {canUndo && (
-          <button
-            className="section-undo-btn"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUndo(); }}
-            title="Undo last action"
-          >
-            <RotateCcw size={11} />
-          </button>
-        )}
-      </summary>
-      <div className="completed-section-body">{children}</div>
-    </details>
-  );
-}
-
-function formatDuration(ms) {
-  const sec = Math.round(ms / 1000);
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}m ${s}s`;
+  return <div data-section={sectionNum}>{children}</div>;
 }
 
 function useDebouncedValue(value, delayMs) {
@@ -208,6 +147,130 @@ const PILL_BASE = {
   transition: "all 0.15s",
   background: "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
 };
+
+const ELIGIBILITY_LINKS = [
+  {
+    id: "humana",
+    label: "HUMANA",
+    color: "#00D166",
+    glow: "rgba(0,209,102,0.42)",
+    url: "https://account.humana.com/",
+    hoverText: "sign in -> quote & enroll ->eligibility verification",
+  },
+  {
+    id: "uhc",
+    label: "UHC",
+    color: "#0057B8",
+    glow: "rgba(33,150,243,0.42)",
+    url: "https://www.uhcjarvis.com/content/jarvis/en/secure/home.html",
+    hoverText: "sign in -> sales tools tab ->Medicare & Medicaid eligibility look up",
+  },
+];
+
+function EligibilityVerificationWidget() {
+  return (
+    <div
+      style={{
+        width: "100%",
+        minWidth: 230,
+        marginBottom: 8,
+        pointerEvents: "auto",
+        overflow: "hidden",
+        background:
+          "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 16,
+        backdropFilter: "blur(12px)",
+        boxShadow: "0 10px 24px rgba(0,0,0,0.36)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          padding: "5px 10px",
+          background: "rgba(255,255,255,0.03)",
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        }}
+      >
+        <span
+          style={{
+            fontSize: "0.64rem",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "#8fc7ff",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          Eligility Verification
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          padding: "5px 10px 6px",
+        }}
+      >
+        {ELIGIBILITY_LINKS.map((link) => (
+          <a
+            key={link.id}
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={link.hoverText}
+            aria-label={link.hoverText}
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 3,
+              minHeight: 24,
+              padding: "3px 6px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.02)",
+              textDecoration: "none",
+              transition: "transform 0.15s ease, border-color 0.15s ease, background 0.15s ease",
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: link.color,
+                border: `1px solid ${link.color}`,
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontSize: "0.58rem",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: link.color,
+                lineHeight: 1,
+              }}
+            >
+              {link.label}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ---- Shared widget stack — used by both full rail and overlay ---- */
 function RailWidgets({
@@ -297,6 +360,8 @@ function RailWidgets({
       </CollapsibleWidget>
 
       {/* ── Compliance ── */}
+      <EligibilityVerificationWidget />
+
       <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="#E8002D">
         <ComplianceMini
           transcript={transcript}
@@ -660,7 +725,13 @@ export default function ScriptFlow() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  const ts = state.sectionTimestamps;
+  const canGoBack = state.undoHistory.length > 0;
+  const handleGoBack = useCallback(() => {
+    if (!state.undoHistory.length) {
+      return;
+    }
+    dispatch({ type: "UNDO_LAST_GATE" });
+  }, [dispatch, state.undoHistory.length]);
 
   return (
     <motion.div
@@ -723,34 +794,30 @@ export default function ScriptFlow() {
       {/* Sequential enrollment flow sections */}
       {callStarted && (
       <>
-      {(() => {
-        const undoSection = state.undoHistory.length > 0 &&
-          (Date.now() - state.undoHistory[state.undoHistory.length - 1].timestamp) < 30000
-          ? Math.floor(activeSection) - 1
-          : null;
-        const handleUndo = () => dispatch({ type: "UNDO_LAST_GATE" });
-        return (
-          <>
+      {canGoBack ? (
+        <div className="flow-card-nav">
+          <button
+            type="button"
+            className="flow-back-button"
+            onClick={handleGoBack}
+            aria-label="Go to previous card"
+            title="Go to previous card"
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span>Back</span>
+          </button>
+        </div>
+      ) : null}
       <CollapsibleSection
         sectionNum={1}
-        label="Recording Disclosure"
-        isCompleted={state.recordingOk}
         isActive={activeSection === 1}
-        sectionTimestamps={ts}
-        canUndo={undoSection === 1}
-        onUndo={handleUndo}
       >
         <SectionRecording />
       </CollapsibleSection>
 
       <CollapsibleSection
         sectionNum={2}
-        label="TPMO Disclaimer"
-        isCompleted={state.tpmoOk}
         isActive={activeSection === 2}
-        sectionTimestamps={ts}
-        canUndo={undoSection === 2}
-        onUndo={handleUndo}
       >
         <SectionTPMO />
       </CollapsibleSection>
@@ -759,66 +826,38 @@ export default function ScriptFlow() {
 
       <CollapsibleSection
         sectionNum={3}
-        label="POA & Scope of Appointment"
-        isCompleted={state.soaOk}
         isActive={activeSection === 3}
-        sectionTimestamps={ts}
-        canUndo={undoSection === 3}
-        onUndo={handleUndo}
       >
         <SectionSOA />
       </CollapsibleSection>
 
       <CollapsibleSection
         sectionNum={4}
-        label="Qualifications"
-        isCompleted={state.qualOk}
         isActive={activeSection === 4}
-        sectionTimestamps={ts}
-        canUndo={undoSection === 4}
-        onUndo={handleUndo}
       >
         <SectionQualifications />
       </CollapsibleSection>
 
       <CollapsibleSection
         sectionNum={5}
-        label="NEADS Assessment"
-        isCompleted={state.neadsOk}
         isActive={activeSection === 5}
-        sectionTimestamps={ts}
-        canUndo={undoSection === 5}
-        onUndo={handleUndo}
       >
         <SectionNEADS />
       </CollapsibleSection>
 
       <CollapsibleSection
         sectionNum={6}
-        label="Plan Selection & SOB"
-        isCompleted={state.sobOk}
         isActive={activeSection === 6}
-        sectionTimestamps={ts}
-        canUndo={undoSection === 6}
-        onUndo={handleUndo}
       >
         <SectionSOB />
       </CollapsibleSection>
 
       <CollapsibleSection
         sectionNum={7}
-        label="Enrollment"
-        isCompleted={state.enrollOk}
         isActive={activeSection === 7}
-        sectionTimestamps={ts}
-        canUndo={undoSection === 7}
-        onUndo={handleUndo}
       >
         <SectionEnrollment />
       </CollapsibleSection>
-          </>
-        );
-      })()}
 
       {activeSection >= 8 && <SectionWrapUp />}
 

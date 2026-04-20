@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import DecisionTree from "./DecisionTree";
 import ObjectionHandler from "./ObjectionHandler";
-import TrainingGuides from "./TrainingGuides";
 import SEPGuide2026 from "./SEPGuide2026";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 import "../AgentTools.css";
@@ -377,12 +376,6 @@ const TOOL_GROUPS = [
         title: "Official References",
         description: "Federal, CMS, and regulatory links for policy-level verification.",
         icon: <Scale size={16} />,
-      },
-      {
-        id: "training",
-        title: "Training",
-        description: "Searchable MA and ACA compliance guides with accordion sections and quick-call summaries.",
-        icon: <ClipboardCheck size={16} />,
       },
       {
         id: "citizenship-immigration-docs",
@@ -1198,8 +1191,6 @@ export default function AgentTools() {
         return <DecisionTree singleCardMode embedded />;
       case "official-references":
         return <LinkGrid items={OFFICIAL_REFS} />;
-      case "training":
-        return <TrainingGuides />;
       case "citizenship-immigration-docs":
         return (
           <CitizenshipDocsReference

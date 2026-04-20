@@ -194,12 +194,14 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1.05;
+  overflow-wrap: anywhere;
 }
 
 .at-tool-desc {
   color: #7f8694;
   font-size: 0.82rem;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .at-empty {
@@ -243,15 +245,19 @@
 .at-modal-header {
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
   gap: 14px;
   padding: 22px 24px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 0;
 }
 
 .at-modal-copy {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  flex: 1 1 280px;
 }
 
 .at-modal-kicker {
@@ -271,7 +277,8 @@
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  line-height: 1;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 .at-modal-desc {
@@ -280,6 +287,7 @@
   color: #838a97;
   font-size: 0.88rem;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .at-modal-close {
@@ -322,6 +330,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 4px;
   padding: 13px 14px;
   border-radius: 12px;
@@ -345,12 +354,14 @@
   color: #edf1f5;
   font-size: 0.82rem;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .at-link-desc {
   color: #7f8694;
   font-size: 0.72rem;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .at-link-arrow {
@@ -413,6 +424,11 @@
   margin-bottom: 12px;
   color: #c78dff;
   font-size: 0.7rem;
+}
+
+.at-util-header span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .at-calc {
@@ -780,6 +796,7 @@
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .at-doc-title {
@@ -854,12 +871,14 @@
   font-size: 0.84rem;
   font-weight: 700;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .at-doc-card-note {
   color: #7f8694;
   font-size: 0.74rem;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .at-doc-note-card {
@@ -1492,6 +1511,10 @@
   .at-doc-field-grid,
   .at-compliance-grid {
     grid-template-columns: 1fr;
+  }
+
+  .at-tool-card {
+    min-height: 0;
   }
 
   .at-timeline-row {

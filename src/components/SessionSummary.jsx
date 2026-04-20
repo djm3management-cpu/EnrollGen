@@ -596,14 +596,6 @@ export default React.memo(function SessionSummary() {
 
   // Quick compliance preview
   const complianceResult = buildComplianceResult();
-  const blockers = getDeterministicBlockers(state);
-  const scoreColor =
-    complianceResult.score >= 90
-      ? "#16a34a"
-      : complianceResult.score >= 75
-      ? "#d97706"
-      : "#dc2626";
-
   return (
     <div
       className="session-summary-bar"
@@ -623,34 +615,12 @@ export default React.memo(function SessionSummary() {
           alignItems: "center",
           gap: 10,
           flexWrap: "wrap",
+          fontSize: 0,
         }}
       >
         <ClipboardCheck size={16} style={{ color: "#94a3b8", flexShrink: 0 }} />
+        <span style={{ fontSize: "1rem" }}>Enrollment complete</span>
         <span>Enrollment complete — save your records</span>
-        {blockers.length > 0 && (
-          <span
-            style={{
-              fontWeight: 700,
-              fontSize: "0.82em",
-              color: "#fca5a5",
-            }}
-          >
-            {blockers.length} blocker{blockers.length === 1 ? "" : "s"}
-          </span>
-        )}
-        <span
-          style={{
-            fontWeight: 800,
-            fontSize: "1.1em",
-            color: scoreColor,
-            background: `${scoreColor}18`,
-            padding: "2px 10px",
-            borderRadius: 5,
-            border: `1.5px solid ${scoreColor}40`,
-          }}
-        >
-          {complianceResult.score}/100 {complianceResult.grade}
-        </span>
       </span>
       <div style={{ display: "flex", gap: 10 }}>
         <button className="btn-clay" onClick={handleCopyToClipboard}>
