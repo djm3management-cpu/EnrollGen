@@ -77,7 +77,7 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
       backdropFilter: "blur(12px)",
       boxShadow: "0 10px 24px rgba(0,0,0,0.36)",
       width: "100%",
-      minWidth: 230,
+      minWidth: 0,
       marginBottom: 8,
       pointerEvents: "auto",
       overflow: "hidden",

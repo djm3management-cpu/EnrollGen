@@ -205,7 +205,9 @@ export function LeftRail({
       </div>
 
       <motion.aside
-        className={`left-rail${expandedItem ? " is-open" : ""}`}
+        className={`left-rail${expandedItem ? " is-open" : ""}${
+          expandedItem?.id === "sep-qualifier" ? " left-rail--sep-qualifier" : ""
+        }`}
         animate={{ width: railWidth }}
         initial={false}
         transition={PANEL_TRANSITION}
@@ -214,7 +216,9 @@ export function LeftRail({
           {expandedItem ? (
             <motion.div
               key={expandedItem.id}
-              className="left-rail-panel-shell"
+              className={`left-rail-panel-shell${
+                expandedItem.id === "sep-qualifier" ? " left-rail-panel-shell--sep-qualifier" : ""
+              }`}
               initial={{ opacity: 0, x: -28 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -24 }}

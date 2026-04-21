@@ -8,6 +8,9 @@ import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 
+const FULL_RAIL_WIDTH = 296;
+const COMPACT_RAIL_OVERLAY_WIDTH = "min(340px, calc(100vw - 24px))";
+
 const FULL_RAIL_STYLE = {
   position: "fixed",
   top: 14,
@@ -25,7 +28,7 @@ const FULL_RAIL_SCROLL_STYLE = {
   minHeight: 0,
   overflowY: "auto",
   overflowX: "hidden",
-  width: 250,
+  width: FULL_RAIL_WIDTH,
   display: "flex",
   flexDirection: "column",
   alignItems: "stretch",
@@ -50,10 +53,10 @@ const COMPACT_RAIL_OVERLAY_STYLE = {
   right: 0,
   bottom: 0,
   zIndex: 98,
-  width: 268,
+  width: COMPACT_RAIL_OVERLAY_WIDTH,
   display: "flex",
   flexDirection: "column",
-  justifyContent: "flex-end",
+  justifyContent: "flex-start",
   gap: 8,
 };
 
@@ -188,7 +191,7 @@ function RailWidgets({
       <div
         style={{
           width: "100%",
-          minWidth: 230,
+          minWidth: 0,
           pointerEvents: "auto",
           background:
             "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",

@@ -24,6 +24,7 @@ import {
   resolveStateCode,
   STATE_SEP_TYPE_META,
 } from "../../data/stateSepData";
+import QuickNotes from "../QuickNotes";
 
 const OPENER_SCRIPT =
   "Before I can help you look at plan options, I need to make sure you're eligible to make a change right now. Outside of the annual enrollment period, Medicare only allows changes during what's called a Special Enrollment Period. I'm going to ask you a few quick questions to see if you qualify - should only take about a minute.";
@@ -33,6 +34,23 @@ const VERIFICATION_SCRIPT =
 
 const NO_SEP_NOTICE =
   "If none of these apply, the client does not currently have a Special Enrollment Period. They can enroll during AEP (Oct 15 - Dec 7) or OEP (Jan 1 - Mar 31 for existing MA members). Set a follow-up callback.";
+
+const ELIGIBILITY_LINKS = [
+  {
+    id: "humana",
+    label: "HUMANA",
+    color: "#00D166",
+    url: "https://account.humana.com/",
+    hoverText: "sign in -> quote & enroll -> eligibility verification",
+  },
+  {
+    id: "uhc",
+    label: "UHC",
+    color: "#0057B8",
+    url: "https://www.uhcjarvis.com/content/jarvis/en/secure/home.html",
+    hoverText: "sign in -> sales tools tab -> Medicare & Medicaid eligibility look up",
+  },
+];
 
 const CATEGORY_ICON_MAP = {
   house: House,
@@ -273,6 +291,7 @@ export default function SEPQualifier({ onMinimize }) {
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedSubtypeId, setSelectedSubtypeId] = useState("");
   const [expandedStateSections, setExpandedStateSections] = useState({});
+  const [agentNotes, setAgentNotes] = useState("");
   const [usedQuestionShortcut, setUsedQuestionShortcut] = useState(false);
   const [showNoSepNotice, setShowNoSepNotice] = useState(false);
 
@@ -355,50 +374,67 @@ export default function SEPQualifier({ onMinimize }) {
 
   return (
     <section className="sep-qualifier">
-      <header className="sep-qualifier-header">
-        <div className="sep-qualifier-header-main">
-          <div className="sep-qualifier-header-copy">
-            <div className="sep-qualifier-title">SEP QUALIFIER</div>
-          </div>
-        </div>
-
-        <div className="sep-qualifier-actions">
-          {stageIndex > 0 ? (
-            <button type="button" className="sep-qualifier-action" onClick={resetAll}>
-              <RotateCcw size={13} />
-              Reset
-            </button>
-          ) : null}
-          <button type="button" className="sep-qualifier-action" onClick={onMinimize}>
-            <Minimize2 size={13} />
-            Minimize
-          </button>
-        </div>
-      </header>
-
       <div className="sep-qualifier-body">
-        {stageIndex === 0 ? (
-          <div className="sep-qualifier-stage">
-            <div className="sep-qualifier-intro-card">
-              <button
-                type="button"
-                className="sep-qualifier-primary"
-                onClick={() => setStageIndex(1)}
-              >
-                START SEP QUALIFICATION
+        {stageIndex > 0 ? (
+          <div className="sep-qualifier-toolbar">
+            <div className="sep-qualifier-actions">
+              <button type="button" className="sep-qualifier-action" onClick={resetAll}>
+                <RotateCcw size={13} />
+                Reset
+              </button>
+              <button type="button" className="sep-qualifier-action" onClick={onMinimize}>
+                <Minimize2 size={13} />
+                Minimize
               </button>
             </div>
+          </div>
+        ) : null}
 
-            <div className="sep-qualifier-warning-card">
-              <div className="sep-qualifier-warning-title">
-                <AlertTriangle size={15} />
-                CMS Compliance Warning
+        {stageIndex === 0 ? (
+          <div className="sep-qualifier-stage sep-qualifier-stage--default">
+            <div className="sep-qualifier-intro-card">
+              <div className="sep-qualifier-start-panel">
+                <button
+                  type="button"
+                  className="sep-qualifier-primary sep-qualifier-start-trigger"
+                  onClick={() => setStageIndex(1)}
+                >
+                  START SEP QUALIFICATION
+                </button>
+                <button
+                  type="button"
+                  className="sep-qualifier-minimize-icon"
+                  onClick={onMinimize}
+                  aria-label="Minimize SEP Qualifier"
+                  title="Minimize"
+                >
+                  <Minimize2 size={12} />
+                </button>
               </div>
-              <p>
-                Wrong SEP code = CMS application rejection. Do not use disaster SEPs as a
-                marketing tool. Some SEPs cannot be agent-solicited.
-              </p>
             </div>
+
+            <div className="sep-qualifier-eligibility-card">
+              <div className="sep-qualifier-eligibility-label">Eligibility Verification</div>
+              <div className="sep-qualifier-eligibility-grid">
+                {ELIGIBILITY_LINKS.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={link.hoverText}
+                    aria-label={link.hoverText}
+                    className="sep-qualifier-eligibility-link"
+                    style={{ "--sep-eligibility-color": link.color }}
+                  >
+                    <span className="sep-qualifier-eligibility-dot" aria-hidden="true" />
+                    <span className="sep-qualifier-eligibility-text">{link.label}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <QuickNotes value={agentNotes} onChange={setAgentNotes} title="Agent Notes" />
           </div>
         ) : null}
 

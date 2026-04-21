@@ -40,6 +40,8 @@ import DevotedPopupManager from "./ancillary/DevotedPopupManager";
 import { motion } from "framer-motion";
 
 const ComplianceDashboard = lazy(() => import("./ComplianceDashboard"));
+const FULL_RAIL_WIDTH = 296;
+const COMPACT_RAIL_OVERLAY_WIDTH = "min(340px, calc(100vw - 24px))";
 
 const FULL_RAIL_STYLE = {
   position: "fixed",
@@ -58,7 +60,7 @@ const FULL_RAIL_SCROLL_STYLE = {
   minHeight: 0,
   overflowY: "auto",
   overflowX: "hidden",
-  width: 250,
+  width: FULL_RAIL_WIDTH,
   display: "flex",
   flexDirection: "column",
   alignItems: "stretch",
@@ -83,10 +85,10 @@ const COMPACT_RAIL_OVERLAY_STYLE = {
   right: 0,
   bottom: 0,
   zIndex: 98,
-  width: 268,
+  width: COMPACT_RAIL_OVERLAY_WIDTH,
   display: "flex",
   flexDirection: "column",
-  justifyContent: "flex-end",
+  justifyContent: "flex-start",
   gap: 8,
 };
 
@@ -148,130 +150,6 @@ const PILL_BASE = {
   background: "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
 };
 
-const ELIGIBILITY_LINKS = [
-  {
-    id: "humana",
-    label: "HUMANA",
-    color: "#00D166",
-    glow: "rgba(0,209,102,0.42)",
-    url: "https://account.humana.com/",
-    hoverText: "sign in -> quote & enroll ->eligibility verification",
-  },
-  {
-    id: "uhc",
-    label: "UHC",
-    color: "#0057B8",
-    glow: "rgba(33,150,243,0.42)",
-    url: "https://www.uhcjarvis.com/content/jarvis/en/secure/home.html",
-    hoverText: "sign in -> sales tools tab ->Medicare & Medicaid eligibility look up",
-  },
-];
-
-function EligibilityVerificationWidget() {
-  return (
-    <div
-      style={{
-        width: "100%",
-        minWidth: 230,
-        marginBottom: 8,
-        pointerEvents: "auto",
-        overflow: "hidden",
-        background:
-          "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: 16,
-        backdropFilter: "blur(12px)",
-        boxShadow: "0 10px 24px rgba(0,0,0,0.36)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "5px 10px",
-          background: "rgba(255,255,255,0.03)",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "0.64rem",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "#8fc7ff",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          Eligility Verification
-        </span>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          padding: "5px 10px 6px",
-        }}
-      >
-        {ELIGIBILITY_LINKS.map((link) => (
-          <a
-            key={link.id}
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={link.hoverText}
-            aria-label={link.hoverText}
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 3,
-              minHeight: 24,
-              padding: "3px 6px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background: "rgba(255,255,255,0.02)",
-              textDecoration: "none",
-              transition: "transform 0.15s ease, border-color 0.15s ease, background 0.15s ease",
-            }}
-          >
-            <span
-              aria-hidden="true"
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                background: link.color,
-                border: `1px solid ${link.color}`,
-                flexShrink: 0,
-              }}
-            />
-            <span
-              style={{
-                fontSize: "0.58rem",
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: link.color,
-                lineHeight: 1,
-              }}
-            >
-              {link.label}
-            </span>
-          </a>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /* ---- Shared widget stack — used by both full rail and overlay ---- */
 function RailWidgets({
   transcript,
@@ -293,7 +171,7 @@ function RailWidgets({
 
       {/* ── Copilot Control Strip ── */}
       <div style={{
-        width: "100%", minWidth: 230, pointerEvents: "auto",
+        width: "100%", minWidth: 0, pointerEvents: "auto",
         background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
         border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16,
         backdropFilter: "blur(12px)", boxShadow: "0 10px 24px rgba(0,0,0,0.36)",
@@ -360,8 +238,6 @@ function RailWidgets({
       </CollapsibleWidget>
 
       {/* ── Compliance ── */}
-      <EligibilityVerificationWidget />
-
       <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="#E8002D">
         <ComplianceMini
           transcript={transcript}

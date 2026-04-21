@@ -11,7 +11,7 @@ function levelColor(level) {
 }
 
 const AUTO_SCROLL_THRESHOLD = 50;
-const FEED_PANEL_HEIGHT = 212;
+const FEED_PANEL_HEIGHT = "clamp(148px, 22vh, 212px)";
 const MAX_FEED_ENTRIES = 16;
 
 const CopilotFeedMini = memo(function CopilotFeedMini() {
