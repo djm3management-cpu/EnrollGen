@@ -23,6 +23,7 @@ import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
 
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
+import { COPILOT_PILL_BASE } from "./copilot/pillStyles";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
 import SectionRecording from "./SectionRecording";
@@ -134,22 +135,6 @@ function useDebouncedValue(value, delayMs) {
   return debouncedValue;
 }
 
-/* ---- pill button shared style ---- */
-const PILL_BASE = {
-  flex: 1,
-  borderRadius: 50,
-  padding: "4px 0",
-  fontSize: "0.58rem",
-  fontFamily: "'Barlow Condensed', sans-serif",
-  fontWeight: 700,
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
-  border: "1px solid rgba(255,255,255,0.07)",
-  cursor: "pointer",
-  transition: "all 0.15s",
-  background: "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
-};
-
 /* ---- Shared widget stack — used by both full rail and overlay ---- */
 function RailWidgets({
   transcript,
@@ -182,14 +167,17 @@ function RailWidgets({
 
         <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
           <button
+            className="copilot-pill-button"
             onClick={() => { const h = copilotHandlersRef.current; if (listening) h.handleStop?.(); else h.handleStart?.(); }}
             disabled={!supportsRecognition}
             style={{
-              ...PILL_BASE,
+              ...COPILOT_PILL_BASE,
               background: listening
                 ? "linear-gradient(145deg, rgba(232,0,45,0.2) 0%, rgba(180,0,35,0.14) 100%)"
-                : PILL_BASE.background,
-              border: listening ? "1px solid rgba(232,0,45,0.28)" : PILL_BASE.border,
+                : COPILOT_PILL_BASE.background,
+              border: listening
+                ? "1px solid rgba(232,0,45,0.28)"
+                : COPILOT_PILL_BASE.border,
               color: listening ? "#FF8FA3" : "#00ff41",
               cursor: supportsRecognition ? "pointer" : "not-allowed",
             }}
@@ -197,16 +185,18 @@ function RailWidgets({
             {!supportsRecognition ? "NO MIC" : listening ? "■ STOP" : "● START"}
           </button>
           <button
+            className="copilot-pill-button"
             onClick={() => copilotHandlersRef.current.clearAll?.()}
-            style={{ ...PILL_BASE, color: "#666" }}
+            style={{ ...COPILOT_PILL_BASE, color: "#666" }}
           >
             CLEAR
           </button>
           <button
+            className="copilot-pill-button"
             onClick={() => copilotHandlersRef.current.requestCoaching?.()}
             disabled={!hasTranscript || coachingLoading}
             style={{
-              ...PILL_BASE,
+              ...COPILOT_PILL_BASE,
               border: "1px solid rgba(157,0,255,0.45)",
               color: "#B84DFF",
               cursor: hasTranscript && !coachingLoading ? "pointer" : "not-allowed",

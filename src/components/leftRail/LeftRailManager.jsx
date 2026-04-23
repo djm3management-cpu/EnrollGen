@@ -2,7 +2,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -35,10 +34,7 @@ export function LeftRailProvider({ children }) {
   const [itemsById, setItemsById] = useState({});
   const [expandedId, setExpandedId] = useState(null);
   const itemsRef = useRef(itemsById);
-
-  useEffect(() => {
-    itemsRef.current = itemsById;
-  }, [itemsById]);
+  itemsRef.current = itemsById;
 
   const showLeftRail = useCallback((item) => {
     if (!item?.id) {
@@ -122,7 +118,7 @@ export function LeftRailProvider({ children }) {
     setExpandedId(null);
   }, []);
 
-  const hasLeftRailItem = useCallback((id) => Boolean(itemsRef.current[id]), []);
+  const hasLeftRailItem = useCallback((id) => Boolean(itemsById[id]), [itemsById]);
 
   const sortedItems = useMemo(() => sortRailItems(itemsById), [itemsById]);
   const expandedItem = expandedId ? itemsById[expandedId] ?? null : null;

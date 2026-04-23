@@ -3,6 +3,7 @@ import {
   Suspense,
   startTransition,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -324,7 +325,7 @@ function AppShell() {
     }
   }, [dismissLeftRail, hasLeftRailItem, mode]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (mode !== "ma" || hasAutoOpenedSepRef.current) {
       return;
     }
@@ -670,10 +671,10 @@ function AppShell() {
           </div>
         </header>
 
-        <LeftRail launcher={sepLauncher} />
-
         {mode === "ma" ? (
           <ScriptProvider>
+            <LeftRail launcher={sepLauncher} />
+
             {openPanel ? (
               <div ref={overlayRef} className="top-panel-overlay">
                 <div className="top-panel-header">

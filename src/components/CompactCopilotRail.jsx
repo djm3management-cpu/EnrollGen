@@ -6,6 +6,7 @@ import CopilotFeedMini from "./CopilotFeedMini";
 import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
+import { COPILOT_PILL_BASE } from "./copilot/pillStyles";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 
 const FULL_RAIL_WIDTH = 296;
@@ -58,22 +59,6 @@ const COMPACT_RAIL_OVERLAY_STYLE = {
   flexDirection: "column",
   justifyContent: "flex-start",
   gap: 8,
-};
-
-const PILL_BASE = {
-  flex: 1,
-  borderRadius: 50,
-  padding: "4px 0",
-  fontSize: "0.58rem",
-  fontFamily: "'Barlow Condensed', sans-serif",
-  fontWeight: 700,
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
-  border: "1px solid rgba(255,255,255,0.07)",
-  cursor: "pointer",
-  transition: "all 0.15s",
-  background:
-    "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
 };
 
 function FloatingAlert({
@@ -208,30 +193,36 @@ function RailWidgets({
 
         <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
           <button
+            className="copilot-pill-button"
             onClick={onToggleListening}
             disabled={!supportsRecognition}
             style={{
-              ...PILL_BASE,
+              ...COPILOT_PILL_BASE,
               background: listening
                 ? "linear-gradient(145deg, rgba(232,0,45,0.2) 0%, rgba(180,0,35,0.14) 100%)"
-                : PILL_BASE.background,
+                : COPILOT_PILL_BASE.background,
               border: listening
                 ? "1px solid rgba(232,0,45,0.28)"
-                : PILL_BASE.border,
+                : COPILOT_PILL_BASE.border,
               color: listening ? "#FF8FA3" : "#00ff41",
               cursor: supportsRecognition ? "pointer" : "not-allowed",
             }}
           >
             {!supportsRecognition ? "NO MIC" : listening ? "STOP" : "START"}
           </button>
-          <button onClick={onClear} style={{ ...PILL_BASE, color: "#666" }}>
+          <button
+            className="copilot-pill-button"
+            onClick={onClear}
+            style={{ ...COPILOT_PILL_BASE, color: "#666" }}
+          >
             CLEAR
           </button>
           <button
+            className="copilot-pill-button"
             onClick={onAnalyze}
             disabled={!hasTranscript || analyzing}
             style={{
-              ...PILL_BASE,
+              ...COPILOT_PILL_BASE,
               border: "1px solid rgba(157,0,255,0.45)",
               color: "#B84DFF",
               cursor: hasTranscript && !analyzing ? "pointer" : "not-allowed",

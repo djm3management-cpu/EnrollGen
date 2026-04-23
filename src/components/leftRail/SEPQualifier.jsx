@@ -25,6 +25,7 @@ import {
   STATE_SEP_TYPE_META,
 } from "../../data/stateSepData";
 import QuickNotes from "../QuickNotes";
+import SNPRoutingWidget from "./SNPRoutingWidget";
 
 const OPENER_SCRIPT =
   "Before I can help you look at plan options, I need to make sure you're eligible to make a change right now. Outside of the annual enrollment period, Medicare only allows changes during what's called a Special Enrollment Period. I'm going to ask you a few quick questions to see if you qualify - should only take about a minute.";
@@ -34,23 +35,6 @@ const VERIFICATION_SCRIPT =
 
 const NO_SEP_NOTICE =
   "If none of these apply, the client does not currently have a Special Enrollment Period. They can enroll during AEP (Oct 15 - Dec 7) or OEP (Jan 1 - Mar 31 for existing MA members). Set a follow-up callback.";
-
-const ELIGIBILITY_LINKS = [
-  {
-    id: "humana",
-    label: "HUMANA",
-    color: "#00D166",
-    url: "https://account.humana.com/",
-    hoverText: "sign in -> quote & enroll -> eligibility verification",
-  },
-  {
-    id: "uhc",
-    label: "UHC",
-    color: "#0057B8",
-    url: "https://www.uhcjarvis.com/content/jarvis/en/secure/home.html",
-    hoverText: "sign in -> sales tools tab -> Medicare & Medicaid eligibility look up",
-  },
-];
 
 const CATEGORY_ICON_MAP = {
   house: House,
@@ -413,26 +397,7 @@ export default function SEPQualifier({ onMinimize }) {
               </div>
             </div>
 
-            <div className="sep-qualifier-eligibility-card">
-              <div className="sep-qualifier-eligibility-label">Eligibility Verification</div>
-              <div className="sep-qualifier-eligibility-grid">
-                {ELIGIBILITY_LINKS.map((link) => (
-                  <a
-                    key={link.id}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={link.hoverText}
-                    aria-label={link.hoverText}
-                    className="sep-qualifier-eligibility-link"
-                    style={{ "--sep-eligibility-color": link.color }}
-                  >
-                    <span className="sep-qualifier-eligibility-dot" aria-hidden="true" />
-                    <span className="sep-qualifier-eligibility-text">{link.label}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
+            <SNPRoutingWidget />
 
             <QuickNotes value={agentNotes} onChange={setAgentNotes} title="Agent Notes" />
           </div>
