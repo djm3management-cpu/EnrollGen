@@ -155,7 +155,7 @@ export default function DailyVerse() {
   const [verse, setVerse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [translation, setTranslation] = useState("ylt");
+  const [translation, setTranslation] = useState("kjv");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [commentaryOpen, setCommentaryOpen] = useState(false);
   const [bookData, setBookData] = useState(null);
@@ -164,7 +164,7 @@ export default function DailyVerse() {
   const [fadeKey, setFadeKey] = useState(0);
 
   const [parallelMode, setParallelMode] = useState(true);
-  const [parallelTranslation, setParallelTranslation] = useState("leb");
+  const [parallelTranslation, setParallelTranslation] = useState("ylt");
   const [parallelVerse, setParallelVerse] = useState(null);
   const [parallelLoading, setParallelLoading] = useState(false);
 
