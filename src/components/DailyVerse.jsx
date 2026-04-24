@@ -38,9 +38,6 @@ const TRANSLATIONS = [
   { id: "kjv", label: "KJV", full: "King James Version", source: "bible-api" },
   { id: "leb", label: "LEB", full: "Lexham English Bible", source: "biblia" },
   { id: "web", label: "WEB", full: "World English Bible", source: "bible-api" },
-  { id: "asv", label: "ASV", full: "American Standard Version", source: "bible-api" },
-  { id: "bbe", label: "BBE", full: "Bible in Basic English", source: "bible-api" },
-  { id: "darby", label: "Darby", full: "Darby Translation", source: "bible-api" },
   { id: "ylt", label: "YLT", full: "Young's Literal Translation", source: "bible-api" },
 ];
 
@@ -204,10 +201,12 @@ export default function DailyVerse() {
     if (getTranslationSource(trans) === "biblia") {
       return fetchBibliaContent(reference, trans);
     }
-    const res = await fetch(
-      `https://bible-api.com/${encodeURIComponent(reference)}?translation=${trans}`
-    );
-    if (!res.ok) throw new Error("API error");
+    const url = `https://bible-api.com/${encodeURIComponent(reference)}?translation=${trans}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(`[DailyVerse] ${trans} fetch failed: ${res.status} ${url}`);
+      throw new Error(`bible-api ${trans} ${res.status}`);
+    }
     return res.json();
   }, []);
 
