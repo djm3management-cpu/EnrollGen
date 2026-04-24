@@ -139,6 +139,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
         restartTimeoutRef.current = window.setTimeout(() => {
           if (recognitionRef.current) {
             try {
+              processedUpTo = 0; // Reset — browser clears results on restart
               recognitionRef.current.start();
               backoffRef.current = 300; // reset on successful restart
             } catch {

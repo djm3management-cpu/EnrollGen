@@ -805,7 +805,13 @@ SECTION CONTEXT (rolling window):
     const score = Math.max(0, gateScore - penalty);
     const grade = calculateServerGrade(score);
 
-    return { score, grade, completed, totalGates, warns, criticals, penalty };
+    return {
+      score, grade, completed, totalGates, warns, criticals, penalty,
+      scoreType: "gate_completion",
+      scoreLabel: "Section Completion",
+      productLine: "aca",
+      comparable: false,
+    };
   }, [state, entries]);
 
   return {

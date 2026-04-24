@@ -8,7 +8,7 @@ import {
 } from "react";
 
 /**
- * CopilotTranscriptLog — Central log for ALL AI copilot activity.
+ * CopilotTranscriptLog â€” Central log for ALL AI copilot activity.
  *
  * Captures:
  *  - ScriptPrompter AI Co-Pilot messages (info/remind/tip/warn/critical)
@@ -27,7 +27,7 @@ import {
  *   const { logEntry, getTranscript, getWarnings } = useCopilotLog();
  */
 
-/* ── Entry types ── */
+/* â”€â”€ Entry types â”€â”€ */
 export const LOG_TYPES = {
   COPILOT_MSG: "copilot_message", // ScriptPrompter AI feed messages
   FLOATING_ALERT: "floating_alert", // Warn/critical popup alerts
@@ -99,29 +99,16 @@ function dedupeEntries(entries, { includeFloatingAlerts = true } = {}) {
   return deduped;
 }
 
-/* ── Reducer ── */
-function logReducer(state, action) {
+/* â”€â”€ Reducers â”€â”€ */
+
+/** Display reducer: keeps dedup for live UI readability. */
+function displayLogReducer(state, action) {
   switch (action.type) {
     case "ADD_ENTRY": {
-      const candidate = {
-        id: Date.now() + Math.random(),
-        timestamp: new Date().toISOString(),
-        timeDisplay: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
-        ...action.payload,
-      };
-
-      if (isNearDuplicate(state.entries, candidate)) {
+      if (isNearDuplicate(state.entries, action.payload)) {
         return state;
       }
-
-      return {
-        ...state,
-        entries: [...state.entries, candidate],
-      };
+      return { ...state, entries: [...state.entries, action.payload] };
     }
     case "UPDATE_ENTRY_FEEDBACK":
       return {
@@ -146,13 +133,45 @@ function logReducer(state, action) {
   }
 }
 
-/* ── Context ── */
+/** Audit reducer: records EVERYTHING â€” no dedup, no filtering. */
+function auditLogReducer(state, action) {
+  switch (action.type) {
+    case "ADD_ENTRY": {
+      return { ...state, entries: [...state.entries, action.payload] };
+    }
+    case "UPDATE_ENTRY_FEEDBACK":
+      return {
+        ...state,
+        entries: state.entries.map((entry) =>
+          entry.id === action.entryId
+            ? {
+                ...entry,
+                feedback: {
+                  verdict: action.verdict,
+                  note: action.note || "",
+                  updatedAt: new Date().toISOString(),
+                },
+              }
+            : entry
+        ),
+      };
+    case "CLEAR":
+      return { entries: [] };
+    default:
+      return state;
+  }
+}
+
+/* â”€â”€ Context â”€â”€ */
 const CopilotLogContext = createContext(null);
 
 export function CopilotLogProvider({ children }) {
-  const [state, dispatch] = useReducer(logReducer, { entries: [] });
-  const entriesRef = useRef(state.entries);
-  entriesRef.current = state.entries;
+  const [displayState, dispatchDisplay] = useReducer(displayLogReducer, { entries: [] });
+  const [auditState, dispatchAudit] = useReducer(auditLogReducer, { entries: [] });
+  const displayRef = useRef(displayState.entries);
+  const auditRef = useRef(auditState.entries);
+  displayRef.current = displayState.entries;
+  auditRef.current = auditState.entries;
 
   useEffect(() => {
     try {
@@ -163,55 +182,67 @@ export function CopilotLogProvider({ children }) {
   }, []);
 
   /**
-   * logEntry — Add an entry to the transcript log.
+   * logEntry â€” Add an entry to both the display and audit logs.
    *
-   * @param {string} logType   — One of LOG_TYPES
-   * @param {string} level     — info | remind | tip | warn | critical
-   * @param {string} message   — The AI's message text
-   * @param {object} [meta]    — Optional extra data (section, objection text, etc.)
+   * @param {string} logType   â€” One of LOG_TYPES
+   * @param {string} level     â€” info | remind | tip | warn | critical
+   * @param {string} message   â€” The AI's message text
+   * @param {object} [meta]    â€” Optional extra data (section, objection text, etc.)
    */
   const logEntry = useCallback((logType, level, message, meta = {}) => {
-    dispatch({
-      type: "ADD_ENTRY",
-      payload: { logType, level, message, meta },
-    });
+    const enriched = {
+      id: Date.now() + Math.random(),
+      timestamp: new Date().toISOString(),
+      timeDisplay: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+      logType,
+      level,
+      message,
+      meta,
+    };
+    dispatchDisplay({ type: "ADD_ENTRY", payload: enriched });
+    dispatchAudit({ type: "ADD_ENTRY", payload: enriched });
   }, []);
 
-  /** Get full transcript (all entries) */
+  /** Get full transcript for PDF export â€” uses AUDIT log (unfiltered, faithful). */
   const getTranscript = useCallback(() => {
-    return dedupeEntries(entriesRef.current, { includeFloatingAlerts: false });
+    return auditRef.current;
   }, []);
 
-  /** Get only warn + critical entries (for the warnings section of the PDF) */
+  /** Get warnings for PDF â€” uses AUDIT log, includes floating alerts. */
   const getWarnings = useCallback(() => {
-    return dedupeEntries(entriesRef.current, { includeFloatingAlerts: false }).filter(
+    return auditRef.current.filter(
       (e) => e.level === "warn" || e.level === "critical"
     );
   }, []);
 
+  /** Get deduped feed for live UI display. */
+  const getDisplayTranscript = useCallback(() => {
+    return dedupeEntries(displayRef.current, { includeFloatingAlerts: false });
+  }, []);
+
   /** Get only floating alerts that were shown */
   const getAlerts = useCallback(() => {
-    return entriesRef.current.filter(
+    return auditRef.current.filter(
       (e) => e.logType === LOG_TYPES.FLOATING_ALERT
     );
   }, []);
 
   /** Get entries by type */
   const getByType = useCallback((logType) => {
-    return entriesRef.current.filter((e) => e.logType === logType);
+    return auditRef.current.filter((e) => e.logType === logType);
   }, []);
 
   const setEntryFeedback = useCallback((entryId, verdict, note = "") => {
-    dispatch({
-      type: "UPDATE_ENTRY_FEEDBACK",
-      entryId,
-      verdict,
-      note,
-    });
+    dispatchDisplay({ type: "UPDATE_ENTRY_FEEDBACK", entryId, verdict, note });
+    dispatchAudit({ type: "UPDATE_ENTRY_FEEDBACK", entryId, verdict, note });
   }, []);
 
   const exportFeedbackDataset = useCallback(() => {
-    return entriesRef.current
+    return auditRef.current
       .filter((entry) => entry.logType === LOG_TYPES.COPILOT_MSG)
       .map((entry) => ({
         id: entry.id,
@@ -224,18 +255,21 @@ export function CopilotLogProvider({ children }) {
       }));
   }, []);
 
-  /** Clear the log (for new sessions) */
+  /** Clear both logs (for new sessions / CLEAR button) */
   const clearLog = useCallback(() => {
-    dispatch({ type: "CLEAR" });
+    dispatchDisplay({ type: "CLEAR" });
+    dispatchAudit({ type: "CLEAR" });
   }, []);
 
   return (
     <CopilotLogContext.Provider
       value={{
-        entries: state.entries,
+        entries: displayState.entries,
+        auditEntries: auditState.entries,
         logEntry,
         getTranscript,
         getWarnings,
+        getDisplayTranscript,
         getAlerts,
         getByType,
         setEntryFeedback,

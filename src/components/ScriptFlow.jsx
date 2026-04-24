@@ -441,13 +441,14 @@ export default function ScriptFlow() {
     dispatch({ type: "START_TIMER" });
   }, [callStarted, clearLog, session, dispatch]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount — mark completed if enrollment gate was reached
   useEffect(() => {
     return () => {
       if (sessionStartedRef.current) {
-        session.endSession(prevSectionRef.current, false);
+        session.endSession(prevSectionRef.current, !!state.enrollOk);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Log section scores when a section gate completes (section changes forward)
@@ -463,6 +464,12 @@ export default function ScriptFlow() {
         scoredSectionsRef.current.add(prev);
         session.logSectionScore(prev, label, true, dur, null, null);
       }
+    }
+    // Log wrap-up (section 8) since there is no section 9 to trigger it
+    if (activeSection >= 8 && !scoredSectionsRef.current.has(8)) {
+      scoredSectionsRef.current.add(8);
+      const wrapLabel = SECTION_LABELS[8] || "Wrap-Up";
+      session.logSectionScore(8, wrapLabel, true, null, null, null);
     }
   }, [activeSection, state.sectionTimestamps, session]);
 

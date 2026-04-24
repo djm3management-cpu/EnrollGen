@@ -298,7 +298,9 @@ function exportSessionSummaryPdf(
       startY: y,
       head: [["Mode", "Coverage", "Intents Detected", "Violations"]],
       body: [[
-        complianceResult.scoringMode === "strict_two_sided"
+        complianceResult.scoringMode === "two_sided"
+          ? "Two-Sided (Agent + Customer)"
+          : complianceResult.scoringMode === "strict_two_sided"
           ? "Strict Transcript + Customer"
           : complianceResult.scoringMode === "strict_transcript"
           ? "Strict Transcript"

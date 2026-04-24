@@ -723,7 +723,16 @@ SECTION CONTEXT (rolling window):
     const score = Math.max(0, sectionScore - penalty);
     const grade = calculateServerGrade(score);
 
-    return { score, grade, completed, totalSections, warns, criticals, penalty };
+    return {
+      score, grade, completed,
+      totalGates: totalSections,
+      totalSections,
+      warns, criticals, penalty,
+      scoreType: "gate_completion",
+      scoreLabel: "Section Completion",
+      productLine: "medsup",
+      comparable: false,
+    };
   }, [state, entries]);
 
   return {

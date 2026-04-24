@@ -61,12 +61,11 @@ export function useSessionTracker() {
   // Resolve or create the enrolled_agents row for this Clerk user
   const resolveAgentId = useCallback(async (sb, token) => {
     if (agentIdRef.current) return agentIdRef.current;
+    const clerkUserId = getClerkSub(token);
     try {
-      const { data, error } = await sb
-        .from("enrolled_agents")
-        .select("id")
-        .limit(1)
-        .single();
+      const query = sb.from("enrolled_agents").select("id").limit(1);
+      if (clerkUserId) query.eq("clerk_user_id", clerkUserId);
+      const { data, error } = await query.single();
       if (data) {
         agentIdRef.current = data.id;
         setActiveSessionMetadata({ agentId: data.id });
@@ -74,7 +73,6 @@ export function useSessionTracker() {
       }
       // Auto-create agent row if missing (RLS lets user insert their own)
       if (error?.code === "PGRST116") {
-        const clerkUserId = getClerkSub(token);
         if (!clerkUserId) throw new Error("Could not extract sub from Clerk JWT");
         const { data: inserted, error: insertErr } = await sb
           .from("enrolled_agents")

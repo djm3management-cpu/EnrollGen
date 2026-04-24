@@ -11,8 +11,7 @@ function levelColor(level) {
 }
 
 const AUTO_SCROLL_THRESHOLD = 50;
-const FEED_PANEL_HEIGHT = "clamp(148px, 22vh, 212px)";
-const MAX_FEED_ENTRIES = 16;
+const MAX_FEED_ENTRIES = 3;
 
 const CopilotFeedMini = memo(function CopilotFeedMini() {
   const { entries } = useCopilotLog();
@@ -47,15 +46,10 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
   }, [recentEntries.at(-1)?.id, userScrolled]);
 
   return (
-    <div style={{ padding: "0 0 6px" }}>
+    <div className="copilot-feed-mini">
       <div
         ref={feedRef}
-        className="right-rail-scroll"
-        style={{
-          height: FEED_PANEL_HEIGHT,
-          overflowY: "auto",
-          padding: "4px 8px",
-        }}
+        className="right-rail-scroll copilot-feed-mini__scroll"
       >
         {recentEntries.length === 0 && (
           <PanelIdleSpinner variant="copilot" compact />
@@ -63,27 +57,11 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
         {recentEntries.map((entry) => (
           <div
             key={entry.id}
-            style={{
-              fontSize: "0.62rem",
-              color: "#94a3b8",
-              marginBottom: 4,
-              lineHeight: 1.45,
-              display: "flex",
-              gap: 5,
-            }}
+            className="copilot-feed-mini__entry"
+            style={{ "--copilot-feed-accent": levelColor(entry.level) }}
           >
-            <span
-              style={{
-                width: 4,
-                minWidth: 4,
-                borderRadius: 2,
-                background: levelColor(entry.level),
-                flexShrink: 0,
-                marginTop: 2,
-                alignSelf: "stretch",
-              }}
-            />
-            <span>{entry.message}</span>
+            <span className="copilot-feed-mini__bar" />
+            <span className="copilot-feed-mini__text">{entry.message}</span>
           </div>
         ))}
       </div>

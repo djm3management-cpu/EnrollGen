@@ -1231,6 +1231,7 @@ function toLiveResult(result) {
   return {
     score: topLineScore,
     agentScore: result.agentScore ?? result.score,
+    customerScore: result.customerScore ?? null,
     grade: getGrade(topLineScore),
     categoriesPassed: result.categoriesPassed,
     totalCategories: result.totalCategories,
@@ -1450,12 +1451,20 @@ export function scoreTwoSided(
 
   const agentAnalysis = safeAgentTranscript ? analyzeTranscript(safeAgentTranscript) : null;
   const customerConfirmation = scoreCustomerConfirmation(safeCustomerText, safeMerged, agentAnalysis);
+  // Blended two-sided score: 60% agent, 40% customer confirmation.
+  const AGENT_WEIGHT = 0.6;
+  const CUSTOMER_WEIGHT = 0.4;
+  const blendedScore = Math.round(
+    agentResult.score * AGENT_WEIGHT + customerConfirmation.score * CUSTOMER_WEIGHT
+  );
 
   return {
     ...agentResult,
+    score: blendedScore,
     agentScore: agentResult.score,
+    customerScore: customerConfirmation.score,
     customerConfirmation,
-    overallTwoSidedScore: agentResult.score,
+    overallTwoSidedScore: blendedScore,
     scoringMode: "two_sided",
   };
 }

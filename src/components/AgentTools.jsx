@@ -2,27 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
   Building2,
-  CalendarDays,
-  CheckSquare,
   Circle,
-  ClipboardCheck,
   ExternalLink,
   FileText,
   Flame,
   Heart,
   Landmark,
-  Map,
   RotateCw,
   Scale,
   Search,
   Shield,
-  Stethoscope,
   UserCheck,
   X,
-  Zap,
 } from "lucide-react";
-import DecisionTree from "./DecisionTree";
-import ObjectionHandler from "./ObjectionHandler";
 import SEPGuide2026 from "./SEPGuide2026";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 import "../AgentTools.css";
@@ -33,7 +25,6 @@ const TOOL_TABS = [
   { id: "reference", label: "Reference" },
   { id: "enrollment", label: "Enrollment" },
   { id: "carrier", label: "Carrier" },
-  { id: "utilities", label: "Utilities" },
 ];
 
 const BADGE_STYLES = {
@@ -117,34 +108,6 @@ const ENROLLMENT_TOOLS = [
   },
 ];
 
-const PROVIDER_TOOLS = [
-  {
-    name: "Care Compare",
-    desc: "Provider participation lookup.",
-    url: "https://www.medicare.gov/care-compare/",
-  },
-  {
-    name: "NPI Registry",
-    desc: "National Provider Identifier lookup.",
-    url: "https://npiregistry.cms.hhs.gov/search",
-  },
-  {
-    name: "OIG LEIE Exclusions",
-    desc: "Excluded provider search.",
-    url: "https://exclusions.oig.hhs.gov/",
-  },
-  {
-    name: "Pharmacy Network Reference",
-    desc: "Preferred pharmacy and network concepts.",
-    url: "https://www.medicare.gov/plan-compare/#/pharmaceutical-assistance-program",
-  },
-  {
-    name: "Medicare Rx Payment Plan",
-    desc: "Prescription Payment Plan info.",
-    url: "https://www.medicare.gov/basics/costs/help/drug-costs",
-  },
-];
-
 const CARRIER_LINKS = [
   {
     name: "Humana MBI Lookup (Vantage)",
@@ -172,183 +135,12 @@ const CARRIER_LINKS = [
   { name: "Medicare.gov", url: "https://www.medicare.gov", icon: "cms" },
 ];
 
-const COMPLIANCE_PROMPTS = [
-  {
-    label: "TPMO Disclaimer",
-    text: "We do not offer every plan available in your area. Any information we provide is limited to those plans we do offer in your area. Please contact Medicare.gov or 1-800-MEDICARE to get information on all of your options.",
-  },
-  {
-    label: "Scope of Appointment",
-    text: "This call will be limited to discussing Medicare Advantage, Part D, or Medicare Supplement plans. I need your verbal permission to continue discussing these plan types. Do I have your consent?",
-  },
-  {
-    label: "Permission to Discuss",
-    text: "Before we review any specific plan details, I need to confirm that I have your permission to discuss Medicare plan options with you today.",
-  },
-  {
-    label: "Enrollment Recap",
-    text: "To confirm, I enrolled you in [Plan Name] effective [Date]. You will receive your new member materials in the mail within 7 to 10 business days. Your new plan ID card will be included.",
-  },
-  {
-    label: "Rx Disclaimer",
-    text: "Formularies, pharmacy networks, and provider networks may change at any time. You will receive notice when necessary. The formulary and provider network can change on January 1 of each year.",
-  },
-  {
-    label: "Provider Network",
-    text: "If you use providers or facilities outside of the plan's network, you may pay more or the plan may not cover services at all, except in an emergency. Please verify your providers are in network before enrolling.",
-  },
-];
-
-const SEP_DATE_RULES = [
-  { reason: "ICEP (Initial Coverage)", effective: "1st of the month Part A and B are both active." },
-  { reason: "OEP (Open Enrollment Jan-Mar)", effective: "1st of the month after the plan receives enrollment." },
-  { reason: "AEP (Oct 15 - Dec 7)", effective: "January 1 of the following year." },
-  { reason: "Move / Change of Address", effective: "1st of the month after the plan receives enrollment." },
-  { reason: "Loss of Creditable Coverage", effective: "1st of the month after the plan receives enrollment." },
-  { reason: "Loss of Medicaid", effective: "1st of the month after the plan receives enrollment." },
-  { reason: "Dual / LIS (Monthly)", effective: "1st of the month after the plan receives enrollment." },
-  { reason: "5-Star SEP", effective: "1st of the month after the plan receives enrollment." },
-  { reason: "FEMA Disaster", effective: "1st of the month after the plan receives enrollment." },
-  { reason: "Institutional (SNF/LTCF)", effective: "1st of the month after the plan receives enrollment." },
-  { reason: "C-SNP (Chronic Condition)", effective: "1st of the month after the plan receives enrollment, or up to 3 months retroactive." },
-  { reason: "Employer / COBRA Loss", effective: "1st of the month after the plan receives enrollment." },
-];
-
-const DOC_CHECKLISTS = [
-  {
-    scenario: "Moving SEP",
-    docs: [
-      "Proof of new address (utility bill, lease, mortgage).",
-      "Prior plan ID if switching.",
-      "MBI / Medicare card.",
-    ],
-  },
-  {
-    scenario: "Loss of Coverage",
-    docs: [
-      "Creditable coverage letter or termination notice.",
-      "Dates of prior coverage.",
-      "MBI / Medicare card.",
-    ],
-  },
-  {
-    scenario: "Medicaid Loss",
-    docs: [
-      "Medicaid termination notice with date.",
-      "MBI / Medicare card.",
-      "State Medicaid contact info for verification.",
-    ],
-  },
-  {
-    scenario: "FEMA Disaster",
-    docs: [
-      "FEMA declaration number.",
-      "Proof of residence in declared county.",
-      "MBI / Medicare card.",
-    ],
-  },
-  {
-    scenario: "C-SNP Enrollment",
-    docs: [
-      "Physician attestation or diagnosis confirmation.",
-      "MBI / Medicare card.",
-      "Provider NPI in plan network.",
-    ],
-  },
-  {
-    scenario: "D-SNP Enrollment",
-    docs: [
-      "Medicaid ID or eligibility verification.",
-      "MBI / Medicare card.",
-      "Current medication list.",
-    ],
-  },
-];
-
-const CARRIER_NOTES = [
-  {
-    carrier: "Humana",
-    mbi: "Required before enrollment",
-    method: "Vantage portal, phone, paper",
-    release: "Early Sept (AEP)",
-    quirks: "Strict SEP documentation. Requires proof uploaded within 48 hours.",
-  },
-  {
-    carrier: "UnitedHealthcare",
-    mbi: "Required before enrollment",
-    method: "Jarvis portal, phone, paper",
-    release: "Mid Sept (AEP)",
-    quirks: "MBI lookup in Jarvis. Fast electronic enrollment processing.",
-  },
-  {
-    carrier: "Aetna",
-    mbi: "Required before enrollment",
-    method: "Producer World, phone, paper",
-    release: "Late Sept (AEP)",
-    quirks: "Plan changes process next business day. Producer World SSO required.",
-  },
-  {
-    carrier: "Anthem / BCBS",
-    mbi: "Required before enrollment",
-    method: "Broker Connect, phone, paper",
-    release: "Early Oct (AEP)",
-    quirks: "Varies by BCBS affiliate. Verify the state-specific portal.",
-  },
-  {
-    carrier: "Cigna",
-    mbi: "Required before enrollment",
-    method: "Broker portal, phone, paper",
-    release: "Mid Sept (AEP)",
-    quirks: "HealthSpring plans in some states. Confirm plan vs entity name.",
-  },
-  {
-    carrier: "Devoted Health",
-    mbi: "Required before enrollment",
-    method: "Agent portal, phone",
-    release: "Early Oct (AEP)",
-    quirks: "No paper apps. Agent portal only. Strong concierge model.",
-  },
-  {
-    carrier: "WellCare (Centene)",
-    mbi: "Required before enrollment",
-    method: "Broker portal, Sunfire, phone",
-    release: "Late Sept (AEP)",
-    quirks: "Some Ambetter crossover. Confirm the correct entity for MA vs ACA.",
-  },
-  {
-    carrier: "Mutual of Omaha",
-    mbi: "N/A (MedSup)",
-    method: "Agent portal, paper",
-    release: "N/A (year-round)",
-    quirks: "MedSup only. No MA plans. Issue-age in most states.",
-  },
-];
-
-const TIMELINE_PERIODS = [
-  { label: "AEP", start: "Oct 15", end: "Dec 7", color: "#E8002D", desc: "Annual Enrollment Period for MA and PDP changes." },
-  { label: "OEP", start: "Jan 1", end: "Mar 31", color: "#FFD700", desc: "Open Enrollment for MA members only, one change." },
-  { label: "IEP", start: "3 mo before 65th", end: "3 mo after 65th", color: "#39FF88", desc: "Initial Enrollment Period for first-time Medicare." },
-  { label: "GI", start: "6 mo window", end: "From Part B start", color: "#22D3EE", desc: "Medigap guaranteed issue with no health questions." },
-];
-
 const TOOL_GROUPS = [
   {
     id: "sales",
     label: "Sales & Objections",
     color: "#e8372c",
     tools: [
-      {
-        id: "objection-handler",
-        title: "Objection Handler",
-        description: "Live rebuttal library for common resistance and compliance-safe pivots.",
-        icon: <Shield size={16} />,
-      },
-      {
-        id: "product-decision-tree",
-        title: "Product Decision Tree",
-        description: "Fast routing for Medicare, ACA, U65, and MedSup fit checks.",
-        icon: <Zap size={16} />,
-      },
       {
         id: "ma-seps",
         title: "MA SEPs",
@@ -384,12 +176,6 @@ const TOOL_GROUPS = [
         icon: <FileText size={16} />,
         badge: "new",
       },
-      {
-        id: "fema-disaster-sep-zones",
-        title: "FEMA Disaster SEP Zones",
-        description: "Disaster SEP map plus Medicaid state view for quick eligibility context.",
-        icon: <Map size={16} />,
-      },
     ],
   },
   {
@@ -403,12 +189,6 @@ const TOOL_GROUPS = [
         description: "Official enrollment, disenrollment, Medicaid, and Extra Help links.",
         icon: <UserCheck size={16} />,
       },
-      {
-        id: "provider-drug-checks",
-        title: "Provider & Drug Checks",
-        description: "Provider, NPI, exclusion, and pharmacy network references.",
-        icon: <Stethoscope size={16} />,
-      },
     ],
   },
   {
@@ -421,19 +201,6 @@ const TOOL_GROUPS = [
         title: "Carrier Portals",
         description: "Portal launchpad for MBI lookups, enrollment platforms, and carrier access.",
         icon: <Building2 size={16} />,
-      },
-    ],
-  },
-  {
-    id: "utilities",
-    label: "Quick Utilities",
-    color: "#9b59b6",
-    tools: [
-      {
-        id: "quick-utilities",
-        title: "Quick Utilities",
-        description: "SEP calculator, doc checklist, quick copy, timeline, and carrier notes.",
-        icon: <Zap size={16} />,
       },
     ],
   },
@@ -488,160 +255,6 @@ function CarrierIcon({ type }) {
   };
 
   return iconMap[type] || <Building2 {...shared} color="#cbd5e1" />;
-}
-
-function CompliancePrompts() {
-  const [copied, setCopied] = useState(null);
-
-  const handleCopy = (text, label) => {
-    navigator.clipboard.writeText(text);
-    setCopied(label);
-    window.setTimeout(() => setCopied(null), 1800);
-  };
-
-  return (
-    <div className="at-compliance-grid">
-      {COMPLIANCE_PROMPTS.map((prompt) => (
-        <button
-          key={prompt.label}
-          className="at-compliance-btn"
-          onClick={() => handleCopy(prompt.text, prompt.label)}
-          type="button"
-        >
-          <span className="at-compliance-label">{prompt.label}</span>
-          <span className="at-compliance-status">
-            {copied === prompt.label ? "Copied" : "Copy"}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function SEPCalculator() {
-  const [reason, setReason] = useState("");
-  const selectedRule = SEP_DATE_RULES.find((rule) => rule.reason === reason);
-
-  return (
-    <div className="at-calc">
-      <div className="at-calc-label">SEP Reason</div>
-      <select
-        className="at-calc-select"
-        value={reason}
-        onChange={(event) => setReason(event.target.value)}
-      >
-        <option value="">Select SEP type...</option>
-        {SEP_DATE_RULES.map((rule) => (
-          <option key={rule.reason} value={rule.reason}>
-            {rule.reason}
-          </option>
-        ))}
-      </select>
-      {selectedRule ? (
-        <div className="at-calc-result">
-          <span className="at-calc-result-label">Effective Date Rule</span>
-          <span className="at-calc-result-value">{selectedRule.effective}</span>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function DocChecklist() {
-  const [scenario, setScenario] = useState("");
-  const selectedChecklist = DOC_CHECKLISTS.find((item) => item.scenario === scenario);
-
-  return (
-    <div className="at-calc">
-      <div className="at-calc-label">Enrollment Scenario</div>
-      <select
-        className="at-calc-select"
-        value={scenario}
-        onChange={(event) => setScenario(event.target.value)}
-      >
-        <option value="">Select scenario...</option>
-        {DOC_CHECKLISTS.map((item) => (
-          <option key={item.scenario} value={item.scenario}>
-            {item.scenario}
-          </option>
-        ))}
-      </select>
-      {selectedChecklist ? (
-        <div className="at-checklist">
-          {selectedChecklist.docs.map((doc) => (
-            <label key={doc} className="at-checklist-item">
-              <input type="checkbox" />
-              <span>{doc}</span>
-            </label>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function TimelineBar() {
-  return (
-    <div className="at-timeline">
-      {TIMELINE_PERIODS.map((period) => (
-        <div key={period.label} className="at-timeline-row">
-          <div
-            className="at-timeline-badge"
-            style={{
-              background: `${period.color}18`,
-              border: `1px solid ${period.color}40`,
-              color: period.color,
-            }}
-          >
-            {period.label}
-          </div>
-          <div className="at-timeline-range">
-            {period.start} - {period.end}
-          </div>
-          <div className="at-timeline-desc">{period.desc}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function CarrierMatrix() {
-  const [expandedCarrier, setExpandedCarrier] = useState(null);
-
-  return (
-    <div className="at-matrix">
-      {CARRIER_NOTES.map((carrier) => (
-        <div
-          key={carrier.carrier}
-          className="at-matrix-row"
-          data-open={expandedCarrier === carrier.carrier || undefined}
-          onClick={() =>
-            setExpandedCarrier((current) =>
-              current === carrier.carrier ? null : carrier.carrier
-            )
-          }
-        >
-          <div className="at-matrix-header">
-            <span className="at-matrix-name">{carrier.carrier}</span>
-            <span className="at-matrix-mbi">{carrier.mbi}</span>
-          </div>
-          {expandedCarrier === carrier.carrier ? (
-            <div className="at-matrix-detail">
-              <div>
-                <span className="at-matrix-key">Enrollment Method:</span> {carrier.method}
-              </div>
-              <div>
-                <span className="at-matrix-key">AEP Plan Release:</span> {carrier.release}
-              </div>
-              <div>
-                <span className="at-matrix-key">Notes:</span> {carrier.quirks}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      ))}
-    </div>
-  );
 }
 
 function SEPReference({ script }) {
@@ -1005,52 +618,6 @@ function CitizenshipDocsReference({
   );
 }
 
-function QuickUtilitiesPanel() {
-  return (
-    <div className="at-util-stack">
-      <div className="at-util-block">
-        <div className="at-util-header">
-          <CalendarDays size={13} />
-          <span>SEP Effective Date Calculator</span>
-        </div>
-        <SEPCalculator />
-      </div>
-
-      <div className="at-util-block">
-        <div className="at-util-header">
-          <CalendarDays size={13} />
-          <span>OEP / AEP / IEP Timeline</span>
-        </div>
-        <TimelineBar />
-      </div>
-
-      <div className="at-util-block">
-        <div className="at-util-header">
-          <CheckSquare size={13} />
-          <span>Doc Checklist by Scenario</span>
-        </div>
-        <DocChecklist />
-      </div>
-
-      <div className="at-util-block">
-        <div className="at-util-header">
-          <ClipboardCheck size={13} />
-          <span>Compliance Quick Copy</span>
-        </div>
-        <CompliancePrompts />
-      </div>
-
-      <div className="at-util-block">
-        <div className="at-util-header">
-          <FileText size={13} />
-          <span>Carrier Note Matrix</span>
-        </div>
-        <CarrierMatrix />
-      </div>
-    </div>
-  );
-}
-
 function CarrierPortalPanel() {
   return (
     <div className="at-carrier-grid">
@@ -1071,43 +638,10 @@ function CarrierPortalPanel() {
   );
 }
 
-function FemaDisasterPanel({ mapsLoaded, onLoadMaps }) {
-  return !mapsLoaded ? (
-    <div className="at-map-prompt">
-      <p>Maps are large. Load them only when you need them.</p>
-      <button className="at-map-load-btn" onClick={onLoadMaps} type="button">
-        Load Maps
-      </button>
-    </div>
-  ) : (
-    <div className="at-map-stack">
-      <h4 className="at-map-title">FEMA Disaster SEP Zones</h4>
-      <iframe
-        src="https://www.google.com/maps/d/embed?mid=1XUQ3Haav_eI8jD4lNnXErKMni_gyPMk&ehbc=2E312F"
-        width="100%"
-        height="500"
-        style={{ border: 0, borderRadius: 12 }}
-        loading="lazy"
-        title="FEMA Disaster SEP Zones"
-      />
-      <h4 className="at-map-title">Medicaid Eligibility by State</h4>
-      <iframe
-        src="https://www.google.com/maps/d/u/0/embed?mid=14aNMdQKllgQH1P81J-0U9pIoiqjLD7g&ehbc=2E312F"
-        width="100%"
-        height="500"
-        style={{ border: 0, borderRadius: 12 }}
-        loading="lazy"
-        title="Medicaid Eligibility by State"
-      />
-    </div>
-  );
-}
-
 export default function AgentTools() {
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedToolId, setSelectedToolId] = useState(null);
-  const [mapsLoaded, setMapsLoaded] = useState(false);
   const [citizenshipReference, setCitizenshipReference] = useState(null);
   const [citizenshipLoading, setCitizenshipLoading] = useState(true);
   const [citizenshipLoadError, setCitizenshipLoadError] = useState("");
@@ -1185,10 +719,6 @@ export default function AgentTools() {
 
   const modalContent = useMemo(() => {
     switch (selectedToolId) {
-      case "objection-handler":
-        return <ObjectionHandler />;
-      case "product-decision-tree":
-        return <DecisionTree singleCardMode embedded />;
       case "official-references":
         return <LinkGrid items={OFFICIAL_REFS} />;
       case "citizenship-immigration-docs":
@@ -1207,21 +737,10 @@ export default function AgentTools() {
             onBack={() => setCitizenshipDocType("")}
           />
         );
-      case "fema-disaster-sep-zones":
-        return (
-          <FemaDisasterPanel
-            mapsLoaded={mapsLoaded}
-            onLoadMaps={() => setMapsLoaded(true)}
-          />
-        );
       case "eligibility-enrollment":
         return <LinkGrid items={ENROLLMENT_TOOLS} />;
-      case "provider-drug-checks":
-        return <LinkGrid items={PROVIDER_TOOLS} />;
       case "carrier-portals":
         return <CarrierPortalPanel />;
-      case "quick-utilities":
-        return <QuickUtilitiesPanel />;
       case "ma-seps":
         return <SEPReference script={NGHS_SEP_SCRIPT} />;
       case "sep-guide-2026":
@@ -1236,7 +755,6 @@ export default function AgentTools() {
     citizenshipLoadError,
     citizenshipStatus,
     citizenshipDocType,
-    mapsLoaded,
   ]);
 
   return (

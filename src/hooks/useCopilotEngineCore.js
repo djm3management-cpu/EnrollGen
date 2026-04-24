@@ -198,7 +198,7 @@ export function useCopilotEngineCore({
     serviceIssuePopupCooldownMs = 60000,
   } = config;
 
-  const { logEntry, setEntryFeedback, exportFeedbackDataset, entries } = useCopilotLog();
+  const { logEntry, setEntryFeedback, exportFeedbackDataset, entries, clearLog } = useCopilotLog();
   const { getToken } = useAppAuth();
 
   /* ─── State ─── */
@@ -360,7 +360,8 @@ export function useCopilotEngineCore({
     coachingAbortRef.current?.abort();
     askAbortRef.current?.abort();
     clearServiceIssue();
-  }, [clearServiceIssue]);
+    clearLog();
+  }, [clearServiceIssue, clearLog]);
 
   /* ─── Unmount cleanup ─── */
   useEffect(() => () => {
