@@ -31,13 +31,14 @@ import {
   getDailyDateLabel,
 } from "../data/dailyVerseSelections";
 import { VERSE_THEMES, pickRandomVerseForTheme } from "../data/verseThemes";
-import { fetchCrossReferences, fetchBibliaContent } from "../lib/bibliaApi";
+import { fetchBibliaContent } from "../lib/bibliaApi";
+import { getCrossReferences } from "../data/verseCrossReferences";
 
 const TRANSLATIONS = [
   { id: "kjv", label: "KJV", full: "King James Version", source: "bible-api" },
-  { id: "nlt", label: "NLT", full: "New Living Translation", source: "biblia" },
-  { id: "asv", label: "ASV", full: "American Standard Version", source: "bible-api" },
+  { id: "leb", label: "LEB", full: "Lexham English Bible", source: "biblia" },
   { id: "web", label: "WEB", full: "World English Bible", source: "bible-api" },
+  { id: "asv", label: "ASV", full: "American Standard Version", source: "bible-api" },
   { id: "bbe", label: "BBE", full: "Bible in Basic English", source: "bible-api" },
   { id: "darby", label: "Darby", full: "Darby Translation", source: "bible-api" },
   { id: "ylt", label: "YLT", full: "Young's Literal Translation", source: "bible-api" },
@@ -166,7 +167,7 @@ export default function DailyVerse() {
   const [fadeKey, setFadeKey] = useState(0);
 
   const [parallelMode, setParallelMode] = useState(true);
-  const [parallelTranslation, setParallelTranslation] = useState("nlt");
+  const [parallelTranslation, setParallelTranslation] = useState("leb");
   const [parallelVerse, setParallelVerse] = useState(null);
   const [parallelLoading, setParallelLoading] = useState(false);
 
@@ -384,26 +385,13 @@ export default function DailyVerse() {
     return () => controller.abort();
   }, [contextOpen, verse?.reference, translation]);
 
-  /* cross-references fetch */
+  /* cross-references (local curated set) */
   useEffect(() => {
     if (!crossRefsOpen || !verse?.reference) {
       return;
     }
-    const controller = new AbortController();
-    setCrossRefsLoading(true);
-    setCrossRefs(null);
-    fetchCrossReferences(verse.reference, { signal: controller.signal })
-      .then((refs) => setCrossRefs(refs))
-      .catch((err) => {
-        if (err?.name !== "AbortError") {
-          console.error("Cross-refs failed", err);
-          setCrossRefs([]);
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setCrossRefsLoading(false);
-      });
-    return () => controller.abort();
+    setCrossRefsLoading(false);
+    setCrossRefs(getCrossReferences(verse.reference));
   }, [crossRefsOpen, verse?.reference]);
 
   /* close dropdowns on outside click */
@@ -1064,7 +1052,22 @@ export default function DailyVerse() {
                   ))}
                 </ul>
               ) : (
-                <p className="dv-context-loading">No cross-references found.</p>
+                <div className="dv-crossrefs-fallback">
+                  <p className="dv-context-loading">
+                    No curated references for this verse yet.
+                  </p>
+                  <a
+                    className="dv-crossrefs-item"
+                    href={`https://www.blueletterbible.org/search/preSearch.cfm?Criteria=${encodeURIComponent(
+                      verse?.reference || ""
+                    )}&t=KJV`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Link2 size={10} />
+                    <span>Explore on Blue Letter Bible</span>
+                  </a>
+                </div>
               )}
             </div>
           )}
