@@ -119,12 +119,11 @@ const S = {
     marginTop: 2,
   },
   card: {
-    background: "linear-gradient(180deg, #111111 0%, #0C0C0C 100%)",
-    border: "1px solid rgba(255,255,255,0.07)",
-    borderRadius: 14,
+    background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    borderRadius: 16,
     padding: 20,
-    boxShadow:
-      "0 1px 3px rgba(0,0,0,0.7), 0 6px 16px rgba(0,0,0,0.6), 0 16px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+    boxShadow: "0 10px 24px rgba(0,0,0,0.36)",
   },
   filterBar: {
     display: "flex",
