@@ -6,38 +6,38 @@ const SNP_MEDICAID_META = {
   },
   partial_qmb_only: {
     bucket: "partial_dual",
-    label: "Partial (QMB-only)",
-    headerLabel: "Partial (QMB-only)",
+    label: "QMB-Only (Partial)",
+    headerLabel: "QMB-Only (Partial)",
   },
   partial_slmb_only: {
     bucket: "partial_dual",
-    label: "Partial (SLMB-only)",
-    headerLabel: "Partial (SLMB-only)",
+    label: "SLMB-Only (Partial)",
+    headerLabel: "SLMB-Only (Partial)",
   },
   partial_qi: {
     bucket: "partial_dual",
-    label: "Partial (QI)",
-    headerLabel: "Partial (QI)",
+    label: "QI (Partial)",
+    headerLabel: "QI (Partial)",
   },
   partial_qdwi: {
     bucket: "partial_dual",
-    label: "Partial (QDWI)",
-    headerLabel: "Partial (QDWI)",
+    label: "QDWI (Partial)",
+    headerLabel: "QDWI (Partial)",
   },
   full_qmb_plus: {
     bucket: "full_dual",
-    label: "Full Dual (QMB+)",
-    headerLabel: "Full Dual (QMB+)",
+    label: "QMB+ (Full Dual)",
+    headerLabel: "QMB+ (Full Dual)",
   },
   full_slmb_plus: {
     bucket: "full_dual",
-    label: "Full Dual (SLMB+)",
-    headerLabel: "Full Dual (SLMB+)",
+    label: "SLMB+ (Full Dual)",
+    headerLabel: "SLMB+ (Full Dual)",
   },
   full_fbde: {
     bucket: "full_dual",
-    label: "Full Dual (FBDE)",
-    headerLabel: "Full Dual (FBDE)",
+    label: "FBDE (Full Dual)",
+    headerLabel: "FBDE (Full Dual)",
   },
 };
 

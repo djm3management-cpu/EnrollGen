@@ -8,7 +8,7 @@ const QuickNotes = memo(function QuickNotes({
   placeholder = "Type notes here...",
 }) {
   return (
-    <div className="agent-notes-widget">
+    <div className="agent-notes-widget agent-notes-widget--separated">
       <div className="agent-notes-widget-header">
         <div className="agent-notes-widget-title-group">
           <span className="agent-notes-widget-icon" aria-hidden="true">
@@ -18,7 +18,7 @@ const QuickNotes = memo(function QuickNotes({
         </div>
       </div>
 
-      <div className="agent-notes-widget-body">
+      <div className="agent-notes-widget-body agent-notes-widget-body--counted">
         <textarea
           className="agent-notes-widget-input right-rail-scroll"
           value={value}
@@ -26,6 +26,7 @@ const QuickNotes = memo(function QuickNotes({
           placeholder={placeholder}
           aria-label={title}
         />
+        <span className="agent-notes-char-count">{value.length}</span>
       </div>
     </div>
   );

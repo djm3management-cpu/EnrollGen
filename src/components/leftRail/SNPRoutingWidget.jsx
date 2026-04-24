@@ -147,9 +147,15 @@ export default function SNPRoutingWidget() {
     setShowSepLanes(false);
   }, [recommendation?.routeLabel, recommendation?.selectedPlanLabel]);
 
+  const filledRequired = [medicaidStatus, chronicCondition, memberPriority].filter(Boolean).length;
+  const filledAll = filledRequired + (zip.length === 5 ? 1 : 0);
+  const zipInvalid = zip.length > 0 && zip.length < 5;
+
   const headerStatus = recommendation
-    ? { label: "Recommendation Ready", tone: "ready" }
-    : { label: "Not Started", tone: "idle" };
+    ? { label: "QUALIFIED", tone: "ready" }
+    : routeReady
+      ? { label: "EVALUATING", tone: "ready" }
+      : { label: "NOT STARTED", tone: "idle" };
   const headerTitle = medicaidHeaderLabel
     ? `SNP Routing - ${medicaidHeaderLabel}`
     : "SNP Routing";
@@ -172,7 +178,7 @@ export default function SNPRoutingWidget() {
         </div>
 
         <div className="snp-routing-widget-header-meta">
-          <span className={`snp-routing-widget-status is-${headerStatus.tone}`}>
+          <span className={`snp-routing-status-pill is-${headerStatus.tone}`}>
             {headerStatus.label}
           </span>
           <ChevronDown
@@ -184,11 +190,24 @@ export default function SNPRoutingWidget() {
 
       {!collapsed ? (
         <div className="agent-notes-widget-body snp-routing-widget-body">
+          <div className="snp-routing-progress-bar">
+            <div
+              className="snp-routing-progress-fill"
+              style={{ width: `${(filledAll / 4) * 100}%` }}
+            />
+            <span className="snp-routing-progress-label">
+              {filledRequired}/3 required{filledAll > filledRequired ? ` \u00B7 ${filledAll}/4 all` : ""}
+            </span>
+          </div>
+
           <div className="snp-routing-fields">
-            <div className="field-group snp-routing-field-group">
-              <label className="field-label snp-routing-field-label">Medicaid Status</label>
+            <div className="snp-routing-data-cell">
+              <label className="snp-routing-cell-label">
+                <span className={`snp-routing-field-dot${medicaidStatus ? " is-filled" : ""}`} />
+                Medicaid Status
+              </label>
               <select
-                className="input-dark snp-routing-select"
+                className="snp-routing-cell-input"
                 value={medicaidStatus}
                 onChange={(event) => setMedicaidStatus(event.target.value)}
               >
@@ -200,10 +219,13 @@ export default function SNPRoutingWidget() {
               </select>
             </div>
 
-            <div className="field-group snp-routing-field-group">
-              <label className="field-label snp-routing-field-label">Chronic Condition</label>
+            <div className="snp-routing-data-cell">
+              <label className="snp-routing-cell-label">
+                <span className={`snp-routing-field-dot${chronicCondition ? " is-filled" : ""}`} />
+                Chronic Condition
+              </label>
               <select
-                className="input-dark snp-routing-select"
+                className="snp-routing-cell-input"
                 value={chronicCondition}
                 onChange={(event) => setChronicCondition(event.target.value)}
               >
@@ -215,10 +237,13 @@ export default function SNPRoutingWidget() {
               </select>
             </div>
 
-            <div className="field-group snp-routing-field-group">
-              <label className="field-label snp-routing-field-label">Member Priority</label>
+            <div className="snp-routing-data-cell">
+              <label className="snp-routing-cell-label">
+                <span className={`snp-routing-field-dot${memberPriority ? " is-filled" : ""}`} />
+                Member Priority
+              </label>
               <select
-                className="input-dark snp-routing-select"
+                className="snp-routing-cell-input"
                 value={memberPriority}
                 onChange={(event) => setMemberPriority(event.target.value)}
               >
@@ -232,13 +257,16 @@ export default function SNPRoutingWidget() {
           </div>
 
           <div className="snp-routing-supporting-fields">
-            <div className="field-group snp-routing-field-group">
-              <label className="field-label snp-routing-field-label">Member ZIP (optional)</label>
+            <div className="snp-routing-data-cell">
+              <label className="snp-routing-cell-label">
+                <span className={`snp-routing-field-dot${zip.length === 5 ? " is-filled" : ""}`} />
+                Member Zip
+              </label>
               <input
-                className="input-dark"
+                className={`snp-routing-cell-input${zipInvalid ? " is-invalid" : ""}`}
                 inputMode="numeric"
                 maxLength={5}
-                placeholder="Enter 5-digit zip"
+                placeholder="00000"
                 value={zip}
                 onChange={(event) =>
                   setZip(event.target.value.replace(/\D/g, "").slice(0, 5))
@@ -247,13 +275,13 @@ export default function SNPRoutingWidget() {
             </div>
 
             {medicaidBucket === "full_dual" ? (
-              <div className="field-group snp-routing-field-group">
-                <label className="field-label snp-routing-field-label">
-                  Medicaid MCO (for D-SNP alignment)
+              <div className="snp-routing-data-cell">
+                <label className="snp-routing-cell-label">
+                  Medicaid MCO (D-SNP Alignment)
                 </label>
                 <input
-                  className="input-dark"
-                  placeholder="Optional Medicaid MCO name"
+                  className="snp-routing-cell-input"
+                  placeholder="Optional MCO name"
                   value={medicaidMco}
                   onChange={(event) => setMedicaidMco(event.target.value)}
                 />
@@ -261,12 +289,12 @@ export default function SNPRoutingWidget() {
             ) : null}
 
             {routeReady ? (
-              <div className="field-group snp-routing-field-group">
-                <label className="field-label snp-routing-field-label">
-                  Current MA Carrier (optional)
+              <div className="snp-routing-data-cell">
+                <label className="snp-routing-cell-label">
+                  Current MA Carrier
                 </label>
                 <select
-                  className="input-dark snp-routing-select"
+                  className="snp-routing-cell-input"
                   value={currentCarrier}
                   onChange={(event) => setCurrentCarrier(event.target.value)}
                 >
