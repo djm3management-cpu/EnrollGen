@@ -8134,7 +8134,8 @@ body[data-bg-mode="classic"] .viewport-bg {
   }
 
   .top-panel-overlay {
-    right: 314px;
+    width: min(960px, calc(100vw - var(--left-rail-width) - 404px));
+    right: auto;
   }
 }
 

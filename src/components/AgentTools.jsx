@@ -10,7 +10,6 @@ import {
   Landmark,
   RotateCw,
   Scale,
-  Search,
   Shield,
   UserCheck,
   X,
@@ -18,14 +17,6 @@ import {
 import SEPGuide2026 from "./SEPGuide2026";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 import "../AgentTools.css";
-
-const TOOL_TABS = [
-  { id: "all", label: "All Tools" },
-  { id: "sales", label: "Sales" },
-  { id: "reference", label: "Reference" },
-  { id: "enrollment", label: "Enrollment" },
-  { id: "carrier", label: "Carrier" },
-];
 
 const BADGE_STYLES = {
   new: { label: "NEW", background: "#e8372c33", color: "#e8372c" },
@@ -220,6 +211,13 @@ const TOOL_MAP = Object.fromEntries(
   )
 );
 
+const TOOL_LIST = TOOL_GROUPS.flatMap((group) =>
+  group.tools.map((tool) => ({
+    color: group.color,
+    ...tool,
+  }))
+);
+
 function LinkGrid({ items }) {
   return (
     <div className="at-link-grid">
@@ -309,27 +307,32 @@ function ToolCard({ tool, onOpen }) {
       onClick={() => onOpen(tool.id)}
       type="button"
     >
-      {badge ? (
+      <span className="at-tool-main">
         <span
-          className="at-card-badge"
-          style={{ background: badge.background, color: badge.color }}
+          className="at-tool-icon-badge"
+          style={{
+            color: tool.color,
+            background: `${tool.color}1a`,
+          }}
         >
-          {badge.label}
+          {tool.icon}
         </span>
-      ) : null}
 
-      <span
-        className="at-tool-icon-badge"
-        style={{
-          color: tool.color,
-          background: `${tool.color}1a`,
-        }}
-      >
-        {tool.icon}
+        <span className="at-tool-copy">
+          <span className="at-tool-title-row">
+            <span className="at-tool-title">{tool.title}</span>
+            {badge ? (
+              <span
+                className="at-card-badge"
+                style={{ background: badge.background, color: badge.color }}
+              >
+                {badge.label}
+              </span>
+            ) : null}
+          </span>
+          <span className="at-tool-desc">{tool.description}</span>
+        </span>
       </span>
-
-      <span className="at-tool-title">{tool.title}</span>
-      <span className="at-tool-desc">{tool.description}</span>
     </button>
   );
 }
@@ -639,8 +642,6 @@ function CarrierPortalPanel() {
 }
 
 export default function AgentTools() {
-  const [activeTab, setActiveTab] = useState("all");
-  const [search, setSearch] = useState("");
   const [selectedToolId, setSelectedToolId] = useState(null);
   const [citizenshipReference, setCitizenshipReference] = useState(null);
   const [citizenshipLoading, setCitizenshipLoading] = useState(true);
@@ -701,21 +702,7 @@ export default function AgentTools() {
     }
   }, [selectedToolId]);
 
-  const query = search.trim().toLowerCase();
   const selectedTool = selectedToolId ? TOOL_MAP[selectedToolId] : null;
-
-  const visibleGroups = useMemo(
-    () =>
-      TOOL_GROUPS.map((group) => ({
-        ...group,
-        tools: group.tools.filter((tool) => {
-          const matchesTab = activeTab === "all" || group.id === activeTab;
-          const matchesSearch = !query || tool.title.toLowerCase().includes(query);
-          return matchesTab && matchesSearch;
-        }),
-      })).filter((group) => group.tools.length),
-    [activeTab, query]
-  );
 
   const modalContent = useMemo(() => {
     switch (selectedToolId) {
@@ -759,51 +746,11 @@ export default function AgentTools() {
 
   return (
     <div className="at-root">
-      <div className="at-toolbar">
-        <div className="at-tab-row" role="tablist" aria-label="Agent tool filters">
-          {TOOL_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              className={`at-filter-tab${activeTab === tab.id ? " is-active" : ""}`}
-              onClick={() => setActiveTab(tab.id)}
-              type="button"
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="at-search-shell">
-          <Search size={15} className="at-search-icon" />
-          <input
-            type="text"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by tool title..."
-            className="at-search-input"
-          />
-          {search ? (
-            <button className="at-search-clear" onClick={() => setSearch("")} type="button">
-              <X size={13} />
-            </button>
-          ) : null}
-        </div>
+      <div className="at-card-list">
+        {TOOL_LIST.map((tool) => (
+          <ToolCard key={tool.id} tool={tool} onOpen={setSelectedToolId} />
+        ))}
       </div>
-
-      {visibleGroups.length ? (
-        visibleGroups.map((group) => (
-          <section key={group.id} className="at-group">
-            <div className="at-group-label">{group.label}</div>
-            <div className="at-card-grid">
-              {group.tools.map((tool) => (
-                <ToolCard key={tool.id} tool={{ color: group.color, ...tool }} onOpen={setSelectedToolId} />
-              ))}
-            </div>
-          </section>
-        ))
-      ) : (
-        <div className="at-empty">No tools match "{search}".</div>
-      )}
 
       <ToolModal tool={selectedTool} onClose={() => setSelectedToolId(null)}>
         {modalContent}

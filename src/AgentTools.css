@@ -5,6 +5,12 @@
   font-family: var(--font-body);
 }
 
+.at-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .at-toolbar {
   display: flex;
   flex-direction: column;
@@ -136,11 +142,10 @@
 .at-tool-card {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  width: 100%;
   min-height: 0;
-  padding: 10px;
+  padding: 12px 14px;
   border-radius: 8px;
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
@@ -156,10 +161,32 @@
   background: var(--bg-card-hover);
 }
 
+.at-tool-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.at-tool-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.at-tool-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
 .at-card-badge {
-  position: absolute;
-  top: 6px;
-  right: 6px;
+  flex-shrink: 0;
   padding: 2px 6px;
   border-radius: 999px;
   font-family: var(--font-display);
@@ -173,9 +200,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 5px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   flex-shrink: 0;
 }
 
