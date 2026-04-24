@@ -155,7 +155,7 @@ export default function DailyVerse() {
   const [verse, setVerse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [translation, setTranslation] = useState("web");
+  const [translation, setTranslation] = useState("ylt");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [commentaryOpen, setCommentaryOpen] = useState(false);
   const [bookData, setBookData] = useState(null);
