@@ -4755,6 +4755,16 @@ html {
   line-height: 1.65;
   color: var(--text-secondary);
 }
+.dv-parallel-fallback-note {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.55);
+}
 
 /* surrounding verses (context window) */
 .dv-context {

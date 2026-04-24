@@ -167,6 +167,7 @@ export default function DailyVerse() {
   const [parallelTranslation, setParallelTranslation] = useState("ylt");
   const [parallelVerse, setParallelVerse] = useState(null);
   const [parallelLoading, setParallelLoading] = useState(false);
+  const [parallelFallbackTrans, setParallelFallbackTrans] = useState(null);
 
   const [contextOpen, setContextOpen] = useState(false);
   const [contextVerses, setContextVerses] = useState(null);
@@ -328,28 +329,45 @@ export default function DailyVerse() {
     return () => controller.abort();
   }, [bookData?.testament, verse?.reference]);
 
-  /* parallel translation fetch */
+  /* parallel translation fetch with WEB fallback for gaps */
   useEffect(() => {
     if (!parallelMode || !verse?.reference || parallelTranslation === translation) {
       setParallelVerse(null);
+      setParallelFallbackTrans(null);
       return;
     }
     const controller = new AbortController();
     setParallelLoading(true);
-    const loader =
-      getTranslationSource(parallelTranslation) === "biblia"
-        ? fetchBibliaContent(verse.reference, parallelTranslation, {
-            signal: controller.signal,
-          })
-        : fetch(
-            `https://bible-api.com/${encodeURIComponent(verse.reference)}?translation=${parallelTranslation}`,
-            { signal: controller.signal }
-          ).then((res) => (res.ok ? res.json() : Promise.reject()));
+    setParallelFallbackTrans(null);
 
-    loader
-      .then((data) => setParallelVerse(data))
-      .catch((err) => {
-        if (err?.name !== "AbortError") setParallelVerse(null);
+    const fetchOne = (trans) => {
+      if (getTranslationSource(trans) === "biblia") {
+        return fetchBibliaContent(verse.reference, trans, {
+          signal: controller.signal,
+        });
+      }
+      return fetch(
+        `https://bible-api.com/${encodeURIComponent(verse.reference)}?translation=${trans}`,
+        { signal: controller.signal }
+      ).then((res) => (res.ok ? res.json() : Promise.reject(new Error(`${trans} ${res.status}`))));
+    };
+
+    fetchOne(parallelTranslation)
+      .then((data) => {
+        setParallelVerse(data);
+        setParallelFallbackTrans(null);
+      })
+      .catch(async (err) => {
+        if (err?.name === "AbortError") return;
+        // fallback: pick an alternate that's not the main translation
+        const fallback = translation === "web" ? "kjv" : "web";
+        try {
+          const data = await fetchOne(fallback);
+          setParallelVerse(data);
+          setParallelFallbackTrans(fallback);
+        } catch (err2) {
+          if (err2?.name !== "AbortError") setParallelVerse(null);
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setParallelLoading(false);
@@ -880,6 +898,12 @@ export default function DailyVerse() {
                     ? "Loading…"
                     : parallelVerse?.text?.trim() || "Unavailable in this translation."}
                 </p>
+                {parallelFallbackTrans && !parallelLoading && (
+                  <span className="dv-parallel-fallback-note">
+                    {currentParallelTrans?.label} missing this verse — showing{" "}
+                    {parallelFallbackTrans.toUpperCase()}
+                  </span>
+                )}
               </div>
             )}
 
