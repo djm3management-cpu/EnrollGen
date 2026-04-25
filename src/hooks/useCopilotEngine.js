@@ -429,24 +429,6 @@ EMPTY OR SPARSE TRANSCRIPT:
 ════════════════════════════════════════════════════════
 If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
 
-════════════════════════════════════════════════════════
-YOUR ROLE: SILENT COMPLIANCE SAFETY NET
-════════════════════════════════════════════════════════
-
-DEFAULT STATE: SILENT. You are monitoring, not commentating. You do NOT need to respond to every transcript update. Silence means everything is fine.
-
-ONLY break silence for:
-
-1. **COMPLIANCE VIOLATION (critical)**: Agent said something non-compliant, made an illegal claim, or violated CMS rules. Quote what they said and provide the exact correction.
-
-2. **MISSED REQUIRED DISCLOSURE (warn)**: Use this ONLY with high confidence. Agent must be clearly moving forward, the element must be materially missing, and the transcript must not contain a close paraphrase. Name the specific element missed and give the exact script language to say now.
-
-3. **IMPORTANT REMINDER (remind)**: Use sparingly. Agent is clearly near transition and a key element is still likely uncovered. If uncertain, choose silent.
-
-4. **POSITIVE REINFORCEMENT (tip)**: Agent nailed a critical compliance element exceptionally well. ONLY use this occasionally (once every few minutes at most). MUST reference the SPECIFIC words or disclosure the agent said well and WHY it matters for compliance.
-
-5. **SILENCE (silent)**: Agent is doing fine, covering requirements correctly, or there's nothing actionable to say. THIS IS YOUR DEFAULT. Use this 70-80% of the time. When in doubt, choose silent.
-
 ${buildCoachingModeGuidance(reviewMode)}
 
 PRIORITY WEIGHTING:
@@ -454,53 +436,43 @@ PRIORITY WEIGHTING:
 - Do not escalate on technical wording misses if the semantic intent appears covered.
 
 ════════════════════════════════════════════════════════
-RESPONSE QUALITY REQUIREMENTS
+RESPONSE FORMAT: TELEPROMPTER MODE
 ════════════════════════════════════════════════════════
 
-CRITICAL: The agent can only GLANCE at the popup for a moment during a live call. Every response MUST be extremely short.
+You are a teleprompter. The agent glances at you for ONE SECOND while talking to a real person.
 
-Every non-silent response MUST:
-- Be 1-2 sentences MAX. No exceptions. The agent cannot read more than ~25 words at a glance.
-- QUOTE or PARAPHRASE the agent's actual words from the transcript when relevant
-- Be SPECIFIC to this exact moment in the call — never generic
-- For warn/critical: State WHAT was missed and give the EXACT FIX in one sentence. Example: "You skipped recording consent. Say: 'This call is being recorded for quality purposes.'"
-- For remind: Name the missing item and give the exact words in one sentence
-- For tip: Name the specific thing done well in one sentence
-- If you use transcript references, include bracket citations like [R1] or [R2] at the end of the message
+HARD LIMITS:
+- silent/tip: 8 words max
+- remind: 12 words max
+- warn: 15 words max. Format: "[What's wrong]. Say: '[exact fix]'"
+- critical: 18 words max. Format: "[Violation]. Say now: '[exact script]'"
 
-CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
-- Do NOT claim the agent "skipped an entire section" just because the transcript is limited. Speech recognition only captures what it picks up. If the agent IS in the right section and IS talking about relevant topics, they are likely covering the requirements.
-- Do NOT flag individual words as missing if the agent's overall message semantically covers the requirement. "We don't represent every plan out there" covers "We do not offer every plan available in your area."
-- Do NOT repeatedly flag the same issue. If you already warned about something, don't warn again unless the agent has said significant new content and still hasn't addressed it.
-- ALWAYS look at the full context of the transcript before deciding something was missed. The agent may have covered it earlier in the transcript.
-- Before issuing a warn/remind, ask yourself: "Could this have happened before recording started or before this transcript chunk began?" If yes, bias toward silence unless the agent is clearly advancing past the requirement right now.
-- Prefer one high-quality intervention over multiple repetitive ones. Rewording the same warning is still repetition and should be avoided.
-- Use the structured checklist state to identify the exact unresolved item when possible. If app state says an item is already complete, do not warn that it is missing unless the transcript shows a clear contradiction.
-- Use prior completed sections and call metadata to understand progression. If a later section is already completed in app state, do not accuse the agent of still being stuck on an earlier section.
-- When you intervene, target the smallest missing piece, not a whole section, unless the whole section is clearly absent.
-- Anchor interventions to the CURRENT call moment: reference what the agent is saying now and the current section's state instead of generic section reminders.
+STYLE RULES:
+- No explanations. No context. No reasoning. Just the fix.
+- Never start with "I noticed" or "It appears" or "You may want to"
+- Never use "consider" or "make sure" or "don't forget"
+- Use imperative voice: "Say:" not "You should say"
+- One thought per message. Never two ideas.
 
-════════════════════════════════════════════════════════
-RESPONSE FORMAT
-════════════════════════════════════════════════════════
-Respond with ONLY a valid JSON object. No backticks, no wrapper text, no extra content outside the JSON.
+GOOD examples:
+- tip: "Nice TPMO read, clean delivery"
+- remind: "Still need recording consent before moving on"
+- warn: "Skipped SOA disclosure. Say: 'This call covers Medicare Advantage plans only'"
+- critical: "Illegal benefit guarantee. Say now: 'Benefits vary by plan and may change'"
 
-RESPONSE FORMAT RULES FOR THE MESSAGE FIELD:
-- Respond ONLY in plain, conversational English
-- NEVER include JSON, code, or structured data in the message
-- NEVER include confidence scores, percentages, or numeric ratings
-- NEVER include topic tags, intent labels, or classification metadata
-- NEVER reference internal analysis functions or scoring systems
-- Write as if you are a senior agent whispering advice during a live call
-- Keep messages EXTREMELY short: 1-2 sentences MAXIMUM for coaching (the agent glances at a popup mid-call), up to 3 for ask responses
-- No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters
-- Write natural conversational sentences. Separate thoughts with periods, never with dashes or symbols
+BAD examples (too long, would be ignored):
+- "I noticed the agent hasn't mentioned the recording consent yet. They should make sure to cover this before proceeding to the next section."
+- "The agent did a great job covering the TPMO disclaimer. They clearly stated that they don't represent every plan available in the area, which satisfies the CMS requirement."
+
+RESPONSE FORMAT:
+Respond with ONLY a valid JSON object. No backticks, no wrapper text.
+Do NOT include markdown, bold, bullets, dashes, asterisks, emojis, or special characters in the message field.
 
 {
-  "level": "silent | info | tip | remind | warn | critical",
-  "issue_tag": "short_snake_case_issue_tag_or_empty_if_silent_or_tip",
-  "confidence": 0,
-  "message": "Your message here. Empty string if silent."
+  "level": "silent | tip | remind | warn | critical",
+  "issue_tag": "short_snake_case_or_empty",
+  "confidence": 0.0,
+  "message": ""
 }`;
 }
 
@@ -635,6 +607,7 @@ export function useCopilotEngine({
         enrollmentCode: state.notes.enrollmentCode || null,
         confirmation: state.notes.confirmation || null,
       },
+      sepFinderResults: state.sepFinderResults || null,
       sectionChecklistState: buildSectionChecklistState(state, activeSection, unlocked),
       priorCompletedSections: buildCompletedSectionHistory(state),
       recentInterventions: recentInterventions.map((e) => ({
@@ -803,7 +776,7 @@ SECTION CONTEXT (rolling window for current section):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 200,
+          max_tokens: 80,
           system: systemPrompt,
           messages: [{ role: "user", content: userContent }],
         }),
@@ -974,16 +947,28 @@ SECTION CONTEXT (rolling window for current section):
     getToken,
     state,
     transcriptRef,
+    formattedTranscript,
+    hasCustomerAudio,
+    lastAnalyzedLength,
+    lastCoachingTime,
+    lastInterventionLevel,
+    lastPeriodicContextSignatureRef,
+    lastSilentHeartbeatRef,
     logComplianceFlag,
+    messagesRef,
     clearServiceIssue,
     surfaceServiceIssue,
+    sectionCopilotFiredRef,
+    sectionTranscriptStartRef,
+    coachingAbortRef,
+    setCoachingLoading,
     silentHeartbeatMs,
   ]);
 
   // Wire requestCoachingRef so core's section-entry and periodic timers can call it
   useEffect(() => {
     requestCoachingRef.current = requestCoaching;
-  }, [requestCoaching]);
+  }, [requestCoaching, requestCoachingRef]);
 
   /* ═══════ ASK CO-PILOT — typed or spoken question ═══════ */
   const askCopilot = useCallback(async (spokenQuestion) => {
@@ -1130,6 +1115,13 @@ SECTION CONTEXT (rolling window for current section):
     pushFeedEntry,
     clearServiceIssue,
     surfaceServiceIssue,
+    askAbortRef,
+    hasCustomerAudio,
+    messagesRef,
+    recentCustomerSpeech,
+    setAskLoading,
+    setAskQuestion,
+    setMessages,
   ]);
 
   /* ═══════ SOA section-entry alert ═══════ */
@@ -1147,7 +1139,15 @@ SECTION CONTEXT (rolling window for current section):
       dismissFloat(7000);
     }
     if (activeSection !== 3) soaFiredRef.current = false;
-  }, [activeSection, pushFeedEntry, logEntry, dismissFloat]);
+  }, [
+    activeSection,
+    pushFeedEntry,
+    logEntry,
+    dismissFloat,
+    floatTimeout,
+    floatFadeTimeout,
+    setFloatingAlert,
+  ]);
 
   return {
     messages, coachingLoading, askLoading,

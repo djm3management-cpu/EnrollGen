@@ -59,6 +59,7 @@ export const TranscriptTimer = memo(function TranscriptTimer({ startTime }) {
 const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = [], listening = false }) {
   const scrollRef = useRef(null);
   const [userScrolled, setUserScrolled] = useState(false);
+  const latestEntryTimestamp = mergedEntries.at(-1)?.timestamp;
 
   // Detect manual scroll — pause auto-scroll when user scrolls up
   useEffect(() => {
@@ -81,7 +82,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
         }
       });
     }
-  }, [mergedEntries.at(-1)?.timestamp, userScrolled]);
+  }, [latestEntryTimestamp, userScrolled]);
 
   const finals = mergedEntries
     .filter((e) => e.isFinal && e.text?.trim())

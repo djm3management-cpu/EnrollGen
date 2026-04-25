@@ -1,23 +1,23 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl =
-  import.meta.env.VITE_SUPABASE_URL ||
-  "https://qzjtagnpklaxefwurorc.supabase.co";
-const supabaseAnonKey =
-  import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6anRhZ25wa2xheGVmd3Vyb3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2ODY1NDQsImV4cCI6MjA4ODI2MjU0NH0.HLYREWlaqsMdhGqaoP2T2SP3SgAoxumKGG4aQuBzx4Q";
-const supabaseCmsUrl =
-  import.meta.env.VITE_SUPABASE_CMS_URL ||
-  "https://nrycpjspndvcxpnhuuun.supabase.co";
-const supabaseCmsAnonKey =
-  import.meta.env.VITE_SUPABASE_CMS_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yeWNwanNwbmR2Y3hwbmh1dXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzODA0MDcsImV4cCI6MjA4Njk1NjQwN30.fFd67FLCD2LVYRjECKldGXZwR_PzKY-tQdM3fh8Px60";
+function requiredEnv(name) {
+  const value = import.meta.env[name];
+  if (!value) {
+    throw new Error(`${name} is required`);
+  }
+  return value;
+}
+
+const supabaseUrl = requiredEnv("VITE_SUPABASE_URL");
+const supabaseAnonKey = requiredEnv("VITE_SUPABASE_ANON_KEY");
+const supabaseCmsUrl = import.meta.env.VITE_SUPABASE_CMS_URL || supabaseUrl;
+const supabaseCmsAnonKey = import.meta.env.VITE_SUPABASE_CMS_ANON_KEY || supabaseAnonKey;
 
 // Base client for unauthenticated/embedding queries (existing usage)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const supabaseCms = createClient(supabaseCmsUrl, supabaseCmsAnonKey);
 
-// Authenticated client factory — pass Clerk JWT for RLS
+// Authenticated client factory - pass Clerk JWT for RLS
 export function getAuthSupabase(token) {
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },

@@ -53,6 +53,19 @@ function renderCategoryIcon(icon, color = "#cbd5e1", size = 14) {
   return iconMap[icon] || <CheckSquare {...props} />;
 }
 
+const GATE_BOOLEAN_KEYS = [
+  "recordingOk",
+  "tpmoOk",
+  "soaOk",
+  "qualOk",
+  "neadsOk",
+  "sobOk",
+  "enrollOk",
+  "snpOk",
+];
+
+const DORMANT_COLOR = "#555";
+
 const ComplianceMini = memo(function ComplianceMini({
   transcript = "",
   activeSection = 1,
@@ -69,6 +82,10 @@ const ComplianceMini = memo(function ComplianceMini({
     [providedResult, state, entries, transcript]
   );
 
+  const transcriptEmpty = !(transcript || "").trim();
+  const noGatesCompleted = GATE_BOOLEAN_KEYS.every((key) => !state[key]);
+  const isDormant = transcriptEmpty && noGatesCompleted;
+
   useEffect(() => {
     if (
       prevScoreRef.current !== null &&
@@ -81,7 +98,7 @@ const ComplianceMini = memo(function ComplianceMini({
     prevScoreRef.current = result.score;
   }, [result.score]);
 
-  const scoreColor = getScoreColor(result.score);
+  const scoreColor = isDormant ? DORMANT_COLOR : getScoreColor(result.score);
   const isTranscriptScored =
     result.scoringMode !== "gate_only" && result.scoringMode !== "inactive";
   const violationCount =
@@ -167,7 +184,7 @@ const ComplianceMini = memo(function ComplianceMini({
                 minWidth: 30,
               }}
             >
-              {result.score}%
+              {isDormant ? "—" : `${result.score}%`}
             </span>
             <div
               style={{
@@ -178,27 +195,36 @@ const ComplianceMini = memo(function ComplianceMini({
                 overflow: "hidden",
               }}
             >
-              <div
-                style={{
-                  width: `${result.score}%`,
-                  height: "100%",
-                  borderRadius: 3,
-                  background: `linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #34d399 100%)`,
-                  backgroundSize: "200% 100%",
-                  backgroundPosition: `${100 - result.score}% 0`,
-                  transition: "width 0.6s ease, background-position 0.6s ease",
-                }}
-              />
+              {isDormant ? null : (
+                <div
+                  style={{
+                    width: `${result.score}%`,
+                    height: "100%",
+                    borderRadius: 3,
+                    background: `linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #34d399 100%)`,
+                    backgroundSize: "200% 100%",
+                    backgroundPosition: `${100 - result.score}% 0`,
+                    transition: "width 0.6s ease, background-position 0.6s ease",
+                  }}
+                />
+              )}
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: "0.58em", color: "#64748b" }}>
-              {result.categoriesPassed}/{result.totalCategories}
+            <span
+              style={{
+                fontSize: "0.58em",
+                color: isDormant ? DORMANT_COLOR : "#64748b",
+              }}
+            >
+              {isDormant
+                ? "0/0"
+                : `${result.categoriesPassed}/${result.totalCategories}`}
             </span>
-            {isTranscriptScored && (
+            {!isDormant && isTranscriptScored && (
               <Mic size={11} style={{ color: "#34d399" }} />
             )}
-            {violationCount > 0 && (
+            {!isDormant && violationCount > 0 && (
               <span
                 style={{
                   color: "#ef4444",
@@ -228,7 +254,7 @@ const ComplianceMini = memo(function ComplianceMini({
         {!collapsed && (
           <div>
             {result.categories.map((c) => {
-              const col = getScoreColor(c.score);
+              const col = isDormant ? DORMANT_COLOR : getScoreColor(c.score);
               return (
                 <div
                   key={c.name}
@@ -253,7 +279,7 @@ const ComplianceMini = memo(function ComplianceMini({
                     style={{
                       flex: 1,
                       fontSize: "0.66em",
-                      color: "#94a3b8",
+                      color: isDormant ? DORMANT_COLOR : "#94a3b8",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -271,15 +297,17 @@ const ComplianceMini = memo(function ComplianceMini({
                       flexShrink: 0,
                     }}
                   >
-                    <div
-                      style={{
-                        width: `${c.score}%`,
-                        height: "100%",
-                        background: col,
-                        borderRadius: 2,
-                        transition: "width 0.5s ease, background 0.3s",
-                      }}
-                    />
+                    {isDormant ? null : (
+                      <div
+                        style={{
+                          width: `${c.score}%`,
+                          height: "100%",
+                          background: col,
+                          borderRadius: 2,
+                          transition: "width 0.5s ease, background 0.3s",
+                        }}
+                      />
+                    )}
                   </div>
                   <span
                     style={{
@@ -291,12 +319,12 @@ const ComplianceMini = memo(function ComplianceMini({
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {c.score}%
+                    {isDormant ? "—" : `${c.score}%`}
                   </span>
                 </div>
               );
             })}
-            {isTranscriptScored && (
+            {!isDormant && isTranscriptScored && (
               <div
                 style={{
                   marginTop: 4,
@@ -311,7 +339,7 @@ const ComplianceMini = memo(function ComplianceMini({
                 Strict · {result.transcriptCoverage}% coverage
               </div>
             )}
-            {result.violations > 0 && (
+            {!isDormant && result.violations > 0 && (
               <div
                 style={{
                   marginTop: 6,

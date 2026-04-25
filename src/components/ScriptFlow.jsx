@@ -20,6 +20,11 @@ import ComplianceMini from "./ComplianceMini";
 import CopilotFeedMini from "./CopilotFeedMini";
 import AskCopilotMini from "./AskCopilotMini";
 import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
+import { useTrainingMode } from "../context/TrainingModeContext";
+import TrainingBanner from "./training/TrainingBanner";
+import TrainingExplainer from "./training/TrainingExplainer";
+import SimulatedTranscriptInput from "./training/SimulatedTranscriptInput";
+import { logTrainingCompletion } from "../lib/trainingCompletion";
 
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
@@ -145,10 +150,17 @@ function RailWidgets({
   result,
   copilotHandlersRef,
   coachingLoading,
+  trainingMode,
 }) {
   const supportsRecognition = typeof window !== "undefined" &&
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
   const hasTranscript = !!transcript.trim();
+  const handleAppendSimulated = (text) => {
+    copilotHandlersRef.current?.appendSimulatedUtterance?.(text);
+  };
+  const handleClearSimulated = () => {
+    copilotHandlersRef.current?.clearSimulatedTranscript?.();
+  };
 
   return (
     <>
@@ -212,14 +224,22 @@ function RailWidgets({
       {/* ── Thin divider ── */}
       <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 6 }} />
 
-      {/* ── Live Transcript ── */}
+      {/* ── Live Transcript / Simulated Transcript ── */}
       <CollapsibleWidget
-        title="Live Transcript"
+        title={trainingMode ? "Simulated Transcript" : "Live Transcript"}
         icon={<Radio size={11} />}
-        accentColor="#39FF88"
-        headerRight={<TranscriptTimer startTime={state.tpmoStart} />}
+        accentColor={trainingMode ? "#ffab00" : "#39FF88"}
+        headerRight={trainingMode ? null : <TranscriptTimer startTime={state.tpmoStart} />}
       >
-        <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
+        {trainingMode ? (
+          <SimulatedTranscriptInput
+            transcript={transcript}
+            onAppendUtterance={handleAppendSimulated}
+            onClear={handleClearSimulated}
+          />
+        ) : (
+          <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
+        )}
       </CollapsibleWidget>
 
       {/* ── Co-Pilot Feed ── */}
@@ -249,6 +269,7 @@ function RightRail({
   result,
   copilotHandlersRef,
   coachingLoading,
+  trainingMode,
 }) {
   const [open, setOpen] = useState(false);
   const [isCompactRail, setIsCompactRail] = useState(() =>
@@ -315,6 +336,7 @@ function RightRail({
     result,
     copilotHandlersRef,
     coachingLoading,
+    trainingMode,
   };
 
   if (!isCompactRail) {
@@ -425,10 +447,13 @@ export default function ScriptFlow() {
   const { state, dispatch, activeSection } = useScript();
   const { clearLog, entries } = useCopilotLog();
   const { updateLiveCall, resetLiveCall } = useLiveCall();
+  const { enabled: trainingModeEnabled } = useTrainingMode();
   const prevSectionRef = useRef(activeSection);
   const session = useSessionTracker();
   const scoredSectionsRef = useRef(new Set());
   const [callStarted, setCallStarted] = useState(false);
+  const trainingStartRef = useRef(null);
+  const trainingLoggedRef = useRef(false);
 
   // Start session only after agent clicks Start Call
   const sessionStartedRef = useRef(false);
@@ -439,7 +464,32 @@ export default function ScriptFlow() {
     session.startSession("ma");
     dispatch({ type: "MARK_SECTION_START", section: 1 });
     dispatch({ type: "START_TIMER" });
-  }, [callStarted, clearLog, session, dispatch]);
+    if (trainingModeEnabled) {
+      trainingStartRef.current = Date.now();
+      trainingLoggedRef.current = false;
+    }
+  }, [callStarted, clearLog, session, dispatch, trainingModeEnabled]);
+
+  // Log training completion when all 8 sections have been completed in training mode
+  useEffect(() => {
+    if (!trainingModeEnabled) return;
+    if (!callStarted) return;
+    if (trainingLoggedRef.current) return;
+    if (!state.enrollOk) return;
+    if (activeSection < 8) return;
+
+    trainingLoggedRef.current = true;
+    const startedAt = trainingStartRef.current;
+    const durationSeconds = startedAt
+      ? Math.max(0, Math.round((Date.now() - startedAt) / 1000))
+      : null;
+
+    logTrainingCompletion({
+      productType: "MA",
+      durationSeconds,
+      sectionsCompleted: 8,
+    });
+  }, [trainingModeEnabled, callStarted, state.enrollOk, activeSection]);
 
   // Cleanup on unmount — mark completed if enrollment gate was reached
   useEffect(() => {
@@ -631,6 +681,7 @@ export default function ScriptFlow() {
         result={liveComplianceResult}
         copilotHandlersRef={copilotHandlersRef}
         coachingLoading={coachingLoading}
+        trainingMode={trainingModeEnabled}
       />
 
       <div className="flow-shell">
@@ -646,6 +697,8 @@ export default function ScriptFlow() {
           />
         </div>
         <div className="flow-main">
+
+      {trainingModeEnabled ? <TrainingBanner /> : null}
 
       {/* ── AI Co-Pilot — passes transcript up via callback ── */}
       <ScriptPrompter onTranscriptChange={setTranscript} onMergedTranscriptChange={setMergedTranscriptEntries} onListeningChange={setIsListening} logComplianceFlag={session.logComplianceFlag} controlsRef={copilotHandlersRef} onCoachingLoadingChange={setCoachingLoading} />
@@ -686,6 +739,7 @@ export default function ScriptFlow() {
         isActive={activeSection === 1}
       >
         <SectionRecording />
+        {trainingModeEnabled ? <TrainingExplainer section={1} /> : null}
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -693,6 +747,7 @@ export default function ScriptFlow() {
         isActive={activeSection === 2}
       >
         <SectionTPMO />
+        {trainingModeEnabled ? <TrainingExplainer section={2} /> : null}
       </CollapsibleSection>
 
       <SectionSNP />
@@ -702,6 +757,7 @@ export default function ScriptFlow() {
         isActive={activeSection === 3}
       >
         <SectionSOA />
+        {trainingModeEnabled ? <TrainingExplainer section={3} /> : null}
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -709,6 +765,7 @@ export default function ScriptFlow() {
         isActive={activeSection === 4}
       >
         <SectionQualifications />
+        {trainingModeEnabled ? <TrainingExplainer section={4} /> : null}
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -716,6 +773,7 @@ export default function ScriptFlow() {
         isActive={activeSection === 5}
       >
         <SectionNEADS />
+        {trainingModeEnabled ? <TrainingExplainer section={5} /> : null}
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -723,6 +781,7 @@ export default function ScriptFlow() {
         isActive={activeSection === 6}
       >
         <SectionSOB />
+        {trainingModeEnabled ? <TrainingExplainer section={6} /> : null}
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -730,9 +789,15 @@ export default function ScriptFlow() {
         isActive={activeSection === 7}
       >
         <SectionEnrollment />
+        {trainingModeEnabled ? <TrainingExplainer section={7} /> : null}
       </CollapsibleSection>
 
-      {activeSection >= 8 && <SectionWrapUp />}
+      {activeSection >= 8 && (
+        <>
+          <SectionWrapUp />
+          {trainingModeEnabled ? <TrainingExplainer section={8} /> : null}
+        </>
+      )}
 
       {/* ── Full Compliance Dashboard — transcript-aware, at the bottom ── */}
       {SHOW_MAIN_FLOW_COMPLIANCE_HUD ? (

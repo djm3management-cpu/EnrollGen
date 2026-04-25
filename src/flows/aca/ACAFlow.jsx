@@ -11,6 +11,7 @@ import { ACA_GATES } from "./ACAData";
 
 // ACA accent color
 const ACCENT = "#EAB308"; // amber/yellow to match tab circle
+const SHOW_REFERENCE_DETAILS = false;
 
 function fmt(ms) {
   const s = Math.round(ms / 1000);
@@ -261,19 +262,19 @@ function G0() {
             </button>
           ))}
         </div>
-        {false && state.enrollmentPeriod === "SEP" && (
+        {SHOW_REFERENCE_DETAILS && state.enrollmentPeriod === "SEP" && (
           <div style={{ marginTop: 6, fontSize: 11, color: "#EAB308", opacity: 0.7 }}>
             → Gate 1 (SEP Qualification) will be required before proceeding
           </div>
         )}
-        {false && state.enrollmentPeriod === "OEP" && (
+        {SHOW_REFERENCE_DETAILS && state.enrollmentPeriod === "OEP" && (
           <div style={{ marginTop: 6, fontSize: 11, color: "#34d399", opacity: 0.7 }}>
             → SEP Gate will be skipped — proceed directly to Income Assessment
           </div>
         )}
       </div>
 
-      {false && gate.notes.map((n, i) => <Note key={i} text={n} />)}
+      {SHOW_REFERENCE_DETAILS && gate.notes.map((n, i) => <Note key={i} text={n} />)}
 
       <Gate
         label="Identity verified — consent obtained"
@@ -307,7 +308,7 @@ function G1() {
         transition={{ duration: 0.2 }}
       >
         <Card num={1} title="SEP Qualification" active={activeGate === 1} done={state.gate1Ok} dur={d ? d.end - d.start : null}>
-          {false && <div style={{ fontSize: 11, color: ACCENT, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12 }}>
+          {SHOW_REFERENCE_DETAILS && <div style={{ fontSize: 11, color: ACCENT, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12 }}>
             Conditional Gate — shown because enrollment period is SEP
           </div>}
 
@@ -341,8 +342,8 @@ function G1() {
             </div>
           </div>
 
-          {false && gate.notes.map((n, i) => <ComplianceBanner key={i} text={n} />)}
-          {false && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
+          {SHOW_REFERENCE_DETAILS && gate.notes.map((n, i) => <ComplianceBanner key={i} text={n} />)}
+          {SHOW_REFERENCE_DETAILS && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
 
           <Gate
             label="SEP event verified — within 60-day window"
@@ -369,7 +370,7 @@ function G2() {
     <Card num={2} title="Household & Income Assessment" active={activeGate === 2} done={state.gate2Ok} dur={d ? d.end - d.start : null}>
       {gate.script.map((l, i) => <Say key={i} text={l} />)}
 
-      {false && <ComplianceBanner text={gate.subsidyNote} />}
+      {SHOW_REFERENCE_DETAILS && <ComplianceBanner text={gate.subsidyNote} />}
 
       <div style={{ marginTop: 10, marginBottom: 10 }}>
         <div style={{ fontSize: 10, fontWeight: 600, color: "#4a5568", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
@@ -405,9 +406,9 @@ function G2() {
       <Say text={gate.subsidyEligibleScript} />
       <Say text={gate.noSubsidyScript} />
 
-      {false && gate.notes.map((n, i) => <Note key={i} text={n} />)}
+      {SHOW_REFERENCE_DETAILS && gate.notes.map((n, i) => <Note key={i} text={n} />)}
       <div style={{ marginTop: 8 }}>
-        {false && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
+        {SHOW_REFERENCE_DETAILS && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
       </div>
 
       <Gate
@@ -444,9 +445,9 @@ function G3() {
         ))}
       </div>
 
-      {false && gate.notes.map((n, i) => <Note key={i} text={n} />)}
+      {SHOW_REFERENCE_DETAILS && gate.notes.map((n, i) => <Note key={i} text={n} />)}
       <div style={{ marginTop: 8 }}>
-        {false && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
+        {SHOW_REFERENCE_DETAILS && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
       </div>
 
       <Gate
@@ -471,7 +472,7 @@ function G4() {
   return (
     <Card num={4} title="Plan Presentation & Selection" active={activeGate === 4} done={state.gate4Ok} dur={d ? d.end - d.start : null}>
       {gate.script.map((l, i) => <Say key={i} text={l} />)}
-      {false && gate.notes.map((n, i) => (
+      {SHOW_REFERENCE_DETAILS && gate.notes.map((n, i) => (
         n.startsWith("COMPLIANCE:") ? <ComplianceBanner key={i} text={n} /> : <Note key={i} text={n} />
       ))}
 
@@ -496,14 +497,14 @@ function G5() {
 
   return (
     <Card num={5} title="Enrollment & Submission" active={activeGate === 5} done={state.gate5Ok} dur={d ? d.end - d.start : null}>
-      {false && <div style={{ fontSize: 11, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12, color: ACCENT }}>
+      {SHOW_REFERENCE_DETAILS && <div style={{ fontSize: 11, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12, color: ACCENT }}>
         {gate.exchangeNote}
       </div>}
 
       {gate.script.map((l, i) => <Say key={i} text={l} />)}
-      {false && gate.notes.map((n, i) => <ComplianceBanner key={i} text={n} />)}
+      {SHOW_REFERENCE_DETAILS && gate.notes.map((n, i) => <ComplianceBanner key={i} text={n} />)}
       <div style={{ marginTop: 8 }}>
-        {false && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
+        {SHOW_REFERENCE_DETAILS && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
       </div>
 
       <Gate

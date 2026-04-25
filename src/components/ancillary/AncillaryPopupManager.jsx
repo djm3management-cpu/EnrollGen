@@ -306,7 +306,6 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
     noteInteraction,
     openPortalProduct,
     popupCopy,
-    popupIcon,
     popupKey,
     portalProducts,
     recapItems,

@@ -592,7 +592,7 @@ SECTION CONTEXT (rolling window):
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 500,
+          model: "claude-sonnet-4-6", max_tokens: 80,
           system: systemPrompt,
           messages: [{ role: "user", content: userContent }],
         }),
@@ -745,7 +745,7 @@ SECTION CONTEXT (rolling window):
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 500, system: systemPrompt, messages: [{ role: "user", content: question }] }),
+        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 300, system: systemPrompt, messages: [{ role: "user", content: question }] }),
         signal: controller.signal,
       });
       if (controller.signal.aborted) return;
@@ -779,7 +779,7 @@ SECTION CONTEXT (rolling window):
       if (askAbortRef.current === controller) askAbortRef.current = null;
       setAskLoading(false);
     }
-  }, [askQuestion, askLoading, currentStep, knowledge, logEntry, getToken, state, activeGate, transcriptRef, pushFeedEntry, clearServiceIssue, surfaceServiceIssue, setMessages, setAskQuestion, setAskLoading, messagesRef, askAbortRef]);
+  }, [askQuestion, askLoading, currentStep, knowledge, logEntry, getToken, state, activeGate, transcriptRef, pushFeedEntry, clearServiceIssue, surfaceServiceIssue, setMessages, setAskQuestion, setAskLoading, askAbortRef]);
 
   /* ═══════ Compliance score ═══════ */
   const complianceScore = useMemo(() => {

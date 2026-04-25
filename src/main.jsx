@@ -4,20 +4,26 @@ import App from "./App";
 import "./styles.css";
 import { CopilotLogProvider } from "./context/CopilotTranscriptLog";
 import { LiveCallProvider } from "./context/LiveCallContext";
+import { TrainingModeProvider } from "./context/TrainingModeContext";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { AuthProvider } from "./context/AuthContext";
+import { runSessionTrackingDiagnostic } from "./lib/sessionTrackingDiagnostic";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const CLERK_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
+runSessionTrackingDiagnostic();
+
 function RootProviders() {
   return (
     <AuthProvider>
-      <CopilotLogProvider>
-        <LiveCallProvider>
-          <App />
-        </LiveCallProvider>
-      </CopilotLogProvider>
+      <TrainingModeProvider>
+        <CopilotLogProvider>
+          <LiveCallProvider>
+            <App />
+          </LiveCallProvider>
+        </CopilotLogProvider>
+      </TrainingModeProvider>
     </AuthProvider>
   );
 }

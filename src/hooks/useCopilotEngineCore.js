@@ -260,6 +260,25 @@ export function useCopilotEngineCore({
     clearTimeout(floatFadeTimeout.current);
     setFloatingAlert({ level, text, ...opts });
     logEntry(LOG_TYPES.FLOATING_ALERT, level, text, { section: currentStep });
+
+    if (level === "warn" || level === "critical") {
+      try {
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContextCtor();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = level === "critical" ? 880 : 660;
+        gain.gain.value = 0.15;
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.stop(ctx.currentTime + 0.3);
+      } catch {
+        // Audio may be blocked or unavailable; the visual alert still fires.
+      }
+    }
+
     const duration = level === "critical" ? 7000 : level === "warn" ? 4000 : 5000;
     dismissFloat(duration);
   }, [logEntry, currentStep, dismissFloat]);

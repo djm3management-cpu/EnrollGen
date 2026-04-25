@@ -468,9 +468,6 @@ function LeaderboardTable({ agents }) {
 /*  BONUS TRACKER                                            */
 /* ────────────────────────────────────────────────────────── */
 function BonusTracker({ agents }) {
-  // Bonus tracker uses monthly data
-  const monthRange = getDateRange("month");
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {agents.map((agent) => {

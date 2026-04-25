@@ -43,6 +43,7 @@ export const initialState = {
   // SNP branching
   snpType: null, // "DSNP" | "CSNP" | null
   snpOk: false,
+  sepFinderResults: null,
 
   // Optional wrap-up products
   hiActive: false,
@@ -208,6 +209,9 @@ export function scriptReducer(state, action) {
     /* ---- SNP ---- */
     case "SET_SNP_TYPE":
       return { ...state, snpType: action.value, snpOk: false };
+
+    case "SET_SEP_FINDER_RESULTS":
+      return { ...state, sepFinderResults: action.value };
 
     /* ---- Timer controls ---- */
     case "START_TIMER":

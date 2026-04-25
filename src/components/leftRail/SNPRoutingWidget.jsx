@@ -1,14 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  ChevronDown,
-  ShieldCheck,
-} from "lucide-react";
+import { AlertTriangle, ChevronDown } from "lucide-react";
 import { useScript } from "../../context/ScriptContext";
 import {
   DEFAULT_CSNP_CARRIER_VERIFICATION,
   getSnpMedicaidBucket,
-  getSnpMedicaidHeaderLabel,
   SNP_CHRONIC_OPTIONS,
   SNP_CURRENT_CARRIER_OPTIONS,
   SNP_MEDICAID_OPTIONS,
@@ -35,12 +30,7 @@ const EMPTY_LOOKUP = {
   routingRules: [],
 };
 
-function CollapsibleSubsection({
-  title,
-  open,
-  onToggle,
-  children,
-}) {
+function CollapsibleSubsection({ title, open, onToggle, children }) {
   return (
     <div className="snp-routing-subsection">
       <button
@@ -60,13 +50,11 @@ function CollapsibleSubsection({
   );
 }
 
-export default function SNPRoutingWidget() {
+export default function SNPRoutingWidget({ zip = "" }) {
   const { state, dispatch } = useScript();
-  const [collapsed, setCollapsed] = useState(false);
   const [medicaidStatus, setMedicaidStatus] = useState("");
   const [chronicCondition, setChronicCondition] = useState("");
   const [memberPriority, setMemberPriority] = useState("");
-  const [zip, setZip] = useState("");
   const [medicaidMco, setMedicaidMco] = useState("");
   const [currentCarrier, setCurrentCarrier] = useState("");
   const [lookup, setLookup] = useState(EMPTY_LOOKUP);
@@ -74,13 +62,12 @@ export default function SNPRoutingWidget() {
   const [showCarrierReference, setShowCarrierReference] = useState(false);
   const [showSepLanes, setShowSepLanes] = useState(false);
 
+  const normalizedZip = String(zip || "").replace(/\D/g, "").slice(0, 5);
   const routeReady = Boolean(medicaidStatus && chronicCondition && memberPriority);
   const medicaidBucket = getSnpMedicaidBucket(medicaidStatus);
-  const medicaidHeaderLabel = getSnpMedicaidHeaderLabel(medicaidStatus);
 
   useEffect(() => {
     let cancelled = false;
-    const normalizedZip = zip.replace(/\D/g, "").slice(0, 5);
 
     if (normalizedZip.length !== 5) {
       setLookup((current) => ({
@@ -106,7 +93,7 @@ export default function SNPRoutingWidget() {
     return () => {
       cancelled = true;
     };
-  }, [zip]);
+  }, [normalizedZip]);
 
   const recommendation = useMemo(
     () =>
@@ -114,7 +101,7 @@ export default function SNPRoutingWidget() {
         medicaidStatus,
         chronicCondition,
         memberPriority,
-        zip,
+        zip: normalizedZip,
         medicaidMco,
         currentCarrier,
         lookup,
@@ -126,14 +113,12 @@ export default function SNPRoutingWidget() {
       medicaidMco,
       medicaidStatus,
       memberPriority,
-      zip,
+      normalizedZip,
     ]
   );
 
   useEffect(() => {
-    if (!routeReady) {
-      return;
-    }
+    if (!routeReady) return;
 
     const nextSnpType = recommendation?.recommendedScriptType || null;
     if (state.snpType !== nextSnpType) {
@@ -148,263 +133,202 @@ export default function SNPRoutingWidget() {
   }, [recommendation?.routeLabel, recommendation?.selectedPlanLabel]);
 
   const filledRequired = [medicaidStatus, chronicCondition, memberPriority].filter(Boolean).length;
-  const filledAll = filledRequired + (zip.length === 5 ? 1 : 0);
-  const zipInvalid = zip.length > 0 && zip.length < 5;
-
-  const headerStatus = recommendation
-    ? { label: "QUALIFIED", tone: "ready" }
-    : routeReady
-      ? { label: "EVALUATING", tone: "ready" }
-      : { label: "NOT STARTED", tone: "idle" };
-  const headerTitle = medicaidHeaderLabel
-    ? `SNP Routing - ${medicaidHeaderLabel}`
-    : "SNP Routing";
-
   const carrierReference = recommendation?.carrierVerification || null;
 
   return (
-    <div className={`agent-notes-widget snp-routing-widget${collapsed ? " is-collapsed" : ""}`}>
-      <button
-        type="button"
-        className="agent-notes-widget-header snp-routing-widget-header"
-        onClick={() => setCollapsed((current) => !current)}
-        aria-expanded={!collapsed}
-      >
-        <div className="agent-notes-widget-title-group">
-          <span className="agent-notes-widget-icon" aria-hidden="true">
-            <ShieldCheck size={11} />
-          </span>
-          <span className="agent-notes-widget-title">{headerTitle}</span>
+    <div className="snp-routing-panel">
+      <div className="snp-routing-progress-bar">
+        <div
+          className="snp-routing-progress-fill"
+          style={{ width: `${(filledRequired / 3) * 100}%` }}
+        />
+        <span className="snp-routing-progress-label">
+          {filledRequired}/3 required
+        </span>
+      </div>
+
+      <div className="snp-routing-fields">
+        <div className="snp-routing-data-cell">
+          <label className="snp-routing-cell-label">
+            <span className={`snp-routing-field-dot${medicaidStatus ? " is-filled" : ""}`} />
+            Medicaid Status
+          </label>
+          <select
+            className="snp-routing-cell-input"
+            value={medicaidStatus}
+            onChange={(event) => setMedicaidStatus(event.target.value)}
+          >
+            {SNP_MEDICAID_OPTIONS.map((option) => (
+              <option key={option.value || "empty"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="snp-routing-widget-header-meta">
-          <span className={`snp-routing-status-pill is-${headerStatus.tone}`}>
-            {headerStatus.label}
-          </span>
-          <ChevronDown
-            size={14}
-            className={`snp-routing-widget-chevron${collapsed ? "" : " is-open"}`}
-          />
+        <div className="snp-routing-data-cell">
+          <label className="snp-routing-cell-label">
+            <span className={`snp-routing-field-dot${chronicCondition ? " is-filled" : ""}`} />
+            Chronic Condition
+          </label>
+          <select
+            className="snp-routing-cell-input"
+            value={chronicCondition}
+            onChange={(event) => setChronicCondition(event.target.value)}
+          >
+            {SNP_CHRONIC_OPTIONS.map((option) => (
+              <option key={option.value || "empty"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
-      </button>
 
-      {!collapsed ? (
-        <div className="agent-notes-widget-body snp-routing-widget-body">
-          <div className="snp-routing-progress-bar">
-            <div
-              className="snp-routing-progress-fill"
-              style={{ width: `${(filledAll / 4) * 100}%` }}
+        <div className="snp-routing-data-cell">
+          <label className="snp-routing-cell-label">
+            <span className={`snp-routing-field-dot${memberPriority ? " is-filled" : ""}`} />
+            Member Priority
+          </label>
+          <select
+            className="snp-routing-cell-input"
+            value={memberPriority}
+            onChange={(event) => setMemberPriority(event.target.value)}
+          >
+            {SNP_PRIORITY_OPTIONS.map((option) => (
+              <option key={option.value || "empty"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {medicaidBucket === "full_dual" ? (
+          <div className="snp-routing-data-cell">
+            <label className="snp-routing-cell-label">
+              Medicaid MCO (D-SNP Alignment)
+            </label>
+            <input
+              className="snp-routing-cell-input"
+              placeholder="Optional MCO name"
+              value={medicaidMco}
+              onChange={(event) => setMedicaidMco(event.target.value)}
             />
-            <span className="snp-routing-progress-label">
-              {filledRequired}/3 required{filledAll > filledRequired ? ` \u00B7 ${filledAll}/4 all` : ""}
-            </span>
           </div>
+        ) : null}
 
-          <div className="snp-routing-fields">
-            <div className="snp-routing-data-cell">
-              <label className="snp-routing-cell-label">
-                <span className={`snp-routing-field-dot${medicaidStatus ? " is-filled" : ""}`} />
-                Medicaid Status
-              </label>
-              <select
-                className="snp-routing-cell-input"
-                value={medicaidStatus}
-                onChange={(event) => setMedicaidStatus(event.target.value)}
-              >
-                {SNP_MEDICAID_OPTIONS.map((option) => (
-                  <option key={option.value || "empty"} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="snp-routing-data-cell">
-              <label className="snp-routing-cell-label">
-                <span className={`snp-routing-field-dot${chronicCondition ? " is-filled" : ""}`} />
-                Chronic Condition
-              </label>
-              <select
-                className="snp-routing-cell-input"
-                value={chronicCondition}
-                onChange={(event) => setChronicCondition(event.target.value)}
-              >
-                {SNP_CHRONIC_OPTIONS.map((option) => (
-                  <option key={option.value || "empty"} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="snp-routing-data-cell">
-              <label className="snp-routing-cell-label">
-                <span className={`snp-routing-field-dot${memberPriority ? " is-filled" : ""}`} />
-                Member Priority
-              </label>
-              <select
-                className="snp-routing-cell-input"
-                value={memberPriority}
-                onChange={(event) => setMemberPriority(event.target.value)}
-              >
-                {SNP_PRIORITY_OPTIONS.map((option) => (
-                  <option key={option.value || "empty"} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="snp-routing-supporting-fields">
-            <div className="snp-routing-data-cell">
-              <label className="snp-routing-cell-label">
-                <span className={`snp-routing-field-dot${zip.length === 5 ? " is-filled" : ""}`} />
-                Member Zip
-              </label>
-              <input
-                className={`snp-routing-cell-input${zipInvalid ? " is-invalid" : ""}`}
-                inputMode="numeric"
-                maxLength={5}
-                placeholder="00000"
-                value={zip}
-                onChange={(event) =>
-                  setZip(event.target.value.replace(/\D/g, "").slice(0, 5))
-                }
-              />
-            </div>
-
-            {medicaidBucket === "full_dual" ? (
-              <div className="snp-routing-data-cell">
-                <label className="snp-routing-cell-label">
-                  Medicaid MCO (D-SNP Alignment)
-                </label>
-                <input
-                  className="snp-routing-cell-input"
-                  placeholder="Optional MCO name"
-                  value={medicaidMco}
-                  onChange={(event) => setMedicaidMco(event.target.value)}
-                />
-              </div>
-            ) : null}
-
-            {routeReady ? (
-              <div className="snp-routing-data-cell">
-                <label className="snp-routing-cell-label">
-                  Current MA Carrier
-                </label>
-                <select
-                  className="snp-routing-cell-input"
-                  value={currentCarrier}
-                  onChange={(event) => setCurrentCarrier(event.target.value)}
-                >
-                  {SNP_CURRENT_CARRIER_OPTIONS.map((option) => (
-                    <option key={option.value || "empty"} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-          </div>
-
-          {recommendation ? (
-            <div
-              className={`snp-routing-recommendation is-${recommendation.status}`}
-              style={{ "--snp-route-color": recommendation.statusMeta.color }}
+        {routeReady ? (
+          <div className="snp-routing-data-cell">
+            <label className="snp-routing-cell-label">Current MA Carrier</label>
+            <select
+              className="snp-routing-cell-input"
+              value={currentCarrier}
+              onChange={(event) => setCurrentCarrier(event.target.value)}
             >
-              <div className="snp-routing-recommendation-head">
-                <div className="snp-routing-recommendation-kicker">
-                  {recommendation.statusMeta.label}
+              {SNP_CURRENT_CARRIER_OPTIONS.map((option) => (
+                <option key={option.value || "empty"} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+      </div>
+
+      {recommendation ? (
+        <div
+          className={`snp-routing-recommendation is-${recommendation.status}`}
+          style={{ "--snp-route-color": recommendation.statusMeta.color }}
+        >
+          <div className="snp-routing-recommendation-head">
+            <div className="snp-routing-recommendation-kicker">
+              {recommendation.statusMeta.label}
+            </div>
+            <div className="snp-routing-recommendation-badge">
+              {recommendation.routeLabel}
+            </div>
+          </div>
+
+          <p className="snp-routing-recommendation-copy">{recommendation.summary}</p>
+
+          {recommendation.selectedPlanLabel ? (
+            <div className="snp-routing-recommendation-plan">
+              Suggested plan lane: {recommendation.selectedPlanLabel}
+            </div>
+          ) : null}
+
+          {recommendation.fallbackRoutes?.length ? (
+            <div className="snp-routing-recommendation-fallbacks">
+              Fallbacks: {recommendation.fallbackRoutes.join(" -> ")}
+            </div>
+          ) : null}
+
+          {recommendation.alerts?.map((alert) => (
+            <div
+              key={`${alert.tone}-${alert.text}`}
+              className={`snp-routing-alert is-${alert.tone}`}
+            >
+              <AlertTriangle size={13} />
+              <span>{alert.text}</span>
+            </div>
+          ))}
+
+          {recommendation.commissionFlag ? (
+            <div className="snp-routing-muted-line">{recommendation.commissionFlag}</div>
+          ) : null}
+
+          {recommendation.disclosures?.length ? (
+            <CollapsibleSubsection
+              title="Mandatory Talking Points"
+              open={showDisclosures}
+              onToggle={() => setShowDisclosures((current) => !current)}
+            >
+              <ul className="snp-routing-list">
+                {recommendation.disclosures.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </CollapsibleSubsection>
+          ) : null}
+
+          {recommendation.routeLabel === "C-SNP" && carrierReference ? (
+            <CollapsibleSubsection
+              title="Carrier Verification Reference"
+              open={showCarrierReference}
+              onToggle={() => setShowCarrierReference((current) => !current)}
+            >
+              <div className="snp-routing-reference-grid">
+                <div className="snp-routing-reference-item">
+                  <span className="snp-routing-reference-label">Method</span>
+                  <span>{carrierReference.verification_method}</span>
                 </div>
-                <div className="snp-routing-recommendation-badge">
-                  {recommendation.routeLabel}
+                <div className="snp-routing-reference-item">
+                  <span className="snp-routing-reference-label">Timeline</span>
+                  <span>{carrierReference.verification_timeline}</span>
+                </div>
+                <div className="snp-routing-reference-item">
+                  <span className="snp-routing-reference-label">If Not Verified</span>
+                  <span>{carrierReference.failed_verification_consequence}</span>
+                </div>
+                <div className="snp-routing-reference-item">
+                  <span className="snp-routing-reference-label">Qualifying Buckets</span>
+                  <span>{carrierReference.qualifying_conditions.join(", ")}</span>
                 </div>
               </div>
+            </CollapsibleSubsection>
+          ) : null}
 
-              <p className="snp-routing-recommendation-copy">{recommendation.summary}</p>
-
-              {recommendation.selectedPlanLabel ? (
-                <div className="snp-routing-recommendation-plan">
-                  Suggested plan lane: {recommendation.selectedPlanLabel}
-                </div>
-              ) : null}
-
-              {recommendation.fallbackRoutes?.length ? (
-                <div className="snp-routing-recommendation-fallbacks">
-                  Fallbacks: {recommendation.fallbackRoutes.join(" -> ")}
-                </div>
-              ) : null}
-
-              {recommendation.alerts?.map((alert) => (
-                <div
-                  key={`${alert.tone}-${alert.text}`}
-                  className={`snp-routing-alert is-${alert.tone}`}
-                >
-                  <AlertTriangle size={13} />
-                  <span>{alert.text}</span>
-                </div>
-              ))}
-
-              {recommendation.commissionFlag ? (
-                <div className="snp-routing-muted-line">{recommendation.commissionFlag}</div>
-              ) : null}
-
-              {recommendation.disclosures?.length ? (
-                <CollapsibleSubsection
-                  title="Mandatory Talking Points"
-                  open={showDisclosures}
-                  onToggle={() => setShowDisclosures((current) => !current)}
-                >
-                  <ul className="snp-routing-list">
-                    {recommendation.disclosures.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </CollapsibleSubsection>
-              ) : null}
-
-              {recommendation.routeLabel === "C-SNP" && carrierReference ? (
-                <CollapsibleSubsection
-                  title="Carrier Verification Reference"
-                  open={showCarrierReference}
-                  onToggle={() => setShowCarrierReference((current) => !current)}
-                >
-                  <div className="snp-routing-reference-grid">
-                    <div className="snp-routing-reference-item">
-                      <span className="snp-routing-reference-label">Method</span>
-                      <span>{carrierReference.verification_method}</span>
-                    </div>
-                    <div className="snp-routing-reference-item">
-                      <span className="snp-routing-reference-label">Timeline</span>
-                      <span>{carrierReference.verification_timeline}</span>
-                    </div>
-                    <div className="snp-routing-reference-item">
-                      <span className="snp-routing-reference-label">If Not Verified</span>
-                      <span>{carrierReference.failed_verification_consequence}</span>
-                    </div>
-                    <div className="snp-routing-reference-item">
-                      <span className="snp-routing-reference-label">Qualifying Buckets</span>
-                      <span>{carrierReference.qualifying_conditions.join(", ")}</span>
-                    </div>
-                  </div>
-                </CollapsibleSubsection>
-              ) : null}
-
-              {recommendation.sepLanes?.length ? (
-                <CollapsibleSubsection
-                  title="SEP Routing"
-                  open={showSepLanes}
-                  onToggle={() => setShowSepLanes((current) => !current)}
-                >
-                  <ul className="snp-routing-list">
-                    {recommendation.sepLanes.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </CollapsibleSubsection>
-              ) : null}
-            </div>
+          {recommendation.sepLanes?.length ? (
+            <CollapsibleSubsection
+              title="SEP Routing"
+              open={showSepLanes}
+              onToggle={() => setShowSepLanes((current) => !current)}
+            >
+              <ul className="snp-routing-list">
+                {recommendation.sepLanes.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </CollapsibleSubsection>
           ) : null}
         </div>
       ) : null}

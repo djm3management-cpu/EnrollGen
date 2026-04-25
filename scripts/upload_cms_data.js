@@ -3,19 +3,22 @@
  * Run: node scripts/upload_cms_data.js /path/to/CY2026_Landscape.csv
  *
  * Requires the table to already exist (run create_cms_table.sql first).
- * Uses the anon key by default — set SUPABASE_SERVICE_KEY env var for service role.
+ * Set SUPABASE_URL and either SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY.
  */
 
-const fs = require("fs");
-const { createClient } = require("@supabase/supabase-js");
+import fs from "node:fs";
+import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = "https://qzjtagnpklaxefwurorc.supabase.co";
-const SUPABASE_KEY =
-  process.env.SUPABASE_SERVICE_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6anRhZ25wa2xheGVmd3Vyb3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2ODY1NDQsImV4cCI6MjA4ODI2MjU0NH0.HLYREWlaqsMdhGqaoP2T2SP3SgAoxumKGG4aQuBzx4Q";
-
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
 const BATCH_SIZE = 500;
 const TABLE = "cms_plans_PY2026";
+
+function requireSupabaseConfig() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    throw new Error("Set SUPABASE_URL and SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY.");
+  }
+}
 
 function parseCSVLine(line) {
   const fields = [];
@@ -32,15 +35,13 @@ function parseCSVLine(line) {
       } else {
         current += ch;
       }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ",") {
+      fields.push(current.trim());
+      current = "";
     } else {
-      if (ch === '"') {
-        inQuotes = true;
-      } else if (ch === ",") {
-        fields.push(current.trim());
-        current = "";
-      } else {
-        current += ch;
-      }
+      current += ch;
     }
   }
   fields.push(current.trim());
@@ -48,6 +49,8 @@ function parseCSVLine(line) {
 }
 
 async function main() {
+  requireSupabaseConfig();
+
   const csvPath = process.argv[2];
   if (!csvPath) {
     console.error("Usage: node upload_cms_data.js <path-to-csv>");
@@ -58,7 +61,6 @@ async function main() {
   const raw = fs.readFileSync(csvPath, "utf-8");
   const lines = raw.split(/\r?\n/).filter((l) => l.trim());
 
-  // Strip BOM from header
   const headerLine = lines[0].replace(/^\uFEFF/, "");
   const headers = parseCSVLine(headerLine);
   console.log(`Columns: ${headers.length}`);
@@ -90,7 +92,7 @@ async function main() {
     }
 
     if ((i - 1) % 5000 === 0 || i + BATCH_SIZE >= lines.length) {
-      const pct = ((inserted + errors) / total * 100).toFixed(1);
+      const pct = (((inserted + errors) / total) * 100).toFixed(1);
       console.log(`Progress: ${inserted} inserted, ${errors} errors (${pct}%)`);
     }
   }
@@ -98,4 +100,7 @@ async function main() {
   console.log(`\nDone! ${inserted} rows inserted, ${errors} errors.`);
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

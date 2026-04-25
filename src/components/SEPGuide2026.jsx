@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Check, ChevronDown, Copy, Phone, AlertTriangle, X, CheckCircle, XCircle } from "lucide-react";
+import { Check, ChevronDown, Copy, Phone, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import rawMarkdown from "../../docs/MA_SEP_Guide_2026.md?raw";
 
 /* ─── Constants ─── */
@@ -89,7 +89,7 @@ function parseSEPTypes(lines) {
     const match = line.match(/\*\*SEP Types Available:\*\*\s*(.+)/);
     if (match) {
       return match[1]
-        .split(/[\/,]/)
+        .split(/[/,]/)
         .map((t) => t.trim().toUpperCase())
         .filter((t) => SEP_PILL_COLORS[t]);
     }
@@ -127,14 +127,6 @@ function parsePhoneTable(lines) {
 
 function phoneToTel(number) {
   return "tel:" + number.replace(/[^0-9+]/g, "");
-}
-
-function formatPhoneInText(text) {
-  // Replace phone number patterns with clickable links
-  return text.replace(
-    /(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\d-\d{3}-\d{3}-\d{4})/g,
-    (match) => `__PHONE__${match}__ENDPHONE__`
-  );
 }
 
 function SEPPill({ type }) {
@@ -301,13 +293,7 @@ function RenderLines({ lines }) {
 }
 
 function InlineContent({ text }) {
-  // Process bold, phone numbers, etc.
-  const parts = [];
-  const phonePattern = /(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|1-\d{3}-\d{3}-\d{4})/g;
-  const boldPattern = /\*\*([^*]+)\*\*/g;
-
-  // First pass: split by bold markers
-  let processed = text;
+  const processed = text;
   const segments = [];
   let lastIndex = 0;
 
@@ -631,7 +617,7 @@ function MarkdownTable({ rawLines }) {
 
 /* ─── Accordion ─── */
 
-function Accordion({ id, title, defaultOpen, children }) {
+function Accordion({ title, defaultOpen, children }) {
   const [open, setOpen] = useState(defaultOpen || false);
 
   return (

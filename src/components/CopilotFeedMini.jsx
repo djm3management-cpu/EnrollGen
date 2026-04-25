@@ -2,16 +2,9 @@ import { useRef, useEffect, useState, memo } from "react";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import PanelIdleSpinner from "./PanelIdleSpinner";
 
-function levelColor(level) {
-  if (level === "critical") return "#ef4444";
-  if (level === "warn") return "#f97316";
-  if (level === "remind") return "#fbbf24";
-  if (level === "tip") return "#34d399";
-  return "#94a3b8";
-}
-
 const AUTO_SCROLL_THRESHOLD = 50;
 const MAX_FEED_ENTRIES = 3;
+const FEED_LEVELS = new Set(["silent", "info", "tip", "remind", "warn", "critical"]);
 
 const CopilotFeedMini = memo(function CopilotFeedMini() {
   const { entries } = useCopilotLog();
@@ -21,6 +14,7 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
   const recentEntries = entries
     .filter((e) => e.logType === LOG_TYPES.COPILOT_MSG)
     .slice(-MAX_FEED_ENTRIES);
+  const latestEntryId = recentEntries.at(-1)?.id;
 
   // Detect manual scroll — pause auto-scroll when user scrolls up
   useEffect(() => {
@@ -43,7 +37,7 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
         }
       });
     }
-  }, [recentEntries.at(-1)?.id, userScrolled]);
+  }, [latestEntryId, userScrolled]);
 
   return (
     <div className="copilot-feed-mini">
@@ -54,16 +48,17 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
         {recentEntries.length === 0 && (
           <PanelIdleSpinner variant="copilot" compact />
         )}
-        {recentEntries.map((entry) => (
-          <div
-            key={entry.id}
-            className="copilot-feed-mini__entry"
-            style={{ "--copilot-feed-accent": levelColor(entry.level) }}
-          >
-            <span className="copilot-feed-mini__bar" />
-            <span className="copilot-feed-mini__text">{entry.message}</span>
-          </div>
-        ))}
+        {recentEntries.map((entry) => {
+          const level = FEED_LEVELS.has(entry.level) ? entry.level : "info";
+          return (
+            <div
+              key={entry.id}
+              className={`copilot-feed-mini__entry copilot-msg copilot-msg--${level}`}
+            >
+              <span className="copilot-feed-mini__text">{entry.message}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

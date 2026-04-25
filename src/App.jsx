@@ -12,6 +12,7 @@ import EnrollGenLogo from "./components/EnrollGenLogo";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
+import TrainingModeToggle from "./components/training/TrainingModeToggle";
 import { SignedIn, SignedOut, SignIn, useClerk, useUser } from "@clerk/clerk-react";
 import { ChevronDown, Shuffle, X } from "lucide-react";
 import { wallpapers } from "./config/wallpapers";
@@ -595,6 +596,7 @@ function AppShell() {
               title="Refresh and return to the main page"
             />
             <FlowSelector mode={mode} onChange={handleModeChange} compact />
+            <TrainingModeToggle />
           </div>
 
           <nav className="top-bar-tabs" aria-label="Workspace tabs">

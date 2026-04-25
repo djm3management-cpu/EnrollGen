@@ -11,6 +11,8 @@ import { fetchLiveNews } from "../lib/sepLiveNews";
 import { fetchCountiesForState, fetchPlansFromSupabase, fetchCountyPlanCounts, transformCmsPlan } from "../lib/sepCms";
 import { getCountyFromZip, getPlansForState } from "../data/sepPlanDb";
 import { getSEPsForZip, getSEPsForState } from "../lib/sepEngine";
+import { supabase } from "../lib/supabase";
+import { parseSepRpcResult } from "../components/SEPResultsPanel";
 
 export function useSEPLookup() {
   const [zip, setZip] = useState("");
@@ -38,6 +40,10 @@ export function useSEPLookup() {
   const [femaDisasters, setFemaDisasters] = useState([]);
   const [bulletins, setBulletins] = useState([]);
   const [liveNews, setLiveNews] = useState([]);
+  const [sepFinderZip, setSepFinderZip] = useState(null);
+  const [sepFinderResult, setSepFinderResult] = useState(null);
+  const [sepFinderLoading, setSepFinderLoading] = useState(false);
+  const [sepFinderError, setSepFinderError] = useState("");
   const femaCache = useRef({ data: null, fetchedAt: 0 });
   const countyCache = useRef({});
 
@@ -124,6 +130,37 @@ export function useSEPLookup() {
     }
   }, []);
 
+  const loadSepFinderResults = useCallback(async (cleanZip) => {
+    setSepFinderZip(cleanZip);
+    setSepFinderLoading(true);
+    setSepFinderError("");
+    setSepFinderResult(null);
+
+    try {
+      const { data, error } = await supabase.rpc("get_available_seps", {
+        input_zip: cleanZip,
+      });
+      if (error) throw error;
+
+      const parsed = parseSepRpcResult(data);
+      if (!parsed) throw new Error("SEP lookup returned an unreadable response.");
+
+      if (parsed.error) {
+        setSepFinderError("ZIP code not found. Please verify and try again.");
+        return null;
+      }
+
+      setSepFinderResult(parsed);
+      return parsed;
+    } catch (err) {
+      console.error("SEP Finder RPC error:", err);
+      setSepFinderError(err?.message || "SEP lookup failed. Please try again.");
+      return null;
+    } finally {
+      setSepFinderLoading(false);
+    }
+  }, []);
+
   /* ── State map click entry ── */
   const handleStateClick = useCallback(async (stateCode) => {
     setSelectedState(stateCode);
@@ -133,6 +170,10 @@ export function useSEPLookup() {
     setSearchedZip(null);
     setCarriers([]);
     setExpanded({});
+    setSepFinderZip(null);
+    setSepFinderResult(null);
+    setSepFinderError("");
+    setSepFinderLoading(false);
     setExpandedPlans({});
     setFilterCategory("all");
     setFilterProduct("all");
@@ -193,7 +234,11 @@ export function useSEPLookup() {
     const cleanZip = zip.trim();
     if (!/^\d{5}$/.test(cleanZip)) return;
     setLoading(true);
+    setSepFinderZip(cleanZip);
+    setSepFinderResult(null);
+    setSepFinderError("");
     try {
+      const sepFinderPromise = loadSepFinderResults(cleanZip);
       let femaData = femaCache.current.data;
       const now = Date.now();
       if (!femaData || now - femaCache.current.fetchedAt > 30 * 60 * 1000) {
@@ -248,12 +293,13 @@ export function useSEPLookup() {
         setSelectedCounty(null);
         setPlans(getPlansForState(cleanZip));
       }
+      await sepFinderPromise;
     } catch (err) {
       console.error("Search error:", err);
     } finally {
       setLoading(false);
     }
-  }, [zip, loadPlansForCounty]);
+  }, [zip, loadPlansForCounty, loadSepFinderResults]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSearch();
@@ -312,6 +358,7 @@ export function useSEPLookup() {
     planSearch, setPlanSearch,
     selectedCounty, setSelectedCounty, countyList,
     countyLoading, countyPlanCounts, femaSource, femaDisasters, bulletins, liveNews, inputRef,
+    sepFinderZip, sepFinderResult, sepFinderLoading, sepFinderError,
     handleSearch, handleKeyDown, handleStateClick, loadPlansForCounty,
     isValidZip, filtered, femaActive, state,
     selectedState, setSelectedState,

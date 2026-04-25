@@ -7,6 +7,7 @@ import { PlanTable } from "./sep/PlanTable";
 import { StateMap } from "./sep/StateMap";
 import { CountyGrid } from "./sep/CountyGrid";
 import { FemaFeed } from "./sep/FemaFeed";
+import SEPResultsPanel, { SEP_FINDER_FULL_DISCLAIMER } from "./SEPResultsPanel";
 import "../SEPLookupTool.css";
 
 export default function SEPLookupTool() {
@@ -44,6 +45,21 @@ export default function SEPLookupTool() {
           inputRef={s.inputRef}
           hasResults={!!s.results || !!s.selectedState}
         />
+
+        {(s.sepFinderZip || s.sepFinderLoading || s.sepFinderError || s.sepFinderResult) && (
+          <div className="sep-intelligence-seps">
+            <SEPResultsPanel
+              zip={s.sepFinderZip || s.zip}
+              result={s.sepFinderResult}
+              loading={s.sepFinderLoading}
+              error={s.sepFinderError}
+              onRefresh={s.handleSearch}
+              refreshDisabled={!s.isValidZip}
+              className="sep-finder-panel--wide"
+              disclaimer={SEP_FINDER_FULL_DISCLAIMER}
+            />
+          </div>
+        )}
 
         {/* Loading */}
         {s.loading && (

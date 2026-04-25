@@ -56,6 +56,13 @@ const CITIZENSHIP_REFERENCE_PATTERNS = [
 ];
 const CITIZENSHIP_REFERENCE_MESSAGE =
   "Citizenship or immigration docs sound relevant. Open Agent Tools > Citizenship & Immigration Docs for document numbers and field locations.";
+const EMPTY_RETRIEVAL_TRACE = {
+  topics: [],
+  scenarios: [],
+  sources: [],
+  transcriptReferenceCount: 0,
+  transcriptReferenceError: null,
+};
 
 function hasCitizenshipReferenceTrigger(text) {
   return CITIZENSHIP_REFERENCE_PATTERNS.some((pattern) => pattern.test(text));
@@ -434,14 +441,6 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
     }
   }, [activeGate, state.stateCode, state.state, state.county, state.countyName]);
 
-  const emptyRetrievalTrace = {
-    topics: [],
-    scenarios: [],
-    sources: [],
-    transcriptReferenceCount: 0,
-    transcriptReferenceError: null,
-  };
-
   /* ─── Build copilot context ─── */
   const buildCopilotContext = useCallback((recentInterventions) => {
     return {
@@ -469,7 +468,7 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
       if (manual && !coachingLoading) {
         pushFeedEntry("info", "Analyze skipped. Start the transcript first.", {
           section: currentStep,
-          retrievalTrace: emptyRetrievalTrace,
+          retrievalTrace: EMPTY_RETRIEVAL_TRACE,
         });
       }
       return;
@@ -492,7 +491,7 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
       if (now - lastCoachingTime.current < cooldown) {
         pushFeedEntry("info", `Analyze skipped. Co-Pilot is in cooldown for another ${Math.ceil((cooldown - (now - lastCoachingTime.current)) / 1000)}s.`, {
           section: currentStep,
-          retrievalTrace: emptyRetrievalTrace,
+          retrievalTrace: EMPTY_RETRIEVAL_TRACE,
         });
         return;
       }
@@ -572,7 +571,7 @@ SECTION CONTEXT (rolling window):
         const errorMessage = getCopilotHttpErrorMessage(response.status, detail);
         console.error("ACA Coaching API error:", response.status, detail);
         const alreadyWarned = liveMessages.some((m) => m.text === errorMessage);
-        if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: emptyRetrievalTrace });
+        if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
         surfaceServiceIssue(errorMessage, { force: manual || periodic });
         return;
       }
@@ -607,13 +606,13 @@ SECTION CONTEXT (rolling window):
             sectionEntry
               ? `Entered "${sectionKey}". ${knowledge ? `Key items: ${knowledge.requiredElements.slice(0, 3).join(", ")}. ` : ""}No issues detected.`
               : "Analyze complete. No actionable compliance issues found.",
-            { section: currentStep, retrievalTrace: emptyRetrievalTrace }
+            { section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE }
           );
         } else if (shouldHeartbeat) {
           lastSilentHeartbeatRef.current = now;
           pushFeedEntry("info",
             firstSilent ? "Live speech analyzed. No action needed." : "Still listening. No intervention needed.",
-            { section: currentStep, skipLog: true, retrievalTrace: emptyRetrievalTrace }
+            { section: currentStep, skipLog: true, retrievalTrace: EMPTY_RETRIEVAL_TRACE }
           );
         }
         return;
@@ -624,7 +623,7 @@ SECTION CONTEXT (rolling window):
           shouldSuppressDuplicateIssue(liveMessages, currentStep, issueTag)) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning — not repeated.", { section: currentStep, issueTag, retrievalTrace: emptyRetrievalTrace });
+        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning — not repeated.", { section: currentStep, issueTag, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
         return;
       }
 
@@ -633,7 +632,7 @@ SECTION CONTEXT (rolling window):
           shouldSuppressForNuance({ level, issueTag, message, derivedSignals })) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed — context too ambiguous.", { section: currentStep, issueTag, retrievalTrace: emptyRetrievalTrace });
+        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed — context too ambiguous.", { section: currentStep, issueTag, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
         return;
       }
 
@@ -649,7 +648,7 @@ SECTION CONTEXT (rolling window):
         } else {
           lastAnalyzedLength.current = targetAnalyzedLength;
           lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Warning below confidence threshold.", { section: currentStep, issueTag, retrievalTrace: emptyRetrievalTrace });
+          if (manual) pushFeedEntry("info", "Analyze complete. Warning below confidence threshold.", { section: currentStep, issueTag, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
           return;
         }
       }
@@ -661,7 +660,7 @@ SECTION CONTEXT (rolling window):
         } else {
           lastAnalyzedLength.current = targetAnalyzedLength;
           lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Reminder below confidence threshold.", { section: currentStep, issueTag, retrievalTrace: emptyRetrievalTrace });
+          if (manual) pushFeedEntry("info", "Analyze complete. Reminder below confidence threshold.", { section: currentStep, issueTag, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
           return;
         }
       }
@@ -672,23 +671,23 @@ SECTION CONTEXT (rolling window):
       lastInterventionLevel.current = level;
       sectionCopilotFiredRef.current.add(activeGate);
       if (periodic && periodicSignature) lastPeriodicContextSignatureRef.current = periodicSignature;
-      pushFeedEntry(level, message, { issueTag, section: currentStep, retrievalTrace: emptyRetrievalTrace });
+      pushFeedEntry(level, message, { issueTag, section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
       showFloat(level, message);
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("ACA Coaching error:", err);
       const errorMessage = "Co-Pilot could not reach the coaching service. If running locally, use 'netlify dev' instead of 'npm run dev'.";
       const alreadyWarned = liveMessages.some((m) => m.text === errorMessage);
-      if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: emptyRetrievalTrace });
+      if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
       surfaceServiceIssue(errorMessage, { force: manual || periodic });
     } finally {
       if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
       setCoachingLoading(false);
     }
-  }, [activeGate, currentStep, coachingLoading, knowledge, showFloat, pushFeedEntry, buildCopilotContext, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs]);
+  }, [activeGate, currentStep, coachingLoading, knowledge, showFloat, pushFeedEntry, buildCopilotContext, getToken, transcriptRef, clearServiceIssue, surfaceServiceIssue, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs]);
 
   // Wire requestCoachingRef so core's periodic timer and section-entry logic can call it
-  useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching]);
+  useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching, requestCoachingRef]);
 
   /* ═══════ ASK ═══════ */
   const askCopilot = useCallback(async (spokenQuestion) => {
@@ -740,7 +739,7 @@ SECTION CONTEXT (rolling window):
       if (!response.ok) {
         const detail = await readErrorDetail(response);
         const errorMessage = getCopilotHttpErrorMessage(response.status, detail);
-        pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: emptyRetrievalTrace });
+        pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
         surfaceServiceIssue(errorMessage, { force: true });
         return;
       }
@@ -763,7 +762,7 @@ SECTION CONTEXT (rolling window):
       if (err.name === "AbortError") return;
       console.error("ACA Ask error:", err);
       const errorMessage = "Co-Pilot could not reach the coaching service.";
-      pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: emptyRetrievalTrace });
+      pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
       surfaceServiceIssue(errorMessage, { force: true });
     } finally {
       if (askAbortRef.current === controller) askAbortRef.current = null;
@@ -777,7 +776,7 @@ SECTION CONTEXT (rolling window):
     if (activeGate === 2 && !subsidyFiredRef.current) {
       subsidyFiredRef.current = true;
       const msg = "INCOME ASSESSMENT — You MUST accurately determine household size and income. 2026 subsidy cliff: clients above 400% FPL have NO APTC. Never coach clients to misrepresent income.";
-      pushFeedEntry("warn", msg, { section: "Household & Income Assessment", issueTag: "SUBSIDY_GATE_ENTRY", retrievalTrace: emptyRetrievalTrace });
+      pushFeedEntry("warn", msg, { section: "Household & Income Assessment", issueTag: "SUBSIDY_GATE_ENTRY", retrievalTrace: EMPTY_RETRIEVAL_TRACE });
       clearTimeout(floatTimeout.current);
       clearTimeout(floatFadeTimeout.current);
       setFloatingAlert({ level: "warn", text: msg, pulse: true });

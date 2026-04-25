@@ -74,6 +74,39 @@ function FloatingAlert({
   const isPulse = Boolean(alert.pulse);
   const isFading = Boolean(alert.fading);
   const isAlert = alert.level === "warn" || alert.level === "critical";
+  const isWarn = alert.level === "warn";
+  const isCritical = alert.level === "critical";
+  const urgencyColor = isCritical ? "#ff1744" : isWarn ? "#ffab00" : style.color || "#9ca3af";
+  const urgencyBorder = isCritical
+    ? "rgba(255,23,68,0.72)"
+    : isWarn
+      ? "rgba(255,171,0,0.64)"
+      : style.border || "rgba(255,255,255,0.07)";
+  const urgencyBackground = isCritical
+    ? "linear-gradient(145deg, rgba(255,23,68,0.22) 0%, rgba(10,10,12,0.99) 100%)"
+    : isWarn
+      ? "linear-gradient(145deg, rgba(255,171,0,0.16) 0%, rgba(10,10,12,0.99) 100%)"
+      : isPulse
+        ? "linear-gradient(145deg, rgba(157,0,255,0.12) 0%, rgba(10,10,12,0.99) 100%)"
+        : isAlert
+          ? "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)"
+          : "linear-gradient(145deg, rgba(21,21,26,0.92) 0%, rgba(10,10,12,0.94) 100%)";
+  const urgencyShadow = isCritical
+    ? "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 34px rgba(255,23,68,0.42)"
+    : isWarn
+      ? "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 28px rgba(255,171,0,0.34)"
+      : isPulse
+        ? `14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 30px ${(style.color || "#9ca3af")}33`
+        : "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 20px rgba(0,0,0,0.5)";
+  const urgencyAnimation = isFading
+    ? "floatFadeOut 5s ease forwards"
+    : isCritical
+      ? "slideDown 0.25s ease, alertPulseCritical 1s ease-in-out infinite"
+      : isWarn
+        ? "slideDown 0.25s ease, alertPulseWarn 1.5s ease-in-out 3"
+        : isPulse
+          ? "slideDown 0.25s ease, alertPulse 1.5s ease-in-out 3"
+          : "slideDown 0.25s ease";
   const floatLabel =
     labelMap?.[alert.level] || defaultLabel || "CO-PILOT";
 
@@ -87,41 +120,31 @@ function FloatingAlert({
         zIndex: 9999,
         maxWidth: isAlert ? 420 : 340,
         width: "auto",
-        background: isPulse
-          ? "linear-gradient(145deg, rgba(157,0,255,0.12) 0%, rgba(10,10,12,0.99) 100%)"
-          : isAlert
-            ? "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)"
-            : "linear-gradient(145deg, rgba(21,21,26,0.92) 0%, rgba(10,10,12,0.94) 100%)",
-        border: `1px solid ${style.border || "rgba(255,255,255,0.07)"}`,
+        background: urgencyBackground,
+        border: `1px solid ${urgencyBorder}`,
         borderLeftWidth: isAlert ? 4 : 3,
-        borderLeftColor: style.color || "#9ca3af",
+        borderLeftColor: urgencyColor,
         borderRadius: isAlert ? 14 : 10,
         padding: isAlert ? "14px 18px" : "10px 14px",
         display: "flex",
         alignItems: "flex-start",
         gap: isAlert ? 12 : 8,
         cursor: "pointer",
-        boxShadow: isPulse
-          ? `14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 30px ${(style.color || "#9ca3af")}33`
-          : "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 20px rgba(0,0,0,0.5)",
-        animation: isFading
-          ? "floatFadeOut 5s ease forwards"
-          : isPulse
-            ? "slideDown 0.25s ease, alertPulse 1.5s ease-in-out 3"
-            : "slideDown 0.25s ease",
+        boxShadow: urgencyShadow,
+        animation: urgencyAnimation,
         backdropFilter: "blur(12px)",
       }}
     >
       <span
         style={{
-          fontSize: isPulse ? "1.1rem" : isAlert ? "0.85rem" : "0.75rem",
-          color: style.color || "#9ca3af",
+          fontSize: isCritical ? "1.15rem" : isPulse ? "1.1rem" : isAlert ? "0.85rem" : "0.75rem",
+          color: urgencyColor,
           fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 800,
           lineHeight: 1,
           paddingTop: 2,
           flexShrink: 0,
-          animation: isPulse ? "iconFlash 0.8s ease-in-out 4" : "none",
+          animation: isPulse || isCritical ? "iconFlash 0.8s ease-in-out 4" : "none",
         }}
       >
         {style.icon || "!"}
@@ -129,12 +152,12 @@ function FloatingAlert({
       <div style={{ flex: 1 }}>
         <div
           style={{
-            fontSize: isPulse ? "0.7rem" : isAlert ? "0.62rem" : "0.58rem",
+            fontSize: isPulse || isCritical ? "0.7rem" : isAlert ? "0.62rem" : "0.58rem",
             fontWeight: 800,
             fontFamily: "'Barlow Condensed', sans-serif",
             letterSpacing: "0.1em",
             textTransform: "uppercase",
-            color: style.color || "#9ca3af",
+            color: urgencyColor,
             marginBottom: isAlert ? 5 : 3,
           }}
         >
@@ -142,11 +165,11 @@ function FloatingAlert({
         </div>
         <div
           style={{
-            fontSize: isAlert ? "0.82rem" : "0.76rem",
-            color: "#d0d0d0",
+            fontSize: isCritical ? "0.9rem" : isAlert ? "0.84rem" : "0.76rem",
+            color: "#f4f4f5",
             lineHeight: 1.5,
             fontFamily: "'DM Sans', sans-serif",
-            fontWeight: isPulse ? 600 : 400,
+            fontWeight: isCritical ? 700 : isWarn || isPulse ? 600 : 400,
           }}
         >
           {alert.text}

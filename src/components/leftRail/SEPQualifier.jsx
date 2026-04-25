@@ -24,7 +24,9 @@ import {
   resolveStateCode,
   STATE_SEP_TYPE_META,
 } from "../../data/stateSepData";
+import { useScript } from "../../context/ScriptContext";
 import QuickNotes from "../QuickNotes";
+import SEPFinder from "../SEPFinder";
 import SNPRoutingWidget from "./SNPRoutingWidget";
 
 const OPENER_SCRIPT =
@@ -269,6 +271,7 @@ function StateInfoCard({
 }
 
 export default function SEPQualifier({ onMinimize }) {
+  const { state: scriptState, dispatch: scriptDispatch } = useScript();
   const [stageIndex, setStageIndex] = useState(0);
   const [hasPartAandB, setHasPartAandB] = useState(null);
   const [residentState, setResidentState] = useState("");
@@ -278,6 +281,27 @@ export default function SEPQualifier({ onMinimize }) {
   const [agentNotes, setAgentNotes] = useState("");
   const [usedQuestionShortcut, setUsedQuestionShortcut] = useState(false);
   const [showNoSepNotice, setShowNoSepNotice] = useState(false);
+  const [sharedZip, setSharedZip] = useState("");
+  const [activeTool, setActiveTool] = useState("finder");
+
+  const normalizedSharedZip = sharedZip.replace(/\D/g, "").slice(0, 5);
+  const sharedZipInvalid = sharedZip.length > 0 && sharedZip.length < 5;
+  const sepFinderResultsZip = scriptState.sepFinderResults?.zip || null;
+  const sepFinderResultsMatch =
+    sepFinderResultsZip && sepFinderResultsZip === normalizedSharedZip;
+
+  useEffect(() => {
+    if (
+      sepFinderResultsZip &&
+      sepFinderResultsZip !== normalizedSharedZip
+    ) {
+      scriptDispatch({ type: "SET_SEP_FINDER_RESULTS", value: null });
+    }
+  }, [normalizedSharedZip, scriptDispatch, sepFinderResultsZip]);
+
+  const toggleTool = (tool) => {
+    setActiveTool((current) => (current === tool ? null : tool));
+  };
 
   const selectedCategory = selectedCategoryId
     ? SEP_QUALIFIER_CATEGORY_MAP[selectedCategoryId]
@@ -376,28 +400,95 @@ export default function SEPQualifier({ onMinimize }) {
 
         {stageIndex === 0 ? (
           <div className="sep-qualifier-stage sep-qualifier-stage--default">
-            <div className="sep-qualifier-intro-card">
-              <div className="sep-qualifier-start-panel">
+            <div className="left-rail-tools">
+              <div className="left-rail-zip-cell">
+                <label className="left-rail-zip-label" htmlFor="left-rail-shared-zip">
+                  Member ZIP
+                </label>
+                <input
+                  id="left-rail-shared-zip"
+                  className={`left-rail-zip-input${sharedZipInvalid ? " is-invalid" : ""}`}
+                  inputMode="numeric"
+                  maxLength={5}
+                  placeholder="Enter member ZIP"
+                  value={sharedZip}
+                  onChange={(event) =>
+                    setSharedZip(event.target.value.replace(/\D/g, "").slice(0, 5))
+                  }
+                  autoComplete="postal-code"
+                />
+              </div>
+
+              <div className="left-rail-tool-row" role="tablist" aria-label="Left rail tools">
                 <button
                   type="button"
-                  className="sep-qualifier-primary sep-qualifier-start-trigger"
-                  onClick={() => setStageIndex(1)}
+                  role="tab"
+                  aria-selected={activeTool === "finder"}
+                  className={`left-rail-tool-btn left-rail-tool-btn--finder${activeTool === "finder" ? " is-active" : ""}`}
+                  onClick={() => toggleTool("finder")}
                 >
-                  START SEP QUALIFICATION
+                  SEP Finder
                 </button>
                 <button
                   type="button"
-                  className="sep-qualifier-minimize-icon"
-                  onClick={onMinimize}
-                  aria-label="Minimize SEP Qualifier"
-                  title="Minimize"
+                  role="tab"
+                  aria-selected={activeTool === "qualifier"}
+                  className={`left-rail-tool-btn left-rail-tool-btn--qualifier${activeTool === "qualifier" ? " is-active" : ""}`}
+                  onClick={() => toggleTool("qualifier")}
                 >
-                  <Minimize2 size={12} />
+                  SEP Qualifier
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTool === "snp"}
+                  className={`left-rail-tool-btn left-rail-tool-btn--snp${activeTool === "snp" ? " is-active" : ""}`}
+                  onClick={() => toggleTool("snp")}
+                >
+                  SNP Routing
                 </button>
               </div>
-            </div>
 
-            <SNPRoutingWidget />
+              {activeTool ? (
+                <div
+                  className={`left-rail-tool-panel left-rail-tool-panel--${activeTool}`}
+                  role="tabpanel"
+                >
+                  {activeTool === "finder" ? (
+                    <SEPFinder zip={sharedZip} />
+                  ) : null}
+
+                  {activeTool === "qualifier" ? (
+                    <div className="left-rail-tool-panel-inner">
+                      {!sepFinderResultsMatch ? (
+                        <div className="left-rail-tool-prompt">
+                          Run SEP Finder first to see available SEPs for this ZIP.
+                        </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="left-rail-tool-start-btn"
+                        onClick={() => setStageIndex(1)}
+                      >
+                        START SEP QUALIFICATION
+                      </button>
+                      <button
+                        type="button"
+                        className="left-rail-tool-minimize"
+                        onClick={onMinimize}
+                      >
+                        <Minimize2 size={11} />
+                        Minimize Rail
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {activeTool === "snp" ? (
+                    <SNPRoutingWidget zip={sharedZip} />
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
 
             <QuickNotes value={agentNotes} onChange={setAgentNotes} title="Agent Notes" />
           </div>

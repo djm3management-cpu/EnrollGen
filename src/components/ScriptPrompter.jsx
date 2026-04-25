@@ -1,9 +1,10 @@
-import { useRef, useEffect, useCallback, memo } from "react";
+import { useRef, useEffect, useCallback, useState, memo } from "react";
 import { useScript } from "../context/ScriptContext";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useCopilotEngine } from "../hooks/useCopilotEngine";
 import { useCustomerAudio } from "../hooks/useCustomerAudio";
 import { useMergedTranscript } from "../hooks/useMergedTranscript";
+import { useTrainingMode } from "../context/TrainingModeContext";
 import { LEVEL_STYLE } from "../data/complianceKnowledge";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -26,8 +27,13 @@ const ScriptPrompter = memo(function ScriptPrompter({
     unlocked,
   } = useScript();
 
+  const { enabled: trainingModeEnabled } = useTrainingMode();
+
   // Shared transcriptRef — created here, passed to both hooks
   const transcriptRef = useRef("");
+
+  // Simulated transcript state (training mode only)
+  const [simulatedTranscript, setSimulatedTranscript] = useState("");
 
   /* ─── Customer audio capture (opt-in via getDisplayMedia + Deepgram) ─── */
   const customerAudio = useCustomerAudio();
@@ -71,8 +77,21 @@ const ScriptPrompter = memo(function ScriptPrompter({
 
   // Forward transcript changes to parent
   useEffect(() => {
-    if (onTranscriptChange) onTranscriptChange(speech.transcript);
-  }, [speech.transcript, onTranscriptChange]);
+    if (!onTranscriptChange) return;
+    onTranscriptChange(trainingModeEnabled ? simulatedTranscript : speech.transcript);
+  }, [
+    speech.transcript,
+    simulatedTranscript,
+    trainingModeEnabled,
+    onTranscriptChange,
+  ]);
+
+  // Keep transcriptRef in sync with simulated text in training mode so the
+  // Co-Pilot engine reads the typed utterances instead of the empty mic feed.
+  useEffect(() => {
+    if (!trainingModeEnabled) return;
+    transcriptRef.current = simulatedTranscript;
+  }, [trainingModeEnabled, simulatedTranscript]);
 
   // Forward merged transcript entries for MiniLiveTranscript in the right rail
   useEffect(() => {
@@ -91,10 +110,14 @@ const ScriptPrompter = memo(function ScriptPrompter({
 
   /* ─── Unified START / STOP handler ─── */
   const customerAudioEnabled =
-    import.meta.env.VITE_ENABLE_CUSTOMER_AUDIO !== "false" &&
-    !!import.meta.env.VITE_DEEPGRAM_API_KEY;
+    import.meta.env.VITE_ENABLE_CUSTOMER_AUDIO !== "false";
 
   const handleStart = useCallback(async () => {
+    if (trainingModeEnabled) {
+      // Training mode: no live audio capture. The simulated transcript input
+      // feeds transcriptRef directly via appendSimulatedUtterance().
+      return;
+    }
     speech.startListening();
     if (!customerAudioEnabled) return;
     await new Promise((r) => setTimeout(r, 200));
@@ -103,19 +126,42 @@ const ScriptPrompter = memo(function ScriptPrompter({
     } catch {
       return;
     }
-  }, [speech, customerAudio, customerAudioEnabled]);
+  }, [speech, customerAudio, customerAudioEnabled, trainingModeEnabled]);
 
   const handleStop = useCallback(() => {
+    if (trainingModeEnabled) return;
     speech.stopListening();
     if (customerAudio.isCapturing) customerAudio.stopCapture();
-  }, [speech, customerAudio]);
+  }, [speech, customerAudio, trainingModeEnabled]);
 
   /* ─── Clear all ─── */
   const clearAll = useCallback(() => {
     speech.clearTranscript();
     customerAudio.clearTranscript();
     copilot.clearFeed();
+    setSimulatedTranscript("");
+    transcriptRef.current = "";
   }, [speech, customerAudio, copilot]);
+
+  /* ─── Simulated transcript helpers (training mode) ─── */
+  const appendSimulatedUtterance = useCallback(
+    (text) => {
+      const trimmed = (text || "").trim();
+      if (!trimmed) return;
+      setSimulatedTranscript((current) => {
+        const next = current ? `${current} ${trimmed}` : trimmed;
+        transcriptRef.current = next;
+        return next;
+      });
+      copilot.scheduleCoaching?.(trimmed);
+    },
+    [copilot]
+  );
+
+  const clearSimulatedTranscript = useCallback(() => {
+    setSimulatedTranscript("");
+    transcriptRef.current = "";
+  }, []);
 
   /* ─── Expose controls to right rail via ref ─── */
   useEffect(() => {
@@ -126,6 +172,10 @@ const ScriptPrompter = memo(function ScriptPrompter({
         clearAll,
         requestCoaching: () => copilot.requestCoaching({ manual: true }),
         supportsRecognition: speech.supportsRecognition,
+        appendSimulatedUtterance,
+        clearSimulatedTranscript,
+        simulatedTranscript,
+        trainingModeEnabled,
       };
     }
   });
@@ -140,43 +190,68 @@ const ScriptPrompter = memo(function ScriptPrompter({
         const isPulse = !!floatingAlert.pulse;
         const isFading = !!floatingAlert.fading;
         const isAlert = floatingAlert.level === "warn" || floatingAlert.level === "critical";
+        const isWarn = floatingAlert.level === "warn";
+        const isCritical = floatingAlert.level === "critical";
+        const urgencyColor = isCritical ? "#ff1744" : isWarn ? "#ffab00" : s.color;
+        const urgencyBorder = isCritical
+          ? "rgba(255,23,68,0.72)"
+          : isWarn
+            ? "rgba(255,171,0,0.64)"
+            : s.border || "rgba(255,255,255,0.07)";
+        const urgencyBackground = isCritical
+          ? "linear-gradient(145deg, rgba(255,23,68,0.22) 0%, rgba(10,10,12,0.99) 100%)"
+          : isWarn
+            ? "linear-gradient(145deg, rgba(255,171,0,0.16) 0%, rgba(10,10,12,0.99) 100%)"
+            : isPulse
+              ? "linear-gradient(145deg, rgba(157,0,255,0.12) 0%, rgba(10,10,12,0.99) 100%)"
+              : isAlert
+                ? "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)"
+                : "linear-gradient(145deg, rgba(21,21,26,0.92) 0%, rgba(10,10,12,0.94) 100%)";
+        const urgencyShadow = isCritical
+          ? "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 34px rgba(255,23,68,0.42)"
+          : isWarn
+            ? "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 28px rgba(255,171,0,0.34)"
+            : isPulse
+              ? `14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 30px ${s.color}33`
+              : "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 20px rgba(0,0,0,0.5)";
+        const urgencyAnimation = isFading
+          ? "floatFadeOut 5s ease forwards"
+          : isCritical
+            ? "slideDown 0.25s ease, alertPulseCritical 1s ease-in-out infinite"
+            : isWarn
+              ? "slideDown 0.25s ease, alertPulseWarn 1.5s ease-in-out 3"
+              : isPulse
+                ? "slideDown 0.25s ease, alertPulse 1.5s ease-in-out 3"
+                : "slideDown 0.25s ease";
         const floatLabel = { critical: "CRITICAL ALERT", warn: "WARNING", tip: "TIP", remind: "REMINDER", info: "CO-PILOT" }[floatingAlert.level] || "CO-PILOT";
         return (
           <div
             onClick={() => copilot.setFloatingAlert(null)}
             style={{
               position: "fixed", top: 80, right: 20, zIndex: 9999, maxWidth: isAlert ? 420 : 340, width: "auto",
-              background: isPulse
-                ? "linear-gradient(145deg, rgba(157,0,255,0.12) 0%, rgba(10,10,12,0.99) 100%)"
-                : isAlert
-                  ? "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)"
-                  : "linear-gradient(145deg, rgba(21,21,26,0.92) 0%, rgba(10,10,12,0.94) 100%)",
-              border: `1px solid ${s.border || "rgba(255,255,255,0.07)"}`,
-              borderLeftWidth: isAlert ? 4 : 3, borderLeftColor: s.color,
+              background: urgencyBackground,
+              border: `1px solid ${urgencyBorder}`,
+              borderLeftWidth: isAlert ? 4 : 3, borderLeftColor: urgencyColor,
               borderRadius: isAlert ? 14 : 10, padding: isAlert ? "14px 18px" : "10px 14px",
               display: "flex", alignItems: "flex-start", gap: isAlert ? 12 : 8, cursor: "pointer",
-              boxShadow: isPulse
-                ? `14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 30px ${s.color}33`
-                : "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 20px rgba(0,0,0,0.5)",
-              animation: isFading
-                ? "floatFadeOut 5s ease forwards"
-                : isPulse ? "slideDown 0.25s ease, alertPulse 1.5s ease-in-out 3" : "slideDown 0.25s ease",
+              boxShadow: urgencyShadow,
+              animation: urgencyAnimation,
               backdropFilter: "blur(12px)",
             }}
           >
             <span style={{
-              fontSize: isPulse ? "1.1rem" : isAlert ? "0.85rem" : "0.75rem", color: s.color,
+              fontSize: isCritical ? "1.15rem" : isPulse ? "1.1rem" : isAlert ? "0.85rem" : "0.75rem", color: urgencyColor,
               fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, lineHeight: 1,
               paddingTop: 2, flexShrink: 0,
-              animation: isPulse ? "iconFlash 0.8s ease-in-out 4" : "none",
+              animation: isPulse || isCritical ? "iconFlash 0.8s ease-in-out 4" : "none",
             }}>
               {s.icon}
             </span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: isPulse ? "0.7rem" : isAlert ? "0.62rem" : "0.58rem", fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: s.color, marginBottom: isAlert ? 5 : 3 }}>
+              <div style={{ fontSize: isPulse || isCritical ? "0.7rem" : isAlert ? "0.62rem" : "0.58rem", fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: urgencyColor, marginBottom: isAlert ? 5 : 3 }}>
                 {floatLabel} — tap to dismiss
               </div>
-              <div style={{ fontSize: isAlert ? "0.82rem" : "0.76rem", color: "#d0d0d0", lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif", fontWeight: isPulse ? 600 : 400 }}>
+              <div style={{ fontSize: isCritical ? "0.9rem" : isAlert ? "0.84rem" : "0.76rem", color: "#f4f4f5", lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif", fontWeight: isCritical ? 700 : isWarn || isPulse ? 600 : 400 }}>
                 {floatingAlert.text}
               </div>
             </div>

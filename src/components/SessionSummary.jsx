@@ -596,8 +596,6 @@ export default React.memo(function SessionSummary() {
 
   if (!state.enrollOk) return null;
 
-  // Quick compliance preview
-  const complianceResult = buildComplianceResult();
   return (
     <div
       className="session-summary-bar"

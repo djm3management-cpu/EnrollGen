@@ -478,7 +478,7 @@ SECTION CONTEXT (rolling window):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 500,
+          max_tokens: 80,
           system: systemPrompt,
           messages: [{ role: "user", content: userContent }],
         }),
@@ -612,7 +612,7 @@ SECTION CONTEXT (rolling window):
     }
   }, [
     activeSection, currentStep, coachingLoading, knowledge, showFloat, pushFeedEntry,
-    buildCopilotContext, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue,
+    buildCopilotContext, getToken, transcriptRef, clearServiceIssue, surfaceServiceIssue,
     messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel,
     sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef,
     lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs,
@@ -659,7 +659,7 @@ SECTION CONTEXT (rolling window):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 500,
+          max_tokens: 300,
           system: systemPrompt,
           messages: [{ role: "user", content: question }],
         }),

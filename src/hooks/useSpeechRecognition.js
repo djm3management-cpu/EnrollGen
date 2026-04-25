@@ -63,7 +63,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
   useEffect(() => { onSpokenQuestionRef.current = onSpokenQuestion; }, [onSpokenQuestion]);
 
   // Keep transcriptRef in sync
-  useEffect(() => { transcriptRef.current = transcript; }, [transcript]);
+  useEffect(() => { transcriptRef.current = transcript; }, [transcript, transcriptRef]);
 
   const supportsRecognition =
     typeof window !== "undefined" &&
@@ -153,7 +153,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     recognitionRef.current = recognition;
     recognition.start();
     setListening(true);
-  }, [supportsRecognition]);
+  }, [supportsRecognition, transcriptRef]);
 
   const stopListening = useCallback(() => {
     window.clearTimeout(restartTimeoutRef.current);
@@ -173,7 +173,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     if (spokenQuestion) {
       onSpokenQuestionRef.current?.(spokenQuestion);
     }
-  }, []);
+  }, [transcriptRef]);
 
   const clearTranscript = useCallback(() => {
     transcriptRef.current = "";

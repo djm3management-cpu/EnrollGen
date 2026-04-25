@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useCallStore } from "../stores/callStore";
+import { useAppAuth } from "../context/AuthContext";
+import { fetchWithClerk } from "../lib/clerkFetch";
 import { waitForActiveSessionMetadata } from "./useSessionTracker";
 
 /**
@@ -18,6 +20,25 @@ const DEEPGRAM_WS_URL =
 const TARGET_SAMPLE_RATE = 16000;
 const BUFFER_SIZE = 4096;
 
+async function fetchDeepgramToken(getToken) {
+  const response = await fetchWithClerk(getToken, "/api/deepgram-token", {
+    method: "POST",
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok || !data.access_token) {
+    throw new Error(data.detail || data.error || "Deepgram token request failed.");
+  }
+
+  return data.access_token;
+}
+
 /** Downsample Float32 audio from source rate to 16kHz and convert to Int16 PCM */
 function downsampleToInt16(float32Array, sourceSampleRate) {
   const ratio = sourceSampleRate / TARGET_SAMPLE_RATE;
@@ -32,6 +53,7 @@ function downsampleToInt16(float32Array, sourceSampleRate) {
 }
 
 export function useCustomerAudio() {
+  const { getToken } = useAppAuth();
   const [isCapturing, setIsCapturing] = useState(false);
   const [customerTranscript, setCustomerTranscript] = useState([]);
   const [error, setError] = useState(null);
@@ -93,9 +115,11 @@ export function useCustomerAudio() {
   const startCapture = useCallback(async () => {
     setError(null);
 
-    const apiKey = import.meta.env.VITE_DEEPGRAM_API_KEY;
-    if (!apiKey) {
-      setError("Deepgram API key not configured. Set VITE_DEEPGRAM_API_KEY in .env");
+    let deepgramToken;
+    try {
+      deepgramToken = await fetchDeepgramToken(getToken);
+    } catch (err) {
+      setError(err.message || "Deepgram token service is not configured.");
       return;
     }
 
@@ -165,7 +189,7 @@ export function useCustomerAudio() {
     processorRef.current = processor;
 
     // Open Deepgram WebSocket
-    const ws = new WebSocket(DEEPGRAM_WS_URL, ["token", apiKey]);
+    const ws = new WebSocket(DEEPGRAM_WS_URL, ["token", deepgramToken]);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -250,7 +274,7 @@ export function useCustomerAudio() {
     };
 
     setIsCapturing(true);
-  }, [cleanup, isCapturing]);
+  }, [cleanup, getToken, isCapturing]);
 
   const stopCapture = useCallback(() => {
     cleanup();

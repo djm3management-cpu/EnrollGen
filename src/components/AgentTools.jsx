@@ -10,11 +10,13 @@ import {
   Landmark,
   RotateCw,
   Scale,
+  Search,
   Shield,
   UserCheck,
   X,
 } from "lucide-react";
 import SEPGuide2026 from "./SEPGuide2026";
+import CarrierQuickRef from "./CarrierQuickRef";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 import "../AgentTools.css";
 
@@ -192,6 +194,13 @@ const TOOL_GROUPS = [
         title: "Carrier Portals",
         description: "Portal launchpad for MBI lookups, enrollment platforms, and carrier access.",
         icon: <Building2 size={16} />,
+      },
+      {
+        id: "carrier-quick-ref",
+        title: "Carrier Quick Reference",
+        description: "Search NGHS carriers, plans, states, and key details mid-call.",
+        icon: <Search size={16} />,
+        badge: "new",
       },
     ],
   },
@@ -728,6 +737,8 @@ export default function AgentTools() {
         return <LinkGrid items={ENROLLMENT_TOOLS} />;
       case "carrier-portals":
         return <CarrierPortalPanel />;
+      case "carrier-quick-ref":
+        return <CarrierQuickRef />;
       case "ma-seps":
         return <SEPReference script={NGHS_SEP_SCRIPT} />;
       case "sep-guide-2026":

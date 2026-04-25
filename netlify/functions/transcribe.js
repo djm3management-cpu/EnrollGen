@@ -18,8 +18,8 @@ function json(status, data) {
 }
 
 function getSupabase() {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
   return createClient(url, key);
 }
 
@@ -29,7 +29,7 @@ export default async (request) => {
   const auth = await requireClerkAuth(request);
   if (auth.response) return auth.response;
 
-  const dgKey = process.env.DEEPGRAM_API_KEY || process.env.VITE_DEEPGRAM_API_KEY;
+  const dgKey = process.env.DEEPGRAM_API_KEY;
   if (!dgKey) {
     return json(500, { error: "DEEPGRAM_API_KEY not configured in environment variables." });
   }
