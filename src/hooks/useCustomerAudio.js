@@ -5,10 +5,10 @@ import { fetchWithClerk } from "../lib/clerkFetch";
 import { waitForActiveSessionMetadata } from "./useSessionTracker";
 
 /**
- * useCustomerAudio — captures customer audio from a shared browser tab
+ * useCustomerAudio - captures customer audio from a shared browser tab
  * via getDisplayMedia and streams it to Deepgram for real-time transcription.
  *
- * Flow: getDisplayMedia → AudioContext → ScriptProcessorNode → Deepgram WebSocket
+ * Flow: getDisplayMedia -> AudioContext -> ScriptProcessorNode -> Deepgram WebSocket
  * Output: customerTranscript array with { text, timestamp, isFinal, speaker: 'customer' }
  */
 
@@ -19,6 +19,25 @@ const DEEPGRAM_WS_URL =
 
 const TARGET_SAMPLE_RATE = 16000;
 const BUFFER_SIZE = 4096;
+
+async function requestCustomerAudioStream() {
+  if (!navigator.mediaDevices?.getDisplayMedia) {
+    throw new Error("Browser screen audio capture is not supported.");
+  }
+
+  const stream = await navigator.mediaDevices.getDisplayMedia({
+    video: true,
+    audio: {
+      channelCount: 1,
+      sampleRate: TARGET_SAMPLE_RATE,
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+    },
+  });
+
+  return stream;
+}
 
 async function fetchDeepgramToken(getToken) {
   const response = await fetchWithClerk(getToken, "/api/deepgram-token", {
@@ -39,7 +58,6 @@ async function fetchDeepgramToken(getToken) {
   return data.access_token;
 }
 
-/** Downsample Float32 audio from source rate to 16kHz and convert to Int16 PCM */
 function downsampleToInt16(float32Array, sourceSampleRate) {
   const ratio = sourceSampleRate / TARGET_SAMPLE_RATE;
   const newLength = Math.round(float32Array.length / ratio);
@@ -71,38 +89,52 @@ export function useCustomerAudio() {
     if (cleaningUpRef.current) return;
     cleaningUpRef.current = true;
 
-    // Close WebSocket
     if (wsRef.current) {
       try {
         if (wsRef.current.readyState === WebSocket.OPEN) {
-          // Send close message to Deepgram
           wsRef.current.send(JSON.stringify({ type: "CloseStream" }));
         }
         wsRef.current.close();
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       wsRef.current = null;
     }
 
-    // Disconnect audio processing
     if (processorRef.current) {
-      try { processorRef.current.disconnect(); } catch { /* ignore */ }
+      try {
+        processorRef.current.disconnect();
+      } catch {
+        /* ignore */
+      }
       processorRef.current = null;
     }
+
     if (sourceRef.current) {
-      try { sourceRef.current.disconnect(); } catch { /* ignore */ }
+      try {
+        sourceRef.current.disconnect();
+      } catch {
+        /* ignore */
+      }
       sourceRef.current = null;
     }
 
-    // Close AudioContext
     if (audioContextRef.current) {
-      try { audioContextRef.current.close(); } catch { /* ignore */ }
+      try {
+        audioContextRef.current.close();
+      } catch {
+        /* ignore */
+      }
       audioContextRef.current = null;
     }
 
-    // Stop all media tracks
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => {
-        try { track.stop(); } catch { /* ignore */ }
+        try {
+          track.stop();
+        } catch {
+          /* ignore */
+        }
       });
       mediaStreamRef.current = null;
     }
@@ -115,80 +147,52 @@ export function useCustomerAudio() {
   const startCapture = useCallback(async () => {
     setError(null);
 
-    let deepgramToken;
-    try {
-      deepgramToken = await fetchDeepgramToken(getToken);
-    } catch (err) {
-      setError(err.message || "Deepgram token service is not configured.");
-      return;
-    }
-
     let stream;
     try {
-      // Try audio-only first
-      stream = await navigator.mediaDevices.getDisplayMedia({
-        video: false,
-        audio: {
-          channelCount: 1,
-          sampleRate: TARGET_SAMPLE_RATE,
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      });
-    } catch {
-      try {
-        // Some browsers require video: true — capture it and discard
-        stream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: {
-            channelCount: 1,
-            sampleRate: TARGET_SAMPLE_RATE,
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-          },
-        });
-        // Discard video track
-        stream.getVideoTracks().forEach((track) => track.stop());
-      } catch (err) {
-        // Re-throw user denial so unified START handler can catch silently
-        if (err.name === "NotAllowedError") {
-          throw new Error("Tab sharing was denied by user.");
-        }
-        const msg = `Could not capture tab audio: ${err.message}`;
-        setError(msg);
-        return;
-      }
-    }
-
-    // Verify we got an audio track
-    const audioTracks = stream.getAudioTracks();
-    if (audioTracks.length === 0) {
-      stream.getTracks().forEach((t) => t.stop());
-      throw new Error("No audio track in the shared tab. Make sure to check 'Share tab audio' when selecting.");
+      stream = await requestCustomerAudioStream();
+    } catch (err) {
+      const msg =
+        err?.name === "NotAllowedError"
+          ? "Tab sharing was denied by user."
+          : `Could not open the browser audio picker: ${err?.message || "unknown error"}`;
+      setError(msg);
+      throw new Error(msg);
     }
 
     mediaStreamRef.current = stream;
 
-    // Auto-cleanup when user stops sharing via browser UI
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) {
+      const msg =
+        "No audio track in the shared tab. Make sure to check 'Share tab audio' when selecting.";
+      setError(msg);
+      cleanup();
+      throw new Error(msg);
+    }
+
     audioTracks[0].onended = () => {
       cleanup();
     };
 
-    // Set up AudioContext and processing
+    let deepgramToken;
+    try {
+      deepgramToken = await fetchDeepgramToken(getToken);
+    } catch (err) {
+      const msg = err.message || "Deepgram token service is not configured.";
+      setError(msg);
+      cleanup();
+      throw new Error(msg);
+    }
+
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     audioContextRef.current = audioContext;
 
     const source = audioContext.createMediaStreamSource(stream);
     sourceRef.current = source;
 
-    // Use ScriptProcessorNode for PCM extraction
-    // (AudioWorklet would be ideal but requires a separate file; this is simpler and still works)
     const processor = audioContext.createScriptProcessor(BUFFER_SIZE, 1, 1);
     processorRef.current = processor;
 
-    // Open Deepgram WebSocket
     const ws = new WebSocket(DEEPGRAM_WS_URL, ["token", deepgramToken]);
     wsRef.current = ws;
 
@@ -200,19 +204,16 @@ export function useCustomerAudio() {
         }
       })();
 
-      // Wire up audio processing once WebSocket is ready
-      processor.onaudioprocess = (e) => {
-        const inputData = e.inputBuffer.getChannelData(0);
+      processor.onaudioprocess = (event) => {
+        const inputData = event.inputBuffer.getChannelData(0);
 
-        // Calculate audio level for the UI meter
         let sum = 0;
         for (let i = 0; i < inputData.length; i++) {
           sum += inputData[i] * inputData[i];
         }
         const rms = Math.sqrt(sum / inputData.length);
-        setAudioLevel(Math.min(1, rms * 5)); // Amplify for visual
+        setAudioLevel(Math.min(1, rms * 5));
 
-        // Downsample and convert to Int16 PCM
         if (ws.readyState === WebSocket.OPEN) {
           const pcm = downsampleToInt16(inputData, audioContext.sampleRate);
           ws.send(pcm.buffer);
@@ -231,10 +232,9 @@ export function useCustomerAudio() {
           const text = (alt.transcript || "").trim();
           if (!text) return;
 
-          const isFinal = data.is_final;
           const timestamp = Date.now();
 
-          if (isFinal) {
+          if (data.is_final) {
             interimRef.current = "";
             setCustomerTranscript((prev) => [
               ...prev,
@@ -242,20 +242,21 @@ export function useCustomerAudio() {
             ]);
           } else {
             interimRef.current = text;
-            // Update the last interim entry or add new one
             setCustomerTranscript((prev) => {
               const copy = [...prev];
-              // Replace the last interim entry if it exists
+              const entry = { text, timestamp, isFinal: false, speaker: "customer" };
               if (copy.length > 0 && !copy[copy.length - 1].isFinal) {
-                copy[copy.length - 1] = { text, timestamp, isFinal: false, speaker: "customer" };
+                copy[copy.length - 1] = entry;
               } else {
-                copy.push({ text, timestamp, isFinal: false, speaker: "customer" });
+                copy.push(entry);
               }
               return copy;
             });
           }
         }
-      } catch { /* ignore parse errors */ }
+      } catch {
+        /* ignore parse errors */
+      }
     };
 
     ws.onerror = () => {
@@ -266,7 +267,6 @@ export function useCustomerAudio() {
     ws.onclose = (event) => {
       void useCallStore.getState().endCall();
 
-      // Only set error if we didn't initiate the close
       if (isCapturing && !cleaningUpRef.current && event.code !== 1000) {
         setError("Deepgram connection closed unexpectedly. You may need to restart capture.");
         cleanup();
@@ -285,7 +285,6 @@ export function useCustomerAudio() {
     interimRef.current = "";
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => () => cleanup(), [cleanup]);
 
   return {

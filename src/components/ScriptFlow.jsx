@@ -709,7 +709,10 @@ export default function ScriptFlow() {
           <div className="start-call-gate-stack">
             <button
               className="start-call-button"
-              onClick={() => setCallStarted(true)}
+              onClick={() => {
+                setCallStarted(true);
+                void copilotHandlersRef.current.handleStart?.();
+              }}
             >
               Start
             </button>

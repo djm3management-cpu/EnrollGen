@@ -118,15 +118,18 @@ const ScriptPrompter = memo(function ScriptPrompter({
       // feeds transcriptRef directly via appendSimulatedUtterance().
       return;
     }
-    speech.startListening();
-    if (!customerAudioEnabled) return;
-    await new Promise((r) => setTimeout(r, 200));
-    try {
-      await customerAudio.startCapture();
-    } catch {
-      return;
+    if (customerAudioEnabled) {
+      try {
+        await customerAudio.startCapture();
+      } catch (err) {
+        const message =
+          err?.message ||
+          "Customer audio was not shared. Click START again and share the GoHighLevel tab with audio.";
+        copilot.pushFeedEntry("info", message, { section: copilot.currentStep });
+      }
     }
-  }, [speech, customerAudio, customerAudioEnabled, trainingModeEnabled]);
+    speech.startListening();
+  }, [speech, customerAudio, customerAudioEnabled, trainingModeEnabled, copilot]);
 
   const handleStop = useCallback(() => {
     if (trainingModeEnabled) return;
