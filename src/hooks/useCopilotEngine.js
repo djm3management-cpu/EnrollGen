@@ -759,7 +759,7 @@ export function useCopilotEngine({
 
     const userContent = `${transcriptLabel}
 ${sectionEntry ? `
-SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" section. This is your first look at this section. Provide a brief "info" level response: summarize the 2-3 most important compliance items to cover in this section, note any issues you see so far in the transcript, and give a short status. Keep it to 2-3 sentences. Use level "info" unless you spot an actual compliance issue. Do NOT return silent for a section entry analysis.
+SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" section. Provide one short info message with the next one or two priorities. Use level "info" unless you spot an actual compliance issue. Do NOT return silent for a section entry analysis.
 ` : ""}
 ${periodic ? `
 PERIODIC 90-SECOND REVIEW: You MUST return a popup-ready encouragement or correction. If the agent is on track, return level "tip". If correction is needed, return "remind", "warn", or "critical". Use the current section context even if recent speech is limited.
@@ -776,7 +776,7 @@ SECTION CONTEXT (rolling window for current section):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 80,
+          max_tokens: 220,
           system: systemPrompt,
           messages: [{ role: "user", content: userContent }],
         }),

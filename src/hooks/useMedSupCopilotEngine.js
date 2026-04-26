@@ -461,7 +461,7 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state }) 
 
     const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words. Speech recognition may have minor errors.)
 ${sectionEntry ? `
-SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" section. Provide a brief "info" level response: summarize 2-3 most important compliance items, note any issues so far. Keep to 2-3 sentences. Use level "info" unless you spot an actual issue. Do NOT return silent.
+SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" section. Provide one short info message with the next one or two priorities. Use level "info" unless you spot an actual issue. Do NOT return silent.
 ` : ""}
 ${periodic ? `
 PERIODIC 90-SECOND REVIEW: You MUST return a popup-ready message. If on track, return "tip". If correction needed, return "remind", "warn", or "critical".
@@ -478,7 +478,7 @@ SECTION CONTEXT (rolling window):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 80,
+          max_tokens: 220,
           system: systemPrompt,
           messages: [{ role: "user", content: userContent }],
         }),

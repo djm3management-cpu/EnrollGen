@@ -68,23 +68,147 @@ export function parseAnthropicResponse(data) {
     .trim();
 }
 
+const VALID_COACHING_LEVELS = new Set([
+  "silent",
+  "info",
+  "tip",
+  "remind",
+  "warn",
+  "critical",
+]);
+const INCOMPLETE_COACHING_MESSAGE =
+  "Copilot response was incomplete. Tap Analyze if needed.";
+
+function stripJsonFences(value) {
+  return (value || "")
+    .toString()
+    .replace(/```(?:json)?/gi, "")
+    .replace(/```/g, "")
+    .trim();
+}
+
+function getJsonObjectCandidate(value) {
+  const text = stripJsonFences(value);
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1) return text;
+  if (end > start) return text.slice(start, end + 1);
+  return text.slice(start);
+}
+
+function tryParseJsonObject(value) {
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function extractJsonStringField(source, field) {
+  const pattern = new RegExp(`"${field}"\\s*:\\s*"`, "i");
+  const match = pattern.exec(source);
+  if (!match) return null;
+
+  let output = "";
+  let escaped = false;
+  for (let i = match.index + match[0].length; i < source.length; i += 1) {
+    const char = source[i];
+    if (escaped) {
+      output += char;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === "\"") return output;
+    output += char;
+  }
+  return output;
+}
+
+function extractJsonNumberField(source, field) {
+  const match = new RegExp(`"${field}"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)`, "i").exec(source);
+  if (!match) return null;
+  const value = Number(match[1]);
+  return Number.isFinite(value) ? value : null;
+}
+
+function normalizeCoachingLevel(value) {
+  const level = (value || "").toString().trim().toLowerCase();
+  return VALID_COACHING_LEVELS.has(level) ? level : "info";
+}
+
+function normalizeConfidence(value) {
+  const confidence = Number(value);
+  if (!Number.isFinite(confidence)) return null;
+  return confidence > 0 && confidence <= 1 ? confidence * 100 : confidence;
+}
+
+function normalizePlainMessage(value) {
+  return (value || "")
+    .toString()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function looksLikeStructuredCoachingText(value) {
+  return /"?(level|issue_tag|confidence|message)"?\s*:/i.test(value);
+}
+
+export function formatCopilotDisplayMessage(value) {
+  const text = stripJsonFences(value);
+  if (!text) return "";
+
+  const candidate = getJsonObjectCandidate(text);
+  const parsed = tryParseJsonObject(candidate);
+  if (parsed && Object.prototype.hasOwnProperty.call(parsed, "message")) {
+    return normalizePlainMessage(parsed.message);
+  }
+
+  const extractedMessage = extractJsonStringField(text, "message");
+  if (extractedMessage !== null) {
+    return normalizePlainMessage(extractedMessage);
+  }
+
+  if (looksLikeStructuredCoachingText(text)) {
+    return INCOMPLETE_COACHING_MESSAGE;
+  }
+
+  return normalizePlainMessage(text);
+}
+
 /** Parse the coaching model's JSON response into structured fields. */
 export function parseCoachingJson(raw) {
-  let level = "info", message = "", issueTag = "", confidence = null;
-  try {
-    const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
-    level = parsed.level || "info";
-    message = parsed.message || "";
-    const parsedConf = Number(parsed.confidence);
-    confidence = Number.isFinite(parsedConf) ? parsedConf : null;
-    issueTag =
-      normalizeIssueTag(parsed.issue_tag) ||
-      normalizeIssueTag(message.split(/[.:!?]/)[0]);
-  } catch {
-    message = raw || "";
-    issueTag = normalizeIssueTag(message.split(/[.:!?]/)[0]);
+  const text = stripJsonFences(raw);
+  const candidate = getJsonObjectCandidate(text);
+  const parsed = tryParseJsonObject(candidate);
+
+  if (parsed) {
+    const message = normalizePlainMessage(parsed.message);
+    return {
+      level: normalizeCoachingLevel(parsed.level),
+      message,
+      issueTag:
+        normalizeIssueTag(parsed.issue_tag) ||
+        normalizeIssueTag(message.split(/[.:!?]/)[0]),
+      confidence: normalizeConfidence(parsed.confidence),
+    };
   }
-  return { level, message, issueTag, confidence };
+
+  const message = formatCopilotDisplayMessage(text);
+  return {
+    level: normalizeCoachingLevel(extractJsonStringField(text, "level")),
+    message,
+    issueTag:
+      normalizeIssueTag(extractJsonStringField(text, "issue_tag")) ||
+      normalizeIssueTag(message.split(/[.:!?]/)[0]),
+    confidence: normalizeConfidence(extractJsonNumberField(text, "confidence")),
+  };
 }
 
 /**
@@ -256,10 +380,11 @@ export function useCopilotEngineCore({
   }, []);
 
   const showFloat = useCallback((level, text, opts = {}) => {
+    const displayText = formatCopilotDisplayMessage(text);
     clearTimeout(floatTimeout.current);
     clearTimeout(floatFadeTimeout.current);
-    setFloatingAlert({ level, text, ...opts });
-    logEntry(LOG_TYPES.FLOATING_ALERT, level, text, { section: currentStep });
+    setFloatingAlert({ level, text: displayText, ...opts });
+    logEntry(LOG_TYPES.FLOATING_ALERT, level, displayText, { section: currentStep });
 
     if (level === "warn" || level === "critical") {
       try {
@@ -299,16 +424,17 @@ export function useCopilotEngineCore({
 
   /* ─── Feed entry ─── */
   const pushFeedEntry = useCallback((level, text, extra = {}) => {
+    const displayText = formatCopilotDisplayMessage(text);
     const entry = {
       id: Date.now() + Math.floor(Math.random() * 1000),
       level,
-      text,
+      text: displayText,
       ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       ...extra,
     };
     setMessages((prev) => [...prev.slice(-19), entry]);
     if (!extra.skipLog) {
-      logEntry(LOG_TYPES.COPILOT_MSG, level, text, {
+      logEntry(LOG_TYPES.COPILOT_MSG, level, displayText, {
         section: extra.section || currentStep,
         issueTag: extra.issueTag || "",
         contextSnapshot: extra.contextSnapshot,

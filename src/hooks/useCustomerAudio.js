@@ -19,6 +19,7 @@ const DEEPGRAM_WS_URL =
 
 const TARGET_SAMPLE_RATE = 16000;
 const BUFFER_SIZE = 4096;
+const DEEPGRAM_TOKEN_ENDPOINT = "/api/deepgram-token";
 
 async function requestCustomerAudioStream() {
   if (!navigator.mediaDevices?.getDisplayMedia) {
@@ -40,19 +41,38 @@ async function requestCustomerAudioStream() {
 }
 
 async function fetchDeepgramToken(getToken) {
-  const response = await fetchWithClerk(getToken, "/api/deepgram-token", {
+  const response = await fetchWithClerk(getToken, DEEPGRAM_TOKEN_ENDPOINT, {
     method: "POST",
   });
 
-  let data = {};
+  const raw = await response.text().catch(() => "");
+  let data = null;
   try {
-    data = await response.json();
+    data = raw ? JSON.parse(raw) : null;
   } catch {
-    data = {};
+    data = null;
   }
 
-  if (!response.ok || !data.access_token) {
-    throw new Error(data.detail || data.error || "Deepgram token request failed.");
+  if (!response.ok || !data?.access_token) {
+    const nestedError =
+      typeof data?.error === "object" && data.error
+        ? data.error.message || data.error.type
+        : data?.error;
+    const detail =
+      data?.detail ||
+      nestedError ||
+      data?.message ||
+      (raw && !raw.trim().startsWith("<") ? raw.trim() : "");
+
+    if (response.status === 404) {
+      throw new Error(
+        "Customer audio is unavailable because the Deepgram token function is not running. Use Netlify dev or disable customer audio."
+      );
+    }
+
+    throw new Error(
+      detail || `Deepgram token request failed with HTTP ${response.status}.`
+    );
   }
 
   return data.access_token;

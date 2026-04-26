@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, memo } from "react";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import PanelIdleSpinner from "./PanelIdleSpinner";
+import { formatCopilotDisplayMessage } from "../hooks/useCopilotEngineCore";
 
 const AUTO_SCROLL_THRESHOLD = 50;
 const MAX_FEED_ENTRIES = 3;
@@ -55,7 +56,9 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
               key={entry.id}
               className={`copilot-feed-mini__entry copilot-msg copilot-msg--${level}`}
             >
-              <span className="copilot-feed-mini__text">{entry.message}</span>
+              <span className="copilot-feed-mini__text">
+                {formatCopilotDisplayMessage(entry.message)}
+              </span>
             </div>
           );
         })}

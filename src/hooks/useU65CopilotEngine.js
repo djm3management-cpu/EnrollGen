@@ -580,7 +580,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
     });
 
     const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words. Speech recognition may have minor errors.)
-${sectionEntry ? `\nSECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" gate. Provide a brief "info" level response: summarize 2-3 most important compliance items, note any issues so far. Keep to 2-3 sentences. Use level "info" unless you spot an actual issue. Do NOT return silent.\n` : ""}${periodic ? `\nPERIODIC 90-SECOND REVIEW: You MUST return a popup-ready message. If on track, return "tip". If correction needed, return "remind", "warn", or "critical".\n` : ""}
+${sectionEntry ? `\nSECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" gate. Provide one short info message with the next one or two priorities. Use level "info" unless you spot an actual issue. Do NOT return silent.\n` : ""}${periodic ? `\nPERIODIC 90-SECOND REVIEW: You MUST return a popup-ready message. If on track, return "tip". If correction needed, return "remind", "warn", or "critical".\n` : ""}
 NEW SPEECH SINCE LAST ANALYSIS:
 "${newSpeechWindow}"
 
@@ -592,7 +592,7 @@ SECTION CONTEXT (rolling window):
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 80,
+          model: "claude-sonnet-4-6", max_tokens: 220,
           system: systemPrompt,
           messages: [{ role: "user", content: userContent }],
         }),
