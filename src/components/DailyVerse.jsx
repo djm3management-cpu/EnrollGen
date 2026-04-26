@@ -73,7 +73,10 @@ function normalizeOriginalText(text = "") {
 }
 
 function todayKey(now = new Date()) {
-  return now.toISOString().slice(0, 10);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function readStreak() {
@@ -617,8 +620,6 @@ export default function DailyVerse() {
 
   const testamentClass = isOT ? "is-ot" : isNT ? "is-nt" : "";
   const verseText = verse?.text?.trim() || "";
-  const firstLetter = verseText ? verseText.charAt(0) : "";
-  const restOfText = verseText ? verseText.slice(1) : "";
 
   const focusedVerseNumber = useMemo(() => {
     const parsed = parseReference(verse?.reference);
@@ -632,7 +633,6 @@ export default function DailyVerse() {
 
   return (
     <div className={`dv-card ${testamentClass}`}>
-      <span className="dv-rail" aria-hidden="true" />
 
       {/* ── header row ── */}
       <div className="dv-header">
@@ -850,10 +850,7 @@ export default function DailyVerse() {
                 &ldquo;
               </span>
               <p className="dv-text">
-                {firstLetter && (
-                  <span className="dv-dropcap">{firstLetter}</span>
-                )}
-                {restOfText}
+                {verseText}
                 <span className="dv-text-close">&rdquo;</span>
               </p>
             </div>

@@ -90,8 +90,9 @@ const DAILY_VERSE_POOL = [
 
 export function getDailyReference(now = new Date()) {
   const year = now.getFullYear();
-  const start = new Date(year, 0, 0);
-  const diff = now - start;
+  const start = Date.UTC(year, 0, 0);
+  const currentDate = Date.UTC(year, now.getMonth(), now.getDate());
+  const diff = currentDate - start;
   const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
   // mix in year so Jan 1 differs across years
   const seed = (year * 31 + dayOfYear) % DAILY_VERSE_POOL.length;

@@ -4159,23 +4159,6 @@ html {
   overflow: hidden;
 }
 
-/* testament accent rail — left edge */
-.dv-rail {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.55) 0%, rgba(212, 175, 55, 0) 80%);
-  pointer-events: none;
-  opacity: 0.85;
-}
-.dv-card.is-ot .dv-rail {
-  background: linear-gradient(180deg, rgba(255, 179, 0, 0.6) 0%, rgba(255, 179, 0, 0) 80%);
-}
-.dv-card.is-nt .dv-rail {
-  background: linear-gradient(180deg, rgba(232, 0, 45, 0.55) 0%, rgba(232, 0, 45, 0) 80%);
-}
 .dv-card::before {
   content: "";
   position: absolute;
@@ -4356,32 +4339,18 @@ html {
 }
 
 .dv-text {
-  font-family: "EB Garamond", "Cormorant Garamond", Georgia, serif;
-  font-size: 19.5px;
-  line-height: 1.72;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 17.5px;
+  line-height: 1.78;
+  letter-spacing: 0.012em;
   color: var(--text-primary);
   margin: 0;
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   border-left: 2px solid rgba(212, 175, 55, 0.2);
   padding-left: 18px;
 }
 
-.dv-dropcap {
-  float: left;
-  font-family: "EB Garamond", "Cormorant Garamond", Georgia, serif;
-  font-style: normal;
-  font-weight: 700;
-  font-size: 52px;
-  line-height: 0.92;
-  color: rgba(212, 175, 55, 0.95);
-  padding: 4px 10px 0 0;
-  text-shadow: 0 2px 18px rgba(212, 175, 55, 0.18);
-}
-.dv-card.is-nt .dv-dropcap {
-  color: rgba(255, 120, 130, 0.92);
-  text-shadow: 0 2px 18px rgba(232, 0, 45, 0.14);
-}
 
 .dv-text-close {
   color: rgba(212, 175, 55, 0.6);
@@ -4422,31 +4391,8 @@ html {
     inset 0 1px 0 rgba(255, 179, 0, 0.05),
     0 2px 14px rgba(0, 0, 0, 0.25);
 }
-.dv-original-block--scroll::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 14%;
-  bottom: 14%;
-  width: 2px;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(212, 175, 55, 0.35) 20%,
-    rgba(212, 175, 55, 0.35) 80%,
-    transparent 100%
-  );
-  border-radius: 2px;
-  pointer-events: none;
-}
 .dv-original-block--scroll.is-nt::before {
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(232, 0, 45, 0.32) 20%,
-    rgba(232, 0, 45, 0.32) 80%,
-    transparent 100%
-  );
+  display: none;
 }
 
 .dv-original-hint {
@@ -4819,10 +4765,11 @@ html {
 }
 .dv-parallel-text {
   margin: 0;
-  font-family: "EB Garamond", Georgia, serif;
-  font-style: italic;
-  font-size: 15px;
-  line-height: 1.65;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-style: normal;
+  font-size: 14.5px;
+  line-height: 1.72;
+  letter-spacing: 0.012em;
   color: var(--text-secondary);
 }
 .dv-parallel-fallback-note {
@@ -5186,10 +5133,7 @@ a.dv-crossrefs-item {
     border-radius: 12px;
   }
   .dv-text {
-    font-size: 16.5px;
-  }
-  .dv-dropcap {
-    font-size: 42px;
+    font-size: 15.5px;
   }
   .dv-quote-glyph {
     font-size: 72px;
