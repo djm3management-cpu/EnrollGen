@@ -14,7 +14,7 @@ const COMPACT_RAIL_OVERLAY_WIDTH = "min(340px, calc(100vw - 24px))";
 
 const FULL_RAIL_STYLE = {
   position: "fixed",
-  top: 14,
+  top: "calc(var(--top-bar-height, 44px) + 12px)",
   right: 18,
   bottom: 18,
   zIndex: 96,
@@ -50,7 +50,7 @@ const COMPACT_RAIL_TOGGLE_STYLE = {
 
 const COMPACT_RAIL_OVERLAY_STYLE = {
   position: "fixed",
-  top: 0,
+  top: "calc(var(--top-bar-height, 44px) + 8px)",
   right: 0,
   bottom: 0,
   zIndex: 98,

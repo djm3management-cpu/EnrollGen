@@ -28,6 +28,7 @@ const loadMedSupFlow = () => import("./components/MedSupFlow");
 const loadMedSupAiCopilot = () => import("./components/MedSupAiCopilot");
 const loadACAScript = () => import("./flows/aca/ACAScript");
 const loadU65Script = () => import("./flows/u65/U65Script");
+const loadAncillaryFlow = () => import("./flows/ancillary/AncillaryFlow");
 const loadAgentTools = () => import("./components/AgentTools");
 const loadSEPLookup = () => import("./components/SEPLookup");
 const loadSessionSummary = () => import("./components/SessionSummary");
@@ -44,6 +45,7 @@ const MedSupFlow = lazy(loadMedSupFlow);
 const MedSupAiCopilot = lazy(loadMedSupAiCopilot);
 const ACAScript = lazy(loadACAScript);
 const U65Script = lazy(loadU65Script);
+const AncillaryFlow = lazy(loadAncillaryFlow);
 const AgentTools = lazy(loadAgentTools);
 const SEPLookup = lazy(loadSEPLookup);
 const SessionSummary = lazy(loadSessionSummary);
@@ -62,10 +64,11 @@ function modeSupportsAgentTools(mode) {
 }
 
 const FLOWS = [
-  { id: "ma", label: "MA", color: "#E8002D", rgb: "232,0,45" },
-  { id: "aca", label: "ACA", color: "#EAB308", rgb: "234,179,8" },
-  { id: "medsup", label: "SUP", color: "#00D166", rgb: "0,209,102" },
-  { id: "u65", label: "U65", color: "#a855f7", rgb: "168,85,247" },
+  { id: "ma", label: "MA", title: "Medicare Advantage", color: "#E8002D", rgb: "232,0,45" },
+  { id: "aca", label: "ACA", title: "ACA On-Exchange", color: "#EAB308", rgb: "234,179,8" },
+  { id: "medsup", label: "SUP", title: "Medicare Supplement", color: "#00D166", rgb: "0,209,102" },
+  { id: "u65", label: "U65", title: "U65 Off-Exchange", color: "#a855f7", rgb: "168,85,247" },
+  { id: "ancillary", label: "ANC", title: "Ancillary", color: "#3B82F6", rgb: "59,130,246" },
 ];
 
 function FlowSelector({ mode, onChange, compact = false }) {
@@ -101,15 +104,7 @@ function FlowSelector({ mode, onChange, compact = false }) {
             <button
               key={flow.id}
               onClick={() => onChange(flow.id)}
-              title={
-                flow.id === "ma"
-                  ? "Medicare Advantage"
-                  : flow.id === "medsup"
-                    ? "Medicare Supplement"
-                    : flow.id === "aca"
-                      ? "ACA On-Exchange"
-                      : "U65 Off-Exchange"
-              }
+              title={flow.title}
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -236,6 +231,31 @@ function loadBackgroundSelection() {
   return fallbackId;
 }
 
+function getModeFromLocation() {
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/script/ancillary")) {
+    return "ancillary";
+  }
+
+  return "ma";
+}
+
+function syncModePath(mode) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (mode === "ancillary") {
+    if (!window.location.pathname.startsWith("/script/ancillary")) {
+      window.history.pushState(null, "", "/script/ancillary");
+    }
+    return;
+  }
+
+  if (window.location.pathname.startsWith("/script/ancillary")) {
+    window.history.pushState(null, "", "/");
+  }
+}
+
 function ProfileChip() {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
@@ -281,7 +301,7 @@ function getTabsForMode(mode) {
 }
 
 function AppShell() {
-  const [mode, setMode] = useState("ma");
+  const [mode, setMode] = useState(getModeFromLocation);
   const [openPanel, setOpenPanel] = useState(null);
   const [backgroundSelection, setBackgroundSelection] = useState(loadBackgroundSelection);
   const [wallpaperPickerOpen, setWallpaperPickerOpen] = useState(false);
@@ -302,6 +322,20 @@ function AppShell() {
     wallpapers.find((wallpaper) => wallpaper.id === backgroundSelection) || wallpapers[0];
   const wallpaperChoices = wallpapers.filter((wallpaper) => wallpaper.url);
   const navTabs = useMemo(() => getTabsForMode(mode), [mode]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const nextMode = getModeFromLocation();
+      startTransition(() => {
+        setMode(nextMode);
+        setOpenPanel(null);
+        setWallpaperPickerOpen(false);
+      });
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     document.body.dataset.bgMode = selectedWallpaper?.url ? "wallpaper" : "clean";
@@ -392,6 +426,10 @@ function AppShell() {
     }
     if (targetMode === "u65") {
       loadU65Script();
+      return;
+    }
+    if (targetMode === "ancillary") {
+      loadAncillaryFlow();
     }
   };
 
@@ -434,7 +472,14 @@ function AppShell() {
   };
 
   const handleModeChange = (newMode) => {
+    if (newMode === mode) {
+      setOpenPanel(null);
+      setWallpaperPickerOpen(false);
+      return;
+    }
+
     preloadScriptForMode(newMode);
+    syncModePath(newMode);
     startTransition(() => {
       setMode(newMode);
       setOpenPanel(null);
@@ -747,6 +792,12 @@ function AppShell() {
                 {mode === "u65" ? (
                   <LazyPanel>
                     <U65Script />
+                  </LazyPanel>
+                ) : null}
+
+                {mode === "ancillary" ? (
+                  <LazyPanel>
+                    <AncillaryFlow />
                   </LazyPanel>
                 ) : null}
               </main>
