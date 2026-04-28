@@ -19,7 +19,7 @@ export const COPILOT_PILL_BASE = {
     "linear-gradient(145deg, rgba(42,42,50,0.95) 0%, rgba(26,26,32,0.98) 100%)",
 };
 
-export const COPILOT_CONTROL_STRIP_WIDTH = 296;
+export const COPILOT_CONTROL_STRIP_WIDTH = 278;
 export const COPILOT_CONTROL_STRIP_HORIZONTAL_PADDING = 10;
 export const COPILOT_CONTROL_STRIP_BORDER_WIDTH = 1;
 export const COPILOT_CONTROL_STRIP_BUTTON_GAP = 4;

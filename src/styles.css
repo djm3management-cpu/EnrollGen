@@ -960,9 +960,8 @@ p {
   pointer-events: auto;
   box-sizing: border-box;
   max-width: 100%;
-  min-width: min(280px, calc(100vw - 36px));
+  min-width: min(262px, calc(100vw - 36px));
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 
 /* Dark-themed thin scrollbar for right rail containers */
@@ -8483,11 +8482,11 @@ body[data-bg-mode="classic"] .viewport-bg {
 
 @media (min-width: 1401px) {
   .app-workspace {
-    padding-right: 314px;
+    padding-right: 296px;
   }
 
   .top-panel-overlay {
-    width: min(960px, calc(100vw - var(--left-rail-width) - 404px));
+    width: min(960px, calc(100vw - var(--left-rail-width) - 386px));
     right: auto;
   }
 }

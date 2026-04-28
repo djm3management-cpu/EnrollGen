@@ -9,7 +9,7 @@ import CallTimer from "./copilot/CallTimer";
 import { COPILOT_PILL_BASE } from "./copilot/pillStyles";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 
-const FULL_RAIL_WIDTH = 296;
+const FULL_RAIL_WIDTH = 278;
 const COMPACT_RAIL_OVERLAY_WIDTH = "min(340px, calc(100vw - 24px))";
 
 const FULL_RAIL_STYLE = {
