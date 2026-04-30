@@ -239,6 +239,26 @@ function buildCompliance(rows) {
   return { avg, passes, fails, total: scored.length };
 }
 
+function buildPipelineCounts(rows) {
+  return rows.reduce(
+    (acc, row) => {
+      const key = row.pipeline_status || "unknown";
+      acc[key] = (acc[key] || 0) + 1;
+      if (row.webhook_sent === false && row.webhook_error) acc.webhook_fail += 1;
+      return acc;
+    },
+    {
+      pending_wrap_up: 0,
+      callback_scheduled: 0,
+      recent_enrollment: 0,
+      needs_review: 0,
+      closed: 0,
+      unknown: 0,
+      webhook_fail: 0,
+    }
+  );
+}
+
 function build60Day(rows) {
   return rows
     .filter((r) => r.sixty_day_date)
@@ -262,6 +282,37 @@ function build60Day(rows) {
       if (b.days === null) return -1;
       return a.days - b.days;
     });
+}
+
+function EmptyLine({ children = "--" }) {
+  return <div className="ops-inline-empty">{children}</div>;
+}
+
+function TerminalNav({ windowKey }) {
+  return (
+    <>
+      <div className="ops-command-line">
+        <span>CALL RECORDS</span>
+        <span className="ops-command-market">ENROLLGEN OPS</span>
+      </div>
+      <div className="ops-terminal-tabs">
+        <span className="ops-tab-amber">CALLS</span>
+        <span className="ops-tab-red">ENROLLMENTS</span>
+        <span className="ops-tab-red">WEBHOOKS</span>
+        <span className="ops-tab-blue">FOLLOW-UP</span>
+        <span className="ops-tab-fill">Live Call Monitor</span>
+      </div>
+      <div className="ops-filter-strip">
+        <span className="ops-filter-label">Agent</span>
+        <span className="ops-filter-box">All Agents</span>
+        <span className="ops-filter-label">Outcome</span>
+        <span className="ops-filter-box">All Outcomes</span>
+        <span className="ops-filter-label">Window</span>
+        <span className="ops-filter-box is-blue">{windowKey}</span>
+        <span className="ops-filter-title">Call Records Search</span>
+      </div>
+    </>
+  );
 }
 
 function buildTicker(rows) {
@@ -336,7 +387,7 @@ function LbSection({ title, rows, valueKey, color, format }) {
         <span className="ops-section-meta">{rows.length}</span>
       </div>
       {rows.length === 0 ? (
-        <div className="ops-lb-empty">NO DATA</div>
+        <EmptyLine>--</EmptyLine>
       ) : (
         rows.map((r, i) => {
           const value = Number(r[valueKey] || 0);
@@ -366,6 +417,7 @@ function CallsTable({ rows }) {
       <table className="ops-table">
         <thead>
           <tr>
+            <th className="row-n">#</th>
             <th>Time</th>
             <th>Customer</th>
             <th>Agent</th>
@@ -379,16 +431,17 @@ function CallsTable({ rows }) {
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td className="empty" colSpan={8}>
-                No calls recorded
+              <td className="empty" colSpan={9}>
+                Awaiting call rows
               </td>
             </tr>
           ) : (
-            rows.map((r) => {
+            rows.map((r, i) => {
               const oc = outcomeLabel(r);
               const ghl = ghlBadge(r);
               return (
-                <tr key={r.call_record_id}>
+                <tr key={r.call_record_id} className={i === 0 ? "is-selected" : ""}>
+                  <td className="row-n">{i + 1}</td>
                   <td>{fmtTimeHM(r.call_start) || fmtDateMD(r.activity_date)}</td>
                   <td>{customerName(r)}</td>
                   <td>{resolveAgentName(r)}</td>
@@ -414,18 +467,19 @@ function CallsTable({ rows }) {
 function CarrierMixPanel({ mix }) {
   const max = mix.entries.reduce((m, r) => Math.max(m, r.count), 0);
   return (
-    <div>
+    <div className="ops-carrier-panel">
       <div className="ops-section-head">
         <span>Carrier Mix</span>
         <span className="ops-section-meta">{mix.total} ENROLLED</span>
       </div>
       {mix.entries.length === 0 ? (
-        <div className="ops-empty">No enrollments recorded</div>
+        <EmptyLine>0 enrolled rows</EmptyLine>
       ) : (
-        mix.entries.map((row) => {
+        mix.entries.map((row, i) => {
           const pct = max > 0 ? Math.max(2, (row.count / max) * 100) : 0;
           return (
             <div key={row.carrier} className="ops-carrier-row">
+              <span className="rank">{i + 1}</span>
               <span className="name">{row.carrier}</span>
               <div className="bar-wrap">
                 <div className="bar" style={{ width: `${pct}%` }} />
@@ -442,7 +496,7 @@ function CarrierMixPanel({ mix }) {
 
 function CompliancePanel({ data }) {
   return (
-    <div>
+    <div className="ops-compliance-panel">
       <div className="ops-section-head">
         <span>Compliance</span>
         <span className="ops-section-meta">
@@ -450,12 +504,24 @@ function CompliancePanel({ data }) {
         </span>
       </div>
       {!data ? (
-        <div className="ops-empty">Awaiting compliance data</div>
+        <div className="ops-compliance-body">
+          <div className="ops-compliance-score">
+            --<span className="ops-compliance-score-suffix">%</span>
+          </div>
+          <div className="ops-compliance-row">
+            <span className="label">Pass</span>
+            <span className="val">--</span>
+          </div>
+          <div className="ops-compliance-row">
+            <span className="label">Fail</span>
+            <span className="val">--</span>
+          </div>
+        </div>
       ) : (
         <div className="ops-compliance-body">
           <div className="ops-compliance-score">
             {Math.round(data.avg)}
-            <span style={{ fontSize: "13px", color: "var(--ops-muted)", marginLeft: 4 }}>
+            <span className="ops-compliance-score-suffix">
               %
             </span>
           </div>
@@ -503,6 +569,35 @@ function CompliancePanel({ data }) {
   );
 }
 
+function PipelinePanel({ rows }) {
+  const counts = buildPipelineCounts(rows);
+  const items = [
+    ["Pending", counts.pending_wrap_up, "is-muted"],
+    ["Callback", counts.callback_scheduled, "is-amber"],
+    ["Enroll", counts.recent_enrollment, "is-green"],
+    ["Review", counts.needs_review, "is-red"],
+    ["Closed", counts.closed, "is-cyan"],
+    ["WH Err", counts.webhook_fail, "is-red"],
+  ];
+
+  return (
+    <div className="ops-pipeline-panel">
+      <div className="ops-section-head">
+        <span>Pipeline</span>
+        <span className="ops-section-meta">{rows.length} ROWS</span>
+      </div>
+      <div className="ops-pipeline-grid">
+        {items.map(([label, value, cls]) => (
+          <div key={label} className="ops-pipeline-cell">
+            <span className="label">{label}</span>
+            <span className={`val ${cls}`}>{fmtNumber(value)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TrackerRow({ entry, status, saving, onStatusChange }) {
   const dateStr = fmtDateMD(entry.sixty_day_date);
   let label;
@@ -518,25 +613,25 @@ function TrackerRow({ entry, status, saving, onStatusChange }) {
 
   return (
     <div className={`ops-tracker-row ${entry.bucket}`}>
-      <div className="head">
-        <span className="dot">{entry.dot}</span>
+      <span className="dot">{entry.dot}</span>
+      <div className="ops-tracker-body">
         <span className="date">{label}</span>
+        <span className="customer">{customerName(entry)}</span>
+        {carrierLine ? <span className="meta">{carrierLine}</span> : null}
+        <span className="agent">{resolveAgentName(entry)}</span>
+        <select
+          className="ops-tracker-status"
+          value={status}
+          disabled={saving}
+          onChange={(e) => onStatusChange(e.target.value)}
+        >
+          {TRACKER_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
       </div>
-      <span className="customer">{customerName(entry)}</span>
-      {carrierLine ? <span className="meta">{carrierLine}</span> : null}
-      <span className="agent">{resolveAgentName(entry)}</span>
-      <select
-        className="ops-tracker-status"
-        value={status}
-        disabled={saving}
-        onChange={(e) => onStatusChange(e.target.value)}
-      >
-        {TRACKER_STATUSES.map((s) => (
-          <option key={s} value={s}>
-            {s}
-          </option>
-        ))}
-      </select>
     </div>
   );
 }
@@ -719,10 +814,12 @@ export default function OperationsTab() {
     <section className="operations-tab">
       {error ? <div className="ops-error">⚠ {error}</div> : null}
 
+      <TerminalNav windowKey={windowKey} />
+
       <div className="ops-ticker">
         {tickerEvents.length === 0 ? (
           <span className="ops-ticker-empty">
-            NO ACTIVITY RECORDED — AWAITING FIRST CALL
+            Awaiting first call event
           </span>
         ) : (
           tickerEvents.map((ev) => (
@@ -818,6 +915,7 @@ export default function OperationsTab() {
             <CarrierMixPanel mix={carrierMix} />
             <CompliancePanel data={compliance} />
           </div>
+          <PipelinePanel rows={state.pipelineStatus} />
         </main>
 
         <aside className="ops-tracker">
@@ -830,7 +928,7 @@ export default function OperationsTab() {
             </span>
           </div>
           {trackerEntries.length === 0 ? (
-            <div className="ops-empty">No follow-ups scheduled</div>
+            <EmptyLine>0 follow-ups scheduled</EmptyLine>
           ) : (
             trackerEntries.map((entry) => {
               const id = entry.call_record_id;
