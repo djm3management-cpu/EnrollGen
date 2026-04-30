@@ -219,13 +219,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
               : "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 20px rgba(0,0,0,0.5)";
         const urgencyAnimation = isFading
           ? "floatFadeOut 5s ease forwards"
-          : isCritical
-            ? "slideDown 0.25s ease, alertPulseCritical 1s ease-in-out infinite"
-            : isWarn
-              ? "slideDown 0.25s ease, alertPulseWarn 1.5s ease-in-out 3"
-              : isPulse
-                ? "slideDown 0.25s ease, alertPulse 1.5s ease-in-out 3"
-                : "slideDown 0.25s ease";
+          : "slideDown 0.25s ease";
         const floatLabel = { critical: "CRITICAL ALERT", warn: "WARNING", tip: "TIP", remind: "REMINDER", info: "CO-PILOT" }[floatingAlert.level] || "CO-PILOT";
         return (
           <div
@@ -246,7 +240,6 @@ const ScriptPrompter = memo(function ScriptPrompter({
               fontSize: isCritical ? "1.15rem" : isPulse ? "1.1rem" : isAlert ? "0.85rem" : "0.75rem", color: urgencyColor,
               fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, lineHeight: 1,
               paddingTop: 2, flexShrink: 0,
-              animation: isPulse || isCritical ? "iconFlash 0.8s ease-in-out 4" : "none",
             }}>
               {s.icon}
             </span>
