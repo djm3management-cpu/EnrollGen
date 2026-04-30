@@ -83,6 +83,20 @@ export default async (request) => {
       callRecord,
       callLLM: callClaude,
     });
+    try {
+      await sb.from("call_records").update({
+        metadata: {
+          ...(callRecord.metadata || {}),
+          scoring_status: "complete",
+          scoring_completed_at: new Date().toISOString(),
+        },
+        compliance_scorecard_id: result.scorecard?.id || callRecord.compliance_scorecard_id || null,
+        updated_at: new Date().toISOString(),
+      }).eq("id", callId);
+    } catch (updateError) {
+      console.warn(`[score-bg] Could not mark scoring complete for ${callId}:`, updateError);
+    }
+
     console.log(`[score-bg] Scoring complete for ${callId}: ${result.scorecard?.overall_grade} (${result.scorecard?.overall_score?.toFixed(1)}%)`);
   } catch (err) {
     console.error(`[score-bg] Scoring failed for ${callId}:`, err);

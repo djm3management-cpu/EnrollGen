@@ -91,6 +91,7 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
       .single();
 
     progress(100, 'Scorecard complete (insufficient call)');
+    await updatePostScorecardState(supabase, callRecord, scorecard);
     return { scorecard, scorecardItems: [], detections: [], correctiveActions: [], avgConfidence: 0, isShortCall: true };
   }
 
@@ -251,6 +252,8 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
 
   progress(100, 'Scorecard complete');
 
+  await updatePostScorecardState(supabase, callRecord, scorecard);
+
   return {
     scorecard,
     scorecardItems: scoreResult.scorecard_items,
@@ -258,6 +261,73 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     correctiveActions,
     avgConfidence,
   };
+}
+
+async function updatePostScorecardState(supabase, callRecord, scorecard) {
+  if (!supabase || !callRecord?.id || !scorecard?.id) return;
+
+  try {
+    await supabase
+      .from('call_records')
+      .update({
+        compliance_scorecard_id: scorecard.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', callRecord.id);
+  } catch (error) {
+    console.warn('[ScorecardGenerator] Could not link scorecard to call record:', error?.message || error);
+  }
+
+  try {
+    const { data: profile } = await supabase
+      .from('agent_compliance_profiles')
+      .select('*')
+      .eq('agent_id', callRecord.agent_id)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const previousTotal = Number(profile?.total_calls_scored || 0);
+    const nextTotal = previousTotal + 1;
+    const priorAllTime = Number(profile?.all_time_score || 0);
+    const nextAllTime = ((priorAllTime * previousTotal) + Number(scorecard.overall_score || 0)) / nextTotal;
+    const priorPassRate = Number(profile?.pass_rate || 0);
+    const nextPassRate = ((priorPassRate * previousTotal) + (scorecard.pass_fail === 'pass' ? 100 : 0)) / nextTotal;
+    const priorAutoFailRate = Number(profile?.auto_fail_rate || 0);
+    const nextAutoFailRate = ((priorAutoFailRate * previousTotal) + (scorecard.auto_fail_triggered ? 100 : 0)) / nextTotal;
+    const profilePayload = {
+      agent_id: callRecord.agent_id,
+      agent_name: callRecord.agent_name,
+      agent_npn: callRecord.agent_npn || profile?.agent_npn || null,
+      total_calls_scored: nextTotal,
+      all_time_score: Number(nextAllTime.toFixed(2)),
+      pass_rate: Number(nextPassRate.toFixed(2)),
+      auto_fail_rate: Number(nextAutoFailRate.toFixed(2)),
+      last_scored_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    if (profile?.id) {
+      await supabase
+        .from('agent_compliance_profiles')
+        .update(profilePayload)
+        .eq('id', profile.id);
+      return;
+    }
+
+    await supabase
+      .from('agent_compliance_profiles')
+      .insert({
+        ...profilePayload,
+        rolling_30d_score: Number(scorecard.overall_score || 0),
+        rolling_90d_score: Number(scorecard.overall_score || 0),
+        risk_tier: scorecard.risk_level === 'critical' || scorecard.risk_level === 'high'
+          ? 'elevated'
+          : 'standard',
+      });
+  } catch (error) {
+    console.warn('[ScorecardGenerator] Could not update agent compliance profile:', error?.message || error);
+  }
 }
 
 function buildCorrectiveDescription(scoreResult) {

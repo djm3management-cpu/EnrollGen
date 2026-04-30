@@ -38,7 +38,7 @@ const loadCallHistory = () => import("./components/CallHistory");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
-const loadLeaderboard = () => import("./components/Leaderboard");
+const loadOperationsTab = () => import("./components/OperationsTab");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -55,7 +55,7 @@ const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
-const Leaderboard = lazy(loadLeaderboard);
+const OperationsTab = lazy(loadOperationsTab);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
@@ -294,7 +294,7 @@ function getTabsForMode(mode) {
   }
 
   tabs.push({ id: "complianceHub", label: "Compliance Hub" });
-  tabs.push({ id: "leaderboard", label: "Leaderboard" });
+  tabs.push({ id: "operations", label: "CALLS" });
   tabs.push({ id: "verse", label: "Daily Verse" });
 
   return tabs;
@@ -462,8 +462,8 @@ function AppShell() {
       }
       return;
     }
-    if (panelId === "leaderboard") {
-      loadLeaderboard();
+    if (panelId === "operations") {
+      loadOperationsTab();
       return;
     }
     if (panelId === "verse") {
@@ -595,10 +595,10 @@ function AppShell() {
             ) : null}
           </div>
         );
-      case "leaderboard":
+      case "operations":
         return (
           <LazyPanel>
-            <Leaderboard />
+            <OperationsTab />
           </LazyPanel>
         );
       case "verse":

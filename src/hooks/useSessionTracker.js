@@ -5,7 +5,10 @@ import { getAuthSupabase } from "../lib/supabase";
 const DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const EMPTY_SESSION_METADATA = {
   agentId: null,
+  agentName: null,
   sessionId: null,
+  callRecordId: null,
+  transcriptId: null,
 };
 
 const noop = () => {};
@@ -23,6 +26,10 @@ function setActiveSessionMetadata(patch) {
     ...activeSessionMetadata,
     ...patch,
   };
+}
+
+export function setActivePostCallMetadata(patch) {
+  setActiveSessionMetadata(patch);
 }
 
 export function getActiveSessionMetadata() {
@@ -63,12 +70,12 @@ export function useSessionTracker() {
     if (agentIdRef.current) return agentIdRef.current;
     const clerkUserId = getClerkSub(token);
     try {
-      const query = sb.from("enrolled_agents").select("id").limit(1);
+      const query = sb.from("enrolled_agents").select("id, name").limit(1);
       if (clerkUserId) query.eq("clerk_user_id", clerkUserId);
       const { data, error } = await query.single();
       if (data) {
         agentIdRef.current = data.id;
-        setActiveSessionMetadata({ agentId: data.id });
+        setActiveSessionMetadata({ agentId: data.id, agentName: data.name || "Agent" });
         return data.id;
       }
       // Auto-create agent row if missing (RLS lets user insert their own)
@@ -81,7 +88,7 @@ export function useSessionTracker() {
           .single();
         if (insertErr) throw insertErr;
         agentIdRef.current = inserted.id;
-        setActiveSessionMetadata({ agentId: inserted.id });
+        setActiveSessionMetadata({ agentId: inserted.id, agentName: "Agent" });
         return inserted.id;
       }
       if (error) throw error;
@@ -109,7 +116,7 @@ export function useSessionTracker() {
       if (error) throw error;
       sessionIdRef.current = data.id;
       startedAtRef.current = Date.now();
-      setActiveSessionMetadata({ sessionId: data.id });
+      setActiveSessionMetadata({ sessionId: data.id, callRecordId: null, transcriptId: null });
     } catch (err) {
       console.error("[SessionTracker] startSession:", err);
     }

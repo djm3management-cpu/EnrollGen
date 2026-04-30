@@ -68,10 +68,32 @@ export const initialState = {
 
   // Local notes
   notes: {
+    carrierName: "",
     planName: "",
+    planId: "",
     effectiveDate: "",
     enrollmentCode: "",
     confirmation: "",
+    callOutcome: "enrolled",
+    agentNotes: "",
+    customerFirstName: "",
+    customerLastName: "",
+    customerPhone: "",
+    customerEmail: "",
+    customerDob: "",
+    customerState: "",
+    customerMbi: "",
+    medicaid: "No",
+    medicaidNumber: "",
+    previousCarrier: "",
+    premium: "",
+    sunfireCode: "",
+    sixtyDayDate: "",
+    sep: "No",
+    agency: "",
+    writingAgent: "",
+    hra: "No",
+    hraDate: "",
   },
 
   // Pre-enrollment checklist

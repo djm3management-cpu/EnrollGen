@@ -9,10 +9,23 @@ import {
 } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, MessageSquare, ShieldCheck, Radio } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
-import { useSessionTracker } from "../hooks/useSessionTracker";
+import { useAppAuth } from "../context/AuthContext";
+import {
+  getActiveSessionMetadata,
+  setActivePostCallMetadata,
+  useSessionTracker,
+  waitForActiveSessionMetadata,
+} from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
 import { useLiveCall } from "../context/LiveCallContext";
+import {
+  buildPostCallPayload,
+  CHECKPOINT_INTERVAL_MS,
+  checkpointPostCall,
+  finalizePostCallTranscript,
+  initPostCallRecord,
+} from "../lib/postCallPipeline";
 import {
   StickyTimerBar,
 } from "./SharedUI";
@@ -447,6 +460,7 @@ export default function ScriptFlow() {
   const { state, dispatch, activeSection } = useScript();
   const { clearLog, entries } = useCopilotLog();
   const { updateLiveCall, resetLiveCall } = useLiveCall();
+  const { getToken } = useAppAuth();
   const { enabled: trainingModeEnabled } = useTrainingMode();
   const prevSectionRef = useRef(activeSection);
   const session = useSessionTracker();
@@ -454,6 +468,10 @@ export default function ScriptFlow() {
   const [callStarted, setCallStarted] = useState(false);
   const trainingStartRef = useRef(null);
   const trainingLoggedRef = useRef(false);
+  const checkpointKeyRef = useRef("");
+  const finalTranscriptSavedRef = useRef(false);
+  const latestPostCallRef = useRef(null);
+  const persistPostCallRef = useRef(null);
 
   // Start session only after agent clicks Start Call
   const sessionStartedRef = useRef(false);
@@ -605,7 +623,151 @@ export default function ScriptFlow() {
   ]);
 
   useEffect(() => {
+    latestPostCallRef.current = {
+      state,
+      liveCall: {
+        callStarted,
+        callDirection: state.callDirection,
+        transcript,
+        customerTranscript,
+        mergedTranscript: mergedTranscriptEntries,
+        isListening,
+        complianceResult: liveComplianceResult,
+      },
+    };
+  }, [
+    state,
+    callStarted,
+    transcript,
+    customerTranscript,
+    mergedTranscriptEntries,
+    isListening,
+    liveComplianceResult,
+  ]);
+
+  const persistPostCallTranscript = useCallback(
+    async ({ final = false, force = false } = {}) => {
+      if (trainingModeEnabled) return null;
+
+      const snapshot = latestPostCallRef.current;
+      if (!snapshot?.state) return null;
+
+      let metadata = getActiveSessionMetadata();
+      if (!metadata.sessionId || !metadata.agentId) {
+        metadata = await waitForActiveSessionMetadata(2000);
+      }
+
+      if (!metadata.sessionId || !metadata.agentId) {
+        return null;
+      }
+
+      const payload = buildPostCallPayload({
+        state: snapshot.state,
+        liveCall: snapshot.liveCall,
+        sessionMetadata: metadata,
+        flow: "ma",
+        final,
+      });
+
+      const checkpointKey = [
+        payload.session_id,
+        payload.call_record_id || "",
+        payload.transcript_text?.length || 0,
+        payload.transcript_text?.slice(-80) || "",
+        final ? "final" : "checkpoint",
+      ].join("|");
+
+      if (!force && checkpointKey === checkpointKeyRef.current) {
+        return null;
+      }
+
+      checkpointKeyRef.current = checkpointKey;
+
+      const result = final
+        ? await finalizePostCallTranscript(getToken, payload)
+        : await checkpointPostCall(getToken, payload);
+
+      setActivePostCallMetadata({
+        callRecordId: result.call_record_id || metadata.callRecordId || null,
+        transcriptId: result.transcript_id || metadata.transcriptId || null,
+      });
+
+      return result;
+    },
+    [getToken, trainingModeEnabled]
+  );
+
+  useEffect(() => {
+    persistPostCallRef.current = persistPostCallTranscript;
+  }, [persistPostCallTranscript]);
+
+  useEffect(() => {
+    if (!callStarted || trainingModeEnabled) return undefined;
+
+    let cancelled = false;
+    void (async () => {
+      let metadata = await waitForActiveSessionMetadata(2500);
+      if (cancelled || !metadata.sessionId || !metadata.agentId || metadata.callRecordId) {
+        return;
+      }
+
+      const snapshot = latestPostCallRef.current;
+      const payload = buildPostCallPayload({
+        state: snapshot?.state || state,
+        liveCall: snapshot?.liveCall || {
+          callStarted,
+          callDirection: state.callDirection,
+          transcript,
+          mergedTranscript: mergedTranscriptEntries,
+        },
+        sessionMetadata: metadata,
+        flow: "ma",
+      });
+
+      try {
+        const result = await initPostCallRecord(getToken, payload);
+        setActivePostCallMetadata({
+          callRecordId: result.call_record_id || null,
+          transcriptId: result.transcript_id || null,
+        });
+      } catch (error) {
+        console.error("[PostCall] init failed:", error);
+      }
+    })();
+
     return () => {
+      cancelled = true;
+    };
+  }, [
+    callStarted,
+    trainingModeEnabled,
+    getToken,
+    state,
+    transcript,
+    mergedTranscriptEntries,
+  ]);
+
+  useEffect(() => {
+    if (!callStarted || trainingModeEnabled) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      void persistPostCallTranscript({ final: false });
+    }, CHECKPOINT_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [callStarted, trainingModeEnabled, persistPostCallTranscript]);
+
+  useEffect(() => {
+    if (!callStarted || !state.enrollOk || finalTranscriptSavedRef.current) return;
+    finalTranscriptSavedRef.current = true;
+    void persistPostCallTranscript({ final: true, force: true });
+  }, [callStarted, state.enrollOk, persistPostCallTranscript]);
+
+  useEffect(() => {
+    return () => {
+      if (persistPostCallRef.current) {
+        void persistPostCallRef.current({ final: true, force: true });
+      }
       resetLiveCall();
     };
   }, [resetLiveCall]);

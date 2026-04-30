@@ -68,6 +68,14 @@ export default React.memo(function SectionEnrollment() {
     useScript();
   const { sobOk, enrollOk, notes } = state;
   const isActive = activeSection === 7;
+  const handleNoEnrollmentWrapUp = () => {
+    dispatch({
+      type: "SET_NOTE",
+      field: "callOutcome",
+      value: "not_enrolled",
+    });
+    dispatch({ type: "SET_GATE", field: "enrollOk", value: true });
+  };
 
   return (
     <section
@@ -99,6 +107,22 @@ export default React.memo(function SectionEnrollment() {
 
       <div className="grid">
         <label>
+          Carrier (local note)
+          <input
+            disabled={!sobOk}
+            value={notes.carrierName}
+            onChange={(e) =>
+              dispatch({
+                type: "SET_NOTE",
+                field: "carrierName",
+                value: e.target.value,
+              })
+            }
+            placeholder="Carrier"
+          />
+        </label>
+
+        <label>
           Plan Name (local note)
           <input
             disabled={!sobOk}
@@ -111,6 +135,22 @@ export default React.memo(function SectionEnrollment() {
               })
             }
             placeholder="Plan name"
+          />
+        </label>
+
+        <label>
+          Plan ID (local note)
+          <input
+            disabled={!sobOk}
+            value={notes.planId}
+            onChange={(e) =>
+              dispatch({
+                type: "SET_NOTE",
+                field: "planId",
+                value: e.target.value,
+              })
+            }
+            placeholder="Contract / PBP / plan ID"
           />
         </label>
 
@@ -133,7 +173,7 @@ export default React.memo(function SectionEnrollment() {
 
       {isActive && !enrollOk && <PreEnrollCheck state={state} />}
 
-      <div className="section-next-action">
+      <div className="section-next-action section-next-action-wrap">
         <SectionAdvanceButton
           disabled={!sobOk || enrollOk}
           ariaLabel="Mark enrollment complete"
@@ -142,6 +182,14 @@ export default React.memo(function SectionEnrollment() {
             dispatch({ type: "SET_GATE", field: "enrollOk", value: true })
           }
         />
+        <button
+          type="button"
+          className="secondary"
+          disabled={!sobOk || enrollOk}
+          onClick={handleNoEnrollmentWrapUp}
+        >
+          No Enrollment - Wrap Up
+        </button>
       </div>
 
       {/* Enrollment Code + Green Check */}
