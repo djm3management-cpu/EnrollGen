@@ -108,6 +108,10 @@ export function useSEPLookup() {
     setCountyLoading(true);
     try {
       const cmsRows = await fetchPlansFromSupabase(st, county);
+      if (!cmsRows.length) {
+        setPlans(getPlansForState(st));
+        return;
+      }
       const seen = new Set();
       const transformed = [];
       for (const row of cmsRows) {

@@ -387,7 +387,8 @@ export const PLAN_DB = [
 ];
 
 export function getPlansForState(zip) {
-  const st = getStateFromZip(zip);
+  const input = String(zip || "").trim();
+  const st = /^[A-Za-z]{2}$/.test(input) ? input.toUpperCase() : getStateFromZip(input);
   return PLAN_DB.filter(
     (p) => p.states.includes("ALL") || p.states.includes(st)
   );

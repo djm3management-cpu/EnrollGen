@@ -10,6 +10,27 @@ import { supabaseCms } from "./supabase";
 
 const CMS_TABLE = "cms_plans_PY2026";
 const PAGE_SIZE = 5000;
+const CMS_SUPABASE_ENABLED =
+  import.meta.env.VITE_ENABLE_CMS_SUPABASE === "true" ||
+  Boolean(import.meta.env.VITE_SUPABASE_CMS_URL && import.meta.env.VITE_SUPABASE_CMS_ANON_KEY);
+const CMS_RPC_ENABLED = import.meta.env.VITE_ENABLE_CMS_RPC === "true";
+let cmsUnavailable = false;
+
+function isMissingCmsResource(error) {
+  return error?.code === "PGRST202" || error?.code === "PGRST205";
+}
+
+function markCmsUnavailable(error) {
+  if (isMissingCmsResource(error)) {
+    cmsUnavailable = true;
+    return true;
+  }
+  return false;
+}
+
+function shouldUseCmsSupabase() {
+  return CMS_SUPABASE_ENABLED && !cmsUnavailable;
+}
 
 async function fetchPagedRows(makeQuery) {
   const rows = [];
@@ -84,64 +105,79 @@ async function fetchCountyPlanCountsDirect(state) {
 
 export async function fetchCountiesForState(state) {
   if (!state) return [];
+  if (!shouldUseCmsSupabase()) return [];
 
-  const { data, error } = await supabaseCms.rpc("get_counties_for_state", { p_state: state });
-  if (!error && data?.length) {
-    return data.map((r) => r.county_name).filter(Boolean);
-  }
+  if (CMS_RPC_ENABLED) {
+    const { data, error } = await supabaseCms.rpc("get_counties_for_state", { p_state: state });
+    if (!error && data?.length) {
+      return data.map((r) => r.county_name).filter(Boolean);
+    }
 
-  if (error) {
-    console.warn("Counties RPC failed, falling back to direct query:", error);
+    if (error && !markCmsUnavailable(error)) {
+      console.warn("Counties RPC failed, falling back to direct query:", error);
+    }
   }
 
   try {
     return await fetchCountiesDirect(state);
   } catch (fallbackError) {
-    console.error("Counties fetch error:", fallbackError);
+    if (!markCmsUnavailable(fallbackError)) {
+      console.error("Counties fetch error:", fallbackError);
+    }
     return [];
   }
 }
 
 export async function fetchPlansFromSupabase(state, county) {
   if (!state || !county) return [];
+  if (!shouldUseCmsSupabase()) return [];
 
-  const { data, error } = await supabaseCms.rpc("get_plans_for_county", { p_state: state, p_county: county });
-  if (!error && data?.length) {
-    return data;
-  }
+  if (CMS_RPC_ENABLED) {
+    const { data, error } = await supabaseCms.rpc("get_plans_for_county", { p_state: state, p_county: county });
+    if (!error && data?.length) {
+      return data;
+    }
 
-  if (error) {
-    console.warn("Plans RPC failed, falling back to direct query:", error);
+    if (error && !markCmsUnavailable(error)) {
+      console.warn("Plans RPC failed, falling back to direct query:", error);
+    }
   }
 
   try {
     return await fetchPlansDirect(state, county);
   } catch (fallbackError) {
-    console.error("Plans fetch error:", fallbackError);
+    if (!markCmsUnavailable(fallbackError)) {
+      console.error("Plans fetch error:", fallbackError);
+    }
     return [];
   }
 }
 
 export async function fetchCountyPlanCounts(state) {
   if (!state) return {};
+  if (!shouldUseCmsSupabase()) return {};
 
-  const { data, error } = await supabaseCms.rpc("get_county_plan_counts", { p_state: state });
-  if (!error && data?.length) {
-    const counts = {};
-    for (const row of data) {
-      counts[row.county_name] = Number(row.plan_count);
+  if (CMS_RPC_ENABLED) {
+    const { data, error } = await supabaseCms.rpc("get_county_plan_counts", { p_state: state });
+    if (!error && data?.length) {
+      const counts = {};
+      for (const row of data) {
+        counts[row.county_name] = Number(row.plan_count);
+      }
+      return counts;
     }
-    return counts;
-  }
 
-  if (error) {
-    console.warn("County counts RPC failed, falling back to direct query:", error);
+    if (error && !markCmsUnavailable(error)) {
+      console.warn("County counts RPC failed, falling back to direct query:", error);
+    }
   }
 
   try {
     return await fetchCountyPlanCountsDirect(state);
   } catch (fallbackError) {
-    console.error("County plan counts error:", fallbackError);
+    if (!markCmsUnavailable(fallbackError)) {
+      console.error("County plan counts error:", fallbackError);
+    }
     return {};
   }
 }
