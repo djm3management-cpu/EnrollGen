@@ -230,46 +230,43 @@ const ScriptPrompter = memo(function ScriptPrompter({
         const isCritical = floatingAlert.level === "critical";
         const terminalTone =
           TERMINAL_ALERT_TONES[floatingAlert.level] || TERMINAL_ALERT_TONES.info;
-        const urgencyColor = terminalTone.color;
-        const urgencyBorder = terminalTone.border;
-        const urgencyBackground = terminalTone.background;
         const urgencyShadow = isCritical
-          ? "0 0 0 1px #8a1414, 0 12px 24px rgba(0,0,0,0.5)"
+          ? "0 0 0 1px #8a1414, 0 8px 18px rgba(0,0,0,0.46)"
           : isWarn
-            ? "0 0 0 1px #4a0508, 0 12px 24px rgba(0,0,0,0.5)"
+            ? "0 0 0 1px #4a0508, 0 8px 18px rgba(0,0,0,0.46)"
             : isPulse
-              ? "0 0 0 1px #4d2d00, 0 12px 24px rgba(0,0,0,0.5)"
-              : "0 0 0 1px #1a1a1a, 0 12px 24px rgba(0,0,0,0.5)";
+              ? "0 0 0 1px #4d2d00, 0 8px 18px rgba(0,0,0,0.46)"
+              : "0 0 0 1px #1a1a1a, 0 8px 18px rgba(0,0,0,0.46)";
         const urgencyAnimation = isFading
           ? "floatFadeOut 5s ease forwards"
           : "slideDown 0.25s ease";
         const floatLabel = { critical: "CRITICAL ALERT", warn: "WARNING", tip: "TIP", remind: "REMINDER", info: "CO-PILOT" }[floatingAlert.level] || "CO-PILOT";
         return (
           <div
+            className={`copilot-floating-alert${
+              isAlert ? " copilot-floating-alert--alert" : ""
+            }${isCritical ? " copilot-floating-alert--critical" : ""}`}
             onClick={() => copilot.setFloatingAlert(null)}
             style={{
-              position: "fixed", top: 80, right: 20, zIndex: 9999, maxWidth: isAlert ? 420 : 340, width: "auto",
-              background: urgencyBackground,
-              border: `1px solid ${urgencyBorder}`,
-              borderRadius: isAlert ? 14 : 10, padding: isAlert ? "10px 12px" : "8px 10px",
-              display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer",
-              boxShadow: urgencyShadow,
-              animation: urgencyAnimation,
-              backdropFilter: "blur(12px)",
+              "--copilot-alert-bg": terminalTone.background,
+              "--copilot-alert-border": terminalTone.border,
+              "--copilot-alert-shadow": urgencyShadow,
+              "--copilot-alert-animation": urgencyAnimation,
+              "--copilot-alert-accent": terminalTone.accent,
+              "--copilot-alert-color": terminalTone.color,
             }}
           >
-            <span style={{
-              fontSize: isCritical ? "12px" : isPulse ? "12px" : "10px", color: terminalTone.accent,
-              fontFamily: "'IBM Plex Mono', monospace", fontWeight: 800, lineHeight: 1.25,
-              paddingTop: 1, flexShrink: 0,
-            }}>
+            <span className="copilot-floating-alert__icon">
               {s.icon}
             </span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "10px", fontWeight: 800, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "1.4px", textTransform: "uppercase", color: terminalTone.accent, lineHeight: 1.25, marginBottom: isAlert ? 4 : 3 }}>
+            <div className="copilot-floating-alert__content">
+              <div
+                className="copilot-floating-alert__label"
+                data-label={floatLabel}
+              >
                 {floatLabel} — tap to dismiss
               </div>
-              <div style={{ fontSize: isCritical ? "11px" : "10px", color: urgencyColor, lineHeight: 1.35, fontFamily: "'IBM Plex Mono', monospace", fontWeight: isCritical || isWarn || isPulse ? 700 : 500, letterSpacing: "0.3px" }}>
+              <div className="copilot-floating-alert__text">
                 {floatingAlert.text}
               </div>
             </div>

@@ -7,6 +7,7 @@ import {
   useCallback,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, MessageSquare, ShieldCheck, Radio } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useAppAuth } from "../context/AuthContext";
@@ -820,7 +821,25 @@ export default function ScriptFlow() {
     dispatch({ type: "UNDO_LAST_GATE" });
   }, [dispatch, state.undoHistory.length]);
 
+  const leftPopupStack = (
+    <div className="left-floating-popup-stack">
+      <DevotedPopupManager
+        callStarted={callStarted}
+        transcript={transcript}
+        mergedTranscript={mergedTranscriptEntries}
+      />
+      <AncillaryPopupManager
+        activeSection={activeSection}
+        callStarted={callStarted}
+      />
+    </div>
+  );
+
   return (
+    <>
+    {typeof document !== "undefined"
+      ? createPortal(leftPopupStack, document.body)
+      : null}
     <motion.div
       className="flow"
       initial={{ opacity: 0, y: 40, scale: 0.98 }}
@@ -849,17 +868,6 @@ export default function ScriptFlow() {
       />
 
       <div className="flow-shell">
-        <div className="left-floating-popup-stack">
-          <DevotedPopupManager
-            callStarted={callStarted}
-            transcript={transcript}
-            mergedTranscript={mergedTranscriptEntries}
-          />
-          <AncillaryPopupManager
-            activeSection={activeSection}
-            callStarted={callStarted}
-          />
-        </div>
         <div className="flow-main">
 
       {trainingModeEnabled ? <TrainingBanner /> : null}
@@ -992,5 +1000,6 @@ export default function ScriptFlow() {
         </div>
       </div>
     </motion.div>
+    </>
   );
 }

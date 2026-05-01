@@ -20,9 +20,7 @@ export default React.memo(function SectionSOB() {
       }`}
     >
       <SectionToast sectionNum={6} timestamps={state.sectionTimestamps} />
-      <h2>
-        6) Plan Selection & Summary of Benefits
-      </h2>
+      <h2>6) Plan Selection & Summary of Benefits</h2>
 
       {unlocked.s6 && (
         <>
@@ -42,7 +40,11 @@ export default React.memo(function SectionSOB() {
       {unlocked.s6 && (
         <div className="part-b-toggle">
           <button
-            className="secondary"
+            type="button"
+            className={`secondary part-b-premium-trigger${
+              partBReduction ? " is-active" : ""
+            }`}
+            aria-pressed={partBReduction}
             onClick={() =>
               dispatch({ type: "TOGGLE_PRODUCT", field: "partBReduction" })
             }
@@ -52,7 +54,7 @@ export default React.memo(function SectionSOB() {
 
           {partBReduction && (
             <ScriptBox verbatim>
-              {`"This plan includes a Part B premium reduction. There may be a delay â€” it can take one or more payment cycles to take effect."
+              {`"This plan includes a Part B premium reduction. There may be a delay - it can take one or more payment cycles to take effect."
 
 "If your Part B premium comes out of Social Security, the reduction will show as an increase in your Social Security payment. If you pay Part B directly, you will receive a credit on your statement."
 

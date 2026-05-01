@@ -43,14 +43,8 @@ function loadStoredState() {
         parsed?.popupsDismissed && typeof parsed.popupsDismissed === "object"
           ? parsed.popupsDismissed
           : {},
-      collapsedPopups:
-        parsed?.collapsedPopups && typeof parsed.collapsedPopups === "object"
-          ? parsed.collapsedPopups
-          : {},
-      lastInteractedAt:
-        parsed?.lastInteractedAt && typeof parsed.lastInteractedAt === "object"
-          ? parsed.lastInteractedAt
-          : {},
+      collapsedPopups: {},
+      lastInteractedAt: {},
     };
   } catch {
     return EMPTY_STATE;

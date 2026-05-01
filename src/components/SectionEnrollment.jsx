@@ -84,9 +84,7 @@ export default React.memo(function SectionEnrollment() {
       }`}
     >
       <SectionToast sectionNum={7} timestamps={state.sectionTimestamps} />
-      <h2>
-        7) Enrollment
-      </h2>
+      <h2>7) Enrollment</h2>
 
       {unlocked.s7 && (
         <>
@@ -184,7 +182,7 @@ export default React.memo(function SectionEnrollment() {
         />
         <button
           type="button"
-          className="secondary"
+          className="secondary no-enrollment-wrapup-btn"
           disabled={!sobOk || enrollOk}
           onClick={handleNoEnrollmentWrapUp}
         >
@@ -215,9 +213,8 @@ export default React.memo(function SectionEnrollment() {
                 enrollOk && enrollmentCodeOk ? "visible" : ""
               }`}
               title="Entered"
-            >
-              Ã¢Å“â€¦
-            </span>
+              aria-hidden="true"
+            />
           </div>
         </label>
         {!enrollOk && (
