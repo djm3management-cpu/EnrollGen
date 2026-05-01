@@ -180,7 +180,7 @@ function RailWidgets({
       <AgentAvailabilityToggle />
 
       {/* ── Copilot Control Strip ── */}
-      <div style={{
+      <div className="right-rail-control-panel" style={{
         width: "100%", minWidth: 0, pointerEvents: "auto",
         background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
         border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16,
@@ -190,9 +190,11 @@ function RailWidgets({
       }}>
         <CallTimer fallbackStartTime={state.tpmoStart} />
 
-        <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+        <div className="right-rail-control-row" style={{ display: "flex", gap: 4, marginBottom: 6 }}>
           <button
-            className="copilot-pill-button"
+            className={`copilot-pill-button copilot-pill-button--listen${
+              listening ? " is-listening" : ""
+            }`}
             onClick={() => { const h = copilotHandlersRef.current; if (listening) h.handleStop?.(); else h.handleStart?.(); }}
             disabled={!supportsRecognition}
             style={{
@@ -210,14 +212,14 @@ function RailWidgets({
             {!supportsRecognition ? "NO MIC" : listening ? "■ STOP" : "● START"}
           </button>
           <button
-            className="copilot-pill-button"
+            className="copilot-pill-button copilot-pill-button--clear"
             onClick={() => copilotHandlersRef.current.clearAll?.()}
             style={{ ...COPILOT_PILL_BASE, color: "#666" }}
           >
             CLEAR
           </button>
           <button
-            className="copilot-pill-button"
+            className="copilot-pill-button copilot-pill-button--analyze"
             onClick={() => copilotHandlersRef.current.requestCoaching?.()}
             disabled={!hasTranscript || coachingLoading}
             style={{
@@ -235,7 +237,7 @@ function RailWidgets({
       </div>
 
       {/* ── Thin divider ── */}
-      <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 6 }} />
+      <div className="right-rail-divider" style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 6 }} />
 
       {/* ── Live Transcript / Simulated Transcript ── */}
       <CollapsibleWidget
@@ -867,18 +869,30 @@ export default function ScriptFlow() {
 
       {/* Start Call gate — timer and session don't begin until clicked */}
       {!callStarted && (
-        <section className="start-call-gate">
-          <div className="start-call-gate-stack">
-            <button
-              className="start-call-button"
-              onClick={() => {
-                setCallStarted(true);
-                void copilotHandlersRef.current.handleStart?.();
-              }}
-            >
-              Start
-            </button>
-          </div>
+        <section className="script-start-call-gate script-start-call-gate--bare">
+          <button
+            className="primary script-start-call-button"
+            onClick={() => {
+              setCallStarted(true);
+              void copilotHandlersRef.current.handleStart?.();
+            }}
+            style={{
+              fontSize: 15,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              padding: "10px 36px",
+              background:
+                "linear-gradient(145deg, rgba(74,222,128,0.15), rgba(74,222,128,0.05))",
+              border: "1px solid rgba(74,222,128,0.3)",
+              color: "#4ade80",
+              borderRadius: 8,
+              cursor: "pointer",
+            }}
+          >
+            Start Call
+          </button>
         </section>
       )}
 

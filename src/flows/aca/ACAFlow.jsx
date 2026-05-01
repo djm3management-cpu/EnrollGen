@@ -21,6 +21,7 @@ function fmt(ms) {
 function Say({ text }) {
   return (
     <div
+      className="flow-script-line"
       style={{
         borderLeft: `2px solid rgba(234,179,8,0.3)`,
         padding: "10px 16px",
@@ -28,7 +29,7 @@ function Say({ text }) {
         borderRadius: "0 6px 6px 0",
       }}
     >
-      <div style={{ color: "#c0d0e4", fontSize: 14, lineHeight: 1.65 }}>
+      <div className="flow-script-text" style={{ color: "#c0d0e4", fontSize: 14, lineHeight: 1.65 }}>
         {text}
       </div>
     </div>
@@ -42,6 +43,7 @@ function Note() {
 function ComplianceBanner({ text }) {
   return (
     <div
+      className="flow-compliance-banner"
       style={{
         background: "rgba(248,113,113,0.06)",
         border: "1px solid rgba(248,113,113,0.2)",
@@ -83,6 +85,7 @@ function SignalBadge({ text }) {
 function Gate({ label, done, onDo, onUndo }) {
   return (
     <div
+      className="flow-gate-action"
       style={{
         marginTop: 16,
         paddingTop: 14,
@@ -92,7 +95,7 @@ function Gate({ label, done, onDo, onUndo }) {
       }}
     >
       <label
-        className="check"
+        className="check flow-gate-check"
         style={{
           justifyContent: "center",
           width: "fit-content",
@@ -166,7 +169,7 @@ function Card({ num, title, red, active, done, dur, children }) {
 
   return (
     <section
-      className={active ? "active-card" : ""}
+      className={`flow-script-card${active ? " active-card" : ""}`}
       style={{
         background: active ? "rgba(234,179,8,0.04)" : "rgba(255,255,255,0.018)",
         border: `1px solid ${active ? "rgba(234,179,8,0.3)" : "rgba(255,255,255,0.05)"}`,
@@ -679,8 +682,8 @@ export default function ACAFlow() {
       <Progress />
 
       {!state.callStarted ? (
-        <section style={{ background: `rgba(234,179,8,0.04)`, border: `1px solid rgba(234,179,8,0.2)`, borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
-          <button className="primary" onClick={() => dispatch({ type: "START_CALL" })} style={{
+        <section className="script-start-call-gate" style={{ background: `rgba(234,179,8,0.04)`, border: `1px solid rgba(234,179,8,0.2)`, borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
+          <button className="primary script-start-call-button" onClick={() => dispatch({ type: "START_CALL" })} style={{
             fontSize: 15, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
             background: `linear-gradient(145deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05))`, border: `1px solid rgba(234,179,8,0.3)`, color: ACCENT, borderRadius: 8, cursor: "pointer",
           }}>

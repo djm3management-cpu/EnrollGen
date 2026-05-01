@@ -29,11 +29,11 @@ import { SectionTimer } from "./SharedUI";
  */
 
 function getScoreColor(s) {
-  if (s >= 90) return "#34d399";
-  if (s >= 75) return "#22c55e";
-  if (s >= 50) return "#fbbf24";
-  if (s >= 25) return "#f97316";
-  return "#ef4444";
+  if (s >= 90) return "#33cc66";
+  if (s >= 75) return "#33cc66";
+  if (s >= 50) return "#f4b24d";
+  if (s >= 25) return "#d98b45";
+  return "#ff3838";
 }
 
 function renderCategoryIcon(icon, color = "#cbd5e1", size = 14) {
@@ -64,7 +64,7 @@ const GATE_BOOLEAN_KEYS = [
   "snpOk",
 ];
 
-const DORMANT_COLOR = "#555";
+const DORMANT_COLOR = "#555555";
 
 const ComplianceMini = memo(function ComplianceMini({
   transcript = "",
@@ -110,8 +110,9 @@ const ComplianceMini = memo(function ComplianceMini({
   const sectionLabel = SECTION_LABELS[currentStep] || `Section ${currentStep}`;
 
   return (
-    <div>
+    <div className="compliance-mini">
       <div
+        className="compliance-mini__body"
         style={{
           padding: "8px 10px 10px",
           transition: "all 0.25s ease",
@@ -120,6 +121,7 @@ const ComplianceMini = memo(function ComplianceMini({
       >
         {/* Section indicator */}
         <div
+          className="compliance-mini__section"
           style={{
             display: "flex",
             alignItems: "center",
@@ -130,6 +132,7 @@ const ComplianceMini = memo(function ComplianceMini({
           }}
         >
           <span
+            className="compliance-mini__section-dot"
             style={{
               width: 8,
               height: 8,
@@ -140,6 +143,7 @@ const ComplianceMini = memo(function ComplianceMini({
             }}
           />
           <span
+            className="compliance-mini__section-label"
             style={{
               fontSize: "0.68em",
               fontFamily: "'Barlow Condensed', sans-serif",
@@ -165,6 +169,7 @@ const ComplianceMini = memo(function ComplianceMini({
 
         {/* Header — score + toggle */}
         <div
+          className="compliance-mini__score-toggle"
           onClick={() => setCollapsed((p) => !p)}
           style={{
             display: "flex",
@@ -174,8 +179,9 @@ const ComplianceMini = memo(function ComplianceMini({
             marginBottom: collapsed ? 0 : 8,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, marginRight: 8 }}>
+          <div className="compliance-mini__score-main" style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, marginRight: 8 }}>
             <span
+              className="compliance-mini__score-value"
               style={{
                 fontSize: "0.72em",
                 fontWeight: 800,
@@ -187,6 +193,7 @@ const ComplianceMini = memo(function ComplianceMini({
               {isDormant ? "—" : `${result.score}%`}
             </span>
             <div
+              className="compliance-mini__score-bar"
               style={{
                 flex: 1,
                 height: 6,
@@ -197,6 +204,7 @@ const ComplianceMini = memo(function ComplianceMini({
             >
               {isDormant ? null : (
                 <div
+                  className="compliance-mini__score-fill"
                   style={{
                     width: `${result.score}%`,
                     height: "100%",
@@ -210,8 +218,9 @@ const ComplianceMini = memo(function ComplianceMini({
               )}
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div className="compliance-mini__meta" style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span
+              className="compliance-mini__count"
               style={{
                 fontSize: "0.58em",
                 color: isDormant ? DORMANT_COLOR : "#64748b",
@@ -222,12 +231,13 @@ const ComplianceMini = memo(function ComplianceMini({
                 : `${result.categoriesPassed}/${result.totalCategories}`}
             </span>
             {!isDormant && isTranscriptScored && (
-              <Mic size={11} style={{ color: "#34d399" }} />
+              <Mic className="compliance-mini__transcript-icon" size={11} style={{ color: "#33cc66" }} />
             )}
             {!isDormant && violationCount > 0 && (
               <span
+                className="compliance-mini__violation-count"
                 style={{
-                  color: "#ef4444",
+                  color: "#ff3838",
                   fontWeight: 700,
                   display: "inline-flex",
                   alignItems: "center",
@@ -240,6 +250,7 @@ const ComplianceMini = memo(function ComplianceMini({
               </span>
             )}
             <ChevronDown
+              className="compliance-mini__chevron"
               size={12}
               style={{
                 color: "#64748b",
@@ -252,12 +263,13 @@ const ComplianceMini = memo(function ComplianceMini({
 
         {/* Category breakdown */}
         {!collapsed && (
-          <div>
+          <div className="compliance-mini__categories">
             {result.categories.map((c) => {
               const col = isDormant ? DORMANT_COLOR : getScoreColor(c.score);
               return (
                 <div
                   key={c.name}
+                  className="compliance-mini__category-row"
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -266,6 +278,7 @@ const ComplianceMini = memo(function ComplianceMini({
                   }}
                 >
                   <span
+                    className="compliance-mini__category-icon"
                     style={{
                       width: 18,
                       display: "inline-flex",
@@ -276,6 +289,7 @@ const ComplianceMini = memo(function ComplianceMini({
                     {renderCategoryIcon(c.icon, col, 13)}
                   </span>
                   <div
+                    className="compliance-mini__category-name"
                     style={{
                       flex: 1,
                       fontSize: "0.66em",
@@ -288,6 +302,7 @@ const ComplianceMini = memo(function ComplianceMini({
                     {c.name}
                   </div>
                   <div
+                    className="compliance-mini__category-bar"
                     style={{
                       width: 50,
                       height: 4,
@@ -299,6 +314,7 @@ const ComplianceMini = memo(function ComplianceMini({
                   >
                     {isDormant ? null : (
                       <div
+                        className="compliance-mini__category-fill"
                         style={{
                           width: `${c.score}%`,
                           height: "100%",
@@ -310,6 +326,7 @@ const ComplianceMini = memo(function ComplianceMini({
                     )}
                   </div>
                   <span
+                    className="compliance-mini__category-score"
                     style={{
                       fontSize: "0.63em",
                       fontWeight: 700,
@@ -326,10 +343,11 @@ const ComplianceMini = memo(function ComplianceMini({
             })}
             {!isDormant && isTranscriptScored && (
               <div
+                className="compliance-mini__strict"
                 style={{
                   marginTop: 4,
                   fontSize: "0.5em",
-                  color: "#34d399",
+                  color: "#33cc66",
                   display: "flex",
                   alignItems: "center",
                   gap: 4,
@@ -341,6 +359,7 @@ const ComplianceMini = memo(function ComplianceMini({
             )}
             {!isDormant && result.violations > 0 && (
               <div
+                className="compliance-mini__violation-banner"
                 style={{
                   marginTop: 6,
                   padding: "3px 6px",

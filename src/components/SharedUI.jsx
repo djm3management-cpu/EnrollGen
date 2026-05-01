@@ -68,7 +68,6 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
   return (
     <div className={`script-box ${verbatim ? "verbatim" : ""}`}>
       <div className="script-box-header">
-        {verbatim && <div className="verbatim-label">READ VERBATIM</div>}
         <div className="script-box-actions">
           <button
             className={`copy-btn script-action-btn ${isEditing ? "is-active" : ""}`}
@@ -77,9 +76,9 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
             aria-label={isEditing ? "Finish editing script text" : "Edit script text"}
           >
             {isEditing ? (
-              <><Check size={11} /> Done</>
+              <Check size={13} />
             ) : (
-              <><Pencil size={11} /> Edit</>
+              <Pencil size={13} />
             )}
           </button>
           <button
@@ -89,9 +88,9 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
             aria-label="Copy script text"
           >
             {copied ? (
-              <><Check size={11} /> Copied</>
+              <Check size={13} />
             ) : (
-              <><Copy size={11} /> Copy</>
+              <Copy size={13} />
             )}
           </button>
         </div>

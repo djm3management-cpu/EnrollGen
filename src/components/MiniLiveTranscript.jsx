@@ -12,9 +12,9 @@ const TRANSCRIPT_PANEL_HEIGHT = "clamp(148px, 22vh, 212px)";
 const MAX_TRANSCRIPT_ENTRIES = 24;
 
 function getTimerColor(seconds) {
-  if (seconds < 900) return "#34d399";   // green < 15 min
-  if (seconds < 1500) return "#fbbf24";  // yellow 15-25 min
-  return "#ef4444";                       // red 25+ min
+  if (seconds < 900) return "#33cc66";   // green < 15 min
+  if (seconds < 1500) return "#f4b24d";  // yellow 15-25 min
+  return "#ff3838";                      // red 25+ min
 }
 
 function formatTime(seconds) {
@@ -42,7 +42,7 @@ export const TranscriptTimer = memo(function TranscriptTimer({ startTime }) {
 
   const color = getTimerColor(elapsed);
   return (
-    <span style={{
+    <span className="transcript-timer" style={{
       fontFamily: "'IBM Plex Mono', monospace",
       fontSize: "0.62rem",
       fontWeight: 700,
@@ -89,10 +89,10 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
     .slice(-MAX_TRANSCRIPT_ENTRIES);
 
   return (
-    <div style={{ padding: "0 0 6px" }}>
+    <div className="mini-live-transcript" style={{ padding: "0 0 6px" }}>
       <div
         ref={scrollRef}
-        className="right-rail-scroll"
+        className="right-rail-scroll mini-live-transcript__scroll"
         style={{
           height: TRANSCRIPT_PANEL_HEIGHT,
           overflowY: "auto",
@@ -111,17 +111,20 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
           return (
             <div
               key={`${entry.speaker}-${entry.timestamp}-${idx}`}
+              className={`mini-live-transcript__row ${
+                isCustomer ? "is-customer" : "is-agent"
+              }${idx === finals.length - 1 ? " is-latest" : ""}`}
               style={{
                 display: "flex",
                 gap: 5,
                 padding: "3px 0",
                 borderBottom: "1px solid rgba(255,255,255,0.03)",
                 animation: idx === finals.length - 1 ? "miniTranscriptFadeIn 0.3s ease" : "none",
-                borderLeft: isCustomer ? "2px solid rgba(0,168,255,0.35)" : "2px solid transparent",
+                borderLeft: "2px solid transparent",
                 paddingLeft: 4,
               }}
             >
-              <span style={{
+              <span className="mini-live-transcript__text" style={{
                 fontSize: "0.7rem",
                 color: idx === finals.length - 1
                   ? (isCustomer ? "#88c8ff" : "#c8cdd8")
@@ -131,7 +134,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
                 overflowWrap: "break-word",
                 minWidth: 0,
               }}>
-                <span style={{
+                <span className="mini-live-transcript__speaker" style={{
                   fontSize: "0.54rem",
                   fontWeight: 800,
                   fontFamily: "'Barlow Condensed', sans-serif",

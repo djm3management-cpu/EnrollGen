@@ -91,6 +91,7 @@ const CallTimer = memo(function CallTimer({ fallbackStartTime = null }) {
 
   return (
     <div
+      className="copilot-call-duration"
       style={{
         display: "flex",
         alignItems: "center",
@@ -100,6 +101,7 @@ const CallTimer = memo(function CallTimer({ fallbackStartTime = null }) {
       }}
     >
       <span
+        className="copilot-call-duration__label"
         style={{
           fontSize: "0.56rem",
           fontFamily: "'Barlow Condensed', sans-serif",

@@ -18,6 +18,7 @@ function fmt(ms) {
 function TalkTrack({ text }) {
   return (
     <div
+      className="flow-script-line"
       style={{
         borderLeft: "2px solid rgba(168,85,247,0.28)",
         padding: "11px 16px",
@@ -26,7 +27,7 @@ function TalkTrack({ text }) {
         background: "rgba(255,255,255,0.012)",
       }}
     >
-      <div style={{ color: "#dfe6f0", fontSize: 14, lineHeight: 1.7 }}>{text}</div>
+      <div className="flow-script-text" style={{ color: "#dfe6f0", fontSize: 14, lineHeight: 1.7 }}>{text}</div>
     </div>
   );
 }
@@ -34,6 +35,7 @@ function TalkTrack({ text }) {
 function StageDirection({ text }) {
   return (
     <div
+      className="flow-stage-direction"
       style={{
         borderLeft: "2px solid rgba(255,255,255,0.1)",
         padding: "8px 14px",
@@ -43,6 +45,7 @@ function StageDirection({ text }) {
       }}
     >
       <div
+        className="flow-stage-text"
         style={{
           color: "#8fa4bc",
           fontSize: 12,
@@ -59,6 +62,7 @@ function StageDirection({ text }) {
 function GateToggle({ label, done, onDo, onUndo }) {
   return (
     <div
+      className="flow-gate-action"
       style={{
         marginTop: 16,
         paddingTop: 14,
@@ -68,7 +72,7 @@ function GateToggle({ label, done, onDo, onUndo }) {
       }}
     >
       <label
-        className="check"
+        className="check flow-gate-check"
         style={{
           justifyContent: "center",
           width: "fit-content",
@@ -149,7 +153,7 @@ function FlowCard({ num, title, active, done, dur, children }) {
 
   return (
     <motion.section
-      className={active ? "active-card" : ""}
+      className={`flow-script-card${active ? " active-card" : ""}`}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -379,6 +383,7 @@ export default function U65Flow() {
 
       {!state.callStarted ? (
         <section
+          className="script-start-call-gate"
           style={{
             background: "rgba(168,85,247,0.04)",
             border: "1px solid rgba(168,85,247,0.2)",
@@ -389,7 +394,7 @@ export default function U65Flow() {
           }}
         >
           <button
-            className="primary"
+            className="primary script-start-call-button"
             onClick={() => dispatch({ type: "START_CALL" })}
             style={{
               fontSize: 15,

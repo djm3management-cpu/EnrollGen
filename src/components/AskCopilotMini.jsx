@@ -79,11 +79,11 @@ const AskCopilotMini = memo(function AskCopilotMini() {
   );
 
   return (
-    <div style={{ padding: "6px 10px 8px" }}>
+    <div className="ask-copilot-mini" style={{ padding: "6px 10px 8px" }}>
       {/* Answer area */}
       {answer && (
         <div
-          className="right-rail-scroll"
+          className="right-rail-scroll ask-copilot-mini__answer-scroll"
           style={{
             maxHeight: 110,
             overflowY: "auto",
@@ -91,6 +91,7 @@ const AskCopilotMini = memo(function AskCopilotMini() {
           }}
         >
           <div
+            className="ask-copilot-mini__answer"
             style={{
               fontSize: "0.62rem",
               color: "#c4b5fd",
@@ -107,6 +108,7 @@ const AskCopilotMini = memo(function AskCopilotMini() {
 
       {/* Ask input */}
       <div
+        className="ask-copilot-mini__form"
         style={{
           display: "flex",
           alignItems: "center",
@@ -122,6 +124,7 @@ const AskCopilotMini = memo(function AskCopilotMini() {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={handleKeyDown}
+          className="ask-copilot-mini__input"
           placeholder="Ask Co-Pilot..."
           disabled={loading}
           style={{
@@ -136,6 +139,7 @@ const AskCopilotMini = memo(function AskCopilotMini() {
           }}
         />
         <button
+          className="ask-copilot-mini__send"
           onClick={handleAsk}
           disabled={loading || !question.trim()}
           style={{

@@ -10,7 +10,7 @@ import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionTPMO() {
   const { state, dispatch, activeSection, unlocked } = useScript();
-  const { recordingOk, tpmoOk, tpmoZip, tpmoOrgs, tpmoPlans } = state;
+  const { recordingOk, tpmoOk } = state;
   const isActive = activeSection === 2;
 
   return (
@@ -24,61 +24,11 @@ export default React.memo(function SectionTPMO() {
         2) TPMO Disclaimer & Federal Contracting Statement
       </h2>
 
-      <div className="field-group">
-        <label className="field-label">
-          TPMO Counts (auto-fills disclosure)
-        </label>
-
-        <div className="tpmo-inputs">
-          <input
-            value={tpmoZip}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, "");
-              dispatch({ type: "SET_FIELD", field: "tpmoZip", value: val });
-            }}
-            placeholder="ZIP"
-            maxLength={5}
-            className="input-dark input-zip"
-            inputMode="numeric"
-          />
-
-          <input
-            value={tpmoOrgs}
-            onChange={(e) =>
-              dispatch({
-                type: "SET_FIELD",
-                field: "tpmoOrgs",
-                value: e.target.value,
-              })
-            }
-            placeholder="# of Organizations"
-            className="input-dark input-flex"
-          />
-
-          <input
-            value={tpmoPlans}
-            onChange={(e) =>
-              dispatch({
-                type: "SET_FIELD",
-                field: "tpmoPlans",
-                value: e.target.value,
-              })
-            }
-            placeholder="# of Plans"
-            className="input-dark input-flex"
-          />
-        </div>
-      </div>
-
       {unlocked.s2 && (
         <ScriptBox verbatim>
           {`"Can I please have your Zipcode?" "May I have your First and Last Name" "May I have a phone number to call you back?"
 
-"We do not offer every plan available in your area. Currently we represent ${
-            tpmoOrgs || "[number of organizations]"
-          } organizations which offer ${
-            tpmoPlans || "[number of plans]"
-          } products in your area. Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insurance Program (SHIP) to get information on all of your options. Plans are insured or covered by a Medicare Advantage (HMO, PPO, PFFS) organization with a Medicare contract and/or a Medicare-approved Part D sponsor. Enrollment in the plan depends on the plan's contract renewal with Medicare."`}
+"We do not offer every plan available in your area. Currently we represent [number of organizations] organizations which offer [number of plans] products in your area. Please contact Medicare.gov, 1-800-MEDICARE, or your local State Health Insurance Program (SHIP) to get information on all of your options. Plans are insured or covered by a Medicare Advantage (HMO, PPO, PFFS) organization with a Medicare contract and/or a Medicare-approved Part D sponsor. Enrollment in the plan depends on the plan's contract renewal with Medicare."`}
         </ScriptBox>
       )}
 

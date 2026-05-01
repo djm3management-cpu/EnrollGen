@@ -16,6 +16,7 @@ function fmt(ms) {
 function Say({ text }) {
   return (
     <div
+      className="flow-script-line"
       style={{
         borderLeft: "2px solid rgba(74,222,128,0.3)",
         padding: "10px 16px",
@@ -24,6 +25,7 @@ function Say({ text }) {
       }}
     >
       <div
+        className="flow-script-text"
         style={{
           color: "#c0d0e4",
           fontSize: 14,
@@ -40,6 +42,7 @@ function Say({ text }) {
 function Gate({ label, done, onDo, onUndo }) {
   return (
     <div
+      className="flow-gate-action"
       style={{
         marginTop: 16,
         paddingTop: 14,
@@ -49,7 +52,7 @@ function Gate({ label, done, onDo, onUndo }) {
       }}
     >
       <label
-        className="check"
+        className="check flow-gate-check"
         style={{
           justifyContent: "center",
           width: "fit-content",
@@ -120,7 +123,7 @@ function Card({ num, title, red, active, done, dur, children }) {
 
   return (
     <section
-      className={active ? "active-card" : ""}
+      className={`flow-script-card${active ? " active-card" : ""}`}
       style={{
         background: active
           ? "rgba(74,222,128,0.04)"
@@ -396,6 +399,7 @@ export default function MedSupFlow() {
 
       {!state.callStarted ? (
         <section
+          className="script-start-call-gate"
           style={{
             background: "rgba(74,222,128,0.04)",
             border: "1px solid rgba(74,222,128,0.2)",
@@ -406,7 +410,7 @@ export default function MedSupFlow() {
           }}
         >
           <button
-            className="primary"
+            className="primary script-start-call-button"
             onClick={() => dispatch({ type: "START_CALL" })}
             style={{
               fontSize: 15,

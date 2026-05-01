@@ -7,6 +7,39 @@ import { useMergedTranscript } from "../hooks/useMergedTranscript";
 import { useTrainingMode } from "../context/TrainingModeContext";
 import { LEVEL_STYLE } from "../data/complianceKnowledge";
 
+const TERMINAL_ALERT_TONES = {
+  critical: {
+    color: "#ffffff",
+    accent: "#ff3838",
+    border: "#8a1414",
+    background: "#000000",
+  },
+  warn: {
+    color: "#ff3838",
+    accent: "#c41e1e",
+    border: "#8a1414",
+    background: "#000000",
+  },
+  tip: {
+    color: "#33cc66",
+    accent: "#33cc66",
+    border: "#1a1a1a",
+    background: "#000000",
+  },
+  remind: {
+    color: "#f4b24d",
+    accent: "#f4b24d",
+    border: "#4d2d00",
+    background: "#000000",
+  },
+  info: {
+    color: "#d98b45",
+    accent: "#69a7c8",
+    border: "#1a1a1a",
+    background: "#000000",
+  },
+};
+
 /* ═══════════════════════════════════════════════════════════════════
    ScriptPrompter — Headless copilot engine host.
    All visual controls now live in the right-rail CopilotControlStrip.
@@ -195,28 +228,18 @@ const ScriptPrompter = memo(function ScriptPrompter({
         const isAlert = floatingAlert.level === "warn" || floatingAlert.level === "critical";
         const isWarn = floatingAlert.level === "warn";
         const isCritical = floatingAlert.level === "critical";
-        const urgencyColor = isCritical ? "#ff1744" : isWarn ? "#ffab00" : s.color;
-        const urgencyBorder = isCritical
-          ? "rgba(255,23,68,0.72)"
-          : isWarn
-            ? "rgba(255,171,0,0.64)"
-            : s.border || "rgba(255,255,255,0.07)";
-        const urgencyBackground = isCritical
-          ? "linear-gradient(145deg, rgba(255,23,68,0.22) 0%, rgba(10,10,12,0.99) 100%)"
-          : isWarn
-            ? "linear-gradient(145deg, rgba(255,171,0,0.16) 0%, rgba(10,10,12,0.99) 100%)"
-            : isPulse
-              ? "linear-gradient(145deg, rgba(157,0,255,0.12) 0%, rgba(10,10,12,0.99) 100%)"
-              : isAlert
-                ? "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)"
-                : "linear-gradient(145deg, rgba(21,21,26,0.92) 0%, rgba(10,10,12,0.94) 100%)";
+        const terminalTone =
+          TERMINAL_ALERT_TONES[floatingAlert.level] || TERMINAL_ALERT_TONES.info;
+        const urgencyColor = terminalTone.color;
+        const urgencyBorder = terminalTone.border;
+        const urgencyBackground = terminalTone.background;
         const urgencyShadow = isCritical
-          ? "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 34px rgba(255,23,68,0.42)"
+          ? "0 0 0 1px #8a1414, 0 12px 24px rgba(0,0,0,0.5)"
           : isWarn
-            ? "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 28px rgba(255,171,0,0.34)"
+            ? "0 0 0 1px #4a0508, 0 12px 24px rgba(0,0,0,0.5)"
             : isPulse
-              ? `14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 30px ${s.color}33`
-              : "14px 14px 28px rgba(0,0,0,0.42), -6px -6px 16px rgba(255,255,255,0.018), 0 0 20px rgba(0,0,0,0.5)";
+              ? "0 0 0 1px #4d2d00, 0 12px 24px rgba(0,0,0,0.5)"
+              : "0 0 0 1px #1a1a1a, 0 12px 24px rgba(0,0,0,0.5)";
         const urgencyAnimation = isFading
           ? "floatFadeOut 5s ease forwards"
           : "slideDown 0.25s ease";
@@ -228,26 +251,25 @@ const ScriptPrompter = memo(function ScriptPrompter({
               position: "fixed", top: 80, right: 20, zIndex: 9999, maxWidth: isAlert ? 420 : 340, width: "auto",
               background: urgencyBackground,
               border: `1px solid ${urgencyBorder}`,
-              borderLeftWidth: isAlert ? 4 : 3, borderLeftColor: urgencyColor,
-              borderRadius: isAlert ? 14 : 10, padding: isAlert ? "14px 18px" : "10px 14px",
-              display: "flex", alignItems: "flex-start", gap: isAlert ? 12 : 8, cursor: "pointer",
+              borderRadius: isAlert ? 14 : 10, padding: isAlert ? "10px 12px" : "8px 10px",
+              display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer",
               boxShadow: urgencyShadow,
               animation: urgencyAnimation,
               backdropFilter: "blur(12px)",
             }}
           >
             <span style={{
-              fontSize: isCritical ? "1.15rem" : isPulse ? "1.1rem" : isAlert ? "0.85rem" : "0.75rem", color: urgencyColor,
-              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, lineHeight: 1,
-              paddingTop: 2, flexShrink: 0,
+              fontSize: isCritical ? "12px" : isPulse ? "12px" : "10px", color: terminalTone.accent,
+              fontFamily: "'IBM Plex Mono', monospace", fontWeight: 800, lineHeight: 1.25,
+              paddingTop: 1, flexShrink: 0,
             }}>
               {s.icon}
             </span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: isPulse || isCritical ? "0.7rem" : isAlert ? "0.62rem" : "0.58rem", fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", color: urgencyColor, marginBottom: isAlert ? 5 : 3 }}>
+              <div style={{ fontSize: "10px", fontWeight: 800, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "1.4px", textTransform: "uppercase", color: terminalTone.accent, lineHeight: 1.25, marginBottom: isAlert ? 4 : 3 }}>
                 {floatLabel} — tap to dismiss
               </div>
-              <div style={{ fontSize: isCritical ? "0.9rem" : isAlert ? "0.84rem" : "0.76rem", color: "#f4f4f5", lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif", fontWeight: isCritical ? 700 : isWarn || isPulse ? 600 : 400 }}>
+              <div style={{ fontSize: isCritical ? "11px" : "10px", color: urgencyColor, lineHeight: 1.35, fontFamily: "'IBM Plex Mono', monospace", fontWeight: isCritical || isWarn || isPulse ? 700 : 500, letterSpacing: "0.3px" }}>
                 {floatingAlert.text}
               </div>
             </div>

@@ -70,7 +70,7 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
   }, [collapsed]);
 
   return (
-    <div style={{
+    <div className="right-rail-widget-shell" style={{
       background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
       border: "1px solid rgba(255,255,255,0.06)",
       borderRadius: 16,
@@ -84,6 +84,7 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
     }}>
       {/* Header bar */}
       <div
+        className="right-rail-widget-header"
         onClick={() => setCollapsed((p) => !p)}
         style={{
           display: "flex",
@@ -97,9 +98,9 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
           transition: "border-bottom 0.2s ease",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-          {icon && <span style={{ color: accentColor, flexShrink: 0, display: "flex", alignItems: "center" }}>{icon}</span>}
-          <span style={{
+        <div className="right-rail-widget-title-row" style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+          {icon && <span className="right-rail-widget-icon" style={{ color: accentColor, flexShrink: 0, display: "flex", alignItems: "center" }}>{icon}</span>}
+          <span className="right-rail-widget-title" style={{
             fontSize: "0.64rem",
             fontFamily: "'Barlow Condensed', sans-serif",
             fontWeight: 700,
@@ -113,9 +114,9 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
             {title}
           </span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <div className="right-rail-widget-header-actions" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
           {headerRight}
-          <span style={{
+          <span className="right-rail-widget-chevron" style={{
             fontSize: "0.6rem",
             color: "#555",
             transition: "transform 0.2s ease",
@@ -130,6 +131,7 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
 
       {/* Collapsible content */}
       <div
+        className="right-rail-widget-content"
         ref={contentRef}
         style={{
           maxHeight: contentHeight,

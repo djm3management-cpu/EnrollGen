@@ -14,6 +14,7 @@ function fmt(ms) {
 function Say({ text }) {
   return (
     <div
+      className="flow-script-line"
       style={{
         borderLeft: "2px solid rgba(234,179,8,0.3)",
         padding: "10px 16px",
@@ -21,7 +22,7 @@ function Say({ text }) {
         borderRadius: "0 6px 6px 0",
       }}
     >
-      <div style={{ color: "#c0d0e4", fontSize: 14, lineHeight: 1.65 }}>
+      <div className="flow-script-text" style={{ color: "#c0d0e4", fontSize: 14, lineHeight: 1.65 }}>
         {text}
       </div>
     </div>
@@ -31,6 +32,7 @@ function Say({ text }) {
 function Note({ text }) {
   return (
     <div
+      className="flow-stage-direction"
       style={{
         borderLeft: "2px solid rgba(234,179,8,0.2)",
         padding: "7px 12px",
@@ -40,6 +42,7 @@ function Note({ text }) {
       }}
     >
       <div
+        className="flow-stage-text"
         style={{
           color: "#8fa4bc",
           fontSize: 12,
@@ -56,6 +59,7 @@ function Note({ text }) {
 function ComplianceBanner({ text }) {
   return (
     <div
+      className="flow-compliance-banner"
       style={{
         background: "rgba(248,113,113,0.06)",
         border: "1px solid rgba(248,113,113,0.2)",
@@ -75,6 +79,7 @@ function ComplianceBanner({ text }) {
 function Gate({ label, done, onDo, onUndo }) {
   return (
     <div
+      className="flow-gate-action"
       style={{
         marginTop: 16,
         paddingTop: 14,
@@ -84,7 +89,7 @@ function Gate({ label, done, onDo, onUndo }) {
       }}
     >
       <label
-        className="check"
+        className="check flow-gate-check"
         style={{
           justifyContent: "center",
           width: "fit-content",
@@ -166,7 +171,7 @@ function Card({ num, title, active, done, dur, children }) {
 
   return (
     <section
-      className={active ? "active-card" : ""}
+      className={`flow-script-card${active ? " active-card" : ""}`}
       style={{
         background: active ? "rgba(234,179,8,0.04)" : "rgba(255,255,255,0.018)",
         border: `1px solid ${
@@ -409,6 +414,7 @@ export default function StateACAFlow() {
 
       {!state.callStarted ? (
         <section
+          className="script-start-call-gate"
           style={{
             background: "rgba(234,179,8,0.04)",
             border: "1px solid rgba(234,179,8,0.2)",
@@ -419,7 +425,7 @@ export default function StateACAFlow() {
           }}
         >
           <button
-            className="primary"
+            className="primary script-start-call-button"
             onClick={() => dispatch({ type: "START_CALL" })}
             style={{
               fontSize: 15,

@@ -403,7 +403,7 @@ function DisclosureCallout({ text }) {
           marginBottom: 6,
         }}
       >
-        Mandatory Disclosure — Read Verbatim
+        Mandatory Disclosure
       </div>
       <div
         style={{
