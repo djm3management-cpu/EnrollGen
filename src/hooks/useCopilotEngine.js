@@ -575,8 +575,7 @@ export function useCopilotEngine({
     sectionTranscriptStartRef, sectionCopilotFiredRef,
     lastSilentHeartbeatRef, lastPeriodicContextSignatureRef,
     coachingAbortRef, askAbortRef, requestCoachingRef,
-    floatTimeout, floatFadeTimeout,
-    pushFeedEntry, showFloat, dismissFloat, surfaceServiceIssue, clearServiceIssue,
+    pushFeedEntry, surfaceServiceIssue, clearServiceIssue,
     scheduleCoaching, clearFeed,
     getToken, logEntry, setEntryFeedback, exportFeedbackDataset, entries,
     silentHeartbeatMs,
@@ -916,7 +915,6 @@ SECTION CONTEXT (rolling window for current section):
         lastPeriodicContextSignatureRef.current = periodicSignature;
       }
       pushFeedEntry(level, message, { issueTag, section: currentStep, contextSnapshot: copilotContext, retrievalTrace });
-      showFloat(level, message);
 
       // Persist to session tracking (warn/critical/remind only)
       if ((level === "warn" || level === "critical" || level === "remind") && logComplianceFlag) {
@@ -941,7 +939,6 @@ SECTION CONTEXT (rolling window for current section):
     activeSection,
     currentStep,
     coachingLoading,
-    showFloat,
     pushFeedEntry,
     buildCopilotContext,
     getToken,
@@ -1131,22 +1128,11 @@ SECTION CONTEXT (rolling window for current section):
       soaFiredRef.current = true;
       const soaMsg = "SCOPE OF APPOINTMENT — You MUST inform the beneficiary that this is the Scope of Appointment and confirm they understand what plan types will be discussed.";
       pushFeedEntry("critical", soaMsg, { section: "POA & Scope of Appointment", issueTag: "SOA_DISCLOSURE" });
-      // Use a longer timeout so the agent can't miss it — 7s visible + 3s fade = 10s total
-      clearTimeout(floatTimeout.current);
-      clearTimeout(floatFadeTimeout.current);
-      setFloatingAlert({ level: "critical", text: soaMsg, pulse: true });
-      logEntry(LOG_TYPES.FLOATING_ALERT, "critical", soaMsg, { section: "POA & Scope of Appointment" });
-      dismissFloat(7000);
     }
     if (activeSection !== 3) soaFiredRef.current = false;
   }, [
     activeSection,
     pushFeedEntry,
-    logEntry,
-    dismissFloat,
-    floatTimeout,
-    floatFadeTimeout,
-    setFloatingAlert,
   ]);
 
   return {

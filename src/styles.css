@@ -2452,6 +2452,52 @@ p {
   margin-top: 12px;
 }
 
+.post-call-save-row .post-call-save-button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid #0f5c2b;
+  border-radius: 0;
+  background: #053d17;
+  color: var(--script-term-green, #33cc66);
+  box-shadow: none;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.post-call-save-row .post-call-save-button::before,
+.post-call-save-row .post-call-save-button::after {
+  content: none;
+  display: none;
+}
+
+.post-call-save-row .post-call-save-button:hover:not(:disabled) {
+  border-color: var(--script-term-green, #33cc66);
+  background: #075523;
+  color: #ffffff;
+  box-shadow: none;
+  transform: none;
+}
+
+.post-call-save-row .post-call-save-button:active:not(:disabled) {
+  box-shadow: none;
+  transform: none;
+}
+
+.post-call-save-row .post-call-save-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.post-call-save-row .post-call-save-button:focus-visible {
+  outline: 2px solid rgba(51, 204, 102, 0.55);
+  outline-offset: 3px;
+}
+
 .post-call-save-status {
   display: inline-flex;
   align-items: center;

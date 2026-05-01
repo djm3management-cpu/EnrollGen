@@ -386,8 +386,7 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
     sectionTranscriptStartRef, sectionCopilotFiredRef,
     lastSilentHeartbeatRef, lastPeriodicContextSignatureRef,
     coachingAbortRef, askAbortRef, requestCoachingRef,
-    floatTimeout, floatFadeTimeout,
-    pushFeedEntry, showFloat, dismissFloat, surfaceServiceIssue, clearServiceIssue,
+    pushFeedEntry, surfaceServiceIssue, clearServiceIssue,
     scheduleCoaching, clearFeed,
     getToken, logEntry, setEntryFeedback, exportFeedbackDataset, entries,
     silentHeartbeatMs,
@@ -422,8 +421,7 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
       section: currentStep,
       issueTag: "CITIZENSHIP_DOC_REFERENCE",
     });
-    showFloat("tip", CITIZENSHIP_REFERENCE_MESSAGE);
-  }, [state.callStarted, transcriptSnapshot, currentStep, pushFeedEntry, showFloat]);
+  }, [state.callStarted, transcriptSnapshot, currentStep, pushFeedEntry]);
 
   /* ─── Plan data lookup (fires once at Gate 4+) ─── */
   const [planSummary, setPlanSummary] = useState(null);
@@ -672,7 +670,6 @@ SECTION CONTEXT (rolling window):
       sectionCopilotFiredRef.current.add(activeGate);
       if (periodic && periodicSignature) lastPeriodicContextSignatureRef.current = periodicSignature;
       pushFeedEntry(level, message, { issueTag, section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
-      showFloat(level, message);
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("ACA Coaching error:", err);
@@ -684,7 +681,7 @@ SECTION CONTEXT (rolling window):
       if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
       setCoachingLoading(false);
     }
-  }, [activeGate, currentStep, coachingLoading, knowledge, showFloat, pushFeedEntry, buildCopilotContext, getToken, transcriptRef, clearServiceIssue, surfaceServiceIssue, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs]);
+  }, [activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, buildCopilotContext, getToken, transcriptRef, clearServiceIssue, surfaceServiceIssue, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs]);
 
   // Wire requestCoachingRef so core's periodic timer and section-entry logic can call it
   useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching, requestCoachingRef]);
@@ -777,14 +774,9 @@ SECTION CONTEXT (rolling window):
       subsidyFiredRef.current = true;
       const msg = "INCOME ASSESSMENT — You MUST accurately determine household size and income. 2026 subsidy cliff: clients above 400% FPL have NO APTC. Never coach clients to misrepresent income.";
       pushFeedEntry("warn", msg, { section: "Household & Income Assessment", issueTag: "SUBSIDY_GATE_ENTRY", retrievalTrace: EMPTY_RETRIEVAL_TRACE });
-      clearTimeout(floatTimeout.current);
-      clearTimeout(floatFadeTimeout.current);
-      setFloatingAlert({ level: "warn", text: msg, pulse: true });
-      logEntry(LOG_TYPES.FLOATING_ALERT, "warn", msg, { section: "Household & Income Assessment" });
-      dismissFloat(7000);
     }
     if (activeGate !== 2) subsidyFiredRef.current = false;
-  }, [activeGate, pushFeedEntry, logEntry, dismissFloat, floatTimeout, floatFadeTimeout, setFloatingAlert]);
+  }, [activeGate, pushFeedEntry]);
 
   /* ═══════ Compliance score ═══════ */
   const complianceScore = useMemo(() => {

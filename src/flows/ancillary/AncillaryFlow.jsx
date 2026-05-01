@@ -47,22 +47,6 @@ const PRODUCT_COMPONENTS = {
 const PRODUCT_ORDER = [SUB_PRODUCT.HIP, SUB_PRODUCT.FE, SUB_PRODUCT.DVH];
 const FALLBACK_PRODUCT_META = { label: "Ancillary", shortLabel: "ANC" };
 
-const ANCILLARY_LEVEL_STYLE = {
-  info: { icon: "i", color: ANCILLARY_ACCENT.color, border: "rgba(59,130,246,0.18)" },
-  remind: { icon: "o", color: "#f3f4f6", border: "rgba(243,244,246,0.1)" },
-  tip: { icon: "+", color: "#00ff41", border: "rgba(0,255,65,0.12)" },
-  warn: { icon: "!", color: "#FFE45C", border: "rgba(255,228,92,0.15)" },
-  critical: { icon: "x", color: "#EF4444", border: "rgba(239,68,68,0.18)" },
-};
-
-const ANCILLARY_ALERT_LABELS = {
-  critical: "ANCILLARY ALERT",
-  warn: "ANCILLARY WARNING",
-  tip: "TIP",
-  remind: "REMINDER",
-  info: "ANCILLARY CO-PILOT",
-};
-
 function productFromPath() {
   if (typeof window === "undefined") return null;
   const parts = window.location.pathname.split("/").filter(Boolean);
@@ -918,7 +902,6 @@ function AncillaryCopilot({ onTranscriptChange }) {
     useScriptFlow();
   const transcriptRef = useRef("");
   const { logEntry, clearLog } = useCopilotLog();
-  const [floatingAlert, setFloatingAlert] = useState(null);
   const speech = useSpeechRecognition({
     externalTranscriptRef: transcriptRef,
     onNewFinal: null,
@@ -974,7 +957,6 @@ function AncillaryCopilot({ onTranscriptChange }) {
       flowType: FLOW_TYPE,
       subProduct: state.activeSubProduct,
     });
-    setFloatingAlert({ level: "info", text: message });
   }, [activeProductMeta?.label, complianceScore.score, logEntry, state.activeSubProduct]);
 
   const toggleLabel = state.activeSubProduct
@@ -997,11 +979,6 @@ function AncillaryCopilot({ onTranscriptChange }) {
       onToggleListening={speech.listening ? speech.stop : speech.start}
       onClear={clearAll}
       onAnalyze={analyze}
-      floatingAlert={floatingAlert}
-      onDismissAlert={() => setFloatingAlert(null)}
-      levelStyles={ANCILLARY_LEVEL_STYLE}
-      alertLabels={ANCILLARY_ALERT_LABELS}
-      defaultAlertLabel="ANCILLARY CO-PILOT"
     />
   );
 }

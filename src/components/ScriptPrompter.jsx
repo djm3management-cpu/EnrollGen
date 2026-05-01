@@ -5,45 +5,11 @@ import { useCopilotEngine } from "../hooks/useCopilotEngine";
 import { useCustomerAudio } from "../hooks/useCustomerAudio";
 import { useMergedTranscript } from "../hooks/useMergedTranscript";
 import { useTrainingMode } from "../context/TrainingModeContext";
-import { LEVEL_STYLE } from "../data/complianceKnowledge";
-
-const TERMINAL_ALERT_TONES = {
-  critical: {
-    color: "#ffffff",
-    accent: "#ff3838",
-    border: "#8a1414",
-    background: "#000000",
-  },
-  warn: {
-    color: "#ff3838",
-    accent: "#c41e1e",
-    border: "#8a1414",
-    background: "#000000",
-  },
-  tip: {
-    color: "#33cc66",
-    accent: "#33cc66",
-    border: "#1a1a1a",
-    background: "#000000",
-  },
-  remind: {
-    color: "#f4b24d",
-    accent: "#f4b24d",
-    border: "#4d2d00",
-    background: "#000000",
-  },
-  info: {
-    color: "#d98b45",
-    accent: "#69a7c8",
-    border: "#1a1a1a",
-    background: "#000000",
-  },
-};
 
 /* ═══════════════════════════════════════════════════════════════════
    ScriptPrompter — Headless copilot engine host.
    All visual controls now live in the right-rail CopilotControlStrip.
-   This component owns hooks, transcript forwarding, and the floating alert.
+   This component owns hooks and transcript forwarding.
    ═══════════════════════════════════════════════════════════════════ */
 
 const ScriptPrompter = memo(function ScriptPrompter({
@@ -216,65 +182,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
     }
   });
 
-  /* ═══════ RENDER — floating alert only ═══════ */
-  const { floatingAlert } = copilot;
-
-  return (
-    <>
-      {floatingAlert && (() => {
-        const s = LEVEL_STYLE[floatingAlert.level] || LEVEL_STYLE.info;
-        const isPulse = !!floatingAlert.pulse;
-        const isFading = !!floatingAlert.fading;
-        const isAlert = floatingAlert.level === "warn" || floatingAlert.level === "critical";
-        const isWarn = floatingAlert.level === "warn";
-        const isCritical = floatingAlert.level === "critical";
-        const terminalTone =
-          TERMINAL_ALERT_TONES[floatingAlert.level] || TERMINAL_ALERT_TONES.info;
-        const urgencyShadow = isCritical
-          ? "0 0 0 1px #8a1414, 0 8px 18px rgba(0,0,0,0.46)"
-          : isWarn
-            ? "0 0 0 1px #4a0508, 0 8px 18px rgba(0,0,0,0.46)"
-            : isPulse
-              ? "0 0 0 1px #4d2d00, 0 8px 18px rgba(0,0,0,0.46)"
-              : "0 0 0 1px #1a1a1a, 0 8px 18px rgba(0,0,0,0.46)";
-        const urgencyAnimation = isFading
-          ? "floatFadeOut 5s ease forwards"
-          : "slideDown 0.25s ease";
-        const floatLabel = { critical: "CRITICAL ALERT", warn: "WARNING", tip: "TIP", remind: "REMINDER", info: "CO-PILOT" }[floatingAlert.level] || "CO-PILOT";
-        return (
-          <div
-            className={`copilot-floating-alert${
-              isAlert ? " copilot-floating-alert--alert" : ""
-            }${isCritical ? " copilot-floating-alert--critical" : ""}`}
-            onClick={() => copilot.setFloatingAlert(null)}
-            style={{
-              "--copilot-alert-bg": terminalTone.background,
-              "--copilot-alert-border": terminalTone.border,
-              "--copilot-alert-shadow": urgencyShadow,
-              "--copilot-alert-animation": urgencyAnimation,
-              "--copilot-alert-accent": terminalTone.accent,
-              "--copilot-alert-color": terminalTone.color,
-            }}
-          >
-            <span className="copilot-floating-alert__icon">
-              {s.icon}
-            </span>
-            <div className="copilot-floating-alert__content">
-              <div
-                className="copilot-floating-alert__label"
-                data-label={floatLabel}
-              >
-                {floatLabel} — tap to dismiss
-              </div>
-              <div className="copilot-floating-alert__text">
-                {floatingAlert.text}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-    </>
-  );
+  return null;
 });
 
 export default ScriptPrompter;

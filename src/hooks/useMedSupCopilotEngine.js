@@ -340,7 +340,7 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state }) 
     sectionTranscriptStartRef, sectionCopilotFiredRef,
     lastSilentHeartbeatRef, lastPeriodicContextSignatureRef,
     coachingAbortRef, askAbortRef, requestCoachingRef,
-    pushFeedEntry, showFloat, surfaceServiceIssue, clearServiceIssue,
+    pushFeedEntry, surfaceServiceIssue, clearServiceIssue,
     scheduleCoaching, clearFeed,
     getToken, logEntry, setEntryFeedback, exportFeedbackDataset, entries,
     silentHeartbeatMs,
@@ -378,10 +378,9 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state }) 
       tpmoFiredRef.current = true;
       const msg = "TPMO disclaimer must be read verbatim. Do not paraphrase or summarize.";
       pushFeedEntry("remind", msg, { section: MEDSUP_SECTION_LABELS[2] || "TPMO", issueTag: "TPMO_ENTRY" });
-      showFloat("remind", msg);
     }
     if (activeSection !== 2) tpmoFiredRef.current = false;
-  }, [activeSection, pushFeedEntry, showFloat]);
+  }, [activeSection, pushFeedEntry]);
 
   /* ═══════ COACHING ═══════ */
   const requestCoaching = useCallback(async ({
@@ -598,7 +597,6 @@ SECTION CONTEXT (rolling window):
           transcriptReferenceCount: 0, transcriptReferenceError: null,
         },
       });
-      showFloat(level, message);
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("[MedSupCopilot] coaching error:", err);
@@ -611,7 +609,7 @@ SECTION CONTEXT (rolling window):
       setCoachingLoading(false);
     }
   }, [
-    activeSection, currentStep, coachingLoading, knowledge, showFloat, pushFeedEntry,
+    activeSection, currentStep, coachingLoading, knowledge, pushFeedEntry,
     buildCopilotContext, getToken, transcriptRef, clearServiceIssue, surfaceServiceIssue,
     messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel,
     sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef,

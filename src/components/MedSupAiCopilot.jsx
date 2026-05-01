@@ -2,16 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { useMedSup } from "../context/MedSupContext";
 import { useMedSupCopilotEngine } from "../hooks/useMedSupCopilotEngine";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
-import { MEDSUP_LEVEL_STYLE } from "../data/medSupComplianceKnowledge";
 import CompactCopilotRail from "./CompactCopilotRail";
-
-const MEDSUP_ALERT_LABELS = {
-  critical: "CRITICAL ALERT",
-  warn: "WARNING",
-  tip: "TIP",
-  remind: "REMINDER",
-  info: "MED SUP CO-PILOT",
-};
 
 const MedSupAiCopilot = memo(function MedSupAiCopilot({
   onTranscriptChange,
@@ -39,7 +30,7 @@ const MedSupAiCopilot = memo(function MedSupAiCopilot({
     copilot.clearFeed();
   }, [speech, copilot]);
 
-  const { currentStep, coachingLoading, floatingAlert, complianceScore } = copilot;
+  const { currentStep, coachingLoading, complianceScore } = copilot;
   const { listening, transcript, transcriptRows, supportsRecognition } = speech;
   const mergedEntries = useMemo(
     () =>
@@ -66,11 +57,6 @@ const MedSupAiCopilot = memo(function MedSupAiCopilot({
       onToggleListening={listening ? speech.stop : speech.start}
       onClear={clearAll}
       onAnalyze={() => copilot.requestCoaching({ manual: true })}
-      floatingAlert={floatingAlert}
-      onDismissAlert={() => copilot.setFloatingAlert(null)}
-      levelStyles={MEDSUP_LEVEL_STYLE}
-      alertLabels={MEDSUP_ALERT_LABELS}
-      defaultAlertLabel="MED SUP CO-PILOT"
     />
   );
 });

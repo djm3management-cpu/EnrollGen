@@ -520,7 +520,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
         <div className="post-call-save-row">
           <button
             type="button"
-            className="primary"
+            className="primary post-call-save-button"
             onClick={handleSaveWrapUp}
             disabled={isSaving}
           >

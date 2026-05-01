@@ -11,38 +11,6 @@ import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 
 const FULL_RAIL_WIDTH = 278;
 const COMPACT_RAIL_OVERLAY_WIDTH = "min(340px, calc(100vw - 24px))";
-const TERMINAL_ALERT_TONES = {
-  critical: {
-    color: "#ffffff",
-    accent: "#ff3838",
-    border: "#8a1414",
-    background: "#000000",
-  },
-  warn: {
-    color: "#ff3838",
-    accent: "#c41e1e",
-    border: "#8a1414",
-    background: "#000000",
-  },
-  tip: {
-    color: "#33cc66",
-    accent: "#33cc66",
-    border: "#1a1a1a",
-    background: "#000000",
-  },
-  remind: {
-    color: "#f4b24d",
-    accent: "#f4b24d",
-    border: "#4d2d00",
-    background: "#000000",
-  },
-  info: {
-    color: "#d98b45",
-    accent: "#69a7c8",
-    border: "#1a1a1a",
-    background: "#000000",
-  },
-};
 
 const FULL_RAIL_STYLE = {
   position: "fixed",
@@ -92,107 +60,6 @@ const COMPACT_RAIL_OVERLAY_STYLE = {
   justifyContent: "flex-start",
   gap: 8,
 };
-
-function FloatingAlert({
-  alert,
-  levelStyles,
-  labelMap,
-  defaultLabel,
-  onDismiss,
-}) {
-  if (!alert) return null;
-
-  const style = levelStyles?.[alert.level] || levelStyles?.info || {};
-  const isPulse = Boolean(alert.pulse);
-  const isFading = Boolean(alert.fading);
-  const isAlert = alert.level === "warn" || alert.level === "critical";
-  const isWarn = alert.level === "warn";
-  const isCritical = alert.level === "critical";
-  const terminalTone =
-    TERMINAL_ALERT_TONES[alert.level] || TERMINAL_ALERT_TONES.info;
-  const urgencyColor = terminalTone.color;
-  const urgencyBorder = terminalTone.border;
-  const urgencyBackground = terminalTone.background;
-  const urgencyShadow = isCritical
-    ? "0 0 0 1px #8a1414, 0 12px 24px rgba(0,0,0,0.5)"
-    : isWarn
-      ? "0 0 0 1px #4a0508, 0 12px 24px rgba(0,0,0,0.5)"
-      : isPulse
-        ? "0 0 0 1px #4d2d00, 0 12px 24px rgba(0,0,0,0.5)"
-        : "0 0 0 1px #1a1a1a, 0 12px 24px rgba(0,0,0,0.5)";
-  const urgencyAnimation = isFading
-    ? "floatFadeOut 5s ease forwards"
-    : "slideDown 0.25s ease";
-  const floatLabel =
-    labelMap?.[alert.level] || defaultLabel || "CO-PILOT";
-
-  return (
-    <div
-      onClick={onDismiss}
-      style={{
-        position: "fixed",
-        top: 80,
-        right: 20,
-        zIndex: 9999,
-        maxWidth: isAlert ? 420 : 340,
-        width: "auto",
-        background: urgencyBackground,
-        border: `1px solid ${urgencyBorder}`,
-        borderRadius: isAlert ? 14 : 10,
-        padding: isAlert ? "10px 12px" : "8px 10px",
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 8,
-        cursor: "pointer",
-        boxShadow: urgencyShadow,
-        animation: urgencyAnimation,
-        backdropFilter: "blur(12px)",
-      }}
-    >
-      <span
-        style={{
-          fontSize: isCritical ? "12px" : isPulse ? "12px" : "10px",
-          color: terminalTone.accent,
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontWeight: 800,
-          lineHeight: 1.25,
-          paddingTop: 1,
-          flexShrink: 0,
-        }}
-      >
-        {style.icon || "!"}
-      </span>
-      <div style={{ flex: 1 }}>
-        <div
-          style={{
-            fontSize: "10px",
-            fontWeight: 800,
-            fontFamily: "'IBM Plex Mono', monospace",
-            letterSpacing: "1.4px",
-            textTransform: "uppercase",
-            color: terminalTone.accent,
-            lineHeight: 1.25,
-            marginBottom: isAlert ? 4 : 3,
-          }}
-        >
-          {floatLabel} - tap to dismiss
-        </div>
-        <div
-          style={{
-            fontSize: isCritical ? "11px" : "10px",
-            color: urgencyColor,
-            lineHeight: 1.35,
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontWeight: isCritical || isWarn || isPulse ? 700 : 500,
-            letterSpacing: "0.3px",
-          }}
-        >
-          {alert.text}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function RailWidgets({
   mergedEntries,
@@ -319,11 +186,6 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
   onToggleListening,
   onClear,
   onAnalyze,
-  floatingAlert,
-  onDismissAlert,
-  levelStyles,
-  alertLabels,
-  defaultAlertLabel,
 }) {
   const { clearLog } = useCopilotLog();
   const [open, setOpen] = useState(false);
@@ -413,14 +275,6 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
 
   return (
     <>
-      <FloatingAlert
-        alert={floatingAlert}
-        levelStyles={levelStyles}
-        labelMap={alertLabels}
-        defaultLabel={defaultAlertLabel}
-        onDismiss={onDismissAlert}
-      />
-
       {!isCompactRail ? (
         <div className="right-rail-full" style={FULL_RAIL_STYLE}>
           <div className="right-rail-scroll" style={FULL_RAIL_SCROLL_STYLE}>

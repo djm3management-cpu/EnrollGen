@@ -417,9 +417,8 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
     lastSilentHeartbeatRef, lastPeriodicContextSignatureRef,
     coachingAbortRef, askAbortRef,
     requestCoachingRef,
-    floatTimeout, floatFadeTimeout,
     // Actions
-    pushFeedEntry, showFloat, dismissFloat,
+    pushFeedEntry,
     surfaceServiceIssue, clearServiceIssue,
     scheduleCoaching, clearFeed,
     // Auth
@@ -450,8 +449,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
       section: currentStep,
       issueTag: "CITIZENSHIP_DOC_REFERENCE",
     });
-    showFloat("tip", CITIZENSHIP_REFERENCE_MESSAGE);
-  }, [state.callStarted, transcriptSnapshot, currentStep, pushFeedEntry, showFloat]);
+  }, [state.callStarted, transcriptSnapshot, currentStep, pushFeedEntry]);
 
   /* ═══════ Gate-entry alerts (separate refs, NOT sectionCopilotFiredRef) ═══════ */
 
@@ -462,24 +460,22 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
       mecFiredRef.current = true;
       const msg = "MANDATORY: Deliver NOT-MEC and NOT-ACA-substitute disclosures BEFORE presenting any product details. This is a compliance requirement.";
       pushFeedEntry("critical", msg, { section: U65_GATE_LABELS[3] || "MEC Disclosure", issueTag: "MEC_DISCLOSURE_ENTRY" });
-      clearTimeout(floatTimeout.current);
-      clearTimeout(floatFadeTimeout.current);
-      setFloatingAlert({ level: "critical", text: msg, pulse: true });
-      logEntry(LOG_TYPES.FLOATING_ALERT, "critical", msg, { section: U65_GATE_LABELS[3] || "MEC Disclosure" });
-      dismissFloat(7000);
     }
     if (activeGate !== 3) mecFiredRef.current = false;
-  }, [activeGate, pushFeedEntry, logEntry, dismissFloat, setFloatingAlert, floatTimeout, floatFadeTimeout]);
+  }, [activeGate, pushFeedEntry]);
 
   // UW honesty at gate 6
   const uwFiredRef = useRef(false);
   useEffect(() => {
     if (activeGate === 6 && !uwFiredRef.current) {
       uwFiredRef.current = true;
-      showFloat("remind", "Read UW questions verbatim. Do NOT coach the client to minimize conditions. Say \"subject to underwriting approval\" — never \"approved.\"");
+      pushFeedEntry("remind", "Read UW questions verbatim. Do NOT coach the client to minimize conditions. Say \"subject to underwriting approval\" — never \"approved.\"", {
+        section: U65_GATE_LABELS[6] || "Underwriting",
+        issueTag: "UW_HONESTY_ENTRY",
+      });
     }
     if (activeGate !== 6) uwFiredRef.current = false;
-  }, [activeGate, showFloat]);
+  }, [activeGate, pushFeedEntry]);
 
   // High risk pivot at gate 3
   const highRiskFiredRef = useRef(false);
@@ -487,12 +483,15 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
     if (activeGate === 3 && state.uwRisk === "high" && !highRiskFiredRef.current) {
       highRiskFiredRef.current = true;
       const timer = setTimeout(() => {
-        showFloat("warn", "Client is HIGH UW risk. Off-exchange products may decline. Consider pivoting to ACA (guaranteed issue) if client is in OEP/SEP window.");
+        pushFeedEntry("warn", "Client is HIGH UW risk. Off-exchange products may decline. Consider pivoting to ACA (guaranteed issue) if client is in OEP/SEP window.", {
+          section: U65_GATE_LABELS[3] || "MEC Disclosure",
+          issueTag: "HIGH_UW_RISK",
+        });
       }, 3000);
       return () => clearTimeout(timer);
     }
     if (activeGate !== 3) highRiskFiredRef.current = false;
-  }, [activeGate, state.uwRisk, showFloat]);
+  }, [activeGate, state.uwRisk, pushFeedEntry]);
 
   /* ─── ACA benchmark lookup (fires once when location is captured) ─── */
   const [acaBenchmark, setAcaBenchmark] = useState(null);
@@ -697,7 +696,6 @@ SECTION CONTEXT (rolling window):
       sectionCopilotFiredRef.current.add(activeGate);
       if (periodic && periodicSignature) lastPeriodicContextSignatureRef.current = periodicSignature;
       pushFeedEntry(level, message, { issueTag, section: currentStep, contextSnapshot: copilotContext, retrievalTrace });
-      showFloat(level, message);
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("[U65Copilot] coaching error:", err);
@@ -709,7 +707,7 @@ SECTION CONTEXT (rolling window):
       if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
       setCoachingLoading(false);
     }
-  }, [activeGate, currentStep, coachingLoading, knowledge, showFloat, pushFeedEntry, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, silentHeartbeatMs, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, acaBenchmark]);
+  }, [activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, silentHeartbeatMs, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, acaBenchmark]);
 
   // Store latest requestCoaching for core's periodic timer and section-entry
   useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching, requestCoachingRef]);

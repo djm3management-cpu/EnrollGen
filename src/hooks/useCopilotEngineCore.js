@@ -369,7 +369,7 @@ export function useCopilotEngineCore({
     if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
   }, [messages]);
 
-  /* ─── Floating alerts ─── */
+  /* ─── Feed-only alert compatibility ─── */
   const dismissFloat = useCallback((delay) => {
     clearTimeout(floatTimeout.current);
     clearTimeout(floatFadeTimeout.current);
@@ -381,32 +381,14 @@ export function useCopilotEngineCore({
 
   const showFloat = useCallback((level, text, opts = {}) => {
     const displayText = formatCopilotDisplayMessage(text);
-    clearTimeout(floatTimeout.current);
-    clearTimeout(floatFadeTimeout.current);
-    setFloatingAlert({ level, text: displayText, ...opts });
-    logEntry(LOG_TYPES.FLOATING_ALERT, level, displayText, { section: currentStep });
-
-    if (level === "warn" || level === "critical") {
-      try {
-        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioContextCtor();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = level === "critical" ? 880 : 660;
-        gain.gain.value = 0.15;
-        osc.start();
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-        osc.stop(ctx.currentTime + 0.3);
-      } catch {
-        // Audio may be blocked or unavailable; the visual alert still fires.
-      }
+    if (!displayText) {
+      return;
     }
-
-    const duration = level === "critical" ? 7000 : level === "warn" ? 4000 : 5000;
-    dismissFloat(duration);
-  }, [logEntry, currentStep, dismissFloat]);
+    logEntry(LOG_TYPES.COPILOT_MSG, level, displayText, {
+      section: opts.section || currentStep,
+      issueTag: opts.issueTag || "",
+    });
+  }, [logEntry, currentStep]);
 
   /* ─── Service issue handling ─── */
   const clearServiceIssue = useCallback(() => {
@@ -416,11 +398,11 @@ export function useCopilotEngineCore({
   const surfaceServiceIssue = useCallback((message, { force = false } = {}) => {
     const now = Date.now();
     const prev = lastServiceIssueRef.current;
-    const shouldShow =
+    const shouldRecord =
       force || message !== prev.message || now - prev.at >= serviceIssuePopupCooldownMs;
+    if (!shouldRecord) return;
     lastServiceIssueRef.current = { message, at: now };
-    if (shouldShow) showFloat("warn", message);
-  }, [showFloat, serviceIssuePopupCooldownMs]);
+  }, [serviceIssuePopupCooldownMs]);
 
   /* ─── Feed entry ─── */
   const pushFeedEntry = useCallback((level, text, extra = {}) => {
