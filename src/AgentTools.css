@@ -185,17 +185,6 @@
   min-width: 0;
 }
 
-.at-card-badge {
-  flex-shrink: 0;
-  padding: 2px 6px;
-  border-radius: 999px;
-  font-family: var(--font-display);
-  font-size: 0.48rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 .at-tool-icon-badge {
   display: inline-flex;
   align-items: center;
@@ -1855,4 +1844,295 @@
   border-color: rgba(96, 165, 250, 0.5);
   color: #93c5fd;
   background: rgba(96, 165, 250, 0.1);
+}
+
+/* Bloomberg terminal treatment for the Agent Tools top-panel dropdown. */
+.top-panel-overlay--tools {
+  border: 1px solid var(--rail-term-border) !important;
+  border-radius: 0 !important;
+  background: var(--rail-term-bg) !important;
+  box-shadow: none !important;
+  color: var(--rail-term-amber);
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.top-panel-overlay--tools *,
+.top-panel-overlay--tools *::before,
+.top-panel-overlay--tools *::after {
+  border-radius: 0 !important;
+}
+
+.top-panel-overlay--tools .top-panel-header {
+  min-height: 30px;
+  padding: 0 0 0 10px;
+  border-bottom: 1px solid #4d2d00 !important;
+  background: var(--rail-term-yellow) !important;
+}
+
+.top-panel-overlay--tools .top-panel-title {
+  color: #070707 !important;
+  font-family: "IBM Plex Mono", monospace !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1.8px !important;
+  line-height: 1 !important;
+}
+
+.top-panel-overlay--tools .top-panel-close {
+  width: 30px;
+  height: 30px;
+  border: 0 !important;
+  border-left: 1px solid #4d2d00 !important;
+  background: transparent !important;
+  color: #070707 !important;
+  box-shadow: none !important;
+}
+
+.top-panel-overlay--tools .top-panel-close svg {
+  stroke: #070707 !important;
+}
+
+.top-panel-overlay--tools .top-panel-close:hover {
+  background: #d98b45 !important;
+}
+
+.top-panel-overlay--tools .top-panel-body {
+  padding: 8px;
+  background: var(--rail-term-bg) !important;
+  scrollbar-color: var(--rail-term-border-bright) transparent;
+}
+
+.top-panel-overlay--tools .at-root {
+  gap: 8px;
+  color: var(--rail-term-amber);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.top-panel-overlay--tools .at-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--rail-term-border);
+  border-left: 1px solid var(--rail-term-border);
+  background: var(--rail-term-bg);
+}
+
+.top-panel-overlay--tools .at-tool-card {
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 0;
+  border-right: 1px solid var(--rail-term-border);
+  border-bottom: 1px solid var(--rail-term-border);
+  background: var(--rail-term-bg);
+  box-shadow: none;
+  color: var(--rail-term-amber);
+}
+
+.top-panel-overlay--tools .at-tool-card:hover {
+  border-color: var(--rail-term-border);
+  background: var(--rail-term-hover);
+  color: var(--rail-term-white);
+}
+
+.top-panel-overlay--tools .at-tool-main {
+  align-items: center;
+  gap: 8px;
+}
+
+.top-panel-overlay--tools .at-tool-icon-badge,
+.top-panel-overlay--tools .at-tool-icon-badge-large {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--rail-term-border-bright);
+  background: var(--rail-term-bg-soft) !important;
+  color: var(--rail-term-yellow) !important;
+}
+
+.top-panel-overlay--tools .at-tool-icon-badge svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor !important;
+}
+
+.top-panel-overlay--tools .at-tool-title-row {
+  gap: 6px;
+}
+
+.top-panel-overlay--tools .at-tool-title {
+  color: var(--rail-term-yellow);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  line-height: 1.2;
+}
+
+.top-panel-overlay--tools .at-tool-desc {
+  color: var(--rail-term-cyan);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.top-panel-overlay--tools .at-tool-card:hover .at-tool-title,
+.top-panel-overlay--tools .at-tool-card:hover .at-tool-desc,
+.top-panel-overlay--tools .at-tool-card:hover .at-tool-icon-badge {
+  color: var(--rail-term-white) !important;
+}
+
+.at-modal-backdrop {
+  background: rgba(0, 0, 0, 0.86) !important;
+  backdrop-filter: none !important;
+}
+
+.at-modal {
+  border: 1px solid var(--rail-term-border, #1a1a1a) !important;
+  border-radius: 0 !important;
+  background: var(--rail-term-bg, #000000) !important;
+  box-shadow: none !important;
+  color: var(--rail-term-amber, #d98b45);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.at-modal-header {
+  padding: 10px 44px 10px 10px;
+  border-bottom: 1px solid var(--rail-term-border, #1a1a1a) !important;
+  background: var(--rail-term-bg, #000000) !important;
+}
+
+.at-modal-kicker {
+  color: var(--rail-term-cyan, #69a7c8);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+}
+
+.at-modal-title {
+  color: var(--rail-term-yellow, #f4b24d);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.at-modal-desc {
+  color: var(--rail-term-cyan, #69a7c8);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+}
+
+.at-modal-close {
+  top: 8px;
+  right: 8px;
+  border: 1px solid var(--rail-term-border-bright, #2a2a2a) !important;
+  background: var(--rail-term-bg-soft, #050505) !important;
+  color: var(--rail-term-yellow, #f4b24d) !important;
+  box-shadow: none !important;
+}
+
+.at-modal-close:hover {
+  background: var(--rail-term-hover, #0b376f) !important;
+  color: var(--rail-term-white, #ffffff) !important;
+}
+
+.at-modal-body {
+  background: var(--rail-term-bg, #000000);
+}
+
+.at-modal .at-link-grid,
+.at-modal .at-carrier-grid,
+.at-modal .at-doc-grid,
+.at-modal .at-doc-field-grid,
+.at-modal .at-doc-note-grid {
+  gap: 0;
+  border-top: 1px solid var(--rail-term-border, #1a1a1a);
+  border-left: 1px solid var(--rail-term-border, #1a1a1a);
+}
+
+.at-modal .at-link-card,
+.at-modal .at-carrier-card,
+.at-modal .at-doc-card,
+.at-modal .at-doc-note-card,
+.at-modal .at-doc-field-card,
+.at-modal .at-sep-ref-note,
+.at-modal .at-sep-section,
+.at-modal .at-sep-item,
+.at-modal .at-doc-loading,
+.at-modal .at-doc-error {
+  border: 0;
+  border-right: 1px solid var(--rail-term-border, #1a1a1a);
+  border-bottom: 1px solid var(--rail-term-border, #1a1a1a);
+  background: var(--rail-term-bg, #000000);
+  box-shadow: none;
+  color: var(--rail-term-amber, #d98b45);
+}
+
+.at-modal .at-link-card:hover,
+.at-modal .at-carrier-card:hover,
+.at-modal .at-doc-card:hover {
+  border-color: var(--rail-term-border, #1a1a1a);
+  background: var(--rail-term-hover, #0b376f);
+}
+
+.at-modal .at-link-name,
+.at-modal .at-carrier-name,
+.at-modal .at-doc-title,
+.at-modal .at-doc-detail-title,
+.at-modal .at-doc-card-title,
+.at-modal .at-doc-field-name,
+.at-modal .at-sep-ref-header h4,
+.at-modal .at-sep-ask {
+  color: var(--rail-term-yellow, #f4b24d);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.at-modal .at-link-desc,
+.at-modal .at-doc-description,
+.at-modal .at-doc-card-note,
+.at-modal .at-doc-note-card,
+.at-modal .at-doc-field-value,
+.at-modal .at-sep-ref-header p,
+.at-modal .at-sep-meta li,
+.at-modal .at-sep-meta p {
+  color: var(--rail-term-cyan, #69a7c8);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.at-modal .at-doc-section-head,
+.at-modal .at-doc-note-label,
+.at-modal .at-doc-status-kicker,
+.at-modal .at-doc-field-label,
+.at-modal .at-sep-section-title,
+.at-modal .at-sep-label {
+  color: var(--rail-term-amber-bright, #f2a35b);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.at-modal .at-sep-ref-header,
+.at-modal .at-doc-note-card {
+  border: 1px solid var(--rail-term-border, #1a1a1a);
+  background: var(--rail-term-bg, #000000);
+}
+
+.at-modal .at-sep-section-title {
+  border-bottom: 1px solid var(--rail-term-border, #1a1a1a);
+  background: var(--rail-term-bg-soft, #050505);
+}
+
+.at-modal .at-badge-warning,
+.at-modal .at-doc-back,
+.at-modal .at-doc-status-btn {
+  border: 1px solid var(--rail-term-border-bright, #2a2a2a);
+  background: var(--rail-term-bg-soft, #050505);
+  color: var(--rail-term-yellow, #f4b24d);
+  font-family: "IBM Plex Mono", monospace;
+  box-shadow: none;
+}
+
+.at-modal .at-doc-back:hover,
+.at-modal .at-doc-status-btn:hover,
+.at-modal .at-doc-status-btn.is-active {
+  border-color: var(--rail-term-blue-bright, #2f86c7);
+  background: var(--rail-term-hover, #0b376f);
+  color: var(--rail-term-white, #ffffff);
 }

@@ -723,7 +723,10 @@ function AppShell() {
             <LeftRail launcher={sepLauncher} />
 
             {openPanel ? (
-              <div ref={overlayRef} className="top-panel-overlay">
+              <div
+                ref={overlayRef}
+                className={`top-panel-overlay${openPanel === "tools" ? " top-panel-overlay--tools" : ""}`}
+              >
                 <div className="top-panel-header">
                   <div className="top-panel-title">
                     {navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
@@ -756,7 +759,10 @@ function AppShell() {
         ) : (
           <>
             {openPanel ? (
-              <div ref={overlayRef} className="top-panel-overlay">
+              <div
+                ref={overlayRef}
+                className={`top-panel-overlay${openPanel === "tools" ? " top-panel-overlay--tools" : ""}`}
+              >
                 <div className="top-panel-header">
                   <div className="top-panel-title">
                     {navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}

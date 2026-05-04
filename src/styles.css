@@ -1194,15 +1194,6 @@ p {
   flex-shrink: 0;
 }
 
-.agent-availability-dot.is-available::after {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: inherit;
-  border: 1px solid color-mix(in srgb, var(--availability-color, #00ff87) 52%, transparent);
-  animation: availabilityPulse 1.4s ease-out infinite;
-}
-
 .agent-availability-status,
 .agent-availability-since,
 .agent-availability-btn {
@@ -1266,18 +1257,6 @@ p {
 
 .agent-availability-btn:disabled {
   cursor: not-allowed;
-}
-
-@keyframes availabilityPulse {
-  0% {
-    opacity: 0.9;
-    transform: scale(0.75);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.8);
-  }
 }
 
 /* Toggle tab: hidden >1400px, visible ≤1400px */
@@ -1418,7 +1397,8 @@ p {
 /* Bloomberg terminal treatment for the full right rail. Visual-only: layout, copy, and behavior stay in components. */
 .right-rail-full,
 .right-rail-overlay,
-.right-rail-toggle {
+.right-rail-toggle,
+.top-panel-overlay--tools {
   --rail-term-bg: #000000;
   --rail-term-bg-soft: #050505;
   --rail-term-row: #0a0a0a;
@@ -1877,10 +1857,6 @@ p {
 
 .agent-availability-dot {
   box-shadow: none !important;
-}
-
-.agent-availability-dot.is-available::after {
-  border-color: var(--rail-term-green) !important;
 }
 
 .agent-availability-buttons {

@@ -42,7 +42,12 @@
       "mcp__ghl-mcp__opportunities_get-pipelines",
       "mcp__ghl-mcp__opportunities_search-opportunity",
       "Bash(python3 -c ' *)",
-      "mcp__ghl-mcp__opportunities_update-opportunity"
+      "mcp__ghl-mcp__opportunities_update-opportunity",
+      "mcp__ghl__conversations_search-conversation"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "ghl"
+  ]
 }

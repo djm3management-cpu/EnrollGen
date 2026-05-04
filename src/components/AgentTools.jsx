@@ -20,11 +20,6 @@ import CarrierQuickRef from "./CarrierQuickRef";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 import "../AgentTools.css";
 
-const BADGE_STYLES = {
-  new: { label: "NEW", background: "#e8372c33", color: "#e8372c" },
-  hot: { label: "HOT", background: "#f5a62333", color: "#f5a623" },
-};
-
 const OFFICIAL_REFS = [
   {
     name: "Federal Register",
@@ -139,14 +134,12 @@ const TOOL_GROUPS = [
         title: "MA SEPs",
         description: "Internal SEP script, qualifying events, and enrollment window guidance.",
         icon: <RotateCw size={16} />,
-        badge: "hot",
       },
       {
         id: "sep-guide-2026",
         title: "2026 SEP Guide",
         description: "State-by-state INT, PAP, CSNP, and DST guide with mandatory disclosures and bonus tracking.",
         icon: <BookOpen size={16} />,
-        badge: "new",
         color: "#2196F3",
       },
     ],
@@ -167,7 +160,6 @@ const TOOL_GROUPS = [
         title: "Citizenship & Immigration Docs",
         description: "ACA enrollment document reference with sample images and field lookup help.",
         icon: <FileText size={16} />,
-        badge: "new",
       },
     ],
   },
@@ -200,7 +192,6 @@ const TOOL_GROUPS = [
         title: "Carrier Quick Reference",
         description: "Search NGHS carriers, plans, states, and key details mid-call.",
         icon: <Search size={16} />,
-        badge: "new",
       },
     ],
   },
@@ -308,8 +299,6 @@ function SEPReference({ script }) {
 }
 
 function ToolCard({ tool, onOpen }) {
-  const badge = tool.badge ? BADGE_STYLES[tool.badge] : null;
-
   return (
     <button
       className="at-tool-card"
@@ -330,14 +319,6 @@ function ToolCard({ tool, onOpen }) {
         <span className="at-tool-copy">
           <span className="at-tool-title-row">
             <span className="at-tool-title">{tool.title}</span>
-            {badge ? (
-              <span
-                className="at-card-badge"
-                style={{ background: badge.background, color: badge.color }}
-              >
-                {badge.label}
-              </span>
-            ) : null}
           </span>
           <span className="at-tool-desc">{tool.description}</span>
         </span>
