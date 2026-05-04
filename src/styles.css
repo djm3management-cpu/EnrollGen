@@ -1327,6 +1327,55 @@ p {
   color: #64748b;
 }
 
+.rail-minimize-btn {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--rail-term-border, var(--sep-term-border, rgba(255, 255, 255, 0.08)));
+  border-radius: 4px;
+  background: var(--rail-term-bg, var(--sep-term-bg, rgba(13, 17, 23, 0.94)));
+  color: var(--rail-term-yellow, var(--sep-term-yellow, #f4b24d));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: none;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.rail-minimize-btn:hover {
+  border-color: var(--rail-term-blue-bright, var(--sep-term-blue-bright, rgba(255, 255, 255, 0.18)));
+  background: var(--rail-term-hover, var(--sep-term-hover, rgba(255, 255, 255, 0.06)));
+  color: var(--rail-term-white, var(--sep-term-white, #ffffff));
+}
+
+.right-rail-minimize {
+  position: absolute;
+  top: 0;
+  right: calc(var(--right-rail-width, 296px) + 6px);
+  border-radius: 4px 0 0 4px;
+  z-index: 2;
+}
+
+.right-rail-overlay-minimize {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+.left-rail-minimize {
+  position: absolute;
+  top: 8px;
+  left: 3px;
+  border-radius: 0 4px 4px 0;
+  z-index: 4;
+}
+
+.right-rail-toggle--restore {
+  display: flex;
+}
+
 /* Scrim behind overlay */
 .right-rail-scrim {
   position: fixed;
@@ -1808,10 +1857,6 @@ p {
   padding: 7px 8px 8px;
 }
 
-.agent-availability-header {
-  border-bottom: 1px solid var(--rail-term-border);
-}
-
 .agent-availability-status,
 .agent-availability-since,
 .agent-availability-btn {
@@ -1863,9 +1908,10 @@ p {
 }
 
 .agent-availability-btn.is-active {
-  background: var(--rail-term-blue) !important;
-  border-color: var(--rail-term-border) !important;
-  color: var(--rail-term-white) !important;
+  background: color-mix(in srgb, var(--availability-color, var(--rail-term-white)) 16%, var(--rail-term-bg)) !important;
+  border-color: var(--availability-color, var(--rail-term-border)) !important;
+  color: var(--availability-color, var(--rail-term-white)) !important;
+  box-shadow: inset 0 0 12px color-mix(in srgb, var(--availability-color, var(--rail-term-white)) 18%, transparent) !important;
 }
 
 .compliance-mini__section {
@@ -4165,7 +4211,7 @@ input::placeholder {
 .card.active-card > .section-next-action-wrap,
 .flow-script-card.active-card > .flow-gate-action {
   position: absolute !important;
-  right: 8px !important;
+  right: 44px !important;
   bottom: 8px !important;
   z-index: 2 !important;
   margin: 0 !important;
@@ -8251,9 +8297,20 @@ body[data-bg-mode="classic"] .viewport-bg {
 .top-bar-tabs {
   display: flex;
   align-items: stretch;
-  gap: 2px;
+  gap: 0;
   min-width: 0;
   flex: 1 1 auto;
+  height: 30px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom-color: rgba(0, 0, 0, 0.72);
+  border-radius: 3px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(111, 116, 124, 0.42) 4%, rgba(56, 59, 64, 0.94) 48%, rgba(25, 27, 31, 0.98) 49%, rgba(8, 9, 11, 0.98) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.78),
+    0 1px 0 rgba(255, 255, 255, 0.04);
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -8267,20 +8324,24 @@ body[data-bg-mode="classic"] .viewport-bg {
 .top-bar-tab {
   position: relative;
   appearance: none;
-  border: 0;
-  background: transparent;
-  color: #8b949e;
-  padding: 0 12px;
-  height: calc(var(--top-bar-height) - 1px);
+  border: 1px solid transparent;
+  border-right-color: rgba(0, 0, 0, 0.46);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(118, 122, 128, 0.12) 42%, rgba(0, 0, 0, 0.18) 100%);
+  color: #c1c5ca;
+  padding: 0 13px;
+  height: 22px;
   flex: 0 0 auto;
   font-family: "Barlow Condensed", sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
   white-space: nowrap;
   cursor: pointer;
-  transition: color 0.18s ease, background 0.18s ease;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.82);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.08);
+  transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .top-bar-tab::after {
@@ -8288,25 +8349,36 @@ body[data-bg-mode="classic"] .viewport-bg {
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: 0;
-  height: 2px;
-  border-radius: 999px;
+  bottom: 1px;
+  height: 1px;
+  border-radius: 0;
   background: transparent;
   transition: background 0.18s ease, box-shadow 0.18s ease;
 }
 
 .top-bar-tab:hover {
-  color: #d0d7de;
-  background: rgba(255, 255, 255, 0.025);
+  color: #f0f2f5;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(137, 141, 148, 0.18) 44%, rgba(0, 0, 0, 0.15) 100%);
+  border-top-color: rgba(255, 255, 255, 0.16);
 }
 
 .top-bar-tab.is-active {
-  color: #8bd2ff;
+  color: #050505;
+  border-color: rgba(244, 178, 77, 0.88);
+  border-bottom-color: #5a3200;
+  background:
+    linear-gradient(180deg, rgba(255, 242, 202, 0.92) 0%, rgba(244, 178, 77, 0.98) 42%, rgba(196, 112, 19, 0.98) 100%);
+  text-shadow: 0 1px 0 rgba(255, 232, 170, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.74),
+    inset 0 -1px 0 rgba(88, 43, 0, 0.72),
+    0 0 12px rgba(244, 178, 77, 0.18);
 }
 
 .top-bar-tab.is-active::after {
-  background: #2f86c7;
-  box-shadow: 0 0 16px rgba(47, 134, 199, 0.36);
+  background: rgba(70, 36, 0, 0.72);
+  box-shadow: none;
 }
 
 .top-bar-wallpaper {
@@ -8482,6 +8554,12 @@ body[data-bg-mode="classic"] .viewport-bg {
   min-height: 0 !important;
   margin: 0 auto !important;
   padding: 0 !important;
+}
+
+@media (min-width: 1401px) and (max-width: 1560px) {
+  .app-workspace {
+    padding-right: 152px;
+  }
 }
 
 .top-panel-overlay {
@@ -11620,8 +11698,8 @@ body[data-bg-mode="classic"] .viewport-bg {
   .left-rail-tool-btn--qualifier.is-active,
   .left-rail-tool-btn--snp.is-active
 ) {
-  background: var(--sep-term-blue);
-  color: var(--sep-term-white);
+  background: var(--sep-term-yellow);
+  color: #050505;
   box-shadow: none;
 }
 

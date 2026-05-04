@@ -15,6 +15,53 @@ const CMS_SUPABASE_ENABLED =
   Boolean(import.meta.env.VITE_SUPABASE_CMS_URL && import.meta.env.VITE_SUPABASE_CMS_ANON_KEY);
 const CMS_RPC_ENABLED = import.meta.env.VITE_ENABLE_CMS_RPC === "true";
 let cmsUnavailable = false;
+let fallbackCountiesByState = null;
+let fallbackCountiesByStatePromise = null;
+
+function cleanCountyName(name) {
+  return String(name || "")
+    .trim()
+    .replace(/\s+County$/i, "")
+    .replace(/\s+Parish$/i, "");
+}
+
+async function getFallbackCountiesByState() {
+  if (fallbackCountiesByState) return fallbackCountiesByState;
+
+  if (!fallbackCountiesByStatePromise) {
+    fallbackCountiesByStatePromise = import(
+      "../../scripts/sep-data/cache/national_county2020.txt?raw"
+    ).then(({ default: nationalCountyText }) => {
+      const countiesByState = nationalCountyText
+        .trim()
+        .split(/\r?\n/)
+        .slice(1)
+        .reduce((nextCountiesByState, line) => {
+          const [state, , , , countyName] = line.split("|");
+          const county = cleanCountyName(countyName);
+          if (!state || !county) return nextCountiesByState;
+
+          if (!nextCountiesByState[state]) nextCountiesByState[state] = [];
+          nextCountiesByState[state].push(county);
+          return nextCountiesByState;
+        }, {});
+
+      for (const counties of Object.values(countiesByState)) {
+        counties.sort((a, b) => a.localeCompare(b));
+      }
+
+      fallbackCountiesByState = countiesByState;
+      return countiesByState;
+    });
+  }
+
+  return fallbackCountiesByStatePromise;
+}
+
+async function getFallbackCountiesForState(state) {
+  const countiesByState = await getFallbackCountiesByState();
+  return countiesByState[state] || [];
+}
 
 function isMissingCmsResource(error) {
   return error?.code === "PGRST202" || error?.code === "PGRST205";
@@ -105,7 +152,7 @@ async function fetchCountyPlanCountsDirect(state) {
 
 export async function fetchCountiesForState(state) {
   if (!state) return [];
-  if (!shouldUseCmsSupabase()) return [];
+  if (!shouldUseCmsSupabase()) return await getFallbackCountiesForState(state);
 
   if (CMS_RPC_ENABLED) {
     const { data, error } = await supabaseCms.rpc("get_counties_for_state", { p_state: state });
@@ -119,12 +166,13 @@ export async function fetchCountiesForState(state) {
   }
 
   try {
-    return await fetchCountiesDirect(state);
+    const counties = await fetchCountiesDirect(state);
+    return counties.length ? counties : await getFallbackCountiesForState(state);
   } catch (fallbackError) {
     if (!markCmsUnavailable(fallbackError)) {
       console.error("Counties fetch error:", fallbackError);
     }
-    return [];
+    return await getFallbackCountiesForState(state);
   }
 }
 

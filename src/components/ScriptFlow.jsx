@@ -288,6 +288,7 @@ function RightRail({
   trainingMode,
 }) {
   const [open, setOpen] = useState(false);
+  const [fullRailMinimized, setFullRailMinimized] = useState(false);
   const [isCompactRail, setIsCompactRail] = useState(() =>
     typeof window !== "undefined" &&
     window.matchMedia("(max-width: 1400px)").matches
@@ -356,8 +357,39 @@ function RightRail({
   };
 
   if (!isCompactRail) {
+    if (fullRailMinimized) {
+      return (
+        <button
+          className="right-rail-toggle right-rail-toggle--restore"
+          style={COMPACT_RAIL_TOGGLE_STYLE}
+          onClick={() => setFullRailMinimized(false)}
+          title="Expand compliance rail"
+          aria-label="Expand compliance rail"
+        >
+          <span className="right-rail-toggle-score">{result.score}%</span>
+          <span className="right-rail-toggle-section">{currentStep}. {sectionLabel}</span>
+          <ChevronLeft size={12} />
+        </button>
+      );
+    }
+
     return (
-      <div className="right-rail-full" style={FULL_RAIL_STYLE}>
+      <div
+        className="right-rail-full"
+        style={{
+          ...FULL_RAIL_STYLE,
+          "--right-rail-width": `${FULL_RAIL_WIDTH}px`,
+        }}
+      >
+        <button
+          type="button"
+          className="rail-minimize-btn right-rail-minimize"
+          onClick={() => setFullRailMinimized(true)}
+          title="Minimize compliance rail"
+          aria-label="Minimize compliance rail"
+        >
+          <ChevronRight size={12} />
+        </button>
         <div className="right-rail-scroll" style={FULL_RAIL_SCROLL_STYLE}>
           <RailWidgets {...widgetProps} />
         </div>
@@ -387,7 +419,20 @@ function RightRail({
           display: open ? "flex" : "none",
         }}
       >
-        {open ? <RailWidgets {...widgetProps} /> : null}
+        {open ? (
+          <>
+            <button
+              type="button"
+              className="rail-minimize-btn right-rail-overlay-minimize"
+              onClick={() => setOpen(false)}
+              title="Minimize compliance rail"
+              aria-label="Minimize compliance rail"
+            >
+              <ChevronRight size={12} />
+            </button>
+            <RailWidgets {...widgetProps} />
+          </>
+        ) : null}
       </div>
     </>
   );

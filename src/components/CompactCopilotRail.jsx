@@ -189,6 +189,7 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
 }) {
   const { clearLog } = useCopilotLog();
   const [open, setOpen] = useState(false);
+  const [fullRailMinimized, setFullRailMinimized] = useState(false);
   const [isCompactRail, setIsCompactRail] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -276,11 +277,40 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
   return (
     <>
       {!isCompactRail ? (
-        <div className="right-rail-full" style={FULL_RAIL_STYLE}>
-          <div className="right-rail-scroll" style={FULL_RAIL_SCROLL_STYLE}>
-            <RailWidgets {...widgetProps} />
+        fullRailMinimized ? (
+          <button
+            className="right-rail-toggle right-rail-toggle--restore"
+            style={COMPACT_RAIL_TOGGLE_STYLE}
+            onClick={() => setFullRailMinimized(false)}
+            title="Expand co-pilot rail"
+            aria-label="Expand co-pilot rail"
+          >
+            <span className="right-rail-toggle-score">{scoreDisplay}</span>
+            <span className="right-rail-toggle-section">{toggleLabel}</span>
+            <ChevronLeft size={12} />
+          </button>
+        ) : (
+          <div
+            className="right-rail-full"
+            style={{
+              ...FULL_RAIL_STYLE,
+              "--right-rail-width": `${FULL_RAIL_WIDTH}px`,
+            }}
+          >
+            <button
+              type="button"
+              className="rail-minimize-btn right-rail-minimize"
+              onClick={() => setFullRailMinimized(true)}
+              title="Minimize co-pilot rail"
+              aria-label="Minimize co-pilot rail"
+            >
+              <ChevronRight size={12} />
+            </button>
+            <div className="right-rail-scroll" style={FULL_RAIL_SCROLL_STYLE}>
+              <RailWidgets {...widgetProps} />
+            </div>
           </div>
-        </div>
+        )
       ) : (
         <>
           <button
@@ -305,7 +335,20 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
               display: open ? "flex" : "none",
             }}
           >
-            {open ? <RailWidgets {...widgetProps} /> : null}
+            {open ? (
+              <>
+                <button
+                  type="button"
+                  className="rail-minimize-btn right-rail-overlay-minimize"
+                  onClick={() => setOpen(false)}
+                  title="Minimize co-pilot rail"
+                  aria-label="Minimize co-pilot rail"
+                >
+                  <ChevronRight size={12} />
+                </button>
+                <RailWidgets {...widgetProps} />
+              </>
+            ) : null}
           </div>
         </>
       )}

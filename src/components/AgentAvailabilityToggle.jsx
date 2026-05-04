@@ -8,9 +8,9 @@ const FUNCTIONS_BASE_URL =
   "https://qzjtagnpklaxefwurorc.supabase.co/functions/v1";
 
 const STATUS_OPTIONS = [
-  { value: "available", label: "AVAILABLE", color: "#00ff87" },
-  { value: "busy", label: "BUSY", color: "#ff3b3b" },
-  { value: "offline", label: "OFFLINE", color: "#555e6e" },
+  { value: "available", label: "AVAILABLE", color: "#00D166" },
+  { value: "busy", label: "BUSY", color: "#FFD700" },
+  { value: "offline", label: "OFFLINE", color: "#FF4455" },
 ];
 
 const STATUS_MAP = Object.fromEntries(

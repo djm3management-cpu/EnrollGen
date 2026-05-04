@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { ChevronLeft } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const LeftRailContext = createContext(null);
@@ -176,6 +177,7 @@ export function LeftRail({
     minimizedItems,
     railWidth,
     expandLeftRail,
+    minimizeLeftRail,
   } = useLeftRailManager();
 
   return (
@@ -220,6 +222,15 @@ export function LeftRail({
               exit={{ opacity: 0, x: -24 }}
               transition={PANEL_TRANSITION}
             >
+              <button
+                type="button"
+                className="rail-minimize-btn left-rail-minimize"
+                onClick={() => minimizeLeftRail(expandedItem.id)}
+                title={`Minimize ${expandedItem.title}`}
+                aria-label={`Minimize ${expandedItem.title}`}
+              >
+                <ChevronLeft size={12} />
+              </button>
               {expandedItem.component}
             </motion.div>
           ) : null}

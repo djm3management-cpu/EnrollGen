@@ -117,7 +117,7 @@ export default function SEPLookupTool() {
         {s.hasView && !s.loading && (
           <div className="sep-below-map">
             {/* County grid (state-click or zip) */}
-            {s.selectedState && s.countyList.length > 0 && (
+            {s.selectedState && (s.countyLoading || s.countyList.length > 0) && (
               <CountyGrid
                 state={s.selectedState || s.state}
                 counties={s.countyList}
