@@ -3,10 +3,11 @@
  * Straight-through Medicare Supplement script flow.
  */
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useMedSup } from "../context/MedSupContext";
 import { MEDSUP_SECTIONS } from "../context/MedSupScript";
+import { useScriptTemplate } from "../hooks/useScriptTemplate";
 
 function fmt(ms) {
   const s = Math.round(ms / 1000);
@@ -265,6 +266,45 @@ function SectionCard({ section }) {
   );
 }
 
+function scriptBodyToLines(body, fallback = []) {
+  const lines = String(body || "")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return lines.length ? lines : fallback;
+}
+
+function useMedSupTemplateSections() {
+  const { sections } = useScriptTemplate("medsup");
+
+  return useMemo(() => {
+    if (!sections.length) {
+      return MEDSUP_SECTIONS;
+    }
+
+    return sections
+      .slice()
+      .sort((a, b) => (a.sort_order || a.section_number || 0) - (b.sort_order || b.section_number || 0))
+      .map((section, index) => {
+        const fallback =
+          MEDSUP_SECTIONS.find((item) => item.key === section.gate_field) ||
+          MEDSUP_SECTIONS[index] ||
+          {};
+
+        return {
+          ...fallback,
+          id: section.key || fallback.id || `medsup-${index + 1}`,
+          num: fallback.num || index + 1,
+          key: section.gate_field || fallback.key,
+          label: section.title || fallback.label || `Section ${index + 1}`,
+          compliance: Boolean(section.compliance_locked),
+          script: scriptBodyToLines(section.body, fallback.script),
+          gate: section.lock_message || fallback.gate || "Section completed",
+        };
+      });
+  }, [sections]);
+}
+
 function Progress() {
   const { state, activeSection } = useMedSup();
   const steps = [
@@ -373,6 +413,7 @@ function Progress() {
 
 export default function MedSupFlow() {
   const { state, dispatch, activeSection } = useMedSup();
+  const medSupSections = useMedSupTemplateSections();
   const prev = useRef(activeSection);
 
   useEffect(() => {
@@ -435,7 +476,7 @@ export default function MedSupFlow() {
         </section>
       ) : (
         <>
-          {MEDSUP_SECTIONS.map((section) => (
+          {medSupSections.map((section) => (
             <SectionCard key={section.id} section={section} />
           ))}
         </>

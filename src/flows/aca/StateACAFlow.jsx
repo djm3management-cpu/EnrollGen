@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useACA } from "./ACAContext";
 import { STATE_ACA_GATES } from "./StateACAData";
 import FplCalculatorPanel from "../../components/FplCalculatorPanel";
+import { useScriptTemplate } from "../../hooks/useScriptTemplate";
 
 const ACCENT = "#EAB308";
 
@@ -264,6 +265,42 @@ function StateGate({ gate, active, done, children }) {
   );
 }
 
+function scriptBodyToLines(body, fallback = []) {
+  const lines = String(body || "")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return lines.length ? lines : fallback;
+}
+
+function useStateAcaTemplateGates() {
+  const { sections } = useScriptTemplate("aca");
+
+  return useMemo(() => {
+    if (!sections.length) {
+      return STATE_ACA_GATES;
+    }
+
+    return STATE_ACA_GATES.map((gate, index) => {
+      const section =
+        sections.find((item) => item.key === `state_${gate.key}`) ||
+        sections.find((item) => item.key === gate.key || item.gate_field === gate.key) ||
+        sections[index];
+
+      if (!section) {
+        return gate;
+      }
+
+      return {
+        ...gate,
+        title: section.title || gate.title,
+        script: scriptBodyToLines(section.body, gate.script),
+        gate: section.lock_message || gate.gate,
+      };
+    });
+  }, [sections]);
+}
+
 function G2Extra() {
   const [fplTool, setFplTool] = useState({
     householdSize: null,
@@ -388,6 +425,7 @@ function Progress() {
 
 export default function StateACAFlow() {
   const { state, dispatch, activeGate } = useACA();
+  const gates = useStateAcaTemplateGates();
   const prev = useRef(activeGate);
 
   useEffect(() => {
@@ -451,7 +489,7 @@ export default function StateACAFlow() {
       ) : (
         <>
           <StateGate
-            gate={STATE_ACA_GATES[0]}
+            gate={gates[0]}
             active={activeGate === 0}
             done={state.gate0Ok}
           >
@@ -459,13 +497,13 @@ export default function StateACAFlow() {
           </StateGate>
 
           <StateGate
-            gate={STATE_ACA_GATES[1]}
+            gate={gates[1]}
             active={activeGate === 1}
             done={state.gate1Ok}
           />
 
           <StateGate
-            gate={STATE_ACA_GATES[2]}
+            gate={gates[2]}
             active={activeGate === 2}
             done={state.gate2Ok}
           >
@@ -473,13 +511,13 @@ export default function StateACAFlow() {
           </StateGate>
 
           <StateGate
-            gate={STATE_ACA_GATES[3]}
+            gate={gates[3]}
             active={activeGate === 3}
             done={state.gate3Ok}
           />
 
           <StateGate
-            gate={STATE_ACA_GATES[4]}
+            gate={gates[4]}
             active={activeGate === 4}
             done={state.gate4Ok}
           >
@@ -495,13 +533,13 @@ export default function StateACAFlow() {
           </StateGate>
 
           <StateGate
-            gate={STATE_ACA_GATES[5]}
+            gate={gates[5]}
             active={activeGate === 5}
             done={state.gate5Ok}
           />
 
           <StateGate
-            gate={STATE_ACA_GATES[6]}
+            gate={gates[6]}
             active={activeGate === 6}
             done={state.gate6Ok}
           >

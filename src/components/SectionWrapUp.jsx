@@ -44,7 +44,7 @@ function yesNoControl({ name, value, disabled, onChange }) {
   );
 }
 
-export default React.memo(function SectionWrapUp() {
+export default React.memo(function SectionWrapUp({ scriptBody }) {
   const { state, dispatch, activeSection, unlocked } = useScript();
   const { liveCall } = useLiveCall();
   const { getToken } = useAppAuth();
@@ -212,7 +212,7 @@ export default React.memo(function SectionWrapUp() {
 
       {unlocked.s8 && isEnrolled && (
         <ScriptBox verbatim>
-          {`"Great news, your Medicare enrollment is all set."
+          {scriptBody || `"Great news, your Medicare enrollment is all set."
 
 Call closing: "It's been a pleasure speaking with you today. If you have any family members or friends that would benefit by speaking with me, please give them my number and I would be happy to assist them too."
 End the call: "Thank you for [calling/choosing] [Carrier name] and have a great day!"`}

@@ -47,6 +47,7 @@ const loadOperationsTab = () => import("./components/OperationsTab");
 const loadBillingSettings = () => import("./components/BillingSettings");
 const loadTenantSettings = () => import("./components/TenantSettings");
 const loadOnboarding = () => import("./components/Onboarding");
+const loadScriptEditor = () => import("./components/ScriptEditor");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -67,6 +68,7 @@ const OperationsTab = lazy(loadOperationsTab);
 const BillingSettings = lazy(loadBillingSettings);
 const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
+const ScriptEditor = lazy(loadScriptEditor);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const tenantBootstrapAttempts = new Set();
@@ -299,7 +301,7 @@ function isAdminUser(user) {
   return role === "admin" || role === "org:admin" || user?.publicMetadata?.isAdmin === true;
 }
 
-function getTabsForMode(mode) {
+function getTabsForMode(mode, canAdmin = false) {
   const tabs = [{ id: "script", label: "Script" }];
 
   if (modeSupportsAgentTools(mode)) {
@@ -317,6 +319,9 @@ function getTabsForMode(mode) {
   tabs.push({ id: "complianceHub", label: "Compliance Hub" });
   tabs.push({ id: "operations", label: "CALLS" });
   tabs.push({ id: "billing", label: "Billing" });
+  if (canAdmin) {
+    tabs.push({ id: "scriptEditor", label: "SCRIPT EDITOR" });
+  }
   tabs.push({ id: "verse", label: "Daily Verse" });
 
   return tabs;
@@ -344,7 +349,7 @@ function AppShell({ currentUser = null }) {
     wallpapers.find((wallpaper) => wallpaper.id === backgroundSelection) || wallpapers[0];
   const wallpaperChoices = wallpapers.filter((wallpaper) => wallpaper.url);
   const canAdmin = LOGIN_DISABLED || isAdminUser(currentUser);
-  const navTabs = useMemo(() => getTabsForMode(mode), [mode]);
+  const navTabs = useMemo(() => getTabsForMode(mode, canAdmin), [canAdmin, mode]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -497,6 +502,10 @@ function AppShell({ currentUser = null }) {
       loadTenantSettings();
       return;
     }
+    if (panelId === "scriptEditor") {
+      loadScriptEditor();
+      return;
+    }
     if (panelId === "verse") {
       loadDailyVerse();
     }
@@ -642,6 +651,12 @@ function AppShell({ currentUser = null }) {
         return (
           <LazyPanel>
             <TenantSettings currentUser={currentUser} />
+          </LazyPanel>
+        );
+      case "scriptEditor":
+        return (
+          <LazyPanel>
+            <ScriptEditor />
           </LazyPanel>
         );
       case "verse":

@@ -22,6 +22,7 @@ import {
   COOLDOWN_BY_LEVEL, WARN_CONFIDENCE_FLOOR, REMIND_CONFIDENCE_FLOOR,
   SECTION_CONFIDENCE_OVERRIDES, SECTION_SETTLE_MS, HIGH_RISK_KEYWORDS,
 } from "../data/complianceKnowledge";
+import { useScriptTemplate } from "./useScriptTemplate";
 
 const PERIODIC_SIGNATURE_TAIL_CHARS = 320;
 
@@ -198,6 +199,45 @@ function resolveSectionKnowledge(sectionKey, state, knowledgeMap = COMPLIANCE_KN
     knowledgeKey: sectionKey,
     knowledge: knowledgeMap[sectionKey] || null,
   };
+}
+
+function buildTemplateSectionLookup(sections) {
+  return new Map(
+    sections
+      .filter((section) => Number.isFinite(Number(section.section_number)))
+      .map((section) => [Number(section.section_number), section])
+  );
+}
+
+function buildScriptTemplatePromptBlock(sections) {
+  if (!sections?.length) {
+    return "";
+  }
+
+  const rows = sections
+    .slice()
+    .sort((a, b) => (a.sort_order || a.section_number || 0) - (b.sort_order || b.section_number || 0))
+    .map((section) => {
+      const flags = [
+        section.compliance_locked ? "compliance locked" : null,
+        section.verbatim ? "verbatim" : null,
+      ]
+        .filter(Boolean)
+        .join(", ");
+      return `SECTION ${section.section_number}: ${section.title}${flags ? ` (${flags})` : ""}
+Gate field: ${section.gate_field || "none"}
+Script body:
+${String(section.body || "").trim() || "[No script body]"}`;
+    })
+    .join("\n\n");
+
+  return `════════════════════════════════════════════════════════
+TENANT SCRIPT TEMPLATE — AUTHORITATIVE CURRENT SCRIPT
+════════════════════════════════════════════════════════
+Use these section titles and script bodies when coaching. If this differs from older hardcoded descriptions, this tenant script wins.
+
+${rows}
+`;
 }
 
 function buildPeriodicContextSignature({
@@ -397,6 +437,7 @@ function buildCoachingSystemPrompt({
   copilotContextJson,
   reviewMode = "live",
   hasCustomerAudio = false,
+  scriptTemplateBlock = "",
 }) {
   const complianceContext = buildComplianceContext(knowledge);
   const audioBlock = buildAudioConstraintBlock(hasCustomerAudio);
@@ -411,6 +452,7 @@ CURRENT SECTION: "${sectionKey}"
 FLOW POSITION (previous → current → next):
 ${flowOrder}
 
+${scriptTemplateBlock}
 ${complianceContext}
 ${cmsBlock}
 ${transcriptRefBlock}
@@ -482,7 +524,7 @@ Do NOT include markdown, bold, bullets, dashes, asterisks, emojis, or special ch
 }`;
 }
 
-function buildAskSystemPrompt({ sectionKey, knowledge, cmsBlock, transcriptRefBlock, recentTranscript, copilotContextJson, isSpoken, hasCustomerAudio = false, recentCustomerSpeech = "" }) {
+function buildAskSystemPrompt({ sectionKey, knowledge, cmsBlock, transcriptRefBlock, recentTranscript, copilotContextJson, isSpoken, hasCustomerAudio = false, recentCustomerSpeech = "", scriptTemplateBlock = "" }) {
   let sectionContext = "";
   if (knowledge) {
     sectionContext = `\nCurrent section: "${sectionKey}"\nRequired elements:\n${knowledge.requiredElements.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n`;
@@ -505,6 +547,7 @@ ${audioContext}
 - The agent is currently in the "${sectionKey}" section of the enrollment flow
 - They need a fast, practical answer they can use RIGHT NOW on this call
 ${sectionContext}
+${scriptTemplateBlock}
 ${cmsBlock}
 ${transcriptRefBlock}
 ${recentTranscript ? `\nRecent agent transcript for context:\n"${recentTranscript.slice(-1000)}"\n` : ""}${customerContext}
@@ -571,7 +614,19 @@ export function useCopilotEngine({
   formattedTranscript = "",
   recentCustomerSpeech = "",
 }) {
-  const currentStep = SECTION_LABELS[activeSection] || `Section ${activeSection}`;
+  const { sections: templateSections } = useScriptTemplate("ma");
+  const templateSectionLookup = useMemo(
+    () => buildTemplateSectionLookup(templateSections),
+    [templateSections]
+  );
+  const activeTemplateSection = templateSectionLookup.get(Number(activeSection));
+  const currentStep =
+    activeTemplateSection?.title || SECTION_LABELS[activeSection] || `Section ${activeSection}`;
+  const currentKnowledgeStep = SECTION_LABELS[activeSection] || currentStep;
+  const scriptTemplateBlock = useMemo(
+    () => buildScriptTemplatePromptBlock(templateSections),
+    [templateSections]
+  );
   const { entries: dbComplianceEntries } = useKnowledge("compliance_ma");
   const complianceKnowledge = useMemo(
     () => mergeStructuredKnowledgeMap(COMPLIANCE_KNOWLEDGE, dbComplianceEntries),
@@ -656,7 +711,7 @@ export function useCopilotEngine({
     }
 
     const sectionKey = currentStep;
-    const { knowledge } = resolveSectionKnowledge(sectionKey, state, complianceKnowledge);
+    const { knowledge } = resolveSectionKnowledge(currentKnowledgeStep, state, complianceKnowledge);
     const reviewMode = periodic ? "periodic" : "live";
 
     // Gates (bypassed for manual, section entry, and timed periodic review)
@@ -694,7 +749,10 @@ export function useCopilotEngine({
     const currentIdx = sectionKeys.indexOf(activeSection);
     const neighborKeys = sectionKeys.slice(Math.max(0, currentIdx - 1), currentIdx + 2);
     const flowOrder = neighborKeys
-      .map((k) => `${k === activeSection ? ">>>" : "   "} ${k}: ${SECTION_LABELS[k]}`)
+      .map((k) => {
+        const label = templateSectionLookup.get(Number(k))?.title || SECTION_LABELS[k];
+        return `${k === activeSection ? ">>>" : "   "} ${k}: ${label}`;
+      })
       .join("\n");
     const liveMessages = messagesRef.current;
     const recentInterventions = liveMessages
@@ -716,7 +774,7 @@ export function useCopilotEngine({
     const derivedSignals = copilotContext.derivedSignals;
 
     // Fetch CMS knowledge + transcript references
-    const cmsKnowledge = getCmsKnowledgeForSection(sectionKey, copilotContext);
+    const cmsKnowledge = getCmsKnowledgeForSection(currentKnowledgeStep, copilotContext);
     let transcriptReferenceResult = { results: [], contextBlock: "", sources: [], error: null };
     try {
       transcriptReferenceResult = await abortable(
@@ -761,6 +819,7 @@ export function useCopilotEngine({
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
       reviewMode,
       hasCustomerAudio,
+      scriptTemplateBlock,
     });
 
     const transcriptLabel = hasCustomerAudio
@@ -885,7 +944,7 @@ SECTION CONTEXT (rolling window for current section):
         return;
       }
 
-      const sectionOverrides = SECTION_CONFIDENCE_OVERRIDES[currentStep] || {};
+      const sectionOverrides = SECTION_CONFIDENCE_OVERRIDES[currentKnowledgeStep] || {};
       const effectiveWarnFloor = sectionOverrides.warn ?? WARN_CONFIDENCE_FLOOR;
       const effectiveRemindFloor = sectionOverrides.remind ?? REMIND_CONFIDENCE_FLOOR;
 
@@ -954,6 +1013,7 @@ SECTION CONTEXT (rolling window for current section):
     activeSection,
     complianceKnowledge,
     currentStep,
+    currentKnowledgeStep,
     coachingLoading,
     pushFeedEntry,
     buildCopilotContext,
@@ -975,7 +1035,9 @@ SECTION CONTEXT (rolling window for current section):
     sectionTranscriptStartRef,
     coachingAbortRef,
     setCoachingLoading,
+    scriptTemplateBlock,
     silentHeartbeatMs,
+    templateSectionLookup,
   ]);
 
   // Wire requestCoachingRef so core's section-entry and periodic timers can call it
@@ -998,7 +1060,7 @@ SECTION CONTEXT (rolling window for current section):
     askAbortRef.current = controller;
 
     const sectionKey = currentStep;
-    const { knowledge } = resolveSectionKnowledge(sectionKey, state, complianceKnowledge);
+    const { knowledge } = resolveSectionKnowledge(currentKnowledgeStep, state, complianceKnowledge);
     const recentTranscript = transcriptRef.current.trim().slice(-1500);
     const liveMessages = messagesRef.current;
     const recentInterventions = liveMessages
@@ -1011,7 +1073,7 @@ SECTION CONTEXT (rolling window for current section):
       fullTranscriptTail: transcriptRef.current.trim().slice(-2500),
     };
 
-    const cmsKnowledge = getCmsKnowledgeForQuestion(sectionKey, question, copilotContext);
+    const cmsKnowledge = getCmsKnowledgeForQuestion(currentKnowledgeStep, question, copilotContext);
 
     let transcriptReferenceResult = { results: [], contextBlock: "", sources: [], error: null };
     try {
@@ -1057,6 +1119,7 @@ SECTION CONTEXT (rolling window for current section):
       isSpoken,
       hasCustomerAudio,
       recentCustomerSpeech,
+      scriptTemplateBlock,
     });
 
     try {
@@ -1121,6 +1184,7 @@ SECTION CONTEXT (rolling window for current section):
     askLoading,
     complianceKnowledge,
     currentStep,
+    currentKnowledgeStep,
     logEntry,
     getToken,
     buildCopilotContext,
@@ -1136,6 +1200,7 @@ SECTION CONTEXT (rolling window for current section):
     setAskLoading,
     setAskQuestion,
     setMessages,
+    scriptTemplateBlock,
   ]);
 
   /* ═══════ SOA section-entry alert ═══════ */

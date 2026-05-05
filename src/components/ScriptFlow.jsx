@@ -1,5 +1,6 @@
 import {
   lazy,
+  Fragment,
   Suspense,
   useEffect,
   useMemo,
@@ -45,19 +46,14 @@ import CallTimer from "./copilot/CallTimer";
 import { COPILOT_PILL_BASE } from "./copilot/pillStyles";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
-import SectionRecording from "./SectionRecording";
-import SectionTPMO from "./SectionTPMO";
 import SectionSNP from "./SectionSNP";
-import SectionSOA from "./SectionSOA";
-import SectionQualifications from "./SectionQualifications";
-import SectionNEADS from "./SectionNEADS";
-import SectionSOB from "./SectionSOB";
-import SectionEnrollment from "./SectionEnrollment";
 import SectionWrapUp from "./SectionWrapUp";
+import ScriptSection from "./ScriptSection";
 import ScriptPrompter from "./ScriptPrompter";
 import AncillaryPopupManager from "./ancillary/AncillaryPopupManager";
 import DevotedPopupManager from "./ancillary/DevotedPopupManager";
 import { motion } from "framer-motion";
+import { useScriptTemplate } from "../hooks/useScriptTemplate";
 
 const ComplianceDashboard = lazy(() => import("./ComplianceDashboard"));
 const FULL_RAIL_WIDTH = 296;
@@ -510,6 +506,8 @@ export default function ScriptFlow() {
   const { updateLiveCall, resetLiveCall } = useLiveCall();
   const { getToken } = useAppAuth();
   const { enabled: trainingModeEnabled } = useTrainingMode();
+  const { sections: scriptSections } = useScriptTemplate("ma");
+  const wrapUpSection = scriptSections.find((section) => section.key === "wrapup");
   const prevSectionRef = useRef(activeSection);
   const session = useSessionTracker();
   const scoredSectionsRef = useRef(new Set());
@@ -966,67 +964,36 @@ export default function ScriptFlow() {
           </button>
         </div>
       ) : null}
-      <CollapsibleSection
-        sectionNum={1}
-        isActive={activeSection === 1}
-      >
-        <SectionRecording />
-        {trainingModeEnabled ? <TrainingExplainer section={1} /> : null}
-      </CollapsibleSection>
+      {scriptSections
+        .filter((section) => section.key !== "wrapup")
+        .map((section, index) => {
+          const sectionNum = Number(section.section_number || index + 1);
+          const rendered = (
+            <CollapsibleSection
+              key={section.key}
+              sectionNum={sectionNum}
+              isActive={activeSection === sectionNum}
+            >
+              <ScriptSection section={section} />
+              {trainingModeEnabled ? <TrainingExplainer section={sectionNum} /> : null}
+            </CollapsibleSection>
+          );
 
-      <CollapsibleSection
-        sectionNum={2}
-        isActive={activeSection === 2}
-      >
-        <SectionTPMO />
-        {trainingModeEnabled ? <TrainingExplainer section={2} /> : null}
-      </CollapsibleSection>
+          if (section.gate_field === "tpmoOk") {
+            return (
+              <Fragment key={section.key}>
+                {rendered}
+                <SectionSNP />
+              </Fragment>
+            );
+          }
 
-      <SectionSNP />
-
-      <CollapsibleSection
-        sectionNum={3}
-        isActive={activeSection === 3}
-      >
-        <SectionSOA />
-        {trainingModeEnabled ? <TrainingExplainer section={3} /> : null}
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        sectionNum={4}
-        isActive={activeSection === 4}
-      >
-        <SectionQualifications />
-        {trainingModeEnabled ? <TrainingExplainer section={4} /> : null}
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        sectionNum={5}
-        isActive={activeSection === 5}
-      >
-        <SectionNEADS />
-        {trainingModeEnabled ? <TrainingExplainer section={5} /> : null}
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        sectionNum={6}
-        isActive={activeSection === 6}
-      >
-        <SectionSOB />
-        {trainingModeEnabled ? <TrainingExplainer section={6} /> : null}
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        sectionNum={7}
-        isActive={activeSection === 7}
-      >
-        <SectionEnrollment />
-        {trainingModeEnabled ? <TrainingExplainer section={7} /> : null}
-      </CollapsibleSection>
+          return rendered;
+        })}
 
       {activeSection >= 8 && (
         <>
-          <SectionWrapUp />
+          <SectionWrapUp scriptBody={wrapUpSection?.body} />
           {trainingModeEnabled ? <TrainingExplainer section={8} /> : null}
         </>
       )}

@@ -4,10 +4,11 @@
  * Follows MedSupFlow.jsx architecture patterns
  */
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useACA } from "./ACAContext";
 import { ACA_GATES } from "./ACAData";
+import { useScriptTemplate } from "../../hooks/useScriptTemplate";
 
 // ACA accent color
 const ACCENT = "#EAB308"; // amber/yellow to match tab circle
@@ -228,10 +229,45 @@ function Card({ num, title, red, active, done, dur, children }) {
   );
 }
 
+function scriptBodyToLines(body, fallback = []) {
+  const lines = String(body || "")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return lines.length ? lines : fallback;
+}
+
+function useAcaTemplateGates() {
+  const { sections } = useScriptTemplate("aca");
+
+  return useMemo(() => {
+    const ffmSections = sections.filter((section) => String(section.key || "").startsWith("ffm_"));
+    if (!ffmSections.length) {
+      return ACA_GATES;
+    }
+
+    return ACA_GATES.map((gate, index) => {
+      const section =
+        ffmSections.find((item) => item.key === `ffm_${gate.key}`) ||
+        ffmSections[index];
+
+      if (!section) {
+        return gate;
+      }
+
+      return {
+        ...gate,
+        label: section.title?.replace(/^FFM:\s*/i, "") || gate.label,
+        script: scriptBodyToLines(section.body, gate.script),
+        gate: section.lock_message || gate.gate,
+      };
+    });
+  }, [sections]);
+}
+
 // ─── GATE 0 — Opening & Identity ────────────────────────────────────────────
-function G0() {
+function G0({ gate }) {
   const { state, dispatch, activeGate } = useACA();
-  const gate = ACA_GATES[0];
   const d = state.sectionTimestamps[0];
 
   return (
@@ -293,9 +329,8 @@ function G0() {
 }
 
 // ─── GATE 1 — SEP Qualification (Conditional) ───────────────────────────────
-function G1() {
+function G1({ gate }) {
   const { state, dispatch, activeGate } = useACA();
-  const gate = ACA_GATES[1];
   const d = state.sectionTimestamps[1];
 
   // Only render if SEP
@@ -364,9 +399,8 @@ function G1() {
 }
 
 // ─── GATE 2 — Household & Income ─────────────────────────────────────────────
-function G2() {
+function G2({ gate }) {
   const { state, dispatch, activeGate } = useACA();
-  const gate = ACA_GATES[2];
   const d = state.sectionTimestamps[2];
 
   return (
@@ -428,9 +462,8 @@ function G2() {
 }
 
 // ─── GATE 3 — Needs Analysis ──────────────────────────────────────────────────
-function G3() {
+function G3({ gate }) {
   const { state, dispatch, activeGate } = useACA();
-  const gate = ACA_GATES[3];
   const d = state.sectionTimestamps[3];
 
   return (
@@ -467,9 +500,8 @@ function G3() {
 }
 
 // ─── GATE 4 — Plan Presentation ──────────────────────────────────────────────
-function G4() {
+function G4({ gate }) {
   const { state, dispatch, activeGate } = useACA();
-  const gate = ACA_GATES[4];
   const d = state.sectionTimestamps[4];
 
   return (
@@ -493,9 +525,8 @@ function G4() {
 }
 
 // ─── GATE 5 — Enrollment ─────────────────────────────────────────────────────
-function G5() {
+function G5({ gate }) {
   const { state, dispatch, activeGate } = useACA();
-  const gate = ACA_GATES[5];
   const d = state.sectionTimestamps[5];
 
   return (
@@ -524,9 +555,8 @@ function G5() {
 }
 
 // ─── GATE 6 — Closing ────────────────────────────────────────────────────────
-function G6() {
+function G6({ gate }) {
   const { state, dispatch, activeGate } = useACA();
-  const gate = ACA_GATES[6];
   const d = state.sectionTimestamps[6];
 
   return (
@@ -657,6 +687,7 @@ function Progress() {
 // ─── ACAFlow (main export) ────────────────────────────────────────────────────
 export default function ACAFlow() {
   const { state, dispatch, activeGate } = useACA();
+  const gates = useAcaTemplateGates();
   const prev = useRef(activeGate);
 
   useEffect(() => {
@@ -693,13 +724,13 @@ export default function ACAFlow() {
         </section>
       ) : (
         <>
-          <G0 />
-          <G1 />
-          <G2 />
-          <G3 />
-          <G4 />
-          <G5 />
-          <G6 />
+          <G0 gate={gates[0]} />
+          <G1 gate={gates[1]} />
+          <G2 gate={gates[2]} />
+          <G3 gate={gates[3]} />
+          <G4 gate={gates[4]} />
+          <G5 gate={gates[5]} />
+          <G6 gate={gates[6]} />
         </>
       )}
     </motion.div>
