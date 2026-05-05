@@ -1,4 +1,11 @@
 import { requireClerkAuth } from "./_clerkAuth.js";
+import { createClient } from "@supabase/supabase-js";
+import {
+  logUsageRecord,
+  requireActiveSubscription,
+  requirePlan,
+  resolveTenantIdForOrg,
+} from "./_subscriptionGate.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const AI_REQUEST_TIMEOUT_MS = 45000;
@@ -8,6 +15,22 @@ function jsonResponse(status, payload) {
     status,
     headers: JSON_HEADERS,
   });
+}
+
+function getSupabase() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error("Supabase env vars not configured");
+  return createClient(url, key);
+}
+
+function countClaudeTokens(usage = {}) {
+  return (
+    Number(usage.input_tokens || 0) +
+    Number(usage.output_tokens || 0) +
+    Number(usage.cache_creation_input_tokens || 0) +
+    Number(usage.cache_read_input_tokens || 0)
+  );
 }
 
 async function readJsonResponse(response) {
@@ -39,6 +62,14 @@ export default async (request) => {
   if (auth.response) {
     return auth.response;
   }
+
+  const supabase = getSupabase();
+  const tenantId = await resolveTenantIdForOrg(supabase, auth.orgId);
+  const subscription = await requireActiveSubscription(supabase, tenantId);
+  if (subscription.response) return subscription.response;
+
+  const planGate = requirePlan(subscription, "pro");
+  if (planGate.response) return planGate.response;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -109,6 +140,16 @@ export default async (request) => {
 
     if (!resp.ok) {
       console.error("Anthropic API error:", resp.status, raw || JSON.stringify(data));
+    }
+
+    if (resp.ok) {
+      const tokenCount = countClaudeTokens(data.usage);
+      await logUsageRecord(supabase, tenantId, "claude_tokens", tokenCount || 1, {
+        model: body.model,
+        endpoint: "coach",
+        user_id: auth.userId,
+        status: resp.status,
+      });
     }
 
     return jsonResponse(resp.status, data);

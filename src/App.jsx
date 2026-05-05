@@ -16,6 +16,7 @@ import TrainingModeToggle from "./components/training/TrainingModeToggle";
 import { SignedIn, SignedOut, SignIn, useClerk, useUser } from "@clerk/clerk-react";
 import { ChevronDown, Shuffle, X } from "lucide-react";
 import { wallpapers } from "./config/wallpapers";
+import { useSubscription } from "./hooks/useSubscription";
 import {
   LeftRail,
   LeftRailProvider,
@@ -39,6 +40,7 @@ const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 const loadOperationsTab = () => import("./components/OperationsTab");
+const loadBillingSettings = () => import("./components/BillingSettings");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -56,6 +58,7 @@ const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
 const OperationsTab = lazy(loadOperationsTab);
+const BillingSettings = lazy(loadBillingSettings);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
@@ -295,6 +298,7 @@ function getTabsForMode(mode) {
 
   tabs.push({ id: "complianceHub", label: "Compliance Hub" });
   tabs.push({ id: "operations", label: "CALLS" });
+  tabs.push({ id: "billing", label: "Billing" });
   tabs.push({ id: "verse", label: "Daily Verse" });
 
   return tabs;
@@ -466,6 +470,10 @@ function AppShell() {
       loadOperationsTab();
       return;
     }
+    if (panelId === "billing") {
+      loadBillingSettings();
+      return;
+    }
     if (panelId === "verse") {
       loadDailyVerse();
     }
@@ -599,6 +607,12 @@ function AppShell() {
         return (
           <LazyPanel>
             <OperationsTab />
+          </LazyPanel>
+        );
+      case "billing":
+        return (
+          <LazyPanel>
+            <BillingSettings />
           </LazyPanel>
         );
       case "verse":
@@ -815,11 +829,85 @@ function AppShell() {
   );
 }
 
+function trialDaysRemaining(subscription) {
+  const end = subscription?.trial_ends_at;
+  if (!end) return null;
+  const diff = new Date(end).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / 86400000));
+}
+
+function SubscriptionBanner() {
+  const { subscription, isStarter, isTrial } = useSubscription();
+  const days = trialDaysRemaining(subscription);
+
+  if (isTrial) {
+    return (
+      <div className="subscription-banner">
+        Trial ends in {days ?? "--"} days. Upgrade from Billing to continue uninterrupted.
+      </div>
+    );
+  }
+
+  if (isStarter) {
+    return (
+      <div className="subscription-banner is-starter">
+        Starter plan active. Co-Pilot, transcription, CRM sync, and advanced analytics require Pro.
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function SubscriptionGate({ children }) {
+  const { loading, error, isActive, isInternal } = useSubscription();
+
+  if (loading) {
+    return (
+      <div className="subscription-paywall">
+        <div className="subscription-paywall-card">
+          <span className="billing-eyebrow">SUBSCRIPTION</span>
+          <h1>Checking access</h1>
+          <p>Loading your agency billing status.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isActive && !isInternal) {
+    return (
+      <div className="subscription-paywall">
+        <div className="subscription-paywall-card">
+          <span className="billing-eyebrow">SUBSCRIPTION REQUIRED</span>
+          <h1>Activate EnrollGen</h1>
+          <p>
+            Your agency needs an active subscription to use script flows, call records,
+            compliance scoring, transcription, and Co-Pilot.
+          </p>
+          {error ? <div className="billing-alert is-error">{error}</div> : null}
+          <LazyPanel>
+            <BillingSettings />
+          </LazyPanel>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <SubscriptionBanner />
+      {children}
+    </>
+  );
+}
+
 function AppContent() {
   return (
-    <LeftRailProvider>
-      <AppShell />
-    </LeftRailProvider>
+    <SubscriptionGate>
+      <LeftRailProvider>
+        <AppShell />
+      </LeftRailProvider>
+    </SubscriptionGate>
   );
 }
 
