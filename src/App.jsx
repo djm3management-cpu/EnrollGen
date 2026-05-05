@@ -905,38 +905,7 @@ function SubscriptionBanner() {
 }
 
 function SubscriptionGate({ children }) {
-  const { loading, error, isActive, isInternal } = useSubscription();
-
-  if (loading) {
-    return (
-      <div className="subscription-paywall">
-        <div className="subscription-paywall-card">
-          <span className="billing-eyebrow">SUBSCRIPTION</span>
-          <h1>Checking access</h1>
-          <p>Loading your agency billing status.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isActive && !isInternal) {
-    return (
-      <div className="subscription-paywall">
-        <div className="subscription-paywall-card">
-          <span className="billing-eyebrow">SUBSCRIPTION REQUIRED</span>
-          <h1>Activate EnrollGen</h1>
-          <p>
-            Your agency needs an active subscription to use script flows, call records,
-            compliance scoring, transcription, and Co-Pilot.
-          </p>
-          {error ? <div className="billing-alert is-error">{error}</div> : null}
-          <LazyPanel>
-            <BillingSettings />
-          </LazyPanel>
-        </div>
-      </div>
-    );
-  }
+  useSubscription();
 
   return (
     <>
