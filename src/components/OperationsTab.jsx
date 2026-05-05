@@ -17,7 +17,23 @@ const TRACKER_STATUSES = [
 ];
 const DEFAULT_TRACKER_STATUS = TRACKER_STATUSES[0];
 
-const WINDOWS = ["MTD", "QTD", "YTD"];
+const DATE_RANGE_OPTIONS = [
+  { key: "today", label: "Today" },
+  { key: "7d", label: "7d" },
+  { key: "30d", label: "30d" },
+  { key: "custom", label: "Custom" },
+];
+
+const AGENT_AVATAR_COLORS = [
+  "#4f6f52",
+  "#6b5b3e",
+  "#4f6573",
+  "#6d4f62",
+  "#5e6445",
+  "#6b4d42",
+  "#4d6670",
+  "#5c5870",
+];
 
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString();
@@ -54,6 +70,17 @@ function fmtTimeHM(value) {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+function fmtDateISO(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    String(d.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 function fmtClock(d) {
   return [d.getHours(), d.getMinutes(), d.getSeconds()]
     .map((n) => String(n).padStart(2, "0"))
@@ -62,6 +89,10 @@ function fmtClock(d) {
 
 function normalizeTrackerStatus(value) {
   return TRACKER_STATUSES.includes(value) ? value : DEFAULT_TRACKER_STATUS;
+}
+
+function dateValueForRow(row) {
+  return row.call_start || row.activity_date || row.created_at || "";
 }
 
 function contactedAtForStatus(status, currentValue) {
@@ -81,6 +112,10 @@ function looksLikeId(value) {
   if (/^\d+$/.test(value.trim())) return true;
   if (/^[0-9a-f]{8}-[0-9a-f-]+$/i.test(value)) return true;
   return false;
+}
+
+function normalizeLookup(value) {
+  return typeof value === "string" ? value.trim().toLowerCase().replace(/\s+/g, " ") : "";
 }
 
 function resolveAgentName(row) {
@@ -125,23 +160,159 @@ function coopFor(row, coopRates = {}) {
   return Number(coopRates[key] ?? 0);
 }
 
-function filterByWindow(rows, window) {
-  if (!window || !rows.length) return rows;
-  const now = new Date();
-  const start = new Date(now);
-  if (window === "MTD") {
-    start.setDate(1);
-  } else if (window === "QTD") {
-    const q = Math.floor(now.getMonth() / 3) * 3;
-    start.setMonth(q, 1);
-  } else if (window === "YTD") {
-    start.setMonth(0, 1);
+function sortValue(row, key) {
+  if (key === "agent") return resolveAgentName(row).toLowerCase();
+  if (key === "datetime") {
+    const d = new Date(dateValueForRow(row));
+    return Number.isNaN(d.getTime()) ? 0 : d.getTime();
   }
-  start.setHours(0, 0, 0, 0);
-  return rows.filter((r) => {
-    const d = new Date(r.call_start);
-    return !Number.isNaN(d.getTime()) && d >= start;
+  if (key === "duration") return Number(row.call_duration_seconds || 0);
+  if (key === "carrier") return carrierName(row).toLowerCase();
+  if (key === "outcome") return outcomeLabel(row).label.toLowerCase();
+  if (key === "compliance") {
+    return row.overall_score !== null && row.overall_score !== undefined
+      ? Number(row.overall_score)
+      : -1;
+  }
+  return "";
+}
+
+function sortRows(rows, sortConfig) {
+  const direction = sortConfig.direction === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    const av = sortValue(a, sortConfig.key);
+    const bv = sortValue(b, sortConfig.key);
+    if (typeof av === "number" && typeof bv === "number") {
+      return av === bv ? 0 : (av > bv ? 1 : -1) * direction;
+    }
+    return String(av).localeCompare(String(bv)) * direction;
   });
+}
+
+function csvCell(value) {
+  const raw = value === null || value === undefined ? "" : String(value);
+  return /[",\n]/.test(raw) ? `"${raw.replace(/"/g, '""')}"` : raw;
+}
+
+function downloadCallsCsv(rows, coopRates) {
+  const headers = [
+    "date",
+    "time",
+    "agent",
+    "customer name",
+    "carrier",
+    "plan",
+    "outcome",
+    "compliance score",
+    "duration",
+    "co-op amount",
+  ];
+  const lines = rows.map((row) => {
+    const oc = outcomeLabel(row);
+    const d = dateValueForRow(row);
+    return [
+      fmtDateISO(d),
+      fmtTimeHM(d),
+      resolveAgentName(row),
+      customerName(row),
+      carrierName(row),
+      row.plan_name || "",
+      oc.label,
+      row.overall_score !== null && row.overall_score !== undefined
+        ? Math.round(Number(row.overall_score))
+        : "",
+      fmtDuration(row.call_duration_seconds),
+      coopFor(row, coopRates),
+    ].map(csvCell).join(",");
+  });
+  const csv = [headers.join(","), ...lines].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `enrollgen-calls-${fmtDateISO(new Date().toISOString())}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function rangeLabel(rangeKey, customStart, customEnd) {
+  if (rangeKey === "custom") {
+    if (customStart && customEnd) return `${customStart} - ${customEnd}`;
+    if (customStart) return `${customStart}+`;
+    if (customEnd) return `Through ${customEnd}`;
+    return "Custom";
+  }
+  return DATE_RANGE_OPTIONS.find((option) => option.key === rangeKey)?.label || "30d";
+}
+
+function dateRangeBounds(rangeKey, customStart, customEnd) {
+  const now = new Date();
+  let start = null;
+  let end = null;
+
+  if (rangeKey === "today") {
+    start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(start);
+    end.setDate(end.getDate() + 1);
+  } else if (rangeKey === "7d" || rangeKey === "30d") {
+    start = new Date(now);
+    start.setDate(start.getDate() - (rangeKey === "7d" ? 6 : 29));
+    start.setHours(0, 0, 0, 0);
+    end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+  } else if (rangeKey === "custom") {
+    if (customStart) {
+      start = new Date(`${customStart}T00:00:00`);
+    }
+    if (customEnd) {
+      end = new Date(`${customEnd}T23:59:59.999`);
+    }
+  }
+
+  return { start, end };
+}
+
+function filterByDateRange(rows, rangeKey, customStart, customEnd) {
+  const { start, end } = dateRangeBounds(rangeKey, customStart, customEnd);
+  if (!start && !end) return rows;
+  return rows.filter((r) => {
+    const d = new Date(dateValueForRow(r));
+    if (Number.isNaN(d.getTime())) return false;
+    if (start && d < start) return false;
+    if (end && d > end) return false;
+    return true;
+  });
+}
+
+function filterByAgent(rows, agentName) {
+  if (!agentName) return rows;
+  return rows.filter((row) => resolveAgentName(row) === agentName);
+}
+
+function hashAgentName(name) {
+  let hash = 0;
+  const raw = name || "Unknown Agent";
+  for (let i = 0; i < raw.length; i += 1) {
+    hash = (hash * 31 + raw.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function agentInitials(name) {
+  const parts = String(name || "Unknown Agent")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return "UA";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+function agentAvatarColor(name) {
+  return AGENT_AVATAR_COLORS[hashAgentName(name) % AGENT_AVATAR_COLORS.length];
 }
 
 function buildLeaderboards(rows, coopRates = {}) {
@@ -208,6 +379,53 @@ function buildCarrierMix(rows) {
   return { total, entries };
 }
 
+function buildAgentDetail(rows, coopRates = {}) {
+  if (!rows.length) {
+    return {
+      calls: 0,
+      enrollments: 0,
+      conversion: 0,
+      compliance: null,
+      duration: null,
+      coop: 0,
+      carrier: "—",
+    };
+  }
+
+  const enrollments = rows.filter(isEnrolled).length;
+  const scored = rows.filter(
+    (r) => r.overall_score !== null && r.overall_score !== undefined && !Number.isNaN(Number(r.overall_score))
+  );
+  const timed = rows.filter(
+    (r) => r.call_duration_seconds !== null && r.call_duration_seconds !== undefined && !Number.isNaN(Number(r.call_duration_seconds))
+  );
+  const carrierCounts = new Map();
+
+  for (const row of rows) {
+    const carrier = carrierName(row);
+    if (carrier !== "—") {
+      carrierCounts.set(carrier, (carrierCounts.get(carrier) || 0) + 1);
+    }
+  }
+
+  const carrier = Array.from(carrierCounts.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || "—";
+
+  return {
+    calls: rows.length,
+    enrollments,
+    conversion: rows.length ? (enrollments / rows.length) * 100 : 0,
+    compliance: scored.length
+      ? scored.reduce((sum, row) => sum + Number(row.overall_score), 0) / scored.length
+      : null,
+    duration: timed.length
+      ? timed.reduce((sum, row) => sum + Number(row.call_duration_seconds), 0) / timed.length
+      : null,
+    coop: rows.reduce((sum, row) => sum + coopFor(row, coopRates), 0),
+    carrier,
+  };
+}
+
 function buildCompliance(rows) {
   const scored = rows.filter(
     (r) => r.overall_score !== null && r.overall_score !== undefined && !Number.isNaN(Number(r.overall_score))
@@ -268,7 +486,7 @@ function EmptyLine({ children = "--" }) {
   return <div className="ops-inline-empty">{children}</div>;
 }
 
-function TerminalNav({ windowKey }) {
+function TerminalNav({ agentLabel, dateLabel }) {
   return (
     <>
       <div className="ops-command-line">
@@ -284,14 +502,75 @@ function TerminalNav({ windowKey }) {
       </div>
       <div className="ops-filter-strip">
         <span className="ops-filter-label">Agent</span>
-        <span className="ops-filter-box">All Agents</span>
+        <span className="ops-filter-box">{agentLabel || "All Agents"}</span>
         <span className="ops-filter-label">Outcome</span>
         <span className="ops-filter-box">All Outcomes</span>
         <span className="ops-filter-label">Window</span>
-        <span className="ops-filter-box is-blue">{windowKey}</span>
+        <span className="ops-filter-box is-blue">{dateLabel}</span>
         <span className="ops-filter-title">Call Records Search</span>
       </div>
     </>
+  );
+}
+
+function OpsFilters({
+  agentOptions,
+  selectedAgent,
+  onAgentChange,
+  dateRange,
+  onDateRangeChange,
+  customStart,
+  customEnd,
+  onCustomStartChange,
+  onCustomEndChange,
+}) {
+  return (
+    <div className="ops-controls">
+      <label className="ops-control">
+        <span>Agent</span>
+        <select
+          value={selectedAgent}
+          onChange={(event) => onAgentChange(event.target.value)}
+        >
+          <option value="">All Agents</option>
+          {agentOptions.map((agent) => (
+            <option key={agent} value={agent}>
+              {agent}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="ops-date-control">
+        <span>Date</span>
+        <div className="ops-date-buttons">
+          {DATE_RANGE_OPTIONS.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              className={dateRange === option.key ? "is-active" : ""}
+              onClick={() => onDateRangeChange(option.key)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {dateRange === "custom" ? (
+        <div className="ops-custom-range">
+          <input
+            type="date"
+            value={customStart}
+            onChange={(event) => onCustomStartChange(event.target.value)}
+          />
+          <span>to</span>
+          <input
+            type="date"
+            value={customEnd}
+            onChange={(event) => onCustomEndChange(event.target.value)}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -391,55 +670,150 @@ function LbSection({ title, rows, valueKey, color, format }) {
   );
 }
 
-function CallsTable({ rows }) {
+function AgentDetailSection({ open, selectedAgent, detail, onToggle }) {
   return (
-    <div className="ops-table-wrap">
-      <table className="ops-table">
-        <thead>
-          <tr>
-            <th className="row-n">#</th>
-            <th>Time</th>
-            <th>Customer</th>
-            <th>Agent</th>
-            <th>Carrier</th>
-            <th>Outcome</th>
-            <th className="num">Dur</th>
-            <th className="num">Compl</th>
-            <th title="Webhook">WH</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
+    <div className="ops-agent-detail">
+      <button type="button" className="ops-agent-detail-toggle" onClick={onToggle}>
+        <span>{open ? "▼" : "▶"} AGENT DETAIL</span>
+        <span>{selectedAgent || "SELECT AGENT"}</span>
+      </button>
+      {open ? (
+        selectedAgent ? (
+          <div className="ops-agent-detail-grid">
+            <div>
+              <span>Total Calls</span>
+              <strong>{fmtNumber(detail.calls)}</strong>
+            </div>
+            <div>
+              <span>Enrollments</span>
+              <strong>{fmtNumber(detail.enrollments)}</strong>
+            </div>
+            <div>
+              <span>Conversion</span>
+              <strong>{fmtPercent(detail.conversion)}</strong>
+            </div>
+            <div>
+              <span>Avg Compliance</span>
+              <strong>{detail.compliance !== null ? `${Math.round(detail.compliance)}%` : "—"}</strong>
+            </div>
+            <div>
+              <span>Avg Duration</span>
+              <strong>{detail.duration !== null ? fmtDuration(detail.duration) : "—"}</strong>
+            </div>
+            <div>
+              <span>Co-op Earnings</span>
+              <strong>{fmtMoney(detail.coop)}</strong>
+            </div>
+            <div className="wide">
+              <span>Most Common Carrier</span>
+              <strong>{detail.carrier}</strong>
+            </div>
+          </div>
+        ) : (
+          <div className="ops-agent-detail-empty">Select an agent to inspect current-window performance.</div>
+        )
+      ) : null}
+    </div>
+  );
+}
+
+function SortableTh({ column, sortConfig, onSort, children, className = "" }) {
+  const active = sortConfig.key === column;
+  return (
+    <th className={`${className} ops-sort-th${active ? " is-active" : ""}`}>
+      <button type="button" onClick={() => onSort(column)}>
+        <span>{children}</span>
+        <span className="ops-sort-indicator">
+          {active ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+        </span>
+      </button>
+    </th>
+  );
+}
+
+function CallsTable({ rows, loading, sortConfig, onSort, tenantAgentsByName, coopRates }) {
+  return (
+    <div className="ops-calls-panel">
+      <div className="ops-section-head">
+        <span>Recent Calls</span>
+        <span className="ops-section-meta">
+          {loading ? "LOADING…" : `${rows.length} RECORDS`}
+          <button
+            type="button"
+            className="ops-export-btn"
+            onClick={() => downloadCallsCsv(rows, coopRates)}
+            disabled={rows.length === 0}
+          >
+            EXPORT
+          </button>
+        </span>
+      </div>
+      <div className="ops-table-wrap">
+        <table className="ops-table">
+          <thead>
             <tr>
-              <td className="empty" colSpan={9}>
-                Awaiting call rows
-              </td>
+              <th className="row-n">#</th>
+              <SortableTh column="datetime" sortConfig={sortConfig} onSort={onSort}>Date/Time</SortableTh>
+              <th>Customer</th>
+              <SortableTh column="agent" sortConfig={sortConfig} onSort={onSort}>Agent</SortableTh>
+              <SortableTh column="carrier" sortConfig={sortConfig} onSort={onSort}>Carrier</SortableTh>
+              <SortableTh column="outcome" sortConfig={sortConfig} onSort={onSort}>Outcome</SortableTh>
+              <SortableTh column="duration" sortConfig={sortConfig} onSort={onSort} className="num">Dur</SortableTh>
+              <SortableTh column="compliance" sortConfig={sortConfig} onSort={onSort} className="num">Compl</SortableTh>
+              <th title="Webhook">WH</th>
             </tr>
-          ) : (
-            rows.map((r, i) => {
-              const oc = outcomeLabel(r);
-              const ghl = ghlBadge(r);
-              return (
-                <tr key={r.call_record_id} className={i === 0 ? "is-selected" : ""}>
-                  <td className="row-n">{i + 1}</td>
-                  <td>{fmtTimeHM(r.call_start) || fmtDateMD(r.activity_date)}</td>
-                  <td>{customerName(r)}</td>
-                  <td>{resolveAgentName(r)}</td>
-                  <td>{carrierName(r)}</td>
-                  <td className={oc.cls}>{oc.label}</td>
-                  <td className="num">{fmtDuration(r.call_duration_seconds)}</td>
-                  <td className="num">
-                    {r.overall_score !== null && r.overall_score !== undefined
-                      ? `${Math.round(Number(r.overall_score))}%`
-                      : "—"}
-                  </td>
-                  <td className={ghl.cls}>{ghl.glyph}</td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td className="empty" colSpan={9}>
+                  Awaiting call rows
+                </td>
+              </tr>
+            ) : (
+              rows.map((r, i) => {
+                const oc = outcomeLabel(r);
+                const ghl = ghlBadge(r);
+                const agentName = resolveAgentName(r);
+                const tenantAgent = tenantAgentsByName.get(normalizeLookup(agentName));
+                const tooltip = tenantAgent?.npn
+                  ? `${agentName} | NPN ${tenantAgent.npn}`
+                  : agentName;
+                return (
+                  <tr key={r.call_record_id} className={i === 0 ? "is-selected" : ""}>
+                    <td className="row-n">{i + 1}</td>
+                    <td>
+                      <span className="ops-date-cell">{fmtDateMD(r.call_start)}</span>
+                      <span className="ops-time-cell">{fmtTimeHM(r.call_start) || fmtDateMD(r.activity_date)}</span>
+                    </td>
+                    <td>{customerName(r)}</td>
+                    <td>
+                      <span className="ops-agent-cell" title={tooltip}>
+                        <span
+                          className="ops-agent-avatar"
+                          style={{ backgroundColor: agentAvatarColor(agentName) }}
+                        >
+                          {agentInitials(agentName)}
+                        </span>
+                        <span>{agentName}</span>
+                      </span>
+                    </td>
+                    <td>{carrierName(r)}</td>
+                    <td className={oc.cls}>{oc.label}</td>
+                    <td className="num">{fmtDuration(r.call_duration_seconds)}</td>
+                    <td className="num">
+                      {r.overall_score !== null && r.overall_score !== undefined
+                        ? `${Math.round(Number(r.overall_score))}%`
+                        : "—"}
+                    </td>
+                    <td className={ghl.cls}>{ghl.glyph}</td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -619,6 +993,7 @@ function TrackerRow({ entry, status, saving, onStatusChange }) {
 export default function OperationsTab() {
   const {
     agencyDisplayName,
+    agents: tenantAgents,
     coopRates,
     error: tenantError,
     loading: tenantLoading,
@@ -627,7 +1002,12 @@ export default function OperationsTab() {
   const [state, setState] = useState(EMPTY_STATE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [windowKey, setWindowKey] = useState("MTD");
+  const [selectedAgent, setSelectedAgent] = useState("");
+  const [dateRange, setDateRange] = useState("30d");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: "datetime", direction: "desc" });
+  const [agentDetailOpen, setAgentDetailOpen] = useState(true);
   const [now, setNow] = useState(new Date());
   const [trackerPending, setTrackerPending] = useState({});
 
@@ -700,16 +1080,66 @@ export default function OperationsTab() {
     return () => clearInterval(id);
   }, []);
 
+  const tenantAgentsByName = useMemo(() => {
+    const map = new Map();
+    for (const agent of tenantAgents || []) {
+      const key = normalizeLookup(agent.name);
+      if (key) map.set(key, agent);
+    }
+    return map;
+  }, [tenantAgents]);
+
+  const agentOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        state.dailyActivity
+          .map(resolveAgentName)
+          .filter((name) => name && name !== "—")
+      )
+    ).sort((a, b) => a.localeCompare(b));
+  }, [state.dailyActivity]);
+
+  useEffect(() => {
+    if (selectedAgent && !agentOptions.includes(selectedAgent)) {
+      setSelectedAgent("");
+    }
+  }, [agentOptions, selectedAgent]);
+
+  const dateFilteredDaily = useMemo(
+    () => filterByDateRange(state.dailyActivity, dateRange, customStart, customEnd),
+    [customEnd, customStart, dateRange, state.dailyActivity]
+  );
+
+  const dateFilteredPipeline = useMemo(
+    () => filterByDateRange(state.pipelineStatus, dateRange, customStart, customEnd),
+    [customEnd, customStart, dateRange, state.pipelineStatus]
+  );
+
   const filteredDaily = useMemo(
-    () => filterByWindow(state.dailyActivity, windowKey),
-    [state.dailyActivity, windowKey]
+    () => filterByAgent(dateFilteredDaily, selectedAgent),
+    [dateFilteredDaily, selectedAgent]
+  );
+
+  const filteredPipeline = useMemo(
+    () => filterByAgent(dateFilteredPipeline, selectedAgent),
+    [dateFilteredPipeline, selectedAgent]
+  );
+
+  const sortedDaily = useMemo(
+    () => sortRows(filteredDaily, sortConfig),
+    [filteredDaily, sortConfig]
   );
 
   const leaderboards = useMemo(() => buildLeaderboards(filteredDaily, coopRates), [coopRates, filteredDaily]);
-  const carrierMix = useMemo(() => buildCarrierMix(state.dailyActivity), [state.dailyActivity]);
-  const compliance = useMemo(() => buildCompliance(state.dailyActivity), [state.dailyActivity]);
-  const tickerEvents = useMemo(() => buildTicker(state.dailyActivity), [state.dailyActivity]);
-  const trackerEntries = useMemo(() => build60Day(state.pipelineStatus), [state.pipelineStatus]);
+  const carrierMix = useMemo(() => buildCarrierMix(filteredDaily), [filteredDaily]);
+  const compliance = useMemo(() => buildCompliance(filteredDaily), [filteredDaily]);
+  const tickerEvents = useMemo(() => buildTicker(sortedDaily), [sortedDaily]);
+  const trackerEntries = useMemo(() => build60Day(filteredPipeline), [filteredPipeline]);
+  const agentDetail = useMemo(() => buildAgentDetail(filteredDaily, coopRates), [coopRates, filteredDaily]);
+  const dateLabel = useMemo(
+    () => rangeLabel(dateRange, customStart, customEnd),
+    [customEnd, customStart, dateRange]
+  );
 
   const trackerStats = useMemo(() => {
     const overdue = trackerEntries.filter((t) => t.bucket === "overdue").length;
@@ -718,12 +1148,12 @@ export default function OperationsTab() {
   }, [trackerEntries]);
 
   const metrics = useMemo(() => {
-    const calls = state.dailyActivity.length;
-    const enrollments = state.dailyActivity.filter(isEnrolled).length;
-    const callbacks = state.pipelineStatus.filter(
+    const calls = filteredDaily.length;
+    const enrollments = filteredDaily.filter(isEnrolled).length;
+    const callbacks = filteredPipeline.filter(
       (record) => record.call_outcome === "callback_scheduled"
     ).length;
-    const coopTotal = state.dailyActivity.reduce((sum, r) => sum + coopFor(r, coopRates), 0);
+    const coopTotal = filteredDaily.reduce((sum, r) => sum + coopFor(r, coopRates), 0);
     const complianceAvg = compliance ? compliance.avg : null;
     return {
       calls,
@@ -733,7 +1163,22 @@ export default function OperationsTab() {
       coopTotal,
       complianceAvg,
     };
-  }, [coopRates, state.dailyActivity, state.pipelineStatus, compliance]);
+  }, [compliance, coopRates, filteredDaily, filteredPipeline]);
+
+  const handleSort = useCallback((column) => {
+    setSortConfig((current) => {
+      if (current.key === column) {
+        return {
+          key: column,
+          direction: current.direction === "asc" ? "desc" : "asc",
+        };
+      }
+      return {
+        key: column,
+        direction: column === "datetime" || column === "duration" || column === "compliance" ? "desc" : "asc",
+      };
+    });
+  }, []);
 
   const handleTrackerStatusChange = useCallback(
     async (entry, nextValue) => {
@@ -802,7 +1247,7 @@ export default function OperationsTab() {
     <section className="operations-tab">
       {error ? <div className="ops-error">⚠ {error}</div> : null}
 
-      <TerminalNav windowKey={windowKey} />
+      <TerminalNav agentLabel={selectedAgent} dateLabel={dateLabel} />
 
       <div className="ops-ticker">
         {tickerEvents.length === 0 ? (
@@ -821,18 +1266,6 @@ export default function OperationsTab() {
 
       <div className="ops-grid">
         <aside className="ops-leaderboard">
-          <div className="ops-window-toggle">
-            {WINDOWS.map((w) => (
-              <button
-                key={w}
-                type="button"
-                className={windowKey === w ? "is-active" : ""}
-                onClick={() => setWindowKey(w)}
-              >
-                {w}
-              </button>
-            ))}
-          </div>
           <LbSection
             title="Enrollments"
             rows={leaderboards.enrolled}
@@ -861,9 +1294,33 @@ export default function OperationsTab() {
             color="amber"
             format={(v) => fmtMoney(v)}
           />
+          <AgentDetailSection
+            open={agentDetailOpen}
+            selectedAgent={selectedAgent}
+            detail={agentDetail}
+            onToggle={() => setAgentDetailOpen((value) => !value)}
+          />
         </aside>
 
         <main className="ops-main">
+          <OpsFilters
+            agentOptions={agentOptions}
+            selectedAgent={selectedAgent}
+            onAgentChange={setSelectedAgent}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomStartChange={(value) => {
+              setCustomStart(value);
+              setDateRange("custom");
+            }}
+            onCustomEndChange={(value) => {
+              setCustomEnd(value);
+              setDateRange("custom");
+            }}
+          />
+
           <div className="ops-metric-row">
             <div className="ops-metric">
               <span className="ops-metric-label">Calls</span>
@@ -891,19 +1348,20 @@ export default function OperationsTab() {
             </div>
           </div>
 
-          <div className="ops-section-head">
-            <span>Recent Calls</span>
-            <span className="ops-section-meta">
-              {loading ? "LOADING…" : `${state.dailyActivity.length} RECORDS`}
-            </span>
-          </div>
-          <CallsTable rows={state.dailyActivity} />
+          <CallsTable
+            rows={sortedDaily}
+            loading={loading}
+            sortConfig={sortConfig}
+            onSort={handleSort}
+            tenantAgentsByName={tenantAgentsByName}
+            coopRates={coopRates}
+          />
 
           <div className="ops-bottom-row">
             <CarrierMixPanel mix={carrierMix} />
             <CompliancePanel data={compliance} />
           </div>
-          <PipelinePanel rows={state.pipelineStatus} />
+          <PipelinePanel rows={filteredPipeline} />
         </main>
 
         <aside className="ops-tracker">

@@ -24,6 +24,19 @@ function normalizeLookup(value) {
   return safeText(value).toLowerCase().replace(/\s+/g, " ");
 }
 
+function looksLikeIdentifier(value) {
+  const raw = safeText(value);
+  if (!raw) return false;
+  if (/^\d+$/.test(raw)) return true;
+  if (/^[0-9a-f]{8}-[0-9a-f-]+$/i.test(raw)) return true;
+  return false;
+}
+
+function humanAgentText(value) {
+  const raw = safeText(value);
+  return raw && !looksLikeIdentifier(raw) ? raw : "";
+}
+
 function normalizeTenant(row) {
   if (!row) return null;
   return {
@@ -149,7 +162,7 @@ function mergeMetadata(current, patch) {
 }
 
 async function fetchTenantAgentForPayload(supabase, payload, auth, tenantId) {
-  const writingAgent = safeText(payload.writing_agent || payload.agent_name);
+  const writingAgent = humanAgentText(payload.writing_agent || payload.agent_name);
 
   if (auth.userId) {
     const { data } = await supabase
@@ -176,12 +189,7 @@ async function fetchTenantAgentForPayload(supabase, payload, auth, tenantId) {
   return null;
 }
 
-async function fetchAgent(supabase, payload, auth, tenant) {
-  const tenantId = tenant?.id;
-  const tenantAgent = tenantId
-    ? await fetchTenantAgentForPayload(supabase, payload, auth, tenantId)
-    : null;
-
+async function fetchEnrolledAgentForPayload(supabase, payload, auth, tenantId) {
   if (payload.agent_id) {
     let query = supabase
       .from("enrolled_agents")
@@ -192,23 +200,50 @@ async function fetchAgent(supabase, payload, auth, tenant) {
     if (data) return data;
   }
 
-  let query = supabase
-    .from("enrolled_agents")
-    .select("id, name, npn, clerk_user_id")
-    .eq("clerk_user_id", auth.userId);
-  if (tenantId) query = query.eq("tenant_id", tenantId);
-  const { data } = await query.maybeSingle();
+  if (auth.userId) {
+    let query = supabase
+      .from("enrolled_agents")
+      .select("id, name, npn, clerk_user_id")
+      .eq("clerk_user_id", auth.userId);
+    if (tenantId) query = query.eq("tenant_id", tenantId);
+    const { data } = await query.maybeSingle();
+    if (data) return data;
+  }
 
-  return data || {
-    id: payload.agent_id || tenantAgent?.id || null,
-    name:
-      safeText(payload.writing_agent) ||
-      tenantAgent?.name ||
-      safeText(payload.agent_name) ||
-      "Agent",
-    npn: tenantAgent?.npn || null,
-    clerk_user_id: tenantAgent?.clerk_user_id || auth.userId,
+  return null;
+}
+
+function resolveHumanAgentName(payload, tenantAgent, enrolledAgent) {
+  return (
+    humanAgentText(payload.writing_agent) ||
+    humanAgentText(tenantAgent?.name) ||
+    humanAgentText(enrolledAgent?.name) ||
+    "Unknown Agent"
+  );
+}
+
+async function fetchAgent(supabase, payload, auth, tenant) {
+  const tenantId = tenant?.id;
+  const tenantAgent = tenantId
+    ? await fetchTenantAgentForPayload(supabase, payload, auth, tenantId)
+    : null;
+
+  const enrolledAgent = await fetchEnrolledAgentForPayload(supabase, payload, auth, tenantId);
+  const agentName = resolveHumanAgentName(payload, tenantAgent, enrolledAgent);
+
+  return {
+    id: enrolledAgent?.id || payload.agent_id || tenantAgent?.id || null,
+    name: agentName,
+    npn: tenantAgent?.npn || enrolledAgent?.npn || null,
+    clerk_user_id: tenantAgent?.clerk_user_id || enrolledAgent?.clerk_user_id || auth.userId,
   };
+}
+
+function resolveHumanAgentNameFromLoaded(payload, auth, tenantAgents, fallbackAgent) {
+  const tenantAgent = auth.userId
+    ? tenantAgents.find((agent) => agent.clerk_user_id === auth.userId)
+    : null;
+  return resolveHumanAgentName(payload, tenantAgent, fallbackAgent);
 }
 
 async function resolveTranscriptAgentId(supabase, agent, tenant) {
@@ -280,11 +315,7 @@ async function ensureCallRecord(supabase, payload, auth, tenant) {
     external_call_id: payload.session_id || null,
     session_id: payload.session_id || null,
     agent_id: agent.id,
-    agent_name:
-      safeText(payload.writing_agent) ||
-      agent.name ||
-      safeText(payload.agent_name) ||
-      "Agent",
+    agent_name: agent.name,
     agent_npn: agent.npn || null,
     call_direction: normalizeDirection(payload.call_direction),
     call_type: safeText(payload.call_type) || "enrollment",
@@ -613,13 +644,14 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
   const callRecord = saved.callRecord;
   const outcome = normalizeOutcome(payload.call_outcome);
   const now = new Date().toISOString();
+  const agent = await fetchAgent(supabase, payload, auth, tenant);
+  const writingAgent = resolveHumanAgentNameFromLoaded(payload, auth, tenantAgents, agent);
 
   const metadata = mergeMetadata(callRecord.metadata, {
     wrap_up_saved_at: now,
     scoring_status: "queued",
   });
 
-  const writingAgent = safeText(payload.writing_agent) || null;
   const updatePayload = {
     carrier_name: safeText(payload.carrier_name) || callRecord.carrier_name || null,
     plan_name: safeText(payload.plan_name) || callRecord.plan_name || null,
@@ -643,7 +675,7 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
     sep: safeText(payload.sep) || "No",
     agency: safeText(payload.agency) || tenant.agency_display_name || tenant.name || null,
     writing_agent: writingAgent,
-    agent_name: writingAgent || callRecord.agent_name,
+    agent_name: writingAgent,
     hra: safeText(payload.hra) || "No",
     hra_date: payload.hra_date || null,
     enrollment_confirmation_number: safeText(payload.enrollment_confirmation_number) || null,
