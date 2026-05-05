@@ -39,6 +39,7 @@ const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 const loadOperationsTab = () => import("./components/OperationsTab");
+const loadScriptEditor = () => import("./components/ScriptEditor");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -56,6 +57,7 @@ const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
 const OperationsTab = lazy(loadOperationsTab);
+const ScriptEditor = lazy(loadScriptEditor);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
@@ -278,7 +280,16 @@ function ProfileChip() {
   );
 }
 
-function getTabsForMode(mode) {
+function isAdminUser(user) {
+  const role =
+    user?.publicMetadata?.role ||
+    user?.privateMetadata?.role ||
+    user?.organizationMemberships?.[0]?.role ||
+    "";
+  return role === "admin" || role === "org:admin" || user?.publicMetadata?.isAdmin === true;
+}
+
+function getTabsForMode(mode, canAdmin = false) {
   const tabs = [{ id: "script", label: "Script" }];
 
   if (modeSupportsAgentTools(mode)) {
@@ -295,12 +306,15 @@ function getTabsForMode(mode) {
 
   tabs.push({ id: "complianceHub", label: "Compliance Hub" });
   tabs.push({ id: "operations", label: "CALLS" });
+  if (canAdmin) {
+    tabs.push({ id: "scriptEditor", label: "SCRIPT EDITOR" });
+  }
   tabs.push({ id: "verse", label: "Daily Verse" });
 
   return tabs;
 }
 
-function AppShell() {
+function AppShell({ currentUser = null }) {
   const [mode, setMode] = useState(getModeFromLocation);
   const [openPanel, setOpenPanel] = useState(null);
   const [backgroundSelection, setBackgroundSelection] = useState(loadBackgroundSelection);
@@ -321,7 +335,8 @@ function AppShell() {
   const selectedWallpaper =
     wallpapers.find((wallpaper) => wallpaper.id === backgroundSelection) || wallpapers[0];
   const wallpaperChoices = wallpapers.filter((wallpaper) => wallpaper.url);
-  const navTabs = useMemo(() => getTabsForMode(mode), [mode]);
+  const canAdmin = LOGIN_DISABLED || isAdminUser(currentUser);
+  const navTabs = useMemo(() => getTabsForMode(mode, canAdmin), [canAdmin, mode]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -466,6 +481,10 @@ function AppShell() {
       loadOperationsTab();
       return;
     }
+    if (panelId === "scriptEditor") {
+      loadScriptEditor();
+      return;
+    }
     if (panelId === "verse") {
       loadDailyVerse();
     }
@@ -599,6 +618,12 @@ function AppShell() {
         return (
           <LazyPanel>
             <OperationsTab />
+          </LazyPanel>
+        );
+      case "scriptEditor":
+        return (
+          <LazyPanel>
+            <ScriptEditor />
           </LazyPanel>
         );
       case "verse":
@@ -815,12 +840,17 @@ function AppShell() {
   );
 }
 
-function AppContent() {
+function AppContent({ currentUser = null }) {
   return (
     <LeftRailProvider>
-      <AppShell />
+      <AppShell currentUser={currentUser} />
     </LeftRailProvider>
   );
+}
+
+function AuthenticatedAppContent() {
+  const { user } = useUser();
+  return <AppContent currentUser={user} />;
 }
 
 export default function App() {
@@ -844,7 +874,7 @@ export default function App() {
         </div>
       </SignedOut>
       <SignedIn>
-        <AppContent />
+        <AuthenticatedAppContent />
       </SignedIn>
     </>
   );

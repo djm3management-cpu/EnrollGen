@@ -18,7 +18,7 @@ function extractScriptText(node) {
 }
 
 /* ===================== SCRIPT BOX (with copy button) ===================== */
-export const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
+export const ScriptBox = React.memo(function ScriptBox({ children, verbatim, editable = true }) {
   const [copied, setCopied] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -72,6 +72,7 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
           <button
             className={`copy-btn script-action-btn ${isEditing ? "is-active" : ""}`}
             onClick={() => setIsEditing((current) => !current)}
+            disabled={!editable}
             title={isEditing ? "Finish editing script text" : "Edit script text"}
             aria-label={isEditing ? "Finish editing script text" : "Edit script text"}
           >
@@ -100,10 +101,11 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim }) {
         className={`script-box-editor ${isEditing ? "is-editing" : ""}`}
         value={draftText}
         onChange={(e) => {
+          if (!editable) return;
           setDraftText(e.target.value);
           setIsDirty(true);
         }}
-        readOnly={!isEditing}
+        readOnly={!editable || !isEditing}
         spellCheck={false}
         aria-label="Editable script text"
       />

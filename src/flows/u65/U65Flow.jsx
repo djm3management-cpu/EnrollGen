@@ -3,10 +3,11 @@
  * Simplified G00-G07 talk track only.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { useU65 } from "./U65Context";
 import { U65_GATES } from "./U65Data";
+import { useScriptTemplate } from "../../hooks/useScriptTemplate";
 
 const ACCENT = "#a855f7";
 
@@ -227,6 +228,41 @@ function U65GateSection({ gate }) {
   );
 }
 
+function scriptBodyToLines(body, fallback = []) {
+  const lines = String(body || "")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return lines.length ? lines : fallback;
+}
+
+function useU65TemplateGates() {
+  const { sections } = useScriptTemplate("u65");
+
+  return useMemo(() => {
+    if (!sections.length) {
+      return U65_GATES;
+    }
+
+    return U65_GATES.map((gate, index) => {
+      const section =
+        sections.find((item) => item.gate_field === gate.key || item.key === gate.key) ||
+        sections[index];
+
+      if (!section) {
+        return gate;
+      }
+
+      return {
+        ...gate,
+        label: section.title || gate.label,
+        script: scriptBodyToLines(section.body, gate.script),
+        gate: section.lock_message || gate.gate,
+      };
+    });
+  }, [sections]);
+}
+
 function Progress() {
   const { state, activeGate } = useU65();
   const steps = [
@@ -355,6 +391,7 @@ function Progress() {
 
 export default function U65Flow() {
   const { state, dispatch, activeGate } = useU65();
+  const u65Gates = useU65TemplateGates();
   const previousGateRef = useRef(activeGate);
 
   useEffect(() => {
@@ -419,7 +456,7 @@ export default function U65Flow() {
         </section>
       ) : (
         <>
-          {U65_GATES.map((gate) => (
+          {u65Gates.map((gate) => (
             <U65GateSection key={gate.id} gate={gate} />
           ))}
 
