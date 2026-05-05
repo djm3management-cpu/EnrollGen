@@ -129,6 +129,13 @@ function getAgentsFromBody(body) {
   return { agents: normalizeAgents(field.value), errors: [] };
 }
 
+function isBootstrapOnly(body) {
+  const field = readFirst(body, ["bootstrap_only", "bootstrapOnly"]);
+  if (!field.found) return false;
+  if (typeof field.value === "boolean") return field.value;
+  return ["true", "1", "yes"].includes(String(field.value || "").trim().toLowerCase());
+}
+
 async function upsertTenant(supabase, existing, payload) {
   if (existing?.id) {
     const { data, error } = await supabase
@@ -195,6 +202,31 @@ export default async (request) => {
 
     const supabase = getSupabase();
     const existing = await findTenantByOrg(supabase, orgId);
+    const bootstrapOnly = isBootstrapOnly(body);
+    if (existing && bootstrapOnly) {
+      const { agents, errors: agentErrors } = getAgentsFromBody(body);
+      if (agentErrors.length) {
+        return json(400, {
+          error: "Invalid tenant seed payload",
+          details: agentErrors,
+        });
+      }
+
+      const agentsUpserted = isAdminAuth(auth)
+        ? await upsertAgents(supabase, existing.id, agents)
+        : 0;
+
+      return json(200, {
+        tenant: existing,
+        created: false,
+        counts: {
+          agents_upserted: agentsUpserted,
+          script_templates_copied: 0,
+        },
+        script_templates: { copied: 0, skipped: true, reason: "existing tenant" },
+      });
+    }
+
     if (existing && !isAdminAuth(auth)) {
       return json(403, {
         error: "Forbidden",

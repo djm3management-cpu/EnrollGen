@@ -985,6 +985,7 @@ function TenantAutoBootstrap({ currentUser = null, organization, onComplete }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            bootstrap_only: true,
             org_id: organization.id,
             tenant: {
               name: agencyName,
@@ -994,9 +995,20 @@ function TenantAutoBootstrap({ currentUser = null, organization, onComplete }) {
           }),
         });
 
-        const data = await response.json().catch(() => ({}));
+        const raw = await response.text().catch(() => "");
+        let data = {};
+        try {
+          data = raw ? JSON.parse(raw) : {};
+        } catch {
+          data = {};
+        }
         if (!response.ok) {
-          throw new Error(data.detail || data.error || "Unable to create agency workspace.");
+          const detail = data.detail || data.error || raw?.slice(0, 240);
+          throw new Error(
+            detail
+              ? `Unable to create agency workspace (${response.status}): ${detail}`
+              : `Unable to create agency workspace (HTTP ${response.status}).`
+          );
         }
 
         if (!cancelled) {
