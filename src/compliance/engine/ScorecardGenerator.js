@@ -7,6 +7,32 @@
 import { classifyCall } from './IntentClassifier.js';
 import { scoreCall, calculateAverageConfidence } from './ScoringEngine.js';
 
+const ASSESSMENT_SYSTEM_PROMPT = `You are a Medicare enrollment quality analyst. You will receive a call transcript with compliance scoring results. Produce two assessments in JSON format.
+
+Respond ONLY with valid JSON, no markdown fences, no preamble:
+
+{
+  "agent": {
+    "rapport_score": <1-10>,
+    "rapport_notes": "<1 sentence on rapport quality>",
+    "listening_score": <1-10>,
+    "listening_notes": "<1 sentence>",
+    "product_knowledge_score": <1-10>,
+    "product_knowledge_notes": "<1 sentence>",
+    "missed_opportunities": ["<brief description of any missed cross-sell or clarification opportunities>"],
+    "audit_risk_flags": ["<anything a CMS auditor would specifically flag beyond compliance scoring>"],
+    "top_coaching_priority": "<single most impactful thing this agent should work on>"
+  },
+  "beneficiary": {
+    "engagement_score": <1-10 based on how engaged/responsive the beneficiary was>,
+    "confusion_indicators": ["<moments where beneficiary expressed confusion or uncertainty>"],
+    "competing_plan_mentioned": <true/false>,
+    "disenrollment_risk": "<low/medium/high>",
+    "disenrollment_risk_reason": "<1 sentence explaining the risk assessment>",
+    "recommended_followup_days": <number of days recommended before first follow-up, 14-60>
+  }
+}`;
+
 /**
  * Generate a complete compliance scorecard for a call.
  *
@@ -176,6 +202,29 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     })
     .select()
     .single();
+
+  // 7b. Agent performance + beneficiary risk assessment
+  if (callDurationS >= 120 && diarized.length >= 10) {
+    progress(92, 'Assessing agent performance...');
+    try {
+      const assessmentPrompt = buildAssessmentPrompt(callRecord, diarized, scoreResult);
+      const assessmentRaw = await callLLM(ASSESSMENT_SYSTEM_PROMPT, assessmentPrompt);
+      const assessment = parseAssessmentResponse(assessmentRaw);
+
+      let assessmentQuery = supabase.from('call_records').update({
+        agent_assessment: assessment.agent,
+        beneficiary_risk: assessment.beneficiary,
+        updated_at: new Date().toISOString(),
+      }).eq('id', callRecord.id);
+      if (callRecord.tenant_id) assessmentQuery = assessmentQuery.eq('tenant_id', callRecord.tenant_id);
+      const { error: assessmentError } = await assessmentQuery;
+      if (assessmentError) throw assessmentError;
+
+      await upsertFollowupQueue(supabase, callRecord, assessment.beneficiary);
+    } catch (err) {
+      console.warn('[ScorecardGenerator] Assessment generation failed:', err.message);
+    }
+  }
 
   // Update call record with detected direction if classifier overrode it
   if (classificationResult.detectedDirection) {
@@ -367,4 +416,103 @@ function buildCorrectiveDescription(scoreResult) {
   }
 
   return lines.join('\n');
+}
+
+function formatScore(value) {
+  const numeric = Number(value || 0);
+  return Number.isFinite(numeric) ? numeric.toFixed(1) : '0.0';
+}
+
+function buildAssessmentPrompt(callRecord, diarized, scoreResult) {
+  const transcriptText = diarized
+    .map(u => `[${u.speaker}]: ${u.text}`)
+    .join('\n');
+
+  const words = transcriptText.split(/\s+/);
+  const truncated = words.length > 3000
+    ? `${words.slice(0, 3000).join(' ')}\n[TRUNCATED]`
+    : transcriptText;
+
+  const weakCategories = Object.entries(scoreResult.category_scores || {})
+    .filter(([, scores]) => Number(scores?.pct || 0) < 70)
+    .map(([category, scores]) => `${category}: ${scores.pct}%`)
+    .join(', ') || 'None';
+
+  return `Call Metadata:
+- Agent: ${callRecord.agent_name || callRecord.writing_agent || 'Unknown'}
+- Carrier: ${callRecord.carrier_name || 'Unknown'}
+- Duration: ${Math.round((callRecord.call_duration_seconds || 0) / 60)} minutes
+- Product: ${callRecord.product_type || 'MA'}
+- Compliance Score: ${formatScore(scoreResult.overall_score)}% (${scoreResult.overall_grade})
+- Pass/Fail: ${scoreResult.pass_fail}
+- Auto-Fail: ${scoreResult.auto_fail_triggered ? 'YES - ' + scoreResult.auto_fail_reasons.join(', ') : 'No'}
+
+Weak Categories: ${weakCategories}
+
+Transcript:
+${truncated}`;
+}
+
+function parseAssessmentResponse(raw) {
+  try {
+    const cleaned = String(raw || '').replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    return {
+      agent: parsed.agent || { rapport_score: null, top_coaching_priority: 'Assessment missing agent section' },
+      beneficiary: parsed.beneficiary || { disenrollment_risk: 'unknown', recommended_followup_days: 30 },
+    };
+  } catch {
+    return {
+      agent: { rapport_score: null, top_coaching_priority: 'Assessment parsing failed' },
+      beneficiary: { disenrollment_risk: 'unknown', recommended_followup_days: 30 },
+    };
+  }
+}
+
+function addDays(dateValue, days) {
+  const base = dateValue ? new Date(dateValue) : new Date();
+  const validBase = Number.isNaN(base.getTime()) ? new Date() : base;
+  validBase.setDate(validBase.getDate() + days);
+  return validBase.toISOString().slice(0, 10);
+}
+
+function clampFollowupDays(value) {
+  const days = Number.parseInt(value, 10);
+  if (!Number.isFinite(days)) return 30;
+  return Math.min(60, Math.max(14, days));
+}
+
+async function upsertFollowupQueue(supabase, callRecord, beneficiaryRisk) {
+  const riskLevel = beneficiaryRisk?.disenrollment_risk;
+  const shouldQueue =
+    (callRecord.call_outcome === 'enrolled' || callRecord.enrollment_completed === true)
+    && (riskLevel === 'medium' || riskLevel === 'high');
+
+  if (!shouldQueue || !callRecord.tenant_id) return;
+
+  const customerName = [callRecord.customer_first_name, callRecord.customer_last_name]
+    .filter(Boolean)
+    .join(' ') || callRecord.beneficiary_name || null;
+  const enrollmentDate = callRecord.effective_date
+    || (callRecord.call_start ? String(callRecord.call_start).slice(0, 10) : new Date().toISOString().slice(0, 10));
+  const followupDays = clampFollowupDays(beneficiaryRisk?.recommended_followup_days);
+
+  try {
+    const { error } = await supabase.from('followup_queue').upsert({
+      tenant_id: callRecord.tenant_id,
+      call_id: callRecord.id,
+      agent_name: callRecord.writing_agent || callRecord.agent_name || null,
+      customer_name: customerName,
+      carrier_name: callRecord.carrier_name || null,
+      plan_name: callRecord.plan_name || null,
+      enrollment_date: enrollmentDate,
+      risk_level: riskLevel,
+      risk_reason: beneficiaryRisk?.disenrollment_risk_reason || null,
+      recommended_followup_date: addDays(enrollmentDate, followupDays),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'call_id' });
+    if (error) throw error;
+  } catch (error) {
+    console.warn('[ScorecardGenerator] Could not queue beneficiary follow-up:', error?.message || error);
+  }
 }
