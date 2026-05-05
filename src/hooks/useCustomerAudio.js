@@ -15,7 +15,8 @@ import { waitForActiveSessionMetadata } from "./useSessionTracker";
 const DEEPGRAM_WS_URL =
   "wss://api.deepgram.com/v1/listen?" +
   "encoding=linear16&sample_rate=16000&channels=1&model=nova-2" +
-  "&punctuate=true&interim_results=true&utterance_end_ms=1500&vad_events=true";
+  "&punctuate=true&interim_results=true&utterance_end_ms=1500&vad_events=true" +
+  "&sentiment=true";
 
 const TARGET_SAMPLE_RATE = 16000;
 const BUFFER_SIZE = 4096;

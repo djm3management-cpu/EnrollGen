@@ -1,0 +1,6 @@
+ALTER TABLE public.call_records
+  ADD COLUMN IF NOT EXISTS dg_sentiment JSONB DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS dg_intents JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS dg_topics JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS dg_summary TEXT,
+  ADD COLUMN IF NOT EXISTS call_analytics JSONB DEFAULT '{}';
