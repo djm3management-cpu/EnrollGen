@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Clock, HeartPulse, PhoneCall, ShieldAlert, UserRound } from "lucide-react";
+import { useAgentCoaching } from "../hooks/useAgentCoaching";
+import { useCallInsights } from "../hooks/useCallInsights";
+import { useFollowUps } from "../hooks/useFollowUps";
 import { useTenantConfig } from "../hooks/useTenantConfig";
 
 const EMPTY_STATE = {
@@ -18,6 +22,8 @@ const TRACKER_STATUSES = [
 const DEFAULT_TRACKER_STATUS = TRACKER_STATUSES[0];
 
 const WINDOWS = ["MTD", "QTD", "YTD"];
+const DETAIL_TABS = ["Transcript", "Analytics", "Assessment", "Compliance"];
+const FOLLOWUP_FILTERS = ["All", "Overdue", "High Risk", "This Week"];
 
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString();
@@ -47,6 +53,13 @@ function fmtDateMD(value) {
   return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function fmtDateISO(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toISOString().slice(0, 10);
+}
+
 function fmtTimeHM(value) {
   if (!value) return "";
   const d = new Date(value);
@@ -62,6 +75,40 @@ function fmtClock(d) {
 
 function normalizeTrackerStatus(value) {
   return TRACKER_STATUSES.includes(value) ? value : DEFAULT_TRACKER_STATUS;
+}
+
+function asNumber(value, fallback = 0) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function avgNumbers(values) {
+  const valid = values.map((value) => Number(value)).filter(Number.isFinite);
+  return valid.length ? valid.reduce((sum, value) => sum + value, 0) / valid.length : null;
+}
+
+function scoreLabel(score) {
+  const value = asNumber(score, 0);
+  if (value > 0.05) return "positive";
+  if (value < -0.05) return "negative";
+  return "neutral";
+}
+
+function sentenceCase(value) {
+  return String(value || "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function statusLabel(value) {
+  return sentenceCase(value || "pending");
+}
+
+function addDaysISO(value, days) {
+  const base = value ? new Date(value) : new Date();
+  const valid = Number.isNaN(base.getTime()) ? new Date() : base;
+  valid.setDate(valid.getDate() + asNumber(days, 30));
+  return valid.toISOString().slice(0, 10);
 }
 
 function contactedAtForStatus(status, currentValue) {
@@ -142,6 +189,11 @@ function filterByWindow(rows, window) {
     const d = new Date(r.call_start);
     return !Number.isNaN(d.getTime()) && d >= start;
   });
+}
+
+function filterByAgent(rows, selectedAgent) {
+  if (!selectedAgent) return rows;
+  return rows.filter((row) => resolveAgentName(row) === selectedAgent);
 }
 
 function buildLeaderboards(rows, coopRates = {}) {
@@ -268,7 +320,7 @@ function EmptyLine({ children = "--" }) {
   return <div className="ops-inline-empty">{children}</div>;
 }
 
-function TerminalNav({ windowKey }) {
+function TerminalNav({ windowKey, agentOptions, selectedAgent, onAgentChange }) {
   return (
     <>
       <div className="ops-command-line">
@@ -284,7 +336,18 @@ function TerminalNav({ windowKey }) {
       </div>
       <div className="ops-filter-strip">
         <span className="ops-filter-label">Agent</span>
-        <span className="ops-filter-box">All Agents</span>
+        <select
+          className="ops-filter-select"
+          value={selectedAgent}
+          onChange={(event) => onAgentChange(event.target.value)}
+        >
+          <option value="">All Agents</option>
+          {agentOptions.map((agent) => (
+            <option key={agent} value={agent}>
+              {agent}
+            </option>
+          ))}
+        </select>
         <span className="ops-filter-label">Outcome</span>
         <span className="ops-filter-box">All Outcomes</span>
         <span className="ops-filter-label">Window</span>
@@ -391,7 +454,315 @@ function LbSection({ title, rows, valueKey, color, format }) {
   );
 }
 
-function CallsTable({ rows }) {
+function sentimentForUtterance(text, segments = []) {
+  const normalized = String(text || "").toLowerCase();
+  if (!normalized) return "neutral";
+  const match = segments.find((segment) => {
+    const segmentText = String(segment.text || "").toLowerCase();
+    if (!segmentText) return false;
+    const probe = segmentText.slice(0, 48);
+    return normalized.includes(probe) || segmentText.includes(normalized.slice(0, 48));
+  });
+  return match?.sentiment || scoreLabel(match?.score);
+}
+
+function DetailTabs({ activeTab, onTabChange }) {
+  return (
+    <div className="ops-detail-tabs">
+      {DETAIL_TABS.map((tab) => (
+        <button
+          key={tab}
+          type="button"
+          className={activeTab === tab ? "is-active" : ""}
+          onClick={() => onTabChange(tab)}
+        >
+          {tab}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TranscriptDetail({ detail }) {
+  const utterances = Array.isArray(detail?.transcript_diarized) ? detail.transcript_diarized : [];
+  const segments = detail?.dg_sentiment?.segments || [];
+
+  return (
+    <div className="ops-detail-grid">
+      <div className="ops-summary-box">
+        <span className="ops-mini-label">Deepgram Summary</span>
+        <p>{detail?.dg_summary || "No Deepgram summary available."}</p>
+      </div>
+      <div className="ops-transcript-list">
+        {utterances.length === 0 ? (
+          <EmptyLine>No diarized transcript stored</EmptyLine>
+        ) : (
+          utterances.map((utterance, index) => {
+            const sentiment = sentimentForUtterance(utterance.text, segments);
+            const speaker = utterance.speaker === "customer" ? "Customer" : "Agent";
+            return (
+              <div key={`${utterance.start_ms || 0}-${index}`} className={`ops-utterance sentiment-${sentiment}`}>
+                <span className="speaker">{speaker}</span>
+                <span className="time">{fmtDuration((utterance.start_ms || 0) / 1000)}</span>
+                <p>{utterance.text}</p>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WpmIndicator({ label, value }) {
+  const numeric = asNumber(value, 0);
+  const pct = Math.max(0, Math.min(100, (numeric / 220) * 100));
+  return (
+    <div className="ops-wpm">
+      <div className="ops-wpm-head">
+        <span>{label}</span>
+        <strong>{numeric}</strong>
+      </div>
+      <div className="ops-wpm-track">
+        <span className="ideal" />
+        <span className="marker" style={{ left: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function SentimentTrajectory({ trajectory = [] }) {
+  const points = trajectory.length ? trajectory : [1, 2, 3, 4].map((quarter) => ({ quarter, avg_score: 0 }));
+  const polyline = points.map((point, index) => {
+    const x = 12 + index * 45;
+    const y = 42 - Math.max(-1, Math.min(1, asNumber(point.avg_score, 0))) * 30;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return (
+    <div className="ops-sentiment-chart">
+      <svg viewBox="0 0 150 82" role="img" aria-label="Sentiment trajectory">
+        <line x1="8" y1="42" x2="142" y2="42" />
+        <polyline points={polyline} />
+        {points.map((point, index) => {
+          const x = 12 + index * 45;
+          const y = 42 - Math.max(-1, Math.min(1, asNumber(point.avg_score, 0))) * 30;
+          return <circle key={point.quarter || index} cx={x} cy={y} r="3" />;
+        })}
+      </svg>
+      <div className="ops-chart-axis">
+        {points.map((point, index) => (
+          <span key={point.quarter || index}>Q{point.quarter || index + 1}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsDetail({ detail }) {
+  const analytics = detail?.call_analytics || {};
+  const talk = analytics.talk_time || {};
+  const wpm = analytics.wpm || {};
+  const pauses = analytics.pauses || {};
+  const interruptions = analytics.interruptions || {};
+  const trajectory = detail?.dg_sentiment?.trajectory || [];
+  const pauseRows = Array.isArray(pauses.pauses) ? pauses.pauses : [];
+  const longestPause = pauseRows.reduce((max, pause) => (
+    asNumber(pause.duration_ms, 0) > asNumber(max?.duration_ms, 0) ? pause : max
+  ), null);
+  const agentPct = asNumber(talk.agent_talk_pct, 50);
+  const customerPct = Math.max(0, 100 - agentPct);
+
+  return (
+    <div className="ops-analytics-grid">
+      <div className="ops-analytics-block span-2">
+        <span className="ops-mini-label">Talk Time</span>
+        <div className="ops-talk-bar">
+          <span className="agent" style={{ width: `${agentPct}%` }}>{agentPct}%</span>
+          <span className="customer" style={{ width: `${customerPct}%` }}>{customerPct}%</span>
+        </div>
+        <div className="ops-talk-legend">
+          <span>Agent {fmtDuration(asNumber(talk.agent_ms, 0) / 1000)}</span>
+          <span>Customer {fmtDuration(asNumber(talk.customer_ms, 0) / 1000)}</span>
+        </div>
+      </div>
+      <div className="ops-analytics-block">
+        <span className="ops-mini-label">Words Per Minute</span>
+        <WpmIndicator label="Agent" value={wpm.agent_wpm} />
+        <WpmIndicator label="Customer" value={wpm.customer_wpm} />
+      </div>
+      <div className="ops-analytics-block">
+        <span className="ops-mini-label">Pauses</span>
+        <div className="ops-kpi-pair">
+          <span>Total</span>
+          <strong>{fmtNumber(pauses.total_pauses)}</strong>
+        </div>
+        <div className="ops-kpi-pair">
+          <span>Longest</span>
+          <strong>{fmtDuration(asNumber(pauses.longest_pause_ms, 0) / 1000)}</strong>
+        </div>
+        <div className="ops-position-track">
+          <span style={{ left: `${asNumber(longestPause?.position_pct, 0)}%` }} />
+        </div>
+      </div>
+      <div className="ops-analytics-block">
+        <span className="ops-mini-label">Interruptions</span>
+        <div className="ops-kpi-pair">
+          <span>Agent</span>
+          <strong>{fmtNumber(interruptions.agent_interruptions)}</strong>
+        </div>
+        <div className="ops-kpi-pair">
+          <span>Customer</span>
+          <strong>{fmtNumber(interruptions.customer_interruptions)}</strong>
+        </div>
+      </div>
+      <div className="ops-analytics-block span-2">
+        <span className="ops-mini-label">Sentiment Trajectory</span>
+        <SentimentTrajectory trajectory={trajectory} />
+      </div>
+    </div>
+  );
+}
+
+function Gauge({ label, value }) {
+  const numeric = asNumber(value, 0);
+  const pct = Math.max(0, Math.min(100, (numeric / 10) * 100));
+  return (
+    <div className="ops-gauge" style={{ "--score-pct": `${pct}%` }}>
+      <div className="ring">
+        <span>{numeric || "--"}</span>
+      </div>
+      <span className="label">{label}</span>
+    </div>
+  );
+}
+
+function RiskBadge({ level }) {
+  const normalized = String(level || "low").toLowerCase();
+  return <span className={`ops-risk-badge ${normalized}`}>{normalized.toUpperCase()}</span>;
+}
+
+function ListBlock({ title, items }) {
+  const rows = Array.isArray(items) ? items.filter(Boolean) : [];
+  return (
+    <div className="ops-list-block">
+      <span className="ops-mini-label">{title}</span>
+      {rows.length === 0 ? (
+        <EmptyLine>None</EmptyLine>
+      ) : (
+        rows.map((item, index) => <p key={`${title}-${index}`}>{item}</p>)
+      )}
+    </div>
+  );
+}
+
+function AssessmentDetail({ detail }) {
+  const agent = detail?.agent_assessment || {};
+  const beneficiary = detail?.beneficiary_risk || {};
+  const followupDate = addDaysISO(
+    detail?.effective_date || detail?.call_start,
+    beneficiary.recommended_followup_days || 30
+  );
+
+  return (
+    <div className="ops-assessment-grid">
+      <div className="ops-gauge-row">
+        <Gauge label="Rapport" value={agent.rapport_score} />
+        <Gauge label="Listening" value={agent.listening_score} />
+        <Gauge label="Product" value={agent.product_knowledge_score} />
+      </div>
+      <div className="ops-coaching-priority">
+        <span className="ops-mini-label">Top Coaching Priority</span>
+        <p>{agent.top_coaching_priority || "No coaching priority stored."}</p>
+      </div>
+      <ListBlock title="Missed Opportunities" items={agent.missed_opportunities} />
+      <ListBlock title="CMS Audit Flags" items={agent.audit_risk_flags} />
+      <div className="ops-beneficiary-box">
+        <span className="ops-mini-label">Beneficiary Risk</span>
+        <div className="ops-beneficiary-row">
+          <span>Engagement</span>
+          <strong>{agent.engagement_score || beneficiary.engagement_score || "--"}/10</strong>
+        </div>
+        <div className="ops-beneficiary-row">
+          <span>Disenrollment</span>
+          <RiskBadge level={beneficiary.disenrollment_risk} />
+        </div>
+        <div className="ops-beneficiary-row">
+          <span>Follow-up</span>
+          <strong>{followupDate}</strong>
+        </div>
+        <p>{beneficiary.disenrollment_risk_reason || "No risk reason stored."}</p>
+      </div>
+      <ListBlock title="Confusion Indicators" items={beneficiary.confusion_indicators} />
+    </div>
+  );
+}
+
+function ComplianceDetail({ detail }) {
+  const scorecard = detail?.scorecard || {};
+  const categoryScores = Object.entries(scorecard.category_scores || {});
+
+  return (
+    <div className="ops-compliance-detail">
+      <div className="ops-compliance-overview">
+        <div>
+          <span className="ops-mini-label">Overall</span>
+          <strong>{scorecard.overall_score !== undefined ? `${Math.round(Number(scorecard.overall_score))}%` : "--"}</strong>
+        </div>
+        <div>
+          <span className="ops-mini-label">Grade</span>
+          <strong>{scorecard.overall_grade || "--"}</strong>
+        </div>
+        <div>
+          <span className="ops-mini-label">Pass/Fail</span>
+          <strong>{String(scorecard.pass_fail || "--").toUpperCase()}</strong>
+        </div>
+      </div>
+      {scorecard.auto_fail_triggered ? (
+        <ListBlock title="Auto-Fail Reasons" items={scorecard.auto_fail_reasons} />
+      ) : null}
+      <div className="ops-category-grid">
+        {categoryScores.length === 0 ? (
+          <EmptyLine>No category scores stored</EmptyLine>
+        ) : (
+          categoryScores.map(([category, scores]) => (
+            <div key={category} className="ops-category-row">
+              <span>{sentenceCase(category)}</span>
+              <strong>{Math.round(asNumber(scores?.pct, 0))}%</strong>
+              <div className="ops-category-track">
+                <span style={{ width: `${Math.max(0, Math.min(100, asNumber(scores?.pct, 0)))}%` }} />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      <ListBlock title="Risk Flags" items={scorecard.risk_flags} />
+    </div>
+  );
+}
+
+function CallDetailPanel({ detail, loading }) {
+  const [activeTab, setActiveTab] = useState("Transcript");
+
+  if (loading) {
+    return <div className="ops-detail-panel"><EmptyLine>Loading call intelligence</EmptyLine></div>;
+  }
+  if (!detail) {
+    return <div className="ops-detail-panel"><EmptyLine>Call intelligence unavailable</EmptyLine></div>;
+  }
+
+  return (
+    <div className="ops-detail-panel">
+      <DetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      {activeTab === "Transcript" ? <TranscriptDetail detail={detail} /> : null}
+      {activeTab === "Analytics" ? <AnalyticsDetail detail={detail} /> : null}
+      {activeTab === "Assessment" ? <AssessmentDetail detail={detail} /> : null}
+      {activeTab === "Compliance" ? <ComplianceDetail detail={detail} /> : null}
+    </div>
+  );
+}
+
+function CallsTable({ rows, selectedCallId, callDetails, detailLoading, onSelectCall }) {
   return (
     <div className="ops-table-wrap">
       <table className="ops-table">
@@ -419,23 +790,38 @@ function CallsTable({ rows }) {
             rows.map((r, i) => {
               const oc = outcomeLabel(r);
               const ghl = ghlBadge(r);
-              return (
-                <tr key={r.call_record_id} className={i === 0 ? "is-selected" : ""}>
-                  <td className="row-n">{i + 1}</td>
-                  <td>{fmtTimeHM(r.call_start) || fmtDateMD(r.activity_date)}</td>
-                  <td>{customerName(r)}</td>
-                  <td>{resolveAgentName(r)}</td>
-                  <td>{carrierName(r)}</td>
-                  <td className={oc.cls}>{oc.label}</td>
-                  <td className="num">{fmtDuration(r.call_duration_seconds)}</td>
-                  <td className="num">
-                    {r.overall_score !== null && r.overall_score !== undefined
-                      ? `${Math.round(Number(r.overall_score))}%`
-                      : "—"}
-                  </td>
-                  <td className={ghl.cls}>{ghl.glyph}</td>
-                </tr>
-              );
+              const selected = selectedCallId === r.call_record_id;
+              return [
+                  <tr
+                    key={r.call_record_id}
+                    className={selected ? "is-selected" : ""}
+                    onClick={() => onSelectCall(r.call_record_id)}
+                  >
+                    <td className="row-n">{i + 1}</td>
+                    <td>{fmtTimeHM(r.call_start) || fmtDateMD(r.activity_date)}</td>
+                    <td>{customerName(r)}</td>
+                    <td>{resolveAgentName(r)}</td>
+                    <td>{carrierName(r)}</td>
+                    <td className={oc.cls}>{oc.label}</td>
+                    <td className="num">{fmtDuration(r.call_duration_seconds)}</td>
+                    <td className="num">
+                      {r.overall_score !== null && r.overall_score !== undefined
+                        ? `${Math.round(Number(r.overall_score))}%`
+                        : "—"}
+                    </td>
+                    <td className={ghl.cls}>{ghl.glyph}</td>
+                  </tr>,
+                  selected ? (
+                    <tr key={`${r.call_record_id}-detail`} className="ops-detail-row">
+                      <td colSpan={9}>
+                        <CallDetailPanel
+                          detail={callDetails[r.call_record_id]}
+                          loading={detailLoading === r.call_record_id}
+                        />
+                      </td>
+                    </tr>
+                  ) : null,
+              ];
             })
           )}
         </tbody>
@@ -549,6 +935,324 @@ function CompliancePanel({ data }) {
   );
 }
 
+function latestInsights(insights, type) {
+  const rows = insights
+    .filter((insight) => insight.insight_type === type)
+    .sort((a, b) => new Date(b.computed_at || 0) - new Date(a.computed_at || 0));
+  const byKey = new Map();
+  for (const row of rows) {
+    if (!byKey.has(row.insight_key)) byKey.set(row.insight_key, row);
+  }
+  return Array.from(byKey.values());
+}
+
+function TrendValue({ value }) {
+  if (value === null || value === undefined) return <span className="ops-trend flat">0</span>;
+  const numeric = Number(value);
+  const cls = numeric > 0 ? "up" : numeric < 0 ? "down" : "flat";
+  const glyph = numeric > 0 ? "▲" : numeric < 0 ? "▼" : "■";
+  return <span className={`ops-trend ${cls}`}>{glyph} {Math.abs(numeric).toFixed(1)}</span>;
+}
+
+function AgentIntelligencePanel({ insights, selectedAgent, agentOptions }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const { coaching, loading: coachingLoading } = useAgentCoaching(selectedAgent);
+  const rows = latestInsights(insights, "agent_30d")
+    .map((row) => row.insight_data || {})
+    .sort((a, b) => asNumber(b.conversion_rate, 0) - asNumber(a.conversion_rate, 0));
+  const selectedStats = rows.find((row) => row.agent_name === selectedAgent);
+
+  return (
+    <div className="ops-agent-intel">
+      <button type="button" className="ops-collapsible-head" onClick={() => setCollapsed((value) => !value)}>
+        <span>Agent Intelligence</span>
+        <strong>{collapsed ? "+" : "-"}</strong>
+      </button>
+      {collapsed ? null : (
+        selectedAgent && selectedStats ? (
+          <div className="ops-agent-intel-body">
+            <div className="ops-agent-name">{selectedAgent}</div>
+            <div className="ops-agent-stat-grid">
+              <div><span>Calls</span><strong>{fmtNumber(selectedStats.total_calls)}</strong></div>
+              <div><span>Enroll</span><strong>{fmtNumber(selectedStats.enrollments)}</strong></div>
+              <div><span>Rate</span><strong>{fmtPercent(selectedStats.conversion_rate, 1)}</strong></div>
+              <div><span>Dur</span><strong>{selectedStats.avg_duration_min ?? "--"}m</strong></div>
+              <div><span>Talk</span><strong>{selectedStats.avg_talk_pct ?? "--"}%</strong></div>
+              <div><span>WPM</span><strong>{selectedStats.avg_wpm ?? "--"}</strong></div>
+              <div><span>Ints</span><strong>{selectedStats.avg_interruptions ?? "--"}</strong></div>
+              <div><span>Sent</span><strong>{selectedStats.avg_sentiment ?? "--"}</strong></div>
+              <div><span>Rapport</span><strong>{selectedStats.avg_rapport ?? "--"}</strong></div>
+              <div><span>Listen</span><strong>{selectedStats.avg_listening ?? "--"}</strong></div>
+            </div>
+            <div className="ops-agent-trends">
+              <span>Rate <TrendValue value={selectedStats.trend?.conversion_rate_delta} /></span>
+              <span>Sent <TrendValue value={selectedStats.trend?.avg_sentiment_delta} /></span>
+              <span>Rapport <TrendValue value={selectedStats.trend?.avg_rapport_delta} /></span>
+            </div>
+            <div className="ops-coaching-summary">
+              <span className="ops-mini-label">Latest Coaching</span>
+              <p>{coachingLoading ? "Loading..." : coaching?.coaching_summary || "No weekly coaching summary stored."}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="ops-agent-intel-body">
+            {rows.length === 0 ? (
+              <EmptyLine>{agentOptions.length ? "No agent insights yet" : "No agents found"}</EmptyLine>
+            ) : (
+              rows.slice(0, 5).map((agent, index) => (
+                <div key={agent.agent_name || index} className="ops-agent-rank">
+                  <span className="rank">{index + 1}</span>
+                  <span className="name">{agent.agent_name}</span>
+                  <strong>{fmtPercent(agent.conversion_rate, 1)}</strong>
+                  <TrendValue value={agent.trend?.conversion_rate_delta} />
+                </div>
+              ))
+            )}
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
+function buildBriefingCards(insights) {
+  const cards = [];
+  const time = latestInsights(insights, "time_patterns")[0]?.insight_data?.best_pattern;
+  if (time) {
+    cards.push({
+      key: "time",
+      icon: Clock,
+      stat: `${Math.round(asNumber(time.conversion_rate, 0))}%`,
+      text: `${time.day_name} ${time.hour_of_day}:00 converts best this quarter`,
+      updated: "Updated recently",
+    });
+  }
+
+  const duration = latestInsights(insights, "duration_patterns")[0]?.insight_data?.best_pattern;
+  if (duration) {
+    cards.push({
+      key: "duration",
+      icon: PhoneCall,
+      stat: `${Math.round(asNumber(duration.conversion_rate, 0))}%`,
+      text: `${sentenceCase(duration.duration_bucket)} has the strongest conversion`,
+      updated: "Updated recently",
+    });
+  }
+
+  const agents = latestInsights(insights, "agent_30d").map((row) => row.insight_data || {});
+  const spotlight = [...agents].sort((a, b) => asNumber(b.trend?.avg_rapport_delta, -999) - asNumber(a.trend?.avg_rapport_delta, -999))[0];
+  if (spotlight?.agent_name && spotlight.trend?.avg_rapport_delta !== null && spotlight.trend?.avg_rapport_delta !== undefined) {
+    cards.push({
+      key: "agent",
+      icon: UserRound,
+      stat: `${spotlight.trend.avg_rapport_delta > 0 ? "+" : ""}${spotlight.trend.avg_rapport_delta}`,
+      text: `${spotlight.agent_name}'s rapport trend leads the team`,
+      updated: "Updated recently",
+    });
+  }
+
+  const carrier = latestInsights(insights, "carrier_30d")
+    .map((row) => row.insight_data || {})
+    .sort((a, b) => asNumber(b.high_risk_count, 0) - asNumber(a.high_risk_count, 0))[0];
+  if (carrier?.carrier_name && asNumber(carrier.high_risk_count, 0) > 0) {
+    cards.push({
+      key: "carrier",
+      icon: ShieldAlert,
+      stat: fmtNumber(carrier.high_risk_count),
+      text: `${carrier.carrier_name} enrollments have high-risk flags`,
+      updated: "Updated recently",
+    });
+  }
+
+  const currentSentiment = avgNumbers(agents.map((row) => row.avg_sentiment));
+  const previousSentiment = avgNumbers(agents.map((row) => row.previous_30d?.avg_sentiment));
+  if (currentSentiment !== null && previousSentiment !== null) {
+    const delta = currentSentiment - previousSentiment;
+    cards.push({
+      key: "sentiment",
+      icon: HeartPulse,
+      stat: `${delta >= 0 ? "+" : ""}${Math.round(delta * 100)}%`,
+      text: "Average beneficiary sentiment trend",
+      updated: "Updated recently",
+    });
+  }
+
+  return cards.slice(0, 5);
+}
+
+function IntelligenceBriefing({ insights, loading }) {
+  const cards = useMemo(() => buildBriefingCards(insights), [insights]);
+  return (
+    <div className="ops-briefing">
+      <div className="ops-section-head">
+        <span>Intelligence Briefing</span>
+        <span className="ops-section-meta">{loading ? "LOADING" : `${cards.length} ALERTS`}</span>
+      </div>
+      {cards.length === 0 ? (
+        <div className="ops-briefing-empty">Intelligence briefing will appear after your first few calls are analyzed.</div>
+      ) : (
+        <div className="ops-briefing-row">
+          {cards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div key={card.key} className="ops-briefing-card">
+                <Icon size={14} />
+                <strong>{card.stat}</strong>
+                <span>{card.text}</span>
+                <small>{card.updated}</small>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function followupIsOverdue(row) {
+  if (row.followup_status !== "pending" || !row.recommended_followup_date) return false;
+  const due = new Date(row.recommended_followup_date);
+  const today = new Date();
+  due.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return !Number.isNaN(due.getTime()) && due < today;
+}
+
+function followupThisWeek(row) {
+  if (!row.recommended_followup_date) return false;
+  const due = new Date(row.recommended_followup_date);
+  const today = new Date();
+  const week = new Date(today);
+  today.setHours(0, 0, 0, 0);
+  week.setDate(today.getDate() + 7);
+  week.setHours(23, 59, 59, 999);
+  return !Number.isNaN(due.getTime()) && due >= today && due <= week;
+}
+
+function FollowUpsPanel() {
+  const { followups, overdue, loading, updateStatus } = useFollowUps();
+  const [filter, setFilter] = useState("All");
+  const visible = useMemo(() => {
+    if (filter === "Overdue") return followups.filter(followupIsOverdue);
+    if (filter === "High Risk") return followups.filter((row) => row.risk_level === "high");
+    if (filter === "This Week") return followups.filter(followupThisWeek);
+    return followups;
+  }, [filter, followups]);
+
+  return (
+    <div className="ops-followups">
+      <div className="ops-section-head">
+        <span>Follow-Ups</span>
+        <span className="ops-section-meta">
+          {loading ? "LOADING" : `${overdue.length} OVERDUE`}
+        </span>
+      </div>
+      <div className="ops-followup-filters">
+        {FOLLOWUP_FILTERS.map((item) => (
+          <button
+            key={item}
+            type="button"
+            className={filter === item ? "is-active" : ""}
+            onClick={() => setFilter(item)}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+      {visible.length === 0 ? (
+        <EmptyLine>0 follow-ups</EmptyLine>
+      ) : (
+        <div className="ops-followup-table">
+          {visible.map((row) => (
+            <div key={row.id} className={`ops-followup-row${followupIsOverdue(row) ? " is-overdue" : ""}`}>
+              <span className="customer">{row.customer_name || "Unknown"}</span>
+              <span className="carrier">{[row.carrier_name, row.plan_name].filter(Boolean).join(" / ") || "—"}</span>
+              <RiskBadge level={row.risk_level} />
+              <span className="date">{fmtDateISO(row.recommended_followup_date)}</span>
+              <select
+                value={row.followup_status || "pending"}
+                onChange={(event) => updateStatus(row.id, event.target.value)}
+              >
+                {["pending", "contacted", "cleared", "at_risk", "disenrolled"].map((status) => (
+                  <option key={status} value={status}>{statusLabel(status)}</option>
+                ))}
+              </select>
+              <span className="agent">{row.agent_name || "—"}</span>
+              {row.notes ? <span className="notes">{row.notes}</span> : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function heatCell(value, values, reverse = false, suffix = "") {
+  const numeric = asNumber(value, 0);
+  const valid = values.map((item) => asNumber(item, 0));
+  const min = Math.min(...valid);
+  const max = Math.max(...valid);
+  const ratio = max === min ? 0.5 : (numeric - min) / (max - min);
+  const score = reverse ? 1 - ratio : ratio;
+  const color = score >= 0.5
+    ? `rgba(51, 204, 102, ${0.15 + score * 0.35})`
+    : `rgba(255, 56, 56, ${0.15 + (1 - score) * 0.35})`;
+  return { value: `${numeric}${suffix}`, style: { backgroundColor: color } };
+}
+
+function CarrierHeatmapPanel({ insights }) {
+  const rows = latestInsights(insights, "carrier_30d").map((row) => row.insight_data || {});
+  const enrollments = rows.map((row) => row.total_enrollments);
+  const compliance = rows.map((row) => row.avg_compliance_score);
+  const sentiment = rows.map((row) => row.avg_sentiment);
+  const risk = rows.map((row) => row.high_risk_count);
+  const duration = rows.map((row) => row.avg_call_duration);
+
+  return (
+    <div className="ops-carrier-heatmap">
+      <div className="ops-section-head">
+        <span>Carrier Heatmap</span>
+        <span className="ops-section-meta">{rows.length} CARRIERS</span>
+      </div>
+      {rows.length === 0 ? (
+        <EmptyLine>No carrier insights yet</EmptyLine>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>Carrier</th>
+              <th>Enrl</th>
+              <th>Compl</th>
+              <th>Sent</th>
+              <th>Risk</th>
+              <th>Dur</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const enrollCell = heatCell(row.total_enrollments, enrollments);
+              const compCell = heatCell(row.avg_compliance_score, compliance, false, "%");
+              const sentCell = heatCell(row.avg_sentiment, sentiment);
+              const riskCell = heatCell(row.high_risk_count, risk, true);
+              const durCell = heatCell(row.avg_call_duration, duration, true, "m");
+              return (
+                <tr key={row.carrier_name}>
+                  <td>{row.carrier_name}</td>
+                  <td style={enrollCell.style}>{enrollCell.value}</td>
+                  <td style={compCell.style}>{compCell.value}</td>
+                  <td style={sentCell.style}>{sentCell.value}</td>
+                  <td style={riskCell.style}>{riskCell.value}</td>
+                  <td style={durCell.style}>{durCell.value}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 function PipelinePanel({ rows }) {
   const counts = buildPipelineCounts(rows);
   const items = [
@@ -619,15 +1323,21 @@ function TrackerRow({ entry, status, saving, onStatusChange }) {
 export default function OperationsTab() {
   const {
     agencyDisplayName,
+    agents,
     coopRates,
     error: tenantError,
     loading: tenantLoading,
     supabaseClient,
   } = useTenantConfig();
+  const { insights, loading: insightsLoading } = useCallInsights();
   const [state, setState] = useState(EMPTY_STATE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [windowKey, setWindowKey] = useState("MTD");
+  const [selectedAgent, setSelectedAgent] = useState("");
+  const [selectedCallId, setSelectedCallId] = useState(null);
+  const [callDetails, setCallDetails] = useState({});
+  const [detailLoading, setDetailLoading] = useState(null);
   const [now, setNow] = useState(new Date());
   const [trackerPending, setTrackerPending] = useState({});
 
@@ -700,9 +1410,15 @@ export default function OperationsTab() {
     return () => clearInterval(id);
   }, []);
 
+  const agentOptions = useMemo(() => {
+    const names = new Set((agents || []).map((agent) => agent.name).filter(Boolean));
+    state.dailyActivity.forEach((row) => names.add(resolveAgentName(row)));
+    return Array.from(names).filter((name) => name && name !== "—").sort((a, b) => a.localeCompare(b));
+  }, [agents, state.dailyActivity]);
+
   const filteredDaily = useMemo(
-    () => filterByWindow(state.dailyActivity, windowKey),
-    [state.dailyActivity, windowKey]
+    () => filterByAgent(filterByWindow(state.dailyActivity, windowKey), selectedAgent),
+    [selectedAgent, state.dailyActivity, windowKey]
   );
 
   const leaderboards = useMemo(() => buildLeaderboards(filteredDaily, coopRates), [coopRates, filteredDaily]);
@@ -718,13 +1434,14 @@ export default function OperationsTab() {
   }, [trackerEntries]);
 
   const metrics = useMemo(() => {
-    const calls = state.dailyActivity.length;
-    const enrollments = state.dailyActivity.filter(isEnrolled).length;
+    const calls = filteredDaily.length;
+    const enrollments = filteredDaily.filter(isEnrolled).length;
     const callbacks = state.pipelineStatus.filter(
       (record) => record.call_outcome === "callback_scheduled"
     ).length;
-    const coopTotal = state.dailyActivity.reduce((sum, r) => sum + coopFor(r, coopRates), 0);
-    const complianceAvg = compliance ? compliance.avg : null;
+    const coopTotal = filteredDaily.reduce((sum, r) => sum + coopFor(r, coopRates), 0);
+    const filteredCompliance = buildCompliance(filteredDaily);
+    const complianceAvg = filteredCompliance ? filteredCompliance.avg : null;
     return {
       calls,
       enrollments,
@@ -733,7 +1450,47 @@ export default function OperationsTab() {
       coopTotal,
       complianceAvg,
     };
-  }, [coopRates, state.dailyActivity, state.pipelineStatus, compliance]);
+  }, [coopRates, filteredDaily, state.pipelineStatus]);
+
+  const handleSelectCall = useCallback(async (callId) => {
+    if (!callId) return;
+    const nextSelected = selectedCallId === callId ? null : callId;
+    setSelectedCallId(nextSelected);
+    if (!nextSelected || callDetails[callId]) return;
+
+    setDetailLoading(callId);
+    try {
+      const { data: callRecord, error: callError } = await supabaseClient
+        .from("call_records")
+        .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, plan_name, effective_date, call_start, compliance_scorecard_id")
+        .eq("id", callId)
+        .single();
+
+      if (callError) throw callError;
+
+      const { data: scorecards, error: scoreError } = await supabaseClient
+        .from("compliance_scorecards")
+        .select("id, overall_score, overall_grade, pass_fail, auto_fail_triggered, auto_fail_reasons, category_scores, risk_flags, coaching_notes, created_at")
+        .eq("call_id", callId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (scoreError) throw scoreError;
+
+      setCallDetails((prev) => ({
+        ...prev,
+        [callId]: {
+          ...callRecord,
+          scorecard: scorecards?.[0] || null,
+        },
+      }));
+    } catch (err) {
+      console.error("[OperationsTab] Call detail load failed:", err);
+      setError(err.message || "Call detail unavailable.");
+    } finally {
+      setDetailLoading(null);
+    }
+  }, [callDetails, selectedCallId, supabaseClient]);
 
   const handleTrackerStatusChange = useCallback(
     async (entry, nextValue) => {
@@ -802,7 +1559,12 @@ export default function OperationsTab() {
     <section className="operations-tab">
       {error ? <div className="ops-error">⚠ {error}</div> : null}
 
-      <TerminalNav windowKey={windowKey} />
+      <TerminalNav
+        windowKey={windowKey}
+        agentOptions={agentOptions}
+        selectedAgent={selectedAgent}
+        onAgentChange={setSelectedAgent}
+      />
 
       <div className="ops-ticker">
         {tickerEvents.length === 0 ? (
@@ -861,9 +1623,16 @@ export default function OperationsTab() {
             color="amber"
             format={(v) => fmtMoney(v)}
           />
+          <AgentIntelligencePanel
+            insights={insights}
+            selectedAgent={selectedAgent}
+            agentOptions={agentOptions}
+          />
         </aside>
 
         <main className="ops-main">
+          <IntelligenceBriefing insights={insights} loading={insightsLoading} />
+
           <div className="ops-metric-row">
             <div className="ops-metric">
               <span className="ops-metric-label">Calls</span>
@@ -894,15 +1663,22 @@ export default function OperationsTab() {
           <div className="ops-section-head">
             <span>Recent Calls</span>
             <span className="ops-section-meta">
-              {loading ? "LOADING…" : `${state.dailyActivity.length} RECORDS`}
+              {loading ? "LOADING…" : `${filteredDaily.length} RECORDS`}
             </span>
           </div>
-          <CallsTable rows={state.dailyActivity} />
+          <CallsTable
+            rows={filteredDaily}
+            selectedCallId={selectedCallId}
+            callDetails={callDetails}
+            detailLoading={detailLoading}
+            onSelectCall={handleSelectCall}
+          />
 
           <div className="ops-bottom-row">
             <CarrierMixPanel mix={carrierMix} />
             <CompliancePanel data={compliance} />
           </div>
+          <CarrierHeatmapPanel insights={insights} />
           <PipelinePanel rows={state.pipelineStatus} />
         </main>
 
@@ -931,6 +1707,7 @@ export default function OperationsTab() {
               );
             })
           )}
+          <FollowUpsPanel />
         </aside>
       </div>
 
