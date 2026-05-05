@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import EnrollGenLogo from "./components/EnrollGenLogo";
+import LandingPage from "./components/LandingPage";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
@@ -824,6 +825,16 @@ function AppContent() {
 }
 
 export default function App() {
+  const [pathname, setPathname] = useState(() =>
+    typeof window === "undefined" ? "/" : window.location.pathname
+  );
+
+  useEffect(() => {
+    const updatePathname = () => setPathname(window.location.pathname);
+    window.addEventListener("popstate", updatePathname);
+    return () => window.removeEventListener("popstate", updatePathname);
+  }, []);
+
   if (LOGIN_DISABLED) {
     return <AppContent />;
   }
@@ -831,17 +842,21 @@ export default function App() {
   return (
     <>
       <SignedOut>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "100vh",
-            background: "#0c1017",
-          }}
-        >
-          <SignIn />
-        </div>
+        {pathname === "/login" ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "100vh",
+              background: "#0c1017",
+            }}
+          >
+            <SignIn />
+          </div>
+        ) : (
+          <LandingPage />
+        )}
       </SignedOut>
       <SignedIn>
         <AppContent />
