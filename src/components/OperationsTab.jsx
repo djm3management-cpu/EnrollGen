@@ -22,6 +22,22 @@ const TRACKER_STATUSES = [
 const DEFAULT_TRACKER_STATUS = TRACKER_STATUSES[0];
 
 const WINDOWS = ["MTD", "QTD", "YTD"];
+const DATE_RANGE_OPTIONS = [
+  { key: "today", label: "Today" },
+  { key: "7d", label: "7d" },
+  { key: "30d", label: "30d" },
+  { key: "custom", label: "Custom" },
+];
+const AGENT_AVATAR_COLORS = [
+  "#4f6f52",
+  "#6b5b3e",
+  "#4f6573",
+  "#6d4f62",
+  "#5e6445",
+  "#6b4d42",
+  "#4d6670",
+  "#5c5870",
+];
 const DETAIL_TABS = ["Transcript", "Analytics", "Assessment", "Compliance"];
 const FOLLOWUP_FILTERS = ["All", "Overdue", "High Risk", "This Week"];
 
@@ -77,6 +93,10 @@ function normalizeTrackerStatus(value) {
   return TRACKER_STATUSES.includes(value) ? value : DEFAULT_TRACKER_STATUS;
 }
 
+function dateValueForRow(row) {
+  return row.call_start || row.activity_date || row.created_at || "";
+}
+
 function asNumber(value, fallback = 0) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
@@ -130,6 +150,10 @@ function looksLikeId(value) {
   return false;
 }
 
+function normalizeLookup(value) {
+  return typeof value === "string" ? value.trim().toLowerCase().replace(/\s+/g, " ") : "";
+}
+
 function resolveAgentName(row) {
   if (row.writing_agent && !looksLikeId(row.writing_agent)) return row.writing_agent;
   if (row.agent_name && !looksLikeId(row.agent_name)) return row.agent_name;
@@ -172,6 +196,129 @@ function coopFor(row, coopRates = {}) {
   return Number(coopRates[key] ?? 0);
 }
 
+function sortValue(row, key) {
+  if (key === "agent") return resolveAgentName(row).toLowerCase();
+  if (key === "datetime") {
+    const d = new Date(dateValueForRow(row));
+    return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+  }
+  if (key === "duration") return Number(row.call_duration_seconds || 0);
+  if (key === "carrier") return carrierName(row).toLowerCase();
+  if (key === "outcome") return outcomeLabel(row).label.toLowerCase();
+  if (key === "compliance") {
+    return row.overall_score !== null && row.overall_score !== undefined
+      ? Number(row.overall_score)
+      : -1;
+  }
+  return "";
+}
+
+function sortRows(rows, sortConfig) {
+  const direction = sortConfig.direction === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    const av = sortValue(a, sortConfig.key);
+    const bv = sortValue(b, sortConfig.key);
+    if (typeof av === "number" && typeof bv === "number") {
+      return av === bv ? 0 : (av > bv ? 1 : -1) * direction;
+    }
+    return String(av).localeCompare(String(bv)) * direction;
+  });
+}
+
+function csvCell(value) {
+  const raw = value === null || value === undefined ? "" : String(value);
+  return /[",\n]/.test(raw) ? `"${raw.replace(/"/g, '""')}"` : raw;
+}
+
+function downloadCallsCsv(rows, coopRates) {
+  const headers = [
+    "date",
+    "time",
+    "agent",
+    "customer name",
+    "carrier",
+    "plan",
+    "outcome",
+    "compliance score",
+    "duration",
+    "co-op amount",
+  ];
+  const lines = rows.map((row) => {
+    const oc = outcomeLabel(row);
+    const d = dateValueForRow(row);
+    return [
+      fmtDateISO(d),
+      fmtTimeHM(d),
+      resolveAgentName(row),
+      customerName(row),
+      carrierName(row),
+      row.plan_name || "",
+      oc.label,
+      row.overall_score !== null && row.overall_score !== undefined
+        ? Math.round(Number(row.overall_score))
+        : "",
+      fmtDuration(row.call_duration_seconds),
+      coopFor(row, coopRates),
+    ].map(csvCell).join(",");
+  });
+  const csv = [headers.join(","), ...lines].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `enrollgen-calls-${fmtDateISO(new Date().toISOString())}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function rangeLabel(rangeKey, customStart, customEnd) {
+  if (rangeKey === "custom") {
+    if (customStart && customEnd) return `${customStart} - ${customEnd}`;
+    if (customStart) return `${customStart}+`;
+    if (customEnd) return `Through ${customEnd}`;
+    return "Custom";
+  }
+  return DATE_RANGE_OPTIONS.find((option) => option.key === rangeKey)?.label || "30d";
+}
+
+function dateRangeBounds(rangeKey, customStart, customEnd) {
+  const now = new Date();
+  let start = null;
+  let end = null;
+
+  if (rangeKey === "today") {
+    start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(start);
+    end.setDate(end.getDate() + 1);
+  } else if (rangeKey === "7d" || rangeKey === "30d") {
+    start = new Date(now);
+    start.setDate(start.getDate() - (rangeKey === "7d" ? 6 : 29));
+    start.setHours(0, 0, 0, 0);
+    end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+  } else if (rangeKey === "custom") {
+    if (customStart) start = new Date(`${customStart}T00:00:00`);
+    if (customEnd) end = new Date(`${customEnd}T23:59:59.999`);
+  }
+
+  return { start, end };
+}
+
+function filterByDateRange(rows, rangeKey, customStart, customEnd) {
+  const { start, end } = dateRangeBounds(rangeKey, customStart, customEnd);
+  if (!start && !end) return rows;
+  return rows.filter((r) => {
+    const d = new Date(dateValueForRow(r));
+    if (Number.isNaN(d.getTime())) return false;
+    if (start && d < start) return false;
+    if (end && d > end) return false;
+    return true;
+  });
+}
+
 function filterByWindow(rows, window) {
   if (!window || !rows.length) return rows;
   const now = new Date();
@@ -186,7 +333,7 @@ function filterByWindow(rows, window) {
   }
   start.setHours(0, 0, 0, 0);
   return rows.filter((r) => {
-    const d = new Date(r.call_start);
+    const d = new Date(dateValueForRow(r));
     return !Number.isNaN(d.getTime()) && d >= start;
   });
 }
@@ -194,6 +341,29 @@ function filterByWindow(rows, window) {
 function filterByAgent(rows, selectedAgent) {
   if (!selectedAgent) return rows;
   return rows.filter((row) => resolveAgentName(row) === selectedAgent);
+}
+
+function hashAgentName(name) {
+  let hash = 0;
+  const raw = name || "Unknown Agent";
+  for (let i = 0; i < raw.length; i += 1) {
+    hash = (hash * 31 + raw.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function agentInitials(name) {
+  const parts = String(name || "Unknown Agent")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return "UA";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+function agentAvatarColor(name) {
+  return AGENT_AVATAR_COLORS[hashAgentName(name) % AGENT_AVATAR_COLORS.length];
 }
 
 function buildLeaderboards(rows, coopRates = {}) {
@@ -258,6 +428,53 @@ function buildCarrierMix(rows) {
     }))
     .sort((a, b) => b.count - a.count);
   return { total, entries };
+}
+
+function buildAgentDetail(rows, coopRates = {}) {
+  if (!rows.length) {
+    return {
+      calls: 0,
+      enrollments: 0,
+      conversion: 0,
+      compliance: null,
+      duration: null,
+      coop: 0,
+      carrier: "—",
+    };
+  }
+
+  const enrollments = rows.filter(isEnrolled).length;
+  const scored = rows.filter(
+    (r) => r.overall_score !== null && r.overall_score !== undefined && !Number.isNaN(Number(r.overall_score))
+  );
+  const timed = rows.filter(
+    (r) => r.call_duration_seconds !== null && r.call_duration_seconds !== undefined && !Number.isNaN(Number(r.call_duration_seconds))
+  );
+  const carrierCounts = new Map();
+
+  for (const row of rows) {
+    const carrier = carrierName(row);
+    if (carrier !== "—") {
+      carrierCounts.set(carrier, (carrierCounts.get(carrier) || 0) + 1);
+    }
+  }
+
+  const carrier = Array.from(carrierCounts.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || "—";
+
+  return {
+    calls: rows.length,
+    enrollments,
+    conversion: rows.length ? (enrollments / rows.length) * 100 : 0,
+    compliance: scored.length
+      ? scored.reduce((sum, row) => sum + Number(row.overall_score), 0) / scored.length
+      : null,
+    duration: timed.length
+      ? timed.reduce((sum, row) => sum + Number(row.call_duration_seconds), 0) / timed.length
+      : null,
+    coop: rows.reduce((sum, row) => sum + coopFor(row, coopRates), 0),
+    carrier,
+  };
 }
 
 function buildCompliance(rows) {
@@ -355,6 +572,67 @@ function TerminalNav({ windowKey, agentOptions, selectedAgent, onAgentChange }) 
         <span className="ops-filter-title">Call Records Search</span>
       </div>
     </>
+  );
+}
+
+function OpsFilters({
+  agentOptions,
+  selectedAgent,
+  onAgentChange,
+  dateRange,
+  onDateRangeChange,
+  customStart,
+  customEnd,
+  onCustomStartChange,
+  onCustomEndChange,
+}) {
+  return (
+    <div className="ops-controls">
+      <label className="ops-control">
+        <span>Agent</span>
+        <select
+          value={selectedAgent}
+          onChange={(event) => onAgentChange(event.target.value)}
+        >
+          <option value="">All Agents</option>
+          {agentOptions.map((agent) => (
+            <option key={agent} value={agent}>
+              {agent}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="ops-date-control">
+        <span>Date</span>
+        <div className="ops-date-buttons">
+          {DATE_RANGE_OPTIONS.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              className={dateRange === option.key ? "is-active" : ""}
+              onClick={() => onDateRangeChange(option.key)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {dateRange === "custom" ? (
+        <div className="ops-custom-range">
+          <input
+            type="date"
+            value={customStart}
+            onChange={(event) => onCustomStartChange(event.target.value)}
+          />
+          <span>to</span>
+          <input
+            type="date"
+            value={customEnd}
+            onChange={(event) => onCustomEndChange(event.target.value)}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -762,45 +1040,150 @@ function CallDetailPanel({ detail, loading }) {
   );
 }
 
-function CallsTable({ rows, selectedCallId, callDetails, detailLoading, onSelectCall }) {
+function AgentDetailSection({ open, selectedAgent, detail, onToggle }) {
   return (
-    <div className="ops-table-wrap">
-      <table className="ops-table">
-        <thead>
-          <tr>
-            <th className="row-n">#</th>
-            <th>Time</th>
-            <th>Customer</th>
-            <th>Agent</th>
-            <th>Carrier</th>
-            <th>Outcome</th>
-            <th className="num">Dur</th>
-            <th className="num">Compl</th>
-            <th title="Webhook">WH</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
+    <div className="ops-agent-detail">
+      <button type="button" className="ops-agent-detail-toggle" onClick={onToggle}>
+        <span>{open ? "▼" : "▶"} Agent Detail</span>
+        <span>{selectedAgent || "Select Agent"}</span>
+      </button>
+      {open ? (
+        selectedAgent ? (
+          <div className="ops-agent-detail-grid">
+            <div>
+              <span>Total Calls</span>
+              <strong>{fmtNumber(detail.calls)}</strong>
+            </div>
+            <div>
+              <span>Enrollments</span>
+              <strong>{fmtNumber(detail.enrollments)}</strong>
+            </div>
+            <div>
+              <span>Conversion</span>
+              <strong>{fmtPercent(detail.conversion)}</strong>
+            </div>
+            <div>
+              <span>Avg Compliance</span>
+              <strong>{detail.compliance !== null ? `${Math.round(detail.compliance)}%` : "—"}</strong>
+            </div>
+            <div>
+              <span>Avg Duration</span>
+              <strong>{detail.duration !== null ? fmtDuration(detail.duration) : "—"}</strong>
+            </div>
+            <div>
+              <span>Co-op Earnings</span>
+              <strong>{fmtMoney(detail.coop)}</strong>
+            </div>
+            <div className="wide">
+              <span>Most Common Carrier</span>
+              <strong>{detail.carrier}</strong>
+            </div>
+          </div>
+        ) : (
+          <div className="ops-agent-detail-empty">Select an agent to inspect current-window performance.</div>
+        )
+      ) : null}
+    </div>
+  );
+}
+
+function SortableTh({ column, sortConfig, onSort, children, className = "" }) {
+  const active = sortConfig.key === column;
+  return (
+    <th className={`${className} ops-sort-th${active ? " is-active" : ""}`}>
+      <button type="button" onClick={() => onSort(column)}>
+        <span>{children}</span>
+        <span className="ops-sort-indicator">
+          {active ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+        </span>
+      </button>
+    </th>
+  );
+}
+
+function CallsTable({
+  rows,
+  loading,
+  sortConfig,
+  onSort,
+  tenantAgentsByName,
+  coopRates,
+  selectedCallId,
+  callDetails,
+  detailLoading,
+  onSelectCall,
+}) {
+  return (
+    <div className="ops-calls-panel">
+      <div className="ops-section-head">
+        <span>Recent Calls</span>
+        <span className="ops-section-meta">
+          {loading ? "LOADING…" : `${rows.length} RECORDS`}
+          <button
+            type="button"
+            className="ops-export-btn"
+            onClick={() => downloadCallsCsv(rows, coopRates)}
+            disabled={rows.length === 0}
+          >
+            EXPORT
+          </button>
+        </span>
+      </div>
+      <div className="ops-table-wrap">
+        <table className="ops-table">
+          <thead>
             <tr>
-              <td className="empty" colSpan={9}>
-                Awaiting call rows
-              </td>
+              <th className="row-n">#</th>
+              <SortableTh column="datetime" sortConfig={sortConfig} onSort={onSort}>Date/Time</SortableTh>
+              <th>Customer</th>
+              <SortableTh column="agent" sortConfig={sortConfig} onSort={onSort}>Agent</SortableTh>
+              <SortableTh column="carrier" sortConfig={sortConfig} onSort={onSort}>Carrier</SortableTh>
+              <SortableTh column="outcome" sortConfig={sortConfig} onSort={onSort}>Outcome</SortableTh>
+              <SortableTh column="duration" sortConfig={sortConfig} onSort={onSort} className="num">Dur</SortableTh>
+              <SortableTh column="compliance" sortConfig={sortConfig} onSort={onSort} className="num">Compl</SortableTh>
+              <th title="Webhook">WH</th>
             </tr>
-          ) : (
-            rows.map((r, i) => {
-              const oc = outcomeLabel(r);
-              const ghl = ghlBadge(r);
-              const selected = selectedCallId === r.call_record_id;
-              return [
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td className="empty" colSpan={9}>
+                  Awaiting call rows
+                </td>
+              </tr>
+            ) : (
+              rows.map((r, i) => {
+                const oc = outcomeLabel(r);
+                const ghl = ghlBadge(r);
+                const agentName = resolveAgentName(r);
+                const tenantAgent = tenantAgentsByName.get(normalizeLookup(agentName));
+                const tooltip = tenantAgent?.npn
+                  ? `${agentName} | NPN ${tenantAgent.npn}`
+                  : agentName;
+                const selected = selectedCallId === r.call_record_id;
+                return [
                   <tr
                     key={r.call_record_id}
                     className={selected ? "is-selected" : ""}
                     onClick={() => onSelectCall(r.call_record_id)}
                   >
                     <td className="row-n">{i + 1}</td>
-                    <td>{fmtTimeHM(r.call_start) || fmtDateMD(r.activity_date)}</td>
+                    <td>
+                      <span className="ops-date-cell">{fmtDateMD(dateValueForRow(r))}</span>
+                      <span className="ops-time-cell">{fmtTimeHM(dateValueForRow(r)) || fmtDateMD(r.activity_date)}</span>
+                    </td>
                     <td>{customerName(r)}</td>
-                    <td>{resolveAgentName(r)}</td>
+                    <td>
+                      <span className="ops-agent-cell" title={tooltip}>
+                        <span
+                          className="ops-agent-avatar"
+                          style={{ backgroundColor: agentAvatarColor(agentName) }}
+                        >
+                          {agentInitials(agentName)}
+                        </span>
+                        <span>{agentName}</span>
+                      </span>
+                    </td>
                     <td>{carrierName(r)}</td>
                     <td className={oc.cls}>{oc.label}</td>
                     <td className="num">{fmtDuration(r.call_duration_seconds)}</td>
@@ -821,11 +1204,12 @@ function CallsTable({ rows, selectedCallId, callDetails, detailLoading, onSelect
                       </td>
                     </tr>
                   ) : null,
-              ];
-            })
-          )}
-        </tbody>
-      </table>
+                ];
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1335,6 +1719,11 @@ export default function OperationsTab() {
   const [error, setError] = useState("");
   const [windowKey, setWindowKey] = useState("MTD");
   const [selectedAgent, setSelectedAgent] = useState("");
+  const [dateRange, setDateRange] = useState("30d");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: "datetime", direction: "desc" });
+  const [agentDetailOpen, setAgentDetailOpen] = useState(true);
   const [selectedCallId, setSelectedCallId] = useState(null);
   const [callDetails, setCallDetails] = useState({});
   const [detailLoading, setDetailLoading] = useState(null);
@@ -1410,22 +1799,62 @@ export default function OperationsTab() {
     return () => clearInterval(id);
   }, []);
 
+  const tenantAgentsByName = useMemo(() => {
+    const map = new Map();
+    for (const agent of agents || []) {
+      const key = normalizeLookup(agent.name);
+      if (key) map.set(key, agent);
+    }
+    return map;
+  }, [agents]);
+
   const agentOptions = useMemo(() => {
     const names = new Set((agents || []).map((agent) => agent.name).filter(Boolean));
     state.dailyActivity.forEach((row) => names.add(resolveAgentName(row)));
     return Array.from(names).filter((name) => name && name !== "—").sort((a, b) => a.localeCompare(b));
   }, [agents, state.dailyActivity]);
 
+  useEffect(() => {
+    if (selectedAgent && !agentOptions.includes(selectedAgent)) {
+      setSelectedAgent("");
+    }
+  }, [agentOptions, selectedAgent]);
+
+  const dateFilteredDaily = useMemo(
+    () => filterByDateRange(filterByWindow(state.dailyActivity, windowKey), dateRange, customStart, customEnd),
+    [customEnd, customStart, dateRange, state.dailyActivity, windowKey]
+  );
+
+  const dateFilteredPipeline = useMemo(
+    () => filterByDateRange(filterByWindow(state.pipelineStatus, windowKey), dateRange, customStart, customEnd),
+    [customEnd, customStart, dateRange, state.pipelineStatus, windowKey]
+  );
+
   const filteredDaily = useMemo(
-    () => filterByAgent(filterByWindow(state.dailyActivity, windowKey), selectedAgent),
-    [selectedAgent, state.dailyActivity, windowKey]
+    () => filterByAgent(dateFilteredDaily, selectedAgent),
+    [dateFilteredDaily, selectedAgent]
+  );
+
+  const filteredPipeline = useMemo(
+    () => filterByAgent(dateFilteredPipeline, selectedAgent),
+    [dateFilteredPipeline, selectedAgent]
+  );
+
+  const sortedDaily = useMemo(
+    () => sortRows(filteredDaily, sortConfig),
+    [filteredDaily, sortConfig]
   );
 
   const leaderboards = useMemo(() => buildLeaderboards(filteredDaily, coopRates), [coopRates, filteredDaily]);
-  const carrierMix = useMemo(() => buildCarrierMix(state.dailyActivity), [state.dailyActivity]);
-  const compliance = useMemo(() => buildCompliance(state.dailyActivity), [state.dailyActivity]);
-  const tickerEvents = useMemo(() => buildTicker(state.dailyActivity), [state.dailyActivity]);
-  const trackerEntries = useMemo(() => build60Day(state.pipelineStatus), [state.pipelineStatus]);
+  const carrierMix = useMemo(() => buildCarrierMix(filteredDaily), [filteredDaily]);
+  const compliance = useMemo(() => buildCompliance(filteredDaily), [filteredDaily]);
+  const tickerEvents = useMemo(() => buildTicker(sortedDaily), [sortedDaily]);
+  const trackerEntries = useMemo(() => build60Day(filteredPipeline), [filteredPipeline]);
+  const agentDetail = useMemo(() => buildAgentDetail(filteredDaily, coopRates), [coopRates, filteredDaily]);
+  const dateLabel = useMemo(
+    () => rangeLabel(dateRange, customStart, customEnd),
+    [customEnd, customStart, dateRange]
+  );
 
   const trackerStats = useMemo(() => {
     const overdue = trackerEntries.filter((t) => t.bucket === "overdue").length;
@@ -1436,12 +1865,11 @@ export default function OperationsTab() {
   const metrics = useMemo(() => {
     const calls = filteredDaily.length;
     const enrollments = filteredDaily.filter(isEnrolled).length;
-    const callbacks = state.pipelineStatus.filter(
+    const callbacks = filteredPipeline.filter(
       (record) => record.call_outcome === "callback_scheduled"
     ).length;
     const coopTotal = filteredDaily.reduce((sum, r) => sum + coopFor(r, coopRates), 0);
-    const filteredCompliance = buildCompliance(filteredDaily);
-    const complianceAvg = filteredCompliance ? filteredCompliance.avg : null;
+    const complianceAvg = compliance ? compliance.avg : null;
     return {
       calls,
       enrollments,
@@ -1450,7 +1878,22 @@ export default function OperationsTab() {
       coopTotal,
       complianceAvg,
     };
-  }, [coopRates, filteredDaily, state.pipelineStatus]);
+  }, [compliance, coopRates, filteredDaily, filteredPipeline]);
+
+  const handleSort = useCallback((column) => {
+    setSortConfig((current) => {
+      if (current.key === column) {
+        return {
+          key: column,
+          direction: current.direction === "asc" ? "desc" : "asc",
+        };
+      }
+      return {
+        key: column,
+        direction: column === "datetime" || column === "duration" || column === "compliance" ? "desc" : "asc",
+      };
+    });
+  }, []);
 
   const handleSelectCall = useCallback(async (callId) => {
     if (!callId) return;
@@ -1560,7 +2003,7 @@ export default function OperationsTab() {
       {error ? <div className="ops-error">⚠ {error}</div> : null}
 
       <TerminalNav
-        windowKey={windowKey}
+        windowKey={`${windowKey} · ${dateLabel}`}
         agentOptions={agentOptions}
         selectedAgent={selectedAgent}
         onAgentChange={setSelectedAgent}
@@ -1628,10 +2071,33 @@ export default function OperationsTab() {
             selectedAgent={selectedAgent}
             agentOptions={agentOptions}
           />
+          <AgentDetailSection
+            open={agentDetailOpen}
+            selectedAgent={selectedAgent}
+            detail={agentDetail}
+            onToggle={() => setAgentDetailOpen((value) => !value)}
+          />
         </aside>
 
         <main className="ops-main">
           <IntelligenceBriefing insights={insights} loading={insightsLoading} />
+          <OpsFilters
+            agentOptions={agentOptions}
+            selectedAgent={selectedAgent}
+            onAgentChange={setSelectedAgent}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomStartChange={(value) => {
+              setCustomStart(value);
+              setDateRange("custom");
+            }}
+            onCustomEndChange={(value) => {
+              setCustomEnd(value);
+              setDateRange("custom");
+            }}
+          />
 
           <div className="ops-metric-row">
             <div className="ops-metric">
@@ -1660,14 +2126,13 @@ export default function OperationsTab() {
             </div>
           </div>
 
-          <div className="ops-section-head">
-            <span>Recent Calls</span>
-            <span className="ops-section-meta">
-              {loading ? "LOADING…" : `${filteredDaily.length} RECORDS`}
-            </span>
-          </div>
           <CallsTable
-            rows={filteredDaily}
+            rows={sortedDaily}
+            loading={loading}
+            sortConfig={sortConfig}
+            onSort={handleSort}
+            tenantAgentsByName={tenantAgentsByName}
+            coopRates={coopRates}
             selectedCallId={selectedCallId}
             callDetails={callDetails}
             detailLoading={detailLoading}
@@ -1679,7 +2144,7 @@ export default function OperationsTab() {
             <CompliancePanel data={compliance} />
           </div>
           <CarrierHeatmapPanel insights={insights} />
-          <PipelinePanel rows={state.pipelineStatus} />
+          <PipelinePanel rows={filteredPipeline} />
         </main>
 
         <aside className="ops-tracker">

@@ -2671,7 +2671,7 @@ p {
 }
 .operations-tab .ops-filter-strip {
   display: grid;
-  grid-template-columns: auto 116px auto 126px auto 72px 1fr;
+  grid-template-columns: auto minmax(116px, 160px) auto 126px auto minmax(72px, 140px) 1fr;
   align-items: center;
   height: 20px;
   background: var(--ops-bg);
@@ -2692,6 +2692,8 @@ p {
   color: var(--ops-white);
   background: #101010;
   border-right: 1px solid var(--ops-border-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .operations-tab .ops-filter-select {
   height: 20px;
@@ -2799,6 +2801,9 @@ p {
   letter-spacing: 1px;
   color: #070707;
   font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* COLUMN HEADER ROW — cyan sub-header strip */
@@ -2907,8 +2912,154 @@ p {
   font-style: italic;
 }
 
+.operations-tab .ops-agent-detail {
+  border-top: 1px solid var(--ops-border);
+  border-bottom: 1px solid var(--ops-border);
+  background: var(--ops-bg);
+}
+.operations-tab .ops-agent-detail-toggle {
+  width: 100%;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 8px;
+  background: var(--ops-yellow);
+  border: none;
+  color: #070707;
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 800;
+}
+.operations-tab .ops-agent-detail-toggle span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.operations-tab .ops-agent-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.operations-tab .ops-agent-detail-grid div,
+.operations-tab .ops-agent-detail-empty {
+  min-height: 34px;
+  padding: 5px 8px;
+  border-right: 1px solid var(--ops-border);
+  border-bottom: 1px solid var(--ops-border);
+}
+.operations-tab .ops-agent-detail-grid div:nth-child(2n),
+.operations-tab .ops-agent-detail-grid div.wide {
+  border-right: none;
+}
+.operations-tab .ops-agent-detail-grid div.wide {
+  grid-column: 1 / -1;
+}
+.operations-tab .ops-agent-detail-grid span {
+  display: block;
+  color: var(--ops-cyan);
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.operations-tab .ops-agent-detail-grid strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--ops-amber-bright);
+  font-size: 13px;
+  line-height: 1.05;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.operations-tab .ops-agent-detail-empty {
+  color: var(--ops-muted);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  font-style: italic;
+}
+
 /* MAIN COLUMN */
 .operations-tab .ops-main { background: var(--ops-bg); overflow-y: auto; }
+
+.operations-tab .ops-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) auto minmax(220px, 300px);
+  align-items: center;
+  gap: 0;
+  min-height: 30px;
+  border-bottom: 1px solid var(--ops-border);
+  background: var(--ops-bg);
+}
+.operations-tab .ops-control,
+.operations-tab .ops-date-control,
+.operations-tab .ops-custom-range {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-right: 1px solid var(--ops-border);
+}
+.operations-tab .ops-control > span,
+.operations-tab .ops-date-control > span {
+  color: var(--ops-cyan);
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.operations-tab .ops-control select,
+.operations-tab .ops-custom-range input {
+  min-width: 0;
+  height: 20px;
+  background: #080808;
+  border: 1px solid var(--ops-border-bright);
+  color: var(--ops-amber-bright);
+  font-family: inherit;
+  font-size: 10px;
+  padding: 1px 5px;
+  text-transform: uppercase;
+}
+.operations-tab .ops-control select { flex: 1; }
+.operations-tab .ops-control select:focus,
+.operations-tab .ops-custom-range input:focus {
+  outline: 1px solid var(--ops-yellow);
+}
+.operations-tab .ops-date-buttons {
+  display: inline-flex;
+  height: 20px;
+  border: 1px solid var(--ops-border-bright);
+}
+.operations-tab .ops-date-buttons button {
+  min-width: 52px;
+  height: 18px;
+  border: none;
+  border-right: 1px solid var(--ops-border-bright);
+  background: transparent;
+  color: var(--ops-amber);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 700;
+}
+.operations-tab .ops-date-buttons button:last-child { border-right: none; }
+.operations-tab .ops-date-buttons button:hover,
+.operations-tab .ops-date-buttons button.is-active {
+  background: var(--ops-blue);
+  color: var(--ops-white);
+}
+.operations-tab .ops-custom-range {
+  color: var(--ops-cyan);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+.operations-tab .ops-custom-range input { width: 118px; }
 
 /* METRIC STRIP */
 .operations-tab .ops-metric-row {
@@ -2941,6 +3092,31 @@ p {
 }
 
 /* CALLS TABLE */
+.operations-tab .ops-calls-panel {
+  display: flex;
+  flex-direction: column;
+}
+.operations-tab .ops-export-btn {
+  height: 14px;
+  padding: 0 6px;
+  background: #070707;
+  border: 1px solid #5a3400;
+  color: var(--ops-yellow);
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 800;
+}
+.operations-tab .ops-export-btn:hover:not(:disabled) {
+  background: var(--ops-blue);
+  border-color: var(--ops-blue);
+  color: var(--ops-white);
+}
+.operations-tab .ops-export-btn:disabled {
+  color: #5a3400;
+  cursor: not-allowed;
+}
 .operations-tab .ops-table-wrap { overflow-x: auto; }
 .operations-tab .ops-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .operations-tab .ops-table thead th {
@@ -2960,6 +3136,37 @@ p {
 }
 .operations-tab .ops-table thead th.num { text-align: right; }
 .operations-tab .ops-table thead th.row-n { width: 28px; text-align: right; padding-right: 4px; }
+.operations-tab .ops-table thead th.ops-sort-th { padding: 0; }
+.operations-tab .ops-sort-th button {
+  width: 100%;
+  height: 23px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 3px 8px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 700;
+}
+.operations-tab .ops-sort-th.num button { justify-content: flex-end; }
+.operations-tab .ops-sort-th button:hover,
+.operations-tab .ops-sort-th.is-active button {
+  background: #101010;
+  color: var(--ops-yellow);
+}
+.operations-tab .ops-sort-indicator {
+  color: var(--ops-muted);
+  font-size: 8px;
+}
+.operations-tab .ops-sort-th.is-active .ops-sort-indicator {
+  color: var(--ops-yellow);
+}
 .operations-tab .ops-table tbody tr {
   background: var(--ops-bg);
   transition: background 0.05s linear;
@@ -3009,6 +3216,32 @@ p {
   font-size: 10px;
   padding: 8px;
   font-style: italic;
+}
+.operations-tab .ops-date-cell {
+  color: var(--ops-cyan);
+  margin-right: 6px;
+  font-size: 10px;
+}
+.operations-tab .ops-time-cell { color: var(--ops-amber-bright); }
+.operations-tab .ops-agent-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+.operations-tab .ops-agent-avatar {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 18px;
+  color: var(--ops-white);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 .operations-tab .ops-out-enrolled { color: var(--ops-green); font-weight: 600; }
 .operations-tab .ops-out-callback { color: var(--ops-yellow); font-weight: 600; }
@@ -3918,6 +4151,13 @@ p {
   }
 }
 @media (max-width: 768px) {
+  .operations-tab .ops-controls { grid-template-columns: 1fr; }
+  .operations-tab .ops-control,
+  .operations-tab .ops-date-control,
+  .operations-tab .ops-custom-range {
+    border-right: none;
+    border-bottom: 1px solid var(--ops-border);
+  }
   .operations-tab .ops-metric-row { grid-template-columns: repeat(2, 1fr); }
   .operations-tab .ops-bottom-row { grid-template-columns: 1fr; }
   .operations-tab .ops-bottom-row > div + div { border-left: none; border-top: 1px solid var(--ops-border); }
