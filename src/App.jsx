@@ -68,6 +68,7 @@ const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
+const tenantBootstrapAttempts = new Set();
 
 function modeSupportsAgentTools(mode) {
   return mode === "ma" || mode === "aca";
@@ -955,7 +956,7 @@ function AppContent({ currentUser = null }) {
   );
 }
 
-function TenantAutoBootstrap({ currentUser = null, organization, onComplete }) {
+function TenantAutoBootstrap({ currentUser = null, organization, onComplete, onTenantSeeded }) {
   const { getToken } = useAppAuth();
   const [error, setError] = useState("");
   const userId = currentUser?.id || "";
@@ -977,7 +978,9 @@ function TenantAutoBootstrap({ currentUser = null, organization, onComplete }) {
 
     async function bootstrapTenant() {
       if (!organization?.id) return;
+      if (tenantBootstrapAttempts.has(organization.id)) return;
 
+      tenantBootstrapAttempts.add(organization.id);
       setError("");
       try {
         const agencyName = organization.name || "New Agency";
@@ -1012,7 +1015,8 @@ function TenantAutoBootstrap({ currentUser = null, organization, onComplete }) {
         }
 
         if (!cancelled) {
-          await onComplete?.();
+          if (data.tenant?.id) onTenantSeeded?.(data.tenant);
+          await onComplete?.({ background: true });
         }
       } catch (error) {
         if (!cancelled) {
@@ -1030,6 +1034,7 @@ function TenantAutoBootstrap({ currentUser = null, organization, onComplete }) {
     bootstrapAgent,
     getToken,
     onComplete,
+    onTenantSeeded,
     organization?.id,
     organization?.name,
   ]);
@@ -1048,7 +1053,7 @@ function TenantAutoBootstrap({ currentUser = null, organization, onComplete }) {
 
 function AuthenticatedAppContent() {
   const { user } = useUser();
-  const { tenant, loading, error, refetch } = useTenantConfig();
+  const { tenant, loading, error, refetch, hydrateTenant } = useTenantConfig();
   const { organization, isLoaded: organizationLoaded } = useOrganization();
 
   if (loading || !organizationLoaded) {
@@ -1070,6 +1075,7 @@ function AuthenticatedAppContent() {
           currentUser={user}
           organization={organization}
           onComplete={refetch}
+          onTenantSeeded={hydrateTenant}
         />
       );
     }

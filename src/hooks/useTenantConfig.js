@@ -8,6 +8,10 @@ import {
 
 const tenantCache = new Map();
 
+function cachedTenantBundle() {
+  return Array.from(tenantCache.values()).find((bundle) => bundle?.tenant?.id) || null;
+}
+
 function decodeJwtPayload(token) {
   try {
     const payload = token?.split(".")?.[1];
@@ -67,7 +71,7 @@ export function useTenantConfig() {
 
     try {
       const bundle = await getTenantBundle(getToken);
-      tenantCache.set(bundle.cacheKey, bundle);
+      if (bundle.tenant?.id) tenantCache.set(bundle.cacheKey, bundle);
       setState({
         tenant: bundle.tenant,
         agents: bundle.agents,
@@ -84,11 +88,29 @@ export function useTenantConfig() {
     }
   }, [getToken]);
 
+  const hydrateTenant = useCallback((tenant, agents = []) => {
+    if (!tenant?.id) return;
+    const bundle = {
+      cacheKey: tenant.clerk_org_id || tenant.id,
+      client: state.supabaseClient,
+      tenant,
+      agents,
+    };
+    tenantCache.set(bundle.cacheKey, bundle);
+    setState((current) => ({
+      ...current,
+      tenant,
+      agents,
+      loading: false,
+      error: "",
+    }));
+  }, [state.supabaseClient]);
+
   useEffect(() => {
     let cancelled = false;
 
     async function hydrate() {
-      const cached = tenantCache.get("default") || Array.from(tenantCache.values())[0];
+      const cached = cachedTenantBundle();
       if (cached && !cancelled) {
         setState({
           tenant: cached.tenant,
@@ -101,7 +123,7 @@ export function useTenantConfig() {
 
       try {
         const bundle = await getTenantBundle(getToken);
-        tenantCache.set(bundle.cacheKey, bundle);
+        if (bundle.tenant?.id) tenantCache.set(bundle.cacheKey, bundle);
         if (!cancelled) {
           setState({
             tenant: bundle.tenant,
@@ -143,6 +165,7 @@ export function useTenantConfig() {
     supabaseClient: state.supabaseClient,
     loading: state.loading,
     error: state.error,
-    refetch: () => load(),
-  }), [load, state]);
+    refetch: load,
+    hydrateTenant,
+  }), [hydrateTenant, load, state]);
 }
