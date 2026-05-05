@@ -25,6 +25,8 @@ import {
 } from "./useCopilotEngineCore";
 import { lookupPlanSummary, formatPlanSummaryForPrompt } from "../lib/acaPlanLookup";
 import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
+import { mergeStructuredKnowledgeMap } from "../lib/knowledgeBase";
+import { useKnowledge } from "./useKnowledge";
 import {
   ACA_COMPLIANCE_KNOWLEDGE,
   ACA_SECTION_LABELS,
@@ -375,7 +377,12 @@ Use plain text only. No bold, no bullet points, no markdown, no dashes, no aster
 
 export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
   const currentStep = ACA_SECTION_LABELS[activeGate] || `Gate ${activeGate}`;
-  const knowledge = ACA_COMPLIANCE_KNOWLEDGE[currentStep] || null;
+  const { entries: dbComplianceEntries } = useKnowledge("compliance_aca");
+  const complianceKnowledge = useMemo(
+    () => mergeStructuredKnowledgeMap(ACA_COMPLIANCE_KNOWLEDGE, dbComplianceEntries),
+    [dbComplianceEntries]
+  );
+  const knowledge = complianceKnowledge[currentStep] || null;
 
   /* ─── Core hook ─── */
   const {

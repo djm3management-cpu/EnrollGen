@@ -1,9 +1,15 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
 import { SECTION_LABELS } from "../context/scriptReducer";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
-import { getCmsKnowledgeForQuestion, getCmsKnowledgeForSection } from "../context/CopilotCmsKnowledge";
+import {
+  getCmsKnowledgeForQuestion,
+  getCmsKnowledgeForSection,
+  setDbCmsKnowledgeEntries,
+} from "../context/CopilotCmsKnowledge";
 import { fetchTranscriptReferences } from "../lib/transcriptSearch";
+import { mergeStructuredKnowledgeMap } from "../lib/knowledgeBase";
+import { useKnowledge } from "./useKnowledge";
 import {
   useCopilotEngineCore,
   shouldSuppressDuplicateIssue,
@@ -173,7 +179,7 @@ function buildDerivedSignals(state, activeSection, transcript, recentInterventio
   };
 }
 
-function resolveSectionKnowledge(sectionKey, state) {
+function resolveSectionKnowledge(sectionKey, state, knowledgeMap = COMPLIANCE_KNOWLEDGE) {
   if (sectionKey === "SNP Disclosure") {
     const snpType = (state?.snpType || "").toUpperCase();
     const typedKey =
@@ -184,13 +190,13 @@ function resolveSectionKnowledge(sectionKey, state) {
     return {
       knowledgeKey: typedKey,
       knowledge:
-        COMPLIANCE_KNOWLEDGE[typedKey] || COMPLIANCE_KNOWLEDGE[sectionKey] || null,
+        knowledgeMap[typedKey] || knowledgeMap[sectionKey] || null,
     };
   }
 
   return {
     knowledgeKey: sectionKey,
-    knowledge: COMPLIANCE_KNOWLEDGE[sectionKey] || null,
+    knowledge: knowledgeMap[sectionKey] || null,
   };
 }
 
@@ -566,6 +572,15 @@ export function useCopilotEngine({
   recentCustomerSpeech = "",
 }) {
   const currentStep = SECTION_LABELS[activeSection] || `Section ${activeSection}`;
+  const { entries: dbComplianceEntries } = useKnowledge("compliance_ma");
+  const complianceKnowledge = useMemo(
+    () => mergeStructuredKnowledgeMap(COMPLIANCE_KNOWLEDGE, dbComplianceEntries),
+    [dbComplianceEntries]
+  );
+
+  useEffect(() => {
+    setDbCmsKnowledgeEntries(dbComplianceEntries);
+  }, [dbComplianceEntries]);
 
   const {
     messages, setMessages, coachingLoading, setCoachingLoading,
@@ -641,7 +656,7 @@ export function useCopilotEngine({
     }
 
     const sectionKey = currentStep;
-    const { knowledge } = resolveSectionKnowledge(sectionKey, state);
+    const { knowledge } = resolveSectionKnowledge(sectionKey, state, complianceKnowledge);
     const reviewMode = periodic ? "periodic" : "live";
 
     // Gates (bypassed for manual, section entry, and timed periodic review)
@@ -937,6 +952,7 @@ SECTION CONTEXT (rolling window for current section):
     }
   }, [
     activeSection,
+    complianceKnowledge,
     currentStep,
     coachingLoading,
     pushFeedEntry,
@@ -982,7 +998,7 @@ SECTION CONTEXT (rolling window for current section):
     askAbortRef.current = controller;
 
     const sectionKey = currentStep;
-    const { knowledge } = resolveSectionKnowledge(sectionKey, state);
+    const { knowledge } = resolveSectionKnowledge(sectionKey, state, complianceKnowledge);
     const recentTranscript = transcriptRef.current.trim().slice(-1500);
     const liveMessages = messagesRef.current;
     const recentInterventions = liveMessages
@@ -1103,6 +1119,7 @@ SECTION CONTEXT (rolling window for current section):
   }, [
     askQuestion,
     askLoading,
+    complianceKnowledge,
     currentStep,
     logEntry,
     getToken,

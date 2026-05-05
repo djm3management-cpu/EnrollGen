@@ -11,6 +11,12 @@ import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import {
+  findKnowledgeEntry,
+  getKnowledgeStructuredValue,
+  mergeStructuredKnowledgeMap,
+} from "../lib/knowledgeBase";
+import { useKnowledge } from "./useKnowledge";
+import {
   useCopilotEngineCore,
   shouldSuppressDuplicateIssue,
   readErrorDetail, getCopilotHttpErrorMessage,
@@ -329,7 +335,22 @@ Use plain text only. No bold, no bullet points, no markdown, no dashes, no aster
 
 export function useMedSupCopilotEngine({ transcriptRef, activeSection, state }) {
   const currentStep = MEDSUP_SECTION_LABELS[activeSection] || `Section ${activeSection}`;
-  const knowledge = MEDSUP_COMPLIANCE_KNOWLEDGE[currentStep] || null;
+  const { entries: dbComplianceEntries } = useKnowledge("compliance_medsup");
+  const { entries: dbMedicareEntries } = useKnowledge("medicare_reference");
+  const complianceKnowledge = useMemo(
+    () => mergeStructuredKnowledgeMap(MEDSUP_COMPLIANCE_KNOWLEDGE, dbComplianceEntries),
+    [dbComplianceEntries]
+  );
+  const medicareReference = useMemo(() => {
+    const costs = getKnowledgeStructuredValue(
+      findKnowledgeEntry(dbMedicareEntries, "2026_cost_sharing")
+    ) || medicare2026;
+    const giRules = getKnowledgeStructuredValue(
+      findKnowledgeEntry(dbMedicareEntries, "state_gi_rules")
+    ) || stateGIRules;
+    return { costs, giRules };
+  }, [dbMedicareEntries]);
+  const knowledge = complianceKnowledge[currentStep] || null;
 
   /* ─── Core hook ─── */
   const {
@@ -366,10 +387,10 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state }) 
       derivedSignals: buildDerivedSignals(
         state, activeSection, transcriptRef.current.trim(), recentInterventions
       ),
-      medicareReference: medicare2026,
-      stateGIRules,
+      medicareReference: medicareReference.costs,
+      stateGIRules: medicareReference.giRules,
     };
-  }, [activeSection, currentStep, state, transcriptRef]);
+  }, [activeSection, currentStep, state, transcriptRef, medicareReference]);
 
   /* ═══════ TPMO ALERT ═══════ */
   const tpmoFiredRef = useRef(false);
