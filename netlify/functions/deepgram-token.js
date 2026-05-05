@@ -1,4 +1,11 @@
 import { requireClerkAuth } from "./_clerkAuth.js";
+import { createClient } from "@supabase/supabase-js";
+import {
+  logUsageRecord,
+  requireActiveSubscription,
+  requirePlan,
+  resolveTenantIdForOrg,
+} from "./_subscriptionGate.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const DEEPGRAM_GRANT_URL = "https://api.deepgram.com/v1/auth/grant";
@@ -11,6 +18,13 @@ function json(status, payload) {
   });
 }
 
+function getSupabase() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error("Supabase env vars not configured");
+  return createClient(url, key);
+}
+
 export default async (request) => {
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
@@ -20,6 +34,14 @@ export default async (request) => {
   if (auth.response) {
     return auth.response;
   }
+
+  const supabase = getSupabase();
+  const tenantId = await resolveTenantIdForOrg(supabase, auth.orgId);
+  const subscription = await requireActiveSubscription(supabase, tenantId);
+  if (subscription.response) return subscription.response;
+
+  const planGate = requirePlan(subscription, "pro");
+  if (planGate.response) return planGate.response;
 
   const apiKey = process.env.DEEPGRAM_API_KEY;
   if (!apiKey) {
@@ -49,6 +71,12 @@ export default async (request) => {
     console.error("Deepgram token grant failed:", response.status, payload);
     return json(502, { error: "Deepgram token grant failed" });
   }
+
+  await logUsageRecord(supabase, tenantId, "deepgram_minutes", Math.ceil(DEFAULT_TTL_SECONDS / 60), {
+    endpoint: "deepgram-token",
+    ttl_seconds: DEFAULT_TTL_SECONDS,
+    user_id: auth.userId,
+  });
 
   return json(200, {
     access_token: payload.access_token,

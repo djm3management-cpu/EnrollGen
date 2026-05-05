@@ -1,5 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { requireClerkAuth } from "./_clerkAuth.js";
+import {
+  checkSeatLimit,
+  logUsageRecord,
+  requireActiveSubscription,
+  requirePlan,
+} from "./_subscriptionGate.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const LIVE_SOURCE_SYSTEM = "enrollgen_live";
@@ -608,7 +614,7 @@ async function sendEnrollmentWebhook(tenant, tenantAgents, payload) {
   }
 }
 
-async function handleWrapUp(supabase, payload, auth, request, context, tenant, tenantAgents) {
+async function handleWrapUp(supabase, payload, auth, request, context, tenant, tenantAgents, subscription) {
   const saved = await saveCheckpoint(supabase, payload, auth, tenant, { final: true });
   const callRecord = saved.callRecord;
   const outcome = normalizeOutcome(payload.call_outcome);
@@ -702,32 +708,37 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
 
   let webhookStatus = "skipped";
   if (outcome === "enrolled") {
-    const webhookResult = await sendEnrollmentWebhook(tenant, tenantAgents, {
-      ...payload,
-      agency: updatePayload.agency,
-      writing_agent: updatePayload.writing_agent,
-      enrollment_code: updatePayload.enrollment_code,
-      application_id: updatePayload.application_id,
-    });
+    const webhookAllowed = requirePlan(subscription, "pro");
+    if (webhookAllowed.response) {
+      webhookStatus = "skipped_plan";
+    } else {
+      const webhookResult = await sendEnrollmentWebhook(tenant, tenantAgents, {
+        ...payload,
+        agency: updatePayload.agency,
+        writing_agent: updatePayload.writing_agent,
+        enrollment_code: updatePayload.enrollment_code,
+        application_id: updatePayload.application_id,
+      });
 
-    const webhookPatch = {
-      webhook_sent: webhookResult.sent,
-      webhook_sent_at: webhookResult.sent ? webhookResult.sentAt : null,
-      webhook_error: webhookResult.sent ? null : webhookResult.error,
-      updated_at: new Date().toISOString(),
-    };
+      const webhookPatch = {
+        webhook_sent: webhookResult.sent,
+        webhook_sent_at: webhookResult.sent ? webhookResult.sentAt : null,
+        webhook_error: webhookResult.sent ? null : webhookResult.error,
+        updated_at: new Date().toISOString(),
+      };
 
-    const { data: webhookUpdated, error: webhookUpdateError } = await supabase
-      .from("call_records")
-      .update(webhookPatch)
-      .eq("id", updatedCallRecord.id)
-      .eq("tenant_id", tenant.id)
-      .select("*")
-      .single();
+      const { data: webhookUpdated, error: webhookUpdateError } = await supabase
+        .from("call_records")
+        .update(webhookPatch)
+        .eq("id", updatedCallRecord.id)
+        .eq("tenant_id", tenant.id)
+        .select("*")
+        .single();
 
-    if (webhookUpdateError) throw webhookUpdateError;
-    updatedCallRecord = webhookUpdated || updatedCallRecord;
-    webhookStatus = webhookResult.sent ? "sent" : "failed";
+      if (webhookUpdateError) throw webhookUpdateError;
+      updatedCallRecord = webhookUpdated || updatedCallRecord;
+      webhookStatus = webhookResult.sent ? "sent" : "failed";
+    }
   }
 
   return {
@@ -792,6 +803,11 @@ export default async (request, context) => {
   try {
     const supabase = getSupabase();
     const tenant = await resolveTenant(supabase, auth.orgId);
+    const subscription = await requireActiveSubscription(supabase, tenant.id);
+    if (subscription.response) return subscription.response;
+    const seatLimit = await checkSeatLimit(supabase, tenant.id, subscription);
+    if (seatLimit.response) return seatLimit.response;
+
     const tenantAgents = await fetchTenantAgents(supabase, tenant.id);
 
     if (action === "init") {
@@ -812,7 +828,22 @@ export default async (request, context) => {
     }
 
     if (action === "wrap_up") {
-      const result = await handleWrapUp(supabase, body, auth, request, context, tenant, tenantAgents);
+      const result = await handleWrapUp(
+        supabase,
+        body,
+        auth,
+        request,
+        context,
+        tenant,
+        tenantAgents,
+        subscription
+      );
+      await logUsageRecord(supabase, tenant.id, "call_completed", 1, {
+        call_record_id: result.call_record_id,
+        outcome: normalizeOutcome(body.call_outcome),
+        product_type: normalizeProductType(body.product_type),
+        user_id: auth.userId,
+      });
       return json(200, result);
     }
 

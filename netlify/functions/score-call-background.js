@@ -9,6 +9,11 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { generateScorecard } from "../../src/compliance/engine/ScorecardGenerator.js";
+import {
+  checkSeatLimit,
+  logUsageRecord,
+  requireActiveSubscription,
+} from "./_subscriptionGate.js";
 
 const AI_TIMEOUT_MS = 120000;
 
@@ -77,6 +82,18 @@ export default async (request) => {
     return;
   }
 
+  const subscription = await requireActiveSubscription(sb, callRecord.tenant_id);
+  if (subscription.response) {
+    console.warn(`[score-bg] Subscription gate blocked scoring for call ${callId}`);
+    return;
+  }
+
+  const seatLimit = await checkSeatLimit(sb, callRecord.tenant_id, subscription);
+  if (seatLimit.response) {
+    console.warn(`[score-bg] Seat limit blocked scoring for call ${callId}`);
+    return;
+  }
+
   try {
     const result = await generateScorecard({
       supabase: sb,
@@ -98,6 +115,13 @@ export default async (request) => {
     } catch (updateError) {
       console.warn(`[score-bg] Could not mark scoring complete for ${callId}:`, updateError);
     }
+
+    await logUsageRecord(sb, callRecord.tenant_id, "compliance_score", 1, {
+      call_record_id: callId,
+      scorecard_id: result.scorecard?.id || null,
+      overall_score: result.scorecard?.overall_score ?? null,
+      overall_grade: result.scorecard?.overall_grade || null,
+    });
 
     console.log(`[score-bg] Scoring complete for ${callId}: ${result.scorecard?.overall_grade} (${result.scorecard?.overall_score?.toFixed(1)}%)`);
   } catch (err) {

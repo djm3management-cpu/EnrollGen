@@ -23,6 +23,10 @@
 
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { createClient } from "@supabase/supabase-js";
+import {
+  checkSeatLimit,
+  requireActiveSubscription,
+} from "./_subscriptionGate.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const NOT_APPLICABLE_RESULT = "na";
@@ -485,6 +489,10 @@ export default async (request) => {
   try {
     const sb = getSupabase();
     const tenantId = await resolveTenantId(sb, auth.orgId);
+    const subscription = await requireActiveSubscription(sb, tenantId);
+    if (subscription.response) return subscription.response;
+    const seatLimit = await checkSeatLimit(sb, tenantId, subscription);
+    if (seatLimit.response) return seatLimit.response;
 
     // POST /calls — create call record
     if (parts[0] === "calls" && !parts[1] && method === "POST") {
