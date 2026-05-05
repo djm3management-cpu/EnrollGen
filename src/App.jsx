@@ -14,9 +14,10 @@ import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
 import TrainingModeToggle from "./components/training/TrainingModeToggle";
 import { SignedIn, SignedOut, SignIn, useClerk, useUser } from "@clerk/clerk-react";
-import { ChevronDown, Shuffle, X } from "lucide-react";
+import { ChevronDown, Settings, Shuffle, X } from "lucide-react";
 import { wallpapers } from "./config/wallpapers";
 import { useSubscription } from "./hooks/useSubscription";
+import { useTenantConfig } from "./hooks/useTenantConfig";
 import {
   LeftRail,
   LeftRailProvider,
@@ -41,6 +42,8 @@ const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 const loadOperationsTab = () => import("./components/OperationsTab");
 const loadBillingSettings = () => import("./components/BillingSettings");
+const loadTenantSettings = () => import("./components/TenantSettings");
+const loadOnboarding = () => import("./components/Onboarding");
 
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
@@ -59,6 +62,8 @@ const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
 const OperationsTab = lazy(loadOperationsTab);
 const BillingSettings = lazy(loadBillingSettings);
+const TenantSettings = lazy(loadTenantSettings);
+const Onboarding = lazy(loadOnboarding);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
@@ -281,6 +286,15 @@ function ProfileChip() {
   );
 }
 
+function isAdminUser(user) {
+  const role =
+    user?.publicMetadata?.role ||
+    user?.privateMetadata?.role ||
+    user?.organizationMemberships?.[0]?.role ||
+    "";
+  return role === "admin" || role === "org:admin" || user?.publicMetadata?.isAdmin === true;
+}
+
 function getTabsForMode(mode) {
   const tabs = [{ id: "script", label: "Script" }];
 
@@ -304,7 +318,7 @@ function getTabsForMode(mode) {
   return tabs;
 }
 
-function AppShell() {
+function AppShell({ currentUser = null }) {
   const [mode, setMode] = useState(getModeFromLocation);
   const [openPanel, setOpenPanel] = useState(null);
   const [backgroundSelection, setBackgroundSelection] = useState(loadBackgroundSelection);
@@ -325,6 +339,7 @@ function AppShell() {
   const selectedWallpaper =
     wallpapers.find((wallpaper) => wallpaper.id === backgroundSelection) || wallpapers[0];
   const wallpaperChoices = wallpapers.filter((wallpaper) => wallpaper.url);
+  const canAdmin = LOGIN_DISABLED || isAdminUser(currentUser);
   const navTabs = useMemo(() => getTabsForMode(mode), [mode]);
 
   useEffect(() => {
@@ -474,6 +489,10 @@ function AppShell() {
       loadBillingSettings();
       return;
     }
+    if (panelId === "settings") {
+      loadTenantSettings();
+      return;
+    }
     if (panelId === "verse") {
       loadDailyVerse();
     }
@@ -615,6 +634,12 @@ function AppShell() {
             <BillingSettings />
           </LazyPanel>
         );
+      case "settings":
+        return (
+          <LazyPanel>
+            <TenantSettings currentUser={currentUser} />
+          </LazyPanel>
+        );
       case "verse":
         return (
           <LazyPanel>
@@ -729,6 +754,19 @@ function AppShell() {
             </div>
 
             {!LOGIN_DISABLED ? <ProfileChip /> : null}
+            {canAdmin ? (
+              <button
+                type="button"
+                className={`top-bar-settings-button${openPanel === "settings" ? " is-active" : ""}`}
+                onClick={() => {
+                  preloadPanel("settings");
+                  setOpenPanel((current) => (current === "settings" ? null : "settings"));
+                }}
+                title="Agency settings"
+              >
+                <Settings size={14} />
+              </button>
+            ) : null}
           </div>
         </header>
 
@@ -743,7 +781,9 @@ function AppShell() {
               >
                 <div className="top-panel-header">
                   <div className="top-panel-title">
-                    {navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
+                    {openPanel === "settings"
+                      ? "Agency Settings"
+                      : navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
                   </div>
                   <button
                     type="button"
@@ -779,7 +819,9 @@ function AppShell() {
               >
                 <div className="top-panel-header">
                   <div className="top-panel-title">
-                    {navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
+                    {openPanel === "settings"
+                      ? "Agency Settings"
+                      : navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
                   </div>
                   <button
                     type="button"
@@ -901,14 +943,41 @@ function SubscriptionGate({ children }) {
   );
 }
 
-function AppContent() {
+function AppContent({ currentUser = null }) {
   return (
     <SubscriptionGate>
       <LeftRailProvider>
-        <AppShell />
+        <AppShell currentUser={currentUser} />
       </LeftRailProvider>
     </SubscriptionGate>
   );
+}
+
+function AuthenticatedAppContent() {
+  const { user } = useUser();
+  const { tenant, loading, error, refetch } = useTenantConfig();
+
+  if (loading) {
+    return (
+      <div className="subscription-paywall">
+        <div className="subscription-paywall-card">
+          <span className="billing-eyebrow">TENANT</span>
+          <h1>Loading agency</h1>
+          <p>Checking your organization workspace.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tenant) {
+    return (
+      <LazyPanel>
+        <Onboarding currentUser={user} onComplete={refetch} error={error} />
+      </LazyPanel>
+    );
+  }
+
+  return <AppContent currentUser={user} />;
 }
 
 export default function App() {
@@ -932,7 +1001,7 @@ export default function App() {
         </div>
       </SignedOut>
       <SignedIn>
-        <AppContent />
+        <AuthenticatedAppContent />
       </SignedIn>
     </>
   );

@@ -38,6 +38,14 @@ export function useSubscription() {
 
   const load = useCallback(async ({ background = false } = {}) => {
     if (!tenantId || tenantLoading) {
+      if (!tenantLoading && !tenantId) {
+        setState((current) => ({
+          ...current,
+          subscription: null,
+          usage: emptyUsage(),
+          loading: false,
+        }));
+      }
       return;
     }
 
@@ -80,6 +88,16 @@ export function useSubscription() {
   }, [supabaseClient, tenantId, tenantLoading]);
 
   useEffect(() => {
+    if (!tenantLoading && !tenantId) {
+      setState((current) => ({
+        ...current,
+        subscription: null,
+        usage: emptyUsage(),
+        loading: false,
+      }));
+      return undefined;
+    }
+
     if (!tenantId || tenantLoading) {
       return undefined;
     }

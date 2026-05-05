@@ -37,6 +37,12 @@ function normalizeTenantConfig(row) {
     coop_rates: row.coop_rates && typeof row.coop_rates === "object" ? row.coop_rates : {},
     carrier_options: Array.isArray(row.carrier_options) ? row.carrier_options : [],
     agency_display_name: row.agency_display_name || row.name || "",
+    agency_npn: row.agency_npn || "",
+    licensed_states: Array.isArray(row.licensed_states) ? row.licensed_states : [],
+    compliance_config:
+      row.compliance_config && typeof row.compliance_config === "object"
+        ? row.compliance_config
+        : {},
   };
 }
 
@@ -45,7 +51,7 @@ export async function fetchTenantConfig(supabaseClient, tenantId) {
   let query = supabaseClient
     .from("tenants")
     .select(
-      "id, name, clerk_org_id, ghl_webhook_url, ghl_location_id, coop_rates, carrier_options, agency_display_name"
+      "id, name, clerk_org_id, ghl_webhook_url, ghl_location_id, coop_rates, carrier_options, agency_display_name, agency_npn, licensed_states, compliance_config"
     );
 
   if (tenantId) {
