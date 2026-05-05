@@ -4,6 +4,8 @@ import {
   CARRIER_REFERENCE,
   CARRIER_PRODUCT_FILTERS,
 } from "../data/carrierReference";
+import { useKnowledge } from "../hooks/useKnowledge";
+import { mergeStructuredList } from "../lib/knowledgeBase";
 
 function highlightMatches(carrier, query) {
   if (!query) return true;
@@ -37,16 +39,21 @@ export default function CarrierQuickRef() {
   const [query, setQuery] = useState("");
   const [productFilter, setProductFilter] = useState("All");
   const [expandedKey, setExpandedKey] = useState(null);
+  const { entries: carrierEntries } = useKnowledge("carrier_reference");
+  const carrierReference = useMemo(
+    () => mergeStructuredList(CARRIER_REFERENCE, carrierEntries, (carrier) => carrier.carrier),
+    [carrierEntries]
+  );
 
   const filterDef =
     CARRIER_PRODUCT_FILTERS.find((filter) => filter.id === productFilter) ||
     CARRIER_PRODUCT_FILTERS[0];
 
   const results = useMemo(() => {
-    return CARRIER_REFERENCE.filter(
+    return carrierReference.filter(
       (carrier) => filterDef.match(carrier) && highlightMatches(carrier, query)
     );
-  }, [filterDef, query]);
+  }, [carrierReference, filterDef, query]);
 
   const togglePlan = (key) => {
     setExpandedKey((current) => (current === key ? null : key));

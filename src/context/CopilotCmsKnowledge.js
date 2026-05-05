@@ -1,3 +1,16 @@
+let dbCmsKnowledgeEntries = [];
+
+function normalizeKnowledgeText(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ");
+}
+
+export function setDbCmsKnowledgeEntries(entries = []) {
+  dbCmsKnowledgeEntries = Array.isArray(entries) ? entries : [];
+}
+
 const CMS_SOURCES = {
   mmcm_ch2: {
     id: "mmcm_ch2",
@@ -1013,6 +1026,43 @@ function formatSources(sources) {
     .join("\n");
 }
 
+function selectDbKnowledgeEntries(sectionLabel, question = "", maxEntries = 4) {
+  const sectionNeedle = normalizeKnowledgeText(sectionLabel);
+  const questionNeedle = normalizeKnowledgeText(question);
+  const terms = questionNeedle.split(/\s+/).filter((term) => term.length > 4);
+
+  return dbCmsKnowledgeEntries
+    .map((entry) => {
+      const title = normalizeKnowledgeText(entry.title || entry.metadata?.static_key || entry.key);
+      const content = normalizeKnowledgeText(entry.content);
+      let score = 0;
+      if (sectionNeedle && title.includes(sectionNeedle)) score += 8;
+      if (sectionNeedle && content.includes(sectionNeedle)) score += 4;
+      for (const term of terms) {
+        if (title.includes(term)) score += 3;
+        if (content.includes(term)) score += 1;
+      }
+      return { entry, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, maxEntries)
+    .map((item) => item.entry);
+}
+
+function formatDbKnowledgeEntries(entries) {
+  if (!entries.length) return "";
+  return [
+    "DATABASE KNOWLEDGE BASE ENTRIES:",
+    ...entries.map((entry) => [
+      `- ${entry.title || entry.key}`,
+      `  ${String(entry.content || "").replace(/\s+/g, " ").slice(0, 900)}`,
+      entry.source_urls?.length ? `  Sources: ${entry.source_urls.join(", ")}` : null,
+      entry.last_verified_at ? `  Last verified: ${entry.last_verified_at}` : null,
+    ].filter(Boolean).join("\n")),
+  ].join("\n");
+}
+
 export function getCmsKnowledgeForSection(sectionLabel, copilotContext) {
   const contextTerms = inferContextTerms({
     sectionLabel,
@@ -1025,11 +1075,14 @@ export function getCmsKnowledgeForSection(sectionLabel, copilotContext) {
       ? selectSepScenarios(contextTerms, 6)
       : [];
   const sources = collectSourceIds(topics, scenarios);
+  const dbEntries = selectDbKnowledgeEntries(sectionLabel);
+  const dbPromptBlock = formatDbKnowledgeEntries(dbEntries);
 
   return {
     topics,
     scenarios,
     sources,
+    dbEntries,
     promptBlock: [
       "════════════════════════════════════════════════════════",
       "CMS / MEDICARE RETRIEVED GUIDANCE",
@@ -1041,6 +1094,8 @@ export function getCmsKnowledgeForSection(sectionLabel, copilotContext) {
       scenarios.length ? "" : null,
       scenarios.length ? "RELEVANT SEP SCENARIOS:" : null,
       scenarios.length ? scenarios.map(formatScenario).join("\n") : null,
+      dbPromptBlock ? "" : null,
+      dbPromptBlock || null,
       "",
       "AUTHORITATIVE SOURCES:",
       formatSources(sources),
@@ -1059,17 +1114,22 @@ export function getCmsKnowledgeForQuestion(sectionLabel, question, copilotContex
   const topics = selectTopics(sectionLabel, contextTerms, 8);
   const scenarios = selectSepScenarios(contextTerms, 6);
   const sources = collectSourceIds(topics, scenarios);
+  const dbEntries = selectDbKnowledgeEntries(sectionLabel, question);
+  const dbPromptBlock = formatDbKnowledgeEntries(dbEntries);
 
   return {
     topics,
     scenarios,
     sources,
+    dbEntries,
     promptBlock: [
       "RETRIEVED CMS / MEDICARE GUIDANCE FOR THIS QUESTION:",
       topics.map(formatTopic).join("\n\n"),
       scenarios.length ? "" : null,
       scenarios.length ? "MATCHING SEP RULES:" : null,
       scenarios.length ? scenarios.map(formatScenario).join("\n") : null,
+      dbPromptBlock ? "" : null,
+      dbPromptBlock || null,
       "",
       "SOURCES:",
       formatSources(sources),

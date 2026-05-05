@@ -17,6 +17,8 @@ import { lookupAcaBenchmark, formatBenchmarkForPrompt } from "../lib/acaBenchmar
 import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
+import { mergeStructuredKnowledgeMap } from "../lib/knowledgeBase";
+import { useKnowledge } from "./useKnowledge";
 import {
   useCopilotEngineCore,
   shouldSuppressDuplicateIssue,
@@ -388,7 +390,12 @@ Use plain text only. No bold, no bullet points, no markdown, no dashes, no aster
 
 export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
   const currentStep = U65_GATE_LABELS[activeGate] || `Gate ${activeGate}`;
-  const knowledge = U65_COMPLIANCE_KNOWLEDGE[currentStep] || null;
+  const { entries: dbComplianceEntries } = useKnowledge("compliance_u65");
+  const complianceKnowledge = useMemo(
+    () => mergeStructuredKnowledgeMap(U65_COMPLIANCE_KNOWLEDGE, dbComplianceEntries),
+    [dbComplianceEntries]
+  );
+  const knowledge = complianceKnowledge[currentStep] || null;
 
   /* ─── Core infrastructure ─── */
   const core = useCopilotEngineCore({

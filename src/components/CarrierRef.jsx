@@ -8,8 +8,8 @@ import {
 } from "../data/stateCarrierData";
 import STATE_PATHS, { STATE_CENTROIDS } from "../data/usMapPaths";
 import { supabase } from "../lib/supabase";
-
-const ACTIVE = new Set(Object.keys(STATES));
+import { useKnowledge } from "../hooks/useKnowledge";
+import { mergeStructuredStateMap } from "../lib/knowledgeBase";
 
 /* SBE states with their own tables (not in qhp_landscape_2026) */
 const SBE_TABLES = { NJ: "sbe_plans_nj_2025", PA: "sbe_plans_pa_2025", VA: "sbe_plans_va_2025" };
@@ -251,8 +251,8 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
 }
 
 /* ── State Sidebar ────────────────────────────────────────────────── */
-function StateSidebar({ code, onClose, acaIssuers }) {
-  const data = STATES[code];
+function StateSidebar({ code, onClose, acaIssuers, states }) {
+  const data = states[code];
   if (!data) return null;
 
   const totalCarriers =
@@ -452,15 +452,21 @@ export default function CarrierRef() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [search, setSearch] = useState("");
   const [activeSeg, setActiveSeg] = useState(null);
+  const { entries: stateCarrierEntries } = useKnowledge("state_carrier_data");
+  const carrierStates = useMemo(
+    () => mergeStructuredStateMap(STATES, stateCarrierEntries),
+    [stateCarrierEntries]
+  );
+  const activeStates = useMemo(() => new Set(Object.keys(carrierStates)), [carrierStates]);
 
   /* Every state on the map that is NOT in NGHS ACTIVE = orange expansion state */
   const acaExpansionStates = useMemo(() => {
     const set = new Set();
     for (const code of Object.keys(STATE_PATHS)) {
-      if (!ACTIVE.has(code)) set.add(code);
+      if (!activeStates.has(code)) set.add(code);
     }
     return set;
-  }, []);
+  }, [activeStates]);
 
   /* ACA issuers cache — fetched on-demand when a state is selected */
   const [acaIssuers, setAcaIssuers] = useState({});
@@ -504,29 +510,29 @@ export default function CarrierRef() {
   const selectedAcaTool = selected ? (TOOLS.ACA.byState[selected] || TOOLS.ACA.default) : TOOLS.ACA.default;
 
   const matchedStates = useMemo(() => {
-    if (!query) return ACTIVE;
+    if (!query) return activeStates;
     const matched = new Set();
-    for (const [code, data] of Object.entries(STATES)) {
+    for (const [code, data] of Object.entries(carrierStates)) {
       if (stateMatchesQuery(code, data, query)) matched.add(code);
     }
     return matched;
-  }, [query]);
+  }, [activeStates, carrierStates, query]);
 
   const segSummary = useMemo(() => {
     const sums = {};
     for (const seg of MARKET_SEGMENTS) {
       let total = 0;
-      for (const data of Object.values(STATES)) {
+      for (const data of Object.values(carrierStates)) {
         total += carriers(data, seg.id).length;
       }
       sums[seg.id] = total;
     }
     return sums;
-  }, []);
+  }, [carrierStates]);
 
   /* Determine fill/stroke for each state */
   function stateStyle(code) {
-    const isActive = ACTIVE.has(code);
+    const isActive = activeStates.has(code);
     const isExpansion = acaExpansionStates.has(code);
     const isMatch = isActive && matchedStates.has(code);
     const isSel = selected === code;
@@ -763,7 +769,7 @@ export default function CarrierRef() {
             {/* Render all state shapes */}
             {Object.entries(STATE_PATHS).map(([code, d]) => {
               const style = stateStyle(code);
-              const isActive = ACTIVE.has(code);
+              const isActive = activeStates.has(code);
               const isExpansion = acaExpansionStates.has(code);
               const isMatch = isActive && matchedStates.has(code);
               const isClickable = (isActive && isMatch) || isExpansion;
@@ -805,7 +811,7 @@ export default function CarrierRef() {
 
             {/* State labels for active states */}
             {Object.entries(STATE_CENTROIDS).map(([code, [cx, cy]]) => {
-              const isActive = ACTIVE.has(code);
+              const isActive = activeStates.has(code);
               const isMatch = isActive && matchedStates.has(code);
               if (!isActive) return null;
 
@@ -862,7 +868,7 @@ export default function CarrierRef() {
           </svg>
 
           {/* Hover tooltip — NGHS active states */}
-          {hovered && STATES[hovered] && (
+          {hovered && carrierStates[hovered] && (
             <div
               style={{
                 position: "absolute",
@@ -889,11 +895,11 @@ export default function CarrierRef() {
                   marginBottom: 8,
                 }}
               >
-                {STATES[hovered].name}
+                {carrierStates[hovered].name}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {MARKET_SEGMENTS.map((seg) => {
-                  const count = carriers(STATES[hovered], seg.id).length;
+                  const count = carriers(carrierStates[hovered], seg.id).length;
                   return (
                     <div
                       key={seg.id}
@@ -945,7 +951,7 @@ export default function CarrierRef() {
           )}
 
           {/* Hover tooltip — expansion states (ACA data only) */}
-          {hovered && !STATES[hovered] && acaExpansionStates.has(hovered) && (
+          {hovered && !carrierStates[hovered] && acaExpansionStates.has(hovered) && (
             <div
               style={{
                 position: "absolute",
@@ -1049,19 +1055,25 @@ export default function CarrierRef() {
                 fontFamily: "'IBM Plex Mono', monospace",
               }}
             >
-              {matchedStates.size} / {ACTIVE.size} states
+              {matchedStates.size} / {activeStates.size} states
               {query ? ` matching "${search}"` : ""}
             </div>
           </div>
         </section>
 
         {/* Sidebar — NGHS active states */}
-        {selected && STATES[selected] && (
-          <StateSidebar key={selected} code={selected} onClose={() => setSelected(null)} acaIssuers={acaIssuers[selected]} />
+        {selected && carrierStates[selected] && (
+          <StateSidebar
+            key={selected}
+            code={selected}
+            states={carrierStates}
+            onClose={() => setSelected(null)}
+            acaIssuers={acaIssuers[selected]}
+          />
         )}
 
         {/* Sidebar — ACA expansion states (not in NGHS) */}
-        {selected && !STATES[selected] && acaExpansionStates.has(selected) && (
+        {selected && !carrierStates[selected] && acaExpansionStates.has(selected) && (
           <aside
             className="card carrier-ref-sidebar"
             style={{
