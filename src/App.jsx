@@ -13,11 +13,13 @@ import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
 import TrainingModeToggle from "./components/training/TrainingModeToggle";
-import { SignedIn, SignedOut, SignIn, useClerk, useUser } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, SignIn, useClerk, useOrganization, useUser } from "@clerk/clerk-react";
 import { ChevronDown, Settings, Shuffle, X } from "lucide-react";
 import { wallpapers } from "./config/wallpapers";
 import { useSubscription } from "./hooks/useSubscription";
 import { useTenantConfig } from "./hooks/useTenantConfig";
+import { useAppAuth } from "./context/AuthContext";
+import { fetchWithClerk } from "./lib/clerkFetch";
 import {
   LeftRail,
   LeftRailProvider,
@@ -953,11 +955,91 @@ function AppContent({ currentUser = null }) {
   );
 }
 
+function TenantAutoBootstrap({ currentUser = null, organization, onComplete }) {
+  const { getToken } = useAppAuth();
+  const [error, setError] = useState("");
+  const userId = currentUser?.id || "";
+  const userFullName = currentUser?.fullName || "";
+  const userFirstName = currentUser?.firstName || "";
+  const userLastName = currentUser?.lastName || "";
+  const bootstrapAgent = useMemo(
+    () => ({
+      name: userFullName || [userFirstName, userLastName].filter(Boolean).join(" ") || "Agent",
+      npn: "",
+      clerk_user_id: userId,
+      ghl_user_id: "",
+    }),
+    [userFirstName, userFullName, userId, userLastName]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrapTenant() {
+      if (!organization?.id) return;
+
+      setError("");
+      try {
+        const agencyName = organization.name || "New Agency";
+        const response = await fetchWithClerk(getToken, "/api/seed-new-tenant", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            org_id: organization.id,
+            tenant: {
+              name: agencyName,
+              agency_display_name: agencyName,
+            },
+            agents: [bootstrapAgent],
+          }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.detail || data.error || "Unable to create agency workspace.");
+        }
+
+        if (!cancelled) {
+          await onComplete?.();
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setError(error?.message || "Unable to create agency workspace.");
+        }
+      }
+    }
+
+    bootstrapTenant();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    bootstrapAgent,
+    getToken,
+    onComplete,
+    organization?.id,
+    organization?.name,
+  ]);
+
+  return (
+    <div className="subscription-paywall">
+      <div className="subscription-paywall-card">
+        <span className="billing-eyebrow">TENANT</span>
+        <h1>Setting up {organization?.name || "agency"}</h1>
+        <p>Linking your Clerk organization to an EnrollGen workspace.</p>
+        {error ? <div className="billing-alert is-error">{error}</div> : null}
+      </div>
+    </div>
+  );
+}
+
 function AuthenticatedAppContent() {
   const { user } = useUser();
   const { tenant, loading, error, refetch } = useTenantConfig();
+  const { organization, isLoaded: organizationLoaded } = useOrganization();
 
-  if (loading) {
+  if (loading || !organizationLoaded) {
     return (
       <div className="subscription-paywall">
         <div className="subscription-paywall-card">
@@ -970,6 +1052,16 @@ function AuthenticatedAppContent() {
   }
 
   if (!tenant) {
+    if (organization?.id) {
+      return (
+        <TenantAutoBootstrap
+          currentUser={user}
+          organization={organization}
+          onComplete={refetch}
+        />
+      );
+    }
+
     return (
       <LazyPanel>
         <Onboarding currentUser={user} onComplete={refetch} error={error} />
