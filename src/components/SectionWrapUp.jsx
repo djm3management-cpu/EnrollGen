@@ -3,20 +3,17 @@ import { useScript } from "../context/ScriptContext";
 import { useAppAuth } from "../context/AuthContext";
 import { useLiveCall } from "../context/LiveCallContext";
 import {
-  AGENCY_OPTIONS,
   CALL_OUTCOME_OPTIONS,
-  INTAKE_CARRIER_OPTIONS,
   US_STATE_OPTIONS,
-  WRITING_AGENT_OPTIONS,
   buildPostCallPayload,
   calculateSixtyDayDate,
   formatMbiInput,
   formatPhoneInput,
   formatPremiumInput,
-  normalizeWritingAgent,
   savePostCallWrapUp,
   sendEnrollmentWebhookAfterSave,
 } from "../lib/postCallPipeline";
+import { useTenantConfig } from "../hooks/useTenantConfig";
 import {
   getActiveSessionMetadata,
   setActivePostCallMetadata,
@@ -51,6 +48,12 @@ export default React.memo(function SectionWrapUp() {
   const { state, dispatch, activeSection, unlocked } = useScript();
   const { liveCall } = useLiveCall();
   const { getToken } = useAppAuth();
+  const {
+    tenantConfig,
+    agents,
+    carrierOptions,
+    agencyDisplayName,
+  } = useTenantConfig();
   const [saveState, setSaveState] = useState({
     status: "idle",
     message: "",
@@ -62,6 +65,14 @@ export default React.memo(function SectionWrapUp() {
   const callOutcome = notes.callOutcome || "enrolled";
   const isEnrolled = callOutcome === "enrolled";
   const isSaving = saveState.status === "saving";
+  const writingAgentOptions = useMemo(
+    () => agents.map((agent) => agent.name).filter(Boolean),
+    [agents]
+  );
+  const agencyOptions = useMemo(
+    () => [agencyDisplayName].filter(Boolean),
+    [agencyDisplayName]
+  );
 
   const updateNote = useCallback(
     (field, value) => {
@@ -73,11 +84,17 @@ export default React.memo(function SectionWrapUp() {
   useEffect(() => {
     if (notes.writingAgent) return;
     const sessionMetadata = getActiveSessionMetadata();
-    const matchedAgent = normalizeWritingAgent(sessionMetadata.agentName || state.agentName);
+    const rawAgent = String(sessionMetadata.agentName || state.agentName || "").trim().toLowerCase();
+    const matchedAgent = writingAgentOptions.find((agent) => agent.toLowerCase() === rawAgent);
     if (matchedAgent) {
       updateNote("writingAgent", matchedAgent);
     }
-  }, [notes.writingAgent, state.agentName, updateNote]);
+  }, [notes.writingAgent, state.agentName, updateNote, writingAgentOptions]);
+
+  useEffect(() => {
+    if (notes.agency || !agencyDisplayName) return;
+    updateNote("agency", agencyDisplayName);
+  }, [agencyDisplayName, notes.agency, updateNote]);
 
   const validationError = useMemo(() => {
     if (!notes.customerFirstName?.trim()) return "Customer first name is required.";
@@ -156,10 +173,13 @@ export default React.memo(function SectionWrapUp() {
         webhookStatus: result.webhook_status || (isEnrolled ? "pending" : "skipped"),
       });
 
-      if (isEnrolled && callRecordId && result.webhook_status !== "sent") {
+      if (isEnrolled && callRecordId && result.webhook_status === "pending") {
         void sendEnrollmentWebhookAfterSave(getToken, {
           callRecordId,
           payload,
+          webhookUrl: tenantConfig?.ghl_webhook_url,
+          tenantConfig,
+          tenantAgents: agents,
         }).then((webhookResult) => {
           if (webhookResult.status !== "sent") return;
           setSaveState((current) => ({
@@ -177,7 +197,7 @@ export default React.memo(function SectionWrapUp() {
         webhookStatus: "idle",
       });
     }
-  }, [callOutcome, getToken, isEnrolled, liveCall, notes.agentNotes, state, validationError]);
+  }, [agents, callOutcome, getToken, isEnrolled, liveCall, notes.agentNotes, state, tenantConfig, validationError]);
 
   const statusClass = `post-call-save-status is-${saveState.status}`;
 
@@ -350,7 +370,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
               required={isEnrolled}
             >
               <option value="">Select</option>
-              {INTAKE_CARRIER_OPTIONS.map((carrier) => (
+              {carrierOptions.map((carrier) => (
                 <option key={carrier} value={carrier}>{carrier}</option>
               ))}
             </select>
@@ -460,7 +480,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
               required={isEnrolled}
             >
               <option value="">Select</option>
-              {AGENCY_OPTIONS.map((agency) => (
+              {agencyOptions.map((agency) => (
                 <option key={agency} value={agency}>{agency}</option>
               ))}
             </select>
@@ -475,7 +495,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
               required={isEnrolled}
             >
               <option value="">Select</option>
-              {WRITING_AGENT_OPTIONS.map((agent) => (
+              {writingAgentOptions.map((agent) => (
                 <option key={agent} value={agent}>{agent}</option>
               ))}
             </select>

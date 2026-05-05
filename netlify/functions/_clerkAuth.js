@@ -35,7 +35,7 @@ function isAuthBypassed() {
 
 export async function requireClerkAuth(request) {
   if (isAuthBypassed()) {
-    return { userId: "dev-bypass", sessionId: null };
+    return { userId: "dev-bypass", sessionId: null, orgId: null, tokenPayload: {} };
   }
 
   const secretKey = process.env.CLERK_SECRET_KEY;
@@ -75,6 +75,7 @@ export async function requireClerkAuth(request) {
     return {
       userId: payload.sub,
       sessionId: payload.sid ?? null,
+      orgId: payload.org_id ?? null,
       tokenPayload: payload,
     };
   } catch (error) {

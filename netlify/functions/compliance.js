@@ -29,6 +29,7 @@ const NOT_APPLICABLE_RESULT = "na";
 const LEGACY_NOT_APPLICABLE_RESULT = "not_applicable";
 const INSUFFICIENT_PASS_FAIL = "N/A";
 const LEGACY_INSUFFICIENT_PASS_FAIL = "INSUFFICIENT";
+const NGHS_TENANT_ID = "00000000-0000-4000-8000-000000000001";
 
 function json(status, data) {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
@@ -39,6 +40,26 @@ function getSupabase() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
   if (!url || !key) throw new Error("Supabase env vars not configured");
   return createClient(url, key);
+}
+
+async function resolveTenantId(supabase, orgId) {
+  if (orgId) {
+    const { data, error } = await supabase
+      .from("tenants")
+      .select("id")
+      .eq("clerk_org_id", orgId)
+      .maybeSingle();
+    if (error) throw error;
+    if (data?.id) return data.id;
+  }
+
+  const { data, error } = await supabase
+    .from("tenants")
+    .select("id")
+    .eq("id", NGHS_TENANT_ID)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id || NGHS_TENANT_ID;
 }
 
 function parsePath(url) {
@@ -463,11 +484,16 @@ export default async (request) => {
 
   try {
     const sb = getSupabase();
+    const tenantId = await resolveTenantId(sb, auth.orgId);
 
     // POST /calls — create call record
     if (parts[0] === "calls" && !parts[1] && method === "POST") {
       const body = await request.json();
-      const { data, error } = await sb.from("call_records").insert(body).select().single();
+      const { data, error } = await sb
+        .from("call_records")
+        .insert({ ...body, tenant_id: body.tenant_id || tenantId })
+        .select()
+        .single();
       if (error) return json(400, { error: error.message });
       return json(201, data);
     }

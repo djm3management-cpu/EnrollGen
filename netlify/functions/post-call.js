@@ -3,6 +3,7 @@ import { requireClerkAuth } from "./_clerkAuth.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const LIVE_SOURCE_SYSTEM = "enrollgen_live";
+const NGHS_TENANT_ID = "00000000-0000-4000-8000-000000000001";
 
 function json(status, payload) {
   return new Response(JSON.stringify(payload), { status, headers: JSON_HEADERS });
@@ -17,6 +18,70 @@ function getSupabase() {
 
 function safeText(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeLookup(value) {
+  return safeText(value).toLowerCase().replace(/\s+/g, " ");
+}
+
+function normalizeTenant(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name || "",
+    ghl_webhook_url: row.ghl_webhook_url || "",
+    ghl_location_id: row.ghl_location_id || "",
+    coop_rates: row.coop_rates && typeof row.coop_rates === "object" ? row.coop_rates : {},
+    carrier_options: Array.isArray(row.carrier_options) ? row.carrier_options : [],
+    agency_display_name: row.agency_display_name || row.name || "",
+  };
+}
+
+async function resolveTenant(supabase, orgId) {
+  if (orgId) {
+    const { data, error } = await supabase
+      .from("tenants")
+      .select("id, name, ghl_webhook_url, ghl_location_id, coop_rates, carrier_options, agency_display_name")
+      .eq("clerk_org_id", orgId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data) return normalizeTenant(data);
+  }
+
+  const { data, error } = await supabase
+    .from("tenants")
+    .select("id, name, ghl_webhook_url, ghl_location_id, coop_rates, carrier_options, agency_display_name")
+    .eq("id", NGHS_TENANT_ID)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error("Unable to resolve tenant for Clerk organization.");
+  return normalizeTenant(data);
+}
+
+async function fetchTenantAgents(supabase, tenantId) {
+  const { data, error } = await supabase
+    .from("tenant_agents")
+    .select("id, name, npn, clerk_user_id, ghl_user_id")
+    .eq("tenant_id", tenantId)
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+function getAgentGhlUserId(agents, agentName) {
+  const raw = normalizeLookup(agentName);
+  if (!raw) return "";
+  const exact = agents.find((agent) => normalizeLookup(agent.name) === raw);
+  if (exact?.ghl_user_id) return exact.ghl_user_id;
+  const loose = agents.find((agent) => {
+    const name = normalizeLookup(agent.name);
+    return name && (name.includes(raw) || raw.includes(name));
+  });
+  return loose?.ghl_user_id || "";
 }
 
 function normalizeProductType(value) {
@@ -83,36 +148,77 @@ function mergeMetadata(current, patch) {
   };
 }
 
-async function fetchAgent(supabase, payload, auth) {
-  if (payload.agent_id) {
+async function fetchTenantAgentForPayload(supabase, payload, auth, tenantId) {
+  const writingAgent = safeText(payload.writing_agent || payload.agent_name);
+
+  if (auth.userId) {
     const { data } = await supabase
-      .from("enrolled_agents")
-      .select("id, name, npn, clerk_user_id")
-      .eq("id", payload.agent_id)
+      .from("tenant_agents")
+      .select("id, name, npn, clerk_user_id, ghl_user_id")
+      .eq("tenant_id", tenantId)
+      .eq("clerk_user_id", auth.userId)
+      .eq("is_active", true)
       .maybeSingle();
     if (data) return data;
   }
 
-  const { data } = await supabase
+  if (writingAgent) {
+    const { data } = await supabase
+      .from("tenant_agents")
+      .select("id, name, npn, clerk_user_id, ghl_user_id")
+      .eq("tenant_id", tenantId)
+      .ilike("name", writingAgent)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (data) return data;
+  }
+
+  return null;
+}
+
+async function fetchAgent(supabase, payload, auth, tenant) {
+  const tenantId = tenant?.id;
+  const tenantAgent = tenantId
+    ? await fetchTenantAgentForPayload(supabase, payload, auth, tenantId)
+    : null;
+
+  if (payload.agent_id) {
+    let query = supabase
+      .from("enrolled_agents")
+      .select("id, name, npn, clerk_user_id")
+      .eq("id", payload.agent_id);
+    if (tenantId) query = query.eq("tenant_id", tenantId);
+    const { data } = await query.maybeSingle();
+    if (data) return data;
+  }
+
+  let query = supabase
     .from("enrolled_agents")
     .select("id, name, npn, clerk_user_id")
-    .eq("clerk_user_id", auth.userId)
-    .maybeSingle();
+    .eq("clerk_user_id", auth.userId);
+  if (tenantId) query = query.eq("tenant_id", tenantId);
+  const { data } = await query.maybeSingle();
 
   return data || {
-    id: payload.agent_id || null,
-    name: safeText(payload.agent_name) || "Agent",
-    npn: null,
-    clerk_user_id: auth.userId,
+    id: payload.agent_id || tenantAgent?.id || null,
+    name:
+      safeText(payload.writing_agent) ||
+      tenantAgent?.name ||
+      safeText(payload.agent_name) ||
+      "Agent",
+    npn: tenantAgent?.npn || null,
+    clerk_user_id: tenantAgent?.clerk_user_id || auth.userId,
   };
 }
 
-async function resolveTranscriptAgentId(supabase, agent) {
+async function resolveTranscriptAgentId(supabase, agent, tenant) {
   try {
+    const agency = tenant?.agency_display_name || tenant?.name || "Unknown";
     const { data: existing, error: fetchError } = await supabase
       .from("agents")
       .select("id, name")
       .ilike("name", agent.name || "Agent")
+      .eq("agency", agency)
       .limit(1)
       .maybeSingle();
 
@@ -123,7 +229,7 @@ async function resolveTranscriptAgentId(supabase, agent) {
       .from("agents")
       .insert({
         name: agent.name || "Agent",
-        agency: "NGHS",
+        agency,
         is_active: true,
       })
       .select("id")
@@ -141,37 +247,44 @@ async function resolveTranscriptAgentId(supabase, agent) {
   }
 }
 
-async function ensureCallRecord(supabase, payload, auth) {
+async function ensureCallRecord(supabase, payload, auth, tenant) {
   if (payload.call_record_id) {
-    const { data } = await supabase
+    let query = supabase
       .from("call_records")
       .select("*")
-      .eq("id", payload.call_record_id)
-      .maybeSingle();
+      .eq("id", payload.call_record_id);
+    if (tenant?.id) query = query.eq("tenant_id", tenant.id);
+    const { data } = await query.maybeSingle();
     if (data) return data;
   }
 
   if (payload.session_id) {
-    const { data } = await supabase
+    let query = supabase
       .from("call_records")
       .select("*")
       .eq("session_id", payload.session_id)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+    if (tenant?.id) query = query.eq("tenant_id", tenant.id);
+    const { data } = await query.maybeSingle();
     if (data) return data;
   }
 
-  const agent = await fetchAgent(supabase, payload, auth);
+  const agent = await fetchAgent(supabase, payload, auth, tenant);
   if (!agent.id) {
     throw new Error("Unable to resolve enrolled agent for call record");
   }
 
   const insertPayload = {
+    tenant_id: tenant.id,
     external_call_id: payload.session_id || null,
     session_id: payload.session_id || null,
     agent_id: agent.id,
-    agent_name: agent.name || safeText(payload.agent_name) || "Agent",
+    agent_name:
+      safeText(payload.writing_agent) ||
+      agent.name ||
+      safeText(payload.agent_name) ||
+      "Agent",
     agent_npn: agent.npn || null,
     call_direction: normalizeDirection(payload.call_direction),
     call_type: safeText(payload.call_type) || "enrollment",
@@ -204,56 +317,60 @@ async function ensureCallRecord(supabase, payload, auth) {
       .update({
         call_record_id: callRecord.id,
       })
-      .eq("id", payload.session_id);
+      .eq("id", payload.session_id)
+      .eq("tenant_id", tenant.id);
   }
 
   return callRecord;
 }
 
-async function findTranscript(supabase, callRecord, payload) {
+async function findTranscript(supabase, callRecord, payload, tenant) {
   if (payload.transcript_id || callRecord.transcript_id) {
-    const { data } = await supabase
+    let query = supabase
       .from("call_transcripts")
       .select("*")
-      .eq("id", payload.transcript_id || callRecord.transcript_id)
-      .maybeSingle();
+      .eq("id", payload.transcript_id || callRecord.transcript_id);
+    if (tenant?.id) query = query.eq("tenant_id", tenant.id);
+    const { data } = await query.maybeSingle();
     if (data) return data;
   }
 
   if (callRecord.id) {
-    const { data } = await supabase
+    let query = supabase
       .from("call_transcripts")
       .select("*")
       .eq("call_record_id", callRecord.id)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+    if (tenant?.id) query = query.eq("tenant_id", tenant.id);
+    const { data } = await query.maybeSingle();
     if (data) return data;
   }
 
   if (payload.session_id) {
-    const { data } = await supabase
+    let query = supabase
       .from("call_transcripts")
       .select("*")
       .eq("source_system", LIVE_SOURCE_SYSTEM)
       .eq("source_id", payload.session_id)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+    if (tenant?.id) query = query.eq("tenant_id", tenant.id);
+    const { data } = await query.maybeSingle();
     if (data) return data;
   }
 
   return null;
 }
 
-async function saveTranscript(supabase, callRecord, payload, auth, { final = false } = {}) {
+async function saveTranscript(supabase, callRecord, payload, auth, tenant, { final = false } = {}) {
   const transcriptText = scrubPhi(payload.transcript_text);
   if (!transcriptText) {
     return { transcript: null, callRecord };
   }
 
-  const agent = await fetchAgent(supabase, payload, auth);
-  const transcriptAgentId = await resolveTranscriptAgentId(supabase, agent);
+  const agent = await fetchAgent(supabase, payload, auth, tenant);
+  const transcriptAgentId = await resolveTranscriptAgentId(supabase, agent, tenant);
   if (!transcriptAgentId) {
     console.warn("[post-call] call_transcripts was not available; transcript stored on call_records only.");
     return { transcript: null, callRecord };
@@ -262,7 +379,7 @@ async function saveTranscript(supabase, callRecord, payload, auth, { final = fal
   const now = new Date().toISOString();
   let existing = null;
   try {
-    existing = await findTranscript(supabase, callRecord, payload);
+    existing = await findTranscript(supabase, callRecord, payload, tenant);
   } catch (error) {
     if (error?.code === "42P01" || /call_transcripts/i.test(error.message || "")) {
       console.warn("[post-call] call_transcripts was not available; transcript stored on call_records only.");
@@ -272,6 +389,7 @@ async function saveTranscript(supabase, callRecord, payload, auth, { final = fal
   }
 
   const basePayload = {
+    tenant_id: tenant.id,
     agent_id: transcriptAgentId,
     call_date: callRecord.call_start || payload.call_start || now,
     duration_seconds: Number.isFinite(Number(payload.call_duration_seconds))
@@ -302,6 +420,7 @@ async function saveTranscript(supabase, callRecord, payload, auth, { final = fal
         .from("call_transcripts")
         .update(basePayload)
         .eq("id", existing.id)
+        .eq("tenant_id", tenant.id)
         .select("*")
         .single();
       if (error) throw error;
@@ -330,13 +449,14 @@ async function saveTranscript(supabase, callRecord, payload, auth, { final = fal
       updated_at: now,
     })
     .eq("id", callRecord.id)
+    .eq("tenant_id", tenant.id)
     .select("*")
     .single();
 
   return { transcript, callRecord: updatedCallRecord || callRecord };
 }
 
-async function updateCallTranscriptFields(supabase, transcriptId, payload) {
+async function updateCallTranscriptFields(supabase, transcriptId, payload, tenant) {
   if (!transcriptId) return;
 
   const updatePayload = {
@@ -349,11 +469,12 @@ async function updateCallTranscriptFields(supabase, transcriptId, payload) {
   await supabase
     .from("call_transcripts")
     .update(updatePayload)
-    .eq("id", transcriptId);
+    .eq("id", transcriptId)
+    .eq("tenant_id", tenant.id);
 }
 
-async function saveCheckpoint(supabase, payload, auth, { final = false } = {}) {
-  const callRecord = await ensureCallRecord(supabase, payload, auth);
+async function saveCheckpoint(supabase, payload, auth, tenant, { final = false } = {}) {
+  const callRecord = await ensureCallRecord(supabase, payload, auth, tenant);
   const diarized = normalizeDiarized(payload.transcript_diarized);
   const transcriptText = scrubPhi(payload.transcript_text);
   const now = new Date().toISOString();
@@ -384,12 +505,13 @@ async function saveCheckpoint(supabase, payload, auth, { final = false } = {}) {
     .from("call_records")
     .update(callUpdate)
     .eq("id", callRecord.id)
+    .eq("tenant_id", tenant.id)
     .select("*")
     .single();
 
   if (error) throw error;
 
-  const saved = await saveTranscript(supabase, updatedCallRecord, payload, auth, { final });
+  const saved = await saveTranscript(supabase, updatedCallRecord, payload, auth, tenant, { final });
 
   return {
     callRecord: saved.callRecord || updatedCallRecord,
@@ -420,8 +542,74 @@ function queueBackground(context, promise) {
   }
 }
 
-async function handleWrapUp(supabase, payload, auth, request, context) {
-  const saved = await saveCheckpoint(supabase, payload, auth, { final: true });
+function buildGhlWebhookPayload(payload, tenant, tenantAgents) {
+  const writingAgent = safeText(payload.writing_agent) || tenantAgents.find((agent) => agent.name)?.name || "";
+  return {
+    firstName: safeText(payload.customer_first_name),
+    lastName: safeText(payload.customer_last_name),
+    dob: payload.customer_dob || "",
+    phone: safeText(payload.customer_phone),
+    email: safeText(payload.customer_email),
+    state: safeText(payload.customer_state),
+    mbi: safeText(payload.customer_mbi),
+    medicaid: safeText(payload.medicaid) || "No",
+    medicaidNum: safeText(payload.medicaid_number),
+    prevCarrier: safeText(payload.previous_carrier),
+    newCarrier: safeText(payload.carrier_name),
+    enrollCode: safeText(payload.enrollment_code || payload.application_id),
+    premium: safeText(payload.premium),
+    sunfireCode: safeText(payload.sunfire_code),
+    effectiveDate: payload.effective_date || "",
+    sixtyDayDate: payload.sixty_day_date || "",
+    sep: safeText(payload.sep) || "No",
+    agency: safeText(payload.agency) || tenant.agency_display_name || tenant.name || "",
+    aor: writingAgent,
+    assignedUserId:
+      getAgentGhlUserId(tenantAgents, writingAgent) ||
+      tenantAgents.find((agent) => agent.ghl_user_id)?.ghl_user_id ||
+      "",
+    hra: safeText(payload.hra) || "No",
+    hraDate: payload.hra_date || "",
+    submittedAt: new Date().toISOString(),
+  };
+}
+
+async function sendEnrollmentWebhook(tenant, tenantAgents, payload) {
+  if (!tenant?.ghl_webhook_url) {
+    return {
+      sent: false,
+      sentAt: null,
+      error: "Tenant GHL webhook URL is not configured.",
+    };
+  }
+
+  try {
+    const response = await fetch(tenant.ghl_webhook_url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildGhlWebhookPayload(payload, tenant, tenantAgents)),
+    });
+
+    if (response.ok) {
+      return { sent: true, sentAt: new Date().toISOString(), error: "" };
+    }
+
+    return {
+      sent: false,
+      sentAt: null,
+      error: `HTTP ${response.status}: ${response.statusText}`,
+    };
+  } catch (error) {
+    return {
+      sent: false,
+      sentAt: null,
+      error: error?.message || "Webhook request failed",
+    };
+  }
+}
+
+async function handleWrapUp(supabase, payload, auth, request, context, tenant, tenantAgents) {
+  const saved = await saveCheckpoint(supabase, payload, auth, tenant, { final: true });
   const callRecord = saved.callRecord;
   const outcome = normalizeOutcome(payload.call_outcome);
   const now = new Date().toISOString();
@@ -431,6 +619,7 @@ async function handleWrapUp(supabase, payload, auth, request, context) {
     scoring_status: "queued",
   });
 
+  const writingAgent = safeText(payload.writing_agent) || null;
   const updatePayload = {
     carrier_name: safeText(payload.carrier_name) || callRecord.carrier_name || null,
     plan_name: safeText(payload.plan_name) || callRecord.plan_name || null,
@@ -452,8 +641,9 @@ async function handleWrapUp(supabase, payload, auth, request, context) {
     sunfire_code: safeText(payload.sunfire_code) || null,
     sixty_day_date: payload.sixty_day_date || null,
     sep: safeText(payload.sep) || "No",
-    agency: safeText(payload.agency) || null,
-    writing_agent: safeText(payload.writing_agent) || null,
+    agency: safeText(payload.agency) || tenant.agency_display_name || tenant.name || null,
+    writing_agent: writingAgent,
+    agent_name: writingAgent || callRecord.agent_name,
     hra: safeText(payload.hra) || "No",
     hra_date: payload.hra_date || null,
     enrollment_confirmation_number: safeText(payload.enrollment_confirmation_number) || null,
@@ -471,10 +661,11 @@ async function handleWrapUp(supabase, payload, auth, request, context) {
     updated_at: now,
   };
 
-  const { data: updatedCallRecord, error } = await supabase
+  let { data: updatedCallRecord, error } = await supabase
     .from("call_records")
     .update(updatePayload)
     .eq("id", callRecord.id)
+    .eq("tenant_id", tenant.id)
     .select("*")
     .single();
 
@@ -488,7 +679,8 @@ async function handleWrapUp(supabase, payload, auth, request, context) {
         completed: outcome === "enrolled",
         duration_seconds: updatePayload.call_duration_seconds,
       })
-      .eq("id", updatedCallRecord.session_id);
+      .eq("id", updatedCallRecord.session_id)
+      .eq("tenant_id", tenant.id);
   }
 
   await updateCallTranscriptFields(
@@ -499,7 +691,8 @@ async function handleWrapUp(supabase, payload, auth, request, context) {
       call_outcome: outcome,
       carrier_name: updatePayload.carrier_name,
       plan_name: updatePayload.plan_name,
-    }
+    },
+    tenant
   );
 
   queueBackground(
@@ -509,7 +702,32 @@ async function handleWrapUp(supabase, payload, auth, request, context) {
 
   let webhookStatus = "skipped";
   if (outcome === "enrolled") {
-    webhookStatus = updatedCallRecord.webhook_sent ? "sent" : "pending";
+    const webhookResult = await sendEnrollmentWebhook(tenant, tenantAgents, {
+      ...payload,
+      agency: updatePayload.agency,
+      writing_agent: updatePayload.writing_agent,
+      enrollment_code: updatePayload.enrollment_code,
+      application_id: updatePayload.application_id,
+    });
+
+    const webhookPatch = {
+      webhook_sent: webhookResult.sent,
+      webhook_sent_at: webhookResult.sent ? webhookResult.sentAt : null,
+      webhook_error: webhookResult.sent ? null : webhookResult.error,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: webhookUpdated, error: webhookUpdateError } = await supabase
+      .from("call_records")
+      .update(webhookPatch)
+      .eq("id", updatedCallRecord.id)
+      .eq("tenant_id", tenant.id)
+      .select("*")
+      .single();
+
+    if (webhookUpdateError) throw webhookUpdateError;
+    updatedCallRecord = webhookUpdated || updatedCallRecord;
+    webhookStatus = webhookResult.sent ? "sent" : "failed";
   }
 
   return {
@@ -520,7 +738,7 @@ async function handleWrapUp(supabase, payload, auth, request, context) {
   };
 }
 
-async function handleWebhookResult(supabase, payload) {
+async function handleWebhookResult(supabase, payload, tenant) {
   const callRecordId = safeText(payload.call_record_id);
   if (!callRecordId) {
     throw new Error("Missing call_record_id for webhook result");
@@ -539,6 +757,7 @@ async function handleWebhookResult(supabase, payload) {
     .from("call_records")
     .update(updatePayload)
     .eq("id", callRecordId)
+    .eq("tenant_id", tenant.id)
     .select("id, webhook_sent, webhook_sent_at, webhook_error")
     .single();
 
@@ -572,9 +791,11 @@ export default async (request, context) => {
 
   try {
     const supabase = getSupabase();
+    const tenant = await resolveTenant(supabase, auth.orgId);
+    const tenantAgents = await fetchTenantAgents(supabase, tenant.id);
 
     if (action === "init") {
-      const callRecord = await ensureCallRecord(supabase, body, auth);
+      const callRecord = await ensureCallRecord(supabase, body, auth, tenant);
       return json(200, {
         call_record_id: callRecord.id,
         transcript_id: callRecord.transcript_id || null,
@@ -582,7 +803,7 @@ export default async (request, context) => {
     }
 
     if (action === "checkpoint" || action === "finalize") {
-      const saved = await saveCheckpoint(supabase, body, auth, { final: action === "finalize" });
+      const saved = await saveCheckpoint(supabase, body, auth, tenant, { final: action === "finalize" });
       return json(200, {
         call_record_id: saved.callRecord.id,
         transcript_id: saved.transcript?.id || saved.callRecord.transcript_id || null,
@@ -591,12 +812,12 @@ export default async (request, context) => {
     }
 
     if (action === "wrap_up") {
-      const result = await handleWrapUp(supabase, body, auth, request, context);
+      const result = await handleWrapUp(supabase, body, auth, request, context, tenant, tenantAgents);
       return json(200, result);
     }
 
     if (action === "webhook_result") {
-      const result = await handleWebhookResult(supabase, body);
+      const result = await handleWebhookResult(supabase, body, tenant);
       return json(200, result);
     }
 

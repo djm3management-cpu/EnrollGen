@@ -84,7 +84,7 @@ export default async (request) => {
       callLLM: callClaude,
     });
     try {
-      await sb.from("call_records").update({
+      let updateQuery = sb.from("call_records").update({
         metadata: {
           ...(callRecord.metadata || {}),
           scoring_status: "complete",
@@ -93,6 +93,8 @@ export default async (request) => {
         compliance_scorecard_id: result.scorecard?.id || callRecord.compliance_scorecard_id || null,
         updated_at: new Date().toISOString(),
       }).eq("id", callId);
+      if (callRecord.tenant_id) updateQuery = updateQuery.eq("tenant_id", callRecord.tenant_id);
+      await updateQuery;
     } catch (updateError) {
       console.warn(`[score-bg] Could not mark scoring complete for ${callId}:`, updateError);
     }
@@ -101,12 +103,14 @@ export default async (request) => {
   } catch (err) {
     console.error(`[score-bg] Scoring failed for ${callId}:`, err);
     // Store error on the call record so the client can detect failure
-    await sb.from("call_records").update({
+    let updateQuery = sb.from("call_records").update({
       metadata: {
         ...(callRecord.metadata || {}),
         scoring_error: err.message,
         scoring_failed_at: new Date().toISOString(),
       },
     }).eq("id", callId);
+    if (callRecord.tenant_id) updateQuery = updateQuery.eq("tenant_id", callRecord.tenant_id);
+    await updateQuery;
   }
 };

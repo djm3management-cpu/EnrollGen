@@ -68,6 +68,7 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     const { data: scorecard } = await supabase
       .from('compliance_scorecards')
       .insert({
+        tenant_id: callRecord.tenant_id,
         call_id: callRecord.id,
         template_id: template.id,
         thread_id: callRecord.thread_id,
@@ -153,6 +154,7 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
   const { data: scorecard } = await supabase
     .from('compliance_scorecards')
     .insert({
+      tenant_id: callRecord.tenant_id,
       call_id: callRecord.id,
       template_id: template.id,
       thread_id: callRecord.thread_id,
@@ -177,13 +179,15 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
 
   // Update call record with detected direction if classifier overrode it
   if (classificationResult.detectedDirection) {
-    await supabase.from('call_records').update({
+    let directionQuery = supabase.from('call_records').update({
       call_direction: classificationResult.detectedDirection,
       metadata: {
         ...(callRecord.metadata || {}),
         direction_detected_from: 'transcript_analysis',
       },
     }).eq('id', callRecord.id);
+    if (callRecord.tenant_id) directionQuery = directionQuery.eq('tenant_id', callRecord.tenant_id);
+    await directionQuery;
   }
 
   // 8. Insert scorecard line items
@@ -267,13 +271,15 @@ async function updatePostScorecardState(supabase, callRecord, scorecard) {
   if (!supabase || !callRecord?.id || !scorecard?.id) return;
 
   try {
-    await supabase
+    let updateQuery = supabase
       .from('call_records')
       .update({
         compliance_scorecard_id: scorecard.id,
         updated_at: new Date().toISOString(),
       })
       .eq('id', callRecord.id);
+    if (callRecord.tenant_id) updateQuery = updateQuery.eq('tenant_id', callRecord.tenant_id);
+    await updateQuery;
   } catch (error) {
     console.warn('[ScorecardGenerator] Could not link scorecard to call record:', error?.message || error);
   }

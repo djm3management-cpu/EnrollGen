@@ -1,6 +1,7 @@
 import { useRef, useCallback } from "react";
 import { useAppAuth } from "../context/AuthContext";
 import { getAuthSupabase } from "../lib/supabase";
+import { fetchTenantConfig } from "../lib/postCallPipeline";
 
 const DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const EMPTY_SESSION_METADATA = {
@@ -53,6 +54,7 @@ export function useSessionTracker() {
   const { getToken } = useAppAuth();
   const sessionIdRef = useRef(null);
   const agentIdRef = useRef(null);
+  const tenantIdRef = useRef(null);
   const startedAtRef = useRef(null);
 
   // Extract the Clerk user ID (sub claim) from a JWT
@@ -65,12 +67,35 @@ export function useSessionTracker() {
     }
   }, []);
 
+  const getSupabaseToken = useCallback(async () => {
+    try {
+      const token = await getToken({ template: "supabase" });
+      if (token) return token;
+    } catch {
+      // Fall back to the default Clerk token for local/dev JWT setups.
+    }
+    return getToken();
+  }, [getToken]);
+
+  const resolveTenantId = useCallback(async (sb) => {
+    if (tenantIdRef.current) return tenantIdRef.current;
+    try {
+      const tenant = await fetchTenantConfig(sb);
+      tenantIdRef.current = tenant?.id || null;
+      return tenantIdRef.current;
+    } catch (err) {
+      console.error("[SessionTracker] resolveTenantId:", err);
+      return null;
+    }
+  }, []);
+
   // Resolve or create the enrolled_agents row for this Clerk user
-  const resolveAgentId = useCallback(async (sb, token) => {
+  const resolveAgentId = useCallback(async (sb, token, tenantId) => {
     if (agentIdRef.current) return agentIdRef.current;
     const clerkUserId = getClerkSub(token);
     try {
       const query = sb.from("enrolled_agents").select("id, name").limit(1);
+      if (tenantId) query.eq("tenant_id", tenantId);
       if (clerkUserId) query.eq("clerk_user_id", clerkUserId);
       const { data, error } = await query.single();
       if (data) {
@@ -81,9 +106,10 @@ export function useSessionTracker() {
       // Auto-create agent row if missing (RLS lets user insert their own)
       if (error?.code === "PGRST116") {
         if (!clerkUserId) throw new Error("Could not extract sub from Clerk JWT");
+        if (!tenantId) throw new Error("Could not resolve tenant for Clerk organization");
         const { data: inserted, error: insertErr } = await sb
           .from("enrolled_agents")
-          .insert({ clerk_user_id: clerkUserId, name: "Agent" })
+          .insert({ tenant_id: tenantId, clerk_user_id: clerkUserId, name: "Agent" })
           .select("id")
           .single();
         if (insertErr) throw insertErr;
@@ -101,16 +127,19 @@ export function useSessionTracker() {
   const startSession = useCallback(async (flow = "ma") => {
     if (DISABLED) return;
     try {
-      const token = await getToken();
+      const token = await getSupabaseToken();
       if (!token) return;
       const sb = getAuthSupabase(token);
-      const agentId = await resolveAgentId(sb, token);
+      const tenantId = await resolveTenantId(sb);
+      const agentId = await resolveAgentId(sb, token, tenantId);
       if (!agentId) return;
       setActiveSessionMetadata({ agentId });
+      const sessionPayload = { agent_id: agentId, flow };
+      if (tenantId) sessionPayload.tenant_id = tenantId;
 
       const { data, error } = await sb
         .from("sessions")
-        .insert({ agent_id: agentId, flow })
+        .insert(sessionPayload)
         .select("id")
         .single();
       if (error) throw error;
@@ -120,12 +149,12 @@ export function useSessionTracker() {
     } catch (err) {
       console.error("[SessionTracker] startSession:", err);
     }
-  }, [getToken, resolveAgentId]);
+  }, [getSupabaseToken, resolveAgentId, resolveTenantId]);
 
   const endSession = useCallback(async (finalSection, completed = false) => {
     if (DISABLED || !sessionIdRef.current) return;
     try {
-      const token = await getToken();
+      const token = await getSupabaseToken();
       if (!token) return;
       const sb = getAuthSupabase(token);
       const durationSeconds = startedAtRef.current
@@ -147,12 +176,12 @@ export function useSessionTracker() {
     } catch (err) {
       console.error("[SessionTracker] endSession:", err);
     }
-  }, [getToken]);
+  }, [getSupabaseToken]);
 
   const logComplianceFlag = useCallback(async (sectionLabel, level, issueTag, confidence, message, addressed = false) => {
     if (DISABLED || !sessionIdRef.current) return;
     try {
-      const token = await getToken();
+      const token = await getSupabaseToken();
       if (!token) return;
       const sb = getAuthSupabase(token);
 
@@ -171,12 +200,12 @@ export function useSessionTracker() {
     } catch (err) {
       console.error("[SessionTracker] logComplianceFlag:", err);
     }
-  }, [getToken]);
+  }, [getSupabaseToken]);
 
   const logSectionScore = useCallback(async (sectionNumber, sectionLabel, completed, durationSeconds, checklistTotal, checklistDone) => {
     if (DISABLED || !sessionIdRef.current) return;
     try {
-      const token = await getToken();
+      const token = await getSupabaseToken();
       if (!token) return;
       const sb = getAuthSupabase(token);
 
@@ -195,7 +224,7 @@ export function useSessionTracker() {
     } catch (err) {
       console.error("[SessionTracker] logSectionScore:", err);
     }
-  }, [getToken]);
+  }, [getSupabaseToken]);
 
   if (DISABLED) {
     activeSessionMetadata = { ...EMPTY_SESSION_METADATA };

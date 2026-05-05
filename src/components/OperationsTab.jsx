@@ -1,22 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAppAuth } from "../context/AuthContext";
-import { getAuthSupabase, supabase } from "../lib/supabase";
+import { useTenantConfig } from "../hooks/useTenantConfig";
 
 const EMPTY_STATE = {
   dailyActivity: [],
   agentPerformance: [],
   pipelineStatus: [],
   enrollmentSummary: [],
-};
-
-const COOP_RATES = {
-  aetna: 150,
-  cigna: 225,
-  "cigna / healthspring": 225,
-  elevance: 125,
-  "elevance / anthem": 125,
-  zing: 200,
-  "zing health": 200,
 };
 
 const TRACKER_STATUSES = [
@@ -86,15 +75,6 @@ function patchPipelineTrackerRows(rows, callRecordId, patch) {
   );
 }
 
-async function getSupabaseAuthClient(getToken) {
-  try {
-    const token = await getToken({ template: "supabase" });
-    return token ? getAuthSupabase(token) : supabase;
-  } catch {
-    return supabase;
-  }
-}
-
 function looksLikeId(value) {
   if (!value) return true;
   if (typeof value !== "string") return true;
@@ -139,10 +119,10 @@ function isEnrolled(row) {
   return row.call_outcome === "enrolled" || row.enrollment_completed === true;
 }
 
-function coopFor(row) {
+function coopFor(row, coopRates = {}) {
   if (!isEnrolled(row)) return 0;
   const key = String(row.carrier_name || "").toLowerCase().trim();
-  return COOP_RATES[key] ?? 0;
+  return Number(coopRates[key] ?? 0);
 }
 
 function filterByWindow(rows, window) {
@@ -164,7 +144,7 @@ function filterByWindow(rows, window) {
   });
 }
 
-function buildLeaderboards(rows) {
+function buildLeaderboards(rows, coopRates = {}) {
   const map = new Map();
   for (const r of rows) {
     const key = resolveAgentName(r);
@@ -182,7 +162,7 @@ function buildLeaderboards(rows) {
     a.calls += 1;
     if (isEnrolled(r)) {
       a.enrolled += 1;
-      a.coop += coopFor(r);
+      a.coop += coopFor(r, coopRates);
     }
     if (r.overall_score !== null && r.overall_score !== undefined && !Number.isNaN(Number(r.overall_score))) {
       a.scoreSum += Number(r.overall_score);
@@ -637,7 +617,13 @@ function TrackerRow({ entry, status, saving, onStatusChange }) {
 }
 
 export default function OperationsTab() {
-  const { getToken } = useAppAuth();
+  const {
+    agencyDisplayName,
+    coopRates,
+    error: tenantError,
+    loading: tenantLoading,
+    supabaseClient,
+  } = useTenantConfig();
   const [state, setState] = useState(EMPTY_STATE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -649,27 +635,29 @@ export default function OperationsTab() {
     let cancelled = false;
 
     async function loadOperations() {
+      if (tenantLoading) return;
       setLoading(true);
-      setError("");
+      setError(tenantError || "");
 
       try {
+        const sb = supabaseClient;
         const [daily, agents, pipeline, summary] = await Promise.all([
-          supabase
+          sb
             .from("v_daily_activity")
             .select("*")
             .order("call_start", { ascending: false })
             .limit(25),
-          supabase
+          sb
             .from("v_agent_performance")
             .select("*")
             .order("calls_completed", { ascending: false })
             .limit(12),
-          supabase
+          sb
             .from("v_pipeline_status")
             .select("*")
             .order("call_start", { ascending: false })
             .limit(25),
-          supabase
+          sb
             .from("v_enrollment_summary")
             .select("*")
             .order("activity_date", { ascending: false })
@@ -705,7 +693,7 @@ export default function OperationsTab() {
     return () => {
       cancelled = true;
     };
-  }, [getToken]);
+  }, [supabaseClient, tenantError, tenantLoading]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -717,7 +705,7 @@ export default function OperationsTab() {
     [state.dailyActivity, windowKey]
   );
 
-  const leaderboards = useMemo(() => buildLeaderboards(filteredDaily), [filteredDaily]);
+  const leaderboards = useMemo(() => buildLeaderboards(filteredDaily, coopRates), [coopRates, filteredDaily]);
   const carrierMix = useMemo(() => buildCarrierMix(state.dailyActivity), [state.dailyActivity]);
   const compliance = useMemo(() => buildCompliance(state.dailyActivity), [state.dailyActivity]);
   const tickerEvents = useMemo(() => buildTicker(state.dailyActivity), [state.dailyActivity]);
@@ -735,7 +723,7 @@ export default function OperationsTab() {
     const callbacks = state.pipelineStatus.filter(
       (record) => record.call_outcome === "callback_scheduled"
     ).length;
-    const coopTotal = state.dailyActivity.reduce((sum, r) => sum + coopFor(r), 0);
+    const coopTotal = state.dailyActivity.reduce((sum, r) => sum + coopFor(r, coopRates), 0);
     const complianceAvg = compliance ? compliance.avg : null;
     return {
       calls,
@@ -745,7 +733,7 @@ export default function OperationsTab() {
       coopTotal,
       complianceAvg,
     };
-  }, [state.dailyActivity, state.pipelineStatus, compliance]);
+  }, [coopRates, state.dailyActivity, state.pipelineStatus, compliance]);
 
   const handleTrackerStatusChange = useCallback(
     async (entry, nextValue) => {
@@ -773,7 +761,7 @@ export default function OperationsTab() {
       }));
 
       try {
-        const sb = await getSupabaseAuthClient(getToken);
+        const sb = supabaseClient;
         const { data, error: updateError } = await sb
           .from("call_records")
           .update(optimistic)
@@ -807,7 +795,7 @@ export default function OperationsTab() {
         });
       }
     },
-    [getToken]
+    [supabaseClient]
   );
 
   return (
@@ -949,7 +937,7 @@ export default function OperationsTab() {
       <div className="ops-status-bar">
         <span className="left">
           <span className="ops-cursor" aria-hidden="true" />
-          <span>NGHS OPS v1.0</span>
+          <span>{agencyDisplayName ? `${agencyDisplayName} OPS v1.0` : "OPS v1.0"}</span>
         </span>
         <span className="center">
           <span>

@@ -3,8 +3,6 @@ import { fetchWithClerk } from "./clerkFetch";
 const POST_CALL_ENDPOINT = "/api/post-call";
 
 export const CHECKPOINT_INTERVAL_MS = 120000;
-export const GHL_INTAKE_WEBHOOK_URL =
-  "https://services.leadconnectorhq.com/hooks/V7c16VOd5bQuHfUbo3iE/webhook-trigger/de07ab99-2af6-4ed6-86cd-a228abd2650c";
 
 export const CALL_OUTCOME_OPTIONS = [
   { value: "enrolled", label: "Enrolled" },
@@ -24,48 +22,73 @@ export const US_STATE_OPTIONS = [
   "DC",
 ];
 
-export const INTAKE_CARRIER_OPTIONS = [
-  "Devoted Health",
-  "Aetna",
-  "Elevance / Anthem",
-  "UnitedHealthcare",
-  "Humana",
-  "Cigna / HealthSpring",
-  "Wellcare / Centene",
-  "Zing Health",
-  "HCSC / BCBS",
-  "Manhattan Life",
-  "Other",
-];
-
-export const AGENCY_OPTIONS = [
-  "New Gen Health Solutions",
-  "Medigap Life",
-  "SMS",
-  "Other",
-];
-
-export const WRITING_AGENT_OPTIONS = [
-  "Mark Endres",
-  "Miguel Mejia",
-  "Dylan Maria",
-];
-
-export const AOR_TO_USER_ID = {
-  "Mark Endres": "1UVVwLG5sFIzHVOJJjmE",
-  "Miguel Mejia": "Wg0azMeBcPcqH6fqXNV4",
-  "Dylan Maria": "ybc6Z1qfF5PgD1kODzOo",
-};
-
-export const DEFAULT_USER_ID = "1UVVwLG5sFIzHVOJJjmE";
-
-export function normalizeWritingAgent(value) {
-  const raw = String(value || "").trim().toLowerCase();
-  return WRITING_AGENT_OPTIONS.find((agent) => agent.toLowerCase() === raw) || "";
+function normalizeLookup(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-export function assignedUserIdForAor(value) {
-  return AOR_TO_USER_ID[value] || DEFAULT_USER_ID;
+function normalizeTenantConfig(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name || "",
+    clerk_org_id: row.clerk_org_id || null,
+    ghl_webhook_url: row.ghl_webhook_url || "",
+    ghl_location_id: row.ghl_location_id || "",
+    coop_rates: row.coop_rates && typeof row.coop_rates === "object" ? row.coop_rates : {},
+    carrier_options: Array.isArray(row.carrier_options) ? row.carrier_options : [],
+    agency_display_name: row.agency_display_name || row.name || "",
+  };
+}
+
+export async function fetchTenantConfig(supabaseClient, tenantId) {
+  if (!supabaseClient?.from) return null;
+  let query = supabaseClient
+    .from("tenants")
+    .select(
+      "id, name, clerk_org_id, ghl_webhook_url, ghl_location_id, coop_rates, carrier_options, agency_display_name"
+    );
+
+  if (tenantId) {
+    query = query.eq("id", tenantId);
+  }
+
+  const { data, error } = await query
+    .order("clerk_org_id", { ascending: true, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return normalizeTenantConfig(data);
+}
+
+export async function fetchTenantAgents(supabaseClient, tenantId) {
+  if (!supabaseClient?.from || !tenantId) return [];
+  const { data, error } = await supabaseClient
+    .from("tenant_agents")
+    .select("name, ghl_user_id, npn, clerk_user_id")
+    .eq("tenant_id", tenantId)
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return (data || []).map((agent) => ({
+    name: agent.name || "",
+    ghl_user_id: agent.ghl_user_id || "",
+    npn: agent.npn || "",
+    clerk_user_id: agent.clerk_user_id || "",
+  }));
+}
+
+export function getAgentGhlUserId(agents = [], agentName) {
+  const raw = normalizeLookup(agentName);
+  if (!raw) return "";
+  const exact = agents.find((agent) => normalizeLookup(agent.name) === raw);
+  if (exact?.ghl_user_id) return exact.ghl_user_id;
+  const loose = agents.find((agent) => {
+    const name = normalizeLookup(agent.name);
+    return name && (name.includes(raw) || raw.includes(name));
+  });
+  return loose?.ghl_user_id || "";
 }
 
 export function formatPhoneInput(value) {
@@ -223,7 +246,7 @@ export function buildPostCallPayload({
     sixty_day_date: normalizeDateInput(notes.sixtyDayDate) || calculateSixtyDayDate(notes.effectiveDate) || null,
     sep: notes.sep || "No",
     agency: notes.agency || null,
-    writing_agent: notes.writingAgent || normalizeWritingAgent(state?.agentName) || null,
+    writing_agent: notes.writingAgent || state?.agentName || null,
     hra: notes.hra || "No",
     hra_date: normalizeDateInput(notes.hraDate),
     enrollment_confirmation_number: notes.confirmation || null,
@@ -273,8 +296,8 @@ export async function recordWebhookResult(getToken, payload) {
   return postCallAction(getToken, "webhook_result", payload);
 }
 
-export function buildGhlWebhookPayload(payload = {}) {
-  const writingAgent = payload.writing_agent || "Mark Endres";
+export function buildGhlWebhookPayload(payload = {}, tenantConfig = {}, tenantAgents = []) {
+  const writingAgent = payload.writing_agent || tenantAgents.find((agent) => agent.name)?.name || "";
   return {
     firstName: payload.customer_first_name || "",
     lastName: payload.customer_last_name || "",
@@ -293,18 +316,29 @@ export function buildGhlWebhookPayload(payload = {}) {
     effectiveDate: payload.effective_date || "",
     sixtyDayDate: payload.sixty_day_date || "",
     sep: payload.sep || "No",
-    agency: payload.agency || "",
+    agency: payload.agency || tenantConfig?.agency_display_name || "",
     aor: writingAgent,
-    assignedUserId: assignedUserIdForAor(writingAgent),
+    assignedUserId:
+      getAgentGhlUserId(tenantAgents, writingAgent) ||
+      tenantAgents.find((agent) => agent.ghl_user_id)?.ghl_user_id ||
+      "",
     hra: payload.hra || "No",
     hraDate: payload.hra_date || "",
     submittedAt: new Date().toISOString(),
   };
 }
 
-export async function sendEnrollmentWebhookAfterSave(getToken, { callRecordId, payload }) {
+export async function sendEnrollmentWebhookAfterSave(
+  getToken,
+  { callRecordId, payload, webhookUrl, tenantConfig, tenantAgents = [] }
+) {
   if (payload?.call_outcome !== "enrolled" || !callRecordId) {
     return { status: "skipped" };
+  }
+
+  const targetUrl = webhookUrl || tenantConfig?.ghl_webhook_url;
+  if (!targetUrl) {
+    return { status: "failed", error: "Tenant GHL webhook URL is not configured." };
   }
 
   let webhookSent = false;
@@ -312,10 +346,10 @@ export async function sendEnrollmentWebhookAfterSave(getToken, { callRecordId, p
   let webhookSentAt = "";
 
   try {
-    const response = await fetch(GHL_INTAKE_WEBHOOK_URL, {
+    const response = await fetch(targetUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildGhlWebhookPayload(payload)),
+      body: JSON.stringify(buildGhlWebhookPayload(payload, tenantConfig, tenantAgents)),
     });
 
     if (response.ok) {
