@@ -11,34 +11,20 @@ const flowAccents = [
   { label: "ANC", name: "Ancillary", color: "#3B82F6" },
 ];
 
-const features = [
+const featureCards = [
   {
-    eyebrow: "Guided Scripts",
-    title: "Keep agents on the compliant path",
-    body: "Dynamic enrollment flows help teams stay aligned with required disclosures, eligibility checks, and plan presentation steps.",
+    label: "Script Intelligence",
+    body: "Per-LOB guided flows for MA, ACA, SUP, U65, ancillary.",
   },
   {
-    eyebrow: "AI Copilot",
-    title: "Surface the next best response",
-    body: "EnrollGen turns call context into timely coaching, objection support, and compliance reminders without slowing the conversation.",
+    label: "Live Compliance",
+    body: "Real-time CMS telemetry with CFR citation tracking.",
   },
   {
-    eyebrow: "Multi-Flow",
-    title: "One operating system for growth",
-    body: "Support Medicare Advantage, ACA, Medicare Supplement, U65, and ancillary workflows from a single dark-theme command center.",
+    label: "Field Intelligence",
+    body: "FEMA disaster alerts, CMS bulletins, carrier news feed.",
   },
 ];
-
-const steps = [
-  "Select the enrollment flow that matches the call.",
-  "Follow guided prompts, checks, and AI coaching in real time.",
-  "Review summaries, compliance signals, and operational context after the call.",
-];
-
-function handleSectionScroll(event, selector) {
-  event.preventDefault();
-  document.querySelector(selector)?.scrollIntoView({ behavior: "smooth" });
-}
 
 function HeroBackgroundVideo() {
   return (
@@ -64,21 +50,10 @@ export default function LandingPage() {
           <EnrollGenLogo width={142} className="landing-logo" />
         </a>
         <nav className="landing-nav-links" aria-label="Landing page navigation">
-          <a href="#problem" onClick={(event) => handleSectionScroll(event, "#problem")}>
-            Problem
+          <a href="mailto:djm3management@gmail.com?subject=EnrollGen%20Access%20Request">
+            Request Access
           </a>
-          <a href="#features" onClick={(event) => handleSectionScroll(event, "#features")}>
-            Features
-          </a>
-          <a
-            href="#how-it-works"
-            onClick={(event) => handleSectionScroll(event, "#how-it-works")}
-          >
-            How It Works
-          </a>
-          <a href="#contact" onClick={(event) => handleSectionScroll(event, "#contact")}>
-            Contact
-          </a>
+          <a href="/login">Login</a>
         </nav>
         <a className="landing-nav-cta" href="/login">
           Start Free Trial
@@ -101,26 +76,23 @@ export default function LandingPage() {
                   </span>
                 ))}
               </div>
-              <h1 id="landing-hero-title">Compliant Medicare enrollment, guided by AI</h1>
+              <h1 id="landing-hero-title">
+                Compliant Medicare Scripting Intelligence&nbsp;System
+              </h1>
               <p className="landing-hero-subhead">
                 EnrollGen gives agents a live command center with guided script flows, real-time
                 CMS compliance scoring, and AI copilot coaching &mdash; built for Medicare
                 Advantage, ACA, Supplement, U65, and ancillary sales.
               </p>
-              <div className="landing-hero-actions">
-                <a className="landing-button landing-button-primary" href="/login">
-                  Start Free Trial
-                </a>
-                <a
-                  className="landing-button landing-button-secondary"
-                  href="#features"
-                  onClick={(event) => handleSectionScroll(event, "#features")}
-                >
-                  See How It Works
-                </a>
-              </div>
             </div>
             <div className="landing-hero-panel" aria-label="EnrollGen workflow snapshot">
+              <div className="landing-panel-topbar">
+                <span>LIVE ENROLLMENT</span>
+                <strong>
+                  <i aria-hidden="true" />
+                  AI READY
+                </strong>
+              </div>
               <div className="landing-terminal-section">
                 <div className="landing-terminal-heading">SCRIPT FLOW</div>
                 <div className="landing-terminal-row">
@@ -170,71 +142,20 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="problem" className="landing-section landing-problem">
-          <div className="landing-section-kicker">Problem</div>
-          <div className="landing-two-column">
-            <h2>Enrollment calls move faster than manual compliance support can follow.</h2>
-            <p>
-              Agents are expected to sell, document, disclose, qualify, and respond with precision
-              while switching between products, scripts, and customer objections. That creates risk
-              at the exact moment teams need consistency.
-            </p>
-          </div>
-        </section>
-
-        <section id="features" className="landing-section">
-          <div className="landing-section-heading">
-            <div className="landing-section-kicker">Features</div>
-            <h2>Built for the call floor, not a static script binder.</h2>
-          </div>
+        <section className="landing-feature-section" aria-label="EnrollGen capabilities">
           <div className="landing-feature-grid">
-            {features.map((feature) => (
-              <article key={feature.title} className="landing-feature-card">
-                <span>{feature.eyebrow}</span>
-                <h3>{feature.title}</h3>
+            {featureCards.map((feature) => (
+              <article key={feature.label} className="landing-feature-card">
+                <span>{feature.label}</span>
                 <p>{feature.body}</p>
               </article>
             ))}
           </div>
         </section>
-
-        <section id="how-it-works" className="landing-section landing-how">
-          <div className="landing-section-heading">
-            <div className="landing-section-kicker">How It Works</div>
-            <h2>From call start to QA-ready summary in three steps.</h2>
-          </div>
-          <div className="landing-step-grid">
-            {steps.map((step, index) => (
-              <article key={step} className="landing-step">
-                <strong>{String(index + 1).padStart(2, "0")}</strong>
-                <p>{step}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="contact" className="landing-section landing-contact">
-          <div className="landing-section-heading">
-            <div className="landing-section-kicker">Contact</div>
-            <h2>Bring live script guidance, AI coaching, and compliance scoring to your team.</h2>
-          </div>
-          <a
-            className="landing-contact-box"
-            href="mailto:djm3management@gmail.com?subject=EnrollGen%20Demo%20Request"
-          >
-            <span>Contact EnrollGen</span>
-            <strong>djm3management@gmail.com</strong>
-          </a>
-        </section>
       </main>
 
       <footer className="landing-footer">
-        <EnrollGenLogo width={126} className="landing-footer-logo" />
-        <div>
-          <strong>EnrollGen</strong>
-          <span>AI-guided enrollment workflows for compliant growth.</span>
-        </div>
-        <a href="/login">Start Free Trial</a>
+        <span>&copy; 2026 EnrollGen. All rights reserved.</span>
       </footer>
     </div>
   );

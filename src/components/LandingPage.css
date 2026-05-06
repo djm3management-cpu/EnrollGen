@@ -1,6 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
 .landing-page {
   min-height: 100vh;
   color: var(--text-primary);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
   background:
     linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
@@ -49,22 +58,23 @@
 .landing-nav-links {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: clamp(12px, 2vw, 26px);
-  color: rgba(255, 255, 255, 0.82);
-  font-family: var(--font-display);
+  color: #ffffff;
+  font-family: 'IBM Plex Sans', sans-serif;
   font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.07em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
   text-transform: uppercase;
 }
 
 .landing-nav-links a {
-  transition: color var(--speed-normal) ease;
+  transition: opacity var(--speed-normal) ease;
 }
 
 .landing-nav-links a:hover {
-  color: var(--text-primary);
+  opacity: 1;
 }
 
 .landing-nav-cta,
@@ -75,10 +85,10 @@
   justify-content: center;
   min-height: 34px;
   border-radius: 2px;
-  font-family: var(--font-display);
+  font-family: 'IBM Plex Sans', sans-serif;
   font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.05em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
@@ -114,7 +124,7 @@
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(0, 0.98fr) minmax(320px, 0.64fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.58fr);
   align-items: center;
   gap: clamp(18px, 3vw, 38px);
   min-height: calc(100vh - 58px);
@@ -150,7 +160,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .landing-flow-strip span {
@@ -162,38 +172,44 @@
   color: rgba(255, 255, 255, 0.88);
   background:
     linear-gradient(180deg, rgba(18, 18, 18, 0.88), rgba(4, 4, 4, 0.88));
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.6);
   border-radius: 2px;
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .landing-flow-strip i {
   width: 7px;
   height: 7px;
-  border-radius: 1px;
-  background: var(--flow-color);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--flow-color), transparent 45%);
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.82);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.38);
 }
 
 .landing-hero h1 {
-  max-width: 840px;
+  max-width: 600px;
   margin: 0;
-  font-size: clamp(50px, 6.8vw, 94px);
-  line-height: 0.9;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: clamp(1.9rem, 3.2vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.04;
   letter-spacing: 0;
   text-transform: none;
+  text-wrap: balance;
 }
 
 .landing-hero-subhead {
-  max-width: 620px;
-  margin-top: 14px;
-  color: #9ca3af;
-  font-family: var(--font-mono);
-  font-size: clamp(13px, 1.05vw, 14px);
+  max-width: 600px;
+  margin-top: 16px;
+  color: #ffffff;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 300;
   line-height: 1.45;
+  opacity: 0.8;
 }
 
 .landing-hero-actions {
@@ -226,14 +242,62 @@
   display: grid;
   padding: 0;
   overflow: hidden;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(10, 10, 10, 0.96), rgba(3, 3, 3, 0.96));
-  background-size: 18px 18px, 18px 18px, 100% 100%;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(10, 10, 10, 0.85);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 2px;
   box-shadow: var(--shadow-float);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.landing-panel-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.18);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.landing-panel-topbar span {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.landing-panel-topbar strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(0, 255, 157, 0.6);
+  font: inherit;
+}
+
+.landing-panel-topbar i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(0, 255, 157, 0.6);
+  box-shadow: 0 0 12px rgba(0, 255, 157, 0.36);
+  animation: landingReadyPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes landingReadyPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.86);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .landing-terminal-section {
@@ -249,10 +313,10 @@
 
 .landing-terminal-heading {
   color: #f3f4f6;
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -276,7 +340,7 @@
   background: rgba(0, 0, 0, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 2px;
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 12px;
   line-height: 1.25;
 }
@@ -284,7 +348,7 @@
 .landing-terminal-row strong,
 .landing-compliance-row strong {
   color: #ffffff;
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
@@ -309,7 +373,7 @@
 .landing-terminal-ai {
   margin: 0;
   color: #d1d5db;
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   font-style: italic;
   line-height: 1.4;
@@ -325,7 +389,7 @@
 
 .landing-compliance-row span {
   color: #d1d5db;
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 12px;
 }
 
@@ -374,172 +438,48 @@
   color: #6b7280;
 }
 
-.landing-section {
-  position: relative;
-  padding: clamp(44px, 5vw, 64px) clamp(16px, 4vw, 48px);
-  border-top: 1px solid rgba(255, 255, 255, 0.11);
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    rgba(4, 4, 4, 0.82);
-  background-size: 28px 28px, 28px 28px, 100% 100%;
+.landing-feature-section {
+  padding: 26px clamp(16px, 4vw, 48px) 44px;
 }
 
-.landing-section-heading {
-  max-width: 760px;
-  margin-bottom: 20px;
-}
-
-.landing-section-kicker {
-  margin-bottom: 8px;
-  color: #ff2448;
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.landing-section h2 {
-  max-width: 860px;
-  font-size: clamp(30px, 4vw, 52px);
-  line-height: 0.98;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.landing-two-column {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(280px, 0.65fr);
-  gap: clamp(20px, 4vw, 48px);
-  align-items: start;
-}
-
-.landing-two-column p,
-.landing-feature-card p,
-.landing-step p,
-.landing-footer span {
-  color: #9ca3af;
-  font-size: 13px;
-  line-height: 1.42;
-}
-
-.landing-feature-grid,
-.landing-step-grid {
+.landing-feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
 
-.landing-feature-card,
-.landing-step {
-  position: relative;
-  min-height: 178px;
-  padding: 16px;
-  overflow: hidden;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.024) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(13, 13, 13, 0.96), rgba(5, 5, 5, 0.96));
-  background-size: 18px 18px, 18px 18px, 100% 100%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.landing-feature-card {
+  min-height: 116px;
+  padding: 14px;
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 2px;
   box-shadow: var(--shadow-float);
-}
-
-.landing-feature-card::before,
-.landing-step::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 3px;
-  background: linear-gradient(90deg, #e8002d, rgba(232, 0, 45, 0.18));
 }
 
 .landing-feature-card span {
-  color: #f3f4f6;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  color: rgba(245, 158, 11, 0.9);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 
-.landing-feature-card h3 {
-  margin: 14px 0 12px;
-  color: var(--text-primary);
-  font-family: var(--font-display);
-  font-size: 25px;
-  font-weight: 900;
-  line-height: 0.98;
-  text-transform: none;
-}
-
-.landing-how {
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    rgba(9, 9, 9, 0.74);
-  background-size: 48px 48px, 48px 48px, 100% 100%;
-}
-
-.landing-step {
-  min-height: 150px;
-}
-
-.landing-step strong {
-  display: block;
-  margin-bottom: 18px;
-  color: #e8002d;
-  font-family: var(--font-mono);
-  font-size: 32px;
-  line-height: 1;
-}
-
-.landing-contact {
-  display: grid;
-  gap: 18px;
-}
-
-.landing-contact-box {
-  display: grid;
-  gap: 8px;
-  width: min(100%, 520px);
-  padding: 16px;
+.landing-feature-card p {
+  margin-top: 14px;
   color: #ffffff;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.024) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(13, 13, 13, 0.96), rgba(5, 5, 5, 0.96));
-  background-size: 18px 18px, 18px 18px, 100% 100%;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 2px;
-  box-shadow: var(--shadow-float);
-}
-
-.landing-contact-box span {
-  color: #ff2448;
-  font-family: var(--font-display);
+  font-family: 'IBM Plex Sans', sans-serif;
   font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.landing-contact-box strong {
-  color: #ffffff;
-  font-family: var(--font-mono);
-  font-size: clamp(15px, 2vw, 18px);
-  font-weight: 700;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
+  font-weight: 300;
+  line-height: 1.42;
+  opacity: 0.6;
 }
 
 .landing-footer {
   display: grid;
-  grid-template-columns: auto 1fr auto;
   align-items: center;
+  justify-content: center;
   gap: 16px;
   padding: 18px clamp(16px, 4vw, 48px);
   background: #050505;
@@ -549,12 +489,11 @@
 .landing-footer strong,
 .landing-footer span {
   display: block;
-}
-
-.landing-footer strong {
-  font-family: var(--font-display);
-  font-size: 20px;
-  text-transform: uppercase;
+  color: #ffffff;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  opacity: 0.6;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -567,16 +506,8 @@
 }
 
 @media (max-width: 980px) {
-  .landing-nav {
-    grid-template-columns: auto auto;
-  }
-
-  .landing-nav-links {
-    display: none;
-  }
-
   .landing-hero-shell,
-  .landing-two-column {
+  .landing-feature-grid {
     grid-template-columns: 1fr;
   }
 
@@ -589,13 +520,7 @@
     justify-self: start;
   }
 
-  .landing-feature-grid,
-  .landing-step-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .landing-feature-card,
-  .landing-step {
+  .landing-feature-card {
     min-height: auto;
   }
 }
@@ -620,26 +545,7 @@
     padding-top: 42px;
   }
 
-  .landing-hero h1 {
-    font-size: clamp(42px, 14vw, 58px);
-  }
-
-  .landing-hero-actions,
-  .landing-button {
-    width: 100%;
-  }
-
-  .landing-feature-card,
-  .landing-step {
-    padding: 18px;
-  }
-
-  .landing-section {
-    padding-top: 56px;
-    padding-bottom: 56px;
-  }
-
   .landing-footer {
-    grid-template-columns: 1fr;
+    justify-content: center;
   }
 }
