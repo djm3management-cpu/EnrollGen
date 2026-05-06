@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unknown-property -- Keep the literal fetchpriority attribute on the hero video. */
+import { Suspense } from "react";
 import EnrollGenLogo from "./EnrollGenLogo";
 import "./LandingPage.css";
 
@@ -57,6 +59,22 @@ function handleSectionScroll(event, selector) {
   document.querySelector(selector)?.scrollIntoView({ behavior: "smooth" });
 }
 
+function HeroBackgroundVideo() {
+  return (
+    <video
+      className="landing-hero-video"
+      src="/videos/hero-bg.mp4"
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="auto"
+      fetchpriority="high"
+      aria-hidden="true"
+    />
+  );
+}
+
 export default function LandingPage() {
   return (
     <div className="landing-page">
@@ -88,47 +106,52 @@ export default function LandingPage() {
 
       <main>
         <section className="landing-hero" aria-labelledby="landing-hero-title">
-          <div className="landing-hero-bg" aria-hidden="true" />
-          <div className="landing-hero-content">
-            <div className="landing-flow-strip" aria-label="Supported enrollment flows">
-              {flowAccents.map((flow) => (
-                <span key={flow.label} style={{ "--flow-color": flow.color }}>
-                  <i aria-hidden="true" />
-                  {flow.label}
-                </span>
-              ))}
+          <div className="landing-hero-shell">
+            <Suspense fallback={null}>
+              <HeroBackgroundVideo />
+            </Suspense>
+            <div className="landing-hero-overlay" aria-hidden="true" />
+            <div className="landing-hero-content">
+              <div className="landing-flow-strip" aria-label="Supported enrollment flows">
+                {flowAccents.map((flow) => (
+                  <span key={flow.label} style={{ "--flow-color": flow.color }}>
+                    <i aria-hidden="true" />
+                    {flow.label}
+                  </span>
+                ))}
+              </div>
+              <h1 id="landing-hero-title">Compliant Medicare enrollment, guided by AI</h1>
+              <p className="landing-hero-subhead">
+                EnrollGen gives agents a real-time command center for guided scripts, compliance
+                checkpoints, and AI coaching across Medicare and health enrollment workflows.
+              </p>
+              <div className="landing-hero-actions">
+                <a className="landing-button landing-button-primary" href="/login">
+                  Start Free Trial
+                </a>
+                <a
+                  className="landing-button landing-button-secondary"
+                  href="#features"
+                  onClick={(event) => handleSectionScroll(event, "#features")}
+                >
+                  See How It Works
+                </a>
+              </div>
             </div>
-            <h1 id="landing-hero-title">Compliant Medicare Enrollment, Guided by AI</h1>
-            <p className="landing-hero-subhead">
-              EnrollGen gives agents a real-time command center for guided scripts, compliance
-              checkpoints, and AI coaching across Medicare and health enrollment workflows.
-            </p>
-            <div className="landing-hero-actions">
-              <a className="landing-button landing-button-primary" href="/login">
-                Start Free Trial
-              </a>
-              <a
-                className="landing-button landing-button-secondary"
-                href="#features"
-                onClick={(event) => handleSectionScroll(event, "#features")}
-              >
-                See How It Works
-              </a>
-            </div>
-          </div>
-          <div className="landing-hero-panel" aria-label="EnrollGen workflow snapshot">
-            <div className="landing-panel-topline">
-              <span>Live Enrollment</span>
-              <strong>AI READY</strong>
-            </div>
-            <div className="landing-panel-metric">
-              <span>Compliance Confidence</span>
-              <strong>94%</strong>
-            </div>
-            <div className="landing-panel-list">
-              <span>TPMO disclosure verified</span>
-              <span>Needs assessment in progress</span>
-              <span>Plan impact check queued</span>
+            <div className="landing-hero-panel" aria-label="EnrollGen workflow snapshot">
+              <div className="landing-panel-topline">
+                <span>Live Enrollment</span>
+                <strong>AI READY</strong>
+              </div>
+              <div className="landing-panel-metric">
+                <span>Compliance Confidence</span>
+                <strong>94%</strong>
+              </div>
+              <div className="landing-panel-list">
+                <span>TPMO disclosure verified</span>
+                <span>Needs assessment in progress</span>
+                <span>Plan impact check queued</span>
+              </div>
             </div>
           </div>
         </section>

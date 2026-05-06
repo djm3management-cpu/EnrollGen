@@ -72,6 +72,107 @@ const ScriptEditor = lazy(loadScriptEditor);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const tenantBootstrapAttempts = new Set();
+const clerkTerminalAppearance = {
+  variables: {
+    colorPrimary: "#e8002d",
+    colorBackground: "#050505",
+    colorInputBackground: "#030303",
+    colorInputText: "#f3f4f6",
+    colorText: "#f3f4f6",
+    colorTextSecondary: "#9ca3af",
+    borderRadius: "2px",
+    fontFamily: '"DM Sans", sans-serif',
+    fontSize: "13px",
+  },
+  elements: {
+    rootBox: {
+      width: "min(430px, calc(100vw - 32px))",
+    },
+    cardBox: {
+      width: "100%",
+      border: "1px solid rgba(255, 255, 255, 0.14)",
+      borderRadius: "2px",
+      boxShadow: "0 24px 70px rgba(0, 0, 0, 0.58)",
+      background:
+        "linear-gradient(180deg, rgba(17, 17, 17, 0.98), rgba(3, 3, 3, 0.98))",
+    },
+    card: {
+      gap: "14px",
+      padding: "22px",
+      backgroundColor: "transparent",
+    },
+    headerTitle: {
+      color: "#ffffff",
+      fontFamily: '"Barlow Condensed", sans-serif',
+      fontSize: "34px",
+      fontWeight: 900,
+      letterSpacing: "0",
+      lineHeight: "0.95",
+      textTransform: "none",
+    },
+    headerSubtitle: {
+      color: "#9ca3af",
+      fontFamily: '"IBM Plex Mono", monospace',
+      fontSize: "12px",
+      lineHeight: "1.35",
+    },
+    socialButtonsBlockButton: {
+      minHeight: "34px",
+      border: "1px solid rgba(255, 255, 255, 0.12)",
+      borderRadius: "2px",
+      backgroundColor: "#080808",
+      color: "#f3f4f6",
+      fontSize: "12px",
+      fontWeight: 800,
+    },
+    dividerLine: {
+      backgroundColor: "rgba(255, 255, 255, 0.12)",
+    },
+    dividerText: {
+      color: "#6b7280",
+      fontFamily: '"IBM Plex Mono", monospace',
+      fontSize: "11px",
+      textTransform: "uppercase",
+    },
+    formFieldLabel: {
+      color: "#d1d5db",
+      fontFamily: '"IBM Plex Mono", monospace',
+      fontSize: "11px",
+      fontWeight: 700,
+      letterSpacing: "0.03em",
+      textTransform: "uppercase",
+    },
+    formFieldInput: {
+      minHeight: "34px",
+      border: "1px solid rgba(255, 255, 255, 0.14)",
+      borderRadius: "2px",
+      backgroundColor: "#030303",
+      color: "#f3f4f6",
+      fontFamily: '"IBM Plex Mono", monospace',
+      fontSize: "12px",
+    },
+    formButtonPrimary: {
+      minHeight: "34px",
+      border: "1px solid rgba(255, 255, 255, 0.16)",
+      borderRadius: "2px",
+      background: "linear-gradient(180deg, #ff2448 0%, #e8002d 48%, #8f001b 100%)",
+      color: "#ffffff",
+      fontFamily: '"Barlow Condensed", sans-serif',
+      fontSize: "13px",
+      fontWeight: 900,
+      letterSpacing: "0.05em",
+      textTransform: "uppercase",
+    },
+    footerActionText: {
+      color: "#9ca3af",
+      fontSize: "12px",
+    },
+    footerActionLink: {
+      color: "#ffffff",
+      fontWeight: 800,
+    },
+  },
+};
 
 function modeSupportsAgentTools(mode) {
   return mode === "ma" || mode === "aca";
@@ -1094,16 +1195,8 @@ export default function App() {
     <>
       <SignedOut>
         {pathname === "/login" ? (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              minHeight: "100vh",
-              background: "#0c1017",
-            }}
-          >
-            <SignIn />
+          <div className="auth-shell">
+            <SignIn appearance={clerkTerminalAppearance} />
           </div>
         ) : (
           <LandingPage />
