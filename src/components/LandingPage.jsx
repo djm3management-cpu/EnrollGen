@@ -35,25 +35,6 @@ const steps = [
   "Review summaries, compliance signals, and operational context after the call.",
 ];
 
-const pricing = [
-  {
-    name: "Starter",
-    price: "$99",
-    body: "For individual agents validating a compliant workflow.",
-  },
-  {
-    name: "Team",
-    price: "$249",
-    body: "For sales teams standardizing scripts, coaching, and QA.",
-    featured: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    body: "For organizations with multi-tenant operations and advanced controls.",
-  },
-];
-
 function handleSectionScroll(event, selector) {
   event.preventDefault();
   document.querySelector(selector)?.scrollIntoView({ behavior: "smooth" });
@@ -95,8 +76,8 @@ export default function LandingPage() {
           >
             How It Works
           </a>
-          <a href="#pricing" onClick={(event) => handleSectionScroll(event, "#pricing")}>
-            Pricing
+          <a href="#contact" onClick={(event) => handleSectionScroll(event, "#contact")}>
+            Contact
           </a>
         </nav>
         <a className="landing-nav-cta" href="/login">
@@ -122,8 +103,9 @@ export default function LandingPage() {
               </div>
               <h1 id="landing-hero-title">Compliant Medicare enrollment, guided by AI</h1>
               <p className="landing-hero-subhead">
-                EnrollGen gives agents a real-time command center for guided scripts, compliance
-                checkpoints, and AI coaching across Medicare and health enrollment workflows.
+                EnrollGen gives agents a live command center with guided script flows, real-time
+                CMS compliance scoring, and AI copilot coaching &mdash; built for Medicare
+                Advantage, ACA, Supplement, U65, and ancillary sales.
               </p>
               <div className="landing-hero-actions">
                 <a className="landing-button landing-button-primary" href="/login">
@@ -139,18 +121,50 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="landing-hero-panel" aria-label="EnrollGen workflow snapshot">
-              <div className="landing-panel-topline">
-                <span>Live Enrollment</span>
-                <strong>AI READY</strong>
+              <div className="landing-terminal-section">
+                <div className="landing-terminal-heading">SCRIPT FLOW</div>
+                <div className="landing-terminal-row">
+                  <span className="landing-status-dot is-green" aria-hidden="true" />
+                  <span>Recording Disclosure</span>
+                  <strong>✓</strong>
+                </div>
+                <div className="landing-terminal-row">
+                  <span className="landing-status-dot is-amber" aria-hidden="true" />
+                  <span>TPMO Disclosure</span>
+                  <strong>→ IN PROGRESS</strong>
+                </div>
               </div>
-              <div className="landing-panel-metric">
-                <span>Compliance Confidence</span>
-                <strong>94%</strong>
+
+              <div className="landing-terminal-section">
+                <div className="landing-terminal-heading">CO-PILOT FEED</div>
+                <p className="landing-terminal-ai">
+                  Beneficiary expressed cost concern &mdash; suggest MAPD with $0 premium
+                </p>
               </div>
-              <div className="landing-panel-list">
-                <span>TPMO disclosure verified</span>
-                <span>Needs assessment in progress</span>
-                <span>Plan impact check queued</span>
+
+              <div className="landing-terminal-section">
+                <div className="landing-terminal-heading">COMPLIANCE</div>
+                <div className="landing-compliance-row is-green">
+                  <div>
+                    <span>Call Opening</span>
+                    <strong>100%</strong>
+                  </div>
+                  <i aria-hidden="true" />
+                </div>
+                <div className="landing-compliance-row is-amber">
+                  <div>
+                    <span>Required Disclosures</span>
+                    <strong>43%</strong>
+                  </div>
+                  <i aria-hidden="true" />
+                </div>
+                <div className="landing-compliance-row is-muted">
+                  <div>
+                    <span>Needs Assessment</span>
+                    <strong>0%</strong>
+                  </div>
+                  <i aria-hidden="true" />
+                </div>
               </div>
             </div>
           </div>
@@ -199,33 +213,18 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="pricing" className="landing-section">
+        <section id="contact" className="landing-section landing-contact">
           <div className="landing-section-heading">
-            <div className="landing-section-kicker">Pricing</div>
-            <h2>Choose the operating tier that matches your enrollment team.</h2>
+            <div className="landing-section-kicker">Contact</div>
+            <h2>Bring live script guidance, AI coaching, and compliance scoring to your team.</h2>
           </div>
-          <div className="landing-pricing-grid">
-            {pricing.map((tier) => (
-              <article
-                key={tier.name}
-                className={`landing-price-card${tier.featured ? " is-featured" : ""}`}
-              >
-                <h3>{tier.name}</h3>
-                <div className="landing-price">{tier.price}</div>
-                <p>{tier.body}</p>
-                <a href="/login">Start Free Trial</a>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="landing-section landing-proof">
-          <div className="landing-section-kicker">Social Proof</div>
-          <blockquote>
-            "EnrollGen helped our agents standardize compliant enrollment conversations without
-            taking momentum out of the call."
-          </blockquote>
-          <p>Customer story placeholder</p>
+          <a
+            className="landing-contact-box"
+            href="mailto:djm3management@gmail.com?subject=EnrollGen%20Demo%20Request"
+          >
+            <span>Contact EnrollGen</span>
+            <strong>djm3management@gmail.com</strong>
+          </a>
         </section>
       </main>
 
