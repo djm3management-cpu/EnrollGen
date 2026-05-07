@@ -14,11 +14,11 @@ function json(status, payload) {
   return new Response(JSON.stringify(payload), { status, headers: JSON_HEADERS });
 }
 
-function getSupabase() {
+export function getSupabase() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error("Supabase env vars not configured");
-  return createClient(url, key);
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) throw new Error("Supabase service-role env vars not configured");
+  return createClient(url, serviceRoleKey);
 }
 
 function startOfToday() {
@@ -326,7 +326,7 @@ async function upsertRows(supabase, table, rows, onConflict) {
   return rows.length;
 }
 
-async function processTenant(supabase, tenant) {
+export async function processTenant(supabase, tenant) {
   const asOf = startOfToday();
   const start30 = addDays(asOf, -30);
   const start60 = addDays(asOf, -60);

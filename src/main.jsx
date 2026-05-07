@@ -14,6 +14,50 @@ const CLERK_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
 runSessionTrackingDiagnostic();
 
+function getClientPlatform() {
+  if (typeof navigator === "undefined") return "unknown";
+
+  const platformHints = [
+    navigator.userAgentData?.platform,
+    navigator.platform,
+    navigator.userAgent,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  if (/win/i.test(platformHints)) return "windows";
+  if (/mac|iphone|ipad|ipod/i.test(platformHints)) return "apple";
+  if (/android/i.test(platformHints)) return "android";
+  if (/linux/i.test(platformHints)) return "linux";
+  return "unknown";
+}
+
+function applyRenderEnvironmentFlags() {
+  if (typeof document === "undefined") return;
+
+  document.documentElement.dataset.platform = getClientPlatform();
+
+  if (typeof window === "undefined" || !window.matchMedia) {
+    document.documentElement.dataset.motion = "full";
+    return;
+  }
+
+  const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const syncMotionPreference = () => {
+    document.documentElement.dataset.motion = motionQuery.matches ? "reduce" : "full";
+  };
+
+  syncMotionPreference();
+
+  if (motionQuery.addEventListener) {
+    motionQuery.addEventListener("change", syncMotionPreference);
+  } else {
+    motionQuery.addListener(syncMotionPreference);
+  }
+}
+
+applyRenderEnvironmentFlags();
+
 function RootProviders() {
   return (
     <AuthProvider>

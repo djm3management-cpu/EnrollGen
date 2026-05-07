@@ -1,20 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 
-const DEFAULT_CATEGORIES = [
-  "compliance_ma",
-  "compliance_aca",
-  "sep_guide",
-  "medicare_reference",
-  "state_carrier_data",
-];
 const SOURCE_FETCH_TIMEOUT_MS = 15000;
 const AI_TIMEOUT_MS = 60000;
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error("Supabase env vars not configured");
-  return createClient(url, key);
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) throw new Error("Supabase service-role env vars not configured");
+  return createClient(url, serviceRoleKey);
 }
 
 function truncate(value, maxChars) {
@@ -261,11 +254,7 @@ async function fetchEntries(supabase, { category, key, limit }) {
     .eq("is_active", true)
     .order("updated_at", { ascending: true });
 
-  if (category) {
-    query = query.eq("category", category);
-  } else {
-    query = query.in("category", DEFAULT_CATEGORIES);
-  }
+  if (category) query = query.eq("category", category);
 
   if (key) query = query.eq("key", key);
   if (limit) query = query.limit(limit);
@@ -273,6 +262,23 @@ async function fetchEntries(supabase, { category, key, limit }) {
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).filter((entry) => entry.source_urls?.length);
+}
+
+export async function listKnowledgeCategories() {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("knowledge_base")
+    .select("category, source_urls")
+    .eq("is_active", true)
+    .order("category", { ascending: true });
+
+  if (error) throw error;
+
+  return Array.from(new Set(
+    (data || [])
+      .filter((entry) => entry.category && entry.source_urls?.length)
+      .map((entry) => entry.category)
+  )).sort();
 }
 
 export async function runKnowledgeUpdate({ category = null, key = null, limit = 12 } = {}) {
@@ -303,6 +309,33 @@ export async function runKnowledgeUpdate({ category = null, key = null, limit = 
 
   return {
     checked: entries.length,
+    results,
+  };
+}
+
+export async function runAllKnowledgeCategoryUpdates({ limitPerCategory = 6 } = {}) {
+  const categories = await listKnowledgeCategories();
+  const results = [];
+
+  for (const category of categories) {
+    try {
+      const result = await runKnowledgeUpdate({
+        category,
+        limit: limitPerCategory,
+      });
+      results.push({ category, ...result });
+    } catch (error) {
+      results.push({
+        category,
+        checked: 0,
+        results: [],
+        error: error?.message || String(error),
+      });
+    }
+  }
+
+  return {
+    categories: categories.length,
     results,
   };
 }

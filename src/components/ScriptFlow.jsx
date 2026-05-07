@@ -929,7 +929,7 @@ export default function ScriptFlow() {
             }}
             style={{
               fontSize: 15,
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-display)",
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",

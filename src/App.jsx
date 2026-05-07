@@ -251,7 +251,7 @@ function FlowSelector({ mode, onChange, compact = false }) {
                   fontSize: compact ? 8 : 9,
                   fontWeight: 700,
                   letterSpacing: "0.1em",
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-display)",
                   color: active ? flow.color : `rgba(${flow.rgb},0.35)`,
                   transition: "color 0.2s ease",
                   textTransform: "uppercase",
@@ -787,7 +787,9 @@ function AppShell({ currentUser = null }) {
       </div>
 
       <div
-        className="app-shell app-shell-modern"
+        className={`app-shell app-shell-modern${
+          mode === "ma" ? " app-shell--right-rail-space" : ""
+        }`}
         style={{ "--left-rail-width": `${railWidth}px` }}
       >
         <header ref={topBarRef} className="top-bar-shell">

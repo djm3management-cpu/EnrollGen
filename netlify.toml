@@ -18,13 +18,22 @@
   to = "/index.html"
   status = 200
 
-# Daily bulletin sync — every day at 6:15 AM UTC
+# Netlify cron expressions are UTC. These align with the requested ET
+# windows during daylight saving time.
+[functions."nightly-analytics"]
+  schedule = "0 6 * * *"
+
+[functions."weekly-coaching"]
+  schedule = "0 11 * * 1"
+
 [functions."sync-bulletins"]
-  schedule = "15 6 * * *"
+  schedule = "0 10 * * *"
+
+[functions."update-knowledge"]
+  schedule = "0 7 * * 0"
 
 [dev]
   command = "npm run dev"
   port = 5173
   targetPort = 5173
   autoLaunch = false
-

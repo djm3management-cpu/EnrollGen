@@ -1,9 +1,12 @@
-import { runKnowledgeUpdate } from "./_knowledgeUpdate.js";
+import {
+  runAllKnowledgeCategoryUpdates,
+  runKnowledgeUpdate,
+} from "./_knowledgeUpdate.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
 export const config = {
-  schedule: "0 9 * * 1",
+  schedule: "0 7 * * 0",
 };
 
 function json(status, payload) {
@@ -34,11 +37,15 @@ export default async (request) => {
       body = await request.json().catch(() => ({}));
     }
 
-    const result = await runKnowledgeUpdate({
-      category: body.category || null,
-      key: body.key || null,
-      limit: Number(body.limit || 12),
-    });
+    const result = body.category || body.key
+      ? await runKnowledgeUpdate({
+          category: body.category || null,
+          key: body.key || null,
+          limit: Number(body.limit || 12),
+        })
+      : await runAllKnowledgeCategoryUpdates({
+          limitPerCategory: Number(body.limitPerCategory || body.limit || 6),
+        });
 
     return json(200, result);
   } catch (error) {
