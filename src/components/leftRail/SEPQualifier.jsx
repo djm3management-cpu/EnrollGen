@@ -27,6 +27,8 @@ import {
 import { useScript } from "../../context/ScriptContext";
 import QuickNotes from "../QuickNotes";
 import SEPFinder from "../SEPFinder";
+import ClientInfoCard from "./ClientInfoCard";
+import PlanContextCard from "./PlanContextCard";
 import SNPRoutingWidget from "./SNPRoutingWidget";
 
 const OPENER_SCRIPT =
@@ -94,6 +96,19 @@ function renderStateContentField(title, items, className = "") {
       </ul>
     </div>
   );
+}
+
+function formatCountyLabel(counties) {
+  if (!Array.isArray(counties)) {
+    return "";
+  }
+
+  return counties
+    .map((county) =>
+      [county.county_name, county.state_code].filter(Boolean).join(", ")
+    )
+    .filter(Boolean)
+    .join(" / ");
 }
 
 function StateInfoCard({
@@ -281,7 +296,7 @@ export default function SEPQualifier({ onMinimize }) {
   const [agentNotes, setAgentNotes] = useState("");
   const [usedQuestionShortcut, setUsedQuestionShortcut] = useState(false);
   const [showNoSepNotice, setShowNoSepNotice] = useState(false);
-  const [sharedZip, setSharedZip] = useState("");
+  const [sharedZip, setSharedZip] = useState(scriptState.tpmoZip || "");
   const [activeTool, setActiveTool] = useState("finder");
 
   const normalizedSharedZip = sharedZip.replace(/\D/g, "").slice(0, 5);
@@ -289,6 +304,17 @@ export default function SEPQualifier({ onMinimize }) {
   const sepFinderResultsZip = scriptState.sepFinderResults?.zip || null;
   const sepFinderResultsMatch =
     sepFinderResultsZip && sepFinderResultsZip === normalizedSharedZip;
+  const countyLabel = useMemo(
+    () => formatCountyLabel(scriptState.sepFinderResults?.counties),
+    [scriptState.sepFinderResults?.counties]
+  );
+
+  useEffect(() => {
+    const contextZip = String(scriptState.tpmoZip || "").replace(/\D/g, "").slice(0, 5);
+    if (contextZip && contextZip !== sharedZip) {
+      setSharedZip(contextZip);
+    }
+  }, [scriptState.tpmoZip, sharedZip]);
 
   useEffect(() => {
     if (
@@ -367,8 +393,16 @@ export default function SEPQualifier({ onMinimize }) {
   };
 
   const handleStateChange = (event) => {
+    const nextState = event.target.value.toUpperCase();
     setShowNoSepNotice(false);
-    setResidentState(event.target.value.toUpperCase());
+    setResidentState(nextState);
+    scriptDispatch({ type: "SET_NOTE", field: "customerState", value: nextState });
+  };
+
+  const handleSharedZipChange = (event) => {
+    const nextZip = event.target.value.replace(/\D/g, "").slice(0, 5);
+    setSharedZip(nextZip);
+    scriptDispatch({ type: "SET_FIELD", field: "tpmoZip", value: nextZip });
   };
 
   const toggleStateSection = (sectionId) => {
@@ -412,9 +446,7 @@ export default function SEPQualifier({ onMinimize }) {
                   maxLength={5}
                   placeholder="Enter member ZIP"
                   value={sharedZip}
-                  onChange={(event) =>
-                    setSharedZip(event.target.value.replace(/\D/g, "").slice(0, 5))
-                  }
+                  onChange={handleSharedZipChange}
                   autoComplete="postal-code"
                 />
               </div>
@@ -488,6 +520,11 @@ export default function SEPQualifier({ onMinimize }) {
                   ) : null}
                 </div>
               ) : null}
+            </div>
+
+            <div className="left-rail-context-stack">
+              <ClientInfoCard countyLabel={countyLabel} />
+              <PlanContextCard />
             </div>
 
             <QuickNotes value={agentNotes} onChange={setAgentNotes} title="Agent Notes" />

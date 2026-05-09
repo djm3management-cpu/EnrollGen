@@ -1696,44 +1696,9 @@ button.primary.section-complete-btn {
   border-radius: var(--eg-radius-md) !important;
 }
 
-/* ============================================================
-   FIXED LEFT RAIL WRAPPER (V3LeftRail)
-   ============================================================ */
-
-.eg-left-rail-fixed {
-  position: fixed;
-  top: 48px;
-  left: 0;
-  bottom: 30px;
-  width: 210px;
-  z-index: 105;
-  display: flex;
-  flex-direction: column;
-}
-
-.eg-left-rail-fixed > .eg-left-rail {
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-}
-
-.app-shell-modern {
-  --left-rail-width: 210px;
-}
-
-/* Push the legacy LeftRail manager's expandable panel beyond V3LeftRail. */
-.app-shell-modern .left-rail {
-  left: 210px !important;
-}
-
-.app-shell-modern .left-rail-handles {
-  left: 218px !important;
-}
-
-/* Push center column to clear the 210px fixed rail and make room for the
-   30px bottom bar. */
+/* Keep the workspace clear of the fixed bottom bar while letting the real
+   LeftRail manager own horizontal spacing through --left-rail-width. */
 .app-shell-modern .app-workspace {
-  padding-left: calc(24px + 210px) !important;
   padding-bottom: calc(24px + 30px) !important;
 }
 
@@ -1938,6 +1903,16 @@ button.primary.section-complete-btn {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+.left-rail-context-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.left-rail-context-stack .eg-rail-card {
+  margin-bottom: 0;
 }
 
 /* ============================================================

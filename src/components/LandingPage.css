@@ -13,7 +13,7 @@ body {
   background:
     linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
-    linear-gradient(180deg, #020202 0%, var(--eg-surface-1) 44%, var(--eg-surface-1) 100%);
+    linear-gradient(180deg, var(--eg-base) 0%, var(--eg-surface-1) 44%, var(--eg-surface-1) 100%);
   background-size: 28px 28px, 28px 28px, 100% 100%;
   overflow: hidden;
   scroll-behavior: smooth;

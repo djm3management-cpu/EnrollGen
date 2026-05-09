@@ -1,8 +1,6 @@
 import { memo, useMemo } from "react";
 import { useScript } from "../../context/ScriptContext";
 
-const DEFAULT_PILLS = ["$0 premium", "$0 PCP", "$250 MOOP", "OTC $100/qtr"];
-
 function tokenize(value) {
   if (!value || typeof value !== "string") return [];
   return value
@@ -19,14 +17,18 @@ const PlanContextCard = memo(function PlanContextCard() {
   const planName = notes.planName?.trim() || "";
   const planId = notes.planId?.trim() || "";
   const planType = notes.planType?.trim() || (planId.includes("HMO") ? "HMO-POS" : "");
+  const premium = notes.premium?.trim() || "";
+  const effectiveDate = notes.effectiveDate?.trim() || "";
   const benefits = useMemo(() => {
     const tokens = tokenize(notes.benefitPills || notes.benefits);
     if (tokens.length) return tokens;
-    if (carrier || planName) return [];
-    return DEFAULT_PILLS;
-  }, [notes.benefitPills, notes.benefits, carrier, planName]);
+    return [
+      premium ? `${premium} premium` : "",
+      effectiveDate ? `Eff. ${effectiveDate}` : "",
+    ].filter(Boolean);
+  }, [notes.benefitPills, notes.benefits, effectiveDate, premium]);
 
-  const planMeta = [planId, planType].filter(Boolean).join("  ·  ");
+  const planMeta = [planId, planType].filter(Boolean).join(" - ");
 
   return (
     <div className="eg-rail-card">

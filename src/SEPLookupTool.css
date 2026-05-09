@@ -258,7 +258,7 @@
 }
 
 .sep-plan-table tbody tr:hover td {
-  background: #151515 !important;
+  background: var(--eg-surface-2) !important;
 }
 
 .sep-plan-table tbody tr.expanded {

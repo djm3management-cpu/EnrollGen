@@ -350,7 +350,7 @@ p {
   padding: 0;
   width: 100%;
   /* Deep layered gunmetal frame */
-  background: linear-gradient(180deg, #0f0f0f 0%, var(--eg-surface-1) 100%);
+  background: linear-gradient(180deg, var(--eg-surface-1) 0%, var(--eg-surface-1) 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
@@ -597,7 +597,7 @@ p {
 
 .ancillary-popup-dismiss:hover {
   color: #f4b24d;
-  background: #101010;
+  background: var(--eg-surface-2);
 }
 
 .ancillary-popup-header {
@@ -2676,7 +2676,7 @@ p {
 .operations-tab .ops-filter-box {
   padding: 0 8px;
   color: var(--ops-white);
-  background: #101010;
+  background: var(--eg-surface-2);
   border-right: 1px solid var(--ops-border-bright);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2687,7 +2687,7 @@ p {
   padding: 0 8px;
   border: none;
   border-right: 1px solid var(--ops-border-bright);
-  background: #101010;
+  background: var(--eg-surface-2);
   color: var(--ops-white);
   font-family: inherit;
   font-size: 10px;
@@ -3143,7 +3143,7 @@ p {
 .operations-tab .ops-sort-th.num button { justify-content: flex-end; }
 .operations-tab .ops-sort-th button:hover,
 .operations-tab .ops-sort-th.is-active button {
-  background: #101010;
+  background: var(--eg-surface-2);
   color: var(--ops-yellow);
 }
 .operations-tab .ops-sort-indicator {
@@ -3556,7 +3556,7 @@ p {
 }
 .operations-tab .ops-summary-box {
   padding: 7px 8px;
-  background: #101010;
+  background: var(--eg-surface-2);
   border: 1px solid var(--ops-border);
 }
 .operations-tab .ops-summary-box p,
@@ -3658,7 +3658,7 @@ p {
   position: relative;
   height: 8px;
   margin-top: 3px;
-  background: #101010;
+  background: var(--eg-surface-2);
   border: 1px solid var(--ops-border);
 }
 .operations-tab .ops-wpm-track .ideal {
@@ -3680,7 +3680,7 @@ p {
   position: relative;
   height: 8px;
   margin-top: 8px;
-  background: #101010;
+  background: var(--eg-surface-2);
   border: 1px solid var(--ops-border);
 }
 .operations-tab .ops-position-track span {
@@ -3744,7 +3744,7 @@ p {
   height: 42px;
   display: grid;
   place-items: center;
-  background: conic-gradient(var(--ops-green) var(--score-pct), #151515 0);
+  background: conic-gradient(var(--ops-green) var(--score-pct), var(--eg-surface-2) 0);
 }
 .operations-tab .ops-gauge .ring span {
   width: 30px;
@@ -3830,7 +3830,7 @@ p {
 .operations-tab .ops-category-track {
   grid-column: 1 / -1;
   height: 5px;
-  background: #151515;
+  background: var(--eg-surface-2);
 }
 .operations-tab .ops-category-track span {
   display: block;
@@ -6633,7 +6633,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .prompter-transcript {
-  background: linear-gradient(180deg, #0d0d10 0%, var(--eg-surface-1) 100%);
+  background: linear-gradient(180deg, var(--eg-surface-1) 0%, var(--eg-surface-1) 100%);
   border: 1px solid rgba(255,255,255,0.05);
   border-left: 1px solid rgba(173,173,173,0.45);
   padding: 10px 12px;
@@ -8657,7 +8657,7 @@ button:focus-visible,
 }
 
 body[data-bg-mode="wallpaper"] .viewport-bg {
-  background: linear-gradient(180deg, #090909 0%, var(--eg-surface-1) 100%);
+  background: linear-gradient(180deg, var(--eg-surface-1) 0%, var(--eg-surface-1) 100%);
 }
 
 body[data-bg-mode="wallpaper"] .viewport-bg::before {
@@ -9392,7 +9392,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   background:
     linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.026) 1px, transparent 1px),
-    linear-gradient(180deg, #020202 0%, var(--eg-surface-1) 50%, var(--eg-surface-1) 100%);
+    linear-gradient(180deg, var(--eg-base) 0%, var(--eg-surface-1) 50%, var(--eg-surface-1) 100%);
   background-size: 28px 28px, 28px 28px, 100% 100%;
 }
 
@@ -9404,7 +9404,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   background:
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px),
-    linear-gradient(180deg, #020202 0%, var(--eg-surface-1) 48%, var(--eg-surface-1) 100%);
+    linear-gradient(180deg, var(--eg-base) 0%, var(--eg-surface-1) 48%, var(--eg-surface-1) 100%);
   background-size: 28px 28px, 28px 28px, 100% 100%;
 }
 
@@ -9947,7 +9947,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   background:
     linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.026) 1px, transparent 1px),
-    linear-gradient(180deg, #020202 0%, var(--eg-surface-1) 48%, var(--eg-surface-1) 100%);
+    linear-gradient(180deg, var(--eg-base) 0%, var(--eg-surface-1) 48%, var(--eg-surface-1) 100%);
   background-size: 28px 28px, 28px 28px, 100% 100%;
 }
 
@@ -11026,7 +11026,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   padding: 0 9px;
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
-  background: linear-gradient(180deg, #151515 0%, #0d0d0d 100%);
+  background: linear-gradient(180deg, var(--eg-surface-2) 0%, var(--eg-surface-1) 100%);
   color: var(--text-primary);
   font-family: var(--font-display);
   font-size: 0.64rem;

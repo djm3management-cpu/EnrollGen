@@ -29,7 +29,6 @@ import {
   useLeftRailManager,
 } from "./components/leftRail/LeftRailManager";
 import SEPQualifier from "./components/leftRail/SEPQualifier";
-import V3LeftRail from "./components/leftRail/V3LeftRail";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
@@ -833,9 +832,6 @@ function AppShell({ currentUser = null }) {
 
         {mode === "ma" ? (
           <ScriptProvider>
-            <div className="eg-left-rail-fixed">
-              <V3LeftRail />
-            </div>
             <LeftRail launcher={sepLauncher} />
 
             {openPanel ? (
