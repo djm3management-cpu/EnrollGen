@@ -46,7 +46,7 @@ export default function CallHistory() {
     let cancelled = false;
     async function load() {
       try {
-        const token = await getToken();
+        const token = await getToken({ template: "supabase" });
         if (!token) {
           setError("auth_disabled");
           setLoading(false);

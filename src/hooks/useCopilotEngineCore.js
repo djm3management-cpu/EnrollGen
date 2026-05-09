@@ -253,6 +253,23 @@ export function makeIsHighRisk(keywords) {
   };
 }
 
+export function buildTranscriptRetrievalTrace(transcriptReferenceResult = {}) {
+  const results = Array.isArray(transcriptReferenceResult.results)
+    ? transcriptReferenceResult.results
+    : [];
+  const sources = Array.isArray(transcriptReferenceResult.sources)
+    ? transcriptReferenceResult.sources.map((source) => `call:${source}`)
+    : [];
+
+  return {
+    topics: [],
+    scenarios: [],
+    sources,
+    transcriptReferenceCount: results.length,
+    transcriptReferenceError: transcriptReferenceResult.error || null,
+  };
+}
+
 function createAbortError() {
   try {
     return new DOMException("The request was aborted.", "AbortError");

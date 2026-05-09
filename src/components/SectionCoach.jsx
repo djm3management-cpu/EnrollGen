@@ -182,8 +182,6 @@ OBJECTION RESPONSES:
 };
 
 const SectionCoach = memo(function SectionCoach({ stepName, context = "", sectionNum }) {
-  return null;
-
   const [tip, setTip] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);

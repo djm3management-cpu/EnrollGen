@@ -2,13 +2,18 @@ import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { useU65 } from "../flows/u65/U65Context";
 import { useU65CopilotEngine } from "../hooks/useU65CopilotEngine";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
+import { useSessionTracker } from "../hooks/useSessionTracker";
 import CompactCopilotRail from "./CompactCopilotRail";
 
 const U65Copilot = memo(function U65Copilot({ onTranscriptChange }) {
   const { state, activeGate } = useU65();
   const transcriptRef = useRef("");
+  const { startSession, endSession, logComplianceFlag } = useSessionTracker();
+  const sessionStartedRef = useRef(false);
+  const finalGateRef = useRef(activeGate);
+  const completedRef = useRef(false);
 
-  const copilot = useU65CopilotEngine({ transcriptRef, activeGate, state });
+  const copilot = useU65CopilotEngine({ transcriptRef, activeGate, state, logComplianceFlag });
   const speech = useSpeechRecognition({
     onNewFinal: copilot.scheduleCoaching,
     onSpokenQuestion: copilot.askCopilot,
@@ -18,6 +23,29 @@ const U65Copilot = memo(function U65Copilot({ onTranscriptChange }) {
   useEffect(() => {
     onTranscriptChange?.(speech.transcript);
   }, [onTranscriptChange, speech.transcript]);
+
+  useEffect(() => {
+    finalGateRef.current = activeGate;
+    completedRef.current = Boolean(state.gate7Ok);
+  }, [activeGate, state.gate7Ok]);
+
+  useEffect(() => {
+    if (state.callStarted && !sessionStartedRef.current) {
+      sessionStartedRef.current = true;
+      startSession("u65");
+    }
+    if (!state.callStarted && sessionStartedRef.current) {
+      endSession(finalGateRef.current, completedRef.current);
+      sessionStartedRef.current = false;
+    }
+  }, [state.callStarted, startSession, endSession]);
+
+  useEffect(() => () => {
+    if (sessionStartedRef.current) {
+      endSession(finalGateRef.current, completedRef.current);
+      sessionStartedRef.current = false;
+    }
+  }, [endSession]);
 
   const clearAll = useCallback(() => {
     speech.clearTranscript();

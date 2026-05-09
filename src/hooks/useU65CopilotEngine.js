@@ -17,6 +17,7 @@ import { lookupAcaBenchmark, formatBenchmarkForPrompt } from "../lib/acaBenchmar
 import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
+import { fetchTranscriptReferences } from "../lib/transcriptSearch";
 import { mergeStructuredKnowledgeMap } from "../lib/knowledgeBase";
 import { useKnowledge } from "./useKnowledge";
 import {
@@ -24,7 +25,7 @@ import {
   shouldSuppressDuplicateIssue,
   readErrorDetail, getCopilotHttpErrorMessage,
   parseAnthropicResponse, parseCoachingJson, buildTranscriptWindows,
-  formatSectionDuration, makeIsHighRisk,
+  formatSectionDuration, makeIsHighRisk, buildTranscriptRetrievalTrace,
 } from "./useCopilotEngineCore";
 import {
   U65_COMPLIANCE_KNOWLEDGE, U65_GATE_LABELS,
@@ -239,7 +240,7 @@ ONLY break silence for:
 5. **SILENCE (silent)**: Agent is doing fine. THIS IS YOUR DEFAULT. Use 70-80% of the time.`;
 }
 
-function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, reviewMode = "live" }) {
+function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock = "", reviewMode = "live" }) {
   const complianceContext = buildComplianceContext(knowledge);
 
   return `You are an expert U65 off-exchange private health products compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue.
@@ -282,6 +283,9 @@ FLOW POSITION:
 ${flowOrder}
 
 ${complianceContext}
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
 ${recentInterventionText ? `════════════════════════════════════════════════════════
 RECENT PRIOR INTERVENTIONS — DO NOT REPEAT:
 ════════════════════════════════════════════════════════
@@ -342,7 +346,7 @@ Respond with ONLY a valid JSON object. No backticks, no wrapper text. Your messa
 }`;
 }
 
-function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilotContextJson, isSpoken }) {
+function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilotContextJson, transcriptReferenceBlock = "", isSpoken }) {
   let sectionContext = "";
   if (knowledge) {
     sectionContext = `\nCurrent gate: "${sectionKey}"\nRequired elements:\n${knowledge.requiredElements.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n`;
@@ -355,6 +359,9 @@ CRITICAL CONTEXT:
 - The agent is in the "${sectionKey}" gate of the U65 off-exchange enrollment flow
 - Products: EnrollPrime/AFI (Cigna PPO, association group plan) and PALIC HSP Gold (fixed-benefit indemnity, First Health network)
 ${sectionContext}
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
 ${recentTranscript ? `\nRecent agent transcript:\n"${recentTranscript.slice(-1000)}"\n` : ""}
 Structured app context:
 ${copilotContextJson}
@@ -388,7 +395,7 @@ Use plain text only. No bold, no bullet points, no markdown, no dashes, no aster
    THE HOOK
    ─────────────────────────────────────────────────────── */
 
-export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
+export function useU65CopilotEngine({ transcriptRef, activeGate, state, logComplianceFlag }) {
   const currentStep = U65_GATE_LABELS[activeGate] || `Gate ${activeGate}`;
   const { entries: dbComplianceEntries } = useKnowledge("compliance_u65");
   const complianceKnowledge = useMemo(
@@ -526,7 +533,8 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
     }
     const sectionKey = currentStep;
     const reviewMode = periodic ? "periodic" : "live";
-    const retrievalTrace = { topics: [], scenarios: [], sources: [], transcriptReferenceCount: 0, transcriptReferenceError: null };
+    let retrievalTrace = buildTranscriptRetrievalTrace();
+    let transcriptReferenceBlock = "";
 
     // Gates (bypassed for manual, sectionEntry, periodic)
     if (!sectionEntry && !manual && !periodic) {
@@ -571,6 +579,15 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
     const { analysisWindow, newSpeechWindow } = buildTranscriptWindows({
       fullTranscript, previousAnalyzedLength, sectionStart: sectionTranscriptStartRef.current, periodic,
     });
+    const transcriptReferenceResult = await fetchTranscriptReferences({
+      getToken,
+      query: newSpeechWindow || analysisWindow.slice(-1400),
+      productLine: "U65",
+      matchCount: 5,
+      similarityThreshold: 0.72,
+    });
+    retrievalTrace = buildTranscriptRetrievalTrace(transcriptReferenceResult);
+    transcriptReferenceBlock = transcriptReferenceResult.contextBlock || "";
 
     const derivedSignals = buildU65DerivedSignals(state, activeGate, fullTranscript);
     const copilotContext = {
@@ -582,7 +599,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state }) {
     const copilotContextJson = JSON.stringify(copilotContext, null, 2);
 
     const systemPrompt = buildCoachingSystemPrompt({
-      sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, reviewMode,
+      sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock, reviewMode,
     });
 
     const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words. Speech recognition may have minor errors.)
@@ -703,6 +720,9 @@ SECTION CONTEXT (rolling window):
       sectionCopilotFiredRef.current.add(activeGate);
       if (periodic && periodicSignature) lastPeriodicContextSignatureRef.current = periodicSignature;
       pushFeedEntry(level, message, { issueTag, section: currentStep, contextSnapshot: copilotContext, retrievalTrace });
+      if ((level === "warn" || level === "critical" || level === "remind") && logComplianceFlag) {
+        logComplianceFlag(currentStep, level, issueTag, confidence, message);
+      }
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("[U65Copilot] coaching error:", err);
@@ -714,7 +734,7 @@ SECTION CONTEXT (rolling window):
       if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
       setCoachingLoading(false);
     }
-  }, [activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, silentHeartbeatMs, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, acaBenchmark]);
+  }, [activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, silentHeartbeatMs, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, acaBenchmark, logComplianceFlag]);
 
   // Store latest requestCoaching for core's periodic timer and section-entry
   useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching, requestCoachingRef]);
@@ -741,9 +761,17 @@ SECTION CONTEXT (rolling window):
       currentWindow: recentTranscript,
       fullTranscriptTail: transcriptRef.current.trim().slice(-2500),
     };
+    const transcriptReferenceResult = await fetchTranscriptReferences({
+      getToken,
+      query: [question, recentTranscript].filter(Boolean).join("\n\n"),
+      productLine: "U65",
+      matchCount: 5,
+      similarityThreshold: 0.7,
+    });
+    const retrievalTrace = buildTranscriptRetrievalTrace(transcriptReferenceResult);
     const copilotContextJson = JSON.stringify(copilotContext, null, 2);
     const systemPrompt = buildAskSystemPrompt({
-      sectionKey, knowledge, recentTranscript, copilotContextJson, isSpoken,
+      sectionKey, knowledge, recentTranscript, copilotContextJson, transcriptReferenceBlock: transcriptReferenceResult.contextBlock, isSpoken,
     });
 
     try {
@@ -757,7 +785,7 @@ SECTION CONTEXT (rolling window):
       if (!response.ok) {
         const detail = await readErrorDetail(response);
         const errorMessage = getCopilotHttpErrorMessage(response.status, detail);
-        pushFeedEntry("info", errorMessage, { section: currentStep });
+        pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace });
         surfaceServiceIssue(errorMessage, { force: true });
         return;
       }
@@ -769,16 +797,17 @@ SECTION CONTEXT (rolling window):
         setMessages((prev) => [...prev.slice(-19), {
           id: Date.now(), level: "info",
           text: `${prefix}\n\n${raw}`,
+          retrievalTrace,
           ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         }]);
-        logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, { section: currentStep });
+        logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, { section: currentStep, retrievalTrace });
       }
       setAskQuestion("");
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("[U65Copilot] ask error:", err);
       const errorMessage = "Co-Pilot could not reach the coaching service.";
-      pushFeedEntry("info", errorMessage, { section: currentStep });
+      pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace });
       surfaceServiceIssue(errorMessage, { force: true });
     } finally {
       if (askAbortRef.current === controller) askAbortRef.current = null;

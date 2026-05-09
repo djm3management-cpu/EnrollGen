@@ -12,6 +12,7 @@
 import { useCallback, useMemo, useEffect, useRef, useState } from "react";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
+import { fetchTranscriptReferences } from "../lib/transcriptSearch";
 import {
   useCopilotEngineCore,
   shouldSuppressDuplicateIssue,
@@ -22,6 +23,7 @@ import {
   buildTranscriptWindows,
   formatSectionDuration,
   makeIsHighRisk,
+  buildTranscriptRetrievalTrace,
 } from "./useCopilotEngineCore";
 import { lookupPlanSummary, formatPlanSummaryForPrompt } from "../lib/acaPlanLookup";
 import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
@@ -243,7 +245,7 @@ ONLY break silence for:
 5. **SILENCE (silent)**: Agent is doing fine. THIS IS YOUR DEFAULT. Use 70-80% of the time.`;
 }
 
-function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, reviewMode = "live" }) {
+function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock = "", reviewMode = "live" }) {
   const complianceContext = buildComplianceContext(knowledge);
 
   return `You are an expert ACA Marketplace enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required element, or something the agent needs to correct RIGHT NOW.
@@ -274,6 +276,9 @@ FLOW POSITION:
 ${flowOrder}
 
 ${complianceContext}
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
 ${recentInterventionText ? `════════════════════════════════════════════════════════
 RECENT PRIOR INTERVENTIONS — DO NOT REPEAT UNLESS THE ISSUE CLEARLY REMAINS:
 ════════════════════════════════════════════════════════
@@ -331,7 +336,7 @@ Respond with ONLY a valid JSON object. No backticks, no wrapper text. Your messa
 }`;
 }
 
-function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilotContextJson, isSpoken }) {
+function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilotContextJson, transcriptReferenceBlock = "", isSpoken }) {
   let sectionContext = "";
   if (knowledge) {
     sectionContext = `\nCurrent section: "${sectionKey}"\nRequired elements:\n${knowledge.requiredElements.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n`;
@@ -344,6 +349,9 @@ CRITICAL CONTEXT:
 - The agent is currently in the "${sectionKey}" section of the ACA enrollment flow
 - They need a fast, practical answer for this live call
 ${sectionContext}
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
 ${recentTranscript ? `\nRecent agent transcript:\n"${recentTranscript.slice(-1000)}"\n` : ""}
 Structured app context:
 ${copilotContextJson}
@@ -375,7 +383,7 @@ Use plain text only. No bold, no bullet points, no markdown, no dashes, no aster
    THE HOOK
    ─────────────────────────────────────────────────────── */
 
-export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
+export function useAcaCopilotEngine({ transcriptRef, activeGate, state, logComplianceFlag }) {
   const currentStep = ACA_SECTION_LABELS[activeGate] || `Gate ${activeGate}`;
   const { entries: dbComplianceEntries } = useKnowledge("compliance_aca");
   const complianceKnowledge = useMemo(
@@ -481,6 +489,8 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
 
     const sectionKey = currentStep;
     const reviewMode = periodic ? "periodic" : "live";
+    let retrievalTrace = buildTranscriptRetrievalTrace();
+    let transcriptReferenceBlock = "";
 
     // Cooldown / minimum-chars gates
     if (!sectionEntry && !manual && !periodic) {
@@ -533,6 +543,16 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
       periodic,
     });
 
+    const transcriptReferenceResult = await fetchTranscriptReferences({
+      getToken,
+      query: newSpeechWindow || analysisWindow.slice(-1400),
+      productLine: "ACA",
+      matchCount: 5,
+      similarityThreshold: 0.72,
+    });
+    retrievalTrace = buildTranscriptRetrievalTrace(transcriptReferenceResult);
+    transcriptReferenceBlock = transcriptReferenceResult.contextBlock || "";
+
     const copilotContext = buildCopilotContext(recentInterventions);
     const derivedSignals = copilotContext.derivedSignals;
 
@@ -540,6 +560,7 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state }) {
       sectionKey, knowledge, flowOrder,
       recentInterventionText,
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
+      transcriptReferenceBlock,
       reviewMode,
     });
 
@@ -576,7 +597,7 @@ SECTION CONTEXT (rolling window):
         const errorMessage = getCopilotHttpErrorMessage(response.status, detail);
         console.error("ACA Coaching API error:", response.status, detail);
         const alreadyWarned = liveMessages.some((m) => m.text === errorMessage);
-        if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
+        if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace });
         surfaceServiceIssue(errorMessage, { force: manual || periodic });
         return;
       }
@@ -611,13 +632,13 @@ SECTION CONTEXT (rolling window):
             sectionEntry
               ? `Entered "${sectionKey}". ${knowledge ? `Key items: ${knowledge.requiredElements.slice(0, 3).join(", ")}. ` : ""}No issues detected.`
               : "Analyze complete. No actionable compliance issues found.",
-            { section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE }
+            { section: currentStep, retrievalTrace }
           );
         } else if (shouldHeartbeat) {
           lastSilentHeartbeatRef.current = now;
           pushFeedEntry("info",
             firstSilent ? "Live speech analyzed. No action needed." : "Still listening. No intervention needed.",
-            { section: currentStep, skipLog: true, retrievalTrace: EMPTY_RETRIEVAL_TRACE }
+            { section: currentStep, skipLog: true, retrievalTrace }
           );
         }
         return;
@@ -628,7 +649,7 @@ SECTION CONTEXT (rolling window):
           shouldSuppressDuplicateIssue(liveMessages, currentStep, issueTag)) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning — not repeated.", { section: currentStep, issueTag, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
+        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning — not repeated.", { section: currentStep, issueTag, retrievalTrace });
         return;
       }
 
@@ -637,7 +658,7 @@ SECTION CONTEXT (rolling window):
           shouldSuppressForNuance({ level, issueTag, message, derivedSignals })) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed — context too ambiguous.", { section: currentStep, issueTag, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
+        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed — context too ambiguous.", { section: currentStep, issueTag, retrievalTrace });
         return;
       }
 
@@ -653,7 +674,7 @@ SECTION CONTEXT (rolling window):
         } else {
           lastAnalyzedLength.current = targetAnalyzedLength;
           lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Warning below confidence threshold.", { section: currentStep, issueTag, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
+          if (manual) pushFeedEntry("info", "Analyze complete. Warning below confidence threshold.", { section: currentStep, issueTag, retrievalTrace });
           return;
         }
       }
@@ -665,7 +686,7 @@ SECTION CONTEXT (rolling window):
         } else {
           lastAnalyzedLength.current = targetAnalyzedLength;
           lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Reminder below confidence threshold.", { section: currentStep, issueTag, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
+          if (manual) pushFeedEntry("info", "Analyze complete. Reminder below confidence threshold.", { section: currentStep, issueTag, retrievalTrace });
           return;
         }
       }
@@ -676,19 +697,22 @@ SECTION CONTEXT (rolling window):
       lastInterventionLevel.current = level;
       sectionCopilotFiredRef.current.add(activeGate);
       if (periodic && periodicSignature) lastPeriodicContextSignatureRef.current = periodicSignature;
-      pushFeedEntry(level, message, { issueTag, section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
+      pushFeedEntry(level, message, { issueTag, section: currentStep, retrievalTrace });
+      if ((level === "warn" || level === "critical" || level === "remind") && logComplianceFlag) {
+        logComplianceFlag(currentStep, level, issueTag, confidence, message);
+      }
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("ACA Coaching error:", err);
       const errorMessage = "Co-Pilot could not reach the coaching service. If running locally, use 'netlify dev' instead of 'npm run dev'.";
       const alreadyWarned = liveMessages.some((m) => m.text === errorMessage);
-      if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
+      if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace });
       surfaceServiceIssue(errorMessage, { force: manual || periodic });
     } finally {
       if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
       setCoachingLoading(false);
     }
-  }, [activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, buildCopilotContext, getToken, transcriptRef, clearServiceIssue, surfaceServiceIssue, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs]);
+  }, [activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, buildCopilotContext, getToken, transcriptRef, clearServiceIssue, surfaceServiceIssue, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs, logComplianceFlag]);
 
   // Wire requestCoachingRef so core's periodic timer and section-entry logic can call it
   useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching, requestCoachingRef]);
@@ -717,11 +741,20 @@ SECTION CONTEXT (rolling window):
       currentWindow: recentTranscript,
       fullTranscriptTail: transcriptRef.current.trim().slice(-2500),
     };
+    const transcriptReferenceResult = await fetchTranscriptReferences({
+      getToken,
+      query: [question, recentTranscript].filter(Boolean).join("\n\n"),
+      productLine: "ACA",
+      matchCount: 5,
+      similarityThreshold: 0.7,
+    });
+    const retrievalTrace = buildTranscriptRetrievalTrace(transcriptReferenceResult);
 
     const systemPrompt = buildAskSystemPrompt({
       sectionKey, knowledge,
       recentTranscript,
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
+      transcriptReferenceBlock: transcriptReferenceResult.contextBlock,
       isSpoken,
     });
 
@@ -743,7 +776,7 @@ SECTION CONTEXT (rolling window):
       if (!response.ok) {
         const detail = await readErrorDetail(response);
         const errorMessage = getCopilotHttpErrorMessage(response.status, detail);
-        pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
+        pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace });
         surfaceServiceIssue(errorMessage, { force: true });
         return;
       }
@@ -757,16 +790,17 @@ SECTION CONTEXT (rolling window):
         setMessages((prev) => [...prev.slice(-19), {
           id: Date.now(), level: "info",
           text: `${prefix}\n\n${raw}`,
+          retrievalTrace,
           ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         }]);
-        logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, { section: currentStep });
+        logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, { section: currentStep, retrievalTrace });
       }
       setAskQuestion("");
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("ACA Ask error:", err);
       const errorMessage = "Co-Pilot could not reach the coaching service.";
-      pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace: EMPTY_RETRIEVAL_TRACE });
+      pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace });
       surfaceServiceIssue(errorMessage, { force: true });
     } finally {
       if (askAbortRef.current === controller) askAbortRef.current = null;

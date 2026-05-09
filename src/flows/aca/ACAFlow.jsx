@@ -12,7 +12,7 @@ import { useScriptTemplate } from "../../hooks/useScriptTemplate";
 
 // ACA accent color
 const ACCENT = "#EAB308"; // amber/yellow to match tab circle
-const SHOW_REFERENCE_DETAILS = false;
+const SHOW_REFERENCE_DETAILS = import.meta.env.VITE_SHOW_ACA_REFERENCE_DETAILS === "true";
 
 function fmt(ms) {
   const s = Math.round(ms / 1000);

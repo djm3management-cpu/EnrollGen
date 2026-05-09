@@ -96,17 +96,6 @@ function hasNegation(transcript, phrase, windowChars = 30) {
   return negators.some((neg) => before.includes(neg));
 }
 
-/**
- * Check if phraseA appears BEFORE phraseB in transcript.
- * Used for sequence validation (SOA before plan discussion, etc.)
- */
-function appearsBeforeInTranscript(transcript, phrasesA, phrasesB) {
-  const resultA = findPhrase(transcript, phrasesA);
-  const resultB = findPhrase(transcript, phrasesB);
-  if (!resultA.found || !resultB.found) return null; // can't determine
-  return resultA.position < resultB.position;
-}
-
 function getAgentStatements(transcript) {
   const lines = String(transcript || "")
     .split(/\r?\n+/)
@@ -139,6 +128,28 @@ function stripToken(token) {
   return token.replace(/^[^a-z0-9]+|[^a-z0-9]+$/gi, "");
 }
 
+function escapeRegex(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function containsPhraseWithBoundaries(transcript, phrase) {
+  const normalizedTranscript = normalize(transcript);
+  const normalizedPhrase = normalize(phrase);
+  if (!normalizedPhrase) return false;
+  return new RegExp(`\\b${escapeRegex(normalizedPhrase)}\\b`, "i").test(normalizedTranscript);
+}
+
+function isBenignComparativeContext(statement) {
+  const normalized = normalize(statement);
+  return [
+    /\b(find|finding|look|looking|shop|shopping|compare|review|identify|choose|select|help)\b.{0,45}\b(best|lowest)\b.{0,45}\b(plan|plans|option|options|coverage|premium|premiums|rate|rates|price|prices)\b/,
+    /\bbest (plan|option|coverage) for (you|your|their|the client)\b/,
+    /\bfind the best\b/,
+    /\bbest fit\b/,
+    /\bbest option\b/,
+  ].some((pattern) => pattern.test(normalized));
+}
+
 function findComparativeClaimViolations(transcript) {
   const triggerWords = ["best", "lowest", "guaranteed"];
   const targetWords = [
@@ -156,6 +167,7 @@ function findComparativeClaimViolations(transcript) {
 
   for (const statement of getAgentStatements(transcript)) {
     if (isQuestionLikeStatement(statement)) continue;
+    if (isBenignComparativeContext(statement)) continue;
 
     const words = normalize(statement)
       .split(/\s+/)
@@ -680,14 +692,13 @@ const INTENT_MAP = {
         "no limitations",
         "unlimited coverage",
       ];
-      const normalizedT = normalize(t);
       for (const phrase of pressure) {
-        if (normalizedT.includes(normalize(phrase))) {
+        if (containsPhraseWithBoundaries(t, phrase)) {
           violations.push(`Pressure tactic: "${phrase}"`);
         }
       }
       for (const phrase of misleading) {
-        if (normalizedT.includes(normalize(phrase))) {
+        if (containsPhraseWithBoundaries(t, phrase)) {
           violations.push(`Misleading claim: "${phrase}"`);
         }
       }
@@ -865,8 +876,6 @@ const INTENT_MAP = {
         "here's what the plan covers",
         "this plan gives you",
         "with this plan you get",
-        "monthly premium",
-        "plan benefits are",
         "let me go over the benefits",
       ];
       if (normalize(t).length < 200) {
@@ -876,8 +885,9 @@ const INTENT_MAP = {
           evidence: "Transcript too short to determine SOA timing reliably",
         };
       }
-      const result = appearsBeforeInTranscript(t, soaPhrases, planPhrases);
-      if (result === null) {
+      const soaResult = findPhrase(t, soaPhrases);
+      const planResult = findPhrase(t, planPhrases);
+      if (!soaResult.found || !planResult.found) {
         return {
           detected: true,
           confidence: 60,
@@ -885,7 +895,7 @@ const INTENT_MAP = {
             "Unable to determine SOA timing — plan details may not have been discussed yet",
         };
       }
-      if (result) {
+      if (soaResult.position < planResult.position) {
         return {
           detected: true,
           confidence: 95,
@@ -893,6 +903,28 @@ const INTENT_MAP = {
             "SOA was properly established before plan details were discussed",
         };
       }
+
+      const norm = normalize(t);
+      const nearbyPlanContext = norm
+        .slice(Math.max(0, planResult.position - 120), planResult.position + 220)
+        .trim();
+      const hasConcretePlanDetail = /\$\s*\d|\b\d+\s*(?:dollar|percent|%)\b|\bcopay\b|\bdeductible\b|\bmaximum out of pocket\b|\bmoop\b|\bpremium (?:is|would be)\b|\bbenefits include\b|\bcovers\b/.test(
+        nearbyPlanContext
+      );
+      const looksLikeGeneralPlanning =
+        /\b(review|go over|look at|compare|discuss|available|options|types of plans|plan choices)\b/.test(
+          nearbyPlanContext
+        ) && !hasConcretePlanDetail;
+
+      if (looksLikeGeneralPlanning) {
+        return {
+          detected: true,
+          confidence: 70,
+          evidence:
+            "Only general plan discussion appeared before SOA; no concrete plan benefits or costs were detected before scope was established",
+        };
+      }
+
       return {
         detected: false,
         confidence: 0,

@@ -9,6 +9,7 @@
 import { useCallback, useMemo, useEffect, useRef } from "react";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
+import { fetchTranscriptReferences } from "../lib/transcriptSearch";
 import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import {
   findKnowledgeEntry,
@@ -21,7 +22,7 @@ import {
   shouldSuppressDuplicateIssue,
   readErrorDetail, getCopilotHttpErrorMessage,
   parseAnthropicResponse, parseCoachingJson, buildTranscriptWindows,
-  formatSectionDuration, makeIsHighRisk,
+  formatSectionDuration, makeIsHighRisk, buildTranscriptRetrievalTrace,
 } from "./useCopilotEngineCore";
 import { medicare2026, stateGIRules } from "../data/medicareReference2026";
 import {
@@ -180,7 +181,7 @@ ONLY break silence for:
 5. **SILENCE (silent)**: Agent is doing fine. THIS IS YOUR DEFAULT. Use 70-80% of the time.`;
 }
 
-function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, reviewMode = "live" }) {
+function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock = "", reviewMode = "live" }) {
   const complianceContext = buildComplianceContext(knowledge);
 
   return `You are an expert Medicare Supplement (Medigap) enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required element, or something the agent needs to correct RIGHT NOW.
@@ -231,6 +232,9 @@ FLOW POSITION:
 ${flowOrder}
 
 ${complianceContext}
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
 ${recentInterventionText ? `════════════════════════════════════════════════════════
 RECENT PRIOR INTERVENTIONS — DO NOT REPEAT UNLESS THE ISSUE CLEARLY REMAINS:
 ════════════════════════════════════════════════════════
@@ -289,7 +293,7 @@ Respond with ONLY a valid JSON object. No backticks, no wrapper text. Your messa
 }`;
 }
 
-function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilotContextJson, isSpoken }) {
+function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilotContextJson, transcriptReferenceBlock = "", isSpoken }) {
   let sectionContext = "";
   if (knowledge) {
     sectionContext = `\nCurrent section: "${sectionKey}"\nRequired elements:\n${knowledge.requiredElements.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n`;
@@ -302,6 +306,9 @@ CRITICAL CONTEXT:
 - The agent is currently in the "${sectionKey}" section of the Med Sup enrollment flow
 - They need a fast, practical answer for this live call
 ${sectionContext}
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
 ${recentTranscript ? `\nRecent agent transcript:\n"${recentTranscript.slice(-1000)}"\n` : ""}
 Structured app context:
 ${copilotContextJson}
@@ -333,7 +340,7 @@ Use plain text only. No bold, no bullet points, no markdown, no dashes, no aster
    THE HOOK
    ─────────────────────────────────────────────────────── */
 
-export function useMedSupCopilotEngine({ transcriptRef, activeSection, state }) {
+export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, logComplianceFlag }) {
   const currentStep = MEDSUP_SECTION_LABELS[activeSection] || `Section ${activeSection}`;
   const { entries: dbComplianceEntries } = useKnowledge("compliance_medsup");
   const { entries: dbMedicareEntries } = useKnowledge("medicare_reference");
@@ -468,6 +475,15 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state }) 
       periodic,
     });
 
+    const transcriptReferenceResult = await fetchTranscriptReferences({
+      getToken,
+      query: newSpeechWindow || analysisWindow.slice(-1400),
+      productLine: "MedSup",
+      matchCount: 5,
+      similarityThreshold: 0.72,
+    });
+    const retrievalTrace = buildTranscriptRetrievalTrace(transcriptReferenceResult);
+
     const copilotContext = buildCopilotContext(recentInterventions);
     const derivedSignals = copilotContext.derivedSignals;
     const copilotContextJson = JSON.stringify(copilotContext, null, 2);
@@ -476,6 +492,7 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state }) 
       sectionKey, knowledge, flowOrder,
       recentInterventionText,
       copilotContextJson,
+      transcriptReferenceBlock: transcriptReferenceResult.contextBlock,
       reviewMode,
     });
 
@@ -613,11 +630,11 @@ SECTION CONTEXT (rolling window):
         issueTag,
         section: currentStep,
         contextSnapshot: copilotContextJson,
-        retrievalTrace: {
-          topics: [], scenarios: [], sources: [],
-          transcriptReferenceCount: 0, transcriptReferenceError: null,
-        },
+        retrievalTrace,
       });
+      if ((level === "warn" || level === "critical" || level === "remind") && logComplianceFlag) {
+        logComplianceFlag(currentStep, level, issueTag, confidence, message);
+      }
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("[MedSupCopilot] coaching error:", err);
@@ -635,6 +652,7 @@ SECTION CONTEXT (rolling window):
     messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel,
     sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef,
     lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs,
+    logComplianceFlag,
   ]);
 
   // Store latest requestCoaching for core's periodic timer and section-entry triggers
@@ -664,11 +682,20 @@ SECTION CONTEXT (rolling window):
       currentWindow: recentTranscript,
       fullTranscriptTail: transcriptRef.current.trim().slice(-2500),
     };
+    const transcriptReferenceResult = await fetchTranscriptReferences({
+      getToken,
+      query: [question, recentTranscript].filter(Boolean).join("\n\n"),
+      productLine: "MedSup",
+      matchCount: 5,
+      similarityThreshold: 0.7,
+    });
+    const retrievalTrace = buildTranscriptRetrievalTrace(transcriptReferenceResult);
 
     const systemPrompt = buildAskSystemPrompt({
       sectionKey, knowledge,
       recentTranscript,
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
+      transcriptReferenceBlock: transcriptReferenceResult.contextBlock,
       isSpoken,
     });
 
@@ -704,9 +731,10 @@ SECTION CONTEXT (rolling window):
         setMessages((prev) => [...prev.slice(-19), {
           id: Date.now(), level: "info",
           text: `${prefix}\n\n${raw}`,
+          retrievalTrace,
           ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         }]);
-        logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, { section: currentStep });
+        logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, { section: currentStep, retrievalTrace });
       }
       setAskQuestion("");
     } catch (err) {
