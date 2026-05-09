@@ -1,10 +1,10 @@
-/* ═══════════════════════════════════════════════════════════════════════
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SEPLookupTool.css, Claymorphic Dark Theme Override
    Matches the design system in styles.css (floating 3D cards, pill buttons,
    DM Sans + IBM Plex Mono, layered shadows, deep blue palette)
-   ═══════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ── Root container ── */
+/* â”€â”€ Root container â”€â”€ */
 .sep-tool {
   min-height: 100vh;
   font-family: var(--font-body);
@@ -18,14 +18,14 @@
 
 /* (header removed, FemaFeed is the top element now) */
 
-/* ── Search bar ── */
+/* â”€â”€ Search bar â”€â”€ */
 .sep-search-bar {
   margin-top: 16px;
   padding: 6px;
   display: flex;
   gap: 8px;
   align-items: center;
-  background: linear-gradient(180deg, #181818 0%, #111111 100%);
+  background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 100%);
   border: 1px solid rgba(173, 173, 173, 0.14);
   border-radius: 16px;
   box-shadow: var(--shadow-inset);
@@ -54,7 +54,7 @@
   align-items: center;
   gap: 8px;
   white-space: nowrap;
-  background: linear-gradient(180deg, #1a1a1a 0%, #141414 100%) !important;
+  background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 100%) !important;
   border: 1px solid rgba(173, 173, 173, 0.18) !important;
   border-top: 1px solid rgba(173, 173, 173, 0.18) !important;
   color: #e4e7ec !important;
@@ -73,7 +73,7 @@
   display: none !important;
 }
 
-/* ── Quick zip pills ── */
+/* â”€â”€ Quick zip pills â”€â”€ */
 .sep-quick-zips {
   margin-top: 14px;
   display: flex;
@@ -92,7 +92,7 @@
   padding: 6px 16px;
   border-radius: 50px;
   border: 1px solid var(--border-default);
-  background: linear-gradient(180deg, #181818 0%, #111111 100%);
+  background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 100%);
   color: var(--text-secondary);
   font-size: 13px;
   font-family: var(--font-mono);
@@ -109,7 +109,7 @@
   transform: translateY(-1px);
 }
 
-/* ── Summary stat grid ── */
+/* â”€â”€ Summary stat grid â”€â”€ */
 .sep-stats-grid {
   display: grid;
   grid-template-columns: 1fr repeat(4, auto);
@@ -124,7 +124,7 @@
 }
 
 .sep-stat-box {
-  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, #111111 100%);
+  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, var(--eg-surface-2) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 16px 20px;
@@ -153,7 +153,7 @@
   background: linear-gradient(
     180deg,
     rgba(248, 113, 113, 0.04) 0%,
-    #111111 100%
+    var(--eg-surface-2) 100%
   );
 }
 
@@ -177,7 +177,7 @@
 
 /* (county card selector removed, CountyGrid handles selection) */
 
-/* ── Filter bar ── */
+/* â”€â”€ Filter bar â”€â”€ */
 .sep-filter-bar {
   display: flex;
   gap: 10px;
@@ -185,7 +185,7 @@
   flex-wrap: wrap;
   align-items: center;
   padding: 12px 18px;
-  background: linear-gradient(180deg, #181818 0%, #111111 52%, #0e0e0e 100%) !important;
+  background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 52%, var(--eg-surface-1) 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
   border-top-color: rgba(255, 255, 255, 0.08) !important;
 }
@@ -203,7 +203,7 @@
 }
 
 .sep-tool select {
-  background: linear-gradient(180deg, #121212 0%, #0e0e0e 100%);
+  background: linear-gradient(180deg, var(--eg-surface-2) 0%, var(--eg-surface-1) 100%);
   color: var(--text-primary);
   border: 1px solid var(--border-default);
   box-shadow: var(--shadow-inset);
@@ -211,16 +211,16 @@
 
 .sep-tool select option,
 .sep-tool select optgroup {
-  background: #111111;
+  background: var(--eg-surface-2);
   color: #e7edf5;
 }
 
-/* ── Plan table ── */
+/* â”€â”€ Plan table â”€â”€ */
 .sep-plan-table-wrap {
   padding: 0;
   overflow: visible;
   margin-top: 12px;
-  background: linear-gradient(180deg, #181818 0%, #111111 52%, #0e0e0e 100%) !important;
+  background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 52%, var(--eg-surface-1) 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
   border-top-color: rgba(255, 255, 255, 0.08) !important;
 }
@@ -248,7 +248,7 @@
   letter-spacing: 0.05em;
   white-space: nowrap;
   font-family: var(--font-mono);
-  background: #0e0e0e;
+  background: var(--eg-surface-1);
 }
 
 .sep-plan-table tbody tr {
@@ -262,17 +262,17 @@
 }
 
 .sep-plan-table tbody tr.expanded {
-  background: #121212;
+  background: var(--eg-surface-2);
 }
 
 .sep-plan-table td {
   padding: 10px;
 }
 
-/* ── Plan detail expanded row ── */
+/* â”€â”€ Plan detail expanded row â”€â”€ */
 .sep-plan-detail {
   padding: 0 14px 16px;
-  background: #0e0e0e;
+  background: var(--eg-surface-1);
 }
 
 .sep-plan-benefits {
@@ -333,7 +333,7 @@
   font-family: var(--font-mono);
 }
 
-/* ── Type / SNP badges ── */
+/* â”€â”€ Type / SNP badges â”€â”€ */
 .sep-type-badge {
   display: inline-block;
   padding: 2px 8px;
@@ -360,7 +360,7 @@
   border: 1px solid rgba(251, 191, 36, 0.15);
 }
 
-/* ── Product badge pill ── */
+/* â”€â”€ Product badge pill â”€â”€ */
 .sep-product-badge {
   display: inline-block;
   padding: 2px 10px;
@@ -409,10 +409,10 @@
   border: 1px solid rgba(251, 191, 36, 0.25);
 }
 
-/* ── SEP card ── */
+/* â”€â”€ SEP card â”€â”€ */
 .sep-sep-card {
   position: relative;
-  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, #111111 40%, #0e0e0e 100%);
+  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, var(--eg-surface-2) 40%, var(--eg-surface-1) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-float);
@@ -483,7 +483,7 @@
   margin: 0 0 18px 0;
 }
 
-/* ── Urgency pills ── */
+/* â”€â”€ Urgency pills â”€â”€ */
 .sep-urgency-pill {
   font-size: 10px;
   font-weight: 700;
@@ -515,7 +515,7 @@
   border: 1px solid rgba(232, 0, 45, 0.15);
 }
 
-/* ── Category pills ── */
+/* â”€â”€ Category pills â”€â”€ */
 .sep-category-pill {
   font-size: 10px;
   font-weight: 700;
@@ -537,7 +537,7 @@
   border: 1px solid rgba(232, 0, 45, 0.15);
 }
 
-/* ── Days-left pill ── */
+/* â”€â”€ Days-left pill â”€â”€ */
 .sep-days-pill {
   font-size: 10px;
   font-weight: 700;
@@ -563,7 +563,7 @@
   border: 1px solid var(--border-subtle);
 }
 
-/* ── Info boxes inside SEP detail ── */
+/* â”€â”€ Info boxes inside SEP detail â”€â”€ */
 .sep-info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -572,7 +572,7 @@
 }
 
 .sep-info-box {
-  background: linear-gradient(180deg, #0c0c0c 0%, #0a0a0a 100%);
+  background: linear-gradient(180deg, var(--eg-surface-1) 0%, var(--eg-surface-1) 100%);
   border-radius: var(--radius-sm);
   padding: 14px 16px;
   border: 1px solid var(--border-default);
@@ -605,13 +605,13 @@
   margin-top: 2px;
 }
 
-/* ── FEMA Alert Banner ── */
+/* â”€â”€ FEMA Alert Banner â”€â”€ */
 .sep-fema-alert {
   border-color: rgba(248, 113, 113, 0.3) !important;
   background: linear-gradient(
     180deg,
     rgba(248, 113, 113, 0.06) 0%,
-    #111111 100%
+    var(--eg-surface-2) 100%
   ) !important;
   margin-bottom: 20px;
   display: flex;
@@ -622,7 +622,7 @@
 
 /* (county notice removed, replaced by sep-select-county-prompt) */
 
-/* ── Carrier grid ── */
+/* â”€â”€ Carrier grid â”€â”€ */
 .sep-carrier-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -630,7 +630,7 @@
 }
 
 .sep-carrier-item {
-  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, #111111 100%);
+  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, var(--eg-surface-2) 100%);
   border-radius: var(--radius-md);
   padding: 16px;
   position: relative;
@@ -681,7 +681,7 @@
   margin-bottom: 8px;
 }
 
-/* ── Disclaimer footer ── */
+/* â”€â”€ Disclaimer footer â”€â”€ */
 .sep-disclaimer {
   text-align: left;
   border-top: none;
@@ -728,7 +728,7 @@
   border: 1px solid rgba(251, 191, 36, 0.22);
 }
 
-/* ── Loading / Empty states ── */
+/* â”€â”€ Loading / Empty states â”€â”€ */
 .sep-loading {
   padding: 80px 24px;
   text-align: center;
@@ -759,15 +759,15 @@
   text-align: center;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MAP LAYOUT, Full-width stacked
-   ═══════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ── Map section (always full-width) ── */
+/* â”€â”€ Map section (always full-width) â”€â”€ */
 .sep-map-section {
   margin-top: 24px;
   text-align: center;
-  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, #111111 100%);
+  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, var(--eg-surface-2) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 16px 16px 12px;
@@ -802,7 +802,7 @@
   letter-spacing: 0.04em;
 }
 
-/* ── Active label bar (state selected) ── */
+/* â”€â”€ Active label bar (state selected) â”€â”€ */
 .sep-map-active-label {
   display: flex;
   align-items: center;
@@ -851,13 +851,13 @@
   border-color: rgba(232, 0, 45, 0.3);
 }
 
-/* ── Below-map content ── */
+/* â”€â”€ Below-map content â”€â”€ */
 .sep-below-map {
   margin-top: 24px;
   width: 100%;
 }
 
-/* ── Tab bar (state-click flow) ── */
+/* â”€â”€ Tab bar (state-click flow) â”€â”€ */
 .sep-tab-bar {
   display: flex;
   gap: 6px;
@@ -908,7 +908,7 @@
     0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
-/* ── Select-county prompt ── */
+/* â”€â”€ Select-county prompt â”€â”€ */
 .sep-select-county-prompt {
   display: flex;
   align-items: center;
@@ -938,11 +938,11 @@
 
 /* (state header removed, info now in map bar + tab bar) */
 
-/* ═══════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COUNTY GRID PANEL, horizontal wrapping grid
-   ═══════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .sep-county-grid-panel {
-  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, #111111 100%);
+  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, var(--eg-surface-2) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-float);
@@ -1028,7 +1028,7 @@
   padding: 6px 14px;
   border-radius: 50px;
   border: 1px solid var(--border-default);
-  background: linear-gradient(180deg, #181818 0%, #111111 100%);
+  background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 100%);
   color: var(--text-secondary);
   font-size: 12px;
   font-weight: 600;
@@ -1086,7 +1086,7 @@
   text-align: center;
 }
 
-/* ── Matching plans sub-table in SEP detail ── */
+/* â”€â”€ Matching plans sub-table in SEP detail â”€â”€ */
 .sep-sub-table {
   width: 100%;
   border-collapse: collapse;
@@ -1119,7 +1119,7 @@
   padding: 6px;
 }
 
-/* ── Utility ── */
+/* â”€â”€ Utility â”€â”€ */
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -1142,11 +1142,11 @@
   font-family: var(--font-mono);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FEMA FEED, Horizontal top banner
-   ═══════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .fema-feed-hz {
-  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, #111111 100%);
+  background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, var(--eg-surface-2) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-float);
@@ -1623,7 +1623,7 @@
   opacity: 0.6;
 }
 
-/* ── Zoom & overflow safety ── */
+/* â”€â”€ Zoom & overflow safety â”€â”€ */
 .sep-tool-inner {
   width: min(100%, 1320px);
   max-width: 1320px;
@@ -1659,7 +1659,7 @@
   min-width: 0;
 }
 
-/* ── Mobile fixes ── */
+/* â”€â”€ Mobile fixes â”€â”€ */
 @media (max-width: 640px) {
   .sep-stats-grid {
     grid-template-columns: 1fr 1fr;

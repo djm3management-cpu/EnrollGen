@@ -708,7 +708,7 @@ export default function DecisionTree({ singleCardMode = false, embedded = false 
         style={{
           maxWidth: embedded ? "none" : 760,
           margin: embedded ? 0 : "0 auto",
-          background: "linear-gradient(180deg,#181818 0%,#111111 50%,#0e0e0e 100%)",
+          background: "linear-gradient(180deg,var(--eg-surface-3) 0%,var(--eg-surface-2) 50%,var(--eg-surface-1) 100%)",
         }}
       >
         <h2 style={{ marginBottom: 16 }}>
@@ -862,7 +862,7 @@ export default function DecisionTree({ singleCardMode = false, embedded = false 
   }
 
   return (
-    <div className="card" style={{ maxWidth: 760, margin: "0 auto", background: "linear-gradient(180deg,#181818 0%,#111111 50%,#0e0e0e 100%)" }}>
+    <div className="card" style={{ maxWidth: 760, margin: "0 auto", background: "linear-gradient(180deg,var(--eg-surface-3) 0%,var(--eg-surface-2) 50%,var(--eg-surface-1) 100%)" }}>
       <h2 style={{ marginBottom: 16 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
           Product Decision Tree

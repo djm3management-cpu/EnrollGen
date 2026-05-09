@@ -1,4 +1,4 @@
-/* DM Sans / DM Serif Display / JetBrains Mono are loaded via index.html. */
+﻿/* DM Sans / DM Serif Display / JetBrains Mono are loaded via index.html. */
 
 body {
   font-family: var(--eg-font-body);
@@ -13,7 +13,7 @@ body {
   background:
     linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
-    linear-gradient(180deg, #020202 0%, #070707 44%, #030303 100%);
+    linear-gradient(180deg, #020202 0%, var(--eg-surface-1) 44%, var(--eg-surface-1) 100%);
   background-size: 28px 28px, 28px 28px, 100% 100%;
   overflow: hidden;
   scroll-behavior: smooth;
@@ -482,7 +482,7 @@ body {
   justify-content: center;
   gap: 16px;
   padding: 18px clamp(16px, 4vw, 48px);
-  background: #050505;
+  background: var(--eg-surface-1);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 

@@ -649,6 +649,57 @@ body,
   text-align: right;
 }
 
+/* ComplianceMini specific overrides: align with v3 mockup */
+.compliance-mini__score-value {
+  font-family: var(--eg-font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: var(--eg-green-text) !important;
+  letter-spacing: 0 !important;
+}
+
+.compliance-mini__score-bar {
+  background: var(--eg-surface-3) !important;
+  height: 4px !important;
+  border-radius: 2px !important;
+}
+
+.compliance-mini__score-fill {
+  background: linear-gradient(90deg, var(--eg-green), var(--eg-green-text)) !important;
+  border-radius: 2px !important;
+}
+
+.compliance-mini__count {
+  font-family: var(--eg-font-mono) !important;
+  font-size: 9px !important;
+  color: var(--eg-text-faint) !important;
+  letter-spacing: 0.04em;
+}
+
+.compliance-mini__category-row {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--eg-border);
+}
+
+.compliance-mini__category-row:last-child {
+  border-bottom: none;
+}
+
+.compliance-mini__chevron {
+  color: var(--eg-text-dim) !important;
+}
+
+.compliance-mini__violation-count {
+  color: var(--eg-red-text) !important;
+  font-family: var(--eg-font-mono) !important;
+  font-weight: 500 !important;
+  font-size: 9px !important;
+}
+
+.compliance-mini__transcript-icon {
+  color: var(--eg-green) !important;
+}
+
 /* ============================================================
    LEFT RAIL (Section 4 + 5.6)
    ============================================================ */
@@ -925,25 +976,40 @@ body,
 .progress-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  background: var(--eg-text-faint);
   cursor: pointer;
-  transition: all var(--eg-transition-slow);
   border: none;
+  padding: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.progress-dot.is-done {
+.progress-dot__pill {
+  display: inline-block;
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  background: var(--eg-text-faint);
+  transition: all var(--eg-transition-slow);
+}
+
+.progress-dot__pill.is-done {
   background: var(--eg-green);
 }
 
-.progress-dot.is-active {
+.progress-dot__pill.is-active {
   background: var(--eg-amber);
   width: 20px;
   border-radius: 4px;
 }
 
-.progress-dot.is-pending {
+.progress-dot__pill.is-pending {
   background: var(--eg-text-faint);
+}
+
+.progress-dot.is-active {
+  width: 20px;
 }
 
 /* Enrollment CTA (Section 5.16) */
@@ -975,6 +1041,26 @@ body,
   color: var(--eg-text);
 }
 
+.enrollment-cta__submit {
+  font-family: var(--eg-font-mono) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  font-weight: 500 !important;
+  padding: 10px 24px !important;
+  border-radius: var(--eg-radius-md) !important;
+  cursor: pointer;
+  transition: all var(--eg-transition-fast);
+  box-shadow: none !important;
+}
+
+.enrollment-cta__submit.is-ready {
+  border: 1px solid rgba(106, 171, 125, 0.42) !important;
+  background: var(--eg-green) !important;
+  color: #fff !important;
+}
+
+.enrollment-cta__submit.is-disabled,
 .enrollment-cta__submit:disabled,
 .btn-submit:disabled {
   border: 1px solid var(--eg-border) !important;
@@ -1608,6 +1694,300 @@ button.primary.section-complete-btn {
 .app-shell-modern .top-panel-close,
 .app-shell-modern .rail-minimize-btn {
   border-radius: var(--eg-radius-md) !important;
+}
+
+/* ============================================================
+   FIXED LEFT RAIL WRAPPER (V3LeftRail)
+   ============================================================ */
+
+.eg-left-rail-fixed {
+  position: fixed;
+  top: 48px;
+  left: 0;
+  bottom: 30px;
+  width: 210px;
+  z-index: 105;
+  display: flex;
+  flex-direction: column;
+}
+
+.eg-left-rail-fixed > .eg-left-rail {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.app-shell-modern {
+  --left-rail-width: 210px;
+}
+
+/* Push the legacy LeftRail manager's expandable panel beyond V3LeftRail. */
+.app-shell-modern .left-rail {
+  left: 210px !important;
+}
+
+.app-shell-modern .left-rail-handles {
+  left: 218px !important;
+}
+
+/* Push center column to clear the 210px fixed rail and make room for the
+   30px bottom bar. */
+.app-shell-modern .app-workspace {
+  padding-left: calc(24px + 210px) !important;
+  padding-bottom: calc(24px + 30px) !important;
+}
+
+/* ============================================================
+   CENTER TIMER BAR (Section 6 + 9 + mockup)
+   ============================================================ */
+
+.eg-timer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 40px;
+  border-bottom: 1px solid var(--eg-border);
+  background: rgba(30, 26, 22, 0.27);
+  flex-shrink: 0;
+}
+
+.eg-timer-bar__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eg-timer-bar__beacon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--eg-text-faint);
+  display: inline-block;
+}
+
+.eg-timer-bar__beacon.is-live {
+  background: var(--eg-green);
+  box-shadow: 0 0 6px rgba(106, 171, 125, 0.55);
+  animation: eg-breathe 2s ease-in-out infinite;
+}
+
+.eg-timer-bar__live-label {
+  font-family: var(--eg-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+}
+
+.eg-timer-bar__time {
+  font-family: var(--eg-font-mono);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  transition: color 1s ease;
+  color: var(--eg-green);
+  font-variant-numeric: tabular-nums;
+}
+
+.eg-timer-bar__actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.eg-timer-bar__primary {
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 7px 18px;
+  border-radius: var(--eg-radius-md);
+  border: none;
+  cursor: pointer;
+  box-shadow: none;
+  transition: all var(--eg-transition-fast);
+}
+
+.eg-timer-bar__primary.is-start {
+  background: var(--eg-green);
+  color: #fff;
+}
+
+.eg-timer-bar__primary.is-end {
+  background: var(--eg-red-dim);
+  color: var(--eg-red-text);
+}
+
+.eg-timer-bar__secondary {
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: var(--eg-radius-md);
+  border: 1px solid var(--eg-border);
+  background: transparent;
+  color: var(--eg-text-dim);
+  cursor: pointer;
+  transition: all var(--eg-transition-fast);
+}
+
+.eg-timer-bar__secondary:hover {
+  border-color: var(--eg-border-hover);
+  color: var(--eg-text);
+}
+
+/* ============================================================
+   LEFT-RAIL CARDS (client info, plan context)
+   ============================================================ */
+
+.eg-rail-card {
+  background: var(--eg-surface-2);
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-card);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.eg-rail-card__label {
+  font-family: var(--eg-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--eg-text-faint);
+  margin-bottom: 8px;
+}
+
+.eg-rail-card__name {
+  font-family: var(--eg-font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--eg-text);
+  margin-bottom: 2px;
+}
+
+.eg-rail-card__sub {
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  color: var(--eg-text-dim);
+  margin-bottom: 8px;
+}
+
+.eg-rail-card__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+
+.eg-rail-card__field-key {
+  font-family: var(--eg-font-mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--eg-text-faint);
+}
+
+.eg-rail-card__field-value {
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  color: var(--eg-text-mid);
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 100%;
+  outline: none;
+}
+
+.eg-rail-card__field-value.is-good {
+  color: var(--eg-green-text);
+}
+
+.eg-rail-card__field-value.is-empty {
+  color: var(--eg-text-faint);
+  font-style: italic;
+}
+
+.eg-rail-card__field input.eg-rail-card__field-value {
+  cursor: text;
+  border-bottom: 1px dashed transparent;
+  transition: border-color var(--eg-transition-fast);
+}
+
+.eg-rail-card__field input.eg-rail-card__field-value:focus {
+  border-bottom-color: var(--eg-border-active);
+}
+
+.eg-rail-card__plan {
+  font-family: var(--eg-font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--eg-accent);
+  margin-bottom: 2px;
+}
+
+.eg-rail-card__plan-meta {
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  color: var(--eg-text-dim);
+  margin-bottom: 6px;
+}
+
+.eg-rail-card__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ============================================================
+   BOTTOM STATUS BAR
+   ============================================================ */
+
+.eg-bottom-bar {
+  height: 30px;
+  background: rgba(30, 26, 22, 0.93);
+  border-top: 1px solid var(--eg-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+  font-family: var(--eg-font-mono);
+  font-size: 9px;
+  color: var(--eg-text-faint);
+  letter-spacing: 0.04em;
+  position: relative;
+  z-index: 2;
+}
+
+.eg-bottom-bar__left,
+.eg-bottom-bar__right {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.eg-bottom-bar__indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+}
+
+.eg-bottom-bar__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--eg-text-faint);
+}
+
+.eg-bottom-bar__dot.is-up {
+  background: var(--eg-green);
+}
+
+.eg-bottom-bar__dot.is-down {
+  background: var(--eg-red);
 }
 
 /* ============================================================

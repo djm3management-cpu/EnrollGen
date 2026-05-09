@@ -1,4 +1,4 @@
-/* ── Backdrop ── */
+﻿/* â”€â”€ Backdrop â”€â”€ */
 .sep-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -16,9 +16,9 @@
   to { opacity: 1; }
 }
 
-/* ── Modal container ── */
+/* â”€â”€ Modal container â”€â”€ */
 .sep-modal-container {
-  background: linear-gradient(180deg, #1a1a1a 0%, #111111 100%);
+  background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   box-shadow:
@@ -38,7 +38,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Header ── */
+/* â”€â”€ Header â”€â”€ */
 .sep-modal-header {
   display: flex;
   align-items: center;
@@ -79,7 +79,7 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* ── Body (scrollable) ── */
+/* â”€â”€ Body (scrollable) â”€â”€ */
 .sep-modal-body {
   flex: 1;
   overflow-y: auto;
@@ -97,7 +97,7 @@
   border-radius: 10px;
 }
 
-/* ── Footer ── */
+/* â”€â”€ Footer â”€â”€ */
 .sep-modal-footer {
   padding: 12px 24px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -107,7 +107,7 @@
 
 .sep-modal-close-btn {
   appearance: none;
-  background: linear-gradient(180deg, #1a1a1a 0%, #141414 100%);
+  background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   color: #8f949e;
@@ -126,7 +126,7 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* ── Override SEPResultsPanel styles when inside modal ── */
+/* â”€â”€ Override SEPResultsPanel styles when inside modal â”€â”€ */
 .sep-finder-panel.in-modal {
   background: transparent;
   border: none;

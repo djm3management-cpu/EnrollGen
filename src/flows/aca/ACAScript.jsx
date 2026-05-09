@@ -44,7 +44,7 @@ function ACAFlowSelector({ variant, onChange }) {
           gap: 14,
           width: "fit-content",
           margin: "0 auto 14px",
-          background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
+          background: "linear-gradient(180deg, var(--eg-surface-2) 0%, var(--eg-surface-1) 100%)",
           border: "1px solid rgba(255,255,255,0.07)",
           borderRadius: 8,
           padding: "8px 16px",

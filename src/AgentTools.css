@@ -1,4 +1,4 @@
-.at-root {
+﻿.at-root {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1871,7 +1871,7 @@
 }
 
 .top-panel-overlay--tools .top-panel-title {
-  color: #070707 !important;
+  color: var(--eg-surface-1) !important;
   font-family: "IBM Plex Mono", monospace !important;
   font-size: 11px !important;
   font-weight: 800 !important;
@@ -1885,12 +1885,12 @@
   border: 0 !important;
   border-left: 1px solid #4d2d00 !important;
   background: transparent !important;
-  color: #070707 !important;
+  color: var(--eg-surface-1) !important;
   box-shadow: none !important;
 }
 
 .top-panel-overlay--tools .top-panel-close svg {
-  stroke: #070707 !important;
+  stroke: var(--eg-surface-1) !important;
 }
 
 .top-panel-overlay--tools .top-panel-close:hover {
@@ -1987,9 +1987,9 @@
 }
 
 .at-modal {
-  border: 1px solid var(--rail-term-border, #1a1a1a) !important;
+  border: 1px solid var(--rail-term-border, var(--eg-surface-3)) !important;
   border-radius: 0 !important;
-  background: var(--rail-term-bg, #000000) !important;
+  background: var(--rail-term-bg, var(--eg-base)) !important;
   box-shadow: none !important;
   color: var(--rail-term-amber, #d98b45);
   font-family: "IBM Plex Mono", monospace;
@@ -1997,8 +1997,8 @@
 
 .at-modal-header {
   padding: 10px 44px 10px 10px;
-  border-bottom: 1px solid var(--rail-term-border, #1a1a1a) !important;
-  background: var(--rail-term-bg, #000000) !important;
+  border-bottom: 1px solid var(--rail-term-border, var(--eg-surface-3)) !important;
+  background: var(--rail-term-bg, var(--eg-base)) !important;
 }
 
 .at-modal-kicker {
@@ -2025,7 +2025,7 @@
   top: 8px;
   right: 8px;
   border: 1px solid var(--rail-term-border-bright, #2a2a2a) !important;
-  background: var(--rail-term-bg-soft, #050505) !important;
+  background: var(--rail-term-bg-soft, var(--eg-surface-1)) !important;
   color: var(--rail-term-yellow, #f4b24d) !important;
   box-shadow: none !important;
 }
@@ -2036,7 +2036,7 @@
 }
 
 .at-modal-body {
-  background: var(--rail-term-bg, #000000);
+  background: var(--rail-term-bg, var(--eg-base));
 }
 
 .at-modal .at-link-grid,
@@ -2045,8 +2045,8 @@
 .at-modal .at-doc-field-grid,
 .at-modal .at-doc-note-grid {
   gap: 0;
-  border-top: 1px solid var(--rail-term-border, #1a1a1a);
-  border-left: 1px solid var(--rail-term-border, #1a1a1a);
+  border-top: 1px solid var(--rail-term-border, var(--eg-surface-3));
+  border-left: 1px solid var(--rail-term-border, var(--eg-surface-3));
 }
 
 .at-modal .at-link-card,
@@ -2060,9 +2060,9 @@
 .at-modal .at-doc-loading,
 .at-modal .at-doc-error {
   border: 0;
-  border-right: 1px solid var(--rail-term-border, #1a1a1a);
-  border-bottom: 1px solid var(--rail-term-border, #1a1a1a);
-  background: var(--rail-term-bg, #000000);
+  border-right: 1px solid var(--rail-term-border, var(--eg-surface-3));
+  border-bottom: 1px solid var(--rail-term-border, var(--eg-surface-3));
+  background: var(--rail-term-bg, var(--eg-base));
   box-shadow: none;
   color: var(--rail-term-amber, #d98b45);
 }
@@ -2070,7 +2070,7 @@
 .at-modal .at-link-card:hover,
 .at-modal .at-carrier-card:hover,
 .at-modal .at-doc-card:hover {
-  border-color: var(--rail-term-border, #1a1a1a);
+  border-color: var(--rail-term-border, var(--eg-surface-3));
   background: var(--rail-term-hover, #0b376f);
 }
 
@@ -2110,20 +2110,20 @@
 
 .at-modal .at-sep-ref-header,
 .at-modal .at-doc-note-card {
-  border: 1px solid var(--rail-term-border, #1a1a1a);
-  background: var(--rail-term-bg, #000000);
+  border: 1px solid var(--rail-term-border, var(--eg-surface-3));
+  background: var(--rail-term-bg, var(--eg-base));
 }
 
 .at-modal .at-sep-section-title {
-  border-bottom: 1px solid var(--rail-term-border, #1a1a1a);
-  background: var(--rail-term-bg-soft, #050505);
+  border-bottom: 1px solid var(--rail-term-border, var(--eg-surface-3));
+  background: var(--rail-term-bg-soft, var(--eg-surface-1));
 }
 
 .at-modal .at-badge-warning,
 .at-modal .at-doc-back,
 .at-modal .at-doc-status-btn {
   border: 1px solid var(--rail-term-border-bright, #2a2a2a);
-  background: var(--rail-term-bg-soft, #050505);
+  background: var(--rail-term-bg-soft, var(--eg-surface-1));
   color: var(--rail-term-yellow, #f4b24d);
   font-family: "IBM Plex Mono", monospace;
   box-shadow: none;

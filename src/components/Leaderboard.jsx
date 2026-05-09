@@ -239,14 +239,14 @@ function AgentStatCard({ agent, rank }) {
                   ? "linear-gradient(135deg, #C0C0C0, #808080)"
                   : rank === 3
                     ? "linear-gradient(135deg, #CD7F32, #8B4513)"
-                    : "linear-gradient(135deg, #333, #222)",
+                    : "linear-gradient(135deg, #333, var(--eg-surface-3))",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontFamily: "'Barlow Condensed', sans-serif",
             fontSize: 12,
             fontWeight: 800,
-            color: rank <= 3 ? "#000" : "#666",
+            color: rank <= 3 ? "var(--eg-text)" : "#666",
             flexShrink: 0,
           }}
         >

@@ -10,6 +10,8 @@ import {
 } from "react";
 import EnrollGenLogo from "./components/EnrollGenLogo";
 import LandingPage from "./components/LandingPage";
+import ShellTextures from "./components/ShellTextures";
+import BottomStatusBar from "./components/BottomStatusBar";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
@@ -27,6 +29,7 @@ import {
   useLeftRailManager,
 } from "./components/leftRail/LeftRailManager";
 import SEPQualifier from "./components/leftRail/SEPQualifier";
+import V3LeftRail from "./components/leftRail/V3LeftRail";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
@@ -722,18 +725,7 @@ function AppShell({ currentUser = null }) {
 
   return (
     <>
-      <div className="viewport-bg">
-        {selectedWallpaper?.url ? (
-          <img
-            key={selectedWallpaper.id}
-            className="viewport-wallpaper-image"
-            src={selectedWallpaper.url}
-            alt=""
-            aria-hidden="true"
-            decoding="async"
-          />
-        ) : null}
-      </div>
+      <ShellTextures />
 
       <div
         className={`app-shell app-shell-modern${
@@ -841,6 +833,9 @@ function AppShell({ currentUser = null }) {
 
         {mode === "ma" ? (
           <ScriptProvider>
+            <div className="eg-left-rail-fixed">
+              <V3LeftRail />
+            </div>
             <LeftRail launcher={sepLauncher} />
 
             {openPanel ? (
@@ -935,6 +930,8 @@ function AppShell({ currentUser = null }) {
             </div>
           </>
         )}
+
+        <BottomStatusBar />
       </div>
     </>
   );

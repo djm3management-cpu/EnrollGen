@@ -264,7 +264,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
       style={{
         padding: "18px 16px",
         background:
-          "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+          "linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 50%, var(--eg-surface-1) 100%)",
         display: "flex",
         flexDirection: "column",
         gap: 12,
@@ -646,7 +646,7 @@ export default function CarrierRef() {
           style={{
             padding: "16px 20px 12px",
             background:
-              "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+              "linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 50%, var(--eg-surface-1) 100%)",
             overflow: "hidden",
             position: "relative",
             display: "flex",
@@ -1078,7 +1078,7 @@ export default function CarrierRef() {
             className="card carrier-ref-sidebar"
             style={{
               padding: "18px 16px",
-              background: "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+              background: "linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 50%, var(--eg-surface-1) 100%)",
               display: "flex",
               flexDirection: "column",
               gap: 12,
@@ -1237,7 +1237,7 @@ export default function CarrierRef() {
           style={{
             padding: "16px 18px",
             background:
-              "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+              "linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 50%, var(--eg-surface-1) 100%)",
             display: "flex",
             flexDirection: "column",
             gap: 10,
@@ -1327,7 +1327,7 @@ export default function CarrierRef() {
           style={{
             padding: "16px 18px",
             background:
-              "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
+              "linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 50%, var(--eg-surface-1) 100%)",
             display: "flex",
             flexDirection: "column",
             gap: 8,

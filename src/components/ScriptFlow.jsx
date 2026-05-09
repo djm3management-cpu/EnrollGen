@@ -43,6 +43,9 @@ import { logTrainingCompletion } from "../lib/trainingCompletion";
 
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
+import CenterTimerBar from "./CenterTimerBar";
+import ProgressDots from "./ProgressDots";
+import EnrollmentCTA from "./EnrollmentCTA";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
 import SectionSNP from "./SectionSNP";
@@ -892,34 +895,35 @@ export default function ScriptFlow() {
 
       {trainingModeEnabled ? <TrainingBanner /> : null}
 
+      <CenterTimerBar
+        onStart={() => {
+          if (!callStarted) {
+            setCallStarted(true);
+          }
+          void copilotHandlersRef.current?.handleStart?.();
+        }}
+        onEnd={() => copilotHandlersRef.current?.handleStop?.()}
+        onAnalyze={() => copilotHandlersRef.current?.requestCoaching?.()}
+        fallbackStartTime={state.tpmoStart}
+      />
+
       {/* ── AI Co-Pilot, passes transcript up via callback ── */}
       <ScriptPrompter onTranscriptChange={setTranscript} onMergedTranscriptChange={setMergedTranscriptEntries} onListeningChange={setIsListening} logComplianceFlag={session.logComplianceFlag} controlsRef={copilotHandlersRef} onCoachingLoadingChange={setCoachingLoading} />
 
-      {/* Start Call gate, timer and session don't begin until clicked */}
+      {/* Idle state: prompt to start the call from the timer bar above. */}
       {!callStarted && (
-        <section className="script-start-call-gate script-start-call-gate--bare">
-          <button
-            className="primary script-start-call-button"
-            onClick={() => {
-              setCallStarted(true);
-              void copilotHandlersRef.current.handleStart?.();
-            }}
-            style={{
-              fontFamily: "var(--eg-font-mono)",
-              fontSize: 11,
-              fontWeight: 500,
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              padding: "10px 24px",
-              background: "var(--eg-green)",
-              border: "none",
-              color: "#fff",
-              borderRadius: "var(--eg-radius-md)",
-              cursor: "pointer",
-            }}
-          >
-            Start Call
-          </button>
+        <section
+          className="script-start-call-gate script-start-call-gate--bare"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "24px 0",
+            color: "var(--eg-text-mid)",
+            fontFamily: "var(--eg-font-body)",
+            fontSize: 13,
+          }}
+        >
+          Press START in the timer bar to begin the call.
         </section>
       )}
 
@@ -973,6 +977,39 @@ export default function ScriptFlow() {
           {trainingModeEnabled ? <TrainingExplainer section={8} /> : null}
         </>
       )}
+
+      <ProgressDots
+        sections={scriptSections
+          .filter((section) => section.key !== "wrapup")
+          .map((section, index) => {
+            const sectionNum = Number(section.section_number || index + 1);
+            const gateField = section.gate_field;
+            const gateDone = gateField ? Boolean(state[gateField]) : false;
+            let status = "pending";
+            if (gateDone) status = "done";
+            else if (sectionNum === activeSection) status = "active";
+            return {
+              key: section.key,
+              label: section.title || SECTION_LABELS[sectionNum] || `Section ${sectionNum}`,
+              status,
+              sectionNum,
+            };
+          })}
+      />
+
+      <EnrollmentCTA
+        ready={Boolean(state.enrollOk)}
+        remaining={(() => {
+          const gates = ["recordingOk", "tpmoOk", "soaOk", "qualOk", "neadsOk", "sobOk", "enrollOk"];
+          return gates.filter((g) => !state[g]).length;
+        })()}
+        total={TOTAL_SECTIONS}
+        onSubmit={() => {
+          if (state.enrollOk) {
+            window.location.hash = "#enrollment-complete";
+          }
+        }}
+      />
 
       {/* ── Full Compliance Dashboard, transcript-aware, at the bottom ── */}
       {SHOW_MAIN_FLOW_COMPLIANCE_HUD ? (
