@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, memo } from "react";
 
 /**
- * CollapsibleWidget — Reusable wrapper that makes any right rail widget
+ * CollapsibleWidget, Reusable wrapper that makes any right rail widget
  * collapsible with a header bar + chevron toggle.
  *
  * Collapsed: only the header bar visible (~34px).

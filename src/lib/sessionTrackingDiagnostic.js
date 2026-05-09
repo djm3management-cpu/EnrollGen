@@ -64,6 +64,6 @@ export async function runSessionTrackingDiagnostic() {
       }
     }
   } catch {
-    // Diagnostic only — never block the app on these checks.
+    // Diagnostic only, never block the app on these checks.
   }
 }

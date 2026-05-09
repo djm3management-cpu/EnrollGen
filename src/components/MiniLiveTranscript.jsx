@@ -2,7 +2,7 @@ import { useRef, useEffect, useState, memo } from "react";
 import PanelIdleSpinner from "./PanelIdleSpinner";
 
 /**
- * MiniLiveTranscript — Compact live transcript panel for the right rail.
+ * MiniLiveTranscript, Compact live transcript panel for the right rail.
  * Mirrors the Live Telemetry from ScriptPrompter in a smaller, always-visible format.
  * Now includes an embedded call timer in the CollapsibleWidget header via headerRight.
  */
@@ -61,7 +61,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
   const [userScrolled, setUserScrolled] = useState(false);
   const latestEntryTimestamp = mergedEntries.at(-1)?.timestamp;
 
-  // Detect manual scroll — pause auto-scroll when user scrolls up
+  // Detect manual scroll, pause auto-scroll when user scrolls up
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;

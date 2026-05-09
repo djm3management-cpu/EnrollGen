@@ -26,7 +26,7 @@ export default function SEPLookupTool() {
     <div className="sep-tool">
       <div className="sep-tool-inner">
 
-        {/* ═══ FEMA & Carrier Feed — top banner ═══ */}
+        {/* ═══ FEMA & Carrier Feed, top banner ═══ */}
         <FemaFeed
           femaDisasters={s.femaDisasters}
           femaSource={s.femaSource}
@@ -74,7 +74,7 @@ export default function SEPLookupTool() {
           </div>
         )}
 
-        {/* ═══ Map — always full-width ═══ */}
+        {/* ═══ Map, always full-width ═══ */}
         {!s.loading && (
           <div className="sep-map-section">
             {!s.hasView && (
@@ -221,7 +221,7 @@ export default function SEPLookupTool() {
                 <div>
                   <div className="sep-select-county-title">Select a county to view plans</div>
                   <div className="sep-select-county-sub">
-                    Medicare plan availability is county-specific — pick one above to load {s.selectedState} plans from CMS.
+                    Medicare plan availability is county-specific, pick one above to load {s.selectedState} plans from CMS.
                   </div>
                 </div>
               </div>
@@ -259,7 +259,7 @@ export default function SEPLookupTool() {
                         Active FEMA Disaster Declaration{s.femaActive.length > 1 ? "s" : ""} in This Area
                       </div>
                       <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                        {s.femaActive.map((f) => f.event).join("; ")} — 60-day SEP applies for affected beneficiaries.
+                        {s.femaActive.map((f) => f.event).join("; ")}, 60-day SEP applies for affected beneficiaries.
                       </div>
                     </div>
                   </div>
@@ -290,7 +290,7 @@ export default function SEPLookupTool() {
               <p>
                 <strong>Disclaimer:</strong> FEMA disaster data is fetched live from the OpenFEMA API with verified
                 fallback data. Plan data is sourced from CMS Landscape Files for CY2026 (138K rows via Supabase,
-                county-level precision). Premiums, benefits, and service areas may vary — always verify on Medicare.gov.
+                county-level precision). Premiums, benefits, and service areas may vary, always verify on Medicare.gov.
                 For agent/broker use only.
                 {s.femaSource !== "unknown" && (
                   <span className={`sep-fema-source-badge ${s.femaSource === "live" ? "live" : "fallback"}`}>

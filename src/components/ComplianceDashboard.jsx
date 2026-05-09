@@ -22,7 +22,7 @@ import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
 
 /**
- * ComplianceDashboard v2 — Dual-Layer Live Compliance Scoring
+ * ComplianceDashboard v2, Dual-Layer Live Compliance Scoring
  *
  * Shows 9 categories with real-time scores that combine BOTH:
  *   - Gate state (checkbox) scoring
@@ -35,12 +35,12 @@ import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
  *   ⚠️ = Transcript violation detected
  *
  * Props:
- *   transcript — Current agent transcript string from ScriptPrompter
+ *   transcript, Current agent transcript string from ScriptPrompter
  *
  * Drop into: src/components/ComplianceDashboard.jsx
  */
 
-/* ── Color helpers — F1 HUD palette ── */
+/* ── Color helpers, F1 HUD palette ── */
 function getScoreColor(s) {
   if (s >= 90) return "#00D166";   // safety green
   if (s >= 75) return "#00B050";
@@ -483,7 +483,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
         overflow: "hidden",
       }}
     >
-      {/* Header — F1 HUD bar */}
+      {/* Header, F1 HUD bar */}
       <div
         className="compliance-dashboard-header"
         onClick={forceExpanded ? undefined : () => setExpanded((p) => !p)}
@@ -550,7 +550,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
               ` · ${result.transcriptStats.intentsDetected}/${result.transcriptStats.intentsTotal} INTENTS`}
           </div>
         </div>
-        {/* Sector bars — F1 telemetry style */}
+        {/* Sector bars, F1 telemetry style */}
         <div style={{ display: "flex", gap: 2, alignItems: "flex-end" }}>
           {result.categories.map((c) => (
             <div

@@ -17,19 +17,19 @@ const initialState = {
   // call started gate
   callStarted: false,
 
-  // entry source — controls Gate 0 script variant
+  // entry source, controls Gate 0 script variant
   entrySource: null, // 'direct' | 'aca_transition'
 
   // selected products to present in Gate 3
   selectedProducts: [], // ['enrollprime', 'palic']
 
-  // UW risk level — set during Gate 2
+  // UW risk level, set during Gate 2
   uwRisk: null, // null | 'low' | 'moderate' | 'high'
 
-  // product recommendation — derived after UW risk set
+  // product recommendation, derived after UW risk set
   productRecommendation: null,
 
-  // NOT-MEC disclosure acknowledged — lockgate for G3
+  // NOT-MEC disclosure acknowledged, lockgate for G3
   mecDisclosureAcknowledged: false,
 
   // subsidy cliff calculator

@@ -22,7 +22,7 @@ export const callRecording = [
     sample_phrases: [
       'Recording contains continuous audio from call initiation through call termination.',
       'Audio stream is present for the complete duration of the call without interruption.',
-      'Full call recording confirmed — no start/stop events detected between call open and call close.',
+      'Full call recording confirmed, no start/stop events detected between call open and call close.',
     ],
     anti_patterns: [
       'Recording begins partway through the conversation after enrollment discussion has started.',

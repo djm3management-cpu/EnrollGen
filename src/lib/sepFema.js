@@ -81,10 +81,10 @@ export async function fetchLiveFemaDisasters() {
           sepEnd = new Date(baseDate);
           sepEnd.setMonth(sepEnd.getMonth() + 2);
           sepEnd = new Date(sepEnd.getFullYear(), sepEnd.getMonth() + 1, 0);
-          durationLabel = "PA only — SEP activates if IA is declared";
+          durationLabel = "PA only, SEP activates if IA is declared";
         } else if (isOngoing) {
           sepEnd = new Date(now.getFullYear() + 1, 0, 1);
-          durationLabel = "Ongoing — SEP open until closed + 2 mo";
+          durationLabel = "Ongoing, SEP open until closed + 2 mo";
         } else {
           const baseDate = incidentEnd > declared ? incidentEnd : declared;
           sepEnd = new Date(baseDate);

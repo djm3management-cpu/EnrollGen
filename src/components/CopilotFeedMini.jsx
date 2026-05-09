@@ -17,7 +17,7 @@ const CopilotFeedMini = memo(function CopilotFeedMini() {
     .slice(-MAX_FEED_ENTRIES);
   const latestEntryId = recentEntries.at(-1)?.id;
 
-  // Detect manual scroll — pause auto-scroll when user scrolls up
+  // Detect manual scroll, pause auto-scroll when user scrolls up
   useEffect(() => {
     const el = feedRef.current;
     if (!el) return;

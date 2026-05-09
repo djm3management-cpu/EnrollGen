@@ -176,7 +176,7 @@ export const SectionTimer = React.memo(function SectionTimer({
 });
 
 /* ===================== SECTION TOAST ===================== */
-/* Rendered as first child of .card — positions itself centered on the card's top border */
+/* Rendered as first child of .card, positions itself centered on the card's top border */
 export const SectionToast = React.memo(function SectionToast() {
   return null;
 });

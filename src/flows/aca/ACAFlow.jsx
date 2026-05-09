@@ -1,5 +1,5 @@
 /**
- * ACAFlow.jsx — ACA On-Exchange Script Flow
+ * ACAFlow.jsx, ACA On-Exchange Script Flow
  * Gates 0–6 per u65-aca-spec.md Section 2.2
  * Follows MedSupFlow.jsx architecture patterns
  */
@@ -265,7 +265,7 @@ function useAcaTemplateGates() {
   }, [sections]);
 }
 
-// ─── GATE 0 — Opening & Identity ────────────────────────────────────────────
+// ─── GATE 0, Opening & Identity ────────────────────────────────────────────
 function G0({ gate }) {
   const { state, dispatch, activeGate } = useACA();
   const d = state.sectionTimestamps[0];
@@ -308,7 +308,7 @@ function G0({ gate }) {
         )}
         {SHOW_REFERENCE_DETAILS && state.enrollmentPeriod === "OEP" && (
           <div style={{ marginTop: 6, fontSize: 11, color: "#34d399", opacity: 0.7 }}>
-            → SEP Gate will be skipped — proceed directly to Income Assessment
+            → SEP Gate will be skipped, proceed directly to Income Assessment
           </div>
         )}
       </div>
@@ -316,7 +316,7 @@ function G0({ gate }) {
       {SHOW_REFERENCE_DETAILS && gate.notes.map((n, i) => <Note key={i} text={n} />)}
 
       <Gate
-        label="Identity verified — consent obtained"
+        label="Identity verified, consent obtained"
         done={state.gate0Ok}
         onDo={() => {
           dispatch({ type: "START_SECTION", sectionNum: 0 });
@@ -328,7 +328,7 @@ function G0({ gate }) {
   );
 }
 
-// ─── GATE 1 — SEP Qualification (Conditional) ───────────────────────────────
+// ─── GATE 1, SEP Qualification (Conditional) ───────────────────────────────
 function G1({ gate }) {
   const { state, dispatch, activeGate } = useACA();
   const d = state.sectionTimestamps[1];
@@ -347,7 +347,7 @@ function G1({ gate }) {
       >
         <Card num={1} title="SEP Qualification" active={activeGate === 1} done={state.gate1Ok} dur={d ? d.end - d.start : null}>
           {SHOW_REFERENCE_DETAILS && <div style={{ fontSize: 11, color: ACCENT, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12 }}>
-            Conditional Gate — shown because enrollment period is SEP
+            Conditional Gate, shown because enrollment period is SEP
           </div>}
 
           {gate.script.map((l, i) => <Say key={i} text={l} />)}
@@ -384,7 +384,7 @@ function G1({ gate }) {
           {SHOW_REFERENCE_DETAILS && gate.signals.map((s, i) => <SignalBadge key={i} text={s} />)}
 
           <Gate
-            label="SEP event verified — within 60-day window"
+            label="SEP event verified, within 60-day window"
             done={state.gate1Ok}
             onDo={() => {
               dispatch({ type: "START_SECTION", sectionNum: 1 });
@@ -398,7 +398,7 @@ function G1({ gate }) {
   );
 }
 
-// ─── GATE 2 — Household & Income ─────────────────────────────────────────────
+// ─── GATE 2, Household & Income ─────────────────────────────────────────────
 function G2({ gate }) {
   const { state, dispatch, activeGate } = useACA();
   const d = state.sectionTimestamps[2];
@@ -449,7 +449,7 @@ function G2({ gate }) {
       </div>
 
       <Gate
-        label="Household + income documented — subsidy eligibility determined"
+        label="Household + income documented, subsidy eligibility determined"
         done={state.gate2Ok}
         onDo={() => {
           dispatch({ type: "START_SECTION", sectionNum: 2 });
@@ -461,7 +461,7 @@ function G2({ gate }) {
   );
 }
 
-// ─── GATE 3 — Needs Analysis ──────────────────────────────────────────────────
+// ─── GATE 3, Needs Analysis ──────────────────────────────────────────────────
 function G3({ gate }) {
   const { state, dispatch, activeGate } = useACA();
   const d = state.sectionTimestamps[3];
@@ -487,7 +487,7 @@ function G3({ gate }) {
       </div>
 
       <Gate
-        label="Needs documented — metal level direction determined"
+        label="Needs documented, metal level direction determined"
         done={state.gate3Ok}
         onDo={() => {
           dispatch({ type: "START_SECTION", sectionNum: 3 });
@@ -499,7 +499,7 @@ function G3({ gate }) {
   );
 }
 
-// ─── GATE 4 — Plan Presentation ──────────────────────────────────────────────
+// ─── GATE 4, Plan Presentation ──────────────────────────────────────────────
 function G4({ gate }) {
   const { state, dispatch, activeGate } = useACA();
   const d = state.sectionTimestamps[4];
@@ -524,7 +524,7 @@ function G4({ gate }) {
   );
 }
 
-// ─── GATE 5 — Enrollment ─────────────────────────────────────────────────────
+// ─── GATE 5, Enrollment ─────────────────────────────────────────────────────
 function G5({ gate }) {
   const { state, dispatch, activeGate } = useACA();
   const d = state.sectionTimestamps[5];
@@ -542,7 +542,7 @@ function G5({ gate }) {
       </div>
 
       <Gate
-        label="Enrollment submitted — confirmation number recorded"
+        label="Enrollment submitted, confirmation number recorded"
         done={state.gate5Ok}
         onDo={() => {
           dispatch({ type: "START_SECTION", sectionNum: 5 });
@@ -554,7 +554,7 @@ function G5({ gate }) {
   );
 }
 
-// ─── GATE 6 — Closing ────────────────────────────────────────────────────────
+// ─── GATE 6, Closing ────────────────────────────────────────────────────────
 function G6({ gate }) {
   const { state, dispatch, activeGate } = useACA();
   const d = state.sectionTimestamps[6];
@@ -564,7 +564,7 @@ function G6({ gate }) {
       {gate.script.map((l, i) => <Say key={i} text={l} />)}
 
       <Gate
-        label="Call closed — follow-up scheduled"
+        label="Call closed, follow-up scheduled"
         done={state.gate6Ok}
         onDo={() => {
           dispatch({ type: "START_SECTION", sectionNum: 6 });

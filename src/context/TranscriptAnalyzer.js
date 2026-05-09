@@ -1,5 +1,5 @@
 /**
- * TranscriptAnalyzer — Real-Time Medicare Intent Detection Engine
+ * TranscriptAnalyzer, Real-Time Medicare Intent Detection Engine
  *
  * This is EnrollGen's answer to Conversely AI's 150+ intent classification
  * system, but running LIVE during the call instead of post-call.
@@ -22,11 +22,11 @@
 
 /* ═══════════════════════════════════════════════════════════════
    FUZZY MATCHING UTILITIES
-   Speech recognition garbles words — we need tolerance
+   Speech recognition garbles words, we need tolerance
    ═══════════════════════════════════════════════════════════════ */
 
 /**
- * Normalize text for matching — lowercase, collapse spaces,
+ * Normalize text for matching, lowercase, collapse spaces,
  * strip common speech-to-text artifacts
  */
 function normalize(text) {
@@ -196,7 +196,7 @@ function findComparativeClaimViolations(transcript) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-     INTENT MAP — 150+ Medicare Enrollment Intents
+     INTENT MAP, 150+ Medicare Enrollment Intents
      Organized by compliance category, mirroring Conversely AI's
      classification system but with phrase-variant matching
      ═══════════════════════════════════════════════════════════════ */
@@ -447,7 +447,7 @@ const INTENT_MAP = {
           detected: false,
           confidence: 0,
           violation: true,
-          evidence: `⚠️ VIOLATION: Agent said "${wrong.match}" — this MUST be "we do NOT offer every plan available in your area"`,
+          evidence: `⚠️ VIOLATION: Agent said "${wrong.match}", this MUST be "we do NOT offer every plan available in your area"`,
         };
       }
 
@@ -456,7 +456,7 @@ const INTENT_MAP = {
         confidence: positive.found ? 98 : 0,
         evidence: positive.found
           ? `Critical TPMO disclosure stated: "${positive.match}"`
-          : "Agent has NOT stated 'we do not offer every plan' — this is the most critical TPMO line",
+          : "Agent has NOT stated 'we do not offer every plan', this is the most critical TPMO line",
       };
     },
   },
@@ -549,7 +549,7 @@ const INTENT_MAP = {
         return {
           detected: true,
           confidence: 70,
-          evidence: `Partial referral — mentioned ${
+          evidence: `Partial referral, mentioned ${
             result.detected[0]
           } but should also reference ${
             result.count === 0
@@ -562,7 +562,7 @@ const INTENT_MAP = {
         detected: false,
         confidence: 0,
         evidence:
-          "Agent did not refer to Medicare.gov, 1-800-MEDICARE, or SHIP — all three are legally required",
+          "Agent did not refer to Medicare.gov, 1-800-MEDICARE, or SHIP, all three are legally required",
       };
     },
   },
@@ -892,7 +892,7 @@ const INTENT_MAP = {
           detected: true,
           confidence: 60,
           evidence:
-            "Unable to determine SOA timing — plan details may not have been discussed yet",
+            "Unable to determine SOA timing, plan details may not have been discussed yet",
         };
       }
       if (soaResult.position < planResult.position) {
@@ -961,7 +961,7 @@ const INTENT_MAP = {
           result.count >= 2
             ? `Both Parts A & B verified: ${result.detected.join(", ")}`
             : result.count === 1
-            ? `Only ${result.detected[0]} verified — must confirm both Parts A and B`
+            ? `Only ${result.detected[0]} verified, must confirm both Parts A and B`
             : "Parts A & B not verified in transcript",
       };
     },
@@ -1170,7 +1170,7 @@ const INTENT_MAP = {
           result.count >= 2
             ? `Thorough provider assessment: ${result.detected.join(", ")}`
             : result.count === 1
-            ? `Basic provider question: ${result.detected[0]} — should also ask about specialists`
+            ? `Basic provider question: ${result.detected[0]}, should also ask about specialists`
             : "Agent did not ask about doctors/providers",
       };
     },
@@ -1225,9 +1225,9 @@ const INTENT_MAP = {
             : result.count === 2
             ? `Good medication assessment: ${result.detected.join(
                 ", "
-              )} — verify all three covered`
+              )}, verify all three covered`
             : result.count === 1
-            ? `Partial medication assessment: ${result.detected[0]} — must also ask about dosages and pharmacy`
+            ? `Partial medication assessment: ${result.detected[0]}, must also ask about dosages and pharmacy`
             : "Agent did not ask about medications",
       };
     },
@@ -1379,8 +1379,8 @@ const INTENT_MAP = {
                 result.count
               }/6): ${result.detected.join(
                 ", "
-              )} — should cover premium, deductible, MOOP, copays, drugs, and extras`
-            : "No specific plan benefits reviewed — agent must discuss actual costs and coverage",
+              )}, should cover premium, deductible, MOOP, copays, drugs, and extras`
+            : "No specific plan benefits reviewed, agent must discuss actual costs and coverage",
       };
     },
   },
@@ -1437,7 +1437,7 @@ const INTENT_MAP = {
         confidence: r.found ? 95 : 0,
         evidence: r.found
           ? `Coverage impact explained: "${r.match}"`
-          : "Agent did NOT explain that plan replaces Original Medicare — this is critical",
+          : "Agent did NOT explain that plan replaces Original Medicare, this is critical",
       };
     },
   },
@@ -1582,7 +1582,7 @@ const INTENT_MAP = {
         return {
           detected: true,
           confidence: 65,
-          evidence: `Effective date stated ("${hasDate.match}") but MISSING "subject to approval by Medicare" qualifier — this is required`,
+          evidence: `Effective date stated ("${hasDate.match}") but MISSING "subject to approval by Medicare" qualifier, this is required`,
         };
       }
       return {
@@ -1677,7 +1677,7 @@ const INTENT_MAP = {
           result.count >= 2
             ? `Carrier number with TTY provided: ${result.detected.join(", ")}`
             : result.count === 1
-            ? `${result.detected[0]} provided — should also provide TTY number`
+            ? `${result.detected[0]} provided, should also provide TTY number`
             : "Carrier customer service number not provided",
       };
     },
@@ -1709,7 +1709,7 @@ const INTENT_MAP = {
             : result.count >= 2
             ? `Partial rights disclosed: ${result.detected.join(", ")}`
             : result.count === 1
-            ? `Only ${result.detected[0]} mentioned — should cover EOC, cancellation, and appeal rights`
+            ? `Only ${result.detected[0]} mentioned, should cover EOC, cancellation, and appeal rights`
             : "Post-enrollment rights not disclosed",
       };
     },
@@ -1755,7 +1755,7 @@ const INTENT_MAP = {
             : result.count >= 2
             ? `Good next steps coverage: ${result.detected.join(", ")}`
             : result.count === 1
-            ? `Minimal next steps: ${result.detected[0]} — should explain full timeline`
+            ? `Minimal next steps: ${result.detected[0]}, should explain full timeline`
             : "Next steps not explained to beneficiary",
       };
     },
@@ -1820,9 +1820,9 @@ const INTENT_MAP = {
      ═══════════════════════════════════════════════════════════════ */
 
 /**
- * analyzeTranscript — Run all 150+ intent detectors against transcript
+ * analyzeTranscript, Run all 150+ intent detectors against transcript
  *
- * @param {string} transcript — The current agent transcript text
+ * @param {string} transcript, The current agent transcript text
  * @returns {object} Complete analysis with per-intent results
  */
 export function analyzeTranscript(transcript) {
@@ -1887,13 +1887,13 @@ export function analyzeTranscript(transcript) {
 }
 
 /**
- * getTranscriptEvidence — Get evidence for a specific ComplianceScorer question
+ * getTranscriptEvidence, Get evidence for a specific ComplianceScorer question
  *
  * Maps ComplianceScorer question IDs to relevant transcript intents
  * and returns the best available evidence.
  *
- * @param {string} questionId — The ComplianceScorer question ID
- * @param {object} analysis — Result from analyzeTranscript()
+ * @param {string} questionId, The ComplianceScorer question ID
+ * @param {object} analysis, Result from analyzeTranscript()
  * @returns {object} { hasTranscriptEvidence, confidence, evidence, intents }
  */
 export function getTranscriptEvidence(questionId, analysis) {
@@ -2034,9 +2034,9 @@ export function getTranscriptEvidence(questionId, analysis) {
 }
 
 /**
- * getIntentConfidence — Conversely-style per-section confidence scores
+ * getIntentConfidence, Conversely-style per-section confidence scores
  *
- * @param {object} analysis — Result from analyzeTranscript()
+ * @param {object} analysis, Result from analyzeTranscript()
  * @returns {object} { sectionName: { confidence: 0-100, detected: n, total: n } }
  */
 export function getIntentConfidence(analysis) {
@@ -2067,7 +2067,7 @@ export function getIntentConfidence(analysis) {
 }
 
 /**
- * getViolations — Get all active violations for alerting
+ * getViolations, Get all active violations for alerting
  */
 export function getViolations(analysis) {
   return analysis?.violations || [];
@@ -2088,7 +2088,7 @@ export function getIntentCount() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-     CUSTOMER AUDIO ANALYSIS — Two-Sided Compliance
+     CUSTOMER AUDIO ANALYSIS, Two-Sided Compliance
      These functions analyze the customer's side of the conversation
      when dual audio capture is active.
      ═══════════════════════════════════════════════════════════════ */
@@ -2318,7 +2318,7 @@ export function detectMisleadingClaimEvidence(customerText) {
         phrase,
         context,
         severity: "critical",
-        evidence: `Customer said: "${context}" — investigate potential misleading agent statement.`,
+        evidence: `Customer said: "${context}", investigate potential misleading agent statement.`,
       });
     }
   }

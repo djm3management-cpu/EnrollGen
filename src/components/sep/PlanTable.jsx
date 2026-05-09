@@ -142,7 +142,7 @@ export function PlanTable({
                           {p.prem === 0 ? "$0" : `$${p.prem.toFixed(2)}`}
                         </td>
                         <td className="text-right nowrap" style={{ color: "var(--text-secondary)" }}>
-                          {p.moop ? `$${p.moop.toLocaleString()}` : "—"}
+                          {p.moop ? `$${p.moop.toLocaleString()}` : "-"}
                         </td>
                         <td style={{ color: "var(--text-muted)", transition: "transform 0.25s ease", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)" }}>
                           <ChevronRight size={16} />

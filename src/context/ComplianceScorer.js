@@ -1,5 +1,5 @@
 /**
- * ComplianceScorer v3 — DUAL-LAYER Live Compliance Engine
+ * ComplianceScorer v3, DUAL-LAYER Live Compliance Engine
  *
  * Layer 1: GATE STATE (checkboxes)
  * Layer 2: TRANSCRIPT ANALYSIS (150+ intent detectors)
@@ -333,7 +333,7 @@ function confirmedScore(value) {
 }
 
 /**
- * mergeScores — Combine gate score with transcript evidence.
+ * mergeScores, Combine gate score with transcript evidence.
  * Violations override. Otherwise higher score wins.
  */
 function mergeScores(questionId, gateResult, te) {
@@ -408,7 +408,7 @@ function mergeScores(questionId, gateResult, te) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-     9 CATEGORIES — 33 QUESTIONS
+     9 CATEGORIES, 33 QUESTIONS
      ═══════════════════════════════════════════════════════════════ */
 
 const CATEGORIES = [
@@ -450,7 +450,7 @@ const CATEGORIES = [
           s.recordingOk
             ? {
                 score: 100,
-                evidence: "Recording completed — beneficiary name collected.",
+                evidence: "Recording completed, beneficiary name collected.",
               }
             : { score: 0, evidence: "Beneficiary name not collected." },
       },
@@ -527,7 +527,7 @@ const CATEGORIES = [
           if (!s.snpType)
             return {
               score: 100,
-              evidence: "No SNP selected — disclosure not required.",
+              evidence: "No SNP selected, disclosure not required.",
               notApplicable: true,
             };
           return s.snpOk
@@ -582,7 +582,7 @@ const CATEGORIES = [
         points: 3,
         evaluate: (s) =>
           s.soaOk
-            ? { score: 100, evidence: "SOA completed — POA checked." }
+            ? { score: 100, evidence: "SOA completed, POA checked." }
             : { score: 0, evidence: "POA check not performed." },
       },
       {
@@ -592,7 +592,7 @@ const CATEGORIES = [
         points: 4,
         evaluate: (s) =>
           s.soaOk
-            ? { score: 100, evidence: "SOA completed — no-obligation stated." }
+            ? { score: 100, evidence: "SOA completed, no-obligation stated." }
             : { score: 0, evidence: "No-obligation statement not delivered." },
       },
       {
@@ -602,7 +602,7 @@ const CATEGORIES = [
         points: 5,
         evaluate: (s) =>
           s.soaOk
-            ? { score: 100, evidence: "SOA completed — products listed." }
+            ? { score: 100, evidence: "SOA completed, products listed." }
             : { score: 0, evidence: "Product scope not established." },
       },
     ],
@@ -740,9 +740,9 @@ const CATEGORIES = [
           const t = Object.keys(c).length || 1;
           const p = Math.round((d / t) * 100);
           if (p >= 90)
-            return { score: 100, evidence: `SOB complete — ${d}/${t} items.` };
+            return { score: 100, evidence: `SOB complete, ${d}/${t} items.` };
           if (p >= 60)
-            return { score: 75, evidence: `SOB partial — ${d}/${t} items.` };
+            return { score: 75, evidence: `SOB partial, ${d}/${t} items.` };
           return {
             score: 50,
             evidence: `SOB marked done but ${d}/${t} items.`,
@@ -770,7 +770,7 @@ const CATEGORIES = [
           s.enrollOk
             ? { score: 100, evidence: "Coverage impact explained." }
             : s.sobOk
-            ? { score: 75, evidence: "SOB done — likely discussed." }
+            ? { score: 75, evidence: "SOB done, likely discussed." }
             : { score: 0, evidence: "Not explained." },
       },
       {
@@ -781,7 +781,7 @@ const CATEGORIES = [
           s.enrollOk
             ? { score: 100, evidence: "All disclosures given." }
             : s.sobOk
-            ? { score: 75, evidence: "SOB done — likely covered." }
+            ? { score: 75, evidence: "SOB done, likely covered." }
             : { score: 0, evidence: "Not completed." },
       },
     ],
@@ -914,12 +914,12 @@ const CATEGORIES = [
           if (d > 60)
             return {
               score: 60,
-              evidence: `${d.toFixed(1)}min — unusually long call, review for friction.`,
+              evidence: `${d.toFixed(1)}min, unusually long call, review for friction.`,
             };
           if (d >= 8)
-            return { score: 100, evidence: `${d.toFixed(1)}min — adequate.` };
+            return { score: 100, evidence: `${d.toFixed(1)}min, adequate.` };
           if (d > 0)
-            return { score: 0, evidence: `${d.toFixed(1)}min — too short.` };
+            return { score: 0, evidence: `${d.toFixed(1)}min, too short.` };
           return { score: 0, evidence: "Timer not started." };
         },
       },
@@ -950,10 +950,10 @@ const CATEGORIES = [
             (x) => x.level === "warn" || x.level === "critical"
           );
           if (w.length <= 2)
-            return { score: 100, evidence: `${w.length} warning(s) — within tolerance.` };
+            return { score: 100, evidence: `${w.length} warning(s), within tolerance.` };
           if (w.length <= 5)
-            return { score: 60, evidence: `${w.length} warnings — review recommended.` };
-          return { score: 0, evidence: `${w.length} warnings — excessive.` };
+            return { score: 60, evidence: `${w.length} warnings, review recommended.` };
+          return { score: 0, evidence: `${w.length} warnings, excessive.` };
         },
       },
     ],
@@ -961,7 +961,7 @@ const CATEGORIES = [
 ];
 
 /* ═══════════════════════════════════════════════════════════════
-     MAIN SCORING FUNCTION — DUAL LAYER
+     MAIN SCORING FUNCTION, DUAL LAYER
      ═══════════════════════════════════════════════════════════════ */
 
 function scoreComplianceLegacy(
@@ -1100,7 +1100,7 @@ function scoreComplianceLegacy(
 }
 
 /* ═══════════════════════════════════════════════════════════════
-     LIVE SCORE — Lightweight for real-time dashboard
+     LIVE SCORE, Lightweight for real-time dashboard
      ═══════════════════════════════════════════════════════════════ */
 
 const STRICT_CATEGORY_ORDER = [
@@ -1250,7 +1250,7 @@ function toLiveResult(result) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-     CONVERSELY-STYLE REPORT — For supervisors
+     CONVERSELY-STYLE REPORT, For supervisors
      ═══════════════════════════════════════════════════════════════ */
 
 export function getConverselyReport(
@@ -1308,7 +1308,7 @@ function getGrade(s) {
 function getSummary(score, flags, catsPassed, totalCats) {
   const hf = flags.filter((f) => f.severity === "high");
   if (score >= 90)
-    return `Excellent compliance — ${catsPassed}/${totalCats} categories passed. All critical disclosures completed per CMS guidelines.`;
+    return `Excellent compliance, ${catsPassed}/${totalCats} categories passed. All critical disclosures completed per CMS guidelines.`;
   if (score >= 75) {
     if (hf.length > 0)
       return `Good compliance (${catsPassed}/${totalCats}), but ${
@@ -1317,11 +1317,11 @@ function getSummary(score, flags, catsPassed, totalCats) {
         .map((f) => f.question.split("?")[0])
         .slice(0, 3)
         .join("; ")}.`;
-    return `Good compliance — ${catsPassed}/${totalCats} categories passed.`;
+    return `Good compliance, ${catsPassed}/${totalCats} categories passed.`;
   }
   if (score >= 50)
-    return `Below standard — ${catsPassed}/${totalCats} passed. ${flags.length} items flagged.`;
-  return `Critical failure — ${catsPassed}/${totalCats} passed. ${flags.length} items flagged — does not meet CMS requirements.`;
+    return `Below standard, ${catsPassed}/${totalCats} passed. ${flags.length} items flagged.`;
+  return `Critical failure, ${catsPassed}/${totalCats} passed. ${flags.length} items flagged, does not meet CMS requirements.`;
 }
 
 export function groupByCategory(categories) {
@@ -1342,13 +1342,13 @@ export function getCategoryDefinitions() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-     CUSTOMER CONFIRMATION SCORING — Two-Sided Compliance
+     CUSTOMER CONFIRMATION SCORING, Two-Sided Compliance
      When customer audio is available, this layer scores whether
      the customer acknowledged/confirmed critical disclosures.
      ═══════════════════════════════════════════════════════════════ */
 
 /**
- * scoreCustomerConfirmation — Analyzes customer audio for acknowledgments,
+ * scoreCustomerConfirmation, Analyzes customer audio for acknowledgments,
  * objections, and potential misleading claim evidence.
  *
  * @param {string} customerText - flat customer transcript text
@@ -1379,7 +1379,7 @@ export function scoreCustomerConfirmation(customerText, mergedTranscript, agentA
   const acknowledgments = verifyCustomerAcknowledgments(safeMerged, safeAnalysis);
   const misleadingFlags = detectMisleadingClaimEvidence(safeCustomerText);
 
-  // Detect "silent enrollment" — agent moved through enrollment steps
+  // Detect "silent enrollment", agent moved through enrollment steps
   // but customer never verbally confirmed
   const enrollmentDisclosure = acknowledgments.disclosures.find((d) => d.id === "enrollment_confirmed");
   const silentEnrollment = enrollmentDisclosure
@@ -1405,7 +1405,7 @@ export function scoreCustomerConfirmation(customerText, mergedTranscript, agentA
 }
 
 /**
- * scoreTwoSided — Combined agent + customer compliance score.
+ * scoreTwoSided, Combined agent + customer compliance score.
  * Falls back gracefully to agent-only when customer audio isn't available.
  *
  * @param {Object} scriptState - enrollment form state

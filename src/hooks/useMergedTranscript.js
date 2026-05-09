@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 /**
- * useMergedTranscript — merges agent and customer transcripts into a single
+ * useMergedTranscript, merges agent and customer transcripts into a single
  * chronological stream with speaker labels.
  *
  * Agent transcript comes from useSpeechRecognition (transcriptRows).

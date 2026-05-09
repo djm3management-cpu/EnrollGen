@@ -55,7 +55,7 @@ function fmtMoney(value) {
 }
 
 function fmtDuration(seconds) {
-  if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return "—";
+  if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return "-";
   const total = Math.max(0, Math.round(Number(seconds)));
   const m = Math.floor(total / 60);
   const s = total % 60;
@@ -63,16 +63,16 @@ function fmtDuration(seconds) {
 }
 
 function fmtDateMD(value) {
-  if (!value) return "—";
+  if (!value) return "-";
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function fmtDateISO(value) {
-  if (!value) return "—";
+  if (!value) return "-";
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toISOString().slice(0, 10);
 }
 
@@ -160,7 +160,7 @@ function resolveAgentName(row) {
   if (row.writing_agent) return row.writing_agent;
   if (row.agent_name) return row.agent_name;
   if (row.agent_id) return `Agent ${row.agent_id}`;
-  return "—";
+  return "-";
 }
 
 function customerName(row) {
@@ -172,7 +172,7 @@ function customerName(row) {
 
 function carrierName(row) {
   const c = row.carrier_name;
-  if (!c || /^\d+$/.test(String(c).trim())) return "—";
+  if (!c || /^\d+$/.test(String(c).trim())) return "-";
   return c;
 }
 
@@ -439,7 +439,7 @@ function buildAgentDetail(rows, coopRates = {}) {
       compliance: null,
       duration: null,
       coop: 0,
-      carrier: "—",
+      carrier: "-",
     };
   }
 
@@ -454,13 +454,13 @@ function buildAgentDetail(rows, coopRates = {}) {
 
   for (const row of rows) {
     const carrier = carrierName(row);
-    if (carrier !== "—") {
+    if (carrier !== "-") {
       carrierCounts.set(carrier, (carrierCounts.get(carrier) || 0) + 1);
     }
   }
 
   const carrier = Array.from(carrierCounts.entries())
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || "—";
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || "-";
 
   return {
     calls: rows.length,
@@ -646,7 +646,7 @@ function buildTicker(rows) {
         key: r.call_record_id || idx,
         cls: "is-enrolled",
         icon: "▲",
-        text: `${time} ENROLLED ${name}${carrier !== "—" ? " — " + carrier : ""}`,
+        text: `${time} ENROLLED ${name}${carrier !== "-" ? ", " + carrier : ""}`,
       };
     }
     if (r.call_outcome === "callback_scheduled") {
@@ -696,7 +696,7 @@ function ghlBadge(row) {
     return { glyph: "✗", cls: "ops-ghl-fail" };
   if (isEnrolled(row) && !row.webhook_sent)
     return { glyph: "◷", cls: "ops-ghl-fail" };
-  return { glyph: "—", cls: "ops-ghl-na" };
+  return { glyph: "-", cls: "ops-ghl-na" };
 }
 
 function LbSection({ title, rows, valueKey, color, format }) {
@@ -1064,11 +1064,11 @@ function AgentDetailSection({ open, selectedAgent, detail, onToggle }) {
             </div>
             <div>
               <span>Avg Compliance</span>
-              <strong>{detail.compliance !== null ? `${Math.round(detail.compliance)}%` : "—"}</strong>
+              <strong>{detail.compliance !== null ? `${Math.round(detail.compliance)}%` : "-"}</strong>
             </div>
             <div>
               <span>Avg Duration</span>
-              <strong>{detail.duration !== null ? fmtDuration(detail.duration) : "—"}</strong>
+              <strong>{detail.duration !== null ? fmtDuration(detail.duration) : "-"}</strong>
             </div>
             <div>
               <span>Co-op Earnings</span>
@@ -1190,7 +1190,7 @@ function CallsTable({
                     <td className="num">
                       {r.overall_score !== null && r.overall_score !== undefined
                         ? `${Math.round(Number(r.overall_score))}%`
-                        : "—"}
+                        : "-"}
                     </td>
                     <td className={ghl.cls}>{ghl.glyph}</td>
                   </tr>,
@@ -1250,7 +1250,7 @@ function CompliancePanel({ data }) {
       <div className="ops-section-head">
         <span>Compliance</span>
         <span className="ops-section-meta">
-          {data ? `${data.total} SCORED` : "—"}
+          {data ? `${data.total} SCORED` : "-"}
         </span>
       </div>
       {!data ? (
@@ -1310,7 +1310,7 @@ function CompliancePanel({ data }) {
             <span className="val">
               {data.passes + data.fails > 0
                 ? `${Math.round((data.passes / (data.passes + data.fails)) * 100)}%`
-                : "—"}
+                : "-"}
             </span>
           </div>
         </div>
@@ -1550,7 +1550,7 @@ function FollowUpsPanel() {
           {visible.map((row) => (
             <div key={row.id} className={`ops-followup-row${followupIsOverdue(row) ? " is-overdue" : ""}`}>
               <span className="customer">{row.customer_name || "Unknown"}</span>
-              <span className="carrier">{[row.carrier_name, row.plan_name].filter(Boolean).join(" / ") || "—"}</span>
+              <span className="carrier">{[row.carrier_name, row.plan_name].filter(Boolean).join(" / ") || "-"}</span>
               <RiskBadge level={row.risk_level} />
               <span className="date">{fmtDateISO(row.recommended_followup_date)}</span>
               <select
@@ -1561,7 +1561,7 @@ function FollowUpsPanel() {
                   <option key={status} value={status}>{statusLabel(status)}</option>
                 ))}
               </select>
-              <span className="agent">{row.agent_name || "—"}</span>
+              <span className="agent">{row.agent_name || "-"}</span>
               {row.notes ? <span className="notes">{row.notes}</span> : null}
             </div>
           ))}
@@ -1677,7 +1677,7 @@ function TrackerRow({ entry, status, saving, onStatusChange }) {
 
   const carrier = carrierName(entry);
   const plan = entry.plan_name || entry.enrollment_code || "";
-  const carrierLine = [carrier, plan].filter((v) => v && v !== "—").join("  ");
+  const carrierLine = [carrier, plan].filter((v) => v && v !== "-").join("  ");
 
   return (
     <div className={`ops-tracker-row ${entry.bucket}`}>
@@ -1811,7 +1811,7 @@ export default function OperationsTab() {
   const agentOptions = useMemo(() => {
     const names = new Set((agents || []).map((agent) => agent.name).filter(Boolean));
     state.dailyActivity.forEach((row) => names.add(resolveAgentName(row)));
-    return Array.from(names).filter((name) => name && name !== "—").sort((a, b) => a.localeCompare(b));
+    return Array.from(names).filter((name) => name && name !== "-").sort((a, b) => a.localeCompare(b));
   }, [agents, state.dailyActivity]);
 
   useEffect(() => {
@@ -2117,7 +2117,7 @@ export default function OperationsTab() {
               <span className="ops-metric-value">
                 {metrics.complianceAvg !== null
                   ? `${Math.round(metrics.complianceAvg)}%`
-                  : "—"}
+                  : "-"}
               </span>
             </div>
             <div className="ops-metric">

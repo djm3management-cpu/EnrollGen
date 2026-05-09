@@ -1,5 +1,5 @@
 /**
- * useU65CopilotEngine.js — U65 Off-Exchange compliance copilot engine
+ * useU65CopilotEngine.js, U65 Off-Exchange compliance copilot engine
  * Built on useCopilotEngineCore for shared infrastructure (feed, alerts,
  * periodic review, section-entry, debounced scheduling, cleanup).
  *
@@ -7,7 +7,7 @@
  *   - NOT-MEC / NOT-ACA-substitute disclosures are hard compliance requirements
  *   - UW risk level drives product recommendation and compliance path
  *   - Fixed-benefit vs traditional plan structure must be clear
- *   - Cannot guarantee acceptance — "subject to underwriting approval"
+ *   - Cannot guarantee acceptance, "subject to underwriting approval"
  *   - Subsidy cliff framing is the primary entry narrative
  *   - Two products: EnrollPrime/AFI (PPO) and PALIC HSP Gold (indemnity)
  */
@@ -207,7 +207,7 @@ ${knowledge.requiredElements.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
 COMMON AGENT MISTAKES:
 ${knowledge.commonMistakes.map((m) => `  ⚠ ${m}`).join("\n")}
 
-RED FLAGS — INTERVENE IMMEDIATELY:
+RED FLAGS, INTERVENE IMMEDIATELY:
 ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 `;
 }
@@ -246,11 +246,11 @@ function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInt
   return `You are an expert U65 off-exchange private health products compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue.
 
 CRITICAL U65 OFF-EXCHANGE CONTEXT:
-- This is a U65 (under-65) off-exchange enrollment — NOT ACA marketplace, NOT Medicare
+- This is a U65 (under-65) off-exchange enrollment, NOT ACA marketplace, NOT Medicare
 - Products sold are PRIVATE health products that are NOT minimum essential coverage (MEC)
 - Products are NOT substitutes for ACA-compliant major medical insurance
 - Two products: EnrollPrime/AFI Association PPO (Cigna network) and PALIC HSP Gold (fixed-benefit indemnity, First Health network)
-- Medical underwriting is REQUIRED — agent CANNOT guarantee acceptance
+- Medical underwriting is REQUIRED, agent CANNOT guarantee acceptance
 - PALIC has a 12-month pre-existing condition exclusion that MUST be disclosed
 - PALIC is fixed-benefit (set dollar amounts per service), NOT percentage-based coverage
 - Primary client profile: above 400% FPL (subsidy cliff), self-employed, COBRA runout, Aetna market exit affected
@@ -266,15 +266,15 @@ HIGHEST SEVERITY COMPLIANCE ITEMS (intervene immediately):
 6. Not disclosing the 12-month pre-existing condition exclusion for PALIC
 
 ════════════════════════════════════════════════════════
-CRITICAL AUDIO CONSTRAINT — NON-NEGOTIABLE
+CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
 ════════════════════════════════════════════════════════
 You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words.
 
 IMPLICATIONS:
 - Evaluate compliance ONLY based on what the AGENT said or failed to say
-- NEVER say "the client didn't confirm" — YOU CANNOT HEAR THE CLIENT
-- Speech recognition is imperfect — if it SOUNDS CLOSE ENOUGH, give credit
-- The agent may have started before recording began — absence is not proof of omission
+- NEVER say "the client didn't confirm", YOU CANNOT HEAR THE CLIENT
+- Speech recognition is imperfect, if it SOUNDS CLOSE ENOUGH, give credit
+- The agent may have started before recording began, absence is not proof of omission
 
 ════════════════════════════════════════════════════════
 CURRENT GATE: "${sectionKey}"
@@ -287,7 +287,7 @@ ${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
 ${transcriptReferenceBlock}
 ` : ""}
 ${recentInterventionText ? `════════════════════════════════════════════════════════
-RECENT PRIOR INTERVENTIONS — DO NOT REPEAT:
+RECENT PRIOR INTERVENTIONS, DO NOT REPEAT:
 ════════════════════════════════════════════════════════
 ${recentInterventionText}
 ` : ""}
@@ -298,11 +298,11 @@ ${copilotContextJson}
 
 HOW TO USE THIS CONTEXT:
 - Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
-- uwRisk tells you the client's health risk level — impacts which products are appropriate and compliance requirements.
+- uwRisk tells you the client's health risk level, impacts which products are appropriate and compliance requirements.
 - selectedProducts shows what the agent has selected to present.
 - mecDisclosureAcknowledged indicates if the mandatory NOT-MEC disclosure has been given.
 - derivedSignals.subsidyCliffClient, cobraActive, aetnaExitAffected provide client situation context.
-- If acaBenchmark is present, it contains real ACA Silver benchmark and Bronze premiums for the client's area. Use this to coach the agent on concrete subsidy cliff comparisons: "Without enhanced PTCs, ACA costs $X/mo vs. off-exchange at $Y/mo." Do NOT read raw numbers to the agent — frame them as talking points.
+- If acaBenchmark is present, it contains real ACA Silver benchmark and Bronze premiums for the client's area. Use this to coach the agent on concrete subsidy cliff comparisons: "Without enhanced PTCs, ACA costs $X/mo vs. off-exchange at $Y/mo." Do NOT read raw numbers to the agent, frame them as talking points.
 
 ════════════════════════════════════════════════════════
 EMPTY OR SPARSE TRANSCRIPT:
@@ -315,7 +315,7 @@ PRIORITY WEIGHTING:
 - NOT-MEC/NOT-ACA-substitute disclosure violations are the HIGHEST priority
 - UW guarantee violations are SECOND highest
 - Pre-existing condition exclusion disclosure is THIRD
-- Prioritize substance over wording — if the intent is clearly covered, don't flag minor phrasing differences
+- Prioritize substance over wording, if the intent is clearly covered, don't flag minor phrasing differences
 
 ════════════════════════════════════════════════════════
 RESPONSE QUALITY REQUIREMENTS
@@ -328,7 +328,7 @@ Every non-silent response MUST:
 - For remind: State what hasn't been covered yet and give the exact words to say
 - For tip: Name the specific element handled well and why it matters
 
-CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
+CRITICAL NUANCE, AVOIDING FALSE POSITIVES:
 - Do NOT claim the agent skipped a section just because the transcript is limited
 - Do NOT flag individual words as missing if the overall message semantically covers the requirement
 - Do NOT repeatedly flag the same issue
@@ -377,7 +377,7 @@ YOUR CAPABILITIES:
 - Ancillary product recommendations and stacking
 - Enrollment platform details (enrollprime.com, apps.neweralife.com)
 
-HARD BOUNDARY — DO NOT ANSWER:
+HARD BOUNDARY, DO NOT ANSWER:
 - Specific premium quotes → tell agent to check the enrollment portal
 - Whether a specific provider is in-network → direct to myfirsthealth.com (PALIC) or Cigna provider finder (EnrollPrime)
 - Specific UW outcomes → tell agent to submit application and await UW decision
@@ -387,7 +387,7 @@ Do NOT guess product-specific data.
 RESPONSE RULES:
 - Keep answers concise and actionable
 - Put script language in quotes so agent can read it directly
-- Always prioritize compliance — especially NOT-MEC disclosure and UW honesty
+- Always prioritize compliance, especially NOT-MEC disclosure and UW honesty
 Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.`;
 }
 
@@ -483,7 +483,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
   useEffect(() => {
     if (activeGate === 6 && !uwFiredRef.current) {
       uwFiredRef.current = true;
-      pushFeedEntry("remind", "Read UW questions verbatim. Do NOT coach the client to minimize conditions. Say \"subject to underwriting approval\" — never \"approved.\"", {
+      pushFeedEntry("remind", "Read UW questions verbatim. Do NOT coach the client to minimize conditions. Say \"subject to underwriting approval\", never \"approved.\"", {
         section: U65_GATE_LABELS[6] || "Underwriting",
         issueTag: "UW_HONESTY_ENTRY",
       });
@@ -602,7 +602,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
       sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock, reviewMode,
     });
 
-    const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words. Speech recognition may have minor errors.)
+    const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client, only the agent's words. Speech recognition may have minor errors.)
 ${sectionEntry ? `\nSECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" gate. Provide one short info message with the next one or two priorities. Use level "info" unless you spot an actual issue. Do NOT return silent.\n` : ""}${periodic ? `\nPERIODIC 90-SECOND REVIEW: You MUST return a popup-ready message. If on track, return "tip". If correction needed, return "remind", "warn", or "critical".\n` : ""}
 NEW SPEECH SINCE LAST ANALYSIS:
 "${newSpeechWindow}"
@@ -678,14 +678,14 @@ SECTION CONTEXT (rolling window):
           shouldSuppressDuplicateIssue(liveMessages, currentStep, issueTag)) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning — not repeated.", { section: currentStep, issueTag, retrievalTrace });
+        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning, not repeated.", { section: currentStep, issueTag, retrievalTrace });
         return;
       }
       if (!periodic && (level === "warn" || level === "remind") &&
           shouldSuppressForNuance({ level, issueTag, message, derivedSignals })) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed — context too ambiguous.", { section: currentStep, issueTag, retrievalTrace });
+        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed, context too ambiguous.", { section: currentStep, issueTag, retrievalTrace });
         return;
       }
 

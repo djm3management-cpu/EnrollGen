@@ -53,7 +53,7 @@ export const salesConduct = [
     auto_fail: false,
     sample_phrases: [
       'Based on the healthcare needs you described, I think this plan is the best fit because it covers your doctors and medications at the lowest cost to you.',
-      'I am recommending this plan specifically because it matches what you told me about your priorities — the low specialist copays and the $0 drug coverage for your medications.',
+      'I am recommending this plan specifically because it matches what you told me about your priorities, the low specialist copays and the $0 drug coverage for your medications.',
       'Let me show you a few options and explain why each one might or might not be a good fit for your specific situation.',
       'I want to present several plans that meet your needs so you can compare them and make an informed choice.',
     ],
@@ -86,7 +86,7 @@ export const salesConduct = [
     sample_phrases: [
       'Medicare Advantage plans cannot deny you coverage based on your health conditions. Everyone who is eligible can enroll regardless of their health status.',
       'Your pre-existing conditions will not prevent you from enrolling. Medicare Advantage plans are guaranteed issue during the enrollment period.',
-      'It does not matter what health conditions you have — if you are eligible for Medicare, you can enroll in any plan available in your area.',
+      'It does not matter what health conditions you have, if you are eligible for Medicare, you can enroll in any plan available in your area.',
       'I want to assure you that this plan covers all of your conditions. No one can be turned away based on their health.',
     ],
     anti_patterns: [
@@ -118,7 +118,7 @@ export const salesConduct = [
     sample_phrases: [
       'I want to be very straightforward with you about what this plan does and does not cover so you can make an informed decision.',
       'Let me explain this benefit clearly. The dental coverage includes two cleanings per year and up to $1,500 in comprehensive dental services. Anything beyond that, you would be responsible for.',
-      'I want to make sure I am clear — the $0 premium does not mean everything is free. You will still have copays and coinsurance when you use services.',
+      'I want to make sure I am clear, the $0 premium does not mean everything is free. You will still have copays and coinsurance when you use services.',
       'To be transparent, there are some limitations with this plan that I want you to understand before we go any further.',
     ],
     anti_patterns: [
@@ -469,8 +469,8 @@ export const salesConduct = [
     failure_severity: 'major',
     auto_fail: false,
     sample_phrases: [
-      'Let me try explaining that differently. The maximum out-of-pocket is basically a safety net — it is the most you would ever pay in a year. After you hit that number, the plan pays everything.',
-      'I understand that can be confusing. Think of the deductible like this — it is the amount you pay before the plan starts sharing costs with you.',
+      'Let me try explaining that differently. The maximum out-of-pocket is basically a safety net, it is the most you would ever pay in a year. After you hit that number, the plan pays everything.',
+      'I understand that can be confusing. Think of the deductible like this, it is the amount you pay before the plan starts sharing costs with you.',
       'Let me go back to the network question since you seemed unsure. An HMO means you pick a primary doctor and they coordinate your care. You need a referral to see a specialist.',
       'I can see that was not clear. Let me start over on that part. The Part B giveback means the plan actually pays part of your Medicare Part B premium back to you each month.',
       'No worries at all. Let me break that down in simpler terms so it makes more sense.',

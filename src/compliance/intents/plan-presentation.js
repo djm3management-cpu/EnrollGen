@@ -87,7 +87,7 @@ export const planPresentation = [
     auto_fail: false,
     sample_phrases: [
       'This is an HMO plan, which means you will need to use doctors and hospitals that are in the plan network, and you will need a referral to see a specialist.',
-      'This plan is a PPO, so you have the flexibility to see any doctor — in-network or out-of-network. You will just pay less when you stay in-network.',
+      'This plan is a PPO, so you have the flexibility to see any doctor, in-network or out-of-network. You will just pay less when you stay in-network.',
       'This is what is called an HMO-POS plan. Mostly it works like an HMO, but it does give you some ability to go out of network in certain situations.',
       'The plan type here is a local PPO. That means you can see out-of-network providers, but your costs will be lower if you stick with in-network doctors.',
     ],
@@ -120,14 +120,14 @@ export const planPresentation = [
     sample_phrases: [
       'The monthly premium on this plan is zero dollars. So you would not pay anything beyond your Part B premium.',
       'This plan has a monthly premium of $29, which would be in addition to your Part B premium.',
-      'Good news — this is a zero-dollar premium plan. Your only ongoing cost would be your regular Part B premium.',
+      'Good news, this is a zero-dollar premium plan. Your only ongoing cost would be your regular Part B premium.',
       'The premium for this plan is $45 per month. That gets deducted from your Social Security check along with your Part B.',
       'At zero dollars a month for the plan premium, this is one of the more affordable options in your area.',
     ],
     anti_patterns: [
       'This plan is basically free.',
       'You do not pay anything for this plan at all.',
-      'It costs nothing — completely free healthcare.',
+      'It costs nothing, completely free healthcare.',
     ],
   },
   {
@@ -153,7 +153,7 @@ export const planPresentation = [
     sample_phrases: [
       'This plan has no medical deductible, so your copays kick in right from day one. The drug deductible is $505 for Tier 3 through 5 drugs.',
       'The annual medical deductible is $250. Once you have met that, you will pay your regular copays. There is no separate drug deductible on this plan.',
-      'Good news — there is zero deductible on this plan, both for medical and prescription drugs.',
+      'Good news, there is zero deductible on this plan, both for medical and prescription drugs.',
       'The drug deductible on this plan is $250, which applies to Tiers 3 through 5. Tiers 1 and 2 have no deductible.',
     ],
     anti_patterns: [
@@ -184,9 +184,9 @@ export const planPresentation = [
     auto_fail: false,
     sample_phrases: [
       'The maximum out-of-pocket on this plan is $5,900 for in-network services. That is the absolute most you would pay in a calendar year before the plan covers everything at 100 percent.',
-      'Your max out-of-pocket would be $4,500. Now that is a worst-case scenario number — most people never come close to hitting it.',
+      'Your max out-of-pocket would be $4,500. Now that is a worst-case scenario number, most people never come close to hitting it.',
       'The MOOP on this plan is $7,550 for in-network. If you go out-of-network with the PPO, it is $11,300 combined.',
-      'One of the things I like about this plan is the low max out-of-pocket — just $3,400. That gives you a lot of financial protection.',
+      'One of the things I like about this plan is the low max out-of-pocket, just $3,400. That gives you a lot of financial protection.',
     ],
     anti_patterns: [
       'You will never pay more than a few dollars.',
@@ -218,7 +218,7 @@ export const planPresentation = [
       'For your primary care doctor visits, the copay is $0. Specialist visits are $40. Urgent care is $40, and if you need the emergency room it is $120, which is waived if you are admitted.',
       'Your copays on this plan would be $5 for PCP visits, $45 for specialists, and $90 for the ER.',
       'Let me walk you through the costs. You would pay $10 to see your primary care doctor, $40 for a specialist, $75 for an ER visit that gets waived if they admit you, and $250 per day for an inpatient hospital stay up to 5 days.',
-      'The copay structure is pretty straightforward — zero dollars for primary care, $35 for specialists, and $120 for emergency services.',
+      'The copay structure is pretty straightforward, zero dollars for primary care, $35 for specialists, and $120 for emergency services.',
     ],
     anti_patterns: [
       'Doctor visits are basically free.',
@@ -314,7 +314,7 @@ export const planPresentation = [
       'This plan includes Part D prescription drug coverage, so you would not need a separate drug plan. Your medications are covered right within this Medicare Advantage plan.',
       'Drug coverage is built into this MAPD plan. It covers a wide range of medications across five different tiers, each with different cost levels.',
       'This plan has integrated Part D coverage. That means your medical benefits and your drug benefits are all under one plan, which keeps things simple.',
-      'Let me go over the drug coverage. This plan includes full Part D benefits with its own formulary — that is the list of covered drugs.',
+      'Let me go over the drug coverage. This plan includes full Part D benefits with its own formulary, that is the list of covered drugs.',
     ],
     anti_patterns: [
       'Drugs are covered, do not worry about it.',
@@ -378,7 +378,7 @@ export const planPresentation = [
       'I ran your medications through the formulary and all three are covered. Metformin is Tier 1, Lisinopril is Tier 1, and Atorvastatin is Tier 2.',
       'Let me check your drugs on this plan. Okay, Eliquis is covered on Tier 3 and Jardiance is on Tier 3 as well. Gabapentin is Tier 1.',
       'I looked up your prescriptions and I do want to let you know that one of them, Farxiga, requires prior authorization on this plan. The other two are covered without restrictions.',
-      'Good news — all five of your medications are on the formulary. Let me tell you which tier each one falls under.',
+      'Good news, all five of your medications are on the formulary. Let me tell you which tier each one falls under.',
     ],
     anti_patterns: [
       'All medications are covered, so do not worry about it.',
@@ -409,7 +409,7 @@ export const planPresentation = [
     sample_phrases: [
       'At your preferred pharmacy, Metformin would cost you about $1 for a 30-day supply, and Lisinopril would be about $1 as well. Those are both Tier 1 generics.',
       'Based on the formulary, Eliquis would run you about $47 per month at a preferred pharmacy, and Jardiance would be about $47 as well since they are both Tier 3.',
-      'Here is what your monthly drug costs would look like — your two generics would be about $2 total, and the Atorvastatin would be about $7. So roughly $9 per month for all three.',
+      'Here is what your monthly drug costs would look like, your two generics would be about $2 total, and the Atorvastatin would be about $7. So roughly $9 per month for all three.',
       'I want to give you an estimate. Your total monthly prescription costs on this plan would be approximately $55 at your Walgreens, which is a preferred pharmacy.',
     ],
     anti_patterns: [
@@ -443,7 +443,7 @@ export const planPresentation = [
       'Let me look up your doctors. Dr. Thompson is in the network, but I want to verify Dr. Rivera as well. Yes, she is listed as in-network too.',
       'I ran your providers through the directory and all three of your doctors are participating providers on this plan.',
       'I do need to let you know that your primary care doctor, Dr. Chen, is not in this plan network. However, Dr. Williams at the same practice group is, if you would be open to that.',
-      'Good news — both your PCP and your endocrinologist are in-network. Your dermatologist is not, but with the PPO you could still see them at a higher cost.',
+      'Good news, both your PCP and your endocrinologist are in-network. Your dermatologist is not, but with the PPO you could still see them at a higher cost.',
     ],
     anti_patterns: [
       'I am sure all your doctors are in-network.',
@@ -475,7 +475,7 @@ export const planPresentation = [
       'This plan includes a dental benefit. You get two preventive cleanings and exams per year at no cost, plus a $2,000 annual allowance for comprehensive dental work like fillings, crowns, and dentures.',
       'For dental, this plan covers preventive services like cleanings and X-rays, and it has a $1,500 annual maximum for restorative work. There is a $50 deductible on the comprehensive side.',
       'Dental is included at no extra charge. Preventive cleanings are covered, and you have up to $1,000 per year for things like extractions, root canals, and crowns.',
-      'The dental benefit on this plan is quite generous — two free cleanings a year, free X-rays, and up to $3,000 for major dental work.',
+      'The dental benefit on this plan is quite generous, two free cleanings a year, free X-rays, and up to $3,000 for major dental work.',
     ],
     anti_patterns: [
       'You get unlimited dental coverage.',
@@ -603,11 +603,11 @@ export const planPresentation = [
       'This plan includes SilverSneakers, which gives you a free gym membership at thousands of locations nationwide. That includes places like Planet Fitness, the YMCA, and local fitness centers.',
       'You would get the Silver and Fit fitness program, which gives you access to a gym at no cost. There are over 15,000 participating locations.',
       'The plan includes a fitness benefit through Renew Active. You get a free gym membership and access to online fitness classes and brain health games.',
-      'There is a complimentary fitness membership included. You can go to any participating gym in the network — just show your member card.',
+      'There is a complimentary fitness membership included. You can go to any participating gym in the network, just show your member card.',
     ],
     anti_patterns: [
       'You get a free membership to any gym in the country.',
-      'The gym benefit is worth hundreds of dollars — it basically pays for the plan.',
+      'The gym benefit is worth hundreds of dollars, it basically pays for the plan.',
       'Everyone should sign up just for the free gym membership.',
     ],
   },
@@ -731,7 +731,7 @@ export const planPresentation = [
       'This plan includes what is called a Part B premium giveback of $75 per month. That means instead of paying the full $185 Part B premium, you would only pay $110. It reduces your Social Security deduction.',
       'One unique feature of this plan is the Part B giveback. The plan pays $50 per month toward your Part B premium, so your out-of-pocket for Part B drops from $185 to $135.',
       'There is a $100 monthly Part B premium reduction on this plan. That money goes right back into your Social Security check.',
-      'This plan gives you money back on your Part B premium — $60 per month. So you effectively get a raise in your Social Security income.',
+      'This plan gives you money back on your Part B premium, $60 per month. So you effectively get a raise in your Social Security income.',
     ],
     anti_patterns: [
       'This plan pays you to have it.',
@@ -863,7 +863,7 @@ export const planPresentation = [
     ],
     anti_patterns: [
       'Original Medicare is terrible compared to this plan.',
-      'That other plan is a ripoff — ours is way better.',
+      'That other plan is a ripoff, ours is way better.',
       'Why would anyone stay on Original Medicare when this plan exists?',
     ],
   },
@@ -954,8 +954,8 @@ export const planPresentation = [
     sample_phrases: [
       'You mentioned that keeping Dr. Patel and having good dental coverage were your top priorities. This plan has Dr. Patel in-network and includes $2,000 in annual dental benefits.',
       'Since you said low drug costs were important and you take five medications, I want to highlight that all five are on this plan formulary and your estimated monthly cost is only $12.',
-      'You told me you travel a lot between here and Michigan. That is why I am recommending this PPO — it gives you coverage even when you are out of state.',
-      'Based on everything you told me — wanting a zero-dollar premium, keeping your two specialists, and having the OTC benefit — this plan checks all of those boxes.',
+      'You told me you travel a lot between here and Michigan. That is why I am recommending this PPO, it gives you coverage even when you are out of state.',
+      'Based on everything you told me, wanting a zero-dollar premium, keeping your two specialists, and having the OTC benefit, this plan checks all of those boxes.',
       'Remember you said dental was a must-have? This plan has one of the strongest dental benefits in your area with $3,000 in annual coverage and no waiting period.',
     ],
     anti_patterns: [

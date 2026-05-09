@@ -21,7 +21,7 @@ export const impactCoverage = [
     auto_fail: false,
     sample_phrases: [
       'I want to make sure you understand that if you enroll in this plan, you will be automatically disenrolled from your current plan. You cannot be in both at the same time.',
-      'One important thing to know — by enrolling in this Medicare Advantage plan, your current coverage through your existing plan will end.',
+      'One important thing to know, by enrolling in this Medicare Advantage plan, your current coverage through your existing plan will end.',
       'If we move forward with enrollment today, your current plan will be cancelled and replaced by this new plan on the effective date.',
       'Before we go further, I need you to understand that signing up for this plan means your current Medicare Advantage coverage will terminate.',
     ],
@@ -85,7 +85,7 @@ export const impactCoverage = [
     auto_fail: true,
     sample_phrases: [
       'If you currently have a Medicare Supplement or Medigap policy, I need you to understand that once you drop it, you may not be able to get it back at the same rate or with the same benefits. There is no guarantee the company will accept you again.',
-      'This is very important — if you have a Medigap plan right now and you cancel it, you could lose your guaranteed issue rights. That means if you ever want to go back, you might face medical underwriting and could be denied or charged more.',
+      'This is very important, if you have a Medigap plan right now and you cancel it, you could lose your guaranteed issue rights. That means if you ever want to go back, you might face medical underwriting and could be denied or charged more.',
       'Do you currently have a Medicare Supplement policy? Because if so, I want to make sure you know that dropping your Medigap plan could mean permanently losing that coverage. Most people cannot get it back under the same terms.',
       'I am required to let you know that giving up a Medigap plan to join a Medicare Advantage plan is a serious decision. Once your Medigap policy lapses, you may not be able to re-enroll in the same plan or any Medigap plan without health screening.',
     ],
@@ -117,7 +117,7 @@ export const impactCoverage = [
     auto_fail: false,
     sample_phrases: [
       'Do you have any health coverage through a current or former employer or union? That is important because enrolling in this plan could affect that coverage.',
-      'Before we go any further, I need to ask — are you currently receiving health benefits through an employer or a union retiree plan?',
+      'Before we go any further, I need to ask, are you currently receiving health benefits through an employer or a union retiree plan?',
       'I want to make sure I ask: do you or your spouse have any group health insurance from an employer or union? Signing up for a Medicare Advantage plan could impact those benefits.',
       'Are you covered under any employer-sponsored or union health plan right now? If so, you will want to check with your benefits office before enrolling because it could change your group coverage.',
     ],
@@ -149,7 +149,7 @@ export const impactCoverage = [
     auto_fail: false,
     sample_phrases: [
       'Do you receive any benefits through the VA or TRICARE? If you do, it is important to know how a Medicare Advantage plan interacts with those benefits.',
-      'I also want to ask — are you a veteran receiving VA health benefits, or do you have TRICARE coverage? Those programs work differently with Medicare Advantage.',
+      'I also want to ask, are you a veteran receiving VA health benefits, or do you have TRICARE coverage? Those programs work differently with Medicare Advantage.',
       'Before we proceed, are you enrolled in any VA healthcare or TRICARE? If so, you will want to understand how this plan coordinates with those benefits.',
     ],
     anti_patterns: [
@@ -212,7 +212,7 @@ export const impactCoverage = [
     auto_fail: false,
     sample_phrases: [
       'I also want to mention the Part D late enrollment penalty. If you go 63 or more consecutive days without creditable prescription drug coverage, you could face a permanent penalty added to your Part D premium when you do enroll.',
-      'Something important to keep in mind — if there is a gap in your prescription drug coverage of 63 days or more, Medicare may charge you a late enrollment penalty for Part D that you would pay for as long as you have Part D coverage.',
+      'Something important to keep in mind, if there is a gap in your prescription drug coverage of 63 days or more, Medicare may charge you a late enrollment penalty for Part D that you would pay for as long as you have Part D coverage.',
       'There is a Part D penalty I want to make sure you know about. If you drop a plan with drug coverage and do not have creditable coverage for more than 63 days, you will be assessed a monthly penalty when you re-enroll.',
     ],
     anti_patterns: [
@@ -245,7 +245,7 @@ export const impactCoverage = [
       'I want to make sure you understand the timing here. Your new plan will not take effect until the first of the month, so there should be no gap in coverage. Your current plan stays in place until the new one starts.',
       'There should be a seamless transition between your current coverage and the new plan. Your existing plan will continue until the effective date of the new plan, so you will not have a gap.',
       'It is important to know that you will remain covered by your current plan until the new plan effective date. We want to make sure there is no lapse in your coverage during the transition.',
-      'Your coverage transition should be smooth — your current plan covers you until the day the new plan kicks in, so you will not experience a gap in benefits.',
+      'Your coverage transition should be smooth, your current plan covers you until the day the new plan kicks in, so you will not experience a gap in benefits.',
     ],
     anti_patterns: [
       'You might have a short gap but it is not a big deal.',
@@ -274,7 +274,7 @@ export const impactCoverage = [
     failure_severity: 'critical',
     auto_fail: true,
     sample_phrases: [
-      'I want to be very clear — enrolling in this plan is completely voluntary. You are under absolutely no obligation to make any changes today.',
+      'I want to be very clear, enrolling in this plan is completely voluntary. You are under absolutely no obligation to make any changes today.',
       'This is entirely your decision. Nobody is requiring you to switch plans, and you should only move forward if you feel this is the right choice for you.',
       'Before we go any further, I want to remind you that this is 100 percent voluntary. You do not have to enroll in anything today, and there is no pressure to do so.',
       'I need you to know that this decision is yours and yours alone. You are not obligated to enroll, and you can stay with your current plan if you prefer.',

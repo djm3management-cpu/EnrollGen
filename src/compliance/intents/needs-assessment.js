@@ -126,9 +126,9 @@ export const needsAssessment = [
     failure_severity: 'moderate',
     auto_fail: false,
     sample_phrases: [
-      'Okay, so you said Lisinopril. What dosage are you on — is it the 10 milligram or the 20?',
+      'Okay, so you said Lisinopril. What dosage are you on, is it the 10 milligram or the 20?',
       'Let me get those exact names and dosages. You said Metformin 500 milligrams twice a day, Atorvastatin 40 milligrams, and Amlodipine 5 milligrams. Is that correct?',
-      'Can you spell that medication for me? And do you know the strength — like how many milligrams?',
+      'Can you spell that medication for me? And do you know the strength, like how many milligrams?',
       'Alright, I have Eliquis 5 milligrams, Jardiance 25 milligrams, and Gabapentin 300 milligrams. Are there any others?',
     ],
     anti_patterns: [
@@ -194,8 +194,8 @@ export const needsAssessment = [
     auto_fail: false,
     sample_phrases: [
       'Can you give me the name of your primary care doctor? And what practice are they with?',
-      'So your primary is Dr. Patel at Sunshine Medical Group. And you said you also see a cardiologist — what is their name?',
-      'Let me write these down — Dr. Thompson for primary care, Dr. Lee for endocrinology, and Dr. Rivera for cardiology. Anyone else?',
+      'So your primary is Dr. Patel at Sunshine Medical Group. And you said you also see a cardiologist, what is their name?',
+      'Let me write these down, Dr. Thompson for primary care, Dr. Lee for endocrinology, and Dr. Rivera for cardiology. Anyone else?',
       'Do you know the full name of your specialist? I want to look them up in the provider directory.',
     ],
     anti_patterns: [
@@ -259,8 +259,8 @@ export const needsAssessment = [
     sample_phrases: [
       'Okay, so you use the Walgreens on Main Street. Let me check if that is a preferred pharmacy.',
       'Got it, CVS on Oak Avenue. I will look that up to see how your copays would work there.',
-      'So you do mail order through Express Scripts. That is good to know — I will check if that works with these plans.',
-      'The Publix pharmacy in your neighborhood — I will make sure that is in-network and check the pricing tier.',
+      'So you do mail order through Express Scripts. That is good to know, I will check if that works with these plans.',
+      'The Publix pharmacy in your neighborhood, I will make sure that is in-network and check the pricing tier.',
     ],
     anti_patterns: [
       'I am sure your pharmacy is covered.',
@@ -424,7 +424,7 @@ export const needsAssessment = [
     sample_phrases: [
       'Do you have any surgeries or procedures coming up in the next year?',
       'Are there any medical treatments you are planning on or that your doctor has recommended?',
-      'Is there anything scheduled — like a knee replacement, cataract surgery, or any other procedure — that we should factor in?',
+      'Is there anything scheduled, like a knee replacement, cataract surgery, or any other procedure, that we should factor in?',
       'Do you anticipate needing any major medical care in the coming year? Sometimes that affects which plan makes the most sense.',
     ],
     anti_patterns: [
@@ -489,7 +489,7 @@ export const needsAssessment = [
     auto_fail: false,
     sample_phrases: [
       'How about dental, vision, and hearing? Are those services important to you? A lot of Medicare Advantage plans include those benefits.',
-      'Do you currently have dental coverage? What about vision — do you wear glasses? And hearing — is that something you need?',
+      'Do you currently have dental coverage? What about vision, do you wear glasses? And hearing, is that something you need?',
       'Tell me about your dental, vision, and hearing needs. Do you go to the dentist regularly? When was your last eye exam?',
       'One of the big advantages of MA plans is extra benefits like dental, vision, and hearing. Are any of those a priority for you?',
     ],
@@ -619,10 +619,10 @@ export const needsAssessment = [
     auto_fail: false,
     sample_phrases: [
       'Okay, let me make sure I have everything. You take Metformin and Lisinopril, you want to keep seeing Dr. Patel, you use the Walgreens on Main Street, dental is important to you, and you would like to keep your premium as low as possible. Did I miss anything?',
-      'So to summarize what you have told me — your main priorities are keeping your current doctors, making sure your three medications are covered at a reasonable cost, and having good dental benefits. Does that sound right?',
+      'So to summarize what you have told me, your main priorities are keeping your current doctors, making sure your three medications are covered at a reasonable cost, and having good dental benefits. Does that sound right?',
       'Let me recap your needs before we look at plans. You have diabetes and high blood pressure, you see a specialist quarterly, you want a PPO for travel flexibility, and you would prefer a zero-dollar premium. Is there anything I left out?',
       'Before I start showing you plans, I want to confirm I have your needs right. You said low copays are important, you want your prescriptions covered, you need dental and vision, and you want to keep your cardiologist Dr. Lee. Am I on track?',
-      'Just to make sure we are on the same page — your top priorities are drug coverage for your five medications, keeping your two specialists, and having the OTC benefit. Did I get that right?',
+      'Just to make sure we are on the same page, your top priorities are drug coverage for your five medications, keeping your two specialists, and having the OTC benefit. Did I get that right?',
     ],
     anti_patterns: [
       'Alright, I think I know what you need. Let me show you this plan.',

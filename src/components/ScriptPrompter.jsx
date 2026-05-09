@@ -7,7 +7,7 @@ import { useMergedTranscript } from "../hooks/useMergedTranscript";
 import { useTrainingMode } from "../context/TrainingModeContext";
 
 /* ═══════════════════════════════════════════════════════════════════
-   ScriptPrompter — Headless copilot engine host.
+   ScriptPrompter, Headless copilot engine host.
    All visual controls now live in the right-rail CopilotControlStrip.
    This component owns hooks and transcript forwarding.
    ═══════════════════════════════════════════════════════════════════ */
@@ -28,7 +28,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
 
   const { enabled: trainingModeEnabled } = useTrainingMode();
 
-  // Shared transcriptRef — created here, passed to both hooks
+  // Shared transcriptRef, created here, passed to both hooks
   const transcriptRef = useRef("");
 
   // Simulated transcript state (training mode only)

@@ -1,5 +1,5 @@
 /**
- * useMedSupCopilotEngine.js — Medicare Supplement compliance copilot engine
+ * useMedSupCopilotEngine.js, Medicare Supplement compliance copilot engine
  *
  * Built on the shared useCopilotEngineCore hook. Supplies MedSup-specific
  * prompt builders, context builders, requestCoaching / askCopilot, TPMO
@@ -135,19 +135,19 @@ function buildComplianceContext(knowledge) {
 SECTION-SPECIFIC COMPLIANCE INTELLIGENCE
 ════════════════════════════════════════════════════════
 
-VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING (or close paraphrases — speech recognition may garble words):
+VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING (or close paraphrases, speech recognition may garble words):
 ${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
 
 KEY PHRASES TO LISTEN FOR (if you hear these or synonyms/paraphrases, the agent IS covering the requirement):
 ${knowledge.keyPhrasesToListenFor.map((p) => `  • "${p}"`).join("\n")}
 
-REQUIRED COMPLIANCE ELEMENTS — every one MUST be covered in this section:
+REQUIRED COMPLIANCE ELEMENTS, every one MUST be covered in this section:
 ${knowledge.requiredElements.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
 
 COMMON AGENT MISTAKES IN THIS SECTION:
 ${knowledge.commonMistakes.map((m) => `  ⚠ ${m}`).join("\n")}
 
-RED FLAGS — INTERVENE IMMEDIATELY IF DETECTED:
+RED FLAGS, INTERVENE IMMEDIATELY IF DETECTED:
 ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 `;
 }
@@ -189,12 +189,12 @@ function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInt
 IMPORTANT MED SUP CONTEXT:
 - This is a Medicare Supplement (Medigap) enrollment, NOT Medicare Advantage or ACA
 - Medigap plans are standardized by letter (A, B, C, D, F, G, K, L, M, N)
-- Same letter = same benefits regardless of carrier — only premiums differ
+- Same letter = same benefits regardless of carrier, only premiums differ
 - Client MUST have Medicare Part A and Part B to enroll in Medigap
 - Guaranteed Issue (GI) rights: Medigap OEP (6 months from Part B), trial right, specific qualifying events
 - Outside GI windows: medical underwriting is required in most states
 - Some states have year-round GI rights (CT, ME, MA, NY)
-- TPMO disclaimer must be delivered verbatim — twice (opening and closing)
+- TPMO disclaimer must be delivered verbatim, twice (opening and closing)
 - Agent cannot guarantee acceptance when underwriting is required
 - Replacement/switching compliance: cannot misrepresent benefits of switching carriers
 
@@ -211,19 +211,19 @@ IMPORTANT MED SUP CONTEXT:
 STATE GI RULES (included in structured context as stateGIRules):
 - Year-round GI (no UW): CT, ME, MA, NJ, NY
 - Birthday rule states (annual 30-day window): CA, ID, IL, LA, NV, OK, OR
-- Federal OEP only: all other states — 6 months from Part B effective date at 65
+- Federal OEP only: all other states, 6 months from Part B effective date at 65
 
 ════════════════════════════════════════════════════════
-CRITICAL AUDIO CONSTRAINT — NON-NEGOTIABLE
+CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
 ════════════════════════════════════════════════════════
 You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words. You have ZERO access to what the client says.
 
 IMPLICATIONS:
 - Evaluate compliance ONLY based on what the AGENT said or failed to say
-- NEVER say "the client didn't confirm" — YOU CANNOT HEAR THE CLIENT
+- NEVER say "the client didn't confirm", YOU CANNOT HEAR THE CLIENT
 - DO say "I didn't hear you ask for..." or "Make sure you cover..."
-- Speech recognition is imperfect — if it SOUNDS CLOSE ENOUGH, give credit
-- The agent may have started before recording began — absence is not proof of omission
+- Speech recognition is imperfect, if it SOUNDS CLOSE ENOUGH, give credit
+- The agent may have started before recording began, absence is not proof of omission
 
 ════════════════════════════════════════════════════════
 CURRENT SECTION: "${sectionKey}"
@@ -236,7 +236,7 @@ ${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
 ${transcriptReferenceBlock}
 ` : ""}
 ${recentInterventionText ? `════════════════════════════════════════════════════════
-RECENT PRIOR INTERVENTIONS — DO NOT REPEAT UNLESS THE ISSUE CLEARLY REMAINS:
+RECENT PRIOR INTERVENTIONS, DO NOT REPEAT UNLESS THE ISSUE CLEARLY REMAINS:
 ════════════════════════════════════════════════════════
 ${recentInterventionText}
 ` : ""}
@@ -250,7 +250,7 @@ HOW TO USE THIS CONTEXT:
 - Use derivedSignals for broader patterns: timeInSectionMs and likelyCoveredByParaphrase.
 - Use priorCompletedSections to understand what the agent has already finished.
 - medicareReference contains verified 2026 CMS cost-sharing amounts. Use these to coach the agent with accurate dollar figures when explaining what Medigap covers.
-- stateGIRules contains state-specific GI rules. If the agent mentions a state, check whether that state has year-round GI, a birthday rule, or federal OEP only — and coach accordingly.
+- stateGIRules contains state-specific GI rules. If the agent mentions a state, check whether that state has year-round GI, a birthday rule, or federal OEP only, and coach accordingly.
 
 ════════════════════════════════════════════════════════
 EMPTY OR SPARSE TRANSCRIPT:
@@ -275,7 +275,7 @@ Every non-silent response MUST:
 - For remind: State what hasn't been covered yet and give the exact words to say
 - For tip: Name the specific element handled well and why it matters
 
-CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
+CRITICAL NUANCE, AVOIDING FALSE POSITIVES:
 - Do NOT claim the agent skipped a section just because the transcript is limited
 - Do NOT flag individual words as missing if the overall message semantically covers the requirement
 - Do NOT repeatedly flag the same issue
@@ -323,7 +323,7 @@ YOUR CAPABILITIES:
 - Replacement/switching compliance requirements
 - TPMO disclosure requirements
 
-HARD BOUNDARY — DO NOT ANSWER:
+HARD BOUNDARY, DO NOT ANSWER:
 - Specific premium quotes → tell agent to check carrier rating tool
 - Whether a specific doctor accepts Medicare → direct to Medicare.gov provider lookup
 - Specific carrier underwriting criteria → direct to carrier guidelines
@@ -426,7 +426,7 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, lo
     const sectionKey = currentStep;
     const reviewMode = periodic ? "periodic" : "live";
 
-    // Gates — normal (non-entry, non-manual, non-periodic) requests
+    // Gates, normal (non-entry, non-manual, non-periodic) requests
     if (!sectionEntry && !manual && !periodic) {
       const now = Date.now();
       const cooldown = MEDSUP_COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
@@ -451,7 +451,7 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, lo
     setCoachingLoading(true);
     const targetAnalyzedLength = fullTranscript.length;
 
-    // Flow order — show neighboring sections
+    // Flow order, show neighboring sections
     const sectionKeys = Object.keys(MEDSUP_SECTION_LABELS).map(Number).sort((a, b) => a - b);
     const currentIdx = sectionKeys.indexOf(activeSection);
     const neighborKeys = sectionKeys.slice(Math.max(0, currentIdx - 1), currentIdx + 2);
@@ -496,7 +496,7 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, lo
       reviewMode,
     });
 
-    const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words. Speech recognition may have minor errors.)
+    const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client, only the agent's words. Speech recognition may have minor errors.)
 ${sectionEntry ? `
 SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" section. Provide one short info message with the next one or two priorities. Use level "info" unless you spot an actual issue. Do NOT return silent.
 ` : ""}
@@ -582,7 +582,7 @@ SECTION CONTEXT (rolling window):
           shouldSuppressDuplicateIssue(liveMessages, currentStep, issueTag)) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning — not repeated.", { section: currentStep, issueTag });
+        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning, not repeated.", { section: currentStep, issueTag });
         return;
       }
 
@@ -591,11 +591,11 @@ SECTION CONTEXT (rolling window):
           shouldSuppressForNuance({ level, issueTag, message, derivedSignals })) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed — context too ambiguous.", { section: currentStep, issueTag });
+        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed, context too ambiguous.", { section: currentStep, issueTag });
         return;
       }
 
-      // Confidence floor checks (MedSup has no section overrides — use base floors)
+      // Confidence floor checks (MedSup has no section overrides, use base floors)
       if (level === "warn" && confidence !== null && confidence < MEDSUP_WARN_CONFIDENCE_FLOOR) {
         if (periodic) {
           level = "tip"; issueTag = "";

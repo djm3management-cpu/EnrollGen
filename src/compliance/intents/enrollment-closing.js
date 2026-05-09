@@ -21,9 +21,9 @@ export const enrollmentClosing = [
     auto_fail: true,
     sample_phrases: [
       'Before we proceed, I need to confirm that this enrollment is completely voluntary. No one is requiring you to enroll in this plan. Are you choosing to enroll on your own free will?',
-      'I want to make absolutely sure — you understand that this enrollment is entirely voluntary, correct? You are under no obligation to sign up today.',
+      'I want to make absolutely sure, you understand that this enrollment is entirely voluntary, correct? You are under no obligation to sign up today.',
       'Just to be clear, nobody is pressuring you into this decision. This enrollment is 100 percent voluntary. Do you confirm that you are choosing to enroll of your own accord?',
-      'I am required to ask — is your decision to enroll in this plan voluntary? You are not being forced or pressured by anyone to make this choice, correct?',
+      'I am required to ask, is your decision to enroll in this plan voluntary? You are not being forced or pressured by anyone to make this choice, correct?',
     ],
     anti_patterns: [
       'Great, let me just get you signed up real quick.',
@@ -55,7 +55,7 @@ export const enrollmentClosing = [
       'Do I have your verbal authorization to submit this enrollment application on your behalf? Please say yes or no.',
       'I need your verbal consent to proceed. Do you authorize me to submit your enrollment into the Humana Gold Plus plan?',
       'Can you please confirm out loud that you give your consent for me to submit this enrollment form to the carrier?',
-      'I need a clear yes or no — do you authorize the submission of this Medicare Advantage enrollment application?',
+      'I need a clear yes or no, do you authorize the submission of this Medicare Advantage enrollment application?',
     ],
     anti_patterns: [
       'Alright, I will go ahead and submit this for you.',
@@ -86,7 +86,7 @@ export const enrollmentClosing = [
     sample_phrases: [
       'Your enrollment application has been submitted to Humana. You are all set on our end.',
       'I have successfully submitted your enrollment into the Aetna Medicare Eagle Plus plan. The application is now with the carrier for processing.',
-      'Great news — your enrollment form has been submitted. The carrier will now process your application.',
+      'Great news, your enrollment form has been submitted. The carrier will now process your application.',
       'Your application has been sent to UnitedHealthcare. Your enrollment is now being processed.',
     ],
     anti_patterns: [
@@ -117,7 +117,7 @@ export const enrollmentClosing = [
     auto_fail: false,
     sample_phrases: [
       'Your confirmation number is HG-2026-847291. I recommend writing that down for your records.',
-      'Let me give you your confirmation number — it is AET-55012-MA. Please keep that in a safe place in case you need to reference your application.',
+      'Let me give you your confirmation number, it is AET-55012-MA. Please keep that in a safe place in case you need to reference your application.',
       'I want to make sure you have your confirmation number. It is UHC-2026-331987. Do you have something to write that down with?',
       'Your enrollment reference number is WC-MA-098712. You will want to keep that handy in case you need to follow up on your application.',
     ],

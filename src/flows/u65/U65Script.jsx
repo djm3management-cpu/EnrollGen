@@ -1,5 +1,5 @@
 /**
- * U65Script.jsx — U65 Off-Exchange entry point
+ * U65Script.jsx, U65 Off-Exchange entry point
  * Wraps U65Flow with U65Provider
  */
 

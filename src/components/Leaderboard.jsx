@@ -805,7 +805,7 @@ export default function Leaderboard() {
         </div>
       ) : (
         <>
-          {/* ── STATS DASHBOARD — Top agent cards ── */}
+          {/* ── STATS DASHBOARD, Top agent cards ── */}
           <div>
             <h2 style={{ ...S.sectionTitle, marginBottom: 12 }}>Stats Dashboard</h2>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>

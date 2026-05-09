@@ -6,20 +6,20 @@ const TREE = {
     id: "q1",
     num: "01",
     question: "Is the client 65 or older, or currently Medicare-eligible?",
-    hint: "Medicare eligibility includes disability (SSDI) and ESRD — not just age 65+",
+    hint: "Medicare eligibility includes disability (SSDI) and ESRD, not just age 65+",
     answers: [
-      { label: "Yes — 65+ or Medicare-eligible", next: "q2" },
-      { label: "No — Under 65, not Medicare-eligible", next: "q5" },
+      { label: "Yes, 65+ or Medicare-eligible", next: "q2" },
+      { label: "No, Under 65, not Medicare-eligible", next: "q5" },
     ],
   },
   q2: {
     id: "q2",
     num: "02",
     question: "Does the client currently have Medicare Parts A & B?",
-    hint: "Part A = hospital · Part B = medical — both required before enrolling in MA or Med Sup",
+    hint: "Part A = hospital · Part B = medical, both required before enrolling in MA or Med Sup",
     answers: [
-      { label: "Yes — enrolled in both Part A & B", next: "q3" },
-      { label: "No — not yet enrolled in Medicare", next: "refer_medicare" },
+      { label: "Yes, enrolled in both Part A & B", next: "q3" },
+      { label: "No, not yet enrolled in Medicare", next: "refer_medicare" },
     ],
   },
   refer_medicare: {
@@ -50,9 +50,9 @@ const TREE = {
     num: "04",
     question: "Does the client want prescription drug (Rx) coverage included?",
     answers: [
-      { label: "Yes — needs drug coverage", next: "result_medsup_pdp" },
+      { label: "Yes, needs drug coverage", next: "result_medsup_pdp" },
       {
-        label: "No — has other creditable coverage or is declining Part D",
+        label: "No, has other creditable coverage or is declining Part D",
         next: "result_medsup",
       },
     ],
@@ -62,8 +62,8 @@ const TREE = {
     num: "05",
     question: "Does the client have access to employer or group health insurance?",
     answers: [
-      { label: "Yes — employer coverage is available", next: "q6" },
-      { label: "No — no employer coverage available", next: "q7" },
+      { label: "Yes, employer coverage is available", next: "q6" },
+      { label: "No, no employer coverage available", next: "q7" },
     ],
   },
   q6: {
@@ -72,8 +72,8 @@ const TREE = {
     question: "Is the employer coverage affordable per ACA standards?",
     hint: "Affordable = employee-only premium at or below 9.96% of household income for plan years beginning in 2026.",
     answers: [
-      { label: "Yes — employer coverage is affordable", next: "refer_employer" },
-      { label: "No — coverage is unaffordable or inadequate", next: "q7" },
+      { label: "Yes, employer coverage is affordable", next: "refer_employer" },
+      { label: "No, coverage is unaffordable or inadequate", next: "q7" },
     ],
   },
   refer_employer: {
@@ -91,8 +91,8 @@ const TREE = {
     question: "What is the client's estimated household income relative to the Federal Poverty Level (FPL)?",
     hint: "100–400% FPL typically qualifies for premium tax credits. Below 138% FPL may qualify for Medicaid in expansion states (NJ, PA, VA). GA has not expanded Medicaid.",
     answers: [
-      { label: "At or below 400% FPL — likely subsidy-eligible", next: "result_aca" },
-      { label: "Above 400% FPL — not subsidy-eligible", next: "q8" },
+      { label: "At or below 400% FPL, likely subsidy-eligible", next: "result_aca" },
+      { label: "Above 400% FPL, not subsidy-eligible", next: "q8" },
       { label: "Unknown / Not sure", next: "refer_income" },
     ],
   },
@@ -101,7 +101,7 @@ const TREE = {
     type: "refer",
     message: "Verify income eligibility before recommending a product.",
     detail:
-      "Use healthcare.gov or the state marketplace income estimator to check subsidy eligibility. Do not assume — incorrect guidance can harm the client's coverage or tax situation.",
+      "Use healthcare.gov or the state marketplace income estimator to check subsidy eligibility. Do not assume, incorrect guidance can harm the client's coverage or tax situation.",
     branches: [
       { label: "Client is subsidy-eligible → ACA On-Exchange", next: "result_aca" },
       { label: "Client is not subsidy-eligible → Non-ACA Triage", next: "refer_u65_rules" },
@@ -159,7 +159,7 @@ const TREE = {
     label: "Medicare Advantage",
     sublabel: "MA",
     bullets: [
-      "Bundled coverage — medical, Rx, dental, and vision often in one plan",
+      "Bundled coverage, medical, Rx, dental, and vision often in one plan",
       "Low or $0 monthly premium; cost-sharing through copays and coinsurance",
       "Ideal for clients who want simplicity and are comfortable with a network",
     ],
@@ -173,7 +173,7 @@ const TREE = {
     label: "Medicare Supplement + Part D",
     sublabel: "MED SUP + PDP",
     bullets: [
-      "Freedom to see any Medicare-accepting provider nationwide — no referrals needed",
+      "Freedom to see any Medicare-accepting provider nationwide, no referrals needed",
       "Supplement covers Original Medicare gaps (deductibles, coinsurance, copays)",
       "Pair with a standalone Part D plan to add prescription drug coverage",
     ],
@@ -187,7 +187,7 @@ const TREE = {
     label: "Medicare Supplement",
     sublabel: "MED SUP",
     bullets: [
-      "Total provider freedom — any Medicare-accepting physician or hospital, nationwide",
+      "Total provider freedom, any Medicare-accepting physician or hospital, nationwide",
       "Predictable out-of-pocket costs with no network restrictions",
       "Client has separate creditable drug coverage or is knowingly declining Part D",
     ],
@@ -203,7 +203,7 @@ const TREE = {
     bullets: [
       "NJ → Get Covered NJ · PA → Pennie · VA → marketplace.va.gov · GA → HealthCare.gov",
       "Premium tax credits and cost-sharing reductions available based on household income",
-      "All plans include Essential Health Benefits — comprehensive major medical coverage",
+      "All plans include Essential Health Benefits, comprehensive major medical coverage",
     ],
   },
   result_enrollprime: {
@@ -213,7 +213,7 @@ const TREE = {
     color: "#a855f7",
     rgb: "168,85,247",
     label: "Underwritten Network Option",
-    sublabel: "U65 — PPO / BRIDGE",
+    sublabel: "U65, PPO / BRIDGE",
     bullets: [
       "Use this lane for healthier bridge cases that want a more familiar network story than indemnity products.",
       "Verify state legality, underwriting, pre-existing condition handling, Rx, and true benefit structure before presenting it as value.",
@@ -227,9 +227,9 @@ const TREE = {
     color: "#a855f7",
     rgb: "168,85,247",
     label: "PALIC HSP Gold",
-    sublabel: "U65 — FIXED BENEFIT",
+    sublabel: "U65, FIXED BENEFIT",
     bullets: [
-      "Pays set dollar amounts per covered service — NOT ACA-compliant major medical",
+      "Pays set dollar amounts per covered service, NOT ACA-compliant major medical",
       "Best only when the client knowingly accepts a budget-first, scheduled-benefit structure",
       "Disclose limitations clearly: client is responsible for costs above fixed benefit amounts and catastrophic exposure can remain significant",
     ],
@@ -241,7 +241,7 @@ const TREE = {
     color: "#a855f7",
     rgb: "168,85,247",
     label: "LIFE-X / BHPI Group Health",
-    sublabel: "U65 — GROUP",
+    sublabel: "U65, GROUP",
     bullets: [
       "Use this lane when a group-style or association-based structure fits better than STM or indemnity.",
       "Qualification, participation, and ongoing program mechanics matter as much as premium.",
@@ -255,7 +255,7 @@ const TREE = {
     color: "#a855f7",
     rgb: "168,85,247",
     label: "Farm Bureau-Style State Option",
-    sublabel: "U65 — STATE SPECIFIC",
+    sublabel: "U65, STATE SPECIFIC",
     bullets: [
       "This can be a strong lane in select states when a Farm Bureau or similar membership-based option is actually available.",
       "Do not assume availability across states; verify membership rules, underwriting, network, and whether the product is true major medical or another non-ACA structure.",
@@ -340,7 +340,7 @@ function QuestionCard({ node, selectedAnswer, stepIndex, onNavigate, isCurrent }
         </div>
       )}
 
-      {/* Answer options — styled like script say-blocks */}
+      {/* Answer options, styled like script say-blocks */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {node.answers.map((ans, i) => {
           const isHov = hovered === i;

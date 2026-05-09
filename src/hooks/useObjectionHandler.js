@@ -37,7 +37,7 @@ CRITICAL FORMATTING: Plain text only. No markdown, no asterisks, no dashes, no b
 }
 
 const FALLBACK_REBUTTAL =
-  "I understand completely. Can I ask — what would make this worth a few more minutes of your time?";
+  "I understand completely. Can I ask, what would make this worth a few more minutes of your time?";
 
 export function useObjectionHandler() {
   const [input, setInput] = useState("");

@@ -62,7 +62,7 @@ export async function lookupPlanSummary(stateCode, county) {
 
   try {
     if (SBE_TABLES[st]) {
-      // State-based exchange — no county filter, no premium data
+      // State-based exchange, no county filter, no premium data
       const { data, error } = await supabase
         .from(SBE_TABLES[st])
         .select("metal_level, tehb_ded_inn_tier_1_individual, tehb_inn_tier_1_individual_moop")
@@ -82,7 +82,7 @@ export async function lookupPlanSummary(stateCode, county) {
       };
     }
 
-    // Federal exchange — filter by state + county
+    // Federal exchange, filter by state + county
     let query = supabase
       .from("qhp_landscape_2026")
       .select("metal_level, premium_adult_individual_age_27, medical_deductible_individual_standard, medical_maximum_out_of_pocket_individual_standard")

@@ -1,5 +1,5 @@
 /**
- * useCopilotEngineCore.js — shared infrastructure for all copilot engines
+ * useCopilotEngineCore.js, shared infrastructure for all copilot engines
  * (MA, ACA, U65, Med Sup).
  *
  * Encapsulates: feed state, floating alerts, service-issue handling,
@@ -16,7 +16,7 @@ import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { useAppAuth } from "../context/AuthContext";
 
 /* ═══════════════════════════════════════════════════════
-   SHARED HELPERS — exported for product engines
+   SHARED HELPERS, exported for product engines
    ═══════════════════════════════════════════════════════ */
 
 export function normalizeIssueTag(tag) {

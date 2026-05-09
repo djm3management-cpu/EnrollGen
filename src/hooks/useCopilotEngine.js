@@ -232,7 +232,7 @@ ${String(section.body || "").trim() || "[No script body]"}`;
     .join("\n\n");
 
   return `════════════════════════════════════════════════════════
-TENANT SCRIPT TEMPLATE — AUTHORITATIVE CURRENT SCRIPT
+TENANT SCRIPT TEMPLATE, AUTHORITATIVE CURRENT SCRIPT
 ════════════════════════════════════════════════════════
 Use these section titles and script bodies when coaching. If this differs from older hardcoded descriptions, this tenant script wins.
 
@@ -339,19 +339,19 @@ function buildComplianceContext(knowledge) {
 SECTION-SPECIFIC COMPLIANCE INTELLIGENCE
 ════════════════════════════════════════════════════════
 
-VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING (or close paraphrases — speech recognition may garble words slightly):
+VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING (or close paraphrases, speech recognition may garble words slightly):
 ${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
 
-KEY PHRASES TO LISTEN FOR (if you hear these or close synonyms/paraphrases in the transcript, the agent IS covering the requirement — give them credit):
+KEY PHRASES TO LISTEN FOR (if you hear these or close synonyms/paraphrases in the transcript, the agent IS covering the requirement, give them credit):
 ${knowledge.keyPhrasesToListenFor.map((p) => `  • "${p}"`).join("\n")}
 
-REQUIRED COMPLIANCE ELEMENTS — every one of these MUST be covered in this section:
+REQUIRED COMPLIANCE ELEMENTS, every one of these MUST be covered in this section:
 ${knowledge.requiredElements.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
 
 COMMON AGENT MISTAKES IN THIS SECTION (watch for these):
 ${knowledge.commonMistakes.map((m) => `  ⚠ ${m}`).join("\n")}
 
-RED FLAGS — IF YOU DETECT ANY OF THESE, INTERVENE IMMEDIATELY (warn or critical):
+RED FLAGS, IF YOU DETECT ANY OF THESE, INTERVENE IMMEDIATELY (warn or critical):
 ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 `;
 }
@@ -396,14 +396,14 @@ ONLY break silence for:
 function buildAudioConstraintBlock(hasCustomerAudio) {
   if (hasCustomerAudio) {
     return `════════════════════════════════════════════════════════
-DUAL AUDIO MODE — AGENT + CUSTOMER
+DUAL AUDIO MODE, AGENT + CUSTOMER
 ════════════════════════════════════════════════════════
 You can hear BOTH the agent and the customer. The transcript below includes lines labeled AGENT: and CUSTOMER:. Use the customer's responses to provide more accurate, contextual coaching.
 
 DUAL AUDIO IMPLICATIONS:
 - When the customer expresses confusion, objections, or asks questions, coach the agent on how to respond effectively and compliantly.
 - When the customer confirms understanding or agreement, note compliance checkpoints that have been satisfied by the customer's own words.
-- Track whether required disclosures were BOTH delivered by the agent AND acknowledged by the customer — this is the gold standard for CMS compliance.
+- Track whether required disclosures were BOTH delivered by the agent AND acknowledged by the customer, this is the gold standard for CMS compliance.
 - If the customer says something that contradicts what the agent said ("you told me it was free", "but you said there's no network"), flag this as a potential compliance violation immediately.
 - When the customer verbally confirms enrollment, verify that ALL required disclosures were made BEFORE that point.
 - If the customer mentions pre-existing conditions, medications, or other coverage, flag for plan suitability review.
@@ -412,16 +412,16 @@ DUAL AUDIO IMPLICATIONS:
   }
 
   return `════════════════════════════════════════════════════════
-CRITICAL AUDIO CONSTRAINT — THIS IS NON-NEGOTIABLE
+CRITICAL AUDIO CONSTRAINT, THIS IS NON-NEGOTIABLE
 ════════════════════════════════════════════════════════
 You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words captured through their microphone. You have ZERO access to what the client/beneficiary says, asks, confirms, or agrees to.
 
-IMPLICATIONS — read carefully:
+IMPLICATIONS, read carefully:
 - Evaluate compliance ONLY based on what the AGENT said or failed to say
-- When the agent repeats/confirms information ("So your Part B started March 2010..."), that tells you what the client likely said — grade the AGENT's handling, not the client's responses
-- NEVER say "the client didn't give consent" or "the client didn't confirm" — YOU CANNOT HEAR THE CLIENT
+- When the agent repeats/confirms information ("So your Part B started March 2010..."), that tells you what the client likely said, grade the AGENT's handling, not the client's responses
+- NEVER say "the client didn't give consent" or "the client didn't confirm", YOU CANNOT HEAR THE CLIENT
 - DO say "I didn't hear you ask for their verbal consent" or "Make sure you read the disclosure"
-- When the agent reads back information, confirms details, or paraphrases — that's GOOD compliance behavior. Acknowledge it by referencing their specific words.
+- When the agent reads back information, confirms details, or paraphrases, that's GOOD compliance behavior. Acknowledge it by referencing their specific words.
 - Speech recognition is imperfect. Words may be garbled, truncated, or slightly wrong. If something SOUNDS CLOSE ENOUGH to a required phrase, GIVE THE AGENT CREDIT. Don't flag something as missing just because a word or two was garbled. Use semantic matching, not exact text matching.
 - The agent may have started speaking with the beneficiary BEFORE pressing record or before this transcript segment began. That means earlier required lines may have happened off-transcript. Absence in the visible transcript is NOT proof they were skipped.
 - Because the transcript may begin mid-call or mid-section, do NOT assume the first visible line is the true start of the section. Only warn when the agent is clearly moving forward without covering something, not merely because you did not hear the opening.`;
@@ -457,20 +457,20 @@ ${complianceContext}
 ${cmsBlock}
 ${transcriptRefBlock}
 ${recentInterventionText ? `════════════════════════════════════════════════════════
-RECENT PRIOR INTERVENTIONS — DO NOT REPEAT THESE UNLESS THERE IS SUBSTANTIAL NEW CONTENT AND THE ISSUE STILL CLEARLY REMAINS:
+RECENT PRIOR INTERVENTIONS, DO NOT REPEAT THESE UNLESS THERE IS SUBSTANTIAL NEW CONTENT AND THE ISSUE STILL CLEARLY REMAINS:
 ════════════════════════════════════════════════════════
 ${recentInterventionText}
 ` : ""}
 ════════════════════════════════════════════════════════
-STRUCTURED CALL CONTEXT — TREAT THIS AS RELIABLE APP STATE
+STRUCTURED CALL CONTEXT, TREAT THIS AS RELIABLE APP STATE
 ════════════════════════════════════════════════════════
 ${copilotContextJson}
 
 HOW TO USE THIS CONTEXT:
 - Inspect sectionChecklistState to see exactly which checklist items are complete vs. pending for the current section. If an item is marked complete, do NOT warn that it is missing. If an item is still pending and the agent appears to be moving on, flag it.
 - Use derivedSignals to detect broader patterns: pacing issues, repeated missed items, sections completed out of order, or unusual call progression.
-- Use priorCompletedSections to understand what the agent has already finished — do not accuse them of missing something from a completed section.
-- If callMetadata.agentName is null, the agent has not entered their name. Mention this once as a tip if a natural opportunity arises — do not force it.
+- Use priorCompletedSections to understand what the agent has already finished, do not accuse them of missing something from a completed section.
+- If callMetadata.agentName is null, the agent has not entered their name. Mention this once as a tip if a natural opportunity arises, do not force it.
 
 ════════════════════════════════════════════════════════
 EMPTY OR SPARSE TRANSCRIPT:
@@ -554,7 +554,7 @@ ${recentTranscript ? `\nRecent agent transcript for context:\n"${recentTranscrip
 Structured app context:
 ${copilotContextJson}
 
-YOUR CAPABILITIES — you can answer questions about:
+YOUR CAPABILITIES, you can answer questions about:
 - CMS compliance rules and requirements
 - MA plan types, general benefits structure, eligibility
 - Enrollment periods (AEP, OEP, SEP) and eligibility rules
@@ -565,14 +565,14 @@ YOUR CAPABILITIES — you can answer questions about:
 - Disqualifying coverage types (TRICARE, CHAMPVA, employer)
 - How to handle specific client scenarios on the call
 
-HARD BOUNDARY — DO NOT ANSWER (no live data access):
+HARD BOUNDARY, DO NOT ANSWER (no live data access):
 - Specific drug formulary or tier info for any plan -> tell agent to check Sunfire or carrier formulary tool
 - Whether a specific provider is in-network for a plan -> tell agent to use Sunfire provider search or call carrier
 - Specific premium, copay, or cost-sharing amounts -> tell agent to verify in Sunfire or plan SOB
 - Pharmacy-specific coverage (preferred vs standard, mail order) -> direct to Sunfire or carrier formulary
 Do NOT guess or approximate any plan-specific data. Always redirect to the authoritative tool.
 
-SCOPE RULE: If the question is not directly relevant to the current section or enrollment flow, answer it briefly and then redirect the agent back to completing the current section. Example: "Quick answer: [answer]. You're currently in ${sectionKey} — make sure to cover [key remaining item] before moving on."
+SCOPE RULE: If the question is not directly relevant to the current section or enrollment flow, answer it briefly and then redirect the agent back to completing the current section. Example: "Quick answer: [answer]. You're currently in ${sectionKey}, make sure to cover [key remaining item] before moving on."
 
 STRUCTURED CONTEXT USAGE:
 - Check sectionChecklistState for exactly what is complete and pending in the current section.
@@ -582,7 +582,7 @@ STRUCTURED CONTEXT USAGE:
 EMPTY TRANSCRIPT: If no transcript is available, answer based on the agent's question and current section context only. Do not speculate about what was or wasn't said on the call.
 
 RESPONSE RULES:
-- Keep answers concise and actionable — the agent is on a live call
+- Keep answers concise and actionable, the agent is on a live call
 - If providing script language, put it in quotes so the agent can read it directly
 - Always prioritize CMS compliance in your answers
 - For any plan-specific data question, follow the HARD BOUNDARY rules above
@@ -694,7 +694,7 @@ export function useCopilotEngine({
     };
   }, [activeSection, currentStep, state, unlocked, transcriptRef]);
 
-  /* ═══════ COACHING — real-time compliance monitor ═══════ */
+  /* ═══════ COACHING, real-time compliance monitor ═══════ */
   const requestCoaching = useCallback(async ({
     manual = false,
     sectionEntry = false,
@@ -733,7 +733,7 @@ export function useCopilotEngine({
         pushFeedEntry("info", `Analyze skipped. Co-Pilot is in cooldown for another ${Math.ceil((cooldown - (now - lastCoachingTime.current)) / 1000)}s.`, { section: currentStep });
         return;
       }
-      // Manual analyze bypasses MIN_NEW_CHARS — agent explicitly requested it
+      // Manual analyze bypasses MIN_NEW_CHARS, agent explicitly requested it
     }
 
     // Cancel any in-flight coaching request
@@ -823,8 +823,8 @@ export function useCopilotEngine({
     });
 
     const transcriptLabel = hasCustomerAudio
-      ? "DUAL TRANSCRIPT — AGENT + CUSTOMER (lines labeled AGENT: or CUSTOMER:. Speech recognition may have minor errors for both speakers.)"
-      : "AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words appear below. Speech recognition may have minor transcription errors.)";
+      ? "DUAL TRANSCRIPT, AGENT + CUSTOMER (lines labeled AGENT: or CUSTOMER:. Speech recognition may have minor errors for both speakers.)"
+      : "AGENT-ONLY TRANSCRIPT (you CANNOT hear the client, only the agent's words appear below. Speech recognition may have minor transcription errors.)";
 
     const dualTranscriptBlock = hasCustomerAudio && formattedTranscript
       ? `\nFULL CONVERSATION (speaker-labeled, chronological):\n"${formattedTranscript.slice(-3000)}"\n`
@@ -1045,7 +1045,7 @@ SECTION CONTEXT (rolling window for current section):
     requestCoachingRef.current = requestCoaching;
   }, [requestCoaching, requestCoachingRef]);
 
-  /* ═══════ ASK CO-PILOT — typed or spoken question ═══════ */
+  /* ═══════ ASK CO-PILOT, typed or spoken question ═══════ */
   const askCopilot = useCallback(async (spokenQuestion) => {
     const isSpoken = typeof spokenQuestion === "string";
     const question = isSpoken ? spokenQuestion.trim() : askQuestion.trim();
@@ -1208,7 +1208,7 @@ SECTION CONTEXT (rolling window for current section):
   useEffect(() => {
     if (activeSection === 3 && !soaFiredRef.current) {
       soaFiredRef.current = true;
-      const soaMsg = "SCOPE OF APPOINTMENT — You MUST inform the beneficiary that this is the Scope of Appointment and confirm they understand what plan types will be discussed.";
+      const soaMsg = "SCOPE OF APPOINTMENT, You MUST inform the beneficiary that this is the Scope of Appointment and confirm they understand what plan types will be discussed.";
       pushFeedEntry("critical", soaMsg, { section: "POA & Scope of Appointment", issueTag: "SOA_DISCLOSURE" });
     }
     if (activeSection !== 3) soaFiredRef.current = false;

@@ -468,7 +468,7 @@ export default function CarrierRef() {
     return set;
   }, [activeStates]);
 
-  /* ACA issuers cache — fetched on-demand when a state is selected */
+  /* ACA issuers cache, fetched on-demand when a state is selected */
   const [acaIssuers, setAcaIssuers] = useState({});
 
   useEffect(() => {
@@ -867,7 +867,7 @@ export default function CarrierRef() {
             })}
           </svg>
 
-          {/* Hover tooltip — NGHS active states */}
+          {/* Hover tooltip, NGHS active states */}
           {hovered && carrierStates[hovered] && (
             <div
               style={{
@@ -950,7 +950,7 @@ export default function CarrierRef() {
             </div>
           )}
 
-          {/* Hover tooltip — expansion states (ACA data only) */}
+          {/* Hover tooltip, expansion states (ACA data only) */}
           {hovered && !carrierStates[hovered] && acaExpansionStates.has(hovered) && (
             <div
               style={{
@@ -1061,7 +1061,7 @@ export default function CarrierRef() {
           </div>
         </section>
 
-        {/* Sidebar — NGHS active states */}
+        {/* Sidebar, NGHS active states */}
         {selected && carrierStates[selected] && (
           <StateSidebar
             key={selected}
@@ -1072,7 +1072,7 @@ export default function CarrierRef() {
           />
         )}
 
-        {/* Sidebar — ACA expansion states (not in NGHS) */}
+        {/* Sidebar, ACA expansion states (not in NGHS) */}
         {selected && !carrierStates[selected] && acaExpansionStates.has(selected) && (
           <aside
             className="card carrier-ref-sidebar"

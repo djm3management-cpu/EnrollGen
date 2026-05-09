@@ -110,12 +110,12 @@ const COMPACT_RAIL_OVERLAY_STYLE = {
 const SHOW_MAIN_FLOW_COMPLIANCE_HUD = false;
 
 /**
- * ScriptFlow v2 — Now with transcript pass-through for dual-layer scoring.
+ * ScriptFlow v2, Now with transcript pass-through for dual-layer scoring.
  *
  * The ScriptPrompter exposes its transcript via onTranscriptChange callback.
  * This transcript is passed down to ComplianceMini and ComplianceDashboard
  * so the compliance scoring engine can do live intent detection against
- * the actual words the agent speaks — not just checkbox state.
+ * the actual words the agent speaks, not just checkbox state.
  *
  * NOTE: ScriptPrompter needs a small update to call props.onTranscriptChange
  * whenever its transcript state changes. See INTEGRATION_GUIDE.md for the
@@ -149,7 +149,7 @@ function useDebouncedValue(value, delayMs) {
   return debouncedValue;
 }
 
-/* ---- Shared widget stack — used by both full rail and overlay ---- */
+/* ---- Shared widget stack, used by both full rail and overlay ---- */
 function RailWidgets({
   transcript,
   activeSection,
@@ -532,7 +532,7 @@ export default function ScriptFlow() {
     });
   }, [trainingModeEnabled, callStarted, state.enrollOk, activeSection]);
 
-  // Cleanup on unmount — mark completed if enrollment gate was reached
+  // Cleanup on unmount, mark completed if enrollment gate was reached
   useEffect(() => {
     return () => {
       if (sessionStartedRef.current) {
@@ -795,7 +795,7 @@ export default function ScriptFlow() {
     };
   }, [resetLiveCall]);
 
-  // ── Quick notes — persists into wrap-up ──
+  // ── Quick notes, persists into wrap-up ──
   // Auto-scroll to active section when it changes
   useEffect(() => {
     if (activeSection !== prevSectionRef.current) {
@@ -874,7 +874,7 @@ export default function ScriptFlow() {
         totalSections={TOTAL_SECTIONS}
       />
 
-      {/* Right rail — responsive: always visible >1400, overlay ≤1400 */}
+      {/* Right rail, responsive: always visible >1400, overlay ≤1400 */}
       <RightRail
         transcript={transcript}
         activeSection={activeSection}
@@ -892,10 +892,10 @@ export default function ScriptFlow() {
 
       {trainingModeEnabled ? <TrainingBanner /> : null}
 
-      {/* ── AI Co-Pilot — passes transcript up via callback ── */}
+      {/* ── AI Co-Pilot, passes transcript up via callback ── */}
       <ScriptPrompter onTranscriptChange={setTranscript} onMergedTranscriptChange={setMergedTranscriptEntries} onListeningChange={setIsListening} logComplianceFlag={session.logComplianceFlag} controlsRef={copilotHandlersRef} onCoachingLoadingChange={setCoachingLoading} />
 
-      {/* Start Call gate — timer and session don't begin until clicked */}
+      {/* Start Call gate, timer and session don't begin until clicked */}
       {!callStarted && (
         <section className="script-start-call-gate script-start-call-gate--bare">
           <button
@@ -974,7 +974,7 @@ export default function ScriptFlow() {
         </>
       )}
 
-      {/* ── Full Compliance Dashboard — transcript-aware, at the bottom ── */}
+      {/* ── Full Compliance Dashboard, transcript-aware, at the bottom ── */}
       {SHOW_MAIN_FLOW_COMPLIANCE_HUD ? (
         <DeferredComplianceDashboard
           transcript={debouncedTranscript}

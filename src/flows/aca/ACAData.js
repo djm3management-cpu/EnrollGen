@@ -1,4 +1,4 @@
-// ACAScript.js — ACA On-Exchange Script Flow Data
+// ACAScript.js, ACA On-Exchange Script Flow Data
 // Gates 0–6 per u65-aca-spec.md Section 2.2
 
 export const ACA_GATES = [
@@ -24,7 +24,7 @@ export const ACA_GATES = [
       "Identity verified (name + DOB confirmed)",
       "Call recording consent obtained",
     ],
-    gate: "Identity verified — consent obtained — enrollment period determined",
+    gate: "Identity verified, consent obtained, enrollment period determined",
   },
   {
     id: "aca-1",
@@ -48,7 +48,7 @@ export const ACA_GATES = [
     ],
     notes: [
       "COMPLIANCE: If the SEP window has expired, do NOT proceed with marketplace enrollment. Inform client of the deadline and explore off-exchange alternatives (transition to U65 flow if appropriate).",
-      "If sepExpiringSoon (< 7 days remain): display urgency — 'SEP window closes [date]. Prioritize enrollment completion today.'",
+      "If sepExpiringSoon (< 7 days remain): display urgency, 'SEP window closes [date]. Prioritize enrollment completion today.'",
     ],
     signals: [
       "sepValid → true/false (derived from sepDate + 60 days)",
@@ -59,7 +59,7 @@ export const ACA_GATES = [
       "SEP date within 60-day window verified",
       "SEP documentation identified / noted",
     ],
-    gate: "SEP event verified — within 60-day window",
+    gate: "SEP event verified, within 60-day window",
   },
   {
     id: "aca-2",
@@ -68,8 +68,8 @@ export const ACA_GATES = [
     label: "Household & Income Assessment",
     compliance: false,
     script: [
-      "Now I need to understand your household so we can figure out what kind of financial help you qualify for. How many people are in your tax household — that's you, your spouse if filing jointly, and any dependents you claim?",
-      "And what's your estimated total household income for 2026? This includes wages, self-employment income, Social Security, investment income — basically your modified adjusted gross income.",
+      "Now I need to understand your household so we can figure out what kind of financial help you qualify for. How many people are in your tax household, that's you, your spouse if filing jointly, and any dependents you claim?",
+      "And what's your estimated total household income for 2026? This includes wages, self-employment income, Social Security, investment income, basically your modified adjusted gross income.",
     ],
     subsidyNote: "2026 SUBSIDY CLIFF: Enhanced PTCs from ARP/IRA expired 12/31/2025. Clients above 400% FPL have NO subsidy. This is the #1 reason to have the U65 off-exchange flow ready as a pivot.",
     fplTable: [
@@ -80,7 +80,7 @@ export const ACA_GATES = [
       { range: "251–400% FPL", subsidy: "APTC available, no CSR", csr: "None", action: "Compare Bronze vs Silver vs Gold based on utilization." },
       { range: "> 400% FPL", subsidy: "NO APTC (2026 subsidy cliff)", csr: "None", action: "Full price. Consider off-exchange alternatives → U65 flow." },
     ],
-    subsidyEligibleScript: "[If subsidyEligible] Great news — based on what you've told me, you should qualify for a monthly tax credit of approximately $[estimatedAPTC] to lower your premium. That's applied automatically when we enroll.",
+    subsidyEligibleScript: "[If subsidyEligible] Great news, based on what you've told me, you should qualify for a monthly tax credit of approximately $[estimatedAPTC] to lower your premium. That's applied automatically when we enroll.",
     noSubsidyScript: "[If > 400% FPL] Based on your income, you won't qualify for a premium subsidy on the marketplace this year. The enhanced subsidies that were available the last few years expired at the end of 2025. We have two options: I can show you full-price marketplace plans, or I can walk you through some private off-exchange alternatives that might be more affordable. Which would you prefer?",
     notes: [
       "On income + household size entry: auto-calculate FPL%. Display derived values.",
@@ -96,7 +96,7 @@ export const ACA_GATES = [
       "Income documented / estimated",
       "FPL% calculated and subsidy eligibility determined",
     ],
-    gate: "Household + income documented — subsidy eligibility determined",
+    gate: "Household + income documented, subsidy eligibility determined",
   },
   {
     id: "aca-3",
@@ -108,7 +108,7 @@ export const ACA_GATES = [
       "Let me ask a few questions so I can narrow down the best plans for you.",
       "Do you have any doctors or specialists you need to keep seeing? If so, who are they and where are they located?",
       "Are you currently taking any prescription medications?",
-      "How would you describe your healthcare usage — are you pretty healthy and mostly need preventive care, or do you have ongoing conditions or expect any procedures this year?",
+      "How would you describe your healthcare usage, are you pretty healthy and mostly need preventive care, or do you have ongoing conditions or expect any procedures this year?",
       "And what's your monthly budget for health insurance?",
     ],
     metalGuidance: [
@@ -132,7 +132,7 @@ export const ACA_GATES = [
       "Utilization level assessed",
       "Budget range noted",
     ],
-    gate: "Needs documented — metal level direction determined",
+    gate: "Needs documented, metal level direction determined",
   },
   {
     id: "aca-4",
@@ -150,7 +150,7 @@ export const ACA_GATES = [
     notes: [
       "COMPLIANCE: Never guarantee specific premium amounts until the application is processed. Use 'approximately' or 'estimated' language.",
       "At this point the agent should be in the exchange platform (Get Covered NJ, PA Pennie, or Healthcare.gov) running the plan comparison.",
-      "planMismatch check — if agent selects Bronze for CSR-eligible client, flag it.",
+      "planMismatch check, if agent selects Bronze for CSR-eligible client, flag it.",
     ],
     checklist: [
       "Plan benefits reviewed with client",
@@ -189,7 +189,7 @@ export const ACA_GATES = [
       "Effective date confirmed: ___________",
       "First premium amount and due date disclosed",
     ],
-    gate: "Enrollment submitted — confirmation number recorded",
+    gate: "Enrollment submitted, confirmation number recorded",
   },
   {
     id: "aca-6",
@@ -209,6 +209,6 @@ export const ACA_GATES = [
       "Follow-up scheduled: Date _________ Method _________",
       "Client confirmed understanding of next steps",
     ],
-    gate: "Call closed — follow-up scheduled",
+    gate: "Call closed, follow-up scheduled",
   },
 ];

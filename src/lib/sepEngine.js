@@ -21,16 +21,16 @@ export function getSEPsForState(stateCode, femaDisasters = []) {
           id: `fema-${d.id}`,
           category: "FEMA Disaster",
           type: isPAOnly
-            ? "FEMA Disaster (PA Only — No SEP Yet)"
+            ? "FEMA Disaster (PA Only, No SEP Yet)"
             : "FEMA Disaster SEP",
           code: "SEP-FEMA",
           event: d.title,
-          description: `${d.id} — ${d.type} in ${d.state}. Counties: ${d.counties.join(", ")}.${
+          description: `${d.id}, ${d.type} in ${d.state}. Counties: ${d.counties.join(", ")}.${
             isPAOnly
-              ? " Public Assistance only — Medicare SEP NOT yet active. Monitor for IA amendment."
+              ? " Public Assistance only, Medicare SEP NOT yet active. Monitor for IA amendment."
               : `Enroll in or switch MA/MAPD plans.${
                   d.isOngoing
-                    ? " Incident still active — SEP window remains open."
+                    ? " Incident still active, SEP window remains open."
                     : ""
                 }`
           }`,
@@ -89,11 +89,11 @@ export function getSEPsForState(stateCode, femaDisasters = []) {
       startDate: "Varies by individual", endDate: "Varies by individual", duration: "7-month window around 65th birthday or 25th month of disability",
       eligibleProducts: ["MA", "MAPD", "PDP", "Medigap"], source: "CMS", urgency: "info", matchingPlans: [] },
     { id: "medicare-dual-lis", category: "Medicare", type: "Dual-Eligible / LIS (Extra Help) SEP", code: "DUAL/LIS",
-      event: "Dual-eligible (Medicare+Medicaid) or Extra Help/LIS", description: "Continuous SEP — change MA/MAPD once per quarter (Q1–Q3). D-SNP plans designed for dual-eligible beneficiaries.",
-      startDate: "Year-round", endDate: "Year-round", duration: "Continuous — once per quarter",
+      event: "Dual-eligible (Medicare+Medicaid) or Extra Help/LIS", description: "Continuous SEP, change MA/MAPD once per quarter (Q1–Q3). D-SNP plans designed for dual-eligible beneficiaries.",
+      startDate: "Year-round", endDate: "Year-round", duration: "Continuous, once per quarter",
       eligibleProducts: ["MA", "MAPD", "D-SNP"], source: "CMS", urgency: "info", matchingPlans: [] },
     { id: "medicare-move", category: "Medicare", type: "Moved Out of Service Area SEP", code: "SEP-MOVE",
-      event: "Permanent move — current plan no longer available", description: "63-day SEP to enroll in a new MA/MAPD plan in new service area after permanent address change.",
+      event: "Permanent move, current plan no longer available", description: "63-day SEP to enroll in a new MA/MAPD plan in new service area after permanent address change.",
       startDate: "Varies by individual", endDate: "63 days from move date", duration: "63 days from move",
       eligibleProducts: ["MA", "MAPD", "Medigap"], source: "CMS", urgency: "info", matchingPlans: [] },
     { id: "medicare-loss-coverage", category: "Medicare", type: "Loss of Creditable Coverage SEP", code: "SEP-LOSS",
@@ -126,16 +126,16 @@ export function getSEPsForZip(zip, femaDisasters = []) {
           id: `fema-${d.id}`,
           category: "FEMA Disaster",
           type: isPAOnly
-            ? "FEMA Disaster (PA Only — No SEP Yet)"
+            ? "FEMA Disaster (PA Only, No SEP Yet)"
             : "FEMA Disaster SEP",
           code: "SEP-FEMA",
           event: d.title,
-          description: `${d.id} — ${d.type} in ${d.state}. Counties: ${d.counties.join(", ")}.${
+          description: `${d.id}, ${d.type} in ${d.state}. Counties: ${d.counties.join(", ")}.${
             isPAOnly
-              ? " Public Assistance only — Medicare SEP NOT yet active. Monitor for IA amendment."
+              ? " Public Assistance only, Medicare SEP NOT yet active. Monitor for IA amendment."
               : `Enroll in or switch MA/MAPD plans.${
                   d.isOngoing
-                    ? " Incident still active — SEP window remains open."
+                    ? " Incident still active, SEP window remains open."
                     : ""
                 }`
           }`,
@@ -258,10 +258,10 @@ export function getSEPsForZip(zip, femaDisasters = []) {
     code: "DUAL/LIS",
     event: "Dual-eligible (Medicare+Medicaid) or Extra Help/LIS",
     description:
-      "Continuous SEP — change MA/MAPD once per quarter (Q1–Q3). D-SNP plans designed for dual-eligible beneficiaries.",
+      "Continuous SEP, change MA/MAPD once per quarter (Q1–Q3). D-SNP plans designed for dual-eligible beneficiaries.",
     startDate: "Year-round",
     endDate: "Year-round",
-    duration: "Continuous — once per quarter",
+    duration: "Continuous, once per quarter",
     eligibleProducts: ["MA", "MAPD", "D-SNP"],
     source: "CMS",
     urgency: "info",
@@ -276,7 +276,7 @@ export function getSEPsForZip(zip, femaDisasters = []) {
     category: "Medicare",
     type: "Moved Out of Service Area SEP",
     code: "SEP-MOVE",
-    event: "Permanent move — current plan no longer available",
+    event: "Permanent move, current plan no longer available",
     description:
       "63-day SEP to enroll in a new MA/MAPD plan in new service area after permanent address change.",
     startDate: "Varies by individual",

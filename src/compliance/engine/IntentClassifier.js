@@ -1,5 +1,5 @@
 /**
- * IntentClassifier — LLM-based intent detection engine.
+ * IntentClassifier, LLM-based intent detection engine.
  * Sends transcript segments to Claude Sonnet via Netlify function,
  * classifies against 152 MA compliance intents, returns structured detections.
  */
@@ -14,7 +14,7 @@ const SHORT_CALL_THRESHOLD_S = 120; // calls under 2 min are "insufficient"
 
 /**
  * Detect whether a call is inbound or outbound from the first 60 seconds.
- * Defaults to 'inbound' when context is ambiguous per business rule —
+ * Defaults to 'inbound' when context is ambiguous per business rule,
  * outbound-only intents must never penalise an inbound/warm-transfer call.
  */
 export function detectCallDirection(diarized) {
@@ -165,7 +165,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress 
       sequence_violation_detail: null,
       anti_pattern_match: false,
       anti_pattern_detail: null,
-      llm_reasoning: `Not applicable — ${intent.subcategory} intent on ${detectedDirection} call`,
+      llm_reasoning: `Not applicable, ${intent.subcategory} intent on ${detectedDirection} call`,
     });
   }
 

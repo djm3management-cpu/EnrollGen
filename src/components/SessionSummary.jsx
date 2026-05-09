@@ -167,10 +167,10 @@ function exportSessionSummaryPdf(
     startY: y,
     head: [["Field", "Value", "Field", "Value"]],
     body: [
-      ["Agent Name",     summary.agentName || "—",           "Plan Name",        summary.planName || "—"],
-      ["Session Start",  summary.sessionStart || "—",         "Effective Date",   summary.effectiveDate || "—"],
-      ["Session End",    summary.sessionEnd || "—",           "Enrollment Code",  summary.enrollmentCode || "—"],
-      ["SNP Type",       summary.snpType || "None",           "Confirmation #",   summary.confirmationNumber || "—"],
+      ["Agent Name",     summary.agentName || "-",           "Plan Name",        summary.planName || "-"],
+      ["Session Start",  summary.sessionStart || "-",         "Effective Date",   summary.effectiveDate || "-"],
+      ["Session End",    summary.sessionEnd || "-",           "Enrollment Code",  summary.enrollmentCode || "-"],
+      ["SNP Type",       summary.snpType || "None",           "Confirmation #",   summary.confirmationNumber || "-"],
     ],
     columnStyles: {
       0: { fontStyle: "bold", cellWidth: 32, textColor: PC.muted },
@@ -187,7 +187,7 @@ function exportSessionSummaryPdf(
     body: summary.sections.map((s) => [
       s.completed ? "DONE" : "MISSED",
       s.section,
-      s.detail || "—",
+      s.detail || "-",
       s.duration,
     ]),
     didParseCell: (data) => {
@@ -392,7 +392,7 @@ function exportSessionSummaryPdf(
       head: [["Severity", "Flag"]],
       body: complianceResult.flags.map((flag) => [
         flag.severity.toUpperCase(),
-        `${flag.question} — ${flag.evidence}`,
+        `${flag.question}, ${flag.evidence}`,
       ]),
       headStyles: { ...tBase().headStyles, textColor: PC.red },
       columnStyles: {
@@ -563,7 +563,7 @@ export default React.memo(function SessionSummary() {
       lines.push("Deterministic Blockers:");
       for (const blocker of blockers) {
         lines.push(
-          `  [${blocker.severity.toUpperCase()}] ${blocker.label} — ${blocker.detail}`
+          `  [${blocker.severity.toUpperCase()}] ${blocker.label}, ${blocker.detail}`
         );
       }
     }
@@ -571,7 +571,7 @@ export default React.memo(function SessionSummary() {
     lines.push("Sections:");
     for (const s of summary.sections) {
       lines.push(
-        `  ${s.completed ? "✔" : "✗"} ${s.section}: ${s.detail || "—"} (${s.duration})`
+        `  ${s.completed ? "✔" : "✗"} ${s.section}: ${s.detail || "-"} (${s.duration})`
       );
     }
     lines.push("");
@@ -586,7 +586,7 @@ export default React.memo(function SessionSummary() {
       lines.push("Compliance Flags:");
       for (const f of complianceResult.flags) {
         lines.push(
-          `  [${f.severity.toUpperCase()}] ${f.question} — ${f.evidence}`
+          `  [${f.severity.toUpperCase()}] ${f.question}, ${f.evidence}`
         );
       }
     }
@@ -620,7 +620,7 @@ export default React.memo(function SessionSummary() {
       >
         <ClipboardCheck size={16} style={{ color: "#94a3b8", flexShrink: 0 }} />
         <span style={{ fontSize: "1rem" }}>Enrollment complete</span>
-        <span>Enrollment complete — save your records</span>
+        <span>Enrollment complete, save your records</span>
       </span>
       <div style={{ display: "flex", gap: 10 }}>
         <button className="btn-clay" onClick={handleCopyToClipboard}>

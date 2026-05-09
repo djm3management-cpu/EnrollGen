@@ -1,5 +1,5 @@
 /**
- * ScorecardGenerator — Orchestrates the full scoring pipeline:
+ * ScorecardGenerator, Orchestrates the full scoring pipeline:
  * transcript → classification → scoring → scorecard + corrective actions.
  * Persists results to Supabase.
  */
@@ -85,12 +85,12 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     });
   }
 
-  // 3a. Short-call filter — calls under 2 min are flagged as insufficient
+  // 3a. Short-call filter, calls under 2 min are flagged as insufficient
   const callDurationS = callRecord.call_duration_seconds
     || (diarized.length > 0 ? Math.max(...diarized.map(u => (u.end_ms || 0))) / 1000 : 0);
 
   if (callDurationS > 0 && callDurationS < 120) {
-    progress(90, 'Short call — insufficient for scoring');
+    progress(90, 'Short call, insufficient for scoring');
     const { data: scorecard } = await supabase
       .from('compliance_scorecards')
       .insert({
@@ -108,7 +108,7 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
         auto_fail_reasons: [],
         category_scores: {},
         risk_level: 'low',
-        risk_flags: [`Call duration ${Math.round(callDurationS)}s — insufficient for compliance scoring (minimum 120s)`],
+        risk_flags: [`Call duration ${Math.round(callDurationS)}s, insufficient for compliance scoring (minimum 120s)`],
         sequence_violations: 0,
         sentiment_summary: {},
         coaching_notes: [`Short call (${Math.round(callDurationS)}s) flagged as insufficient rather than scored at 0%`],
@@ -272,7 +272,7 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
       severity: scoreResult.risk_level,
       category: scoreResult.corrective_bucket,
       bucket: scoreResult.corrective_bucket,
-      title: `${scoreResult.corrective_bucket}: ${callRecord.agent_name} — Score ${scoreResult.overall_score.toFixed(1)}%`,
+      title: `${scoreResult.corrective_bucket}: ${callRecord.agent_name}, Score ${scoreResult.overall_score.toFixed(1)}%`,
       description: buildCorrectiveDescription(scoreResult),
       intent_codes: scoreResult.auto_fail_reasons.length > 0
         ? scoreResult.scorecard_items.filter(i => i.auto_fail_triggered).map(i => i.intent_code).filter(Boolean)

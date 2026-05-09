@@ -2,7 +2,7 @@ import { ChevronRight, Clock, Shield, MapPin, Star as StarIcon } from "lucide-re
 import { CARRIERS } from "../../data/sepCarriers";
 
 export function Stars({ count }) {
-  if (count == null) return <span className="muted">—</span>;
+  if (count == null) return <span className="muted">-</span>;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: "1px" }}>
       {[1, 2, 3, 4, 5].map((i) => (
@@ -158,7 +158,7 @@ export function SEPCard({ sep, isExpanded, onToggle }) {
                             {p.prem === 0 ? "$0" : `$${p.prem.toFixed(2)}`}
                           </td>
                           <td className="text-right" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: 11 }}>
-                            {p.moop ? `$${p.moop.toLocaleString()}` : "—"}
+                            {p.moop ? `$${p.moop.toLocaleString()}` : "-"}
                           </td>
                         </tr>
                       );

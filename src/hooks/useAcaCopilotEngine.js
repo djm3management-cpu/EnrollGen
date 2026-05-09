@@ -1,5 +1,5 @@
 /**
- * useAcaCopilotEngine.js — ACA Marketplace compliance copilot engine
+ * useAcaCopilotEngine.js, ACA Marketplace compliance copilot engine
  * Refactored to use the shared useCopilotEngineCore hook for common
  * infrastructure (feed state, floating alerts, service-issue handling,
  * debounced scheduling, periodic review, section-entry analysis, cleanup).
@@ -199,19 +199,19 @@ function buildComplianceContext(knowledge) {
 SECTION-SPECIFIC COMPLIANCE INTELLIGENCE
 ════════════════════════════════════════════════════════
 
-VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING (or close paraphrases — speech recognition may garble words):
+VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING (or close paraphrases, speech recognition may garble words):
 ${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
 
 KEY PHRASES TO LISTEN FOR (if you hear these or synonyms/paraphrases, the agent IS covering the requirement):
 ${knowledge.keyPhrasesToListenFor.map((p) => `  • "${p}"`).join("\n")}
 
-REQUIRED COMPLIANCE ELEMENTS — every one MUST be covered in this section:
+REQUIRED COMPLIANCE ELEMENTS, every one MUST be covered in this section:
 ${knowledge.requiredElements.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
 
 COMMON AGENT MISTAKES IN THIS SECTION:
 ${knowledge.commonMistakes.map((m) => `  ⚠ ${m}`).join("\n")}
 
-RED FLAGS — INTERVENE IMMEDIATELY IF DETECTED:
+RED FLAGS, INTERVENE IMMEDIATELY IF DETECTED:
 ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 `;
 }
@@ -254,20 +254,20 @@ IMPORTANT ACA CONTEXT:
 - This is an ACA On-Exchange (Marketplace) enrollment, NOT Medicare
 - Key regulations: 45 CFR Part 155, ACA Section 1311, CMS Marketplace rules
 - Exchange platforms vary by state: Healthcare.gov (federal), Get Covered NJ, PA Pennie
-- 2026 subsidy cliff: Enhanced PTCs from ARP/IRA expired 12/31/2025 — clients above 400% FPL have NO subsidy
+- 2026 subsidy cliff: Enhanced PTCs from ARP/IRA expired 12/31/2025, clients above 400% FPL have NO subsidy
 - CSR (Cost Sharing Reductions) only apply to Silver plans for clients 100-250% FPL
 
 ════════════════════════════════════════════════════════
-CRITICAL AUDIO CONSTRAINT — NON-NEGOTIABLE
+CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
 ════════════════════════════════════════════════════════
 You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words. You have ZERO access to what the client says.
 
 IMPLICATIONS:
 - Evaluate compliance ONLY based on what the AGENT said or failed to say
-- NEVER say "the client didn't confirm" — YOU CANNOT HEAR THE CLIENT
+- NEVER say "the client didn't confirm", YOU CANNOT HEAR THE CLIENT
 - DO say "I didn't hear you ask for..." or "Make sure you cover..."
-- Speech recognition is imperfect — if it SOUNDS CLOSE ENOUGH, give credit
-- The agent may have started before recording began — absence is not proof of omission
+- Speech recognition is imperfect, if it SOUNDS CLOSE ENOUGH, give credit
+- The agent may have started before recording began, absence is not proof of omission
 
 ════════════════════════════════════════════════════════
 CURRENT SECTION: "${sectionKey}"
@@ -280,7 +280,7 @@ ${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
 ${transcriptReferenceBlock}
 ` : ""}
 ${recentInterventionText ? `════════════════════════════════════════════════════════
-RECENT PRIOR INTERVENTIONS — DO NOT REPEAT UNLESS THE ISSUE CLEARLY REMAINS:
+RECENT PRIOR INTERVENTIONS, DO NOT REPEAT UNLESS THE ISSUE CLEARLY REMAINS:
 ════════════════════════════════════════════════════════
 ${recentInterventionText}
 ` : ""}
@@ -293,7 +293,7 @@ HOW TO USE THIS CONTEXT:
 - Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
 - Use derivedSignals for broader patterns: subsidyCliffRisk, medicaidLikely, csrEligible, sepValid, sepExpiringSoon.
 - Use priorCompletedGates to understand what the agent has already finished.
-- If planData is present, use it to ground your coaching with real market data (plan counts, premium/deductible ranges by metal tier). Do NOT quote exact dollar amounts to the agent — use ranges and tier comparisons.
+- If planData is present, use it to ground your coaching with real market data (plan counts, premium/deductible ranges by metal tier). Do NOT quote exact dollar amounts to the agent, use ranges and tier comparisons.
 
 ════════════════════════════════════════════════════════
 EMPTY OR SPARSE TRANSCRIPT:
@@ -318,7 +318,7 @@ Every non-silent response MUST:
 - For remind: State what hasn't been covered and give exact words to say
 - For tip: Name the specific element handled well and why it matters
 
-CRITICAL NUANCE — AVOIDING FALSE POSITIVES:
+CRITICAL NUANCE, AVOIDING FALSE POSITIVES:
 - Do NOT claim the agent skipped a section just because the transcript is limited
 - Do NOT flag individual words as missing if the overall message semantically covers the requirement
 - Do NOT repeatedly flag the same issue
@@ -366,7 +366,7 @@ YOUR CAPABILITIES:
 - Medicaid screening for expansion states
 - Enrollment process compliance
 
-HARD BOUNDARY — DO NOT ANSWER:
+HARD BOUNDARY, DO NOT ANSWER:
 - Whether a specific provider is in-network → direct to plan's provider directory
 - Specific drug formulary/tier info → direct to plan's formulary tool
 - Exact subsidy amounts → tell agent to run calculation on exchange platform
@@ -564,7 +564,7 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state, logCompl
       reviewMode,
     });
 
-    const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client — only the agent's words. Speech recognition may have minor errors.)
+    const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client, only the agent's words. Speech recognition may have minor errors.)
 ${sectionEntry ? `
 SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" gate. Provide one short info message with the next one or two priorities. Use level "info" unless you spot an actual issue. Do NOT return silent.
 ` : ""}
@@ -649,7 +649,7 @@ SECTION CONTEXT (rolling window):
           shouldSuppressDuplicateIssue(liveMessages, currentStep, issueTag)) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning — not repeated.", { section: currentStep, issueTag, retrievalTrace });
+        if (manual) pushFeedEntry("info", "Analyze complete. Issue matches a recent warning, not repeated.", { section: currentStep, issueTag, retrievalTrace });
         return;
       }
 
@@ -658,7 +658,7 @@ SECTION CONTEXT (rolling window):
           shouldSuppressForNuance({ level, issueTag, message, derivedSignals })) {
         lastAnalyzedLength.current = targetAnalyzedLength;
         lastCoachingTime.current = Date.now();
-        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed — context too ambiguous.", { section: currentStep, issueTag, retrievalTrace });
+        if (manual) pushFeedEntry("info", "Analyze complete. Warning suppressed, context too ambiguous.", { section: currentStep, issueTag, retrievalTrace });
         return;
       }
 
@@ -813,7 +813,7 @@ SECTION CONTEXT (rolling window):
   useEffect(() => {
     if (activeGate === 2 && !subsidyFiredRef.current) {
       subsidyFiredRef.current = true;
-      const msg = "INCOME ASSESSMENT — You MUST accurately determine household size and income. 2026 subsidy cliff: clients above 400% FPL have NO APTC. Never coach clients to misrepresent income.";
+      const msg = "INCOME ASSESSMENT, You MUST accurately determine household size and income. 2026 subsidy cliff: clients above 400% FPL have NO APTC. Never coach clients to misrepresent income.";
       pushFeedEntry("warn", msg, { section: "Household & Income Assessment", issueTag: "SUBSIDY_GATE_ENTRY", retrievalTrace: EMPTY_RETRIEVAL_TRACE });
     }
     if (activeGate !== 2) subsidyFiredRef.current = false;

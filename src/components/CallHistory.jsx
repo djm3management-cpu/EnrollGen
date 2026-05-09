@@ -17,14 +17,14 @@ const FLOW_LABELS = {
 };
 
 function formatDuration(seconds) {
-  if (!seconds) return "—";
+  if (!seconds) return "-";
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
 function formatDate(iso) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
   return d.toLocaleDateString("en-US", {
     month: "short",
@@ -174,7 +174,7 @@ export default function CallHistory() {
             {sessions.map((s) => {
               const flowKey = (s.flow || "").toLowerCase();
               const dotColor = FLOW_COLORS[flowKey] || "#556677";
-              const flowLabel = FLOW_LABELS[flowKey] || s.flow || "—";
+              const flowLabel = FLOW_LABELS[flowKey] || s.flow || "-";
               const flagCount = s.compliance_flags?.[0]?.count || 0;
               const sectionCount = s.section_scores?.[0]?.count || 0;
 
@@ -195,12 +195,12 @@ export default function CallHistory() {
                   </td>
                   <td style={tdStyle}>{formatDate(s.started_at)}</td>
                   <td style={tdStyle}>{formatDuration(s.duration_seconds)}</td>
-                  <td style={tdStyle}>{sectionCount > 0 ? `${sectionCount}/8` : "—"}</td>
+                  <td style={tdStyle}>{sectionCount > 0 ? `${sectionCount}/8` : "-"}</td>
                   <td style={{
                     ...tdStyle,
                     color: flagCount > 0 ? "#EAB308" : "#556677",
                   }}>
-                    {flagCount > 0 ? flagCount : "—"}
+                    {flagCount > 0 ? flagCount : "-"}
                   </td>
                   <td style={tdStyle}>
                     <span style={{

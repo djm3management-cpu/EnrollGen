@@ -37,7 +37,7 @@ function extractSpokenQuestion(lastChunk, transcript) {
 }
 
 /**
- * useSpeechRecognition — manages browser speech recognition with:
+ * useSpeechRecognition, manages browser speech recognition with:
  * - Automatic restart with exponential backoff on errors
  * - Rolling transcript cap to prevent unbounded growth
  * - Spoken question detection on mute
@@ -119,11 +119,11 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     };
 
     recognition.onerror = (e) => {
-      // no-speech and aborted are normal — don't log as errors
+      // no-speech and aborted are normal, don't log as errors
       if (e.error !== "no-speech" && e.error !== "aborted") {
         console.error("SpeechRecognition error:", e.error);
       }
-      // Only truly stop for permission denial — everything else will auto-restart via onend
+      // Only truly stop for permission denial, everything else will auto-restart via onend
       if (e.error === "not-allowed") {
         setListening(false);
         recognitionRef.current = null;
@@ -139,7 +139,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
         restartTimeoutRef.current = window.setTimeout(() => {
           if (recognitionRef.current) {
             try {
-              processedUpTo = 0; // Reset — browser clears results on restart
+              processedUpTo = 0; // Reset, browser clears results on restart
               recognitionRef.current.start();
               backoffRef.current = 300; // reset on successful restart
             } catch {

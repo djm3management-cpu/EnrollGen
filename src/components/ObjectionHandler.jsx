@@ -37,7 +37,7 @@ export default function ObjectionHandler() {
         </div>
       </div>
 
-      {/* Custom input row — always visible above the 3 columns */}
+      {/* Custom input row, always visible above the 3 columns */}
       <ObjectionInput
         input={input}
         setInput={setInput}
@@ -48,7 +48,7 @@ export default function ObjectionHandler() {
 
       {/* 3-column tactical layout */}
       <div className="objection-3col">
-        {/* Left — categories + objection list */}
+        {/* Left, categories + objection list */}
         <CategoryList
           categories={OBJECTION_CATEGORIES}
           selectedCategory={selectedCategory}
@@ -57,10 +57,10 @@ export default function ObjectionHandler() {
           onSelectObjection={handleSelectObjection}
         />
 
-        {/* Center — selected objection analysis */}
+        {/* Center, selected objection analysis */}
         <ObjectionAnalysis objection={selectedObjection} />
 
-        {/* Right — response tree + copy + AI response */}
+        {/* Right, response tree + copy + AI response */}
         <RebuttalPanel
           objection={selectedObjection}
           aiResponse={response}

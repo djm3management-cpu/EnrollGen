@@ -1,5 +1,5 @@
 /**
- * ScoringEngine — Calculates compliance scores from intent detections.
+ * ScoringEngine, Calculates compliance scores from intent detections.
  * Implements the full scoring algorithm: confidence thresholds, auto-fail,
  * sequence violations, category weights, and grading scale.
  */
@@ -55,7 +55,7 @@ export function scoreCall({ detections, templateItems, template }) {
 
     let result, pointsEarned;
 
-    // Direction-excluded intents are N/A — don't count against the score
+    // Direction-excluded intents are N/A, don't count against the score
     if (detection?.direction_excluded) {
       scorecardItems.push({
         template_item_id: item.id,
@@ -95,13 +95,13 @@ export function scoreCall({ detections, templateItems, template }) {
         autoFailReasons.push(`Anti-pattern: ${item.question_text}`);
       }
       riskFlags.push(`Anti-pattern detected: ${item.question_text}`);
-      coachingNotes.push(`Anti-pattern flagged for: ${item.question_text} — ${detection.anti_pattern_detail || 'Review transcript'}`);
+      coachingNotes.push(`Anti-pattern flagged for: ${item.question_text}, ${detection.anti_pattern_detail || 'Review transcript'}`);
     } else if (detection.confidence >= 0.90) {
       if (detection.sequence_violation) {
         result = 'partial';
         pointsEarned = Math.floor(item.points_possible * 0.5);
         sequenceViolations++;
-        coachingNotes.push(`Sequence violation: ${item.question_text} — ${detection.sequence_violation_detail}`);
+        coachingNotes.push(`Sequence violation: ${item.question_text}, ${detection.sequence_violation_detail}`);
       } else {
         result = 'pass';
         pointsEarned = item.points_possible;
@@ -112,7 +112,7 @@ export function scoreCall({ detections, templateItems, template }) {
     } else if (detection.confidence >= 0.50) {
       result = 'partial';
       pointsEarned = Math.floor(item.points_possible * 0.5);
-      coachingNotes.push(`Low confidence (${(detection.confidence * 100).toFixed(0)}%): ${item.question_text} — needs manual review`);
+      coachingNotes.push(`Low confidence (${(detection.confidence * 100).toFixed(0)}%): ${item.question_text}, needs manual review`);
     } else {
       result = 'fail';
       pointsEarned = 0;

@@ -121,7 +121,7 @@ export const eligibilityVerification = [
       'What is your zip code? I want to make sure I am pulling up the plans available in your exact area.',
       'Can you give me your five-digit zip code so I can look up what is available near you?',
       'And your zip code is 33157, is that correct?',
-      'Let me confirm — you are in the 85281 zip code?',
+      'Let me confirm, you are in the 85281 zip code?',
     ],
     anti_patterns: [
       'What state are you in? That is all I need.',
@@ -150,7 +150,7 @@ export const eligibilityVerification = [
     failure_severity: 'moderate',
     auto_fail: false,
     sample_phrases: [
-      'That zip code actually crosses county lines, so I need to confirm — are you in Miami-Dade County or Broward County?',
+      'That zip code actually crosses county lines, so I need to confirm, are you in Miami-Dade County or Broward County?',
       'And what county are you in? That matters because plans can vary from county to county.',
       'Can you confirm your county for me? I want to make sure I am looking at the right plan options.',
       'I show two counties for that zip code. Do you live in Maricopa or Pinal County?',
@@ -250,7 +250,7 @@ export const eligibilityVerification = [
       'If you enroll today during the Annual Enrollment Period, your new plan would take effect on January 1st.',
       'Because this is an IEP enrollment, your coverage would start on the first day of the month after your Part B effective date.',
       'With your SEP, the effective date would be the first of the month following your enrollment. So if we complete this today, you would be covered starting April 1st.',
-      'I want to make sure you understand the timing — if we submit your application today, your new plan starts on May 1st.',
+      'I want to make sure you understand the timing, if we submit your application today, your new plan starts on May 1st.',
     ],
     anti_patterns: [
       'Your plan starts right away.',
@@ -280,7 +280,7 @@ export const eligibilityVerification = [
     auto_fail: false,
     sample_phrases: [
       'Do you currently receive any Medicaid benefits or assistance from your state?',
-      'I need to ask — are you enrolled in Medicaid in addition to Medicare? That would make you what is called dual-eligible.',
+      'I need to ask, are you enrolled in Medicaid in addition to Medicare? That would make you what is called dual-eligible.',
       'Are you receiving any help from your state with your healthcare costs, like Medicaid or a Medicare Savings Program?',
       'Do you have both Medicare and Medicaid? Some people have both, and it can open up additional plan options for you.',
     ],
@@ -311,9 +311,9 @@ export const eligibilityVerification = [
     failure_severity: 'moderate',
     auto_fail: false,
     sample_phrases: [
-      'I do need to ask — have you been diagnosed with End-Stage Renal Disease, or ESRD? That would be permanent kidney failure requiring dialysis or a transplant.',
+      'I do need to ask, have you been diagnosed with End-Stage Renal Disease, or ESRD? That would be permanent kidney failure requiring dialysis or a transplant.',
       'Are you currently receiving dialysis or have you had a kidney transplant? I need to check your ESRD status for eligibility.',
-      'One more eligibility question — do you have End-Stage Renal Disease? Thanks to recent changes, most people with ESRD can now enroll in MA plans, but I need to document it.',
+      'One more eligibility question, do you have End-Stage Renal Disease? Thanks to recent changes, most people with ESRD can now enroll in MA plans, but I need to document it.',
       'Have you been diagnosed with kidney failure that requires regular dialysis?',
     ],
     anti_patterns: [

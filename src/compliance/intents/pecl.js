@@ -244,7 +244,7 @@ export const preEnrollmentChecklist = [
       'We have now gone through all the main benefits of this plan. Do you feel you have a good understanding of what is covered and how the plan works?',
       'I want to make sure you are comfortable with everything we have discussed about the plan benefits. Do you understand how the coverage works overall?',
       'Before we move to enrollment, can you confirm that you understand the plan benefits we have reviewed, including the medical, drug, and supplemental benefits?',
-      'Do you have a clear understanding of the plan benefits we went over — the doctor visits, hospital coverage, prescription drugs, and the extra benefits like dental and vision?',
+      'Do you have a clear understanding of the plan benefits we went over, the doctor visits, hospital coverage, prescription drugs, and the extra benefits like dental and vision?',
     ],
     anti_patterns: [
       'I am sure you got it, let us move on.',
@@ -276,7 +276,7 @@ export const preEnrollmentChecklist = [
       'I want to make sure you understand your cost sharing. You will have copays for doctor visits, coinsurance for certain services, and those costs can be different depending on whether you use in-network or out-of-network providers. Do you understand that?',
       'Can you confirm you understand the cost-sharing structure? For example, your PCP visits are a $0 copay, specialist visits are $40, and hospital stays have a $250 per day copay for the first 5 days. Does that make sense?',
       'Do you understand that you will have out-of-pocket costs like copays and coinsurance when you use services, and those costs vary by the type of service? We went over the specifics earlier.',
-      'As part of the checklist, I need you to confirm you understand your cost-sharing responsibilities — the copays, coinsurance amounts, and how they differ for in-network versus out-of-network care.',
+      'As part of the checklist, I need you to confirm you understand your cost-sharing responsibilities, the copays, coinsurance amounts, and how they differ for in-network versus out-of-network care.',
     ],
     anti_patterns: [
       'Everything is basically covered so you do not need to worry about costs.',
@@ -305,7 +305,7 @@ export const preEnrollmentChecklist = [
     failure_severity: 'critical',
     auto_fail: true,
     sample_phrases: [
-      'I need to confirm that you understand — by enrolling in this plan, you will be automatically disenrolled from your current plan. Do you understand and acknowledge that?',
+      'I need to confirm that you understand, by enrolling in this plan, you will be automatically disenrolled from your current plan. Do you understand and acknowledge that?',
       'Can you confirm you understand that enrolling in this plan means your current coverage will end? You will be disenrolled from your existing plan on the day this new plan takes effect.',
       'As required by the checklist, do you acknowledge that you understand enrolling here means leaving your current plan? This change cannot be undone outside of an enrollment period.',
       'Do you understand that by proceeding with this enrollment, your current plan will be terminated and replaced by this plan? Can you confirm that?',
@@ -337,7 +337,7 @@ export const preEnrollmentChecklist = [
     failure_severity: 'moderate',
     auto_fail: false,
     sample_phrases: [
-      'Do you understand the plan rules we discussed — including that you will need referrals to see specialists and that some services require prior authorization?',
+      'Do you understand the plan rules we discussed, including that you will need referrals to see specialists and that some services require prior authorization?',
       'I need you to confirm that you acknowledge the plan rules. With this HMO, you will need to choose a primary care doctor and get referrals for specialty care. Do you understand that?',
       'As part of the checklist, can you confirm you understand the plan rules, including any prior authorization requirements for certain procedures and medications?',
     ],

@@ -56,7 +56,7 @@ export const initialState = {
   dvConsentOk: false,
   dvDiscussed: false,
 
-  // Agent & TPMO fields — auto-filled from localStorage
+  // Agent & TPMO fields, auto-filled from localStorage
   agentName: persisted.agentName || "",
   callDirection: "inbound",
   tpmoZip: "",
@@ -130,7 +130,7 @@ export const initialState = {
   tpmoRunning: false,
   tpmoStart: null,
 
-  // Section timing — tracks start/end per section
+  // Section timing, tracks start/end per section
   sectionTimestamps: {},
   // e.g. { 1: { start: Date.now(), end: Date.now() }, 2: { start: ... } }
 
@@ -324,7 +324,7 @@ export function allChecked(obj) {
 }
 
 function formatSectionDuration(ts, nowTs) {
-  if (!ts?.start) return "—";
+  if (!ts?.start) return "-";
   const end = ts.end || nowTs;
   const sec = Math.max(0, Math.round((end - ts.start) / 1000));
   const m = Math.floor(sec / 60);

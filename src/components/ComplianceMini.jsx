@@ -20,10 +20,10 @@ import { SECTION_LABELS } from "../context/scriptReducer";
 import { SectionTimer } from "./SharedUI";
 
 /**
- * ComplianceMini v2 — Floating score badge with transcript awareness
+ * ComplianceMini v2, Floating score badge with transcript awareness
  *
  * Props:
- *   transcript — Current agent transcript from ScriptPrompter
+ *   transcript, Current agent transcript from ScriptPrompter
  *
  * Drop into: src/components/ComplianceMini.jsx
  */
@@ -167,7 +167,7 @@ const ComplianceMini = memo(function ComplianceMini({
           />
         </div>
 
-        {/* Header — score + toggle */}
+        {/* Header, score + toggle */}
         <div
           className="compliance-mini__score-toggle"
           onClick={() => setCollapsed((p) => !p)}
@@ -190,7 +190,7 @@ const ComplianceMini = memo(function ComplianceMini({
                 minWidth: 30,
               }}
             >
-              {isDormant ? "—" : `${result.score}%`}
+              {isDormant ? "-" : `${result.score}%`}
             </span>
             <div
               className="compliance-mini__score-bar"
@@ -336,7 +336,7 @@ const ComplianceMini = memo(function ComplianceMini({
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {isDormant ? "—" : `${c.score}%`}
+                    {isDormant ? "-" : `${c.score}%`}
                   </span>
                 </div>
               );

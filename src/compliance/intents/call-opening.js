@@ -66,7 +66,7 @@ export const callOpening = [
   },
   {
     intent_code: 'CALL_OPEN_003_RECORDING_DECLINE',
-    intent_name: 'Beneficiary declines recording — call must end',
+    intent_name: 'Beneficiary declines recording, call must end',
     category: 'CALL_OPENING',
     subcategory: null,
     description:
@@ -88,7 +88,7 @@ export const callOpening = [
       'I completely understand. Unfortunately, I am not able to continue the call without recording consent. We can schedule an in-person appointment instead if you would prefer.',
       'No problem at all. Since we are unable to proceed without the recording, I can set you up with a face-to-face appointment or mail you some information instead.',
       'I respect that. Because we are required to record enrollment calls, we will need to end the call here. I can send you plan information in the mail if you would like.',
-      'That is perfectly fine. We do have other options — I can send materials by mail or arrange an in-person meeting where recording is not required.',
+      'That is perfectly fine. We do have other options, I can send materials by mail or arrange an in-person meeting where recording is not required.',
     ],
     anti_patterns: [
       'Okay, well let me just go over a few things real quick anyway.',
@@ -251,11 +251,11 @@ export const callOpening = [
     failure_severity: 'critical',
     auto_fail: true,
     sample_phrases: [
-      'I want to let you know that I represent a Third Party Marketing Organization. We work with multiple carriers — currently we represent 12 organizations offering over 40 Medicare Advantage plans in your area. You can always get more information by calling 1-800-MEDICARE or visiting Medicare.gov, and you can also contact your local SHIP for free personalized help.',
+      'I want to let you know that I represent a Third Party Marketing Organization. We work with multiple carriers, currently we represent 12 organizations offering over 40 Medicare Advantage plans in your area. You can always get more information by calling 1-800-MEDICARE or visiting Medicare.gov, and you can also contact your local SHIP for free personalized help.',
       'I work with a third-party marketing organization. We represent several organizations and plans in your area. We do not offer every plan available. You can also visit Medicare.gov or contact your local SHIP for free unbiased counseling.',
       'Before we get started, I am required to let you know that I am a licensed agent working with a TPMO. We represent several insurance companies and their Medicare plans. For unbiased help you can reach out to SHIP or Medicare.gov.',
       'I need to share an important disclosure with you. I work with a Third Party Marketing Organization that represents 8 carriers and over 30 Medicare Advantage plans in your county. You always have the option to get free, unbiased assistance from your State Health Insurance Assistance Program, or SHIP, and you can visit Medicare.gov to compare plans on your own.',
-      'As required by Medicare, I want to let you know I am affiliated with a TPMO. We work with multiple insurance organizations offering a variety of Medicare Advantage plans. You are never obligated to enroll through me — you can always call 1-800-MEDICARE, visit Medicare.gov, or contact your local SHIP office for free help.',
+      'As required by Medicare, I want to let you know I am affiliated with a TPMO. We work with multiple insurance organizations offering a variety of Medicare Advantage plans. You are never obligated to enroll through me, you can always call 1-800-MEDICARE, visit Medicare.gov, or contact your local SHIP office for free help.',
     ],
     anti_patterns: [
       'We offer all the Medicare plans available in your area.',
@@ -284,12 +284,12 @@ export const callOpening = [
     failure_severity: 'minor',
     auto_fail: false,
     sample_phrases: [
-      'Let me get my required disclosures out of the way right at the top here — I represent a TPMO that works with multiple carriers...',
+      'Let me get my required disclosures out of the way right at the top here, I represent a TPMO that works with multiple carriers...',
       'First things first, I need to share an important disclosure before we go any further...',
       'Right off the bat I want to make sure I give you my TPMO disclaimer as required...',
     ],
     anti_patterns: [
-      'Oh, I almost forgot — I should mention that I work with a TPMO.',
+      'Oh, I almost forgot, I should mention that I work with a TPMO.',
       'Before we wrap up, let me give you the disclaimer.',
       'So now that we have gone over the plans, I do need to mention I am with a TPMO.',
     ],
@@ -381,7 +381,7 @@ export const callOpening = [
     sample_phrases: [
       'You also have the option of contacting your local SHIP, the State Health Insurance Assistance Program, for free unbiased counseling.',
       'If you would like a second opinion, SHIP offers free Medicare counseling in your state.',
-      'Your local SHIP office can also help you compare plans at no cost — they are completely independent.',
+      'Your local SHIP office can also help you compare plans at no cost, they are completely independent.',
       'I also want you to know about SHIP. That stands for State Health Insurance Assistance Program, and they provide free help to Medicare beneficiaries.',
     ],
     anti_patterns: [
@@ -444,7 +444,7 @@ export const callOpening = [
     auto_fail: true,
     sample_phrases: [
       'I see here that you gave us permission to contact you on March 15th when you filled out the form online.',
-      'According to our records, you requested a callback about Medicare Advantage plans on the 10th — is that correct?',
+      'According to our records, you requested a callback about Medicare Advantage plans on the 10th, is that correct?',
       'You submitted a request for information through our website last Tuesday, and I am following up on that today.',
       'I am calling because you gave us your permission to reach out when you spoke with one of our team members last week.',
     ],

@@ -14,7 +14,7 @@ RULES:
 4. Flag anti-patterns: statements that SOUND compliant but violate the spirit of the requirement
 5. Identify the SPEAKER (agent or beneficiary) for each detection
 6. Note the specific text that triggered each detection
-7. Respond ONLY in valid JSON format — no markdown, no code fences`;
+7. Respond ONLY in valid JSON format, no markdown, no code fences`;
 
 export function buildClassificationPrompt({ intents, segment, context }) {
   const intentList = intents.map(i =>
@@ -62,7 +62,7 @@ Respond with JSON:
 
 export const PLAN_FIT_SYSTEM = `You are a Medicare plan-fit analyzer. Given a complete call transcript between an agent and a Medicare beneficiary, you extract the beneficiary's stated needs and compare them against the plan(s) presented by the agent. Your goal is to determine whether the agent recommended a plan that genuinely fits the beneficiary's situation.
 
-Respond ONLY in valid JSON format — no markdown, no code fences.`;
+Respond ONLY in valid JSON format, no markdown, no code fences.`;
 
 export function buildPlanFitPrompt({ transcript, plan }) {
   return `FULL TRANSCRIPT:

@@ -211,7 +211,7 @@ function RenderLines({ lines }) {
       continue;
     }
 
-    // Numbered list items — check for mandatory questions pattern
+    // Numbered list items, check for mandatory questions pattern
     if (/^\d+\.\s+"/.test(line)) {
       const questions = [];
       while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
@@ -735,7 +735,7 @@ export default function SEPGuide2026() {
           </Accordion>
         ))}
 
-        {/* State Guides — special section, default open */}
+        {/* State Guides, special section, default open */}
         <Accordion id="state-guides" title="State Guides" defaultOpen>
           {/* State selector */}
           <div
@@ -849,8 +849,8 @@ export default function SEPGuide2026() {
           )}
         </Accordion>
 
-        {/* Quick Reference — Phone Numbers */}
-        <Accordion id="quick-ref" title="Quick Reference — Key Phone Numbers">
+        {/* Quick Reference, Phone Numbers */}
+        <Accordion id="quick-ref" title="Quick Reference, Key Phone Numbers">
           <div style={{ overflowX: "auto" }}>
             <table
               style={{

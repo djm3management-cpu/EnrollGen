@@ -19,8 +19,8 @@ function parseDollar(val) {
 /**
  * Look up ACA benchmark premiums for a given location.
  *
- * @param {string} stateCode — 2-letter state abbreviation
- * @param {string} [county]  — county name (required for FFE states)
+ * @param {string} stateCode, 2-letter state abbreviation
+ * @param {string} [county] , county name (required for FFE states)
  * @returns {Promise<{ silverBenchmark: number|null, cheapestBronze: number|null, silverCount: number, bronzeCount: number, source: string }|null>}
  */
 export async function lookupAcaBenchmark(stateCode, county) {
@@ -47,11 +47,11 @@ export async function lookupAcaBenchmark(stateCode, county) {
         cheapestBronze: null,
         silverCount: silver.length,
         bronzeCount: bronze.length,
-        source: `SBE (${st}) — premium data not available in plan files`,
+        source: `SBE (${st}), premium data not available in plan files`,
       };
     }
 
-    // Federal exchange — query by state + county for Silver & Bronze premiums
+    // Federal exchange, query by state + county for Silver & Bronze premiums
     let query = supabase
       .from("qhp_landscape_2026")
       .select("metal_level, premium_adult_individual_age_27")
@@ -104,7 +104,7 @@ export function formatBenchmarkForPrompt(benchmark) {
   const lines = [`ACA BENCHMARK DATA (${benchmark.source}):`];
 
   if (benchmark.silverBenchmark) {
-    lines.push(`  Second-lowest Silver premium (age 27): $${benchmark.silverBenchmark}/mo — this is the APTC benchmark`);
+    lines.push(`  Second-lowest Silver premium (age 27): $${benchmark.silverBenchmark}/mo, this is the APTC benchmark`);
   }
   if (benchmark.cheapestBronze) {
     lines.push(`  Cheapest Bronze premium (age 27): $${benchmark.cheapestBronze}/mo`);

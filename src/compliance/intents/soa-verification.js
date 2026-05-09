@@ -117,7 +117,7 @@ export const soaVerification = [
     auto_fail: false,
     sample_phrases: [
       'Your Scope of Appointment authorizes me to discuss Medicare Advantage plans with you today, including plans that have prescription drug coverage.',
-      'According to your SOA, you have given permission for us to go over MAPD plans — those are Medicare Advantage plans with Part D drug coverage.',
+      'According to your SOA, you have given permission for us to go over MAPD plans, those are Medicare Advantage plans with Part D drug coverage.',
       'The scope form you signed covers Medicare Advantage and Medicare Advantage with Prescription Drug plans. That is what we will be focusing on today.',
       'Based on your SOA, we are authorized to talk about MA and MAPD plan options in your area.',
     ],

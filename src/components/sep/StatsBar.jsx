@@ -10,7 +10,7 @@ export function StatsBar({
     { l: "Plans", v: plans?.length || 0, c: "var(--accent-teal)" },
     {
       l: "FEMA",
-      v: femaActive.length > 0 ? femaActive.length : "—",
+      v: femaActive.length > 0 ? femaActive.length : "-",
       c: femaActive.length > 0 ? "var(--accent-red)" : "var(--text-muted)",
       a: femaActive.length > 0,
     },
@@ -25,7 +25,7 @@ export function StatsBar({
           <div className="sep-stat-value" style={{ color: "var(--text-primary)" }}>
             {searchedZip}{" "}
             <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)" }}>
-              ({state}){selectedCounty ? ` — ${selectedCounty} Co.` : ""}
+              ({state}){selectedCounty ? `, ${selectedCounty} Co.` : ""}
             </span>
           </div>
         </div>

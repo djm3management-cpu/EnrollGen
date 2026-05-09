@@ -484,7 +484,7 @@ export default function DailyVerse() {
 
   const handleCopy = async () => {
     if (!verse?.text) return;
-    const formatted = `"${verse.text.trim()}"\n— ${verse.reference} (${(currentTrans?.label || translation).toUpperCase()})`;
+    const formatted = `"${verse.text.trim()}"\n- ${verse.reference} (${(currentTrans?.label || translation).toUpperCase()})`;
     try {
       await navigator.clipboard.writeText(formatted);
       setCopied(true);
@@ -897,7 +897,7 @@ export default function DailyVerse() {
                 </p>
                 {parallelFallbackTrans && !parallelLoading && (
                   <span className="dv-parallel-fallback-note">
-                    {currentParallelTrans?.label} missing this verse — showing{" "}
+                    {currentParallelTrans?.label} missing this verse, showing{" "}
                     {parallelFallbackTrans.toUpperCase()}
                   </span>
                 )}
@@ -939,7 +939,7 @@ export default function DailyVerse() {
             )}
 
             <div className="dv-ref">
-              — {verse.reference}{" "}
+             , {verse.reference}{" "}
               <span className="dv-trans-tag">
                 {currentTrans?.label || translation.toUpperCase()}
               </span>
@@ -1115,7 +1115,7 @@ export default function DailyVerse() {
                 <span className="dv-meta-pill">
                   <span className="dv-meta-label">Book</span>
                   <span className="dv-meta-value">
-                    {verse.reference?.replace(/\s+\d+.*$/, "") || "—"}
+                    {verse.reference?.replace(/\s+\d+.*$/, "") || "-"}
                   </span>
                 </span>
                 <span className="dv-meta-pill">
