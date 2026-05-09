@@ -1,55 +1,23 @@
 export default function EnrollGenLogo({
-  width = 260,
   className = "",
   style,
   onClick,
   title,
 }) {
   const Wrapper = onClick ? "button" : "div";
+  const wrapperClass = ["top-bar-logo-wordmark", className].filter(Boolean).join(" ");
 
   return (
     <Wrapper
-      className={className}
+      className={wrapperClass}
       onClick={onClick}
       title={title}
-      aria-label={title}
+      aria-label={title || "EnrollGen"}
       type={onClick ? "button" : undefined}
-      style={{
-        width: "100%",
-        display: "flex",
-        justifyContent: "center",
-        padding: 0,
-        margin: 0,
-        border: "none",
-        background: "transparent",
-        cursor: onClick ? "pointer" : "default",
-        ...style,
-      }}
+      style={style}
     >
-      <div
-        style={{
-          position: "relative",
-          display: "inline-block",
-          padding: "6px 8px",
-          borderRadius: "18px",
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
-          border: "1px solid rgba(255, 255, 255, 0.06)",
-          overflow: "hidden",
-        }}
-      >
-        <img
-          src="/logofinalshadow.png"
-          width={width}
-          alt="EnrollGen Logo"
-          draggable={false}
-          style={{
-            display: "block",
-            maxWidth: "100%",
-            height: "auto",
-          }}
-        />
-      </div>
+      <span className="eg-wordmark-enroll">Enroll</span>
+      <span className="eg-wordmark-gen">GEN</span>
     </Wrapper>
   );
 }

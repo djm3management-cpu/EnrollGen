@@ -6,7 +6,6 @@ import CopilotFeedMini from "./CopilotFeedMini";
 import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
-import { COPILOT_PILL_BASE } from "./copilot/pillStyles";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 
 const FULL_RAIL_WIDTH = 278;
@@ -34,6 +33,10 @@ const FULL_RAIL_SCROLL_STYLE = {
   flexDirection: "column",
   alignItems: "stretch",
   pointerEvents: "auto",
+  background: "var(--eg-surface-1)",
+  border: "1px solid var(--eg-border)",
+  borderRadius: "var(--eg-radius-card)",
+  padding: 12,
 };
 
 const COMPACT_RAIL_TOGGLE_STYLE = {
@@ -78,26 +81,10 @@ function RailWidgets({
     <>
       <AgentAvailabilityToggle />
 
-      <div
-        className="right-rail-control-panel"
-        style={{
-          width: "100%",
-          minWidth: 0,
-          pointerEvents: "auto",
-          background:
-            "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
-          border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 16,
-          backdropFilter: "blur(12px)",
-          boxShadow: "0 10px 24px rgba(0,0,0,0.36)",
-          padding: "8px 10px 4px",
-          marginBottom: 6,
-          overflow: "hidden",
-        }}
-      >
+      <div className="right-rail-control-panel">
         <CallTimer fallbackStartTime={startTime} />
 
-        <div className="right-rail-control-row" style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+        <div className="right-rail-control-row" style={{ display: "flex", gap: 4, marginTop: 8, marginBottom: 8 }}>
           <button
             className={`copilot-pill-button copilot-pill-button--listen${
               listening ? " is-listening" : ""
@@ -105,14 +92,6 @@ function RailWidgets({
             onClick={onToggleListening}
             disabled={!supportsRecognition}
             style={{
-              ...COPILOT_PILL_BASE,
-              background: listening
-                ? "linear-gradient(145deg, rgba(232,0,45,0.2) 0%, rgba(180,0,35,0.14) 100%)"
-                : COPILOT_PILL_BASE.background,
-              border: listening
-                ? "1px solid rgba(232,0,45,0.28)"
-                : COPILOT_PILL_BASE.border,
-              color: listening ? "#FF8FA3" : "#00ff41",
               cursor: supportsRecognition ? "pointer" : "not-allowed",
             }}
           >
@@ -121,7 +100,6 @@ function RailWidgets({
           <button
             className="copilot-pill-button copilot-pill-button--clear"
             onClick={onClear}
-            style={{ ...COPILOT_PILL_BASE, color: "#666" }}
           >
             CLEAR
           </button>
@@ -130,9 +108,6 @@ function RailWidgets({
             onClick={onAnalyze}
             disabled={!hasTranscript || analyzing}
             style={{
-              ...COPILOT_PILL_BASE,
-              border: "1px solid rgba(157,0,255,0.45)",
-              color: "#B84DFF",
               cursor: hasTranscript && !analyzing ? "pointer" : "not-allowed",
               opacity: !hasTranscript || analyzing ? 0.45 : 1,
             }}
@@ -143,15 +118,7 @@ function RailWidgets({
         <AskCopilotMini />
       </div>
 
-      <div
-        className="right-rail-divider"
-        style={{
-          width: "100%",
-          height: 1,
-          background: "rgba(255,255,255,0.06)",
-          marginBottom: 6,
-        }}
-      />
+      <div className="right-rail-divider" />
 
       <CollapsibleWidget
         title="Live Transcript"

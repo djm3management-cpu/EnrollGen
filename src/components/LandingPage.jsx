@@ -4,11 +4,11 @@ import EnrollGenLogo from "./EnrollGenLogo";
 import "./LandingPage.css";
 
 const flowAccents = [
-  { label: "MA", name: "Medicare Advantage", color: "#E8002D" },
-  { label: "ACA", name: "ACA", color: "#EAB308" },
-  { label: "SUP", name: "Medicare Supplement", color: "#00D166" },
-  { label: "U65", name: "U65", color: "#a855f7" },
-  { label: "ANC", name: "Ancillary", color: "#3B82F6" },
+  { label: "MA", name: "Medicare Advantage", color: "#b85c5c" },
+  { label: "ACA", name: "ACA", color: "#5c88b8" },
+  { label: "MS", name: "Medicare Supplement", color: "#6aab7d" },
+  { label: "U65", name: "U65", color: "#8b6eb8" },
+  { label: "ANC", name: "Ancillary", color: "#c49940" },
 ];
 
 const featureCards = [
@@ -81,7 +81,7 @@ export default function LandingPage() {
               </h1>
               <p className="landing-hero-subhead">
                 EnrollGen gives agents a live command center with guided script flows, real-time
-                CMS compliance scoring, and AI copilot coaching &mdash; built for Medicare
+                CMS compliance scoring, and AI copilot coaching , built for Medicare
                 Advantage, ACA, Supplement, U65, and ancillary sales.
               </p>
             </div>
@@ -110,7 +110,7 @@ export default function LandingPage() {
               <div className="landing-terminal-section">
                 <div className="landing-terminal-heading">CO-PILOT FEED</div>
                 <p className="landing-terminal-ai">
-                  Beneficiary expressed cost concern &mdash; suggest MAPD with $0 premium
+                  Beneficiary expressed cost concern , suggest MAPD with $0 premium
                 </p>
               </div>
 

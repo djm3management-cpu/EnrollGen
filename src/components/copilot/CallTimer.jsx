@@ -94,33 +94,21 @@ const CallTimer = memo(function CallTimer({ fallbackStartTime = null }) {
       className="copilot-call-duration"
       style={{
         display: "flex",
-        alignItems: "center",
+        alignItems: "baseline",
         justifyContent: "space-between",
         gap: 10,
-        marginBottom: 6,
       }}
     >
-      <span
-        className="copilot-call-duration__label"
-        style={{
-          fontSize: "0.56rem",
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontWeight: 700,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          color: "#556677",
-          whiteSpace: "nowrap",
-        }}
-      >
+      <span className="copilot-call-duration__label eg-panel-header">
         Call Duration
       </span>
       <span
         className={`copilot-call-timer ${toneClass}${pulseClass}`.trim()}
-        style={{ gap: 6 }}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
         aria-live="polite"
         aria-label={`Call duration ${formatTime(elapsed * 1000)}`}
       >
-        <Timer size={12} strokeWidth={2.1} />
+        <Timer size={14} strokeWidth={2} />
         {formatTime(elapsed * 1000)}
       </span>
     </div>

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   ObjectionHandler.css — 3-Column Tactical Layout
+   ObjectionHandler.css, 3-Column Tactical Layout
    Claymorphic Dark Theme, F1 pit wall design system
    ═══════════════════════════════════════════════════════════════════════ */
 
@@ -117,7 +117,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   LEFT COLUMN — Category List
+   LEFT COLUMN, Category List
    ═══════════════════════════════════════════════════════════════════ */
 
 .objection-categories {
@@ -202,7 +202,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   CENTER COLUMN — Objection Analysis
+   CENTER COLUMN, Objection Analysis
    ═══════════════════════════════════════════════════════════════════ */
 
 .objection-analysis {
@@ -348,7 +348,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   RIGHT COLUMN — Rebuttal Panel / Response Tree
+   RIGHT COLUMN, Rebuttal Panel / Response Tree
    ═══════════════════════════════════════════════════════════════════ */
 
 .objection-rebuttal-panel {
@@ -566,7 +566,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   RESPONSIVE — stack on narrow screens
+   RESPONSIVE, stack on narrow screens
    ═══════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 900px) {

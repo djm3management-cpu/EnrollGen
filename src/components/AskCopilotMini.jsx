@@ -79,45 +79,19 @@ const AskCopilotMini = memo(function AskCopilotMini() {
   );
 
   return (
-    <div className="ask-copilot-mini" style={{ padding: "6px 10px 8px" }}>
-      {/* Answer area */}
+    <div className="ask-copilot-mini">
       {answer && (
         <div
           className="right-rail-scroll ask-copilot-mini__answer-scroll"
-          style={{
-            maxHeight: 110,
-            overflowY: "auto",
-            marginBottom: 8,
-          }}
+          style={{ maxHeight: 110, overflowY: "auto", marginBottom: 8 }}
         >
-          <div
-            className="ask-copilot-mini__answer"
-            style={{
-              fontSize: "0.62rem",
-              color: "#c4b5fd",
-              lineHeight: 1.5,
-              background: "rgba(168,85,247,0.06)",
-              borderRadius: 6,
-              padding: "5px 7px",
-            }}
-          >
-            {answer}
-          </div>
+          <div className="ask-copilot-mini__answer">{answer}</div>
         </div>
       )}
 
-      {/* Ask input */}
       <div
         className="ask-copilot-mini__form"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          background: "rgba(255,255,255,0.03)",
-          borderRadius: 10,
-          border: "1px solid rgba(255,255,255,0.06)",
-          padding: "4px 6px 4px 10px",
-        }}
+        style={{ display: "flex", alignItems: "center", gap: 6 }}
       >
         <input
           type="text"
@@ -127,48 +101,28 @@ const AskCopilotMini = memo(function AskCopilotMini() {
           className="ask-copilot-mini__input"
           placeholder="Ask Co-Pilot..."
           disabled={loading}
-          style={{
-            flex: 1,
-            background: "transparent",
-            border: "none",
-            outline: "none",
-            color: "#e2e8f0",
-            fontSize: "0.62em",
-            fontFamily: "'Inter', sans-serif",
-            padding: "4px 0",
-          }}
         />
         <button
           className="ask-copilot-mini__send"
           onClick={handleAsk}
           disabled={loading || !question.trim()}
           style={{
-            background: loading
-              ? "rgba(168,85,247,0.15)"
-              : "rgba(168,85,247,0.25)",
-            border: "none",
-            borderRadius: 7,
-            width: 24,
-            height: 24,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: loading ? "not-allowed" : "pointer",
-            transition: "background 0.2s",
             flexShrink: 0,
           }}
+          aria-label="Send"
         >
           {loading ? (
-            <Loader2
-              size={11}
-              style={{ color: "#a855f7", animation: "spin 1s linear infinite" }}
-            />
+            <Loader2 size={11} style={{ animation: "eg-spin 1s linear infinite" }} />
           ) : (
-            <Send size={11} style={{ color: "#a855f7" }} />
+            <Send size={11} />
           )}
         </button>
       </div>
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes eg-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 });

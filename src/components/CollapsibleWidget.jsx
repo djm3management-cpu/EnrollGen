@@ -70,19 +70,19 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
   }, [collapsed]);
 
   return (
-    <div className="right-rail-widget-shell" style={{
-      background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
-      border: "1px solid rgba(255,255,255,0.06)",
-      borderRadius: 16,
-      backdropFilter: "blur(12px)",
-      boxShadow: "0 10px 24px rgba(0,0,0,0.36)",
-      width: "100%",
-      minWidth: 0,
-      marginBottom: 8,
-      pointerEvents: "auto",
-      overflow: "hidden",
-    }}>
-      {/* Header bar */}
+    <div
+      className="right-rail-widget-shell"
+      style={{
+        background: "var(--eg-surface-2)",
+        border: "1px solid var(--eg-border)",
+        borderRadius: "var(--eg-radius-card)",
+        width: "100%",
+        minWidth: 0,
+        marginBottom: 8,
+        pointerEvents: "auto",
+        overflow: "hidden",
+      }}
+    >
       <div
         className="right-rail-widget-header"
         onClick={() => setCollapsed((p) => !p)}
@@ -92,44 +92,67 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
           justifyContent: "space-between",
           padding: "8px 12px",
           cursor: "pointer",
-          background: "rgba(255,255,255,0.03)",
+          background: "transparent",
           userSelect: "none",
-          borderBottom: collapsed ? "none" : "1px solid rgba(255,255,255,0.04)",
+          borderBottom: collapsed ? "none" : "1px solid var(--eg-border)",
           transition: "border-bottom 0.2s ease",
         }}
       >
-        <div className="right-rail-widget-title-row" style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-          {icon && <span className="right-rail-widget-icon" style={{ color: accentColor, flexShrink: 0, display: "flex", alignItems: "center" }}>{icon}</span>}
-          <span className="right-rail-widget-title" style={{
-            fontSize: "0.64rem",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: accentColor,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}>
+        <div
+          className="right-rail-widget-title-row"
+          style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}
+        >
+          {icon && (
+            <span
+              className="right-rail-widget-icon"
+              style={{
+                color: "var(--eg-text-dim)",
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {icon}
+            </span>
+          )}
+          <span
+            className="right-rail-widget-title"
+            style={{
+              fontFamily: "var(--eg-font-mono)",
+              fontSize: 9,
+              fontWeight: 500,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "var(--eg-text-dim)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             {title}
           </span>
         </div>
-        <div className="right-rail-widget-header-actions" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <div
+          className="right-rail-widget-header-actions"
+          style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}
+        >
           {headerRight}
-          <span className="right-rail-widget-chevron" style={{
-            fontSize: "0.6rem",
-            color: "#555",
-            transition: "transform 0.2s ease",
-            transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
-            display: "inline-block",
-            lineHeight: 1,
-          }}>
-            ▼
+          <span
+            className="right-rail-widget-chevron"
+            style={{
+              fontSize: 9,
+              color: "var(--eg-text-faint)",
+              transition: "transform 0.2s ease",
+              transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
+              display: "inline-block",
+              lineHeight: 1,
+            }}
+          >
+            {"▼"}
           </span>
         </div>
       </div>
 
-      {/* Collapsible content */}
       <div
         className="right-rail-widget-content"
         ref={contentRef}

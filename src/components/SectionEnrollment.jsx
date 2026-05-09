@@ -23,26 +23,30 @@ function PreEnrollCheck({ state }) {
   return (
     <div
       style={{
-        background: "rgba(251,191,36,0.12)",
-        border: "1px solid rgba(251,191,36,0.45)",
-        borderRadius: 8,
-        padding: "12px 16px",
+        background: "var(--eg-amber-dim)",
+        border: "1px solid var(--eg-border)",
+        borderRadius: "var(--eg-radius-md)",
+        padding: "10px 14px",
         marginBottom: 12,
-        fontSize: "0.82em",
-        boxShadow: "0 0 0 1px rgba(251,191,36,0.08)",
+        fontFamily: "var(--eg-font-body)",
+        fontSize: 11.5,
+        color: "var(--eg-amber-text)",
+        lineHeight: 1.5,
       }}
     >
       <div
         style={{
-          color: "#fbbf24",
-          fontWeight: 700,
-          fontSize: "0.78em",
-          letterSpacing: "0.08em",
+          fontFamily: "var(--eg-font-mono)",
+          fontSize: 9,
+          fontWeight: 500,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          color: "var(--eg-amber)",
           marginBottom: 6,
         }}
       >
-        PRE-ENROLLMENT CHECKLIST - {gaps.length} ITEM
-        {gaps.length !== 1 ? "S" : ""} OPEN
+        Pre-enrollment checklist, {gaps.length} item
+        {gaps.length !== 1 ? "s" : ""} open
       </div>
       <ul
         style={{
@@ -54,9 +58,7 @@ function PreEnrollCheck({ state }) {
         }}
       >
         {gaps.map((g) => (
-          <li key={g} style={{ color: "#fde68a" }}>
-            {g}
-          </li>
+          <li key={g}>{g}</li>
         ))}
       </ul>
     </div>

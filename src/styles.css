@@ -1,136 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
-@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Serif+Hebrew:wght@400;500;600;700&display=swap");
+/* Fonts loaded via <link rel="stylesheet"> in index.html
+   to avoid the FOUC and request-waterfall delay of @import.
+   Keep DM Serif Display + DM Sans + JetBrains Mono as the only families. */
 
-/* ===============================
-   SCROLLBAR — F1 DARK THEME
-================================ */
+/* ============================================================
+   SCROLLBAR, sedimentary command (Section 10)
+   ============================================================ */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
-  border-radius: 3px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 3px;
+  background: var(--eg-border);
+  border-radius: 2px;
   transition: background 0.15s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #e10600;
+  background: var(--eg-border-hover);
 }
 
 ::-webkit-scrollbar-corner {
-  background: #1a1a1a;
+  background: transparent;
 }
 
-/* ===============================
-   CSS VARIABLES — F1 PIT WALL DARK
-   Carbon black with regulation red
-================================ */
-:root {
-  /* Surface — deep carbon black */
-  --bg-deep: #070707;
-  --bg-panel: #0C0C0C;
-  --bg-card: #111111;
-  --bg-card-hover: #171717;
-  --bg-input: #0A0A0A;
-  --bg-elevated: #1A1A1A;
-
-  /* ─── LAYERED SHADOW SYSTEM ─── */
-
-  /* Cards: sharp depth with red ambient */
-  --shadow-float:
-    0 1px 3px rgba(0, 0, 0, 0.7),
-    0 6px 16px rgba(0, 0, 0, 0.6),
-    0 16px 40px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
-
-  --shadow-float-hover:
-    0 2px 4px rgba(0, 0, 0, 0.65),
-    0 10px 24px rgba(232, 0, 45, 0.08),
-    0 24px 52px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
-
-  /* Buttons: sharp instrument panel feel */
-  --shadow-btn:
-    0 1px 2px rgba(0, 0, 0, 0.7),
-    0 3px 8px rgba(0, 0, 0, 0.5),
-    0 8px 20px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
-
-  --shadow-btn-hover:
-    0 2px 4px rgba(0, 0, 0, 0.6),
-    0 6px 14px rgba(232, 0, 45, 0.15),
-    0 14px 30px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
-
-  --shadow-btn-pressed:
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    inset 0 2px 6px rgba(0, 0, 0, 0.5),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.02);
-
-  /* Inset fields: sunken panels */
-  --shadow-inset:
-    inset 0 2px 6px rgba(0, 0, 0, 0.6),
-    inset 0 1px 2px rgba(0, 0, 0, 0.4),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.02);
-
-  /* Active card: float + red ambient glow */
-  --shadow-active:
-    0 2px 4px rgba(0, 0, 0, 0.7),
-    0 8px 20px rgba(0, 0, 0, 0.6),
-    0 20px 48px rgba(0, 0, 0, 0.4),
-    0 0 32px rgba(232, 0, 45, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
-
-  /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-default: rgba(255, 255, 255, 0.10);
-  --border-active: rgba(232, 0, 45, 0.35);
-  --border-accent: rgba(255, 215, 0, 0.4);
-
-  /* Text */
-  --text-primary: #F0F0F0;
-  --text-secondary: #8A8A9A;
-  --text-muted: #4A4A5A;
-  --text-accent: #E8002D;
-  --text-warning: #FFD700;
-  --text-danger: #FF4455;
-  --text-success: #00D166;
-
-  /* Accent — F1 regulation palette */
-  --accent-cyan: #E8002D;       /* primary: F1 regulation red */
-  --accent-teal: #ADADAD;       /* secondary: silver */
-  --accent-gold: #FFD700;       /* podium gold */
-  --accent-red: #FF4455;        /* danger / violation */
-  --accent-green: #00D166;      /* success / safe */
-  --color-fastest: #a855f7;    /* fastest lap purple — peak performance */
-
-  /* Typography */
-  --font-display: "Barlow Condensed", "DM Sans", "Segoe UI", sans-serif;
-  --font-body: "IBM Plex Sans", "Segoe UI Variable Text", "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
-  --font-script-read: "IBM Plex Sans", "DM Sans", "Segoe UI Variable Text", "Segoe UI", sans-serif;
-
-  /* Spacing — angular F1 corners */
-  --radius-sm: 12px;
-  --radius-md: 14px;
-  --radius-lg: 16px;
-
-  /* Transitions */
-  --speed-fast: 0.12s;
-  --speed-normal: 0.2s;
+/* ============================================================
+   ANIMATION KEYFRAMES, Section 7
+   ============================================================ */
+@keyframes eg-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  50% { transform: scale(1.6); opacity: 0.35; }
 }
+
+@keyframes eg-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes eg-slide-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* CSS variables (both v3 --eg-* tokens and legacy aliases) live in
+   src/styles/design-tokens.css and are imported before this file. */
 
 /* ===============================
    RESET & BASE
@@ -152,16 +69,16 @@ body,
 html,
 body {
   height: 100%;
-  background-color: var(--bg-deep);
+  background-color: var(--eg-base);
   overflow-x: hidden;
 }
 
 body {
-  color: var(--text-primary);
-  font-family: var(--font-body);
+  color: var(--eg-text);
+  font-family: var(--eg-font-body);
   font-weight: 400;
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 13.5px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-synthesis: none;
@@ -171,10 +88,13 @@ body {
 }
 
 html[data-platform="windows"] {
-  --font-display: "Barlow Condensed", "Segoe UI Variable Display", "Arial Narrow", "Segoe UI", sans-serif;
-  --font-body: "Segoe UI Variable Text", "Segoe UI", "IBM Plex Sans", sans-serif;
-  --font-mono: "Cascadia Mono", Consolas, "IBM Plex Mono", monospace;
-  --font-script-read: "Segoe UI Variable Text", "Segoe UI", "IBM Plex Sans", sans-serif;
+  /* Keep DM Sans / DM Serif Display / JetBrains Mono everywhere, Windows
+     font stack used to fall back to Segoe UI, but the v3 spec is explicit
+     about the three families. */
+  --font-display: var(--eg-font-display);
+  --font-body: var(--eg-font-body);
+  --font-mono: var(--eg-font-mono);
+  --font-script-read: var(--eg-font-body);
 }
 
 html[data-platform="windows"],
@@ -226,7 +146,7 @@ html[data-platform="windows"][data-motion="full"] .copilot-floating-alert {
 }
 
 /* ===============================
-   BACKGROUND — F1 DARK GRID
+   BACKGROUND, F1 DARK GRID
    Carbon black with regulation grid
 ================================ */
 .viewport-bg {
@@ -235,7 +155,7 @@ html[data-platform="windows"][data-motion="full"] .copilot-floating-alert {
   z-index: 0;
   pointer-events: none;
   background:
-    /* carbon fiber weave — diagonal */
+    /* carbon fiber weave, diagonal */
     repeating-linear-gradient(
       45deg,
       rgba(255, 255, 255, 0.012) 0px,
@@ -250,10 +170,10 @@ html[data-platform="windows"][data-motion="full"] .copilot-floating-alert {
       transparent 1px,
       transparent 4px
     ),
-    /* grid lines — F1 red tint */
+    /* grid lines, F1 red tint */
     linear-gradient(rgba(232, 0, 45, 0.07) 1px, transparent 1px),
     linear-gradient(90deg, rgba(232, 0, 45, 0.07) 1px, transparent 1px),
-    /* glow orbs — red + silver */
+    /* glow orbs, red + silver */
     radial-gradient(ellipse at 15% 20%, rgba(232, 0, 45, 0.12), transparent 40%),
     radial-gradient(ellipse at 85% 25%, rgba(180, 180, 180, 0.06), transparent 45%),
     radial-gradient(ellipse at 50% 75%, rgba(232, 0, 45, 0.05), transparent 50%),
@@ -378,7 +298,7 @@ html[data-platform="windows"][data-motion="full"] .copilot-floating-alert {
 
 
 /* ===============================
-   HEADER — BARLOW CONDENSED F1 STYLE
+   HEADER, BARLOW CONDENSED F1 STYLE
 ================================ */
 h1 {
   font-family: "Barlow Condensed", "DM Sans", sans-serif;
@@ -418,10 +338,10 @@ p {
 
 
 /* ===============================
-   TABS — F1 DASHBOARD CONTROLS
+   TABS, F1 DASHBOARD CONTROLS
 ================================ */
 /* ===============================
-   TOP NAVIGATION TABS — TACTICAL PANEL
+   TOP NAVIGATION TABS, TACTICAL PANEL
 ================================ */
 .tabs {
   display: flex;
@@ -464,7 +384,7 @@ p {
   overflow: hidden;
 }
 
-/* Inner gradient wash — revealed on hover/active */
+/* Inner gradient wash, revealed on hover/active */
 .tabs .tab::before {
   content: "";
   position: absolute;
@@ -486,7 +406,7 @@ p {
   opacity: 1;
 }
 
-/* ── ACTIVE TAB — pressed in + lit up ── */
+/* ── ACTIVE TAB, pressed in + lit up ── */
 .tabs .tab.active {
   color: #ff2244;
   background: linear-gradient(
@@ -523,7 +443,7 @@ p {
 }
 
 /* ===============================
-   FLOW / CARDS — F1 PIT WALL PANELS
+   FLOW / CARDS, F1 PIT WALL PANELS
 ================================ */
 .flow {
   display: flex;
@@ -1020,7 +940,7 @@ p {
 }
 
 /* ═══════════════════════════════════════════════
-   RIGHT RAIL — Responsive floating widgets
+   RIGHT RAIL, Responsive floating widgets
    ═══════════════════════════════════════════════ */
 
 /* Full rail: fixed, always visible >1400px */
@@ -2108,7 +2028,7 @@ p {
   stroke: var(--rail-term-yellow) !important;
 }
 
-/* ── Hamburger button — visible <1024px ── */
+/* ── Hamburger button, visible <1024px ── */
 .sidebar-hamburger {
   display: none;
   position: fixed;
@@ -2139,7 +2059,7 @@ p {
 }
 
 /* ═══════════════════════════════════════════════
-   BREAKPOINT: ≤1400px — Collapse right rail
+   BREAKPOINT: ≤1400px, Collapse right rail
    ═══════════════════════════════════════════════ */
 @media (max-width: 1400px) {
   .right-rail-full {
@@ -2154,7 +2074,7 @@ p {
 }
 
 /* ═══════════════════════════════════════════════
-   BREAKPOINT: ≤1280px — Sidebar icons only
+   BREAKPOINT: ≤1280px, Sidebar icons only
    ═══════════════════════════════════════════════ */
 @media (max-width: 1280px) {
   .app-sidebar {
@@ -2208,7 +2128,7 @@ p {
 }
 
 /* ═══════════════════════════════════════════════
-   BREAKPOINT: ≤1024px — Hamburger sidebar + overlay right rail
+   BREAKPOINT: ≤1024px, Hamburger sidebar + overlay right rail
    ═══════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .app-sidebar {
@@ -2315,7 +2235,7 @@ p {
   transform: none;
 }
 
-/* Active Card — white glow border, plain background (no carbon weave) */
+/* Active Card, white glow border, plain background (no carbon weave) */
 .active-card {
   background:
     linear-gradient(145deg, rgba(21, 21, 26, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%);
@@ -2368,7 +2288,7 @@ p {
 }
 
 /* ===============================
-   CARD SECTION HEADERS — F1 HUD
+   CARD SECTION HEADERS, F1 HUD
 ================================ */
 .card h2 {
   display: flex;
@@ -2622,7 +2542,7 @@ p {
 }
 
 /* ============================================================
-   OPERATIONS TAB — BLOOMBERG TERMINAL (authentic palette)
+   OPERATIONS TAB, BLOOMBERG TERMINAL (authentic palette)
    Amber on pitch-black, red section bars, cyan column rows,
    bright-blue full-row highlights. Scoped to .operations-tab.
 ============================================================ */
@@ -2872,7 +2792,7 @@ p {
   gap: 8px;
 }
 
-/* COLUMN HEADER ROW — cyan sub-header strip */
+/* COLUMN HEADER ROW, cyan sub-header strip */
 .operations-tab .ops-col-head {
   background: var(--ops-bg);
   color: var(--ops-cyan);
@@ -2883,7 +2803,7 @@ p {
   border-bottom: 1px solid var(--ops-border);
 }
 
-/* WINDOW TOGGLE — red command strip */
+/* WINDOW TOGGLE, red command strip */
 .operations-tab .ops-window-toggle {
   display: flex;
   height: 18px;
@@ -3421,7 +3341,7 @@ p {
   font-weight: 600;
 }
 
-/* INLINE EMPTY — single tight line, no big box */
+/* INLINE EMPTY, single tight line, no big box */
 .operations-tab .ops-inline-empty {
   padding: 3px 10px;
   font-size: 10px;
@@ -4248,7 +4168,7 @@ p {
 }
 
 /* ===============================
-   DIGITAL TIMER — F1 RACE HUD
+   DIGITAL TIMER, F1 RACE HUD
 ================================ */
 .digital {
   font-family: var(--font-mono);
@@ -4260,7 +4180,7 @@ p {
 }
 
 /* ===============================
-   FORMS — SUNKEN INTO SURFACE
+   FORMS, SUNKEN INTO SURFACE
 ================================ */
 label {
   display: flex;
@@ -4442,7 +4362,7 @@ input::placeholder {
 }
 
 /* ===============================
-   BUTTONS — F1 DASHBOARD CONTROLS
+   BUTTONS, F1 DASHBOARD CONTROLS
 ================================ */
 .primary {
   position: relative;
@@ -4795,7 +4715,7 @@ input::placeholder {
 }
 
 /* ===============================
-   SCRIPT BOX — RACE COMM PANEL
+   SCRIPT BOX, RACE COMM PANEL
 ================================ */
 .script-box {
   background: transparent;
@@ -5509,7 +5429,7 @@ input::placeholder {
 }
 
 /* ===============================
-   ACCORDION — FLOATING 3D
+   ACCORDION, FLOATING 3D
 ================================ */
 .accordion {
   border: 1px solid var(--border-subtle);
@@ -5581,7 +5501,7 @@ input::placeholder {
   z-index: 1;
 }
 
-/* Nested accordion — sunken */
+/* Nested accordion, sunken */
 .accordion .accordion {
   margin: 4px 0;
   border-color: var(--border-subtle);
@@ -5952,7 +5872,7 @@ input::placeholder {
 }
 
 /* ===============================
-   FILE UPLOAD — FLOATING PILL
+   FILE UPLOAD, FLOATING PILL
 ================================ */
 input[type="file"] {
   margin-bottom: 12px;
@@ -6088,7 +6008,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 /* ===============================
-   COPY BUTTON — ANGULAR CONTROL
+   COPY BUTTON, ANGULAR CONTROL
 ================================ */
 .copy-btn {
   appearance: none;
@@ -6190,17 +6110,17 @@ input[type="file"]::file-selector-button:hover {
 .panel-empty-dot:nth-child(2) { animation-delay: 0.27s; }
 .panel-empty-dot:nth-child(3) { animation-delay: 0.54s; }
 
-/* gray — awaiting input */
+/* gray, awaiting input */
 .panel-empty--input .panel-empty-dot {
   background: #555;
 }
 
-/* red — awaiting AI analysis */
+/* red, awaiting AI analysis */
 .panel-empty--ai .panel-empty-dot {
   background: rgba(200, 160, 255, 0.6);
 }
 
-/* green — listening */
+/* green, listening */
 .panel-empty--listening .panel-empty-dot {
   background: rgba(0, 209, 102, 0.7);
 }
@@ -6249,7 +6169,7 @@ input[type="file"]::file-selector-button:hover {
 .ai-dot:nth-child(3) { animation-delay: 0.4s; }
 
 /* ===============================
-   COPILOT FEED — CIRCULAR SPINNER
+   COPILOT FEED, CIRCULAR SPINNER
 ================================ */
 @keyframes copilot-spin {
   to { transform: rotate(360deg); }
@@ -6330,7 +6250,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 /* ===============================
-   SECTION RAIL — left fixed strip
+   SECTION RAIL, left fixed strip
 ================================ */
 .sector-bar {
   display: flex;
@@ -6411,7 +6331,7 @@ input[type="file"]::file-selector-button:hover {
   white-space: nowrap;
 }
 
-/* pending — gray */
+/* pending, gray */
 .sector-step--pending .sector-dot {
   background: rgba(255, 255, 255, 0.15);
 }
@@ -6419,7 +6339,7 @@ input[type="file"]::file-selector-button:hover {
   color: rgba(255, 255, 255, 0.18);
 }
 
-/* done — red */
+/* done, red */
 .sector-step--done .sector-dot {
   background: #E8002D;
   box-shadow: 0 0 5px rgba(232, 0, 45, 0.5);
@@ -6447,7 +6367,7 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: 0 0 8px rgba(232, 0, 45, 0.7);
 }
 
-/* active — green */
+/* active, green */
 .sector-step--active .sector-dot {
   width: 9px;
   height: 9px;
@@ -6478,7 +6398,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 /* ===============================
-   SECTION COUNTER — F1 LAP INDICATOR
+   SECTION COUNTER, F1 LAP INDICATOR
 ================================ */
 .progress-bar-info {
   display: flex;
@@ -6581,7 +6501,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 /* ===============================
-   UNDO BUTTON — ANGULAR CONTROL
+   UNDO BUTTON, ANGULAR CONTROL
 ================================ */
 .undo-btn {
   appearance: none;
@@ -7048,7 +6968,7 @@ input[type="file"]::file-selector-button:hover {
   }
 }
 
-/* ── Session Summary PDF — F1 style ── */
+/* ── Session Summary PDF, F1 style ── */
 .session-summary-pdf-btn {
   background: linear-gradient(180deg, #1A0508 0%, #0F0203 100%) !important;
   border: 1px solid rgba(232, 0, 45, 0.3) !important;
@@ -7108,7 +7028,7 @@ html {
 }
 
 /* =====================================
-   DAILY SCRIPTURE — COMPREHENSIVE
+   DAILY SCRIPTURE, COMPREHENSIVE
 ===================================== */
 .dv-card {
   position: relative;
@@ -7966,7 +7886,7 @@ a.dv-crossrefs-item {
   align-items: flex-start;
 }
 
-/* action — loading state */
+/* action, loading state */
 .dv-action.is-loading {
   opacity: 0.6;
   cursor: wait;
@@ -8400,7 +8320,7 @@ a.dv-crossrefs-item {
 }
 
 /* ===============================
-   ACCESSIBILITY — FOCUS RINGS
+   ACCESSIBILITY, FOCUS RINGS
 ================================ */
 button:focus-visible,
 .accordion-toggle:focus-visible,
@@ -8547,7 +8467,7 @@ button:focus-visible,
   transform: translateY(0);
 }
 
-/* ── Sticky Timer — fixed left pill, outside document flow ── */
+/* ── Sticky Timer, fixed left pill, outside document flow ── */
 .sticky-timer-bar {
   position: fixed;
   left: 16px;
@@ -8674,7 +8594,7 @@ button:focus-visible,
 }
 
 /* ===============================
-   FINAL OVERRIDES — BACKGROUND TOGGLE + SIDEBAR UTILITY
+   FINAL OVERRIDES, BACKGROUND TOGGLE + SIDEBAR UTILITY
 ================================ */
 @keyframes ambientShiftClean {
   0% {
@@ -12952,7 +12872,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   }
 }
 
-/* SEP Finder trigger (left rail) — replaces inline results with a button */
+/* SEP Finder trigger (left rail), replaces inline results with a button */
 .sep-finder-trigger {
   display: flex;
   flex-direction: column;

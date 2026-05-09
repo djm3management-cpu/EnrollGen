@@ -20,7 +20,7 @@ function parseDollar(v) {
   return isNaN(n) ? null : n;
 }
 
-function fmt(n) { return n == null ? "—" : `$${n.toLocaleString()}`; }
+function fmt(n) { return n == null ? "-" : `$${n.toLocaleString()}`; }
 function fmtRange(lo, hi) { return lo === hi ? fmt(lo) : `${fmt(lo)} – ${fmt(hi)}`; }
 function fmtDate(value) {
   if (!value) return "No DB sync";
@@ -47,17 +47,22 @@ function diffPreview(before = "", after = "") {
   return { beforeLines, afterLines };
 }
 
-/* ── Styles ─── */
+/* Styles */
 const card = {
-  background: "linear-gradient(180deg, #181818 0%, #111111 50%, #0e0e0e 100%)",
-  borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)",
-  padding: "18px 22px",
+  background: "var(--eg-surface-2)",
+  borderRadius: "var(--eg-radius-card)",
+  border: "1px solid var(--eg-border)",
+  padding: "16px 18px",
 };
 const label = {
-  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
-  fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#8E99A7",
+  fontFamily: "var(--eg-font-mono)",
+  fontWeight: 500,
+  fontSize: 9,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: "var(--eg-text-faint)",
 };
-const mono = { fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700 };
+const mono = { fontFamily: "var(--eg-font-mono)", fontWeight: 500 };
 
 export default function ACAIntelligence() {
   const { user } = useUser();
@@ -210,7 +215,7 @@ export default function ACAIntelligence() {
           premium: null, deductible: parseDollar(r.tehb_ded_inn_tier_1_individual),
           moop: parseDollar(r.tehb_inn_tier_1_individual_moop),
         }));
-        setSource(`SBE — ${st}`);
+        setSource(`SBE, ${st}`);
       } else {
         let q = supabase
           .from("qhp_landscape_2026")
@@ -227,7 +232,7 @@ export default function ACAIntelligence() {
           deductible: parseDollar(r.medical_deductible_individual_standard),
           moop: parseDollar(r.medical_maximum_out_of_pocket_individual_standard),
         }));
-        setSource(countyName ? `FFE — ${st}, ${countyName} County` : `FFE — ${st} (all counties)`);
+        setSource(countyName ? `FFE, ${st}, ${countyName} County` : `FFE, ${st} (all counties)`);
       }
 
       if (!rows.length) {
@@ -448,14 +453,14 @@ export default function ACAIntelligence() {
                       <td style={{ ...td, ...mono, color: "#FFE45C" }}>{t.count}</td>
                       {hasPremiums && (
                         <td style={{ ...td, ...mono, color: "#D6DFE9" }}>
-                          {t.premLo != null ? fmtRange(t.premLo, t.premHi) : "—"}
+                          {t.premLo != null ? fmtRange(t.premLo, t.premHi) : "-"}
                         </td>
                       )}
                       <td style={{ ...td, ...mono, color: "#D6DFE9" }}>
-                        {t.dedLo != null ? fmtRange(t.dedLo, t.dedHi) : "—"}
+                        {t.dedLo != null ? fmtRange(t.dedLo, t.dedHi) : "-"}
                       </td>
                       <td style={{ ...td, ...mono, color: "#D6DFE9" }}>
-                        {t.moopLo != null ? fmtRange(t.moopLo, t.moopHi) : "—"}
+                        {t.moopLo != null ? fmtRange(t.moopLo, t.moopHi) : "-"}
                       </td>
                     </tr>
                   ))}

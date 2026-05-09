@@ -43,7 +43,6 @@ import { logTrainingCompletion } from "../lib/trainingCompletion";
 
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
-import { COPILOT_PILL_BASE } from "./copilot/pillStyles";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
 import SectionSNP from "./SectionSNP";
@@ -176,42 +175,24 @@ function RailWidgets({
     <>
       <AgentAvailabilityToggle />
 
-      {/* ── Copilot Control Strip ── */}
-      <div className="right-rail-control-panel" style={{
-        width: "100%", minWidth: 0, pointerEvents: "auto",
-        background: "linear-gradient(145deg, rgba(21,21,26,0.98) 0%, rgba(10,10,12,0.99) 100%)",
-        border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16,
-        backdropFilter: "blur(12px)", boxShadow: "0 10px 24px rgba(0,0,0,0.36)",
-        padding: "8px 10px 4px", marginBottom: 6,
-        overflow: "hidden",
-      }}>
+      {/* Copilot Control Strip */}
+      <div className="right-rail-control-panel">
         <CallTimer fallbackStartTime={state.tpmoStart} />
 
-        <div className="right-rail-control-row" style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+        <div className="right-rail-control-row" style={{ display: "flex", gap: 4, marginTop: 8, marginBottom: 8 }}>
           <button
             className={`copilot-pill-button copilot-pill-button--listen${
               listening ? " is-listening" : ""
             }`}
             onClick={() => { const h = copilotHandlersRef.current; if (listening) h.handleStop?.(); else h.handleStart?.(); }}
             disabled={!supportsRecognition}
-            style={{
-              ...COPILOT_PILL_BASE,
-              background: listening
-                ? "linear-gradient(145deg, rgba(232,0,45,0.2) 0%, rgba(180,0,35,0.14) 100%)"
-                : COPILOT_PILL_BASE.background,
-              border: listening
-                ? "1px solid rgba(232,0,45,0.28)"
-                : COPILOT_PILL_BASE.border,
-              color: listening ? "#FF8FA3" : "#00ff41",
-              cursor: supportsRecognition ? "pointer" : "not-allowed",
-            }}
+            style={{ cursor: supportsRecognition ? "pointer" : "not-allowed" }}
           >
-            {!supportsRecognition ? "NO MIC" : listening ? "■ STOP" : "● START"}
+            {!supportsRecognition ? "NO MIC" : listening ? "STOP" : "START"}
           </button>
           <button
             className="copilot-pill-button copilot-pill-button--clear"
             onClick={() => copilotHandlersRef.current.clearAll?.()}
-            style={{ ...COPILOT_PILL_BASE, color: "#666" }}
           >
             CLEAR
           </button>
@@ -220,21 +201,17 @@ function RailWidgets({
             onClick={() => copilotHandlersRef.current.requestCoaching?.()}
             disabled={!hasTranscript || coachingLoading}
             style={{
-              ...COPILOT_PILL_BASE,
-              border: "1px solid rgba(157,0,255,0.45)",
-              color: "#B84DFF",
               cursor: hasTranscript && !coachingLoading ? "pointer" : "not-allowed",
               opacity: !hasTranscript || coachingLoading ? 0.45 : 1,
             }}
           >
-            {coachingLoading ? "ANALYZING…" : "◈ ANALYZE"}
+            {coachingLoading ? "ANALYZING..." : "ANALYZE"}
           </button>
         </div>
         <AskCopilotMini />
       </div>
 
-      {/* ── Thin divider ── */}
-      <div className="right-rail-divider" style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 6 }} />
+      <div className="right-rail-divider" />
 
       {/* ── Live Transcript / Simulated Transcript ── */}
       <CollapsibleWidget
@@ -928,17 +905,16 @@ export default function ScriptFlow() {
               void copilotHandlersRef.current.handleStart?.();
             }}
             style={{
-              fontSize: 15,
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
+              fontFamily: "var(--eg-font-mono)",
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: "0.04em",
               textTransform: "uppercase",
-              padding: "10px 36px",
-              background:
-                "linear-gradient(145deg, rgba(74,222,128,0.15), rgba(74,222,128,0.05))",
-              border: "1px solid rgba(74,222,128,0.3)",
-              color: "#4ade80",
-              borderRadius: 8,
+              padding: "10px 24px",
+              background: "var(--eg-green)",
+              border: "none",
+              color: "#fff",
+              borderRadius: "var(--eg-radius-md)",
               cursor: "pointer",
             }}
           >

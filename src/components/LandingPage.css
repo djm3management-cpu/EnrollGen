@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+/* DM Sans / DM Serif Display / JetBrains Mono are loaded via index.html. */
 
 body {
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--eg-font-body);
 }
 
 .landing-page {
@@ -549,3 +549,333 @@ body {
     justify-content: center;
   }
 }
+
+/* ============================================================
+   v3 — Sedimentary Command overrides
+   These rules cascade over the legacy landing styles and lock the
+   marketing site to the same design tokens as the product.
+   ============================================================ */
+
+.landing-page {
+  background: var(--eg-base) !important;
+  color: var(--eg-text);
+  font-family: var(--eg-font-body) !important;
+  font-size: 14px;
+}
+
+.landing-nav {
+  background: rgba(30, 26, 22, 0.93) !important;
+  border-bottom: 1px solid var(--eg-border) !important;
+  box-shadow: none !important;
+}
+
+.landing-nav-links,
+.landing-nav-links a,
+.landing-footer {
+  font-family: var(--eg-font-mono) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em !important;
+  font-weight: 500 !important;
+  color: var(--eg-text-mid) !important;
+  text-transform: uppercase !important;
+  opacity: 1 !important;
+}
+
+.landing-nav-links a:hover {
+  color: var(--eg-text) !important;
+}
+
+.landing-nav-cta,
+.landing-button {
+  font-family: var(--eg-font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  border-radius: var(--eg-radius-md) !important;
+  background: var(--eg-accent) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 0 16px !important;
+  box-shadow: none !important;
+}
+
+.landing-nav-cta:hover,
+.landing-button:hover {
+  background: var(--eg-accent-bright) !important;
+}
+
+.landing-hero-shell {
+  background: var(--eg-base) !important;
+}
+
+.landing-hero-overlay {
+  background: linear-gradient(180deg, rgba(23, 20, 17, 0.4), var(--eg-base)) !important;
+}
+
+.landing-hero-video {
+  opacity: 0.18;
+}
+
+.landing-flow-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.landing-flow-strip span {
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-md);
+  color: var(--eg-text-mid);
+  background: var(--eg-surface-2);
+}
+
+.landing-flow-strip span i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--flow-color, var(--eg-accent));
+  box-shadow: 0 0 8px var(--flow-color, var(--eg-accent));
+}
+
+#landing-hero-title,
+.landing-hero h1 {
+  font-family: var(--eg-font-display) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--eg-text) !important;
+  font-size: clamp(38px, 5.4vw, 64px) !important;
+}
+
+.landing-hero-subhead {
+  font-family: var(--eg-font-body) !important;
+  color: var(--eg-text-mid) !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  font-weight: 400 !important;
+}
+
+.landing-hero-panel {
+  background: var(--eg-surface-1) !important;
+  border: 1px solid var(--eg-border) !important;
+  border-radius: var(--eg-radius-card-lg) !important;
+  box-shadow: none !important;
+  padding: 18px !important;
+}
+
+.landing-panel-topbar {
+  font-family: var(--eg-font-mono) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--eg-text-dim) !important;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--eg-border);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.landing-panel-topbar strong {
+  color: var(--eg-green-text) !important;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.landing-panel-topbar strong i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--eg-green);
+}
+
+.landing-terminal-section {
+  margin-bottom: 14px;
+}
+
+.landing-terminal-heading {
+  font-family: var(--eg-font-mono) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--eg-text-faint) !important;
+  margin-bottom: 8px;
+}
+
+.landing-terminal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--eg-font-body);
+  font-size: 12px;
+  color: var(--eg-text);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--eg-border);
+}
+
+.landing-terminal-row:last-child {
+  border-bottom: none;
+}
+
+.landing-terminal-row strong {
+  margin-left: auto;
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--eg-text-mid);
+}
+
+.landing-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.landing-status-dot.is-green { background: var(--eg-green); }
+.landing-status-dot.is-amber { background: var(--eg-amber); }
+.landing-status-dot.is-muted,
+.landing-status-dot.is-faint { background: var(--eg-text-faint); }
+
+.landing-terminal-ai {
+  font-family: var(--eg-font-body) !important;
+  font-size: 11px !important;
+  color: var(--eg-green-text) !important;
+  background: var(--eg-green-dim) !important;
+  border-radius: var(--eg-radius-md) !important;
+  padding: 8px 22px 8px 10px !important;
+  margin: 0;
+  position: relative;
+  line-height: 1.45;
+}
+
+.landing-terminal-ai::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--eg-green);
+}
+
+.landing-compliance-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--eg-border);
+}
+
+.landing-compliance-row:last-child {
+  border-bottom: none;
+}
+
+.landing-compliance-row > div {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--eg-font-body);
+  font-size: 11.5px;
+  color: var(--eg-text);
+}
+
+.landing-compliance-row > div strong {
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.landing-compliance-row.is-green > div strong { color: var(--eg-green-text); }
+.landing-compliance-row.is-amber > div strong { color: var(--eg-amber-text); }
+.landing-compliance-row.is-muted > div strong { color: var(--eg-text-faint); }
+
+.landing-compliance-row > i {
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--eg-surface-3);
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-compliance-row.is-green > i::after,
+.landing-compliance-row.is-amber > i::after,
+.landing-compliance-row.is-muted > i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: var(--bar-width, 100%);
+}
+
+.landing-compliance-row.is-green > i { background: var(--eg-green); }
+.landing-compliance-row.is-amber > i { background: var(--eg-amber); width: 14px; }
+.landing-compliance-row.is-muted > i { background: var(--eg-text-faint); width: 4px; }
+
+.landing-feature-card {
+  background: var(--eg-surface-2) !important;
+  border: 1px solid var(--eg-border) !important;
+  border-radius: var(--eg-radius-card) !important;
+  box-shadow: none !important;
+  padding: 18px !important;
+}
+
+.landing-feature-card span {
+  font-family: var(--eg-font-mono) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--eg-accent) !important;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.landing-feature-card p {
+  font-family: var(--eg-font-body) !important;
+  color: var(--eg-text-mid) !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+.landing-footer {
+  border-top: 1px solid var(--eg-border) !important;
+  background: transparent !important;
+  color: var(--eg-text-faint) !important;
+}
+
+.landing-logo,
+.landing-footer-logo {
+  width: auto !important;
+}
+
+.landing-logo > div,
+.landing-footer-logo > div {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Kill leftover red ambient glow */
+.landing-nav,
+.landing-nav-cta,
+.landing-button,
+.landing-feature-card,
+.landing-hero-panel {
+  text-shadow: none !important;
+}
+

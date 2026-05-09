@@ -1,0 +1,143 @@
+/* ============================================================
+   EnrollGen Design System v3.0, Sedimentary Command
+   Single source of truth for all design tokens.
+   See docs/DESIGN_SYSTEM.md for usage rules.
+   ============================================================ */
+
+:root {
+  /* ----- Core surfaces (darkest to lightest) ----- */
+  --eg-base: #171411;
+  --eg-surface-1: #1e1a16;
+  --eg-surface-2: #262119;
+  --eg-surface-3: #2e2820;
+  --eg-surface-4: #382f25;
+
+  /* ----- Borders ----- */
+  --eg-border: #3d352b;
+  --eg-border-hover: #564a3c;
+  --eg-border-active: #7a6a56;
+
+  /* ----- Text ----- */
+  --eg-text: #e4dace;
+  --eg-text-mid: #b5a898;
+  --eg-text-dim: #7d7060;
+  --eg-text-faint: #524838;
+
+  /* ----- Accent (brand) ----- */
+  --eg-accent: #c08b55;
+  --eg-accent-bright: #daa76d;
+  --eg-accent-dim: #8a6338;
+
+  /* ----- Semantic, green ----- */
+  --eg-green: #6aab7d;
+  --eg-green-dim: #2d4a35;
+  --eg-green-text: #a0d4ac;
+
+  /* ----- Semantic, red ----- */
+  --eg-red: #b85c5c;
+  --eg-red-dim: #4a2828;
+  --eg-red-text: #e09898;
+
+  /* ----- Semantic, blue ----- */
+  --eg-blue: #5c88b8;
+  --eg-blue-dim: #283a4a;
+  --eg-blue-text: #98bce0;
+
+  /* ----- Semantic, amber ----- */
+  --eg-amber: #c49940;
+  --eg-amber-dim: #4a3818;
+  --eg-amber-text: #e0c080;
+
+  /* ----- Semantic, purple ----- */
+  --eg-purple: #8b6eb8;
+  --eg-purple-dim: #352a4a;
+  --eg-purple-text: #bca8e0;
+
+  /* ----- Flow colors (named aliases) ----- */
+  --eg-flow-ma: var(--eg-red);
+  --eg-flow-ma-glow: var(--eg-red-text);
+  --eg-flow-ms: var(--eg-green);
+  --eg-flow-ms-glow: var(--eg-green-text);
+  --eg-flow-aca: var(--eg-blue);
+  --eg-flow-aca-glow: var(--eg-blue-text);
+  --eg-flow-u65: var(--eg-purple);
+  --eg-flow-u65-glow: var(--eg-purple-text);
+
+  /* ----- Typography ----- */
+  --eg-font-display: 'DM Serif Display', 'EB Garamond', Georgia, serif;
+  --eg-font-body: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  --eg-font-mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+
+  /* ----- Radii ----- */
+  --eg-radius-pill: 3px;
+  --eg-radius-sm: 4px;
+  --eg-radius-md: 5px;
+  --eg-radius-card: 6px;
+  --eg-radius-card-lg: 7px;
+
+  /* ----- Transitions ----- */
+  --eg-transition-fast: 0.15s ease;
+  --eg-transition-base: 0.2s ease;
+  --eg-transition-slow: 0.3s ease;
+
+  /* ============================================================
+     Compatibility aliases, map legacy tokens to v3 palette so
+     any unmigrated component still picks up the new look.
+     New work must reference --eg-* tokens directly.
+     ============================================================ */
+
+  /* Surfaces */
+  --bg-deep: var(--eg-base);
+  --bg-panel: var(--eg-surface-1);
+  --bg-card: var(--eg-surface-2);
+  --bg-card-hover: var(--eg-surface-3);
+  --bg-input: var(--eg-surface-2);
+  --bg-elevated: var(--eg-surface-3);
+
+  /* Borders */
+  --border-subtle: var(--eg-border);
+  --border-default: var(--eg-border);
+  --border-active: var(--eg-border-active);
+  --border-accent: var(--eg-accent-dim);
+
+  /* Text */
+  --text-primary: var(--eg-text);
+  --text-secondary: var(--eg-text-mid);
+  --text-muted: var(--eg-text-dim);
+  --text-accent: var(--eg-accent);
+  --text-warning: var(--eg-amber);
+  --text-danger: var(--eg-red);
+  --text-success: var(--eg-green);
+
+  /* Accent palette */
+  --accent-cyan: var(--eg-accent);
+  --accent-teal: var(--eg-text-mid);
+  --accent-gold: var(--eg-amber);
+  --accent-red: var(--eg-red);
+  --accent-green: var(--eg-green);
+  --color-fastest: var(--eg-purple);
+
+  /* Fonts */
+  --font-display: var(--eg-font-display);
+  --font-body: var(--eg-font-body);
+  --font-mono: var(--eg-font-mono);
+  --font-script-read: var(--eg-font-body);
+
+  /* Radii */
+  --radius-sm: var(--eg-radius-card);
+  --radius-md: var(--eg-radius-card);
+  --radius-lg: var(--eg-radius-card-lg);
+
+  /* Speeds */
+  --speed-fast: 0.15s;
+  --speed-normal: 0.2s;
+
+  /* Disable legacy drop shadows, depth comes from surface layering */
+  --shadow-float: none;
+  --shadow-float-hover: none;
+  --shadow-btn: none;
+  --shadow-btn-hover: none;
+  --shadow-btn-pressed: none;
+  --shadow-inset: none;
+  --shadow-active: none;
+}

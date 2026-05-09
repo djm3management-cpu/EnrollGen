@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   SEPLookupTool.css — Claymorphic Dark Theme Override
+   SEPLookupTool.css, Claymorphic Dark Theme Override
    Matches the design system in styles.css (floating 3D cards, pill buttons,
    DM Sans + IBM Plex Mono, layered shadows, deep blue palette)
    ═══════════════════════════════════════════════════════════════════════ */
@@ -16,7 +16,7 @@
   overflow: visible;
 }
 
-/* (header removed — FemaFeed is the top element now) */
+/* (header removed, FemaFeed is the top element now) */
 
 /* ── Search bar ── */
 .sep-search-bar {
@@ -175,7 +175,7 @@
   font-family: var(--font-mono);
 }
 
-/* (county card selector removed — CountyGrid handles selection) */
+/* (county card selector removed, CountyGrid handles selection) */
 
 /* ── Filter bar ── */
 .sep-filter-bar {
@@ -620,7 +620,7 @@
   padding: 18px 22px;
 }
 
-/* (county notice removed — replaced by sep-select-county-prompt) */
+/* (county notice removed, replaced by sep-select-county-prompt) */
 
 /* ── Carrier grid ── */
 .sep-carrier-grid {
@@ -760,7 +760,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   MAP LAYOUT — Full-width stacked
+   MAP LAYOUT, Full-width stacked
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* ── Map section (always full-width) ── */
@@ -936,10 +936,10 @@
   line-height: 1.5;
 }
 
-/* (state header removed — info now in map bar + tab bar) */
+/* (state header removed, info now in map bar + tab bar) */
 
 /* ═══════════════════════════════════════════════════════════════════════
-   COUNTY GRID PANEL — horizontal wrapping grid
+   COUNTY GRID PANEL, horizontal wrapping grid
    ═══════════════════════════════════════════════════════════════════════ */
 .sep-county-grid-panel {
   background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, #111111 100%);
@@ -1143,7 +1143,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   FEMA FEED — Horizontal top banner
+   FEMA FEED, Horizontal top banner
    ═══════════════════════════════════════════════════════════════════════ */
 .fema-feed-hz {
   background: linear-gradient(180deg, rgba(24, 24, 24, 0.28) 0%, #111111 100%);

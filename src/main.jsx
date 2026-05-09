@@ -1,7 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import "./styles/design-tokens.css";
 import "./styles.css";
+import "./styles/v3-overrides.css";
 import { CopilotLogProvider } from "./context/CopilotTranscriptLog";
 import { LiveCallProvider } from "./context/LiveCallContext";
 import { TrainingModeProvider } from "./context/TrainingModeContext";
@@ -79,15 +81,25 @@ function MissingClerkKey() {
         minHeight: "100vh",
         display: "grid",
         placeItems: "center",
-        background: "#0c1017",
-        color: "#f8fafc",
+        background: "#171411",
+        color: "#e4dace",
         padding: 24,
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: '"DM Sans", sans-serif',
       }}
     >
-      <div style={{ maxWidth: 560, lineHeight: 1.5 }}>
-        <h1 style={{ marginTop: 0 }}>Clerk is not configured</h1>
-        <p style={{ marginBottom: 0 }}>
+      <div style={{ maxWidth: 560, lineHeight: 1.55 }}>
+        <h1
+          style={{
+            marginTop: 0,
+            fontFamily: '"DM Serif Display", serif',
+            fontSize: 28,
+            fontWeight: 400,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Clerk is not configured
+        </h1>
+        <p style={{ marginBottom: 0, color: "#b5a898" }}>
           Set <code>VITE_CLERK_PUBLISHABLE_KEY</code> in your Vite environment,
           or set <code>VITE_DISABLE_CLERK_AUTH=true</code> if you intentionally
           want to bypass auth.

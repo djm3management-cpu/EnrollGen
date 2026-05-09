@@ -74,13 +74,13 @@ const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const tenantBootstrapAttempts = new Set();
 const clerkTerminalAppearance = {
   variables: {
-    colorPrimary: "#e8002d",
-    colorBackground: "#050505",
-    colorInputBackground: "#030303",
-    colorInputText: "#f3f4f6",
-    colorText: "#f3f4f6",
-    colorTextSecondary: "#9ca3af",
-    borderRadius: "2px",
+    colorPrimary: "#c08b55",
+    colorBackground: "#171411",
+    colorInputBackground: "#262119",
+    colorInputText: "#e4dace",
+    colorText: "#e4dace",
+    colorTextSecondary: "#b5a898",
+    borderRadius: "5px",
     fontFamily: '"DM Sans", sans-serif',
     fontSize: "13px",
   },
@@ -90,11 +90,10 @@ const clerkTerminalAppearance = {
     },
     cardBox: {
       width: "100%",
-      border: "1px solid rgba(255, 255, 255, 0.14)",
-      borderRadius: "2px",
-      boxShadow: "0 24px 70px rgba(0, 0, 0, 0.58)",
-      background:
-        "linear-gradient(180deg, rgba(17, 17, 17, 0.98), rgba(3, 3, 3, 0.98))",
+      border: "1px solid #3d352b",
+      borderRadius: "7px",
+      boxShadow: "none",
+      background: "#1e1a16",
     },
     card: {
       gap: "14px",
@@ -102,74 +101,76 @@ const clerkTerminalAppearance = {
       backgroundColor: "transparent",
     },
     headerTitle: {
-      color: "#ffffff",
-      fontFamily: '"Barlow Condensed", sans-serif',
-      fontSize: "34px",
-      fontWeight: 900,
-      letterSpacing: "0",
-      lineHeight: "0.95",
+      color: "#e4dace",
+      fontFamily: '"DM Serif Display", serif',
+      fontSize: "28px",
+      fontWeight: 400,
+      letterSpacing: "-0.02em",
+      lineHeight: "1.1",
       textTransform: "none",
     },
     headerSubtitle: {
-      color: "#9ca3af",
-      fontFamily: '"IBM Plex Mono", monospace',
-      fontSize: "12px",
-      lineHeight: "1.35",
+      color: "#b5a898",
+      fontFamily: '"DM Sans", sans-serif',
+      fontSize: "13px",
+      lineHeight: "1.45",
     },
     socialButtonsBlockButton: {
-      minHeight: "34px",
-      border: "1px solid rgba(255, 255, 255, 0.12)",
-      borderRadius: "2px",
-      backgroundColor: "#080808",
-      color: "#f3f4f6",
-      fontSize: "12px",
-      fontWeight: 800,
+      minHeight: "36px",
+      border: "1px solid #3d352b",
+      borderRadius: "5px",
+      backgroundColor: "#262119",
+      color: "#e4dace",
+      fontFamily: '"DM Sans", sans-serif',
+      fontSize: "13px",
+      fontWeight: 500,
     },
     dividerLine: {
-      backgroundColor: "rgba(255, 255, 255, 0.12)",
+      backgroundColor: "#3d352b",
     },
     dividerText: {
-      color: "#6b7280",
-      fontFamily: '"IBM Plex Mono", monospace',
-      fontSize: "11px",
+      color: "#7d7060",
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: "10px",
+      letterSpacing: "0.06em",
       textTransform: "uppercase",
     },
     formFieldLabel: {
-      color: "#d1d5db",
-      fontFamily: '"IBM Plex Mono", monospace',
-      fontSize: "11px",
-      fontWeight: 700,
-      letterSpacing: "0.03em",
+      color: "#7d7060",
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: "9px",
+      fontWeight: 500,
+      letterSpacing: "0.06em",
       textTransform: "uppercase",
     },
     formFieldInput: {
-      minHeight: "34px",
-      border: "1px solid rgba(255, 255, 255, 0.14)",
-      borderRadius: "2px",
-      backgroundColor: "#030303",
-      color: "#f3f4f6",
-      fontFamily: '"IBM Plex Mono", monospace',
-      fontSize: "12px",
+      minHeight: "36px",
+      border: "1px solid #3d352b",
+      borderRadius: "5px",
+      backgroundColor: "#262119",
+      color: "#e4dace",
+      fontFamily: '"DM Sans", sans-serif',
+      fontSize: "13px",
     },
     formButtonPrimary: {
-      minHeight: "34px",
-      border: "1px solid rgba(255, 255, 255, 0.16)",
-      borderRadius: "2px",
-      background: "linear-gradient(180deg, #ff2448 0%, #e8002d 48%, #8f001b 100%)",
+      minHeight: "36px",
+      border: "none",
+      borderRadius: "5px",
+      background: "#c08b55",
       color: "#ffffff",
-      fontFamily: '"Barlow Condensed", sans-serif',
-      fontSize: "13px",
-      fontWeight: 900,
-      letterSpacing: "0.05em",
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: "11px",
+      fontWeight: 500,
+      letterSpacing: "0.04em",
       textTransform: "uppercase",
     },
     footerActionText: {
-      color: "#9ca3af",
+      color: "#7d7060",
       fontSize: "12px",
     },
     footerActionLink: {
-      color: "#ffffff",
-      fontWeight: 800,
+      color: "#c08b55",
+      fontWeight: 500,
     },
   },
 };
@@ -179,92 +180,40 @@ function modeSupportsAgentTools(mode) {
 }
 
 const FLOWS = [
-  { id: "ma", label: "MA", title: "Medicare Advantage", color: "#E8002D", rgb: "232,0,45" },
-  { id: "aca", label: "ACA", title: "ACA On-Exchange", color: "#EAB308", rgb: "234,179,8" },
-  { id: "medsup", label: "SUP", title: "Medicare Supplement", color: "#00D166", rgb: "0,209,102" },
-  { id: "u65", label: "U65", title: "U65 Off-Exchange", color: "#a855f7", rgb: "168,85,247" },
-  { id: "ancillary", label: "ANC", title: "Ancillary", color: "#3B82F6", rgb: "59,130,246" },
+  { id: "ma", label: "MA", title: "Medicare Advantage", color: "var(--eg-red)", border: "rgba(184, 92, 92, 0.42)", bg: "rgba(184, 92, 92, 0.08)" },
+  { id: "aca", label: "ACA", title: "ACA On-Exchange", color: "var(--eg-blue)", border: "rgba(92, 136, 184, 0.42)", bg: "rgba(92, 136, 184, 0.08)" },
+  { id: "medsup", label: "MS", title: "Medicare Supplement", color: "var(--eg-green)", border: "rgba(106, 171, 125, 0.42)", bg: "rgba(106, 171, 125, 0.08)" },
+  { id: "u65", label: "U65", title: "U65 Off-Exchange", color: "var(--eg-purple)", border: "rgba(139, 110, 184, 0.42)", bg: "rgba(139, 110, 184, 0.08)" },
+  { id: "ancillary", label: "ANC", title: "Ancillary", color: "var(--eg-amber)", border: "rgba(196, 153, 64, 0.42)", bg: "rgba(196, 153, 64, 0.08)" },
 ];
 
-function FlowSelector({ mode, onChange, compact = false }) {
+function FlowSelector({ mode, onChange }) {
   return (
-    <>
-      <style>{`
-        @keyframes flow-pulse {
-          0%   { box-shadow: 0 0 6px 2px var(--pulse-color); }
-          50%  { box-shadow: 0 0 14px 5px var(--pulse-color); }
-          100% { box-shadow: 0 0 6px 2px var(--pulse-color); }
-        }
-        .flow-circle-active {
-          animation: flow-pulse 2.4s ease-in-out infinite;
-        }
-      `}</style>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: compact ? 10 : 14,
-          background: "linear-gradient(180deg, #141414 0%, #0E0E0E 100%)",
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: compact ? 999 : 8,
-          padding: compact ? "5px 10px" : "8px 16px",
-          userSelect: "none",
-          boxShadow: "inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03)",
-          flexShrink: 0,
-        }}
-      >
-        {FLOWS.map((flow) => {
-          const active = mode === flow.id;
-          return (
-            <button
-              key={flow.id}
-              onClick={() => onChange(flow.id)}
-              title={flow.title}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: compact ? 3 : 5,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                fontFamily: "var(--font-body)",
-              }}
-            >
-              <div
-                className={active ? "flow-circle-active" : ""}
-                style={{
-                  "--pulse-color": `rgba(${flow.rgb},0.55)`,
-                  width: compact ? 10 : 14,
-                  height: compact ? 10 : 14,
-                  borderRadius: "50%",
-                  background: active ? flow.color : `rgba(${flow.rgb},0.18)`,
-                  border: `1px solid ${active ? flow.color : `rgba(${flow.rgb},0.25)`}`,
-                  boxShadow: active ? `0 0 8px 2px rgba(${flow.rgb},0.5)` : "none",
-                  transition: "background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: compact ? 8 : 9,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  fontFamily: "var(--font-display)",
-                  color: active ? flow.color : `rgba(${flow.rgb},0.35)`,
-                  transition: "color 0.2s ease",
-                  textTransform: "uppercase",
-                  lineHeight: 1,
-                }}
-              >
-                {flow.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </>
+    <div className="flow-selector-strip" role="tablist" aria-label="Workflow">
+      {FLOWS.map((flow) => {
+        const active = mode === flow.id;
+        return (
+          <button
+            key={flow.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(flow.id)}
+            title={flow.title}
+            className={`flow-pill${active ? " is-active" : ""}`}
+            style={{
+              "--flow-color": flow.color,
+              "--flow-border": flow.border,
+              "--flow-bg": flow.bg,
+              ...(active ? { background: flow.bg, borderColor: flow.border } : null),
+            }}
+          >
+            <span className="flow-beacon" />
+            <span className="flow-label">{flow.label}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -795,13 +744,11 @@ function AppShell({ currentUser = null }) {
         <header ref={topBarRef} className="top-bar-shell">
           <div className="top-bar-brand">
             <EnrollGenLogo
-              width={118}
               className="top-bar-logo"
-              style={{ margin: 0 }}
               onClick={handleLogoClick}
               title="Refresh and return to the main page"
             />
-            <FlowSelector mode={mode} onChange={handleModeChange} compact />
+            <FlowSelector mode={mode} onChange={handleModeChange} />
             <TrainingModeToggle />
           </div>
 
