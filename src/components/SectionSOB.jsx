@@ -6,7 +6,6 @@ import {
   SectionAdvanceButton,
   SectionToast,
 } from "./SharedUI";
-import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSOB() {
   const { state, dispatch, activeSection, unlocked } = useScript();
@@ -74,8 +73,6 @@ export default React.memo(function SectionSOB() {
           }
         />
       </div>
-
-      <SectionCoach stepName="Plan Selection & SOB" sectionNum={6} />
 
       {!neadsOk && <LockText>Locked until NEADS is complete.</LockText>}
     </section>

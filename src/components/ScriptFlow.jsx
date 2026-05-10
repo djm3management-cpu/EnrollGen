@@ -45,7 +45,6 @@ import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
 import CenterTimerBar from "./CenterTimerBar";
 import ProgressDots from "./ProgressDots";
-import EnrollmentCTA from "./EnrollmentCTA";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
 import SectionSNP from "./SectionSNP";
@@ -573,7 +572,38 @@ export default function ScriptFlow() {
   const [mergedTranscriptEntries, setMergedTranscriptEntries] = useState([]);
   const [isListening, setIsListening] = useState(false);
   const [coachingLoading, setCoachingLoading] = useState(false);
+  const [agentAudioLevel, setAgentAudioLevel] = useState(0);
+  const [customerAudioLevel, setCustomerAudioLevel] = useState(0);
   const copilotHandlersRef = useRef({});
+  const autoStartCallRef = useRef(false);
+
+  useEffect(() => {
+    if (autoStartCallRef.current) return undefined;
+    autoStartCallRef.current = true;
+    setCallStarted(true);
+
+    let attempts = 0;
+    const startWhenReady = () => {
+      attempts += 1;
+      const handleStart = copilotHandlersRef.current?.handleStart;
+      if (handleStart) {
+        void handleStart({ skipCustomerAudio: true });
+        return true;
+      }
+      return attempts >= 20;
+    };
+
+    if (startWhenReady()) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      if (startWhenReady()) {
+        window.clearInterval(intervalId);
+      }
+    }, 100);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   const customerTranscript = useMemo(
     () =>
       mergedTranscriptEntries
@@ -896,21 +926,25 @@ export default function ScriptFlow() {
       {trainingModeEnabled ? <TrainingBanner /> : null}
 
       <CenterTimerBar
-        onStart={() => {
-          if (!callStarted) {
-            setCallStarted(true);
-          }
-          void copilotHandlersRef.current?.handleStart?.();
-        }}
-        onEnd={() => copilotHandlersRef.current?.handleStop?.()}
-        onAnalyze={() => copilotHandlersRef.current?.requestCoaching?.()}
-        fallbackStartTime={state.tpmoStart}
+        agentLevel={agentAudioLevel}
+        customerLevel={customerAudioLevel}
+        agentActive={isListening}
+        customerActive={customerAudioLevel > 0.015}
       />
 
       {/* ── AI Co-Pilot, passes transcript up via callback ── */}
-      <ScriptPrompter onTranscriptChange={setTranscript} onMergedTranscriptChange={setMergedTranscriptEntries} onListeningChange={setIsListening} logComplianceFlag={session.logComplianceFlag} controlsRef={copilotHandlersRef} onCoachingLoadingChange={setCoachingLoading} />
+      <ScriptPrompter
+        onTranscriptChange={setTranscript}
+        onMergedTranscriptChange={setMergedTranscriptEntries}
+        onListeningChange={setIsListening}
+        logComplianceFlag={session.logComplianceFlag}
+        controlsRef={copilotHandlersRef}
+        onCoachingLoadingChange={setCoachingLoading}
+        onAgentAudioLevelChange={setAgentAudioLevel}
+        onCustomerAudioLevelChange={setCustomerAudioLevel}
+      />
 
-      {/* Idle state: prompt to start the call from the timer bar above. */}
+      {/* Idle state: retained only if automatic start is blocked before controls mount. */}
       {!callStarted && (
         <section
           className="script-start-call-gate script-start-call-gate--bare"
@@ -923,7 +957,7 @@ export default function ScriptFlow() {
             fontSize: 13,
           }}
         >
-          Press START in the timer bar to begin the call.
+          Audio meters initialize automatically.
         </section>
       )}
 
@@ -995,20 +1029,6 @@ export default function ScriptFlow() {
               sectionNum,
             };
           })}
-      />
-
-      <EnrollmentCTA
-        ready={Boolean(state.enrollOk)}
-        remaining={(() => {
-          const gates = ["recordingOk", "tpmoOk", "soaOk", "qualOk", "neadsOk", "sobOk", "enrollOk"];
-          return gates.filter((g) => !state[g]).length;
-        })()}
-        total={TOTAL_SECTIONS}
-        onSubmit={() => {
-          if (state.enrollOk) {
-            window.location.hash = "#enrollment-complete";
-          }
-        }}
       />
 
       {/* ── Full Compliance Dashboard, transcript-aware, at the bottom ── */}

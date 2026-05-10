@@ -6,7 +6,6 @@ import {
   SectionAdvanceButton,
   SectionToast,
 } from "./SharedUI";
-import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionSNP() {
   const { state, dispatch, activeSection } = useScript();
@@ -57,13 +56,6 @@ export default React.memo(function SectionSNP() {
             }
           />
         </div>
-      )}
-
-      {snpType && (
-        <SectionCoach
-          stepName={`SNP Disclosure (${snpType})`}
-          sectionNum={2.5}
-        />
       )}
 
       {snpType && !snpOk && (

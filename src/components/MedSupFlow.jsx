@@ -5,6 +5,7 @@
 
 import { useRef, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 import { useMedSup } from "../context/MedSupContext";
 import { MEDSUP_SECTIONS } from "../context/MedSupScript";
 import { useScriptTemplate } from "../hooks/useScriptTemplate";
@@ -52,8 +53,13 @@ function Gate({ label, done, onDo, onUndo }) {
         justifyContent: "center",
       }}
     >
-      <label
+      <button
+        type="button"
         className="check flow-gate-check"
+        onClick={done ? onUndo : onDo}
+        aria-label={label}
+        aria-pressed={done}
+        title={label}
         style={{
           justifyContent: "center",
           width: "fit-content",
@@ -68,14 +74,8 @@ function Gate({ label, done, onDo, onUndo }) {
           color: done ? "#34d399" : "#dfe6f0",
         }}
       >
-        <input
-          type="checkbox"
-          checked={done}
-          onChange={(e) => (e.target.checked ? onDo() : onUndo())}
-          style={{ margin: 0 }}
-        />
-        {label}
-      </label>
+        <Check className="flow-gate-icon" size={14} strokeWidth={2.8} aria-hidden="true" />
+      </button>
     </div>
   );
 }

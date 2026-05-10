@@ -6,7 +6,6 @@ import {
   SectionAdvanceButton,
   SectionToast,
 } from "./SharedUI";
-import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionQualifications() {
   const { state, dispatch, activeSection, unlocked } = useScript();
@@ -61,8 +60,6 @@ If not available: Verify full legal name, date of birth, and Social Security Num
           }
         />
       </div>
-
-      <SectionCoach stepName="Qualifications" sectionNum={4} />
 
       {!soaOk && (
         <LockText>

@@ -6,7 +6,6 @@ import {
   SectionAdvanceButton,
   SectionToast,
 } from "./SharedUI";
-import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionTPMO() {
   const { state, dispatch, activeSection, unlocked } = useScript();
@@ -46,8 +45,6 @@ export default React.memo(function SectionTPMO() {
           }
         />
       </div>
-
-      <SectionCoach stepName="TPMO Disclaimer" sectionNum={2} />
 
       {!recordingOk && (
         <LockText>Locked until Recording Disclosure is complete.</LockText>

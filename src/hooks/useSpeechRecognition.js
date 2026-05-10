@@ -48,8 +48,15 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
   const [transcript, setTranscript] = useState("");
   const [transcriptRows, setTranscriptRows] = useState([]);
   const [interimText, setInterimText] = useState("");
+  const [audioLevel, setAudioLevel] = useState(0);
 
   const recognitionRef = useRef(null);
+  const micStreamRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const meterSourceRef = useRef(null);
+  const meterFrameRef = useRef(null);
+  const meterDataRef = useRef(null);
   const internalRef = useRef("");
   const transcriptRef = externalTranscriptRef || internalRef;
   const backoffRef = useRef(300); // exponential backoff for restarts
@@ -69,8 +76,97 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     typeof window !== "undefined" &&
     !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
+  const stopMicMeter = useCallback(() => {
+    if (meterFrameRef.current) {
+      cancelAnimationFrame(meterFrameRef.current);
+      meterFrameRef.current = null;
+    }
+
+    if (meterSourceRef.current) {
+      meterSourceRef.current.disconnect();
+      meterSourceRef.current = null;
+    }
+
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach((track) => track.stop());
+      micStreamRef.current = null;
+    }
+
+    const audioContext = audioContextRef.current;
+    audioContextRef.current = null;
+    analyserRef.current = null;
+    meterDataRef.current = null;
+    setAudioLevel(0);
+
+    if (audioContext && audioContext.state !== "closed") {
+      void audioContext.close();
+    }
+  }, []);
+
+  const startMicMeter = useCallback(async () => {
+    if (
+      micStreamRef.current ||
+      typeof window === "undefined" ||
+      typeof navigator === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia
+    ) {
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      const audioContext = new AudioContextCtor();
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.76;
+      source.connect(analyser);
+
+      micStreamRef.current = stream;
+      audioContextRef.current = audioContext;
+      meterSourceRef.current = source;
+      analyserRef.current = analyser;
+      meterDataRef.current = new Uint8Array(analyser.fftSize);
+
+      const tick = () => {
+        const currentAnalyser = analyserRef.current;
+        const data = meterDataRef.current;
+        if (!currentAnalyser || !data) return;
+
+        currentAnalyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i += 1) {
+          const centered = (data[i] - 128) / 128;
+          sum += centered * centered;
+        }
+        const rms = Math.sqrt(sum / data.length);
+        setAudioLevel(Math.min(1, rms * 5));
+        meterFrameRef.current = requestAnimationFrame(tick);
+      };
+
+      tick();
+    } catch {
+      setAudioLevel(0);
+    }
+  }, []);
+
   const startListening = useCallback(() => {
+    void startMicMeter();
     if (!supportsRecognition) return;
+    if (recognitionRef.current) {
+      setListening(true);
+      return;
+    }
     backoffRef.current = 300; // reset backoff on manual start
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -127,6 +223,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
       if (e.error === "not-allowed") {
         setListening(false);
         recognitionRef.current = null;
+        stopMicMeter();
       }
     };
 
@@ -153,7 +250,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     recognitionRef.current = recognition;
     recognition.start();
     setListening(true);
-  }, [supportsRecognition, transcriptRef]);
+  }, [supportsRecognition, transcriptRef, startMicMeter, stopMicMeter]);
 
   const stopListening = useCallback(() => {
     window.clearTimeout(restartTimeoutRef.current);
@@ -164,6 +261,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
       recognitionRef.current = null;
     }
     setListening(false);
+    stopMicMeter();
 
     // Detect spoken questions on mute
     const spokenQuestion = extractSpokenQuestion(
@@ -173,7 +271,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     if (spokenQuestion) {
       onSpokenQuestionRef.current?.(spokenQuestion);
     }
-  }, [transcriptRef]);
+  }, [transcriptRef, stopMicMeter]);
 
   const clearTranscript = useCallback(() => {
     transcriptRef.current = "";
@@ -192,10 +290,12 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
-  }, []);
+    stopMicMeter();
+  }, [stopMicMeter]);
 
   return {
     listening,
+    audioLevel,
     transcript,
     transcriptRef,
     transcriptRows,

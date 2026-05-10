@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Building2,
+  Check,
   CheckCircle2,
   Eye,
   Heart,
@@ -451,8 +452,13 @@ function GateToggle({ label, done, onDo, onUndo }) {
         justifyContent: "center",
       }}
     >
-      <label
+      <button
+        type="button"
         className="check flow-gate-check"
+        onClick={done ? onUndo : onDo}
+        aria-label={label}
+        aria-pressed={done}
+        title={label}
         style={{
           justifyContent: "center",
           width: "fit-content",
@@ -463,14 +469,8 @@ function GateToggle({ label, done, onDo, onUndo }) {
           color: done ? "#34d399" : "#dfe6f0",
         }}
       >
-        <input
-          type="checkbox"
-          checked={done}
-          onChange={(event) => (event.target.checked ? onDo() : onUndo())}
-          style={{ margin: 0 }}
-        />
-        {label}
-      </label>
+        <Check className="flow-gate-icon" size={14} strokeWidth={2.8} aria-hidden="true" />
+      </button>
     </div>
   );
 }

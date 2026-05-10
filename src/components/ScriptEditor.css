@@ -1,31 +1,32 @@
 .script-editor,
 .script-editor-empty {
   min-height: 100%;
-  padding: 22px;
-  color: #dfe6f0;
-  font-family: var(--font-body);
-  background:
-    linear-gradient(180deg, rgba(18, 18, 18, 0.96), rgba(8, 9, 11, 0.98)),
-    #0b0d10;
+  padding: 18px;
+  color: var(--eg-text);
+  font-family: var(--eg-font-body);
+  background: var(--eg-base);
 }
 
 .script-editor h2,
 .script-editor-empty h2 {
   margin: 0;
-  color: #f3f6fb;
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--eg-text);
+  font-family: var(--eg-font-display);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .script-editor p,
 .script-editor-empty p {
   margin: 4px 0 0;
-  color: #6b7a8d;
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  color: var(--eg-text-dim);
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  line-height: 1.45;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -40,8 +41,8 @@
 
 .script-editor-top {
   justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 16px;
+  gap: 16px;
+  margin-bottom: 14px;
 }
 
 .script-editor-actions {
@@ -54,84 +55,119 @@
 .script-editor-card-head button,
 .script-editor-tabs button,
 .script-editor-add {
+  appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border-radius: 6px;
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  min-height: 32px;
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-surface-2);
+  color: var(--eg-text-mid);
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
+  transition:
+    background var(--eg-transition-fast),
+    border-color var(--eg-transition-fast),
+    color var(--eg-transition-fast);
+}
+
+.script-editor-actions button:hover:not(:disabled),
+.script-editor-card-head button:hover:not(:disabled),
+.script-editor-tabs button:hover:not(:disabled),
+.script-editor-add:hover:not(:disabled) {
+  border-color: var(--eg-border-hover);
+  background: var(--eg-surface-3);
+  color: var(--eg-text);
 }
 
 .script-editor-actions button:disabled,
-.script-editor-card-head button:disabled {
+.script-editor-card-head button:disabled,
+.script-editor-add:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
 
+.script-editor-actions .primary {
+  border-color: var(--eg-accent-dim);
+  background: var(--eg-accent);
+  color: #ffffff;
+}
+
+.script-editor-actions .primary:hover:not(:disabled) {
+  border-color: var(--eg-accent-bright);
+  background: var(--eg-accent-bright);
+  color: #ffffff;
+}
+
+.script-editor-actions .secondary {
+  background: var(--eg-surface-2);
+  color: var(--eg-text-mid);
+}
+
 .script-editor-tabs {
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
-  padding: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.018);
+  margin-bottom: 12px;
+  padding: 6px;
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-card);
+  background: var(--eg-surface-1);
 }
 
 .script-editor-tabs button {
-  min-height: 34px;
-  padding: 7px 14px;
-  color: #77889d;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
+  min-height: 30px;
+  padding: 0 10px;
+  color: var(--eg-text-dim);
+  background: transparent;
+  border-color: transparent;
 }
 
 .script-editor-tabs button.is-active {
-  color: #f7fbff;
-  border-color: rgba(232, 0, 45, 0.34);
-  background: rgba(232, 0, 45, 0.12);
-  box-shadow: 0 0 18px rgba(232, 0, 45, 0.08);
+  color: var(--eg-accent);
+  border-color: var(--eg-border);
+  background: var(--eg-surface-3);
 }
 
 .script-editor-message,
 .script-editor-diff {
-  margin-bottom: 12px;
-  padding: 9px 12px;
-  border-radius: 7px;
-  font-size: 12px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-md);
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  line-height: 1.45;
   letter-spacing: 0.03em;
 }
 
 .script-editor-message {
-  color: #f0c66a;
-  border: 1px solid rgba(240, 198, 106, 0.18);
-  background: rgba(240, 198, 106, 0.06);
+  color: var(--eg-amber-text);
+  background: var(--eg-amber-dim);
+  border-color: var(--eg-amber-dim);
 }
 
 .script-editor-diff {
-  color: #8fa4bc;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.018);
+  color: var(--eg-text-dim);
+  background: var(--eg-surface-1);
 }
 
 .script-editor-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .script-editor-card {
-  padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.026), rgba(255, 255, 255, 0.012)),
-    rgba(12, 14, 17, 0.94);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-card);
+  background: var(--eg-surface-1);
+  box-shadow: none;
 }
 
 .script-editor-card-head {
@@ -140,74 +176,73 @@
 }
 
 .script-editor-card-head > span {
-  width: 34px;
-  color: #e8002d;
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  width: 28px;
+  color: var(--eg-text-faint);
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
 }
 
 .script-editor-card-head input,
 .script-editor-options input[type="number"],
 .script-editor-card textarea {
-  color: #dfe6f0;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(0, 0, 0, 0.22);
+  width: 100%;
+  color: var(--eg-text);
+  background: var(--eg-surface-2);
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-md);
   outline: none;
+  transition:
+    border-color var(--eg-transition-fast),
+    background var(--eg-transition-fast);
 }
 
 .script-editor-card-head input:focus,
 .script-editor-options input[type="number"]:focus,
 .script-editor-card textarea:focus {
-  border-color: rgba(232, 0, 45, 0.38);
-  box-shadow: 0 0 0 1px rgba(232, 0, 45, 0.12);
+  border-color: var(--eg-border-active);
+  background: var(--eg-surface-3);
 }
 
 .script-editor-card-head input {
   flex: 1;
   min-width: 160px;
-  min-height: 36px;
-  padding: 7px 10px;
-  border-radius: 6px;
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  min-height: 34px;
+  padding: 7px 9px;
+  font-family: var(--eg-font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .script-editor-card-head button {
-  width: 34px;
-  height: 34px;
-  color: #8fa4bc;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.025);
-}
-
-.script-editor-card-head button:not(:disabled):hover {
-  color: #f3f6fb;
-  border-color: rgba(232, 0, 45, 0.26);
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
 }
 
 .script-editor-card textarea {
-  width: 100%;
   resize: vertical;
   min-height: 180px;
-  padding: 12px;
-  border-radius: 7px;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-  line-height: 1.6;
+  padding: 10px;
+  font-family: var(--eg-font-body);
+  font-size: 13px;
+  line-height: 1.58;
 }
 
 .script-editor-options {
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
   margin-top: 10px;
-  color: #8fa4bc;
-  font-size: 12px;
+  color: var(--eg-text-dim);
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .script-editor-options label {
@@ -217,38 +252,37 @@
 }
 
 .script-editor-options input[type="checkbox"] {
-  accent-color: #e8002d;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--eg-accent);
 }
 
 .script-editor-options input[type="number"] {
   width: 72px;
-  padding: 6px 8px;
-  border-radius: 6px;
+  min-height: 30px;
+  padding: 5px 7px;
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
 }
 
 .script-editor-lock-note {
   flex-basis: 100%;
-  color: #6b7a8d;
+  color: var(--eg-text-faint);
+  font-family: var(--eg-font-body);
   font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .script-editor-add {
-  margin-top: 14px;
-  min-height: 38px;
-  padding: 8px 14px;
-  color: #dfe6f0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.028);
-}
-
-.script-editor-add:hover {
-  border-color: rgba(232, 0, 45, 0.3);
-  background: rgba(232, 0, 45, 0.08);
+  margin-top: 12px;
+  padding: 0 12px;
 }
 
 @media (max-width: 720px) {
-  .script-editor {
-    padding: 16px;
+  .script-editor,
+  .script-editor-empty {
+    padding: 14px;
   }
 
   .script-editor-top,

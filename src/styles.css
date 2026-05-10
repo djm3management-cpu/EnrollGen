@@ -5035,6 +5035,7 @@ input::placeholder {
 
 .section-next-action .section-complete-btn,
 .flow-gate-check {
+  appearance: none !important;
   width: 30px !important;
   height: 26px !important;
   min-width: 30px !important;
@@ -5051,6 +5052,7 @@ input::placeholder {
   box-shadow: none !important;
   font-size: 0 !important;
   line-height: 1 !important;
+  cursor: pointer !important;
 }
 
 .section-next-action .section-complete-btn:hover:not(:disabled),
@@ -5060,11 +5062,16 @@ input::placeholder {
   color: #ffffff !important;
 }
 
-.section-next-action .section-complete-btn svg {
+.section-next-action .section-complete-btn svg,
+.flow-gate-check .flow-gate-icon {
   width: 14px !important;
   height: 14px !important;
   color: currentColor !important;
   stroke: currentColor !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 1 !important;
 }
 
 .section-next-action .no-enrollment-wrapup-btn {

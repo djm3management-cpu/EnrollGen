@@ -7,7 +7,6 @@ import {
   SectionAdvanceButton,
   SectionToast,
 } from "./SharedUI";
-import SectionCoach from "./SectionCoach";
 
 function unlockKey(sectionNumber) {
   return `s${String(sectionNumber).replace(".", "_")}`;
@@ -181,8 +180,6 @@ export default React.memo(function ScriptSection({ section }) {
           />
         </div>
       ) : null}
-
-      <SectionCoach stepName={section.title} sectionNum={sectionNumber} />
 
       {isUnlocked && gateField && !gateDone && section.lock_message ? (
         <LockText>{section.lock_message}</LockText>

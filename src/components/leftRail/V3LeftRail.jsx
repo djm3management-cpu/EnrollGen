@@ -47,10 +47,10 @@ function V3LeftRailInner({ tools = ["SEP finder", "Qualifier", "SNP"], onToolSel
         className="left-rail-zip-input"
         type="text"
         inputMode="numeric"
-        placeholder="Member ZIP"
+        placeholder="ZIP"
         value={zip}
         onChange={handleZipChange}
-        aria-label="Member ZIP"
+        aria-label="ZIP"
       />
 
       {tools.length ? (

@@ -6,7 +6,6 @@ import {
   SectionAdvanceButton,
   SectionToast,
 } from "./SharedUI";
-import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionNEADS() {
   const { state, dispatch, activeSection, unlocked } = useScript();
@@ -51,8 +50,6 @@ export default React.memo(function SectionNEADS() {
           }
         />
       </div>
-
-      <SectionCoach stepName="NEADS Assessment" sectionNum={5} />
 
       {!qualOk && (
         <LockText>Locked until Qualifications are complete.</LockText>

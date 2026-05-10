@@ -6,7 +6,6 @@ import {
   SectionAdvanceButton,
   SectionToast,
 } from "./SharedUI";
-import SectionCoach from "./SectionCoach";
 
 export default React.memo(function SectionRecording() {
   const { state, dispatch, activeSection } = useScript();
@@ -38,8 +37,6 @@ export default React.memo(function SectionRecording() {
           }
         />
       </div>
-
-      <SectionCoach stepName="Recording Disclosure" sectionNum={1} />
 
       {!recordingOk && (
         <LockText>Complete Recording Disclosure to continue.</LockText>

@@ -6,7 +6,6 @@ import {
   SectionAdvanceButton,
   SectionToast,
 } from "./SharedUI";
-import SectionCoach from "./SectionCoach";
 
 function PreEnrollCheck({ state }) {
   const gaps = [];
@@ -225,8 +224,6 @@ export default React.memo(function SectionEnrollment() {
           </LockText>
         )}
       </div>
-
-      <SectionCoach stepName="Enrollment" sectionNum={7} />
 
       {!sobOk && <LockText>Locked until SOB Review is complete.</LockText>}
     </section>

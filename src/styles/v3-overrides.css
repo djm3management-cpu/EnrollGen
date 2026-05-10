@@ -49,6 +49,29 @@ body,
   max-width: none !important;
 }
 
+.top-bar-logo-image-button {
+  width: 118px !important;
+  height: 32px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.top-bar-logo-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 46% 42%;
+  transform: scale(1.07);
+  transform-origin: 46% 42%;
+}
+
 .top-bar-logo-wordmark {
   display: inline-flex;
   align-items: baseline;
@@ -136,6 +159,13 @@ body,
 .top-bar-tab.is-active::after {
   background: var(--eg-accent);
   box-shadow: none;
+}
+
+.top-bar-tab[data-tab-id="operations"],
+.top-bar-tab[data-tab-id="tools"] {
+  min-height: 32px !important;
+  padding-inline: 14px !important;
+  font-size: 12.5px !important;
 }
 
 /* Top-bar utility chips (wallpaper toggle, settings, profile) */
@@ -247,16 +277,6 @@ body,
 .flow-pill.is-active .flow-beacon {
   background: var(--flow-color, var(--eg-accent));
   box-shadow: 0 0 8px var(--flow-color, var(--eg-accent));
-}
-
-.flow-pill.is-active .flow-beacon::after {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  background: var(--flow-color, var(--eg-accent));
-  animation: eg-pulse 2.5s ease-in-out infinite;
-  pointer-events: none;
 }
 
 .flow-pill .flow-label {
@@ -1702,6 +1722,413 @@ button.primary.section-complete-btn {
   padding-bottom: calc(24px + 30px) !important;
 }
 
+/* Compliance Hub: neutral v3 shell while preserving semantic score colors
+   inside the dashboard rows, rings, bars, and alerts. */
+.app-shell-modern .top-panel-overlay--compliance .top-panel-header,
+.app-shell-modern .top-panel-overlay--compliance .top-panel-body {
+  background: var(--eg-surface-1) !important;
+}
+
+.app-shell-modern .top-panel-overlay--compliance .top-panel-header {
+  border-bottom: 1px solid var(--eg-border) !important;
+}
+
+.compliance-hub-shell {
+  background: var(--eg-surface-1);
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-card-lg);
+  padding: 14px;
+}
+
+.compliance-hub-shell .compliance-dashboard {
+  background: var(--eg-surface-2) !important;
+  border: 1px solid var(--eg-border) !important;
+  border-radius: var(--eg-radius-card-lg) !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.compliance-hub-shell .compliance-dashboard-header {
+  background: var(--eg-surface-2) !important;
+  border-bottom: 1px solid var(--eg-border) !important;
+}
+
+.compliance-hub-shell .compliance-dashboard-body {
+  background: var(--eg-surface-1) !important;
+  padding: 12px !important;
+}
+
+.compliance-hub-shell .compliance-dashboard-grid {
+  gap: 8px;
+  margin-bottom: 12px !important;
+}
+
+/* Daily Verse: neutral panel background only, leaving verse controls,
+   scripture accents, and interactive states in their existing styling. */
+.app-shell-modern .top-panel-overlay--verse .top-panel-header,
+.app-shell-modern .top-panel-overlay--verse .top-panel-body {
+  background: var(--eg-surface-1) !important;
+}
+
+.app-shell-modern .top-panel-overlay--verse .top-panel-header {
+  border-bottom: 1px solid var(--eg-border) !important;
+}
+
+.daily-verse-shell {
+  background: var(--eg-surface-1);
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-card-lg);
+  padding: 14px;
+}
+
+.daily-verse-shell .dv-card {
+  background: var(--eg-surface-2) !important;
+  border: 1px solid var(--eg-border) !important;
+  box-shadow: none !important;
+}
+
+.daily-verse-shell .dv-card::before,
+.daily-verse-shell .dv-card::after {
+  background: transparent !important;
+}
+
+/* Calls + Agent Tools: larger desktop reading scale while keeping the
+   existing terminal treatment and site tokens intact. */
+.app-shell-modern .top-panel-overlay--operations,
+.app-shell-modern .top-panel-overlay--tools {
+  width: auto !important;
+  right: 24px !important;
+  max-height: calc(100vh - var(--top-bar-height) - 24px) !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .top-panel-header,
+.app-shell-modern .top-panel-overlay--tools .top-panel-header {
+  min-height: 42px !important;
+  padding: 0 0 0 14px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .top-panel-title,
+.app-shell-modern .top-panel-overlay--tools .top-panel-title {
+  font-size: 13px !important;
+  letter-spacing: 1.4px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .top-panel-close,
+.app-shell-modern .top-panel-overlay--tools .top-panel-close {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .top-panel-body,
+.app-shell-modern .top-panel-overlay--tools .top-panel-body {
+  padding: 12px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .operations-tab {
+  min-height: min(880px, calc(100vh - var(--top-bar-height) - 92px)) !important;
+  font-size: 13px !important;
+  line-height: 1.35 !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .operations-tab button,
+.app-shell-modern .top-panel-overlay--operations .operations-tab select,
+.app-shell-modern .top-panel-overlay--operations .operations-tab input {
+  font-size: 12px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-command-line,
+.app-shell-modern .top-panel-overlay--operations .ops-terminal-tabs,
+.app-shell-modern .top-panel-overlay--operations .ops-filter-strip,
+.app-shell-modern .top-panel-overlay--operations .ops-ticker,
+.app-shell-modern .top-panel-overlay--operations .ops-status-bar {
+  font-size: 12px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-command-line,
+.app-shell-modern .top-panel-overlay--operations .ops-terminal-tabs {
+  height: 26px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-filter-strip,
+.app-shell-modern .top-panel-overlay--operations .ops-ticker {
+  min-height: 28px !important;
+  height: auto !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-terminal-tabs {
+  grid-template-columns: 170px 150px 150px 154px 1fr !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-filter-strip {
+  grid-template-columns: auto minmax(150px, 220px) auto 156px auto minmax(96px, 160px) 1fr !important;
+  line-height: 28px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-filter-select {
+  height: 28px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-grid {
+  grid-template-columns: minmax(250px, 0.85fr) minmax(0, 2.2fr) minmax(300px, 1fr) !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-section-head {
+  height: 26px !important;
+  font-size: 11px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-section-meta,
+.app-shell-modern .top-panel-overlay--operations .ops-col-head,
+.app-shell-modern .top-panel-overlay--operations .ops-control > span,
+.app-shell-modern .top-panel-overlay--operations .ops-date-control > span,
+.app-shell-modern .top-panel-overlay--operations .ops-metric-label {
+  font-size: 11px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-window-toggle {
+  height: 26px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-window-toggle button,
+.app-shell-modern .top-panel-overlay--operations .ops-date-buttons button {
+  font-size: 11px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-lb-row {
+  grid-template-columns: 28px 1fr auto !important;
+  min-height: 28px !important;
+  padding: 5px 10px !important;
+  font-size: 13px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-lb-row .name,
+.app-shell-modern .top-panel-overlay--operations .ops-lb-row .value,
+.app-shell-modern .top-panel-overlay--operations .ops-table tbody td,
+.app-shell-modern .top-panel-overlay--operations .ops-tracker-row .customer {
+  font-size: 13px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-lb-row .rank,
+.app-shell-modern .top-panel-overlay--operations .ops-date-cell,
+.app-shell-modern .top-panel-overlay--operations .ops-tracker-row .date,
+.app-shell-modern .top-panel-overlay--operations .ops-tracker-row .meta {
+  font-size: 12px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-agent-detail-toggle {
+  height: 28px !important;
+  font-size: 11px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-agent-detail-grid div,
+.app-shell-modern .top-panel-overlay--operations .ops-agent-detail-empty {
+  min-height: 44px !important;
+  padding: 8px 10px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-agent-detail-grid span {
+  font-size: 10px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-agent-detail-grid strong {
+  font-size: 16px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-controls {
+  min-height: 42px !important;
+  grid-template-columns: minmax(220px, 300px) auto minmax(270px, 360px) !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-control,
+.app-shell-modern .top-panel-overlay--operations .ops-date-control,
+.app-shell-modern .top-panel-overlay--operations .ops-custom-range {
+  min-height: 42px !important;
+  gap: 8px !important;
+  padding: 7px 10px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-control select,
+.app-shell-modern .top-panel-overlay--operations .ops-custom-range input {
+  height: 28px !important;
+  padding: 3px 8px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-date-buttons {
+  height: 28px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-date-buttons button {
+  min-width: 64px !important;
+  height: 26px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-metric {
+  padding: 8px 12px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-metric-value {
+  font-size: 24px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-export-btn {
+  height: 24px !important;
+  padding: 0 10px !important;
+  font-size: 10px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-table {
+  min-width: 980px !important;
+  font-size: 13px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-table thead th,
+.app-shell-modern .top-panel-overlay--operations .ops-sort-th button {
+  font-size: 11px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-table thead th {
+  padding: 6px 10px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-sort-th button {
+  height: 32px !important;
+  padding: 6px 10px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-table tbody td {
+  height: 30px !important;
+  padding: 5px 10px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-agent-avatar {
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 10px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-tracker-row {
+  grid-template-columns: 18px 1fr !important;
+  padding: 7px 10px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-tracker-row .agent,
+.app-shell-modern .top-panel-overlay--operations .ops-tracker-status {
+  font-size: 11px !important;
+}
+
+.app-shell-modern .top-panel-overlay--operations .ops-status-bar {
+  min-height: 28px !important;
+  height: auto !important;
+}
+
+.app-shell-modern .top-panel-overlay--tools .at-root {
+  gap: 10px !important;
+  font-size: 13px !important;
+}
+
+.app-shell-modern .top-panel-overlay--tools .at-toolbar-label {
+  padding: 7px 10px 8px !important;
+  font-size: 11px !important;
+}
+
+.app-shell-modern .top-panel-overlay--tools .at-tool-card {
+  min-height: 74px !important;
+  padding: 14px 16px !important;
+}
+
+.app-shell-modern .top-panel-overlay--tools .at-tool-main {
+  gap: 12px !important;
+}
+
+.app-shell-modern .top-panel-overlay--tools .at-tool-icon-badge,
+.app-shell-modern .top-panel-overlay--tools .at-tool-icon-badge-large {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.app-shell-modern .top-panel-overlay--tools .at-tool-icon-badge svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.app-shell-modern .top-panel-overlay--tools .at-tool-title {
+  font-size: 13px !important;
+  line-height: 1.25 !important;
+}
+
+.app-shell-modern .top-panel-overlay--tools .at-tool-desc {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+
+.app-shell-modern .at-modal {
+  width: min(1220px, calc(100vw - 48px)) !important;
+}
+
+.app-shell-modern .at-modal-header {
+  padding: 16px 56px 16px 16px !important;
+}
+
+.app-shell-modern .at-modal-body {
+  padding: 16px !important;
+}
+
+.app-shell-modern .at-modal-kicker,
+.app-shell-modern .at-doc-status-btn,
+.app-shell-modern .at-doc-back,
+.app-shell-modern .at-training-summary-kicker {
+  font-size: 12px !important;
+}
+
+.app-shell-modern .at-modal-title {
+  font-size: 18px !important;
+}
+
+.app-shell-modern .at-modal-desc,
+.app-shell-modern .at-link-name,
+.app-shell-modern .at-carrier-name,
+.app-shell-modern .at-doc-card-title,
+.app-shell-modern .at-doc-title,
+.app-shell-modern .at-doc-detail-title,
+.app-shell-modern .at-training-section-title,
+.app-shell-modern .at-training-guide-title {
+  font-size: 14px !important;
+}
+
+.app-shell-modern .at-link-desc,
+.app-shell-modern .at-doc-description,
+.app-shell-modern .at-doc-card-note,
+.app-shell-modern .at-doc-note-card,
+.app-shell-modern .at-doc-field-value,
+.app-shell-modern .at-training-list li,
+.app-shell-modern .at-training-table td,
+.app-shell-modern .at-training-quote-text,
+.app-shell-modern .at-training-section-body,
+.app-shell-modern .at-training-section-body li {
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+.app-shell-modern .at-doc-section-head,
+.app-shell-modern .at-doc-note-label,
+.app-shell-modern .at-doc-status-kicker,
+.app-shell-modern .at-doc-field-label,
+.app-shell-modern .at-training-table th {
+  font-size: 11px !important;
+}
+
+@media (max-width: 1200px) {
+  .app-shell-modern .top-panel-overlay--operations .ops-grid,
+  .app-shell-modern .top-panel-overlay--operations .ops-controls {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell-modern .top-panel-overlay--operations .ops-table {
+    min-width: 860px !important;
+  }
+}
+
 /* ============================================================
    CENTER TIMER BAR (Section 6 + 9 + mockup)
    ============================================================ */
@@ -1715,6 +2142,53 @@ button.primary.section-complete-btn {
   border-bottom: 1px solid var(--eg-border);
   background: rgba(30, 26, 22, 0.27);
   flex-shrink: 0;
+}
+
+.eg-audio-meter-bar {
+  flex-direction: column;
+  gap: 4px;
+  min-height: 64px;
+  padding: 8px 40px;
+}
+
+.eg-audio-meter-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(320px, 100%);
+}
+
+.eg-audio-meter-label {
+  flex: 0 0 72px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  font-family: var(--eg-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-align: right;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+}
+
+.eg-audio-meter-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--eg-red);
+  box-shadow: 0 0 5px rgba(184, 92, 92, 0.42);
+  flex-shrink: 0;
+}
+
+.eg-audio-meter-dot.is-live {
+  background: var(--eg-green);
+  box-shadow: 0 0 5px rgba(106, 171, 125, 0.46);
+}
+
+.eg-audio-meter-row canvas {
+  max-width: calc(100% - 82px);
 }
 
 .eg-timer-bar__live {

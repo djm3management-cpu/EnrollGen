@@ -8,14 +8,12 @@ import {
   useRef,
   useState,
 } from "react";
-import EnrollGenLogo from "./components/EnrollGenLogo";
 import LandingPage from "./components/LandingPage";
 import ShellTextures from "./components/ShellTextures";
 import BottomStatusBar from "./components/BottomStatusBar";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
-import TrainingModeToggle from "./components/training/TrainingModeToggle";
 import { SignedIn, SignedOut, SignIn, useClerk, useOrganization, useUser } from "@clerk/clerk-react";
 import { ChevronDown, Settings, Shuffle, X } from "lucide-react";
 import { wallpapers } from "./config/wallpapers";
@@ -29,6 +27,7 @@ import {
   useLeftRailManager,
 } from "./components/leftRail/LeftRailManager";
 import SEPQualifier from "./components/leftRail/SEPQualifier";
+import treeLogoUrl from "../docs/treev2.png";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
@@ -46,7 +45,6 @@ const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 const loadOperationsTab = () => import("./components/OperationsTab");
-const loadBillingSettings = () => import("./components/BillingSettings");
 const loadTenantSettings = () => import("./components/TenantSettings");
 const loadOnboarding = () => import("./components/Onboarding");
 const loadScriptEditor = () => import("./components/ScriptEditor");
@@ -67,7 +65,6 @@ const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
 const OperationsTab = lazy(loadOperationsTab);
-const BillingSettings = lazy(loadBillingSettings);
 const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
 const ScriptEditor = lazy(loadScriptEditor);
@@ -252,15 +249,17 @@ function MainFlowComplianceHubPanel() {
 
   return (
     <LazyPanel>
-      <ComplianceDashboard
-        transcript={liveCall.transcript}
-        customerTranscript={liveCall.customerTranscript}
-        mergedTranscript={liveCall.mergedTranscript}
-        result={liveCall.complianceResult}
-        forceExpanded
-        forceShowDetail
-        forceExpandAllCategories
-      />
+      <div className="compliance-hub-shell">
+        <ComplianceDashboard
+          transcript={liveCall.transcript}
+          customerTranscript={liveCall.customerTranscript}
+          mergedTranscript={liveCall.mergedTranscript}
+          result={liveCall.complianceResult}
+          forceExpanded
+          forceShowDetail
+          forceExpandAllCategories
+        />
+      </div>
     </LazyPanel>
   );
 }
@@ -370,7 +369,6 @@ function getTabsForMode(mode, canAdmin = false) {
 
   tabs.push({ id: "complianceHub", label: "Compliance Hub" });
   tabs.push({ id: "operations", label: "CALLS" });
-  tabs.push({ id: "billing", label: "Billing" });
   if (canAdmin) {
     tabs.push({ id: "scriptEditor", label: "SCRIPT EDITOR" });
   }
@@ -546,10 +544,6 @@ function AppShell({ currentUser = null }) {
       loadOperationsTab();
       return;
     }
-    if (panelId === "billing") {
-      loadBillingSettings();
-      return;
-    }
     if (panelId === "settings") {
       loadTenantSettings();
       return;
@@ -693,12 +687,6 @@ function AppShell({ currentUser = null }) {
             <OperationsTab />
           </LazyPanel>
         );
-      case "billing":
-        return (
-          <LazyPanel>
-            <BillingSettings />
-          </LazyPanel>
-        );
       case "settings":
         return (
           <LazyPanel>
@@ -714,7 +702,9 @@ function AppShell({ currentUser = null }) {
       case "verse":
         return (
           <LazyPanel>
-            <DailyVerse />
+            <div className="daily-verse-shell">
+              <DailyVerse />
+            </div>
           </LazyPanel>
         );
       default:
@@ -734,13 +724,16 @@ function AppShell({ currentUser = null }) {
       >
         <header ref={topBarRef} className="top-bar-shell">
           <div className="top-bar-brand">
-            <EnrollGenLogo
-              className="top-bar-logo"
+            <button
+              type="button"
+              className="top-bar-logo top-bar-logo-image-button"
               onClick={handleLogoClick}
               title="Refresh and return to the main page"
-            />
+              aria-label="Refresh and return to the main page"
+            >
+              <img className="top-bar-logo-image" src={treeLogoUrl} alt="" />
+            </button>
             <FlowSelector mode={mode} onChange={handleModeChange} />
-            <TrainingModeToggle />
           </div>
 
           <nav className="top-bar-tabs" aria-label="Workspace tabs">
@@ -749,6 +742,7 @@ function AppShell({ currentUser = null }) {
                 key={tab.id}
                 type="button"
                 className={`top-bar-tab${activeTabId === tab.id ? " is-active" : ""}`}
+                data-tab-id={tab.id}
                 onClick={() => handleTabToggle(tab.id)}
                 onMouseEnter={() => preloadPanel(tab.id)}
               >
@@ -837,7 +831,15 @@ function AppShell({ currentUser = null }) {
             {openPanel ? (
               <div
                 ref={overlayRef}
-                className={`top-panel-overlay${openPanel === "tools" ? " top-panel-overlay--tools" : ""}`}
+                className={`top-panel-overlay${
+                  openPanel === "tools" ? " top-panel-overlay--tools" : ""
+                }${
+                  openPanel === "operations" ? " top-panel-overlay--operations" : ""
+                }${
+                  openPanel === "complianceHub" ? " top-panel-overlay--compliance" : ""
+                }${
+                  openPanel === "verse" ? " top-panel-overlay--verse" : ""
+                }`}
               >
                 <div className="top-panel-header">
                   <div className="top-panel-title">
@@ -875,7 +877,15 @@ function AppShell({ currentUser = null }) {
             {openPanel ? (
               <div
                 ref={overlayRef}
-                className={`top-panel-overlay${openPanel === "tools" ? " top-panel-overlay--tools" : ""}`}
+                className={`top-panel-overlay${
+                  openPanel === "tools" ? " top-panel-overlay--tools" : ""
+                }${
+                  openPanel === "operations" ? " top-panel-overlay--operations" : ""
+                }${
+                  openPanel === "complianceHub" ? " top-panel-overlay--compliance" : ""
+                }${
+                  openPanel === "verse" ? " top-panel-overlay--verse" : ""
+                }`}
               >
                 <div className="top-panel-header">
                   <div className="top-panel-title">
@@ -947,7 +957,7 @@ function SubscriptionBanner() {
   if (isTrial) {
     return (
       <div className="subscription-banner">
-        Trial ends in {days ?? "--"} days. Upgrade from Billing to continue uninterrupted.
+        Trial ends in {days ?? "--"} days. Upgrade to continue uninterrupted.
       </div>
     );
   }

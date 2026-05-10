@@ -19,6 +19,8 @@ const ScriptPrompter = memo(function ScriptPrompter({
   logComplianceFlag,
   controlsRef,
   onCoachingLoadingChange,
+  onAgentAudioLevelChange,
+  onCustomerAudioLevelChange,
 }) {
   const {
     state,
@@ -30,6 +32,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
 
   // Shared transcriptRef, created here, passed to both hooks
   const transcriptRef = useRef("");
+  const customerCapturePromiseRef = useRef(null);
 
   // Simulated transcript state (training mode only)
   const [simulatedTranscript, setSimulatedTranscript] = useState("");
@@ -102,6 +105,17 @@ const ScriptPrompter = memo(function ScriptPrompter({
     if (onListeningChange) onListeningChange(speech.listening);
   }, [speech.listening, onListeningChange]);
 
+  // Forward live audio levels for the two-channel waveform in the center bar.
+  useEffect(() => {
+    if (onAgentAudioLevelChange) onAgentAudioLevelChange(speech.audioLevel || 0);
+  }, [speech.audioLevel, onAgentAudioLevelChange]);
+
+  useEffect(() => {
+    if (onCustomerAudioLevelChange) {
+      onCustomerAudioLevelChange(customerAudio.audioLevel || 0);
+    }
+  }, [customerAudio.audioLevel, onCustomerAudioLevelChange]);
+
   // Forward coaching loading state
   useEffect(() => {
     if (onCoachingLoadingChange) onCoachingLoadingChange(copilot.coachingLoading);
@@ -111,24 +125,40 @@ const ScriptPrompter = memo(function ScriptPrompter({
   const customerAudioEnabled =
     import.meta.env.VITE_ENABLE_CUSTOMER_AUDIO !== "false";
 
-  const handleStart = useCallback(async () => {
+  const startCustomerAudio = useCallback(async () => {
+    if (!customerAudioEnabled || customerAudio.isCapturing) {
+      return;
+    }
+    if (customerCapturePromiseRef.current) {
+      return customerCapturePromiseRef.current;
+    }
+
+    customerCapturePromiseRef.current = customerAudio
+      .startCapture()
+      .catch((err) => {
+        const message =
+          err?.message ||
+          "Customer audio was not shared. Share the GoHighLevel tab with audio to enable the customer waveform.";
+        copilot.pushFeedEntry("info", message, { section: copilot.currentStep });
+      })
+      .finally(() => {
+        customerCapturePromiseRef.current = null;
+      });
+
+    return customerCapturePromiseRef.current;
+  }, [customerAudio, customerAudioEnabled, copilot]);
+
+  const handleStart = useCallback(async (options = {}) => {
     if (trainingModeEnabled) {
       // Training mode: no live audio capture. The simulated transcript input
       // feeds transcriptRef directly via appendSimulatedUtterance().
       return;
     }
-    if (customerAudioEnabled) {
-      try {
-        await customerAudio.startCapture();
-      } catch (err) {
-        const message =
-          err?.message ||
-          "Customer audio was not shared. Click START again and share the GoHighLevel tab with audio.";
-        copilot.pushFeedEntry("info", message, { section: copilot.currentStep });
-      }
+    if (!options?.skipCustomerAudio) {
+      await startCustomerAudio();
     }
     speech.startListening();
-  }, [speech, customerAudio, customerAudioEnabled, trainingModeEnabled, copilot]);
+  }, [speech, trainingModeEnabled, startCustomerAudio]);
 
   const handleStop = useCallback(() => {
     if (trainingModeEnabled) return;

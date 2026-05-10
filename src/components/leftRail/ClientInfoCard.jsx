@@ -182,7 +182,7 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
     .filter(Boolean)
     .join(" - ");
 
-  const partsAB = notes.partsABStatus || (notes.customerMbi ? "Active" : "");
+  const partsAB = notes.partsABStatus || "";
   const currentCoverage = notes.currentCoverage || notes.previousCarrier || "";
   const county = countyLabel || notes.customerCounty || notes.customerState || "";
 
@@ -194,7 +194,7 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
         className="eg-rail-card__name"
         style={{ background: "transparent", border: "none", outline: "none", width: "100%", padding: 0 }}
         value={fullName}
-        placeholder="Client name"
+        placeholder=""
         onChange={(e) => {
           const parts = e.target.value.trim().split(/\s+/);
           setNote("customerFirstName", parts[0] || "");
@@ -203,7 +203,7 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
         aria-label="Client name"
       />
 
-      <div className="eg-rail-card__sub">{subline || "DOB not entered"}</div>
+      <div className="eg-rail-card__sub">{subline}</div>
 
       <div className="eg-rail-card__grid">
         <div className="eg-rail-card__field">
@@ -211,7 +211,7 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
           <input
             className={`eg-rail-card__field-value${notes.customerMbi ? "" : " is-empty"}`}
             value={notes.customerMbi || ""}
-            placeholder="1EG4-TE5-MK72"
+            placeholder=""
             onChange={(e) => setNote("customerMbi", e.target.value)}
             aria-label="MBI"
           />
@@ -221,7 +221,7 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
           <input
             className={`eg-rail-card__field-value${county ? "" : " is-empty"}`}
             value={county}
-            placeholder="County, ST"
+            placeholder=""
             onChange={(e) => setNote("customerCounty", e.target.value)}
             aria-label="County"
           />
@@ -231,7 +231,7 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
           <input
             className={`eg-rail-card__field-value${partsAB === "Active" ? " is-good" : partsAB ? "" : " is-empty"}`}
             value={partsAB}
-            placeholder="Active"
+            placeholder=""
             onChange={(e) => setNote("partsABStatus", e.target.value)}
             aria-label="Parts A and B status"
           />
@@ -241,7 +241,7 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
           <input
             className={`eg-rail-card__field-value${currentCoverage ? "" : " is-empty"}`}
             value={currentCoverage}
-            placeholder="Orig. Medicare"
+            placeholder=""
             onChange={(e) => setNote("currentCoverage", e.target.value)}
             aria-label="Current coverage"
           />

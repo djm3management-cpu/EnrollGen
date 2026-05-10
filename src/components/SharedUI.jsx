@@ -203,7 +203,7 @@ export const SectionAdvanceButton = React.memo(function SectionAdvanceButton({
       aria-label={accessibleLabel}
       title={title || accessibleLabel}
     >
-      <Check size={18} strokeWidth={2.8} aria-hidden="true" />
+      <Check className="section-complete-icon" size={18} strokeWidth={2.8} aria-hidden="true" />
     </button>
   );
 });
