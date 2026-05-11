@@ -84,16 +84,16 @@ function MissingClerkKey() {
         background: "#171411",
         color: "#e4dace",
         padding: 24,
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: 'var(--font-body)',
       }}
     >
-      <div style={{ maxWidth: 560, lineHeight: 1.55 }}>
+      <div style={{ maxWidth: 560, lineHeight: 1.5 }}>
         <h1
           style={{
             marginTop: 0,
-            fontFamily: '"DM Serif Display", serif',
+            fontFamily: 'var(--font-display)',
             fontSize: 28,
-            fontWeight: 400,
+            fontWeight: 600,
             letterSpacing: "-0.02em",
           }}
         >

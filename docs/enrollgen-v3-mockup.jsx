@@ -33,6 +33,9 @@ const C = {
   purpleText: "#bca8e0",
 };
 
+const SYSTEM_FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+const SYSTEM_MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
+
 const FLOWS = [
   { id: "ma", label: "MA", color: C.red, glow: C.redText },
   { id: "medsup", label: "MS", color: C.green, glow: C.greenText },
@@ -167,9 +170,8 @@ export default function EnrollGenV3() {
   const activeIdx = SECTIONS.findIndex(s => s.status === "active");
 
   return (
-    <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: C.base, color: C.text, height: "100vh", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+    <div style={{ fontFamily: SYSTEM_FONT, background: C.base, color: C.text, height: "100vh", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap');
         @keyframes pulse { 0%,100% { transform: scale(1); opacity: 0.15; } 50% { transform: scale(1.6); opacity: 0.35; } }
         @keyframes slideIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -186,22 +188,22 @@ export default function EnrollGenV3() {
       {/* ═══ TOP BAR ═══ */}
       <div style={{ position: "relative", zIndex: 2, display: "flex", alignItems: "center", height: 48, padding: "0 20px", borderBottom: `1px solid ${C.border}`, background: `${C.s1}ee`, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginRight: 28 }}>
-          <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 19, color: C.accent, letterSpacing: "-0.02em" }}>Enroll</span>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 500, color: C.textMid, letterSpacing: "0.08em" }}>GEN</span>
+          <span style={{ fontFamily: SYSTEM_FONT, fontSize: 19, color: C.accent, letterSpacing: "-0.02em" }}>Enroll</span>
+          <span style={{ fontFamily: SYSTEM_MONO, fontSize: 12, fontWeight: 500, color: C.textMid, letterSpacing: "0.08em" }}>GEN</span>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 24 }}>
           {FLOWS.map(f => (
             <button key={f.id} onClick={() => setActiveFlow(f.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 5, border: `1px solid ${activeFlow === f.id ? f.color + "55" : "transparent"}`, background: activeFlow === f.id ? f.color + "12" : "transparent", cursor: "pointer", transition: "all 0.2s" }}>
               <Beacon color={f.color} glow={f.glow} active={activeFlow === f.id} size={7} />
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.06em", color: activeFlow === f.id ? C.text : C.textDim }}>{f.label}</span>
+              <span style={{ fontFamily: SYSTEM_MONO, fontSize: 10, letterSpacing: "0.06em", color: activeFlow === f.id ? C.text : C.textDim }}>{f.label}</span>
             </button>
           ))}
         </div>
 
         <div style={{ display: "flex", gap: 1, position: "relative" }}>
           {TABS.map(t => (
-            <button key={t} onClick={() => setActiveTab(t)} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11.5, fontWeight: activeTab === t ? 500 : 400, padding: "5px 13px", borderRadius: 4, border: "none", background: activeTab === t ? C.s3 : "transparent", color: activeTab === t ? C.accent : C.textDim, cursor: "pointer", transition: "all 0.15s", letterSpacing: "0.01em", position: "relative" }}>
+            <button key={t} onClick={() => setActiveTab(t)} style={{ fontFamily: SYSTEM_FONT, fontSize: 11.5, fontWeight: activeTab === t ? 500 : 400, padding: "5px 13px", borderRadius: 4, border: "none", background: activeTab === t ? C.s3 : "transparent", color: activeTab === t ? C.accent : C.textDim, cursor: "pointer", transition: "all 0.15s", letterSpacing: "0.01em", position: "relative" }}>
               {t}
               {activeTab === t && <div style={{ position: "absolute", bottom: -1, left: "20%", right: "20%", height: 2, background: C.accent, borderRadius: 1 }} />}
             </button>
@@ -209,10 +211,10 @@ export default function EnrollGenV3() {
         </div>
 
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: C.textFaint }}>DEFAULT</div>
+          <div style={{ fontFamily: SYSTEM_MONO, fontSize: 10, color: C.textFaint }}>DEFAULT</div>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <div style={{ width: 26, height: 26, borderRadius: "50%", background: `linear-gradient(135deg, ${C.accent}44, ${C.accent}22)`, border: `1px solid ${C.accent}33`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 500, color: C.accent }}>MS</div>
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: C.textDim }}>Sign out</span>
+            <div style={{ width: 26, height: 26, borderRadius: "50%", background: `linear-gradient(135deg, ${C.accent}44, ${C.accent}22)`, border: `1px solid ${C.accent}33`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: SYSTEM_MONO, fontSize: 9, fontWeight: 500, color: C.accent }}>MS</div>
+            <span style={{ fontFamily: SYSTEM_FONT, fontSize: 11, color: C.textDim }}>Sign out</span>
           </div>
         </div>
       </div>
@@ -222,24 +224,24 @@ export default function EnrollGenV3() {
 
         {/* ─── LEFT RAIL ─── */}
         <div style={{ borderRight: `1px solid ${C.border}`, padding: 14, display: "flex", flexDirection: "column", gap: 10, background: `${C.s1}88`, overflow: "auto" }}>
-          <input placeholder="Member ZIP" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "7px 10px", background: C.s2, border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, outline: "none", width: "100%" }} />
+          <input placeholder="Member ZIP" style={{ fontFamily: SYSTEM_MONO, fontSize: 11, padding: "7px 10px", background: C.s2, border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, outline: "none", width: "100%" }} />
 
           <div style={{ display: "flex", gap: 4 }}>
             {["SEP finder", "Qualifier", "SNP"].map((b, i) => (
-              <button key={b} style={{ flex: 1, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.04em", padding: "5px 2px", borderRadius: 4, border: `1px solid ${i === 0 ? C.accent + "55" : C.border}`, background: i === 0 ? C.accent + "15" : "transparent", color: i === 0 ? C.accent : C.textDim, cursor: "pointer" }}>{b}</button>
+              <button key={b} style={{ flex: 1, fontFamily: SYSTEM_MONO, fontSize: 9, letterSpacing: "0.04em", padding: "5px 2px", borderRadius: 4, border: `1px solid ${i === 0 ? C.accent + "55" : C.border}`, background: i === 0 ? C.accent + "15" : "transparent", color: i === 0 ? C.accent : C.textDim, cursor: "pointer" }}>{b}</button>
             ))}
           </div>
 
           {/* client info card */}
           <div style={{ background: C.s2, borderRadius: 6, border: `1px solid ${C.border}`, padding: 12 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 8 }}>CLIENT</div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: C.text, fontWeight: 500, marginBottom: 2 }}>Margaret Chen</div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: C.textDim, marginBottom: 8 }}>DOB 03/15/1958 &middot; 66 yrs</div>
+            <div style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 8 }}>CLIENT</div>
+            <div style={{ fontFamily: SYSTEM_FONT, fontSize: 13, color: C.text, fontWeight: 500, marginBottom: 2 }}>Margaret Chen</div>
+            <div style={{ fontFamily: SYSTEM_MONO, fontSize: 10, color: C.textDim, marginBottom: 8 }}>DOB 03/15/1958 &middot; 66 yrs</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 12px" }}>
               {[["MBI", "1EG4-TE5-MK72"], ["County", "Camden, NJ"], ["Parts A/B", "Active"], ["Current", "Orig. Medicare"]].map(([k, v]) => (
                 <div key={k}>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.06em" }}>{k.toUpperCase()}</div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: k === "Parts A/B" ? C.greenText : C.textMid }}>{v}</div>
+                  <div style={{ fontFamily: SYSTEM_MONO, fontSize: 8, color: C.textFaint, letterSpacing: "0.06em" }}>{k.toUpperCase()}</div>
+                  <div style={{ fontFamily: SYSTEM_MONO, fontSize: 10, color: k === "Parts A/B" ? C.greenText : C.textMid }}>{v}</div>
                 </div>
               ))}
             </div>
@@ -247,20 +249,20 @@ export default function EnrollGenV3() {
 
           {/* plan context */}
           <div style={{ background: C.s2, borderRadius: 6, border: `1px solid ${C.border}`, padding: 12 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 8 }}>PRESENTING</div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: C.accent, fontWeight: 500 }}>Devoted Health Plan</div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: C.textDim, marginBottom: 6 }}>H5765-003 &middot; HMO-POS</div>
+            <div style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 8 }}>PRESENTING</div>
+            <div style={{ fontFamily: SYSTEM_FONT, fontSize: 12, color: C.accent, fontWeight: 500 }}>Devoted Health Plan</div>
+            <div style={{ fontFamily: SYSTEM_MONO, fontSize: 10, color: C.textDim, marginBottom: 6 }}>H5765-003 &middot; HMO-POS</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {["$0 premium", "$0 PCP", "$250 MOOP", "OTC $100/qtr"].map(b => (
-                <span key={b} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "2px 6px", borderRadius: 3, background: C.accent + "15", color: C.accentBright }}>{b}</span>
+                <span key={b} style={{ fontFamily: SYSTEM_MONO, fontSize: 9, padding: "2px 6px", borderRadius: 3, background: C.accent + "15", color: C.accentBright }}>{b}</span>
               ))}
             </div>
           </div>
 
           {/* notes */}
           <div style={{ marginTop: "auto" }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 6 }}>NOTES</div>
-            <textarea placeholder="Type notes here..." rows={4} style={{ width: "100%", fontFamily: "'DM Sans', sans-serif", fontSize: 11, padding: 8, background: C.s2, border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, outline: "none", resize: "vertical", lineHeight: 1.5 }} />
+            <div style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 6 }}>NOTES</div>
+            <textarea placeholder="Type notes here..." rows={4} style={{ width: "100%", fontFamily: SYSTEM_FONT, fontSize: 11, padding: 8, background: C.s2, border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, outline: "none", resize: "vertical", lineHeight: 1.5 }} />
           </div>
         </div>
 
@@ -270,13 +272,13 @@ export default function EnrollGenV3() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: "16px 40px", borderBottom: `1px solid ${C.border}`, background: `${C.s1}44`, flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: callActive ? C.green : C.textFaint, boxShadow: callActive ? `0 0 6px ${C.green}88` : "none", animation: callActive ? "breathe 2s ease-in-out infinite" : "none" }} />
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textDim, letterSpacing: "0.06em" }}>{callActive ? "LIVE" : "IDLE"}</span>
+              <span style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textDim, letterSpacing: "0.06em" }}>{callActive ? "LIVE" : "IDLE"}</span>
             </div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 28, fontWeight: 500, color: timerColor(callTime), letterSpacing: "0.08em", transition: "color 1s ease" }}>{fmt(callTime)}</div>
+            <div style={{ fontFamily: SYSTEM_MONO, fontSize: 28, fontWeight: 500, color: timerColor(callTime), letterSpacing: "0.08em", transition: "color 1s ease" }}>{fmt(callTime)}</div>
             <Waveform active={callActive} color={C.accent} />
             <div style={{ display: "flex", gap: 6 }}>
-              <button onClick={() => setCallActive(!callActive)} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.06em", padding: "7px 18px", borderRadius: 5, border: "none", background: callActive ? C.redDim : C.green, color: callActive ? C.redText : "#fff", cursor: "pointer", fontWeight: 500 }}>{callActive ? "END" : "START"}</button>
-              <button style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.06em", padding: "7px 14px", borderRadius: 5, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, cursor: "pointer" }}>ANALYZE</button>
+              <button onClick={() => setCallActive(!callActive)} style={{ fontFamily: SYSTEM_MONO, fontSize: 10, letterSpacing: "0.06em", padding: "7px 18px", borderRadius: 5, border: "none", background: callActive ? C.redDim : C.green, color: callActive ? C.redText : "#fff", cursor: "pointer", fontWeight: 500 }}>{callActive ? "END" : "START"}</button>
+              <button style={{ fontFamily: SYSTEM_MONO, fontSize: 10, letterSpacing: "0.06em", padding: "7px 14px", borderRadius: 5, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, cursor: "pointer" }}>ANALYZE</button>
             </div>
           </div>
 
@@ -286,13 +288,13 @@ export default function EnrollGenV3() {
               {/* section header */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
                 <StatusDot status="active" size={8} />
-                <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, color: C.text }}>Scope of appointment</span>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textFaint, marginLeft: "auto" }}>3 OF 8</span>
+                <span style={{ fontFamily: SYSTEM_FONT, fontSize: 17, color: C.text }}>Scope of appointment</span>
+                <span style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textFaint, marginLeft: "auto" }}>3 OF 8</span>
               </div>
 
               {/* script prompt */}
               <div style={{ background: C.s2, borderRadius: 7, border: `1px solid ${C.border}`, padding: 18, marginBottom: 14 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13.5, color: C.text, lineHeight: 1.75 }}>
+                <div style={{ fontFamily: SYSTEM_FONT, fontSize: 13.5, color: C.text, lineHeight: 1.75 }}>
                   "Before we continue, I want to make sure we're on the same page about what we'll be reviewing today. We'll be looking at <span style={{ color: C.accent, fontWeight: 500 }}>Medicare Advantage plans</span> available in your area. I'm not going to discuss anything outside of what you agree to. Does that sound good?"
                 </div>
               </div>
@@ -301,28 +303,28 @@ export default function EnrollGenV3() {
               <div style={{ background: C.amberDim, borderRadius: 5, padding: "9px 13px", marginBottom: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
                   <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.amber }} />
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.amber, letterSpacing: "0.06em" }}>COMPLIANCE</span>
+                  <span style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.amber, letterSpacing: "0.06em" }}>COMPLIANCE</span>
                 </div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11.5, color: C.amberText, lineHeight: 1.5 }}>SOA must document all product types discussed. Cannot discuss products not included in the scope.</div>
+                <div style={{ fontFamily: SYSTEM_FONT, fontSize: 11.5, color: C.amberText, lineHeight: 1.5 }}>SOA must document all product types discussed. Cannot discuss products not included in the scope.</div>
               </div>
 
               {/* inline checklist */}
               <div style={{ background: C.s2, borderRadius: 7, border: `1px solid ${C.border}`, padding: 14, marginBottom: 16 }}>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 10 }}>SECTION CHECKLIST</div>
+                <div style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 10 }}>SECTION CHECKLIST</div>
                 {CHECKLIST.map((item, i) => (
                   <label key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", cursor: "pointer", borderBottom: i < CHECKLIST.length - 1 ? `1px solid ${C.border}44` : "none" }}>
                     <div onClick={() => { const n = [...checks]; n[i] = !n[i]; setChecks(n); }} style={{ width: 16, height: 16, borderRadius: 3, border: `1px solid ${checks[i] ? C.green : C.border}`, background: checks[i] ? C.green + "25" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", transition: "all 0.15s" }}>
                       {checks[i] && <div style={{ width: 8, height: 8, borderRadius: 1, background: C.green }} />}
                     </div>
-                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: checks[i] ? C.textMid : C.text, textDecoration: checks[i] ? "line-through" : "none", transition: "all 0.15s" }}>{item.text}</span>
+                    <span style={{ fontFamily: SYSTEM_FONT, fontSize: 12, color: checks[i] ? C.textMid : C.text, textDecoration: checks[i] ? "line-through" : "none", transition: "all 0.15s" }}>{item.text}</span>
                   </label>
                 ))}
               </div>
 
               {/* actions */}
               <div style={{ display: "flex", gap: 8 }}>
-                <button style={{ flex: 1, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.04em", padding: "10px 16px", borderRadius: 5, border: `1px solid ${C.green}44`, background: C.green + "15", color: C.greenText, cursor: "pointer" }}>COMPLETE SECTION</button>
-                <button style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.04em", padding: "10px 16px", borderRadius: 5, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, cursor: "pointer" }}>SKIP</button>
+                <button style={{ flex: 1, fontFamily: SYSTEM_MONO, fontSize: 11, letterSpacing: "0.04em", padding: "10px 16px", borderRadius: 5, border: `1px solid ${C.green}44`, background: C.green + "15", color: C.greenText, cursor: "pointer" }}>COMPLETE SECTION</button>
+                <button style={{ fontFamily: SYSTEM_MONO, fontSize: 11, letterSpacing: "0.04em", padding: "10px 16px", borderRadius: 5, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, cursor: "pointer" }}>SKIP</button>
               </div>
 
               {/* progress dots */}
@@ -335,10 +337,10 @@ export default function EnrollGenV3() {
               {/* enrollment CTA */}
               <div style={{ marginTop: 32, padding: 16, background: C.s2, borderRadius: 7, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 3 }}>ENROLLMENT</div>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: C.textDim }}>Complete all 8 sections to submit</div>
+                  <div style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 3 }}>ENROLLMENT</div>
+                  <div style={{ fontFamily: SYSTEM_FONT, fontSize: 12, color: C.textDim }}>Complete all 8 sections to submit</div>
                 </div>
-                <button disabled style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.04em", padding: "10px 24px", borderRadius: 5, border: `1px solid ${C.border}`, background: C.s3, color: C.textFaint, cursor: "not-allowed", opacity: 0.5 }}>SUBMIT ENROLLMENT</button>
+                <button disabled style={{ fontFamily: SYSTEM_MONO, fontSize: 11, letterSpacing: "0.04em", padding: "10px 24px", borderRadius: 5, border: `1px solid ${C.border}`, background: C.s3, color: C.textFaint, cursor: "not-allowed", opacity: 0.5 }}>SUBMIT ENROLLMENT</button>
               </div>
             </div>
           </div>
@@ -350,11 +352,11 @@ export default function EnrollGenV3() {
           <div style={{ padding: "8px 14px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: agentStatus === "available" ? C.green : agentStatus === "busy" ? C.amber : C.textFaint }} />
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.06em", color: C.textDim, textTransform: "uppercase" }}>{agentStatus}</span>
+              <span style={{ fontFamily: SYSTEM_MONO, fontSize: 9, letterSpacing: "0.06em", color: C.textDim, textTransform: "uppercase" }}>{agentStatus}</span>
             </div>
             <div style={{ display: "flex", gap: 3 }}>
               {["available", "busy", "offline"].map(s => (
-                <button key={s} onClick={() => setAgentStatus(s)} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, letterSpacing: "0.04em", padding: "3px 8px", borderRadius: 3, border: `1px solid ${agentStatus === s ? (s === "available" ? C.green : s === "busy" ? C.amber : C.textDim) + "55" : C.border}`, background: agentStatus === s ? (s === "available" ? C.green : s === "busy" ? C.amber : C.textDim) + "18" : "transparent", color: agentStatus === s ? C.text : C.textFaint, cursor: "pointer", textTransform: "uppercase" }}>{s}</button>
+                <button key={s} onClick={() => setAgentStatus(s)} style={{ fontFamily: SYSTEM_MONO, fontSize: 8, letterSpacing: "0.04em", padding: "3px 8px", borderRadius: 3, border: `1px solid ${agentStatus === s ? (s === "available" ? C.green : s === "busy" ? C.amber : C.textDim) + "55" : C.border}`, background: agentStatus === s ? (s === "available" ? C.green : s === "busy" ? C.amber : C.textDim) + "18" : "transparent", color: agentStatus === s ? C.text : C.textFaint, cursor: "pointer", textTransform: "uppercase" }}>{s}</button>
               ))}
             </div>
           </div>
@@ -362,7 +364,7 @@ export default function EnrollGenV3() {
           {/* copilot ask */}
           <div style={{ padding: "8px 14px", flexShrink: 0 }}>
             <div style={{ display: "flex", gap: 5 }}>
-              <input placeholder="Ask Co-Pilot..." style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 11, padding: "7px 10px", background: C.s2, border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, outline: "none" }} />
+              <input placeholder="Ask Co-Pilot..." style={{ flex: 1, fontFamily: SYSTEM_FONT, fontSize: 11, padding: "7px 10px", background: C.s2, border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, outline: "none" }} />
               <button style={{ padding: "7px 9px", background: C.accent + "20", border: `1px solid ${C.accent}33`, borderRadius: 5, color: C.accent, cursor: "pointer", fontSize: 13, lineHeight: 1 }}>&#x2191;</button>
             </div>
           </div>
@@ -370,17 +372,17 @@ export default function EnrollGenV3() {
           {/* transcript */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
             <div style={{ padding: "8px 14px", borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.08em", color: C.textDim }}>LIVE TRANSCRIPT</span>
+              <span style={{ fontFamily: SYSTEM_MONO, fontSize: 9, letterSpacing: "0.08em", color: C.textDim }}>LIVE TRANSCRIPT</span>
               <div style={{ width: 5, height: 5, borderRadius: "50%", background: callActive ? C.green : C.textFaint, animation: callActive ? "breathe 1.5s ease-in-out infinite" : "none" }} />
             </div>
             <div style={{ flex: 1, overflow: "auto", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
               {TRANSCRIPT.map((t, i) => (
                 <div key={i} style={{ animation: `slideIn 0.3s ease ${i * 0.08}s both` }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, color: t.speaker === "agent" ? C.accent : C.blue, letterSpacing: "0.06em", textTransform: "uppercase" }}>{t.speaker}</span>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, color: C.textFaint }}>{t.time}</span>
+                    <span style={{ fontFamily: SYSTEM_MONO, fontSize: 8, color: t.speaker === "agent" ? C.accent : C.blue, letterSpacing: "0.06em", textTransform: "uppercase" }}>{t.speaker}</span>
+                    <span style={{ fontFamily: SYSTEM_MONO, fontSize: 8, color: C.textFaint }}>{t.time}</span>
                   </div>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11.5, color: C.textMid, lineHeight: 1.55 }}>{t.text}</div>
+                  <div style={{ fontFamily: SYSTEM_FONT, fontSize: 11.5, color: C.textMid, lineHeight: 1.55 }}>{t.text}</div>
                 </div>
               ))}
             </div>
@@ -389,13 +391,13 @@ export default function EnrollGenV3() {
           {/* copilot feed */}
           <div style={{ borderTop: `1px solid ${C.border}`, flexShrink: 0 }}>
             <div style={{ padding: "8px 14px", borderBottom: `1px solid ${C.border}` }}>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.08em", color: C.textDim }}>CO-PILOT</span>
+              <span style={{ fontFamily: SYSTEM_MONO, fontSize: 9, letterSpacing: "0.08em", color: C.textDim }}>CO-PILOT</span>
             </div>
             <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 6, maxHeight: 120, overflow: "auto" }}>
               {COPILOT.map((c, i) => (
                 <div key={i} style={{ padding: "7px 10px", borderRadius: 5, background: c.type === "coaching" ? C.greenDim : C.amberDim, position: "relative" }}>
                   <div style={{ position: "absolute", top: 7, right: 8, width: 4, height: 4, borderRadius: "50%", background: c.type === "coaching" ? C.green : C.amber }} />
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: c.type === "coaching" ? C.greenText : C.amberText, lineHeight: 1.45, paddingRight: 14 }}>{c.text}</div>
+                  <div style={{ fontFamily: SYSTEM_FONT, fontSize: 11, color: c.type === "coaching" ? C.greenText : C.amberText, lineHeight: 1.45, paddingRight: 14 }}>{c.text}</div>
                 </div>
               ))}
             </div>
@@ -404,8 +406,8 @@ export default function EnrollGenV3() {
           {/* compliance panel */}
           <div style={{ borderTop: `1px solid ${C.border}`, flexShrink: 0 }}>
             <div style={{ padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.08em", color: C.textDim }}>COMPLIANCE</span>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: C.greenText, fontWeight: 500 }}>96%</span>
+              <span style={{ fontFamily: SYSTEM_MONO, fontSize: 9, letterSpacing: "0.08em", color: C.textDim }}>COMPLIANCE</span>
+              <span style={{ fontFamily: SYSTEM_MONO, fontSize: 10, color: C.greenText, fontWeight: 500 }}>96%</span>
             </div>
             {/* overall bar */}
             <div style={{ margin: "0 14px 8px", height: 4, borderRadius: 2, background: C.s3, overflow: "hidden" }}>
@@ -415,11 +417,11 @@ export default function EnrollGenV3() {
               {SECTIONS.map((s, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <StatusDot status={s.status} size={5} />
-                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10.5, color: s.status === "active" ? C.text : C.textDim, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.label}</span>
+                  <span style={{ fontFamily: SYSTEM_FONT, fontSize: 10.5, color: s.status === "active" ? C.text : C.textDim, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.label}</span>
                   <div style={{ width: 32, height: 3, borderRadius: 2, background: C.s3, overflow: "hidden", flexShrink: 0 }}>
                     <div style={{ width: s.score ? `${s.score}%` : "0%", height: "100%", background: s.status === "done" ? C.green : C.textFaint, borderRadius: 2 }} />
                   </div>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, color: s.score ? C.greenText : C.textFaint, minWidth: 18, textAlign: "right" }}>{s.score || "--"}</span>
+                  <span style={{ fontFamily: SYSTEM_MONO, fontSize: 8, color: s.score ? C.greenText : C.textFaint, minWidth: 18, textAlign: "right" }}>{s.score || "--"}</span>
                 </div>
               ))}
             </div>
@@ -429,11 +431,11 @@ export default function EnrollGenV3() {
 
       {/* ═══ BOTTOM BAR ═══ */}
       <div style={{ position: "relative", zIndex: 2, height: 30, background: `${C.s1}ee`, borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", flexShrink: 0 }}>
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.04em" }}>NGHS &middot; NPN 21313049 &middot; 22 STATES</div>
+        <div style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textFaint, letterSpacing: "0.04em" }}>NGHS &middot; NPN 21313049 &middot; 22 STATES</div>
         <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textFaint }}>DEEPGRAM <span style={{ color: C.greenText }}>&#x2022;</span></span>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textFaint }}>SUPABASE <span style={{ color: C.greenText }}>&#x2022;</span></span>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.textFaint }}>CLERK <span style={{ color: C.greenText }}>&#x2022;</span></span>
+          <span style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textFaint }}>DEEPGRAM <span style={{ color: C.greenText }}>&#x2022;</span></span>
+          <span style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textFaint }}>SUPABASE <span style={{ color: C.greenText }}>&#x2022;</span></span>
+          <span style={{ fontFamily: SYSTEM_MONO, fontSize: 9, color: C.textFaint }}>CLERK <span style={{ color: C.greenText }}>&#x2022;</span></span>
         </div>
       </div>
     </div>

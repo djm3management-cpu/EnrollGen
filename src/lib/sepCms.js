@@ -121,6 +121,100 @@ async function fetchPlansDirect(state, county) {
   );
 }
 
+function applyPlanSearchArea(query, state, county) {
+  let nextQuery = query;
+  if (state) nextQuery = nextQuery.eq("State Territory Abbreviation", state);
+  if (county) nextQuery = nextQuery.in("County Name", [county, "All Counties"]);
+  return nextQuery;
+}
+
+function normalizePlanSearchTerm(term) {
+  return String(term || "").trim().slice(0, 80);
+}
+
+function parsePlanNumberSearch(term) {
+  const upper = normalizePlanSearchTerm(term).toUpperCase();
+  const compact = upper.replace(/[^A-Z0-9]/g, "");
+  const contract = compact.match(/[A-Z]\d{4}/)?.[0] || "";
+  const afterContract = contract ? compact.slice(compact.indexOf(contract) + contract.length) : compact;
+  const planId = afterContract.match(/\d{1,3}/)?.[0] || "";
+
+  return {
+    raw: upper,
+    compact,
+    contract,
+    planId: planId ? planId.padStart(3, "0").slice(0, 3) : "",
+  };
+}
+
+function makeSearchBaseQuery() {
+  return supabaseCms
+    .from(CMS_TABLE)
+    .select("*")
+    .neq("Sanctioned Plan", "Yes");
+}
+
+async function runLimitedPlanQueries(queries, limit) {
+  const responses = await Promise.all(queries.map((query) => query.limit(limit)));
+  const error = responses.find((response) => response.error)?.error;
+  if (error) throw error;
+  return responses.flatMap((response) => response.data || []);
+}
+
+async function searchPlansDirect({ term, mode = "name", state = "", county = "", limit = 24 }) {
+  const cleanTerm = normalizePlanSearchTerm(term);
+  if (!cleanTerm) return [];
+
+  const perQueryLimit = Math.max(4, Math.min(Number(limit) || 24, 60));
+  const buildAreaQuery = () =>
+    applyPlanSearchArea(makeSearchBaseQuery(), state, county);
+
+  if (mode === "number") {
+    const parsed = parsePlanNumberSearch(cleanTerm);
+    const planIdVariants = parsed.planId
+      ? [...new Set([parsed.planId, String(Number(parsed.planId))].filter(Boolean))]
+      : [];
+    const queries = [];
+
+    if (parsed.contract && parsed.planId) {
+      queries.push(
+        buildAreaQuery()
+          .eq("Contract ID", parsed.contract)
+          .in("Plan ID", planIdVariants)
+      );
+    }
+
+    if (parsed.compact.length >= 4) {
+      queries.push(buildAreaQuery().ilike("ContractPlanID", `%${parsed.compact}%`));
+      queries.push(buildAreaQuery().ilike("ContractPlanSegmentID", `%${parsed.compact}%`));
+    }
+
+    if (parsed.contract) {
+      queries.push(buildAreaQuery().ilike("Contract ID", `%${parsed.contract}%`));
+    }
+
+    if (parsed.planId && !parsed.contract) {
+      queries.push(buildAreaQuery().in("Plan ID", planIdVariants));
+    }
+
+    if (!queries.length && cleanTerm.length >= 2) {
+      queries.push(buildAreaQuery().ilike("Plan ID", `%${cleanTerm}%`));
+    }
+
+    return runLimitedPlanQueries(queries, perQueryLimit);
+  }
+
+  const pattern = `%${cleanTerm}%`;
+  return runLimitedPlanQueries(
+    [
+      buildAreaQuery().ilike("Plan Name", pattern),
+      buildAreaQuery().ilike("Organization Marketing Name", pattern),
+      buildAreaQuery().ilike("Contract Name", pattern),
+    ],
+    perQueryLimit
+  );
+}
+
 async function fetchCountyPlanCountsDirect(state) {
   const rows = await fetchPagedRows((from, to) =>
     supabaseCms
@@ -196,6 +290,20 @@ export async function fetchPlansFromSupabase(state, county) {
   } catch (fallbackError) {
     if (!markCmsUnavailable(fallbackError)) {
       console.error("Plans fetch error:", fallbackError);
+    }
+    return [];
+  }
+}
+
+export async function searchCmsPlans({ term, mode = "name", state = "", county = "", limit = 24 } = {}) {
+  if (!normalizePlanSearchTerm(term)) return [];
+  if (!shouldUseCmsSupabase()) return [];
+
+  try {
+    return await searchPlansDirect({ term, mode, state, county, limit });
+  } catch (error) {
+    if (!markCmsUnavailable(error)) {
+      console.error("Plan lookup search error:", error);
     }
     return [];
   }

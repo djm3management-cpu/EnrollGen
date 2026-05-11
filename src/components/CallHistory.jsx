@@ -81,7 +81,7 @@ export default function CallHistory() {
   if (loading) {
     return (
       <div className="card" style={{ marginTop: 14, padding: 24 }}>
-        <span style={{ color: "#556677", fontSize: 13, fontFamily: "'Barlow Condensed', sans-serif" }}>
+        <span style={{ color: "#556677", fontSize: 13, fontFamily: "var(--font-body)" }}>
           Loading…
         </span>
       </div>
@@ -91,7 +91,7 @@ export default function CallHistory() {
   if (error === "auth_disabled") {
     return (
       <div className="card" style={{ marginTop: 14, padding: 24 }}>
-        <span style={{ color: "#556677", fontSize: 13, fontFamily: "'Barlow Condensed', sans-serif" }}>
+        <span style={{ color: "#556677", fontSize: 13, fontFamily: "var(--font-body)" }}>
           Sign in to view call history.
         </span>
       </div>
@@ -101,7 +101,7 @@ export default function CallHistory() {
   if (error) {
     return (
       <div className="card" style={{ marginTop: 14, padding: 24 }}>
-        <span style={{ color: "#cc4444", fontSize: 13, fontFamily: "'Barlow Condensed', sans-serif" }}>
+        <span style={{ color: "#cc4444", fontSize: 13, fontFamily: "var(--font-body)" }}>
           Error loading calls: {error}
         </span>
       </div>
@@ -111,7 +111,7 @@ export default function CallHistory() {
   if (sessions.length === 0) {
     return (
       <div className="card" style={{ marginTop: 14, padding: 24 }}>
-        <span style={{ color: "#556677", fontSize: 13, fontFamily: "'Barlow Condensed', sans-serif" }}>
+        <span style={{ color: "#556677", fontSize: 13, fontFamily: "var(--font-body)" }}>
           No calls recorded yet. Start an enrollment to see your history here.
         </span>
       </div>
@@ -122,7 +122,7 @@ export default function CallHistory() {
     padding: "8px 12px",
     textAlign: "left",
     fontSize: 10,
-    fontFamily: "'Barlow Condensed', sans-serif",
+    fontFamily: "var(--font-body)",
     fontWeight: 700,
     letterSpacing: "0.12em",
     textTransform: "uppercase",
@@ -134,7 +134,7 @@ export default function CallHistory() {
   const tdStyle = {
     padding: "8px 12px",
     fontSize: 12,
-    fontFamily: "'Barlow Condensed', sans-serif",
+    fontFamily: "var(--font-body)",
     fontWeight: 500,
     color: "#c8d6e5",
     borderBottom: "1px solid rgba(255,255,255,0.03)",
@@ -149,7 +149,7 @@ export default function CallHistory() {
       }}>
         <span style={{
           fontSize: 11,
-          fontFamily: "'Barlow Condensed', sans-serif",
+          fontFamily: "var(--font-body)",
           fontWeight: 700,
           letterSpacing: "0.12em",
           textTransform: "uppercase",

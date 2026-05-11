@@ -100,14 +100,13 @@ Each script flow has an assigned color. These never change.
 
 ## 3. Typography
 
-Three font families. No substitutions. Load from Google Fonts.
+System UI typography only. Do not load external web fonts.
 
 ```css
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap');
-
---eg-font-display: 'DM Serif Display', serif;
---eg-font-body: 'DM Sans', sans-serif;
---eg-font-mono: 'JetBrains Mono', monospace;
+--eg-font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+--eg-font-display: var(--eg-font-system);
+--eg-font-body: var(--eg-font-system);
+--eg-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
 ```
 
 ### Usage rules

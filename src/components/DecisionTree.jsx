@@ -273,7 +273,7 @@ function StepBadge({ label, color = "#4a5568", bg = "rgba(255,255,255,0.03)", bo
       style={{
         fontSize: 11,
         fontWeight: 700,
-        fontFamily: "'Barlow Condensed', sans-serif",
+        fontFamily: "var(--font-body)",
         letterSpacing: "0.08em",
         color,
         background: bg,
@@ -298,7 +298,7 @@ function QuestionCard({ node, selectedAnswer, stepIndex, onNavigate, isCurrent }
       {/* Question text */}
       <p
         style={{
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "var(--font-body)",
           fontSize: 14,
           fontWeight: 500,
           color: "#c0d0e4",
@@ -311,7 +311,7 @@ function QuestionCard({ node, selectedAnswer, stepIndex, onNavigate, isCurrent }
       {node.hint && (
         <p
           style={{
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: 12,
             color: "#4A4A5A",
             lineHeight: 1.5,
@@ -331,7 +331,7 @@ function QuestionCard({ node, selectedAnswer, stepIndex, onNavigate, isCurrent }
             borderRadius: 8,
             background: "rgba(232,0,45,0.05)",
             border: "1px solid rgba(232,0,45,0.14)",
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: 12,
             color: "#cfd8e3",
           }}
@@ -376,7 +376,7 @@ function QuestionCard({ node, selectedAnswer, stepIndex, onNavigate, isCurrent }
             >
               <span
                 style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontWeight: 800,
                   fontSize: 13,
                   color: isSelected ? "#ff536f" : isHov ? "#E8002D" : "#3A3A4A",
@@ -390,7 +390,7 @@ function QuestionCard({ node, selectedAnswer, stepIndex, onNavigate, isCurrent }
               </span>
               <span
                 style={{
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: 13.5,
                   color: isSelected ? "#eef4fb" : isHov ? "#dfe6f0" : "#8A8A9A",
                   lineHeight: 1.6,
@@ -437,7 +437,7 @@ function ReferCard({ node, selectedAnswer, stepIndex, onNavigate, onReset, isCur
 
       <p
         style={{
-          fontFamily: "'Barlow Condensed', sans-serif",
+          fontFamily: "var(--font-body)",
           fontWeight: 700,
           fontSize: 15,
           color: "#dfe6f0",
@@ -452,7 +452,7 @@ function ReferCard({ node, selectedAnswer, stepIndex, onNavigate, onReset, isCur
       {node.detail && (
         <p
           style={{
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: 13,
             color: "#5A5A6A",
             lineHeight: 1.55,
@@ -471,7 +471,7 @@ function ReferCard({ node, selectedAnswer, stepIndex, onNavigate, onReset, isCur
             borderRadius: 8,
             background: "rgba(255,215,0,0.05)",
             border: "1px solid rgba(255,215,0,0.14)",
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: 12,
             color: "#d9dfb0",
           }}
@@ -506,7 +506,7 @@ function ReferCard({ node, selectedAnswer, stepIndex, onNavigate, onReset, isCur
                 borderRadius: "0 4px 4px 0",
                 padding: "9px 14px",
                 cursor: "pointer",
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: 13,
                 color: selectedAnswer === b.label ? "#f0f3d7" : "#8A8A9A",
                 textAlign: "left",
@@ -534,7 +534,7 @@ function ReferCard({ node, selectedAnswer, stepIndex, onNavigate, onReset, isCur
           border: "none",
           cursor: "pointer",
           color: "#3A3A4A",
-          fontFamily: "'Barlow Condensed', sans-serif",
+          fontFamily: "var(--font-body)",
           fontWeight: 700,
           letterSpacing: "0.1em",
           textTransform: "uppercase",
@@ -575,7 +575,7 @@ function ResultCard({ node, onReset }) {
           />
           <span
             style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: 800,
               fontSize: 10,
               letterSpacing: "0.14em",
@@ -590,7 +590,7 @@ function ResultCard({ node, onReset }) {
         {/* Product name */}
         <p
           style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "var(--font-body)",
             fontWeight: 700,
             fontSize: 22,
             letterSpacing: "0.03em",
@@ -610,7 +610,7 @@ function ResultCard({ node, onReset }) {
               <span style={{ color: node.color, flexShrink: 0, fontSize: 10, marginTop: 4, opacity: 0.7 }}>▸</span>
               <span
                 style={{
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: 13,
                   color: "#8A8A9A",
                   lineHeight: 1.55,
@@ -717,7 +717,7 @@ export default function DecisionTree({ singleCardMode = false, embedded = false 
           </span>
           <span
             style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: 700,
               fontSize: 11,
               letterSpacing: "0.1em",
@@ -774,7 +774,7 @@ export default function DecisionTree({ singleCardMode = false, embedded = false 
                   border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 8,
                   color: "#c0d0e4",
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: "0.08em",
@@ -795,7 +795,7 @@ export default function DecisionTree({ singleCardMode = false, embedded = false 
                   border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 8,
                   color: "#7f8b99",
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: "0.08em",
@@ -818,7 +818,7 @@ export default function DecisionTree({ singleCardMode = false, embedded = false 
               borderRadius: 10,
               background: "rgba(255,255,255,0.02)",
               border: "1px solid rgba(255,255,255,0.05)",
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: 12,
               color: "#8A8A9A",
             }}
@@ -869,7 +869,7 @@ export default function DecisionTree({ singleCardMode = false, embedded = false 
         </span>
         <span
           style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "var(--font-body)",
             fontWeight: 700,
             fontSize: 11,
             letterSpacing: "0.1em",
@@ -935,7 +935,7 @@ export default function DecisionTree({ singleCardMode = false, embedded = false 
               {!isCurrent && (
                 <span
                   style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontWeight: 700,
                     fontSize: 10,
                     letterSpacing: "0.12em",

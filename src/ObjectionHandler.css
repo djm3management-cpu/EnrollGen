@@ -104,7 +104,7 @@
 
 /* ── Column label ── */
 .objection-col-label {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -163,7 +163,7 @@
   margin-left: auto;
   font-size: 0.8em;
   opacity: 0.4;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
 }
 
 .objection-cat-items {
@@ -251,7 +251,7 @@
 .objection-mode-btn {
   padding: 4px 12px;
   font-size: 0.7em;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -282,7 +282,7 @@
 }
 
 .objection-dx-label {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -376,7 +376,7 @@
 }
 
 .objection-tree-label {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -420,7 +420,7 @@
 }
 
 .objection-tree-if {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #E8002D;
@@ -466,7 +466,7 @@
   gap: 6px;
   font-size: 0.7em;
   color: #00D166;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   letter-spacing: 0.04em;
 }
@@ -516,7 +516,7 @@
   gap: 4px;
   font-size: 0.72em;
   color: #00D166;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   letter-spacing: 0.06em;
   padding: 4px 0;
@@ -557,7 +557,7 @@
 .objection-tip-label {
   color: #00D166;
   font-weight: 700;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   display: inline-flex;

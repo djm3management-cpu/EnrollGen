@@ -121,7 +121,7 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
           />
           <span
             style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: 800,
               fontSize: "0.72rem",
               letterSpacing: "0.12em",
@@ -135,7 +135,7 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span
             style={{
-              fontFamily: "'IBM Plex Mono', monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: "0.72rem",
               fontWeight: 700,
               color: "rgba(255,255,255,0.5)",
@@ -174,7 +174,7 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
                     border: `1px solid rgba(${rgb},0.2)`,
                     fontSize: "0.7rem",
                     color: "#D6DFE9",
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "var(--font-body)",
                     whiteSpace: "nowrap",
                     textDecoration: "none",
                     cursor: "pointer",
@@ -203,7 +203,7 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
                     border: `1px solid rgba(${rgb},0.2)`,
                     fontSize: "0.7rem",
                     color: "#D6DFE9",
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "var(--font-body)",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -232,7 +232,7 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
                     background: `rgba(${rgb},0.08)`,
                     color,
                     textDecoration: "none",
-                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontWeight: 700,
                     fontSize: "0.56rem",
                     letterSpacing: "0.1em",
@@ -280,7 +280,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
         <div>
           <div
             style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: 800,
               fontSize: "0.56rem",
               letterSpacing: "0.14em",
@@ -298,7 +298,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
               fontSize: "1.15rem",
               letterSpacing: "0.05em",
               textTransform: "uppercase",
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: 800,
             }}
           >
@@ -315,7 +315,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
             cursor: "pointer",
             padding: "4px 8px",
             fontSize: "0.7rem",
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font-body)",
           }}
         >
           ✕
@@ -339,7 +339,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
             >
               <div
                 style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "1rem",
                   fontWeight: 800,
                   color: seg.color,
@@ -349,7 +349,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
               </div>
               <div
                 style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "0.5rem",
                   fontWeight: 700,
                   letterSpacing: "0.1em",
@@ -368,7 +368,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
       <div
         style={{
           textAlign: "center",
-          fontFamily: "'IBM Plex Mono', monospace",
+          fontFamily: "var(--font-mono)",
           fontSize: "0.68rem",
           color: "#5A5A6A",
         }}
@@ -395,7 +395,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
           background: "rgba(249,115,22,0.03)", padding: "10px 14px",
         }}>
           <div style={{
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
+            fontFamily: "var(--font-body)", fontWeight: 800,
             fontSize: "0.62rem", letterSpacing: "0.1em", textTransform: "uppercase",
             color: "#F97316", marginBottom: 8,
           }}>
@@ -408,7 +408,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
                 background: "rgba(249,115,22,0.08)",
                 border: "1px solid rgba(249,115,22,0.15)",
                 fontSize: "0.64rem", color: "#D6DFE9",
-                fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
+                fontFamily: "var(--font-body)", whiteSpace: "nowrap",
               }}>
                 {iss}
               </span>
@@ -431,7 +431,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
             background: "rgba(255,255,255,0.03)",
             color: "#6F7D8E",
             textDecoration: "none",
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "var(--font-body)",
             fontWeight: 700,
             fontSize: "0.56rem",
             letterSpacing: "0.1em",
@@ -708,7 +708,7 @@ export default function CarrierRef() {
                     borderRadius: 999,
                     padding: "5px 12px",
                     cursor: "pointer",
-                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontWeight: 700,
                     fontSize: "0.64rem",
                     letterSpacing: "0.1em",
@@ -733,7 +733,7 @@ export default function CarrierRef() {
                   <span
                     style={{
                       marginLeft: 6,
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: "var(--font-mono)",
                       fontSize: "0.58rem",
                       opacity: 0.6,
                     }}
@@ -850,7 +850,7 @@ export default function CarrierRef() {
                             : "#B8B8C8"
                     }
                     style={{
-                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontFamily: "var(--font-body)",
                       fontWeight: 800,
                       fontSize: isSel || isHov ? "11px" : "9px",
                       letterSpacing: "0.06em",
@@ -886,7 +886,7 @@ export default function CarrierRef() {
             >
               <div
                 style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontWeight: 800,
                   fontSize: "0.82rem",
                   letterSpacing: "0.06em",
@@ -922,7 +922,7 @@ export default function CarrierRef() {
                         />
                         <span
                           style={{
-                            fontFamily: "'Barlow Condensed', sans-serif",
+                            fontFamily: "var(--font-body)",
                             fontWeight: 700,
                             fontSize: "0.62rem",
                             letterSpacing: "0.08em",
@@ -935,7 +935,7 @@ export default function CarrierRef() {
                       </div>
                       <span
                         style={{
-                          fontFamily: "'IBM Plex Mono', monospace",
+                          fontFamily: "var(--font-mono)",
                           fontWeight: 700,
                           fontSize: "0.72rem",
                           color: seg.color,
@@ -969,7 +969,7 @@ export default function CarrierRef() {
             >
               <div
                 style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontWeight: 800,
                   fontSize: "0.82rem",
                   letterSpacing: "0.06em",
@@ -1052,7 +1052,7 @@ export default function CarrierRef() {
               style={{
                 fontSize: "0.6rem",
                 color: "#3A3A4A",
-                fontFamily: "'IBM Plex Mono', monospace",
+                fontFamily: "var(--font-mono)",
               }}
             >
               {matchedStates.size} / {activeStates.size} states
@@ -1087,7 +1087,7 @@ export default function CarrierRef() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div style={{
-                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
+                  fontFamily: "var(--font-body)", fontWeight: 800,
                   fontSize: "0.56rem", letterSpacing: "0.14em", textTransform: "uppercase",
                   color: "#F97316", marginBottom: 3,
                 }}>
@@ -1096,7 +1096,7 @@ export default function CarrierRef() {
                 <h3 style={{
                   margin: 0, color: "#F0F0F0", fontSize: "1.15rem",
                   letterSpacing: "0.05em", textTransform: "uppercase",
-                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
+                  fontFamily: "var(--font-body)", fontWeight: 800,
                 }}>
                   ACA Market Data
                 </h3>
@@ -1106,7 +1106,7 @@ export default function CarrierRef() {
                 style={{
                   background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 8, color: "#8A8A9A", cursor: "pointer",
-                  padding: "4px 8px", fontSize: "0.7rem", fontFamily: "'DM Sans', sans-serif",
+                  padding: "4px 8px", fontSize: "0.7rem", fontFamily: "var(--font-body)",
                 }}
               >
                 ✕
@@ -1121,13 +1121,13 @@ export default function CarrierRef() {
                 textAlign: "center",
               }}>
                 <div style={{
-                  fontFamily: "'IBM Plex Mono', monospace", fontSize: "1.4rem",
+                  fontFamily: "var(--font-mono)", fontSize: "1.4rem",
                   fontWeight: 800, color: "#F97316",
                 }}>
                   {acaIssuers[selected]?.length || 0}
                 </div>
                 <div style={{
-                  fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.56rem",
+                  fontFamily: "var(--font-body)", fontSize: "0.56rem",
                   fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
                   color: "#5A5A6A", marginTop: 2,
                 }}>
@@ -1145,7 +1145,7 @@ export default function CarrierRef() {
                 gap: 10,
               }}>
                 <div style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontWeight: 800,
                   fontSize: "0.68rem",
                   letterSpacing: "0.12em",
@@ -1169,7 +1169,7 @@ export default function CarrierRef() {
                     background: "rgba(249,115,22,0.08)",
                     color: "#F97316",
                     textDecoration: "none",
-                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontWeight: 700,
                     fontSize: "0.6rem",
                     letterSpacing: "0.1em",
@@ -1188,7 +1188,7 @@ export default function CarrierRef() {
                 padding: "12px 14px",
               }}>
                 <div style={{
-                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
+                  fontFamily: "var(--font-body)", fontWeight: 800,
                   fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase",
                   color: "#F97316", marginBottom: 10,
                 }}>
@@ -1203,7 +1203,7 @@ export default function CarrierRef() {
                         background: "rgba(249,115,22,0.1)",
                         border: "1px solid rgba(249,115,22,0.2)",
                         fontSize: "0.7rem", color: "#D6DFE9",
-                        fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
+                        fontFamily: "var(--font-body)", whiteSpace: "nowrap",
                       }}
                     >
                       {iss}
@@ -1215,7 +1215,7 @@ export default function CarrierRef() {
 
             <div style={{
               fontSize: "0.62rem", color: "#3A3A4A", textAlign: "center",
-              fontFamily: "'IBM Plex Mono', monospace",
+              fontFamily: "var(--font-mono)",
             }}>
               Not an active NGHS state · ACA data only
             </div>
@@ -1246,7 +1246,7 @@ export default function CarrierRef() {
           <h3
             style={{
               margin: 0,
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: 800,
               fontSize: "0.74rem",
               letterSpacing: "0.12em",
@@ -1281,7 +1281,7 @@ export default function CarrierRef() {
               >
                 <span
                   style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontWeight: 700,
                     fontSize: "0.58rem",
                     letterSpacing: "0.1em",
@@ -1305,7 +1305,7 @@ export default function CarrierRef() {
                       background: `rgba(${seg.rgb},0.06)`,
                       color: seg.color,
                       textDecoration: "none",
-                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontFamily: "var(--font-body)",
                       fontWeight: 700,
                       fontSize: "0.54rem",
                       letterSpacing: "0.08em",
@@ -1336,7 +1336,7 @@ export default function CarrierRef() {
           <h3
             style={{
               margin: 0,
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: 800,
               fontSize: "0.74rem",
               letterSpacing: "0.12em",
@@ -1374,7 +1374,7 @@ export default function CarrierRef() {
               border: "1px solid rgba(255,255,255,0.05)",
               fontSize: "0.62rem",
               color: "#3A3A4A",
-              fontFamily: "'IBM Plex Mono', monospace",
+              fontFamily: "var(--font-mono)",
             }}
           >
             Last verified: {DATA_VERSION.lastUpdated}

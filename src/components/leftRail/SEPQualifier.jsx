@@ -436,18 +436,16 @@ export default function SEPQualifier({ onMinimize }) {
           <div className="sep-qualifier-stage sep-qualifier-stage--default">
             <div className="left-rail-tools">
               <div className="left-rail-zip-cell">
-                <label className="left-rail-zip-label" htmlFor="left-rail-shared-zip">
-                  ZIP
-                </label>
                 <input
                   id="left-rail-shared-zip"
                   className={`left-rail-zip-input${sharedZipInvalid ? " is-invalid" : ""}`}
                   inputMode="numeric"
                   maxLength={5}
-                  placeholder="ZIP"
+                  placeholder="Enter ZIP"
                   value={sharedZip}
                   onChange={handleSharedZipChange}
                   autoComplete="postal-code"
+                  aria-label="Enter ZIP"
                 />
               </div>
 

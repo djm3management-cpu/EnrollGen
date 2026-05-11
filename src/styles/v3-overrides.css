@@ -66,10 +66,8 @@ body,
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: 46% 42%;
-  transform: scale(1.07);
-  transform-origin: 46% 42%;
+  object-fit: contain;
+  object-position: center;
 }
 
 .top-bar-logo-wordmark {
@@ -2377,6 +2375,184 @@ button.primary.section-complete-btn {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+.eg-plan-context-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.eg-plan-context-head .eg-rail-card__label {
+  margin-bottom: 0;
+}
+
+.eg-plan-lookup {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--eg-border);
+}
+
+.eg-plan-lookup__label {
+  font-family: var(--eg-font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--eg-text-faint);
+}
+
+.eg-plan-lookup__mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.eg-plan-lookup__mode-btn,
+.eg-plan-lookup__clear,
+.eg-plan-lookup__submit {
+  border: 1px solid var(--eg-border);
+  background: transparent;
+  color: var(--eg-text-dim);
+  font-family: var(--eg-font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--eg-transition-fast), color var(--eg-transition-fast), background var(--eg-transition-fast);
+}
+
+.eg-plan-lookup__mode-btn {
+  min-height: 24px;
+  padding: 0 6px;
+  border-radius: var(--eg-radius-sm);
+}
+
+.eg-plan-lookup__mode-btn:hover,
+.eg-plan-lookup__clear:hover,
+.eg-plan-lookup__submit:hover:not(:disabled) {
+  border-color: var(--eg-border-hover);
+  color: var(--eg-text);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.eg-plan-lookup__mode-btn.is-active {
+  border-color: var(--eg-border-active);
+  color: var(--eg-accent);
+  background: var(--eg-surface-1);
+}
+
+.eg-plan-lookup__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px;
+}
+
+.eg-plan-lookup__input {
+  min-width: 0;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-sm);
+  background: var(--eg-surface-1);
+  color: var(--eg-text);
+  font-family: var(--eg-font-body);
+  font-size: 11px;
+  line-height: 1.4;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.eg-plan-lookup__input::placeholder {
+  color: var(--eg-text-faint);
+}
+
+.eg-plan-lookup__input:focus {
+  border-color: var(--eg-border-active);
+}
+
+.eg-plan-lookup__submit,
+.eg-plan-lookup__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 7px;
+  border-radius: var(--eg-radius-sm);
+  white-space: nowrap;
+}
+
+.eg-plan-lookup__submit {
+  min-height: 28px;
+}
+
+.eg-plan-lookup__submit:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+.eg-plan-lookup__message {
+  color: var(--eg-text-faint);
+  font-family: var(--eg-font-body);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.eg-plan-lookup__results {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 188px;
+  overflow-y: auto;
+  border-top: 1px solid var(--eg-border);
+}
+
+.eg-plan-lookup__result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 7px 0;
+  border: 0;
+  border-bottom: 1px solid var(--eg-border);
+  background: transparent;
+  color: var(--eg-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.eg-plan-lookup__result:hover {
+  color: var(--eg-accent);
+}
+
+.eg-plan-lookup__result-name {
+  display: -webkit-box;
+  overflow: hidden;
+  color: inherit;
+  font-family: var(--eg-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.eg-plan-lookup__result-meta {
+  overflow: hidden;
+  color: var(--eg-text-faint);
+  font-family: var(--eg-font-mono);
+  font-size: 9px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .left-rail-context-stack {

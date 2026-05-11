@@ -64,9 +64,10 @@
   --eg-flow-u65-glow: var(--eg-purple-text);
 
   /* ----- Typography ----- */
-  --eg-font-display: 'DM Serif Display', 'EB Garamond', Georgia, serif;
-  --eg-font-body: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
-  --eg-font-mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+  --eg-font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --eg-font-display: var(--eg-font-system);
+  --eg-font-body: var(--eg-font-system);
+  --eg-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
 
   /* ----- Radii ----- */
   --eg-radius-pill: 3px;

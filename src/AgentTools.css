@@ -1,4 +1,4 @@
-﻿.at-root {
+.at-root {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -87,7 +87,7 @@
   border: none;
   background: transparent;
   color: var(--text-primary);
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.72rem;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -461,7 +461,7 @@
   border: 1px solid var(--border-subtle);
   background: var(--bg-input);
   color: var(--text-primary);
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.72rem;
   font-weight: 500;
   outline: none;
@@ -1576,7 +1576,7 @@
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.03);
   color: #f0f6fc;
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.85rem;
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -1608,7 +1608,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   color: rgba(240, 246, 252, 0.72);
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1634,7 +1634,7 @@
   border: 1px dashed rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
   color: rgba(240, 246, 252, 0.6);
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.85rem;
   text-align: center;
 }
@@ -1666,7 +1666,7 @@
 
 .carrier-quickref-card-title {
   color: #f0f6fc;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.96rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1687,7 +1687,7 @@
   border-radius: 999px;
   background: rgba(96, 165, 250, 0.16);
   color: #93c5fd;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1702,7 +1702,7 @@
 
 .carrier-quickref-meta-label {
   color: rgba(240, 246, 252, 0.45);
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -1711,7 +1711,7 @@
 
 .carrier-quickref-meta-value {
   color: #c9d1d9;
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.78rem;
   line-height: 1.45;
 }
@@ -1755,7 +1755,7 @@
 
 .carrier-quickref-plan-name {
   color: #f0f6fc;
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.84rem;
   font-weight: 600;
   line-height: 1.3;
@@ -1768,7 +1768,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   color: rgba(240, 246, 252, 0.78);
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1789,7 +1789,7 @@
   margin: 0;
   padding-left: 16px;
   color: #c9d1d9;
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.76rem;
   line-height: 1.45;
   display: flex;
@@ -1831,7 +1831,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   color: rgba(240, 246, 252, 0.78);
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1853,7 +1853,7 @@
   background: var(--rail-term-bg) !important;
   box-shadow: none !important;
   color: var(--rail-term-amber);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1872,7 +1872,7 @@
 
 .top-panel-overlay--tools .top-panel-title {
   color: var(--eg-surface-1) !important;
-  font-family: "IBM Plex Mono", monospace !important;
+  font-family: var(--font-mono) !important;
   font-size: 11px !important;
   font-weight: 800 !important;
   letter-spacing: 1.8px !important;
@@ -1906,7 +1906,7 @@
 .top-panel-overlay--tools .at-root {
   gap: 8px;
   color: var(--rail-term-amber);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .top-panel-overlay--tools .at-card-list {
@@ -1961,7 +1961,7 @@
 
 .top-panel-overlay--tools .at-tool-title {
   color: var(--rail-term-yellow);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.6px;
@@ -1970,7 +1970,7 @@
 
 .top-panel-overlay--tools .at-tool-desc {
   color: var(--rail-term-cyan);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 9px;
   line-height: 1.25;
 }
@@ -1992,7 +1992,7 @@
   background: var(--rail-term-bg, var(--eg-base)) !important;
   box-shadow: none !important;
   color: var(--rail-term-amber, #d98b45);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .at-modal-header {
@@ -2003,21 +2003,21 @@
 
 .at-modal-kicker {
   color: var(--rail-term-cyan, #69a7c8);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 1.2px;
 }
 
 .at-modal-title {
   color: var(--rail-term-yellow, #f4b24d);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   letter-spacing: 1px;
 }
 
 .at-modal-desc {
   color: var(--rail-term-cyan, #69a7c8);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 
@@ -2083,7 +2083,7 @@
 .at-modal .at-sep-ref-header h4,
 .at-modal .at-sep-ask {
   color: var(--rail-term-yellow, #f4b24d);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .at-modal .at-link-desc,
@@ -2095,7 +2095,7 @@
 .at-modal .at-sep-meta li,
 .at-modal .at-sep-meta p {
   color: var(--rail-term-cyan, #69a7c8);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .at-modal .at-doc-section-head,
@@ -2105,7 +2105,7 @@
 .at-modal .at-sep-section-title,
 .at-modal .at-sep-label {
   color: var(--rail-term-amber-bright, #f2a35b);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .at-modal .at-sep-ref-header,
@@ -2125,7 +2125,7 @@
   border: 1px solid var(--rail-term-border-bright, #2a2a2a);
   background: var(--rail-term-bg-soft, var(--eg-surface-1));
   color: var(--rail-term-yellow, #f4b24d);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   box-shadow: none;
 }
 

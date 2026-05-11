@@ -308,7 +308,7 @@ CRITICAL FORMATTING: Plain text only. No markdown, no asterisks, no dashes, no b
             animation: "prompter-pulse-anim 1.5s infinite",
           }} />
           <span style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: "11px",
             fontWeight: 700,
             letterSpacing: "0.14em",
@@ -339,7 +339,7 @@ CRITICAL FORMATTING: Plain text only. No markdown, no asterisks, no dashes, no b
             }}>
               <div style={{
                 color: "#00D166",
-                fontFamily: "'Barlow Condensed', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontWeight: 700,
                 fontSize: "12px",
                 letterSpacing: "0.12em",
@@ -368,7 +368,7 @@ CRITICAL FORMATTING: Plain text only. No markdown, no asterisks, no dashes, no b
             }}>
               <div style={{
                 color: "#FF4455",
-                fontFamily: "'Barlow Condensed', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontWeight: 700,
                 fontSize: "12px",
                 letterSpacing: "0.12em",
@@ -398,7 +398,7 @@ CRITICAL FORMATTING: Plain text only. No markdown, no asterisks, no dashes, no b
           }}>
             <div style={{
               color: "#FFD700",
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: 700,
               fontSize: "11px",
               letterSpacing: "0.14em",

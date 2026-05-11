@@ -467,7 +467,7 @@ export default function StateACAFlow() {
             onClick={() => dispatch({ type: "START_CALL" })}
             style={{
               fontSize: 15,
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",

@@ -43,7 +43,7 @@ export const TranscriptTimer = memo(function TranscriptTimer({ startTime }) {
   const color = getTimerColor(elapsed);
   return (
     <span className="transcript-timer" style={{
-      fontFamily: "'IBM Plex Mono', monospace",
+      fontFamily: "var(--font-mono)",
       fontSize: "0.62rem",
       fontWeight: 700,
       color,
@@ -129,7 +129,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
                 color: idx === finals.length - 1
                   ? (isCustomer ? "#88c8ff" : "#c8cdd8")
                   : (isCustomer ? "#5588aa" : "#555860"),
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "var(--font-body)",
                 lineHeight: 1.5,
                 overflowWrap: "break-word",
                 minWidth: 0,
@@ -137,7 +137,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
                 <span className="mini-live-transcript__speaker" style={{
                   fontSize: "0.54rem",
                   fontWeight: 800,
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   letterSpacing: "0.06em",
                   color: isCustomer ? "#00A8FF" : "#666",
                   marginRight: 5,

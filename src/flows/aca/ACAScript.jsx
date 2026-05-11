@@ -99,7 +99,7 @@ function ACAFlowSelector({ variant, onChange }) {
                   fontSize: 9,
                   fontWeight: 700,
                   letterSpacing: "0.1em",
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   color: active ? flow.color : `rgba(${flow.rgb},0.45)`,
                   transition: "color 0.2s ease",
                   textTransform: "uppercase",

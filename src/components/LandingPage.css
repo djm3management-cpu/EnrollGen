@@ -1,4 +1,4 @@
-﻿/* DM Sans / DM Serif Display / JetBrains Mono are loaded via index.html. */
+/* Uses project system typography tokens. */
 
 body {
   font-family: var(--eg-font-body);
@@ -7,7 +7,7 @@ body {
 .landing-page {
   min-height: 100vh;
   color: var(--text-primary);
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--font-body);
   font-size: 13px;
   font-weight: 300;
   background:
@@ -61,7 +61,7 @@ body {
   justify-content: flex-end;
   gap: clamp(12px, 2vw, 26px);
   color: #ffffff;
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--font-body);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -85,7 +85,7 @@ body {
   justify-content: center;
   min-height: 34px;
   border-radius: 2px;
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--font-body);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -174,7 +174,7 @@ body {
     linear-gradient(180deg, rgba(18, 18, 18, 0.88), rgba(4, 4, 4, 0.88));
   border: 1px solid rgba(245, 158, 11, 0.6);
   border-radius: 2px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.08em;
@@ -192,7 +192,7 @@ body {
 .landing-hero h1 {
   max-width: 600px;
   margin: 0;
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--font-body);
   font-size: clamp(1.9rem, 3.2vw, 3.25rem);
   font-weight: 700;
   line-height: 1.04;
@@ -205,7 +205,7 @@ body {
   max-width: 600px;
   margin-top: 16px;
   color: #ffffff;
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--font-body);
   font-size: 15px;
   font-weight: 300;
   line-height: 1.45;
@@ -258,7 +258,7 @@ body {
   min-height: 34px;
   padding: 0 12px;
   border-bottom: 1px solid rgba(245, 158, 11, 0.18);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.14em;
@@ -313,7 +313,7 @@ body {
 
 .landing-terminal-heading {
   color: #f3f4f6;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.15em;
@@ -340,7 +340,7 @@ body {
   background: rgba(0, 0, 0, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 2px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.25;
 }
@@ -348,7 +348,7 @@ body {
 .landing-terminal-row strong,
 .landing-compliance-row strong {
   color: #ffffff;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
@@ -373,7 +373,7 @@ body {
 .landing-terminal-ai {
   margin: 0;
   color: #d1d5db;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-style: italic;
   line-height: 1.4;
@@ -389,7 +389,7 @@ body {
 
 .landing-compliance-row span {
   color: #d1d5db;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
 }
 
@@ -459,7 +459,7 @@ body {
 
 .landing-feature-card span {
   color: rgba(245, 158, 11, 0.9);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.15em;
@@ -469,7 +469,7 @@ body {
 .landing-feature-card p {
   margin-top: 14px;
   color: #ffffff;
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--font-body);
   font-size: 13px;
   font-weight: 300;
   line-height: 1.42;
@@ -490,7 +490,7 @@ body {
 .landing-footer span {
   display: block;
   color: #ffffff;
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--font-body);
   font-size: 13px;
   font-weight: 300;
   opacity: 0.6;

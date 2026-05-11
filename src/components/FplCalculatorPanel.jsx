@@ -178,7 +178,7 @@ export default function FplCalculatorPanel({
                 fontSize: 16,
                 fontWeight: 700,
                 color: "#dfe6f0",
-                fontFamily: "'Barlow Condensed', sans-serif",
+                fontFamily: "var(--font-body)",
               }}
             >
               ${baseThreshold.toLocaleString()}/year
@@ -208,7 +208,7 @@ export default function FplCalculatorPanel({
                 fontSize: 16,
                 fontWeight: 700,
                 color: accentColor,
-                fontFamily: "'Barlow Condensed', sans-serif",
+                fontFamily: "var(--font-body)",
               }}
             >
               ${(baseThreshold * 4).toLocaleString()}/year
@@ -301,7 +301,7 @@ export default function FplCalculatorPanel({
                 fontSize: 20,
                 fontWeight: 800,
                 color: aboveCliff ? "#f87171" : "#34d399",
-                fontFamily: "'Barlow Condensed', sans-serif",
+                fontFamily: "var(--font-body)",
                 letterSpacing: "0.04em",
               }}
             >
@@ -351,7 +351,7 @@ export default function FplCalculatorPanel({
                   fontSize: 18,
                   fontWeight: 800,
                   color: "#f87171",
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                 }}
               >
                 ${acaEstimate.low} to ${acaEstimate.high}/month

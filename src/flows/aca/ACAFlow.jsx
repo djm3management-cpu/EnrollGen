@@ -715,7 +715,7 @@ export default function ACAFlow() {
       {!state.callStarted ? (
         <section className="script-start-call-gate" style={{ background: `rgba(234,179,8,0.04)`, border: `1px solid rgba(234,179,8,0.2)`, borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
           <button className="primary script-start-call-button" onClick={() => dispatch({ type: "START_CALL" })} style={{
-            fontSize: 15, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
+            fontSize: 15, fontFamily: "var(--font-body)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
             background: `linear-gradient(145deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05))`, border: `1px solid rgba(234,179,8,0.3)`, color: ACCENT, borderRadius: 8, cursor: "pointer",
           }}>
             Start Call

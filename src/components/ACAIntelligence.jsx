@@ -333,7 +333,7 @@ export default function ACAIntelligence() {
           style={{
             background: "rgba(234,179,8,0.12)", border: "1px solid rgba(234,179,8,0.3)",
             borderRadius: 999, padding: "7px 20px", cursor: loading ? "wait" : "pointer",
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
+            fontFamily: "var(--font-body)", fontWeight: 800,
             fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase",
             color: "#FFE45C", transition: "all 0.15s ease",
           }}
@@ -523,7 +523,7 @@ function StatBox({ label: lbl, value, color }) {
 
 const th = {
   textAlign: "left", padding: "8px 10px",
-  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+  fontFamily: "var(--font-body)", fontWeight: 700,
   fontSize: "0.62rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "#5A5A6A",
 };
 const td = { padding: "8px 10px", color: "#B8B8C8", fontSize: "0.75rem" };
@@ -539,7 +539,7 @@ const diffBoxStyle = {
   padding: 10,
   color: "#B8B8C8",
   fontSize: "0.66rem",
-  fontFamily: "'IBM Plex Mono', monospace",
+  fontFamily: "var(--font-mono)",
   lineHeight: 1.5,
 };
 const reviewButtonStyle = {
@@ -549,7 +549,7 @@ const reviewButtonStyle = {
   color: "#8A8A9A",
   padding: "6px 12px",
   cursor: "pointer",
-  fontFamily: "'Barlow Condensed', sans-serif",
+  fontFamily: "var(--font-body)",
   fontWeight: 800,
   fontSize: "0.62rem",
   letterSpacing: "0.1em",

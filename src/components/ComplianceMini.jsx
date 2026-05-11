@@ -146,7 +146,7 @@ const ComplianceMini = memo(function ComplianceMini({
             className="compliance-mini__section-label"
             style={{
               fontSize: "0.68em",
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: 700,
               letterSpacing: "0.08em",
               textTransform: "uppercase",

@@ -27,7 +27,6 @@ import {
   useLeftRailManager,
 } from "./components/leftRail/LeftRailManager";
 import SEPQualifier from "./components/leftRail/SEPQualifier";
-import treeLogoUrl from "../docs/treev2.png";
 
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
@@ -69,6 +68,9 @@ const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
 const ScriptEditor = lazy(loadScriptEditor);
 const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
+const headerLogoUrl = "/enrollgen-logo-v3.png?v=2";
+const SYSTEM_FONT_STACK = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+const SYSTEM_MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const tenantBootstrapAttempts = new Set();
 const clerkTerminalAppearance = {
@@ -80,8 +82,8 @@ const clerkTerminalAppearance = {
     colorText: "#e4dace",
     colorTextSecondary: "#b5a898",
     borderRadius: "5px",
-    fontFamily: '"DM Sans", sans-serif',
-    fontSize: "13px",
+    fontFamily: SYSTEM_FONT_STACK,
+    fontSize: "14px",
   },
   elements: {
     rootBox: {
@@ -101,18 +103,18 @@ const clerkTerminalAppearance = {
     },
     headerTitle: {
       color: "#e4dace",
-      fontFamily: '"DM Serif Display", serif',
+      fontFamily: SYSTEM_FONT_STACK,
       fontSize: "28px",
-      fontWeight: 400,
+      fontWeight: 600,
       letterSpacing: "-0.02em",
       lineHeight: "1.1",
       textTransform: "none",
     },
     headerSubtitle: {
       color: "#b5a898",
-      fontFamily: '"DM Sans", sans-serif',
-      fontSize: "13px",
-      lineHeight: "1.45",
+      fontFamily: SYSTEM_FONT_STACK,
+      fontSize: "14px",
+      lineHeight: "1.5",
     },
     socialButtonsBlockButton: {
       minHeight: "36px",
@@ -120,8 +122,8 @@ const clerkTerminalAppearance = {
       borderRadius: "5px",
       backgroundColor: "#262119",
       color: "#e4dace",
-      fontFamily: '"DM Sans", sans-serif',
-      fontSize: "13px",
+      fontFamily: SYSTEM_FONT_STACK,
+      fontSize: "14px",
       fontWeight: 500,
     },
     dividerLine: {
@@ -129,14 +131,14 @@ const clerkTerminalAppearance = {
     },
     dividerText: {
       color: "#7d7060",
-      fontFamily: '"JetBrains Mono", monospace',
+      fontFamily: SYSTEM_MONO_STACK,
       fontSize: "10px",
       letterSpacing: "0.06em",
       textTransform: "uppercase",
     },
     formFieldLabel: {
       color: "#7d7060",
-      fontFamily: '"JetBrains Mono", monospace',
+      fontFamily: SYSTEM_MONO_STACK,
       fontSize: "9px",
       fontWeight: 500,
       letterSpacing: "0.06em",
@@ -148,8 +150,8 @@ const clerkTerminalAppearance = {
       borderRadius: "5px",
       backgroundColor: "#262119",
       color: "#e4dace",
-      fontFamily: '"DM Sans", sans-serif',
-      fontSize: "13px",
+      fontFamily: SYSTEM_FONT_STACK,
+      fontSize: "14px",
     },
     formButtonPrimary: {
       minHeight: "36px",
@@ -157,7 +159,7 @@ const clerkTerminalAppearance = {
       borderRadius: "5px",
       background: "#c08b55",
       color: "#ffffff",
-      fontFamily: '"JetBrains Mono", monospace',
+      fontFamily: SYSTEM_MONO_STACK,
       fontSize: "11px",
       fontWeight: 500,
       letterSpacing: "0.04em",
@@ -731,7 +733,7 @@ function AppShell({ currentUser = null }) {
               title="Refresh and return to the main page"
               aria-label="Refresh and return to the main page"
             >
-              <img className="top-bar-logo-image" src={treeLogoUrl} alt="" />
+              <img className="top-bar-logo-image" src={headerLogoUrl} alt="" />
             </button>
             <FlowSelector mode={mode} onChange={handleModeChange} />
           </div>

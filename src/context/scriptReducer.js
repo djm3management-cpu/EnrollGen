@@ -16,6 +16,16 @@ function loadPersisted() {
 
 const persisted = loadPersisted();
 
+const PLAN_CONTEXT_NOTE_FIELDS = new Set([
+  "carrierName",
+  "planName",
+  "planId",
+  "planType",
+  "premium",
+  "benefitPills",
+  "benefits",
+]);
+
 export const SECTION_LABELS = {
   1: "Recording Disclosure",
   2: "TPMO Disclaimer",
@@ -71,6 +81,11 @@ export const initialState = {
     carrierName: "",
     planName: "",
     planId: "",
+    planType: "",
+    benefitPills: "",
+    planManualOverride: false,
+    planContextSource: "",
+    selectedPlanContext: null,
     effectiveDate: "",
     enrollmentCode: "",
     confirmation: "",
@@ -200,10 +215,67 @@ export function scriptReducer(state, action) {
       return next;
 
     /* ---- Notes (nested object) ---- */
-    case "SET_NOTE":
+    case "SET_NOTE": {
+      if (
+        PLAN_CONTEXT_NOTE_FIELDS.has(action.field) &&
+        action.source === "copilot" &&
+        state.notes.planManualOverride
+      ) {
+        return state;
+      }
+
+      const notes = { ...state.notes, [action.field]: action.value };
+
+      if (PLAN_CONTEXT_NOTE_FIELDS.has(action.field)) {
+        if (action.source === "copilot") {
+          notes.planContextSource = "copilot";
+          notes.planManualOverride = false;
+        } else {
+          notes.planContextSource = "manual";
+          notes.planManualOverride = true;
+          notes.selectedPlanContext = null;
+        }
+      }
+
       return {
         ...state,
-        notes: { ...state.notes, [action.field]: action.value },
+        notes,
+      };
+    }
+
+    case "SET_PLAN_CONTEXT": {
+      const source = action.source || "manual";
+      if (source === "copilot" && state.notes.planManualOverride) {
+        return state;
+      }
+
+      return {
+        ...state,
+        notes: {
+          ...state.notes,
+          ...(action.value || {}),
+          planContextSource: source,
+          planManualOverride: source === "manual" || Boolean(action.manualOverride),
+        },
+      };
+    }
+
+    case "CLEAR_PLAN_CONTEXT":
+      return {
+        ...state,
+        notes: {
+          ...state.notes,
+          carrierName: "",
+          planName: "",
+          planId: "",
+          planType: "",
+          premium: "",
+          benefitPills: "",
+          benefits: "",
+          planManualOverride: false,
+          planContextSource: "",
+          selectedPlanContext: null,
+        },
       };
 
     /* ---- Checklist items (nested objects) ---- */

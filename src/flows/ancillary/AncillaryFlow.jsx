@@ -360,7 +360,7 @@ function ProductSelector() {
         <div
           style={{
             color: ANCILLARY_ACCENT.color,
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: 11,
             fontWeight: 800,
             letterSpacing: "0.12em",
@@ -774,7 +774,7 @@ function AncillaryHeader({ product, productMeta }) {
         <div
           style={{
             color: ANCILLARY_ACCENT.color,
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: 10,
             fontWeight: 800,
             letterSpacing: "0.12em",
@@ -819,7 +819,7 @@ function StartCallGate({ product }) {
         onClick={() => dispatch({ type: "START_CALL", product })}
         style={{
           fontSize: 15,
-          fontFamily: "'Barlow Condensed', sans-serif",
+          fontFamily: "var(--font-body)",
           fontWeight: 700,
           letterSpacing: "0.1em",
           textTransform: "uppercase",

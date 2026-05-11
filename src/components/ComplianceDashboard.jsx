@@ -183,7 +183,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: "13px",
             fontWeight: 700,
             letterSpacing: "0.06em",
@@ -501,7 +501,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "14px",
               fontWeight: 700,
               letterSpacing: "0.10em",
@@ -512,7 +512,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             </span>
             {isExpanded && (
               <span style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "16px",
                 fontWeight: 800,
                 letterSpacing: "0.06em",
@@ -525,7 +525,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             {isTranscriptScored && (
               <span style={{
                 fontSize: "10px",
-                fontFamily: "'Barlow Condensed', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontWeight: 700,
                 letterSpacing: "0.10em",
                 background: "rgba(232,0,45,0.12)",
@@ -543,7 +543,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
               </span>
             )}
           </div>
-          <div style={{ fontSize: "0.68em", color: "#4A4A5A", marginTop: 3, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "0.02em" }}>
+          <div style={{ fontSize: "0.68em", color: "#4A4A5A", marginTop: 3, fontFamily: "var(--font-mono)", letterSpacing: "0.02em" }}>
             {result.categoriesPassed}/{result.totalCategories} SECTORS ·{" "}
             {result.totalPassed}/{result.totalQuestions} CHECKS
             {result.transcriptStats &&
@@ -674,7 +674,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 3,
                   padding: "3px 10px",
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "11px",
                   fontWeight: 700,
                   letterSpacing: "0.10em",
@@ -741,7 +741,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
               >
                 <Scale size={13} color="#94a3b8" />
                 <span style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "13px",
                   fontWeight: 700,
                   color: "#6A6A7A",

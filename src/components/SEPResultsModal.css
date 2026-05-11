@@ -1,4 +1,4 @@
-﻿/* â”€â”€ Backdrop â”€â”€ */
+/* â”€â”€ Backdrop â”€â”€ */
 .sep-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -48,7 +48,7 @@
 }
 
 .sep-modal-title {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 20px;
   letter-spacing: 0.04em;
@@ -111,7 +111,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   color: #8f949e;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.08em;
@@ -150,7 +150,7 @@
 .sep-modal-county {
   font-size: 13px;
   color: #8f949e;
-  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-family: var(--font-mono);
   margin-bottom: 16px;
   letter-spacing: 0.03em;
 }

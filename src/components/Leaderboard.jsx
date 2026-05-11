@@ -101,10 +101,10 @@ const S = {
     flexDirection: "column",
     gap: 24,
     padding: "4px 0",
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: "var(--font-body)",
   },
   sectionTitle: {
-    fontFamily: "'Barlow Condensed', sans-serif",
+    fontFamily: "var(--font-body)",
     fontSize: 18,
     fontWeight: 800,
     letterSpacing: "0.1em",
@@ -113,7 +113,7 @@ const S = {
     margin: 0,
   },
   sectionSubtitle: {
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: "var(--font-body)",
     fontSize: 12,
     color: "#4A4A5A",
     marginTop: 2,
@@ -138,7 +138,7 @@ const S = {
       ? "linear-gradient(180deg, rgba(232,0,45,0.15) 0%, rgba(232,0,45,0.05) 100%)"
       : "rgba(255,255,255,0.03)",
     color: active ? "#ff2244" : "#8A8A9A",
-    fontFamily: "'Barlow Condensed', sans-serif",
+    fontFamily: "var(--font-body)",
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: "0.1em",
@@ -203,7 +203,7 @@ function AgentStatCard({ agent, rank }) {
             position: "absolute",
             top: 10,
             right: 12,
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: rank === 1 ? 28 : 22,
             fontWeight: 800,
             color:
@@ -243,7 +243,7 @@ function AgentStatCard({ agent, rank }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: 12,
             fontWeight: 800,
             color: rank <= 3 ? "var(--eg-text)" : "#666",
@@ -255,7 +255,7 @@ function AgentStatCard({ agent, rank }) {
         <div>
           <div
             style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: 15,
               fontWeight: 700,
               letterSpacing: "0.04em",
@@ -279,7 +279,7 @@ function AgentStatCard({ agent, rank }) {
       <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 12 }}>
         <span
           style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: 36,
             fontWeight: 800,
             color: "#F0F0F0",
@@ -308,10 +308,10 @@ function AgentStatCard({ agent, rank }) {
               border: `1px solid ${PRODUCT_COLORS[pt]}20`,
             }}
           >
-            <span style={{ fontSize: 9, fontWeight: 700, color: PRODUCT_COLORS[pt], fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.08em" }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: PRODUCT_COLORS[pt], fontFamily: "var(--font-body)", letterSpacing: "0.08em" }}>
               {pt}
             </span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#F0F0F0", fontFamily: "'Barlow Condensed', sans-serif" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#F0F0F0", fontFamily: "var(--font-body)" }}>
               {agent.byProduct[pt] || 0}
             </span>
           </div>
@@ -336,7 +336,7 @@ function LeaderboardTable({ agents }) {
   const thStyle = {
     padding: "10px 14px",
     textAlign: "left",
-    fontFamily: "'Barlow Condensed', sans-serif",
+    fontFamily: "var(--font-body)",
     fontSize: 10,
     fontWeight: 700,
     letterSpacing: "0.14em",
@@ -348,7 +348,7 @@ function LeaderboardTable({ agents }) {
 
   const tdStyle = (rank) => ({
     padding: "10px 14px",
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: "var(--font-body)",
     fontSize: 13,
     color: "#F0F0F0",
     borderBottom: "1px solid rgba(255,255,255,0.04)",
@@ -389,7 +389,7 @@ function LeaderboardTable({ agents }) {
                     {rank <= 3 ? (
                       <span
                         style={{
-                          fontFamily: "'Barlow Condensed', sans-serif",
+                          fontFamily: "var(--font-body)",
                           fontSize: 16,
                           fontWeight: 800,
                           color:
@@ -413,7 +413,7 @@ function LeaderboardTable({ agents }) {
                   <td style={td}>
                     <span
                       style={{
-                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontFamily: "var(--font-body)",
                         fontWeight: 700,
                         fontSize: 14,
                         letterSpacing: "0.03em",
@@ -433,7 +433,7 @@ function LeaderboardTable({ agents }) {
                     style={{
                       ...td,
                       textAlign: "right",
-                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontFamily: "var(--font-body)",
                       fontSize: 18,
                       fontWeight: 800,
                     }}
@@ -446,7 +446,7 @@ function LeaderboardTable({ agents }) {
                       style={{
                         ...td,
                         textAlign: "right",
-                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontFamily: "var(--font-body)",
                         fontWeight: 600,
                         color: agent.byProduct[pt] ? PRODUCT_COLORS[pt] : "#2a2a2a",
                       }}
@@ -484,7 +484,7 @@ function BonusTracker({ agents }) {
               <div>
                 <span
                   style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: 14,
                     fontWeight: 700,
                     color: "#F0F0F0",
@@ -500,7 +500,7 @@ function BonusTracker({ agents }) {
                       padding: "2px 8px",
                       borderRadius: 4,
                       fontSize: 9,
-                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontFamily: "var(--font-body)",
                       fontWeight: 700,
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
@@ -517,7 +517,7 @@ function BonusTracker({ agents }) {
                 {totalBonus > 0 && (
                   <span
                     style={{
-                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontFamily: "var(--font-body)",
                       fontSize: 16,
                       fontWeight: 800,
                       color: "#00D166",
@@ -526,7 +526,7 @@ function BonusTracker({ agents }) {
                     ${totalBonus.toLocaleString()}
                   </span>
                 )}
-                <div style={{ fontSize: 9, color: "#4A4A5A", fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                <div style={{ fontSize: 9, color: "#4A4A5A", fontFamily: "var(--font-body)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                   {monthlySales} sales this month
                 </div>
               </div>
@@ -586,7 +586,7 @@ function BonusTracker({ agents }) {
                     left: `${(tier.threshold / maxThreshold) * 100}%`,
                     transform: "translateX(-50%)",
                     fontSize: 8,
-                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontWeight: 600,
                     letterSpacing: "0.06em",
                     color: monthlySales >= tier.threshold ? tier.color : "#333",
@@ -758,7 +758,7 @@ export default function Leaderboard() {
           <div>
             <h1
               style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: 26,
                 fontWeight: 800,
                 letterSpacing: "0.06em",
@@ -794,7 +794,7 @@ export default function Leaderboard() {
         <div style={{ ...S.card, textAlign: "center", color: "#4A4A5A", padding: 60 }}>
           <div
             style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: 13,
               letterSpacing: "0.12em",
               textTransform: "uppercase",

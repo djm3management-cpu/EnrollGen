@@ -1,7 +1,7 @@
-﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SEPLookupTool.css, Claymorphic Dark Theme Override
    Matches the design system in styles.css (floating 3D cards, pill buttons,
-   DM Sans + IBM Plex Mono, layered shadows, deep blue palette)
+   System UI tokens, layered shadows, deep blue palette)
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* â”€â”€ Root container â”€â”€ */
@@ -340,7 +340,7 @@
   border-radius: 3px;
   font-size: 10px;
   font-weight: 700;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #E8002D;
@@ -778,7 +778,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.08em;
@@ -808,7 +808,7 @@
   align-items: center;
   gap: 10px;
   padding: 0 4px 8px;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 800;
   font-size: 15px;
   letter-spacing: 0.06em;
@@ -839,7 +839,7 @@
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 700;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -882,7 +882,7 @@
   color: #8f949e;
   padding: 11px 16px 10px;
   cursor: pointer;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -956,7 +956,7 @@
   gap: 8px;
   padding: 14px 18px;
   border-bottom: 1px solid var(--border-subtle);
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.08em;
@@ -1207,7 +1207,7 @@
   justify-content: center;
   gap: 5px;
   padding: 7px 10px;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 11px;
   text-transform: uppercase;
@@ -1300,7 +1300,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.08em;
@@ -1351,7 +1351,7 @@
   align-items: center;
   gap: 6px;
   padding: 12px 16px 6px;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -1424,7 +1424,7 @@
 }
 
 .fema-feed-type {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1493,7 +1493,7 @@
 }
 
 .fema-ongoing-tag {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -1521,7 +1521,7 @@
 }
 
 .fema-feed-carrier-tag {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -1534,7 +1534,7 @@
 }
 
 .fema-feed-kind {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-body);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
