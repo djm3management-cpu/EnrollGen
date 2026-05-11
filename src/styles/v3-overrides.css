@@ -13,7 +13,7 @@ body,
 }
 
 .app-shell-modern {
-  background: var(--eg-base);
+  background: transparent;
   color: var(--eg-text);
   font-family: var(--eg-font-body);
 }
@@ -24,6 +24,115 @@ body,
   display: none !important;
 }
 
+.eg-main-wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.88) brightness(0.48) contrast(1.08);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ----- Animated topographic background --------------------- */
+
+.eg-strata-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Vignette as a plain overlay div instead of a mask (cheaper to composite). */
+.eg-strata-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 45%,
+    rgba(23, 20, 17, 0) 0%,
+    rgba(23, 20, 17, 0.35) 60%,
+    rgba(23, 20, 17, 0.7) 100%
+  );
+  z-index: 2;
+}
+
+.eg-strata {
+  position: absolute;
+  top: -8%;
+  left: -10%;
+  width: 120%;
+  height: 116%;
+  display: block;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+.eg-strata--a {
+  opacity: 0.11;
+  animation: eg-strata-drift-a 43s ease-in-out infinite;
+}
+
+.eg-strata--b {
+  opacity: 0.078;
+  animation: eg-strata-drift-b 58s ease-in-out infinite;
+}
+
+.eg-strata--c {
+  opacity: 0.091;
+  animation: eg-strata-drift-c 70s ease-in-out infinite;
+}
+
+@keyframes eg-strata-drift-a {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0.097; }
+  50%  { transform: translate3d(-2.4%, 1.1%, 0); opacity: 0.137; }
+  100% { transform: translate3d(0, 0, 0); opacity: 0.097; }
+}
+
+@keyframes eg-strata-drift-b {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0.065; }
+  50%  { transform: translate3d(2.1%, -0.9%, 0); opacity: 0.097; }
+  100% { transform: translate3d(0, 0, 0); opacity: 0.065; }
+}
+
+@keyframes eg-strata-drift-c {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0.078; }
+  50%  { transform: translate3d(-1.5%, -1.4%, 0); opacity: 0.117; }
+  100% { transform: translate3d(0, 0, 0); opacity: 0.078; }
+}
+
+/* Grain layer: SVG fractal noise via ::after pseudo-element. */
+.eg-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.eg-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.75  0 0 0 0 0.55  0 0 0 0 0.33  0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 220px 220px;
+  opacity: 0.05;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-strata--a,
+  .eg-strata--b,
+  .eg-strata--c {
+    animation: none;
+  }
+}
+
 /* ============================================================
    TOP BAR (Section 4 + 5.8 + 5.9)
    ============================================================ */
@@ -31,11 +140,9 @@ body,
 .top-bar-shell {
   height: 48px !important;
   padding: 0 18px !important;
-  background: rgba(30, 26, 22, 0.93) !important;
+  background: rgba(30, 26, 22, 0.985) !important;
   border-bottom: 1px solid var(--eg-border) !important;
   box-shadow: none !important;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   gap: 16px;
 }
 
@@ -2144,17 +2251,17 @@ button.primary.section-complete-btn {
 
 .eg-audio-meter-bar {
   flex-direction: column;
-  gap: 4px;
-  min-height: 64px;
-  padding: 8px 40px;
+  gap: 6px;
+  min-height: 80px;
+  padding: 10px 40px;
 }
 
 .eg-audio-meter-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  width: min(320px, 100%);
+  gap: 12px;
+  width: min(380px, 100%);
 }
 
 .eg-audio-meter-label {

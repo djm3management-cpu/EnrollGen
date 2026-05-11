@@ -10,6 +10,8 @@ import { Check } from "lucide-react";
 import { useACA } from "./ACAContext";
 import { ACA_GATES } from "./ACAData";
 import { useScriptTemplate } from "../../hooks/useScriptTemplate";
+import CenterTimerBar from "../../components/CenterTimerBar";
+import ProgressDots from "../../components/ProgressDots";
 
 // ACA accent color
 const ACCENT = "#EAB308"; // amber/yellow to match tab circle
@@ -611,80 +613,17 @@ function G6({ gate }) {
   );
 }
 
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
-function Progress() {
-  const { state, activeGate } = useACA();
-  const steps = [
-    { k: "gate0Ok", l: "Open" },
-    { k: "gate1Ok", l: "SEP", conditional: true },
-    { k: "gate2Ok", l: "Income" },
-    { k: "gate3Ok", l: "Needs" },
-    { k: "gate4Ok", l: "Plans" },
-    { k: "gate5Ok", l: "Enroll" },
-    { k: "gate6Ok", l: "Close" },
-  ];
-
-  const relevantSteps = steps.filter(
-    (s) => !s.conditional || state.enrollmentPeriod === "SEP"
-  );
-  const done = relevantSteps.filter((s) => state[s.k]).length;
-  const pct = relevantSteps.length ? Math.round((done / relevantSteps.length) * 100) : 0;
-
-  return (
-    <div
-      style={{
-        marginBottom: 14,
-        padding: "12px 16px",
-        background: "rgba(255,255,255,0.018)",
-        border: "1px solid rgba(255,255,255,0.04)",
-        borderRadius: 10,
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ fontSize: 10, fontWeight: 600, color: "#4a5568", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          ACA On-Exchange
-        </span>
-        <span style={{ fontSize: 11, fontWeight: 600, color: ACCENT, fontVariantNumeric: "tabular-nums" }}>
-          {pct}%
-        </span>
-      </div>
-      <div style={{ height: 3, background: "rgba(255,255,255,0.04)", borderRadius: 2, overflow: "hidden", marginBottom: 8 }}>
-        <motion.div
-          style={{ height: "100%", background: ACCENT, borderRadius: 2 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.3 }}
-        />
-      </div>
-      <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-        {steps.map((s, i) => {
-          if (s.conditional && state.enrollmentPeriod !== "SEP") return null;
-          const isDone = state[s.k];
-          const isActive = i === activeGate;
-          return (
-            <span
-              key={s.k}
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                padding: "2px 7px",
-                borderRadius: 4,
-                background: isDone ? "rgba(52,211,153,0.06)" : isActive ? "rgba(234,179,8,0.06)" : "rgba(255,255,255,0.015)",
-                color: isDone ? "#34d399" : isActive ? ACCENT : "#4a5568",
-                border: `1px solid ${isDone ? "rgba(52,211,153,0.12)" : isActive ? "rgba(234,179,8,0.15)" : "rgba(255,255,255,0.03)"}`,
-              }}
-            >
-              {isDone ? "✓ " : isActive ? "● " : ""}
-              {s.l}
-              {s.conditional && <span style={{ marginLeft: 2, opacity: 0.6 }}>(SEP)</span>}
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 // ─── ACAFlow (main export) ────────────────────────────────────────────────────
+const ACA_STEP_LABELS = [
+  { k: "gate0Ok", l: "Open" },
+  { k: "gate1Ok", l: "SEP", conditional: true },
+  { k: "gate2Ok", l: "Income" },
+  { k: "gate3Ok", l: "Needs" },
+  { k: "gate4Ok", l: "Plans" },
+  { k: "gate5Ok", l: "Enroll" },
+  { k: "gate6Ok", l: "Close" },
+];
+
 export default function ACAFlow() {
   const { state, dispatch, activeGate } = useACA();
   const gates = useAcaTemplateGates();
@@ -710,7 +649,7 @@ export default function ACAFlow() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Progress />
+      <CenterTimerBar />
 
       {!state.callStarted ? (
         <section className="script-start-call-gate" style={{ background: `rgba(234,179,8,0.04)`, border: `1px solid rgba(234,179,8,0.2)`, borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
@@ -731,6 +670,24 @@ export default function ACAFlow() {
           <G4 gate={gates[4]} />
           <G5 gate={gates[5]} />
           <G6 gate={gates[6]} />
+
+          <ProgressDots
+            sections={ACA_STEP_LABELS.filter(
+              (s) => !s.conditional || state.enrollmentPeriod === "SEP"
+            ).map((s, idx) => {
+              const isDone = Boolean(state[s.k]);
+              const visibleSteps = ACA_STEP_LABELS.filter(
+                (x) => !x.conditional || state.enrollmentPeriod === "SEP"
+              );
+              const realIndex = visibleSteps.findIndex((x) => x.k === s.k);
+              const isActive = !isDone && realIndex === activeGate;
+              return {
+                key: s.k,
+                label: s.l,
+                status: isDone ? "done" : isActive ? "active" : "pending",
+              };
+            })}
+          />
         </>
       )}
     </motion.div>

@@ -15,8 +15,7 @@ import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
 import { SignedIn, SignedOut, SignIn, useClerk, useOrganization, useUser } from "@clerk/clerk-react";
-import { ChevronDown, Settings, Shuffle, X } from "lucide-react";
-import { wallpapers } from "./config/wallpapers";
+import { Settings, X } from "lucide-react";
 import { useSubscription } from "./hooks/useSubscription";
 import { useTenantConfig } from "./hooks/useTenantConfig";
 import { useAppAuth } from "./context/AuthContext";
@@ -67,7 +66,6 @@ const OperationsTab = lazy(loadOperationsTab);
 const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
 const ScriptEditor = lazy(loadScriptEditor);
-const BACKGROUND_SELECTION_STORAGE_KEY = "enrollgen_background_selection_v4";
 const headerLogoUrl = "/enrollgen-logo-v3.png?v=2";
 const SYSTEM_FONT_STACK = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const SYSTEM_MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
@@ -279,25 +277,6 @@ function MedSupScriptWorkspace() {
   );
 }
 
-function loadBackgroundSelection() {
-  const fallbackId = wallpapers[0]?.id || "none";
-
-  if (typeof window === "undefined") {
-    return fallbackId;
-  }
-
-  try {
-    const storedId = window.localStorage.getItem(BACKGROUND_SELECTION_STORAGE_KEY);
-    if (wallpapers.some((wallpaper) => wallpaper.id === storedId)) {
-      return storedId;
-    }
-  } catch {
-    // Ignore storage failures and use the default background.
-  }
-
-  return fallbackId;
-}
-
 function getModeFromLocation() {
   if (typeof window !== "undefined" && window.location.pathname.startsWith("/script/ancillary")) {
     return "ancillary";
@@ -382,8 +361,6 @@ function getTabsForMode(mode, canAdmin = false) {
 function AppShell({ currentUser = null }) {
   const [mode, setMode] = useState(getModeFromLocation);
   const [openPanel, setOpenPanel] = useState(null);
-  const [backgroundSelection, setBackgroundSelection] = useState(loadBackgroundSelection);
-  const [wallpaperPickerOpen, setWallpaperPickerOpen] = useState(false);
   const topBarRef = useRef(null);
   const overlayRef = useRef(null);
   const hasAutoOpenedSepRef = useRef(false);
@@ -397,9 +374,6 @@ function AppShell({ currentUser = null }) {
     dismissLeftRail,
   } = useLeftRailManager();
 
-  const selectedWallpaper =
-    wallpapers.find((wallpaper) => wallpaper.id === backgroundSelection) || wallpapers[0];
-  const wallpaperChoices = wallpapers.filter((wallpaper) => wallpaper.url);
   const canAdmin = LOGIN_DISABLED || isAdminUser(currentUser);
   const navTabs = useMemo(() => getTabsForMode(mode, canAdmin), [canAdmin, mode]);
 
@@ -409,7 +383,6 @@ function AppShell({ currentUser = null }) {
       startTransition(() => {
         setMode(nextMode);
         setOpenPanel(null);
-        setWallpaperPickerOpen(false);
       });
     };
 
@@ -418,21 +391,12 @@ function AppShell({ currentUser = null }) {
   }, []);
 
   useEffect(() => {
-    document.body.dataset.bgMode = selectedWallpaper?.url ? "wallpaper" : "clean";
-
-    try {
-      window.localStorage.setItem(
-        BACKGROUND_SELECTION_STORAGE_KEY,
-        selectedWallpaper?.id || wallpapers[0]?.id || "none"
-      );
-    } catch {
-      // Ignore storage failures; the UI still works for the current session.
-    }
+    document.body.dataset.bgMode = "wallpaper";
 
     return () => {
       delete document.body.dataset.bgMode;
     };
-  }, [selectedWallpaper?.id, selectedWallpaper?.url]);
+  }, []);
 
   useEffect(() => {
     if (mode !== "ma" && hasLeftRailItem("sep-qualifier")) {
@@ -459,7 +423,7 @@ function AppShell({ currentUser = null }) {
   }, [minimizeLeftRail, mode, showLeftRail]);
 
   useEffect(() => {
-    if (!openPanel && !wallpaperPickerOpen) {
+    if (!openPanel) {
       return undefined;
     }
 
@@ -470,13 +434,11 @@ function AppShell({ currentUser = null }) {
       }
 
       setOpenPanel(null);
-      setWallpaperPickerOpen(false);
     };
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         setOpenPanel(null);
-        setWallpaperPickerOpen(false);
       }
     };
 
@@ -487,7 +449,7 @@ function AppShell({ currentUser = null }) {
       document.removeEventListener("mousedown", handleMouseDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [openPanel, wallpaperPickerOpen]);
+  }, [openPanel]);
 
   const preloadScriptForMode = (targetMode) => {
     if (targetMode === "ma") {
@@ -562,7 +524,6 @@ function AppShell({ currentUser = null }) {
   const handleModeChange = (newMode) => {
     if (newMode === mode) {
       setOpenPanel(null);
-      setWallpaperPickerOpen(false);
       return;
     }
 
@@ -571,7 +532,6 @@ function AppShell({ currentUser = null }) {
     startTransition(() => {
       setMode(newMode);
       setOpenPanel(null);
-      setWallpaperPickerOpen(false);
     });
   };
 
@@ -589,24 +549,6 @@ function AppShell({ currentUser = null }) {
 
   const handleLogoClick = () => {
     window.location.reload();
-  };
-
-  const selectBackground = (nextSelection) => {
-    setBackgroundSelection(nextSelection);
-    setWallpaperPickerOpen(false);
-  };
-
-  const selectRandomWallpaper = () => {
-    const candidates = wallpaperChoices.filter(
-      (wallpaper) => wallpaper.id !== selectedWallpaper?.id
-    );
-    const source = candidates.length ? candidates : wallpaperChoices;
-    if (!source.length) {
-      return;
-    }
-
-    const randomWallpaper = source[Math.floor(Math.random() * source.length)];
-    setBackgroundSelection(randomWallpaper.id);
   };
 
   const openSepQualifier = () => {
@@ -754,61 +696,6 @@ function AppShell({ currentUser = null }) {
           </nav>
 
           <div className="top-bar-utilities">
-            <div className={`top-bar-wallpaper${wallpaperPickerOpen ? " is-open" : ""}`}>
-              <button
-                type="button"
-                className="top-bar-wallpaper-toggle"
-                onClick={() => setWallpaperPickerOpen((open) => !open)}
-              >
-                <span className="top-bar-wallpaper-label">
-                  {selectedWallpaper?.label || "Wallpaper"}
-                </span>
-                <ChevronDown size={13} />
-              </button>
-
-              {wallpaperPickerOpen ? (
-                <div className="top-bar-wallpaper-panel">
-                  <div className="top-bar-wallpaper-head">
-                    <span>Background</span>
-                    <button
-                      type="button"
-                      className="top-bar-wallpaper-random"
-                      onClick={selectRandomWallpaper}
-                      title="Random wallpaper"
-                    >
-                      <Shuffle size={12} />
-                    </button>
-                  </div>
-
-                  <div className="top-bar-wallpaper-grid">
-                    {wallpapers.map((wallpaper) => (
-                      <button
-                        key={wallpaper.id}
-                        type="button"
-                        className={`top-bar-wallpaper-tile${
-                          backgroundSelection === wallpaper.id ? " is-active" : ""
-                        }`}
-                        onClick={() => selectBackground(wallpaper.id)}
-                        title={wallpaper.label}
-                      >
-                        {wallpaper.thumbUrl ? (
-                          <img
-                            className="top-bar-wallpaper-image"
-                            src={wallpaper.thumbUrl}
-                            alt=""
-                            aria-hidden="true"
-                            decoding="async"
-                          />
-                        ) : (
-                          <span className="top-bar-wallpaper-fallback" aria-hidden="true" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
             {!LOGIN_DISABLED ? <ProfileChip /> : null}
             {canAdmin ? (
               <button

@@ -30,8 +30,8 @@ const CenterTimerBar = memo(function CenterTimerBar({
         <Waveform
           active={customerLive}
           level={safeCustomerLevel}
-          width={240}
-          height={22}
+          width={288}
+          height={30}
         />
       </div>
       <div className="eg-audio-meter-row">
@@ -45,8 +45,8 @@ const CenterTimerBar = memo(function CenterTimerBar({
         <Waveform
           active={agentLive}
           level={safeAgentLevel}
-          width={240}
-          height={22}
+          width={288}
+          height={30}
         />
       </div>
     </div>

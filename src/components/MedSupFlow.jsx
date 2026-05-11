@@ -9,6 +9,18 @@ import { Check } from "lucide-react";
 import { useMedSup } from "../context/MedSupContext";
 import { MEDSUP_SECTIONS } from "../context/MedSupScript";
 import { useScriptTemplate } from "../hooks/useScriptTemplate";
+import CenterTimerBar from "./CenterTimerBar";
+import ProgressDots from "./ProgressDots";
+
+const MEDSUP_STEP_LABELS = [
+  { k: "recordingOk", l: "Record" },
+  { k: "tpmoOk", l: "TPMO" },
+  { k: "qualOk", l: "Qualify" },
+  { k: "discoveryOk", l: "Discovery" },
+  { k: "quoteOk", l: "Quote" },
+  { k: "enrollOk", l: "Enroll" },
+  { k: "wrapOk", l: "Wrap" },
+];
 
 function fmt(ms) {
   const s = Math.round(ms / 1000);
@@ -305,111 +317,6 @@ function useMedSupTemplateSections() {
   }, [sections]);
 }
 
-function Progress() {
-  const { state, activeSection } = useMedSup();
-  const steps = [
-    { k: "recordingOk", l: "Record" },
-    { k: "tpmoOk", l: "TPMO" },
-    { k: "qualOk", l: "Qualify" },
-    { k: "discoveryOk", l: "Discovery" },
-    { k: "quoteOk", l: "Quote" },
-    { k: "enrollOk", l: "Enroll" },
-    { k: "wrapOk", l: "Wrap" },
-  ];
-  const done = steps.filter((s) => state[s.k]).length;
-  const pct = Math.round((done / steps.length) * 100);
-  const activeIdx = Math.min(Math.max(activeSection - 1, 0), steps.length - 1);
-
-  return (
-    <div
-      style={{
-        marginBottom: 14,
-        padding: "12px 16px",
-        background: "rgba(255,255,255,0.018)",
-        border: "1px solid rgba(255,255,255,0.04)",
-        borderRadius: 10,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 8,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            color: "#4a5568",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-          }}
-        >
-          Med Sup Call
-        </span>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: "#4ade80",
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {pct}%
-        </span>
-      </div>
-      <div
-        style={{
-          height: 3,
-          background: "rgba(255,255,255,0.04)",
-          borderRadius: 2,
-          overflow: "hidden",
-          marginBottom: 8,
-        }}
-      >
-        <motion.div
-          style={{ height: "100%", background: "#4ade80", borderRadius: 2 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.3 }}
-        />
-      </div>
-      <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-        {steps.map((step, idx) => {
-          const isDone = state[step.k];
-          const isActive = idx === activeIdx;
-          return (
-            <span
-              key={step.k}
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                padding: "2px 7px",
-                borderRadius: 4,
-                background: isDone
-                  ? "rgba(52,211,153,0.06)"
-                  : isActive
-                  ? "rgba(74,222,128,0.06)"
-                  : "rgba(255,255,255,0.015)",
-                color: isDone ? "#34d399" : isActive ? "#4ade80" : "#4a5568",
-                border: `1px solid ${
-                  isDone
-                    ? "rgba(52,211,153,0.12)"
-                    : isActive
-                    ? "rgba(74,222,128,0.12)"
-                    : "rgba(255,255,255,0.03)"
-                }`,
-              }}
-            >
-              {isDone ? "✓ " : isActive ? "● " : ""}
-              {step.l}
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function MedSupFlow() {
   const { state, dispatch, activeSection } = useMedSup();
@@ -436,7 +343,7 @@ export default function MedSupFlow() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Progress />
+      <CenterTimerBar />
 
       {!state.callStarted ? (
         <section
@@ -479,6 +386,22 @@ export default function MedSupFlow() {
           {medSupSections.map((section) => (
             <SectionCard key={section.id} section={section} />
           ))}
+
+          <ProgressDots
+            sections={MEDSUP_STEP_LABELS.map((step, idx) => {
+              const isDone = Boolean(state[step.k]);
+              const activeIdx = Math.min(
+                Math.max(activeSection - 1, 0),
+                MEDSUP_STEP_LABELS.length - 1
+              );
+              const isActive = !isDone && idx === activeIdx;
+              return {
+                key: step.k,
+                label: step.l,
+                status: isDone ? "done" : isActive ? "active" : "pending",
+              };
+            })}
+          />
         </>
       )}
     </motion.div>

@@ -20,6 +20,8 @@ import {
   Shield,
 } from "lucide-react";
 import CompactCopilotRail from "../../components/CompactCopilotRail";
+import CenterTimerBar from "../../components/CenterTimerBar";
+import ProgressDots from "../../components/ProgressDots";
 import { LOG_TYPES, useCopilotLog } from "../../context/CopilotTranscriptLog";
 import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
 import "../../AgentTools.css";
@@ -560,94 +562,6 @@ function FlowCard({ num, title, active, done, duration, children }) {
   );
 }
 
-function Progress({ productMeta, steps, productState, activeStepIndex }) {
-  const completed = steps.filter((step) => productState.completedSteps[step.id]).length;
-  const percent = steps.length ? Math.round((completed / steps.length) * 100) : 0;
-
-  return (
-    <div
-      style={{
-        marginBottom: 14,
-        padding: "12px 16px",
-        background: "rgba(255,255,255,0.018)",
-        border: "1px solid rgba(255,255,255,0.04)",
-        borderRadius: 10,
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            color: "#4a5568",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-          }}
-        >
-          {productMeta.label}
-        </span>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: ANCILLARY_ACCENT.color,
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {percent}%
-        </span>
-      </div>
-      <div
-        style={{
-          height: 3,
-          background: "rgba(255,255,255,0.04)",
-          borderRadius: 2,
-          overflow: "hidden",
-          marginBottom: 8,
-        }}
-      >
-        <motion.div
-          style={{ height: "100%", background: ANCILLARY_ACCENT.color, borderRadius: 2 }}
-          animate={{ width: `${percent}%` }}
-          transition={{ duration: 0.3 }}
-        />
-      </div>
-      <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-        {steps.map((step, index) => {
-          const isDone = productState.completedSteps[step.id];
-          const isActive = index === activeStepIndex;
-          return (
-            <span
-              key={step.id}
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                padding: "2px 7px",
-                borderRadius: 4,
-                background: isDone
-                  ? "rgba(52,211,153,0.06)"
-                  : isActive
-                    ? "rgba(59,130,246,0.06)"
-                    : "rgba(255,255,255,0.015)",
-                color: isDone ? "#34d399" : isActive ? ANCILLARY_ACCENT.color : "#4a5568",
-                border: `1px solid ${
-                  isDone
-                    ? "rgba(52,211,153,0.12)"
-                    : isActive
-                      ? "rgba(59,130,246,0.15)"
-                      : "rgba(255,255,255,0.03)"
-                }`,
-              }}
-            >
-              {isDone ? "Done " : isActive ? "Now " : ""}
-              {step.title}
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 function AncillaryScriptStep({ product, step, index, active, done, productState }) {
   const { dispatch } = useScriptFlow();
@@ -863,12 +777,7 @@ function AncillaryScriptRenderer({ product, productMeta, steps }) {
       transition={{ duration: 0.3 }}
     >
       <AncillaryHeader product={product} productMeta={productMeta} />
-      <Progress
-        productMeta={productMeta}
-        steps={steps}
-        productState={productState}
-        activeStepIndex={activeStepIndex}
-      />
+      <CenterTimerBar />
 
       {!productState.callStarted ? (
         <StartCallGate product={product} />
@@ -888,6 +797,19 @@ function AncillaryScriptRenderer({ product, productMeta, steps }) {
               />
             );
           })}
+
+          <ProgressDots
+            sections={steps.map((step, idx) => {
+              const isDone = Boolean(productState.completedSteps[step.id]);
+              const isActive = !isDone && idx === activeStepIndex;
+              return {
+                key: step.id,
+                label: step.title,
+                status: isDone ? "done" : isActive ? "active" : "pending",
+              };
+            })}
+          />
+
           {activeStepIndex >= steps.length ? (
             <CompletionPanel product={product} productMeta={productMeta} />
           ) : null}

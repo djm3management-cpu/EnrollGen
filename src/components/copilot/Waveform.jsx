@@ -51,13 +51,16 @@ export default function Waveform({
     const bars = 48;
     const barWidth = width / bars;
 
+    let timeoutId = null;
+
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
-      phaseRef.current += 0.04;
       const targetLevel = hasExternalLevel ? levelRef.current : active ? 0.72 : 0;
       displayLevelRef.current += (targetLevel - displayLevelRef.current) * 0.22;
       const smoothedLevel = displayLevelRef.current;
       const isActive = active || smoothedLevel > 0.015;
+      const phaseStep = isActive ? 0.04 : 0.012;
+      phaseRef.current += phaseStep;
 
       for (let i = 0; i < bars; i += 1) {
         const centerWeight = 1 - Math.abs(i - bars / 2) / (bars / 2);
@@ -72,11 +75,22 @@ export default function Waveform({
         ctx.fillStyle = isActive ? activeColor : inactiveColor;
         ctx.fillRect(i * barWidth + 1, y, barWidth - 2, h);
       }
-      frameRef.current = requestAnimationFrame(draw);
+
+      if (isActive) {
+        frameRef.current = requestAnimationFrame(draw);
+      } else {
+        // Idle: redraw ~8 fps via setTimeout so the GPU isn't pegged for a near-flat line.
+        timeoutId = setTimeout(() => {
+          frameRef.current = requestAnimationFrame(draw);
+        }, 125);
+      }
     };
 
     draw();
-    return () => cancelAnimationFrame(frameRef.current);
+    return () => {
+      cancelAnimationFrame(frameRef.current);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [active, width, height, color, idleColor, hasExternalLevel]);
 
   return (

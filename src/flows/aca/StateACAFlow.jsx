@@ -5,8 +5,20 @@ import { useACA } from "./ACAContext";
 import { STATE_ACA_GATES } from "./StateACAData";
 import FplCalculatorPanel from "../../components/FplCalculatorPanel";
 import { useScriptTemplate } from "../../hooks/useScriptTemplate";
+import CenterTimerBar from "../../components/CenterTimerBar";
+import ProgressDots from "../../components/ProgressDots";
 
 const ACCENT = "#EAB308";
+
+const STATE_ACA_STEP_LABELS = [
+  { k: "gate0Ok", l: "Open" },
+  { k: "gate1Ok", l: "Profile" },
+  { k: "gate2Ok", l: "Income" },
+  { k: "gate3Ok", l: "Needs" },
+  { k: "gate4Ok", l: "Plans" },
+  { k: "gate5Ok", l: "Login" },
+  { k: "gate6Ok", l: "Close" },
+];
 
 function fmt(ms) {
   const s = Math.round(ms / 1000);
@@ -324,104 +336,6 @@ function G2Extra() {
   );
 }
 
-function Progress() {
-  const { state, activeGate } = useACA();
-  const steps = [
-    { k: "gate0Ok", l: "Open" },
-    { k: "gate1Ok", l: "Profile" },
-    { k: "gate2Ok", l: "Income" },
-    { k: "gate3Ok", l: "Needs" },
-    { k: "gate4Ok", l: "Plans" },
-    { k: "gate5Ok", l: "Login" },
-    { k: "gate6Ok", l: "Close" },
-  ];
-  const done = steps.filter((step) => state[step.k]).length;
-  const pct = Math.round((done / steps.length) * 100);
-
-  return (
-    <div
-      style={{
-        marginBottom: 14,
-        padding: "12px 16px",
-        background: "rgba(255,255,255,0.018)",
-        border: "1px solid rgba(255,255,255,0.04)",
-        borderRadius: 10,
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            color: "#4a5568",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-          }}
-        >
-          State ACA
-        </span>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: ACCENT,
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {pct}%
-        </span>
-      </div>
-      <div
-        style={{
-          height: 3,
-          background: "rgba(255,255,255,0.04)",
-          borderRadius: 2,
-          overflow: "hidden",
-          marginBottom: 8,
-        }}
-      >
-        <motion.div
-          style={{ height: "100%", background: ACCENT, borderRadius: 2 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.3 }}
-        />
-      </div>
-      <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-        {steps.map((step, index) => {
-          const isDone = state[step.k];
-          const isActive = index === activeGate;
-          return (
-            <span
-              key={step.k}
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                padding: "2px 7px",
-                borderRadius: 4,
-                background: isDone
-                  ? "rgba(52,211,153,0.06)"
-                  : isActive
-                    ? "rgba(234,179,8,0.06)"
-                    : "rgba(255,255,255,0.015)",
-                color: isDone ? "#34d399" : isActive ? ACCENT : "#4a5568",
-                border: `1px solid ${
-                  isDone
-                    ? "rgba(52,211,153,0.12)"
-                    : isActive
-                      ? "rgba(234,179,8,0.15)"
-                      : "rgba(255,255,255,0.03)"
-                }`,
-              }}
-            >
-              {isDone ? "✓ " : isActive ? "• " : ""}
-              {step.l}
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function StateACAFlow() {
   const { state, dispatch, activeGate } = useACA();
@@ -448,7 +362,7 @@ export default function StateACAFlow() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Progress />
+      <CenterTimerBar />
 
       {!state.callStarted ? (
         <section
@@ -590,6 +504,18 @@ export default function StateACAFlow() {
               </motion.div>
             )}
           </StateGate>
+
+          <ProgressDots
+            sections={STATE_ACA_STEP_LABELS.map((step, idx) => {
+              const isDone = Boolean(state[step.k]);
+              const isActive = !isDone && idx === activeGate;
+              return {
+                key: step.k,
+                label: step.l,
+                status: isDone ? "done" : isActive ? "active" : "pending",
+              };
+            })}
+          />
         </>
       )}
     </motion.div>

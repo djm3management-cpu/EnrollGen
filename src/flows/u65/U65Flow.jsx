@@ -9,8 +9,21 @@ import { Check } from "lucide-react";
 import { useU65 } from "./U65Context";
 import { U65_GATES } from "./U65Data";
 import { useScriptTemplate } from "../../hooks/useScriptTemplate";
+import CenterTimerBar from "../../components/CenterTimerBar";
+import ProgressDots from "../../components/ProgressDots";
 
 const ACCENT = "#a855f7";
+
+const U65_STEP_LABELS = [
+  { key: "gate0Ok", label: "Open" },
+  { key: "gate1Ok", label: "Assess" },
+  { key: "gate2Ok", label: "Health" },
+  { key: "gate3Ok", label: "Present" },
+  { key: "gate4Ok", label: "Select" },
+  { key: "gate5Ok", label: "Ancillary" },
+  { key: "gate6Ok", label: "Enroll" },
+  { key: "gate7Ok", label: "Close" },
+];
 
 function fmt(ms) {
   const seconds = Math.round(ms / 1000);
@@ -263,131 +276,6 @@ function useU65TemplateGates() {
   }, [sections]);
 }
 
-function Progress() {
-  const { state, activeGate } = useU65();
-  const steps = [
-    { key: "gate0Ok", label: "Open" },
-    { key: "gate1Ok", label: "Assess" },
-    { key: "gate2Ok", label: "Health" },
-    { key: "gate3Ok", label: "Present" },
-    { key: "gate4Ok", label: "Select" },
-    { key: "gate5Ok", label: "Ancillary" },
-    { key: "gate6Ok", label: "Enroll" },
-    { key: "gate7Ok", label: "Close" },
-  ];
-  const completed = steps.filter((step) => state[step.key]).length;
-  const percent = Math.round((completed / steps.length) * 100);
-
-  return (
-    <div
-      style={{
-        marginBottom: 14,
-        padding: "12px 16px",
-        background: "rgba(255,255,255,0.018)",
-        border: "1px solid rgba(255,255,255,0.04)",
-        borderRadius: 10,
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            color: "#4a5568",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-          }}
-        >
-          U65 Off-Exchange
-        </span>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: ACCENT,
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {percent}%
-        </span>
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 6 }}>
-        {steps.map((step, index) => {
-          const isDone = Boolean(state[step.key]);
-          const isActive = index === activeGate;
-
-          return (
-            <div
-              key={step.key}
-              style={{ display: "flex", alignItems: "center", flex: 1 }}
-            >
-              <div
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: "50%",
-                    background: isDone
-                      ? "#34d399"
-                      : isActive
-                      ? ACCENT
-                      : "rgba(255,255,255,0.06)",
-                    border: `2px solid ${
-                      isDone
-                        ? "#34d399"
-                        : isActive
-                        ? ACCENT
-                        : "rgba(255,255,255,0.1)"
-                    }`,
-                    boxShadow: isActive
-                      ? "0 0 8px rgba(168,85,247,0.5)"
-                      : isDone
-                      ? "0 0 6px rgba(52,211,153,0.3)"
-                      : "none",
-                    transition: "all 0.3s",
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 8,
-                    fontWeight: 600,
-                    color: isDone ? "#34d399" : isActive ? ACCENT : "#4a5568",
-                    marginTop: 4,
-                    letterSpacing: "0.04em",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {step.label}
-                </span>
-              </div>
-              {index < steps.length - 1 ? (
-                <div
-                  style={{
-                    flex: 1,
-                    height: 2,
-                    background: isDone
-                      ? "rgba(52,211,153,0.2)"
-                      : "rgba(255,255,255,0.04)",
-                    margin: "0 2px",
-                    marginBottom: 14,
-                  }}
-                />
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function U65Flow() {
   const { state, dispatch, activeGate } = useU65();
@@ -416,7 +304,7 @@ export default function U65Flow() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Progress />
+      <CenterTimerBar />
 
       {!state.callStarted ? (
         <section
@@ -459,6 +347,18 @@ export default function U65Flow() {
           {u65Gates.map((gate) => (
             <U65GateSection key={gate.id} gate={gate} />
           ))}
+
+          <ProgressDots
+            sections={U65_STEP_LABELS.map((step, idx) => {
+              const isDone = Boolean(state[step.key]);
+              const isActive = !isDone && idx === activeGate;
+              return {
+                key: step.key,
+                label: step.label,
+                status: isDone ? "done" : isActive ? "active" : "pending",
+              };
+            })}
+          />
 
           {state.gate7Ok ? (
             <motion.div
