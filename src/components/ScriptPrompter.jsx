@@ -18,6 +18,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
   onListeningChange,
   logComplianceFlag,
   controlsRef,
+  onControlsReadyChange,
   onCoachingLoadingChange,
   onAgentAudioLevelChange,
   onCustomerAudioLevelChange,
@@ -209,8 +210,13 @@ const ScriptPrompter = memo(function ScriptPrompter({
         simulatedTranscript,
         trainingModeEnabled,
       };
+      onControlsReadyChange?.(true);
     }
   });
+
+  useEffect(() => {
+    return () => onControlsReadyChange?.(false);
+  }, [onControlsReadyChange]);
 
   return null;
 });

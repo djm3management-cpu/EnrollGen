@@ -110,6 +110,7 @@ const COMPACT_RAIL_OVERLAY_STYLE = {
 };
 
 const SHOW_MAIN_FLOW_COMPLIANCE_HUD = false;
+const MA_FIRST_CARD_WINDOW_SECONDS = 90;
 
 /**
  * ScriptFlow v2, Now with transcript pass-through for dual-layer scoring.
@@ -124,14 +125,73 @@ const SHOW_MAIN_FLOW_COMPLIANCE_HUD = false;
  * 3-line change needed.
  */
 
+function MAFirstCardCountdown({ startTime }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    setNow(Date.now());
+    const intervalId = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(intervalId);
+  }, [startTime]);
+
+  const elapsedSeconds = Math.max(0, Math.floor((now - startTime) / 1000));
+  const remainingSeconds = Math.max(
+    0,
+    MA_FIRST_CARD_WINDOW_SECONDS - elapsedSeconds
+  );
+  const progress = Math.max(
+    0,
+    Math.min(100, (remainingSeconds / MA_FIRST_CARD_WINDOW_SECONDS) * 100)
+  );
+  const tone =
+    remainingSeconds <= 0
+      ? "expired"
+      : remainingSeconds <= 15
+        ? "danger"
+        : remainingSeconds <= 30
+          ? "warning"
+          : "active";
+
+  return (
+    <aside
+      className={`ma-first-card-countdown ma-first-card-countdown--${tone}`}
+      aria-label={`MA first card 90 second timer, ${remainingSeconds} seconds remaining`}
+    >
+      <span className="ma-first-card-countdown__label">90 SEC</span>
+      <strong className="ma-first-card-countdown__time">
+        {remainingSeconds}
+      </strong>
+      <span className="ma-first-card-countdown__caption">
+        {remainingSeconds > 0 ? "LEFT" : "UP"}
+      </span>
+      <span className="ma-first-card-countdown__track" aria-hidden="true">
+        <span
+          className="ma-first-card-countdown__fill"
+          style={{ width: `${progress}%` }}
+        />
+      </span>
+    </aside>
+  );
+}
+
 /* ---- Collapsible wrapper for completed sections ---- */
 function CollapsibleSection({
   sectionNum,
   isActive,
+  sidecar = null,
   children,
 }) {
   if (!isActive) {
     return null;
+  }
+
+  if (sidecar) {
+    return (
+      <div className="ma-first-card-layout" data-section={sectionNum}>
+        {sidecar}
+        <div className="ma-first-card-main">{children}</div>
+      </div>
+    );
   }
 
   return <div data-section={sectionNum}>{children}</div>;
@@ -162,6 +222,7 @@ function RailWidgets({
   copilotHandlersRef,
   coachingLoading,
   trainingMode,
+  onManualCopilotStart,
 }) {
   const supportsRecognition = typeof window !== "undefined" &&
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
@@ -186,7 +247,14 @@ function RailWidgets({
             className={`copilot-pill-button copilot-pill-button--listen${
               listening ? " is-listening" : ""
             }`}
-            onClick={() => { const h = copilotHandlersRef.current; if (listening) h.handleStop?.(); else h.handleStart?.(); }}
+            onClick={() => {
+              const h = copilotHandlersRef.current;
+              if (listening) {
+                h.handleStop?.();
+              } else {
+                onManualCopilotStart?.();
+              }
+            }}
             disabled={!supportsRecognition}
             style={{ cursor: supportsRecognition ? "pointer" : "not-allowed" }}
           >
@@ -261,6 +329,7 @@ function RightRail({
   copilotHandlersRef,
   coachingLoading,
   trainingMode,
+  onManualCopilotStart,
 }) {
   const [open, setOpen] = useState(false);
   const [fullRailMinimized, setFullRailMinimized] = useState(false);
@@ -329,6 +398,7 @@ function RightRail({
     copilotHandlersRef,
     coachingLoading,
     trainingMode,
+    onManualCopilotStart,
   };
 
   if (!isCompactRail) {
@@ -575,33 +645,19 @@ export default function ScriptFlow() {
   const [agentAudioLevel, setAgentAudioLevel] = useState(0);
   const [customerAudioLevel, setCustomerAudioLevel] = useState(0);
   const copilotHandlersRef = useRef({});
-  const autoStartCallRef = useRef(false);
-
-  useEffect(() => {
-    if (autoStartCallRef.current) return undefined;
-    autoStartCallRef.current = true;
+  const supportsRecognition = useMemo(
+    () =>
+      typeof window !== "undefined" &&
+      ("SpeechRecognition" in window || "webkitSpeechRecognition" in window),
+    []
+  );
+  const canStartCopilot = trainingModeEnabled || supportsRecognition;
+  const handleManualCopilotStart = useCallback(() => {
     setCallStarted(true);
-
-    let attempts = 0;
-    const startWhenReady = () => {
-      attempts += 1;
-      const handleStart = copilotHandlersRef.current?.handleStart;
-      if (handleStart) {
-        void handleStart({ skipCustomerAudio: true });
-        return true;
-      }
-      return attempts >= 20;
-    };
-
-    if (startWhenReady()) return undefined;
-
-    const intervalId = window.setInterval(() => {
-      if (startWhenReady()) {
-        window.clearInterval(intervalId);
-      }
-    }, 100);
-
-    return () => window.clearInterval(intervalId);
+    const handleStart = copilotHandlersRef.current?.handleStart;
+    if (handleStart) {
+      void handleStart();
+    }
   }, []);
 
   const customerTranscript = useMemo(
@@ -918,6 +974,7 @@ export default function ScriptFlow() {
         copilotHandlersRef={copilotHandlersRef}
         coachingLoading={coachingLoading}
         trainingMode={trainingModeEnabled}
+        onManualCopilotStart={handleManualCopilotStart}
       />
 
       <div className="flow-shell">
@@ -944,20 +1001,19 @@ export default function ScriptFlow() {
         onCustomerAudioLevelChange={setCustomerAudioLevel}
       />
 
-      {/* Idle state: retained only if automatic start is blocked before controls mount. */}
+      {/* Manual idle state: sections stay hidden until the agent starts Copilot. */}
       {!callStarted && (
         <section
-          className="script-start-call-gate script-start-call-gate--bare"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            padding: "24px 0",
-            color: "var(--eg-text-mid)",
-            fontFamily: "var(--eg-font-body)",
-            fontSize: 13,
-          }}
+          className="script-start-call-gate script-start-call-gate--manual"
         >
-          Audio meters initialize automatically.
+          <button
+            type="button"
+            className="script-start-call-button"
+            onClick={handleManualCopilotStart}
+            disabled={!canStartCopilot}
+          >
+            {canStartCopilot ? "START" : "NO MIC"}
+          </button>
         </section>
       )}
 
@@ -987,6 +1043,11 @@ export default function ScriptFlow() {
               key={section.key}
               sectionNum={sectionNum}
               isActive={activeSection === sectionNum}
+              sidecar={
+                sectionNum === 1 && callStarted && state.tpmoStart ? (
+                  <MAFirstCardCountdown startTime={state.tpmoStart} />
+                ) : null
+              }
             >
               <ScriptSection section={section} />
               {trainingModeEnabled ? <TrainingExplainer section={sectionNum} /> : null}

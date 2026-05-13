@@ -4996,6 +4996,217 @@ input::placeholder {
   letter-spacing: 0 !important;
 }
 
+.flow-script-text-line {
+  display: block;
+  min-height: 1.42em;
+}
+
+.flow-script-text-line--parenthetical {
+  color: var(--script-term-red) !important;
+}
+
+.ancillary-fe-script-layout {
+  display: grid;
+  grid-template-columns: minmax(124px, 150px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.ancillary-fe-card-column {
+  min-width: 0;
+}
+
+.ancillary-fe-countdown {
+  --fe-timer-accent: var(--script-term-green);
+  position: sticky;
+  top: calc(var(--top-bar-height) + 18px);
+  z-index: 2;
+  min-height: 172px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 14px 12px;
+  border: 1px solid var(--script-term-border);
+  border-radius: 0;
+  background: var(--script-term-bg);
+  color: var(--fe-timer-accent);
+  box-shadow: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ancillary-fe-countdown--warning {
+  --fe-timer-accent: var(--script-term-yellow);
+}
+
+.ancillary-fe-countdown--danger,
+.ancillary-fe-countdown--expired {
+  --fe-timer-accent: var(--script-term-red);
+}
+
+.ancillary-fe-countdown__label,
+.ancillary-fe-countdown__caption {
+  color: var(--script-term-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+}
+
+.ancillary-fe-countdown__time {
+  color: var(--fe-timer-accent);
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.ancillary-fe-countdown__caption {
+  color: var(--fe-timer-accent);
+}
+
+.ancillary-fe-countdown__track {
+  width: 100%;
+  height: 5px;
+  margin-top: 4px;
+  border: 1px solid var(--script-term-border);
+  background: var(--script-term-bg-soft);
+  overflow: hidden;
+}
+
+.ancillary-fe-countdown__fill {
+  display: block;
+  height: 100%;
+  background: var(--fe-timer-accent);
+  transition: width 0.2s linear, background-color 0.2s ease;
+}
+
+.ma-first-card-layout {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.ma-first-card-main {
+  min-width: 0;
+}
+
+.ma-first-card-countdown {
+  --ma-timer-accent: var(--script-term-green);
+  position: sticky;
+  top: calc(var(--top-bar-height) + 18px);
+  z-index: 2;
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 6px;
+  border: 1px solid var(--script-term-border);
+  border-radius: 0;
+  background: var(--script-term-bg);
+  color: var(--ma-timer-accent);
+  box-shadow: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ma-first-card-countdown--warning {
+  --ma-timer-accent: var(--script-term-yellow);
+}
+
+.ma-first-card-countdown--danger,
+.ma-first-card-countdown--expired {
+  --ma-timer-accent: var(--script-term-red);
+}
+
+.ma-first-card-countdown__label,
+.ma-first-card-countdown__caption {
+  color: var(--script-term-muted);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.ma-first-card-countdown__time {
+  color: var(--ma-timer-accent);
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.ma-first-card-countdown__caption {
+  color: var(--ma-timer-accent);
+}
+
+.ma-first-card-countdown__track {
+  width: 100%;
+  height: 3px;
+  margin-top: 2px;
+  border: 1px solid var(--script-term-border);
+  background: var(--script-term-bg-soft);
+  overflow: hidden;
+}
+
+.ma-first-card-countdown__fill {
+  display: block;
+  height: 100%;
+  background: var(--ma-timer-accent);
+  transition: width 0.2s linear, background-color 0.2s ease;
+}
+
+@media (max-width: 1080px) {
+  .ancillary-fe-script-layout,
+  .ma-first-card-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ancillary-fe-countdown {
+    position: relative;
+    top: auto;
+    min-height: 0;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .ancillary-fe-countdown__time {
+    font-size: 36px;
+  }
+
+  .ancillary-fe-countdown__track {
+    flex: 1;
+    min-width: 84px;
+    margin-top: 0;
+  }
+
+  .ma-first-card-countdown {
+    position: relative;
+    top: auto;
+    min-height: 0;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .ma-first-card-countdown__time {
+    font-size: 24px;
+  }
+
+  .ma-first-card-countdown__track {
+    flex: 1;
+    min-width: 70px;
+    margin-top: 0;
+  }
+}
+
 .flow-stage-direction,
 .flow-compliance-banner {
   border: 1px solid var(--script-term-border) !important;
@@ -5172,6 +5383,18 @@ input::placeholder {
   box-shadow: none !important;
   padding: 18px 0 22px !important;
   text-align: center !important;
+}
+
+.script-start-call-gate--manual {
+  min-height: 220px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 24px !important;
+}
+
+.script-start-call-gate--manual .script-start-call-button {
+  min-width: 132px !important;
 }
 
 .script-start-call-button:hover {

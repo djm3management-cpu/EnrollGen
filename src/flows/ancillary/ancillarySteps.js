@@ -45,48 +45,22 @@ export const ANCILLARY_STEPS = {
 
   [SUB_PRODUCT.FE]: [
     {
-      id: "fe-opening",
-      title: "Opening",
-      content:
-        "Hi [NAME], I'm [AGENT], a licensed agent in your state. I'm reaching out about the senior benefit life insurance you requested information on. Can I have 2 minutes to explain how this works?",
-      substeps: [],
-    },
-    {
-      id: "fe-need-build",
-      title: "Need Build",
-      content:
-        "These benefits help [STATE] residents leave tax-free money to cover final expenses: funeral costs, medical bills, outstanding debt. Have you given thought to how your family would handle those?",
-      substeps: [],
-    },
-    {
-      id: "fe-health-prequal",
-      title: "Health Pre-Qual",
-      content:
-        "I need to ask a few basic health questions. No medical exam required. DOB? Tobacco in past year? Heart attack, cancer, stroke in past 2 years? Uncontrolled diabetes? Hospitalized past 12 months?",
-      substeps: [],
-    },
-    {
-      id: "fe-present-options",
-      title: "Present 3 Options",
-      content:
-        "[CARRIER] offers: $10K at [PRICE]/mo, $15K at [PRICE]/mo, $20K at [PRICE]/mo. Which works best for you, your family, and your budget?",
-      substeps: ["Always show three face amounts before asking for the choice."],
-    },
-    {
-      id: "fe-key-benefits",
-      title: "Key Benefits",
-      content:
-        "Day 1 full coverage. Can never be cancelled. Premium never increases. Benefit is tax-free to your beneficiary.",
-      substeps: [
-        "Contrast against guaranteed acceptance products only when relevant.",
-        "Do not imply approval until underwriting or e-app confirms it.",
-      ],
-    },
-    {
-      id: "fe-close",
-      title: "Close",
-      content:
-        "Let's complete the enrollment. Congratulations, you're approved for [AMOUNT]. Your beneficiary [NAME] will receive the full benefit tax-free.",
+      id: "fe-script",
+      title: "Final Expense Script",
+      content: `Hi, this is [Your Name], I'm a licensed life insurance advisor. You're calling about Final Expense insurance coverage, correct?
+(If yes, continue. If not, thank and end the call before 90 seconds.)
+
+Great -- this is a real policy from top A-rated companies like Mutual of Omaha. It's affordable, but not free -- you do pay a monthly premium based on your age, health, and coverage amount. Does that sound okay?
+(If yes, continue. If not, exit the call.)
+
+Just a few quick questions to see what you qualify for -- sound good?
+- Are you between the ages of 50 and 80?
+- What state are you in?
+- Do you have a checking or savings account -- or a Direct Express card?
+- Do you have a monthly budget in mind, even just a ballpark?
+- And just to make sure I'm not repeating what you've already done, have you applied for life insurance recently with anyone else?
+
+If we find something that fits, we'll go ahead and submit an application to get you approved. That just takes a few minutes -- sound good?`,
       substeps: [],
     },
   ],

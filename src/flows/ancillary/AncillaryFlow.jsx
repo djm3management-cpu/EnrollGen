@@ -49,6 +49,7 @@ const PRODUCT_COMPONENTS = {
 
 const PRODUCT_ORDER = [SUB_PRODUCT.HIP, SUB_PRODUCT.FE, SUB_PRODUCT.DVH];
 const FALLBACK_PRODUCT_META = { label: "Ancillary", shortLabel: "ANC" };
+const FE_CALL_WINDOW_SECONDS = 90;
 
 function productFromPath() {
   if (typeof window === "undefined") return null;
@@ -256,6 +257,59 @@ function fmt(ms) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+function formatCountdown(seconds) {
+  return String(seconds);
+}
+
+function FinalExpenseCountdown({ callStart }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!callStart) return undefined;
+    setNow(Date.now());
+    const intervalId = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(intervalId);
+  }, [callStart]);
+
+  const elapsedSeconds = callStart
+    ? Math.max(0, Math.floor((now - callStart) / 1000))
+    : 0;
+  const remainingSeconds = Math.max(0, FE_CALL_WINDOW_SECONDS - elapsedSeconds);
+  const progress = Math.max(
+    0,
+    Math.min(100, (remainingSeconds / FE_CALL_WINDOW_SECONDS) * 100)
+  );
+  const tone =
+    remainingSeconds <= 0
+      ? "expired"
+      : remainingSeconds <= 15
+        ? "danger"
+        : remainingSeconds <= 30
+          ? "warning"
+          : "active";
+
+  return (
+    <aside
+      className={`ancillary-fe-countdown ancillary-fe-countdown--${tone}`}
+      aria-label={`Final Expense 90 second timer, ${remainingSeconds} seconds remaining`}
+    >
+      <span className="ancillary-fe-countdown__label">90 SEC</span>
+      <strong className="ancillary-fe-countdown__time">
+        {formatCountdown(remainingSeconds)}
+      </strong>
+      <span className="ancillary-fe-countdown__caption">
+        {remainingSeconds > 0 ? "TIME LEFT" : "TIME UP"}
+      </span>
+      <span className="ancillary-fe-countdown__track" aria-hidden="true">
+        <span
+          className="ancillary-fe-countdown__fill"
+          style={{ width: `${progress}%` }}
+        />
+      </span>
+    </aside>
+  );
+}
+
 export function useScriptFlow() {
   const ctx = useContext(AncillaryFlowContext);
   if (!ctx) {
@@ -408,7 +462,14 @@ function ProductSelector() {
   );
 }
 
-function TalkTrack({ text }) {
+function isParentheticalScriptLine(line) {
+  const trimmed = line.trim();
+  return trimmed.startsWith("(") && trimmed.endsWith(")");
+}
+
+function TalkTrack({ text, highlightParentheticals = false }) {
+  const lines = String(text || "").split("\n");
+
   return (
     <div
       className="flow-script-line"
@@ -420,7 +481,23 @@ function TalkTrack({ text }) {
         background: "rgba(255,255,255,0.012)",
       }}
     >
-      <div className="flow-script-text" style={{ color: "#dfe6f0", fontSize: 14, lineHeight: 1.7 }}>{text}</div>
+      <div
+        className="flow-script-text"
+        style={{ color: "#dfe6f0", fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-line" }}
+      >
+        {lines.map((line, index) => (
+          <span
+            key={`${index}-${line}`}
+            className={
+              highlightParentheticals && isParentheticalScriptLine(line)
+                ? "flow-script-text-line flow-script-text-line--parenthetical"
+                : "flow-script-text-line"
+            }
+          >
+            {line}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -576,7 +653,10 @@ function AncillaryScriptStep({ product, step, index, active, done, productState 
       done={done}
       duration={duration}
     >
-      <TalkTrack text={step.content} />
+      <TalkTrack
+        text={step.content}
+        highlightParentheticals={product === SUB_PRODUCT.FE}
+      />
       {step.substeps?.map((substep) => (
         <Substep key={substep} text={substep} />
       ))}
@@ -758,6 +838,42 @@ function StartCallGate({ product }) {
 function AncillaryScriptRenderer({ product, productMeta, steps }) {
   const { state, activeStepIndex } = useScriptFlow();
   const productState = state.products[product] || createProductState();
+  const showFinalExpenseTimer = product === SUB_PRODUCT.FE && productState.callStarted;
+
+  const scriptContent = (
+    <div className="ancillary-fe-card-column">
+      {steps.map((step, index) => {
+        const done = Boolean(productState.completedSteps[step.id]);
+        return (
+          <AncillaryScriptStep
+            key={step.id}
+            product={product}
+            step={step}
+            index={index}
+            active={activeStepIndex === index}
+            done={done}
+            productState={productState}
+          />
+        );
+      })}
+
+      <ProgressDots
+        sections={steps.map((step, idx) => {
+          const isDone = Boolean(productState.completedSteps[step.id]);
+          const isActive = !isDone && idx === activeStepIndex;
+          return {
+            key: step.id,
+            label: step.title,
+            status: isDone ? "done" : isActive ? "active" : "pending",
+          };
+        })}
+      />
+
+      {activeStepIndex >= steps.length ? (
+        <CompletionPanel product={product} productMeta={productMeta} />
+      ) : null}
+    </div>
+  );
 
   useEffect(() => {
     requestAnimationFrame(() =>
@@ -782,38 +898,12 @@ function AncillaryScriptRenderer({ product, productMeta, steps }) {
       {!productState.callStarted ? (
         <StartCallGate product={product} />
       ) : (
-        <>
-          {steps.map((step, index) => {
-            const done = Boolean(productState.completedSteps[step.id]);
-            return (
-              <AncillaryScriptStep
-                key={step.id}
-                product={product}
-                step={step}
-                index={index}
-                active={activeStepIndex === index}
-                done={done}
-                productState={productState}
-              />
-            );
-          })}
-
-          <ProgressDots
-            sections={steps.map((step, idx) => {
-              const isDone = Boolean(productState.completedSteps[step.id]);
-              const isActive = !isDone && idx === activeStepIndex;
-              return {
-                key: step.id,
-                label: step.title,
-                status: isDone ? "done" : isActive ? "active" : "pending",
-              };
-            })}
-          />
-
-          {activeStepIndex >= steps.length ? (
-            <CompletionPanel product={product} productMeta={productMeta} />
+        <div className={showFinalExpenseTimer ? "ancillary-fe-script-layout" : ""}>
+          {showFinalExpenseTimer ? (
+            <FinalExpenseCountdown callStart={productState.callStart} />
           ) : null}
-        </>
+          {scriptContent}
+        </div>
       )}
     </motion.div>
   );
