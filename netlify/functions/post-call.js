@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { requireClerkAuth } from "./_clerkAuth.js";
+import { redactDiarizedTranscript, redactSensitiveText } from "./_redaction.js";
 import {
   checkSeatLimit,
   logUsageRecord,
@@ -138,12 +139,7 @@ function normalizeEnrollmentPeriod(value) {
 }
 
 function scrubPhi(rawText) {
-  return safeText(rawText)
-    .replace(/\b\d[A-Z]\d{2}-?[A-Z]\d{2}-?[A-Z]{2}\d{2}\b/g, "[MBI_REDACTED]")
-    .replace(/\b\d{3}-?\d{2}-?\d{4}\b/g, "[SSN_REDACTED]")
-    .replace(/\b\d{3}[-.)]\s?\d{3}[-.)]\s?\d{4}\b/g, "[PHONE_REDACTED]")
-    .replace(/(born|DOB|date of birth)[:\s]*([\d/-]+)/gi, "$1: [DOB_REDACTED]")
-    .replace(/[\w.-]+@[\w.-]+\.\w{2,}/g, "[EMAIL_REDACTED]");
+  return redactSensitiveText(safeText(rawText));
 }
 
 function normalizeDiarized(entries) {
@@ -512,7 +508,7 @@ async function updateCallTranscriptFields(supabase, transcriptId, payload, tenan
 
 async function saveCheckpoint(supabase, payload, auth, tenant, { final = false } = {}) {
   const callRecord = await ensureCallRecord(supabase, payload, auth, tenant);
-  const diarized = normalizeDiarized(payload.transcript_diarized);
+  const diarized = redactDiarizedTranscript(normalizeDiarized(payload.transcript_diarized));
   const transcriptText = scrubPhi(payload.transcript_text);
   const now = new Date().toISOString();
 

@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Plan Playbook | O'Neill Marketing</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:    #0B2545;
+    --navy2:   #163560;
+    --blue:    #1565C0;
+    --blue2:   #1E88E5;
+    --lime:    #AEDD27;
+    --lime2:   #C8F135;
+    --white:   #FFFFFF;
+    --offwhite:#F4F7FA;
+    --muted:   rgba(255,255,255,0.55);
+    --font-h:  'Poppins', sans-serif;
+    --font-b:  'Inter', sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html, body {
+    width:100%; height:100%;
+    background:#000;
+    overflow:hidden;
+    font-family: var(--font-b);
+  }
+
+  /* ── DECK CONTAINER ─────────────────────────────── */
+  #deck {
+    width:100vw; height:100vh;
+    position:relative;
+    overflow:hidden;
+    background: var(--navy);
+  }
+
+  /* ── SLIDES ─────────────────────────────────────── */
+  .slide {
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    transform: translateX(40px);
+    overflow:hidden;
+  }
+
+  .slide.active {
+    opacity:1;
+    pointer-events:all;
+    transform: translateX(0);
+  }
+
+  .slide.exit {
+    opacity:0;
+    transform: translateX(-40px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  /* ── SLIDE LAYOUTS ──────────────────────────────── */
+
+  /* DARK — navy bg */
+  .slide-dark { background: var(--navy); }
+
+  /* LIGHT — white/offwhite bg */
+  .slide-light { background: var(--offwhite); }
+
+  /* SPLIT — left dark, right light */
+  .slide-split {
+    flex-direction: row;
+    background: var(--white);
+  }
+  .split-left {
+    background: var(--navy);
+    width: 40%;
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .split-right {
+    flex: 1;
+    padding: 2.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--white);
+    overflow-y: auto;
+  }
+
+  /* FULL CONTENT light with navy header */
+  .slide-content { background: var(--white); flex-direction: column; }
+
+  /* ── LIME ACCENT BAR ────────────────────────────── */
+  .lime-bar {
+    height: 5px;
+    background: linear-gradient(90deg, var(--lime) 0%, var(--blue2) 70%, transparent 100%);
+    flex-shrink: 0;
+  }
+  .lime-bar-left {
+    width: 5px;
+    background: linear-gradient(180deg, var(--lime) 0%, var(--blue2) 70%, transparent 100%);
+    flex-shrink: 0;
+  }
+
+  /* ── SLIDE HEADER BAND ──────────────────────────── */
+  .slide-header {
+    background: var(--navy);
+    padding: 1rem 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+  .slide-header-badge {
+    font-family: var(--font-h);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--lime);
+    background: rgba(174,221,39,0.1);
+    border: 1px solid rgba(174,221,39,0.25);
+    border-radius: 20px;
+    padding: 0.18rem 0.7rem;
+    white-space: nowrap;
+  }
+  .slide-header h2 {
+    font-family: var(--font-h);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.01em;
+  }
+
+  /* ── SLIDE BODY ─────────────────────────────────── */
+  .slide-body {
+    flex: 1;
+    padding: 2rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .slide-body.pad-sm { padding: 1.25rem 2.5rem; }
+
+  /* ── TYPOGRAPHY ─────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--font-h);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--lime);
+    margin-bottom: 0.5rem;
+  }
+  .eyebrow.dark { color: var(--navy2); }
+  .eyebrow.blue { color: var(--blue); }
+
+  h1.title {
+    font-family: var(--font-h);
+    font-size: clamp(2.2rem, 4vw, 3.5rem);
+    font-weight: 900;
+    color: var(--white);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+  h1.title em { font-style:normal; color: var(--lime); }
+  h1.title .b { color: var(--blue2); }
+
+  h2.heading {
+    font-family: var(--font-h);
+    font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.6rem;
+  }
+  h2.heading.white { color: var(--white); }
+  h2.heading em { font-style:normal; color: var(--lime); }
+
+  h3.subhead {
+    font-family: var(--font-h);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 0.3rem;
+  }
+  h3.subhead.white { color: var(--white); }
+  h3.subhead.lime  { color: var(--lime); }
+  h3.subhead.blue  { color: var(--blue); }
+
+  p.lead {
+    font-size: clamp(0.9rem, 1.3vw, 1.05rem);
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 560px;
+  }
+  p.lead.dark { color: #3A5070; }
+
+  p.body-text {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: #3A5070;
+  }
+
+  /* ── GRID LAYOUTS ───────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; }
+
+  /* ── CARDS ──────────────────────────────────────── */
+  .card {
+    background: var(--white);
+    border: 1px solid #D8E2F0;
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 12px rgba(11,37,69,0.07);
+  }
+  .card.navy-card {
+    background: var(--navy2);
+    border-color: rgba(255,255,255,0.1);
+  }
+  .card.lime-accent { border-top: 3px solid var(--lime); }
+  .card.blue-accent { border-top: 3px solid var(--blue); }
+  .card.left-lime { border-left: 3px solid var(--lime); border-radius: 0 10px 10px 0; }
+  .card.left-blue { border-left: 3px solid var(--blue); border-radius: 0 10px 10px 0; }
+
+  .card h3 { font-family:var(--font-h); font-size:0.88rem; font-weight:700; color:var(--navy); margin-bottom:0.35rem; }
+  .card h3.white { color:var(--white); }
+  .card h3.lime  { color:var(--lime);  }
+  .card p  { font-size:0.8rem; line-height:1.65; color:#4A6285; }
+  .card p.white { color:rgba(255,255,255,0.65); }
+
+  /* ── STAT BOXES ─────────────────────────────────── */
+  .stat-box {
+    background: var(--navy);
+    border-radius: 10px;
+    padding: 1.1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-box::after {
+    content:'';
+    position:absolute;
+    bottom:0; left:0; right:0;
+    height:3px;
+    background: var(--lime);
+  }
+  .stat-box .val {
+    font-family:var(--font-h);
+    font-size: 1.8rem;
+    font-weight:900;
+    color:var(--white);
+    line-height:1;
+    margin-bottom:0.25rem;
+  }
+  .stat-box .lbl {
+    font-size:0.65rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--muted);
+  }
+
+  /* ── COMPARISON TABLE ───────────────────────────── */
+  .cmp-table { width:100%; border-collapse:collapse; font-size:0.8rem; margin-top:0.5rem; }
+  .cmp-table th {
+    background:var(--navy); color:rgba(255,255,255,0.7);
+    font-family:var(--font-h); font-size:0.68rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.08em;
+    padding:0.55rem 0.85rem; text-align:left;
+  }
+  .cmp-table th.lm { color:var(--lime); }
+  .cmp-table td {
+    padding:0.55rem 0.85rem;
+    border-bottom:1px solid #E4EDF8;
+    color:#4A6285;
+  }
+  .cmp-table tr:nth-child(even) td { background:#F8FAFE; }
+  .cmp-table td.row-label { font-family:var(--font-h); font-weight:700; color:var(--navy); width:22%; }
+  .cmp-table td.blue-val { font-weight:700; color:var(--blue); }
+
+  /* ── BULLET LIST ────────────────────────────────── */
+  .blist { list-style:none; padding:0; display:flex; flex-direction:column; gap:0.45rem; }
+  .blist li {
+    display:flex; align-items:flex-start; gap:0.6rem;
+    font-size:0.87rem; line-height:1.6; color:#2C3E5A;
+  }
+  .blist li::before {
+    content:'';
+    display:inline-block;
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--lime);
+    flex-shrink:0;
+    margin-top:0.38em;
+  }
+  .blist.white li { color:rgba(255,255,255,0.8); }
+  .blist.white li::before { background:var(--lime); }
+  .blist.sm li { font-size:0.8rem; }
+
+  /* ── CHECK / X LISTS ────────────────────────────── */
+  .check-list { list-style:none; padding:0; display:flex; flex-direction:column; gap:0.4rem; }
+  .check-list li {
+    display:flex; align-items:flex-start; gap:0.55rem;
+    font-size:0.82rem; line-height:1.6; color:#2C3E5A;
+  }
+  .check-list li .icon {
+    font-size:0.9rem; flex-shrink:0; margin-top:0.08em;
+  }
+  .check-list li.good .icon { color:#2E7D32; }
+  .check-list li.bad  .icon { color:#C62828; }
+
+  /* ── WARNING BOX ────────────────────────────────── */
+  .warn-box {
+    background:#FFEBEE;
+    border:1px solid #FFCDD2;
+    border-left:4px solid #C62828;
+    border-radius:0 8px 8px 0;
+    padding:0.75rem 1rem;
+    font-size:0.8rem;
+    line-height:1.65;
+    color:#5C0000;
+  }
+  .warn-box strong { color:#C62828; }
+
+  .info-box {
+    background:#E8F1FB;
+    border-left:4px solid var(--blue);
+    border-radius:0 8px 8px 0;
+    padding:0.75rem 1rem;
+    font-size:0.8rem;
+    line-height:1.65;
+    color:#0D3060;
+  }
+
+  .lime-box {
+    background:#F2FAD6;
+    border-left:4px solid #8DB81E;
+    border-radius:0 8px 8px 0;
+    padding:0.75rem 1rem;
+    font-size:0.8rem;
+    line-height:1.65;
+    color:#2A4A00;
+  }
+
+  /* ── STEP NUMBERS ───────────────────────────────── */
+  .step-row { display:flex; gap:0.75rem; align-items:flex-start; margin-bottom:0.75rem; }
+  .step-num {
+    width:28px; height:28px; border-radius:50%;
+    background:var(--navy);
+    color:var(--lime);
+    font-family:var(--font-h); font-size:0.75rem; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .step-content h4 { font-family:var(--font-h); font-size:0.85rem; font-weight:700; color:var(--navy); margin-bottom:0.15rem; }
+  .step-content p  { font-size:0.78rem; line-height:1.6; color:#4A6285; }
+
+  /* ── SLIDE FOOTER ───────────────────────────────── */
+  .slide-footer {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0.5rem 1.5rem;
+    background:rgba(255,255,255,0.04);
+    border-top:1px solid rgba(255,255,255,0.07);
+    flex-shrink:0;
+  }
+  .slide-footer.light-footer {
+    background:rgba(11,37,69,0.04);
+    border-top:1px solid #D8E2F0;
+  }
+  .footer-brand {
+    font-family:var(--font-h); font-size:0.62rem; font-weight:600;
+    color:var(--muted); letter-spacing:0.06em; text-transform:uppercase;
+  }
+  .footer-brand.dark { color:#8AAAC8; }
+  .footer-slide {
+    font-family:var(--font-h); font-size:0.62rem; font-weight:600;
+    color:var(--muted); letter-spacing:0.06em;
+  }
+  .footer-slide.dark { color:#8AAAC8; }
+
+  /* ── PILL TAGS ──────────────────────────────────── */
+  .pill-row { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem; }
+  .pill {
+    font-family:var(--font-h); font-size:0.68rem; font-weight:700;
+    padding:0.2rem 0.6rem; border-radius:20px; border:1px solid transparent;
+  }
+  .pill-lime  { background:rgba(174,221,39,0.12); color:#3A6200; border-color:rgba(174,221,39,0.4); }
+  .pill-blue  { background:#E8F1FB; color:var(--blue); border-color:#90CAF9; }
+  .pill-navy  { background:var(--navy); color:var(--lime); border-color:var(--navy); }
+  .pill-red   { background:#FFEBEE; color:#C62828; border-color:#FFCDD2; }
+  .pill-white { background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.8); border-color:rgba(255,255,255,0.2); }
+
+  /* ── SPEAKER NOTES ──────────────────────────────── */
+  #notes-panel {
+    position:fixed; bottom:0; left:0; right:0;
+    height:0;
+    background:#1A2740;
+    border-top:2px solid var(--lime);
+    transition:height 0.3s ease;
+    overflow:hidden;
+    z-index:50;
+  }
+  #notes-panel.open { height:200px; }
+  .notes-inner {
+    padding:1rem 2rem;
+    height:100%;
+    overflow-y:auto;
+  }
+  .notes-label {
+    font-family:var(--font-h); font-size:0.6rem; font-weight:700;
+    letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--lime); margin-bottom:0.5rem;
+  }
+  .notes-text {
+    font-size:0.88rem; line-height:1.7; color:rgba(255,255,255,0.8);
+  }
+
+  /* ── CONTROLS ───────────────────────────────────── */
+  #controls {
+    position:fixed; bottom:1.2rem; right:1.5rem;
+    display:flex; gap:0.5rem; align-items:center;
+    z-index:60;
+  }
+
+  .ctrl-btn {
+    width:38px; height:38px;
+    border-radius:50%;
+    background:rgba(11,37,69,0.7);
+    border:1px solid rgba(174,221,39,0.3);
+    color:var(--white);
+    font-size:1rem;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.2s;
+    backdrop-filter:blur(8px);
+  }
+  .ctrl-btn:hover { background:var(--navy2); border-color:var(--lime); color:var(--lime); }
+
+  #slide-counter {
+    font-family:var(--font-h); font-size:0.72rem; font-weight:600;
+    color:rgba(255,255,255,0.5); min-width:50px; text-align:center;
+  }
+
+  /* ── PROGRESS BAR ───────────────────────────────── */
+  #progress {
+    position:fixed; top:0; left:0;
+    height:3px;
+    background: var(--lime);
+    transition: width 0.4s ease;
+    z-index:60;
+  }
+
+  /* ── TITLE SLIDE SPECIFICS ──────────────────────── */
+  .title-slide-inner {
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    height:100%;
+    padding:0 5rem;
+    position:relative;
+    z-index:1;
+  }
+
+  .title-bg-circle {
+    position:absolute;
+    width:600px; height:600px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(21,101,192,0.3) 0%, transparent 70%);
+    top:-150px; right:-150px;
+    pointer-events:none;
+  }
+  .title-bg-circle2 {
+    position:absolute;
+    width:400px; height:400px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(174,221,39,0.08) 0%, transparent 70%);
+    bottom:-100px; left:200px;
+    pointer-events:none;
+  }
+
+  /* ── DIVIDER ────────────────────────────────────── */
+  .divider { height:1px; background:#D8E2F0; margin:0.85rem 0; }
+  .divider.white { background:rgba(255,255,255,0.1); }
+
+  /* ── SECTION TITLE SLIDE ────────────────────────── */
+  .section-title-inner {
+    display:flex; flex-direction:column;
+    justify-content:center; align-items:flex-start;
+    height:100%; padding:0 5rem;
+    position:relative; z-index:1;
+  }
+
+  /* ── OUTRO SLIDE ────────────────────────────────── */
+  .outro-grid {
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:1rem; margin-top:1.5rem;
+  }
+  .outro-item {
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:10px;
+    padding:1.1rem;
+  }
+  .outro-item .num {
+    font-family:var(--font-h); font-size:1.8rem; font-weight:900;
+    color:var(--lime); line-height:1; margin-bottom:0.35rem;
+  }
+  .outro-item h4 { font-family:var(--font-h); font-size:0.82rem; font-weight:700; color:var(--white); margin-bottom:0.25rem; }
+  .outro-item p  { font-size:0.75rem; line-height:1.6; color:var(--muted); }
+
+  /* ── RESPONSIVE SCALING ─────────────────────────── */
+  @media (max-height: 700px) {
+    .slide-body { padding:1rem 2.5rem; }
+    h1.title { font-size:2rem; }
+    h2.heading { font-size:1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<div id="deck">
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 1 — TITLE -->
+  <div class="slide slide-dark active" data-notes="Open with a confident, unhurried welcome. Pause after your name and company. Let the room settle before moving forward. This slide should stay up for 20–30 seconds while you introduce yourself.">
+    <div class="lime-bar"></div>
+    <div class="title-bg-circle"></div>
+    <div class="title-bg-circle2"></div>
+    <div class="title-slide-inner">
+      <div class="eyebrow">O'Neill Marketing · Private Plan Playbook</div>
+      <h1 class="title">Real Coverage Solutions<br>for Clients <em>Outside</em><br>the Marketplace</h1>
+      <p class="lead" style="margin-top:1rem">A complete guide to ERISA-sponsored private health plans: what they are, how they work, and how to present them with confidence.</p>
+      <div class="pill-row" style="margin-top:1.5rem">
+        <span class="pill pill-white">MedPerformance · Cigna PPO</span>
+        <span class="pill pill-white">MedMax · First Health PPO</span>
+        <span class="pill pill-white">ERISA Sponsored</span>
+        <span class="pill pill-white">A-Rated Stop-Loss Carrier</span>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span class="footer-brand">O'Neill Marketing</span>
+      <span class="footer-slide" id="fc1">1 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 2 — MARKET GAP -->
+  <div class="slide slide-split" data-notes="This is the 'why we're here' slide. Don't rush it. The goal is to establish that there is a real, large, underserved population that the ACA doesn't reach. Ask the room: how many of you have had a client who made too much for a subsidy? That's your audience.">
+    <div class="lime-bar-left"></div>
+    <div class="split-left">
+      <div class="eyebrow">The Problem</div>
+      <h2 class="heading white">Who the ACA<br><em>Leaves Behind</em></h2>
+      <p class="lead" style="margin-top:0.75rem;font-size:0.88rem">Millions of Americans fall into a coverage gap, with too much income for a meaningful subsidy, no employer plan, or blocked from the marketplace entirely.</p>
+      <div class="divider white" style="margin-top:1.25rem"></div>
+      <div style="margin-top:1rem">
+        <div style="font-family:var(--font-h);font-size:2.5rem;font-weight:900;color:var(--lime);line-height:1">$2,000<span style="font-size:1rem;color:rgba(255,255,255,0.5)">/mo</span></div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.08em;font-family:var(--font-h);font-weight:600">Avg Unsubsidized ACA Silver · Family of 4 · 2025</div>
+      </div>
+    </div>
+    <div class="split-right">
+      <h3 class="subhead" style="margin-bottom:1rem">Clients Who Need an Alternative</h3>
+      <div class="grid-2" style="gap:0.85rem">
+        <div class="card lime-accent">
+          <h3>Self-Employed &amp; Gig Workers</h3>
+          <p>No employer plan, no subsidy. ACA pricing without the subsidy is often unworkable.</p>
+        </div>
+        <div class="card lime-accent">
+          <h3>Income Above the Subsidy Cliff</h3>
+          <p>Household income just over 400% FPL loses the entire subsidy in one dollar.</p>
+        </div>
+        <div class="card lime-accent">
+          <h3>Between Coverage</h3>
+          <p>Job change, aging off a parent's plan, or waiting on new employer benefits.</p>
+        </div>
+        <div class="card lime-accent">
+          <h3>ITIN / Immigration Status</h3>
+          <p>Cannot access the ACA marketplace. Need year-round PPO coverage with no SSN.</p>
+        </div>
+      </div>
+      <div class="lime-box" style="margin-top:1rem">These plans are built for clients who want <strong>PPO protection for unexpected events</strong>, not ongoing chronic care management.</div>
+    </div>
+    <div style="position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;padding:0.5rem 1.5rem;background:rgba(11,37,69,0.04);border-top:1px solid #D8E2F0;">
+      <span class="footer-brand dark">O'Neill Marketing</span>
+      <span class="footer-slide dark">2 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 3 — WHAT IS ERISA -->
+  <div class="slide slide-light" data-notes="This is the decision framework. Walk through each scenario. These are real client archetypes; the more you can make each one feel like a client they know, the better. Pause on the 'can't pass simplified underwriting' scenario; this is where MedAccess MVP becomes the conversation.">
+    <div class="slide-header">
+      <span class="slide-header-badge">Real World Scenarios</span>
+      <h2>When to Use Each Product</h2>
+    </div>
+    <div class="slide-body">
+      <div class="grid-3" style="gap:1rem">
+        <div class="card lime-accent">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem">💼</div>
+          <h3>Self-Employed / Leaving Group Plan</h3>
+          <p style="margin-bottom:0.6rem">Wants PPO quality, needs outpatient and surgical benefits. Cigna is most comparable to employer plans.</p>
+          <span class="pill pill-blue">→ MedPerformance</span>
+        </div>
+        <div class="card lime-accent">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem">👨‍👩‍👧</div>
+          <h3>Young Couple · Low Utilization</h3>
+          <p style="margin-bottom:0.6rem">Rarely visit doctors, want PPO access and telemedicine. ACA Bronze costs are high with huge deductibles.</p>
+          <span class="pill pill-blue">→ MedMax</span>
+        </div>
+        <div class="card lime-accent">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem">🤰</div>
+          <h3>Planning Pregnancy</h3>
+          <p style="margin-bottom:0.6rem">ACA plan too expensive, still needs maternity. MedPerformance has no maternity wait (subject to underwriting).</p>
+          <span class="pill pill-blue">→ MedPerformance</span>
+        </div>
+        <div class="card lime-accent">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem">📋</div>
+          <h3>No Social Security Number</h3>
+          <p style="margin-bottom:0.6rem">Clients without a Social Security number may enroll using an ITIN or other valid government-issued documentation. Enrollment is subject to identity verification requirements.</p>
+          <span class="pill pill-blue">→ Either Plan</span>
+        </div>
+
+        <div class="card" style="border-top:3px solid #C62828">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem">🚫</div>
+          <h3>Cannot Pass Simplified UW</h3>
+          <p style="margin-bottom:0.6rem">Lifetime history issue (Q4 MedPerf) or active condition. Neither plan is the right fit. Consider MedAccess MVP (Guaranteed Issue).</p>
+          <span class="pill pill-red">→ MedAccess MVP / Other</span>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer light-footer">
+      <span class="footer-brand dark">O'Neill Marketing</span>
+      <span class="footer-slide dark">3 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 12 — COMPLIANCE GUARDRAILS -->
+  <div class="slide slide-dark" data-notes="Section transition. Pause, breathe, signal the shift. 'Now let's walk through MedPerformance specifically.' Let the slide speak for a moment before moving forward.">
+    <div class="lime-bar"></div>
+    <div class="title-bg-circle"></div>
+    <div class="section-title-inner">
+      <div class="eyebrow">Product Deep Dive · 01</div>
+      <h1 class="title" style="font-size:2.8rem">MedPerformance<br><em>Major Medical PPO</em></h1>
+      <p class="lead" style="margin-top:0.75rem">ERISA Sponsored · Cigna PPO Network · Securus Benefits / Yuzu Health TPA · DisclosedRx PBM · A-Rated Stop-Loss Carrier</p>
+      <div class="pill-row" style="margin-top:1.25rem">
+        <span class="pill pill-navy">3500 Classic</span>
+        <span class="pill pill-navy">5000 Classic</span>
+        <span class="pill pill-navy">5000 HSA</span>
+        <span class="pill pill-navy">7350 Value</span>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span class="footer-brand">O'Neill Marketing</span>
+      <span class="footer-slide">4 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 6 — MEDPERFORMANCE BENEFITS -->
+  <div class="slide slide-light" data-notes="Walk through the benefits structure. Emphasize: no visit limits, 80/20 coinsurance after deductible, no lifetime max. Hit the emergency parity point, same cost in or out of network reduces surprise billing risk dramatically. Then point to FabricHealth telemedicine as the day-one, $0 touchpoint.">
+    <div class="slide-header">
+      <span class="slide-header-badge">MedPerformance · Cigna PPO</span>
+      <h2>ERISA Sponsored Major Medical PPO: Benefit Overview</h2>
+    </div>
+    <div class="slide-body pad-sm">
+      <div class="grid-2" style="gap:1.25rem">
+        <div>
+          <div class="grid-4" style="margin-bottom:1rem;gap:0.65rem">
+            <div class="stat-box"><div class="val" style="font-size:1.1rem">No Max</div><div class="lbl">Lifetime Benefit</div></div>
+            <div class="stat-box"><div class="val" style="font-size:1.1rem">80/20</div><div class="lbl">Coinsurance</div></div>
+            <div class="stat-box"><div class="val" style="font-size:1.1rem">$0</div><div class="lbl">Preventive Care</div></div>
+            <div class="stat-box"><div class="val" style="font-size:1.1rem">$0</div><div class="lbl">FabricHealth Telemed</div></div>
+          </div>
+          <div class="card blue-accent">
+            <h3>3500 Classic — Core Benefits</h3>
+            <table style="width:100%;font-size:0.78rem;margin-top:0.5rem;border-collapse:collapse">
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">PCP Visit</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right;border-bottom:1px solid #EEF3FA">$45 copay</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">Specialist</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right;border-bottom:1px solid #EEF3FA">$90 copay</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">Urgent Care</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right;border-bottom:1px solid #EEF3FA">$90 copay</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">Chiropractic</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right;border-bottom:1px solid #EEF3FA">$20 copay · 20/yr</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">Inpatient / Outpatient Surgery</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right;border-bottom:1px solid #EEF3FA">20% after deductible</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">Emergency Room</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right;border-bottom:1px solid #EEF3FA">20%, in &amp; out of network</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070">Skilled Nursing</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right">60 days/year</td></tr>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="card lime-accent" style="margin-bottom:0.85rem">
+            <h3>Four Tier Options</h3>
+            <table style="width:100%;font-size:0.78rem;margin-top:0.5rem;border-collapse:collapse">
+              <tr style="background:#F0F5FC"><td style="padding:0.3rem 0.5rem;font-weight:700;color:var(--navy)">3500 Classic</td><td style="padding:0.3rem 0.5rem;color:#3A5070">$3,500 ded · $7,350 OOP max</td></tr>
+              <tr><td style="padding:0.3rem 0.5rem;font-weight:700;color:var(--navy)">5000 Classic</td><td style="padding:0.3rem 0.5rem;color:#3A5070">$5,000 ded · $7,350 OOP max</td></tr>
+              <tr style="background:#F0F5FC"><td style="padding:0.3rem 0.5rem;font-weight:700;color:var(--navy)">5000 HSA</td><td style="padding:0.3rem 0.5rem;color:#3A5070">HSA-compatible · 20% coinsurance throughout</td></tr>
+              <tr><td style="padding:0.3rem 0.5rem;font-weight:700;color:var(--navy)">7350 Value</td><td style="padding:0.3rem 0.5rem;color:#3A5070">$7,350 ded = OOP max · 100% after</td></tr>
+            </table>
+          </div>
+          <div class="card" style="margin-bottom:0.85rem">
+            <h3>DisclosedRx PBM — Pharmacy Tiers</h3>
+            <ul class="blist sm" style="margin-top:0.4rem">
+              <li>Preventive Generic: <strong>$0 copay</strong></li>
+              <li>Generic: <strong>$15 copay</strong> (30-day) / $45 (90-day)</li>
+              <li>Preferred Brand: <strong>$65 copay</strong></li>
+              <li>Non-Preferred Brand: <strong>$100 copay</strong></li>
+            </ul>
+          </div>
+          <div class="info-box"><strong>Emergency parity:</strong> ER costs are 20% coinsurance both in and out of network, dramatically reducing surprise billing risk. This is an important client protection to communicate.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer light-footer">
+      <span class="footer-brand dark">O'Neill Marketing</span>
+      <span class="footer-slide dark">5 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 7 — SECTION BREAK: MEDMAX -->
+  <div class="slide slide-dark" data-notes="Section transition to MedMax. Set the framing before the next slide: MedMax is different from MedPerformance; it is a defined-benefit plan with annual utilization caps. That's what makes it affordable, and it's what you must disclose. Lead with transparency.">
+    <div class="lime-bar"></div>
+    <div class="title-bg-circle"></div>
+    <div class="section-title-inner">
+      <div class="eyebrow">Product Deep Dive · 02</div>
+      <h1 class="title" style="font-size:2.8rem">MedMax PPO<br><em>Defined Benefit Plan</em></h1>
+      <p class="lead" style="margin-top:0.75rem">ERISA Sponsored · First Health PPO (Aetna Subsidiary) · Performance Health TPA · StarRx PBM · A-Rated Stop-Loss Carrier</p>
+      <div class="pill-row" style="margin-top:1.25rem">
+        <span class="pill pill-white">$250 Deductible</span>
+        <span class="pill pill-white">$500 Deductible</span>
+        <span class="pill pill-white">$750 Deductible</span>
+        <span class="pill pill-white">$1,000 Deductible</span>
+        <span class="pill pill-white">$1,500 Deductible</span>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span class="footer-brand">O'Neill Marketing</span>
+      <span class="footer-slide">6 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 8 — MEDMAX BENEFITS + LIMITS -->
+  <div class="slide slide-light" data-notes="The critical disclosure slide for MedMax. Lead with the positives: PPO access, RelyMD unlimited telemedicine, pre-existing conditions covered day one. Then clearly walk through the caps and the OOP exposure beyond limits. This is the slide where transparency builds trust. Never skip the limitations.">
+    <div class="slide-header">
+      <span class="slide-header-badge">MedMax · First Health PPO</span>
+      <h2>Defined Benefit PPO: Benefits &amp; Critical Disclosures</h2>
+    </div>
+    <div class="slide-body pad-sm">
+      <div class="grid-2" style="gap:1.25rem">
+        <div>
+          <div class="card lime-accent" style="margin-bottom:0.85rem">
+            <h3>Key Benefits (Based on $250 Deductible Tier)</h3>
+            <table style="width:100%;font-size:0.78rem;margin-top:0.5rem;border-collapse:collapse">
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">RelyMD Telemedicine</td><td style="padding:0.3rem 0;font-weight:700;color:#2E7D32;text-align:right;border-bottom:1px solid #EEF3FA">$0 · UNLIMITED</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">Preventive Care</td><td style="padding:0.3rem 0;font-weight:700;color:#2E7D32;text-align:right;border-bottom:1px solid #EEF3FA">$0 · No deductible</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">PCP / Specialist / Urgent Care</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right;border-bottom:1px solid #EEF3FA">$50 copay · 10 visits combined</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">Inpatient Hospital</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right;border-bottom:1px solid #EEF3FA">$1,000 copay · 2 stays/yr · 10 days/stay</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">Emergency Room</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right;border-bottom:1px solid #EEF3FA">$250 copay · 2 visits/yr</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070;border-bottom:1px solid #EEF3FA">Outpatient Surgery</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right;border-bottom:1px solid #EEF3FA">$250 copay · 3/yr</td></tr>
+              <tr><td style="padding:0.3rem 0;color:#3A5070">Prescription (Generic Only)</td><td style="padding:0.3rem 0;font-weight:700;color:var(--navy);text-align:right">$0 copay via StarRx</td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <h3>Advantages</h3>
+            <ul class="check-list" style="margin-top:0.4rem">
+              <li class="good"><span class="icon">✓</span>ITIN or valid government-issued documentation accepted in lieu of SSN, subject to verification</li>
+              <li class="good"><span class="icon">✓</span>Pre-existing conditions covered day one</li>
+              <li class="good"><span class="icon">✓</span>Maternity covered, 12-month wait (subject to UW)</li>
+              <li class="good"><span class="icon">✓</span>Premiums starting ~$289/month</li>
+              <li class="good"><span class="icon">✓</span>993K+ First Health providers nationwide</li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <div class="warn-box" style="margin-bottom:0.85rem">
+            <strong>⚠️ Mandatory Agent Disclosures</strong><br>
+            These must be communicated before enrollment on every application.
+          </div>
+          <div class="card" style="border-top:3px solid #C62828;margin-bottom:0.85rem">
+            <h3>Annual Utilization Caps</h3>
+            <ul class="blist sm" style="margin-top:0.4rem">
+              <li>In-office visits (PCP + Specialist + UC combined): <strong>10/year</strong></li>
+              <li>ER visits (accident or sickness): <strong>2/year each</strong></li>
+              <li>Inpatient hospitalizations: <strong>2/year · 10 days/stay max</strong></li>
+              <li>Advanced imaging (CT/MRI/PET): <strong>3/year</strong></li>
+              <li>Outpatient Mental Health: <strong>15 days/year</strong></li>
+              <li>Skilled Nursing: <strong>10 days/year</strong></li>
+            </ul>
+          </div>
+          <div class="warn-box">
+            <strong>Unlimited OOP Exposure Beyond Limits:</strong> Once any benefit category cap is exhausted, the member bears full financial responsibility with no cap. Generic Rx only, no brand or specialty drug coverage.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer light-footer">
+      <span class="footer-brand dark">O'Neill Marketing</span>
+      <span class="footer-slide dark">7 / 19</span>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 9 — MEDACCESS SECTION BREAK -->
+  <div class="slide slide-dark" data-notes="Section break for MedAccess. Pause here and set the framing before the benefits slide. MedAccess is your accessibility play — two tiers, two network options, designed for clients who either can't pass full simplified issue underwriting or need a more affordable defined benefit PPO. MVP Basic is near guaranteed issue; MVP Pro is simplified issue. Both run on Cigna or First Health depending on the version.">
+    <div class="lime-bar"></div>
+    <div class="title-bg-circle"></div>
+    <div class="title-bg-circle2"></div>
+    <div class="section-title-inner">
+      <div class="eyebrow">Product Deep Dive · 03</div>
+      <h1 class="title" style="font-size:2.8rem">MedAccess MVP<br><em>Most Valuable Plan</em></h1>
+      <p class="lead" style="margin-top:0.75rem">ERISA Sponsored · Cigna PPO &amp; First Health PPO (Aetna Subsidiary)<br>Ascend (The Health Plan) / Securus Benefits · THP / DisclosedRx PBM · A-Rated Stop-Loss Carrier</p>
+      <div class="pill-row" style="margin-top:1.25rem">
+        <span class="pill pill-white">Basic — ~99% Guaranteed Issue</span>
+        <span class="pill pill-white">Pro — Simplified Issue</span>
+        <span class="pill pill-white">$0 Deductible</span>
+        <span class="pill pill-white">Cigna PPO or First Health PPO</span>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span class="footer-brand">O'Neill Marketing</span>
+      <span class="footer-slide">8 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 10 — MEDACCESS BENEFITS -->
+  <div class="slide slide-light" data-notes="Walk column by column: Basic is near-GI one question, Pro is simplified issue 5 questions. Both share $0 deductible, $0 telemedicine, $0 preventive. Key Pro upgrades: lower OOP max, more visits in every category, maternity covered. Toggle the network to flip TPA/PBM. Disclose: NOT insured by the carrier.">
+    <div class="slide-header" style="padding:0.6rem 2rem">
+      <span class="slide-header-badge">MedAccess · Plan Benefits</span>
+      <h2 style="font-size:1rem">MedAccess MVP — Basic vs. Pro</h2>
+    </div>
+    <div class="slide-body" style="padding:0.5rem 1.25rem;overflow:hidden;justify-content:flex-start">
+
+      <!-- Top strip: network toggle + $0 stats + OOP -->
+      <div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:0.5rem;align-items:center;margin-bottom:0.45rem">
+        <div style="display:flex;flex-direction:column;gap:0.3rem">
+          <div style="display:flex;background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden">
+            <button id="btn-cigna" onclick="maNet('cigna')" style="padding:0.28rem 0.8rem;font-family:var(--font-h);font-size:0.68rem;font-weight:700;cursor:pointer;border:none;background:var(--navy);color:var(--lime)">Cigna PPO</button>
+            <button id="btn-fh" onclick="maNet('fh')" style="padding:0.28rem 0.8rem;font-family:var(--font-h);font-size:0.68rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text-mid)">First Health PPO</button>
+          </div>
+          <div style="display:flex;gap:0.3rem">
+            <span class="pill pill-navy" id="ma-tpa-pill" style="font-size:0.6rem;padding:0.12rem 0.45rem">Ascend (The Health Plan)</span>
+            <span class="pill pill-blue" id="ma-pbm-pill" style="font-size:0.6rem;padding:0.12rem 0.45rem">THP PBM</span>
+          </div>
+        </div>
+        <!-- $0 trio -->
+        <div style="background:var(--navy);border-radius:8px;padding:0.5rem 0.85rem;display:flex;align-items:center;gap:0.6rem">
+          <div style="text-align:center"><div style="font-family:var(--font-h);font-size:1.4rem;font-weight:900;color:var(--lime);line-height:1">$0</div><div style="font-size:0.55rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--font-h);font-weight:600">Deductible</div></div>
+          <div style="width:1px;background:rgba(255,255,255,0.1);align-self:stretch"></div>
+          <div style="text-align:center"><div style="font-family:var(--font-h);font-size:1.4rem;font-weight:900;color:var(--lime);line-height:1">$0</div><div style="font-size:0.55rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--font-h);font-weight:600">Telemedicine</div></div>
+          <div style="width:1px;background:rgba(255,255,255,0.1);align-self:stretch"></div>
+          <div style="text-align:center"><div style="font-family:var(--font-h);font-size:1.4rem;font-weight:900;color:var(--lime);line-height:1">$0</div><div style="font-size:0.55rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--font-h);font-weight:600">Preventive</div></div>
+        </div>
+        <!-- Basic OOP -->
+        <div style="background:var(--blue-pale);border:1px solid #BBDEFB;border-radius:8px;padding:0.45rem 0.75rem;text-align:center;min-width:110px">
+          <div style="font-family:var(--font-h);font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--blue)">Basic OOP Max</div>
+          <div style="font-family:var(--font-h);font-size:1rem;font-weight:900;color:var(--navy)">$7,350</div>
+          <div style="font-size:0.58rem;color:var(--text-muted)">$14,700 fam · From $432.84/mo</div>
+        </div>
+        <!-- Pro OOP -->
+        <div style="background:#EBF5EE;border:1px solid #A5D6A7;border-radius:8px;padding:0.45rem 0.75rem;text-align:center;min-width:110px">
+          <div style="font-family:var(--font-h);font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#2E7D32">Pro OOP Max</div>
+          <div style="font-family:var(--font-h);font-size:1rem;font-weight:900;color:var(--navy)">$5,000</div>
+          <div style="font-size:0.58rem;color:var(--text-muted)">$10,000 fam · From $567.16/mo</div>
+        </div>
+      </div>
+
+      <!-- Compact 4-section table -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+        <!-- Left: Everyday + Diagnostics + Hospital -->
+        <table style="width:100%;border-collapse:collapse;font-size:0.7rem">
+          <thead><tr style="background:var(--navy)">
+            <th style="padding:0.28rem 0.5rem;text-align:left;font-family:var(--font-h);font-size:0.58rem;font-weight:700;text-transform:uppercase;color:rgba(255,255,255,0.55);width:34%;border-radius:6px 0 0 0">Benefit</th>
+            <th style="padding:0.28rem 0.5rem;text-align:center;font-family:var(--font-h);font-size:0.58rem;font-weight:700;color:var(--lime)">Basic ~99% GI</th>
+            <th style="padding:0.28rem 0.5rem;text-align:center;font-family:var(--font-h);font-size:0.58rem;font-weight:700;color:#A5D6A7;border-radius:0 6px 0 0">Pro SI</th>
+          </tr></thead>
+          <tbody>
+            <tr style="background:#F0F4FA"><td colspan="3" style="padding:0.18rem 0.5rem;font-family:var(--font-h);font-size:0.54rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-muted)">Everyday Care</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">PCP Visit</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$25 · 6/yr</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$15 · 12/yr</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8;background:#FAFBFD"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Specialist</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$50 · 6/yr</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$25 · 12/yr</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Urgent Care</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$50 · 2/yr</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$35 · 3/yr</td></tr>
+            <tr style="background:#F0F4FA"><td colspan="3" style="padding:0.18rem 0.5rem;font-family:var(--font-h);font-size:0.54rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-muted)">Diagnostics</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8;background:#FAFBFD"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Lab &amp; Radiology</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$50 · 3/yr</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$50 · 4/yr</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">CT / MRI / PET</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$350 · 1/yr</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$350 · 3/yr</td></tr>
+            <tr style="background:#F0F4FA"><td colspan="3" style="padding:0.18rem 0.5rem;font-family:var(--font-h);font-size:0.54rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-muted)">Hospital &amp; Facility</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8;background:#FAFBFD"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Inpatient Hospital</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$350/admit · 3 days</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$350/admit · 10 days</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Inpatient Surgery</td><td colspan="2" style="padding:0.22rem 0.4rem;text-align:center;color:#4A6285;font-size:0.66rem">Included in IP Copay (Basic: 3 days · Pro: 4 surgeries)</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8;background:#FAFBFD"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Outpatient Surgery</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$350 · 1/yr</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$350 · 2/yr</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Emergency Room</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$350 · 1/yr</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$350 · 2/yr</td></tr>
+            <tr><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Ambulance (Ground)</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$250 · 1/yr</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$250 · 2/yr</td></tr>
+          </tbody>
+        </table>
+        <!-- Right: Other + Pharmacy -->
+        <table style="width:100%;border-collapse:collapse;font-size:0.7rem">
+          <thead><tr style="background:var(--navy)">
+            <th style="padding:0.28rem 0.5rem;text-align:left;font-family:var(--font-h);font-size:0.58rem;font-weight:700;text-transform:uppercase;color:rgba(255,255,255,0.55);width:34%;border-radius:6px 0 0 0">Benefit</th>
+            <th style="padding:0.28rem 0.5rem;text-align:center;font-family:var(--font-h);font-size:0.58rem;font-weight:700;color:var(--lime)">Basic ~99% GI</th>
+            <th style="padding:0.28rem 0.5rem;text-align:center;font-family:var(--font-h);font-size:0.58rem;font-weight:700;color:#A5D6A7;border-radius:0 6px 0 0">Pro SI</th>
+          </tr></thead>
+          <tbody>
+            <tr style="background:#F0F4FA"><td colspan="3" style="padding:0.18rem 0.5rem;font-family:var(--font-h);font-size:0.54rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-muted)">Other Services</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8;background:#FAFBFD"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Home Health</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$25 · 5/yr</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$25 · 20/yr</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Rehab / Habilitation</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$50/day · 6/yr</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$50/day · 12/yr</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8;background:#FAFBFD"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Maternity (12-mo)</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#C62828;font-weight:600">Not Covered</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$350/admit + Prof.</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Hospice</td><td colspan="2" style="padding:0.22rem 0.4rem;text-align:center;color:#C62828;font-weight:600">Not Covered</td></tr>
+            <tr style="background:#F0F4FA"><td colspan="3" style="padding:0.18rem 0.5rem;font-family:var(--font-h);font-size:0.54rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-muted)">Pharmacy (Subject to Formulary)</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8;background:#FAFBFD"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Preventive Generic</td><td style="padding:0.22rem 0.4rem;text-align:center;font-weight:700;color:var(--blue)">$0</td><td style="padding:0.22rem 0.4rem;text-align:center;font-weight:700;color:var(--blue)">$0</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Generic</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$10 Copay</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">20% Copay</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8;background:#FAFBFD"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Preferred Brand</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#C62828;font-weight:600">Not Covered</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">20% Copay</td></tr>
+            <tr><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Non-Preferred / Specialty</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#C62828;font-weight:600">Not Covered</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#C62828;font-weight:600">Not Covered</td></tr>
+            <!-- Rates -->
+            <tr style="background:#F0F4FA"><td colspan="3" style="padding:0.18rem 0.5rem;font-family:var(--font-h);font-size:0.54rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-muted)">Monthly Rates (Age 18–45)</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8;background:#FAFBFD"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Employee Only</td><td style="padding:0.22rem 0.4rem;text-align:center;font-weight:700;color:var(--blue)">$432.84</td><td style="padding:0.22rem 0.4rem;text-align:center;font-weight:700;color:#2E7D32">$567.16</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Emp + Spouse</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$776.12</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$1,097.01</td></tr>
+            <tr style="border-bottom:1px solid #EEF1F8;background:#FAFBFD"><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Emp + Child(ren)</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$670.15</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$886.57</td></tr>
+            <tr><td style="padding:0.22rem 0.5rem;font-weight:600;color:var(--text-dark)">Family</td><td style="padding:0.22rem 0.4rem;text-align:center;color:var(--text-mid)">$997.01</td><td style="padding:0.22rem 0.4rem;text-align:center;color:#2E7D32;font-weight:600">$1,455.22</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:0.4rem;font-size:0.63rem;color:var(--text-muted);font-style:italic">Plan utilizes the selected PPO network. <strong style="color:var(--text-dark)">Plan is NOT insured by the network carrier.</strong> Anesthesia included in IP/OP copay. *No specialty or non-preferred brand drugs covered except base contraceptive benefit.</div>
+
+    </div>
+    <div class="slide-footer light-footer">
+      <span class="footer-brand dark">O'Neill Marketing</span>
+      <span class="footer-slide dark">9 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 10 — UNDERWRITING INTRO -->
+  <div class="slide slide-dark" data-notes="Three-column structure. Left: shared questions for MedMax, MedPerformance, and MVP Pro. Middle: Q4 distinction — MedMax is last 12 months, MedPerf is lifetime. Right: MedAccess underwriting tiers — MVP Basic has ONE question and ~99% approval, MVP Pro uses the same 5-question screen as MedMax. This column is the most important for agents who've been routing all non-qualifying clients away. MVP Basic is almost always the answer for UW failures.">
+    <div class="lime-bar"></div>
+    <div class="slide-header">
+      <span class="slide-header-badge">Simplified Issue · No Medical Exam</span>
+      <h2>Underwriting: What Agents Must Know</h2>
+    </div>
+    <div class="slide-body pad-sm">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+        <!-- Col 1: Shared Questions + fraud warning -->
+        <div>
+          <div class="card navy-card" style="margin-bottom:0.75rem">
+            <h3 class="lime" style="font-size:0.82rem;margin-bottom:0.5rem">Shared Questions — MedMax &amp; MedPerformance &amp; MVP Pro</h3>
+            <p class="white" style="font-size:0.75rem;margin-bottom:0.5rem">No exam. No labs. Yes on any = declination.</p>
+            <ul class="blist white sm">
+              <li>Q1: COBRA disabled or missed 10+ consecutive workdays due to illness/injury in 12 months</li>
+              <li>Q2: Scheduled for or advised to seek hospitalization or surgery in past 12 months</li>
+              <li>Q3: Pending test results, pending services, or currently pregnant / planning pregnancy in 12 months</li>
+              <li>Q5: Ongoing condition likely to cost $5,000+/year (verify with GoodRX)</li>
+            </ul>
+          </div>
+          <div class="warn-box" style="background:rgba(198,40,40,0.12);border-left-color:#EF5350;color:rgba(255,100,100,0.9)">
+            <strong style="color:#EF5350">Never coach a client to answer No when the accurate answer is Yes.</strong> Application fraud voids coverage and creates agent liability.
+          </div>
+        </div>
+        <!-- Col 2: MedMax Q4 + MedPerf Q4 -->
+        <div>
+          <div class="card navy-card" style="margin-bottom:0.75rem">
+            <h3 class="lime" style="font-size:0.82rem">MedMax Q4 — Last 12 Months</h3>
+            <p class="white" style="margin-bottom:0.4rem;font-size:0.75rem">Diagnosed or treated in the <strong style="color:var(--lime)">past 12 months</strong> for:</p>
+            <ul class="blist white sm">
+              <li>Cancer, heart/blood vessel disease, stroke</li>
+              <li>Kidney disease, diabetes, alcohol/drug abuse</li>
+              <li>Lung, liver, blood disorders</li>
+              <li>Mental/emotional/nervous system disorders</li>
+              <li>Arthritis, back, bones, or joint disorders</li>
+            </ul>
+          </div>
+          <div class="card navy-card">
+            <h3 style="color:#EF9A9A;font-size:0.82rem">MedPerformance Q4: LIFETIME History</h3>
+            <p style="color:rgba(255,200,200,0.7);font-size:0.72rem;margin-bottom:0.4rem">Has any applicant <strong style="color:#EF9A9A">ever</strong> been diagnosed with:</p>
+            <ul class="blist sm">
+              <li style="color:rgba(255,200,200,0.8)">Chronic kidney disease, kidney failure, dialysis</li>
+              <li style="color:rgba(255,200,200,0.8)">Type 1 diabetes or Type 2 with complications</li>
+              <li style="color:rgba(255,200,200,0.8)">Cancer (other than fully removed basal cell)</li>
+              <li style="color:rgba(255,200,200,0.8)">Heart attack, heart surgery, stroke, TIA, stent</li>
+              <li style="color:rgba(255,200,200,0.8)">HIV/AIDS, autoimmune (Crohn's, lupus, MS, RA)</li>
+              <li style="color:rgba(255,200,200,0.8)">ALS, Parkinson's, organ transplant</li>
+            </ul>
+            <div style="margin-top:0.4rem;font-size:0.7rem;color:rgba(255,180,180,0.7);font-style:italic">Lifetime lookback — the key pre-qualifying distinction from MedMax.</div>
+          </div>
+        </div>
+        <!-- Col 3: MedAccess MVP Basic (near GI) + MVP Pro (SI) -->
+        <div>
+          <div class="card" style="background:rgba(174,221,39,0.08);border:1px solid rgba(174,221,39,0.2);margin-bottom:0.75rem">
+            <h3 style="color:var(--lime);font-size:0.82rem;margin-bottom:0.4rem">MedAccess MVP Basic — Near Guaranteed Issue</h3>
+            <div style="background:rgba(174,221,39,0.08);border-radius:6px;padding:0.5rem 0.75rem;margin-bottom:0.5rem">
+              <span style="font-family:var(--font-h);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--lime)">~99% Approval Rate</span>
+            </div>
+            <p style="color:rgba(255,255,255,0.7);font-size:0.75rem;margin-bottom:0.5rem">Only one underwriting question:</p>
+            <div style="background:rgba(255,255,255,0.06);border-radius:6px;padding:0.6rem 0.75rem;font-size:0.78rem;color:rgba(255,255,255,0.85);line-height:1.65;font-style:italic">
+              "Does any applicant have any medical test results pending, or a medical service or surgery that has not yet been performed?"
+            </div>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.7rem;margin-top:0.4rem">This is the only declination trigger. Almost all applicants qualify.</p>
+          </div>
+          <div class="card navy-card">
+            <h3 class="lime" style="font-size:0.82rem;margin-bottom:0.4rem">MedAccess MVP Pro — Simplified Issue</h3>
+            <p class="white" style="font-size:0.75rem;margin-bottom:0.4rem">Same 5 questions as MedMax (Q1–Q3, Q4 last 12 months, Q5). Yes on any = declination.</p>
+            <ul class="blist white sm">
+              <li>Q1: COBRA disabled / missed 10+ consecutive workdays</li>
+              <li>Q2: Scheduled for hospitalization or surgery</li>
+              <li>Q3: Pending results or pregnant / planning pregnancy</li>
+              <li>Q4: Diagnosed/treated in last 12 months (cancer, heart, kidney, diabetes, lung, mental health, joint)</li>
+              <li>Q5: Ongoing condition likely to cost $5,000+/year</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span class="footer-brand">O'Neill Marketing</span>
+      <span class="footer-slide">10 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 10 — QUICK DECISION GUIDE -->
+  <div class="slide slide-light" data-notes="This is your at-a-glance comparison. Use it to orient the audience before going deeper. Call out the three things that matter most in most client conversations: premium, network, and benefit structure. The other rows are for specific scenarios.">
+    <div class="slide-header">
+      <span class="slide-header-badge">Compare</span>
+      <h2>Quick Decision Guide: MedMax · MedPerformance · MedAccess</h2>
+    </div>
+    <div class="slide-body pad-sm">
+      <table class="cmp-table" style="font-size:0.8rem">
+        <tr>
+          <th style="width:18%">Factor</th>
+          <th class="lm" style="width:27%">MedMax</th>
+          <th class="lm" style="width:27%">MedPerformance</th>
+          <th style="color:#E8A836;width:28%">MedAccess MVP</th>
+        </tr>
+        <tr><td class="row-label">Legal Structure</td><td class="blue-val">ERISA Sponsored Defined Benefit PPO</td><td class="blue-val">ERISA Sponsored Major Medical PPO</td><td style="color:#E8A836;font-weight:600">ERISA Sponsored Defined Benefit PPO</td></tr>
+        <tr><td class="row-label">Network</td><td class="blue-val">First Health PPO (Aetna subsidiary)</td><td class="blue-val">Cigna PPO</td><td style="color:#E8A836;font-weight:600">First Health (Securus/Yuzu) or Cigna (Ascend)</td></tr>
+        <tr><td class="row-label">Telemedicine</td><td class="blue-val">$0 via RelyMD, no deductible</td><td class="blue-val">$0 via Evo / FabricHealth</td><td style="color:#E8A836;font-weight:600">$0 via Evo / FabricHealth (Securus)</td></tr>
+        <tr><td class="row-label">Identity Documentation</td><td>ITIN or valid government-issued documentation accepted</td><td>ITIN or valid government-issued documentation accepted</td><td>ITIN or valid government-issued documentation accepted</td></tr>
+        <tr><td class="row-label">Enrollment Window</td><td>Open enrollment, 365 days/year</td><td>Open enrollment, 365 days/year</td><td>Open enrollment, 365 days/year</td></tr>
+        <tr><td class="row-label">Premium Sensitivity</td><td class="blue-val">High, starts ~$289/mo</td><td>Moderate, starts ~$621.50/mo</td><td style="color:#E8A836;font-weight:600">From $432.84/mo (Basic)</td></tr>
+        <tr><td class="row-label">Benefit Structure</td><td>Copay-based, visit-limited, defined caps</td><td class="blue-val">Coinsurance, no visit limits, no lifetime max</td><td>Copay-based, visit-limited (identical structure to MedMax)</td></tr>
+        <tr><td class="row-label">Maternity</td><td>12 months (subject to underwriting)</td><td class="blue-val">No waiting period (subject to underwriting)</td><td>MVP Pro: 12 months (subject to underwriting) · Basic: Not Covered</td></tr>
+        <tr><td class="row-label">TPA</td><td>Performance Health</td><td>Securus Benefits / Yuzu Health</td><td>Securus / Yuzu (First Health) · Ascend / TBA (Cigna)</td></tr>
+        <tr><td class="row-label">PBM</td><td>StarRx (generic only)</td><td class="blue-val">DisclosedRx (tiered, includes brand)</td><td>DisclosedRx (Securus/Yuzu) · THP (Ascend)</td></tr>
+        <tr><td class="row-label">Stop-Loss Reinsurer</td><td>SiriusPoint (A-Rated)</td><td>SiriusPoint (A-Rated)</td><td style="color:#E8A836;font-weight:600">SiriusPoint (A-Rated)</td></tr>
+      </table>
+    </div>
+    <div class="slide-footer light-footer">
+      <span class="footer-brand dark">O'Neill Marketing</span>
+      <span class="footer-slide dark">11 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 13 — DENTAL ANCILLARY -->
+  <div class="slide slide-light" data-notes="Dental is an easy add-on sale for any client in the suite. Lead with the price — $59.99/mo DHMO, $89.99/mo PPO. The DHMO plans have no annual max, no waiting periods on any services including major, and most preventive care is free. The PPO has a $1,500 annual max and 50% on major services with an 80% basic tier. Both are available in 37 states, both allow age 65+. Solstice is backed by UnitedHealth Group. Cigna DHMO uses the Cigna dental Access Plus network. Run a provider lookup before presenting either DHMO — the member must use a network dentist for coverage to apply.">
+    <div class="slide-header">
+      <span class="slide-header-badge">Ancillary · Dental</span>
+      <h2>Dental Coverage — DHMO &amp; PPO Options</h2>
+    </div>
+    <div class="slide-body pad-sm">
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.65rem;margin-bottom:0.85rem">
+        <div style="background:var(--navy);border-radius:8px;padding:0.65rem 0.85rem;text-align:center">
+          <div style="font-family:var(--font-h);font-size:1.35rem;font-weight:900;color:var(--lime);line-height:1">37</div>
+          <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--font-h);font-weight:600;margin-top:0.2rem">States Available</div>
+        </div>
+        <div style="background:var(--navy);border-radius:8px;padding:0.65rem 0.85rem;text-align:center">
+          <div style="font-family:var(--font-h);font-size:1.35rem;font-weight:900;color:var(--lime);line-height:1">65+</div>
+          <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--font-h);font-weight:600;margin-top:0.2rem">Age Eligible</div>
+        </div>
+        <div style="background:var(--navy);border-radius:8px;padding:0.65rem 0.85rem;text-align:center">
+          <div style="font-family:var(--font-h);font-size:1.35rem;font-weight:900;color:var(--lime);line-height:1">$0</div>
+          <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--font-h);font-weight:600;margin-top:0.2rem">Waiting Periods (DHMO)</div>
+        </div>
+        <div style="background:var(--navy);border-radius:8px;padding:0.65rem 0.85rem;text-align:center">
+          <div style="font-family:var(--font-h);font-size:1.35rem;font-weight:900;color:var(--lime);line-height:1">$0</div>
+          <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--font-h);font-weight:600;margin-top:0.2rem">Annual Max (DHMO)</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem">
+
+        <div class="card navy-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+            <h3 style="color:var(--lime);font-size:0.88rem">Solstice DHMO</h3>
+            <span style="font-family:var(--font-h);font-size:1rem;font-weight:900;color:var(--lime)">$59.99<span style="font-size:0.65rem;color:rgba(255,255,255,0.5)">/mo</span></span>
+          </div>
+          <div class="pill-row" style="margin-bottom:0.6rem;flex-wrap:wrap;gap:0.3rem">
+            <span class="pill pill-white" style="font-size:0.6rem">Solstice Network</span>
+            <span class="pill pill-white" style="font-size:0.6rem">No Annual Max</span>
+          </div>
+          <table style="width:100%;font-size:0.71rem;border-collapse:collapse;color:rgba(255,255,255,0.85)">
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Waiting Periods</td><td style="text-align:right;color:var(--lime);font-weight:700">None</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Deductibles / Max</td><td style="text-align:right;color:var(--lime);font-weight:700">None</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Preventive Care</td><td style="text-align:right;color:var(--lime);font-weight:700">$0 Copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Amalgam Fillings</td><td style="text-align:right;color:var(--lime);font-weight:700">$0 Copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Composite (1-surf ant.)</td><td style="text-align:right">$30 copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Crown (porcelain)</td><td style="text-align:right">$245 + lab</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Root Canal (molar)</td><td style="text-align:right">$245 copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Extraction (erupted)</td><td style="text-align:right">$20 copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Ortho (comprehensive adult)</td><td style="text-align:right">$2,350 copay</td></tr>
+            <tr><td style="padding:0.22rem 0;font-weight:600">Cosmetic / Whitening</td><td style="text-align:right;color:var(--lime)">Covered</td></tr>
+          </table>
+          <div style="margin-top:0.5rem;font-size:0.62rem;color:rgba(255,255,255,0.4)">SolsticeBenefits.com · 877-760-2247</div>
+        </div>
+
+        <div class="card navy-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+            <h3 style="color:var(--lime);font-size:0.88rem">Cigna DHMO</h3>
+            <span style="font-family:var(--font-h);font-size:1rem;font-weight:900;color:var(--lime)">$59.99<span style="font-size:0.65rem;color:rgba(255,255,255,0.5)">/mo</span></span>
+          </div>
+          <div class="pill-row" style="margin-bottom:0.6rem;flex-wrap:wrap;gap:0.3rem">
+            <span class="pill pill-white" style="font-size:0.6rem">Cigna Access Plus</span>
+            <span class="pill pill-white" style="font-size:0.6rem">No Annual Max</span>
+          </div>
+          <table style="width:100%;font-size:0.71rem;border-collapse:collapse;color:rgba(255,255,255,0.85)">
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Waiting Periods</td><td style="text-align:right;color:var(--lime);font-weight:700">None</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Deductibles / Max</td><td style="text-align:right;color:var(--lime);font-weight:700">None</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Preventive Care</td><td style="text-align:right;color:var(--lime);font-weight:700">$0 Copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Amalgam Fillings</td><td style="text-align:right;color:var(--lime);font-weight:700">$0 Copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Composite (1-surf ant.)</td><td style="text-align:right;color:var(--lime);font-weight:700">$0 Copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Crown (porcelain)</td><td style="text-align:right">$225 copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Root Canal (molar)</td><td style="text-align:right">$170 copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Extraction (erupted)</td><td style="text-align:right;color:var(--lime);font-weight:700">$0 copay</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Ortho (adult 24-mo)</td><td style="text-align:right">$1,992 total</td></tr>
+            <tr><td style="padding:0.22rem 0;font-weight:600">Home Whitening</td><td style="text-align:right">$165/arch</td></tr>
+          </table>
+          <div style="margin-top:0.5rem;font-size:0.62rem;color:rgba(255,255,255,0.4)">hcpdirectory.cigna.com → Employer or School → Access Plus</div>
+        </div>
+
+        <div class="card navy-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+            <h3 style="color:var(--lime);font-size:0.88rem">Solstice PPO</h3>
+            <span style="font-family:var(--font-h);font-size:1rem;font-weight:900;color:var(--lime)">$89.99<span style="font-size:0.65rem;color:rgba(255,255,255,0.5)">/mo</span></span>
+          </div>
+          <div class="pill-row" style="margin-bottom:0.6rem;flex-wrap:wrap;gap:0.3rem">
+            <span class="pill pill-white" style="font-size:0.6rem">In &amp; Out of Network</span>
+            <span class="pill pill-white" style="font-size:0.6rem">$1,500 Annual Max</span>
+          </div>
+          <table style="width:100%;font-size:0.71rem;border-collapse:collapse;color:rgba(255,255,255,0.85)">
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Deductible (Ind / Fam)</td><td style="text-align:right">$50 / $150</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Annual Maximum</td><td style="text-align:right;font-weight:700;color:#fff">$1,500/person</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Preventive &amp; Diagnostic</td><td style="text-align:right;color:var(--lime);font-weight:700">100%</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-size:0.62rem;color:rgba(255,255,255,0.5)">Cleanings, X-rays, exams, sealants, fluoride</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Basic Services</td><td style="text-align:right;font-weight:700;color:#fff">80%</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-size:0.62rem;color:rgba(255,255,255,0.5)">Fillings, extractions, endo, perio, oral surgery</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Major Services</td><td style="text-align:right;font-weight:700;color:#fff">50%</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-size:0.62rem;color:rgba(255,255,255,0.5)">Crowns, bridges, dentures, inlays/onlays</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Orthodontics</td><td style="text-align:right;color:#EF9A9A">Not Covered</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><td style="padding:0.22rem 0;font-weight:600">Out-of-Network</td><td style="text-align:right;color:var(--lime);font-weight:700">Same Benefit</td></tr>
+            <tr><td style="padding:0.22rem 0;font-weight:600">Waiting Periods</td><td style="text-align:right;color:var(--lime);font-weight:700">None</td></tr>
+          </table>
+          <div style="margin-top:0.5rem;font-size:0.62rem;color:rgba(255,255,255,0.4)">Plan 11029 · MySolstice.net · 877-760-2247</div>
+        </div>
+      </div>
+
+      <div style="margin-top:0.55rem;background:#0B2545;border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:0.5rem 0.85rem;font-size:0.72rem;color:#FFFFFF;display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center">
+        <span><strong style="color:var(--lime)">DHMO:</strong> Must use a network dentist. No out-of-network coverage except emergencies.</span>
+        <span><strong style="color:var(--lime)">PPO:</strong> Same benefit level in and out of network. Deductible applies to all services.</span>
+        <span><strong style="color:var(--lime)">All Plans:</strong> Guaranteed issue · No waiting periods · Age 65+ eligible · 37 states.</span>
+        <span style="margin-left:auto;color:rgba(255,255,255,0.45);font-size:0.64rem;font-style:italic">Solstice Benefits is a subsidiary of UnitedHealth Group</span>
+      </div>
+
+    </div>
+    <div class="slide-footer light-footer">
+      <span class="footer-brand dark">O'Neill Marketing</span>
+      <span class="footer-slide dark">12 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 13 — WHAT'S BEHIND THESE PLANS -->
+  <div class="slide slide-dark" data-notes="Walk the five layers from left to right — keep it simple and practical. Who holds the plan, who handles claims, what network connects members to providers, and what financially backs it all. This is not a legal explanation. It is a product infrastructure overview. Your goal is for every agent in the room to be able to answer the question 'what is this backed by' with confidence and without hesitation.">
+    <div class="lime-bar"></div>
+    <div class="slide-header">
+      <span class="slide-header-badge">Product Infrastructure</span>
+      <h2>What's Behind These Plans</h2>
+    </div>
+    <div class="slide-body" style="justify-content:center">
+
+      <!-- Five-layer horizontal flow -->
+      <div style="display:flex;align-items:stretch;gap:0;margin-bottom:1.25rem;position:relative">
+
+        <!-- Layer 1 -->
+        <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(174,221,39,0.3);border-radius:12px;padding:1.25rem 0.85rem;text-align:center;position:relative;z-index:1;margin:0 0.4rem">
+          <div style="font-family:var(--font-h);font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--lime);margin-bottom:0.6rem">Step 1</div>
+          <div style="font-size:1.75rem;margin-bottom:0.5rem">🏛</div>
+          <h3 style="color:var(--white);font-size:0.82rem;font-weight:700;margin-bottom:0.35rem">Federal Framework</h3>
+          <p style="color:rgba(255,255,255,0.55);font-size:0.72rem;line-height:1.6">A long-established federal structure governs how these benefit plans are organized and operated.</p>
+        </div>
+
+        <!-- Arrow -->
+        <div style="display:flex;align-items:center;color:var(--lime);font-size:1.1rem;z-index:2;margin:0 -0.2rem">→</div>
+
+        <!-- Layer 2 -->
+        <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(174,221,39,0.3);border-radius:12px;padding:1.25rem 0.85rem;text-align:center;position:relative;z-index:1;margin:0 0.4rem">
+          <div style="font-family:var(--font-h);font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--lime);margin-bottom:0.6rem">Step 2</div>
+          <div style="font-size:1.75rem;margin-bottom:0.5rem">📋</div>
+          <h3 style="color:var(--white);font-size:0.82rem;font-weight:700;margin-bottom:0.35rem">Plan Sponsor</h3>
+          <p style="color:rgba(255,255,255,0.55);font-size:0.72rem;line-height:1.6">A sponsoring entity holds and administers the benefit plan. Members enroll and gain access to coverage.</p>
+        </div>
+
+        <!-- Arrow -->
+        <div style="display:flex;align-items:center;color:var(--lime);font-size:1.1rem;z-index:2;margin:0 -0.2rem">→</div>
+
+        <!-- Layer 3 -->
+        <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(174,221,39,0.3);border-radius:12px;padding:1.25rem 0.85rem;text-align:center;position:relative;z-index:1;margin:0 0.4rem">
+          <div style="font-family:var(--font-h);font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--lime);margin-bottom:0.6rem">Step 3</div>
+          <div style="font-size:1.75rem;margin-bottom:0.5rem">⚙️</div>
+          <h3 style="color:var(--white);font-size:0.82rem;font-weight:700;margin-bottom:0.35rem">TPA</h3>
+          <p style="color:rgba(255,255,255,0.55);font-size:0.72rem;line-height:1.6">A third-party administrator handles all claims, prior authorizations, member services, and ID cards.</p>
+        </div>
+
+        <!-- Arrow -->
+        <div style="display:flex;align-items:center;color:var(--lime);font-size:1.1rem;z-index:2;margin:0 -0.2rem">→</div>
+
+        <!-- Layer 4 -->
+        <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(174,221,39,0.3);border-radius:12px;padding:1.25rem 0.85rem;text-align:center;position:relative;z-index:1;margin:0 0.4rem">
+          <div style="font-family:var(--font-h);font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--lime);margin-bottom:0.6rem">Step 4</div>
+          <div style="font-size:1.75rem;margin-bottom:0.5rem">🏥</div>
+          <h3 style="color:var(--white);font-size:0.82rem;font-weight:700;margin-bottom:0.35rem">PPO Network</h3>
+          <p style="color:rgba(255,255,255,0.55);font-size:0.72rem;line-height:1.6">Cigna or First Health PPO connects members to hundreds of thousands of providers at negotiated rates.</p>
+        </div>
+
+        <!-- Arrow -->
+        <div style="display:flex;align-items:center;color:var(--lime);font-size:1.1rem;z-index:2;margin:0 -0.2rem">→</div>
+
+        <!-- Layer 5 -->
+        <div style="flex:1;background:rgba(174,221,39,0.08);border:2px solid var(--lime);border-radius:12px;padding:1.25rem 0.85rem;text-align:center;position:relative;z-index:1;margin:0 0.4rem">
+          <div style="font-family:var(--font-h);font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--lime);margin-bottom:0.6rem">Step 5</div>
+          <div style="font-size:1.75rem;margin-bottom:0.5rem">🛡</div>
+          <h3 style="color:var(--lime);font-size:0.82rem;font-weight:700;margin-bottom:0.35rem">A-Rated Stop-Loss</h3>
+          <p style="color:rgba(255,255,255,0.7);font-size:0.72rem;line-height:1.6">SiriusPoint — an A-rated carrier — provides the financial backstop on large claims, protecting plan stability.</p>
+        </div>
+      </div>
+
+      <!-- Single bottom context card -->
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:1rem 1.5rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem">
+        <div style="text-align:center">
+          <div style="font-family:var(--font-h);font-size:1.4rem;font-weight:900;color:var(--lime)">900K+</div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.55);margin-top:0.2rem">First Health PPO providers</div>
+        </div>
+        <div style="text-align:center;border-left:1px solid rgba(255,255,255,0.1);border-right:1px solid rgba(255,255,255,0.1)">
+          <div style="font-family:var(--font-h);font-size:1.4rem;font-weight:900;color:var(--lime)">A-Rated</div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.55);margin-top:0.2rem">SiriusPoint stop-loss carrier</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:var(--font-h);font-size:1.4rem;font-weight:900;color:var(--lime)">365</div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.55);margin-top:0.2rem">Days/year open enrollment</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="slide-footer">
+      <span class="footer-brand">O'Neill Marketing</span>
+      <span class="footer-slide">13 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 5 — SECTION BREAK: MEDPERFORMANCE -->
+  <div class="slide slide-dark" data-notes="This is the compliance guardrails slide. Deliver it seriously and slowly. Every agent needs to hear this clearly. The 'do not say' items are the most important; these are the phrases that create misrepresentation liability. Then give them the affirmative script they should use instead.">
+    <div class="lime-bar"></div>
+    <div class="slide-header">
+      <span class="slide-header-badge">Agent Compliance</span>
+      <h2>What to Say, and What Not to Say</h2>
+    </div>
+    <div class="slide-body">
+      <div class="grid-2" style="gap:1.5rem">
+        <div>
+          <h3 class="subhead" style="color:#EF9A9A;margin-bottom:0.85rem">❌ Never Say These</h3>
+          <div class="card navy-card" style="margin-bottom:0.65rem">
+            <h3 style="color:#EF9A9A;font-size:0.82rem">"This is the same as having Cigna insurance."</h3>
+            <p class="white" style="font-size:0.76rem">The plan uses the Cigna network. Claims are funded by the plan, not Cigna.</p>
+          </div>
+          <div class="card navy-card" style="margin-bottom:0.65rem">
+            <h3 style="color:#EF9A9A;font-size:0.82rem">"This is an ACA plan."</h3>
+            <p class="white" style="font-size:0.76rem">These are ERISA-governed plans. Legally distinct from ACA marketplace coverage.</p>
+          </div>
+          <div class="card navy-card" style="margin-bottom:0.65rem">
+            <h3 style="color:#EF9A9A;font-size:0.82rem">"Cancel your marketplace plan; this is the same thing for less."</h3>
+            <p class="white" style="font-size:0.76rem">Never make benefit equivalence claims. Subsidy reconciliation and ACA compliance require proper consultation.</p>
+          </div>
+          <div class="card navy-card">
+            <h3 style="color:#EF9A9A;font-size:0.82rem">"This is real major medical." (for MedMax)</h3>
+            <p class="white" style="font-size:0.76rem">MedMax is a defined-benefit PPO with annual utilization caps. Must be described accurately.</p>
+          </div>
+        </div>
+        <div>
+          <h3 class="subhead lime" style="margin-bottom:0.85rem">✓ Use This Language Instead</h3>
+          <div style="background:rgba(174,221,39,0.08);border:1px solid rgba(174,221,39,0.2);border-radius:10px;padding:1.25rem;margin-bottom:1rem">
+            <div style="font-family:var(--font-h);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--lime);margin-bottom:0.5rem">For MedPerformance</div>
+            <p style="font-size:0.85rem;line-height:1.75;color:rgba(255,255,255,0.8);font-style:italic">"MedPerformance is a self-funded ERISA major medical plan on the Cigna PPO network, with no lifetime benefit maximum, covers hospital, surgery, specialist, and prescriptions. Administered by Securus Benefits / Yuzu Health with A-rated stop-loss carrier backing."</p>
+          </div>
+          <div style="background:rgba(174,221,39,0.08);border:1px solid rgba(174,221,39,0.2);border-radius:10px;padding:1.25rem">
+            <div style="font-family:var(--font-h);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--lime);margin-bottom:0.5rem">For MedMax</div>
+            <p style="font-size:0.85rem;line-height:1.75;color:rgba(255,255,255,0.8);font-style:italic">"MedMax is a self-funded ERISA defined-benefit PPO on the First Health network. It has scheduled copay benefits with annual utilization limits I'll walk you through, and unlimited $0 telemedicine through RelyMD starting day one."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span class="footer-brand">O'Neill Marketing</span>
+      <span class="footer-slide">14 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 13 — OBJECTIONS -->
+  <div class="slide slide-light" data-notes="Walk through these one at a time. Don't rush. For each objection, acknowledge it genuinely before answering; never dismiss a concern. The 'is this real insurance' objection is the most common and most important to handle well. The 'plan going under' objection is where SiriusPoint and the stop-loss structure are your credibility anchors.">
+    <div class="slide-header">
+      <span class="slide-header-badge">Sales Training</span>
+      <h2>Handling the Most Common Objections</h2>
+    </div>
+    <div class="slide-body pad-sm">
+      <div class="grid-2" style="gap:1rem">
+        <div class="objection-card" style="background:var(--white);border:1px solid #D8E2F0;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(11,37,69,0.07)">
+          <div style="background:#FFEBEE;border-bottom:1px solid #FFCDD2;padding:0.75rem 1rem;font-family:var(--font-h);font-size:0.82rem;font-weight:700;color:#C62828">"Is this real insurance? I've been burned before."</div>
+          <div style="padding:0.85rem 1rem;font-size:0.82rem;line-height:1.7;color:#3A5070">This is a legitimate PPO health plan, not a discount card. It's on the <strong>First Health / Cigna network</strong>, you get a member ID card, and it pays claims through real network pricing. It's a defined-benefit plan, so let me walk you through the structure so you know exactly what you're getting.</div>
+        </div>
+        <div class="objection-card" style="background:var(--white);border:1px solid #D8E2F0;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(11,37,69,0.07)">
+          <div style="background:#FFEBEE;border-bottom:1px solid #FFCDD2;padding:0.75rem 1rem;font-family:var(--font-h);font-size:0.82rem;font-weight:700;color:#C62828">"This isn't 'real' Cigna; can I use it at Cigna providers?"</div>
+          <div style="padding:0.85rem 1rem;font-size:0.82rem;line-height:1.7;color:#3A5070">You'll use it at Cigna in-network providers, same directory, same discounts. The distinction is that it's <strong>self-funded under ERISA</strong>, administered by Securus Benefits / Yuzu Health. Cigna provides the network; Securus Benefits / Yuzu Health handles the claims. Your provider interaction is identical.</div>
+        </div>
+        <div class="objection-card" style="background:var(--white);border:1px solid #D8E2F0;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(11,37,69,0.07)">
+          <div style="background:#FFEBEE;border-bottom:1px solid #FFCDD2;padding:0.75rem 1rem;font-family:var(--font-h);font-size:0.82rem;font-weight:700;color:#C62828">"What if the plan goes under?"</div>
+          <div style="padding:0.85rem 1rem;font-size:0.82rem;line-height:1.7;color:#3A5070">Both plans carry stop-loss reinsurance through <strong>SiriusPoint, an A-rated carrier</strong>. The plan structure is the same framework used by large employers and unions to cover millions of Americans. It's built with layered financial protection, not open-ended exposure.</div>
+        </div>
+        <div class="objection-card" style="background:var(--white);border:1px solid #D8E2F0;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(11,37,69,0.07)">
+          <div style="background:#FFEBEE;border-bottom:1px solid #FFCDD2;padding:0.75rem 1rem;font-family:var(--font-h);font-size:0.82rem;font-weight:700;color:#C62828">"Why not just get an ACA plan?"</div>
+          <div style="padding:0.85rem 1rem;font-size:0.82rem;line-height:1.7;color:#3A5070">If you qualify for a meaningful subsidy, the ACA may well be the right answer; we'll look at that first. These plans are specifically designed for clients <strong>who don't qualify for a subsidy</strong>, can't use the marketplace, or are between enrollment windows. That's a large and underserved population.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer light-footer">
+      <span class="footer-brand dark">O'Neill Marketing</span>
+      <span class="footer-slide dark">15 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 14 — AGENT ELIGIBILITY & CONTRACTING -->
+  <div class="slide slide-dark" data-notes="Quick and practical. Agents want to know how fast they can get started. The key message: no carrier appointment, no long waiting period. If they have a state health license and E&O, they can be writing within days. Keep this slide short and confident.">
+    <div class="lime-bar"></div>
+    <div class="slide-header">
+      <span class="slide-header-badge">Getting Contracted</span>
+      <h2>Agent Eligibility: How to Get Writing</h2>
+    </div>
+    <div class="slide-body">
+      <div class="grid-2" style="gap:1.5rem;align-items:start">
+        <div>
+          <h2 class="heading white" style="font-size:1.6rem;margin-bottom:1rem">Three Requirements.<br>Fast Approval.</h2>
+          <div class="step-row">
+            <div class="step-num">1</div>
+            <div class="step-content"><h4 style="color:var(--white)">Active State Health License</h4><p style="color:var(--muted)">Must hold a current health insurance license in the state where you're writing business.</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">2</div>
+            <div class="step-content"><h4 style="color:var(--white)">Errors &amp; Omissions (E&amp;O) Coverage</h4><p style="color:var(--muted)">Current E&amp;O policy required for all writing agents.</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">3</div>
+            <div class="step-content"><h4 style="color:var(--white)">No Direct Carrier Appointment Needed</h4><p style="color:var(--muted)">These are private, non-exchange plans. Market and enroll immediately once approved through O'Neill Marketing.</p></div>
+          </div>
+          <div class="card navy-card" style="margin-top:1rem">
+            <h3 class="lime">Important: Won't Affect ACA or Medicare Contracts</h3>
+            <p class="white">These are off-exchange private health products. Writing them does not impact your ACA FFM certification or any Medicare contracting agreements.</p>
+          </div>
+        </div>
+        <div>
+          <h3 class="subhead lime" style="margin-bottom:0.75rem">Writing Cutoff Dates</h3>
+          <table class="cmp-table" style="margin-bottom:1rem">
+            <tr><th>Plan</th><th>Cutoff Date</th></tr>
+            <tr><td>MedMax</td><td class="blue-val">25th of the month</td></tr>
+            <tr style="background:#FFF3F3"><td style="font-weight:700;color:#1A1A2E">MedPerformance</td><td style="font-weight:800;color:#C62828;font-family:var(--font-h)">20th of the month</td></tr>
+            <tr><td>MedAccess MVP</td><td class="blue-val">25th of the month</td></tr>
+          </table>
+          <h3 class="subhead lime" style="margin-bottom:0.75rem;margin-top:1rem">States Not Available</h3>
+          <div class="card navy-card">
+            <p class="white">Washington (WA) is excluded from all plans. All other 49 states are eligible for MedMax and MedPerformance.</p>
+          </div>
+          <div class="info-box" style="background:rgba(21,101,192,0.15);border-left-color:var(--blue2);color:rgba(255,255,255,0.8);margin-top:0.85rem">
+            <strong style="color:var(--lime)">Enrollment:</strong> Simple digital application through the agent portal with fast decisioning, typically 5 minutes or less per application.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span class="footer-brand">O'Neill Marketing</span>
+      <span class="footer-slide">16 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 15 — SUPPORT STRUCTURE -->
+  <div class="slide slide-light" data-notes="Walk through the support chain clearly. EnrollPrime Support is the first stop for all billing, claims, and eligibility inquiries. Walk through the agent onboarding checklist; these steps prevent the most common member service failures.">
+    <div class="slide-header">
+      <span class="slide-header-badge">Member &amp; Agent Support</span>
+      <h2>Support Structure: Who to Call and When</h2>
+    </div>
+    <div class="slide-body pad-sm">
+      <!-- Top: EnrollPrime primary support full width -->
+      <div class="card blue-accent" style="margin-bottom:1rem;padding:1.25rem 1.5rem">
+        <div style="display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:start">
+          <div>
+            <h3 style="font-size:1rem;margin-bottom:0.4rem">Primary Support: EnrollPrime</h3>
+            <p style="font-size:0.85rem;line-height:1.7;color:#3A5070">EnrollPrime is the <strong>centralized front-end platform</strong> for all policy changes, billing updates, payment processing, dependent adjustments, and enrollment. For clinical or prescription questions, members and agents should contact the responsible TPA or PBM directly.</p>
+          </div>
+          <div style="background:#E8F1FB;border-radius:8px;padding:0.75rem 1.1rem;font-size:0.82rem;color:var(--navy);white-space:nowrap;flex-shrink:0">
+            📞 <strong>888-235-1299</strong><br>
+            ✉️ <strong>support@enrollprime.com</strong><br>
+            <span style="font-size:0.72rem;color:#4A6285">CC: off-market@oneillmarketing.net</span>
+          </div>
+        </div>
+      </div>
+      <!-- Bottom: 3-col TPA / PBM / Scope -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+        <div class="card lime-accent">
+          <h3 style="margin-bottom:0.6rem">TPA by Plan</h3>
+          <table style="width:100%;font-size:0.8rem;border-collapse:collapse">
+            <tr style="background:#F0F5FC">
+              <td style="padding:0.45rem 0.6rem;font-weight:700;color:var(--navy);border-radius:6px 0 0 0">MedMax</td>
+              <td style="padding:0.45rem 0.6rem;color:#3A5070">Performance Health<br><a href="https://www.myperformancehlth.com/" style="color:var(--blue);font-size:0.72rem;font-weight:600" target="_blank">myperformancehlth.com</a></td>
+            </tr>
+            <tr>
+              <td style="padding:0.45rem 0.6rem;font-weight:700;color:var(--navy)">MedPerformance</td>
+              <td style="padding:0.45rem 0.6rem;color:#3A5070">Securus Benefits / Yuzu Health<br>
+                <a href="https://portal.securusbenefits.com/signin" style="color:var(--blue);font-size:0.72rem;font-weight:600" target="_blank">portal.securusbenefits.com</a>
+                · <span style="font-size:0.72rem">(877) 420-0785</span>
+              </td>
+            </tr>
+            <tr style="background:#F0F5FC">
+              <td style="padding:0.45rem 0.6rem;font-weight:700;color:var(--navy)">MedAccess MVP<br><span style="font-size:0.7rem;color:#7A90B0;font-weight:400">Cigna PPO</span></td>
+              <td style="padding:0.45rem 0.6rem;color:#3A5070">Ascend (The Health Plan)</td>
+            </tr>
+            <tr>
+              <td style="padding:0.45rem 0.6rem;font-weight:700;color:var(--navy)">MedAccess MVP Pro<br><span style="font-size:0.7rem;color:#7A90B0;font-weight:400">Cigna PPO</span></td>
+              <td style="padding:0.45rem 0.6rem;color:#3A5070">Ascend (The Health Plan)</td>
+            </tr>
+            <tr style="background:#F0F5FC">
+              <td style="padding:0.45rem 0.6rem;font-weight:700;color:var(--navy)">MedAccess MVP<br><span style="font-size:0.7rem;color:#7A90B0;font-weight:400">First Health PPO</span></td>
+              <td style="padding:0.45rem 0.6rem;color:#3A5070">Securus Benefits / Yuzu Health<br>
+                <a href="https://portal.securusbenefits.com/signin" style="color:var(--blue);font-size:0.72rem;font-weight:600" target="_blank">portal.securusbenefits.com</a>
+              </td>
+            </tr>
+          </table>
+          <div class="info-box" style="margin-top:0.75rem;font-size:0.75rem">TPAs handle all claims processing, prior authorization, eligibility verification, and member portal access. Contact the TPA directly for any clinical or benefits questions.</div>
+        </div>
+        <div class="card blue-accent">
+          <h3 style="margin-bottom:0.6rem">PBM by Plan</h3>
+          <table style="width:100%;font-size:0.8rem;border-collapse:collapse">
+            <tr style="background:#F0F5FC">
+              <td style="padding:0.45rem 0.6rem;font-weight:700;color:var(--navy)">MedMax</td>
+              <td style="padding:0.45rem 0.6rem;color:#3A5070">StarRx<br><span style="font-size:0.72rem;color:#7A90B0">Generic formulary only</span></td>
+            </tr>
+            <tr>
+              <td style="padding:0.45rem 0.6rem;font-weight:700;color:var(--navy)">MedPerformance</td>
+              <td style="padding:0.45rem 0.6rem;color:#3A5070">DisclosedRx<br><span style="font-size:0.72rem;color:#7A90B0">Tiered · (888) 589-3340</span></td>
+            </tr>
+            <tr style="background:#F0F5FC">
+              <td style="padding:0.45rem 0.6rem;font-weight:700;color:var(--navy)">MedAccess MVP<br><span style="font-size:0.7rem;color:#7A90B0;font-weight:400">Cigna PPO</span></td>
+              <td style="padding:0.45rem 0.6rem;color:#3A5070">THP<br>
+                <span style="font-weight:600;color:var(--navy)">Preventive Generic:</span> $0 · <span style="font-weight:600;color:var(--navy)">Generic:</span> $10
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0.45rem 0.6rem;font-weight:700;color:var(--navy)">MedAccess MVP Pro<br><span style="font-size:0.7rem;color:#7A90B0;font-weight:400">Cigna PPO</span></td>
+              <td style="padding:0.45rem 0.6rem;color:#3A5070">THP<br>
+                <span style="font-weight:600;color:var(--navy)">Preventive Generic:</span> $0 · <span style="font-weight:600;color:var(--navy)">Generic:</span> 20% · <span style="font-weight:600;color:var(--navy)">Preferred Brand:</span> 20%
+              </td>
+            </tr>
+            <tr style="background:#F0F5FC">
+              <td style="padding:0.45rem 0.6rem;font-weight:700;color:var(--navy)">MedAccess MVP<br><span style="font-size:0.7rem;color:#7A90B0;font-weight:400">First Health PPO</span></td>
+              <td style="padding:0.45rem 0.6rem;color:#3A5070">DisclosedRx<br>
+                <span style="font-size:0.72rem;color:#7A90B0">(888) 589-3340</span>
+              </td>
+            </tr>
+          </table>
+          <div class="info-box" style="margin-top:0.75rem;font-size:0.75rem">PBMs handle all prescription drug questions, formulary lookups, pharmacy network, and Rx prior authorization. Contact the PBM directly for any prescription-related inquiries.</div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--navy)">
+          <h3 style="margin-bottom:0.6rem">What EnrollPrime Handles</h3>
+          <ul class="blist sm" style="margin-bottom:0.75rem">
+            <li>Policy changes and plan adjustments</li>
+            <li>Billing updates and payment processing</li>
+            <li>Dependent additions and removals</li>
+            <li>Enrollment and application support</li>
+          </ul>
+          <h3 style="margin-bottom:0.45rem;font-size:0.82rem;color:#C62828">Not Handled by EnrollPrime</h3>
+          <ul class="blist sm">
+            <li style="color:#C62828">Clinical coverage determinations</li>
+            <li style="color:#C62828">Prior authorization requests</li>
+            <li style="color:#C62828">Prescription formulary questions</li>
+            <li style="color:#C62828">Claims status and EOB inquiries</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer light-footer">
+      <span class="footer-brand dark">O'Neill Marketing</span>
+      <span class="footer-slide dark">17 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 16 — THE FULL SUITE -->
+
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 17 — WHY AGENTS TRUST THESE PLANS -->
+  <div class="slide slide-light" data-notes="Confidence-building slide. Summarize the five pillars that make these plans worth presenting with conviction: federal legal structure, proven TPA, real PPO network, A-rated stop-loss, and year-round enrollment. This is the close of the educational section before Q&A.">
+    <div class="slide-header">
+      <span class="slide-header-badge">Why These Plans Work</span>
+      <h2>Five Reasons Agents Present These With Confidence</h2>
+    </div>
+    <div class="slide-body">
+      <div class="grid-3" style="gap:1rem;margin-bottom:1.25rem">
+        <div class="card lime-accent">
+          <div style="font-size:1.8rem;margin-bottom:0.5rem">⚖️</div>
+          <h3>Federal Legal Structure</h3>
+          <p>ERISA is a 50-year-old federal statute. These plans are structured under applicable ERISA provisions with legal counsel review of plan documents and sponsor eligibility. The regulatory framework is well-established at the federal level.</p>
+        </div>
+        <div class="card lime-accent">
+          <div style="font-size:1.8rem;margin-bottom:0.5rem">🏥</div>
+          <h3>Real PPO Networks</h3>
+          <p>Cigna PPO and First Health PPO (Aetna subsidiary), two of the largest provider networks in the country. Members have genuine access to the same doctors as carrier plans.</p>
+        </div>
+        <div class="card lime-accent">
+          <div style="font-size:1.8rem;margin-bottom:0.5rem">🛡️</div>
+          <h3>A-Rated Stop-Loss</h3>
+          <p>SiriusPoint provides aggregate and specific stop-loss reinsurance for both plans. The plan sponsor's claims exposure is capped, protecting both the plan and its members.</p>
+        </div>
+        <div class="card lime-accent">
+          <div style="font-size:1.8rem;margin-bottom:0.5rem">🏢</div>
+          <h3>Experienced TPAs</h3>
+          <p>Securus Benefits / Yuzu Health (MedPerformance), Performance Health (MedMax), Ascend (The Health Plan) (MedAccess Cigna), and Securus Benefits / Yuzu Health (MedAccess First Health) are established third-party administrators with proven claims infrastructure.</p>
+        </div>
+        <div class="card lime-accent">
+          <div style="font-size:1.8rem;margin-bottom:0.5rem">📅</div>
+          <h3>Year-Round Enrollment</h3>
+          <p>No ACA open enrollment window. Agents can write business any day of the year, capture clients at the moment of need, and build a consistent production pipeline.</p>
+        </div>
+      </div>
+      <div class="lime-box"><strong>For agents:</strong> These plans are structured under applicable ERISA provisions with legal counsel oversight of plan documents and compliance requirements. Present them accurately, disclose their structure and limitations clearly, and ensure every client understands what they are enrolling in.</div>
+    </div>
+    <div class="slide-footer light-footer">
+      <span class="footer-brand dark">O'Neill Marketing</span>
+      <span class="footer-slide dark">18 / 19</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 18 — CLOSE -->
+  <div class="slide slide-dark" data-notes="Close confidently. This is your call to action. Three paths forward: get contracted if they aren't yet, pull up the agent portal, or reach out directly. Leave the room with a clear next step for every attendee. Thank them, invite questions, and don't rush this slide.">
+    <div class="lime-bar"></div>
+    <div class="title-bg-circle"></div>
+    <div class="title-bg-circle2"></div>
+    <div class="title-slide-inner">
+      <div class="eyebrow">Next Steps</div>
+      <h1 class="title" style="font-size:2.5rem">Let's Get You<br><em>Writing Business</em></h1>
+      <p class="lead" style="margin-top:0.75rem;margin-bottom:1.5rem">The market is large, the legal structure is sound, and your clients need these solutions today.</p>
+      <div class="outro-grid">
+        <div class="outro-item">
+          <div class="num">01</div>
+          <h4>Get Contracted</h4>
+          <p>Active health license + E&amp;O. No carrier appointment needed. Approval in days, not weeks.</p>
+        </div>
+        <div class="outro-item">
+          <div class="num">02</div>
+          <h4>Access the Agent Portal</h4>
+          <p>Quote tools, provider search, eligibility questionnaires, and application portal, all in one place.</p>
+        </div>
+        <div class="outro-item">
+          <div class="num">03</div>
+          <h4>Reach Your Team</h4>
+          <p>off-market@oneillmarketing.net<br>813-489-4156</p>
+        </div>
+      </div>
+      <div style="margin-top:1.5rem;display:flex;gap:0.75rem;align-items:center">
+        <div style="height:1px;flex:1;background:rgba(255,255,255,0.1)"></div>
+        <span style="font-family:var(--font-h);font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.35);letter-spacing:0.1em;text-transform:uppercase">O'Neill Marketing · Private Plan Playbook</span>
+        <div style="height:1px;flex:1;background:rgba(255,255,255,0.1)"></div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span class="footer-brand">O'Neill Marketing</span>
+      <span class="footer-slide">19 / 19</span>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- ── SPEAKER NOTES ───────────────────────────────── -->
+<div id="notes-panel">
+  <div class="notes-inner">
+    <div class="notes-label">Speaker Notes</div>
+    <div class="notes-text" id="notes-text">Notes will appear here.</div>
+  </div>
+</div>
+
+<!-- ── CONTROLS ───────────────────────────────────── -->
+<div id="controls">
+  <button class="ctrl-btn" id="notesBtn" onclick="toggleNotes()" title="Speaker Notes (N)">📝</button>
+  <button class="ctrl-btn" onclick="prevSlide()" title="Previous (←)">‹</button>
+  <span id="slide-counter">19 / 19</span>
+  <button class="ctrl-btn" onclick="nextSlide()" title="Next (→)">›</button>
+  <button class="ctrl-btn" onclick="toggleFullscreen()" title="Fullscreen (F)">⛶</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+  let notesOpen = false;
+
+  function goTo(n) {
+    if (n < 0 || n >= total) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('exit');
+    setTimeout(() => slides[current < n ? current : n + (current - n)].classList.remove('exit'), 350);
+    // clean up all exit states
+    setTimeout(() => slides.forEach(s => s.classList.remove('exit')), 400);
+    current = n;
+    slides[current].classList.add('active');
+    document.getElementById('slide-counter').textContent = (current + 1) + ' / ' + total;
+    document.getElementById('progress').style.width = ((current + 1) / total * 100) + '%';
+    // update notes
+    const note = slides[current].dataset.notes || '';
+    document.getElementById('notes-text').textContent = note || 'No notes for this slide.';
+  }
+
+  function nextSlide() { goTo(current + 1); }
+  function prevSlide() { goTo(current - 1); }
+
+  function toggleNotes() {
+    notesOpen = !notesOpen;
+    document.getElementById('notes-panel').classList.toggle('open', notesOpen);
+    document.getElementById('notesBtn').style.color = notesOpen ? 'var(--lime)' : '';
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); prevSlide(); }
+    if (e.key === 'n' || e.key === 'N') toggleNotes();
+    if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+  });
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) { dx < 0 ? nextSlide() : prevSlide(); }
+  });
+
+
+  // ── MedAccess Benefits Toggle ────────────────────────────────────────────
+  const maData = {
+    basic: {
+      oop: '$7,350 / $14,700', pcp: '$25 copay · 6/yr', spec: '$50 copay · 6/yr',
+      uc: '$50 copay · 2/yr', lab: '$50 copay · 3/yr', img: '$350 copay · 1/yr',
+      ip: '$350/admit · 3 days/yr', ipsurg: 'Included in IP Hospitalization Copay',
+      opsurg: '$350 copay · 1/yr', er: '$350 copay · 1/yr', amb: '$250 copay · 1/yr',
+      hh: '$25 copay · 5 visits/yr', rehab: '$50/day · 6 visits/yr',
+      mat: 'Not Covered', matColor: '#C62828',
+      gen: '$10 Copay', brand: 'Not Covered', brandColor: '#C62828',
+      rateEmp: '$432.84', rateSpouse: '$776.12', rateChild: '$670.15', rateFam: '$997.01',
+      uwPill: '~99% GI · 1 Question', header: 'MVP Basic'
+    },
+    pro: {
+      oop: '$5,000 / $10,000', pcp: '$15 copay · 12/yr', spec: '$25 copay · 12/yr',
+      uc: '$35 copay · 3/yr', lab: '$50 copay · 4/yr', img: '$350 copay · 3/yr',
+      ip: '$350/admit · 10 days/yr', ipsurg: 'Included in IP Hospitalization Copay · 4 surgeries/yr',
+      opsurg: '$350 copay · 2/yr', er: '$350 copay · 2/yr', amb: '$250 copay · 2/yr',
+      hh: '$25 copay · 20 visits/yr', rehab: '$50/day · 12 visits/yr',
+      mat: '$350 copay/admit', matColor: '#1565C0',
+      gen: '20% Copay', brand: '20% Copay', brandColor: '#1565C0',
+      rateEmp: '$567.16', rateSpouse: '$1,097.01', rateChild: '$886.57', rateFam: '$1,455.22',
+      uwPill: 'Simplified Issue · 5 Questions', header: 'MVP Pro'
+    }
+  };
+  const maNetData = {
+    cigna: { tpa: 'Ascend (The Health Plan)', pbm: 'THP PBM' },
+    fh:    { tpa: 'Securus Benefits / Yuzu Health', pbm: 'DisclosedRx' }
+  };
+  let maCurTier = 'basic', maCurNet = 'cigna';
+
+  function maTier(tier) {
+    maCurTier = tier;
+    const d = maData[tier];
+    document.getElementById('ma-col-header').textContent = d.header;
+    document.getElementById('ma-oop').textContent = d.oop;
+    document.getElementById('ma-pcp').textContent = d.pcp;
+    document.getElementById('ma-spec').textContent = d.spec;
+    document.getElementById('ma-uc').textContent = d.uc;
+    document.getElementById('ma-lab').textContent = d.lab;
+    document.getElementById('ma-img').textContent = d.img;
+    document.getElementById('ma-ip').textContent = d.ip;
+    document.getElementById('ma-ipsurg').textContent = d.ipsurg;
+    document.getElementById('ma-opsurg').textContent = d.opsurg;
+    document.getElementById('ma-er').textContent = d.er;
+    document.getElementById('ma-amb').textContent = d.amb;
+    document.getElementById('ma-hh').textContent = d.hh;
+    document.getElementById('ma-rehab').textContent = d.rehab;
+    const matEl = document.getElementById('ma-mat');
+    matEl.textContent = d.mat; matEl.style.color = d.matColor; matEl.style.fontWeight = '600';
+    document.getElementById('ma-gen').textContent = d.gen;
+    const brandEl = document.getElementById('ma-brand');
+    brandEl.textContent = d.brand; brandEl.style.color = d.brandColor; brandEl.style.fontWeight = '600';
+    document.getElementById('ma-rate-emp').innerHTML = d.rateEmp + '<span style="font-size:0.75rem;color:rgba(255,255,255,0.5)">/mo</span>';
+    document.getElementById('ma-rate-spouse').innerHTML = d.rateSpouse + '<span style="font-size:0.75rem;color:rgba(255,255,255,0.5)">/mo</span>';
+    document.getElementById('ma-rate-child').innerHTML = d.rateChild + '<span style="font-size:0.75rem;color:rgba(255,255,255,0.5)">/mo</span>';
+    document.getElementById('ma-rate-fam').innerHTML = d.rateFam + '<span style="font-size:0.75rem;color:rgba(255,255,255,0.5)">/mo</span>';
+    document.getElementById('ma-uw-pill').textContent = d.uwPill;
+    // Button styles
+    const navy = 'var(--navy)', lime = 'var(--lime)', mid = 'var(--text-mid)', trans = 'transparent';
+    document.getElementById('btn-basic').style.background = tier === 'basic' ? navy : trans;
+    document.getElementById('btn-basic').style.color = tier === 'basic' ? lime : mid;
+    document.getElementById('btn-pro').style.background = tier === 'pro' ? navy : trans;
+    document.getElementById('btn-pro').style.color = tier === 'pro' ? lime : mid;
+  }
+
+  function maNet(net) {
+    maCurNet = net;
+    const d = maNetData[net];
+    document.getElementById('ma-tpa-pill').textContent = d.tpa;
+    document.getElementById('ma-pbm-pill').textContent = d.pbm;
+    const navy = 'var(--navy)', lime = 'var(--lime)', mid = 'var(--text-mid)', trans = 'transparent';
+    document.getElementById('btn-cigna').style.background = net === 'cigna' ? navy : trans;
+    document.getElementById('btn-cigna').style.color = net === 'cigna' ? lime : mid;
+    document.getElementById('btn-fh').style.background = net === 'fh' ? navy : trans;
+    document.getElementById('btn-fh').style.color = net === 'fh' ? lime : mid;
+  }
+
+  // Init notes for first slide
+  document.getElementById('notes-text').textContent = slides[0].dataset.notes || 'No notes for this slide.';
+  document.getElementById('progress').style.width = (1 / total * 100) + '%';
+</script>
+</body>
+</html>

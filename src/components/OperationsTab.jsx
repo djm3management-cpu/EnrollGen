@@ -4,6 +4,7 @@ import { useAgentCoaching } from "../hooks/useAgentCoaching";
 import { useCallInsights } from "../hooks/useCallInsights";
 import { useFollowUps } from "../hooks/useFollowUps";
 import { useTenantConfig } from "../hooks/useTenantConfig";
+import { redactSensitiveText } from "../lib/redaction";
 
 const EMPTY_STATE = {
   dailyActivity: [],
@@ -769,20 +770,21 @@ function TranscriptDetail({ detail }) {
     <div className="ops-detail-grid">
       <div className="ops-summary-box">
         <span className="ops-mini-label">Deepgram Summary</span>
-        <p>{detail?.dg_summary || "No Deepgram summary available."}</p>
+        <p>{redactSensitiveText(detail?.dg_summary || "No Deepgram summary available.")}</p>
       </div>
       <div className="ops-transcript-list">
         {utterances.length === 0 ? (
           <EmptyLine>No diarized transcript stored</EmptyLine>
         ) : (
           utterances.map((utterance, index) => {
-            const sentiment = sentimentForUtterance(utterance.text, segments);
+            const safeText = redactSensitiveText(utterance.text || "");
+            const sentiment = sentimentForUtterance(safeText, segments);
             const speaker = utterance.speaker === "customer" ? "Customer" : "Agent";
             return (
               <div key={`${utterance.start_ms || 0}-${index}`} className={`ops-utterance sentiment-${sentiment}`}>
                 <span className="speaker">{speaker}</span>
                 <span className="time">{fmtDuration((utterance.start_ms || 0) / 1000)}</span>
-                <p>{utterance.text}</p>
+                <p>{safeText}</p>
               </div>
             );
           })

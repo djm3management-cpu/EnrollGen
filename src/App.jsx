@@ -282,6 +282,10 @@ function getModeFromLocation() {
     return "ancillary";
   }
 
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/script/u65")) {
+    return "u65";
+  }
+
   return "ma";
 }
 
@@ -297,7 +301,17 @@ function syncModePath(mode) {
     return;
   }
 
-  if (window.location.pathname.startsWith("/script/ancillary")) {
+  if (mode === "u65") {
+    if (!window.location.pathname.startsWith("/script/u65")) {
+      window.history.pushState(null, "", "/script/u65");
+    }
+    return;
+  }
+
+  if (
+    window.location.pathname.startsWith("/script/ancillary") ||
+    window.location.pathname.startsWith("/script/u65")
+  ) {
     window.history.pushState(null, "", "/");
   }
 }
@@ -763,6 +777,8 @@ function AppShell({ currentUser = null }) {
           </ScriptProvider>
         ) : (
           <>
+            {mode === "u65" ? <LeftRail /> : null}
+
             {openPanel ? (
               <div
                 ref={overlayRef}

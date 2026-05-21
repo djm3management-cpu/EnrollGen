@@ -16,7 +16,7 @@ const PANEL_TRANSITION = {
   ease: [0.16, 1, 0.3, 1],
 };
 
-const DESKTOP_RAIL_WIDTH = 290;
+const DESKTOP_RAIL_WIDTH = 360;
 
 function sortRailItems(itemsById) {
   return Object.values(itemsById).sort((a, b) => {
@@ -188,7 +188,7 @@ export function LeftRail({
           <button
             key={item.id}
             type="button"
-            className="left-rail-handle"
+            className={`left-rail-handle${item.isAttention ? " is-attention" : ""}`}
             onClick={() => expandLeftRail(item.id)}
             title={item.title}
           >
@@ -197,7 +197,15 @@ export function LeftRail({
               style={{ background: item.color || "#8b949e" }}
               aria-hidden="true"
             />
+            {item.icon ? (
+              <span className="left-rail-handle-icon" aria-hidden="true">
+                {item.icon}
+              </span>
+            ) : null}
             <span className="left-rail-handle-text">{item.shortLabel || item.title}</span>
+            {item.badge ? (
+              <span className="left-rail-handle-badge">{item.badge}</span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -205,7 +213,7 @@ export function LeftRail({
       <motion.aside
         className={`left-rail${expandedItem ? " is-open" : ""}${
           expandedItem?.id === "sep-qualifier" ? " left-rail--sep-qualifier" : ""
-        }`}
+        }${expandedItem?.railClassName ? ` ${expandedItem.railClassName}` : ""}`}
         animate={{ width: railWidth }}
         initial={false}
         transition={PANEL_TRANSITION}
@@ -216,6 +224,8 @@ export function LeftRail({
               key={expandedItem.id}
               className={`left-rail-panel-shell${
                 expandedItem.id === "sep-qualifier" ? " left-rail-panel-shell--sep-qualifier" : ""
+              }${expandedItem.panelClassName ? ` ${expandedItem.panelClassName}` : ""}${
+                expandedItem.isAttention ? " is-attention" : ""
               }`}
               initial={{ opacity: 0, x: -28 }}
               animate={{ opacity: 1, x: 0 }}

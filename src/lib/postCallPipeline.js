@@ -1,4 +1,5 @@
 import { fetchWithClerk } from "./clerkFetch";
+import { redactSensitiveText, redactTranscriptEntries } from "./redaction";
 
 const POST_CALL_ENDPOINT = "/api/post-call";
 
@@ -144,7 +145,9 @@ export function inferEnrollmentPeriod(state) {
 }
 
 export function buildTranscriptText(mergedTranscript = [], fallbackTranscript = "") {
-  const finalEntries = (mergedTranscript || []).filter((entry) => entry?.isFinal !== false && entry?.text?.trim());
+  const finalEntries = redactTranscriptEntries(
+    (mergedTranscript || []).filter((entry) => entry?.isFinal !== false && entry?.text?.trim())
+  );
   if (finalEntries.length > 0) {
     return finalEntries
       .map((entry) => {
@@ -160,11 +163,13 @@ export function buildTranscriptText(mergedTranscript = [], fallbackTranscript = 
       .join("\n");
   }
 
-  return String(fallbackTranscript || "").trim();
+  return redactSensitiveText(String(fallbackTranscript || "").trim());
 }
 
 export function buildDiarizedTranscript(mergedTranscript = [], fallbackTranscript = "") {
-  const finalEntries = (mergedTranscript || []).filter((entry) => entry?.isFinal !== false && entry?.text?.trim());
+  const finalEntries = redactTranscriptEntries(
+    (mergedTranscript || []).filter((entry) => entry?.isFinal !== false && entry?.text?.trim())
+  );
   if (finalEntries.length > 0) {
     const firstTimestamp = Number(finalEntries[0]?.timestamp) || Date.now();
     return finalEntries.map((entry, index) => {
@@ -180,7 +185,7 @@ export function buildDiarizedTranscript(mergedTranscript = [], fallbackTranscrip
     });
   }
 
-  const text = String(fallbackTranscript || "").trim();
+  const text = redactSensitiveText(String(fallbackTranscript || "").trim());
   return text
     ? [{ speaker: "agent", text, start_ms: 0, end_ms: Math.max(120000, Math.round(text.length / 12) * 1000) }]
     : [];

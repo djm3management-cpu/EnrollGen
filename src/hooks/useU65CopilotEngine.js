@@ -9,7 +9,7 @@
  *   - Fixed-benefit vs traditional plan structure must be clear
  *   - Cannot guarantee acceptance, "subject to underwriting approval"
  *   - Subsidy cliff framing is the primary entry narrative
- *   - Two products: EnrollPrime/AFI (PPO) and PALIC HSP Gold (indemnity)
+ *   - Private plan playbook references MedPerformance, MedMax, and MedAccess MVP
  */
 
 import { useCallback, useMemo, useEffect, useRef, useState } from "react";
@@ -33,6 +33,7 @@ import {
   U65_WARN_CONFIDENCE_FLOOR, U65_REMIND_CONFIDENCE_FLOOR,
   U65_SECTION_CONFIDENCE_OVERRIDES, U65_HIGH_RISK_KEYWORDS, U65_SECTION_SETTLE_MS,
 } from "../data/u65ComplianceKnowledge";
+import { PRIVATE_PLAN_CONTEXT_EVENT } from "../data/privatePlans";
 
 const PERIODIC_SIGNATURE_TAIL_CHARS = 320;
 const CITIZENSHIP_REFERENCE_PATTERNS = [
@@ -48,9 +49,63 @@ const CITIZENSHIP_REFERENCE_PATTERNS = [
 ];
 const CITIZENSHIP_REFERENCE_MESSAGE =
   "Citizenship or immigration docs sound relevant. Open Agent Tools > Citizenship & Immigration Docs for document numbers and field locations.";
+const PRIVATE_PLAN_REFERENCE_PATTERNS = [
+  /\bprivate plans?\b/i,
+  /\bplan playbook\b/i,
+  /\berisa\b/i,
+  /\bmed\s*performance\b/i,
+  /\bmedperformance\b/i,
+  /\bmed\s*max\b/i,
+  /\bmedmax\b/i,
+  /\bmed\s*access\b/i,
+  /\bmedaccess\b/i,
+  /\bmvp\b/i,
+  /\bfirst health\b/i,
+  /\bcigna ppo\b/i,
+  /\bdefined benefit\b/i,
+  /\bmajor medical ppo\b/i,
+  /\bdisclosedrx\b/i,
+  /\bstarrx\b/i,
+  /\bsiriuspoint\b/i,
+];
+const PRIVATE_PLAN_UNDERWRITING_PATTERNS = [
+  /\bunderwriting\b/i,
+  /\bhealth questions?\b/i,
+  /\bmedical questions?\b/i,
+  /\bq[1-5]\b/i,
+  /\blookback\b/i,
+  /\bdeclination\b/i,
+  /\bpending (?:test|results?|service|surgery)\b/i,
+  /\bscheduled (?:for|to have)\b/i,
+  /\bsurgery\b/i,
+  /\bdiagnosed\b/i,
+  /\btreated\b/i,
+];
+const PRIVATE_PLAN_REFERENCE_MESSAGE =
+  "Private Plan reference available. View in the left rail.";
 
 function hasCitizenshipReferenceTrigger(text) {
   return CITIZENSHIP_REFERENCE_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function hasPrivatePlanReferenceTrigger(text) {
+  return PRIVATE_PLAN_REFERENCE_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function hasPrivatePlanUnderwritingTrigger(text) {
+  return PRIVATE_PLAN_UNDERWRITING_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function dispatchPrivatePlanContext(focus) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(PRIVATE_PLAN_CONTEXT_EVENT, {
+      detail: { focus },
+    })
+  );
 }
 
 /* ───────────────────────────────────────────────────────
@@ -249,7 +304,8 @@ CRITICAL U65 OFF-EXCHANGE CONTEXT:
 - This is a U65 (under-65) off-exchange enrollment, NOT ACA marketplace, NOT Medicare
 - Products sold are PRIVATE health products that are NOT minimum essential coverage (MEC)
 - Products are NOT substitutes for ACA-compliant major medical insurance
-- Two products: EnrollPrime/AFI Association PPO (Cigna network) and PALIC HSP Gold (fixed-benefit indemnity, First Health network)
+- Private plan reference products include MedPerformance, MedMax, and MedAccess MVP
+- MedPerformance is a Cigna PPO major medical structure, MedMax is a First Health PPO defined benefit structure, and MedAccess MVP has Basic and Pro paths
 - Medical underwriting is REQUIRED, agent CANNOT guarantee acceptance
 - PALIC has a 12-month pre-existing condition exclusion that MUST be disclosed
 - PALIC is fixed-benefit (set dollar amounts per service), NOT percentage-based coverage
@@ -357,7 +413,7 @@ ${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muti
 CRITICAL CONTEXT:
 - You can ONLY hear the AGENT speaking
 - The agent is in the "${sectionKey}" gate of the U65 off-exchange enrollment flow
-- Products: EnrollPrime/AFI (Cigna PPO, association group plan) and PALIC HSP Gold (fixed-benefit indemnity, First Health network)
+- Products: MedPerformance, MedMax, and MedAccess MVP. Legacy U65 product names may appear in older call scripts.
 ${sectionContext}
 ${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
 ${transcriptReferenceBlock}
@@ -367,7 +423,7 @@ Structured app context:
 ${copilotContextJson}
 
 YOUR CAPABILITIES:
-- U65 off-exchange product details (EnrollPrime, PALIC)
+- U65 off-exchange product details, including MedPerformance, MedMax, MedAccess MVP, and legacy script references
 - NOT-MEC / NOT-ACA-substitute disclosure requirements
 - Medical underwriting rules and what conditions affect acceptance
 - Pre-existing condition exclusion periods and rules
@@ -379,7 +435,7 @@ YOUR CAPABILITIES:
 
 HARD BOUNDARY, DO NOT ANSWER:
 - Specific premium quotes → tell agent to check the enrollment portal
-- Whether a specific provider is in-network → direct to myfirsthealth.com (PALIC) or Cigna provider finder (EnrollPrime)
+- Whether a specific provider is in-network → direct to the First Health or Cigna provider finder for the selected product
 - Specific UW outcomes → tell agent to submit application and await UW decision
 - Exact benefit payout amounts by tier → tell agent to check the plan document
 Do NOT guess product-specific data.
@@ -444,10 +500,14 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
   } = core;
 
   const immigrationReferenceSuggestedRef = useRef(false);
+  const privatePlanReferenceSuggestedRef = useRef(false);
+  const lastPrivatePlanContextEventRef = useRef(0);
   const transcriptSnapshot = transcriptRef.current.trim().slice(-2000);
 
   useEffect(() => {
     immigrationReferenceSuggestedRef.current = false;
+    privatePlanReferenceSuggestedRef.current = false;
+    lastPrivatePlanContextEventRef.current = 0;
   }, [state.callStart]);
 
   useEffect(() => {
@@ -462,6 +522,35 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
     pushFeedEntry("tip", CITIZENSHIP_REFERENCE_MESSAGE, {
       section: currentStep,
       issueTag: "CITIZENSHIP_DOC_REFERENCE",
+    });
+  }, [state.callStarted, transcriptSnapshot, currentStep, pushFeedEntry]);
+
+  useEffect(() => {
+    if (!state.callStarted) {
+      privatePlanReferenceSuggestedRef.current = false;
+      lastPrivatePlanContextEventRef.current = 0;
+      return;
+    }
+
+    if (!transcriptSnapshot) return;
+
+    const hasReferenceTrigger = hasPrivatePlanReferenceTrigger(transcriptSnapshot);
+    const hasUnderwritingTrigger = hasPrivatePlanUnderwritingTrigger(transcriptSnapshot);
+    if (!hasReferenceTrigger && !hasUnderwritingTrigger) return;
+
+    const focus = hasUnderwritingTrigger ? "underwriting" : "reference";
+    const now = Date.now();
+    if (now - lastPrivatePlanContextEventRef.current > 5000) {
+      dispatchPrivatePlanContext(focus);
+      lastPrivatePlanContextEventRef.current = now;
+    }
+
+    if (privatePlanReferenceSuggestedRef.current) return;
+
+    privatePlanReferenceSuggestedRef.current = true;
+    pushFeedEntry("tip", PRIVATE_PLAN_REFERENCE_MESSAGE, {
+      section: currentStep,
+      issueTag: "PRIVATE_PLAN_REFERENCE",
     });
   }, [state.callStarted, transcriptSnapshot, currentStep, pushFeedEntry]);
 

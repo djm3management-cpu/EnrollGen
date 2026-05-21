@@ -6,13 +6,13 @@ import "./styles.css";
 import "./styles/v3-overrides.css";
 import { CopilotLogProvider } from "./context/CopilotTranscriptLog";
 import { LiveCallProvider } from "./context/LiveCallContext";
-import { TrainingModeProvider } from "./context/TrainingModeContext";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { AuthProvider } from "./context/AuthContext";
 import { runSessionTrackingDiagnostic } from "./lib/sessionTrackingDiagnostic";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const CLERK_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
+const LEGACY_TRAINING_MODE_STORAGE_KEY = "enrollgen_training_mode_v1";
 
 runSessionTrackingDiagnostic();
 
@@ -60,16 +60,25 @@ function applyRenderEnvironmentFlags() {
 
 applyRenderEnvironmentFlags();
 
+function clearLegacyTrainingModeFlag() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(LEGACY_TRAINING_MODE_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+clearLegacyTrainingModeFlag();
+
 function RootProviders() {
   return (
     <AuthProvider>
-      <TrainingModeProvider>
-        <CopilotLogProvider>
-          <LiveCallProvider>
-            <App />
-          </LiveCallProvider>
-        </CopilotLogProvider>
-      </TrainingModeProvider>
+      <CopilotLogProvider>
+        <LiveCallProvider>
+          <App />
+        </LiveCallProvider>
+      </CopilotLogProvider>
     </AuthProvider>
   );
 }

@@ -1,4 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
+import {
+  applyDeepgramRedactionParams,
+  redactDiarizedTranscript,
+  redactSensitiveText,
+} from "./_redaction.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const PAGE_SIZE = 100;
@@ -69,7 +74,7 @@ function parseSentimentData(dgData, bestAlt) {
       ? Number(average.sentiment_score)
       : 0,
     segments: segments.map((segment) => ({
-      text: segment.text || "",
+      text: redactSensitiveText(segment.text || ""),
       sentiment: segment.sentiment || "neutral",
       score: Number.isFinite(Number(segment.sentiment_score)) ? Number(segment.sentiment_score) : 0,
       start_word: segment.start_word,
@@ -81,7 +86,7 @@ function parseSentimentData(dgData, bestAlt) {
 
 function parseIntentsData(dgData) {
   return (dgData.results?.intents?.segments || []).map((segment) => ({
-    text: segment.text || "",
+    text: redactSensitiveText(segment.text || ""),
     intent: segment.intent || "",
     confidence: Number.isFinite(Number(segment.confidence_score))
       ? Number(segment.confidence_score)
@@ -232,6 +237,7 @@ async function transcribeAudio(audioUrl) {
   dgUrl.searchParams.set("intents", "true");
   dgUrl.searchParams.set("topics", "true");
   dgUrl.searchParams.set("summarize", "v2");
+  applyDeepgramRedactionParams(dgUrl);
 
   const dgResp = await fetch(dgUrl.toString(), {
     method: "POST",
@@ -251,13 +257,13 @@ async function transcribeAudio(audioUrl) {
   const channel = dgData.results?.channels?.[0];
   const bestAlt = channel?.alternatives?.[0];
   const utterances = dgData.results?.utterances || [];
-  const diarized = utterances.map((utterance) => ({
+  const diarized = redactDiarizedTranscript(utterances.map((utterance) => ({
     speaker: utterance.speaker === 0 ? "agent" : "customer",
     text: utterance.transcript || "",
     start_ms: Math.round((utterance.start || 0) * 1000),
     end_ms: Math.round((utterance.end || 0) * 1000),
     confidence: utterance.confidence || 0,
-  }));
+  })));
   const durationSeconds = dgData.metadata?.duration
     ? Math.round(dgData.metadata.duration)
     : diarized.length > 0
@@ -265,13 +271,13 @@ async function transcribeAudio(audioUrl) {
       : 0;
 
   return {
-    transcript_raw: bestAlt?.transcript || "",
+    transcript_raw: redactSensitiveText(bestAlt?.transcript || ""),
     transcript_diarized: diarized,
     call_duration_seconds: durationSeconds,
     dg_sentiment: parseSentimentData(dgData, bestAlt),
     dg_intents: parseIntentsData(dgData),
     dg_topics: parseTopicsData(dgData),
-    dg_summary: dgData.results?.summary?.short || "",
+    dg_summary: redactSensitiveText(dgData.results?.summary?.short || ""),
     call_analytics: {
       talk_time: computeTalkTimeRatio(utterances),
       wpm: computeWPM(utterances),

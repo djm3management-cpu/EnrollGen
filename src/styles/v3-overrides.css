@@ -2391,38 +2391,39 @@ button.primary.section-complete-btn {
   background: var(--eg-surface-2);
   border: 1px solid var(--eg-border);
   border-radius: var(--eg-radius-card);
-  padding: 12px;
-  margin-bottom: 10px;
+  padding: 11px 12px;
+  margin-bottom: 8px;
 }
 
 .eg-rail-card__label {
   font-family: var(--eg-font-mono);
-  font-size: 9px;
-  letter-spacing: 0.06em;
+  font-size: 8.5px;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--eg-text-faint);
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 }
 
 .eg-rail-card__name {
   font-family: var(--eg-font-body);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--eg-text);
   margin-bottom: 2px;
 }
 
 .eg-rail-card__sub {
   font-family: var(--eg-font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   color: var(--eg-text-dim);
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 }
 
 .eg-rail-card__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px 12px;
+  gap: 4px 8px;
+  min-width: 0;
 }
 
 .eg-rail-card__field-key {
@@ -2441,7 +2442,12 @@ button.primary.section-complete-btn {
   border: none;
   padding: 0;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .eg-rail-card__field-value.is-good {
@@ -2469,6 +2475,9 @@ button.primary.section-complete-btn {
   font-weight: 500;
   color: var(--eg-accent);
   margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .eg-rail-card__plan-meta {
@@ -2476,6 +2485,9 @@ button.primary.section-complete-btn {
   font-size: 10px;
   color: var(--eg-text-dim);
   margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .eg-rail-card__pills {

@@ -11,6 +11,11 @@
 
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { createClient } from "@supabase/supabase-js";
+import {
+  applyDeepgramRedactionParams,
+  redactDiarizedTranscript,
+  redactSensitiveText,
+} from "./_redaction.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 function json(status, data) {
@@ -71,7 +76,7 @@ function parseSentimentData(dgData, bestAlt) {
       ? Number(average.sentiment_score)
       : 0,
     segments: segments.map((segment) => ({
-      text: segment.text || "",
+      text: redactSensitiveText(segment.text || ""),
       sentiment: segment.sentiment || "neutral",
       score: Number.isFinite(Number(segment.sentiment_score)) ? Number(segment.sentiment_score) : 0,
       start_word: segment.start_word,
@@ -83,7 +88,7 @@ function parseSentimentData(dgData, bestAlt) {
 
 function parseIntentsData(dgData) {
   return (dgData.results?.intents?.segments || []).map((segment) => ({
-    text: segment.text || "",
+    text: redactSensitiveText(segment.text || ""),
     intent: segment.intent || "",
     confidence: Number.isFinite(Number(segment.confidence_score))
       ? Number(segment.confidence_score)
@@ -233,6 +238,7 @@ export default async (request) => {
     dgUrl.searchParams.set("intents", "true");
     dgUrl.searchParams.set("topics", "true");
     dgUrl.searchParams.set("summarize", "v2");
+    applyDeepgramRedactionParams(dgUrl);
 
     const dgResp = await fetch(dgUrl.toString(), {
       method: "POST",
@@ -257,17 +263,17 @@ export default async (request) => {
     const bestAlt = alternatives[0];
 
     // Build raw transcript
-    const transcriptRaw = bestAlt?.transcript || "";
+    const transcriptRaw = redactSensitiveText(bestAlt?.transcript || "");
 
     // Build diarized transcript from utterances
     const utterances = dgData.results?.utterances || [];
-    const diarized = utterances.map(u => ({
+    const diarized = redactDiarizedTranscript(utterances.map(u => ({
       speaker: u.speaker === 0 ? "agent" : "customer",
       text: u.transcript || "",
       start_ms: Math.round((u.start || 0) * 1000),
       end_ms: Math.round((u.end || 0) * 1000),
       confidence: u.confidence || 0,
-    }));
+    })));
 
     // Calculate duration
     const durationSeconds = dgData.metadata?.duration
@@ -279,7 +285,7 @@ export default async (request) => {
     const sentimentData = parseSentimentData(dgData, bestAlt);
     const intentsData = parseIntentsData(dgData);
     const topicsData = parseTopicsData(dgData);
-    const summaryText = dgData.results?.summary?.short || "";
+    const summaryText = redactSensitiveText(dgData.results?.summary?.short || "");
     const talkTimeRatio = computeTalkTimeRatio(utterances);
     const wpmData = computeWPM(utterances);
     const pauseData = computePauses(utterances);

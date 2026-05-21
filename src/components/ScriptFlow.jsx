@@ -35,11 +35,6 @@ import ComplianceMini from "./ComplianceMini";
 import CopilotFeedMini from "./CopilotFeedMini";
 import AskCopilotMini from "./AskCopilotMini";
 import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
-import { useTrainingMode } from "../context/TrainingModeContext";
-import TrainingBanner from "./training/TrainingBanner";
-import TrainingExplainer from "./training/TrainingExplainer";
-import SimulatedTranscriptInput from "./training/SimulatedTranscriptInput";
-import { logTrainingCompletion } from "../lib/trainingCompletion";
 
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
@@ -221,18 +216,11 @@ function RailWidgets({
   result,
   copilotHandlersRef,
   coachingLoading,
-  trainingMode,
   onManualCopilotStart,
 }) {
   const supportsRecognition = typeof window !== "undefined" &&
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
   const hasTranscript = !!transcript.trim();
-  const handleAppendSimulated = (text) => {
-    copilotHandlersRef.current?.appendSimulatedUtterance?.(text);
-  };
-  const handleClearSimulated = () => {
-    copilotHandlersRef.current?.clearSimulatedTranscript?.();
-  };
 
   return (
     <>
@@ -283,22 +271,14 @@ function RailWidgets({
 
       <div className="right-rail-divider" />
 
-      {/* ── Live Transcript / Simulated Transcript ── */}
+      {/* ── Live Transcript ── */}
       <CollapsibleWidget
-        title={trainingMode ? "Simulated Transcript" : "Live Transcript"}
+        title="Live Transcript"
         icon={<Radio size={11} />}
-        accentColor={trainingMode ? "#ffab00" : "#39FF88"}
-        headerRight={trainingMode ? null : <TranscriptTimer startTime={state.tpmoStart} />}
+        accentColor="#39FF88"
+        headerRight={<TranscriptTimer startTime={state.tpmoStart} />}
       >
-        {trainingMode ? (
-          <SimulatedTranscriptInput
-            transcript={transcript}
-            onAppendUtterance={handleAppendSimulated}
-            onClear={handleClearSimulated}
-          />
-        ) : (
-          <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
-        )}
+        <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
       </CollapsibleWidget>
 
       {/* ── Co-Pilot Feed ── */}
@@ -328,7 +308,6 @@ function RightRail({
   result,
   copilotHandlersRef,
   coachingLoading,
-  trainingMode,
   onManualCopilotStart,
 }) {
   const [open, setOpen] = useState(false);
@@ -397,7 +376,6 @@ function RightRail({
     result,
     copilotHandlersRef,
     coachingLoading,
-    trainingMode,
     onManualCopilotStart,
   };
 
@@ -554,15 +532,12 @@ export default function ScriptFlow() {
   const { clearLog, entries } = useCopilotLog();
   const { updateLiveCall, resetLiveCall } = useLiveCall();
   const { getToken } = useAppAuth();
-  const { enabled: trainingModeEnabled } = useTrainingMode();
   const { sections: scriptSections } = useScriptTemplate("ma");
   const wrapUpSection = scriptSections.find((section) => section.key === "wrapup");
   const prevSectionRef = useRef(activeSection);
   const session = useSessionTracker();
   const scoredSectionsRef = useRef(new Set());
   const [callStarted, setCallStarted] = useState(false);
-  const trainingStartRef = useRef(null);
-  const trainingLoggedRef = useRef(false);
   const checkpointKeyRef = useRef("");
   const finalTranscriptSavedRef = useRef(false);
   const latestPostCallRef = useRef(null);
@@ -577,32 +552,7 @@ export default function ScriptFlow() {
     session.startSession("ma");
     dispatch({ type: "MARK_SECTION_START", section: 1 });
     dispatch({ type: "START_TIMER" });
-    if (trainingModeEnabled) {
-      trainingStartRef.current = Date.now();
-      trainingLoggedRef.current = false;
-    }
-  }, [callStarted, clearLog, session, dispatch, trainingModeEnabled]);
-
-  // Log training completion when all 8 sections have been completed in training mode
-  useEffect(() => {
-    if (!trainingModeEnabled) return;
-    if (!callStarted) return;
-    if (trainingLoggedRef.current) return;
-    if (!state.enrollOk) return;
-    if (activeSection < 8) return;
-
-    trainingLoggedRef.current = true;
-    const startedAt = trainingStartRef.current;
-    const durationSeconds = startedAt
-      ? Math.max(0, Math.round((Date.now() - startedAt) / 1000))
-      : null;
-
-    logTrainingCompletion({
-      productType: "MA",
-      durationSeconds,
-      sectionsCompleted: 8,
-    });
-  }, [trainingModeEnabled, callStarted, state.enrollOk, activeSection]);
+  }, [callStarted, clearLog, session, dispatch]);
 
   // Cleanup on unmount, mark completed if enrollment gate was reached
   useEffect(() => {
@@ -651,7 +601,7 @@ export default function ScriptFlow() {
       ("SpeechRecognition" in window || "webkitSpeechRecognition" in window),
     []
   );
-  const canStartCopilot = trainingModeEnabled || supportsRecognition;
+  const canStartCopilot = supportsRecognition;
   const handleManualCopilotStart = useCallback(() => {
     setCallStarted(true);
     const handleStart = copilotHandlersRef.current?.handleStart;
@@ -759,8 +709,6 @@ export default function ScriptFlow() {
 
   const persistPostCallTranscript = useCallback(
     async ({ final = false, force = false } = {}) => {
-      if (trainingModeEnabled) return null;
-
       const snapshot = latestPostCallRef.current;
       if (!snapshot?.state) return null;
 
@@ -806,7 +754,7 @@ export default function ScriptFlow() {
 
       return result;
     },
-    [getToken, trainingModeEnabled]
+    [getToken]
   );
 
   useEffect(() => {
@@ -814,7 +762,7 @@ export default function ScriptFlow() {
   }, [persistPostCallTranscript]);
 
   useEffect(() => {
-    if (!callStarted || trainingModeEnabled) return undefined;
+    if (!callStarted) return undefined;
 
     let cancelled = false;
     void (async () => {
@@ -852,7 +800,6 @@ export default function ScriptFlow() {
     };
   }, [
     callStarted,
-    trainingModeEnabled,
     getToken,
     state,
     transcript,
@@ -860,14 +807,14 @@ export default function ScriptFlow() {
   ]);
 
   useEffect(() => {
-    if (!callStarted || trainingModeEnabled) return undefined;
+    if (!callStarted) return undefined;
 
     const intervalId = window.setInterval(() => {
       void persistPostCallTranscript({ final: false });
     }, CHECKPOINT_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [callStarted, trainingModeEnabled, persistPostCallTranscript]);
+  }, [callStarted, persistPostCallTranscript]);
 
   useEffect(() => {
     if (!callStarted || !state.enrollOk || finalTranscriptSavedRef.current) return;
@@ -973,14 +920,11 @@ export default function ScriptFlow() {
         result={liveComplianceResult}
         copilotHandlersRef={copilotHandlersRef}
         coachingLoading={coachingLoading}
-        trainingMode={trainingModeEnabled}
         onManualCopilotStart={handleManualCopilotStart}
       />
 
       <div className="flow-shell">
         <div className="flow-main">
-
-      {trainingModeEnabled ? <TrainingBanner /> : null}
 
       <CenterTimerBar
         agentLevel={agentAudioLevel}
@@ -1050,7 +994,6 @@ export default function ScriptFlow() {
               }
             >
               <ScriptSection section={section} />
-              {trainingModeEnabled ? <TrainingExplainer section={sectionNum} /> : null}
             </CollapsibleSection>
           );
 
@@ -1069,7 +1012,6 @@ export default function ScriptFlow() {
       {activeSection >= 8 && (
         <>
           <SectionWrapUp scriptBody={wrapUpSection?.body} />
-          {trainingModeEnabled ? <TrainingExplainer section={8} /> : null}
         </>
       )}
 

@@ -1,10 +1,9 @@
-import { useRef, useEffect, useCallback, useState, memo } from "react";
+import { useRef, useEffect, useCallback, memo } from "react";
 import { useScript } from "../context/ScriptContext";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useCopilotEngine } from "../hooks/useCopilotEngine";
 import { useCustomerAudio } from "../hooks/useCustomerAudio";
 import { useMergedTranscript } from "../hooks/useMergedTranscript";
-import { useTrainingMode } from "../context/TrainingModeContext";
 
 /* ═══════════════════════════════════════════════════════════════════
    ScriptPrompter, Headless copilot engine host.
@@ -29,14 +28,9 @@ const ScriptPrompter = memo(function ScriptPrompter({
     unlocked,
   } = useScript();
 
-  const { enabled: trainingModeEnabled } = useTrainingMode();
-
   // Shared transcriptRef, created here, passed to both hooks
   const transcriptRef = useRef("");
   const customerCapturePromiseRef = useRef(null);
-
-  // Simulated transcript state (training mode only)
-  const [simulatedTranscript, setSimulatedTranscript] = useState("");
 
   /* ─── Customer audio capture (opt-in via getDisplayMedia + Deepgram) ─── */
   const customerAudio = useCustomerAudio();
@@ -81,20 +75,8 @@ const ScriptPrompter = memo(function ScriptPrompter({
   // Forward transcript changes to parent
   useEffect(() => {
     if (!onTranscriptChange) return;
-    onTranscriptChange(trainingModeEnabled ? simulatedTranscript : speech.transcript);
-  }, [
-    speech.transcript,
-    simulatedTranscript,
-    trainingModeEnabled,
-    onTranscriptChange,
-  ]);
-
-  // Keep transcriptRef in sync with simulated text in training mode so the
-  // Co-Pilot engine reads the typed utterances instead of the empty mic feed.
-  useEffect(() => {
-    if (!trainingModeEnabled) return;
-    transcriptRef.current = simulatedTranscript;
-  }, [trainingModeEnabled, simulatedTranscript]);
+    onTranscriptChange(speech.transcript);
+  }, [speech.transcript, onTranscriptChange]);
 
   // Forward merged transcript entries for MiniLiveTranscript in the right rail
   useEffect(() => {
@@ -150,51 +132,24 @@ const ScriptPrompter = memo(function ScriptPrompter({
   }, [customerAudio, customerAudioEnabled, copilot]);
 
   const handleStart = useCallback(async (options = {}) => {
-    if (trainingModeEnabled) {
-      // Training mode: no live audio capture. The simulated transcript input
-      // feeds transcriptRef directly via appendSimulatedUtterance().
-      return;
-    }
     if (!options?.skipCustomerAudio) {
       await startCustomerAudio();
     }
     speech.startListening();
-  }, [speech, trainingModeEnabled, startCustomerAudio]);
+  }, [speech, startCustomerAudio]);
 
   const handleStop = useCallback(() => {
-    if (trainingModeEnabled) return;
     speech.stopListening();
     if (customerAudio.isCapturing) customerAudio.stopCapture();
-  }, [speech, customerAudio, trainingModeEnabled]);
+  }, [speech, customerAudio]);
 
   /* ─── Clear all ─── */
   const clearAll = useCallback(() => {
     speech.clearTranscript();
     customerAudio.clearTranscript();
     copilot.clearFeed();
-    setSimulatedTranscript("");
     transcriptRef.current = "";
   }, [speech, customerAudio, copilot]);
-
-  /* ─── Simulated transcript helpers (training mode) ─── */
-  const appendSimulatedUtterance = useCallback(
-    (text) => {
-      const trimmed = (text || "").trim();
-      if (!trimmed) return;
-      setSimulatedTranscript((current) => {
-        const next = current ? `${current} ${trimmed}` : trimmed;
-        transcriptRef.current = next;
-        return next;
-      });
-      copilot.scheduleCoaching?.(trimmed);
-    },
-    [copilot]
-  );
-
-  const clearSimulatedTranscript = useCallback(() => {
-    setSimulatedTranscript("");
-    transcriptRef.current = "";
-  }, []);
 
   /* ─── Expose controls to right rail via ref ─── */
   useEffect(() => {
@@ -205,10 +160,6 @@ const ScriptPrompter = memo(function ScriptPrompter({
         clearAll,
         requestCoaching: () => copilot.requestCoaching({ manual: true }),
         supportsRecognition: speech.supportsRecognition,
-        appendSimulatedUtterance,
-        clearSimulatedTranscript,
-        simulatedTranscript,
-        trainingModeEnabled,
       };
       onControlsReadyChange?.(true);
     }
