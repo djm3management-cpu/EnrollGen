@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import CompactCopilotRail from "../../components/CompactCopilotRail";
 import CenterTimerBar from "../../components/CenterTimerBar";
+import DentalReferencePanel from "../../components/DentalReferencePanel";
+import { useLeftRailManager } from "../../components/leftRail/LeftRailManager";
 import ProgressDots from "../../components/ProgressDots";
 import { LOG_TYPES, useCopilotLog } from "../../context/CopilotTranscriptLog";
 import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
@@ -50,6 +52,7 @@ const PRODUCT_COMPONENTS = {
 const PRODUCT_ORDER = [SUB_PRODUCT.HIP, SUB_PRODUCT.FE, SUB_PRODUCT.DVH];
 const FALLBACK_PRODUCT_META = { label: "Ancillary", shortLabel: "ANC" };
 const FE_CALL_WINDOW_SECONDS = 90;
+const DENTAL_REFERENCE_RAIL_ID = "ancillary-dental-reference";
 
 function productFromPath() {
   if (typeof window === "undefined") return null;
@@ -1025,6 +1028,7 @@ const AncillaryWorkspace = memo(function AncillaryWorkspace() {
 });
 
 export default function AncillaryFlow() {
+  const { showLeftRail, dismissLeftRail } = useLeftRailManager();
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     createInitialState(productFromPath())
   );
@@ -1060,6 +1064,27 @@ export default function AncillaryFlow() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  useEffect(() => {
+    if (activeProduct !== SUB_PRODUCT.DVH) {
+      dismissLeftRail(DENTAL_REFERENCE_RAIL_ID);
+      return undefined;
+    }
+
+    showLeftRail({
+      id: DENTAL_REFERENCE_RAIL_ID,
+      priority: 2,
+      title: "Dental Plans",
+      shortLabel: "Dental",
+      color: ANCILLARY_ACCENT.color,
+      icon: <ProductIcon product={SUB_PRODUCT.DVH} size={13} />,
+      railClassName: "left-rail--private-plans",
+      panelClassName: "left-rail-panel-shell--private-plans",
+      component: <DentalReferencePanel />,
+    });
+
+    return () => dismissLeftRail(DENTAL_REFERENCE_RAIL_ID);
+  }, [activeProduct, dismissLeftRail, showLeftRail]);
 
   const value = useMemo(
     () => ({

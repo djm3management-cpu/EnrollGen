@@ -1,6 +1,5 @@
 /* eslint-disable react/no-unknown-property -- Keep the literal fetchpriority attribute on the hero video. */
 import { Suspense } from "react";
-import EnrollGenLogo from "./EnrollGenLogo";
 import "./LandingPage.css";
 
 const flowAccents = [
@@ -47,7 +46,11 @@ export default function LandingPage() {
     <div className="landing-page">
       <header className="landing-nav">
         <a className="landing-logo-link" href="/" aria-label="EnrollGen home">
-          <EnrollGenLogo width={142} className="landing-logo" />
+          <img
+            className="landing-logo landing-logo-image"
+            src="/enrollgen-logo-v3.png?v=2"
+            alt="EnrollGen"
+          />
         </a>
         <nav className="landing-nav-links" aria-label="Landing page navigation">
           <a href="mailto:djm3management@gmail.com?subject=EnrollGen%20Access%20Request">
@@ -77,12 +80,19 @@ export default function LandingPage() {
                 ))}
               </div>
               <h1 id="landing-hero-title">
-                Compliant Medicare Scripting Intelligence&nbsp;System
+                <span>Real-Time Compliance Intelligence for Medicare Sales</span>
+                <span>The Agent Command Center for Compliant Enrollment</span>
+                <span>Live Compliance Scoring. Guided Scripts. AI Co-Pilot.</span>
               </h1>
               <p className="landing-hero-subhead">
-                EnrollGen gives agents a live command center with guided script flows, real-time
-                CMS compliance scoring, and AI copilot coaching , built for Medicare
-                Advantage, ACA, Supplement, U65, and ancillary sales.
+                <span>
+                  Script guidance, real-time CMS compliance scoring, and AI copilot coaching
+                  across MA, Med Supp, ACA, U65, and ancillary lines.
+                </span>
+                <span>
+                  Guided enrollment flows with live compliance monitoring and AI coaching,
+                  purpose-built for independent Medicare agents.
+                </span>
               </p>
             </div>
             <div className="landing-hero-panel" aria-label="EnrollGen workflow snapshot">

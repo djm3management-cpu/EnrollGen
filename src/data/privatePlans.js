@@ -108,14 +108,6 @@ export const PRIVATE_PLAN_PRODUCTS = [
   },
 ];
 
-export const PRIVATE_PLAN_GLOBAL_FACTS = [
-  "All plans are ERISA sponsored.",
-  "All plans accept ITIN or valid government-issued documentation, subject to verification.",
-  "All plans have 365-day open enrollment.",
-  "All plans use SiriusPoint A-rated stop-loss.",
-  "Washington is excluded from all plans.",
-];
-
 export const PRIVATE_PLAN_DECISION_ROWS = [
   {
     label: "Legal Structure",

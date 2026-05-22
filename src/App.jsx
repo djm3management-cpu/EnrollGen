@@ -777,7 +777,7 @@ function AppShell({ currentUser = null }) {
           </ScriptProvider>
         ) : (
           <>
-            {mode === "u65" ? <LeftRail /> : null}
+            {mode === "u65" || mode === "ancillary" ? <LeftRail /> : null}
 
             {openPanel ? (
               <div

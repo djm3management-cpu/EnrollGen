@@ -1,13 +1,11 @@
 import { useMemo, useState } from "react";
-import { BookOpen, ExternalLink, ShieldCheck } from "lucide-react";
+import { BookOpen, ExternalLink } from "lucide-react";
 import {
   PRIVATE_PLAN_DECISION_ROWS,
-  PRIVATE_PLAN_DENTAL,
-  PRIVATE_PLAN_DENTAL_FACTS,
-  PRIVATE_PLAN_GLOBAL_FACTS,
   PRIVATE_PLAN_PLAYBOOK_URL,
   PRIVATE_PLAN_PRODUCTS,
 } from "../data/privatePlans";
+import { DentalOptionsSection } from "./DentalReferencePanel";
 import PrivatePlanCard from "./PrivatePlanCard";
 import PlaybookModal from "./PlaybookModal";
 import UnderwritingChecker from "./UnderwritingChecker";
@@ -78,71 +76,22 @@ function ProductDetail({ product }) {
   );
 }
 
-function DecisionGuide() {
-  const headers = ["MedMax", "MedPerformance", "MedAccess MVP"];
-
+function DecisionGuide({ product }) {
   return (
     <section className="private-plan-section">
       <div className="private-plan-section-head">
         <div>
           <span className="private-plan-kicker">Compare</span>
-          <h3>Decision Guide</h3>
+          <h3>{product.shortName} Decision Guide</h3>
         </div>
       </div>
-      <div className="private-plan-table-wrap">
-        <table className="private-plan-table">
-          <thead>
-            <tr>
-              <th>Factor</th>
-              {headers.map((header) => (
-                <th key={header}>{header}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {PRIVATE_PLAN_DECISION_ROWS.map((row) => (
-              <tr key={row.label}>
-                <td>{row.label}</td>
-                <td>{row.values.medmax}</td>
-                <td>{row.values.medperformance}</td>
-                <td>{row.values.medaccess}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-function DentalAddOn() {
-  return (
-    <section className="private-plan-section">
-      <div className="private-plan-section-head">
-        <div>
-          <span className="private-plan-kicker">Ancillary</span>
-          <h3>Dental Add-On</h3>
-        </div>
-      </div>
-      <div className="private-plan-dental-grid">
-        {PRIVATE_PLAN_DENTAL.map((option) => (
-          <article key={option.name} className="private-plan-dental-card">
-            <div className="private-plan-dental-card__top">
-              <h4>{option.name}</h4>
-              <strong>{option.price}</strong>
-            </div>
-            <span>{option.network}</span>
-            <ul>
-              {option.highlights.map((highlight) => (
-                <li key={highlight}>{highlight}</li>
-              ))}
-            </ul>
-          </article>
-        ))}
-      </div>
-      <div className="private-plan-fact-row">
-        {PRIVATE_PLAN_DENTAL_FACTS.map((fact) => (
-          <span key={fact}>{fact}</span>
+      <div className="private-plan-detail-grid">
+        {PRIVATE_PLAN_DECISION_ROWS.map((row) => (
+          <DetailRow
+            key={row.label}
+            label={row.label}
+            value={row.values[product.id]}
+          />
         ))}
       </div>
     </section>
@@ -184,15 +133,6 @@ export default function PrivatePlanPanel({
         </button>
       </div>
 
-      <div className="private-plan-global-facts">
-        {PRIVATE_PLAN_GLOBAL_FACTS.map((fact) => (
-          <span key={fact}>
-            <ShieldCheck size={11} aria-hidden="true" />
-            {fact}
-          </span>
-        ))}
-      </div>
-
       <section className="private-plan-section">
         <div className="private-plan-section-head">
           <div>
@@ -213,14 +153,15 @@ export default function PrivatePlanPanel({
         <ProductDetail product={selectedProduct} />
       </section>
 
-      <DecisionGuide />
+      <DecisionGuide product={selectedProduct} />
 
       <UnderwritingChecker
+        selectedProductId={selectedProductId}
         highlighted={highlightUnderwriting}
         onAcknowledgeHighlight={onAcknowledgeUnderwritingHighlight}
       />
 
-      <DentalAddOn />
+      <DentalOptionsSection />
 
       <button
         type="button"
