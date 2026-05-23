@@ -1028,7 +1028,7 @@ const AncillaryWorkspace = memo(function AncillaryWorkspace() {
 });
 
 export default function AncillaryFlow() {
-  const { showLeftRail, dismissLeftRail } = useLeftRailManager();
+  const { showLeftRail, openLeftRail, dismissLeftRail } = useLeftRailManager();
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     createInitialState(productFromPath())
   );
@@ -1077,14 +1077,16 @@ export default function AncillaryFlow() {
       title: "Dental Plans",
       shortLabel: "Dental",
       color: ANCILLARY_ACCENT.color,
+      forceOpen: true,
       icon: <ProductIcon product={SUB_PRODUCT.DVH} size={13} />,
       railClassName: "left-rail--private-plans",
       panelClassName: "left-rail-panel-shell--private-plans",
       component: <DentalReferencePanel />,
     });
+    openLeftRail(DENTAL_REFERENCE_RAIL_ID);
 
     return () => dismissLeftRail(DENTAL_REFERENCE_RAIL_ID);
-  }, [activeProduct, dismissLeftRail, showLeftRail]);
+  }, [activeProduct, dismissLeftRail, openLeftRail, showLeftRail]);
 
   const value = useMemo(
     () => ({

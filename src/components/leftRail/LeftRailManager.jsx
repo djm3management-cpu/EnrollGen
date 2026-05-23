@@ -2,19 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 import { ChevronLeft } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 
 const LeftRailContext = createContext(null);
-
-const PANEL_TRANSITION = {
-  duration: 0.28,
-  ease: [0.16, 1, 0.3, 1],
-};
 
 const DESKTOP_RAIL_WIDTH = 360;
 
@@ -34,42 +29,66 @@ function getHighestPriorityId(itemsById, excludeId = null) {
 export function LeftRailProvider({ children }) {
   const [itemsById, setItemsById] = useState({});
   const [expandedId, setExpandedId] = useState(null);
+  const [manuallyMinimizedIds, setManuallyMinimizedIds] = useState(() => new Set());
   const itemsRef = useRef(itemsById);
+  const manuallyMinimizedIdsRef = useRef(manuallyMinimizedIds);
   itemsRef.current = itemsById;
+  manuallyMinimizedIdsRef.current = manuallyMinimizedIds;
 
   const showLeftRail = useCallback((item) => {
     if (!item?.id) {
       return;
     }
 
+    const { forceOpen = false, ...railItem } = item;
+
+    if (forceOpen) {
+      setManuallyMinimizedIds((prev) => {
+        if (!prev.has(railItem.id)) {
+          return prev;
+        }
+        const next = new Set(prev);
+        next.delete(railItem.id);
+        return next;
+      });
+    }
+
     setItemsById((prev) => {
-      const existing = prev[item.id];
+      const existing = prev[railItem.id];
       const nextItem = {
         ...existing,
-        ...item,
+        ...railItem,
         createdAt: existing?.createdAt ?? Date.now(),
         updatedAt: Date.now(),
       };
       return {
         ...prev,
-        [item.id]: nextItem,
+        [railItem.id]: nextItem,
       };
     });
 
     setExpandedId((currentExpandedId) => {
+      if (forceOpen) {
+        return railItem.id;
+      }
+
+      if (manuallyMinimizedIdsRef.current.has(railItem.id)) {
+        return currentExpandedId;
+      }
+
       const currentExpanded = currentExpandedId
         ? itemsRef.current[currentExpandedId]
         : null;
 
       if (!currentExpanded) {
-        return item.id;
+        return railItem.id;
       }
 
-      if (currentExpandedId === item.id) {
-        return item.id;
+      if (currentExpandedId === railItem.id) {
+        return railItem.id;
       }
 
-      return item.priority > currentExpanded.priority ? item.id : currentExpandedId;
+      return railItem.priority > currentExpanded.priority ? railItem.id : currentExpandedId;
     });
   }, []);
 
@@ -77,6 +96,15 @@ export function LeftRailProvider({ children }) {
     if (!id) {
       return;
     }
+
+    setManuallyMinimizedIds((prev) => {
+      if (!prev.has(id)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
 
     setItemsById((prev) => {
       if (!prev[id]) {
@@ -99,6 +127,12 @@ export function LeftRailProvider({ children }) {
       return;
     }
 
+    setManuallyMinimizedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+
     setExpandedId((currentExpandedId) => {
       if (currentExpandedId !== id) {
         return currentExpandedId;
@@ -111,12 +145,36 @@ export function LeftRailProvider({ children }) {
     if (!id || !itemsRef.current[id]) {
       return;
     }
+    setManuallyMinimizedIds((prev) => {
+      if (!prev.has(id)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setExpandedId(id);
+  }, []);
+
+  const openLeftRail = useCallback((id) => {
+    if (!id) {
+      return;
+    }
+    setManuallyMinimizedIds((prev) => {
+      if (!prev.has(id)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
     setExpandedId(id);
   }, []);
 
   const clearLeftRail = useCallback(() => {
     setItemsById({});
     setExpandedId(null);
+    setManuallyMinimizedIds(new Set());
   }, []);
 
   const hasLeftRailItem = useCallback((id) => Boolean(itemsById[id]), [itemsById]);
@@ -127,6 +185,19 @@ export function LeftRailProvider({ children }) {
     () => sortedItems.filter((item) => item.id !== expandedId),
     [expandedId, sortedItems]
   );
+
+  useEffect(() => {
+    if (expandedItem || !sortedItems.length) {
+      return;
+    }
+
+    const nextOpenItem = sortedItems.find(
+      (item) => !manuallyMinimizedIds.has(item.id)
+    );
+    if (nextOpenItem) {
+      setExpandedId(nextOpenItem.id);
+    }
+  }, [expandedItem, manuallyMinimizedIds, sortedItems]);
 
   const value = useMemo(
     () => ({
@@ -139,6 +210,7 @@ export function LeftRailProvider({ children }) {
       dismissLeftRail,
       minimizeLeftRail,
       expandLeftRail,
+      openLeftRail,
       clearLeftRail,
       hasLeftRailItem,
     }),
@@ -151,6 +223,7 @@ export function LeftRailProvider({ children }) {
       dismissLeftRail,
       minimizeLeftRail,
       expandLeftRail,
+      openLeftRail,
       clearLeftRail,
       hasLeftRailItem,
     ]
@@ -210,42 +283,34 @@ export function LeftRail({
         ))}
       </div>
 
-      <motion.aside
+      <aside
         className={`left-rail${expandedItem ? " is-open" : ""}${
           expandedItem?.id === "sep-qualifier" ? " left-rail--sep-qualifier" : ""
         }${expandedItem?.railClassName ? ` ${expandedItem.railClassName}` : ""}`}
-        animate={{ width: railWidth }}
-        initial={false}
-        transition={PANEL_TRANSITION}
+        style={{ width: railWidth }}
       >
-        <AnimatePresence mode="wait" initial={false}>
-          {expandedItem ? (
-            <motion.div
-              key={expandedItem.id}
-              className={`left-rail-panel-shell${
-                expandedItem.id === "sep-qualifier" ? " left-rail-panel-shell--sep-qualifier" : ""
-              }${expandedItem.panelClassName ? ` ${expandedItem.panelClassName}` : ""}${
-                expandedItem.isAttention ? " is-attention" : ""
-              }`}
-              initial={{ opacity: 0, x: -28 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -24 }}
-              transition={PANEL_TRANSITION}
+        {expandedItem ? (
+          <div
+            key={expandedItem.id}
+            className={`left-rail-panel-shell${
+              expandedItem.id === "sep-qualifier" ? " left-rail-panel-shell--sep-qualifier" : ""
+            }${expandedItem.panelClassName ? ` ${expandedItem.panelClassName}` : ""}${
+              expandedItem.isAttention ? " is-attention" : ""
+            }`}
+          >
+            <button
+              type="button"
+              className="rail-minimize-btn left-rail-minimize"
+              onClick={() => minimizeLeftRail(expandedItem.id)}
+              title={`Minimize ${expandedItem.title}`}
+              aria-label={`Minimize ${expandedItem.title}`}
             >
-              <button
-                type="button"
-                className="rail-minimize-btn left-rail-minimize"
-                onClick={() => minimizeLeftRail(expandedItem.id)}
-                title={`Minimize ${expandedItem.title}`}
-                aria-label={`Minimize ${expandedItem.title}`}
-              >
-                <ChevronLeft size={12} />
-              </button>
-              {expandedItem.component}
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      </motion.aside>
+              <ChevronLeft size={12} />
+            </button>
+            {expandedItem.component}
+          </div>
+        ) : null}
+      </aside>
     </>
   );
 }

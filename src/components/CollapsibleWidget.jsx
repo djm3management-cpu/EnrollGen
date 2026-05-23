@@ -12,7 +12,6 @@ import { useState, useRef, useEffect, memo } from "react";
 const CollapsibleWidget = memo(function CollapsibleWidget({
   title,
   icon,
-  accentColor = "#7a7f8e",
   defaultCollapsed = false,
   children,
   /** Extra elements rendered in the header right side (next to chevron) */

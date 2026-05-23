@@ -13,8 +13,8 @@ import {
  * Captures:
  *  - ScriptPrompter AI Co-Pilot messages (info/remind/tip/warn/critical)
  *  - Floating alerts (warn/critical popups)
- *  - SectionCoach tips (per-section AI assist)
- *  - ObjectionHandler rebuttals
+ *  - Per-section coaching tips
+ *  - Objection and rebuttal entries
  *
  * Drop into: src/context/CopilotTranscriptLog.jsx
  *
@@ -31,8 +31,8 @@ import {
 export const LOG_TYPES = {
   COPILOT_MSG: "copilot_message", // ScriptPrompter AI feed messages
   FLOATING_ALERT: "floating_alert", // Warn/critical popup alerts
-  SECTION_COACH: "section_coach_tip", // SectionCoach AI Assist responses
-  OBJECTION: "objection_rebuttal", // ObjectionHandler AI rebuttals
+  SECTION_COACH: "section_coach_tip", // Per-section AI assist responses
+  OBJECTION: "objection_rebuttal", // Objection/rebuttal log entries
   SYSTEM_EVENT: "system_event", // Gate completions, section changes, etc.
 };
 

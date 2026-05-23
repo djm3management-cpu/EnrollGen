@@ -7,6 +7,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          if (id.includes("vite/preload-helper")) return "vendor-runtime";
           if (!id.includes("node_modules")) return;
           if (id.includes("@clerk")) return "vendor-clerk";
           if (id.includes("@supabase")) return "vendor-supabase";

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const C = {
   base: "#171411",
@@ -166,7 +166,6 @@ export default function EnrollGenV3() {
   }, [callActive]);
 
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-  const allDone = SECTIONS.every(s => s.status === "done");
   const activeIdx = SECTIONS.findIndex(s => s.status === "active");
 
   return (

@@ -19,7 +19,7 @@ import {
 
 function U65ScriptBody() {
   const { state } = useU65();
-  const { showLeftRail, dismissLeftRail } = useLeftRailManager();
+  const { showLeftRail, openLeftRail, dismissLeftRail } = useLeftRailManager();
   const [transcript, setTranscript] = useState("");
   const [privatePlanFocus, setPrivatePlanFocus] = useState(null);
   const flowShellRef = useRef(null);
@@ -83,6 +83,10 @@ function U65ScriptBody() {
       ),
     });
   }, [privatePlanFocus, showLeftRail]);
+
+  useEffect(() => {
+    openLeftRail(PRIVATE_PLAN_RAIL_ID);
+  }, [openLeftRail]);
 
   useEffect(() => {
     return () => dismissLeftRail(PRIVATE_PLAN_RAIL_ID);

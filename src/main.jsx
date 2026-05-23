@@ -13,8 +13,40 @@ import { runSessionTrackingDiagnostic } from "./lib/sessionTrackingDiagnostic";
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const CLERK_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const LEGACY_TRAINING_MODE_STORAGE_KEY = "enrollgen_training_mode_v1";
+const PRELOAD_RELOAD_STORAGE_KEY = "enrollgen_preload_reload_v1";
 
 runSessionTrackingDiagnostic();
+
+function installPreloadErrorHandler() {
+  if (typeof window === "undefined") return;
+
+  window.addEventListener("vite:preloadError", (event) => {
+    event.preventDefault();
+
+    try {
+      if (window.sessionStorage.getItem(PRELOAD_RELOAD_STORAGE_KEY) === "pending") {
+        return;
+      }
+      window.sessionStorage.setItem(PRELOAD_RELOAD_STORAGE_KEY, "pending");
+    } catch {
+      // Reload anyway if storage is blocked.
+    }
+
+    window.location.reload();
+  });
+
+  window.addEventListener("load", () => {
+    window.setTimeout(() => {
+      try {
+        window.sessionStorage.removeItem(PRELOAD_RELOAD_STORAGE_KEY);
+      } catch {
+        // Ignore storage failures.
+      }
+    }, 10000);
+  });
+}
+
+installPreloadErrorHandler();
 
 function getClientPlatform() {
   if (typeof navigator === "undefined") return "unknown";

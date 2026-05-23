@@ -1,4 +1,5 @@
 import {
+  Component,
   lazy,
   Suspense,
   startTransition,
@@ -8,7 +9,6 @@ import {
   useRef,
   useState,
 } from "react";
-import LandingPage from "./components/LandingPage";
 import ShellTextures from "./components/ShellTextures";
 import BottomStatusBar from "./components/BottomStatusBar";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
@@ -27,6 +27,7 @@ import {
 } from "./components/leftRail/LeftRailManager";
 import SEPQualifier from "./components/leftRail/SEPQualifier";
 
+const loadLandingPage = () => import("./components/LandingPage");
 const loadScriptFlow = () => import("./components/ScriptFlow");
 const loadMedSupFlow = () => import("./components/MedSupFlow");
 const loadMedSupAiCopilot = () => import("./components/MedSupAiCopilot");
@@ -47,6 +48,7 @@ const loadTenantSettings = () => import("./components/TenantSettings");
 const loadOnboarding = () => import("./components/Onboarding");
 const loadScriptEditor = () => import("./components/ScriptEditor");
 
+const LandingPage = lazy(loadLandingPage);
 const ScriptFlow = lazy(loadScriptFlow);
 const MedSupFlow = lazy(loadMedSupFlow);
 const MedSupAiCopilot = lazy(loadMedSupAiCopilot);
@@ -218,16 +220,51 @@ function FlowSelector({ mode, onChange }) {
 
 function LazyPanel({ children }) {
   return (
-    <Suspense
-      fallback={
-        <div className="card" style={{ marginTop: 14 }}>
-          <div style={{ color: "#8fa4bc", fontSize: "0.9rem" }}>Loading...</div>
-        </div>
-      }
-    >
-      {children}
-    </Suspense>
+    <PanelErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="card" style={{ marginTop: 14 }}>
+            <div style={{ color: "#8fa4bc", fontSize: "0.9rem" }}>Loading...</div>
+          </div>
+        }
+      >
+        {children}
+      </Suspense>
+    </PanelErrorBoundary>
   );
+}
+
+class PanelErrorBoundary extends Component {
+  state = { error: null };
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("[EnrollGen] Panel render failed", error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="card" style={{ marginTop: 14 }}>
+          <div style={{ color: "#e09898", fontSize: "0.9rem", marginBottom: 10 }}>
+            Panel failed to load.
+          </div>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => this.setState({ error: null })}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 function SessionSummarySlot() {
@@ -277,15 +314,22 @@ function MedSupScriptWorkspace() {
   );
 }
 
+const MODE_ROUTES = {
+  ma: "/",
+  aca: "/script/aca",
+  medsup: "/script/medsup",
+  u65: "/script/u65",
+  ancillary: "/script/ancillary",
+};
+
 function getModeFromLocation() {
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/script/ancillary")) {
-    return "ancillary";
-  }
+  if (typeof window === "undefined") return "ma";
 
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/script/u65")) {
-    return "u65";
-  }
-
+  const { pathname } = window.location;
+  if (pathname.startsWith(MODE_ROUTES.ancillary)) return "ancillary";
+  if (pathname.startsWith(MODE_ROUTES.u65)) return "u65";
+  if (pathname.startsWith(MODE_ROUTES.medsup)) return "medsup";
+  if (pathname.startsWith(MODE_ROUTES.aca)) return "aca";
   return "ma";
 }
 
@@ -294,25 +338,15 @@ function syncModePath(mode) {
     return;
   }
 
-  if (mode === "ancillary") {
-    if (!window.location.pathname.startsWith("/script/ancillary")) {
-      window.history.pushState(null, "", "/script/ancillary");
-    }
+  const nextPath = MODE_ROUTES[mode] || MODE_ROUTES.ma;
+  const currentPath = window.location.pathname;
+
+  if (mode === "ancillary" && currentPath.startsWith(MODE_ROUTES.ancillary)) {
     return;
   }
 
-  if (mode === "u65") {
-    if (!window.location.pathname.startsWith("/script/u65")) {
-      window.history.pushState(null, "", "/script/u65");
-    }
-    return;
-  }
-
-  if (
-    window.location.pathname.startsWith("/script/ancillary") ||
-    window.location.pathname.startsWith("/script/u65")
-  ) {
-    window.history.pushState(null, "", "/");
+  if (currentPath !== nextPath) {
+    window.history.pushState(null, "", nextPath);
   }
 }
 
@@ -377,13 +411,13 @@ function AppShell({ currentUser = null }) {
   const [openPanel, setOpenPanel] = useState(null);
   const topBarRef = useRef(null);
   const overlayRef = useRef(null);
-  const hasAutoOpenedSepRef = useRef(false);
 
   const {
     railWidth,
     hasLeftRailItem,
     showLeftRail,
     expandLeftRail,
+    openLeftRail,
     minimizeLeftRail,
     dismissLeftRail,
   } = useLeftRailManager();
@@ -419,22 +453,23 @@ function AppShell({ currentUser = null }) {
   }, [dismissLeftRail, hasLeftRailItem, mode]);
 
   useLayoutEffect(() => {
-    if (mode !== "ma" || hasAutoOpenedSepRef.current) {
+    if (mode !== "ma") {
       return;
     }
 
-    hasAutoOpenedSepRef.current = true;
     showLeftRail({
       id: "sep-qualifier",
       priority: 3,
       title: "SEP QUALIFIER",
       shortLabel: "SEP QUALIFIER",
       color: "#e53e3e",
+      forceOpen: true,
       component: (
         <SEPQualifier onMinimize={() => minimizeLeftRail("sep-qualifier")} />
       ),
     });
-  }, [minimizeLeftRail, mode, showLeftRail]);
+    openLeftRail("sep-qualifier");
+  }, [minimizeLeftRail, mode, openLeftRail, showLeftRail]);
 
   useEffect(() => {
     if (!openPanel) {
@@ -581,6 +616,7 @@ function AppShell({ currentUser = null }) {
         <SEPQualifier onMinimize={() => minimizeLeftRail("sep-qualifier")} />
       ),
     });
+    openLeftRail("sep-qualifier");
   };
 
   const sepLauncher =
@@ -1056,7 +1092,9 @@ export default function App() {
             <SignIn appearance={clerkTerminalAppearance} />
           </div>
         ) : (
-          <LandingPage />
+          <Suspense fallback={<div className="auth-shell" />}>
+            <LandingPage />
+          </Suspense>
         )}
       </SignedOut>
       <SignedIn>

@@ -3,12 +3,28 @@
    Caches the app shell for offline capability.
    ===================================================== */
 
-const CACHE_NAME = "enrollgen-v1";
+const CACHE_NAME = "enrollgen-v2";
 const isLocalhost =
   self.location.hostname === "localhost" ||
   self.location.hostname === "127.0.0.1";
 
-// Install — pre-cache app shell
+function shouldRuntimeCache(request, response) {
+  if (!response.ok || !request.url.startsWith(self.location.origin)) {
+    return false;
+  }
+
+  const url = new URL(request.url);
+  return (
+    request.mode === "navigate" ||
+    url.pathname === "/" ||
+    url.pathname === "/index.html" ||
+    url.pathname.startsWith("/assets/citizenship-docs/") ||
+    url.pathname.startsWith("/videos/") ||
+    url.pathname.startsWith("/wallpapers/")
+  );
+}
+
+// Install: pre-cache app shell.
 self.addEventListener("install", (event) => {
   if (isLocalhost) {
     self.skipWaiting();
@@ -23,7 +39,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate — clean old caches
+// Activate: clean old caches.
 self.addEventListener("activate", (event) => {
   if (isLocalhost) {
     event.waitUntil(
@@ -50,9 +66,8 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch — network first, fall back to cache
+// Fetch: network first, fall back to cache.
 self.addEventListener("fetch", (event) => {
-  // Skip non-GET and chrome-extension requests
   if (event.request.method !== "GET") return;
   if (event.request.url.startsWith("chrome-extension")) return;
   if (isLocalhost) return;
@@ -60,8 +75,9 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Cache successful responses for same-origin requests
-        if (response.ok && event.request.url.startsWith(self.location.origin)) {
+        // Avoid caching hashed JS/CSS chunks in the service worker. Browser
+        // HTTP cache handles those, and stale chunks can break lazy imports.
+        if (shouldRuntimeCache(event.request, response)) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, clone);
@@ -70,10 +86,8 @@ self.addEventListener("fetch", (event) => {
         return response;
       })
       .catch(() => {
-        // Network failed — try cache
         return caches.match(event.request).then((cached) => {
           if (cached) return cached;
-          // Fallback to index.html for navigation requests (SPA)
           if (event.request.mode === "navigate") {
             return caches.match("/index.html");
           }

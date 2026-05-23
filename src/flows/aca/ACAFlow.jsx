@@ -674,7 +674,7 @@ export default function ACAFlow() {
           <ProgressDots
             sections={ACA_STEP_LABELS.filter(
               (s) => !s.conditional || state.enrollmentPeriod === "SEP"
-            ).map((s, idx) => {
+            ).map((s) => {
               const isDone = Boolean(state[s.k]);
               const visibleSteps = ACA_STEP_LABELS.filter(
                 (x) => !x.conditional || state.enrollmentPeriod === "SEP"
