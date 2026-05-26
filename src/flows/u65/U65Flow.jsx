@@ -1,6 +1,6 @@
 /**
  * U65Flow.jsx - U65 Off-Exchange Script Flow
- * Simplified G00-G07 talk track only.
+ * G00-G09 talk track with G01a employer coverage branch.
  */
 
 import { useEffect, useMemo, useRef } from "react";
@@ -13,17 +13,6 @@ import CenterTimerBar from "../../components/CenterTimerBar";
 import ProgressDots from "../../components/ProgressDots";
 
 const ACCENT = "#a855f7";
-
-const U65_STEP_LABELS = [
-  { key: "gate0Ok", label: "Open" },
-  { key: "gate1Ok", label: "Assess" },
-  { key: "gate2Ok", label: "Health" },
-  { key: "gate3Ok", label: "Present" },
-  { key: "gate4Ok", label: "Select" },
-  { key: "gate5Ok", label: "Ancillary" },
-  { key: "gate6Ok", label: "Enroll" },
-  { key: "gate7Ok", label: "Close" },
-];
 
 function fmt(ms) {
   const seconds = Math.round(ms / 1000);
@@ -111,7 +100,7 @@ function GateToggle({ label, done, onDo, onUndo }) {
   );
 }
 
-function FlowCard({ num, title, active, done, dur, children }) {
+function FlowCard({ code, title, active, done, dur, children }) {
   if (done && !active) {
     return (
       <details style={{ marginBottom: 10 }}>
@@ -140,7 +129,7 @@ function FlowCard({ num, title, active, done, dur, children }) {
                 fontSize: 11,
               }}
             >
-              G{String(num).padStart(2, "0")}
+              {code}
             </span>
             {title}
           </span>
@@ -198,7 +187,7 @@ function FlowCard({ num, title, active, done, dur, children }) {
             fontVariantNumeric: "tabular-nums",
           }}
         >
-          G{String(num).padStart(2, "0")}
+          {code}
         </span>
         <span style={{ fontSize: 15, fontWeight: 600, color: "#dfe6f0" }}>{title}</span>
       </div>
@@ -216,7 +205,7 @@ function U65GateSection({ gate }) {
 
   return (
     <FlowCard
-      num={gate.num}
+      code={gate.code || `G${String(gate.num).padStart(2, "0")}`}
       title={gate.label}
       active={activeGate === gate.num}
       done={done}
@@ -241,19 +230,38 @@ function U65GateSection({ gate }) {
   );
 }
 
-function scriptBodyToLines(body, fallback = []) {
+function scriptBodyToParts(body, fallbackScript = [], fallbackDirections = []) {
   const lines = String(body || "")
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean);
-  return lines.length ? lines : fallback;
+
+  if (!lines.length) {
+    return { script: fallbackScript, directions: fallbackDirections };
+  }
+
+  const script = [];
+  const directions = [];
+
+  lines.forEach((line) => {
+    if (line.startsWith("Direction:")) {
+      directions.push(line.replace(/^Direction:\s*/, ""));
+      return;
+    }
+    script.push(line);
+  });
+
+  return {
+    script: script.length ? script : fallbackScript,
+    directions: directions.length ? directions : fallbackDirections,
+  };
 }
 
 function useU65TemplateGates() {
   const { sections } = useScriptTemplate("u65");
 
   return useMemo(() => {
-    if (!sections.length) {
+    if (!sections.length || sections.length < U65_GATES.length) {
       return U65_GATES;
     }
 
@@ -266,10 +274,13 @@ function useU65TemplateGates() {
         return gate;
       }
 
+      const bodyParts = scriptBodyToParts(section.body, gate.script, gate.directions);
+
       return {
         ...gate,
         label: section.title || gate.label,
-        script: scriptBodyToLines(section.body, gate.script),
+        script: bodyParts.script,
+        directions: bodyParts.directions,
         gate: section.lock_message || gate.gate,
       };
     });
@@ -280,6 +291,7 @@ function useU65TemplateGates() {
 export default function U65Flow() {
   const { state, dispatch, activeGate } = useU65();
   const u65Gates = useU65TemplateGates();
+  const isComplete = u65Gates.every((gate) => Boolean(state[gate.key]));
   const previousGateRef = useRef(activeGate);
 
   useEffect(() => {
@@ -349,18 +361,18 @@ export default function U65Flow() {
           ))}
 
           <ProgressDots
-            sections={U65_STEP_LABELS.map((step, idx) => {
-              const isDone = Boolean(state[step.key]);
-              const isActive = !isDone && idx === activeGate;
+            sections={u65Gates.map((gate) => {
+              const isDone = Boolean(state[gate.key]);
+              const isActive = !isDone && gate.num === activeGate;
               return {
-                key: step.key,
-                label: step.label,
+                key: gate.key,
+                label: gate.shortLabel || gate.label,
                 status: isDone ? "done" : isActive ? "active" : "pending",
               };
             })}
           />
 
-          {state.gate7Ok ? (
+          {isComplete ? (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}

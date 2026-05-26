@@ -1,18 +1,22 @@
 import { createContext, useContext, useReducer, useMemo } from "react";
-import { calcFplPercent, getFplThreshold, getAcaEstimate, getProductRecommendation } from "./U65Data";
+import {
+  U65_GATES,
+  calcFplPercent,
+  getFplThreshold,
+  getAcaEstimate,
+  getProductRecommendation,
+} from "./U65Data";
 
 const U65Context = createContext(null);
 
+const initialGateState = U65_GATES.reduce((acc, gate) => {
+  acc[gate.key] = false;
+  return acc;
+}, {});
+
 const initialState = {
   // gate completion flags
-  gate0Ok: false,
-  gate1Ok: false,
-  gate2Ok: false,
-  gate3Ok: false,
-  gate4Ok: false,
-  gate5Ok: false,
-  gate6Ok: false,
-  gate7Ok: false,
+  ...initialGateState,
 
   // call started gate
   callStarted: false,
@@ -255,15 +259,8 @@ function reducer(state, action) {
 }
 
 function getActiveGate(state) {
-  if (!state.gate0Ok) return 0;
-  if (!state.gate1Ok) return 1;
-  if (!state.gate2Ok) return 2;
-  if (!state.gate3Ok) return 3;
-  if (!state.gate4Ok) return 4;
-  if (!state.gate5Ok) return 5;
-  if (!state.gate6Ok) return 6;
-  if (!state.gate7Ok) return 7;
-  return 8; // complete
+  const nextGate = U65_GATES.find((gate) => !state[gate.key]);
+  return nextGate ? nextGate.num : U65_GATES.length; // complete
 }
 
 export function U65Provider({ children }) {
