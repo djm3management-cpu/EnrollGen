@@ -321,6 +321,17 @@ const MODE_ROUTES = {
   u65: "/script/u65",
   ancillary: "/script/ancillary",
 };
+const LEFT_RAIL_IDS = {
+  sepQualifier: "sep-qualifier",
+  u65PrivatePlans: "u65-private-plans",
+  ancillaryDentalReference: "ancillary-dental-reference",
+};
+const EMPTY_LEFT_RAIL_IDS = [];
+const LEFT_RAIL_IDS_BY_MODE = {
+  ma: [LEFT_RAIL_IDS.sepQualifier],
+  u65: [LEFT_RAIL_IDS.u65PrivatePlans],
+  ancillary: [LEFT_RAIL_IDS.ancillaryDentalReference],
+};
 
 function getModeFromLocation() {
   if (typeof window === "undefined") return "ma";
@@ -414,6 +425,7 @@ function AppShell({ currentUser = null }) {
 
   const {
     railWidth,
+    expandedItem,
     hasLeftRailItem,
     showLeftRail,
     expandLeftRail,
@@ -424,6 +436,10 @@ function AppShell({ currentUser = null }) {
 
   const canAdmin = LOGIN_DISABLED || isAdminUser(currentUser);
   const navTabs = useMemo(() => getTabsForMode(mode, canAdmin), [canAdmin, mode]);
+  const visibleLeftRailIds = LEFT_RAIL_IDS_BY_MODE[mode] || EMPTY_LEFT_RAIL_IDS;
+  const visibleRailWidth = visibleLeftRailIds.includes(expandedItem?.id)
+    ? railWidth
+    : 0;
 
   useEffect(() => {
     const handlePopState = () => {
@@ -447,8 +463,8 @@ function AppShell({ currentUser = null }) {
   }, []);
 
   useEffect(() => {
-    if (mode !== "ma" && hasLeftRailItem("sep-qualifier")) {
-      dismissLeftRail("sep-qualifier");
+    if (mode !== "ma" && hasLeftRailItem(LEFT_RAIL_IDS.sepQualifier)) {
+      dismissLeftRail(LEFT_RAIL_IDS.sepQualifier);
     }
   }, [dismissLeftRail, hasLeftRailItem, mode]);
 
@@ -458,17 +474,17 @@ function AppShell({ currentUser = null }) {
     }
 
     showLeftRail({
-      id: "sep-qualifier",
+      id: LEFT_RAIL_IDS.sepQualifier,
       priority: 3,
       title: "SEP QUALIFIER",
       shortLabel: "SEP QUALIFIER",
       color: "#e53e3e",
       forceOpen: true,
       component: (
-        <SEPQualifier onMinimize={() => minimizeLeftRail("sep-qualifier")} />
+        <SEPQualifier onMinimize={() => minimizeLeftRail(LEFT_RAIL_IDS.sepQualifier)} />
       ),
     });
-    openLeftRail("sep-qualifier");
+    openLeftRail(LEFT_RAIL_IDS.sepQualifier);
   }, [minimizeLeftRail, mode, openLeftRail, showLeftRail]);
 
   useEffect(() => {
@@ -601,26 +617,26 @@ function AppShell({ currentUser = null }) {
   };
 
   const openSepQualifier = () => {
-    if (hasLeftRailItem("sep-qualifier")) {
-      expandLeftRail("sep-qualifier");
+    if (hasLeftRailItem(LEFT_RAIL_IDS.sepQualifier)) {
+      expandLeftRail(LEFT_RAIL_IDS.sepQualifier);
       return;
     }
 
     showLeftRail({
-      id: "sep-qualifier",
+      id: LEFT_RAIL_IDS.sepQualifier,
       priority: 3,
       title: "SEP QUALIFIER",
       shortLabel: "SEP QUALIFIER",
       color: "#e53e3e",
       component: (
-        <SEPQualifier onMinimize={() => minimizeLeftRail("sep-qualifier")} />
+        <SEPQualifier onMinimize={() => minimizeLeftRail(LEFT_RAIL_IDS.sepQualifier)} />
       ),
     });
-    openLeftRail("sep-qualifier");
+    openLeftRail(LEFT_RAIL_IDS.sepQualifier);
   };
 
   const sepLauncher =
-    mode === "ma" && !hasLeftRailItem("sep-qualifier") ? (
+    mode === "ma" && !hasLeftRailItem(LEFT_RAIL_IDS.sepQualifier) ? (
       <button
         type="button"
         className="left-rail-handle left-rail-handle-launcher"
@@ -714,7 +730,7 @@ function AppShell({ currentUser = null }) {
         className={`app-shell app-shell-modern${
           mode === "ma" ? " app-shell--right-rail-space" : ""
         }`}
-        style={{ "--left-rail-width": `${railWidth}px` }}
+        style={{ "--left-rail-width": `${visibleRailWidth}px` }}
       >
         <header ref={topBarRef} className="top-bar-shell">
           <div className="top-bar-brand">
@@ -765,7 +781,7 @@ function AppShell({ currentUser = null }) {
 
         {mode === "ma" ? (
           <ScriptProvider>
-            <LeftRail launcher={sepLauncher} />
+            <LeftRail launcher={sepLauncher} visibleItemIds={visibleLeftRailIds} />
 
             {openPanel ? (
               <div
@@ -813,7 +829,9 @@ function AppShell({ currentUser = null }) {
           </ScriptProvider>
         ) : (
           <>
-            {mode === "u65" || mode === "ancillary" ? <LeftRail /> : null}
+            {mode === "u65" || mode === "ancillary" ? (
+              <LeftRail visibleItemIds={visibleLeftRailIds} />
+            ) : null}
 
             {openPanel ? (
               <div

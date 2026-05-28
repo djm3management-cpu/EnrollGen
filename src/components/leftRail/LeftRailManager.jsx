@@ -244,6 +244,7 @@ export function useLeftRailManager() {
 
 export function LeftRail({
   launcher = null,
+  visibleItemIds = null,
 }) {
   const {
     expandedItem,
@@ -252,12 +253,27 @@ export function LeftRail({
     expandLeftRail,
     minimizeLeftRail,
   } = useLeftRailManager();
+  const visibleItemIdSet = useMemo(
+    () => (visibleItemIds ? new Set(visibleItemIds) : null),
+    [visibleItemIds]
+  );
+  const itemIsVisible = useCallback(
+    (item) => !visibleItemIdSet || visibleItemIdSet.has(item.id),
+    [visibleItemIdSet]
+  );
+  const visibleExpandedItem =
+    expandedItem && itemIsVisible(expandedItem) ? expandedItem : null;
+  const visibleMinimizedItems = useMemo(
+    () => minimizedItems.filter(itemIsVisible),
+    [itemIsVisible, minimizedItems]
+  );
+  const visibleRailWidth = visibleExpandedItem ? railWidth : 0;
 
   return (
     <>
       <div className="left-rail-handles">
         {launcher}
-        {minimizedItems.map((item) => (
+        {visibleMinimizedItems.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -284,30 +300,30 @@ export function LeftRail({
       </div>
 
       <aside
-        className={`left-rail${expandedItem ? " is-open" : ""}${
-          expandedItem?.id === "sep-qualifier" ? " left-rail--sep-qualifier" : ""
-        }${expandedItem?.railClassName ? ` ${expandedItem.railClassName}` : ""}`}
-        style={{ width: railWidth }}
+        className={`left-rail${visibleExpandedItem ? " is-open" : ""}${
+          visibleExpandedItem?.id === "sep-qualifier" ? " left-rail--sep-qualifier" : ""
+        }${visibleExpandedItem?.railClassName ? ` ${visibleExpandedItem.railClassName}` : ""}`}
+        style={{ width: visibleRailWidth }}
       >
-        {expandedItem ? (
+        {visibleExpandedItem ? (
           <div
-            key={expandedItem.id}
+            key={visibleExpandedItem.id}
             className={`left-rail-panel-shell${
-              expandedItem.id === "sep-qualifier" ? " left-rail-panel-shell--sep-qualifier" : ""
-            }${expandedItem.panelClassName ? ` ${expandedItem.panelClassName}` : ""}${
-              expandedItem.isAttention ? " is-attention" : ""
+              visibleExpandedItem.id === "sep-qualifier" ? " left-rail-panel-shell--sep-qualifier" : ""
+            }${visibleExpandedItem.panelClassName ? ` ${visibleExpandedItem.panelClassName}` : ""}${
+              visibleExpandedItem.isAttention ? " is-attention" : ""
             }`}
           >
             <button
               type="button"
               className="rail-minimize-btn left-rail-minimize"
-              onClick={() => minimizeLeftRail(expandedItem.id)}
-              title={`Minimize ${expandedItem.title}`}
-              aria-label={`Minimize ${expandedItem.title}`}
+              onClick={() => minimizeLeftRail(visibleExpandedItem.id)}
+              title={`Minimize ${visibleExpandedItem.title}`}
+              aria-label={`Minimize ${visibleExpandedItem.title}`}
             >
               <ChevronLeft size={12} />
             </button>
-            {expandedItem.component}
+            {visibleExpandedItem.component}
           </div>
         ) : null}
       </aside>
