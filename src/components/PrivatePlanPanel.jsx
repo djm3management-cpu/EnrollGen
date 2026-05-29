@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BookOpen, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import {
   PRIVATE_PLAN_DECISION_ROWS,
   PRIVATE_PLAN_PLAYBOOK_URL,
@@ -234,18 +234,6 @@ export default function PrivatePlanPanel({
 
   return (
     <section className="private-plan-panel">
-      <div className="private-plan-panel__header">
-        <div className="private-plan-panel__title-row">
-          <span className="private-plan-panel__icon" aria-hidden="true">
-            <BookOpen size={16} />
-          </span>
-          <div>
-            <span className="private-plan-kicker">U65 Reference</span>
-            <h2>Private Plans</h2>
-          </div>
-        </div>
-      </div>
-
       <section className="private-plan-section">
         <div className="private-plan-section-head">
           <div>
