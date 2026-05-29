@@ -5,10 +5,25 @@ import {
   PRIVATE_PLAN_PLAYBOOK_URL,
   PRIVATE_PLAN_PRODUCTS,
 } from "../data/privatePlans";
+import {
+  DEFAULT_PRIVATE_PLAN_RATE_OPTIONS,
+  PRIVATE_PLAN_RATE_OPTIONS,
+  formatPrivatePlanCurrency,
+  getCustomerAgeFromDob,
+  getPrivatePlanAgeBand,
+  getPrivatePlanRates,
+} from "../data/privatePlanRates";
 import { DentalOptionsSection } from "./DentalReferencePanel";
 import PrivatePlanCard from "./PrivatePlanCard";
 import PlaybookModal from "./PlaybookModal";
 import UnderwritingChecker from "./UnderwritingChecker";
+
+const COVERAGE_TIERS = [
+  { key: "employee", label: "Employee" },
+  { key: "spouse", label: "Employee & Spouse" },
+  { key: "children", label: "Employee & Child(ren)" },
+  { key: "family", label: "Family" },
+];
 
 function DetailRow({ label, value }) {
   return (
@@ -19,7 +34,39 @@ function DetailRow({ label, value }) {
   );
 }
 
-function ProductDetail({ product }) {
+function ProductDetail({
+  product,
+  customerDob,
+  customerAge,
+  activeRateOption,
+  onCustomerDobChange,
+  onCustomerDobClear,
+  onRateOptionChange,
+}) {
+  const rateOptions = PRIVATE_PLAN_RATE_OPTIONS[product.id] || [];
+  const selectedRateOption =
+    rateOptions.find((option) => String(option.key) === String(activeRateOption)) ||
+    rateOptions[0];
+  const ageBand = getPrivatePlanAgeBand(product.id, customerAge);
+  const hasDob = customerDob.trim().length > 0;
+  const rates =
+    hasDob && ageBand && selectedRateOption
+      ? getPrivatePlanRates(product.id, selectedRateOption.key, ageBand)
+      : null;
+  const optionLabel = selectedRateOption?.rateLabel || selectedRateOption?.label || "";
+  const childTierLabel =
+    product.id === "medperformance" ? "Employee & Children" : "Employee & Child(ren)";
+  const coverageTiers = COVERAGE_TIERS.map((tier) =>
+    tier.key === "children" ? { ...tier, label: childTierLabel } : tier
+  );
+  const ageStatus = hasDob
+    ? customerAge == null
+      ? "Enter a valid DOB."
+      : ageBand
+        ? `Age: ${customerAge} | Band: ${ageBand}`
+        : "Not eligible - age must be 18-64."
+    : "";
+
   return (
     <article className="private-plan-detail">
       <div className="private-plan-detail__header">
@@ -30,13 +77,49 @@ function ProductDetail({ product }) {
         <span className="private-plan-premium">{product.startingPremium}</span>
       </div>
 
-      <div className="private-plan-chip-row">
-        {product.deductibleTiers.map((tier) => (
-          <span key={tier} className="private-plan-chip">
-            {tier}
-          </span>
-        ))}
+      <div className="private-plan-dob-control">
+        <label className="private-plan-dob-field">
+          <span>Customer DOB</span>
+          <input
+            type="date"
+            value={customerDob}
+            onChange={(event) => onCustomerDobChange(event.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          className="private-plan-dob-clear"
+          onClick={onCustomerDobClear}
+          disabled={!customerDob}
+        >
+          Clear
+        </button>
       </div>
+
+      {hasDob ? (
+        <div className={`private-plan-age-status${ageBand ? "" : " is-warning"}`}>
+          {ageStatus}
+        </div>
+      ) : null}
+
+      {rateOptions.length ? (
+        <div className="private-plan-chip-row" aria-label={`${product.name} rate options`}>
+          {rateOptions.map((option) => {
+            const selected = String(option.key) === String(selectedRateOption?.key);
+            return (
+              <button
+                type="button"
+                key={option.key}
+                className={`private-plan-chip${selected ? " is-active" : ""}`}
+                onClick={() => onRateOptionChange(product.id, option.key)}
+                aria-pressed={selected}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       <div className="private-plan-detail-grid">
         <DetailRow label="Plan Type" value={product.planType} />
@@ -45,6 +128,29 @@ function ProductDetail({ product }) {
         <DetailRow label="PBM" value={product.pbm} />
         <DetailRow label="Stop-Loss" value={product.stopLoss} />
       </div>
+
+      {rates ? (
+        <div className="private-plan-rates">
+          <div className="private-plan-rates__header">
+            <span className="private-plan-mini-block__label">Monthly Rates</span>
+            <strong>
+              Age Band: {ageBand}, {optionLabel}
+            </strong>
+          </div>
+          <table className="private-plan-rates-table">
+            <tbody>
+              {coverageTiers.map((tier) => (
+                <tr key={tier.key}>
+                  <th scope="row">{tier.label}</th>
+                  <td>
+                    {formatPrivatePlanCurrency(rates[tier.key], product.id === "medmax")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
 
       {product.variants?.length ? (
         <div className="private-plan-variant-grid">
@@ -104,12 +210,27 @@ export default function PrivatePlanPanel({
 }) {
   const [selectedProductId, setSelectedProductId] = useState(PRIVATE_PLAN_PRODUCTS[0].id);
   const [modalOpen, setModalOpen] = useState(false);
+  const [customerDob, setCustomerDob] = useState("");
+  const [rateOptionByProduct, setRateOptionByProduct] = useState(
+    DEFAULT_PRIVATE_PLAN_RATE_OPTIONS
+  );
   const selectedProduct = useMemo(
     () =>
       PRIVATE_PLAN_PRODUCTS.find((product) => product.id === selectedProductId) ||
       PRIVATE_PLAN_PRODUCTS[0],
     [selectedProductId]
   );
+  const customerAge = useMemo(() => getCustomerAgeFromDob(customerDob), [customerDob]);
+  const activeRateOption =
+    rateOptionByProduct[selectedProduct.id] ||
+    DEFAULT_PRIVATE_PLAN_RATE_OPTIONS[selectedProduct.id];
+
+  const handleRateOptionChange = (productId, optionKey) => {
+    setRateOptionByProduct((current) => ({
+      ...current,
+      [productId]: optionKey,
+    }));
+  };
 
   return (
     <section className="private-plan-panel">
@@ -123,14 +244,6 @@ export default function PrivatePlanPanel({
             <h2>Private Plans</h2>
           </div>
         </div>
-        <button
-          type="button"
-          className="private-plan-open-btn"
-          onClick={() => setModalOpen(true)}
-        >
-          <ExternalLink size={13} />
-          Open Full Playbook
-        </button>
       </div>
 
       <section className="private-plan-section">
@@ -150,7 +263,15 @@ export default function PrivatePlanPanel({
             />
           ))}
         </div>
-        <ProductDetail product={selectedProduct} />
+        <ProductDetail
+          product={selectedProduct}
+          customerDob={customerDob}
+          customerAge={customerAge}
+          activeRateOption={activeRateOption}
+          onCustomerDobChange={setCustomerDob}
+          onCustomerDobClear={() => setCustomerDob("")}
+          onRateOptionChange={handleRateOptionChange}
+        />
       </section>
 
       <DecisionGuide product={selectedProduct} />
