@@ -925,3 +925,96 @@ body {
   text-shadow: none !important;
 }
 
+/* Mystery landing state */
+.landing-page--mystery {
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.landing-page--mystery .landing-nav {
+  position: fixed;
+  inset: 0 0 auto;
+  min-height: 58px;
+  background: linear-gradient(180deg, rgba(10, 8, 7, 0.86), rgba(10, 8, 7, 0)) !important;
+  border-bottom: 0 !important;
+  backdrop-filter: none !important;
+  z-index: 40;
+}
+
+.landing-nav-spacer {
+  display: block;
+}
+
+.landing-nav-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.landing-nav-login {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: var(--eg-radius-md);
+  color: var(--eg-text-mid) !important;
+  font-family: var(--eg-font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+.landing-nav-login:hover {
+  color: var(--eg-text) !important;
+}
+
+.landing-hero-shell--mystery {
+  grid-template-columns: 1fr !important;
+  place-items: center !important;
+  min-height: 100vh !important;
+  padding: 58px clamp(18px, 5vw, 72px) !important;
+}
+
+.landing-page--mystery .landing-hero-overlay {
+  background:
+    radial-gradient(
+      ellipse 58% 38% at 50% 48%,
+      rgba(218, 167, 109, 0.12) 0%,
+      rgba(20, 14, 9, 0.2) 38%,
+      rgba(5, 4, 3, 0.78) 100%
+    ),
+    rgba(0, 0, 0, 0.34) !important;
+}
+
+.landing-mystery-content {
+  width: min(920px, 92vw);
+  text-align: center;
+}
+
+.landing-mystery-content #landing-hero-title,
+.landing-mystery-content.landing-hero-content h1 {
+  max-width: none !important;
+  margin: 0 auto !important;
+  color: rgba(246, 238, 226, 0.9) !important;
+  font-family: var(--eg-font-display) !important;
+  font-size: clamp(38px, 7vw, 92px) !important;
+  font-weight: 400 !important;
+  line-height: 0.98 !important;
+  text-transform: lowercase !important;
+  text-wrap: balance;
+}
+
+@media (max-width: 620px) {
+  .landing-page--mystery .landing-nav {
+    grid-template-columns: auto 1fr auto;
+    padding-inline: 14px;
+  }
+
+  .landing-mystery-content #landing-hero-title,
+  .landing-mystery-content.landing-hero-content h1 {
+    font-size: clamp(34px, 14vw, 58px) !important;
+  }
+}
