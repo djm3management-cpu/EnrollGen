@@ -56,7 +56,11 @@ export const TranscriptTimer = memo(function TranscriptTimer({ startTime }) {
   );
 });
 
-const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = [], listening = false }) {
+const MiniLiveTranscript = memo(function MiniLiveTranscript({
+  mergedEntries = [],
+  listening = false,
+  highlightSpeakers = false,
+}) {
   const scrollRef = useRef(null);
   const [userScrolled, setUserScrolled] = useState(false);
   const latestEntryTimestamp = mergedEntries.at(-1)?.timestamp;
@@ -122,6 +126,11 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({ mergedEntries = []
                 animation: idx === finals.length - 1 ? "miniTranscriptFadeIn 0.3s ease" : "none",
                 borderLeft: "2px solid transparent",
                 paddingLeft: 4,
+                backgroundColor: highlightSpeakers
+                  ? isCustomer
+                    ? "rgba(105, 167, 200, 0.12)"
+                    : "rgba(217, 139, 69, 0.1)"
+                  : undefined,
               }}
             >
               <span className="mini-live-transcript__text" style={{

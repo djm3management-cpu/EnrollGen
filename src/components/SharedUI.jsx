@@ -18,7 +18,7 @@ function extractScriptText(node) {
 }
 
 /* ===================== SCRIPT BOX (with copy button) ===================== */
-export const ScriptBox = React.memo(function ScriptBox({ children, verbatim, editable = true }) {
+export const ScriptBox = React.memo(function ScriptBox({ children, verbatim, editable = true, fitContent = false }) {
   const [copied, setCopied] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -99,6 +99,7 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim, edi
       <textarea
         ref={textRef}
         className={`script-box-editor ${isEditing ? "is-editing" : ""}`}
+        style={fitContent ? { minHeight: 0 } : undefined}
         value={draftText}
         onChange={(e) => {
           if (!editable) return;

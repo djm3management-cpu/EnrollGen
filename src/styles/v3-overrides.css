@@ -39,7 +39,7 @@ body,
   -webkit-user-drag: none;
 }
 
-/* ----- Animated topographic background --------------------- */
+/* ----- Animated topographic command background -------------- */
 
 .eg-strata-stage {
   position: fixed;
@@ -47,9 +47,22 @@ body,
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 32%,
+      rgba(192, 139, 85, 0.07) 0%,
+      rgba(192, 139, 85, 0.02) 45%,
+      transparent 75%
+    ),
+    radial-gradient(
+      ellipse 110% 70% at 50% 100%,
+      rgba(8, 7, 6, 0.55) 0%,
+      rgba(13, 11, 9, 0.25) 55%,
+      transparent 85%
+    );
 }
 
-/* Vignette as a plain overlay div instead of a mask (cheaper to composite). */
+/* Vignette overlay sits above everything except grain. */
 .eg-strata-stage::before {
   content: "";
   position: absolute;
@@ -58,13 +71,82 @@ body,
   background: radial-gradient(
     ellipse at 50% 45%,
     rgba(23, 20, 17, 0) 0%,
-    rgba(23, 20, 17, 0.35) 60%,
-    rgba(23, 20, 17, 0.7) 100%
+    rgba(23, 20, 17, 0.42) 62%,
+    rgba(10, 8, 7, 0.82) 100%
   );
-  z-index: 2;
+  z-index: 5;
 }
 
-.eg-strata {
+/* Aurora: soft glowing radial blobs that slowly drift. */
+.eg-aurora {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  will-change: transform, opacity;
+  z-index: 1;
+}
+
+.eg-aurora--1 {
+  width: 58vw;
+  height: 58vw;
+  top: -18vw;
+  left: -12vw;
+  background: radial-gradient(
+    circle,
+    rgba(192, 139, 85, 0.5) 0%,
+    rgba(192, 139, 85, 0.18) 38%,
+    rgba(192, 139, 85, 0) 70%
+  );
+  animation: eg-aurora-drift-1 38s ease-in-out infinite;
+}
+
+.eg-aurora--2 {
+  width: 50vw;
+  height: 50vw;
+  bottom: -22vw;
+  right: -14vw;
+  background: radial-gradient(
+    circle,
+    rgba(218, 167, 109, 0.42) 0%,
+    rgba(218, 167, 109, 0.14) 38%,
+    rgba(218, 167, 109, 0) 70%
+  );
+  animation: eg-aurora-drift-2 54s ease-in-out infinite;
+}
+
+.eg-aurora--3 {
+  width: 44vw;
+  height: 44vw;
+  top: 30%;
+  right: 22%;
+  background: radial-gradient(
+    circle,
+    rgba(138, 99, 56, 0.48) 0%,
+    rgba(138, 99, 56, 0.15) 38%,
+    rgba(138, 99, 56, 0) 72%
+  );
+  animation: eg-aurora-drift-3 64s ease-in-out infinite;
+}
+
+@keyframes eg-aurora-drift-1 {
+  0%   { transform: translate3d(0, 0, 0) scale(1);    opacity: 0.32; }
+  50%  { transform: translate3d(8vw, 4vw, 0) scale(1.08); opacity: 0.5; }
+  100% { transform: translate3d(0, 0, 0) scale(1);    opacity: 0.32; }
+}
+@keyframes eg-aurora-drift-2 {
+  0%   { transform: translate3d(0, 0, 0) scale(1);    opacity: 0.3; }
+  50%  { transform: translate3d(-6vw, -5vw, 0) scale(1.12); opacity: 0.48; }
+  100% { transform: translate3d(0, 0, 0) scale(1);    opacity: 0.3; }
+}
+@keyframes eg-aurora-drift-3 {
+  0%   { transform: translate3d(0, 0, 0) scale(1);    opacity: 0.25; }
+  50%  { transform: translate3d(-4vw, 6vw, 0) scale(1.15); opacity: 0.42; }
+  100% { transform: translate3d(0, 0, 0) scale(1);    opacity: 0.25; }
+}
+
+/* Vista-style aurora ribbons: blurred glow halo + sharp core, drifting. */
+.eg-ribbons {
   position: absolute;
   top: -8%;
   left: -10%;
@@ -74,39 +156,89 @@ body,
   will-change: transform;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
+  z-index: 2;
+  mix-blend-mode: screen;
 }
 
-.eg-strata--a {
-  opacity: 0.11;
-  animation: eg-strata-drift-a 43s ease-in-out infinite;
+.eg-ribbons--glow {
+  opacity: 0.32;
+  filter: blur(7px);
+  animation: eg-ribbon-drift-glow 72s ease-in-out infinite;
 }
 
-.eg-strata--b {
-  opacity: 0.078;
-  animation: eg-strata-drift-b 58s ease-in-out infinite;
+.eg-ribbons--core {
+  opacity: 0.5;
+  filter: blur(0.4px);
+  animation: eg-ribbon-drift-core 58s ease-in-out infinite;
 }
 
-.eg-strata--c {
-  opacity: 0.091;
-  animation: eg-strata-drift-c 70s ease-in-out infinite;
+@keyframes eg-ribbon-drift-glow {
+  0%   { transform: translate3d(0, 0, 0) scale(1.00); }
+  50%  { transform: translate3d(1.2%, 0.6%, 0) scale(1.015); }
+  100% { transform: translate3d(0, 0, 0) scale(1.00); }
+}
+@keyframes eg-ribbon-drift-core {
+  0%   { transform: translate3d(0, 0, 0)        scale(1.00); }
+  50%  { transform: translate3d(-0.8%, -0.4%, 0) scale(1.008); }
+  100% { transform: translate3d(0, 0, 0)        scale(1.00); }
 }
 
-@keyframes eg-strata-drift-a {
-  0%   { transform: translate3d(0, 0, 0); opacity: 0.097; }
-  50%  { transform: translate3d(-2.4%, 1.1%, 0); opacity: 0.137; }
-  100% { transform: translate3d(0, 0, 0); opacity: 0.097; }
+/* Subtle dot-matrix grid, masked to a soft central pool. */
+.eg-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle,
+    rgba(192, 139, 85, 0.15) 0.7px,
+    transparent 1.2px
+  );
+  background-size: 38px 38px;
+  -webkit-mask-image: radial-gradient(
+    ellipse 65% 55% at 50% 58%,
+    rgba(0, 0, 0, 0.55) 0%,
+    transparent 90%
+  );
+  mask-image: radial-gradient(
+    ellipse 65% 55% at 50% 58%,
+    rgba(0, 0, 0, 0.55) 0%,
+    transparent 90%
+  );
+  opacity: 0.7;
+  z-index: 3;
+  pointer-events: none;
 }
 
-@keyframes eg-strata-drift-b {
-  0%   { transform: translate3d(0, 0, 0); opacity: 0.065; }
-  50%  { transform: translate3d(2.1%, -0.9%, 0); opacity: 0.097; }
-  100% { transform: translate3d(0, 0, 0); opacity: 0.065; }
+/* Floating ember sparks rising from the bottom. */
+.eg-embers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 4;
 }
 
-@keyframes eg-strata-drift-c {
-  0%   { transform: translate3d(0, 0, 0); opacity: 0.078; }
-  50%  { transform: translate3d(-1.5%, -1.4%, 0); opacity: 0.117; }
-  100% { transform: translate3d(0, 0, 0); opacity: 0.078; }
+.eg-ember {
+  position: absolute;
+  bottom: -12px;
+  width: var(--ember-size, 2px);
+  height: var(--ember-size, 2px);
+  border-radius: 50%;
+  background: var(--eg-accent-bright);
+  box-shadow:
+    0 0 4px rgba(218, 167, 109, 0.9),
+    0 0 10px rgba(192, 139, 85, 0.5);
+  opacity: 0;
+  animation-name: eg-ember-rise;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-out;
+  will-change: transform, opacity;
+}
+
+@keyframes eg-ember-rise {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  8%   { opacity: 0.85; }
+  60%  { opacity: 0.5; }
+  100% { transform: translate3d(var(--ember-drift, 0px), -110vh, 0); opacity: 0; }
 }
 
 /* Grain layer: SVG fractal noise via ::after pseudo-element. */
@@ -114,6 +246,7 @@ body,
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 6;
 }
 
 .eg-grain::after {
@@ -126,11 +259,13 @@ body,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .eg-strata--a,
-  .eg-strata--b,
-  .eg-strata--c {
+  .eg-aurora,
+  .eg-ribbons--glow,
+  .eg-ribbons--core,
+  .eg-ember {
     animation: none;
   }
+  .eg-ember { opacity: 0.35; }
 }
 
 /* ============================================================

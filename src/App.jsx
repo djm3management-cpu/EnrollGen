@@ -44,6 +44,7 @@ const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 const loadOperationsTab = () => import("./components/OperationsTab");
+const loadDemoTab = () => import("./components/DemoTab");
 const loadTenantSettings = () => import("./components/TenantSettings");
 const loadOnboarding = () => import("./components/Onboarding");
 const loadScriptEditor = () => import("./components/ScriptEditor");
@@ -65,6 +66,7 @@ const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
 const OperationsTab = lazy(loadOperationsTab);
+const DemoTab = lazy(loadDemoTab);
 const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
 const ScriptEditor = lazy(loadScriptEditor);
@@ -395,6 +397,8 @@ function isAdminUser(user) {
 function getTabsForMode(mode, canAdmin = false) {
   const tabs = [{ id: "script", label: "Script" }];
 
+  tabs.push({ id: "demo", label: "Demo" });
+
   if (modeSupportsAgentTools(mode)) {
     tabs.push({ id: "tools", label: "Agent Tools" });
   }
@@ -573,6 +577,10 @@ function AppShell({ currentUser = null }) {
       loadOperationsTab();
       return;
     }
+    if (panelId === "demo") {
+      loadDemoTab();
+      return;
+    }
     if (panelId === "settings") {
       loadTenantSettings();
       return;
@@ -695,6 +703,12 @@ function AppShell({ currentUser = null }) {
         return (
           <LazyPanel>
             <OperationsTab />
+          </LazyPanel>
+        );
+      case "demo":
+        return (
+          <LazyPanel>
+            <DemoTab />
           </LazyPanel>
         );
       case "settings":
