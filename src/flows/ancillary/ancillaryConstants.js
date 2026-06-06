@@ -4,6 +4,12 @@ export const SUB_PRODUCT = Object.freeze({
   HIP: "hip",
   FE: "fe",
   DVH: "dvh",
+  ANNUITY: "annuity",
+});
+
+export const ANNUITY_MODE = Object.freeze({
+  INBOUND: "inbound",
+  OUTBOUND: "outbound",
 });
 
 export const ANCILLARY_ACCENT = Object.freeze({
@@ -31,6 +37,12 @@ export const ANCILLARY_PRODUCT_META = Object.freeze({
     shortLabel: "DVH",
     route: "/script/ancillary/dvh",
     description: "Fact find, coverage gap build, waiting periods, and close.",
+  },
+  [SUB_PRODUCT.ANNUITY]: {
+    label: "Annuity",
+    shortLabel: "ANN",
+    route: "/script/ancillary/annuity",
+    description: "NAIC best-interest intake, recommendation, disclosures, and e-app.",
   },
 });
 

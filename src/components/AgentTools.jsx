@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import SEPGuide2026 from "./SEPGuide2026";
 import CarrierQuickRef from "./CarrierQuickRef";
+import ScriptEditor from "./ScriptEditor";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 import "../AgentTools.css";
 
@@ -159,6 +160,12 @@ const TOOL_GROUPS = [
         id: "citizenship-immigration-docs",
         title: "Citizenship & Immigration Docs",
         description: "ACA enrollment document reference with sample images and field lookup help.",
+        icon: <FileText size={16} />,
+      },
+      {
+        id: "script-editor",
+        title: "Script Editor",
+        description: "Admin script template editor for MA, Med Sup, ACA, U65, and ancillary flows.",
         icon: <FileText size={16} />,
       },
     ],
@@ -724,6 +731,8 @@ export default function AgentTools() {
         return <SEPReference script={NGHS_SEP_SCRIPT} />;
       case "sep-guide-2026":
         return <SEPGuide2026 />;
+      case "script-editor":
+        return <ScriptEditor />;
       default:
         return null;
     }

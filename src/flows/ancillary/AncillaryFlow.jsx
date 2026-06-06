@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Eye,
   Heart,
+  Landmark,
   Shield,
 } from "lucide-react";
 import CompactCopilotRail from "../../components/CompactCopilotRail";
@@ -26,10 +27,12 @@ import { useLeftRailManager } from "../../components/leftRail/LeftRailManager";
 import ProgressDots from "../../components/ProgressDots";
 import { LOG_TYPES, useCopilotLog } from "../../context/CopilotTranscriptLog";
 import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
+import { useAnnuityCopilotEngine } from "../../hooks/useAnnuityCopilotEngine";
 import "../../AgentTools.css";
 import {
   ANCILLARY_ACCENT,
   ANCILLARY_PRODUCT_META,
+  ANNUITY_MODE,
   FLOW_TYPE,
   SUB_PRODUCT,
   isAncillarySubProduct,
@@ -38,6 +41,7 @@ import { getAncillarySteps } from "./ancillarySteps";
 import HIPFlow from "./HIPFlow";
 import FEFlow from "./FEFlow";
 import DVHFlow from "./DVHFlow";
+import AnnuityScriptFlow from "./AnnuityScriptFlow";
 
 export { FLOW_TYPE, SUB_PRODUCT } from "./ancillaryConstants";
 
@@ -47,9 +51,10 @@ const PRODUCT_COMPONENTS = {
   [SUB_PRODUCT.HIP]: HIPFlow,
   [SUB_PRODUCT.FE]: FEFlow,
   [SUB_PRODUCT.DVH]: DVHFlow,
+  [SUB_PRODUCT.ANNUITY]: AnnuityScriptFlow,
 };
 
-const PRODUCT_ORDER = [SUB_PRODUCT.HIP, SUB_PRODUCT.FE, SUB_PRODUCT.DVH];
+const PRODUCT_ORDER = [SUB_PRODUCT.HIP, SUB_PRODUCT.FE, SUB_PRODUCT.DVH, SUB_PRODUCT.ANNUITY];
 const FALLBACK_PRODUCT_META = { label: "Ancillary", shortLabel: "ANC" };
 const FE_CALL_WINDOW_SECONDS = 90;
 const DENTAL_REFERENCE_RAIL_ID = "ancillary-dental-reference";
@@ -70,17 +75,37 @@ function setAncillaryPath(product) {
   window.history.pushState(null, "", nextPath);
 }
 
+function createAnnuitySuitabilityState() {
+  return {
+    clientAge: "",
+    income: "",
+    netWorth: "",
+    liquidAssetsPercent: "",
+    guaranteedIncome: "",
+    riskTolerance: "",
+    timeHorizon: "",
+    objective: "",
+    existingAnnuity: "",
+    replacementFunding: "",
+    notes: "",
+  };
+}
+
 function createProductState() {
   return {
     callStarted: false,
     callStart: null,
     completedSteps: {},
+    stepChecks: {},
     sectionTimestamps: {},
     complianceChecklist: {
       recordingDisclosure: false,
       needsAssessment: false,
       consent: false,
     },
+    annuityMode: ANNUITY_MODE.INBOUND,
+    annuitySuitability: createAnnuitySuitabilityState(),
+    callMetadata: {},
   };
 }
 
@@ -92,6 +117,7 @@ function createInitialState(initialProduct = null) {
       [SUB_PRODUCT.HIP]: createProductState(),
       [SUB_PRODUCT.FE]: createProductState(),
       [SUB_PRODUCT.DVH]: createProductState(),
+      [SUB_PRODUCT.ANNUITY]: createProductState(),
     },
   };
 }
@@ -121,6 +147,13 @@ function reducer(state, action) {
         ...productState,
         callStarted: true,
         callStart: productState.callStart || Date.now(),
+        callMetadata:
+          action.product === SUB_PRODUCT.ANNUITY
+            ? {
+                ...productState.callMetadata,
+                annuityMode: productState.annuityMode || ANNUITY_MODE.INBOUND,
+              }
+            : productState.callMetadata,
       }));
 
     case "START_STEP":
@@ -179,6 +212,47 @@ function reducer(state, action) {
         },
       }));
 
+    case "SET_ANNUITY_MODE":
+      return updateProductState(state, SUB_PRODUCT.ANNUITY, (productState) => {
+        if (productState.callStarted) return productState;
+        const nextMode =
+          action.mode === ANNUITY_MODE.OUTBOUND
+            ? ANNUITY_MODE.OUTBOUND
+            : ANNUITY_MODE.INBOUND;
+        return {
+          ...productState,
+          annuityMode: nextMode,
+          callMetadata: {
+            ...productState.callMetadata,
+            annuityMode: nextMode,
+          },
+        };
+      });
+
+    case "UPDATE_ANNUITY_SUITABILITY":
+      return updateProductState(state, SUB_PRODUCT.ANNUITY, (productState) => ({
+        ...productState,
+        annuitySuitability: {
+          ...productState.annuitySuitability,
+          [action.field]: action.value,
+        },
+      }));
+
+    case "TOGGLE_STEP_CHECK":
+      return updateProductState(state, action.product, (productState) => {
+        const currentStepChecks = productState.stepChecks[action.stepId] || {};
+        return {
+          ...productState,
+          stepChecks: {
+            ...productState.stepChecks,
+            [action.stepId]: {
+              ...currentStepChecks,
+              [action.key]: !currentStepChecks[action.key],
+            },
+          },
+        };
+      });
+
     case "RESET_PRODUCT":
       return updateProductState(state, action.product, () => createProductState());
 
@@ -197,7 +271,211 @@ function transcriptMatches(transcript, pattern) {
   return pattern.test((transcript || "").toLowerCase());
 }
 
-function calculateAncillaryCompliance({ productState, steps, transcript }) {
+function parseNumberFromInput(value) {
+  if (value === null || value === undefined) return null;
+  const parsed = Number.parseFloat(String(value).replace(/[^\d.]/g, ""));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getAnnuityMode(productState) {
+  return productState?.annuityMode === ANNUITY_MODE.OUTBOUND
+    ? ANNUITY_MODE.OUTBOUND
+    : ANNUITY_MODE.INBOUND;
+}
+
+function getAnnuitySuitability(productState) {
+  return productState?.annuitySuitability || createAnnuitySuitabilityState();
+}
+
+function isReplacementFlagged(productState) {
+  const suitability = getAnnuitySuitability(productState);
+  return ["yes", "exchange_1035", "replace_existing"].includes(
+    String(suitability.replacementFunding || "").toLowerCase()
+  );
+}
+
+function isAnnuitySuitabilityComplete(productState) {
+  const suitability = getAnnuitySuitability(productState);
+  return [
+    "income",
+    "netWorth",
+    "liquidAssetsPercent",
+    "guaranteedIncome",
+    "riskTolerance",
+    "timeHorizon",
+    "objective",
+    "existingAnnuity",
+    "replacementFunding",
+  ].every((field) => String(suitability[field] || "").trim());
+}
+
+function getVisibleChecklistItems(step, productState) {
+  const mode = getAnnuityMode(productState);
+  return (step?.checklist || []).filter((item) => {
+    if (item.mode && item.mode !== mode) return false;
+    if (item.replacementOnly && !isReplacementFlagged(productState)) return false;
+    return true;
+  });
+}
+
+function isChecklistItemDone(productState, step, item) {
+  if (item.field) {
+    return Boolean(String(getAnnuitySuitability(productState)[item.field] || "").trim());
+  }
+
+  return Boolean(productState?.stepChecks?.[step.id]?.[item.key]);
+}
+
+function getMissingRequiredChecklistItems(productState, step) {
+  return getVisibleChecklistItems(step, productState).filter(
+    (item) => item.required && !isChecklistItemDone(productState, step, item)
+  );
+}
+
+function getAnnuityStepBlockReason(step, productState) {
+  if (!step) return "";
+  if (step.form === "annuitySuitability" && !isAnnuitySuitabilityComplete(productState)) {
+    return "Complete every required suitability field before moving on.";
+  }
+
+  const missing = getMissingRequiredChecklistItems(productState, step);
+  if (missing.length) {
+    return `Required before moving on: ${missing[0].label}`;
+  }
+
+  return "";
+}
+
+function getAnnuityRecommendation(productState) {
+  const riskTolerance = getAnnuitySuitability(productState).riskTolerance;
+  if (riskTolerance === "moderate_growth") {
+    return {
+      type: "Fixed Indexed Annuity",
+      rationale:
+        "Client wants protected principal with some index-based growth potential.",
+    };
+  }
+
+  if (riskTolerance === "conservative") {
+    return {
+      type: "MYGA",
+      rationale: "Client prioritized principal protection and a guaranteed rate.",
+    };
+  }
+
+  return {
+    type: "Recommendation pending",
+    rationale: "Complete risk tolerance and time horizon before recommending.",
+  };
+}
+
+function getAnnuityRiskFlags(productState) {
+  const suitability = getAnnuitySuitability(productState);
+  const liquidPercent = parseNumberFromInput(suitability.liquidAssetsPercent);
+  const age = parseNumberFromInput(suitability.clientAge);
+  const flags = [];
+
+  if (liquidPercent !== null && liquidPercent > 50) {
+    flags.push("Liquidity concentration risk: client is placing more than 50% of liquid assets into one annuity.");
+  }
+
+  if (age !== null && age < 59.5) {
+    flags.push("Age flag: disclose possible 10% IRS penalty on withdrawals before age 59 and a half.");
+  }
+
+  if (age !== null && age > 85) {
+    flags.push("Issue-age flag: verify carrier limits before quoting or applying.");
+  }
+
+  if (isReplacementFlagged(productState)) {
+    flags.push("Replacement flag: review surrender charges, lost benefits, and 1035 exchange paperwork.");
+  }
+
+  return flags;
+}
+
+function calculateAnnuityCompliance({ productState, steps, transcript }) {
+  const completedStepCount = steps.filter((step) => productState.completedSteps[step.id]).length;
+  const flowProgressScore = steps.length ? (completedStepCount / steps.length) * 40 : 0;
+  const check = (stepId, key) => Boolean(productState.stepChecks?.[stepId]?.[key]);
+  const replacementFlag = isReplacementFlagged(productState);
+
+  const checks = [
+    {
+      name: "Recording Consent",
+      passed:
+        check("annuity-opening", "recordingConsent") ||
+        transcriptMatches(transcript, /\b(recorded|recording).{0,40}(quality|compliance|purposes|okay|alright)\b/),
+    },
+    {
+      name: "Permission To Discuss",
+      passed:
+        check("annuity-purpose-permission", "permissionToDiscuss") ||
+        transcriptMatches(transcript, /\b(walk you through|open to me|permission|would it be okay)\b/),
+    },
+    {
+      name: "Suitability Complete",
+      passed: isAnnuitySuitabilityComplete(productState),
+    },
+    {
+      name: "Recommendation Tied To Needs",
+      passed: check("annuity-product-recommendation", "recommendationTied"),
+    },
+    {
+      name: "Surrender Period Disclosed",
+      passed:
+        check("annuity-product-recommendation", "surrenderPeriod") ||
+        transcriptMatches(transcript, /\bsurrender (period|charge)\b/),
+    },
+    {
+      name: "Compensation Disclosed",
+      passed:
+        check("annuity-disclosures-best-interest", "compensationDisclosed") ||
+        transcriptMatches(transcript, /\bcompensated by the insurance company\b/),
+    },
+    {
+      name: "Best Interest Stated",
+      passed:
+        check("annuity-disclosures-best-interest", "bestInterest") ||
+        transcriptMatches(transcript, /\bbest interest\b/),
+    },
+    {
+      name: "Free-Look Disclosed",
+      passed:
+        check("annuity-disclosures-best-interest", "freeLook") ||
+        transcriptMatches(transcript, /\bfree[- ]look\b/),
+    },
+    {
+      name: "Replacement Disclosure",
+      passed:
+        !replacementFlag ||
+        check("annuity-disclosures-best-interest", "replacementDisclosure") ||
+        transcriptMatches(transcript, /\b(replacing|replacement).{0,80}(surrender|benefits|charges)\b/),
+    },
+  ];
+
+  const completedCompliance = checks.filter((item) => item.passed).length;
+  const complianceScore = checks.length ? (completedCompliance / checks.length) * 60 : 0;
+
+  return {
+    score: Math.round(Math.min(100, flowProgressScore + complianceScore)),
+    completedStepCount,
+    totalSteps: steps.length,
+    categoriesPassed: completedCompliance,
+    totalCategories: checks.length,
+    categories: checks.map((item) => ({
+      name: item.name,
+      score: item.passed ? 100 : 0,
+      passed: item.passed,
+    })),
+  };
+}
+
+function calculateAncillaryCompliance({ product, productState, steps, transcript }) {
+  if (product === SUB_PRODUCT.ANNUITY) {
+    return calculateAnnuityCompliance({ productState, steps, transcript });
+  }
+
   const completedStepCount = steps.filter((step) => productState.completedSteps[step.id]).length;
   const flowProgressScore = steps.length ? (completedStepCount / steps.length) * 70 : 0;
   const needsStepDone = steps.some(
@@ -324,6 +602,10 @@ export function useScriptFlow() {
 function ProductIcon({ product, size = 18 }) {
   if (product === SUB_PRODUCT.HIP) {
     return <Building2 size={size} />;
+  }
+
+  if (product === SUB_PRODUCT.ANNUITY) {
+    return <Landmark size={size} />;
   }
 
   if (product === SUB_PRODUCT.FE) {
@@ -465,6 +747,406 @@ function ProductSelector() {
   );
 }
 
+function AnnuityModeSelector({ productState }) {
+  const { dispatch } = useScriptFlow();
+  const mode = getAnnuityMode(productState);
+  const locked = Boolean(productState.callStarted);
+
+  return (
+    <section
+      style={{
+        marginBottom: 10,
+        border: "1px solid var(--script-term-border)",
+        background: "var(--script-term-bg)",
+        padding: "10px 12px",
+        fontFamily: "var(--font-mono)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          marginBottom: 8,
+        }}
+      >
+        <span
+          style={{
+            color: "var(--script-term-cyan)",
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: "1.4px",
+            textTransform: "uppercase",
+          }}
+        >
+          Annuity Mode
+        </span>
+        <span style={{ color: "var(--script-term-muted)", fontSize: 10 }}>
+          {locked ? "Locked for this call" : "Select before Start Call"}
+        </span>
+      </div>
+
+      <div className="at-tab-row" role="tablist" aria-label="Annuity call mode">
+        {[
+          [ANNUITY_MODE.INBOUND, "INBOUND"],
+          [ANNUITY_MODE.OUTBOUND, "OUTBOUND"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className={`at-filter-tab${mode === value ? " is-active" : ""}`}
+            aria-selected={mode === value}
+            disabled={locked}
+            onClick={() => dispatch({ type: "SET_ANNUITY_MODE", mode: value })}
+            style={{
+              opacity: locked && mode !== value ? 0.42 : 1,
+              cursor: locked ? "not-allowed" : "pointer",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const SUITABILITY_FIELDS = [
+  {
+    field: "clientAge",
+    label: "Client age",
+    type: "input",
+    placeholder: "Optional, flags 59.5 / 85+",
+    optional: true,
+  },
+  {
+    field: "income",
+    label: "Approx annual household income",
+    type: "input",
+    placeholder: "$",
+  },
+  {
+    field: "netWorth",
+    label: "Total net worth excluding primary residence",
+    type: "input",
+    placeholder: "$",
+  },
+  {
+    field: "liquidAssetsPercent",
+    label: "Percent of liquid assets into annuity",
+    type: "input",
+    placeholder: "%",
+  },
+  {
+    field: "guaranteedIncome",
+    label: "Other guaranteed income",
+    type: "input",
+    placeholder: "Social Security, pension, annuity",
+  },
+  {
+    field: "riskTolerance",
+    label: "Risk tolerance",
+    type: "select",
+    options: [
+      ["", "Select"],
+      ["conservative", "Principal protection / guaranteed rate"],
+      ["moderate_growth", "Protected principal with growth potential"],
+    ],
+  },
+  {
+    field: "timeHorizon",
+    label: "Access timeline",
+    type: "select",
+    options: [
+      ["", "Select"],
+      ["under_3", "Under 3 years"],
+      ["3_years", "3 years"],
+      ["5_years", "5 years"],
+      ["7_years", "7 years"],
+      ["10_plus", "10+ years"],
+    ],
+  },
+  {
+    field: "objective",
+    label: "Primary financial objective",
+    type: "select",
+    options: [
+      ["", "Select"],
+      ["income", "Supplement retirement income"],
+      ["legacy", "Leave money to beneficiaries"],
+      ["safe_growth", "Grow savings safely"],
+      ["tax_deferral", "Tax-deferred accumulation"],
+    ],
+  },
+  {
+    field: "existingAnnuity",
+    label: "Currently owns an annuity",
+    type: "select",
+    options: [
+      ["", "Select"],
+      ["yes", "Yes"],
+      ["no", "No"],
+      ["unknown", "Unknown"],
+    ],
+  },
+  {
+    field: "replacementFunding",
+    label: "Replacing or exchanging existing product",
+    type: "select",
+    options: [
+      ["", "Select"],
+      ["no", "No"],
+      ["yes", "Yes"],
+      ["exchange_1035", "Yes, potential 1035 exchange"],
+      ["replace_existing", "Yes, replacing annuity/CD/life product"],
+      ["unknown", "Unknown"],
+    ],
+  },
+  {
+    field: "notes",
+    label: "Carrier submission notes",
+    type: "textarea",
+    placeholder: "Optional documentation notes",
+    optional: true,
+  },
+];
+
+const FIELD_STYLE = {
+  width: "100%",
+  minHeight: 34,
+  border: "1px solid var(--script-term-border)",
+  borderRadius: 0,
+  background: "var(--script-term-bg)",
+  color: "var(--script-term-amber)",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  padding: "8px 9px",
+  outline: "none",
+};
+
+function AnnuityRiskFlags({ productState }) {
+  const flags = getAnnuityRiskFlags(productState);
+  if (!flags.length) return null;
+
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(255,56,56,0.35)",
+        background: "rgba(255,56,56,0.05)",
+        padding: "9px 11px",
+        marginTop: 10,
+        color: "var(--script-term-red)",
+        fontFamily: "var(--font-mono)",
+        fontSize: 11,
+        lineHeight: 1.45,
+      }}
+    >
+      {flags.map((flag) => (
+        <div key={flag}>{flag}</div>
+      ))}
+    </div>
+  );
+}
+
+function AnnuitySuitabilityForm({ productState }) {
+  const { dispatch } = useScriptFlow();
+  const suitability = getAnnuitySuitability(productState);
+
+  const updateField = (field, value) => {
+    dispatch({ type: "UPDATE_ANNUITY_SUITABILITY", field, value });
+  };
+
+  return (
+    <section
+      style={{
+        margin: "12px 0",
+        border: "1px solid var(--script-term-border)",
+        background: "var(--script-term-bg-soft)",
+        padding: "12px",
+        fontFamily: "var(--font-mono)",
+      }}
+      aria-label="Annuity suitability intake"
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          marginBottom: 10,
+        }}
+      >
+        <span
+          style={{
+            color: "var(--script-term-cyan)",
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: "1.4px",
+            textTransform: "uppercase",
+          }}
+        >
+          Agent Tools: Suitability Intake
+        </span>
+        <span
+          style={{
+            color: isAnnuitySuitabilityComplete(productState)
+              ? "var(--script-term-green)"
+              : "var(--script-term-red)",
+            fontSize: 10,
+            fontWeight: 800,
+          }}
+        >
+          {isAnnuitySuitabilityComplete(productState) ? "COMPLETE" : "HARD GATE"}
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+          gap: 10,
+        }}
+      >
+        {SUITABILITY_FIELDS.map((item) => (
+          <label
+            key={item.field}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 5,
+              color: "var(--script-term-cyan)",
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.6px",
+              textTransform: "uppercase",
+            }}
+          >
+            {item.label}
+            {item.optional ? null : (
+              <span style={{ color: "var(--script-term-red)", marginLeft: 4 }}>*</span>
+            )}
+            {item.type === "select" ? (
+              <select
+                value={suitability[item.field] || ""}
+                onChange={(event) => updateField(item.field, event.target.value)}
+                style={FIELD_STYLE}
+              >
+                {item.options.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            ) : item.type === "textarea" ? (
+              <textarea
+                value={suitability[item.field] || ""}
+                onChange={(event) => updateField(item.field, event.target.value)}
+                placeholder={item.placeholder}
+                rows={3}
+                style={{ ...FIELD_STYLE, resize: "vertical" }}
+              />
+            ) : (
+              <input
+                value={suitability[item.field] || ""}
+                onChange={(event) => updateField(item.field, event.target.value)}
+                placeholder={item.placeholder}
+                style={FIELD_STYLE}
+              />
+            )}
+          </label>
+        ))}
+      </div>
+
+      <AnnuityRiskFlags productState={productState} />
+    </section>
+  );
+}
+
+function AnnuityRecommendationPanel({ productState }) {
+  const recommendation = getAnnuityRecommendation(productState);
+
+  return (
+    <section
+      style={{
+        margin: "10px 0",
+        border: "1px solid var(--script-term-border)",
+        background: "var(--script-term-bg-soft)",
+        padding: "10px 12px",
+        fontFamily: "var(--font-mono)",
+      }}
+    >
+      <div
+        style={{
+          color: "var(--script-term-cyan)",
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: "1.4px",
+          marginBottom: 6,
+          textTransform: "uppercase",
+        }}
+      >
+        Recommendation Anchor
+      </div>
+      <div style={{ color: "var(--script-term-amber)", fontSize: 13, lineHeight: 1.45 }}>
+        {recommendation.type}: {recommendation.rationale}
+      </div>
+    </section>
+  );
+}
+
+function StepChecklist({ product, step, productState }) {
+  const { dispatch } = useScriptFlow();
+  if (product !== SUB_PRODUCT.ANNUITY || !step?.checklist?.length) return null;
+
+  const items = getVisibleChecklistItems(step, productState);
+  if (!items.length) return null;
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        gap: 7,
+        marginTop: 10,
+      }}
+    >
+      {items.map((item) => {
+        const done = isChecklistItemDone(productState, step, item);
+        const fieldDriven = Boolean(item.field);
+        return (
+          <label
+            key={item.key}
+            className="ancillary-check"
+            style={{
+              border: "1px solid var(--script-term-border)",
+              background: done ? "rgba(51,204,102,0.05)" : "var(--script-term-bg-soft)",
+              color: done ? "var(--script-term-green)" : "var(--script-term-cyan)",
+              padding: "7px 8px",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={done}
+              disabled={fieldDriven}
+              onChange={() =>
+                dispatch({
+                  type: "TOGGLE_STEP_CHECK",
+                  product,
+                  stepId: step.id,
+                  key: item.key,
+                })
+              }
+            />
+            <span>{item.label}</span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
 function isParentheticalScriptLine(line) {
   const trimmed = line.trim();
   return trimmed.startsWith("(") && trimmed.endsWith(")");
@@ -522,7 +1204,57 @@ function Substep({ text }) {
   );
 }
 
-function GateToggle({ label, done, onDo, onUndo }) {
+function ComplianceBanner({ text }) {
+  if (!text) return null;
+  return (
+    <div
+      className="flow-compliance-banner"
+      style={{
+        background: "rgba(248,113,113,0.06)",
+        border: "1px solid rgba(248,113,113,0.2)",
+        borderRadius: 6,
+        padding: "9px 13px",
+        marginBottom: 10,
+        fontSize: 12,
+        color: "#f87171",
+        lineHeight: 1.5,
+      }}
+    >
+      COMPLIANCE: {text}
+    </div>
+  );
+}
+
+function StepPurpose({ text }) {
+  if (!text) return null;
+  return (
+    <div
+      className="flow-stage-direction"
+      style={{
+        borderLeft: "2px solid rgba(255,255,255,0.1)",
+        padding: "8px 14px",
+        marginBottom: 8,
+        borderRadius: "0 6px 6px 0",
+        background: "rgba(255,255,255,0.015)",
+      }}
+    >
+      <div className="flow-stage-text" style={{ color: "#8fa4bc", fontSize: 12, lineHeight: 1.55 }}>
+        Purpose: {text}
+      </div>
+    </div>
+  );
+}
+
+function getStepScriptText(step, productState) {
+  if (step?.scripts) {
+    const mode = getAnnuityMode(productState);
+    return step.scripts[mode] || step.scripts[ANNUITY_MODE.INBOUND] || "";
+  }
+
+  return step?.content || "";
+}
+
+function GateToggle({ label, done, onDo, onUndo, disabled = false, disabledReason = "" }) {
   return (
     <div
       className="flow-gate-action"
@@ -538,9 +1270,10 @@ function GateToggle({ label, done, onDo, onUndo }) {
         type="button"
         className="check flow-gate-check"
         onClick={done ? onUndo : onDo}
+        disabled={!done && disabled}
         aria-label={label}
         aria-pressed={done}
-        title={label}
+        title={!done && disabled ? disabledReason : label}
         style={{
           justifyContent: "center",
           width: "fit-content",
@@ -549,6 +1282,8 @@ function GateToggle({ label, done, onDo, onUndo }) {
           border: `1px solid ${done ? "rgba(52,211,153,0.2)" : "rgba(59,130,246,0.15)"}`,
           background: done ? "rgba(52,211,153,0.05)" : "rgba(255,255,255,0.015)",
           color: done ? "#34d399" : "#dfe6f0",
+          cursor: !done && disabled ? "not-allowed" : "pointer",
+          opacity: !done && disabled ? 0.45 : 1,
         }}
       >
         <Check className="flow-gate-icon" size={14} strokeWidth={2.8} aria-hidden="true" />
@@ -647,6 +1382,8 @@ function AncillaryScriptStep({ product, step, index, active, done, productState 
   const { dispatch } = useScriptFlow();
   const timestamps = productState.sectionTimestamps[step.id];
   const duration = timestamps?.start && timestamps?.end ? timestamps.end - timestamps.start : null;
+  const blockReason =
+    product === SUB_PRODUCT.ANNUITY ? getAnnuityStepBlockReason(step, productState) : "";
 
   return (
     <FlowCard
@@ -656,13 +1393,35 @@ function AncillaryScriptStep({ product, step, index, active, done, productState 
       done={done}
       duration={duration}
     >
+      <StepPurpose text={step.purpose} />
+      <ComplianceBanner text={step.compliance} />
       <TalkTrack
-        text={step.content}
+        text={getStepScriptText(step, productState)}
         highlightParentheticals={product === SUB_PRODUCT.FE}
       />
       {step.substeps?.map((substep) => (
         <Substep key={substep} text={substep} />
       ))}
+      {step.form === "annuitySuitability" ? (
+        <AnnuitySuitabilityForm productState={productState} />
+      ) : null}
+      {product === SUB_PRODUCT.ANNUITY && step.id === "annuity-product-recommendation" ? (
+        <AnnuityRecommendationPanel productState={productState} />
+      ) : null}
+      <StepChecklist product={product} step={step} productState={productState} />
+      {blockReason ? (
+        <div
+          className="flow-compliance-banner"
+          style={{
+            marginTop: 10,
+            color: "var(--script-term-red)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+          }}
+        >
+          {blockReason}
+        </div>
+      ) : null}
       <GateToggle
         label={`${step.title} complete`}
         done={done}
@@ -671,6 +1430,8 @@ function AncillaryScriptStep({ product, step, index, active, done, productState 
           dispatch({ type: "COMPLETE_STEP", product, stepId: step.id });
         }}
         onUndo={() => dispatch({ type: "UNCOMPLETE_STEP", product, stepId: step.id })}
+        disabled={Boolean(blockReason)}
+        disabledReason={blockReason}
       />
     </FlowCard>
   );
@@ -897,6 +1658,9 @@ function AncillaryScriptRenderer({ product, productMeta, steps }) {
     >
       <AncillaryHeader product={product} productMeta={productMeta} />
       <CenterTimerBar />
+      {product === SUB_PRODUCT.ANNUITY ? (
+        <AnnuityModeSelector productState={productState} />
+      ) : null}
 
       {!productState.callStarted ? (
         <StartCallGate product={product} />
@@ -917,6 +1681,11 @@ function AncillaryCopilot({ onTranscriptChange }) {
     useScriptFlow();
   const transcriptRef = useRef("");
   const { logEntry, clearLog } = useCopilotLog();
+  const annuityCopilot = useAnnuityCopilotEngine({
+    activeStep,
+    productState: currentProductState,
+    complianceScore,
+  });
   const speech = useSpeechRecognition({
     externalTranscriptRef: transcriptRef,
     onNewFinal: null,
@@ -932,10 +1701,15 @@ function AncillaryCopilot({ onTranscriptChange }) {
       return;
     }
 
+    const message =
+      state.activeSubProduct === SUB_PRODUCT.ANNUITY
+        ? annuityCopilot.sectionMessage
+        : `${activeProductMeta.shortLabel}: ${activeStep.title}. Keep recording disclosure, needs assessment, and client consent covered before close.`;
+
     logEntry(
       LOG_TYPES.COPILOT_MSG,
       "info",
-      `${activeProductMeta.shortLabel}: ${activeStep.title}. Keep recording disclosure, needs assessment, and client consent covered before close.`,
+      message,
       { flowType: FLOW_TYPE, subProduct: state.activeSubProduct, section: activeStep.title }
     );
   }, [
@@ -943,6 +1717,7 @@ function AncillaryCopilot({ onTranscriptChange }) {
     activeProductMeta?.shortLabel,
     activeStep?.id,
     activeStep?.title,
+    annuityCopilot.sectionMessage,
     currentProductState.callStarted,
     logEntry,
     state.activeSubProduct,
@@ -966,16 +1741,26 @@ function AncillaryCopilot({ onTranscriptChange }) {
 
   const analyze = useCallback(() => {
     const message = state.activeSubProduct
-      ? `${activeProductMeta.label}: score is ${complianceScore.score}%. Required checks are recording disclosure, needs assessment, and client consent.`
+      ? state.activeSubProduct === SUB_PRODUCT.ANNUITY
+        ? annuityCopilot.analyzeMessage
+        : `${activeProductMeta.label}: score is ${complianceScore.score}%. Required checks are recording disclosure, needs assessment, and client consent.`
       : "Select an ancillary product to start the script flow.";
     logEntry(LOG_TYPES.COPILOT_MSG, "info", message, {
       flowType: FLOW_TYPE,
       subProduct: state.activeSubProduct,
     });
-  }, [activeProductMeta?.label, complianceScore.score, logEntry, state.activeSubProduct]);
+  }, [
+    activeProductMeta?.label,
+    annuityCopilot.analyzeMessage,
+    complianceScore.score,
+    logEntry,
+    state.activeSubProduct,
+  ]);
 
   const toggleLabel = state.activeSubProduct
-    ? `${activeProductMeta.shortLabel} ${Math.min(activeStepIndex + 1, getAncillarySteps(state.activeSubProduct).length)}. ${
+    ? `${activeProductMeta.shortLabel}${
+        state.activeSubProduct === SUB_PRODUCT.ANNUITY ? ` ${annuityCopilot.mode.toUpperCase()}` : ""
+      } ${Math.min(activeStepIndex + 1, getAncillarySteps(state.activeSubProduct).length)}. ${
         activeStep?.title || "Complete"
       }`
     : "Ancillary";
@@ -1050,11 +1835,12 @@ export default function AncillaryFlow() {
   const complianceScore = useMemo(
     () =>
       calculateAncillaryCompliance({
+        product: activeProduct,
         productState: currentProductState,
         steps,
         transcript: transcriptForScore,
       }),
-    [currentProductState, steps, transcriptForScore]
+    [activeProduct, currentProductState, steps, transcriptForScore]
   );
 
   useEffect(() => {

@@ -3,7 +3,7 @@
  * Used by IntentClassifier to send transcript segments to Claude Sonnet.
  */
 
-export const INTENT_CLASSIFICATION_SYSTEM = `You are a Medicare compliance intent classifier. You analyze segments of Medicare Advantage enrollment call transcripts and identify which compliance intents are present.
+export const INTENT_CLASSIFICATION_SYSTEM = `You are an insurance compliance intent classifier. You analyze segments of Medicare, ancillary, and annuity call transcripts and identify which compliance intents are present.
 
 You detect INTENT, not exact words. An agent can satisfy a compliance requirement through natural conversation without using scripted language. Your job is to determine whether the MEANING of each required element has been conveyed.
 

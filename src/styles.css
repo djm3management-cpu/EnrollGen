@@ -3162,6 +3162,59 @@ p {
   padding: 8px;
   font-style: italic;
 }
+
+.operations-tab.compliance-intent-accordion {
+  width: 100%;
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
+.operations-tab.compliance-intent-accordion .ops-intent-accordion-trigger {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 18px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 0 8px;
+  background: var(--ops-bg);
+  border: 0;
+  color: var(--ops-white);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.operations-tab.compliance-intent-accordion .ops-intent-accordion-trigger:hover {
+  background: var(--ops-surface-hover);
+}
+
+.operations-tab.compliance-intent-accordion .ops-intent-accordion-trigger > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operations-tab.compliance-intent-accordion .ops-intent-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ops-cyan);
+  transition: transform 0.16s ease;
+}
+
+.operations-tab.compliance-intent-accordion.is-open .ops-intent-chevron {
+  transform: rotate(180deg);
+}
+
+.operations-tab.compliance-intent-accordion .ops-intent-accordion-body {
+  max-height: min(58vh, 620px);
+  overflow-y: auto;
+  border-top: 1px solid var(--ops-border);
+}
 .operations-tab .ops-date-cell {
   color: var(--ops-cyan);
   margin-right: 6px;
@@ -10390,6 +10443,13 @@ body[data-bg-mode="classic"] .viewport-bg {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.compliance-hub-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }
 
 .top-panel-body .card:first-child {

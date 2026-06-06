@@ -43,11 +43,10 @@ const loadCallHistory = () => import("./components/CallHistory");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
+const loadComplianceIntentAccordion = () => import("./components/ComplianceIntentAccordion");
 const loadOperationsTab = () => import("./components/OperationsTab");
-const loadDemoTab = () => import("./components/DemoTab");
 const loadTenantSettings = () => import("./components/TenantSettings");
 const loadOnboarding = () => import("./components/Onboarding");
-const loadScriptEditor = () => import("./components/ScriptEditor");
 
 const LandingPage = lazy(loadLandingPage);
 const ScriptFlow = lazy(loadScriptFlow);
@@ -65,11 +64,10 @@ const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
+const ComplianceIntentAccordion = lazy(loadComplianceIntentAccordion);
 const OperationsTab = lazy(loadOperationsTab);
-const DemoTab = lazy(loadDemoTab);
 const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
-const ScriptEditor = lazy(loadScriptEditor);
 const headerLogoUrl = "/enrollgen-logo-v3.png?v=2";
 const SYSTEM_FONT_STACK = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const SYSTEM_MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
@@ -288,16 +286,19 @@ function MainFlowComplianceHubPanel() {
 
   return (
     <LazyPanel>
-      <div className="compliance-hub-shell">
-        <ComplianceDashboard
-          transcript={liveCall.transcript}
-          customerTranscript={liveCall.customerTranscript}
-          mergedTranscript={liveCall.mergedTranscript}
-          result={liveCall.complianceResult}
-          forceExpanded
-          forceShowDetail
-          forceExpandAllCategories
-        />
+      <div className="compliance-hub-stack">
+        <ComplianceIntentAccordion />
+        <div className="compliance-hub-shell">
+          <ComplianceDashboard
+            transcript={liveCall.transcript}
+            customerTranscript={liveCall.customerTranscript}
+            mergedTranscript={liveCall.mergedTranscript}
+            result={liveCall.complianceResult}
+            forceExpanded
+            forceShowDetail
+            forceExpandAllCategories
+          />
+        </div>
       </div>
     </LazyPanel>
   );
@@ -394,10 +395,8 @@ function isAdminUser(user) {
   return role === "admin" || role === "org:admin" || user?.publicMetadata?.isAdmin === true;
 }
 
-function getTabsForMode(mode, canAdmin = false) {
+function getTabsForMode(mode) {
   const tabs = [{ id: "script", label: "Script" }];
-
-  tabs.push({ id: "demo", label: "Demo" });
 
   if (modeSupportsAgentTools(mode)) {
     tabs.push({ id: "tools", label: "Agent Tools" });
@@ -413,9 +412,6 @@ function getTabsForMode(mode, canAdmin = false) {
 
   tabs.push({ id: "complianceHub", label: "Compliance Hub" });
   tabs.push({ id: "operations", label: "CALLS" });
-  if (canAdmin) {
-    tabs.push({ id: "scriptEditor", label: "SCRIPT EDITOR" });
-  }
   tabs.push({ id: "verse", label: "Daily Verse" });
 
   return tabs;
@@ -439,7 +435,7 @@ function AppShell({ currentUser = null }) {
   } = useLeftRailManager();
 
   const canAdmin = LOGIN_DISABLED || isAdminUser(currentUser);
-  const navTabs = useMemo(() => getTabsForMode(mode, canAdmin), [canAdmin, mode]);
+  const navTabs = useMemo(() => getTabsForMode(mode), [mode]);
   const visibleLeftRailIds = LEFT_RAIL_IDS_BY_MODE[mode] || EMPTY_LEFT_RAIL_IDS;
   const visibleRailWidth = visibleLeftRailIds.includes(expandedItem?.id)
     ? railWidth
@@ -564,6 +560,7 @@ function AppShell({ currentUser = null }) {
     }
     if (panelId === "complianceHub") {
       if (targetMode === "ma") {
+        loadComplianceIntentAccordion();
         loadComplianceDashboard();
       } else {
         loadCallHistory();
@@ -577,16 +574,8 @@ function AppShell({ currentUser = null }) {
       loadOperationsTab();
       return;
     }
-    if (panelId === "demo") {
-      loadDemoTab();
-      return;
-    }
     if (panelId === "settings") {
       loadTenantSettings();
-      return;
-    }
-    if (panelId === "scriptEditor") {
-      loadScriptEditor();
       return;
     }
     if (panelId === "verse") {
@@ -705,22 +694,10 @@ function AppShell({ currentUser = null }) {
             <OperationsTab />
           </LazyPanel>
         );
-      case "demo":
-        return (
-          <LazyPanel>
-            <DemoTab />
-          </LazyPanel>
-        );
       case "settings":
         return (
           <LazyPanel>
             <TenantSettings currentUser={currentUser} />
-          </LazyPanel>
-        );
-      case "scriptEditor":
-        return (
-          <LazyPanel>
-            <ScriptEditor />
           </LazyPanel>
         );
       case "verse":

@@ -8,6 +8,7 @@ import { preEnrollmentChecklist } from './pecl.js';
 import { enrollmentClosing } from './enrollment-closing.js';
 import { salesConduct } from './sales-conduct.js';
 import { callRecording } from './call-recording.js';
+import { annuity } from './annuity.js';
 
 export const INTENT_CATEGORIES = {
   CALL_OPENING: callOpening,
@@ -20,6 +21,7 @@ export const INTENT_CATEGORIES = {
   ENROLLMENT_CLOSING: enrollmentClosing,
   SALES_CONDUCT: salesConduct,
   CALL_RECORDING_COMPLIANCE: callRecording,
+  ANNUITY_BEST_INTEREST: annuity,
 };
 
 export const ALL_INTENTS = [
@@ -33,6 +35,7 @@ export const ALL_INTENTS = [
   ...enrollmentClosing,
   ...salesConduct,
   ...callRecording,
+  ...annuity,
 ];
 
 export const CATEGORY_WEIGHTS = {
@@ -46,6 +49,7 @@ export const CATEGORY_WEIGHTS = {
   ENROLLMENT_CLOSING: { weight: 0.08, max_points: 16 },
   SALES_CONDUCT: { weight: 0.06, max_points: 12 },
   CALL_RECORDING_COMPLIANCE: { weight: 0.02, max_points: 4 },
+  ANNUITY_BEST_INTEREST: { weight: 1.0, max_points: 100 },
 };
 
 export function getIntentByCode(code) {
