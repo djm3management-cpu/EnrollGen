@@ -10,7 +10,6 @@ import {
   useState,
 } from "react";
 import ShellTextures from "./components/ShellTextures";
-import BottomStatusBar from "./components/BottomStatusBar";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
@@ -326,14 +325,22 @@ const MODE_ROUTES = {
 };
 const LEFT_RAIL_IDS = {
   sepQualifier: "sep-qualifier",
+  acaClientInfo: "aca-client-info",
+  medsupSalesForum: "medsup-sales-forum",
   u65PrivatePlans: "u65-private-plans",
+  ancillaryCustomerInfo: "ancillary-customer-info",
   ancillaryDentalReference: "ancillary-dental-reference",
 };
 const EMPTY_LEFT_RAIL_IDS = [];
 const LEFT_RAIL_IDS_BY_MODE = {
   ma: [LEFT_RAIL_IDS.sepQualifier],
+  aca: [LEFT_RAIL_IDS.acaClientInfo],
+  medsup: [LEFT_RAIL_IDS.medsupSalesForum],
   u65: [LEFT_RAIL_IDS.u65PrivatePlans],
-  ancillary: [LEFT_RAIL_IDS.ancillaryDentalReference],
+  ancillary: [
+    LEFT_RAIL_IDS.ancillaryCustomerInfo,
+    LEFT_RAIL_IDS.ancillaryDentalReference,
+  ],
 };
 
 function getModeFromLocation() {
@@ -820,7 +827,7 @@ function AppShell({ currentUser = null }) {
           </ScriptProvider>
         ) : (
           <>
-            {mode === "u65" || mode === "ancillary" ? (
+            {mode === "aca" || mode === "medsup" || mode === "u65" || mode === "ancillary" ? (
               <LeftRail visibleItemIds={visibleLeftRailIds} />
             ) : null}
 
@@ -887,7 +894,6 @@ function AppShell({ currentUser = null }) {
           </>
         )}
 
-        <BottomStatusBar />
       </div>
     </>
   );

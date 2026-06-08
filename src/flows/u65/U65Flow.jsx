@@ -348,11 +348,8 @@ export default function U65Flow() {
               cursor: "pointer",
             }}
           >
-            Start Call
+            START
           </button>
-          <p style={{ marginTop: 10, fontSize: 11, color: "#4a5568" }}>
-            Timer begins when you click Start Call
-          </p>
         </section>
       ) : (
         <>
@@ -372,7 +369,13 @@ export default function U65Flow() {
             })}
           />
 
-          {isComplete ? (
+          {isComplete && !state.crossSellAcknowledged ? (
+            <div className="sf-inline-lock">
+              Acknowledge the mandatory cross-sell prompt in Co-Pilot before closing this U65 workflow.
+            </div>
+          ) : null}
+
+          {isComplete && state.crossSellAcknowledged ? (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}

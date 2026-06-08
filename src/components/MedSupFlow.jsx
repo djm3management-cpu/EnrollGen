@@ -5,12 +5,16 @@
 
 import { useRef, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, SlidersHorizontal } from "lucide-react";
 import { useMedSup } from "../context/MedSupContext";
 import { MEDSUP_SECTIONS } from "../context/MedSupScript";
 import { useScriptTemplate } from "../hooks/useScriptTemplate";
+import { useLeftRailManager } from "./leftRail/LeftRailManager";
 import CenterTimerBar from "./CenterTimerBar";
+import MedSupSalesForumPanel from "./medsup/MedSupSalesForumPanel";
 import ProgressDots from "./ProgressDots";
+
+const MEDSUP_SALES_FORUM_RAIL_ID = "medsup-sales-forum";
 
 const MEDSUP_STEP_LABELS = [
   { k: "recordingOk", l: "Record" },
@@ -53,7 +57,7 @@ function Say({ text }) {
   );
 }
 
-function Gate({ label, done, onDo, onUndo }) {
+function Gate({ label, done, onDo, onUndo, disabled = false, disabledReason = "" }) {
   return (
     <div
       className="flow-gate-action"
@@ -69,9 +73,10 @@ function Gate({ label, done, onDo, onUndo }) {
         type="button"
         className="check flow-gate-check"
         onClick={done ? onUndo : onDo}
+        disabled={!done && disabled}
         aria-label={label}
         aria-pressed={done}
-        title={label}
+        title={!done && disabled ? disabledReason : label}
         style={{
           justifyContent: "center",
           width: "fit-content",
@@ -84,6 +89,8 @@ function Gate({ label, done, onDo, onUndo }) {
             ? "rgba(52,211,153,0.05)"
             : "rgba(255,255,255,0.015)",
           color: done ? "#34d399" : "#dfe6f0",
+          cursor: !done && disabled ? "not-allowed" : "pointer",
+          opacity: !done && disabled ? 0.45 : 1,
         }}
       >
         <Check className="flow-gate-icon" size={14} strokeWidth={2.8} aria-hidden="true" />
@@ -212,6 +219,11 @@ function SectionCard({ section }) {
   const { state, dispatch, activeSection } = useMedSup();
   const done = state[section.key];
   const d = state.sectionTimestamps[section.num];
+  const crossSellBlocked =
+    section.key === "wrapOk" &&
+    state.enrollOk &&
+    state.enrollmentDisposition === "enrolled" &&
+    !state.crossSellAcknowledged;
 
   return (
     <Card
@@ -225,9 +237,16 @@ function SectionCard({ section }) {
       {section.script.map((line, idx) => (
         <Say key={`${section.id}-${idx}`} text={line} />
       ))}
+      {crossSellBlocked ? (
+        <div className="sf-inline-lock">
+          Acknowledge the mandatory cross-sell prompt in the Med Sup left rail before completing wrap-up.
+        </div>
+      ) : null}
       <Gate
         label={section.gate}
         done={done}
+        disabled={crossSellBlocked}
+        disabledReason="Acknowledge the mandatory cross-sell prompt in the Med Sup left rail before wrap-up."
         onDo={() => {
           dispatch({ type: "START_SECTION", sectionNum: section.num });
           dispatch({
@@ -320,8 +339,34 @@ function useMedSupTemplateSections() {
 
 export default function MedSupFlow() {
   const { state, dispatch, activeSection } = useMedSup();
+  const { showLeftRail, openLeftRail, dismissLeftRail } = useLeftRailManager();
   const medSupSections = useMedSupTemplateSections();
   const prev = useRef(activeSection);
+
+  useEffect(() => {
+    showLeftRail({
+      id: MEDSUP_SALES_FORUM_RAIL_ID,
+      priority: 2,
+      title: "Med Sup Tools",
+      shortLabel: "Med Sup Tools",
+      color: "#6aab7d",
+      icon: <SlidersHorizontal size={13} />,
+      railClassName: "left-rail--medsup-sales-forum",
+      panelClassName: "left-rail-panel-shell--medsup-sales-forum",
+      component: (
+        <MedSupSalesForumPanel
+          state={state}
+          dispatch={dispatch}
+          activeSection={activeSection}
+        />
+      ),
+    });
+  }, [activeSection, dispatch, showLeftRail, state]);
+
+  useEffect(() => {
+    openLeftRail(MEDSUP_SALES_FORUM_RAIL_ID);
+    return () => dismissLeftRail(MEDSUP_SALES_FORUM_RAIL_ID);
+  }, [dismissLeftRail, openLeftRail]);
 
   useEffect(() => {
     if (activeSection !== prev.current) {
@@ -375,11 +420,8 @@ export default function MedSupFlow() {
               cursor: "pointer",
             }}
           >
-            Start Call
+            START
           </button>
-          <p style={{ marginTop: 10, fontSize: 11, color: "#4a5568" }}>
-            Timer begins when you click Start Call
-          </p>
         </section>
       ) : (
         <>

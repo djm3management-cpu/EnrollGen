@@ -224,9 +224,9 @@ export default function Onboarding({ currentUser = null, onComplete }) {
         {step === 2 ? (
           <section className="onboarding-step">
             <span className="billing-eyebrow">CONNECT YOUR CRM</span>
-            <h1>GoHighLevel sync can be added now or later</h1>
+            <h1>CRM sync can be added now or later</h1>
             <label className="tenant-settings-field">
-              <span>GHL webhook URL</span>
+              <span>CRM webhook URL</span>
               <input
                 value={profile.ghl_webhook_url}
                 onChange={(event) => updateProfile("ghl_webhook_url", event.target.value)}
@@ -234,7 +234,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
               />
             </label>
             <label className="tenant-settings-field">
-              <span>GHL location ID</span>
+              <span>CRM location ID</span>
               <input
                 value={profile.ghl_location_id}
                 onChange={(event) => updateProfile("ghl_location_id", event.target.value)}
@@ -263,7 +263,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
                   <span>Pro</span>
                   <strong>$99</strong>
                 </div>
-                <p>Live Co-Pilot, transcription, GHL integration, and advanced analytics.</p>
+                <p>Live Co-Pilot, transcription, CRM integration, and advanced analytics.</p>
                 <button type="button" className="billing-button is-primary" disabled={saving} onClick={() => choosePlan("pro")}>
                   Start Pro
                 </button>

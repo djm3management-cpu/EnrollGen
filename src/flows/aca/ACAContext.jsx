@@ -42,6 +42,8 @@ function createInitialState(flowVariant = "core") {
       tobaccoUse: null,
     },
 
+    agentNotes: "",
+
     derivedSignals: {
       subsidyCliffRisk: false,
       medicaidLikely: false,
@@ -80,7 +82,29 @@ function reducer(state, action) {
       return { ...state, callStarted: true, callStart: Date.now() };
 
     case "SET_ENROLLMENT_PERIOD":
-      return { ...state, enrollmentPeriod: action.period };
+      return {
+        ...state,
+        enrollmentPeriod: action.period,
+        clientProfile: {
+          ...state.clientProfile,
+          enrollmentPeriod: action.period,
+        },
+      };
+
+    case "SET_CLIENT_PROFILE_FIELD":
+      return {
+        ...state,
+        clientProfile: {
+          ...state.clientProfile,
+          [action.field]: action.value,
+        },
+      };
+
+    case "SET_AGENT_NOTES":
+      return {
+        ...state,
+        agentNotes: action.value,
+      };
 
     case "COMPLETE_SECTION": {
       const { key, sectionNum } = action;

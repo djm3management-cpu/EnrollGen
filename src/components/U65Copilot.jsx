@@ -4,9 +4,10 @@ import { useU65CopilotEngine } from "../hooks/useU65CopilotEngine";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useSessionTracker } from "../hooks/useSessionTracker";
 import CompactCopilotRail from "./CompactCopilotRail";
+import CrossSellTrigger from "./copilot/CrossSellTrigger";
 
 const U65Copilot = memo(function U65Copilot({ onTranscriptChange }) {
-  const { state, activeGate } = useU65();
+  const { state, dispatch, activeGate } = useU65();
   const transcriptRef = useRef("");
   const { startSession, endSession, logComplianceFlag } = useSessionTracker();
   const sessionStartedRef = useRef(false);
@@ -79,6 +80,23 @@ const U65Copilot = memo(function U65Copilot({ onTranscriptChange }) {
       onToggleListening={listening ? speech.stop : speech.start}
       onClear={clearAll}
       onAnalyze={() => copilot.requestCoaching({ manual: true })}
+      extraWidgets={
+        <CrossSellTrigger
+          primaryProduct="U65"
+          primaryCarrier=""
+          clientAge={state.clientProfile?.age}
+          clientState={state.clientProfile?.state}
+          enrolled={Boolean(state.gate7Ok)}
+          acknowledged={Boolean(state.crossSellAcknowledged)}
+          onAcknowledged={(payload) =>
+            dispatch({
+              type: "SET_CROSS_SELL_ACKNOWLEDGED",
+              value: true,
+              payload,
+            })
+          }
+        />
+      }
     />
   );
 });

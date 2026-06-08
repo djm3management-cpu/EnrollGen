@@ -121,7 +121,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
       .catch((err) => {
         const message =
           err?.message ||
-          "Customer audio was not shared. Share the GoHighLevel tab with audio to enable the customer waveform.";
+          "Customer audio was not shared. Share the CRM tab with audio to enable the customer waveform.";
         copilot.pushFeedEntry("info", message, { section: copilot.currentStep });
       })
       .finally(() => {

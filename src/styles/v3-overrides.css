@@ -20,8 +20,7 @@ body,
 
 .viewport-bg,
 .viewport-wallpaper-image {
-  /* Hide legacy wallpaper imagery, v3 ships with a flat earth-tone background. */
-  display: none !important;
+  display: block;
 }
 
 
@@ -2574,56 +2573,6 @@ button.primary.section-complete-btn {
 
 .left-rail-context-stack .eg-rail-card {
   margin-bottom: 0;
-}
-
-/* ============================================================
-   BOTTOM STATUS BAR
-   ============================================================ */
-
-.eg-bottom-bar {
-  height: 30px;
-  background: rgba(30, 26, 22, 0.93);
-  border-top: 1px solid var(--eg-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  flex-shrink: 0;
-  font-family: var(--eg-font-mono);
-  font-size: 9px;
-  color: var(--eg-text-faint);
-  letter-spacing: 0.04em;
-  position: relative;
-  z-index: 2;
-}
-
-.eg-bottom-bar__left,
-.eg-bottom-bar__right {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.eg-bottom-bar__indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  text-transform: uppercase;
-}
-
-.eg-bottom-bar__dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--eg-text-faint);
-}
-
-.eg-bottom-bar__dot.is-up {
-  background: var(--eg-green);
-}
-
-.eg-bottom-bar__dot.is-down {
-  background: var(--eg-red);
 }
 
 /* ============================================================

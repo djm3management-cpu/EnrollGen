@@ -15,6 +15,7 @@ import {
   Building2,
   Check,
   CheckCircle2,
+  ClipboardList,
   Eye,
   Heart,
   Landmark,
@@ -22,7 +23,9 @@ import {
 } from "lucide-react";
 import CompactCopilotRail from "../../components/CompactCopilotRail";
 import CenterTimerBar from "../../components/CenterTimerBar";
+import AncillaryClientSidebar from "../../components/ancillary/AncillaryClientSidebar";
 import DentalReferencePanel from "../../components/DentalReferencePanel";
+import MOHRiderBundle from "../../components/ancillary/MOHRiderBundle";
 import { useLeftRailManager } from "../../components/leftRail/LeftRailManager";
 import ProgressDots from "../../components/ProgressDots";
 import { LOG_TYPES, useCopilotLog } from "../../context/CopilotTranscriptLog";
@@ -57,6 +60,7 @@ const PRODUCT_COMPONENTS = {
 const PRODUCT_ORDER = [SUB_PRODUCT.HIP, SUB_PRODUCT.FE, SUB_PRODUCT.DVH, SUB_PRODUCT.ANNUITY];
 const FALLBACK_PRODUCT_META = { label: "Ancillary", shortLabel: "ANC" };
 const FE_CALL_WINDOW_SECONDS = 90;
+const ANCILLARY_CUSTOMER_RAIL_ID = "ancillary-customer-info";
 const DENTAL_REFERENCE_RAIL_ID = "ancillary-dental-reference";
 
 function productFromPath() {
@@ -113,6 +117,17 @@ function createInitialState(initialProduct = null) {
   return {
     flowType: FLOW_TYPE,
     activeSubProduct: initialProduct,
+    customerInfo: {
+      name: "",
+      phone: "",
+      age: "",
+      state: "",
+      productInterest: initialProduct || "",
+      primaryCoverage: "",
+      carrier: "",
+      budget: "",
+    },
+    agentNotes: "",
     products: {
       [SUB_PRODUCT.HIP]: createProductState(),
       [SUB_PRODUCT.FE]: createProductState(),
@@ -140,6 +155,10 @@ function reducer(state, action) {
       return {
         ...state,
         activeSubProduct: action.product,
+        customerInfo: {
+          ...state.customerInfo,
+          productInterest: action.product || state.customerInfo.productInterest,
+        },
       };
 
     case "START_CALL":
@@ -252,6 +271,30 @@ function reducer(state, action) {
           },
         };
       });
+
+    case "SET_CALL_METADATA_FIELD":
+      return updateProductState(state, action.product, (productState) => ({
+        ...productState,
+        callMetadata: {
+          ...productState.callMetadata,
+          [action.field]: action.value,
+        },
+      }));
+
+    case "SET_CUSTOMER_INFO_FIELD":
+      return {
+        ...state,
+        customerInfo: {
+          ...state.customerInfo,
+          [action.field]: action.value,
+        },
+      };
+
+    case "SET_AGENT_NOTES":
+      return {
+        ...state,
+        agentNotes: action.value,
+      };
 
     case "RESET_PRODUCT":
       return updateProductState(state, action.product, () => createProductState());
@@ -675,14 +718,9 @@ function ProductSelector() {
   return (
     <>
       <style>{`
-        .ancillary-product-card {
-          min-height: 74px;
-        }
-        .ancillary-product-card:hover {
+        .ancillary-product-button:hover {
           border-color: rgba(59,130,246,0.48);
-          background: linear-gradient(145deg, rgba(59,130,246,0.08), rgba(17,17,17,0.98));
-        }
-        .ancillary-product-card:hover .at-tool-title {
+          background: rgba(59,130,246,0.08);
           color: #93c5fd;
         }
       `}</style>
@@ -691,52 +729,33 @@ function ProductSelector() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
         style={{
-          background: "rgba(59,130,246,0.04)",
-          border: "1px solid rgba(59,130,246,0.2)",
-          borderRadius: 10,
-          padding: "20px 18px",
-          marginBottom: 10,
+          width: "fit-content",
+          maxWidth: "100%",
+          background: "transparent",
+          border: 0,
+          padding: 0,
+          margin: "0 auto 10px",
         }}
       >
-        <div
-          style={{
-            color: ANCILLARY_ACCENT.color,
-            fontFamily: "var(--font-body)",
-            fontSize: 11,
-            fontWeight: 800,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            marginBottom: 12,
-          }}
-        >
-          Ancillary
-        </div>
-        <div className="at-card-list">
+        <div className="ancillary-product-grid">
           {PRODUCT_ORDER.map((product) => {
             const meta = ANCILLARY_PRODUCT_META[product];
             return (
               <button
                 key={product}
                 type="button"
-                className="at-tool-card ancillary-product-card"
+                className="ancillary-product-button"
+                title={meta.label}
                 onClick={() => handleSelect(product)}
               >
-                <span className="at-tool-main">
-                  <span
-                    className="at-tool-icon-badge"
-                    style={{
-                      color: ANCILLARY_ACCENT.color,
-                      background: "rgba(59,130,246,0.14)",
-                    }}
-                  >
-                    <ProductIcon product={product} />
-                  </span>
-                  <span className="at-tool-copy">
-                    <span className="at-tool-title-row">
-                      <span className="at-tool-title">{meta.label}</span>
-                    </span>
-                    <span className="at-tool-desc">{meta.description}</span>
-                  </span>
+                <span
+                  className="ancillary-product-button__icon"
+                  style={{ color: ANCILLARY_ACCENT.color }}
+                >
+                  <ProductIcon product={product} size={16} />
+                </span>
+                <span className="ancillary-product-button__label">
+                  {meta.label}
                 </span>
               </button>
             );
@@ -1590,12 +1609,96 @@ function StartCallGate({ product }) {
           cursor: "pointer",
         }}
       >
-        Start Call
+        START
       </button>
-      <p style={{ marginTop: 10, fontSize: 11, color: "#4a5568" }}>
-        Timer begins when you click Start Call
-      </p>
     </section>
+  );
+}
+
+function HIPCarrierContext({ productState }) {
+  const { dispatch } = useScriptFlow();
+  const metadata = productState.callMetadata || {};
+  const carrierCode = metadata.carrierCode || "";
+  const clientAge = metadata.clientAge || "";
+  const primaryCoverage = metadata.primaryCoverage || "";
+  const selectedRiders = Array.isArray(metadata.selectedMohRiders)
+    ? metadata.selectedMohRiders
+    : [];
+  const isMOH = carrierCode === "MOH";
+  const age = Number(clientAge);
+  const giEligible = isMOH && Number.isFinite(age) && age >= 64 && age <= 74;
+  const maObservationCallout = isMOH && primaryCoverage === "MA";
+
+  const update = (field, value) =>
+    dispatch({ type: "SET_CALL_METADATA_FIELD", product: SUB_PRODUCT.HIP, field, value });
+
+  return (
+    <div className="sf-panel sf-ancillary-context">
+      <div className="sf-panel-heading">
+        <span className="sf-dot sf-dot--amber" />
+        <span>HIP Carrier Context</span>
+      </div>
+      <div className="sf-form-grid">
+        <label>
+          Carrier
+          <select value={carrierCode} onChange={(event) => update("carrierCode", event.target.value)}>
+            <option value="">Select</option>
+            <option value="MOH">Mutual of Omaha</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </label>
+        <label>
+          Client Age
+          <input
+            value={clientAge}
+            onChange={(event) => update("clientAge", event.target.value)}
+            placeholder="Age"
+          />
+        </label>
+        <label>
+          Primary Coverage
+          <select value={primaryCoverage} onChange={(event) => update("primaryCoverage", event.target.value)}>
+            <option value="">Select</option>
+            <option value="MA">Medicare Advantage</option>
+            <option value="MedSup">Med Supp</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+      </div>
+
+      {giEligible ? (
+        <div className="sf-callout">
+          <CheckCircle2 size={13} />
+          <span>
+            This client qualifies for Guaranteed Issue Hospital Protection. No
+            health questions required. Present all available riders now.
+          </span>
+        </div>
+      ) : null}
+
+      {maObservationCallout ? (
+        <div className="sf-script-box">
+          <div className="sf-script-label">Observation stay talking point</div>
+          <p>
+            One thing most people do not realize is that hospitals sometimes
+            classify your stay as observation instead of a regular admission. It
+            looks the same to you because you are in a hospital bed, but
+            Medicare treats it differently, and your out-of-pocket costs can be
+            much higher. A Hospital Protection plan pays the same daily benefit
+            whether you are admitted or on observation status, so you are covered
+            either way.
+          </p>
+        </div>
+      ) : null}
+
+      {isMOH ? (
+        <MOHRiderBundle
+          clientAge={clientAge}
+          selectedRiders={selectedRiders}
+          onChange={(nextRiders) => update("selectedMohRiders", nextRiders)}
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -1661,6 +1764,9 @@ function AncillaryScriptRenderer({ product, productMeta, steps }) {
       {product === SUB_PRODUCT.ANNUITY ? (
         <AnnuityModeSelector productState={productState} />
       ) : null}
+      {product === SUB_PRODUCT.HIP ? (
+        <HIPCarrierContext productState={productState} />
+      ) : null}
 
       {!productState.callStarted ? (
         <StartCallGate product={product} />
@@ -1701,10 +1807,22 @@ function AncillaryCopilot({ onTranscriptChange }) {
       return;
     }
 
-    const message =
+    let message =
       state.activeSubProduct === SUB_PRODUCT.ANNUITY
         ? annuityCopilot.sectionMessage
         : `${activeProductMeta.shortLabel}: ${activeStep.title}. Keep recording disclosure, needs assessment, and client consent covered before close.`;
+
+    if (state.activeSubProduct === SUB_PRODUCT.HIP) {
+      const metadata = currentProductState.callMetadata || {};
+      const age = Number(metadata.clientAge);
+      const isMOH = metadata.carrierCode === "MOH";
+      if (isMOH && Number.isFinite(age) && age >= 64 && age <= 74) {
+        message = `${message} MOH GI alert: no health questions required. Present all riders now because they cannot be added later.`;
+      }
+      if (isMOH && metadata.primaryCoverage === "MA") {
+        message = `${message} Observation stay coverage is the key MA talking point. Explain that observation can look like an admission but bill differently.`;
+      }
+    }
 
     logEntry(
       LOG_TYPES.COPILOT_MSG,
@@ -1718,6 +1836,7 @@ function AncillaryCopilot({ onTranscriptChange }) {
     activeStep?.id,
     activeStep?.title,
     annuityCopilot.sectionMessage,
+    currentProductState.callMetadata,
     currentProductState.callStarted,
     logEntry,
     state.activeSubProduct,
@@ -1740,11 +1859,20 @@ function AncillaryCopilot({ onTranscriptChange }) {
   }, [clearLog, speech]);
 
   const analyze = useCallback(() => {
-    const message = state.activeSubProduct
+    let message = state.activeSubProduct
       ? state.activeSubProduct === SUB_PRODUCT.ANNUITY
         ? annuityCopilot.analyzeMessage
         : `${activeProductMeta.label}: score is ${complianceScore.score}%. Required checks are recording disclosure, needs assessment, and client consent.`
       : "Select an ancillary product to start the script flow.";
+    if (state.activeSubProduct === SUB_PRODUCT.HIP) {
+      const metadata = currentProductState.callMetadata || {};
+      if (metadata.carrierCode === "MOH") {
+        message = `${message} MOH rider review required at issue.`;
+      }
+      if (metadata.carrierCode === "MOH" && metadata.primaryCoverage === "MA") {
+        message = `${message} Use the observation stay script when presenting Hospital Protection to this MA client.`;
+      }
+    }
     logEntry(LOG_TYPES.COPILOT_MSG, "info", message, {
       flowType: FLOW_TYPE,
       subProduct: state.activeSubProduct,
@@ -1753,6 +1881,7 @@ function AncillaryCopilot({ onTranscriptChange }) {
     activeProductMeta?.label,
     annuityCopilot.analyzeMessage,
     complianceScore.score,
+    currentProductState.callMetadata,
     logEntry,
     state.activeSubProduct,
   ]);
@@ -1873,6 +2002,31 @@ export default function AncillaryFlow() {
 
     return () => dismissLeftRail(DENTAL_REFERENCE_RAIL_ID);
   }, [activeProduct, dismissLeftRail, openLeftRail, showLeftRail]);
+
+  useEffect(() => {
+    showLeftRail({
+      id: ANCILLARY_CUSTOMER_RAIL_ID,
+      priority: 3,
+      title: "Customer Info",
+      shortLabel: "Customer",
+      color: ANCILLARY_ACCENT.color,
+      icon: <ClipboardList size={13} />,
+      railClassName: "left-rail--ancillary-customer-info",
+      panelClassName: "left-rail-panel-shell--ancillary-customer-info",
+      component: (
+        <AncillaryClientSidebar
+          state={state}
+          dispatch={dispatch}
+          activeProduct={activeProduct}
+        />
+      ),
+    });
+  }, [activeProduct, showLeftRail, state]);
+
+  useEffect(() => {
+    openLeftRail(ANCILLARY_CUSTOMER_RAIL_ID);
+    return () => dismissLeftRail(ANCILLARY_CUSTOMER_RAIL_ID);
+  }, [dismissLeftRail, openLeftRail]);
 
   const value = useMemo(
     () => ({

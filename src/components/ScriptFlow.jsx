@@ -35,6 +35,7 @@ import ComplianceMini from "./ComplianceMini";
 import CopilotFeedMini from "./CopilotFeedMini";
 import AskCopilotMini from "./AskCopilotMini";
 import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
+import CrossSellTrigger from "./copilot/CrossSellTrigger";
 
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
@@ -211,6 +212,7 @@ function RailWidgets({
   transcript,
   activeSection,
   state,
+  dispatch,
   mergedEntries,
   listening,
   result,
@@ -294,6 +296,22 @@ function RailWidgets({
           result={result}
         />
       </CollapsibleWidget>
+
+      <CrossSellTrigger
+        primaryProduct="MA"
+        primaryCarrier={state.notes?.carrierName}
+        clientAge=""
+        clientState={state.notes?.customerState}
+        enrolled={Boolean(state.enrollOk && (state.notes?.callOutcome || "enrolled") === "enrolled")}
+        acknowledged={Boolean(state.crossSellAcknowledged)}
+        onAcknowledged={(payload) =>
+          dispatch?.({
+            type: "SET_CROSS_SELL_ACKNOWLEDGED",
+            value: true,
+            payload,
+          })
+        }
+      />
     </>
   );
 }
@@ -303,6 +321,7 @@ function RightRail({
   transcript,
   activeSection,
   state,
+  dispatch,
   mergedEntries,
   listening,
   result,
@@ -371,6 +390,7 @@ function RightRail({
     transcript,
     activeSection,
     state,
+    dispatch,
     mergedEntries,
     listening,
     result,
@@ -915,6 +935,7 @@ export default function ScriptFlow() {
         transcript={transcript}
         activeSection={activeSection}
         state={state}
+        dispatch={dispatch}
         mergedEntries={mergedTranscriptEntries}
         listening={isListening}
         result={liveComplianceResult}

@@ -510,7 +510,7 @@ export default function TenantSettings({ currentUser = null }) {
 
         <section className="tenant-settings-card">
           <div className="tenant-settings-section-title">CRM Integration</div>
-          <SettingsField label="GHL webhook URL">
+          <SettingsField label="CRM webhook URL">
             <div className="tenant-settings-inline">
               <input
                 value={profile.ghl_webhook_url}
@@ -522,14 +522,14 @@ export default function TenantSettings({ currentUser = null }) {
               </button>
             </div>
           </SettingsField>
-          <SettingsField label="GHL location ID">
+          <SettingsField label="CRM location ID">
             <input
               value={profile.ghl_location_id}
               onChange={(event) => updateProfile("ghl_location_id", event.target.value)}
             />
           </SettingsField>
           <p className="tenant-settings-muted">
-            Enter your GoHighLevel inbound webhook URL. EnrollGen sends enrollment data here after each completed call.
+            Enter your CRM inbound webhook URL. EnrollGen sends enrollment data here after each completed call.
           </p>
         </section>
 
@@ -544,7 +544,7 @@ export default function TenantSettings({ currentUser = null }) {
             <div className="tenant-agent-row tenant-agent-row-head">
               <span>Name</span>
               <span>NPN</span>
-              <span>GHL User ID</span>
+              <span>CRM User ID</span>
               <span>Active</span>
               <span />
             </div>
@@ -583,7 +583,7 @@ export default function TenantSettings({ currentUser = null }) {
               onChange={(event) => setNewAgent((current) => ({ ...current, npn: event.target.value }))}
             />
             <input
-              placeholder="GHL User ID"
+              placeholder="CRM User ID"
               value={newAgent.ghl_user_id}
               onChange={(event) => setNewAgent((current) => ({ ...current, ghl_user_id: event.target.value }))}
             />

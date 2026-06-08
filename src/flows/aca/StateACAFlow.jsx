@@ -394,11 +394,8 @@ export default function StateACAFlow() {
               cursor: "pointer",
             }}
           >
-            Start Call
+            START
           </button>
-          <p style={{ marginTop: 10, fontSize: 11, color: "#4a5568" }}>
-            Timer begins when you click Start Call
-          </p>
         </section>
       ) : (
         <>

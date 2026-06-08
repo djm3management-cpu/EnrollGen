@@ -111,6 +111,9 @@ const initialState = {
     notes: "",
   },
 
+  crossSellAcknowledged: false,
+  crossSellPayload: null,
+
   gateHistory: [],
   sectionTimestamps: {},
   callStart: null,
@@ -190,6 +193,13 @@ function reducer(state, action) {
       return {
         ...state,
         followUp: { ...state.followUp, ...action.payload },
+      };
+
+    case "SET_CROSS_SELL_ACKNOWLEDGED":
+      return {
+        ...state,
+        crossSellAcknowledged: Boolean(action.value),
+        crossSellPayload: action.payload || state.crossSellPayload,
       };
 
     case "TOGGLE_PRODUCT": {

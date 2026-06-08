@@ -657,9 +657,8 @@ export default function ACAFlow() {
             fontSize: 15, fontFamily: "var(--font-body)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
             background: `linear-gradient(145deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05))`, border: `1px solid rgba(234,179,8,0.3)`, color: ACCENT, borderRadius: 8, cursor: "pointer",
           }}>
-            Start Call
+            START
           </button>
-          <p style={{ marginTop: 10, fontSize: 11, color: "#4a5568" }}>Timer begins when you click Start Call</p>
         </section>
       ) : (
         <>

@@ -442,6 +442,21 @@ IMPLICATIONS, read carefully:
 - Because the transcript may begin mid-call or mid-section, do NOT assume the first visible line is the true start of the section. Only warn when the agent is clearly moving forward without covering something, not merely because you did not hear the opening.`;
 }
 
+const OBSERVATION_STAY_TALKING_POINT = `
+════════════════════════════════════════════════════════
+OBSERVATION STAY TALKING POINT, USE ONLY FOR MA + HIP CROSS-SELL
+════════════════════════════════════════════════════════
+Context for agent: Hospitals frequently place Medicare patients on observation status instead of admitting them as inpatient. This is classified as outpatient care under Medicare, which means:
+1. The client pays outpatient copays or coinsurance instead of inpatient rates.
+2. The stay does not count toward the 3-day inpatient requirement for SNF coverage.
+3. Clients are often unaware this happened until they receive the bill.
+4. MA plans apply outpatient cost-sharing, which can be significantly higher.
+
+Script line for agent: "One thing most people do not realize is that hospitals sometimes classify your stay as observation instead of a regular admission. It looks the same to you because you are in a hospital bed, but Medicare treats it differently, and your out-of-pocket costs can be much higher. A Hospital Protection plan pays the same daily benefit whether you are admitted or on observation status, so you are covered either way."
+
+Only surface this talking point when the client is enrolled in or discussing an MA plan, Hospital Indemnity is being presented as a cross-sell, and the carrier HIP product covers observation stays in carrier_profiles.
+`;
+
 function buildCoachingSystemPrompt({
   sectionKey,
   knowledge,
@@ -486,6 +501,8 @@ HOW TO USE THIS CONTEXT:
 - Use derivedSignals to detect broader patterns: pacing issues, repeated missed items, sections completed out of order, or unusual call progression.
 - Use priorCompletedSections to understand what the agent has already finished, do not accuse them of missing something from a completed section.
 - If callMetadata.agentName is null, the agent has not entered their name. Mention this once as a tip if a natural opportunity arises, do not force it.
+
+${OBSERVATION_STAY_TALKING_POINT}
 
 ════════════════════════════════════════════════════════
 EMPTY OR SPARSE TRANSCRIPT:

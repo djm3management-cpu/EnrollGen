@@ -74,6 +74,7 @@ function RailWidgets({
   onToggleListening,
   onClear,
   onAnalyze,
+  extraWidgets = null,
 }) {
   const hasTranscript = Boolean(transcript.trim());
 
@@ -136,6 +137,8 @@ function RailWidgets({
       >
         <CopilotFeedMini />
       </CollapsibleWidget>
+
+      {extraWidgets}
     </>
   );
 }
@@ -153,6 +156,7 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
   onToggleListening,
   onClear,
   onAnalyze,
+  extraWidgets = null,
 }) {
   const { clearLog } = useCopilotLog();
   const [open, setOpen] = useState(false);
@@ -238,6 +242,7 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
     onToggleListening,
     onClear: handleClear,
     onAnalyze,
+    extraWidgets,
   };
   const scoreDisplay = Number.isFinite(score) ? `${score}%` : "--";
 

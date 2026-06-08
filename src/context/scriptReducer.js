@@ -65,6 +65,8 @@ export const initialState = {
   dvActive: false,
   dvConsentOk: false,
   dvDiscussed: false,
+  crossSellAcknowledged: false,
+  crossSellPayload: null,
 
   // Agent & TPMO fields, auto-filled from localStorage
   agentName: persisted.agentName || "",
@@ -240,6 +242,10 @@ export function scriptReducer(state, action) {
       return {
         ...state,
         notes,
+        crossSellAcknowledged:
+          action.field === "callOutcome" && action.value !== "enrolled"
+            ? true
+            : state.crossSellAcknowledged,
       };
     }
 
@@ -317,6 +323,13 @@ export function scriptReducer(state, action) {
     /* ---- Toggle optional products ---- */
     case "TOGGLE_PRODUCT":
       return { ...state, [action.field]: !state[action.field] };
+
+    case "SET_CROSS_SELL_ACKNOWLEDGED":
+      return {
+        ...state,
+        crossSellAcknowledged: Boolean(action.value),
+        crossSellPayload: action.payload || state.crossSellPayload,
+      };
 
     /* ---- Track section start time ---- */
     case "MARK_SECTION_START": {

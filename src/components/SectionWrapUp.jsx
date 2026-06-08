@@ -103,6 +103,9 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
     if (!callOutcome) return "Call outcome is required.";
 
     if (!isEnrolled) return "";
+    if (!state.crossSellAcknowledged) {
+      return "Complete or decline the Co-Pilot cross-sell prompt before saving wrap-up.";
+    }
 
     if (!notes.customerDob) return "Date of birth is required for enrollments.";
     if (!notes.customerState) return "State is required for enrollments.";
@@ -117,7 +120,7 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
     if (!notes.writingAgent) return "Writing agent is required for enrollments.";
     if ((notes.hra || "No") === "Yes" && !notes.hraDate) return "HRA date is required when HRA is completed.";
     return "";
-  }, [callOutcome, isEnrolled, notes]);
+  }, [callOutcome, isEnrolled, notes, state.crossSellAcknowledged]);
 
   const handleEffectiveDateChange = useCallback(
     (value) => {
@@ -276,7 +279,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
       <div className={`post-call-enrollment-panel ${isEnrolled ? "is-open" : ""}`}>
         <div className="post-call-section-heading">
           <span>Enrollment Intake</span>
-          <small>Sent to GHL only when outcome is enrolled</small>
+          <small>Sent to CRM only when outcome is enrolled</small>
         </div>
 
         <div className="grid post-call-wrap-grid">
@@ -542,7 +545,8 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
             type="button"
             className="primary post-call-save-button"
             onClick={handleSaveWrapUp}
-            disabled={isSaving}
+            disabled={isSaving || Boolean(validationError)}
+            title={validationError || "Save call record"}
           >
             {isSaving ? "Saving..." : "Save Call Record"}
           </button>
@@ -552,13 +556,17 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           )}
 
           {saveState.webhookStatus === "pending" && (
-            <span className="post-call-webhook-status">GHL pending...</span>
+            <span className="post-call-webhook-status">CRM pending...</span>
           )}
           {saveState.webhookStatus === "sent" && (
-            <span className="post-call-webhook-status is-sent">Sent to GHL ✓</span>
+            <span className="post-call-webhook-status is-sent">Sent to CRM ✓</span>
           )}
         </div>
       )}
+
+      {enrollOk && validationError ? (
+        <p className="sf-inline-lock">{validationError}</p>
+      ) : null}
 
       {!enrollOk && (
         <LockText>Locked until Enrollment is marked submitted.</LockText>

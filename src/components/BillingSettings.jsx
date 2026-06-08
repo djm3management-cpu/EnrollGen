@@ -201,7 +201,7 @@ export default function BillingSettings() {
             <span>Pro</span>
             <strong>$99</strong>
           </div>
-          <p>Everything in Starter plus Co-Pilot, transcription, GHL sync, and advanced analytics.</p>
+          <p>Everything in Starter plus Co-Pilot, transcription, CRM sync, and advanced analytics.</p>
           <button
             type="button"
             className="billing-button is-primary"

@@ -3,12 +3,17 @@
  * Supports both the original ACA flow and the new default State ACA flow.
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ClipboardList } from "lucide-react";
 import { ACAProvider, useACA } from "./ACAContext";
 import ACAFlow from "./ACAFlow";
 import StateACAFlow from "./StateACAFlow";
 import AcaCopilot from "../../components/AcaCopilot";
+import AcaClientSidebar from "../../components/aca/AcaClientSidebar";
 import DevotedPopupManager from "../../components/ancillary/DevotedPopupManager";
+import { useLeftRailManager } from "../../components/leftRail/LeftRailManager";
+
+const ACA_CLIENT_INFO_RAIL_ID = "aca-client-info";
 
 const ACA_FLOW_OPTIONS = [
   {
@@ -117,10 +122,32 @@ function ACAFlowSelector({ variant, onChange }) {
 }
 
 function ACAScriptBody({ variant, onVariantChange }) {
-  const { state } = useACA();
+  const { state, dispatch } = useACA();
+  const { showLeftRail, openLeftRail, dismissLeftRail } = useLeftRailManager();
   const [transcript, setTranscript] = useState("");
   const flowShellRef = useRef(null);
   const flowMainRef = useRef(null);
+
+  useEffect(() => {
+    showLeftRail({
+      id: ACA_CLIENT_INFO_RAIL_ID,
+      priority: 2,
+      title: "ACA Client Info",
+      shortLabel: "ACA Client",
+      color: "#EAB308",
+      icon: <ClipboardList size={13} />,
+      railClassName: "left-rail--aca-client-info",
+      panelClassName: "left-rail-panel-shell--aca-client-info",
+      component: (
+        <AcaClientSidebar state={state} dispatch={dispatch} variant={variant} />
+      ),
+    });
+  }, [dispatch, showLeftRail, state, variant]);
+
+  useEffect(() => {
+    openLeftRail(ACA_CLIENT_INFO_RAIL_ID);
+    return () => dismissLeftRail(ACA_CLIENT_INFO_RAIL_ID);
+  }, [dismissLeftRail, openLeftRail]);
 
   return (
     <>

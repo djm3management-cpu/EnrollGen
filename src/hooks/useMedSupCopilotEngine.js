@@ -251,6 +251,7 @@ HOW TO USE THIS CONTEXT:
 - Use priorCompletedSections to understand what the agent has already finished.
 - medicareReference contains verified 2026 CMS cost-sharing amounts. Use these to coach the agent with accurate dollar figures when explaining what Medigap covers.
 - stateGIRules contains state-specific GI rules. If the agent mentions a state, check whether that state has year-round GI, a birthday rule, or federal OEP only, and coach accordingly.
+- salesForumContext contains sidebar values for Plan G vs N rates, HDG + Hospital Protection analysis, carrier selection, and cross-sell acknowledgement. During quoting, use it to remind agents about state excess-charge risk, HDG combo savings, CSG/manual rate workflow, and required ancillary cross-sell acknowledgement.
 
 ════════════════════════════════════════════════════════
 EMPTY OR SPARSE TRANSCRIPT:
@@ -396,6 +397,12 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, lo
       ),
       medicareReference: medicareReference.costs,
       stateGIRules: medicareReference.giRules,
+      salesForumContext: {
+        clientProfile: state.clientProfile || {},
+        quoteInputs: state.quoteInputs || {},
+        enrollmentDisposition: state.enrollmentDisposition || "enrolled",
+        crossSellAcknowledged: Boolean(state.crossSellAcknowledged),
+      },
     };
   }, [activeSection, currentStep, state, transcriptRef, medicareReference]);
 

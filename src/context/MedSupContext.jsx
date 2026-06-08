@@ -18,6 +18,33 @@ const initialState = {
   // timestamps
   sectionTimestamps: {},
   callStart: null,
+
+  enrollmentDisposition: "enrolled",
+  crossSellAcknowledged: false,
+  crossSellPayload: null,
+
+  clientProfile: {
+    name: "",
+    dob: "",
+    state: "",
+    zipCode: "",
+    age: "",
+    gender: "",
+    tobaccoUse: "",
+  },
+
+  quoteInputs: {
+    primaryCarrier: "",
+    selectedPlanType: "standard",
+    planLetter: "G",
+    planGMonthly: "",
+    planNMonthly: "",
+    standardGMonthly: "",
+    hdgMonthly: "",
+    hipMonthly: "",
+    hipDailyBenefit: "",
+    averageStayDays: "4.5",
+  },
 };
 
 function reducer(state, action) {
@@ -57,6 +84,39 @@ function reducer(state, action) {
 
     case "UNCOMPLETE_SECTION":
       return { ...state, [action.key]: false };
+
+    case "SET_ENROLLMENT_DISPOSITION":
+      return {
+        ...state,
+        enrollmentDisposition: action.value || "enrolled",
+        crossSellAcknowledged:
+          action.value && action.value !== "enrolled" ? true : state.crossSellAcknowledged,
+      };
+
+    case "SET_CLIENT_PROFILE_FIELD":
+      return {
+        ...state,
+        clientProfile: {
+          ...state.clientProfile,
+          [action.field]: action.value,
+        },
+      };
+
+    case "SET_QUOTE_FIELD":
+      return {
+        ...state,
+        quoteInputs: {
+          ...state.quoteInputs,
+          [action.field]: action.value,
+        },
+      };
+
+    case "SET_CROSS_SELL_ACKNOWLEDGED":
+      return {
+        ...state,
+        crossSellAcknowledged: Boolean(action.value),
+        crossSellPayload: action.payload || state.crossSellPayload,
+      };
 
     case "RESET":
       return { ...initialState };
