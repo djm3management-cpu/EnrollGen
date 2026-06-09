@@ -3,9 +3,9 @@
  * G00-G09 talk track with G01a employer coverage branch.
  */
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { useU65 } from "./U65Context";
 import { U65_GATES } from "./U65Data";
 import { useScriptTemplate } from "../../hooks/useScriptTemplate";
@@ -13,6 +13,8 @@ import CenterTimerBar from "../../components/CenterTimerBar";
 import ProgressDots from "../../components/ProgressDots";
 
 const ACCENT = "#a855f7";
+const U65_VOICEMAIL_SCRIPT =
+  "\"Hi, this is [Agent Name] with New Gen Health Solutions. I'm calling back regarding your request for health insurance information. Give me a call back when you get a chance. We have options that are generally 20 to 40 % less expensive than traditional marketplace plans, as well as private products with full coverage through the Aetna and Cigna networks, zero-dollar generic drugs, and much more. Looking forward to hearing from you. Have a great day.\"";
 
 function fmt(ms) {
   const seconds = Math.round(ms / 1000);
@@ -96,6 +98,31 @@ function GateToggle({ label, done, onDo, onUndo }) {
       >
         <Check className="flow-gate-icon" size={14} strokeWidth={2.8} aria-hidden="true" />
       </button>
+    </div>
+  );
+}
+
+function VoicemailSection() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className={`u65-voicemail-section${open ? " is-open" : ""}`}>
+      <button
+        type="button"
+        className="u65-voicemail-toggle"
+        aria-expanded={open}
+        aria-controls="u65-g00-voicemail-script"
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span>Leave Voicemail</span>
+        <ChevronDown className="u65-voicemail-icon" size={14} strokeWidth={2.4} aria-hidden="true" />
+      </button>
+
+      {open ? (
+        <div id="u65-g00-voicemail-script" className="u65-voicemail-body">
+          <TalkTrack text={U65_VOICEMAIL_SCRIPT} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -214,6 +241,7 @@ function U65GateSection({ gate }) {
       {gate.script.map((line, index) => (
         <TalkTrack key={`${gate.id}-line-${index}`} text={line} />
       ))}
+      {gate.num === 0 ? <VoicemailSection /> : null}
       {gate.directions?.map((line, index) => (
         <StageDirection key={`${gate.id}-dir-${index}`} text={line} />
       ))}

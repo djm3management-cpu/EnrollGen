@@ -5641,6 +5641,68 @@ input::placeholder {
   line-height: 1.35 !important;
 }
 
+.u65-voicemail-section {
+  margin: 10px 0 12px;
+  border: 1px solid var(--script-term-border);
+  border-radius: 0;
+  background: var(--script-term-bg-soft);
+  box-shadow: none;
+  font-family: var(--font-mono);
+  overflow: hidden;
+}
+
+.u65-voicemail-toggle {
+  width: 100%;
+  min-height: 30px;
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 0;
+  border-radius: 0;
+  background: var(--script-term-bg);
+  color: var(--script-term-cyan);
+  box-shadow: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  line-height: 1;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.u65-voicemail-toggle:hover {
+  background: var(--script-term-hover);
+  color: #ffffff;
+}
+
+.u65-voicemail-section.is-open .u65-voicemail-toggle {
+  border-bottom: 1px solid var(--script-term-border);
+  color: var(--script-term-yellow);
+}
+
+.u65-voicemail-icon {
+  flex-shrink: 0;
+  color: currentColor;
+  stroke: currentColor;
+  transition: transform 0.16s ease;
+}
+
+.u65-voicemail-section.is-open .u65-voicemail-icon {
+  transform: rotate(180deg);
+}
+
+.u65-voicemail-body {
+  padding: 10px;
+}
+
+.u65-voicemail-body .flow-script-line {
+  margin-bottom: 0 !important;
+}
+
 .flow-compliance-banner {
   color: var(--script-term-red) !important;
   font-family: var(--font-mono) !important;
