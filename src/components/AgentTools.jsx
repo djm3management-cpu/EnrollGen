@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
   Building2,
+  ClipboardCheck,
   Circle,
   ExternalLink,
   FileText,
@@ -18,6 +19,9 @@ import {
 import SEPGuide2026 from "./SEPGuide2026";
 import CarrierQuickRef from "./CarrierQuickRef";
 import ScriptEditor from "./ScriptEditor";
+import AgentToolsProductQuiz, {
+  AgentToolsMedMaxScenarioQuiz,
+} from "./AgentToolsProductQuiz";
 import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
 import "../AgentTools.css";
 
@@ -142,6 +146,25 @@ const TOOL_GROUPS = [
         description: "State-by-state INT, PAP, CSNP, and DST guide with mandatory disclosures and bonus tracking.",
         icon: <BookOpen size={16} />,
         color: "#2196F3",
+      },
+    ],
+  },
+  {
+    id: "training",
+    label: "Training & Quizzes",
+    color: "#c084fc",
+    tools: [
+      {
+        id: "off-market-product-quiz",
+        title: "Off-Market Product Quiz",
+        description: "30-question Enroll Prime product knowledge quiz with pass/fail scoring.",
+        icon: <ClipboardCheck size={16} />,
+      },
+      {
+        id: "medmax-scenario-quiz",
+        title: "MedMax Scenario Quiz",
+        description: "20-question scenario quiz focused on MedMax sales, underwriting, and member education.",
+        icon: <ClipboardCheck size={16} />,
       },
     ],
   },
@@ -733,6 +756,10 @@ export default function AgentTools() {
         return <SEPGuide2026 />;
       case "script-editor":
         return <ScriptEditor />;
+      case "off-market-product-quiz":
+        return <AgentToolsProductQuiz />;
+      case "medmax-scenario-quiz":
+        return <AgentToolsMedMaxScenarioQuiz />;
       default:
         return null;
     }
