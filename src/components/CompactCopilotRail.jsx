@@ -8,7 +8,7 @@ import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 
-const FULL_RAIL_WIDTH = 278;
+const FULL_RAIL_WIDTH = 310;
 const COMPACT_RAIL_OVERLAY_WIDTH = "min(340px, calc(100vw - 24px))";
 
 const FULL_RAIL_STYLE = {

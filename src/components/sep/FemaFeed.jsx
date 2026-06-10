@@ -42,11 +42,21 @@ function carrierColor(carrier) {
   return map[carrier] || "#666";
 }
 
+function FeedLoading({ label }) {
+  return (
+    <div className="fema-feed-hz-loading">
+      <span className="fema-feed-hz-spinner" aria-hidden="true" />
+      <span>{label}</span>
+    </div>
+  );
+}
+
 export function FemaFeed({
   femaDisasters = [],
   femaSource = "unknown",
   liveNews = [],
   bulletins = [],
+  feedLoading = false,
 }) {
   const [expandedItems, setExpandedItems] = useState({});
   const [showAllFema, setShowAllFema] = useState(false);
@@ -169,11 +179,14 @@ export function FemaFeed({
           </div>
 
           <div className="fema-feed-hz-items">
-            {displayDisasters.length === 0 && (
-              <div className="fema-feed-hz-empty">
-                No active FEMA data loaded yet. Search a zip or click a state.
-              </div>
-            )}
+            {displayDisasters.length === 0 &&
+              (feedLoading ? (
+                <FeedLoading label="Loading FEMA declarations..." />
+              ) : (
+                <div className="fema-feed-hz-empty">
+                  No active FEMA data loaded yet. Search a zip or click a state.
+                </div>
+              ))}
             {displayDisasters.map((disaster) => {
               const isOpen = expandedItems[disaster.id];
               const hasIA = disaster.iaProgram || disaster.ihProgram;
@@ -273,11 +286,14 @@ export function FemaFeed({
 
             {rightTab === "news" && (
               <div className="fema-feed-hz-items fema-feed-stack-items">
-                {displayNews.length === 0 && (
-                  <div className="fema-feed-hz-empty">
-                    No live MA news is available yet.
-                  </div>
-                )}
+                {displayNews.length === 0 &&
+                  (feedLoading ? (
+                    <FeedLoading label="Loading live news..." />
+                  ) : (
+                    <div className="fema-feed-hz-empty">
+                      No live MA news is available yet.
+                    </div>
+                  ))}
 
                 {renderFeedItems(displayNews)}
 
@@ -294,11 +310,14 @@ export function FemaFeed({
 
             {rightTab === "bulletins" && (
               <div className="fema-feed-hz-items fema-feed-stack-items">
-                {displayBulletins.length === 0 && (
-                  <div className="fema-feed-hz-empty">
-                    No MA carrier or CMS bulletin data is available yet.
-                  </div>
-                )}
+                {displayBulletins.length === 0 &&
+                  (feedLoading ? (
+                    <FeedLoading label="Loading bulletins..." />
+                  ) : (
+                    <div className="fema-feed-hz-empty">
+                      No MA carrier or CMS bulletin data is available yet.
+                    </div>
+                  ))}
 
                 {renderFeedItems(displayBulletins)}
 

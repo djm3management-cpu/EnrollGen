@@ -40,6 +40,7 @@ export function useSEPLookup() {
   const [femaDisasters, setFemaDisasters] = useState([]);
   const [bulletins, setBulletins] = useState([]);
   const [liveNews, setLiveNews] = useState([]);
+  const [feedLoading, setFeedLoading] = useState(true);
   const [sepFinderZip, setSepFinderZip] = useState(null);
   const [sepFinderResult, setSepFinderResult] = useState(null);
   const [sepFinderLoading, setSepFinderLoading] = useState(false);
@@ -80,6 +81,10 @@ export function useSEPLookup() {
         setLiveNews(next.liveNews);
       } catch (err) {
         console.error("Top feed refresh error:", err);
+      } finally {
+        if (!cancelled) {
+          setFeedLoading(false);
+        }
       }
     };
 
@@ -361,7 +366,7 @@ export function useSEPLookup() {
     planFilterSnp, setPlanFilterSnp,
     planSearch, setPlanSearch,
     selectedCounty, setSelectedCounty, countyList,
-    countyLoading, countyPlanCounts, femaSource, femaDisasters, bulletins, liveNews, inputRef,
+    countyLoading, countyPlanCounts, femaSource, femaDisasters, bulletins, liveNews, feedLoading, inputRef,
     sepFinderZip, sepFinderResult, sepFinderLoading, sepFinderError,
     handleSearch, handleKeyDown, handleStateClick, loadPlansForCounty,
     isValidZip, filtered, femaActive, state,
