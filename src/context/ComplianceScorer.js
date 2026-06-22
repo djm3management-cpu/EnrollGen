@@ -974,7 +974,12 @@ function scoreComplianceLegacy(
     ...options,
     callDirection: options.callDirection || scriptState?.callDirection || "inbound",
   });
-  const analysis = transcript ? analyzeTranscript(transcript) : null;
+  const analysis =
+    options.precomputedAnalysis !== undefined
+      ? options.precomputedAnalysis
+      : transcript
+        ? analyzeTranscript(transcript)
+        : null;
   const categories = [];
   let twS = 0;
   let tW = 0;
@@ -1427,6 +1432,12 @@ export function scoreTwoSided(
   const safeCustomerText = typeof customerText === "string" ? customerText : "";
   const safeMerged = Array.isArray(mergedTranscript) ? mergedTranscript : [];
   const safeCopilot = Array.isArray(copilotEntries) ? copilotEntries : [];
+  const agentAnalysis =
+    options.precomputedAnalysis !== undefined
+      ? options.precomputedAnalysis
+      : safeAgentTranscript
+        ? analyzeTranscript(safeAgentTranscript)
+        : null;
   const agentResult = scoreCompliance(
     scriptState,
     safeCopilot,
@@ -1436,6 +1447,7 @@ export function scoreTwoSided(
       mergedTranscript: safeMerged,
       customerText: safeCustomerText,
       callDirection: options.callDirection || scriptState?.callDirection || "inbound",
+      precomputedAnalysis: agentAnalysis,
     }
   );
 
@@ -1449,7 +1461,6 @@ export function scoreTwoSided(
     };
   }
 
-  const agentAnalysis = safeAgentTranscript ? analyzeTranscript(safeAgentTranscript) : null;
   const customerConfirmation = scoreCustomerConfirmation(safeCustomerText, safeMerged, agentAnalysis);
   // Blended two-sided score: 60% agent, 40% customer confirmation.
   const AGENT_WEIGHT = 0.6;

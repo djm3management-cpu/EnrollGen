@@ -1,5 +1,6 @@
 import { memo } from "react";
 import Waveform from "./copilot/Waveform";
+import { useAudioLevels } from "../stores/audioLevelStore";
 
 function normalizeLevel(value) {
   if (!Number.isFinite(value)) return 0;
@@ -7,11 +8,10 @@ function normalizeLevel(value) {
 }
 
 const CenterTimerBar = memo(function CenterTimerBar({
-  agentLevel = 0,
-  customerLevel = 0,
   agentActive = false,
   customerActive = false,
 }) {
+  const { agentLevel, customerLevel } = useAudioLevels();
   const safeAgentLevel = normalizeLevel(agentLevel);
   const safeCustomerLevel = normalizeLevel(customerLevel);
   const agentLive = agentActive || safeAgentLevel > 0.015;

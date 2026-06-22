@@ -2,20 +2,22 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./styles/design-tokens.css";
-import "./styles.css";
-import "./styles/v3-overrides.css";
+import "./styles/public-shell.css";
 import { CopilotLogProvider } from "./context/CopilotTranscriptLog";
 import { LiveCallProvider } from "./context/LiveCallContext";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { AuthProvider } from "./context/AuthContext";
-import { runSessionTrackingDiagnostic } from "./lib/sessionTrackingDiagnostic";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const CLERK_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const LEGACY_TRAINING_MODE_STORAGE_KEY = "enrollgen_training_mode_v1";
 const PRELOAD_RELOAD_STORAGE_KEY = "enrollgen_preload_reload_v1";
 
-runSessionTrackingDiagnostic();
+if (import.meta.env.DEV) {
+  void import("./lib/sessionTrackingDiagnostic").then(
+    ({ runSessionTrackingDiagnostic }) => runSessionTrackingDiagnostic()
+  );
+}
 
 function installPreloadErrorHandler() {
   if (typeof window === "undefined") return;

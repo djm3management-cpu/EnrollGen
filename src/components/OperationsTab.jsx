@@ -90,6 +90,17 @@ function fmtClock(d) {
     .join(":");
 }
 
+function LiveOperationsClock() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return <span className="clock">{fmtClock(now)} EST</span>;
+}
+
 function normalizeTrackerStatus(value) {
   return TRACKER_STATUSES.includes(value) ? value : DEFAULT_TRACKER_STATUS;
 }
@@ -1729,7 +1740,6 @@ export default function OperationsTab() {
   const [selectedCallId, setSelectedCallId] = useState(null);
   const [callDetails, setCallDetails] = useState({});
   const [detailLoading, setDetailLoading] = useState(null);
-  const [now, setNow] = useState(new Date());
   const [trackerPending, setTrackerPending] = useState({});
 
   useEffect(() => {
@@ -1795,11 +1805,6 @@ export default function OperationsTab() {
       cancelled = true;
     };
   }, [supabaseClient, tenantError, tenantLoading]);
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
 
   const tenantAgentsByName = useMemo(() => {
     const map = new Map();
@@ -2202,7 +2207,7 @@ export default function OperationsTab() {
           </span>
         </span>
         <span className="right">
-          <span className="clock">{fmtClock(now)} EST</span>
+          <LiveOperationsClock />
           <span className="live">
             <span className="pulse" aria-hidden="true" />
             LIVE

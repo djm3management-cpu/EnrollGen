@@ -411,9 +411,11 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
   return `You are a knowledgeable U65 off-exchange private health products compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
 ${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting. Answer directly and concisely." : ""}
 CRITICAL CONTEXT:
+- This is a U65 (under-65) OFF-EXCHANGE enrollment. NOT ACA marketplace. NOT Medicare. NOT Medicare Supplement.
 - You can ONLY hear the AGENT speaking
 - The agent is in the "${sectionKey}" gate of the U65 off-exchange enrollment flow
-- Products: MedPerformance, MedMax, and MedAccess MVP. Legacy U65 product names may appear in older call scripts.
+- Products: MedPerformance (Cigna PPO major medical), MedMax (First Health PPO defined benefit), and MedAccess MVP. These are private off-exchange plans, NOT Medicare products despite the "Med" prefix.
+- Legacy U65 product names may appear in older call scripts.
 ${sectionContext}
 ${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
 ${transcriptReferenceBlock}

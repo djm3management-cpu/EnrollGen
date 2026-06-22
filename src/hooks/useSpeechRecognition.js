@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MAX_TRANSCRIPT_LENGTH } from "../data/complianceKnowledge";
+import { publishAudioLevel } from "../stores/audioLevelStore";
 
 const QUESTION_START_RE =
   /^(who|what|when|where|why|how|which|can|could|would|will|should|do|does|did|is|are|am|have|has|had|may)\b/i;
@@ -48,7 +49,6 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
   const [transcript, setTranscript] = useState("");
   const [transcriptRows, setTranscriptRows] = useState([]);
   const [interimText, setInterimText] = useState("");
-  const [audioLevel, setAudioLevel] = useState(0);
 
   const recognitionRef = useRef(null);
   const micStreamRef = useRef(null);
@@ -96,7 +96,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     audioContextRef.current = null;
     analyserRef.current = null;
     meterDataRef.current = null;
-    setAudioLevel(0);
+    publishAudioLevel("agent", 0, { immediate: true });
 
     if (audioContext && audioContext.state !== "closed") {
       void audioContext.close();
@@ -150,13 +150,13 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
           sum += centered * centered;
         }
         const rms = Math.sqrt(sum / data.length);
-        setAudioLevel(Math.min(1, rms * 5));
+        publishAudioLevel("agent", Math.min(1, rms * 5));
         meterFrameRef.current = requestAnimationFrame(tick);
       };
 
       tick();
     } catch {
-      setAudioLevel(0);
+      publishAudioLevel("agent", 0, { immediate: true });
     }
   }, []);
 
@@ -295,7 +295,6 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
 
   return {
     listening,
-    audioLevel,
     transcript,
     transcriptRef,
     transcriptRows,

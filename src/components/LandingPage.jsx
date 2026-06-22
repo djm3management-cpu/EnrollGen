@@ -1,8 +1,21 @@
-/* eslint-disable react/no-unknown-property -- Keep the literal fetchpriority attribute on the hero video. */
-import { Suspense } from "react";
+import { useEffect, useState } from "react";
 import "./LandingPage.css";
 
 function HeroBackgroundVideo() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const showVideo = () => setReady(true);
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(showVideo, { timeout: 1500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(showVideo, 800);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  if (!ready) return null;
+
   return (
     <video
       className="landing-hero-video"
@@ -11,8 +24,7 @@ function HeroBackgroundVideo() {
       muted
       loop
       playsInline
-      preload="auto"
-      fetchpriority="high"
+      preload="metadata"
       aria-hidden="true"
     />
   );
@@ -46,9 +58,7 @@ export default function LandingPage() {
       <main>
         <section className="landing-hero" aria-labelledby="landing-hero-title">
           <div className="landing-hero-shell landing-hero-shell--mystery">
-            <Suspense fallback={null}>
-              <HeroBackgroundVideo />
-            </Suspense>
+            <HeroBackgroundVideo />
               <div className="landing-hero-overlay" aria-hidden="true" />
             <div className="landing-hero-content landing-mystery-content">
               <h1 id="landing-hero-title">

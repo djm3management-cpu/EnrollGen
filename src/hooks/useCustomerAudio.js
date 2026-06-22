@@ -3,6 +3,7 @@ import { useCallStore } from "../stores/callStore";
 import { useAppAuth } from "../context/AuthContext";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import { waitForActiveSessionMetadata } from "./useSessionTracker";
+import { publishAudioLevel } from "../stores/audioLevelStore";
 
 /**
  * useCustomerAudio - captures customer audio from a shared browser tab
@@ -96,11 +97,11 @@ export function useCustomerAudio() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [customerTranscript, setCustomerTranscript] = useState([]);
   const [error, setError] = useState(null);
-  const [audioLevel, setAudioLevel] = useState(0);
 
   const mediaStreamRef = useRef(null);
   const audioContextRef = useRef(null);
   const processorRef = useRef(null);
+  const silentGainRef = useRef(null);
   const sourceRef = useRef(null);
   const wsRef = useRef(null);
   const cleaningUpRef = useRef(false);
@@ -129,6 +130,15 @@ export function useCustomerAudio() {
         /* ignore */
       }
       processorRef.current = null;
+    }
+
+    if (silentGainRef.current) {
+      try {
+        silentGainRef.current.disconnect();
+      } catch {
+        /* ignore */
+      }
+      silentGainRef.current = null;
     }
 
     if (sourceRef.current) {
@@ -161,7 +171,7 @@ export function useCustomerAudio() {
     }
 
     setIsCapturing(false);
-    setAudioLevel(0);
+    publishAudioLevel("customer", 0, { immediate: true });
     cleaningUpRef.current = false;
   }, []);
 
@@ -207,12 +217,15 @@ export function useCustomerAudio() {
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     audioContextRef.current = audioContext;
+    try {
+      if (audioContext.state === "suspended") await audioContext.resume();
+    } catch {
+      cleanup();
+      throw new Error("Customer audio processing could not start.");
+    }
 
     const source = audioContext.createMediaStreamSource(stream);
     sourceRef.current = source;
-
-    const processor = audioContext.createScriptProcessor(BUFFER_SIZE, 1, 1);
-    processorRef.current = processor;
 
     const ws = new WebSocket(DEEPGRAM_WS_URL, ["token", deepgramToken]);
     wsRef.current = ws;
@@ -225,24 +238,63 @@ export function useCustomerAudio() {
         }
       })();
 
-      processor.onaudioprocess = (event) => {
-        const inputData = event.inputBuffer.getChannelData(0);
+      void (async () => {
+        if (audioContext.audioWorklet && typeof AudioWorkletNode !== "undefined") {
+          try {
+            await audioContext.audioWorklet.addModule(
+              new URL("../audio/pcmCaptureProcessor.worklet.js", import.meta.url)
+            );
+            if (ws.readyState !== WebSocket.OPEN) return;
 
-        let sum = 0;
-        for (let i = 0; i < inputData.length; i++) {
-          sum += inputData[i] * inputData[i];
+            const processor = new AudioWorkletNode(
+              audioContext,
+              "pcm-capture-processor",
+              {
+                processorOptions: {
+                  targetSampleRate: TARGET_SAMPLE_RATE,
+                  bufferSize: BUFFER_SIZE,
+                },
+              }
+            );
+            const silentGain = audioContext.createGain();
+            silentGain.gain.value = 0;
+            processor.port.onmessage = ({ data }) => {
+              publishAudioLevel("customer", data.level || 0);
+              if (ws.readyState === WebSocket.OPEN && data.pcm) ws.send(data.pcm);
+            };
+            processorRef.current = processor;
+            silentGainRef.current = silentGain;
+            source.connect(processor);
+            processor.connect(silentGain);
+            silentGain.connect(audioContext.destination);
+            return;
+          } catch {
+            // Older browsers and restrictive policies use the fallback below.
+          }
         }
-        const rms = Math.sqrt(sum / inputData.length);
-        setAudioLevel(Math.min(1, rms * 5));
 
-        if (ws.readyState === WebSocket.OPEN) {
-          const pcm = downsampleToInt16(inputData, audioContext.sampleRate);
-          ws.send(pcm.buffer);
-        }
-      };
-
-      source.connect(processor);
-      processor.connect(audioContext.destination);
+        const processor = audioContext.createScriptProcessor(BUFFER_SIZE, 1, 1);
+        processor.onaudioprocess = (event) => {
+          const inputData = event.inputBuffer.getChannelData(0);
+          let sum = 0;
+          for (let i = 0; i < inputData.length; i += 1) {
+            sum += inputData[i] * inputData[i];
+          }
+          publishAudioLevel(
+            "customer",
+            Math.min(1, Math.sqrt(sum / inputData.length) * 5)
+          );
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(downsampleToInt16(inputData, audioContext.sampleRate).buffer);
+          }
+        };
+        processorRef.current = processor;
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+      })().catch(() => {
+        setError("Customer audio processing could not start.");
+        cleanup();
+      });
     };
 
     ws.onmessage = (event) => {
@@ -314,7 +366,6 @@ export function useCustomerAudio() {
     clearTranscript,
     isCapturing,
     customerTranscript,
-    audioLevel,
     error,
   };
 }

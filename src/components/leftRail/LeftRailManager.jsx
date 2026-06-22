@@ -7,11 +7,18 @@ import {
   useRef,
   useState,
 } from "react";
-import { ChevronLeft } from "lucide-react";
 
 const LeftRailContext = createContext(null);
 
 const DESKTOP_RAIL_WIDTH = 360;
+
+function ChevronLeftIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
 
 function sortRailItems(itemsById) {
   return Object.values(itemsById).sort((a, b) => {
@@ -321,7 +328,7 @@ export function LeftRail({
               title={`Minimize ${visibleExpandedItem.title}`}
               aria-label={`Minimize ${visibleExpandedItem.title}`}
             >
-              <ChevronLeft size={12} />
+              <ChevronLeftIcon />
             </button>
             {visibleExpandedItem.component}
           </div>

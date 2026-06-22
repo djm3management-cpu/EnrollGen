@@ -1,0 +1,67 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  font-family: var(--eg-font-body);
+}
+
+html,
+body {
+  background: var(--eg-base);
+}
+
+body {
+  color: var(--eg-text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.auth-shell,
+.subscription-paywall {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--eg-base);
+}
+
+.subscription-paywall-card {
+  width: min(760px, 100%);
+  padding: 20px;
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-card-lg);
+  background: var(--eg-surface-1);
+  color: var(--eg-text);
+}
+
+.subscription-paywall-card h1 {
+  margin: 8px 0 6px;
+  color: var(--eg-text);
+  font-size: clamp(2rem, 4.8vw, 3.3rem);
+  line-height: 1;
+}
+
+.subscription-paywall-card p {
+  max-width: 560px;
+  margin-bottom: 14px;
+  color: var(--eg-text-mid);
+  font-family: var(--eg-font-mono);
+  font-size: 0.78rem;
+}
+
+.billing-eyebrow {
+  color: var(--eg-accent);
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}

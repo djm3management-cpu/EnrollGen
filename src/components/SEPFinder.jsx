@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, RefreshCcw, Search } from "lucide-react";
-import { supabase } from "../lib/supabase";
 import { useScript } from "../context/ScriptContext";
 import { normalizeSepZip, parseSepRpcResult } from "./SEPResultsPanel";
 import SEPResultsModal from "./SEPResultsModal";
@@ -28,6 +27,7 @@ export default function SEPFinder({ zip }) {
     setError("");
 
     try {
+      const { supabase } = await import("../lib/supabase");
       const { data, error: rpcError } = await supabase.rpc("get_available_seps", {
         input_zip: normalizedZip,
       });

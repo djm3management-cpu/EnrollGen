@@ -14,9 +14,8 @@ import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
 import { SignedIn, SignedOut, SignIn, useClerk, useOrganization, useUser } from "@clerk/clerk-react";
-import { Settings, X } from "lucide-react";
-import { useSubscription } from "./hooks/useSubscription";
-import { useTenantConfig } from "./hooks/useTenantConfig";
+import { SubscriptionProvider, useSubscription } from "./hooks/useSubscription";
+import { TenantConfigProvider, useTenantConfig } from "./hooks/useTenantConfig";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
 import {
@@ -24,7 +23,6 @@ import {
   LeftRailProvider,
   useLeftRailManager,
 } from "./components/leftRail/LeftRailManager";
-import SEPQualifier from "./components/leftRail/SEPQualifier";
 
 const loadLandingPage = () => import("./components/LandingPage");
 const loadScriptFlow = () => import("./components/ScriptFlow");
@@ -46,6 +44,8 @@ const loadComplianceIntentAccordion = () => import("./components/ComplianceInten
 const loadOperationsTab = () => import("./components/OperationsTab");
 const loadTenantSettings = () => import("./components/TenantSettings");
 const loadOnboarding = () => import("./components/Onboarding");
+const loadSEPQualifier = () => import("./components/leftRail/SEPQualifier");
+const loadAuthenticatedStyleGate = () => import("./components/AuthenticatedStyleGate");
 
 const LandingPage = lazy(loadLandingPage);
 const ScriptFlow = lazy(loadScriptFlow);
@@ -67,11 +67,30 @@ const ComplianceIntentAccordion = lazy(loadComplianceIntentAccordion);
 const OperationsTab = lazy(loadOperationsTab);
 const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
+const SEPQualifier = lazy(loadSEPQualifier);
+const AuthenticatedStyleGate = lazy(loadAuthenticatedStyleGate);
 const headerLogoUrl = "/enrollgen-logo-v3.png?v=2";
 const SYSTEM_FONT_STACK = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const SYSTEM_MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const tenantBootstrapAttempts = new Set();
+
+function SettingsIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function CloseIcon({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
 const clerkTerminalAppearance = {
   variables: {
     colorPrimary: "#c08b55",
@@ -230,6 +249,14 @@ function LazyPanel({ children }) {
         {children}
       </Suspense>
     </PanelErrorBoundary>
+  );
+}
+
+function SEPQualifierPanel(props) {
+  return (
+    <Suspense fallback={<div className="sf-status-text">Loading qualifier...</div>}>
+      <SEPQualifier {...props} />
+    </Suspense>
   );
 }
 
@@ -488,7 +515,7 @@ function AppShell({ currentUser = null }) {
       color: "#e53e3e",
       forceOpen: true,
       component: (
-        <SEPQualifier onMinimize={() => minimizeLeftRail(LEFT_RAIL_IDS.sepQualifier)} />
+        <SEPQualifierPanel onMinimize={() => minimizeLeftRail(LEFT_RAIL_IDS.sepQualifier)} />
       ),
     });
     openLeftRail(LEFT_RAIL_IDS.sepQualifier);
@@ -633,7 +660,7 @@ function AppShell({ currentUser = null }) {
       shortLabel: "SEP QUALIFIER",
       color: "#e53e3e",
       component: (
-        <SEPQualifier onMinimize={() => minimizeLeftRail(LEFT_RAIL_IDS.sepQualifier)} />
+        <SEPQualifierPanel onMinimize={() => minimizeLeftRail(LEFT_RAIL_IDS.sepQualifier)} />
       ),
     });
     openLeftRail(LEFT_RAIL_IDS.sepQualifier);
@@ -771,7 +798,7 @@ function AppShell({ currentUser = null }) {
                 }}
                 title="Agency settings"
               >
-                <Settings size={14} />
+                <SettingsIcon />
               </button>
             ) : null}
           </div>
@@ -805,7 +832,7 @@ function AppShell({ currentUser = null }) {
                     className="top-panel-close"
                     onClick={() => setOpenPanel(null)}
                   >
-                    <X size={15} />
+                    <CloseIcon />
                   </button>
                 </div>
                 <div className="top-panel-body">{renderOverlayContent()}</div>
@@ -855,7 +882,7 @@ function AppShell({ currentUser = null }) {
                     className="top-panel-close"
                     onClick={() => setOpenPanel(null)}
                   >
-                    <X size={15} />
+                    <CloseIcon />
                   </button>
                 </div>
                 <div className="top-panel-body">{renderOverlayContent()}</div>
@@ -930,8 +957,6 @@ function SubscriptionBanner() {
 }
 
 function SubscriptionGate({ children }) {
-  useSubscription();
-
   return (
     <>
       <SubscriptionBanner />
@@ -1084,6 +1109,28 @@ function AuthenticatedAppContent() {
   return <AppContent currentUser={user} />;
 }
 
+function AuthenticatedProviders({ children }) {
+  return (
+    <TenantConfigProvider>
+      <SubscriptionProvider>
+        <Suspense
+          fallback={
+            <div className="subscription-paywall">
+              <div className="subscription-paywall-card">
+                <span className="billing-eyebrow">WORKSPACE</span>
+                <h1>Loading workspace</h1>
+                <p>Preparing your enrollment tools.</p>
+              </div>
+            </div>
+          }
+        >
+          <AuthenticatedStyleGate>{children}</AuthenticatedStyleGate>
+        </Suspense>
+      </SubscriptionProvider>
+    </TenantConfigProvider>
+  );
+}
+
 export default function App() {
   const [pathname, setPathname] = useState(() =>
     typeof window === "undefined" ? "/" : window.location.pathname
@@ -1096,7 +1143,11 @@ export default function App() {
   }, []);
 
   if (LOGIN_DISABLED) {
-    return <AppContent />;
+    return (
+      <AuthenticatedProviders>
+        <AppContent />
+      </AuthenticatedProviders>
+    );
   }
 
   return (
@@ -1113,7 +1164,9 @@ export default function App() {
         )}
       </SignedOut>
       <SignedIn>
-        <AuthenticatedAppContent />
+        <AuthenticatedProviders>
+          <AuthenticatedAppContent />
+        </AuthenticatedProviders>
       </SignedIn>
     </>
   );

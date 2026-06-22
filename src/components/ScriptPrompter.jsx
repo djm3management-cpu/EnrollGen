@@ -19,8 +19,6 @@ const ScriptPrompter = memo(function ScriptPrompter({
   controlsRef,
   onControlsReadyChange,
   onCoachingLoadingChange,
-  onAgentAudioLevelChange,
-  onCustomerAudioLevelChange,
 }) {
   const {
     state,
@@ -87,17 +85,6 @@ const ScriptPrompter = memo(function ScriptPrompter({
   useEffect(() => {
     if (onListeningChange) onListeningChange(speech.listening);
   }, [speech.listening, onListeningChange]);
-
-  // Forward live audio levels for the two-channel waveform in the center bar.
-  useEffect(() => {
-    if (onAgentAudioLevelChange) onAgentAudioLevelChange(speech.audioLevel || 0);
-  }, [speech.audioLevel, onAgentAudioLevelChange]);
-
-  useEffect(() => {
-    if (onCustomerAudioLevelChange) {
-      onCustomerAudioLevelChange(customerAudio.audioLevel || 0);
-    }
-  }, [customerAudio.audioLevel, onCustomerAudioLevelChange]);
 
   // Forward coaching loading state
   useEffect(() => {

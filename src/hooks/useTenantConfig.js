@@ -1,12 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAppAuth } from "../context/AuthContext";
-import { getAuthSupabase, supabase } from "../lib/supabase";
 import {
-  fetchTenantAgents,
-  fetchTenantConfig,
-} from "../lib/postCallPipeline";
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useAppAuth } from "../context/AuthContext";
 
 const tenantCache = new Map();
+const tenantRequests = new Map();
+const TenantConfigContext = createContext(null);
 
 function cachedTenantBundle() {
   return Array.from(tenantCache.values()).find((bundle) => bundle?.tenant?.id) || null;
@@ -42,24 +47,36 @@ async function getTenantBundle(getToken) {
   const token = await getSupabaseToken(getToken);
   const payload = decodeJwtPayload(token);
   const cacheKey = payload.org_id || token?.slice(-24) || "default";
-  const client = token ? getAuthSupabase(token) : supabase;
-  const tenant = await fetchTenantConfig(client);
-  const agents = tenant?.id ? await fetchTenantAgents(client, tenant.id) : [];
+  if (tenantRequests.has(cacheKey)) return tenantRequests.get(cacheKey);
 
-  return {
-    cacheKey,
-    client,
-    tenant,
-    agents,
-  };
+  const request = (async () => {
+    const [supabaseModule, pipelineModule] = await Promise.all([
+      import("../lib/supabase"),
+      import("../lib/postCallPipeline"),
+    ]);
+    const { getAuthSupabase, supabase } = supabaseModule;
+    const { fetchTenantAgents, fetchTenantConfig } = pipelineModule;
+    const client = token ? getAuthSupabase(token) : supabase;
+    const tenant = await fetchTenantConfig(client);
+    const agents = tenant?.id ? await fetchTenantAgents(client, tenant.id) : [];
+
+    return { cacheKey, client, tenant, agents };
+  })();
+
+  tenantRequests.set(cacheKey, request);
+  try {
+    return await request;
+  } finally {
+    tenantRequests.delete(cacheKey);
+  }
 }
 
-export function useTenantConfig() {
+export function TenantConfigProvider({ children }) {
   const { getToken } = useAppAuth();
   const [state, setState] = useState({
     tenant: null,
     agents: [],
-    supabaseClient: supabase,
+    supabaseClient: null,
     loading: true,
     error: "",
   });
@@ -151,7 +168,7 @@ export function useTenantConfig() {
     };
   }, [getToken]);
 
-  return useMemo(() => ({
+  const value = useMemo(() => ({
     tenant: state.tenant,
     tenantId: state.tenant?.id || null,
     tenantConfig: state.tenant,
@@ -168,4 +185,14 @@ export function useTenantConfig() {
     refetch: load,
     hydrateTenant,
   }), [hydrateTenant, load, state]);
+
+  return createElement(TenantConfigContext.Provider, { value }, children);
+}
+
+export function useTenantConfig() {
+  const context = useContext(TenantConfigContext);
+  if (!context) {
+    throw new Error("useTenantConfig must be used within <TenantConfigProvider>");
+  }
+  return context;
 }

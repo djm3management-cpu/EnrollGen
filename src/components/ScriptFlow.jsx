@@ -19,8 +19,8 @@ import {
   waitForActiveSessionMetadata,
 } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
-import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
 import { useLiveCall } from "../context/LiveCallContext";
+import { useComplianceScoringWorker } from "../hooks/useComplianceScoringWorker";
 import {
   buildPostCallPayload,
   CHECKPOINT_INTERVAL_MS,
@@ -612,8 +612,6 @@ export default function ScriptFlow() {
   const [mergedTranscriptEntries, setMergedTranscriptEntries] = useState([]);
   const [isListening, setIsListening] = useState(false);
   const [coachingLoading, setCoachingLoading] = useState(false);
-  const [agentAudioLevel, setAgentAudioLevel] = useState(0);
-  const [customerAudioLevel, setCustomerAudioLevel] = useState(0);
   const copilotHandlersRef = useRef({});
   const supportsRecognition = useMemo(
     () =>
@@ -647,39 +645,28 @@ export default function ScriptFlow() {
     mergedTranscriptEntries,
     5000
   );
-  const liveComplianceResult = useMemo(
-    () => {
-      const scoringOptions = {
-        callStarted,
-        callDirection: state.callDirection,
-        mergedTranscript: debouncedMergedTranscriptEntries,
-        customerText: debouncedCustomerTranscript,
-      };
-
-      if (!callStarted) {
-        return scoreCompliance(state, entries, "", scoringOptions);
-      }
-
-      return debouncedCustomerTranscript
-        ? scoreTwoSided(
-            state,
-            entries,
-            debouncedTranscript,
-            debouncedCustomerTranscript,
-            debouncedMergedTranscriptEntries,
-            scoringOptions
-          )
-        : scoreCompliance(state, entries, debouncedTranscript, scoringOptions);
-    },
+  const scoringOptions = useMemo(
+    () => ({
+      callStarted,
+      callDirection: state.callDirection,
+      mergedTranscript: debouncedMergedTranscriptEntries,
+      customerText: debouncedCustomerTranscript,
+    }),
     [
       callStarted,
-      state,
-      entries,
-      debouncedTranscript,
       debouncedCustomerTranscript,
       debouncedMergedTranscriptEntries,
+      state.callDirection,
     ]
   );
+  const liveComplianceResult = useComplianceScoringWorker({
+    scriptState: state,
+    copilotEntries: entries,
+    transcript: callStarted ? debouncedTranscript : "",
+    customerTranscript: callStarted ? debouncedCustomerTranscript : "",
+    mergedTranscript: callStarted ? debouncedMergedTranscriptEntries : [],
+    options: scoringOptions,
+  });
 
   useEffect(() => {
     updateLiveCall({
@@ -948,10 +935,7 @@ export default function ScriptFlow() {
         <div className="flow-main">
 
       <CenterTimerBar
-        agentLevel={agentAudioLevel}
-        customerLevel={customerAudioLevel}
         agentActive={isListening}
-        customerActive={customerAudioLevel > 0.015}
       />
 
       {/* ── AI Co-Pilot, passes transcript up via callback ── */}
@@ -962,8 +946,6 @@ export default function ScriptFlow() {
         logComplianceFlag={session.logComplianceFlag}
         controlsRef={copilotHandlersRef}
         onCoachingLoadingChange={setCoachingLoading}
-        onAgentAudioLevelChange={setAgentAudioLevel}
-        onCustomerAudioLevelChange={setCustomerAudioLevel}
       />
 
       {/* Manual idle state: sections stay hidden until the agent starts Copilot. */}
