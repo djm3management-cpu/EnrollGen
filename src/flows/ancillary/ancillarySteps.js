@@ -48,7 +48,7 @@ export const ANCILLARY_STEPS = {
       id: "fe-script",
       title: "Final Expense Script",
       content: `Hi, this is [Your Name], I'm a licensed life insurance advisor. You're calling about Final Expense insurance coverage, correct?
-(If yes, continue. If not, thank and end the call before 90 seconds.)
+(If yes, continue. If not, thank and end the call before 80 seconds.)
 
 Great -- this is a real policy from top A-rated companies like Mutual of Omaha. It's affordable, but not free -- you do pay a monthly premium based on your age, health, and coverage amount. Does that sound okay?
 (If yes, continue. If not, exit the call.)

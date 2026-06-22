@@ -59,7 +59,7 @@ const PRODUCT_COMPONENTS = {
 
 const PRODUCT_ORDER = [SUB_PRODUCT.HIP, SUB_PRODUCT.FE, SUB_PRODUCT.DVH, SUB_PRODUCT.ANNUITY];
 const FALLBACK_PRODUCT_META = { label: "Ancillary", shortLabel: "ANC" };
-const FE_CALL_WINDOW_SECONDS = 90;
+const FE_CALL_WINDOW_SECONDS = 80;
 const ANCILLARY_CUSTOMER_RAIL_ID = "ancillary-customer-info";
 const DENTAL_REFERENCE_RAIL_ID = "ancillary-dental-reference";
 
@@ -615,9 +615,11 @@ function FinalExpenseCountdown({ callStart }) {
   return (
     <aside
       className={`ancillary-fe-countdown ancillary-fe-countdown--${tone}`}
-      aria-label={`Final Expense 90 second timer, ${remainingSeconds} seconds remaining`}
+      aria-label={`Final Expense ${FE_CALL_WINDOW_SECONDS} second timer, ${remainingSeconds} seconds remaining`}
     >
-      <span className="ancillary-fe-countdown__label">90 SEC</span>
+      <span className="ancillary-fe-countdown__label">
+        {FE_CALL_WINDOW_SECONDS} SEC
+      </span>
       <strong className="ancillary-fe-countdown__time">
         {formatCountdown(remainingSeconds)}
       </strong>
