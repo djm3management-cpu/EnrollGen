@@ -3,6 +3,7 @@ import { useCallStore } from "../stores/callStore";
 import { useAppAuth } from "../context/AuthContext";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import { waitForActiveSessionMetadata } from "./useSessionTracker";
+import { computeRmsLevel, computeWaveformPeaks } from "../audio/audioPeaks";
 import { publishAudioLevel } from "../stores/audioLevelStore";
 
 /**
@@ -259,7 +260,7 @@ export function useCustomerAudio() {
             const silentGain = audioContext.createGain();
             silentGain.gain.value = 0;
             processor.port.onmessage = ({ data }) => {
-              publishAudioLevel("customer", data.level || 0);
+              publishAudioLevel("customer", data.level || 0, { peaks: data.peaks });
               if (ws.readyState === WebSocket.OPEN && data.pcm) ws.send(data.pcm);
             };
             processorRef.current = processor;
@@ -276,14 +277,9 @@ export function useCustomerAudio() {
         const processor = audioContext.createScriptProcessor(BUFFER_SIZE, 1, 1);
         processor.onaudioprocess = (event) => {
           const inputData = event.inputBuffer.getChannelData(0);
-          let sum = 0;
-          for (let i = 0; i < inputData.length; i += 1) {
-            sum += inputData[i] * inputData[i];
-          }
-          publishAudioLevel(
-            "customer",
-            Math.min(1, Math.sqrt(sum / inputData.length) * 5)
-          );
+          publishAudioLevel("customer", computeRmsLevel(inputData), {
+            peaks: computeWaveformPeaks(inputData),
+          });
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(downsampleToInt16(inputData, audioContext.sampleRate).buffer);
           }
