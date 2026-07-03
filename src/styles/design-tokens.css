@@ -63,6 +63,37 @@
   --eg-flow-u65: var(--eg-purple);
   --eg-flow-u65-glow: var(--eg-purple-text);
 
+  /* ----- Semantic theme roles ----- */
+  --bg-primary: var(--eg-base);
+  --bg-surface: var(--eg-surface-1);
+  --bg-elevated: var(--eg-surface-3);
+  --text-primary: var(--eg-text);
+  --text-secondary: var(--eg-text-mid);
+  --text-muted: var(--eg-text-dim);
+  --text-label: var(--eg-text-dim);
+  --border-default: var(--eg-border);
+  --border-focus: var(--eg-border-active);
+  --accent: var(--eg-accent);
+  --accent-hover: var(--eg-accent-bright);
+  --status-live: var(--eg-green);
+  --status-offline: var(--eg-red);
+  --status-pending: var(--eg-amber);
+  --success: var(--eg-green);
+  --danger: var(--eg-red);
+  --warning: var(--eg-amber);
+  --info: var(--eg-blue);
+  --selection-bg: var(--eg-accent);
+  --selection-text: #171411;
+  --chart-1: var(--eg-accent);
+  --chart-2: var(--eg-blue);
+  --chart-3: var(--eg-green);
+  --chart-4: var(--eg-purple);
+  --chart-5: var(--eg-amber);
+  --chart-6: var(--eg-red);
+  --chart-grid: var(--eg-border);
+  --chart-positive: var(--eg-green);
+  --chart-negative: var(--eg-red);
+
   /* ----- Typography ----- */
   --eg-font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --eg-font-display: var(--eg-font-system);
@@ -141,4 +172,89 @@
   --shadow-btn-pressed: none;
   --shadow-inset: none;
   --shadow-active: none;
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* ----- Core surfaces (terminal) ----- */
+  --eg-base: #000000;
+  --eg-surface-1: #0a0a0a;
+  --eg-surface-2: #111111;
+  --eg-surface-3: #151515;
+  --eg-surface-4: #1c1c1c;
+
+  /* ----- Borders ----- */
+  --eg-border: #2a2a2a;
+  --eg-border-hover: #333333;
+  --eg-border-active: #ff9900;
+
+  /* ----- Text ----- */
+  --eg-text: #e8e8e8;
+  --eg-text-mid: #b8b8b8;
+  --eg-text-dim: #8a8a8a;
+  --eg-text-faint: #5c5c5c;
+
+  /* ----- Accent (Bloomberg amber) ----- */
+  --eg-accent: #ff9900;
+  --eg-accent-bright: #ffb000;
+  --eg-accent-dim: #4d2d00;
+
+  /* ----- Semantic statuses ----- */
+  --eg-green: #00d26a;
+  --eg-green-dim: #003d20;
+  --eg-green-text: #5cff9d;
+  --eg-red: #ff3b30;
+  --eg-red-dim: #4a0806;
+  --eg-red-text: #ff8a82;
+  --eg-blue: #3ec7ff;
+  --eg-blue-dim: #062c3f;
+  --eg-blue-text: #9be4ff;
+  --eg-amber: #ff9900;
+  --eg-amber-dim: #4d2d00;
+  --eg-amber-text: #ffb84d;
+  --eg-purple: #b889ff;
+  --eg-purple-dim: #27124a;
+  --eg-purple-text: #d7bdff;
+
+  /* ----- Flow colors ----- */
+  --eg-flow-ma: var(--eg-red);
+  --eg-flow-ma-glow: var(--eg-red-text);
+  --eg-flow-ms: var(--eg-green);
+  --eg-flow-ms-glow: var(--eg-green-text);
+  --eg-flow-aca: var(--eg-blue);
+  --eg-flow-aca-glow: var(--eg-blue-text);
+  --eg-flow-u65: var(--eg-purple);
+  --eg-flow-u65-glow: var(--eg-purple-text);
+
+  /* ----- Semantic theme roles ----- */
+  --bg-primary: #000000;
+  --bg-surface: #0a0a0a;
+  --bg-elevated: #111111;
+  --text-primary: #e8e8e8;
+  --text-secondary: #b8b8b8;
+  --text-muted: #8a8a8a;
+  --text-label: #ff9900;
+  --border-default: #2a2a2a;
+  --border-focus: #ff9900;
+  --accent: #ff9900;
+  --accent-hover: #ffb000;
+  --status-live: #00d26a;
+  --status-offline: #ff3b30;
+  --status-pending: #ff9900;
+  --success: #00d26a;
+  --danger: #ff3b30;
+  --warning: #ff9900;
+  --info: #3ec7ff;
+  --selection-bg: #ff9900;
+  --selection-text: #000000;
+  --chart-1: #ff9900;
+  --chart-2: #e8e8e8;
+  --chart-3: #3ec7ff;
+  --chart-4: #b889ff;
+  --chart-5: #00d26a;
+  --chart-6: #ff3b30;
+  --chart-grid: #222222;
+  --chart-positive: #00d26a;
+  --chart-negative: #ff3b30;
 }
