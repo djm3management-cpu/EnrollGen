@@ -7,6 +7,7 @@ import { CopilotLogProvider } from "./context/CopilotTranscriptLog";
 import { LiveCallProvider } from "./context/LiveCallContext";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const CLERK_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
@@ -108,11 +109,13 @@ clearLegacyTrainingModeFlag();
 function RootProviders() {
   return (
     <AuthProvider>
-      <CopilotLogProvider>
-        <LiveCallProvider>
-          <App />
-        </LiveCallProvider>
-      </CopilotLogProvider>
+      <ThemeProvider>
+        <CopilotLogProvider>
+          <LiveCallProvider>
+            <App />
+          </LiveCallProvider>
+        </CopilotLogProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }
@@ -124,8 +127,8 @@ function MissingClerkKey() {
         minHeight: "100vh",
         display: "grid",
         placeItems: "center",
-        background: "#171411",
-        color: "#e4dace",
+        background: "var(--bg-primary)",
+        color: "var(--text-primary)",
         padding: 24,
         fontFamily: 'var(--font-body)',
       }}
@@ -142,7 +145,7 @@ function MissingClerkKey() {
         >
           Clerk is not configured
         </h1>
-        <p style={{ marginBottom: 0, color: "#b5a898" }}>
+        <p style={{ marginBottom: 0, color: "var(--text-secondary)" }}>
           Set <code>VITE_CLERK_PUBLISHABLE_KEY</code> in your Vite environment,
           or set <code>VITE_DISABLE_CLERK_AUTH=true</code> if you intentionally
           want to bypass auth.

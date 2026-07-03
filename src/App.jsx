@@ -18,6 +18,8 @@ import { SubscriptionProvider, useSubscription } from "./hooks/useSubscription";
 import { TenantConfigProvider, useTenantConfig } from "./hooks/useTenantConfig";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
+import { SquareTerminal, Sun } from "lucide-react";
+import { useTheme } from "./context/ThemeContext";
 import {
   LeftRail,
   LeftRailProvider,
@@ -456,6 +458,7 @@ function AppShell({ currentUser = null }) {
   const [openPanel, setOpenPanel] = useState(null);
   const topBarRef = useRef(null);
   const overlayRef = useRef(null);
+  const { isDark, toggleTheme } = useTheme();
 
   const {
     railWidth,
@@ -787,6 +790,15 @@ function AppShell({ currentUser = null }) {
           </nav>
 
           <div className="top-bar-utilities">
+            <button
+              type="button"
+              className="top-bar-settings-button top-bar-theme-button"
+              onClick={toggleTheme}
+              title={isDark ? "Use light mode" : "Use terminal dark mode"}
+              aria-label={isDark ? "Use light mode" : "Use terminal dark mode"}
+            >
+              {isDark ? <Sun size={14} /> : <SquareTerminal size={14} />}
+            </button>
             {!LOGIN_DISABLED ? <ProfileChip /> : null}
             {canAdmin ? (
               <button

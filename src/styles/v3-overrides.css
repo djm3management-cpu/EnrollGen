@@ -2659,8 +2659,56 @@ html.dark ::selection {
   color: var(--selection-text);
 }
 
-html.dark .viewport-bg {
+html.dark body {
+  position: relative;
   background: var(--bg-primary) !important;
+}
+
+html.dark body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.32;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 39px,
+      color-mix(in srgb, var(--accent) 11%, transparent) 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 39px,
+      color-mix(in srgb, var(--accent) 9%, transparent) 40px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0,
+      transparent 79px,
+      color-mix(in srgb, var(--info) 5%, transparent) 80px
+    ),
+    linear-gradient(
+      180deg,
+      var(--bg-primary) 0%,
+      color-mix(in srgb, var(--bg-primary) 92%, var(--accent)) 52%,
+      var(--bg-primary) 100%
+    );
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+html.dark #root {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+
+html.dark .viewport-bg {
+  background: transparent !important;
   animation: none !important;
 }
 
@@ -2678,7 +2726,7 @@ html.dark .app-workspace,
 html.dark .app-center,
 html.dark .flow-shell,
 html.dark .flow-main {
-  background: var(--bg-primary) !important;
+  background: transparent !important;
   color: var(--text-primary) !important;
 }
 
