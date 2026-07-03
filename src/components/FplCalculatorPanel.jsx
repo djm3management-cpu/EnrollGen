@@ -9,9 +9,9 @@ const BASE_INPUT_STYLE = {
   width: "100%",
   padding: "7px 10px",
   borderRadius: 6,
-  border: "1px solid rgba(255,255,255,0.08)",
-  background: "rgba(255,255,255,0.03)",
-  color: "#c0d0e4",
+  border: "1px solid var(--border-default)",
+  background: "var(--bg-primary)",
+  color: "var(--text-primary)",
   fontSize: 13,
   fontFamily: "var(--font-body)",
   outline: "none",
@@ -20,8 +20,7 @@ const BASE_INPUT_STYLE = {
 
 export default function FplCalculatorPanel({
   title = "FPL Chart Reference",
-  accentColor = "#a855f7",
-  accentRgb = "168,85,247",
+  accentColor = "var(--chart-4)",
   fields,
   onFieldChange,
 }) {
@@ -53,8 +52,8 @@ export default function FplCalculatorPanel({
   return (
     <div
       style={{
-        background: `rgba(${accentRgb},0.03)`,
-        border: `1px solid rgba(${accentRgb},0.15)`,
+        background: `color-mix(in srgb, ${accentColor} 3%, transparent)`,
+        border: `1px solid color-mix(in srgb, ${accentColor} 15%, transparent)`,
         borderRadius: 8,
         padding: "14px 16px",
         marginBottom: 14,
@@ -85,7 +84,7 @@ export default function FplCalculatorPanel({
           <label
             style={{
               fontSize: 10,
-              color: "#6b7a8d",
+              color: "var(--text-muted)",
               display: "block",
               marginBottom: 3,
             }}
@@ -106,7 +105,7 @@ export default function FplCalculatorPanel({
           <label
             style={{
               fontSize: 10,
-              color: "#6b7a8d",
+              color: "var(--text-muted)",
               display: "block",
               marginBottom: 3,
             }}
@@ -126,7 +125,7 @@ export default function FplCalculatorPanel({
           <label
             style={{
               fontSize: 10,
-              color: "#6b7a8d",
+              color: "var(--text-muted)",
               display: "block",
               marginBottom: 3,
             }}
@@ -158,14 +157,14 @@ export default function FplCalculatorPanel({
             style={{
               padding: "8px 10px",
               borderRadius: 7,
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.05)",
+              background: "color-mix(in srgb, var(--text-primary) 2%, transparent)",
+              border: "1px solid var(--border-default)",
             }}
           >
             <div
               style={{
                 fontSize: 10,
-                color: "#6b7a8d",
+                color: "var(--text-muted)",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
                 marginBottom: 3,
@@ -177,7 +176,7 @@ export default function FplCalculatorPanel({
               style={{
                 fontSize: 16,
                 fontWeight: 700,
-                color: "#dfe6f0",
+                color: "var(--text-primary)",
                 fontFamily: "var(--font-body)",
               }}
             >
@@ -188,14 +187,14 @@ export default function FplCalculatorPanel({
             style={{
               padding: "8px 10px",
               borderRadius: 7,
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.05)",
+              background: "color-mix(in srgb, var(--text-primary) 2%, transparent)",
+              border: "1px solid var(--border-default)",
             }}
           >
             <div
               style={{
                 fontSize: 10,
-                color: "#6b7a8d",
+                color: "var(--text-muted)",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
                 marginBottom: 3,
@@ -231,7 +230,7 @@ export default function FplCalculatorPanel({
               overflow: "hidden",
               marginBottom: 10,
               background:
-                "linear-gradient(90deg, rgba(52,211,153,0.15) 0%, rgba(52,211,153,0.25) 60%, rgba(234,179,8,0.3) 75%, rgba(248,113,113,0.35) 100%)",
+                "linear-gradient(90deg, var(--status-live-bg) 0%, var(--status-live-border) 60%, var(--status-pending-border) 75%, var(--status-offline-border) 100%)",
             }}
           >
             <div
@@ -241,7 +240,7 @@ export default function FplCalculatorPanel({
                 top: 0,
                 bottom: 0,
                 width: 2,
-                background: "#f87171",
+                background: "var(--status-offline)",
                 zIndex: 2,
               }}
             />
@@ -251,7 +250,7 @@ export default function FplCalculatorPanel({
                 left: "75%",
                 top: -2,
                 fontSize: 8,
-                color: "#f87171",
+                color: "var(--status-offline)",
                 fontWeight: 700,
                 transform: "translateX(-50%)",
                 whiteSpace: "nowrap",
@@ -270,11 +269,9 @@ export default function FplCalculatorPanel({
                 width: 12,
                 height: 12,
                 borderRadius: "50%",
-                background: aboveCliff ? "#f87171" : "#34d399",
-                border: "2px solid #0c1017",
-                boxShadow: aboveCliff
-                  ? "0 0 8px rgba(248,113,113,0.6)"
-                  : "0 0 8px rgba(52,211,153,0.6)",
+                background: aboveCliff ? "var(--status-offline)" : "var(--status-live)",
+                border: "2px solid var(--bg-primary)",
+                boxShadow: "none",
                 transform: "translateX(-50%)",
                 zIndex: 3,
               }}
@@ -287,12 +284,12 @@ export default function FplCalculatorPanel({
               borderRadius: 7,
               marginBottom: 8,
               background: aboveCliff
-                ? "rgba(248,113,113,0.06)"
-                : "rgba(52,211,153,0.06)",
+                ? "var(--status-offline-bg)"
+                : "var(--status-live-bg)",
               border: `1px solid ${
                 aboveCliff
-                  ? "rgba(248,113,113,0.2)"
-                  : "rgba(52,211,153,0.2)"
+                  ? "var(--status-offline-border)"
+                  : "var(--status-live-border)"
               }`,
             }}
           >
@@ -300,7 +297,7 @@ export default function FplCalculatorPanel({
               style={{
                 fontSize: 20,
                 fontWeight: 800,
-                color: aboveCliff ? "#f87171" : "#34d399",
+                color: aboveCliff ? "var(--status-offline)" : "var(--status-live)",
                 fontFamily: "var(--font-body)",
                 letterSpacing: "0.04em",
               }}
@@ -310,7 +307,7 @@ export default function FplCalculatorPanel({
             <div
               style={{
                 fontSize: 12,
-                color: aboveCliff ? "#f87171" : "#34d399",
+                color: aboveCliff ? "var(--status-offline)" : "var(--status-live)",
                 marginTop: 2,
                 fontWeight: 600,
               }}
@@ -319,7 +316,7 @@ export default function FplCalculatorPanel({
                 ? "Subsidy cliff. No premium tax credits at this income level."
                 : "Within subsidy range. Marketplace pricing may stay competitive."}
             </div>
-            <div style={{ fontSize: 11, color: "#6b7a8d", marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
               400% FPL threshold: ${(fplThreshold * 4).toLocaleString()}/year
               for household of {householdSize}
             </div>
@@ -330,14 +327,14 @@ export default function FplCalculatorPanel({
               style={{
                 padding: "10px 14px",
                 borderRadius: 7,
-                background: "rgba(248,113,113,0.04)",
-                border: "1px solid rgba(248,113,113,0.12)",
+                background: "var(--status-offline-bg)",
+                border: "1px solid var(--status-offline-border)",
               }}
             >
               <div
                 style={{
                   fontSize: 11,
-                  color: "#f87171",
+                  color: "var(--status-offline)",
                   fontWeight: 700,
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
@@ -350,13 +347,13 @@ export default function FplCalculatorPanel({
                 style={{
                   fontSize: 18,
                   fontWeight: 800,
-                  color: "#f87171",
+                  color: "var(--status-offline)",
                   fontFamily: "var(--font-body)",
                 }}
               >
                 ${acaEstimate.low} to ${acaEstimate.high}/month
               </div>
-              <div style={{ fontSize: 11, color: "#8fa4bc", marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>
                 Use this as a reference point before pivoting away from ACA.
               </div>
             </div>

@@ -13,10 +13,10 @@ export const ANNUITY_MODE = Object.freeze({
 });
 
 export const ANCILLARY_ACCENT = Object.freeze({
-  color: "#3B82F6",
+  color: "var(--info)",
   rgb: "59,130,246",
-  soft: "rgba(59,130,246,0.08)",
-  border: "rgba(59,130,246,0.28)",
+  soft: "var(--info-bg)",
+  border: "var(--info-border)",
 });
 
 export const ANCILLARY_PRODUCT_META = Object.freeze({

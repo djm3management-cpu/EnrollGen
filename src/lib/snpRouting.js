@@ -11,9 +11,9 @@ import {
 } from "../data/snpRoutingData";
 
 export const SNP_ROUTE_STATUS_META = {
-  clear: { label: "Clear Path", color: "#39ff88" },
-  conditional: { label: "Conditional", color: "#d29922" },
-  blocked: { label: "Blocked", color: "#ff7b72" },
+  clear: { label: "Clear Path", color: "var(--status-live)" },
+  conditional: { label: "Conditional", color: "var(--status-pending)" },
+  blocked: { label: "Blocked", color: "var(--status-offline)" },
 };
 
 function normalizeText(value) {

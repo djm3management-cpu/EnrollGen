@@ -22,24 +22,24 @@ function timeAgo(dateStr) {
 
 function carrierColor(carrier) {
   const map = {
-    UHC: "#003DA5",
-    Humana: "#4CAF50",
-    Aetna: "#7B2D8E",
-    BCBS: "#0072CE",
-    Wellcare: "#00796B",
-    Centene: "#00796B",
-    Elevance: "#2563eb",
-    Anthem: "#2563eb",
-    CMS: "#E8002D",
-    Cigna: "#F58220",
-    Molina: "#1B5E20",
-    Devoted: "#FF6F00",
-    Kaiser: "#009688",
-    Alignment: "#ec4899",
-    Clover: "#22c55e",
-    SCAN: "#f59e0b",
+    UHC: "var(--chart-3)",
+    Humana: "var(--status-live)",
+    Aetna: "var(--chart-4)",
+    BCBS: "var(--info)",
+    Wellcare: "var(--status-live)",
+    Centene: "var(--status-live)",
+    Elevance: "var(--info)",
+    Anthem: "var(--info)",
+    CMS: "var(--danger)",
+    Cigna: "var(--accent)",
+    Molina: "var(--status-live)",
+    Devoted: "var(--warning)",
+    Kaiser: "var(--info)",
+    Alignment: "var(--chart-4)",
+    Clover: "var(--status-live)",
+    SCAN: "var(--warning)",
   };
-  return map[carrier] || "#666";
+  return map[carrier] || "var(--text-muted)";
 }
 
 function FeedLoading({ label }) {

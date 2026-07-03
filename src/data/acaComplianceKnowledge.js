@@ -303,11 +303,11 @@ export const ACA_SECTION_LABELS = {
 /* ═══════ LEVEL STYLES — same as MA ═══════ */
 
 export const ACA_LEVEL_STYLE = {
-  info:     { icon: "◈", color: "#EAB308", bg: "rgba(234,179,8,0.06)", border: "rgba(234,179,8,0.15)" },
-  remind:   { icon: "◉", color: "#F3F4F6", bg: "rgba(243,244,246,0.04)", border: "rgba(243,244,246,0.1)" },
-  tip:      { icon: "◆", color: "#00ff41", bg: "rgba(0,255,65,0.04)", border: "rgba(0,255,65,0.12)" },
-  warn:     { icon: "▲", color: "#FFE45C", bg: "rgba(255,228,92,0.06)", border: "rgba(255,228,92,0.15)" },
-  critical: { icon: "✕", color: "#EF4444", bg: "rgba(239,68,68,0.06)", border: "rgba(239,68,68,0.18)" },
+  info:     { icon: "◈", color: "var(--info)", bg: "var(--info-bg)", border: "var(--info-border)" },
+  remind:   { icon: "◉", color: "var(--text-primary)", bg: "var(--bg-elevated)", border: "var(--border-default)" },
+  tip:      { icon: "◆", color: "var(--status-live)", bg: "var(--status-live-bg)", border: "var(--status-live-border)" },
+  warn:     { icon: "▲", color: "var(--status-pending)", bg: "var(--status-pending-bg)", border: "var(--status-pending-border)" },
+  critical: { icon: "✕", color: "var(--status-offline)", bg: "var(--status-offline-bg)", border: "var(--status-offline-border)" },
 };
 
 /* ═══════ TIMING CONSTANTS ═══════ */

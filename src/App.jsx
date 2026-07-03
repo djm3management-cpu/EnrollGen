@@ -93,12 +93,12 @@ function CloseIcon({ size = 15 }) {
 }
 const clerkTerminalAppearance = {
   variables: {
-    colorPrimary: "#c08b55",
-    colorBackground: "#171411",
-    colorInputBackground: "#262119",
-    colorInputText: "#e4dace",
-    colorText: "#e4dace",
-    colorTextSecondary: "#b5a898",
+    colorPrimary: "var(--accent)",
+    colorBackground: "var(--bg-primary)",
+    colorInputBackground: "var(--bg-elevated)",
+    colorInputText: "var(--text-primary)",
+    colorText: "var(--text-primary)",
+    colorTextSecondary: "var(--text-secondary)",
     borderRadius: "5px",
     fontFamily: SYSTEM_FONT_STACK,
     fontSize: "14px",
@@ -109,10 +109,10 @@ const clerkTerminalAppearance = {
     },
     cardBox: {
       width: "100%",
-      border: "1px solid #3d352b",
+      border: "1px solid var(--border-default)",
       borderRadius: "7px",
       boxShadow: "none",
-      background: "#1e1a16",
+      background: "var(--bg-surface)",
     },
     card: {
       gap: "14px",
@@ -120,7 +120,7 @@ const clerkTerminalAppearance = {
       backgroundColor: "transparent",
     },
     headerTitle: {
-      color: "#e4dace",
+      color: "var(--text-primary)",
       fontFamily: SYSTEM_FONT_STACK,
       fontSize: "28px",
       fontWeight: 600,
@@ -129,33 +129,33 @@ const clerkTerminalAppearance = {
       textTransform: "none",
     },
     headerSubtitle: {
-      color: "#b5a898",
+      color: "var(--text-secondary)",
       fontFamily: SYSTEM_FONT_STACK,
       fontSize: "14px",
       lineHeight: "1.5",
     },
     socialButtonsBlockButton: {
       minHeight: "36px",
-      border: "1px solid #3d352b",
+      border: "1px solid var(--border-default)",
       borderRadius: "5px",
-      backgroundColor: "#262119",
-      color: "#e4dace",
+      backgroundColor: "var(--bg-elevated)",
+      color: "var(--text-primary)",
       fontFamily: SYSTEM_FONT_STACK,
       fontSize: "14px",
       fontWeight: 500,
     },
     dividerLine: {
-      backgroundColor: "#3d352b",
+      backgroundColor: "var(--border-default)",
     },
     dividerText: {
-      color: "#7d7060",
+      color: "var(--text-muted)",
       fontFamily: SYSTEM_MONO_STACK,
       fontSize: "10px",
       letterSpacing: "0.06em",
       textTransform: "uppercase",
     },
     formFieldLabel: {
-      color: "#7d7060",
+      color: "var(--text-label)",
       fontFamily: SYSTEM_MONO_STACK,
       fontSize: "9px",
       fontWeight: 500,
@@ -164,10 +164,10 @@ const clerkTerminalAppearance = {
     },
     formFieldInput: {
       minHeight: "36px",
-      border: "1px solid #3d352b",
+      border: "1px solid var(--border-default)",
       borderRadius: "5px",
-      backgroundColor: "#262119",
-      color: "#e4dace",
+      backgroundColor: "var(--bg-elevated)",
+      color: "var(--text-primary)",
       fontFamily: SYSTEM_FONT_STACK,
       fontSize: "14px",
     },
@@ -175,8 +175,8 @@ const clerkTerminalAppearance = {
       minHeight: "36px",
       border: "none",
       borderRadius: "5px",
-      background: "#c08b55",
-      color: "#ffffff",
+      background: "var(--accent)",
+      color: "var(--selection-text)",
       fontFamily: SYSTEM_MONO_STACK,
       fontSize: "11px",
       fontWeight: 500,
@@ -184,11 +184,11 @@ const clerkTerminalAppearance = {
       textTransform: "uppercase",
     },
     footerActionText: {
-      color: "#7d7060",
+      color: "var(--text-muted)",
       fontSize: "12px",
     },
     footerActionLink: {
-      color: "#c08b55",
+      color: "var(--accent)",
       fontWeight: 500,
     },
   },
@@ -199,11 +199,11 @@ function modeSupportsAgentTools(mode) {
 }
 
 const FLOWS = [
-  { id: "ma", label: "MA", title: "Medicare Advantage", color: "var(--eg-red)", border: "rgba(184, 92, 92, 0.42)", bg: "rgba(184, 92, 92, 0.08)" },
-  { id: "aca", label: "ACA", title: "ACA On-Exchange", color: "var(--eg-blue)", border: "rgba(92, 136, 184, 0.42)", bg: "rgba(92, 136, 184, 0.08)" },
-  { id: "medsup", label: "MS", title: "Medicare Supplement", color: "var(--eg-green)", border: "rgba(106, 171, 125, 0.42)", bg: "rgba(106, 171, 125, 0.08)" },
-  { id: "u65", label: "U65", title: "U65 Off-Exchange", color: "var(--eg-purple)", border: "rgba(139, 110, 184, 0.42)", bg: "rgba(139, 110, 184, 0.08)" },
-  { id: "ancillary", label: "ANC", title: "Ancillary", color: "var(--eg-amber)", border: "rgba(196, 153, 64, 0.42)", bg: "rgba(196, 153, 64, 0.08)" },
+  { id: "ma", label: "MA", title: "Medicare Advantage", color: "var(--eg-flow-ma)", border: "var(--flow-ma-border)", bg: "var(--flow-ma-bg)" },
+  { id: "aca", label: "ACA", title: "ACA On-Exchange", color: "var(--eg-flow-aca)", border: "var(--flow-aca-border)", bg: "var(--flow-aca-bg)" },
+  { id: "medsup", label: "MS", title: "Medicare Supplement", color: "var(--eg-flow-ms)", border: "var(--flow-medsup-border)", bg: "var(--flow-medsup-bg)" },
+  { id: "u65", label: "U65", title: "U65 Off-Exchange", color: "var(--eg-flow-u65)", border: "var(--flow-u65-border)", bg: "var(--flow-u65-bg)" },
+  { id: "ancillary", label: "ANC", title: "Ancillary", color: "var(--eg-amber)", border: "var(--flow-ancillary-border)", bg: "var(--flow-ancillary-bg)" },
 ];
 
 function FlowSelector({ mode, onChange }) {
@@ -242,7 +242,7 @@ function LazyPanel({ children }) {
       <Suspense
         fallback={
           <div className="card" style={{ marginTop: 14 }}>
-            <div style={{ color: "#8fa4bc", fontSize: "0.9rem" }}>Loading...</div>
+            <div style={{ color: "var(--info)", fontSize: "0.9rem" }}>Loading...</div>
           </div>
         }
       >
@@ -275,7 +275,7 @@ class PanelErrorBoundary extends Component {
     if (this.state.error) {
       return (
         <div className="card" style={{ marginTop: 14 }}>
-          <div style={{ color: "#e09898", fontSize: "0.9rem", marginBottom: 10 }}>
+          <div style={{ color: "var(--eg-red-text)", fontSize: "0.9rem", marginBottom: 10 }}>
             Panel failed to load.
           </div>
           <button
@@ -512,7 +512,7 @@ function AppShell({ currentUser = null }) {
       priority: 3,
       title: "SEP QUALIFIER",
       shortLabel: "SEP QUALIFIER",
-      color: "#e53e3e",
+      color: "var(--danger)",
       forceOpen: true,
       component: (
         <SEPQualifierPanel onMinimize={() => minimizeLeftRail(LEFT_RAIL_IDS.sepQualifier)} />
@@ -658,7 +658,7 @@ function AppShell({ currentUser = null }) {
       priority: 3,
       title: "SEP QUALIFIER",
       shortLabel: "SEP QUALIFIER",
-      color: "#e53e3e",
+      color: "var(--danger)",
       component: (
         <SEPQualifierPanel onMinimize={() => minimizeLeftRail(LEFT_RAIL_IDS.sepQualifier)} />
       ),
@@ -673,7 +673,7 @@ function AppShell({ currentUser = null }) {
         className="left-rail-handle left-rail-handle-launcher"
         onClick={openSepQualifier}
       >
-        <span className="left-rail-handle-pip" style={{ background: "#e53e3e" }} />
+        <span className="left-rail-handle-pip" style={{ background: "var(--danger)" }} />
         <span className="left-rail-handle-text">SEP QUALIFIER</span>
       </button>
     ) : null;

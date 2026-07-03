@@ -14,6 +14,20 @@ import { mergeStructuredStateMap } from "../lib/knowledgeBase";
 /* SBE states with their own tables (not in qhp_landscape_2026) */
 const SBE_TABLES = { NJ: "sbe_plans_nj_2025", PA: "sbe_plans_pa_2025", VA: "sbe_plans_va_2025" };
 
+const COLOR = {
+  text: "var(--text-primary)",
+  secondary: "var(--text-secondary)",
+  muted: "var(--text-muted)",
+  label: "var(--text-label)",
+  border: "var(--border-default)",
+  surface: "var(--bg-surface)",
+  elevated: "var(--bg-elevated)",
+  accent: "var(--accent)",
+};
+
+const tint = (color, amount) => `color-mix(in srgb, ${color} ${amount}%, transparent)`;
+const mix = (color, amount, fallback = COLOR.elevated) =>
+  `color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 function carriers(data, segId) {
@@ -75,7 +89,7 @@ const LABEL_OFFSETS = {
 };
 
 /* ── Segment Section (sidebar accordion) ──────────────────────────── */
-function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }) {
+function SegmentSection({ segId, color, label, stateCode, data, startOpen }) {
   const [open, setOpen] = useState(startOpen);
   const list = carriers(data, segId);
   const note = notes(data, segId);
@@ -85,12 +99,12 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
     <div
       style={{
         borderRadius: 14,
-        border: `1px solid rgba(${rgb}, ${open ? 0.25 : 0.1})`,
+        border: `1px solid ${tint(color, open ? 25 : 10)}`,
         background: open
-          ? `linear-gradient(145deg, rgba(${rgb},0.06) 0%, rgba(10,10,12,0.99) 100%)`
-          : "rgba(17,17,17,0.7)",
+          ? `linear-gradient(145deg, ${tint(color, 6)} 0%, var(--bg-surface) 100%)`
+          : "var(--bg-elevated)",
         boxShadow: open
-          ? `inset 4px 4px 10px rgba(0,0,0,0.34), inset -2px -2px 6px rgba(255,255,255,0.015), 0 0 20px rgba(${rgb},0.05)`
+          ? `inset 0 0 0 1px ${tint(color, 5)}`
           : "none",
         transition: "all 0.2s ease",
         overflow: "hidden",
@@ -138,7 +152,7 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
               fontFamily: "var(--font-mono)",
               fontSize: "0.72rem",
               fontWeight: 700,
-              color: "rgba(255,255,255,0.5)",
+              color: COLOR.muted,
             }}
           >
             {list.length}
@@ -146,7 +160,7 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
           <span
             style={{
               fontSize: "0.6rem",
-              color: "#5A5A6A",
+              color: COLOR.muted,
               transform: open ? "rotate(180deg)" : "rotate(0deg)",
               transition: "transform 0.15s ease",
             }}
@@ -170,10 +184,10 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
                   style={{
                     padding: "3px 9px",
                     borderRadius: 999,
-                    background: `rgba(${rgb},0.1)`,
-                    border: `1px solid rgba(${rgb},0.2)`,
+                    background: tint(color, 10),
+                    border: `1px solid ${tint(color, 20)}`,
                     fontSize: "0.7rem",
-                    color: "#D6DFE9",
+                    color: COLOR.text,
                     fontFamily: "var(--font-body)",
                     whiteSpace: "nowrap",
                     textDecoration: "none",
@@ -181,14 +195,14 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
                     transition: "all 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = `rgba(${rgb},0.22)`;
-                    e.currentTarget.style.borderColor = `rgba(${rgb},0.4)`;
-                    e.currentTarget.style.color = "#FFFFFF";
+                    e.currentTarget.style.background = tint(color, 22);
+                    e.currentTarget.style.borderColor = tint(color, 40);
+                    e.currentTarget.style.color = COLOR.text;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = `rgba(${rgb},0.1)`;
-                    e.currentTarget.style.borderColor = `rgba(${rgb},0.2)`;
-                    e.currentTarget.style.color = "#D6DFE9";
+                    e.currentTarget.style.background = tint(color, 10);
+                    e.currentTarget.style.borderColor = tint(color, 20);
+                    e.currentTarget.style.color = COLOR.text;
                   }}
                 >
                   {c} ↗
@@ -199,10 +213,10 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
                   style={{
                     padding: "3px 9px",
                     borderRadius: 999,
-                    background: `rgba(${rgb},0.1)`,
-                    border: `1px solid rgba(${rgb},0.2)`,
+                    background: tint(color, 10),
+                    border: `1px solid ${tint(color, 20)}`,
                     fontSize: "0.7rem",
-                    color: "#D6DFE9",
+                    color: COLOR.text,
                     fontFamily: "var(--font-body)",
                     whiteSpace: "nowrap",
                   }}
@@ -213,7 +227,7 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
             })}
           </div>
           {note && (
-            <p style={{ margin: 0, fontSize: "0.74rem", color: "#8A8A9A", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: "0.74rem", color: COLOR.secondary, lineHeight: 1.5 }}>
               {note}
             </p>
           )}
@@ -228,8 +242,8 @@ function SegmentSection({ segId, color, rgb, label, stateCode, data, startOpen }
                   style={{
                     padding: "3px 9px",
                     borderRadius: 999,
-                    border: `1px solid rgba(${rgb},0.25)`,
-                    background: `rgba(${rgb},0.08)`,
+                    border: `1px solid ${tint(color, 25)}`,
+                    background: tint(color, 8),
                     color,
                     textDecoration: "none",
                     fontFamily: "var(--font-body)",
@@ -285,7 +299,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
               fontSize: "0.56rem",
               letterSpacing: "0.14em",
               textTransform: "uppercase",
-              color: "#4A4A5A",
+              color: "var(--text-muted)",
               marginBottom: 3,
             }}
           >
@@ -294,7 +308,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
           <h3
             style={{
               margin: 0,
-              color: "#F0F0F0",
+              color: "var(--text-primary)",
               fontSize: "1.15rem",
               letterSpacing: "0.05em",
               textTransform: "uppercase",
@@ -308,10 +322,10 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
         <button
           onClick={onClose}
           style={{
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "color-mix(in srgb, var(--text-primary) 5%, transparent)",
+            border: "1px solid var(--border-default)",
             borderRadius: 8,
-            color: "#8A8A9A",
+            color: "var(--text-secondary)",
             cursor: "pointer",
             padding: "4px 8px",
             fontSize: "0.7rem",
@@ -332,8 +346,8 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
               style={{
                 borderRadius: 10,
                 padding: "8px 6px",
-                border: `1px solid rgba(${seg.rgb},0.15)`,
-                background: `rgba(${seg.rgb},0.04)`,
+                border: `1px solid ${tint(seg.color, 15)}`,
+                background: tint(seg.color, 4),
                 textAlign: "center",
               }}
             >
@@ -354,7 +368,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
                   fontWeight: 700,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
-                  color: "#5A5A6A",
+                  color: "var(--text-muted)",
                   marginTop: 2,
                 }}
               >
@@ -370,7 +384,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
           textAlign: "center",
           fontFamily: "var(--font-mono)",
           fontSize: "0.68rem",
-          color: "#5A5A6A",
+          color: "var(--text-muted)",
         }}
       >
         {totalCarriers} total carriers
@@ -391,13 +405,13 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
 
       {acaIssuers?.length > 0 && (
         <div style={{
-          borderRadius: 14, border: "1px solid rgba(249,115,22,0.2)",
-          background: "rgba(249,115,22,0.03)", padding: "10px 14px",
+          borderRadius: 14, border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)",
+          background: "color-mix(in srgb, var(--accent) 3%, transparent)", padding: "10px 14px",
         }}>
           <div style={{
             fontFamily: "var(--font-body)", fontWeight: 800,
             fontSize: "0.62rem", letterSpacing: "0.1em", textTransform: "uppercase",
-            color: "#F97316", marginBottom: 8,
+            color: "var(--accent)", marginBottom: 8,
           }}>
             Live ACA Issuers ({acaIssuers.length})
           </div>
@@ -405,9 +419,9 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
             {acaIssuers.map((iss) => (
               <span key={iss} style={{
                 padding: "2px 8px", borderRadius: 999,
-                background: "rgba(249,115,22,0.08)",
-                border: "1px solid rgba(249,115,22,0.15)",
-                fontSize: "0.64rem", color: "#D6DFE9",
+                background: "color-mix(in srgb, var(--accent) 8%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--accent) 15%, transparent)",
+                fontSize: "0.64rem", color: "var(--text-primary)",
                 fontFamily: "var(--font-body)", whiteSpace: "nowrap",
               }}>
                 {iss}
@@ -427,9 +441,9 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
             textAlign: "center",
             padding: "6px 12px",
             borderRadius: 999,
-            border: "1px solid rgba(255,255,255,0.08)",
-            background: "rgba(255,255,255,0.03)",
-            color: "#6F7D8E",
+            border: "1px solid var(--border-default)",
+            background: "color-mix(in srgb, var(--text-primary) 3%, transparent)",
+            color: "var(--text-secondary)",
             textDecoration: "none",
             fontFamily: "var(--font-body)",
             fontWeight: 700,
@@ -544,8 +558,8 @@ export default function CarrierRef() {
       const hov = hovered === code;
       if (sel) {
         return {
-          fill: "rgba(249,115,22,0.35)",
-          stroke: "#F97316",
+          fill: "color-mix(in srgb, var(--accent) 35%, transparent)",
+          stroke: "var(--accent)",
           strokeWidth: 2,
           cursor: "pointer",
           filter: "url(#map-glow)",
@@ -553,16 +567,16 @@ export default function CarrierRef() {
       }
       if (hov) {
         return {
-          fill: "rgba(249,115,22,0.22)",
-          stroke: "rgba(249,115,22,0.7)",
+          fill: "color-mix(in srgb, var(--accent) 22%, transparent)",
+          stroke: "color-mix(in srgb, var(--accent) 70%, transparent)",
           strokeWidth: 1.5,
           cursor: "pointer",
           filter: "url(#map-glow-subtle)",
         };
       }
       return {
-        fill: "rgba(249,115,22,0.08)",
-        stroke: "rgba(249,115,22,0.25)",
+        fill: "color-mix(in srgb, var(--accent) 8%, transparent)",
+        stroke: "color-mix(in srgb, var(--accent) 25%, transparent)",
         strokeWidth: 0.8,
         cursor: "pointer",
         filter: undefined,
@@ -571,8 +585,8 @@ export default function CarrierRef() {
 
     if (!isActive) {
       return {
-        fill: "#141418",
-        stroke: "rgba(255,255,255,0.06)",
+        fill: "var(--bg-elevated)",
+        stroke: "color-mix(in srgb, var(--text-primary) 6%, transparent)",
         strokeWidth: 0.8,
         cursor: "default",
         filter: undefined,
@@ -581,8 +595,8 @@ export default function CarrierRef() {
 
     if (!isMatch && query) {
       return {
-        fill: "#141418",
-        stroke: "rgba(255,255,255,0.04)",
+        fill: "var(--bg-elevated)",
+        stroke: "color-mix(in srgb, var(--text-primary) 4%, transparent)",
         strokeWidth: 0.8,
         cursor: "default",
         filter: undefined,
@@ -592,13 +606,12 @@ export default function CarrierRef() {
     const segColor = activeSeg
       ? MARKET_SEGMENTS.find((s) => s.id === activeSeg)
       : null;
-    const rgb = segColor ? segColor.rgb : "232,0,45";
-    const hex = segColor ? segColor.color : "#E8002D";
+    const pathColor = segColor ? segColor.color : "var(--danger)";
 
     if (isSel) {
       return {
-        fill: `rgba(${rgb},0.35)`,
-        stroke: hex,
+        fill: tint(pathColor, 35),
+        stroke: pathColor,
         strokeWidth: 2,
         cursor: "pointer",
         filter: "url(#map-glow)",
@@ -606,16 +619,16 @@ export default function CarrierRef() {
     }
     if (isHov) {
       return {
-        fill: `rgba(${rgb},0.22)`,
-        stroke: `rgba(${rgb},0.7)`,
+        fill: tint(pathColor, 22),
+        stroke: tint(pathColor, 70),
         strokeWidth: 1.5,
         cursor: "pointer",
         filter: "url(#map-glow-subtle)",
       };
     }
     return {
-      fill: `rgba(${rgb},0.1)`,
-      stroke: `rgba(${rgb},0.3)`,
+      fill: tint(pathColor, 10),
+      stroke: tint(pathColor, 30),
       strokeWidth: 1,
       cursor: "pointer",
       filter: undefined,
@@ -672,7 +685,7 @@ export default function CarrierRef() {
                   left: 12,
                   top: "50%",
                   transform: "translateY(-50%)",
-                  color: "#3A3A4A",
+                  color: "var(--text-muted)",
                   fontSize: 14,
                   pointerEvents: "none",
                   lineHeight: 1,
@@ -699,12 +712,12 @@ export default function CarrierRef() {
                   style={{
                     background:
                       activeSeg === seg.id
-                        ? `rgba(${seg.rgb},0.14)`
-                        : "rgba(255,255,255,0.03)",
+                        ? tint(seg.color, 14)
+                        : "color-mix(in srgb, var(--text-primary) 3%, transparent)",
                     border:
                       activeSeg === seg.id
-                        ? `1px solid rgba(${seg.rgb},0.45)`
-                        : "1px solid rgba(255,255,255,0.08)",
+                        ? `1px solid ${tint(seg.color, 45)}`
+                        : "1px solid var(--border-default)",
                     borderRadius: 999,
                     padding: "5px 12px",
                     cursor: "pointer",
@@ -713,7 +726,7 @@ export default function CarrierRef() {
                     fontSize: "0.64rem",
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
-                    color: activeSeg === seg.id ? seg.color : "#5A5A6A",
+                    color: activeSeg === seg.id ? seg.color : "var(--text-muted)",
                     transition: "all 0.13s ease",
                   }}
                 >
@@ -831,7 +844,7 @@ export default function CarrierRef() {
                       y1={cy}
                       x2={labelX - 4}
                       y2={labelY}
-                      stroke="rgba(255,255,255,0.15)"
+                      stroke="color-mix(in srgb, var(--text-primary) 15%, transparent)"
                       strokeWidth={0.6}
                     />
                   )}
@@ -842,12 +855,12 @@ export default function CarrierRef() {
                     dominantBaseline="central"
                     fill={
                       !isMatch && query
-                        ? "#1A1A2A"
+                        ? "var(--text-muted)"
                         : isSel
-                          ? "#FFFFFF"
+                          ? "var(--text-primary)"
                           : isHov
-                            ? "#F0F0F0"
-                            : "#B8B8C8"
+                            ? "var(--text-primary)"
+                            : "var(--text-secondary)"
                     }
                     style={{
                       fontFamily: "var(--font-body)",
@@ -855,8 +868,8 @@ export default function CarrierRef() {
                       fontSize: isSel || isHov ? "11px" : "9px",
                       letterSpacing: "0.06em",
                       textShadow: isSel || isHov
-                        ? "0 0 6px rgba(0,0,0,0.8)"
-                        : "0 1px 2px rgba(0,0,0,0.9)",
+                        ? "none"
+                        : "none",
                       transition: "all 0.15s ease",
                     }}
                   >
@@ -876,11 +889,11 @@ export default function CarrierRef() {
                 top: mousePos.y - 10,
                 pointerEvents: "none",
                 zIndex: 20,
-                background: "linear-gradient(145deg, rgba(22,22,28,0.97) 0%, rgba(12,12,14,0.98) 100%)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "linear-gradient(145deg, var(--bg-elevated) 0%, var(--bg-surface) 100%)",
+                border: "1px solid var(--border-default)",
                 borderRadius: 12,
                 padding: "10px 14px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)",
+                boxShadow: "none",
                 minWidth: 160,
               }}
             >
@@ -891,7 +904,7 @@ export default function CarrierRef() {
                   fontSize: "0.82rem",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
-                  color: "#F0F0F0",
+                  color: "var(--text-primary)",
                   marginBottom: 8,
                 }}
               >
@@ -927,7 +940,7 @@ export default function CarrierRef() {
                             fontSize: "0.62rem",
                             letterSpacing: "0.08em",
                             textTransform: "uppercase",
-                            color: "#8A8A9A",
+                            color: "var(--text-secondary)",
                           }}
                         >
                           {seg.label}
@@ -959,11 +972,11 @@ export default function CarrierRef() {
                 top: mousePos.y - 10,
                 pointerEvents: "none",
                 zIndex: 20,
-                background: "linear-gradient(145deg, rgba(22,22,28,0.97) 0%, rgba(12,12,14,0.98) 100%)",
-                border: "1px solid rgba(249,115,22,0.2)",
+                background: "linear-gradient(145deg, var(--bg-elevated) 0%, var(--bg-surface) 100%)",
+                border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)",
                 borderRadius: 12,
                 padding: "10px 14px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)",
+                boxShadow: "none",
                 minWidth: 140,
               }}
             >
@@ -974,13 +987,13 @@ export default function CarrierRef() {
                   fontSize: "0.82rem",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
-                  color: "#F97316",
+                  color: "var(--accent)",
                   marginBottom: 4,
                 }}
               >
                 {hovered}
               </div>
-              <div style={{ fontSize: "0.65rem", color: "#8A8A9A" }}>
+              <div style={{ fontSize: "0.65rem", color: "var(--text-secondary)" }}>
                 {SBE_TABLES[hovered]
                   ? `ACA issuer list${acaIssuers[hovered]?.length ? ` · ${acaIssuers[hovered].length} issuers` : ""} · Click for details`
                   : "Marketplace overview · Click for details"}
@@ -1005,7 +1018,7 @@ export default function CarrierRef() {
                 alignItems: "center",
                 gap: 14,
                 fontSize: "0.65rem",
-                color: "#5A5A6A",
+                color: "var(--text-muted)",
               }}
             >
               <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -1015,8 +1028,8 @@ export default function CarrierRef() {
                     width: 14,
                     height: 10,
                     borderRadius: 3,
-                    background: "rgba(232,0,45,0.15)",
-                    border: "1px solid rgba(232,0,45,0.35)",
+                    background: "color-mix(in srgb, var(--danger) 15%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--danger) 35%, transparent)",
                   }}
                 />
                 Active
@@ -1028,8 +1041,8 @@ export default function CarrierRef() {
                     width: 14,
                     height: 10,
                     borderRadius: 3,
-                    background: "rgba(249,115,22,0.12)",
-                    border: "1px solid rgba(249,115,22,0.35)",
+                    background: "color-mix(in srgb, var(--accent) 12%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)",
                   }}
                 />
                 ACA Data
@@ -1041,8 +1054,8 @@ export default function CarrierRef() {
                     width: 14,
                     height: 10,
                     borderRadius: 3,
-                    background: "#141418",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border-default)",
                   }}
                 />
                 Inactive
@@ -1051,7 +1064,7 @@ export default function CarrierRef() {
             <div
               style={{
                 fontSize: "0.6rem",
-                color: "#3A3A4A",
+                color: "var(--text-muted)",
                 fontFamily: "var(--font-mono)",
               }}
             >
@@ -1089,12 +1102,12 @@ export default function CarrierRef() {
                 <div style={{
                   fontFamily: "var(--font-body)", fontWeight: 800,
                   fontSize: "0.56rem", letterSpacing: "0.14em", textTransform: "uppercase",
-                  color: "#F97316", marginBottom: 3,
+                  color: "var(--accent)", marginBottom: 3,
                 }}>
                   {selected} · {SBE_TABLES[selected] ? "State-Based Exchange" : "Federal Exchange"}
                 </div>
                 <h3 style={{
-                  margin: 0, color: "#F0F0F0", fontSize: "1.15rem",
+                  margin: 0, color: "var(--text-primary)", fontSize: "1.15rem",
                   letterSpacing: "0.05em", textTransform: "uppercase",
                   fontFamily: "var(--font-body)", fontWeight: 800,
                 }}>
@@ -1104,8 +1117,8 @@ export default function CarrierRef() {
               <button
                 onClick={() => setSelected(null)}
                 style={{
-                  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 8, color: "#8A8A9A", cursor: "pointer",
+                  background: "color-mix(in srgb, var(--text-primary) 5%, transparent)", border: "1px solid var(--border-default)",
+                  borderRadius: 8, color: "var(--text-secondary)", cursor: "pointer",
                   padding: "4px 8px", fontSize: "0.7rem", fontFamily: "var(--font-body)",
                 }}
               >
@@ -1116,20 +1129,20 @@ export default function CarrierRef() {
             {SBE_TABLES[selected] ? (
               <div style={{
                 borderRadius: 10, padding: "12px 14px",
-                border: "1px solid rgba(249,115,22,0.15)",
-                background: "rgba(249,115,22,0.04)",
+                border: "1px solid color-mix(in srgb, var(--accent) 15%, transparent)",
+                background: "color-mix(in srgb, var(--accent) 4%, transparent)",
                 textAlign: "center",
               }}>
                 <div style={{
                   fontFamily: "var(--font-mono)", fontSize: "1.4rem",
-                  fontWeight: 800, color: "#F97316",
+                  fontWeight: 800, color: "var(--accent)",
                 }}>
                   {acaIssuers[selected]?.length || 0}
                 </div>
                 <div style={{
                   fontFamily: "var(--font-body)", fontSize: "0.56rem",
                   fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
-                  color: "#5A5A6A", marginTop: 2,
+                  color: "var(--text-muted)", marginTop: 2,
                 }}>
                   ACA Issuers
                 </div>
@@ -1137,8 +1150,8 @@ export default function CarrierRef() {
             ) : (
               <div style={{
                 borderRadius: 14,
-                border: "1px solid rgba(249,115,22,0.18)",
-                background: "rgba(249,115,22,0.04)",
+                border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)",
+                background: "color-mix(in srgb, var(--accent) 4%, transparent)",
                 padding: "12px 14px",
                 display: "flex",
                 flexDirection: "column",
@@ -1150,11 +1163,11 @@ export default function CarrierRef() {
                   fontSize: "0.68rem",
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
-                  color: "#F97316",
+                  color: "var(--accent)",
                 }}>
                   Marketplace Lookup
                 </div>
-                <div style={{ fontSize: "0.72rem", color: "#8A8A9A", lineHeight: 1.55 }}>
+                <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
                   Live issuer scans are disabled here to avoid QHP table timeouts. Use the marketplace link below for current carriers and plan details.
                 </div>
                 <a
@@ -1165,9 +1178,9 @@ export default function CarrierRef() {
                     alignSelf: "flex-start",
                     padding: "5px 10px",
                     borderRadius: 999,
-                    border: "1px solid rgba(249,115,22,0.25)",
-                    background: "rgba(249,115,22,0.08)",
-                    color: "#F97316",
+                    border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)",
+                    background: "color-mix(in srgb, var(--accent) 8%, transparent)",
+                    color: "var(--accent)",
                     textDecoration: "none",
                     fontFamily: "var(--font-body)",
                     fontWeight: 700,
@@ -1183,14 +1196,14 @@ export default function CarrierRef() {
 
             {SBE_TABLES[selected] && acaIssuers[selected]?.length > 0 && (
               <div style={{
-                borderRadius: 14, border: "1px solid rgba(249,115,22,0.25)",
-                background: "linear-gradient(145deg, rgba(249,115,22,0.06) 0%, rgba(10,10,12,0.99) 100%)",
+                borderRadius: 14, border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)",
+                background: "linear-gradient(145deg, color-mix(in srgb, var(--accent) 6%, transparent) 0%, var(--bg-surface) 100%)",
                 padding: "12px 14px",
               }}>
                 <div style={{
                   fontFamily: "var(--font-body)", fontWeight: 800,
                   fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase",
-                  color: "#F97316", marginBottom: 10,
+                  color: "var(--accent)", marginBottom: 10,
                 }}>
                   Issuers
                 </div>
@@ -1200,9 +1213,9 @@ export default function CarrierRef() {
                       key={iss}
                       style={{
                         padding: "3px 9px", borderRadius: 999,
-                        background: "rgba(249,115,22,0.1)",
-                        border: "1px solid rgba(249,115,22,0.2)",
-                        fontSize: "0.7rem", color: "#D6DFE9",
+                        background: "color-mix(in srgb, var(--accent) 10%, transparent)",
+                        border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)",
+                        fontSize: "0.7rem", color: "var(--text-primary)",
                         fontFamily: "var(--font-body)", whiteSpace: "nowrap",
                       }}
                     >
@@ -1214,7 +1227,7 @@ export default function CarrierRef() {
             )}
 
             <div style={{
-              fontSize: "0.62rem", color: "#3A3A4A", textAlign: "center",
+              fontSize: "0.62rem", color: "var(--text-muted)", textAlign: "center",
               fontFamily: "var(--font-mono)",
             }}>
               Not an active NGHS state · ACA data only
@@ -1251,7 +1264,7 @@ export default function CarrierRef() {
               fontSize: "0.74rem",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
-              color: "#8E99A7",
+              color: "var(--text-secondary)",
             }}
           >
             Quick-Reference Tools
@@ -1301,8 +1314,8 @@ export default function CarrierRef() {
                     style={{
                       padding: "3px 9px",
                       borderRadius: 999,
-                      border: `1px solid rgba(${seg.rgb},0.2)`,
-                      background: `rgba(${seg.rgb},0.06)`,
+                      border: `1px solid ${tint(seg.color, 20)}`,
+                      background: tint(seg.color, 6),
                       color: seg.color,
                       textDecoration: "none",
                       fontFamily: "var(--font-body)",
@@ -1341,7 +1354,7 @@ export default function CarrierRef() {
               fontSize: "0.74rem",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
-              color: "#8E99A7",
+              color: "var(--text-secondary)",
             }}
           >
             Data Sources
@@ -1354,13 +1367,13 @@ export default function CarrierRef() {
                 key={src}
                 style={{
                   fontSize: "0.7rem",
-                  color: "#5A5A6A",
+                  color: "var(--text-muted)",
                   display: "flex",
                   alignItems: "flex-start",
                   gap: 6,
                 }}
               >
-                <span style={{ color: "#3A3A4A", marginTop: 1 }}>•</span>
+                <span style={{ color: "var(--text-muted)", marginTop: 1 }}>•</span>
                 <span>{src}</span>
               </div>
             ))}
@@ -1370,10 +1383,10 @@ export default function CarrierRef() {
               marginTop: 4,
               padding: "6px 10px",
               borderRadius: 10,
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.05)",
+              background: "color-mix(in srgb, var(--text-primary) 2%, transparent)",
+              border: "1px solid var(--border-default)",
               fontSize: "0.62rem",
-              color: "#3A3A4A",
+              color: "var(--text-muted)",
               fontFamily: "var(--font-mono)",
             }}
           >

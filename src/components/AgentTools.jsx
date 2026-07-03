@@ -132,7 +132,7 @@ const TOOL_GROUPS = [
   {
     id: "sales",
     label: "Sales & Objections",
-    color: "#e8372c",
+    color: "var(--danger)",
     tools: [
       {
         id: "ma-seps",
@@ -145,14 +145,14 @@ const TOOL_GROUPS = [
         title: "2026 SEP Guide",
         description: "State-by-state INT, PAP, CSNP, and DST guide with mandatory disclosures and bonus tracking.",
         icon: <BookOpen size={16} />,
-        color: "#2196F3",
+        color: "var(--info)",
       },
     ],
   },
   {
     id: "training",
     label: "Training & Quizzes",
-    color: "#c084fc",
+    color: "var(--chart-4)",
     tools: [
       {
         id: "off-market-product-quiz",
@@ -171,7 +171,7 @@ const TOOL_GROUPS = [
   {
     id: "reference",
     label: "Reference & Compliance",
-    color: "#f5a623",
+    color: "var(--warning)",
     tools: [
       {
         id: "official-references",
@@ -196,7 +196,7 @@ const TOOL_GROUPS = [
   {
     id: "enrollment",
     label: "Eligibility & Enrollment",
-    color: "#2ecc71",
+    color: "var(--status-live)",
     tools: [
       {
         id: "eligibility-enrollment",
@@ -209,7 +209,7 @@ const TOOL_GROUPS = [
   {
     id: "carrier",
     label: "Carrier Portals",
-    color: "#3498db",
+    color: "var(--info)",
     tools: [
       {
         id: "carrier-portals",
@@ -271,18 +271,18 @@ function LinkGrid({ items }) {
 function CarrierIcon({ type }) {
   const shared = { size: 14, strokeWidth: 2 };
   const iconMap = {
-    humana: <Circle {...shared} color="#fbbf24" fill="#fbbf24" />,
-    uhc: <Circle {...shared} color="#60a5fa" fill="#60a5fa" />,
-    sunfire: <Flame {...shared} color="#f97316" />,
-    cms: <Landmark {...shared} color="#cbd5e1" />,
-    aetna: <Building2 {...shared} color="#60a5fa" />,
-    anthem: <Shield {...shared} color="#60a5fa" />,
-    cigna: <Circle {...shared} color="#34d399" fill="#34d399" />,
-    devoted: <Heart {...shared} color="#f87171" />,
-    wellcare: <Circle {...shared} color="#c084fc" fill="#c084fc" />,
+    humana: <Circle {...shared} color="var(--status-pending)" fill="var(--status-pending)" />,
+    uhc: <Circle {...shared} color="var(--info)" fill="var(--info)" />,
+    sunfire: <Flame {...shared} color="var(--accent)" />,
+    cms: <Landmark {...shared} color="var(--text-primary)" />,
+    aetna: <Building2 {...shared} color="var(--info)" />,
+    anthem: <Shield {...shared} color="var(--info)" />,
+    cigna: <Circle {...shared} color="var(--status-live)" fill="var(--status-live)" />,
+    devoted: <Heart {...shared} color="var(--danger)" />,
+    wellcare: <Circle {...shared} color="var(--chart-4)" fill="var(--chart-4)" />,
   };
 
-  return iconMap[type] || <Building2 {...shared} color="#cbd5e1" />;
+  return iconMap[type] || <Building2 {...shared} color="var(--text-primary)" />;
 }
 
 function SEPReference({ script }) {

@@ -46,8 +46,8 @@ export default function Waveform({
       return `${value}${alphaHex}`;
     };
 
-    const activeColor = resolveColor("--eg-accent", "#c08b55", "aa");
-    const inactiveColor = resolveColor("--eg-text-faint", "#524838", "44", idleColor);
+    const activeColor = resolveColor("--eg-accent", "var(--accent)", "aa");
+    const inactiveColor = resolveColor("--eg-text-faint", "var(--text-muted)", "44", idleColor);
     const bars = 48;
     const barWidth = width / bars;
 

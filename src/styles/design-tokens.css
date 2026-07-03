@@ -62,6 +62,10 @@
   --eg-flow-aca-glow: var(--eg-blue-text);
   --eg-flow-u65: var(--eg-purple);
   --eg-flow-u65-glow: var(--eg-purple-text);
+  --eg-flow-ma-rgb: 184, 92, 92;
+  --eg-flow-ms-rgb: 106, 171, 125;
+  --eg-flow-aca-rgb: 92, 136, 184;
+  --eg-flow-u65-rgb: 139, 110, 184;
 
   /* ----- Semantic theme roles ----- */
   --bg-primary: var(--eg-base);
@@ -76,14 +80,28 @@
   --accent: var(--eg-accent);
   --accent-hover: var(--eg-accent-bright);
   --status-live: var(--eg-green);
+  --status-live-bg: rgba(106, 171, 125, 0.08);
+  --status-live-border: rgba(106, 171, 125, 0.27);
   --status-offline: var(--eg-red);
+  --status-offline-bg: rgba(184, 92, 92, 0.08);
+  --status-offline-border: rgba(184, 92, 92, 0.34);
   --status-pending: var(--eg-amber);
+  --status-pending-bg: rgba(196, 153, 64, 0.08);
+  --status-pending-border: rgba(196, 153, 64, 0.32);
   --success: var(--eg-green);
   --danger: var(--eg-red);
   --warning: var(--eg-amber);
   --info: var(--eg-blue);
+  --warning-rgb: 196, 153, 64;
+  --info-rgb: 92, 136, 184;
+  --info-bg: rgba(92, 136, 184, 0.08);
+  --info-border: rgba(92, 136, 184, 0.32);
   --selection-bg: var(--eg-accent);
   --selection-text: #171411;
+  --button-primary-text: #ffffff;
+  --overlay-backdrop: rgba(0, 0, 0, 0.72);
+  --focus-glow: rgba(192, 139, 85, 0.16);
+  --chart-track: rgba(255, 255, 255, 0.06);
   --chart-1: var(--eg-accent);
   --chart-2: var(--eg-blue);
   --chart-3: var(--eg-green);
@@ -93,6 +111,36 @@
   --chart-grid: var(--eg-border);
   --chart-positive: var(--eg-green);
   --chart-negative: var(--eg-red);
+  --score-a: #00D166;
+  --score-b: #00B050;
+  --score-c: #FFD700;
+  --score-d: #FF8C00;
+  --score-f: #E8002D;
+  --score-a-bg: rgba(0, 209, 102, 0.16);
+  --score-b-bg: rgba(0, 176, 80, 0.14);
+  --score-c-bg: rgba(255, 215, 0, 0.15);
+  --score-d-bg: rgba(255, 140, 0, 0.15);
+  --score-f-bg: rgba(232, 0, 45, 0.15);
+  --score-a-border: rgba(0, 209, 102, 0.2);
+  --score-b-border: rgba(0, 176, 80, 0.2);
+  --score-c-border: rgba(255, 215, 0, 0.22);
+  --score-d-border: rgba(255, 140, 0, 0.22);
+  --score-f-border: rgba(232, 0, 45, 0.25);
+  --score-a-glow: rgba(0, 209, 102, 0.38);
+  --score-b-glow: rgba(0, 176, 80, 0.34);
+  --score-c-glow: rgba(255, 215, 0, 0.34);
+  --score-d-glow: rgba(255, 140, 0, 0.34);
+  --score-f-glow: rgba(232, 0, 45, 0.36);
+  --flow-ma-border: rgba(184, 92, 92, 0.42);
+  --flow-ma-bg: rgba(184, 92, 92, 0.08);
+  --flow-aca-border: rgba(92, 136, 184, 0.42);
+  --flow-aca-bg: rgba(92, 136, 184, 0.08);
+  --flow-medsup-border: rgba(106, 171, 125, 0.42);
+  --flow-medsup-bg: rgba(106, 171, 125, 0.08);
+  --flow-u65-border: rgba(139, 110, 184, 0.42);
+  --flow-u65-bg: rgba(139, 110, 184, 0.08);
+  --flow-ancillary-border: rgba(196, 153, 64, 0.42);
+  --flow-ancillary-bg: rgba(196, 153, 64, 0.08);
 
   /* ----- Typography ----- */
   --eg-font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -226,6 +274,10 @@
   --eg-flow-aca-glow: var(--eg-blue-text);
   --eg-flow-u65: var(--eg-purple);
   --eg-flow-u65-glow: var(--eg-purple-text);
+  --eg-flow-ma-rgb: 255, 59, 48;
+  --eg-flow-ms-rgb: 0, 210, 106;
+  --eg-flow-aca-rgb: 62, 199, 255;
+  --eg-flow-u65-rgb: 184, 137, 255;
 
   /* ----- Semantic theme roles ----- */
   --bg-primary: #000000;
@@ -240,14 +292,28 @@
   --accent: #ff9900;
   --accent-hover: #ffb000;
   --status-live: #00d26a;
+  --status-live-bg: rgba(0, 210, 106, 0.08);
+  --status-live-border: rgba(0, 210, 106, 0.38);
   --status-offline: #ff3b30;
+  --status-offline-bg: rgba(255, 59, 48, 0.08);
+  --status-offline-border: rgba(255, 59, 48, 0.42);
   --status-pending: #ff9900;
+  --status-pending-bg: rgba(255, 153, 0, 0.1);
+  --status-pending-border: rgba(255, 153, 0, 0.45);
   --success: #00d26a;
   --danger: #ff3b30;
   --warning: #ff9900;
   --info: #3ec7ff;
+  --warning-rgb: 255, 153, 0;
+  --info-rgb: 62, 199, 255;
+  --info-bg: rgba(62, 199, 255, 0.08);
+  --info-border: rgba(62, 199, 255, 0.38);
   --selection-bg: #ff9900;
   --selection-text: #000000;
+  --button-primary-text: #000000;
+  --overlay-backdrop: rgba(0, 0, 0, 0.86);
+  --focus-glow: rgba(255, 153, 0, 0.18);
+  --chart-track: #222222;
   --chart-1: #ff9900;
   --chart-2: #e8e8e8;
   --chart-3: #3ec7ff;
@@ -257,4 +323,55 @@
   --chart-grid: #222222;
   --chart-positive: #00d26a;
   --chart-negative: #ff3b30;
+  --score-a: #00d26a;
+  --score-b: #00d26a;
+  --score-c: #ff9900;
+  --score-d: #ff9900;
+  --score-f: #ff3b30;
+  --score-a-bg: rgba(0, 210, 106, 0.08);
+  --score-b-bg: rgba(0, 210, 106, 0.08);
+  --score-c-bg: rgba(255, 153, 0, 0.1);
+  --score-d-bg: rgba(255, 153, 0, 0.1);
+  --score-f-bg: rgba(255, 59, 48, 0.08);
+  --score-a-border: rgba(0, 210, 106, 0.38);
+  --score-b-border: rgba(0, 210, 106, 0.38);
+  --score-c-border: rgba(255, 153, 0, 0.45);
+  --score-d-border: rgba(255, 153, 0, 0.45);
+  --score-f-border: rgba(255, 59, 48, 0.42);
+  --score-a-glow: transparent;
+  --score-b-glow: transparent;
+  --score-c-glow: transparent;
+  --score-d-glow: transparent;
+  --score-f-glow: transparent;
+  --flow-ma-border: rgba(255, 59, 48, 0.42);
+  --flow-ma-bg: rgba(255, 59, 48, 0.08);
+  --flow-aca-border: rgba(62, 199, 255, 0.42);
+  --flow-aca-bg: rgba(62, 199, 255, 0.08);
+  --flow-medsup-border: rgba(0, 210, 106, 0.42);
+  --flow-medsup-bg: rgba(0, 210, 106, 0.08);
+  --flow-u65-border: rgba(184, 137, 255, 0.42);
+  --flow-u65-bg: rgba(184, 137, 255, 0.08);
+  --flow-ancillary-border: rgba(255, 153, 0, 0.45);
+  --flow-ancillary-bg: rgba(255, 153, 0, 0.1);
+}
+
+html.theme-initializing *,
+html.theme-initializing *::before,
+html.theme-initializing *::after {
+  transition: none !important;
+}
+
+html.theme-ready body,
+html.theme-ready body *,
+html.theme-ready body *::before,
+html.theme-ready body *::after {
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+  transition-property:
+    background-color,
+    border-color,
+    box-shadow,
+    color,
+    fill,
+    stroke;
 }

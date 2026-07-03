@@ -8,7 +8,7 @@ import { useScriptTemplate } from "../../hooks/useScriptTemplate";
 import CenterTimerBar from "../../components/CenterTimerBar";
 import ProgressDots from "../../components/ProgressDots";
 
-const ACCENT = "#EAB308";
+const ACCENT = "var(--eg-flow-aca)";
 
 const STATE_ACA_STEP_LABELS = [
   { k: "gate0Ok", l: "Open" },
@@ -30,13 +30,13 @@ function Say({ text }) {
     <div
       className="flow-script-line"
       style={{
-        borderLeft: "2px solid rgba(234,179,8,0.3)",
+        outline: "1px solid var(--flow-aca-border)",
         padding: "10px 16px",
         marginBottom: 8,
         borderRadius: "0 6px 6px 0",
       }}
     >
-      <div className="flow-script-text" style={{ color: "#c0d0e4", fontSize: 14, lineHeight: 1.65 }}>
+      <div className="flow-script-text" style={{ color: "var(--text-primary)", fontSize: 14, lineHeight: 1.65 }}>
         {text}
       </div>
     </div>
@@ -48,17 +48,17 @@ function Note({ text }) {
     <div
       className="flow-stage-direction"
       style={{
-        borderLeft: "2px solid rgba(234,179,8,0.2)",
+        outline: "1px solid var(--flow-aca-border)",
         padding: "7px 12px",
         marginBottom: 6,
         borderRadius: "0 5px 5px 0",
-        background: "rgba(234,179,8,0.03)",
+        background: "var(--flow-aca-bg)",
       }}
     >
       <div
         className="flow-stage-text"
         style={{
-          color: "#8fa4bc",
+          color: "var(--text-muted)",
           fontSize: 12,
           lineHeight: 1.5,
           fontStyle: "italic",
@@ -75,13 +75,13 @@ function ComplianceBanner({ text }) {
     <div
       className="flow-compliance-banner"
       style={{
-        background: "rgba(248,113,113,0.06)",
-        border: "1px solid rgba(248,113,113,0.2)",
+        background: "var(--status-offline-bg)",
+        border: "1px solid var(--status-offline-border)",
         borderRadius: 6,
         padding: "9px 13px",
         marginBottom: 10,
         fontSize: 12,
-        color: "#f87171",
+        color: "var(--eg-red-text)",
         lineHeight: 1.5,
       }}
     >
@@ -97,7 +97,7 @@ function Gate({ label, done, onDo, onUndo }) {
       style={{
         marginTop: 16,
         paddingTop: 14,
-        borderTop: "1px solid rgba(255,255,255,0.04)",
+        borderTop: "1px solid var(--border-default)",
         display: "flex",
         justifyContent: "center",
       }}
@@ -115,10 +115,10 @@ function Gate({ label, done, onDo, onUndo }) {
           minWidth: 260,
           padding: "10px 14px",
           border: `1px solid ${
-            done ? "rgba(52,211,153,0.2)" : "rgba(234,179,8,0.15)"
+            done ? "var(--status-live-border)" : "var(--flow-aca-border)"
           }`,
-          background: done ? "rgba(52,211,153,0.05)" : "rgba(255,255,255,0.015)",
-          color: done ? "#34d399" : "#dfe6f0",
+          background: done ? "var(--status-live-bg)" : "var(--bg-elevated)",
+          color: done ? "var(--status-live)" : "var(--text-primary)",
         }}
       >
         <Check className="flow-gate-icon" size={14} strokeWidth={2.8} aria-hidden="true" />
@@ -137,21 +137,21 @@ function Card({ num, title, active, done, dur, children }) {
             alignItems: "center",
             gap: 8,
             padding: "10px 14px",
-            background: "rgba(52,211,153,0.03)",
-            border: "1px solid rgba(52,211,153,0.1)",
+            background: "var(--status-live-bg)",
+            border: "1px solid var(--status-live-border)",
             borderRadius: 10,
             cursor: "pointer",
             listStyle: "none",
             fontSize: 13,
-            color: "#6b7a8d",
+            color: "var(--text-muted)",
           }}
         >
-          <span style={{ color: "#34d399" }}>✓</span>
+          <span style={{ color: "var(--status-live)" }}>✓</span>
           <span style={{ flex: 1 }}>
             <span
               style={{
                 fontWeight: 700,
-                color: "#4a5568",
+                color: "var(--text-muted)",
                 marginRight: 8,
                 fontSize: 11,
                 fontVariantNumeric: "tabular-nums",
@@ -165,7 +165,7 @@ function Card({ num, title, active, done, dur, children }) {
             <span
               style={{
                 fontSize: 11,
-                color: "#4a5568",
+                color: "var(--text-muted)",
                 fontVariantNumeric: "tabular-nums",
               }}
             >
@@ -186,9 +186,9 @@ function Card({ num, title, active, done, dur, children }) {
     <section
       className={`flow-script-card${active ? " active-card" : ""}`}
       style={{
-        background: active ? "rgba(234,179,8,0.04)" : "rgba(255,255,255,0.018)",
+        background: active ? "var(--flow-aca-bg)" : "var(--bg-surface)",
         border: `1px solid ${
-          active ? "rgba(234,179,8,0.3)" : "rgba(255,255,255,0.05)"
+          active ? "var(--flow-aca-border)" : "var(--border-default)"
         }`,
         borderRadius: 10,
         padding: "20px 18px",
@@ -200,12 +200,12 @@ function Card({ num, title, active, done, dur, children }) {
           style={{
             fontSize: 11,
             fontWeight: 700,
-            color: active ? ACCENT : "#4a5568",
+            color: active ? ACCENT : "var(--text-muted)",
             background: active
-              ? "rgba(234,179,8,0.08)"
-              : "rgba(255,255,255,0.03)",
+              ? "var(--flow-aca-bg)"
+              : "var(--bg-elevated)",
             border: `1px solid ${
-              active ? "rgba(234,179,8,0.2)" : "rgba(255,255,255,0.05)"
+              active ? "var(--flow-aca-border)" : "var(--border-default)"
             }`,
             borderRadius: 5,
             padding: "3px 8px",
@@ -214,7 +214,7 @@ function Card({ num, title, active, done, dur, children }) {
         >
           G{String(num).padStart(2, "0")}
         </span>
-        <span style={{ fontSize: 15, fontWeight: 600, color: "#dfe6f0" }}>
+        <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
           {title}
         </span>
       </div>
@@ -232,10 +232,10 @@ function ReviewPoints({ points }) {
           style={{
             padding: "8px 10px",
             borderRadius: 7,
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.05)",
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border-default)",
             fontSize: 11,
-            color: "#c0d0e4",
+            color: "var(--text-primary)",
           }}
         >
           {point}
@@ -368,8 +368,8 @@ export default function StateACAFlow() {
         <section
           className="script-start-call-gate"
           style={{
-            background: "rgba(234,179,8,0.04)",
-            border: "1px solid rgba(234,179,8,0.2)",
+            background: "var(--flow-aca-bg)",
+            border: "1px solid var(--flow-aca-border)",
             borderRadius: 10,
             padding: "28px 20px",
             textAlign: "center",
@@ -387,8 +387,8 @@ export default function StateACAFlow() {
               textTransform: "uppercase",
               padding: "10px 36px",
               background:
-                "linear-gradient(145deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05))",
-              border: "1px solid rgba(234,179,8,0.3)",
+                "var(--flow-aca-bg)",
+              border: "1px solid var(--flow-aca-border)",
               color: ACCENT,
               borderRadius: 8,
               cursor: "pointer",
@@ -470,14 +470,14 @@ export default function StateACAFlow() {
                   marginTop: 18,
                   textAlign: "center",
                   padding: "20px",
-                  background: "rgba(52,211,153,0.04)",
-                  border: "1px solid rgba(52,211,153,0.12)",
+                  background: "var(--status-live-bg)",
+                  border: "1px solid var(--status-live-border)",
                   borderRadius: 10,
                 }}
               >
                 <div style={{ fontSize: 24, marginBottom: 6 }}>✓</div>
                 <div
-                  style={{ fontSize: 16, fontWeight: 700, color: "#34d399" }}
+                  style={{ fontSize: 16, fontWeight: 700, color: "var(--status-live)" }}
                 >
                   State ACA Flow Complete
                 </div>
@@ -485,10 +485,10 @@ export default function StateACAFlow() {
                   onClick={() => dispatch({ type: "RESET" })}
                   style={{
                     marginTop: 12,
-                    background: "rgba(52,211,153,0.08)",
-                    border: "1px solid rgba(52,211,153,0.2)",
+                    background: "var(--status-live-bg)",
+                    border: "1px solid var(--status-live-border)",
                     borderRadius: 6,
-                    color: "#34d399",
+                    color: "var(--status-live)",
                     padding: "8px 20px",
                     fontSize: 13,
                     fontWeight: 600,

@@ -9,12 +9,12 @@ export function Stars({ count }) {
         <StarIcon
           key={i}
           size={11}
-          fill={i <= Math.floor(count) ? "#fbbf24" : "none"}
-          stroke="#fbbf24"
+          fill={i <= Math.floor(count) ? "var(--status-pending)" : "none"}
+          stroke="var(--status-pending)"
           strokeWidth={1.5}
         />
       ))}
-      {count % 1 !== 0 && <span style={{ fontSize: "10px", color: "#fbbf24" }}>.5</span>}
+      {count % 1 !== 0 && <span style={{ fontSize: "10px", color: "var(--status-pending)" }}>.5</span>}
     </span>
   );
 }
@@ -40,7 +40,7 @@ function CarrierDot({ carrierKey, size = 6 }) {
     );
   }
   return (
-    <span style={{ width: size, height: size, borderRadius: "50%", backgroundColor: c.color || "#666", flexShrink: 0, display: "inline-block" }} />
+    <span style={{ width: size, height: size, borderRadius: "50%", backgroundColor: c.color || "var(--text-muted)", flexShrink: 0, display: "inline-block" }} />
   );
 }
 
@@ -63,7 +63,7 @@ export function SEPCard({ sep, isExpanded, onToggle }) {
               {{ high: "URGENT", medium: "ACTIVE", low: "OPEN", info: "ONGOING" }[urgCls]}
             </span>
             <span className={`sep-category-pill ${catCls}`}>{sep.category}</span>
-            {sep.code === "5-STAR" && <StarIcon size={14} fill="#fbbf24" stroke="#fbbf24" strokeWidth={1} />}
+            {sep.code === "5-STAR" && <StarIcon size={14} fill="var(--status-pending)" stroke="var(--status-pending)" strokeWidth={1} />}
             {daysCls && <span className={`sep-days-pill ${daysCls}`}>{sep.daysLeft}d left</span>}
           </div>
           <div style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>

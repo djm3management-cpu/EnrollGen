@@ -1,8 +1,8 @@
 export const STATE_SEP_TYPE_META = {
-  PAP: { label: "PAP", color: "#8b5cf6" },
-  DST: { label: "DST", color: "#d29922" },
-  INT: { label: "INT", color: "#58a6ff" },
-  CSNP: { label: "CSNP", color: "#2ea043" },
+  PAP: { label: "PAP", color: "var(--chart-4)" },
+  DST: { label: "DST", color: "var(--status-pending)" },
+  INT: { label: "INT", color: "var(--info)" },
+  CSNP: { label: "CSNP", color: "var(--status-live)" },
 };
 
 export const STATE_NAME_MAP = {
