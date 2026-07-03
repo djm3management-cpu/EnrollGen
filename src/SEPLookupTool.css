@@ -1713,3 +1713,131 @@
     text-align: center;
   }
 }
+
+/* Terminal dark mode, loaded with SEP Lookup after global overrides. */
+html.dark .sep-tool,
+html.dark .sep-tool-inner {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .sep-search-bar,
+html.dark .sep-filter-bar,
+html.dark .sep-stat-box,
+html.dark .sep-plan-table-wrap,
+html.dark .sep-info-box,
+html.dark .sep-map-section,
+html.dark .sep-cg-list,
+html.dark .sep-card,
+html.dark .sep-info-card,
+html.dark .sep-results-card,
+html.dark .fema-feed,
+html.dark .fema-feed-item {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: none !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .sep-search-bar input,
+html.dark .sep-tool select,
+html.dark .sep-tool input {
+  background: var(--bg-primary) !important;
+  border-color: var(--eg-border-hover) !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+}
+
+html.dark .sep-search-bar input:focus,
+html.dark .sep-tool select:focus,
+html.dark .sep-tool input:focus {
+  border-color: var(--border-focus) !important;
+  box-shadow: 0 0 0 1px var(--focus-glow) !important;
+}
+
+html.dark .sep-search-bar .primary,
+html.dark .sep-find-btn,
+html.dark .sep-action-btn.primary {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: var(--selection-text) !important;
+  box-shadow: none !important;
+}
+
+html.dark .sep-quick-zip-btn,
+html.dark .sep-tab-bar .tab,
+html.dark .fema-feed-show-all,
+html.dark .sep-action-btn,
+html.dark .sep-detail-trigger {
+  background: var(--bg-primary) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  box-shadow: none !important;
+}
+
+html.dark .sep-tab-bar .tab.active,
+html.dark .sep-quick-zip-btn:hover,
+html.dark .fema-feed-show-all:hover {
+  background: var(--selection-bg) !important;
+  border-color: var(--selection-bg) !important;
+  color: var(--selection-text) !important;
+}
+
+html.dark .sep-stat-label,
+html.dark .sep-filter-label,
+html.dark .sep-plan-table th,
+html.dark .sep-card-kicker,
+html.dark .sep-info-label,
+html.dark .fema-feed-label {
+  color: var(--text-label) !important;
+}
+
+html.dark .sep-plan-table,
+html.dark .sep-plan-table thead,
+html.dark .sep-plan-table tbody,
+html.dark .sep-plan-table tr,
+html.dark .sep-plan-table th,
+html.dark .sep-plan-table td {
+  background: var(--bg-primary) !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .sep-plan-table tbody tr:nth-child(even) td {
+  background: var(--bg-elevated) !important;
+}
+
+html.dark .sep-plan-table tbody tr:hover td {
+  background: var(--selection-bg) !important;
+  color: var(--selection-text) !important;
+}
+
+html.dark .sep-alert,
+html.dark .sep-stat-box.alert,
+html.dark .sep-error,
+html.dark .fema-feed-item.is-urgent {
+  background: var(--status-offline-bg) !important;
+  border-color: var(--status-offline-border) !important;
+  color: var(--eg-red-text) !important;
+}
+
+html.dark .sep-badge.is-active,
+html.dark .sep-status.is-live,
+html.dark .sep-dot.is-live {
+  background: var(--status-live-bg) !important;
+  border-color: var(--status-live-border) !important;
+  color: var(--status-live) !important;
+}
+
+html.dark .sep-badge.is-pending,
+html.dark .sep-status.is-pending {
+  background: var(--status-pending-bg) !important;
+  border-color: var(--status-pending-border) !important;
+  color: var(--status-pending) !important;
+}
+
+html.dark .sep-ref-alert,
+html.dark .sep-warning-card {
+  border-left: 0 !important;
+  outline: 1px solid var(--status-pending-border);
+}

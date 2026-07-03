@@ -3,7 +3,7 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--overlay-backdrop);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -19,11 +19,11 @@
 /* â”€â”€ Modal container â”€â”€ */
 .sep-modal-container {
   background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-default);
   border-radius: 16px;
   box-shadow:
-    0 24px 80px rgba(0, 0, 0, 0.6),
-    0 0 1px rgba(255, 255, 255, 0.1);
+    0 24px 80px transparent,
+    0 0 1px var(--border-default);
   width: 90vw;
   max-width: 720px;
   max-height: 85vh;
@@ -44,7 +44,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-default);
 }
 
 .sep-modal-title {
@@ -52,16 +52,16 @@
   font-weight: 700;
   font-size: 20px;
   letter-spacing: 0.04em;
-  color: #e7edf5;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .sep-modal-close {
   appearance: none;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-default);
   border-radius: 8px;
-  color: #8f949e;
+  color: var(--text-muted);
   font-size: 20px;
   width: 32px;
   height: 32px;
@@ -74,9 +74,9 @@
 }
 
 .sep-modal-close:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border-color: var(--border-focus);
+  background: color-mix(in srgb, var(--text-primary) 5%, transparent);
 }
 
 /* â”€â”€ Body (scrollable) â”€â”€ */
@@ -93,14 +93,14 @@
   background: transparent;
 }
 .sep-modal-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border-default);
   border-radius: 10px;
 }
 
 /* â”€â”€ Footer â”€â”€ */
 .sep-modal-footer {
   padding: 12px 24px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border-default);
   display: flex;
   justify-content: flex-end;
 }
@@ -108,9 +108,9 @@
 .sep-modal-close-btn {
   appearance: none;
   background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
-  color: #8f949e;
+  color: var(--text-muted);
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 13px;
@@ -122,8 +122,8 @@
 }
 
 .sep-modal-close-btn:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  border-color: var(--border-focus);
 }
 
 /* â”€â”€ Override SEPResultsPanel styles when inside modal â”€â”€ */
@@ -149,7 +149,7 @@
 
 .sep-modal-county {
   font-size: 13px;
-  color: #8f949e;
+  color: var(--text-muted);
   font-family: var(--font-mono);
   margin-bottom: 16px;
   letter-spacing: 0.03em;

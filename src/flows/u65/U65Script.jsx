@@ -64,7 +64,7 @@ function U65ScriptBody() {
       priority: 2,
       title: "Private Plans",
       shortLabel: "Private Plans",
-      color: "#6aab7d",
+      color: "var(--eg-flow-ms)",
       icon: <BookOpen size={13} />,
       badge:
         privatePlanFocus === "underwriting"

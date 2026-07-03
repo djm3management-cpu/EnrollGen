@@ -3,10 +3,10 @@ import { useAppAuth } from "../context/AuthContext";
 import { getAuthSupabase } from "../lib/supabase";
 
 const FLOW_COLORS = {
-  ma: "#E8002D",
-  medsup: "#00D166",
-  aca: "#EAB308",
-  u65: "#a855f7",
+  ma: "var(--eg-flow-ma)",
+  medsup: "var(--eg-flow-ms)",
+  aca: "var(--eg-flow-aca)",
+  u65: "var(--eg-flow-u65)",
 };
 
 const FLOW_LABELS = {
@@ -81,7 +81,7 @@ export default function CallHistory() {
   if (loading) {
     return (
       <div className="card" style={{ marginTop: 14, padding: 24 }}>
-        <span style={{ color: "#556677", fontSize: 13, fontFamily: "var(--font-body)" }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 13, fontFamily: "var(--font-body)" }}>
           Loading…
         </span>
       </div>
@@ -91,7 +91,7 @@ export default function CallHistory() {
   if (error === "auth_disabled") {
     return (
       <div className="card" style={{ marginTop: 14, padding: 24 }}>
-        <span style={{ color: "#556677", fontSize: 13, fontFamily: "var(--font-body)" }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 13, fontFamily: "var(--font-body)" }}>
           Sign in to view call history.
         </span>
       </div>
@@ -101,7 +101,7 @@ export default function CallHistory() {
   if (error) {
     return (
       <div className="card" style={{ marginTop: 14, padding: 24 }}>
-        <span style={{ color: "#cc4444", fontSize: 13, fontFamily: "var(--font-body)" }}>
+        <span style={{ color: "var(--danger)", fontSize: 13, fontFamily: "var(--font-body)" }}>
           Error loading calls: {error}
         </span>
       </div>
@@ -111,7 +111,7 @@ export default function CallHistory() {
   if (sessions.length === 0) {
     return (
       <div className="card" style={{ marginTop: 14, padding: 24 }}>
-        <span style={{ color: "#556677", fontSize: 13, fontFamily: "var(--font-body)" }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 13, fontFamily: "var(--font-body)" }}>
           No calls recorded yet. Start an enrollment to see your history here.
         </span>
       </div>
@@ -126,8 +126,8 @@ export default function CallHistory() {
     fontWeight: 700,
     letterSpacing: "0.12em",
     textTransform: "uppercase",
-    color: "#556677",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
+    color: "var(--text-label)",
+    borderBottom: "1px solid var(--border-default)",
     whiteSpace: "nowrap",
   };
 
@@ -136,8 +136,8 @@ export default function CallHistory() {
     fontSize: 12,
     fontFamily: "var(--font-body)",
     fontWeight: 500,
-    color: "#c8d6e5",
-    borderBottom: "1px solid rgba(255,255,255,0.03)",
+    color: "var(--text-primary)",
+    borderBottom: "1px solid var(--border-default)",
     whiteSpace: "nowrap",
   };
 
@@ -145,7 +145,7 @@ export default function CallHistory() {
     <div className="card" style={{ marginTop: 14, padding: 0, overflow: "hidden" }}>
       <div style={{
         padding: "12px 16px 8px",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        borderBottom: "1px solid var(--border-default)",
       }}>
         <span style={{
           fontSize: 11,
@@ -153,7 +153,7 @@ export default function CallHistory() {
           fontWeight: 700,
           letterSpacing: "0.12em",
           textTransform: "uppercase",
-          color: "#556677",
+          color: "var(--text-label)",
         }}>
           My Calls
         </span>
@@ -173,7 +173,7 @@ export default function CallHistory() {
           <tbody>
             {sessions.map((s) => {
               const flowKey = (s.flow || "").toLowerCase();
-              const dotColor = FLOW_COLORS[flowKey] || "#556677";
+              const dotColor = FLOW_COLORS[flowKey] || "var(--text-muted)";
               const flowLabel = FLOW_LABELS[flowKey] || s.flow || "-";
               const flagCount = s.compliance_flags?.[0]?.count || 0;
               const sectionCount = s.section_scores?.[0]?.count || 0;
@@ -198,7 +198,7 @@ export default function CallHistory() {
                   <td style={tdStyle}>{sectionCount > 0 ? `${sectionCount}/8` : "-"}</td>
                   <td style={{
                     ...tdStyle,
-                    color: flagCount > 0 ? "#EAB308" : "#556677",
+                    color: flagCount > 0 ? "var(--status-pending)" : "var(--text-muted)",
                   }}>
                     {flagCount > 0 ? flagCount : "-"}
                   </td>
@@ -211,12 +211,12 @@ export default function CallHistory() {
                       padding: "2px 8px",
                       borderRadius: 3,
                       background: s.completed
-                        ? "rgba(0,209,102,0.1)"
-                        : "rgba(255,255,255,0.04)",
+                        ? "var(--status-live-bg)"
+                        : "var(--status-pending-bg)",
                       border: s.completed
-                        ? "1px solid rgba(0,209,102,0.2)"
-                        : "1px solid rgba(255,255,255,0.06)",
-                      color: s.completed ? "#00D166" : "#556677",
+                        ? "1px solid var(--status-live-border)"
+                        : "1px solid var(--status-pending-border)",
+                      color: s.completed ? "var(--status-live)" : "var(--status-pending)",
                     }}>
                       {s.completed ? "Done" : "Partial"}
                     </span>

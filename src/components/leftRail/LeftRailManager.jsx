@@ -290,7 +290,7 @@ export function LeftRail({
           >
             <span
               className="left-rail-handle-pip"
-              style={{ background: item.color || "#8b949e" }}
+              style={{ background: item.color || "var(--text-muted)" }}
               aria-hidden="true"
             />
             {item.icon ? (

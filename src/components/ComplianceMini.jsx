@@ -29,14 +29,12 @@ import { SectionTimer } from "./SharedUI";
  */
 
 function getScoreColor(s) {
-  if (s >= 90) return "#33cc66";
-  if (s >= 75) return "#33cc66";
-  if (s >= 50) return "#f4b24d";
-  if (s >= 25) return "#d98b45";
-  return "#ff3838";
+  if (s >= 75) return "var(--status-live)";
+  if (s >= 25) return "var(--status-pending)";
+  return "var(--status-offline)";
 }
 
-function renderCategoryIcon(icon, color = "#cbd5e1", size = 14) {
+function renderCategoryIcon(icon, color = "var(--text-primary)", size = 14) {
   const props = { size, color, strokeWidth: 2 };
   const iconMap = {
     "📣": <Megaphone {...props} />,
@@ -64,7 +62,7 @@ const GATE_BOOLEAN_KEYS = [
   "snpOk",
 ];
 
-const DORMANT_COLOR = "#555555";
+const DORMANT_COLOR = "var(--text-muted)";
 
 const ComplianceMini = memo(function ComplianceMini({
   transcript = "",
@@ -128,7 +126,7 @@ const ComplianceMini = memo(function ComplianceMini({
             gap: 6,
             marginBottom: 10,
             paddingBottom: 8,
-            borderBottom: "1px solid rgba(255,255,255,0.05)",
+            borderBottom: "1px solid var(--border-default)",
           }}
         >
           <span
@@ -137,8 +135,8 @@ const ComplianceMini = memo(function ComplianceMini({
               width: 8,
               height: 8,
               borderRadius: "50%",
-              background: "#00ff41",
-              boxShadow: "0 0 6px rgba(0,255,65,0.6)",
+              background: "var(--status-live)",
+              boxShadow: "none",
               flexShrink: 0,
             }}
           />
@@ -150,7 +148,7 @@ const ComplianceMini = memo(function ComplianceMini({
               fontWeight: 700,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
-              color: "#00ff41",
+              color: "var(--status-live)",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -198,7 +196,7 @@ const ComplianceMini = memo(function ComplianceMini({
                 flex: 1,
                 height: 6,
                 borderRadius: 3,
-                background: "rgba(255,255,255,0.06)",
+                background: "var(--chart-track)",
                 overflow: "hidden",
               }}
             >
@@ -209,7 +207,7 @@ const ComplianceMini = memo(function ComplianceMini({
                     width: `${result.score}%`,
                     height: "100%",
                     borderRadius: 3,
-                    background: `linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #34d399 100%)`,
+                    background: "linear-gradient(90deg, var(--status-offline) 0%, var(--status-pending) 50%, var(--status-live) 100%)",
                     backgroundSize: "200% 100%",
                     backgroundPosition: `${100 - result.score}% 0`,
                     transition: "width 0.6s ease, background-position 0.6s ease",
@@ -223,7 +221,7 @@ const ComplianceMini = memo(function ComplianceMini({
               className="compliance-mini__count"
               style={{
                 fontSize: "0.58em",
-                color: isDormant ? DORMANT_COLOR : "#64748b",
+                color: isDormant ? DORMANT_COLOR : "var(--text-muted)",
               }}
             >
               {isDormant
@@ -231,13 +229,13 @@ const ComplianceMini = memo(function ComplianceMini({
                 : `${result.categoriesPassed}/${result.totalCategories}`}
             </span>
             {!isDormant && isTranscriptScored && (
-              <Mic className="compliance-mini__transcript-icon" size={11} style={{ color: "#33cc66" }} />
+              <Mic className="compliance-mini__transcript-icon" size={11} style={{ color: "var(--status-live)" }} />
             )}
             {!isDormant && violationCount > 0 && (
               <span
                 className="compliance-mini__violation-count"
                 style={{
-                  color: "#ff3838",
+                  color: "var(--status-offline)",
                   fontWeight: 700,
                   display: "inline-flex",
                   alignItems: "center",
@@ -253,7 +251,7 @@ const ComplianceMini = memo(function ComplianceMini({
               className="compliance-mini__chevron"
               size={12}
               style={{
-                color: "#64748b",
+                color: "var(--text-muted)",
                 transition: "transform 0.2s",
                 transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
               }}
@@ -293,7 +291,7 @@ const ComplianceMini = memo(function ComplianceMini({
                     style={{
                       flex: 1,
                       fontSize: "0.66em",
-                      color: isDormant ? DORMANT_COLOR : "#94a3b8",
+                      color: isDormant ? DORMANT_COLOR : "var(--text-secondary)",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -306,7 +304,7 @@ const ComplianceMini = memo(function ComplianceMini({
                     style={{
                       width: 50,
                       height: 4,
-                      background: "rgba(255,255,255,0.06)",
+                      background: "var(--chart-track)",
                       borderRadius: 2,
                       overflow: "hidden",
                       flexShrink: 0,
@@ -347,7 +345,7 @@ const ComplianceMini = memo(function ComplianceMini({
                 style={{
                   marginTop: 4,
                   fontSize: "0.5em",
-                  color: "#33cc66",
+                  color: "var(--status-live)",
                   display: "flex",
                   alignItems: "center",
                   gap: 4,
@@ -363,10 +361,10 @@ const ComplianceMini = memo(function ComplianceMini({
                 style={{
                   marginTop: 6,
                   padding: "3px 6px",
-                  background: "rgba(239,68,68,0.1)",
+                  background: "var(--status-offline-bg)",
                   borderRadius: 4,
                   fontSize: "0.58em",
-                  color: "#f87171",
+                  color: "var(--eg-red-text)",
                   fontWeight: 600,
                   textAlign: "center",
                 }}

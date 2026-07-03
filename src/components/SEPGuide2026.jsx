@@ -18,10 +18,10 @@ const STATE_ABBREVS = {
 };
 
 const SEP_PILL_COLORS = {
-  DST:  { bg: "rgba(120,120,120,0.15)", border: "rgba(120,120,120,0.3)", text: "#999" },
-  INT:  { bg: "rgba(0,209,102,0.12)",   border: "rgba(0,209,102,0.3)",   text: "#00D166" },
-  PAP:  { bg: "rgba(33,150,243,0.12)",  border: "rgba(33,150,243,0.3)",  text: "#2196F3" },
-  CSNP: { bg: "rgba(168,85,247,0.12)",  border: "rgba(168,85,247,0.3)",  text: "#a855f7" },
+  DST:  { bg: "color-mix(in srgb, var(--text-muted) 15%, transparent)", border: "color-mix(in srgb, var(--text-muted) 30%, transparent)", text: "var(--text-muted)" },
+  INT:  { bg: "var(--status-live-bg)",   border: "var(--status-live-border)",   text: "var(--status-live)" },
+  PAP:  { bg: "var(--info-bg)",  border: "var(--info-border)",  text: "var(--info)" },
+  CSNP: { bg: "color-mix(in srgb, var(--chart-4) 12%, transparent)",  border: "color-mix(in srgb, var(--chart-4) 30%, transparent)",  text: "var(--chart-4)" },
 };
 
 /* ─── Markdown Parser ─── */
@@ -272,7 +272,7 @@ function RenderLines({ lines }) {
     // Emphasis-only line: *text*
     if (/^\*[^*].*\*$/.test(line) || /^\(.*\)$/.test(line)) {
       elements.push(
-        <p key={`em-${i}`} style={{ fontSize: 12, color: "#666", fontStyle: "italic", margin: "4px 0" }}>
+        <p key={`em-${i}`} style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic", margin: "4px 0" }}>
           {cleanBold(line)}
         </p>
       );
@@ -321,7 +321,7 @@ function InlineContent({ text }) {
 
   return segments.map((seg, idx) => {
     if (seg.type === "bold") {
-      return <strong key={idx} style={{ color: "#eef2f5" }}>{seg.value}</strong>;
+      return <strong key={idx} style={{ color: "var(--text-primary)" }}>{seg.value}</strong>;
     }
     if (seg.type === "phone") {
       return (
@@ -329,9 +329,9 @@ function InlineContent({ text }) {
           key={idx}
           href={phoneToTel(seg.value)}
           style={{
-            color: "#76bfff",
+            color: "var(--info)",
             textDecoration: "none",
-            borderBottom: "1px dashed rgba(118,191,255,0.3)",
+            borderBottom: "1px dashed var(--info-border)",
           }}
         >
           <Phone size={10} style={{ display: "inline", verticalAlign: "middle", marginRight: 3 }} />
@@ -364,8 +364,8 @@ function DisclosureCallout({ text }) {
     <div
       style={{
         position: "relative",
-        background: "linear-gradient(135deg, rgba(33,150,243,0.08) 0%, rgba(33,150,243,0.03) 100%)",
-        border: "1px solid rgba(33,150,243,0.2)",
+        background: "linear-gradient(135deg, var(--info-bg) 0%, var(--info-bg) 100%)",
+        border: "1px solid var(--info-border)",
         borderRadius: 10,
         padding: "14px 16px 14px 44px",
         margin: "10px 0",
@@ -379,12 +379,12 @@ function DisclosureCallout({ text }) {
           width: 20,
           height: 20,
           borderRadius: 4,
-          background: "rgba(33,150,243,0.15)",
+          background: "var(--info-bg)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           fontSize: 10,
-          color: "#2196F3",
+          color: "var(--info)",
         }}
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -399,7 +399,7 @@ function DisclosureCallout({ text }) {
           fontWeight: 700,
           letterSpacing: "0.14em",
           textTransform: "uppercase",
-          color: "#2196F3",
+          color: "var(--info)",
           marginBottom: 6,
         }}
       >
@@ -409,7 +409,7 @@ function DisclosureCallout({ text }) {
         style={{
           fontSize: 13,
           lineHeight: 1.65,
-          color: "#cfd5df",
+          color: "var(--text-primary)",
           fontStyle: "italic",
         }}
       >
@@ -421,12 +421,12 @@ function DisclosureCallout({ text }) {
           position: "absolute",
           top: 10,
           right: 10,
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          background: "color-mix(in srgb, var(--text-primary) 5%, transparent)",
+          border: "1px solid var(--border-default)",
           borderRadius: 4,
           padding: "3px 6px",
           cursor: "pointer",
-          color: copied ? "#00D166" : "#666",
+          color: copied ? "var(--status-live)" : "var(--text-muted)",
           display: "flex",
           alignItems: "center",
           gap: 4,
@@ -448,8 +448,8 @@ function WarningCallout({ text }) {
   return (
     <div
       style={{
-        background: "rgba(255,193,7,0.08)",
-        border: "1px solid rgba(255,193,7,0.25)",
+        background: "var(--status-pending-bg)",
+        border: "1px solid var(--status-pending-border)",
         borderRadius: 8,
         padding: "10px 14px 10px 40px",
         margin: "8px 0",
@@ -462,10 +462,10 @@ function WarningCallout({ text }) {
           position: "absolute",
           left: 14,
           top: 12,
-          color: "#FFC107",
+          color: "var(--status-pending)",
         }}
       />
-      <div style={{ fontSize: 12, color: "#FFC107", lineHeight: 1.5 }}>
+      <div style={{ fontSize: 12, color: "var(--status-pending)", lineHeight: 1.5 }}>
         {text}
       </div>
     </div>
@@ -490,8 +490,8 @@ function MandatoryQuestions({ items }) {
               display: "flex",
               gap: 10,
               alignItems: "flex-start",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "color-mix(in srgb, var(--text-primary) 2%, transparent)",
+              border: "1px solid var(--border-default)",
               borderRadius: 8,
               padding: "10px 12px",
             }}
@@ -503,22 +503,22 @@ function MandatoryQuestions({ items }) {
                 height: 22,
                 borderRadius: "50%",
                 background: isFail
-                  ? "rgba(255,68,85,0.12)"
+                  ? "var(--status-offline-bg)"
                   : isEnsure
-                    ? "rgba(255,193,7,0.12)"
-                    : "rgba(0,209,102,0.12)",
+                    ? "var(--status-pending-bg)"
+                    : "var(--status-live-bg)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 marginTop: 1,
               }}
             >
-              <span style={{ fontSize: 11, fontWeight: 800, fontFamily: "var(--font-body)", color: isFail ? "#FF4455" : isEnsure ? "#FFC107" : "#00D166" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, fontFamily: "var(--font-body)", color: isFail ? "var(--status-offline)" : isEnsure ? "var(--status-pending)" : "var(--status-live)" }}>
                 {idx + 1}
               </span>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, color: "#eef2f5", lineHeight: 1.5 }}>
+              <div style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 1.5 }}>
                 "{question}"
               </div>
               {outcome && (
@@ -530,7 +530,7 @@ function MandatoryQuestions({ items }) {
                     gap: 5,
                     fontSize: 11,
                     fontWeight: 600,
-                    color: isFail ? "#FF4455" : isEnsure ? "#FFC107" : "#00D166",
+                    color: isFail ? "var(--status-offline)" : isEnsure ? "var(--status-pending)" : "var(--status-live)",
                   }}
                 >
                   {isFail ? (
@@ -583,8 +583,8 @@ function MarkdownTable({ rawLines }) {
                   fontWeight: 700,
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
-                  color: "#666",
-                  borderBottom: "1px solid rgba(255,255,255,0.08)",
+                  color: "var(--text-muted)",
+                  borderBottom: "1px solid var(--border-default)",
                 }}
               >
                 {h}
@@ -600,8 +600,8 @@ function MarkdownTable({ rawLines }) {
                   key={ci}
                   style={{
                     padding: "6px 10px",
-                    color: "#cfd5df",
-                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    color: "var(--text-primary)",
+                    borderBottom: "1px solid var(--border-default)",
                   }}
                 >
                   <InlineContent text={cell} />
@@ -660,11 +660,11 @@ function StatePanel({ state }) {
               fontFamily: "var(--font-body)",
               fontWeight: 600,
               letterSpacing: "0.08em",
-              color: "#FF4455",
+              color: "var(--status-offline)",
               padding: "2px 8px",
               borderRadius: 999,
-              background: "rgba(255,68,85,0.1)",
-              border: "1px solid rgba(255,68,85,0.2)",
+              background: "var(--status-offline-bg)",
+              border: "1px solid var(--status-offline-border)",
             }}
           >
             FEMA END {femaEnd}
@@ -677,11 +677,11 @@ function StatePanel({ state }) {
               fontFamily: "var(--font-body)",
               fontWeight: 600,
               letterSpacing: "0.08em",
-              color: "#666",
+              color: "var(--text-muted)",
               padding: "2px 8px",
               borderRadius: 999,
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "var(--border-default)",
+              border: "1px solid var(--border-default)",
             }}
           >
             NO FEMA DATE
@@ -715,11 +715,11 @@ export default function SEPGuide2026() {
               fontWeight: 700,
               letterSpacing: "0.14em",
               textTransform: "uppercase",
-              color: "#666",
+              color: "var(--text-muted)",
               padding: "2px 6px",
               borderRadius: 4,
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "var(--border-default)",
+              border: "1px solid var(--border-default)",
             }}
           >
             Internal Use Only
@@ -760,11 +760,11 @@ export default function SEPGuide2026() {
                     padding: "8px 12px",
                     borderRadius: 8,
                     border: active
-                      ? "1px solid rgba(33,150,243,0.3)"
-                      : "1px solid rgba(255,255,255,0.06)",
+                      ? "1px solid var(--info-border)"
+                      : "1px solid var(--border-default)",
                     background: active
-                      ? "linear-gradient(135deg, rgba(33,150,243,0.1) 0%, rgba(33,150,243,0.03) 100%)"
-                      : "rgba(255,255,255,0.02)",
+                      ? "linear-gradient(135deg, var(--info-bg) 0%, var(--info-bg) 100%)"
+                      : "color-mix(in srgb, var(--text-primary) 2%, transparent)",
                     cursor: "pointer",
                     textAlign: "left",
                     transition: "all 0.15s ease",
@@ -777,7 +777,7 @@ export default function SEPGuide2026() {
                       fontSize: 14,
                       fontWeight: 800,
                       letterSpacing: "0.06em",
-                      color: active ? "#2196F3" : "#eef2f5",
+                      color: active ? "var(--info)" : "var(--text-primary)",
                       minWidth: 24,
                     }}
                   >
@@ -786,7 +786,7 @@ export default function SEPGuide2026() {
                   <span
                     style={{
                       fontSize: 12,
-                      color: active ? "#8BBEF0" : "#666",
+                      color: active ? "var(--eg-blue-text)" : "var(--text-muted)",
                       flex: 1,
                     }}
                   >
@@ -800,7 +800,7 @@ export default function SEPGuide2026() {
                   <ChevronDown
                     size={14}
                     style={{
-                      color: active ? "#2196F3" : "#444",
+                      color: active ? "var(--info)" : "var(--text-muted)",
                       transform: active ? "rotate(180deg)" : "none",
                       transition: "transform 0.18s ease",
                       flexShrink: 0,
@@ -815,8 +815,8 @@ export default function SEPGuide2026() {
           {selectedState && (
             <div
               style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.06)",
+                background: "color-mix(in srgb, var(--text-primary) 2%, transparent)",
+                border: "1px solid var(--border-default)",
                 borderRadius: 10,
                 padding: 16,
               }}
@@ -833,10 +833,10 @@ export default function SEPGuide2026() {
                         fontWeight: 800,
                         letterSpacing: "0.06em",
                         textTransform: "uppercase",
-                        color: "#eef2f5",
+                        color: "var(--text-primary)",
                         marginBottom: 12,
                         paddingBottom: 10,
-                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                        borderBottom: "1px solid var(--border-default)",
                       }}
                     >
                       {stateData.name}
@@ -870,8 +870,8 @@ export default function SEPGuide2026() {
                       fontWeight: 700,
                       letterSpacing: "0.12em",
                       textTransform: "uppercase",
-                      color: "#666",
-                      borderBottom: "1px solid rgba(255,255,255,0.08)",
+                      color: "var(--text-muted)",
+                      borderBottom: "1px solid var(--border-default)",
                     }}
                   >
                     Resource
@@ -885,8 +885,8 @@ export default function SEPGuide2026() {
                       fontWeight: 700,
                       letterSpacing: "0.12em",
                       textTransform: "uppercase",
-                      color: "#666",
-                      borderBottom: "1px solid rgba(255,255,255,0.08)",
+                      color: "var(--text-muted)",
+                      borderBottom: "1px solid var(--border-default)",
                     }}
                   >
                     Number
@@ -899,8 +899,8 @@ export default function SEPGuide2026() {
                     <td
                       style={{
                         padding: "8px 12px",
-                        color: "#cfd5df",
-                        borderBottom: "1px solid rgba(255,255,255,0.04)",
+                        color: "var(--text-primary)",
+                        borderBottom: "1px solid var(--border-default)",
                       }}
                     >
                       {row.resource}
@@ -908,15 +908,15 @@ export default function SEPGuide2026() {
                     <td
                       style={{
                         padding: "8px 12px",
-                        borderBottom: "1px solid rgba(255,255,255,0.04)",
+                        borderBottom: "1px solid var(--border-default)",
                       }}
                     >
                       <a
                         href={phoneToTel(row.number)}
                         style={{
-                          color: "#76bfff",
+                          color: "var(--info)",
                           textDecoration: "none",
-                          borderBottom: "1px dashed rgba(118,191,255,0.3)",
+                          borderBottom: "1px dashed var(--info-border)",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: 5,

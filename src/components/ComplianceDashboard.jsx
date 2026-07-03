@@ -40,29 +40,34 @@ import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
  * Drop into: src/components/ComplianceDashboard.jsx
  */
 
-/* ── Color helpers, F1 HUD palette ── */
+/* ── Color helpers, semantic score palette ── */
+function scoreBand(s) {
+  if (s >= 90) return "a";
+  if (s >= 75) return "b";
+  if (s >= 50) return "c";
+  if (s >= 25) return "d";
+  return "f";
+}
 function getScoreColor(s) {
-  if (s >= 90) return "#00D166";   // safety green
-  if (s >= 75) return "#00B050";
-  if (s >= 50) return "#FFD700";   // warning gold
-  if (s >= 25) return "#FF8C00";
-  return "#E8002D";                // danger red
+  return `var(--score-${scoreBand(s)})`;
 }
 function getScoreBg(s) {
-  if (s >= 90) return "rgba(0,209,102,0.16)";
-  if (s >= 75) return "rgba(0,176,80,0.14)";
-  if (s >= 50) return "rgba(255,215,0,0.15)";
-  if (s >= 25) return "rgba(255,140,0,0.15)";
-  return "rgba(232,0,45,0.15)";
+  return `var(--score-${scoreBand(s)}-bg)`;
+}
+function getScoreBorder(s) {
+  return `var(--score-${scoreBand(s)}-border)`;
+}
+function getScoreGlow(s) {
+  return `var(--score-${scoreBand(s)}-glow)`;
 }
 function getGradeColor(g) {
-  if (g.startsWith("A")) return "#00D166";
-  if (g.startsWith("B")) return "#00B050";
-  if (g.startsWith("C")) return "#FFD700";
-  if (g.startsWith("D")) return "#FF8C00";
-  return "#E8002D";
+  if (g.startsWith("A")) return "var(--score-a)";
+  if (g.startsWith("B")) return "var(--score-b)";
+  if (g.startsWith("C")) return "var(--score-c)";
+  if (g.startsWith("D")) return "var(--score-d)";
+  return "var(--score-f)";
 }
-function renderCategoryIcon(icon, color = "#cbd5e1", size = 16) {
+function renderCategoryIcon(icon, color = "var(--text-secondary)", size = 16) {
   const props = { size, color, strokeWidth: 2 };
   const iconMap = {
     "📣": <Megaphone {...props} />,
@@ -78,7 +83,7 @@ function renderCategoryIcon(icon, color = "#cbd5e1", size = 16) {
 
   return iconMap[icon] || <CheckSquare {...props} />;
 }
-function sourceIcon(src, color = "#cbd5e1") {
+function sourceIcon(src, color = "var(--text-secondary)") {
   const props = { size: 12, color, strokeWidth: 2 };
   if (src === "both") return <Check {...props} />;
   if (src === "transcript") return <Mic {...props} />;
@@ -118,7 +123,7 @@ function ScoreRing({ score, size = 48, strokeWidth = 4 }) {
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="rgba(255,255,255,0.06)"
+        stroke="var(--chart-track)"
         strokeWidth={strokeWidth}
       />
       <circle
@@ -154,6 +159,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
   const canToggle = typeof onToggle === "function";
   const col = getScoreColor(cat.score);
   const bg = getScoreBg(cat.score);
+  const border = getScoreBorder(cat.score);
   return (
     <div style={{ marginBottom: 2 }}>
       <div
@@ -167,7 +173,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
           borderRadius: 3,
           cursor: canToggle ? "pointer" : "default",
           transition: "background 0.12s",
-          borderLeft: `2px solid ${col}`,
+          outline: `1px solid ${isExpanded ? border : "transparent"}`,
         }}
       >
         <span
@@ -188,21 +194,21 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
             fontWeight: 700,
             letterSpacing: "0.06em",
             textTransform: "uppercase",
-            color: "#D0D0E0",
+            color: "var(--text-primary)",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
           }}>
             {cat.name}
           </div>
-          <div style={{ fontSize: "0.62em", color: "#3A3A4A", marginTop: 1 }}>
+          <div style={{ fontSize: "0.62em", color: "var(--text-muted)", marginTop: 1 }}>
             {cat.description}
           </div>
         </div>
         <div
           style={{
             background: bg,
-            border: `1px solid ${col}30`,
+            border: `1px solid ${border}`,
             borderRadius: 4,
             padding: "2px 8px",
             minWidth: 48,
@@ -222,7 +228,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
         </div>
         <ChevronDown
           size={14}
-          color="#475569"
+          color="var(--text-muted)"
           style={{
             transition: "transform 0.2s",
             transform: isExpanded ? "rotate(180deg)" : "rotate(0)",
@@ -254,10 +260,10 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
                   gap: 8,
                   padding: "6px 8px",
                   background: isViolation
-                    ? "rgba(239,68,68,0.08)"
-                    : "rgba(255,255,255,0.02)",
+                    ? "var(--status-offline-bg)"
+                    : "var(--bg-elevated)",
                   borderRadius: 4,
-                  borderLeft: `2px solid ${isViolation ? "#ef4444" : qc}40`,
+                  outline: `1px solid ${isViolation ? "var(--status-offline-border)" : getScoreBorder(q.score)}`,
                 }}
               >
                 {/* Source + score */}
@@ -291,14 +297,14 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
                       minHeight: 12,
                     }}
                   >
-                    {sourceIcon(q.source, isViolation ? "#ef4444" : qc)}
+                    {sourceIcon(q.source, isViolation ? "var(--danger)" : qc)}
                   </span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
                       fontSize: "0.72em",
-                      color: "#cbd5e1",
+                      color: "var(--text-primary)",
                       lineHeight: 1.35,
                     }}
                   >
@@ -308,10 +314,10 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
                     style={{
                       fontSize: "0.63em",
                       color: isViolation
-                        ? "#f87171"
+                        ? "var(--eg-red-text)"
                         : q.score >= 75
-                        ? "#64748b"
-                        : "#f59e0b",
+                        ? "var(--text-muted)"
+                        : "var(--status-pending)",
                       lineHeight: 1.3,
                       marginTop: 2,
                       fontWeight: isViolation ? 600 : 400,
@@ -332,7 +338,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
                       <span
                         style={{
                           fontSize: "0.55em",
-                          color: "#475569",
+                          color: "var(--text-muted)",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: 3,
@@ -345,7 +351,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
                         style={{
                           width: 60,
                           height: 3,
-                          background: "rgba(255,255,255,0.06)",
+                          background: "var(--chart-track)",
                           borderRadius: 2,
                           overflow: "hidden",
                         }}
@@ -363,7 +369,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
                       <span
                         style={{
                           fontSize: "0.55em",
-                          color: "#64748b",
+                          color: "var(--text-muted)",
                           fontVariantNumeric: "tabular-nums",
                         }}
                       >
@@ -375,7 +381,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
                 <span
                   style={{
                     fontSize: "0.58em",
-                    color: "#475569",
+                    color: "var(--text-muted)",
                     flexShrink: 0,
                     paddingTop: 2,
                   }}
@@ -389,7 +395,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
             <div
               style={{
                 fontSize: "0.56em",
-                color: "#475569",
+                color: "var(--text-muted)",
                 marginTop: 2,
                 paddingLeft: 4,
               }}
@@ -493,7 +499,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
           gap: 12,
           padding: "10px 14px",
           cursor: forceExpanded ? "default" : "pointer",
-          borderBottom: isExpanded ? "1px solid rgba(232,0,45,0.15)" : "none",
+          borderBottom: isExpanded ? "1px solid var(--border-default)" : "none",
           borderRadius: isExpanded ? "5px 5px 0 0" : "5px",
         }}
       >
@@ -506,7 +512,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
               fontWeight: 700,
               letterSpacing: "0.10em",
               textTransform: "uppercase",
-              color: "#E0E0F0",
+              color: "var(--text-primary)",
             }}>
               Compliance HUD
             </span>
@@ -517,7 +523,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 fontWeight: 800,
                 letterSpacing: "0.06em",
                 color: gradeColor,
-                textShadow: `0 0 10px ${gradeColor}60`,
+                textShadow: `0 0 10px ${getScoreGlow(result.score)}`,
               }}>
                 {result.grade}
               </span>
@@ -528,11 +534,11 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 fontFamily: "var(--font-body)",
                 fontWeight: 700,
                 letterSpacing: "0.10em",
-                background: "rgba(232,0,45,0.12)",
-                color: "#E8002D",
+                background: "var(--status-live-bg)",
+                color: "var(--status-live)",
                 padding: "1px 7px",
                 borderRadius: 3,
-                border: "1px solid rgba(232,0,45,0.25)",
+                border: "1px solid var(--status-live-border)",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 4,
@@ -543,7 +549,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
               </span>
             )}
           </div>
-          <div style={{ fontSize: "0.68em", color: "#4A4A5A", marginTop: 3, fontFamily: "var(--font-mono)", letterSpacing: "0.02em" }}>
+          <div style={{ fontSize: "0.68em", color: "var(--text-muted)", marginTop: 3, fontFamily: "var(--font-mono)", letterSpacing: "0.02em" }}>
             {result.categoriesPassed}/{result.totalCategories} SECTORS ·{" "}
             {result.totalPassed}/{result.totalQuestions} CHECKS
             {result.transcriptStats &&
@@ -561,7 +567,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 height: Math.max(8, Math.round(c.score / 100 * 24)),
                 borderRadius: 1,
                 background: getScoreColor(c.score),
-                boxShadow: `0 0 4px ${getScoreColor(c.score)}60`,
+                boxShadow: `0 0 4px ${getScoreGlow(c.score)}`,
                 transition: "all 0.4s ease",
               }}
             />
@@ -569,7 +575,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
         </div>
         <ChevronDown
           size={15}
-          color="#475569"
+          color="var(--text-muted)"
           style={{
             transition: "transform 0.2s",
             transform: isExpanded ? "rotate(180deg)" : "rotate(0)",
@@ -593,7 +599,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                     }}
                     style={{
                       background: getScoreBg(cat.score),
-                      border: `1px solid ${col}20`,
+                      border: `1px solid ${getScoreBorder(cat.score)}`,
                       borderRadius: 6,
                       padding: "8px 8px 6px",
                       cursor: "pointer",
@@ -618,7 +624,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                         style={{
                           fontSize: "0.65em",
                           fontWeight: 600,
-                          color: cat.passed ? "#34d399" : "#475569",
+                          color: cat.passed ? "var(--status-live)" : "var(--text-muted)",
                           display: "inline-flex",
                           alignItems: "center",
                         }}
@@ -640,7 +646,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                     <div
                       style={{
                         fontSize: "0.6em",
-                        color: "#94a3b8",
+                        color: "var(--text-muted)",
                         lineHeight: 1.2,
                         marginTop: 2,
                         whiteSpace: "nowrap",
@@ -671,7 +677,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 onClick={() => setShowDetail((p) => !p)}
                 style={{
                   background: "linear-gradient(180deg, var(--eg-surface-2) 0%, var(--eg-surface-1) 100%)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  border: "1px solid var(--border-default)",
                   borderRadius: 3,
                   padding: "3px 10px",
                   fontFamily: "var(--font-body)",
@@ -679,7 +685,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   fontWeight: 700,
                   letterSpacing: "0.10em",
                   textTransform: "uppercase",
-                  color: "#6A6A7A",
+                  color: "var(--text-muted)",
                   cursor: "pointer",
                 }}
               >
@@ -696,7 +702,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 <span
                   style={{
                     fontSize: "0.6em",
-                    color: "#ef4444",
+                    color: "var(--danger)",
                     fontWeight: 700,
                     display: "inline-flex",
                     alignItems: "center",
@@ -712,7 +718,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 <span
                   style={{
                     fontSize: "0.6em",
-                    color: "#f59e0b",
+                    color: "var(--status-pending)",
                     fontWeight: 600,
                     display: "inline-flex",
                     alignItems: "center",
@@ -739,12 +745,12 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   marginBottom: 4,
                 }}
               >
-                <Scale size={13} color="#94a3b8" />
+                <Scale size={13} color="var(--text-muted)" />
                 <span style={{
                   fontFamily: "var(--font-body)",
                   fontSize: "13px",
                   fontWeight: 700,
-                  color: "#6A6A7A",
+                  color: "var(--text-label)",
                   letterSpacing: "0.10em",
                   textTransform: "uppercase",
                 }}>
@@ -754,7 +760,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   <span
                     style={{
                       fontSize: "0.55em",
-                      color: "#64748b",
+                      color: "var(--text-muted)",
                       marginLeft: "auto",
                     }}
                   >
@@ -781,8 +787,8 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
               style={{
                 marginTop: 8,
                 padding: "8px 10px",
-                background: "rgba(239,68,68,0.08)",
-                border: "1px solid rgba(239,68,68,0.2)",
+                background: "var(--status-offline-bg)",
+                border: "1px solid var(--status-offline-border)",
                 borderRadius: 6,
               }}
             >
@@ -790,7 +796,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 style={{
                   fontSize: "0.68em",
                   fontWeight: 700,
-                  color: "#f87171",
+                  color: "var(--eg-red-text)",
                   marginBottom: 4,
                 }}
               >
@@ -806,19 +812,20 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   key={i}
                   style={{
                     fontSize: "0.63em",
-                    color: "#fca5a5",
+                    color: "var(--eg-red-text)",
                     lineHeight: 1.35,
                     marginBottom: 3,
                     paddingLeft: 8,
-                    borderLeft: "2px solid rgba(239,68,68,0.4)",
+                    outline: "1px solid var(--status-offline-border)",
+                    borderRadius: 3,
                   }}
                 >
-                  <span style={{ color: "#94a3b8" }}>{v.section}:</span>{" "}
+                  <span style={{ color: "var(--text-muted)" }}>{v.section}:</span>{" "}
                   {v.evidence.length > 140
                     ? v.evidence.slice(0, 140) + "…"
                     : v.evidence}
                   {v.critical && (
-                    <span style={{ color: "#ef4444", fontWeight: 700 }}>
+                    <span style={{ color: "var(--danger)", fontWeight: 700 }}>
                       {" "}
                       [CRITICAL]
                     </span>
@@ -836,8 +843,8 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                 style={{
                   marginTop: 8,
                   padding: "8px 10px",
-                  background: "rgba(239,68,68,0.06)",
-                  border: "1px solid rgba(239,68,68,0.15)",
+                  background: "var(--status-offline-bg)",
+                  border: "1px solid var(--status-offline-border)",
                   borderRadius: 6,
                 }}
               >
@@ -845,7 +852,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   style={{
                     fontSize: "0.68em",
                     fontWeight: 700,
-                    color: "#f87171",
+                    color: "var(--eg-red-text)",
                     marginBottom: 4,
                   }}
                 >
@@ -861,20 +868,21 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                     key={f.id}
                     style={{
                       fontSize: "0.63em",
-                      color: "#fca5a5",
+                      color: "var(--eg-red-text)",
                       lineHeight: 1.35,
                       marginBottom: 3,
                       paddingLeft: 8,
-                      borderLeft: `2px solid ${
+                      outline: `1px solid ${
                         f.severity === "high"
-                          ? "#ef4444"
+                          ? "var(--status-offline-border)"
                           : f.severity === "medium"
-                          ? "#f97316"
-                          : "#fbbf24"
-                      }40`,
+                          ? "var(--status-pending-border)"
+                          : "var(--status-pending-border)"
+                      }`,
+                      borderRadius: 3,
                     }}
                   >
-                    <span style={{ color: "#94a3b8" }}>{f.category}:</span>{" "}
+                    <span style={{ color: "var(--text-muted)" }}>{f.category}:</span>{" "}
                     {f.evidence.length > 120
                       ? f.evidence.slice(0, 120) + "…"
                       : f.evidence}
@@ -884,7 +892,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   <div
                     style={{
                       fontSize: "0.58em",
-                      color: "#64748b",
+                      color: "var(--text-muted)",
                       paddingLeft: 8,
                     }}
                   >

@@ -2475,3 +2475,170 @@
     text-align: left;
   }
 }
+
+/* Terminal dark mode, loaded with Agent Tools after global overrides. */
+html.dark .top-panel-overlay--tools,
+html.dark .at-modal,
+html.dark .at-root {
+  --rail-term-bg: var(--bg-primary);
+  --rail-term-bg-soft: var(--bg-surface);
+  --rail-term-row: var(--bg-elevated);
+  --rail-term-hover: var(--selection-bg);
+  --rail-term-border: var(--border-default);
+  --rail-term-border-bright: var(--eg-border-hover);
+  --rail-term-amber: var(--accent);
+  --rail-term-amber-bright: var(--accent-hover);
+  --rail-term-yellow: var(--accent);
+  --rail-term-cyan: var(--text-secondary);
+  --rail-term-cyan-bright: var(--info);
+  --rail-term-blue: var(--info-bg);
+  --rail-term-blue-bright: var(--info);
+  --rail-term-red: var(--status-offline);
+  --rail-term-red-dark: var(--status-offline-bg);
+  --rail-term-red-bright: var(--status-offline);
+  --rail-term-green: var(--status-live);
+  --rail-term-muted: var(--text-muted);
+  --rail-term-white: var(--text-primary);
+}
+
+html.dark .at-modal-backdrop {
+  background: var(--overlay-backdrop) !important;
+}
+
+html.dark .at-root,
+html.dark .at-modal,
+html.dark .at-modal-body,
+html.dark .top-panel-overlay--tools .top-panel-body {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+}
+
+html.dark .at-tool-card,
+html.dark .at-link-card,
+html.dark .at-carrier-card,
+html.dark .at-doc-card,
+html.dark .at-util-block,
+html.dark .at-doc-note-card,
+html.dark .at-doc-field-card,
+html.dark .at-sep-item,
+html.dark .at-sep-ref-note,
+html.dark .at-sep-section,
+html.dark .at-matrix-row,
+html.dark .at-map-prompt,
+html.dark .at-training-guide-head,
+html.dark .at-training-section,
+html.dark .at-training-summary,
+html.dark .carrier-quickref-card,
+html.dark .carrier-quickref-plan,
+html.dark .at-quiz-card,
+html.dark .at-quiz-final-card,
+html.dark .at-quiz-missed-card {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: none !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .at-tool-card:hover,
+html.dark .at-link-card:hover,
+html.dark .at-carrier-card:hover,
+html.dark .at-doc-card:hover,
+html.dark .carrier-quickref-card:hover,
+html.dark .carrier-quickref-plan-trigger:hover {
+  background: var(--bg-elevated) !important;
+  border-color: var(--accent) !important;
+}
+
+html.dark .at-filter-tab.is-active,
+html.dark .at-tool-title,
+html.dark .at-link-name,
+html.dark .at-carrier-name,
+html.dark .at-doc-title,
+html.dark .at-doc-detail-title,
+html.dark .at-doc-card-title,
+html.dark .at-doc-field-name,
+html.dark .at-training-guide-title,
+html.dark .at-training-summary-title,
+html.dark .carrier-quickref-card-title,
+html.dark .carrier-quickref-plan-name,
+html.dark .at-quiz-final-main strong,
+html.dark .at-quiz-section-title span,
+html.dark .at-quiz-missed-question {
+  color: var(--accent) !important;
+}
+
+html.dark .at-tool-desc,
+html.dark .at-link-desc,
+html.dark .at-doc-description,
+html.dark .at-doc-card-note,
+html.dark .at-doc-field-value,
+html.dark .at-training-paragraph,
+html.dark .at-training-emphasis,
+html.dark .carrier-quickref-meta-value,
+html.dark .carrier-quickref-plan-detail,
+html.dark .at-quiz-final-main span:last-child,
+html.dark .at-quiz-final-status small {
+  color: var(--text-secondary) !important;
+}
+
+html.dark .at-group-label,
+html.dark .at-modal-kicker,
+html.dark .at-util-header,
+html.dark .at-calc-label,
+html.dark .at-calc-result-label,
+html.dark .at-sep-section-title,
+html.dark .at-sep-label,
+html.dark .at-doc-section-head,
+html.dark .at-doc-note-label,
+html.dark .at-doc-status-kicker,
+html.dark .at-doc-field-label,
+html.dark .carrier-quickref-meta-label {
+  color: var(--text-label) !important;
+}
+
+html.dark .at-search-shell,
+html.dark .at-calc-select,
+html.dark .at-training-search-shell,
+html.dark .carrier-quickref-search-input {
+  background: var(--bg-primary) !important;
+  border-color: var(--eg-border-hover) !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+}
+
+html.dark .at-search-shell:focus-within,
+html.dark .at-calc-select:focus,
+html.dark .carrier-quickref-search-input:focus {
+  border-color: var(--border-focus) !important;
+  box-shadow: 0 0 0 1px var(--focus-glow) !important;
+}
+
+html.dark .at-doc-error,
+html.dark .at-training-alert.is-do-not,
+html.dark .at-quiz-final-card.is-fail {
+  background: var(--status-offline-bg) !important;
+  border-color: var(--status-offline-border) !important;
+  color: var(--eg-red-text) !important;
+}
+
+html.dark .at-badge-warning,
+html.dark .at-training-alert.is-note,
+html.dark .at-doc-status-btn.is-active {
+  background: var(--status-pending-bg) !important;
+  border-color: var(--status-pending-border) !important;
+  color: var(--status-pending) !important;
+}
+
+html.dark .at-quiz-final-card.is-pass,
+html.dark .at-quiz-perfect {
+  background: var(--status-live-bg) !important;
+  border-color: var(--status-live-border) !important;
+  color: var(--status-live) !important;
+}
+
+html.dark .at-training-alert,
+html.dark .at-training-quote {
+  border-left: 0 !important;
+  outline: 1px solid var(--border-default);
+}

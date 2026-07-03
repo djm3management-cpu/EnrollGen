@@ -642,33 +642,33 @@ export const COMPLIANCE_KNOWLEDGE = {
 export const LEVEL_STYLE = {
   info: {
     icon: "◈",
-    color: "#FF2040",
-    bg: "rgba(255,32,64,0.07)",
-    border: "rgba(255,32,64,0.4)",
+    color: "var(--info)",
+    bg: "var(--info-bg)",
+    border: "var(--info-border)",
   },
   remind: {
     icon: "◉",
-    color: "#F3F4F6",
-    bg: "rgba(243,244,246,0.06)",
-    border: "rgba(243,244,246,0.2)",
+    color: "var(--text-primary)",
+    bg: "var(--bg-elevated)",
+    border: "var(--border-default)",
   },
   tip: {
     icon: "◆",
-    color: "#00ff41",
-    bg: "rgba(0,255,65,0.07)",
-    border: "rgba(0,255,65,0.35)",
+    color: "var(--status-live)",
+    bg: "var(--status-live-bg)",
+    border: "var(--status-live-border)",
   },
   warn: {
     icon: "▲",
-    color: "#FFE45C",
-    bg: "rgba(255,228,92,0.07)",
-    border: "rgba(255,228,92,0.38)",
+    color: "var(--status-pending)",
+    bg: "var(--status-pending-bg)",
+    border: "var(--status-pending-border)",
   },
   critical: {
     icon: "✕",
-    color: "#9D00FF",
-    bg: "rgba(157,0,255,0.09)",
-    border: "rgba(157,0,255,0.45)",
+    color: "var(--status-offline)",
+    bg: "var(--status-offline-bg)",
+    border: "var(--status-offline-border)",
   },
 };
 

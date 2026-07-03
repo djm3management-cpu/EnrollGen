@@ -10,8 +10,12 @@ const SBE_STATES = { NJ: "sbe_plans_nj_2025", PA: "sbe_plans_pa_2025", VA: "sbe_
 
 const METAL_ORDER = ["Catastrophic", "Expanded Bronze", "Bronze", "Silver", "Gold", "Platinum"];
 const METAL_COLORS = {
-  Catastrophic: "#9CA3AF", "Expanded Bronze": "#D97706", Bronze: "#CD7F32",
-  Silver: "#C0C0C0", Gold: "#FFD700", Platinum: "#E5E4E2",
+  Catastrophic: "var(--text-muted)",
+  "Expanded Bronze": "var(--warning)",
+  Bronze: "var(--accent)",
+  Silver: "var(--text-secondary)",
+  Gold: "var(--status-pending)",
+  Platinum: "var(--text-primary)",
 };
 
 function parseDollar(v) {
@@ -300,25 +304,25 @@ export default function ACAIntelligence() {
 
       {/* Search bar */}
       <div style={{ ...card, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <span style={{ ...label, color: "#FFE45C", fontSize: "0.82rem" }}>ACA INTELLIGENCE</span>
-        <span style={{ ...mono, fontSize: "0.62rem", color: "#5A5A6A" }}>
+        <span style={{ ...label, color: "var(--accent)", fontSize: "0.82rem" }}>ACA INTELLIGENCE</span>
+        <span style={{ ...mono, fontSize: "0.62rem", color: "var(--text-muted)" }}>
           KB {fmtDate(knowledgeLastUpdated)}
         </span>
         <span
           style={{
             ...mono,
             fontSize: "0.62rem",
-            color: pendingUpdates.length ? "#FFE45C" : "#5A5A6A",
-            border: "1px solid rgba(234,179,8,0.18)",
+            color: pendingUpdates.length ? "var(--accent)" : "var(--text-muted)",
+            border: "1px solid var(--status-pending-border)",
             borderRadius: 999,
             padding: "3px 8px",
-            background: pendingUpdates.length ? "rgba(234,179,8,0.08)" : "rgba(255,255,255,0.03)",
+            background: pendingUpdates.length ? "var(--status-pending-bg)" : "color-mix(in srgb, var(--text-primary) 3%, transparent)",
           }}
         >
           {pendingUpdates.length} PENDING
         </span>
         <div style={{ position: "relative", flex: "1 1 200px", maxWidth: 280 }}>
-          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#3A3A4A", fontSize: 14, pointerEvents: "none" }}>⌕</span>
+          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: 14, pointerEvents: "none" }}>⌕</span>
           <input
             type="text" value={zip}
             onChange={(e) => setZip(e.target.value.replace(/\D/g, "").slice(0, 5))}
@@ -331,27 +335,27 @@ export default function ACAIntelligence() {
           onClick={handleSearch}
           disabled={loading || zip.length < 5}
           style={{
-            background: "rgba(234,179,8,0.12)", border: "1px solid rgba(234,179,8,0.3)",
+            background: "var(--status-pending-bg)", border: "1px solid var(--status-pending-border)",
             borderRadius: 999, padding: "7px 20px", cursor: loading ? "wait" : "pointer",
             fontFamily: "var(--font-body)", fontWeight: 800,
             fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase",
-            color: "#FFE45C", transition: "all 0.15s ease",
+            color: "var(--accent)", transition: "all 0.15s ease",
           }}
         >
           {loading ? "LOADING..." : "SEARCH"}
         </button>
         {source && (
-          <span style={{ ...mono, fontSize: "0.65rem", color: "#5A5A6A" }}>{source}</span>
+          <span style={{ ...mono, fontSize: "0.65rem", color: "var(--text-muted)" }}>{source}</span>
         )}
       </div>
 
       {error && (
-        <div style={{ ...card, borderColor: "rgba(255,90,90,0.2)", color: "#FF5A5A", fontSize: "0.8rem" }}>{error}</div>
+        <div style={{ ...card, borderColor: "var(--status-offline-border)", color: "var(--status-offline)", fontSize: "0.8rem" }}>{error}</div>
       )}
 
       {isAdmin && pendingUpdates.length > 0 && (
         <section style={card}>
-          <h3 style={{ ...label, margin: "0 0 12px", color: "#FFE45C" }}>Pending Knowledge Updates</h3>
+          <h3 style={{ ...label, margin: "0 0 12px", color: "var(--accent)" }}>Pending Knowledge Updates</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {pendingUpdates.map((update) => {
               const preview = diffPreview(update.previous_content, update.new_content);
@@ -360,21 +364,21 @@ export default function ACAIntelligence() {
                   key={update.id}
                   style={{
                     borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(10,10,12,0.72)",
+                    border: "1px solid var(--border-default)",
+                    background: "var(--bg-elevated)",
                     padding: 12,
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                     <div>
-                      <div style={{ ...label, color: "#D6DFE9", marginBottom: 4 }}>
+                      <div style={{ ...label, color: "var(--text-primary)", marginBottom: 4 }}>
                         {update.knowledge_base?.title || update.knowledge_base?.key || "Knowledge Entry"}
                       </div>
-                      <div style={{ fontSize: "0.72rem", color: "#8A8A9A", lineHeight: 1.45 }}>
+                      <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", lineHeight: 1.45 }}>
                         {update.change_summary || "Agentic update pending review."}
                       </div>
                     </div>
-                    <div style={{ ...mono, color: "#FFE45C", fontSize: "0.68rem" }}>
+                    <div style={{ ...mono, color: "var(--accent)", fontSize: "0.68rem" }}>
                       {Math.round(Number(update.confidence_score || 0) * 100)}%
                     </div>
                   </div>
@@ -387,7 +391,7 @@ export default function ACAIntelligence() {
                     }}
                   >
                     <pre style={diffBoxStyle}>{preview.beforeLines}</pre>
-                    <pre style={{ ...diffBoxStyle, borderColor: "rgba(57,255,136,0.18)" }}>{preview.afterLines}</pre>
+                    <pre style={{ ...diffBoxStyle, borderColor: "var(--status-live-border)" }}>{preview.afterLines}</pre>
                   </div>
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
                     <button
@@ -404,9 +408,9 @@ export default function ACAIntelligence() {
                       onClick={() => reviewUpdate(update, "approve")}
                       style={{
                         ...reviewButtonStyle,
-                        color: "#39FF88",
-                        borderColor: "rgba(57,255,136,0.28)",
-                        background: "rgba(57,255,136,0.08)",
+                        color: "var(--status-live)",
+                        borderColor: "var(--status-live-border)",
+                        background: "var(--status-live-bg)",
                       }}
                     >
                       APPROVE
@@ -423,10 +427,10 @@ export default function ACAIntelligence() {
         <>
           {/* Summary stats row */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
-            <StatBox label="TOTAL PLANS" value={stats.total} color="#FFE45C" />
-            <StatBox label="ISSUERS" value={stats.issuers.length} color="#22D3EE" />
-            <StatBox label="METAL TIERS" value={stats.tiers.length} color="#39FF88" />
-            <StatBox label="PLAN TYPES" value={stats.types.length} color="#C084FC" />
+            <StatBox label="TOTAL PLANS" value={stats.total} color="var(--accent)" />
+            <StatBox label="ISSUERS" value={stats.issuers.length} color="var(--info)" />
+            <StatBox label="METAL TIERS" value={stats.tiers.length} color="var(--status-live)" />
+            <StatBox label="PLAN TYPES" value={stats.types.length} color="var(--chart-4)" />
           </div>
 
           {/* Metal tier breakdown */}
@@ -435,7 +439,7 @@ export default function ACAIntelligence() {
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                  <tr style={{ borderBottom: "1px solid var(--border-default)" }}>
                     <th style={th}>Tier</th>
                     <th style={th}>Plans</th>
                     {hasPremiums && <th style={th}>Premium (Age 27)</th>}
@@ -445,21 +449,21 @@ export default function ACAIntelligence() {
                 </thead>
                 <tbody>
                   {stats.tiers.map((t) => (
-                    <tr key={t.metal} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <tr key={t.metal} style={{ borderBottom: "1px solid var(--border-default)" }}>
                       <td style={{ ...td, display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: METAL_COLORS[t.metal] || "#666", flexShrink: 0 }} />
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: METAL_COLORS[t.metal] || "var(--text-muted)", flexShrink: 0 }} />
                         {t.metal}
                       </td>
-                      <td style={{ ...td, ...mono, color: "#FFE45C" }}>{t.count}</td>
+                      <td style={{ ...td, ...mono, color: "var(--accent)" }}>{t.count}</td>
                       {hasPremiums && (
-                        <td style={{ ...td, ...mono, color: "#D6DFE9" }}>
+                        <td style={{ ...td, ...mono, color: "var(--text-primary)" }}>
                           {t.premLo != null ? fmtRange(t.premLo, t.premHi) : "-"}
                         </td>
                       )}
-                      <td style={{ ...td, ...mono, color: "#D6DFE9" }}>
+                      <td style={{ ...td, ...mono, color: "var(--text-primary)" }}>
                         {t.dedLo != null ? fmtRange(t.dedLo, t.dedHi) : "-"}
                       </td>
-                      <td style={{ ...td, ...mono, color: "#D6DFE9" }}>
+                      <td style={{ ...td, ...mono, color: "var(--text-primary)" }}>
                         {t.moopLo != null ? fmtRange(t.moopLo, t.moopHi) : "-"}
                       </td>
                     </tr>
@@ -477,8 +481,8 @@ export default function ACAIntelligence() {
                 {stats.issuers.map((iss) => (
                   <span key={iss} style={{
                     padding: "3px 10px", borderRadius: 999,
-                    background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.18)",
-                    fontSize: "0.68rem", color: "#D6DFE9", whiteSpace: "nowrap",
+                    background: "var(--status-pending-bg)", border: "1px solid var(--status-pending-border)",
+                    fontSize: "0.68rem", color: "var(--text-primary)", whiteSpace: "nowrap",
                   }}>{iss}</span>
                 ))}
               </div>
@@ -489,13 +493,13 @@ export default function ACAIntelligence() {
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {stats.types.map(([type, count]) => (
                   <div key={type} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: "0.75rem", color: "#B8B8C8" }}>{type}</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{type}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{
                         width: Math.min(200, (count / stats.total) * 200), height: 6,
-                        borderRadius: 3, background: "rgba(234,179,8,0.3)",
+                        borderRadius: 3, background: "var(--status-pending-border)",
                       }} />
-                      <span style={{ ...mono, fontSize: "0.7rem", color: "#FFE45C", minWidth: 30, textAlign: "right" }}>{count}</span>
+                      <span style={{ ...mono, fontSize: "0.7rem", color: "var(--accent)", minWidth: 30, textAlign: "right" }}>{count}</span>
                     </div>
                   </div>
                 ))}
@@ -516,7 +520,7 @@ function StatBox({ label: lbl, value, color }) {
       gap: 4, padding: "14px 16px",
     }}>
       <span style={{ ...mono, fontSize: "1.6rem", color }}>{value}</span>
-      <span style={{ ...label, fontSize: "0.58rem", color: "#5A5A6A" }}>{lbl}</span>
+      <span style={{ ...label, fontSize: "0.58rem", color: "var(--text-muted)" }}>{lbl}</span>
     </div>
   );
 }
@@ -524,9 +528,9 @@ function StatBox({ label: lbl, value, color }) {
 const th = {
   textAlign: "left", padding: "8px 10px",
   fontFamily: "var(--font-body)", fontWeight: 700,
-  fontSize: "0.62rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "#5A5A6A",
+  fontSize: "0.62rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)",
 };
-const td = { padding: "8px 10px", color: "#B8B8C8", fontSize: "0.75rem" };
+const td = { padding: "8px 10px", color: "var(--text-secondary)", fontSize: "0.75rem" };
 const diffBoxStyle = {
   margin: 0,
   minHeight: 120,
@@ -534,19 +538,19 @@ const diffBoxStyle = {
   overflow: "auto",
   whiteSpace: "pre-wrap",
   borderRadius: 10,
-  border: "1px solid rgba(255,90,90,0.16)",
-  background: "rgba(0,0,0,0.22)",
+  border: "1px solid var(--status-offline-border)",
+  background: "var(--bg-primary)",
   padding: 10,
-  color: "#B8B8C8",
+  color: "var(--text-secondary)",
   fontSize: "0.66rem",
   fontFamily: "var(--font-mono)",
   lineHeight: 1.5,
 };
 const reviewButtonStyle = {
-  border: "1px solid rgba(255,255,255,0.12)",
-  background: "rgba(255,255,255,0.04)",
+  border: "1px solid var(--border-default)",
+  background: "var(--border-default)",
   borderRadius: 999,
-  color: "#8A8A9A",
+  color: "var(--text-secondary)",
   padding: "6px 12px",
   cursor: "pointer",
   fontFamily: "var(--font-body)",

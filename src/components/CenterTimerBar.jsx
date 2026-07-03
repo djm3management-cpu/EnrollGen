@@ -11,7 +11,7 @@ const CenterTimerBar = memo(function CenterTimerBar({
   agentActive = false,
   customerActive = false,
 }) {
-  const { agentLevel, customerLevel } = useAudioLevels();
+  const { agentLevel, customerLevel, agentPeaks, customerPeaks } = useAudioLevels();
   const safeAgentLevel = normalizeLevel(agentLevel);
   const safeCustomerLevel = normalizeLevel(customerLevel);
   const agentLive = agentActive || safeAgentLevel > 0.015;
@@ -30,6 +30,7 @@ const CenterTimerBar = memo(function CenterTimerBar({
         <Waveform
           active={customerLive}
           level={safeCustomerLevel}
+          peaks={customerPeaks}
           width={288}
           height={30}
         />
@@ -45,6 +46,7 @@ const CenterTimerBar = memo(function CenterTimerBar({
         <Waveform
           active={agentLive}
           level={safeAgentLevel}
+          peaks={agentPeaks}
           width={288}
           height={30}
         />

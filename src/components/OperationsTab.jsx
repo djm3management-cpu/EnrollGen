@@ -30,14 +30,14 @@ const DATE_RANGE_OPTIONS = [
   { key: "custom", label: "Custom" },
 ];
 const AGENT_AVATAR_COLORS = [
-  "#4f6f52",
-  "#6b5b3e",
-  "#4f6573",
-  "#6d4f62",
-  "#5e6445",
-  "#6b4d42",
-  "#4d6670",
-  "#5c5870",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+  "var(--chart-6)",
+  "var(--chart-positive)",
+  "var(--chart-negative)",
 ];
 const DETAIL_TABS = ["Transcript", "Analytics", "Assessment", "Compliance"];
 const FOLLOWUP_FILTERS = ["All", "Overdue", "High Risk", "This Week"];
@@ -1592,8 +1592,8 @@ function heatCell(value, values, reverse = false, suffix = "") {
   const ratio = max === min ? 0.5 : (numeric - min) / (max - min);
   const score = reverse ? 1 - ratio : ratio;
   const color = score >= 0.5
-    ? `rgba(51, 204, 102, ${0.15 + score * 0.35})`
-    : `rgba(255, 56, 56, ${0.15 + (1 - score) * 0.35})`;
+    ? `color-mix(in srgb, var(--status-live) ${15 + score * 35}%, transparent)`
+    : `color-mix(in srgb, var(--status-offline) ${15 + (1 - score) * 35}%, transparent)`;
   return { value: `${numeric}${suffix}`, style: { backgroundColor: color } };
 }
 

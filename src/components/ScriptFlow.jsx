@@ -277,19 +277,19 @@ function RailWidgets({
       <CollapsibleWidget
         title="Live Transcript"
         icon={<Radio size={11} />}
-        accentColor="#39FF88"
+        accentColor="var(--status-live)"
         headerRight={<TranscriptTimer startTime={state.tpmoStart} />}
       >
         <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
       </CollapsibleWidget>
 
       {/* ── Co-Pilot Feed ── */}
-      <CollapsibleWidget title="Co-Pilot Feed" icon={<MessageSquare size={11} />} accentColor="#9D00FF">
+      <CollapsibleWidget title="Co-Pilot Feed" icon={<MessageSquare size={11} />} accentColor="var(--chart-4)">
         <CopilotFeedMini />
       </CollapsibleWidget>
 
       {/* ── Compliance ── */}
-      <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="#E8002D">
+      <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="var(--danger)">
         <ComplianceMini
           transcript={transcript}
           activeSection={activeSection}
@@ -529,7 +529,7 @@ function DeferredComplianceDashboard({
         <Suspense
           fallback={
             <div className="card" style={{ marginTop: 14 }}>
-              <div style={{ color: "#8fa4bc", fontSize: "0.9rem" }}>
+              <div style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
                 Loadingâ€¦
               </div>
             </div>

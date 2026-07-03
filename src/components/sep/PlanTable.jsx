@@ -21,7 +21,7 @@ function CarrierLogo({ carrierKey, size = 20 }) {
       <span
         style={{
           width: 8, height: 8, borderRadius: "50%",
-          backgroundColor: c.color || "#666", flexShrink: 0,
+          backgroundColor: c.color || "var(--text-muted)", flexShrink: 0,
           display: c.logo ? "none" : "inline-block",
         }}
       />

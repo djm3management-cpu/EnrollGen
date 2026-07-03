@@ -502,7 +502,7 @@ export default function DailyVerse() {
       const mod = await import("html2canvas");
       const html2canvas = mod.default || mod;
       const canvas = await html2canvas(shareCardRef.current, {
-        backgroundColor: "#0a0a0c",
+        backgroundColor: "var(--bg-surface)",
         scale: 2,
         useCORS: true,
       });

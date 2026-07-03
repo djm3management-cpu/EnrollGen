@@ -14,7 +14,7 @@ import CenterTimerBar from "../../components/CenterTimerBar";
 import ProgressDots from "../../components/ProgressDots";
 
 // ACA accent color
-const ACCENT = "#EAB308"; // amber/yellow to match tab circle
+const ACCENT = "var(--accent)";
 const SHOW_REFERENCE_DETAILS = import.meta.env.VITE_SHOW_ACA_REFERENCE_DETAILS === "true";
 
 function fmt(ms) {
@@ -27,13 +27,13 @@ function Say({ text }) {
     <div
       className="flow-script-line"
       style={{
-        borderLeft: `2px solid rgba(234,179,8,0.3)`,
+        outline: "1px solid var(--status-pending-border)",
         padding: "10px 16px",
         marginBottom: 8,
         borderRadius: "0 6px 6px 0",
       }}
     >
-      <div className="flow-script-text" style={{ color: "#c0d0e4", fontSize: 14, lineHeight: 1.65 }}>
+      <div className="flow-script-text" style={{ color: "var(--text-primary)", fontSize: 14, lineHeight: 1.65 }}>
         {text}
       </div>
     </div>
@@ -49,13 +49,13 @@ function ComplianceBanner({ text }) {
     <div
       className="flow-compliance-banner"
       style={{
-        background: "rgba(248,113,113,0.06)",
-        border: "1px solid rgba(248,113,113,0.2)",
+        background: "var(--status-offline-bg)",
+        border: "1px solid var(--status-offline-border)",
         borderRadius: 6,
         padding: "9px 13px",
         marginBottom: 12,
         fontSize: 12,
-        color: "#f87171",
+        color: "var(--status-offline)",
         lineHeight: 1.5,
       }}
     >
@@ -71,9 +71,9 @@ function SignalBadge({ text }) {
         display: "inline-block",
         fontSize: 10,
         fontWeight: 600,
-        background: "rgba(234,179,8,0.06)",
-        border: "1px solid rgba(234,179,8,0.18)",
-        color: "#EAB308",
+        background: "var(--status-pending-bg)",
+        border: "1px solid var(--status-pending-border)",
+        color: "var(--accent)",
         borderRadius: 4,
         padding: "2px 8px",
         marginRight: 4,
@@ -93,7 +93,7 @@ function Gate({ label, done, onDo, onUndo }) {
       style={{
         marginTop: 16,
         paddingTop: 14,
-        borderTop: "1px solid rgba(255,255,255,0.04)",
+        borderTop: "1px solid var(--border-default)",
         display: "flex",
         justifyContent: "center",
       }}
@@ -110,9 +110,9 @@ function Gate({ label, done, onDo, onUndo }) {
           width: "fit-content",
           minWidth: 260,
           padding: "10px 14px",
-          border: `1px solid ${done ? "rgba(52,211,153,0.2)" : "rgba(234,179,8,0.15)"}`,
-          background: done ? "rgba(52,211,153,0.05)" : "rgba(255,255,255,0.015)",
-          color: done ? "#34d399" : "#dfe6f0",
+          border: `1px solid ${done ? "var(--status-live-border)" : "var(--status-pending-border)"}`,
+          background: done ? "var(--status-live-bg)" : "color-mix(in srgb, var(--text-primary) 1.5%, transparent)",
+          color: done ? "var(--status-live)" : "var(--text-primary)",
         }}
       >
         <Check className="flow-gate-icon" size={14} strokeWidth={2.8} aria-hidden="true" />
@@ -131,21 +131,21 @@ function Card({ num, title, red, active, done, dur, children }) {
             alignItems: "center",
             gap: 8,
             padding: "10px 14px",
-            background: "rgba(52,211,153,0.03)",
-            border: "1px solid rgba(52,211,153,0.1)",
+            background: "var(--status-live-bg)",
+            border: "1px solid var(--status-live-border)",
             borderRadius: 10,
             cursor: "pointer",
             listStyle: "none",
             fontSize: 13,
-            color: "#6b7a8d",
+            color: "var(--text-muted)",
           }}
         >
-          <span style={{ color: "#34d399" }}>✓</span>
+          <span style={{ color: "var(--status-live)" }}>✓</span>
           <span style={{ flex: 1 }}>
             <span
               style={{
                 fontWeight: 700,
-                color: "#4a5568",
+                color: "var(--text-muted)",
                 marginRight: 8,
                 fontSize: 11,
                 fontVariantNumeric: "tabular-nums",
@@ -156,7 +156,7 @@ function Card({ num, title, red, active, done, dur, children }) {
             {title}
           </span>
           {dur && (
-            <span style={{ fontSize: 11, color: "#4a5568", fontVariantNumeric: "tabular-nums" }}>
+            <span style={{ fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
               {fmt(dur)}
             </span>
           )}
@@ -174,8 +174,8 @@ function Card({ num, title, red, active, done, dur, children }) {
     <section
       className={`flow-script-card${active ? " active-card" : ""}`}
       style={{
-        background: active ? "rgba(234,179,8,0.04)" : "rgba(255,255,255,0.018)",
-        border: `1px solid ${active ? "rgba(234,179,8,0.3)" : "rgba(255,255,255,0.05)"}`,
+        background: active ? "var(--status-pending-bg)" : "color-mix(in srgb, var(--text-primary) 1.8%, transparent)",
+        border: `1px solid ${active ? "var(--status-pending-border)" : "var(--border-default)"}`,
         borderRadius: 10,
         padding: "20px 18px",
         marginBottom: 10,
@@ -186,18 +186,18 @@ function Card({ num, title, red, active, done, dur, children }) {
           style={{
             fontSize: 11,
             fontWeight: 700,
-            color: red ? "#f87171" : active ? ACCENT : "#4a5568",
+            color: red ? "var(--status-offline)" : active ? ACCENT : "var(--text-muted)",
             background: red
-              ? "rgba(248,113,113,0.08)"
+              ? "var(--status-offline-bg)"
               : active
-              ? "rgba(234,179,8,0.08)"
-              : "rgba(255,255,255,0.03)",
+              ? "var(--status-pending-bg)"
+              : "color-mix(in srgb, var(--text-primary) 3%, transparent)",
             border: `1px solid ${
               red
-                ? "rgba(248,113,113,0.2)"
+                ? "var(--status-offline-border)"
                 : active
-                ? "rgba(234,179,8,0.2)"
-                : "rgba(255,255,255,0.05)"
+                ? "var(--status-pending-border)"
+                : "var(--border-default)"
             }`,
             borderRadius: 5,
             padding: "3px 8px",
@@ -206,16 +206,16 @@ function Card({ num, title, red, active, done, dur, children }) {
         >
           G{String(num).padStart(2, "0")}
         </span>
-        <span style={{ fontSize: 15, fontWeight: 600, color: "#dfe6f0" }}>{title}</span>
+        <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>{title}</span>
         {red && (
           <span
             style={{
               fontSize: 9,
               fontWeight: 700,
               letterSpacing: "0.1em",
-              background: "rgba(248,113,113,0.1)",
-              border: "1px solid rgba(248,113,113,0.25)",
-              color: "#f87171",
+              background: "var(--status-offline-bg)",
+              border: "1px solid var(--status-offline-border)",
+              color: "var(--status-offline)",
               borderRadius: 4,
               padding: "2px 7px",
               marginLeft: "auto",
@@ -277,7 +277,7 @@ function G0({ gate }) {
       {gate.script.map((l, i) => <Say key={i} text={l} />)}
 
       <div style={{ marginTop: 12, marginBottom: 4 }}>
-        <div style={{ fontSize: 10, fontWeight: 600, color: "#4a5568", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
           Set Enrollment Period
         </div>
         <div style={{ display: "flex", gap: 6 }}>
@@ -289,9 +289,9 @@ function G0({ gate }) {
                 flex: 1,
                 padding: "8px 12px",
                 borderRadius: 6,
-                border: `1px solid ${state.enrollmentPeriod === period ? "rgba(234,179,8,0.4)" : "rgba(255,255,255,0.06)"}`,
-                background: state.enrollmentPeriod === period ? "rgba(234,179,8,0.08)" : "rgba(255,255,255,0.02)",
-                color: state.enrollmentPeriod === period ? ACCENT : "#4a5568",
+                border: `1px solid ${state.enrollmentPeriod === period ? "var(--status-pending-border)" : "var(--border-default)"}`,
+                background: state.enrollmentPeriod === period ? "var(--status-pending-bg)" : "color-mix(in srgb, var(--text-primary) 2%, transparent)",
+                color: state.enrollmentPeriod === period ? ACCENT : "var(--text-muted)",
                 fontSize: 12,
                 fontWeight: 600,
                 cursor: "pointer",
@@ -304,12 +304,12 @@ function G0({ gate }) {
           ))}
         </div>
         {SHOW_REFERENCE_DETAILS && state.enrollmentPeriod === "SEP" && (
-          <div style={{ marginTop: 6, fontSize: 11, color: "#EAB308", opacity: 0.7 }}>
+          <div style={{ marginTop: 6, fontSize: 11, color: "var(--accent)", opacity: 0.7 }}>
             → Gate 1 (SEP Qualification) will be required before proceeding
           </div>
         )}
         {SHOW_REFERENCE_DETAILS && state.enrollmentPeriod === "OEP" && (
-          <div style={{ marginTop: 6, fontSize: 11, color: "#34d399", opacity: 0.7 }}>
+          <div style={{ marginTop: 6, fontSize: 11, color: "var(--status-live)", opacity: 0.7 }}>
             → SEP Gate will be skipped, proceed directly to Income Assessment
           </div>
         )}
@@ -348,14 +348,14 @@ function G1({ gate }) {
         transition={{ duration: 0.2 }}
       >
         <Card num={1} title="SEP Qualification" active={activeGate === 1} done={state.gate1Ok} dur={d ? d.end - d.start : null}>
-          {SHOW_REFERENCE_DETAILS && <div style={{ fontSize: 11, color: ACCENT, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12 }}>
+          {SHOW_REFERENCE_DETAILS && <div style={{ fontSize: 11, color: ACCENT, background: "var(--status-pending-bg)", border: "1px solid var(--status-pending-border)", borderRadius: 6, padding: "6px 10px", marginBottom: 12 }}>
             Conditional Gate, shown because enrollment period is SEP
           </div>}
 
           {gate.script.map((l, i) => <Say key={i} text={l} />)}
 
           <div style={{ marginTop: 14, marginBottom: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 600, color: "#4a5568", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
               SEP Type Reference
             </div>
             <div style={{ overflowX: "auto" }}>
@@ -363,7 +363,7 @@ function G1({ gate }) {
                 <thead>
                   <tr>
                     {["SEP Type", "Documentation Needed", "Window"].map((h) => (
-                      <th key={h} style={{ textAlign: "left", padding: "6px 10px", color: "#4a5568", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.05)", fontSize: 11 }}>
+                      <th key={h} style={{ textAlign: "left", padding: "6px 10px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-default)", fontSize: 11 }}>
                         {h}
                       </th>
                     ))}
@@ -371,9 +371,9 @@ function G1({ gate }) {
                 </thead>
                 <tbody>
                   {gate.sepTable.map((row, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-                      <td style={{ padding: "7px 10px", color: "#c0d0e4", verticalAlign: "top" }}>{row.type}</td>
-                      <td style={{ padding: "7px 10px", color: "#8fa4bc", verticalAlign: "top" }}>{row.docs}</td>
+                    <tr key={i} style={{ borderBottom: "1px solid color-mix(in srgb, var(--text-primary) 3%, transparent)" }}>
+                      <td style={{ padding: "7px 10px", color: "var(--text-primary)", verticalAlign: "top" }}>{row.type}</td>
+                      <td style={{ padding: "7px 10px", color: "var(--text-secondary)", verticalAlign: "top" }}>{row.docs}</td>
                       <td style={{ padding: "7px 10px", color: ACCENT, verticalAlign: "top", whiteSpace: "nowrap" }}>{row.window}</td>
                     </tr>
                   ))}
@@ -412,7 +412,7 @@ function G2({ gate }) {
       {SHOW_REFERENCE_DETAILS && <ComplianceBanner text={gate.subsidyNote} />}
 
       <div style={{ marginTop: 10, marginBottom: 10 }}>
-        <div style={{ fontSize: 10, fontWeight: 600, color: "#4a5568", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
           FPL / Subsidy Reference
         </div>
         <div style={{ overflowX: "auto" }}>
@@ -420,7 +420,7 @@ function G2({ gate }) {
             <thead>
               <tr>
                 {["FPL Range", "Subsidy", "CSR Tier", "Agent Action"].map((h) => (
-                  <th key={h} style={{ textAlign: "left", padding: "6px 10px", color: "#4a5568", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.05)", fontSize: 11 }}>
+                  <th key={h} style={{ textAlign: "left", padding: "6px 10px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-default)", fontSize: 11 }}>
                     {h}
                   </th>
                 ))}
@@ -429,11 +429,11 @@ function G2({ gate }) {
             <tbody>
               {gate.fplTable.map((row, i) => {
                 return (
-                  <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                  <tr key={i} style={{ borderBottom: "1px solid color-mix(in srgb, var(--text-primary) 3%, transparent)" }}>
                     <td style={{ padding: "7px 10px", color: ACCENT, fontWeight: 400, whiteSpace: "nowrap" }}>{row.range}</td>
-                    <td style={{ padding: "7px 10px", color: "#c0d0e4" }}>{row.subsidy}</td>
-                    <td style={{ padding: "7px 10px", color: "#8fa4bc" }}>{row.csr}</td>
-                    <td style={{ padding: "7px 10px", color: "#8fa4bc", fontSize: 11 }}>{row.action}</td>
+                    <td style={{ padding: "7px 10px", color: "var(--text-primary)" }}>{row.subsidy}</td>
+                    <td style={{ padding: "7px 10px", color: "var(--text-secondary)" }}>{row.csr}</td>
+                    <td style={{ padding: "7px 10px", color: "var(--text-secondary)", fontSize: 11 }}>{row.action}</td>
                   </tr>
                 );
               })}
@@ -473,11 +473,11 @@ function G3({ gate }) {
       {gate.script.map((l, i) => <Say key={i} text={l} />)}
 
       <div style={{ marginTop: 12, marginBottom: 10 }}>
-        <div style={{ fontSize: 10, fontWeight: 600, color: "#4a5568", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
           Metal Level Guidance
         </div>
         {gate.metalGuidance.map((g, i) => (
-          <div key={i} style={{ fontSize: 12, color: "#8fa4bc", padding: "4px 10px", borderLeft: "2px solid rgba(234,179,8,0.2)", marginBottom: 4, lineHeight: 1.5 }}>
+          <div key={i} style={{ fontSize: 12, color: "var(--text-secondary)", padding: "4px 10px", outline: "1px solid var(--status-pending-border)", marginBottom: 4, lineHeight: 1.5 }}>
             {g}
           </div>
         ))}
@@ -533,7 +533,7 @@ function G5({ gate }) {
 
   return (
     <Card num={5} title="Enrollment & Submission" active={activeGate === 5} done={state.gate5Ok} dur={d ? d.end - d.start : null}>
-      {SHOW_REFERENCE_DETAILS && <div style={{ fontSize: 11, background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)", borderRadius: 6, padding: "6px 10px", marginBottom: 12, color: ACCENT }}>
+      {SHOW_REFERENCE_DETAILS && <div style={{ fontSize: 11, background: "var(--status-pending-bg)", border: "1px solid var(--status-pending-border)", borderRadius: 6, padding: "6px 10px", marginBottom: 12, color: ACCENT }}>
         {gate.exchangeNote}
       </div>}
 
@@ -583,21 +583,21 @@ function G6({ gate }) {
             marginTop: 18,
             textAlign: "center",
             padding: "20px",
-            background: "rgba(52,211,153,0.04)",
-            border: "1px solid rgba(52,211,153,0.12)",
+            background: "var(--status-live-bg)",
+            border: "1px solid var(--status-live-border)",
             borderRadius: 10,
           }}
         >
           <div style={{ fontSize: 24, marginBottom: 6 }}>✓</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#34d399" }}>ACA Enrollment Complete</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--status-live)" }}>ACA Enrollment Complete</div>
           <button
             onClick={() => dispatch({ type: "RESET" })}
             style={{
               marginTop: 12,
-              background: "rgba(52,211,153,0.08)",
-              border: "1px solid rgba(52,211,153,0.2)",
+              background: "var(--status-live-bg)",
+              border: "1px solid var(--status-live-border)",
               borderRadius: 6,
-              color: "#34d399",
+              color: "var(--status-live)",
               padding: "8px 20px",
               fontSize: 13,
               fontWeight: 600,
@@ -652,10 +652,10 @@ export default function ACAFlow() {
       <CenterTimerBar />
 
       {!state.callStarted ? (
-        <section className="script-start-call-gate" style={{ background: `rgba(234,179,8,0.04)`, border: `1px solid rgba(234,179,8,0.2)`, borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
+        <section className="script-start-call-gate" style={{ background: `var(--status-pending-bg)`, border: `1px solid var(--status-pending-border)`, borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
           <button className="primary script-start-call-button" onClick={() => dispatch({ type: "START_CALL" })} style={{
             fontSize: 15, fontFamily: "var(--font-body)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
-            background: `linear-gradient(145deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05))`, border: `1px solid rgba(234,179,8,0.3)`, color: ACCENT, borderRadius: 8, cursor: "pointer",
+            background: `linear-gradient(145deg, var(--status-pending-border), var(--status-pending-bg))`, border: `1px solid var(--status-pending-border)`, color: ACCENT, borderRadius: 8, cursor: "pointer",
           }}>
             START
           </button>

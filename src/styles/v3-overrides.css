@@ -2144,7 +2144,10 @@ button.primary.section-complete-btn {
   flex-direction: column;
   gap: 6px;
   min-height: 80px;
-  padding: 10px 40px;
+  padding: 8px 40px;
+  background: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
 }
 
 .eg-audio-meter-row {
@@ -2622,4 +2625,420 @@ button.primary.section-complete-btn {
   font-family: var(--eg-font-mono);
   font-size: 10px;
   color: var(--eg-text-mid);
+}
+
+/* ============================================================
+   TERMINAL DARK MODE RESWEEP
+   ============================================================ */
+
+html.dark,
+html.dark body,
+html.dark #root {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  scrollbar-color: var(--eg-border-hover) var(--bg-primary);
+}
+
+html.dark * {
+  scrollbar-color: var(--eg-border-hover) var(--bg-primary);
+}
+
+html.dark *::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+html.dark *::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+html.dark *::-webkit-scrollbar-thumb {
+  background: var(--eg-border-hover);
+  border-radius: 0;
+}
+
+html.dark ::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+html.dark body {
+  position: relative;
+  background: var(--bg-primary) !important;
+}
+
+html.dark body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 1;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--text-primary) 12%, transparent) 0,
+      color-mix(in srgb, var(--text-primary) 12%, transparent) 1px,
+      transparent 1px,
+      transparent 200px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--text-secondary) 10%, transparent) 0,
+      color-mix(in srgb, var(--text-secondary) 10%, transparent) 1px,
+      transparent 1px,
+      transparent 200px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--text-primary) 5%, transparent) 0,
+      color-mix(in srgb, var(--text-primary) 5%, transparent) 1px,
+      transparent 1px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--text-secondary) 4%, transparent) 0,
+      color-mix(in srgb, var(--text-secondary) 4%, transparent) 1px,
+      transparent 1px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--text-muted) 3%, transparent) 0,
+      color-mix(in srgb, var(--text-muted) 3%, transparent) 1px,
+      transparent 1px,
+      transparent 120px
+    ),
+    radial-gradient(
+      ellipse at 50% 22%,
+      color-mix(in srgb, var(--text-primary) 4%, transparent) 0%,
+      transparent 54%
+    ),
+    linear-gradient(
+      180deg,
+      var(--bg-primary) 0%,
+      color-mix(in srgb, var(--bg-primary) 94%, var(--text-muted)) 52%,
+      var(--bg-primary) 100%
+    );
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+html.dark #root {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+
+html.dark .viewport-bg {
+  background: transparent !important;
+  animation: none !important;
+}
+
+html.dark .viewport-wallpaper-image,
+html.dark .shell-texture,
+html.dark .shell-textures,
+html.dark .shell-grid,
+html.dark .shell-vignette {
+  opacity: 0 !important;
+}
+
+html.dark .app-shell-modern,
+html.dark .app,
+html.dark .app-workspace,
+html.dark .app-center,
+html.dark .flow-shell,
+html.dark .flow-main {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .top-bar-shell,
+html.dark .top-panel-overlay,
+html.dark .right-rail-full > .right-rail-scroll,
+html.dark .right-rail-overlay,
+html.dark .left-rail,
+html.dark .left-rail-panel-shell,
+html.dark .card,
+html.dark .eg-rail-card,
+html.dark .right-rail-control-panel,
+html.dark .left-rail-tool-panel,
+html.dark .subscription-paywall-card,
+html.dark .auth-shell {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: none !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .top-panel-header,
+html.dark .top-panel-body,
+html.dark .right-rail-widget-header,
+html.dark .left-rail-tool-panel-inner,
+html.dark .compliance-dashboard,
+html.dark .compliance-dashboard-body,
+html.dark .daily-verse-shell {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: none !important;
+}
+
+html.dark .top-panel-title,
+html.dark .right-rail-widget-title,
+html.dark .eg-panel-header,
+html.dark .eg-card-label,
+html.dark .billing-eyebrow,
+html.dark .sf-panel-heading,
+html.dark .sf-script-label,
+html.dark .ops-section-head,
+html.dark .ops-mini-label,
+html.dark .ops-col-head,
+html.dark .ops-filter-label,
+html.dark .sep-stat-label,
+html.dark .sep-filter-label,
+html.dark .sep-plan-table th {
+  color: var(--text-label) !important;
+}
+
+html.dark .top-bar-tab {
+  color: var(--text-muted) !important;
+  background: var(--bg-primary) !important;
+}
+
+html.dark .top-bar-tab:hover {
+  color: var(--text-primary) !important;
+  background: var(--bg-elevated) !important;
+}
+
+html.dark .top-bar-tab.is-active,
+html.dark .top-bar-settings-button.is-active,
+html.dark .flow-pill.is-active .flow-label {
+  color: var(--accent) !important;
+}
+
+html.dark .top-bar-tab.is-active {
+  background: var(--bg-primary) !important;
+}
+
+html.dark .top-bar-tab.is-active::after {
+  background: var(--accent) !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea,
+html.dark .ask-copilot-mini__form,
+html.dark .left-rail-zip-input,
+html.dark .sf-form-grid input,
+html.dark .sf-form-grid select,
+html.dark .sf-decline-box input,
+html.dark .sf-inline-form input {
+  background: var(--bg-primary) !important;
+  border-color: var(--eg-border-hover) !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus,
+html.dark .ask-copilot-mini__form:focus-within,
+html.dark .left-rail-zip-input:focus {
+  border-color: var(--border-focus) !important;
+  box-shadow: 0 0 0 1px var(--focus-glow) !important;
+  outline: none !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+html.dark button.primary,
+html.dark .primary,
+html.dark .ask-copilot-mini__send,
+html.dark .script-start-call-button,
+html.dark .sf-action-button,
+html.dark .left-rail-tool-start-btn,
+html.dark .sep-qualifier-primary,
+html.dark .sep-finder-trigger-btn {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: var(--selection-text) !important;
+  box-shadow: none !important;
+}
+
+html.dark button.secondary,
+html.dark .secondary,
+html.dark .top-panel-close,
+html.dark .copilot-pill-button,
+html.dark .sf-secondary-button,
+html.dark .sf-icon-button,
+html.dark .left-rail-tool-btn,
+html.dark .billing-icon-button,
+html.dark .sep-finder-refresh {
+  background: var(--bg-primary) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  box-shadow: none !important;
+}
+
+html.dark .destructive,
+html.dark .is-error,
+html.dark .billing-alert.is-error,
+html.dark .at-doc-error,
+html.dark .sep-finder-panel-error {
+  border-color: var(--status-offline-border) !important;
+  background: var(--status-offline-bg) !important;
+  color: var(--eg-red-text) !important;
+}
+
+html.dark .sf-dot--green,
+html.dark .agent-availability-btn.is-active .agent-availability-dot,
+html.dark .sep-finder-card.is-yes .sep-finder-card-dot,
+html.dark .snp-routing-field-dot.is-filled {
+  background: var(--status-live) !important;
+}
+
+html.dark .sf-dot--amber,
+html.dark .panel-empty-dot,
+html.dark .ai-dot {
+  background: var(--status-pending) !important;
+}
+
+html.dark .sf-dot--red,
+html.dark .sep-finder-card.is-no .sep-finder-card-dot {
+  background: var(--status-offline) !important;
+}
+
+html.dark table,
+html.dark .sep-plan-table,
+html.dark .ops-table,
+html.dark .at-training-table {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark thead,
+html.dark .sep-plan-table thead,
+html.dark .ops-table thead {
+  background: var(--bg-primary) !important;
+}
+
+html.dark th,
+html.dark .sep-plan-table th,
+html.dark .ops-table thead th,
+html.dark .ops-sort-th button {
+  background: var(--bg-primary) !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-label) !important;
+}
+
+html.dark td,
+html.dark .sep-plan-table td,
+html.dark .ops-table tbody td {
+  border-color: var(--border-default) !important;
+  color: var(--text-primary) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+html.dark tbody tr:nth-child(even),
+html.dark .sep-plan-table tbody tr:nth-child(even),
+html.dark .ops-table tbody tr:nth-child(even) {
+  background: var(--bg-elevated) !important;
+}
+
+html.dark tbody tr:hover,
+html.dark .sep-plan-table tbody tr:hover,
+html.dark .ops-table tbody tr:hover {
+  background: var(--selection-bg) !important;
+  color: var(--selection-text) !important;
+}
+
+html.dark tbody tr:hover *,
+html.dark .sep-plan-table tbody tr:hover *,
+html.dark .ops-table tbody tr:hover * {
+  color: var(--selection-text) !important;
+}
+
+html.dark .ops-sentiment-chart line,
+html.dark .recharts-cartesian-grid line {
+  stroke: var(--chart-grid) !important;
+}
+
+html.dark .ops-sentiment-chart polyline,
+html.dark .recharts-line-curve,
+html.dark .recharts-area-curve {
+  stroke: var(--chart-1) !important;
+}
+
+html.dark .recharts-tooltip-wrapper,
+html.dark .ops-detail-panel,
+html.dark .ops-analytics-block,
+html.dark .ops-summary-box,
+html.dark .ops-coaching-priority,
+html.dark .ops-beneficiary-box,
+html.dark .ops-list-block,
+html.dark .ops-category-row,
+html.dark .ops-metric,
+html.dark .sep-stat-box,
+html.dark .sep-filter-bar,
+html.dark .sep-plan-table-wrap,
+html.dark .sf-panel,
+html.dark .sf-mini-card,
+html.dark .sf-script-box,
+html.dark .sf-callout,
+html.dark .sf-warning-banner,
+html.dark .sf-savings-callout,
+html.dark .sf-inline-lock,
+html.dark .sf-empty-state {
+  background: var(--bg-elevated) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: none !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .recharts-default-tooltip {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--accent) !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .recharts-text,
+html.dark .recharts-legend-item-text,
+html.dark .recharts-tooltip-label {
+  fill: var(--text-muted) !important;
+  color: var(--text-muted) !important;
+}
+
+html.dark .ops-ghl-ok,
+html.dark .ops-out-enrolled,
+html.dark .ops-risk-badge.low,
+html.dark .ops-trend.up {
+  color: var(--status-live) !important;
+}
+
+html.dark .ops-ghl-fail,
+html.dark .ops-out-not_enrolled,
+html.dark .ops-out-incomplete,
+html.dark .ops-risk-badge.high,
+html.dark .ops-trend.down {
+  color: var(--status-offline) !important;
+}
+
+html.dark .ops-out-pending,
+html.dark .ops-out-callback,
+html.dark .ops-risk-badge.medium,
+html.dark .ops-trend.flat {
+  color: var(--status-pending) !important;
+}
+
+html.dark .at-training-alert,
+html.dark .sep-qualifier-alert,
+html.dark .flow-script-note,
+html.dark .flow-script-callout {
+  border-left: 0 !important;
+  outline: 1px solid var(--border-default);
 }

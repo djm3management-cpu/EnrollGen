@@ -126,7 +126,7 @@ function StateInfoCard({
       className="sep-state-card"
       style={{
         "--sep-state-accent":
-          STATE_SEP_TYPE_META[stateSepInfo.dominantType]?.color || "#d29922",
+          STATE_SEP_TYPE_META[stateSepInfo.dominantType]?.color || "var(--status-pending)",
       }}
     >
       <div className="sep-state-card-header">
@@ -145,7 +145,7 @@ function StateInfoCard({
               className="sep-state-card-badge"
               style={{
                 "--sep-state-badge-color":
-                  STATE_SEP_TYPE_META[sepType]?.color || "#8b949e",
+                  STATE_SEP_TYPE_META[sepType]?.color || "var(--text-muted)",
               }}
             >
               {STATE_SEP_TYPE_META[sepType]?.label || sepType}
@@ -173,7 +173,7 @@ function StateInfoCard({
 
       {stateSepInfo.sections.map((section) => {
         const isExpanded = Boolean(expandedStateSections[section.id]);
-        const badgeColor = STATE_SEP_TYPE_META[section.type]?.color || "#8b949e";
+        const badgeColor = STATE_SEP_TYPE_META[section.type]?.color || "var(--text-muted)";
         const { content } = section;
 
         return (
@@ -622,7 +622,7 @@ export default function SEPQualifier({ onMinimize }) {
                         type="button"
                         className="sep-qualifier-shortcut-card"
                         style={{
-                          "--sep-question-color": category?.color || "#8b949e",
+                          "--sep-question-color": category?.color || "var(--text-muted)",
                         }}
                         onClick={() => handleQuestionShortcut(question.categoryId)}
                       >

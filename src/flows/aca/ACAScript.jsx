@@ -20,15 +20,17 @@ const ACA_FLOW_OPTIONS = [
     id: "state",
     label: "STATE",
     title: "State ACA",
-    color: "#EAB308",
-    rgb: "234,179,8",
+    color: "var(--eg-flow-aca)",
+    soft: "var(--flow-aca-bg)",
+    border: "var(--flow-aca-border)",
   },
   {
     id: "core",
     label: "FFM",
     title: "FFM",
-    color: "#8fa4bc",
-    rgb: "143,164,188",
+    color: "var(--text-muted)",
+    soft: "var(--bg-elevated)",
+    border: "var(--border-default)",
   },
 ];
 
@@ -50,12 +52,11 @@ function ACAFlowSelector({ variant, onChange }) {
           width: "fit-content",
           margin: "0 auto 14px",
           background: "linear-gradient(180deg, var(--eg-surface-2) 0%, var(--eg-surface-1) 100%)",
-          border: "1px solid rgba(255,255,255,0.07)",
+          border: "1px solid var(--border-default)",
           borderRadius: 8,
           padding: "8px 16px",
           userSelect: "none",
-          boxShadow:
-            "inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03)",
+          boxShadow: "none",
         }}
       >
         {ACA_FLOW_OPTIONS.map((flow) => {
@@ -80,17 +81,13 @@ function ACAFlowSelector({ variant, onChange }) {
             >
               <div
                 style={{
-                  "--pulse-color": `rgba(${flow.rgb},0.55)`,
+                  "--pulse-color": "var(--focus-glow)",
                   width: 14,
                   height: 14,
                   borderRadius: "50%",
-                  background: active ? flow.color : `rgba(${flow.rgb},0.18)`,
-                  border: `1px solid ${
-                    active ? flow.color : `rgba(${flow.rgb},0.25)`
-                  }`,
-                  boxShadow: active
-                    ? `0 0 8px 2px rgba(${flow.rgb},0.5)`
-                    : "none",
+                  background: active ? flow.color : flow.soft,
+                  border: `1px solid ${active ? flow.color : flow.border}`,
+                  boxShadow: active ? "0 0 8px 2px var(--focus-glow)" : "none",
                   transition:
                     "background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
                   flexShrink: 0,
@@ -105,7 +102,7 @@ function ACAFlowSelector({ variant, onChange }) {
                   fontWeight: 700,
                   letterSpacing: "0.1em",
                   fontFamily: "var(--font-body)",
-                  color: active ? flow.color : `rgba(${flow.rgb},0.45)`,
+                  color: active ? flow.color : "var(--text-muted)",
                   transition: "color 0.2s ease",
                   textTransform: "uppercase",
                   lineHeight: 1,
@@ -134,7 +131,7 @@ function ACAScriptBody({ variant, onVariantChange }) {
       priority: 2,
       title: "ACA Client Info",
       shortLabel: "ACA Client",
-      color: "#EAB308",
+      color: "var(--eg-flow-aca)",
       icon: <ClipboardList size={13} />,
       railClassName: "left-rail--aca-client-info",
       panelClassName: "left-rail-panel-shell--aca-client-info",

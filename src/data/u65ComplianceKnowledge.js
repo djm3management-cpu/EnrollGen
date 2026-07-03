@@ -339,11 +339,11 @@ export const U65_GATE_LABELS = {
 /* ═══════ LEVEL STYLING ═══════ */
 
 export const U65_LEVEL_STYLE = {
-  critical: { color: "#ef4444", icon: "⛔", border: "rgba(239,68,68,0.25)" },
-  warn:     { color: "#fbbf24", icon: "⚠️", border: "rgba(251,191,36,0.2)" },
-  remind:   { color: "#60a5fa", icon: "📋", border: "rgba(96,165,250,0.15)" },
-  tip:      { color: "#4ade80", icon: "✓", border: "rgba(74,222,128,0.15)" },
-  info:     { color: "#7a7f8e", icon: "ℹ", border: "rgba(122,127,142,0.12)" },
+  critical: { color: "var(--status-offline)", icon: "⛔", border: "var(--status-offline-border)" },
+  warn:     { color: "var(--status-pending)", icon: "⚠️", border: "var(--status-pending-border)" },
+  remind:   { color: "var(--info)", icon: "📋", border: "var(--info-border)" },
+  tip:      { color: "var(--status-live)", icon: "✓", border: "var(--status-live-border)" },
+  info:     { color: "var(--text-muted)", icon: "ℹ", border: "var(--border-default)" },
 };
 
 /* ═══════ TIMING CONSTANTS ═══════ */
