@@ -52,12 +52,19 @@ function ensureThemeColorMeta() {
   return meta;
 }
 
+function syncThemeColorMeta(root) {
+  const bgPrimary = window.getComputedStyle(root).getPropertyValue("--bg-primary").trim();
+  if (bgPrimary) {
+    ensureThemeColorMeta()?.setAttribute("content", bgPrimary);
+  }
+}
+
 function applyTheme(theme) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   root.classList.toggle("dark", theme === "dark");
   root.dataset.theme = theme;
-  ensureThemeColorMeta()?.setAttribute("content", theme === "dark" ? "#000000" : "#171411");
+  syncThemeColorMeta(root);
 }
 
 function decodeJwtPayload(token) {

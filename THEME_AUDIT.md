@@ -384,3 +384,50 @@ Files below contain state language that must be mapped to the terminal semantic 
 - Existing colored left-border accent candidates are inventoried above and must be removed or converted to non-left-border treatments during Phase 3.
 - No Tailwind configuration file was present in this checkout during audit; Phase 2 must add/wire semantic Tailwind tokens only if Tailwind is introduced or configured locally.
 - Ambiguous business/domain color strings from broad named-color scans, such as carrier names containing color words, should be left as content and not themed.
+
+## Phase 5 QA Resweep
+
+### Raw Color Resweep
+
+- `src/**/*.{js,jsx,ts,tsx}`: no remaining raw color literals or Tailwind color utility matches after resweep.
+- `index.html`: retains two pre-React `theme-color` literals (`#171411`, `#000000`) so the FOUC prevention script can set the browser chrome before CSS and React are available.
+- CSS raw color counts after resweep:
+  - `src/styles.css`: 1421
+  - `src/styles/design-tokens.css`: 169
+  - `src/styles/v3-overrides.css`: 28
+  - `src/AgentTools.css`: 150
+  - `src/SEPLookupTool.css`: 176
+  - `src/components/LandingPage.css`: 64
+- The CSS counts above are intentionally not zero. `styles.css`, `AgentTools.css`, `SEPLookupTool.css`, and `LandingPage.css` preserve legacy/light-mode source styling so the current light design remains unchanged. Terminal dark mode is applied through semantic tokens and `html.dark` override layers.
+- `src/styles/design-tokens.css` necessarily retains raw values because it defines the light and terminal token maps.
+- `src/styles/v3-overrides.css` retains a small number of literals for legacy compatibility selectors and mode-specific generated backdrop/override behavior.
+
+### Ambiguous Or Risky Color Roles
+
+- Legacy CSS with dense historical terminal styling was not mechanically rewritten in place because doing so would risk changing light-mode pixels. Dark mode coverage is enforced through layered terminal overrides.
+- Carrier/product content that contains color words remains treated as business content, not theme color usage.
+- User-provided docs assets `docs/SL-072622-51930-14.jpg` and `docs/amberenrollgenlogo.png` were not included after follow-up direction changed to a generated grayscale grid and original logo.
+
+### Status Semantics Checked
+
+- Live, active, connected, available, compliant, passing, positive, and healthy states map to green token semantics with text labels/dots or badges.
+- Offline, disconnected, failed, unavailable, auto-fail, negative, and error states map to red token semantics with text labels/dots or badges.
+- Pending, in-progress, warning, awaiting action, incomplete, and review states map to amber token semantics with text labels/dots or badges.
+- Color-only status treatments were replaced or covered by dot/badge plus visible label patterns in the active UI surfaces.
+
+### Screen And Component Checklist
+
+- App shell, top nav, sidebars, theme toggle, Clerk-mounted auth surfaces: checked in light and terminal dark token paths.
+- Co-Pilot panel, compact rail, live transcript, customer/agent audio waveforms, script prompter, and center timer bar: checked in light and terminal dark token paths.
+- MA, Med Sup, ACA, U65, and ancillary script flows: checked in light and terminal dark token paths.
+- SEP Finder, SEP Qualifier, SNP routing, county/state cards, and SEP result panels: checked in light and terminal dark token paths.
+- Agent Tools panel, carrier references, popups, quick notes, and modal overlays: checked in light and terminal dark token paths.
+- Operations/Calls tab, call history, session summary, post-call pipeline, transcription panes, and upload flows: checked in light and terminal dark token paths.
+- Compliance dashboard, 152-intent accordion/scoring UI, tenant settings, badges, tables, forms, empty states, loading states, tooltips, dropdowns, toasts, and scrollbars: checked in light and terminal dark token paths.
+- Charts and numeric/data-heavy surfaces use terminal token colors, dark grid/axis/tooltip styling, and tabular/monospace numeric treatment where already supported by the surface.
+
+### Verification
+
+- `npm run build` passed after terminal dark-mode work and again after the live audio waveform update.
+- Light-mode token values were kept as aliases to the existing warm brown/earth design values.
+- No colored left-border accent bars were introduced; terminal dark overrides remove the known left-accent treatments on covered surfaces.
