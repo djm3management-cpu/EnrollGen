@@ -2144,7 +2144,10 @@ button.primary.section-complete-btn {
   flex-direction: column;
   gap: 6px;
   min-height: 80px;
-  padding: 10px 40px;
+  padding: 8px 40px;
+  background: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
 }
 
 .eg-audio-meter-row {
