@@ -2670,30 +2670,52 @@ html.dark body::before {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.32;
+  opacity: 1;
   background:
     repeating-linear-gradient(
       0deg,
-      transparent 0,
-      transparent 39px,
-      color-mix(in srgb, var(--accent) 11%, transparent) 40px
+      color-mix(in srgb, var(--accent) 13%, transparent) 0,
+      color-mix(in srgb, var(--accent) 13%, transparent) 1px,
+      transparent 1px,
+      transparent 200px
     ),
     repeating-linear-gradient(
       90deg,
-      transparent 0,
-      transparent 39px,
-      color-mix(in srgb, var(--accent) 9%, transparent) 40px
+      color-mix(in srgb, var(--accent) 11%, transparent) 0,
+      color-mix(in srgb, var(--accent) 11%, transparent) 1px,
+      transparent 1px,
+      transparent 200px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--accent) 6%, transparent) 0,
+      color-mix(in srgb, var(--accent) 6%, transparent) 1px,
+      transparent 1px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent) 5%, transparent) 0,
+      color-mix(in srgb, var(--accent) 5%, transparent) 1px,
+      transparent 1px,
+      transparent 40px
     ),
     repeating-linear-gradient(
       45deg,
-      transparent 0,
-      transparent 79px,
-      color-mix(in srgb, var(--info) 5%, transparent) 80px
+      color-mix(in srgb, var(--info) 3%, transparent) 0,
+      color-mix(in srgb, var(--info) 3%, transparent) 1px,
+      transparent 1px,
+      transparent 120px
+    ),
+    radial-gradient(
+      ellipse at 50% 22%,
+      color-mix(in srgb, var(--accent) 6%, transparent) 0%,
+      transparent 54%
     ),
     linear-gradient(
       180deg,
       var(--bg-primary) 0%,
-      color-mix(in srgb, var(--bg-primary) 92%, var(--accent)) 52%,
+      color-mix(in srgb, var(--bg-primary) 96%, var(--accent)) 52%,
       var(--bg-primary) 100%
     );
   background-position: center;
