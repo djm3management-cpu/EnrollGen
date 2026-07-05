@@ -44,6 +44,7 @@ const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 const loadComplianceIntentAccordion = () => import("./components/ComplianceIntentAccordion");
 const loadOperationsTab = () => import("./components/OperationsTab");
+const loadContactsTab = () => import("./components/contacts/ContactsTab");
 const loadTenantSettings = () => import("./components/TenantSettings");
 const loadOnboarding = () => import("./components/Onboarding");
 const loadSEPQualifier = () => import("./components/leftRail/SEPQualifier");
@@ -67,6 +68,7 @@ const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
 const ComplianceIntentAccordion = lazy(loadComplianceIntentAccordion);
 const OperationsTab = lazy(loadOperationsTab);
+const ContactsTab = lazy(loadContactsTab);
 const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
 const SEPQualifier = lazy(loadSEPQualifier);
@@ -448,6 +450,7 @@ function getTabsForMode(mode) {
 
   tabs.push({ id: "complianceHub", label: "Compliance Hub" });
   tabs.push({ id: "operations", label: "CALLS" });
+  tabs.push({ id: "contacts", label: "CONTACTS" });
   tabs.push({ id: "verse", label: "Daily Verse" });
 
   return tabs;
@@ -611,6 +614,10 @@ function AppShell({ currentUser = null }) {
       loadOperationsTab();
       return;
     }
+    if (panelId === "contacts") {
+      loadContactsTab();
+      return;
+    }
     if (panelId === "settings") {
       loadTenantSettings();
       return;
@@ -731,6 +738,12 @@ function AppShell({ currentUser = null }) {
             <OperationsTab />
           </LazyPanel>
         );
+      case "contacts":
+        return (
+          <LazyPanel>
+            <ContactsTab />
+          </LazyPanel>
+        );
       case "settings":
         return (
           <LazyPanel>
@@ -828,6 +841,8 @@ function AppShell({ currentUser = null }) {
                 }${
                   openPanel === "operations" ? " top-panel-overlay--operations" : ""
                 }${
+                  openPanel === "contacts" ? " top-panel-overlay--contacts" : ""
+                }${
                   openPanel === "complianceHub" ? " top-panel-overlay--compliance" : ""
                 }${
                   openPanel === "verse" ? " top-panel-overlay--verse" : ""
@@ -877,6 +892,8 @@ function AppShell({ currentUser = null }) {
                   openPanel === "tools" ? " top-panel-overlay--tools" : ""
                 }${
                   openPanel === "operations" ? " top-panel-overlay--operations" : ""
+                }${
+                  openPanel === "contacts" ? " top-panel-overlay--contacts" : ""
                 }${
                   openPanel === "complianceHub" ? " top-panel-overlay--compliance" : ""
                 }${
