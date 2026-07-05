@@ -4,6 +4,7 @@ import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useCopilotEngine } from "../hooks/useCopilotEngine";
 import { useCustomerAudio } from "../hooks/useCustomerAudio";
 import { useMergedTranscript } from "../hooks/useMergedTranscript";
+import { useInboundCall } from "../context/InboundCallContext";
 
 /* ═══════════════════════════════════════════════════════════════════
    ScriptPrompter, Headless copilot engine host.
@@ -41,6 +42,12 @@ const ScriptPrompter = memo(function ScriptPrompter({
     externalTranscriptRef: transcriptRef,
   });
 
+  /* ─── Inbound Twilio call: both legs are transcribed server-side and
+     delivered over the telephony /agent WebSocket, so the browser
+     capture paths (mic Web Speech + tab-audio Deepgram) stay off. ─── */
+  const inbound = useInboundCall();
+  const inboundActive = Boolean(inbound?.activeCall);
+
   /* ─── Merged transcript (agent + customer) ─── */
   const {
     mergedTranscript,
@@ -48,9 +55,11 @@ const ScriptPrompter = memo(function ScriptPrompter({
     recentCustomerSpeech,
     hasCustomerAudio,
   } = useMergedTranscript({
-    agentTranscriptRows: speech.transcriptRows,
-    customerTranscript: customerAudio.customerTranscript,
-    isCustomerCapturing: customerAudio.isCapturing,
+    agentTranscriptRows: inboundActive ? inbound.agentRows : speech.transcriptRows,
+    customerTranscript: inboundActive
+      ? inbound.customerTranscript
+      : customerAudio.customerTranscript,
+    isCustomerCapturing: inboundActive ? true : customerAudio.isCapturing,
   });
 
   /* ─── Copilot engine (coaching, ask, feed) ─── */
@@ -69,6 +78,22 @@ const ScriptPrompter = memo(function ScriptPrompter({
   useEffect(() => {
     speechRef.current = copilot;
   }, [copilot]);
+
+  // For inbound calls, feed server-transcribed agent finals into the
+  // copilot transcript ref and coaching scheduler, mirroring onNewFinal.
+  const lastInboundAgentRowIdRef = useRef(0);
+  useEffect(() => {
+    if (!inboundActive || !inbound?.agentRows?.length) return;
+    const newRows = inbound.agentRows.filter(
+      (row) => row.id > lastInboundAgentRowIdRef.current
+    );
+    if (!newRows.length) return;
+    lastInboundAgentRowIdRef.current = newRows[newRows.length - 1].id;
+    for (const row of newRows) {
+      transcriptRef.current += (transcriptRef.current ? " " : "") + row.text;
+      speechRef.current?.scheduleCoaching?.(row.text);
+    }
+  }, [inboundActive, inbound?.agentRows]);
 
   // Forward transcript changes to parent
   useEffect(() => {
@@ -119,11 +144,12 @@ const ScriptPrompter = memo(function ScriptPrompter({
   }, [customerAudio, customerAudioEnabled, copilot]);
 
   const handleStart = useCallback(async (options = {}) => {
+    if (inboundActive) return;
     if (!options?.skipCustomerAudio) {
       await startCustomerAudio();
     }
     speech.startListening();
-  }, [speech, startCustomerAudio]);
+  }, [speech, startCustomerAudio, inboundActive]);
 
   const handleStop = useCallback(() => {
     speech.stopListening();

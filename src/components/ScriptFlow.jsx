@@ -20,6 +20,7 @@ import {
 } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { useLiveCall } from "../context/LiveCallContext";
+import { useInboundCall } from "../context/InboundCallContext";
 import { useComplianceScoringWorker } from "../hooks/useComplianceScoringWorker";
 import {
   buildPostCallPayload,
@@ -277,19 +278,19 @@ function RailWidgets({
       <CollapsibleWidget
         title="Live Transcript"
         icon={<Radio size={11} />}
-        accentColor="#39FF88"
+        accentColor="var(--status-live)"
         headerRight={<TranscriptTimer startTime={state.tpmoStart} />}
       >
         <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
       </CollapsibleWidget>
 
       {/* ── Co-Pilot Feed ── */}
-      <CollapsibleWidget title="Co-Pilot Feed" icon={<MessageSquare size={11} />} accentColor="#9D00FF">
+      <CollapsibleWidget title="Co-Pilot Feed" icon={<MessageSquare size={11} />} accentColor="var(--chart-4)">
         <CopilotFeedMini />
       </CollapsibleWidget>
 
       {/* ── Compliance ── */}
-      <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="#E8002D">
+      <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="var(--danger)">
         <ComplianceMini
           transcript={transcript}
           activeSection={activeSection}
@@ -529,7 +530,7 @@ function DeferredComplianceDashboard({
         <Suspense
           fallback={
             <div className="card" style={{ marginTop: 14 }}>
-              <div style={{ color: "#8fa4bc", fontSize: "0.9rem" }}>
+              <div style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
                 Loadingâ€¦
               </div>
             </div>
@@ -627,6 +628,45 @@ export default function ScriptFlow() {
       void handleStart();
     }
   }, []);
+
+  // Inbound Twilio call accepted: auto-start the session (transcript and
+  // Co-Pilot come from the telephony service) and hydrate the left rail
+  // client panel from the matched contact record.
+  const inbound = useInboundCall();
+  const inboundStartedRef = useRef(false);
+  const inboundContactHydratedRef = useRef("");
+  useEffect(() => {
+    if (!inbound?.activeCall || inboundStartedRef.current) return;
+    inboundStartedRef.current = true;
+    setCallStarted(true);
+  }, [inbound?.activeCall]);
+
+  useEffect(() => {
+    const contact = inbound?.contact;
+    if (!inbound?.activeCall || !contact || inboundContactHydratedRef.current === contact.id) {
+      return;
+    }
+    inboundContactHydratedRef.current = contact.id;
+    setActivePostCallMetadata({ contactId: contact.id });
+
+    const noteValues = {
+      customerFirstName: contact.first_name,
+      customerLastName: contact.last_name,
+      customerPhone: contact.phone,
+      customerEmail: contact.email,
+      customerDob: contact.dob,
+      customerState: contact.state,
+      customerCounty: contact.county,
+      previousCarrier: contact.current_carrier,
+      currentCoverage: [contact.current_carrier, contact.current_plan]
+        .filter(Boolean)
+        .join(" "),
+      partsABStatus: contact.medicare_parts === "ab" ? "Active" : "",
+    };
+    for (const [field, value] of Object.entries(noteValues)) {
+      if (value) dispatch({ type: "SET_NOTE", field, value });
+    }
+  }, [inbound?.activeCall, inbound?.contact, dispatch]);
 
   const customerTranscript = useMemo(
     () =>

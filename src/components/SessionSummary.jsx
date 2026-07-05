@@ -618,7 +618,7 @@ export default React.memo(function SessionSummary() {
           fontSize: 0,
         }}
       >
-        <ClipboardCheck size={16} style={{ color: "#94a3b8", flexShrink: 0 }} />
+        <ClipboardCheck size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
         <span style={{ fontSize: "1rem" }}>Enrollment complete</span>
         <span>Enrollment complete, save your records</span>
       </span>

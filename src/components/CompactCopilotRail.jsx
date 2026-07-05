@@ -124,7 +124,7 @@ function RailWidgets({
       <CollapsibleWidget
         title="Live Transcript"
         icon={<Radio size={11} />}
-        accentColor="#39FF88"
+        accentColor="var(--status-live)"
         headerRight={<TranscriptTimer startTime={startTime} />}
       >
         <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
@@ -133,7 +133,7 @@ function RailWidgets({
       <CollapsibleWidget
         title="Co-Pilot Feed"
         icon={<MessageSquare size={11} />}
-        accentColor="#9D00FF"
+        accentColor="var(--chart-4)"
       >
         <CopilotFeedMini />
       </CollapsibleWidget>

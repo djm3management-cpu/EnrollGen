@@ -18,8 +18,8 @@ export function StateMap({ selectedState, onStateClick, compact = false }) {
 
     if (isSel) {
       return {
-        fill: "rgba(232,0,45,0.35)",
-        stroke: "#E8002D",
+        fill: "color-mix(in srgb, var(--danger) 35%, transparent)",
+        stroke: "var(--danger)",
         strokeWidth: 2,
         cursor: "pointer",
         filter: "url(#sep-glow)",
@@ -27,16 +27,16 @@ export function StateMap({ selectedState, onStateClick, compact = false }) {
     }
     if (isHov) {
       return {
-        fill: "rgba(232,0,45,0.18)",
-        stroke: "rgba(232,0,45,0.6)",
+        fill: "color-mix(in srgb, var(--danger) 18%, transparent)",
+        stroke: "color-mix(in srgb, var(--danger) 60%, transparent)",
         strokeWidth: 1.5,
         cursor: "pointer",
         filter: "url(#sep-glow-s)",
       };
     }
     return {
-      fill: "rgba(232,0,45,0.08)",
-      stroke: "rgba(255,255,255,0.12)",
+      fill: "color-mix(in srgb, var(--danger) 8%, transparent)",
+      stroke: "color-mix(in srgb, var(--text-primary) 12%, transparent)",
       strokeWidth: 0.8,
       cursor: "pointer",
       filter: undefined,
@@ -95,19 +95,19 @@ export function StateMap({ selectedState, onStateClick, compact = false }) {
           return (
             <g key={`l-${code}`} style={{ pointerEvents: "none" }}>
               {offset && (
-                <line x1={cx} y1={cy} x2={lx - 4} y2={ly} stroke="rgba(255,255,255,0.12)" strokeWidth={0.5} />
+                <line x1={cx} y1={cy} x2={lx - 4} y2={ly} stroke="color-mix(in srgb, var(--text-primary) 12%, transparent)" strokeWidth={0.5} />
               )}
               <text
                 x={lx} y={ly}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fill={isSel ? "#FFFFFF" : isHov ? "#F0F0F0" : "#999"}
+                fill={isSel ? "var(--text-primary)" : isHov ? "var(--text-primary)" : "var(--text-muted)"}
                 style={{
                   fontFamily: "var(--font-body)",
                   fontWeight: 800,
                   fontSize: isSel || isHov ? "11px" : "8px",
                   letterSpacing: "0.06em",
-                  textShadow: "0 1px 3px rgba(0,0,0,0.9)",
+                  textShadow: "none",
                   transition: "all 0.15s",
                 }}
               >
@@ -127,11 +127,11 @@ export function StateMap({ selectedState, onStateClick, compact = false }) {
             top: mousePos.y - 10,
             pointerEvents: "none",
             zIndex: 20,
-            background: "linear-gradient(145deg, rgba(22,22,28,0.97), rgba(12,12,14,0.98))",
-            border: "1px solid rgba(255,255,255,0.1)",
+            background: "linear-gradient(145deg, var(--bg-elevated), var(--bg-surface))",
+            border: "1px solid var(--border-default)",
             borderRadius: 10,
             padding: "7px 12px",
-            boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
+            boxShadow: "none",
           }}
         >
           <span style={{
@@ -140,11 +140,11 @@ export function StateMap({ selectedState, onStateClick, compact = false }) {
             fontSize: "0.76rem",
             letterSpacing: "0.06em",
             textTransform: "uppercase",
-            color: "#F0F0F0",
+            color: "var(--text-primary)",
           }}>
             {hovered}
           </span>
-          <span style={{ fontSize: "0.65rem", color: "#5A5A6A", marginLeft: 8 }}>
+          <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginLeft: 8 }}>
             Click to explore
           </span>
         </div>

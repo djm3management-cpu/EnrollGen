@@ -96,13 +96,13 @@
 .script-editor-actions .primary {
   border-color: var(--eg-accent-dim);
   background: var(--eg-accent);
-  color: #ffffff;
+  color: var(--button-primary-text);
 }
 
 .script-editor-actions .primary:hover:not(:disabled) {
   border-color: var(--eg-accent-bright);
   background: var(--eg-accent-bright);
-  color: #ffffff;
+  color: var(--button-primary-text);
 }
 
 .script-editor-actions .secondary {

@@ -12,9 +12,9 @@ const TRANSCRIPT_PANEL_HEIGHT = "clamp(148px, 22vh, 212px)";
 const MAX_TRANSCRIPT_ENTRIES = 24;
 
 function getTimerColor(seconds) {
-  if (seconds < 900) return "#33cc66";   // green < 15 min
-  if (seconds < 1500) return "#f4b24d";  // yellow 15-25 min
-  return "#ff3838";                      // red 25+ min
+  if (seconds < 900) return "var(--status-live)";
+  if (seconds < 1500) return "var(--status-pending)";
+  return "var(--status-offline)";
 }
 
 function formatTime(seconds) {
@@ -122,22 +122,21 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
                 display: "flex",
                 gap: 5,
                 padding: "3px 0",
-                borderBottom: "1px solid rgba(255,255,255,0.03)",
+                borderBottom: "1px solid var(--border-default)",
                 animation: idx === finals.length - 1 ? "miniTranscriptFadeIn 0.3s ease" : "none",
-                borderLeft: "2px solid transparent",
                 paddingLeft: 4,
                 backgroundColor: highlightSpeakers
                   ? isCustomer
-                    ? "rgba(105, 167, 200, 0.12)"
-                    : "rgba(217, 139, 69, 0.1)"
+                    ? "var(--info-bg)"
+                    : "var(--status-pending-bg)"
                   : undefined,
               }}
             >
               <span className="mini-live-transcript__text" style={{
                 fontSize: "0.7rem",
                 color: idx === finals.length - 1
-                  ? (isCustomer ? "#88c8ff" : "#c8cdd8")
-                  : (isCustomer ? "#5588aa" : "#555860"),
+                  ? (isCustomer ? "var(--info)" : "var(--text-primary)")
+                  : (isCustomer ? "var(--eg-blue-text)" : "var(--text-muted)"),
                 fontFamily: "var(--font-body)",
                 lineHeight: 1.5,
                 overflowWrap: "break-word",
@@ -148,7 +147,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
                   fontWeight: 800,
                   fontFamily: "var(--font-body)",
                   letterSpacing: "0.06em",
-                  color: isCustomer ? "#00A8FF" : "#666",
+                  color: isCustomer ? "var(--info)" : "var(--text-label)",
                   marginRight: 5,
                 }}>
                   {isCustomer ? "CUSTOMER" : "AGENT"}

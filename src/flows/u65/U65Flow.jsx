@@ -12,7 +12,7 @@ import { useScriptTemplate } from "../../hooks/useScriptTemplate";
 import CenterTimerBar from "../../components/CenterTimerBar";
 import ProgressDots from "../../components/ProgressDots";
 
-const ACCENT = "#a855f7";
+const ACCENT = "var(--eg-flow-u65)";
 const U65_VOICEMAIL_SCRIPT =
   "\"Hi, this is [Agent Name] with New Gen Health Solutions. I'm calling back regarding your request for health insurance information. Give me a call back when you get a chance. We have options that are generally 20 to 40 % less expensive than traditional marketplace plans, as well as private products with full coverage through the Aetna and Cigna networks, zero-dollar generic drugs, and much more. Looking forward to hearing from you. Have a great day.\"";
 
@@ -26,14 +26,14 @@ function TalkTrack({ text }) {
     <div
       className="flow-script-line"
       style={{
-        borderLeft: "2px solid rgba(168,85,247,0.28)",
+        outline: "1px solid var(--flow-u65-border)",
         padding: "11px 16px",
         marginBottom: 8,
         borderRadius: "0 6px 6px 0",
-        background: "rgba(255,255,255,0.012)",
+        background: "var(--bg-elevated)",
       }}
     >
-      <div className="flow-script-text" style={{ color: "#dfe6f0", fontSize: 14, lineHeight: 1.7 }}>{text}</div>
+      <div className="flow-script-text" style={{ color: "var(--text-primary)", fontSize: 14, lineHeight: 1.7 }}>{text}</div>
     </div>
   );
 }
@@ -43,17 +43,17 @@ function StageDirection({ text }) {
     <div
       className="flow-stage-direction"
       style={{
-        borderLeft: "2px solid rgba(255,255,255,0.1)",
+        outline: "1px solid var(--border-default)",
         padding: "8px 14px",
         marginBottom: 8,
         borderRadius: "0 6px 6px 0",
-        background: "rgba(255,255,255,0.015)",
+        background: "var(--bg-elevated)",
       }}
     >
       <div
         className="flow-stage-text"
         style={{
-          color: "#8fa4bc",
+          color: "var(--text-muted)",
           fontSize: 12,
           lineHeight: 1.55,
           fontStyle: "italic",
@@ -72,7 +72,7 @@ function GateToggle({ label, done, onDo, onUndo }) {
       style={{
         marginTop: 16,
         paddingTop: 14,
-        borderTop: "1px solid rgba(255,255,255,0.04)",
+        borderTop: "1px solid var(--border-default)",
         display: "flex",
         justifyContent: "center",
       }}
@@ -90,10 +90,10 @@ function GateToggle({ label, done, onDo, onUndo }) {
           minWidth: 240,
           padding: "10px 14px",
           border: `1px solid ${
-            done ? "rgba(52,211,153,0.2)" : "rgba(168,85,247,0.15)"
+            done ? "var(--status-live-border)" : "var(--flow-u65-border)"
           }`,
-          background: done ? "rgba(52,211,153,0.05)" : "rgba(255,255,255,0.015)",
-          color: done ? "#34d399" : "#dfe6f0",
+          background: done ? "var(--status-live-bg)" : "var(--bg-elevated)",
+          color: done ? "var(--status-live)" : "var(--text-primary)",
         }}
       >
         <Check className="flow-gate-icon" size={14} strokeWidth={2.8} aria-hidden="true" />
@@ -137,21 +137,21 @@ function FlowCard({ code, title, active, done, dur, children }) {
             alignItems: "center",
             gap: 8,
             padding: "10px 14px",
-            background: "rgba(52,211,153,0.03)",
-            border: "1px solid rgba(52,211,153,0.1)",
+            background: "var(--status-live-bg)",
+            border: "1px solid var(--status-live-border)",
             borderRadius: 10,
             cursor: "pointer",
             listStyle: "none",
             fontSize: 13,
-            color: "#6b7a8d",
+            color: "var(--text-muted)",
           }}
         >
-          <span style={{ color: "#34d399" }}>+</span>
+          <span style={{ color: "var(--status-live)" }}>+</span>
           <span style={{ flex: 1 }}>
             <span
               style={{
                 fontWeight: 700,
-                color: "#4a5568",
+                color: "var(--text-muted)",
                 marginRight: 8,
                 fontSize: 11,
               }}
@@ -164,7 +164,7 @@ function FlowCard({ code, title, active, done, dur, children }) {
             <span
               style={{
                 fontSize: 11,
-                color: "#4a5568",
+                color: "var(--text-muted)",
                 fontVariantNumeric: "tabular-nums",
               }}
             >
@@ -188,9 +188,9 @@ function FlowCard({ code, title, active, done, dur, children }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       style={{
-        background: active ? "rgba(168,85,247,0.04)" : "rgba(255,255,255,0.018)",
+        background: active ? "var(--flow-u65-bg)" : "var(--bg-surface)",
         border: `1px solid ${
-          active ? "rgba(168,85,247,0.3)" : "rgba(255,255,255,0.05)"
+          active ? "var(--flow-u65-border)" : "var(--border-default)"
         }`,
         borderRadius: 10,
         padding: "20px 18px",
@@ -202,12 +202,12 @@ function FlowCard({ code, title, active, done, dur, children }) {
           style={{
             fontSize: 11,
             fontWeight: 700,
-            color: active ? ACCENT : "#4a5568",
+            color: active ? ACCENT : "var(--text-muted)",
             background: active
-              ? "rgba(168,85,247,0.08)"
-              : "rgba(255,255,255,0.03)",
+              ? "var(--flow-u65-bg)"
+              : "var(--bg-elevated)",
             border: `1px solid ${
-              active ? "rgba(168,85,247,0.2)" : "rgba(255,255,255,0.05)"
+              active ? "var(--flow-u65-border)" : "var(--border-default)"
             }`,
             borderRadius: 5,
             padding: "3px 8px",
@@ -216,7 +216,7 @@ function FlowCard({ code, title, active, done, dur, children }) {
         >
           {code}
         </span>
-        <span style={{ fontSize: 15, fontWeight: 600, color: "#dfe6f0" }}>{title}</span>
+        <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>{title}</span>
       </div>
       {children}
     </motion.section>
@@ -350,8 +350,8 @@ export default function U65Flow() {
         <section
           className="script-start-call-gate"
           style={{
-            background: "rgba(168,85,247,0.04)",
-            border: "1px solid rgba(168,85,247,0.2)",
+            background: "var(--flow-u65-bg)",
+            border: "1px solid var(--flow-u65-border)",
             borderRadius: 10,
             padding: "28px 20px",
             textAlign: "center",
@@ -369,8 +369,8 @@ export default function U65Flow() {
               textTransform: "uppercase",
               padding: "10px 36px",
               background:
-                "linear-gradient(145deg, rgba(168,85,247,0.15), rgba(168,85,247,0.05))",
-              border: "1px solid rgba(168,85,247,0.3)",
+                "var(--flow-u65-bg)",
+              border: "1px solid var(--flow-u65-border)",
               color: ACCENT,
               borderRadius: 8,
               cursor: "pointer",
@@ -411,23 +411,23 @@ export default function U65Flow() {
                 marginTop: 18,
                 textAlign: "center",
                 padding: "20px",
-                background: "rgba(52,211,153,0.04)",
-                border: "1px solid rgba(52,211,153,0.12)",
+                background: "var(--status-live-bg)",
+                border: "1px solid var(--status-live-border)",
                 borderRadius: 10,
               }}
             >
               <div style={{ fontSize: 24, marginBottom: 6 }}>+</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#34d399" }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--status-live)" }}>
                 U65 Flow Complete
               </div>
               <button
                 onClick={() => dispatch({ type: "RESET" })}
                 style={{
                   marginTop: 12,
-                  background: "rgba(52,211,153,0.08)",
-                  border: "1px solid rgba(52,211,153,0.2)",
+                  background: "var(--status-live-bg)",
+                  border: "1px solid var(--status-live-border)",
                   borderRadius: 6,
-                  color: "#34d399",
+                  color: "var(--status-live)",
                   padding: "8px 20px",
                   fontSize: 13,
                   fontWeight: 600,

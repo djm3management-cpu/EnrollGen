@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MAX_TRANSCRIPT_LENGTH } from "../data/complianceKnowledge";
+import { computeRmsLevel, computeWaveformPeaks } from "../audio/audioPeaks";
 import { publishAudioLevel } from "../stores/audioLevelStore";
 
 const QUESTION_START_RE =
@@ -144,13 +145,9 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
         if (!currentAnalyser || !data) return;
 
         currentAnalyser.getByteTimeDomainData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i += 1) {
-          const centered = (data[i] - 128) / 128;
-          sum += centered * centered;
-        }
-        const rms = Math.sqrt(sum / data.length);
-        publishAudioLevel("agent", Math.min(1, rms * 5));
+        publishAudioLevel("agent", computeRmsLevel(data, { byteTimeDomain: true }), {
+          peaks: computeWaveformPeaks(data, { byteTimeDomain: true }),
+        });
         meterFrameRef.current = requestAnimationFrame(tick);
       };
 

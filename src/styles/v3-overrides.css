@@ -2144,7 +2144,10 @@ button.primary.section-complete-btn {
   flex-direction: column;
   gap: 6px;
   min-height: 80px;
-  padding: 10px 40px;
+  padding: 8px 40px;
+  background: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
 }
 
 .eg-audio-meter-row {
@@ -2622,4 +2625,926 @@ button.primary.section-complete-btn {
   font-family: var(--eg-font-mono);
   font-size: 10px;
   color: var(--eg-text-mid);
+}
+
+/* ============================================================
+   TERMINAL DARK MODE RESWEEP
+   ============================================================ */
+
+html.dark,
+html.dark body,
+html.dark #root {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  scrollbar-color: var(--eg-border-hover) var(--bg-primary);
+}
+
+html.dark * {
+  scrollbar-color: var(--eg-border-hover) var(--bg-primary);
+}
+
+html.dark *::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+html.dark *::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+html.dark *::-webkit-scrollbar-thumb {
+  background: var(--eg-border-hover);
+  border-radius: 0;
+}
+
+html.dark ::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+html.dark body {
+  position: relative;
+  background: var(--bg-primary) !important;
+}
+
+html.dark body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 1;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--text-primary) 12%, transparent) 0,
+      color-mix(in srgb, var(--text-primary) 12%, transparent) 1px,
+      transparent 1px,
+      transparent 200px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--text-secondary) 10%, transparent) 0,
+      color-mix(in srgb, var(--text-secondary) 10%, transparent) 1px,
+      transparent 1px,
+      transparent 200px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--text-primary) 5%, transparent) 0,
+      color-mix(in srgb, var(--text-primary) 5%, transparent) 1px,
+      transparent 1px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--text-secondary) 4%, transparent) 0,
+      color-mix(in srgb, var(--text-secondary) 4%, transparent) 1px,
+      transparent 1px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--text-muted) 3%, transparent) 0,
+      color-mix(in srgb, var(--text-muted) 3%, transparent) 1px,
+      transparent 1px,
+      transparent 120px
+    ),
+    radial-gradient(
+      ellipse at 50% 22%,
+      color-mix(in srgb, var(--text-primary) 4%, transparent) 0%,
+      transparent 54%
+    ),
+    linear-gradient(
+      180deg,
+      var(--bg-primary) 0%,
+      color-mix(in srgb, var(--bg-primary) 94%, var(--text-muted)) 52%,
+      var(--bg-primary) 100%
+    );
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+html.dark #root {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+
+html.dark .viewport-bg {
+  background: transparent !important;
+  animation: none !important;
+}
+
+html.dark .viewport-wallpaper-image,
+html.dark .shell-texture,
+html.dark .shell-textures,
+html.dark .shell-grid,
+html.dark .shell-vignette {
+  opacity: 0 !important;
+}
+
+html.dark .app-shell-modern,
+html.dark .app,
+html.dark .app-workspace,
+html.dark .app-center,
+html.dark .flow-shell,
+html.dark .flow-main {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .top-bar-shell,
+html.dark .top-panel-overlay,
+html.dark .right-rail-full > .right-rail-scroll,
+html.dark .right-rail-overlay,
+html.dark .left-rail,
+html.dark .left-rail-panel-shell,
+html.dark .card,
+html.dark .eg-rail-card,
+html.dark .right-rail-control-panel,
+html.dark .left-rail-tool-panel,
+html.dark .subscription-paywall-card,
+html.dark .auth-shell {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: none !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .top-panel-header,
+html.dark .top-panel-body,
+html.dark .right-rail-widget-header,
+html.dark .left-rail-tool-panel-inner,
+html.dark .compliance-dashboard,
+html.dark .compliance-dashboard-body,
+html.dark .daily-verse-shell {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: none !important;
+}
+
+html.dark .top-panel-title,
+html.dark .right-rail-widget-title,
+html.dark .eg-panel-header,
+html.dark .eg-card-label,
+html.dark .billing-eyebrow,
+html.dark .sf-panel-heading,
+html.dark .sf-script-label,
+html.dark .ops-section-head,
+html.dark .ops-mini-label,
+html.dark .ops-col-head,
+html.dark .ops-filter-label,
+html.dark .sep-stat-label,
+html.dark .sep-filter-label,
+html.dark .sep-plan-table th {
+  color: var(--text-label) !important;
+}
+
+html.dark .top-bar-tab {
+  color: var(--text-muted) !important;
+  background: var(--bg-primary) !important;
+}
+
+html.dark .top-bar-tab:hover {
+  color: var(--text-primary) !important;
+  background: var(--bg-elevated) !important;
+}
+
+html.dark .top-bar-tab.is-active,
+html.dark .top-bar-settings-button.is-active,
+html.dark .flow-pill.is-active .flow-label {
+  color: var(--accent) !important;
+}
+
+html.dark .top-bar-tab.is-active {
+  background: var(--bg-primary) !important;
+}
+
+html.dark .top-bar-tab.is-active::after {
+  background: var(--accent) !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea,
+html.dark .ask-copilot-mini__form,
+html.dark .left-rail-zip-input,
+html.dark .sf-form-grid input,
+html.dark .sf-form-grid select,
+html.dark .sf-decline-box input,
+html.dark .sf-inline-form input {
+  background: var(--bg-primary) !important;
+  border-color: var(--eg-border-hover) !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus,
+html.dark .ask-copilot-mini__form:focus-within,
+html.dark .left-rail-zip-input:focus {
+  border-color: var(--border-focus) !important;
+  box-shadow: 0 0 0 1px var(--focus-glow) !important;
+  outline: none !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+html.dark button.primary,
+html.dark .primary,
+html.dark .ask-copilot-mini__send,
+html.dark .script-start-call-button,
+html.dark .sf-action-button,
+html.dark .left-rail-tool-start-btn,
+html.dark .sep-qualifier-primary,
+html.dark .sep-finder-trigger-btn {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: var(--selection-text) !important;
+  box-shadow: none !important;
+}
+
+html.dark button.secondary,
+html.dark .secondary,
+html.dark .top-panel-close,
+html.dark .copilot-pill-button,
+html.dark .sf-secondary-button,
+html.dark .sf-icon-button,
+html.dark .left-rail-tool-btn,
+html.dark .billing-icon-button,
+html.dark .sep-finder-refresh {
+  background: var(--bg-primary) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  box-shadow: none !important;
+}
+
+html.dark .destructive,
+html.dark .is-error,
+html.dark .billing-alert.is-error,
+html.dark .at-doc-error,
+html.dark .sep-finder-panel-error {
+  border-color: var(--status-offline-border) !important;
+  background: var(--status-offline-bg) !important;
+  color: var(--eg-red-text) !important;
+}
+
+html.dark .sf-dot--green,
+html.dark .agent-availability-btn.is-active .agent-availability-dot,
+html.dark .sep-finder-card.is-yes .sep-finder-card-dot,
+html.dark .snp-routing-field-dot.is-filled {
+  background: var(--status-live) !important;
+}
+
+html.dark .sf-dot--amber,
+html.dark .panel-empty-dot,
+html.dark .ai-dot {
+  background: var(--status-pending) !important;
+}
+
+html.dark .sf-dot--red,
+html.dark .sep-finder-card.is-no .sep-finder-card-dot {
+  background: var(--status-offline) !important;
+}
+
+html.dark table,
+html.dark .sep-plan-table,
+html.dark .ops-table,
+html.dark .at-training-table {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark thead,
+html.dark .sep-plan-table thead,
+html.dark .ops-table thead {
+  background: var(--bg-primary) !important;
+}
+
+html.dark th,
+html.dark .sep-plan-table th,
+html.dark .ops-table thead th,
+html.dark .ops-sort-th button {
+  background: var(--bg-primary) !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-label) !important;
+}
+
+html.dark td,
+html.dark .sep-plan-table td,
+html.dark .ops-table tbody td {
+  border-color: var(--border-default) !important;
+  color: var(--text-primary) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+html.dark tbody tr:nth-child(even),
+html.dark .sep-plan-table tbody tr:nth-child(even),
+html.dark .ops-table tbody tr:nth-child(even) {
+  background: var(--bg-elevated) !important;
+}
+
+html.dark tbody tr:hover,
+html.dark .sep-plan-table tbody tr:hover,
+html.dark .ops-table tbody tr:hover {
+  background: var(--selection-bg) !important;
+  color: var(--selection-text) !important;
+}
+
+html.dark tbody tr:hover *,
+html.dark .sep-plan-table tbody tr:hover *,
+html.dark .ops-table tbody tr:hover * {
+  color: var(--selection-text) !important;
+}
+
+html.dark .ops-sentiment-chart line,
+html.dark .recharts-cartesian-grid line {
+  stroke: var(--chart-grid) !important;
+}
+
+html.dark .ops-sentiment-chart polyline,
+html.dark .recharts-line-curve,
+html.dark .recharts-area-curve {
+  stroke: var(--chart-1) !important;
+}
+
+html.dark .recharts-tooltip-wrapper,
+html.dark .ops-detail-panel,
+html.dark .ops-analytics-block,
+html.dark .ops-summary-box,
+html.dark .ops-coaching-priority,
+html.dark .ops-beneficiary-box,
+html.dark .ops-list-block,
+html.dark .ops-category-row,
+html.dark .ops-metric,
+html.dark .sep-stat-box,
+html.dark .sep-filter-bar,
+html.dark .sep-plan-table-wrap,
+html.dark .sf-panel,
+html.dark .sf-mini-card,
+html.dark .sf-script-box,
+html.dark .sf-callout,
+html.dark .sf-warning-banner,
+html.dark .sf-savings-callout,
+html.dark .sf-inline-lock,
+html.dark .sf-empty-state {
+  background: var(--bg-elevated) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: none !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .recharts-default-tooltip {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--accent) !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark .recharts-text,
+html.dark .recharts-legend-item-text,
+html.dark .recharts-tooltip-label {
+  fill: var(--text-muted) !important;
+  color: var(--text-muted) !important;
+}
+
+html.dark .ops-ghl-ok,
+html.dark .ops-out-enrolled,
+html.dark .ops-risk-badge.low,
+html.dark .ops-trend.up {
+  color: var(--status-live) !important;
+}
+
+html.dark .ops-ghl-fail,
+html.dark .ops-out-not_enrolled,
+html.dark .ops-out-incomplete,
+html.dark .ops-risk-badge.high,
+html.dark .ops-trend.down {
+  color: var(--status-offline) !important;
+}
+
+html.dark .ops-out-pending,
+html.dark .ops-out-callback,
+html.dark .ops-risk-badge.medium,
+html.dark .ops-trend.flat {
+  color: var(--status-pending) !important;
+}
+
+html.dark .at-training-alert,
+html.dark .sep-qualifier-alert,
+html.dark .flow-script-note,
+html.dark .flow-script-callout {
+  border-left: 0 !important;
+  outline: 1px solid var(--border-default);
+}
+
+/* ============================================================
+   CONTACTS tab: CRM list and contact detail. Terminal treatment
+   using existing tokens; no colored left-border accent bars.
+   ============================================================ */
+.app-shell-modern .top-panel-overlay--contacts {
+  width: auto !important;
+  right: 24px !important;
+  max-height: calc(100vh - var(--top-bar-height) - 24px) !important;
+}
+
+.app-shell-modern .top-panel-overlay--contacts .top-panel-body {
+  padding: 12px !important;
+}
+
+.contacts-tab {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: min(720px, calc(100vh - var(--top-bar-height) - 92px));
+}
+
+.contacts-tab .mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.contacts-muted {
+  color: var(--text-tertiary, var(--text-secondary));
+  letter-spacing: 0.4px;
+}
+
+.contacts-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.contacts-search {
+  flex: 1 1 260px;
+  background: var(--surface-raised, transparent);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+}
+
+.contacts-search:focus {
+  outline: none;
+  border-color: var(--eg-accent);
+}
+
+.contacts-filters {
+  display: flex;
+  gap: 4px;
+}
+
+.contacts-filters button,
+.contacts-mini-btn {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.contacts-filters button.is-active,
+.contacts-filters button:hover,
+.contacts-mini-btn:hover {
+  border-color: var(--eg-accent);
+  color: var(--eg-accent);
+}
+
+.contacts-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+}
+
+.contacts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.contacts-table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--text-label);
+  letter-spacing: 1.2px;
+  font-size: 10px;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.contacts-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle, var(--border-default));
+  white-space: nowrap;
+}
+
+.contacts-table tbody tr {
+  cursor: pointer;
+}
+
+.contacts-table tbody tr:hover td {
+  background: var(--surface-raised, rgba(255, 153, 0, 0.06));
+}
+
+.contacts-dnc {
+  color: var(--status-offline);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.contacts-chip {
+  display: inline-block;
+  border: 1px solid var(--border-default);
+  padding: 2px 7px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+.contacts-chip.status-lead { color: var(--status-pending); border-color: var(--status-pending-border, var(--status-pending)); }
+.contacts-chip.status-client { color: var(--status-live); border-color: var(--status-live-border, var(--status-live)); }
+.contacts-chip.status-former { color: var(--text-tertiary, var(--text-secondary)); }
+.contacts-chip.policy-active { color: var(--status-live); }
+.contacts-chip.policy-pending { color: var(--status-pending); }
+.contacts-chip.policy-lapsed,
+.contacts-chip.policy-cancelled { color: var(--status-offline); }
+
+.contacts-chip-score { color: var(--eg-accent); border-color: var(--eg-accent); }
+.contacts-chip-score.band-high { color: var(--status-live); border-color: var(--status-live); }
+.contacts-chip-score.band-low { color: var(--status-offline); border-color: var(--status-offline); }
+
+.contacts-chip-risk.risk-high { color: var(--status-offline); border-color: var(--status-offline); }
+.contacts-chip-risk.risk-medium { color: var(--status-pending); border-color: var(--status-pending); }
+.contacts-chip-risk.risk-low { color: var(--status-live); border-color: var(--status-live); }
+
+.contacts-chip-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Detail view */
+.contacts-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contacts-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.contacts-back {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--eg-accent);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.contacts-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.contacts-detail-title h2 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 1.6px;
+  color: var(--text-primary);
+}
+
+.contacts-status-select {
+  background: var(--surface-raised, transparent);
+  border: 1px solid var(--border-default);
+  color: var(--eg-accent);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 6px 8px;
+}
+
+.contacts-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .contacts-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contacts-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.contacts-section {
+  border: 1px solid var(--border-default);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contacts-section-head {
+  color: var(--text-label);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+}
+
+.contacts-profile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.contacts-profile > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.contacts-profile dt {
+  color: var(--text-secondary);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+}
+
+.contacts-profile dd {
+  margin: 0;
+  font-size: 12px;
+  text-align: right;
+}
+
+.contacts-policy-row,
+.contacts-followup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-subtle, var(--border-default));
+}
+
+.contacts-policy-row:last-of-type,
+.contacts-followup-row:last-of-type {
+  border-bottom: 0;
+}
+
+.contacts-inline-form {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.contacts-inline-form input,
+.contacts-inline-form textarea {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface-raised, transparent);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 6px 8px;
+  resize: vertical;
+}
+
+.contacts-note {
+  border-bottom: 1px solid var(--border-subtle, var(--border-default));
+  padding-bottom: 6px;
+}
+
+.contacts-note.is-pinned .contacts-note-meta .mono {
+  color: var(--eg-accent);
+}
+
+.contacts-note-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.contacts-note p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+.contacts-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.contacts-timeline-row {
+  display: grid;
+  grid-template-columns: 64px 110px 1fr;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 12px;
+  padding: 3px 0;
+}
+
+.contacts-activity-tag {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  border: 1px solid var(--border-default);
+  padding: 1px 5px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.contacts-activity-tag.tag-call { color: var(--eg-accent); border-color: var(--eg-accent); }
+.contacts-activity-tag.tag-enrollment { color: var(--status-live); border-color: var(--status-live); }
+.contacts-activity-tag.tag-follow_up { color: var(--status-pending); border-color: var(--status-pending); }
+
+.contacts-call-row-wrap {
+  border-bottom: 1px solid var(--border-subtle, var(--border-default));
+}
+
+.contacts-call-row {
+  display: grid;
+  grid-template-columns: 120px 60px 1fr 60px 110px;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  text-align: left;
+  padding: 7px 4px;
+  cursor: pointer;
+}
+
+.contacts-call-row:hover {
+  background: var(--surface-raised, rgba(255, 153, 0, 0.06));
+}
+
+.contacts-call-row .status-live {
+  color: var(--status-live);
+}
+
+.contacts-tab .status-offline {
+  color: var(--status-offline);
+}
+
+/* ============================================================
+   Inbound call banner: full-width amber terminal alert below the
+   top nav while a Twilio call rings this agent.
+   ============================================================ */
+.inbound-call-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 8px 16px;
+  background: var(--status-pending-bg, rgba(255, 153, 0, 0.12));
+  border-top: 1px solid var(--eg-accent);
+  border-bottom: 1px solid var(--eg-accent);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--text-primary);
+  position: sticky;
+  top: var(--top-bar-height, 0);
+  z-index: 60;
+}
+
+.inbound-call-banner__pulse {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--eg-accent-bright, var(--eg-accent));
+  animation: inbound-pulse 1s ease-in-out infinite;
+  flex: none;
+}
+
+@keyframes inbound-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.inbound-call-banner__tag {
+  color: var(--eg-accent-bright, var(--eg-accent));
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+.inbound-call-banner__caller {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.inbound-call-banner__phone {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.inbound-call-banner__intel {
+  display: flex;
+  gap: 14px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  font-size: 11px;
+  flex: 1;
+}
+
+.inbound-call-banner__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.inbound-call-banner__btn {
+  border: 1px solid var(--border-default);
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 1.6px;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+.inbound-call-banner__btn.is-accept {
+  color: var(--status-live);
+  border-color: var(--status-live);
+}
+
+.inbound-call-banner__btn.is-accept:hover {
+  background: var(--status-live-bg, rgba(0, 200, 83, 0.12));
+}
+
+.inbound-call-banner__btn.is-decline {
+  color: var(--status-offline);
+  border-color: var(--status-offline);
+}
+
+.inbound-call-banner__btn.is-decline:hover {
+  background: var(--status-offline-bg, rgba(255, 59, 48, 0.12));
+}
+
+/* SAVE TO CONTACT action on the left rail client card */
+.eg-rail-card__save-contact {
+  margin-top: 8px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.eg-rail-card__save-contact:hover {
+  border-color: var(--eg-accent);
+  color: var(--eg-accent);
+}
+
+.eg-rail-card__save-contact.is-saved {
+  border-color: var(--status-live);
+  color: var(--status-live);
+}
+
+.eg-rail-card__save-contact.is-error {
+  border-color: var(--status-offline);
+  color: var(--status-offline);
 }

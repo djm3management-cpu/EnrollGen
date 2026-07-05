@@ -226,6 +226,7 @@ export function buildPostCallPayload({
     agent_id: sessionMetadata?.agentId || null,
     call_record_id: sessionMetadata?.callRecordId || null,
     transcript_id: sessionMetadata?.transcriptId || null,
+    contact_id: sessionMetadata?.contactId || null,
     flow,
     product_type: productTypeFromFlow(flow),
     call_direction: state?.callDirection || liveCall?.callDirection || "inbound",

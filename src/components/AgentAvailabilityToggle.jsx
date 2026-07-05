@@ -1,31 +1,24 @@
 import { memo, useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
+import {
+  AVAILABILITY_API_KEY as API_KEY,
+  AVAILABILITY_FUNCTIONS_BASE_URL as FUNCTIONS_BASE_URL,
+  isAuthDisabled,
+  readLocalAgentId,
+  resolveAgentId,
+} from "../lib/agentIdentity";
 
-const AUTH_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
-const API_KEY = import.meta.env.VITE_AGENT_API_KEY;
-const LOCAL_AGENT_ID = import.meta.env.VITE_AGENT_AVAILABILITY_AGENT_ID;
-const FUNCTIONS_BASE_URL =
-  "https://qzjtagnpklaxefwurorc.supabase.co/functions/v1";
+const AUTH_DISABLED = isAuthDisabled();
 
 const STATUS_OPTIONS = [
-  { value: "available", label: "AVAILABLE", color: "#00D166" },
-  { value: "busy", label: "BUSY", color: "#FFD700" },
-  { value: "offline", label: "OFFLINE", color: "#FF4455" },
+  { value: "available", label: "AVAILABLE", color: "var(--status-live)" },
+  { value: "busy", label: "BUSY", color: "var(--status-pending)" },
+  { value: "offline", label: "OFFLINE", color: "var(--status-offline)" },
 ];
 
 const STATUS_MAP = Object.fromEntries(
   STATUS_OPTIONS.map((status) => [status.value, status])
 );
-
-const KNOWN_AGENT_ID_MAP = new Map([
-  ["markendres", "mark_endres"],
-  ["miguel", "miguel_mejia"],
-  ["miguelmejia", "miguel_mejia"],
-  ["m3", "mark_endres"],
-  ["nghscontracting", "mark_endres"],
-  ["nghs", "mark_endres"],
-  ["michaelshlomos", "mark_endres"],
-]);
 
 const TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
   hour: "2-digit",
@@ -33,90 +26,8 @@ const TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
   hour12: false,
 });
 
-function normalizeLookupValue(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
 function getTrimmedString(value) {
   return typeof value === "string" && value.trim() ? value.trim() : "";
-}
-
-function mapKnownAgentId(value) {
-  const normalized = normalizeLookupValue(value);
-  return normalized ? KNOWN_AGENT_ID_MAP.get(normalized) || null : null;
-}
-
-function resolveAgentIdFromCandidates(candidates) {
-  for (const value of candidates) {
-    const trimmed = getTrimmedString(value);
-    if (!trimmed) {
-      continue;
-    }
-
-    const mapped = mapKnownAgentId(trimmed);
-    if (mapped) {
-      return mapped;
-    }
-  }
-
-  for (const value of candidates) {
-    const trimmed = getTrimmedString(value);
-    if (trimmed) {
-      return trimmed;
-    }
-  }
-
-  return null;
-}
-
-function resolveAgentId(user) {
-  if (!user) {
-    return null;
-  }
-
-  return resolveAgentIdFromCandidates([
-    user.publicMetadata?.availabilityAgentId,
-    user.publicMetadata?.availability_agent_id,
-    user.publicMetadata?.agentId,
-    user.publicMetadata?.agent_id,
-    user.unsafeMetadata?.availabilityAgentId,
-    user.unsafeMetadata?.availability_agent_id,
-    user.unsafeMetadata?.agentId,
-    user.unsafeMetadata?.agent_id,
-    user.publicMetadata?.agentName,
-    user.unsafeMetadata?.agentName,
-    user.username,
-    user.fullName,
-    [user.firstName, user.lastName].filter(Boolean).join(" "),
-  ]);
-}
-
-function readLocalAgentId() {
-  const persistedAgentName = (() => {
-    if (typeof window === "undefined") {
-      return "";
-    }
-
-    try {
-      const raw = window.localStorage.getItem("enrollgen_persist");
-      if (!raw) {
-        return "";
-      }
-
-      const parsed = JSON.parse(raw);
-      return getTrimmedString(parsed?.agentName);
-    } catch {
-      return "";
-    }
-  })();
-
-  return resolveAgentIdFromCandidates([
-    LOCAL_AGENT_ID,
-    persistedAgentName,
-  ]);
 }
 
 function normalizeStatus(value) {

@@ -1,5 +1,28 @@
 const DEFAULT_TARGET_RATE = 16000;
 const DEFAULT_BUFFER_SIZE = 4096;
+const WAVEFORM_PEAK_COUNT = 48;
+
+function computeWaveformPeaks(source, gain = 2.4) {
+  const peaks = new Array(WAVEFORM_PEAK_COUNT).fill(0);
+  if (!source.length) return peaks;
+
+  for (let bin = 0; bin < WAVEFORM_PEAK_COUNT; bin += 1) {
+    const start = Math.floor((bin * source.length) / WAVEFORM_PEAK_COUNT);
+    const end = Math.max(
+      start + 1,
+      Math.floor(((bin + 1) * source.length) / WAVEFORM_PEAK_COUNT)
+    );
+    let peak = 0;
+
+    for (let i = start; i < end; i += 1) {
+      peak = Math.max(peak, Math.abs(source[Math.min(i, source.length - 1)] || 0));
+    }
+
+    peaks[bin] = Math.min(1, peak * gain);
+  }
+
+  return peaks;
+}
 
 class PcmCaptureProcessor extends AudioWorkletProcessor {
   constructor(options) {
@@ -27,6 +50,7 @@ class PcmCaptureProcessor extends AudioWorkletProcessor {
       sum += source[i] * source[i];
     }
     const level = Math.min(1, Math.sqrt(sum / source.length) * 5);
+    const peaks = computeWaveformPeaks(source);
     const ratio = sampleRate / this.targetSampleRate;
     const pcm = new Int16Array(Math.max(1, Math.floor(source.length / ratio)));
 
@@ -39,7 +63,7 @@ class PcmCaptureProcessor extends AudioWorkletProcessor {
       pcm[i] = value < 0 ? value * 0x8000 : value * 0x7fff;
     }
 
-    this.port.postMessage({ level, pcm: pcm.buffer }, [pcm.buffer]);
+    this.port.postMessage({ level, peaks, pcm: pcm.buffer }, [pcm.buffer]);
   }
 
   process(inputs) {

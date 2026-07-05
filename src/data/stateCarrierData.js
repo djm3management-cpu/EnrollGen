@@ -7,12 +7,12 @@
  */
 
 export const MARKET_SEGMENTS = [
-  { id: "ACA", label: "ACA", color: "#FFE45C", rgb: "234,179,8" },
-  { id: "MA", label: "MED ADV", color: "#FF5A5A", rgb: "255,90,90" },
-  { id: "MedSup", label: "MED SUP", color: "#39FF88", rgb: "57,255,136" },
-  { id: "Private", label: "PRIVATE", color: "#C084FC", rgb: "192,132,252" },
-  { id: "HI", label: "HOSP INDEM", color: "#FF9F43", rgb: "255,159,67" },
-  { id: "DVH", label: "D / V / H", color: "#22D3EE", rgb: "34,211,238" },
+  { id: "ACA", label: "ACA", color: "var(--eg-flow-aca)", rgb: "var(--eg-flow-aca-rgb)" },
+  { id: "MA", label: "MED ADV", color: "var(--eg-flow-ma)", rgb: "var(--eg-flow-ma-rgb)" },
+  { id: "MedSup", label: "MED SUP", color: "var(--eg-flow-ms)", rgb: "var(--eg-flow-ms-rgb)" },
+  { id: "Private", label: "PRIVATE", color: "var(--eg-flow-u65)", rgb: "var(--eg-flow-u65-rgb)" },
+  { id: "HI", label: "HOSP INDEM", color: "var(--warning)", rgb: "var(--warning-rgb)" },
+  { id: "DVH", label: "D / V / H", color: "var(--info)", rgb: "var(--info-rgb)" },
 ];
 
 export const STATES = {

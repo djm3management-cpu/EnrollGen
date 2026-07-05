@@ -3,7 +3,7 @@ export const SEP_QUALIFIER_CATEGORIES = [
     id: "move",
     icon: "house",
     label: "Moved",
-    color: "#58a6ff",
+    color: "var(--info)",
     subTypes: [
       {
         id: "move_out",
@@ -38,7 +38,7 @@ export const SEP_QUALIFIER_CATEGORIES = [
     id: "lost-coverage",
     icon: "badge-x",
     label: "Lost Coverage",
-    color: "#e53e3e",
+    color: "var(--status-offline)",
     subTypes: [
       {
         id: "employer_loss",
@@ -82,7 +82,7 @@ export const SEP_QUALIFIER_CATEGORIES = [
     id: "dual-lis",
     icon: "badge-alert",
     label: "Dual / LIS / Extra Help",
-    color: "#8b5cf6",
+    color: "var(--chart-4)",
     subTypes: [
       {
         id: "extra_help_pdp",
@@ -126,7 +126,7 @@ export const SEP_QUALIFIER_CATEGORIES = [
     id: "new-to-medicare",
     icon: "calendar-days",
     label: "New to Medicare / T65",
-    color: "#2ea043",
+    color: "var(--status-live)",
     subTypes: [
       {
         id: "turning_65",
@@ -161,7 +161,7 @@ export const SEP_QUALIFIER_CATEGORIES = [
     id: "institution",
     icon: "hospital",
     label: "Institution / Incarceration",
-    color: "#d29922",
+    color: "var(--status-pending)",
     subTypes: [
       {
         id: "institution_current",
@@ -196,7 +196,7 @@ export const SEP_QUALIFIER_CATEGORIES = [
     id: "disaster",
     icon: "cloud-lightning",
     label: "FEMA Disaster",
-    color: "#d29922",
+    color: "var(--status-pending)",
     subTypes: [
       {
         id: "fema_declared",
@@ -213,7 +213,7 @@ export const SEP_QUALIFIER_CATEGORIES = [
     id: "other",
     icon: "file-text",
     label: "Other SEPs",
-    color: "#8b949e",
+    color: "var(--text-muted)",
     subTypes: [
       {
         id: "five_star",

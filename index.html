@@ -21,6 +21,30 @@
       content="AI-guided enrollment workflows for compliant Medicare, ACA, Medicare Supplement, U65, and ancillary sales teams."
     />
     <meta property="og:image" content="/logofinalshadow.png" />
+    <meta name="theme-color" content="#171411" />
+    <script>
+      (() => {
+        const key = "enrollgen_theme_mode_v1";
+        const root = document.documentElement;
+        root.classList.add("theme-initializing");
+        let theme = null;
+        try {
+          theme = localStorage.getItem(key);
+        } catch {
+          theme = null;
+        }
+        if (theme !== "dark" && theme !== "light") {
+          theme = window.matchMedia?.("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }
+        root.dataset.theme = theme;
+        root.classList.toggle("dark", theme === "dark");
+        document
+          .querySelector('meta[name="theme-color"]')
+          ?.setAttribute("content", theme === "dark" ? "#000000" : "#171411");
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -16,7 +16,7 @@ function annuityIntent({
     category: "ANNUITY_BEST_INTEREST",
     subcategory,
     description,
-    cms_reference: "NAIC Model Regulation #275",
+    cms_reference: "NAIC Model Regulation No. 275",
     mcmg_section: null,
     product_type: "ANNUITY",
     is_required,
