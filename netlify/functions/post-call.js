@@ -27,6 +27,13 @@ function safeText(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function safeUuid(value) {
+  const raw = safeText(value);
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)
+    ? raw
+    : null;
+}
+
 function normalizeLookup(value) {
   return safeText(value).toLowerCase().replace(/\s+/g, " ");
 }
@@ -330,6 +337,8 @@ async function ensureCallRecord(supabase, payload, auth, tenant) {
       ? Number(payload.call_duration_seconds)
       : null,
     election_period: normalizeEnrollmentPeriod(payload.election_period || payload.enrollment_period),
+    // Only set once migration 017 adds the column; keeps wrap-up safe pre-migration.
+    ...(safeUuid(payload.contact_id) ? { contact_id: safeUuid(payload.contact_id) } : {}),
     metadata: {
       created_from: LIVE_SOURCE_SYSTEM,
       source_session_id: payload.session_id || null,
@@ -349,6 +358,7 @@ async function ensureCallRecord(supabase, payload, auth, tenant) {
       .from("sessions")
       .update({
         call_record_id: callRecord.id,
+        ...(safeUuid(payload.contact_id) ? { contact_id: safeUuid(payload.contact_id) } : {}),
       })
       .eq("id", payload.session_id)
       .eq("tenant_id", tenant.id);
@@ -683,6 +693,9 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
     enrollment_confirmation_number: safeText(payload.enrollment_confirmation_number) || null,
     enrollment_completed: outcome === "enrolled",
     call_outcome: outcome,
+    ...(safeUuid(payload.contact_id) || callRecord.contact_id
+      ? { contact_id: safeUuid(payload.contact_id) || callRecord.contact_id }
+      : {}),
     agent_notes: safeText(payload.agent_notes) || null,
     call_end: now,
     call_duration_seconds: Number.isFinite(Number(payload.call_duration_seconds))
@@ -728,6 +741,22 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
     },
     tenant
   );
+
+  if (updatedCallRecord.contact_id) {
+    const { error: activityError } = await supabase.from("contact_activities").insert({
+      tenant_id: tenant.id,
+      contact_id: updatedCallRecord.contact_id,
+      type: outcome === "enrolled" ? "enrollment" : "call",
+      ref_id: updatedCallRecord.id,
+      summary:
+        outcome === "enrolled"
+          ? `Enrolled: ${updatePayload.carrier_name || ""} ${updatePayload.plan_name || ""}`.trim()
+          : `Call wrap-up: ${outcome}`,
+    });
+    if (activityError) {
+      console.error("contact_activities insert failed:", activityError.message);
+    }
+  }
 
   queueBackground(
     context,

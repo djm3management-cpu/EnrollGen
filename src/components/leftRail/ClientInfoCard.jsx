@@ -1,6 +1,8 @@
-import { memo, useEffect, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useScript } from "../../context/ScriptContext";
 import { useLiveCall } from "../../context/LiveCallContext";
+import { useInboundCall } from "../../context/InboundCallContext";
+import { useContactMutations } from "../../hooks/useContacts";
 
 const NAME_STOP_WORDS = new Set([
   "a",
@@ -134,10 +136,59 @@ function inferCustomerName(mergedTranscript) {
 const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
   const { state, dispatch } = useScript();
   const { liveCall } = useLiveCall();
-  const notes = state.notes || {};
+  const inbound = useInboundCall();
+  const { updateContact, createContact } = useContactMutations();
+  const notes = useMemo(() => state.notes || {}, [state.notes]);
 
   const setNote = (field, value) =>
     dispatch({ type: "SET_NOTE", field, value });
+
+  // Edits save back to the contact record, not just session state.
+  const [saveState, setSaveState] = useState("idle"); // idle | saving | saved | error
+  const savedContactIdRef = useRef(null);
+  const saveResetTimerRef = useRef(null);
+  const linkedContactId = savedContactIdRef.current || inbound?.contact?.id || null;
+
+  useEffect(() => {
+    return () => window.clearTimeout(saveResetTimerRef.current);
+  }, []);
+
+  const handleSaveToContact = useCallback(async () => {
+    if (saveState === "saving") return;
+    setSaveState("saving");
+    try {
+      const mbi = String(notes.customerMbi || "").replace(/[^a-zA-Z0-9]/g, "");
+      const fields = {
+        first_name: notes.customerFirstName?.trim() || null,
+        last_name: notes.customerLastName?.trim() || null,
+        phone: notes.customerPhone?.trim() || null,
+        email: notes.customerEmail?.trim() || null,
+        dob: notes.customerDob || null,
+        state: notes.customerState?.trim() || null,
+        county: (countyLabel || notes.customerCounty || "").trim() || null,
+        mbi_last4: mbi.length >= 4 ? mbi.slice(-4) : null,
+        current_carrier: (notes.currentCoverage || notes.previousCarrier || "").trim() || null,
+        ...(notes.partsABStatus === "Active" ? { medicare_parts: "ab" } : {}),
+      };
+      const cleaned = Object.fromEntries(
+        Object.entries(fields).filter(([, value]) => value !== null)
+      );
+
+      if (linkedContactId) {
+        await updateContact(linkedContactId, cleaned);
+      } else {
+        const created = await createContact({ ...cleaned, source: "manual" });
+        savedContactIdRef.current = created.id;
+      }
+      setSaveState("saved");
+    } catch (err) {
+      console.error("[ClientInfoCard] save to contact failed:", err);
+      setSaveState("error");
+    } finally {
+      window.clearTimeout(saveResetTimerRef.current);
+      saveResetTimerRef.current = window.setTimeout(() => setSaveState("idle"), 2500);
+    }
+  }, [saveState, notes, countyLabel, linkedContactId, updateContact, createContact]);
 
   const fullName = useMemo(() => {
     const first = (notes.customerFirstName || "").trim();
@@ -247,6 +298,23 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
           />
         </div>
       </div>
+
+      <button
+        type="button"
+        className={`eg-rail-card__save-contact is-${saveState}`}
+        onClick={handleSaveToContact}
+        disabled={saveState === "saving"}
+      >
+        {saveState === "saving"
+          ? "SAVING..."
+          : saveState === "saved"
+            ? "SAVED ✓"
+            : saveState === "error"
+              ? "SAVE FAILED"
+              : linkedContactId
+                ? "SAVE TO CONTACT"
+                : "CREATE CONTACT"}
+      </button>
     </div>
   );
 });

@@ -16,6 +16,8 @@ import { useLiveCall } from "./context/LiveCallContext";
 import { SignedIn, SignedOut, SignIn, useClerk, useOrganization, useUser } from "@clerk/clerk-react";
 import { SubscriptionProvider, useSubscription } from "./hooks/useSubscription";
 import { TenantConfigProvider, useTenantConfig } from "./hooks/useTenantConfig";
+import { InboundCallProvider, INBOUND_CALLS_ENABLED } from "./context/InboundCallContext";
+import InboundCallBanner from "./components/InboundCallBanner";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
 import { SquareTerminal, Sun } from "lucide-react";
@@ -829,6 +831,8 @@ function AppShell({ currentUser = null }) {
           </div>
         </header>
 
+        {INBOUND_CALLS_ENABLED ? <InboundCallBanner /> : null}
+
         {mode === "ma" ? (
           <ScriptProvider>
             <LeftRail launcher={sepLauncher} visibleItemIds={visibleLeftRailIds} />
@@ -998,7 +1002,9 @@ function AppContent({ currentUser = null }) {
   return (
     <SubscriptionGate>
       <LeftRailProvider>
-        <AppShell currentUser={currentUser} />
+        <InboundCallProvider>
+          <AppShell currentUser={currentUser} />
+        </InboundCallProvider>
       </LeftRailProvider>
     </SubscriptionGate>
   );

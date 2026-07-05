@@ -3423,3 +3423,128 @@ html.dark .flow-script-callout {
 .contacts-tab .status-offline {
   color: var(--status-offline);
 }
+
+/* ============================================================
+   Inbound call banner: full-width amber terminal alert below the
+   top nav while a Twilio call rings this agent.
+   ============================================================ */
+.inbound-call-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 8px 16px;
+  background: var(--status-pending-bg, rgba(255, 153, 0, 0.12));
+  border-top: 1px solid var(--eg-accent);
+  border-bottom: 1px solid var(--eg-accent);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--text-primary);
+  position: sticky;
+  top: var(--top-bar-height, 0);
+  z-index: 60;
+}
+
+.inbound-call-banner__pulse {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--eg-accent-bright, var(--eg-accent));
+  animation: inbound-pulse 1s ease-in-out infinite;
+  flex: none;
+}
+
+@keyframes inbound-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.inbound-call-banner__tag {
+  color: var(--eg-accent-bright, var(--eg-accent));
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+.inbound-call-banner__caller {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.inbound-call-banner__phone {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.inbound-call-banner__intel {
+  display: flex;
+  gap: 14px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  font-size: 11px;
+  flex: 1;
+}
+
+.inbound-call-banner__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.inbound-call-banner__btn {
+  border: 1px solid var(--border-default);
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 1.6px;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+.inbound-call-banner__btn.is-accept {
+  color: var(--status-live);
+  border-color: var(--status-live);
+}
+
+.inbound-call-banner__btn.is-accept:hover {
+  background: var(--status-live-bg, rgba(0, 200, 83, 0.12));
+}
+
+.inbound-call-banner__btn.is-decline {
+  color: var(--status-offline);
+  border-color: var(--status-offline);
+}
+
+.inbound-call-banner__btn.is-decline:hover {
+  background: var(--status-offline-bg, rgba(255, 59, 48, 0.12));
+}
+
+/* SAVE TO CONTACT action on the left rail client card */
+.eg-rail-card__save-contact {
+  margin-top: 8px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.eg-rail-card__save-contact:hover {
+  border-color: var(--eg-accent);
+  color: var(--eg-accent);
+}
+
+.eg-rail-card__save-contact.is-saved {
+  border-color: var(--status-live);
+  color: var(--status-live);
+}
+
+.eg-rail-card__save-contact.is-error {
+  border-color: var(--status-offline);
+  color: var(--status-offline);
+}

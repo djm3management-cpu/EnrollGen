@@ -20,6 +20,7 @@ import {
 } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { useLiveCall } from "../context/LiveCallContext";
+import { useInboundCall } from "../context/InboundCallContext";
 import { useComplianceScoringWorker } from "../hooks/useComplianceScoringWorker";
 import {
   buildPostCallPayload,
@@ -627,6 +628,45 @@ export default function ScriptFlow() {
       void handleStart();
     }
   }, []);
+
+  // Inbound Twilio call accepted: auto-start the session (transcript and
+  // Co-Pilot come from the telephony service) and hydrate the left rail
+  // client panel from the matched contact record.
+  const inbound = useInboundCall();
+  const inboundStartedRef = useRef(false);
+  const inboundContactHydratedRef = useRef("");
+  useEffect(() => {
+    if (!inbound?.activeCall || inboundStartedRef.current) return;
+    inboundStartedRef.current = true;
+    setCallStarted(true);
+  }, [inbound?.activeCall]);
+
+  useEffect(() => {
+    const contact = inbound?.contact;
+    if (!inbound?.activeCall || !contact || inboundContactHydratedRef.current === contact.id) {
+      return;
+    }
+    inboundContactHydratedRef.current = contact.id;
+    setActivePostCallMetadata({ contactId: contact.id });
+
+    const noteValues = {
+      customerFirstName: contact.first_name,
+      customerLastName: contact.last_name,
+      customerPhone: contact.phone,
+      customerEmail: contact.email,
+      customerDob: contact.dob,
+      customerState: contact.state,
+      customerCounty: contact.county,
+      previousCarrier: contact.current_carrier,
+      currentCoverage: [contact.current_carrier, contact.current_plan]
+        .filter(Boolean)
+        .join(" "),
+      partsABStatus: contact.medicare_parts === "ab" ? "Active" : "",
+    };
+    for (const [field, value] of Object.entries(noteValues)) {
+      if (value) dispatch({ type: "SET_NOTE", field, value });
+    }
+  }, [inbound?.activeCall, inbound?.contact, dispatch]);
 
   const customerTranscript = useMemo(
     () =>
