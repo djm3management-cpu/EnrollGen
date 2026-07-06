@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useContactsList, contactDisplayName } from "../../hooks/useContacts";
 import ContactDetail from "./ContactDetail";
+import ContactImportPanel from "./ContactImportPanel";
 
 const STATUS_FILTERS = ["ALL", "LEAD", "CLIENT", "FORMER"];
 
@@ -10,6 +11,13 @@ function fmtPhone(value) {
   return `(${match[1]}) ${match[2]}-${match[3]}`;
 }
 
+function fmtLastActivity(value) {
+  if (!value) return "--";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "--";
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${String(d.getFullYear()).slice(2)}`;
+}
+
 function LeadScoreChip({ intel }) {
   if (!intel || intel.lead_score == null) return <span className="contacts-muted">--</span>;
   const score = Math.round(Number(intel.lead_score));
@@ -17,27 +25,59 @@ function LeadScoreChip({ intel }) {
   return <span className={`contacts-chip contacts-chip-score band-${band}`}>{score}</span>;
 }
 
-export default function ContactsTab() {
+export default function ContactsTab({ variant = "home", onStartCall = null }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [agentFilter, setAgentFilter] = useState("ALL");
   const [selectedContactId, setSelectedContactId] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
   const { contacts, loading, error, refresh } = useContactsList(search);
 
+  const agentOptions = useMemo(() => {
+    const agents = new Set();
+    for (const contact of contacts) {
+      if (contact.assigned_agent_id) agents.add(contact.assigned_agent_id);
+    }
+    return ["ALL", ...Array.from(agents).sort()];
+  }, [contacts]);
+
   const filtered = useMemo(() => {
-    if (statusFilter === "ALL") return contacts;
-    return contacts.filter((contact) => contact.status === statusFilter.toLowerCase());
-  }, [contacts, statusFilter]);
+    return contacts.filter((contact) => {
+      if (statusFilter !== "ALL" && contact.status !== statusFilter.toLowerCase()) return false;
+      if (agentFilter !== "ALL" && contact.assigned_agent_id !== agentFilter) return false;
+      return true;
+    });
+  }, [contacts, statusFilter, agentFilter]);
+
+  const shellClass = `contacts-tab${variant === "home" ? " contacts-tab--home" : ""}`;
 
   if (selectedContactId) {
     return (
-      <div className="contacts-tab">
-        <ContactDetail contactId={selectedContactId} onBack={() => setSelectedContactId(null)} />
+      <div className={shellClass}>
+        <ContactDetail
+          contactId={selectedContactId}
+          onBack={() => setSelectedContactId(null)}
+          onStartCall={onStartCall}
+        />
+      </div>
+    );
+  }
+
+  if (importOpen) {
+    return (
+      <div className={shellClass}>
+        <ContactImportPanel
+          onClose={() => {
+            setImportOpen(false);
+            refresh();
+          }}
+        />
       </div>
     );
   }
 
   return (
-    <div className="contacts-tab">
+    <div className={shellClass}>
       <div className="ops-command-line">
         <span>CONTACTS</span>
         <span className="ops-section-meta">{filtered.length} RECORDS</span>
@@ -51,6 +91,9 @@ export default function ContactsTab() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
+        <button type="button" className="contacts-mini-btn" onClick={() => setImportOpen(true)}>
+          IMPORT
+        </button>
         <div className="contacts-filters">
           {STATUS_FILTERS.map((filter) => (
             <button
@@ -63,6 +106,18 @@ export default function ContactsTab() {
             </button>
           ))}
         </div>
+        <select
+          className="contacts-agent-filter"
+          value={agentFilter}
+          onChange={(event) => setAgentFilter(event.target.value)}
+          aria-label="Filter by agent"
+        >
+          {agentOptions.map((agent) => (
+            <option key={agent} value={agent}>
+              {agent === "ALL" ? "ALL AGENTS" : agent}
+            </option>
+          ))}
+        </select>
         <button type="button" className="contacts-mini-btn" onClick={refresh}>
           REFRESH
         </button>
@@ -77,20 +132,22 @@ export default function ContactsTab() {
               <th>NAME</th>
               <th>PHONE</th>
               <th>STATUS</th>
-              <th>AGENT</th>
               <th>SCORE</th>
+              <th>AGENT</th>
+              <th>LAST ACTIVITY</th>
               <th>SOURCE</th>
               <th>LOCATION</th>
+              {onStartCall ? <th aria-label="Actions" /> : null}
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="contacts-muted">Loading contacts...</td>
+                <td colSpan={9} className="contacts-muted">Loading contacts...</td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="contacts-muted">No contacts found</td>
+                <td colSpan={9} className="contacts-muted">No contacts found</td>
               </tr>
             ) : (
               filtered.map((contact) => (
@@ -105,10 +162,27 @@ export default function ContactsTab() {
                       {(contact.status || "").toUpperCase()}
                     </span>
                   </td>
-                  <td>{contact.assigned_agent_id || "--"}</td>
                   <td><LeadScoreChip intel={contact.lead_intel} /></td>
+                  <td>{contact.assigned_agent_id || "--"}</td>
+                  <td className="mono">{fmtLastActivity(contact.updated_at)}</td>
                   <td>{(contact.source || "").toUpperCase()}</td>
                   <td>{[contact.county, contact.state].filter(Boolean).join(", ") || "--"}</td>
+                  {onStartCall ? (
+                    <td>
+                      <button
+                        type="button"
+                        className="contacts-mini-btn contacts-start-call"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onStartCall(contact, "ma");
+                        }}
+                        disabled={contact.do_not_call}
+                        title={contact.do_not_call ? "Contact is flagged do not call" : "Start an MA call with this contact"}
+                      >
+                        START CALL
+                      </button>
+                    </td>
+                  ) : null}
                 </tr>
               ))
             )}

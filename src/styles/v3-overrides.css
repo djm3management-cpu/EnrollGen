@@ -3548,3 +3548,235 @@ html.dark .flow-script-callout {
   border-color: var(--status-offline);
   color: var(--status-offline);
 }
+
+/* ============================================================
+   CRM-first shell: contacts home workspace, call-mode exit button,
+   return-to-call strip, top-bar availability strip, import panel.
+   ============================================================ */
+.crm-home {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 18px 24px 32px;
+}
+
+.contacts-tab--home {
+  min-height: calc(100vh - var(--top-bar-height) - 80px);
+}
+
+.top-bar-exit-call {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--eg-accent);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.top-bar-exit-call:hover:not(:disabled) {
+  border-color: var(--eg-accent);
+}
+
+.top-bar-exit-call:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.return-to-call-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 16px;
+  background: var(--status-pending-bg, rgba(255, 153, 0, 0.12));
+  border-bottom: 1px solid var(--eg-accent);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+.return-to-call-strip__pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--eg-accent-bright, var(--eg-accent));
+  animation: inbound-pulse 1s ease-in-out infinite;
+  flex: none;
+}
+
+.return-to-call-strip__label {
+  color: var(--eg-accent-bright, var(--eg-accent));
+  letter-spacing: 1.6px;
+  flex: 1;
+}
+
+.return-to-call-strip__btn {
+  background: transparent;
+  border: 1px solid var(--eg-accent);
+  color: var(--eg-accent);
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.return-to-call-strip__btn:hover {
+  background: var(--status-pending-bg, rgba(255, 153, 0, 0.18));
+}
+
+.availability-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-default);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.availability-strip__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.contacts-agent-filter {
+  background: var(--surface-raised, transparent);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  padding: 6px 8px;
+}
+
+.contacts-start-call {
+  color: var(--status-live);
+  border-color: var(--status-live);
+}
+
+.contacts-start-call:hover:not(:disabled) {
+  background: var(--status-live-bg, rgba(0, 200, 83, 0.1));
+  color: var(--status-live);
+  border-color: var(--status-live);
+}
+
+.contacts-start-call:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.contacts-start-call-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.contacts-start-call-btn {
+  background: transparent;
+  border: 1px solid var(--status-live);
+  color: var(--status-live);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.contacts-start-call-btn:hover:not(:disabled) {
+  background: var(--status-live-bg, rgba(0, 200, 83, 0.1));
+}
+
+.contacts-start-call-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Import panel */
+.contacts-import {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.contacts-import-upload input[type="file"] {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.contacts-import-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.contacts-import-mapping {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 6px 18px;
+}
+
+.contacts-import-mapping-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+}
+
+.contacts-import-mapping-row select {
+  background: var(--surface-raised, transparent);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 4px 6px;
+  min-width: 140px;
+}
+
+.contacts-import-flagged td {
+  color: var(--text-tertiary, var(--text-secondary));
+}
+
+.contacts-import-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.contacts-import-progress-track {
+  flex: 1;
+  height: 10px;
+  border: 1px solid var(--border-default);
+  position: relative;
+}
+
+.contacts-import-progress-track span {
+  display: block;
+  height: 100%;
+  background: var(--eg-accent);
+  transition: width 0.2s ease;
+}
+
+.contacts-tab .ops-command-line,
+.contacts-import .ops-command-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  letter-spacing: 1.6px;
+  font-size: 12px;
+  color: var(--text-label);
+}

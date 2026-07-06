@@ -21,6 +21,7 @@ import {
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { useLiveCall } from "../context/LiveCallContext";
 import { useInboundCall } from "../context/InboundCallContext";
+import { consumePendingCallContact, hydrateNotesFromContact } from "../lib/callLaunch";
 import { useComplianceScoringWorker } from "../hooks/useComplianceScoringWorker";
 import {
   buildPostCallPayload,
@@ -648,25 +649,18 @@ export default function ScriptFlow() {
     }
     inboundContactHydratedRef.current = contact.id;
     setActivePostCallMetadata({ contactId: contact.id });
-
-    const noteValues = {
-      customerFirstName: contact.first_name,
-      customerLastName: contact.last_name,
-      customerPhone: contact.phone,
-      customerEmail: contact.email,
-      customerDob: contact.dob,
-      customerState: contact.state,
-      customerCounty: contact.county,
-      previousCarrier: contact.current_carrier,
-      currentCoverage: [contact.current_carrier, contact.current_plan]
-        .filter(Boolean)
-        .join(" "),
-      partsABStatus: contact.medicare_parts === "ab" ? "Active" : "",
-    };
-    for (const [field, value] of Object.entries(noteValues)) {
-      if (value) dispatch({ type: "SET_NOTE", field, value });
-    }
+    hydrateNotesFromContact(dispatch, contact);
   }, [inbound?.activeCall, inbound?.contact, dispatch]);
+
+  // Start-call-from-contact (CRM home): hydrate the left rail from the
+  // stashed contact. The session is NOT auto-started; the agent presses
+  // Start Call as usual.
+  useEffect(() => {
+    const pendingContact = consumePendingCallContact();
+    if (!pendingContact) return;
+    setActivePostCallMetadata({ contactId: pendingContact.id });
+    hydrateNotesFromContact(dispatch, pendingContact);
+  }, [dispatch]);
 
   const customerTranscript = useMemo(
     () =>

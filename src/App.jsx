@@ -16,8 +16,11 @@ import { useLiveCall } from "./context/LiveCallContext";
 import { SignedIn, SignedOut, SignIn, useClerk, useOrganization, useUser } from "@clerk/clerk-react";
 import { SubscriptionProvider, useSubscription } from "./hooks/useSubscription";
 import { TenantConfigProvider, useTenantConfig } from "./hooks/useTenantConfig";
-import { InboundCallProvider, INBOUND_CALLS_ENABLED } from "./context/InboundCallContext";
+import { InboundCallProvider, INBOUND_CALLS_ENABLED, useInboundCall } from "./context/InboundCallContext";
 import InboundCallBanner from "./components/InboundCallBanner";
+import { AvailabilityProvider } from "./context/AvailabilityContext";
+import AvailabilityStrip from "./components/AvailabilityStrip";
+import { setPendingCallContact } from "./lib/callLaunch";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
 import { SquareTerminal, Sun } from "lucide-react";
@@ -387,6 +390,13 @@ function getModeFromLocation() {
   return "ma";
 }
 
+// The CRM is the home experience; deep links into a script flow
+// (/script/aca etc.) still land directly in the call cockpit.
+function getAppModeFromLocation() {
+  if (typeof window === "undefined") return "crm";
+  return window.location.pathname.startsWith("/script/") ? "call" : "crm";
+}
+
 function syncModePath(mode) {
   if (typeof window === "undefined") {
     return;
@@ -460,10 +470,14 @@ function getTabsForMode(mode) {
 
 function AppShell({ currentUser = null }) {
   const [mode, setMode] = useState(getModeFromLocation);
+  const [appMode, setAppMode] = useState(getAppModeFromLocation);
   const [openPanel, setOpenPanel] = useState(null);
   const topBarRef = useRef(null);
   const overlayRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
+  const { liveCall } = useLiveCall();
+  const inbound = useInboundCall();
+  const sessionActive = Boolean(liveCall?.callStarted);
 
   const {
     railWidth,
@@ -486,8 +500,10 @@ function AppShell({ currentUser = null }) {
   useEffect(() => {
     const handlePopState = () => {
       const nextMode = getModeFromLocation();
+      const nextAppMode = getAppModeFromLocation();
       startTransition(() => {
         setMode(nextMode);
+        setAppMode(nextAppMode);
         setOpenPanel(null);
       });
     };
@@ -495,6 +511,18 @@ function AppShell({ currentUser = null }) {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  // Inbound call accepted: always surface the MA cockpit.
+  const inboundActiveCall = inbound?.activeCall || null;
+  useEffect(() => {
+    if (!inboundActiveCall) return;
+    syncModePath("ma");
+    startTransition(() => {
+      setMode("ma");
+      setAppMode("call");
+      setOpenPanel(null);
+    });
+  }, [inboundActiveCall]);
 
   useEffect(() => {
     document.body.dataset.bgMode = "wallpaper";
@@ -505,13 +533,13 @@ function AppShell({ currentUser = null }) {
   }, []);
 
   useEffect(() => {
-    if (mode !== "ma" && hasLeftRailItem(LEFT_RAIL_IDS.sepQualifier)) {
+    if ((mode !== "ma" || appMode !== "call") && hasLeftRailItem(LEFT_RAIL_IDS.sepQualifier)) {
       dismissLeftRail(LEFT_RAIL_IDS.sepQualifier);
     }
-  }, [dismissLeftRail, hasLeftRailItem, mode]);
+  }, [dismissLeftRail, hasLeftRailItem, mode, appMode]);
 
   useLayoutEffect(() => {
-    if (mode !== "ma") {
+    if (mode !== "ma" || appMode !== "call") {
       return;
     }
 
@@ -527,7 +555,7 @@ function AppShell({ currentUser = null }) {
       ),
     });
     openLeftRail(LEFT_RAIL_IDS.sepQualifier);
-  }, [minimizeLeftRail, mode, openLeftRail, showLeftRail]);
+  }, [minimizeLeftRail, mode, appMode, openLeftRail, showLeftRail]);
 
   useEffect(() => {
     if (!openPanel) {
@@ -629,8 +657,10 @@ function AppShell({ currentUser = null }) {
     }
   };
 
+  // Flow pills act as "start a call in this flow": they always enter
+  // the cockpit, from either mode.
   const handleModeChange = (newMode) => {
-    if (newMode === mode) {
+    if (newMode === mode && appMode === "call") {
       setOpenPanel(null);
       return;
     }
@@ -639,19 +669,50 @@ function AppShell({ currentUser = null }) {
     syncModePath(newMode);
     startTransition(() => {
       setMode(newMode);
+      setAppMode("call");
       setOpenPanel(null);
     });
   };
 
   const handleTabToggle = (tabId) => {
     if (tabId === "script") {
-      setOpenPanel(null);
+      startTransition(() => {
+        setAppMode("call");
+        setOpenPanel(null);
+      });
+      return;
+    }
+
+    if (tabId === "contacts") {
+      startTransition(() => {
+        setAppMode("crm");
+        setOpenPanel(null);
+      });
       return;
     }
 
     preloadPanel(tabId);
     startTransition(() => {
       setOpenPanel((current) => (current === tabId ? null : tabId));
+    });
+  };
+
+  const handleStartCallFromContact = (contact, flow = "ma") => {
+    setPendingCallContact(contact);
+    preloadScriptForMode(flow);
+    syncModePath(flow);
+    startTransition(() => {
+      setMode(flow);
+      setAppMode("call");
+      setOpenPanel(null);
+    });
+  };
+
+  const handleExitCallMode = () => {
+    if (sessionActive) return;
+    startTransition(() => {
+      setAppMode("crm");
+      setOpenPanel(null);
     });
   };
 
@@ -690,7 +751,7 @@ function AppShell({ currentUser = null }) {
       </button>
     ) : null;
 
-  const activeTabId = openPanel || "script";
+  const activeTabId = openPanel || (appMode === "crm" ? "contacts" : "script");
 
   const renderOverlayContent = () => {
     switch (openPanel) {
@@ -740,12 +801,6 @@ function AppShell({ currentUser = null }) {
             <OperationsTab />
           </LazyPanel>
         );
-      case "contacts":
-        return (
-          <LazyPanel>
-            <ContactsTab />
-          </LazyPanel>
-        );
       case "settings":
         return (
           <LazyPanel>
@@ -765,15 +820,46 @@ function AppShell({ currentUser = null }) {
     }
   };
 
+  const overlayNode = openPanel ? (
+    <div
+      ref={overlayRef}
+      className={`top-panel-overlay${
+        openPanel === "tools" ? " top-panel-overlay--tools" : ""
+      }${
+        openPanel === "operations" ? " top-panel-overlay--operations" : ""
+      }${
+        openPanel === "complianceHub" ? " top-panel-overlay--compliance" : ""
+      }${
+        openPanel === "verse" ? " top-panel-overlay--verse" : ""
+      }`}
+    >
+      <div className="top-panel-header">
+        <div className="top-panel-title">
+          {openPanel === "settings"
+            ? "Agency Settings"
+            : navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
+        </div>
+        <button
+          type="button"
+          className="top-panel-close"
+          onClick={() => setOpenPanel(null)}
+        >
+          <CloseIcon />
+        </button>
+      </div>
+      <div className="top-panel-body">{renderOverlayContent()}</div>
+    </div>
+  ) : null;
+
   return (
     <>
       <ShellTextures />
 
       <div
         className={`app-shell app-shell-modern${
-          mode === "ma" ? " app-shell--right-rail-space" : ""
+          appMode === "call" && mode === "ma" ? " app-shell--right-rail-space" : ""
         }`}
-        style={{ "--left-rail-width": `${visibleRailWidth}px` }}
+        style={{ "--left-rail-width": `${appMode === "call" ? visibleRailWidth : 0}px` }}
       >
         <header ref={topBarRef} className="top-bar-shell">
           <div className="top-bar-brand">
@@ -786,6 +872,21 @@ function AppShell({ currentUser = null }) {
             >
               <img className="top-bar-logo-image" src={headerLogoUrl} alt="" />
             </button>
+            {appMode === "call" ? (
+              <button
+                type="button"
+                className="top-bar-exit-call"
+                onClick={handleExitCallMode}
+                disabled={sessionActive}
+                title={
+                  sessionActive
+                    ? "End the active session before leaving the cockpit"
+                    : "Back to contacts"
+                }
+              >
+                ← CONTACTS
+              </button>
+            ) : null}
             <FlowSelector mode={mode} onChange={handleModeChange} />
           </div>
 
@@ -805,6 +906,7 @@ function AppShell({ currentUser = null }) {
           </nav>
 
           <div className="top-bar-utilities">
+            <AvailabilityStrip />
             <button
               type="button"
               className="top-bar-settings-button top-bar-theme-button"
@@ -833,42 +935,41 @@ function AppShell({ currentUser = null }) {
 
         {INBOUND_CALLS_ENABLED ? <InboundCallBanner /> : null}
 
-        {mode === "ma" ? (
+        {appMode === "crm" && sessionActive ? (
+          <div className="return-to-call-strip" role="status">
+            <span className="return-to-call-strip__pulse" aria-hidden="true" />
+            <span className="return-to-call-strip__label">CALL SESSION ACTIVE</span>
+            <button
+              type="button"
+              className="return-to-call-strip__btn"
+              onClick={() => {
+                startTransition(() => {
+                  setAppMode("call");
+                  setOpenPanel(null);
+                });
+              }}
+            >
+              RETURN TO CALL
+            </button>
+          </div>
+        ) : null}
+
+        {appMode === "crm" ? (
+          <>
+            {overlayNode}
+            <div className="app-workspace">
+              <main className="app-center crm-home">
+                <LazyPanel>
+                  <ContactsTab variant="home" onStartCall={handleStartCallFromContact} />
+                </LazyPanel>
+              </main>
+            </div>
+          </>
+        ) : mode === "ma" ? (
           <ScriptProvider>
             <LeftRail launcher={sepLauncher} visibleItemIds={visibleLeftRailIds} />
 
-            {openPanel ? (
-              <div
-                ref={overlayRef}
-                className={`top-panel-overlay${
-                  openPanel === "tools" ? " top-panel-overlay--tools" : ""
-                }${
-                  openPanel === "operations" ? " top-panel-overlay--operations" : ""
-                }${
-                  openPanel === "contacts" ? " top-panel-overlay--contacts" : ""
-                }${
-                  openPanel === "complianceHub" ? " top-panel-overlay--compliance" : ""
-                }${
-                  openPanel === "verse" ? " top-panel-overlay--verse" : ""
-                }`}
-              >
-                <div className="top-panel-header">
-                  <div className="top-panel-title">
-                    {openPanel === "settings"
-                      ? "Agency Settings"
-                      : navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
-                  </div>
-                  <button
-                    type="button"
-                    className="top-panel-close"
-                    onClick={() => setOpenPanel(null)}
-                  >
-                    <CloseIcon />
-                  </button>
-                </div>
-                <div className="top-panel-body">{renderOverlayContent()}</div>
-              </div>
-            ) : null}
+            {overlayNode}
 
             <div className="app-workspace">
               <main className="app-center">
@@ -889,38 +990,7 @@ function AppShell({ currentUser = null }) {
               <LeftRail visibleItemIds={visibleLeftRailIds} />
             ) : null}
 
-            {openPanel ? (
-              <div
-                ref={overlayRef}
-                className={`top-panel-overlay${
-                  openPanel === "tools" ? " top-panel-overlay--tools" : ""
-                }${
-                  openPanel === "operations" ? " top-panel-overlay--operations" : ""
-                }${
-                  openPanel === "contacts" ? " top-panel-overlay--contacts" : ""
-                }${
-                  openPanel === "complianceHub" ? " top-panel-overlay--compliance" : ""
-                }${
-                  openPanel === "verse" ? " top-panel-overlay--verse" : ""
-                }`}
-              >
-                <div className="top-panel-header">
-                  <div className="top-panel-title">
-                    {openPanel === "settings"
-                      ? "Agency Settings"
-                      : navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
-                  </div>
-                  <button
-                    type="button"
-                    className="top-panel-close"
-                    onClick={() => setOpenPanel(null)}
-                  >
-                    <CloseIcon />
-                  </button>
-                </div>
-                <div className="top-panel-body">{renderOverlayContent()}</div>
-              </div>
-            ) : null}
+            {overlayNode}
 
             <div className="app-workspace">
               <main className="app-center">
@@ -1002,9 +1072,11 @@ function AppContent({ currentUser = null }) {
   return (
     <SubscriptionGate>
       <LeftRailProvider>
-        <InboundCallProvider>
-          <AppShell currentUser={currentUser} />
-        </InboundCallProvider>
+        <AvailabilityProvider>
+          <InboundCallProvider>
+            <AppShell currentUser={currentUser} />
+          </InboundCallProvider>
+        </AvailabilityProvider>
       </LeftRailProvider>
     </SubscriptionGate>
   );

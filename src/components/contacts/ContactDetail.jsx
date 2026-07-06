@@ -117,13 +117,22 @@ function CallHistorySection({ calls, supabaseClient }) {
   );
 }
 
-export default function ContactDetail({ contactId, onBack }) {
+const CALL_FLOWS = [
+  { id: "ma", label: "MA" },
+  { id: "aca", label: "ACA" },
+  { id: "medsup", label: "MS" },
+  { id: "u65", label: "U65" },
+  { id: "ancillary", label: "ANC" },
+];
+
+export default function ContactDetail({ contactId, onBack, onStartCall = null }) {
   const { supabaseClient } = useTenantConfig();
   const { bundle, loading, error, refresh } = useContactDetail(contactId);
   const { addNote, toggleNotePin, addFollowUp, setFollowUpStatus, updateContact } = useContactMutations();
   const [noteDraft, setNoteDraft] = useState("");
   const [followUpDraft, setFollowUpDraft] = useState({ dueAt: "", reason: "" });
   const [saving, setSaving] = useState(false);
+  const [callFlow, setCallFlow] = useState("ma");
 
   const contact = bundle?.contact;
 
@@ -187,7 +196,47 @@ export default function ContactDetail({ contactId, onBack }) {
         <div className="contacts-detail-title">
           <h2>{contactDisplayName(contact).toUpperCase()}</h2>
           <LeadIntelChips intel={latestIntel} />
+          {bundle.policies.length ? (
+            <div className="contacts-chip-row">
+              {bundle.policies.slice(0, 4).map((policy) => (
+                <span key={policy.id} className={`contacts-chip policy-${policy.status}`}>
+                  {[policy.product_line, (policy.status || "").toUpperCase()]
+                    .filter(Boolean)
+                    .join(" ")}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
+        {onStartCall ? (
+          <div className="contacts-start-call-group">
+            <select
+              className="contacts-status-select"
+              value={callFlow}
+              onChange={(event) => setCallFlow(event.target.value)}
+              aria-label="Call flow"
+            >
+              {CALL_FLOWS.map((flow) => (
+                <option key={flow.id} value={flow.id}>
+                  {flow.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="contacts-start-call-btn"
+              onClick={() => onStartCall(contact, callFlow)}
+              disabled={contact.do_not_call}
+              title={
+                contact.do_not_call
+                  ? "Contact is flagged do not call"
+                  : "Open the call cockpit with this contact loaded"
+              }
+            >
+              START CALL
+            </button>
+          </div>
+        ) : null}
         <select
           className="contacts-status-select"
           value={contact.status}
