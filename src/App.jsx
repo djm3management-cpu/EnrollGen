@@ -956,7 +956,10 @@ function AppShell({ currentUser = null }) {
 
         {appMode === "crm" ? (
           <>
-            {overlayNode}
+            {/* Overlay panels like the Compliance Hub read ScriptContext;
+                in CRM mode there is no cockpit provider, so give them a
+                default-state one. */}
+            <ScriptProvider>{overlayNode}</ScriptProvider>
             <div className="app-workspace">
               <main className="app-center crm-home">
                 <LazyPanel>
