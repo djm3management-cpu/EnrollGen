@@ -27,6 +27,12 @@ async function requireClerkUser(req, res) {
   }
 }
 
+// Browser hits during debugging land here as GET; answer with a hint
+// instead of Express's bare 404.
+voiceTokenRouter.get("/api/voice/token", (_req, res) => {
+  res.status(405).json({ error: "Use POST with a Clerk bearer token and { agent_id }" });
+});
+
 // Issues the Twilio Voice access token for the browser softphone plus
 // a signed token for the /agent transcript WebSocket.
 // Body: { agent_id: "mark_endres" }
