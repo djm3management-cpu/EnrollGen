@@ -11,6 +11,9 @@ export const AVAILABILITY_FUNCTIONS_BASE_URL =
 
 export const KNOWN_AGENT_ID_MAP = new Map([
   ["markendres", "mark_endres"],
+  // Clerk user id user_37aiD3KT6LnoqHp8RKIvXhwRk6U, normalized
+  ["user37aid3kt6lnoqhp8rkivxhwrk6u", "mike_shiomos"],
+  ["mikeshiomos", "mike_shiomos"],
   ["dylanmaria", "dylan_maria"],
   ["dylan", "dylan_maria"],
   ["m3", "mark_endres"],
@@ -72,6 +75,9 @@ export function resolveAgentId(user) {
     user.unsafeMetadata?.availability_agent_id,
     user.unsafeMetadata?.agentId,
     user.unsafeMetadata?.agent_id,
+    // Clerk user id participates in the alias map only; the raw id must
+    // never fall through as an agent_id, so pre-resolve it here.
+    mapKnownAgentId(user.id),
     user.publicMetadata?.agentName,
     user.unsafeMetadata?.agentName,
     user.username,
