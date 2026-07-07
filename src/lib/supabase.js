@@ -115,6 +115,10 @@ export function getClerkSupabase() {
   if (!clerkClient) {
     clerkClient = createClient(supabaseUrl, supabaseAnonKey, {
       accessToken: resolveClerkAccessToken,
+      // The accessToken option only manages the Authorization bearer;
+      // Supabase's gateway still requires the anon key in the apikey
+      // header on every request ("No API key found in request").
+      global: { headers: { apikey: supabaseAnonKey } },
     });
   }
   return clerkClient;
