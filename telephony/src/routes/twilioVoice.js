@@ -4,7 +4,7 @@ import { config, publicUrl, mediaStreamUrl } from "../config.js";
 import { supabase } from "../supabase.js";
 import { requireTwilioSignature } from "../twilioSecurity.js";
 import { findOrCreateContactByPhone, latestLeadIntel, logContactActivity } from "../contacts.js";
-import { getAvailableAgents } from "../availability.js";
+import { claimNextAvailableAgent, releaseAgent } from "../availability.js";
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
@@ -84,6 +84,7 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, async (req, res)
   const callSid = req.body.CallSid;
   const from = req.body.From;
   const to = req.body.To;
+  let claimedAgent = null;
 
   try {
     const { contact } = await findOrCreateContactByPhone({
@@ -91,8 +92,11 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, async (req, res)
       source: "fmo_transfer",
     });
 
-    const agents = await getAvailableAgents();
-    const agent = agents[0] || null;
+    // Claim (not just read) the agent here: marks them busy the instant
+    // they're selected so a second call arriving in the same instant
+    // cannot also be routed to them before they've even started ringing.
+    const agent = await claimNextAvailableAgent();
+    claimedAgent = agent;
 
     const { data: inboundCall, error } = await supabase
       .from("inbound_calls")
@@ -136,6 +140,9 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, async (req, res)
     );
   } catch (err) {
     console.error("/twilio/voice failed:", err);
+    // Don't strand a claimed agent as busy if we never actually dialed
+    // them (e.g. the inbound_calls insert failed after the claim).
+    if (claimedAgent) await releaseAgent(claimedAgent.agent_id);
     return sendTwiml(res, voicemailTwiml());
   }
 });
@@ -147,6 +154,7 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, async (req
   const tried = String(req.query.tried || "").split(",").filter(Boolean);
   const dialStatus = req.body.DialCallStatus;
   const callSid = req.body.CallSid;
+  let claimedAgent = null;
 
   try {
     await logEvent({
@@ -173,8 +181,14 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, async (req
       .maybeSingle();
     if (!inboundCall) return sendTwiml(res, voicemailTwiml());
 
-    const agents = await getAvailableAgents({ exclude: tried });
-    const nextAgent = agents[0] || null;
+    // The agent just dialed (last entry in `tried`) didn't answer;
+    // release the claim from /twilio/voice so they're immediately
+    // eligible for the next inbound call instead of stuck "busy".
+    const justTriedAgentId = tried[tried.length - 1];
+    if (justTriedAgentId) await releaseAgent(justTriedAgentId);
+
+    const nextAgent = await claimNextAvailableAgent({ exclude: tried });
+    claimedAgent = nextAgent;
 
     if (!nextAgent) {
       await supabase
@@ -210,6 +224,7 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, async (req
     );
   } catch (err) {
     console.error("/twilio/dial-result failed:", err);
+    if (claimedAgent) await releaseAgent(claimedAgent.agent_id);
     return sendTwiml(res, voicemailTwiml());
   }
 });
