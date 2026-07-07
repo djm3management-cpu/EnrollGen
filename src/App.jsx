@@ -20,6 +20,7 @@ import { InboundCallProvider, INBOUND_CALLS_ENABLED, useInboundCall } from "./co
 import InboundCallBanner from "./components/InboundCallBanner";
 import { AvailabilityProvider } from "./context/AvailabilityContext";
 import AvailabilityStrip from "./components/AvailabilityStrip";
+import { useUnreadMessages } from "./hooks/useMessages";
 import { setPendingCallContact } from "./lib/callLaunch";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
@@ -478,6 +479,7 @@ function AppShell({ currentUser = null }) {
   const { liveCall } = useLiveCall();
   const inbound = useInboundCall();
   const sessionActive = Boolean(liveCall?.callStarted);
+  const { total: unreadMessageTotal } = useUnreadMessages();
 
   const {
     railWidth,
@@ -901,6 +903,9 @@ function AppShell({ currentUser = null }) {
                 onMouseEnter={() => preloadPanel(tab.id)}
               >
                 {tab.label}
+                {tab.id === "contacts" && unreadMessageTotal > 0 && activeTabId !== "contacts" ? (
+                  <span className="top-bar-tab-badge">{unreadMessageTotal}</span>
+                ) : null}
               </button>
             ))}
           </nav>

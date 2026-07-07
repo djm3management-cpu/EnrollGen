@@ -16,6 +16,7 @@ import {
   resolveAgentId,
   setAvailabilityStatus,
 } from "../lib/agentIdentity";
+import { publishSms } from "../lib/smsEvents";
 
 // Inbound softphone state: Twilio Voice SDK device registration, the
 // incoming-call banner payload, and the server-transcribed AGENT/CUSTOMER
@@ -86,6 +87,10 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   }, [getToken, agentId]);
 
   const handleTranscriptMessage = useCallback((message) => {
+    if (message.type === "sms") {
+      publishSms(message);
+      return;
+    }
     if (message.type !== "transcript" || !message.text) return;
     if (message.speaker === "agent") {
       if (!message.isFinal) return;

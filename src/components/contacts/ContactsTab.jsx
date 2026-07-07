@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { MessageSquare } from "lucide-react";
 import { useContactsList, contactDisplayName } from "../../hooks/useContacts";
+import { useUnreadMessages } from "../../hooks/useMessages";
 import ContactDetail from "./ContactDetail";
 import ContactImportPanel from "./ContactImportPanel";
 
@@ -32,6 +34,7 @@ export default function ContactsTab({ variant = "home", onStartCall = null }) {
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const { contacts, loading, error, refresh } = useContactsList(search);
+  const { unreadByContact } = useUnreadMessages();
 
   const agentOptions = useMemo(() => {
     const agents = new Set();
@@ -154,6 +157,15 @@ export default function ContactsTab({ variant = "home", onStartCall = null }) {
                 <tr key={contact.id} onClick={() => setSelectedContactId(contact.id)}>
                   <td>
                     {contactDisplayName(contact)}
+                    {unreadByContact[contact.id] ? (
+                      <span
+                        className="contacts-unread-icon"
+                        title={`${unreadByContact[contact.id]} unread message${unreadByContact[contact.id] > 1 ? "s" : ""}`}
+                      >
+                        <MessageSquare size={12} />
+                        {unreadByContact[contact.id]}
+                      </span>
+                    ) : null}
                     {contact.do_not_call ? <span className="contacts-dnc"> DNC</span> : null}
                   </td>
                   <td className="mono">{fmtPhone(contact.phone)}</td>

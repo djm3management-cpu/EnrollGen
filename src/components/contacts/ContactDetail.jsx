@@ -1,7 +1,9 @@
 import { useCallback, useState } from "react";
 import { useContactDetail, useContactMutations, contactDisplayName } from "../../hooks/useContacts";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
+import { useAvailability } from "../../context/AvailabilityContext";
 import CallDetailPanel from "../callDetail/CallDetailPanel";
+import MessagesThread from "./MessagesThread";
 
 function fmtDateTime(value) {
   if (!value) return "--";
@@ -133,6 +135,8 @@ export default function ContactDetail({ contactId, onBack, onStartCall = null })
   const [followUpDraft, setFollowUpDraft] = useState({ dueAt: "", reason: "" });
   const [saving, setSaving] = useState(false);
   const [callFlow, setCallFlow] = useState("ma");
+  const [detailTab, setDetailTab] = useState("overview");
+  const availability = useAvailability();
 
   const contact = bundle?.contact;
 
@@ -248,6 +252,22 @@ export default function ContactDetail({ contactId, onBack, onStartCall = null })
         </select>
       </div>
 
+      <div className="contacts-detail-tabs">
+        {["overview", "messages"].map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            className={detailTab === tab ? "is-active" : ""}
+            onClick={() => setDetailTab(tab)}
+          >
+            {tab.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {detailTab === "messages" ? (
+        <MessagesThread contactId={contact.id} agentId={availability?.agentId || null} />
+      ) : (
       <div className="contacts-detail-grid">
         <div className="contacts-col">
           <div className="contacts-section">
@@ -378,6 +398,7 @@ export default function ContactDetail({ contactId, onBack, onStartCall = null })
           <CallHistorySection calls={bundle.calls} supabaseClient={supabaseClient} />
         </div>
       </div>
+      )}
     </div>
   );
 }

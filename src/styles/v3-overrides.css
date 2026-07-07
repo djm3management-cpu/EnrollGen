@@ -3780,3 +3780,201 @@ html.dark .flow-script-callout {
   font-size: 12px;
   color: var(--text-label);
 }
+
+/* ============================================================
+   SMS message thread (contact detail MESSAGES tab)
+   ============================================================ */
+.contacts-detail-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.contacts-detail-tabs button {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.contacts-detail-tabs button.is-active {
+  border-color: var(--eg-accent);
+  color: var(--eg-accent);
+}
+
+.msg-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--border-default);
+  padding: 12px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+}
+
+.msg-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 480px;
+  min-height: 220px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.msg-day-separator {
+  text-align: center;
+  color: var(--text-tertiary, var(--text-secondary));
+  font-size: 9px;
+  letter-spacing: 2px;
+  margin: 8px 0 2px;
+}
+
+.msg-row {
+  display: flex;
+}
+
+.msg-row.is-inbound {
+  justify-content: flex-start;
+}
+
+.msg-row.is-outbound {
+  justify-content: flex-end;
+}
+
+.msg-bubble {
+  max-width: 72%;
+  padding: 7px 10px;
+  border: 1px solid var(--border-default);
+  background: var(--surface-raised, rgba(255, 255, 255, 0.04));
+}
+
+.msg-row.is-outbound .msg-bubble {
+  background: var(--status-pending-bg, rgba(255, 153, 0, 0.12));
+  border-color: var(--eg-accent);
+}
+
+.msg-bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msg-meta {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+  font-size: 9px;
+  color: var(--text-tertiary, var(--text-secondary));
+  letter-spacing: 1px;
+}
+
+.msg-status.is-delivered { color: var(--status-live); }
+.msg-status.is-failed { color: var(--status-offline); }
+.msg-status.is-sent,
+.msg-status.is-queued { color: var(--status-pending); }
+
+.msg-media-image img {
+  display: block;
+  max-width: 220px;
+  max-height: 220px;
+  margin-top: 6px;
+  border: 1px solid var(--border-default);
+}
+
+.msg-media-file {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--eg-accent);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-decoration: none;
+  border: 1px solid var(--eg-accent);
+  padding: 3px 8px;
+}
+
+.msg-compose {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.msg-compose textarea {
+  flex: 1;
+  background: var(--surface-raised, transparent);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.msg-compose textarea:focus {
+  outline: none;
+  border-color: var(--eg-accent);
+}
+
+.msg-compose-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.msg-charcount {
+  font-size: 9px;
+  color: var(--text-tertiary, var(--text-secondary));
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.msg-charcount.is-multi {
+  color: var(--status-pending);
+}
+
+.msg-send-btn {
+  background: transparent;
+  border: 1px solid var(--eg-accent);
+  color: var(--eg-accent);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 1.6px;
+  padding: 6px 18px;
+  cursor: pointer;
+}
+
+.msg-send-btn:hover:not(:disabled) {
+  background: var(--status-pending-bg, rgba(255, 153, 0, 0.12));
+}
+
+.msg-send-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.contacts-unread-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  color: var(--eg-accent);
+  font-size: 10px;
+}
+
+.top-bar-tab-badge {
+  display: inline-block;
+  margin-left: 6px;
+  min-width: 16px;
+  padding: 1px 4px;
+  border: 1px solid var(--eg-accent);
+  color: var(--eg-accent);
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
