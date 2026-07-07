@@ -42,25 +42,79 @@ export const supabaseCms = createClient(supabaseCmsUrl, supabaseCmsAnonKey, cmsC
 // supabase-js accessToken hook. One singleton serves the whole app.
 let clerkTokenGetter = null;
 let clerkClient = null;
+let cachedClerkToken = null;
+let cachedClerkTokenExp = 0;
+let inFlightMint = null;
+let warnedWrongAlg = false;
 
 export function registerClerkTokenGetter(getter) {
   clerkTokenGetter = getter;
+}
+
+function decodeJwtPart(token, index) {
+  try {
+    const part = token.split(".")[index];
+    if (!part) return null;
+    return JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
+  }
+}
+
+// Mint (or reuse) a Clerk token Supabase can actually verify.
+// - Cached until shortly before its exp, so Clerk is asked roughly once
+//   per minute instead of once per request (dev instances rate-limit
+//   token minting; when that limit hit, the old code silently fell back
+//   to the default Clerk token and every request 401ed).
+// - Tokens not signed with HS256 (the default Clerk session token is
+//   RS256) can never verify against the Supabase JWT secret and produce
+//   "No suitable key or wrong key type"; degrade to the anon key instead.
+async function resolveClerkAccessToken() {
+  const now = Date.now() / 1000;
+  if (cachedClerkToken && cachedClerkTokenExp - now > 15) {
+    return cachedClerkToken;
+  }
+
+  if (!inFlightMint) {
+    inFlightMint = (async () => {
+      try {
+        const token = await clerkTokenGetter?.();
+        if (!token) return supabaseAnonKey;
+
+        const header = decodeJwtPart(token, 0);
+        if (header?.alg && header.alg !== "HS256") {
+          if (!warnedWrongAlg) {
+            warnedWrongAlg = true;
+            console.warn(
+              "[supabase] Clerk returned a non-HS256 token (likely the default session token; " +
+                "is the 'supabase' JWT template configured?). Falling back to anonymous access."
+            );
+          }
+          return supabaseAnonKey;
+        }
+
+        const payload = decodeJwtPart(token, 1);
+        cachedClerkToken = token;
+        cachedClerkTokenExp = payload?.exp || Date.now() / 1000 + 50;
+        return token;
+      } catch {
+        const now = Date.now() / 1000;
+        const cachedStillValid = cachedClerkToken && cachedClerkTokenExp - now > 0;
+        return cachedStillValid ? cachedClerkToken : supabaseAnonKey;
+      } finally {
+        inFlightMint = null;
+      }
+    })();
+  }
+
+  return inFlightMint;
 }
 
 export function getClerkSupabase() {
   if (!clerkTokenGetter) return null;
   if (!clerkClient) {
     clerkClient = createClient(supabaseUrl, supabaseAnonKey, {
-      accessToken: async () => {
-        try {
-          const token = await clerkTokenGetter?.();
-          // Fall back to the anon key so requests degrade to
-          // RLS-anonymous instead of failing with a missing header.
-          return token || supabaseAnonKey;
-        } catch {
-          return supabaseAnonKey;
-        }
-      },
+      accessToken: resolveClerkAccessToken,
     });
   }
   return clerkClient;
