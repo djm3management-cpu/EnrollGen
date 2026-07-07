@@ -169,7 +169,7 @@ function ExpandedRow({ row, supabaseClient }) {
 }
 
 export default function CallLogTab({ onOpenContact = null }) {
-  const { supabaseClient } = useTenantConfig();
+  const { supabaseClient, loading: tenantLoading, error: tenantError } = useTenantConfig();
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -186,7 +186,13 @@ export default function CallLogTab({ onOpenContact = null }) {
   const [agentOptions, setAgentOptions] = useState(["ALL"]);
 
   const load = useCallback(async () => {
-    if (!supabaseClient) return;
+    if (!supabaseClient) {
+      if (!tenantLoading) {
+        setLoading(false);
+        setError(tenantError || "Workspace connection not ready. Reload the page.");
+      }
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -224,7 +230,7 @@ export default function CallLogTab({ onOpenContact = null }) {
     } finally {
       setLoading(false);
     }
-  }, [supabaseClient, page, dateFrom, dateTo, directionFilter, dispositionFilter, agentFilter, search]);
+  }, [supabaseClient, tenantLoading, tenantError, page, dateFrom, dateTo, directionFilter, dispositionFilter, agentFilter, search]);
 
   useEffect(() => {
     load();

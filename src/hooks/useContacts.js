@@ -5,13 +5,26 @@ import { useTenantConfig } from "./useTenantConfig";
 // authenticated Supabase client; RLS enforces isolation.
 
 export function useContactsList(searchTerm) {
-  const { supabaseClient, tenant } = useTenantConfig();
+  const {
+    supabaseClient,
+    tenant,
+    loading: tenantLoading,
+    error: tenantError,
+  } = useTenantConfig();
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const refresh = useCallback(async () => {
-    if (!supabaseClient) return;
+    if (!supabaseClient) {
+      // Do not spin forever when the workspace client never arrived
+      // (tenant bootstrap failed); surface the reason instead.
+      if (!tenantLoading) {
+        setLoading(false);
+        setError(tenantError || "Workspace connection not ready. Reload the page.");
+      }
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -52,7 +65,7 @@ export function useContactsList(searchTerm) {
     } finally {
       setLoading(false);
     }
-  }, [supabaseClient, searchTerm]);
+  }, [supabaseClient, searchTerm, tenantLoading, tenantError]);
 
   useEffect(() => {
     refresh();
@@ -62,13 +75,20 @@ export function useContactsList(searchTerm) {
 }
 
 export function useContactDetail(contactId) {
-  const { supabaseClient } = useTenantConfig();
+  const { supabaseClient, loading: tenantLoading, error: tenantError } = useTenantConfig();
   const [bundle, setBundle] = useState(null);
   const [loading, setLoading] = useState(Boolean(contactId));
   const [error, setError] = useState(null);
 
   const refresh = useCallback(async () => {
-    if (!supabaseClient || !contactId) return;
+    if (!contactId) return;
+    if (!supabaseClient) {
+      if (!tenantLoading) {
+        setLoading(false);
+        setError(tenantError || "Workspace connection not ready. Reload the page.");
+      }
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -128,7 +148,7 @@ export function useContactDetail(contactId) {
     } finally {
       setLoading(false);
     }
-  }, [supabaseClient, contactId]);
+  }, [supabaseClient, contactId, tenantLoading, tenantError]);
 
   useEffect(() => {
     setBundle(null);

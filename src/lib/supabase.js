@@ -36,7 +36,39 @@ const cmsClientOptions = {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, publicClientOptions);
 export const supabaseCms = createClient(supabaseCmsUrl, supabaseCmsAnonKey, cmsClientOptions);
 
-// Authenticated client factory - pass Clerk JWT for RLS
+// Fresh-token client: instead of pinning one Clerk JWT at creation (they
+// expire in about 60 seconds, after which every request 401s), this
+// client asks Clerk for a current token before each request via the
+// supabase-js accessToken hook. One singleton serves the whole app.
+let clerkTokenGetter = null;
+let clerkClient = null;
+
+export function registerClerkTokenGetter(getter) {
+  clerkTokenGetter = getter;
+}
+
+export function getClerkSupabase() {
+  if (!clerkTokenGetter) return null;
+  if (!clerkClient) {
+    clerkClient = createClient(supabaseUrl, supabaseAnonKey, {
+      accessToken: async () => {
+        try {
+          const token = await clerkTokenGetter?.();
+          // Fall back to the anon key so requests degrade to
+          // RLS-anonymous instead of failing with a missing header.
+          return token || supabaseAnonKey;
+        } catch {
+          return supabaseAnonKey;
+        }
+      },
+    });
+  }
+  return clerkClient;
+}
+
+// Authenticated client factory - pass Clerk JWT for RLS.
+// Prefer getClerkSupabase() for long-lived clients; this factory pins
+// the given token, which Clerk expires in about 60 seconds.
 export function getAuthSupabase(token) {
   if (!token) return supabase;
   const cacheKey = token.slice(-24);

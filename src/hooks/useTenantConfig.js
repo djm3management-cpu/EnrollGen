@@ -54,9 +54,12 @@ async function getTenantBundle(getToken) {
       import("../lib/supabase"),
       import("../lib/postCallPipeline"),
     ]);
-    const { getAuthSupabase, supabase } = supabaseModule;
+    const { registerClerkTokenGetter, getClerkSupabase, supabase } = supabaseModule;
     const { fetchTenantAgents, fetchTenantConfig } = pipelineModule;
-    const client = token ? getAuthSupabase(token) : supabase;
+    // Fresh-token client: re-resolves the Clerk token per request so it
+    // never goes stale (Clerk tokens expire in about 60 seconds).
+    registerClerkTokenGetter(() => getSupabaseToken(getToken));
+    const client = getClerkSupabase() || supabase;
     const tenant = await fetchTenantConfig(client);
     const agents = tenant?.id ? await fetchTenantAgents(client, tenant.id) : [];
 
@@ -105,11 +108,18 @@ export function TenantConfigProvider({ children }) {
     }
   }, [getToken]);
 
-  const hydrateTenant = useCallback((tenant, agents = []) => {
+  const hydrateTenant = useCallback(async (tenant, agents = []) => {
     if (!tenant?.id) return;
+    // Never hydrate a tenant with a null client: that renders the app
+    // in a permanent loading state. Fall back to the fresh-token client.
+    let client = state.supabaseClient;
+    if (!client) {
+      const { getClerkSupabase, supabase } = await import("../lib/supabase");
+      client = getClerkSupabase() || supabase;
+    }
     const bundle = {
       cacheKey: tenant.clerk_org_id || tenant.id,
-      client: state.supabaseClient,
+      client,
       tenant,
       agents,
     };
@@ -118,6 +128,7 @@ export function TenantConfigProvider({ children }) {
       ...current,
       tenant,
       agents,
+      supabaseClient: current.supabaseClient || client,
       loading: false,
       error: "",
     }));
