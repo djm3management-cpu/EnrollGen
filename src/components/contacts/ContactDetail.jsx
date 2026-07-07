@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useContactDetail, useContactMutations, contactDisplayName } from "../../hooks/useContacts";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { useAvailability } from "../../context/AvailabilityContext";
@@ -127,7 +127,13 @@ const CALL_FLOWS = [
   { id: "ancillary", label: "ANC" },
 ];
 
-export default function ContactDetail({ contactId, onBack, onStartCall = null }) {
+export default function ContactDetail({
+  contactId,
+  onBack,
+  onStartCall = null,
+  initialTab = null,
+  initialTabKey = null,
+}) {
   const { supabaseClient } = useTenantConfig();
   const { bundle, loading, error, refresh } = useContactDetail(contactId);
   const { addNote, toggleNotePin, addFollowUp, setFollowUpStatus, updateContact } = useContactMutations();
@@ -135,8 +141,14 @@ export default function ContactDetail({ contactId, onBack, onStartCall = null })
   const [followUpDraft, setFollowUpDraft] = useState({ dueAt: "", reason: "" });
   const [saving, setSaving] = useState(false);
   const [callFlow, setCallFlow] = useState("ma");
-  const [detailTab, setDetailTab] = useState("overview");
+  const [detailTab, setDetailTab] = useState(initialTab || "overview");
   const availability = useAvailability();
+
+  // Deep links (e.g. clicking an SMS toast) can retarget the tab after
+  // mount; initialTabKey changes per request.
+  useEffect(() => {
+    if (initialTab) setDetailTab(initialTab);
+  }, [initialTab, initialTabKey]);
 
   const contact = bundle?.contact;
 

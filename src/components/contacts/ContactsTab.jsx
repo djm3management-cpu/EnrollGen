@@ -69,6 +69,8 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
           contactId={selectedContactId}
           onBack={() => setSelectedContactId(null)}
           onStartCall={onStartCall}
+          initialTab={focusContact?.id === selectedContactId ? focusContact?.tab : null}
+          initialTabKey={focusContact?.ts}
         />
       </div>
     );

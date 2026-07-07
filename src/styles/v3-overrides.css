@@ -4143,3 +4143,96 @@ html.dark .flow-script-callout {
   font-size: 12px;
   color: var(--text-label);
 }
+
+/* ============================================================
+   Inbound SMS toasts (app-wide) + rounded message bubbles
+   ============================================================ */
+.sms-toast-stack {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 360px;
+}
+
+.sms-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--eg-bg, #000);
+  border: 1px solid var(--eg-accent);
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  cursor: pointer;
+}
+
+.sms-toast:hover {
+  background: var(--status-pending-bg, rgba(255, 153, 0, 0.12));
+}
+
+.sms-toast__icon {
+  color: var(--eg-accent-bright, var(--eg-accent));
+  flex: none;
+  margin-top: 1px;
+}
+
+.sms-toast__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.sms-toast__label {
+  color: var(--eg-accent-bright, var(--eg-accent));
+  font-size: 10px;
+  letter-spacing: 1.4px;
+}
+
+.sms-toast__preview {
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.sms-toast__close {
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  flex: none;
+}
+
+.sms-toast__close:hover {
+  color: var(--text-primary);
+}
+
+/* Rounded chat bubbles: 14px pill corners with a tighter corner on the
+   sender side, like a modern messaging app. */
+.msg-bubble {
+  border-radius: 14px;
+}
+
+.msg-row.is-inbound .msg-bubble {
+  border-bottom-left-radius: 4px;
+}
+
+.msg-row.is-outbound .msg-bubble {
+  border-bottom-right-radius: 4px;
+}
+
+.msg-media-image img {
+  border-radius: 10px;
+}

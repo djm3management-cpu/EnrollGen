@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTenantConfig } from "./useTenantConfig";
 import { useAppAuth } from "../context/AuthContext";
-import { subscribeSms } from "../lib/smsEvents";
+import { publishSms, subscribeSms } from "../lib/smsEvents";
 import { INBOUND_CALLS_ENABLED } from "../context/InboundCallContext";
 
 const TELEPHONY_BASE_URL = (import.meta.env.VITE_TELEPHONY_BASE_URL || "").replace(/\/$/, "");
@@ -118,6 +118,11 @@ export function useMessageThread(contactId) {
   return { messages, media, loading, error, sending, refresh, markRead, send };
 }
 
+// Shared across hook instances so the polling fallback publishes each
+// new inbound message exactly once, no matter how many components have
+// useUnreadMessages mounted.
+let lastPolledCreatedAt = null;
+
 export function useUnreadMessages() {
   const { supabaseClient } = useTenantConfig();
   const [unreadByContact, setUnreadByContact] = useState({});
@@ -127,20 +132,46 @@ export function useUnreadMessages() {
     if (!supabaseClient) return;
     const { data, error } = await supabaseClient
       .from("messages")
-      .select("contact_id")
+      .select("id, contact_id, body, from_number, created_at, contacts(id, first_name, last_name, phone)")
       .eq("direction", "inbound")
       .is("read_at", null)
+      .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
       // Table may not exist until migration 020 runs; stay quiet.
       return;
     }
+    const rows = data || [];
     const counts = {};
-    for (const row of data || []) {
+    for (const row of rows) {
       counts[row.contact_id] = (counts[row.contact_id] || 0) + 1;
     }
     setUnreadByContact(counts);
-    setTotal((data || []).length);
+    setTotal(rows.length);
+
+    // Polling fallback: without the /agent WebSocket, surface newly
+    // arrived messages through the same pub/sub the toast host uses.
+    // Skip when realtime is on (the WS already publishes them).
+    if (!HAS_REALTIME) {
+      const newest = rows[0]?.created_at || null;
+      if (lastPolledCreatedAt === null) {
+        // First fetch of the session: baseline only, no toasts for
+        // messages that were already unread when the app loaded.
+        lastPolledCreatedAt = newest || new Date(0).toISOString();
+      } else if (newest && newest > lastPolledCreatedAt) {
+        const fresh = rows
+          .filter((row) => row.created_at > lastPolledCreatedAt)
+          .reverse();
+        lastPolledCreatedAt = newest;
+        for (const row of fresh) {
+          publishSms({
+            type: "sms",
+            message: { ...row, direction: "inbound" },
+            contact: row.contacts || null,
+          });
+        }
+      }
+    }
   }, [supabaseClient]);
 
   useEffect(() => {

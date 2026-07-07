@@ -21,6 +21,7 @@ import InboundCallBanner from "./components/InboundCallBanner";
 import { AvailabilityProvider } from "./context/AvailabilityContext";
 import AvailabilityStrip from "./components/AvailabilityStrip";
 import { useUnreadMessages } from "./hooks/useMessages";
+import SmsToastHost from "./components/SmsToastHost";
 import { setPendingCallContact } from "./lib/callLaunch";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
@@ -729,6 +730,14 @@ function AppShell({ currentUser = null }) {
     });
   };
 
+  const handleOpenContactMessages = (contactId) => {
+    setCrmFocusContact({ id: contactId, ts: Date.now(), tab: "messages" });
+    startTransition(() => {
+      setAppMode("crm");
+      setOpenPanel(null);
+    });
+  };
+
   const handleLogoClick = () => {
     window.location.reload();
   };
@@ -950,6 +959,8 @@ function AppShell({ currentUser = null }) {
         </header>
 
         {INBOUND_CALLS_ENABLED ? <InboundCallBanner /> : null}
+
+        <SmsToastHost onOpenContactMessages={handleOpenContactMessages} />
 
         {appMode === "crm" && sessionActive ? (
           <div className="return-to-call-strip" role="status">
