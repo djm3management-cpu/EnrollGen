@@ -6,7 +6,7 @@ import { INBOUND_CALLS_ENABLED } from "../context/InboundCallContext";
 
 const TELEPHONY_BASE_URL = (import.meta.env.VITE_TELEPHONY_BASE_URL || "").replace(/\/$/, "");
 const THREAD_POLL_MS = 10000;
-const UNREAD_POLL_MS = 60000;
+const UNREAD_POLL_MS = 20000;
 
 // The /agent WebSocket only exists when inbound calls are enabled;
 // without it the thread and unread counts fall back to polling.
@@ -118,10 +118,17 @@ export function useMessageThread(contactId) {
   return { messages, media, loading, error, sending, refresh, markRead, send };
 }
 
-// Shared across hook instances so the polling fallback publishes each
-// new inbound message exactly once, no matter how many components have
-// useUnreadMessages mounted.
+// Shared across hook instances so polling publishes each new inbound
+// message exactly once, no matter how many components have
+// useUnreadMessages mounted, and never re-publishes a message the
+// WebSocket already delivered (contacts without an assigned agent get
+// no WS push at all, so polling is their only notification path).
 let lastPolledCreatedAt = null;
+const seenMessageIds = new Set();
+
+export function markSmsMessageSeen(messageId) {
+  if (messageId) seenMessageIds.add(messageId);
+}
 
 export function useUnreadMessages() {
   const { supabaseClient } = useTenantConfig();
@@ -149,27 +156,28 @@ export function useUnreadMessages() {
     setUnreadByContact(counts);
     setTotal(rows.length);
 
-    // Polling fallback: without the /agent WebSocket, surface newly
-    // arrived messages through the same pub/sub the toast host uses.
-    // Skip when realtime is on (the WS already publishes them).
-    if (!HAS_REALTIME) {
-      const newest = rows[0]?.created_at || null;
-      if (lastPolledCreatedAt === null) {
-        // First fetch of the session: baseline only, no toasts for
-        // messages that were already unread when the app loaded.
-        lastPolledCreatedAt = newest || new Date(0).toISOString();
-      } else if (newest && newest > lastPolledCreatedAt) {
-        const fresh = rows
-          .filter((row) => row.created_at > lastPolledCreatedAt)
-          .reverse();
-        lastPolledCreatedAt = newest;
-        for (const row of fresh) {
-          publishSms({
-            type: "sms",
-            message: { ...row, direction: "inbound" },
-            contact: row.contacts || null,
-          });
-        }
+    // Surface newly arrived messages through the same pub/sub the toast
+    // host uses. This runs even when the WebSocket is on: the server
+    // only pushes to a contact's assigned agent, so unassigned contacts
+    // (every fresh inbound texter) are notified here. Messages the WS
+    // already delivered are skipped via seenMessageIds.
+    const newest = rows[0]?.created_at || null;
+    if (lastPolledCreatedAt === null) {
+      // First fetch of the session: baseline only, no toasts for
+      // messages that were already unread when the app loaded.
+      lastPolledCreatedAt = newest || new Date(0).toISOString();
+    } else if (newest && newest > lastPolledCreatedAt) {
+      const fresh = rows
+        .filter((row) => row.created_at > lastPolledCreatedAt && !seenMessageIds.has(row.id))
+        .reverse();
+      lastPolledCreatedAt = newest;
+      for (const row of fresh) {
+        seenMessageIds.add(row.id);
+        publishSms({
+          type: "sms",
+          message: { ...row, direction: "inbound" },
+          contact: row.contacts || null,
+        });
       }
     }
   }, [supabaseClient]);
@@ -177,10 +185,16 @@ export function useUnreadMessages() {
   useEffect(() => {
     refresh();
     const timer = window.setInterval(refresh, UNREAD_POLL_MS);
-    const unsubscribe = HAS_REALTIME ? subscribeSms(() => refresh()) : null;
+    // Record every published message id (WS or polling) so the poll
+    // never re-publishes something already delivered, then refresh
+    // counts.
+    const unsubscribe = subscribeSms((event) => {
+      markSmsMessageSeen(event?.message?.id);
+      refresh();
+    });
     return () => {
       window.clearInterval(timer);
-      if (unsubscribe) unsubscribe();
+      unsubscribe();
     };
   }, [refresh]);
 
