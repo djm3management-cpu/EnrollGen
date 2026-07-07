@@ -78,10 +78,18 @@ const ScriptPrompter = memo(function ScriptPrompter({
     speechRef.current = copilot;
   }, [copilot]);
 
-  // Inbound call accepted: start the customer pipeline from the call's
-  // remote stream and the agent pipeline from the local mic, without
-  // waiting for a manual start. Retries are handled upstream (the
-  // remote stream only appears in context once it has an audio track).
+  // Inbound call accepted: the agent mic pipeline starts immediately so
+  // the cockpit is live (STOP state, transcript, coaching) the moment
+  // the agent accepts, independent of the remote stream's arrival.
+  const inboundSpeechRef = useRef(false);
+  useEffect(() => {
+    if (!inboundActive || inboundSpeechRef.current) return;
+    inboundSpeechRef.current = true;
+    if (!speech.listening) speech.startListening();
+  }, [inboundActive, speech]);
+
+  // Customer pipeline starts as soon as the call's remote stream is
+  // available (context publishes it only once it has an audio track).
   const inboundCaptureRef = useRef(false);
   useEffect(() => {
     if (!inboundActive || !inbound?.remoteStream) return;
@@ -95,15 +103,16 @@ const ScriptPrompter = memo(function ScriptPrompter({
           section: copilot.currentStep,
         });
       });
-    if (!speech.listening) speech.startListening();
-  }, [inboundActive, inbound?.remoteStream, customerAudio, speech, copilot]);
+  }, [inboundActive, inbound?.remoteStream, customerAudio, copilot]);
 
   // Inbound call ended: tear the pipelines down.
   useEffect(() => {
-    if (inboundActive || !inboundCaptureRef.current) return;
+    if (inboundActive) return;
+    if (!inboundSpeechRef.current && !inboundCaptureRef.current) return;
+    if (inboundCaptureRef.current && customerAudio.isCapturing) customerAudio.stopCapture();
+    if (inboundSpeechRef.current) speech.stopListening();
+    inboundSpeechRef.current = false;
     inboundCaptureRef.current = false;
-    if (customerAudio.isCapturing) customerAudio.stopCapture();
-    speech.stopListening();
   }, [inboundActive, customerAudio, speech]);
 
   // Forward transcript changes to parent
