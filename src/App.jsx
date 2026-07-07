@@ -49,7 +49,7 @@ const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 const loadComplianceIntentAccordion = () => import("./components/ComplianceIntentAccordion");
-const loadOperationsTab = () => import("./components/OperationsTab");
+const loadCallLogTab = () => import("./components/callLog/CallLogTab");
 const loadContactsTab = () => import("./components/contacts/ContactsTab");
 const loadTenantSettings = () => import("./components/TenantSettings");
 const loadOnboarding = () => import("./components/Onboarding");
@@ -73,7 +73,7 @@ const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceDashboard = lazy(loadComplianceDashboard);
 const ComplianceIntentAccordion = lazy(loadComplianceIntentAccordion);
-const OperationsTab = lazy(loadOperationsTab);
+const CallLogTab = lazy(loadCallLogTab);
 const ContactsTab = lazy(loadContactsTab);
 const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
@@ -643,7 +643,7 @@ function AppShell({ currentUser = null }) {
       return;
     }
     if (panelId === "operations") {
-      loadOperationsTab();
+      loadCallLogTab();
       return;
     }
     if (panelId === "contacts") {
@@ -712,6 +712,17 @@ function AppShell({ currentUser = null }) {
 
   const handleExitCallMode = () => {
     if (sessionActive) return;
+    startTransition(() => {
+      setAppMode("crm");
+      setOpenPanel(null);
+    });
+  };
+
+  // Deep-open a contact from the call log: land on the CRM home with
+  // that contact's detail view selected.
+  const [crmFocusContact, setCrmFocusContact] = useState(null);
+  const handleOpenContactFromLog = (contactId) => {
+    setCrmFocusContact({ id: contactId, ts: Date.now() });
     startTransition(() => {
       setAppMode("crm");
       setOpenPanel(null);
@@ -800,7 +811,7 @@ function AppShell({ currentUser = null }) {
       case "operations":
         return (
           <LazyPanel>
-            <OperationsTab />
+            <CallLogTab onOpenContact={handleOpenContactFromLog} />
           </LazyPanel>
         );
       case "settings":
@@ -968,7 +979,11 @@ function AppShell({ currentUser = null }) {
             <div className="app-workspace">
               <main className="app-center crm-home">
                 <LazyPanel>
-                  <ContactsTab variant="home" onStartCall={handleStartCallFromContact} />
+                  <ContactsTab
+                    variant="home"
+                    onStartCall={handleStartCallFromContact}
+                    focusContact={crmFocusContact}
+                  />
                 </LazyPanel>
               </main>
             </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { useContactsList, contactDisplayName } from "../../hooks/useContacts";
 import { useUnreadMessages } from "../../hooks/useMessages";
@@ -27,7 +27,7 @@ function LeadScoreChip({ intel }) {
   return <span className={`contacts-chip contacts-chip-score band-${band}`}>{score}</span>;
 }
 
-export default function ContactsTab({ variant = "home", onStartCall = null }) {
+export default function ContactsTab({ variant = "home", onStartCall = null, focusContact = null }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [agentFilter, setAgentFilter] = useState("ALL");
@@ -35,6 +35,14 @@ export default function ContactsTab({ variant = "home", onStartCall = null }) {
   const [importOpen, setImportOpen] = useState(false);
   const { contacts, loading, error, refresh } = useContactsList(search);
   const { unreadByContact } = useUnreadMessages();
+
+  // Deep-open from the call log (focusContact.ts changes per request).
+  useEffect(() => {
+    if (focusContact?.id) {
+      setSelectedContactId(focusContact.id);
+      setImportOpen(false);
+    }
+  }, [focusContact?.id, focusContact?.ts]);
 
   const agentOptions = useMemo(() => {
     const agents = new Set();
