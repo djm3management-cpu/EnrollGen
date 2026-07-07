@@ -5,6 +5,7 @@ import { twilioVoiceRouter } from "./routes/twilioVoice.js";
 import { twilioStatusRouter } from "./routes/twilioStatus.js";
 import { leadsRouter } from "./routes/leads.js";
 import { voiceTokenRouter } from "./routes/voiceToken.js";
+import { smsRouter } from "./routes/sms.js";
 import { handleMediaUpgrade } from "./media/mediaStream.js";
 import { handleAgentUpgrade } from "./media/agentSocket.js";
 
@@ -30,6 +31,7 @@ app.use(twilioVoiceRouter);
 app.use(twilioStatusRouter);
 app.use(leadsRouter);
 app.use(voiceTokenRouter);
+app.use(smsRouter);
 
 const server = http.createServer(app);
 

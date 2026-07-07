@@ -1,31 +1,13 @@
 import { Router } from "express";
 import twilio from "twilio";
-import { verifyToken } from "@clerk/backend";
 import { config } from "../config.js";
 import { agentExists } from "../availability.js";
 import { mintAgentWsToken } from "../wsToken.js";
+import { requireClerkUser } from "../clerkAuth.js";
 
 export const voiceTokenRouter = Router();
 
 const TOKEN_TTL_SECONDS = 3600;
-
-async function requireClerkUser(req, res) {
-  const header = req.header("authorization") || "";
-  if (!header.toLowerCase().startsWith("bearer ")) {
-    res.status(401).json({ error: "Missing Bearer token" });
-    return null;
-  }
-  try {
-    const payload = await verifyToken(header.slice(7).trim(), {
-      secretKey: config.clerkSecretKey,
-    });
-    return payload;
-  } catch (err) {
-    console.error("Clerk token verification failed:", err.message);
-    res.status(401).json({ error: "Invalid or expired Clerk session token" });
-    return null;
-  }
-}
 
 // Browser hits during debugging land here as GET; answer with a hint
 // instead of Express's bare 404.
