@@ -59,6 +59,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const [deviceStatus, setDeviceStatus] = useState("offline"); // offline | registering | registered | error
   const [incomingCall, setIncomingCall] = useState(null); // { call, params }
   const [activeCall, setActiveCall] = useState(null); // { call, params }
+  const [remoteStream, setRemoteStream] = useState(null); // customer audio from the Twilio call
   const [contact, setContact] = useState(null);
   const [agentRows, setAgentRows] = useState([]);
   const [customerTranscript, setCustomerTranscript] = useState([]);
@@ -181,8 +182,25 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           const params = paramsFromCall(call);
           setIncomingCall({ call, params });
           call.on("cancel", () => setIncomingCall(null));
+          // Customer audio: the caller's voice is the call's remote
+          // MediaStream. It can lag the accept event by a beat, so
+          // retry briefly until Twilio exposes it.
+          call.on("accept", () => {
+            let attempts = 0;
+            const grabStream = () => {
+              const stream = call.getRemoteStream?.();
+              if (stream && stream.getAudioTracks().length) {
+                setRemoteStream(stream);
+                return;
+              }
+              attempts += 1;
+              if (attempts < 20) window.setTimeout(grabStream, 250);
+            };
+            grabStream();
+          });
           call.on("disconnect", () => {
             setActiveCall(null);
+            setRemoteStream(null);
             setContact(null);
             setAvailabilityStatus(agentId, "available");
           });
@@ -264,6 +282,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       error,
       incomingCall,
       activeCall,
+      remoteStream,
       contact,
       agentRows,
       customerTranscript,
@@ -277,6 +296,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       error,
       incomingCall,
       activeCall,
+      remoteStream,
       contact,
       agentRows,
       customerTranscript,

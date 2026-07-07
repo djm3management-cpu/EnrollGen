@@ -42,9 +42,10 @@ const ScriptPrompter = memo(function ScriptPrompter({
     externalTranscriptRef: transcriptRef,
   });
 
-  /* ─── Inbound Twilio call: both legs are transcribed server-side and
-     delivered over the telephony /agent WebSocket, so the browser
-     capture paths (mic Web Speech + tab-audio Deepgram) stay off. ─── */
+  /* ─── Inbound Twilio call: the caller's voice arrives as the call's
+     remote MediaStream and is routed straight into the customer audio
+     pipeline (Deepgram, waveform, Co-Pilot) the moment the call is
+     accepted. Tab sharing remains the path for non-Twilio calls. ─── */
   const inbound = useInboundCall();
   const inboundActive = Boolean(inbound?.activeCall);
 
@@ -55,11 +56,9 @@ const ScriptPrompter = memo(function ScriptPrompter({
     recentCustomerSpeech,
     hasCustomerAudio,
   } = useMergedTranscript({
-    agentTranscriptRows: inboundActive ? inbound.agentRows : speech.transcriptRows,
-    customerTranscript: inboundActive
-      ? inbound.customerTranscript
-      : customerAudio.customerTranscript,
-    isCustomerCapturing: inboundActive ? true : customerAudio.isCapturing,
+    agentTranscriptRows: speech.transcriptRows,
+    customerTranscript: customerAudio.customerTranscript,
+    isCustomerCapturing: customerAudio.isCapturing,
   });
 
   /* ─── Copilot engine (coaching, ask, feed) ─── */
@@ -79,21 +78,33 @@ const ScriptPrompter = memo(function ScriptPrompter({
     speechRef.current = copilot;
   }, [copilot]);
 
-  // For inbound calls, feed server-transcribed agent finals into the
-  // copilot transcript ref and coaching scheduler, mirroring onNewFinal.
-  const lastInboundAgentRowIdRef = useRef(0);
+  // Inbound call accepted: start the customer pipeline from the call's
+  // remote stream and the agent pipeline from the local mic, without
+  // waiting for a manual start. Retries are handled upstream (the
+  // remote stream only appears in context once it has an audio track).
+  const inboundCaptureRef = useRef(false);
   useEffect(() => {
-    if (!inboundActive || !inbound?.agentRows?.length) return;
-    const newRows = inbound.agentRows.filter(
-      (row) => row.id > lastInboundAgentRowIdRef.current
-    );
-    if (!newRows.length) return;
-    lastInboundAgentRowIdRef.current = newRows[newRows.length - 1].id;
-    for (const row of newRows) {
-      transcriptRef.current += (transcriptRef.current ? " " : "") + row.text;
-      speechRef.current?.scheduleCoaching?.(row.text);
-    }
-  }, [inboundActive, inbound?.agentRows]);
+    if (!inboundActive || !inbound?.remoteStream) return;
+    if (inboundCaptureRef.current || customerAudio.isCapturing) return;
+    inboundCaptureRef.current = true;
+    void customerAudio
+      .startCapture({ mediaStream: inbound.remoteStream })
+      .catch((err) => {
+        inboundCaptureRef.current = false;
+        copilot.pushFeedEntry("info", err?.message || "Call audio transcription could not start.", {
+          section: copilot.currentStep,
+        });
+      });
+    if (!speech.listening) speech.startListening();
+  }, [inboundActive, inbound?.remoteStream, customerAudio, speech, copilot]);
+
+  // Inbound call ended: tear the pipelines down.
+  useEffect(() => {
+    if (inboundActive || !inboundCaptureRef.current) return;
+    inboundCaptureRef.current = false;
+    if (customerAudio.isCapturing) customerAudio.stopCapture();
+    speech.stopListening();
+  }, [inboundActive, customerAudio, speech]);
 
   // Forward transcript changes to parent
   useEffect(() => {
@@ -144,6 +155,8 @@ const ScriptPrompter = memo(function ScriptPrompter({
   }, [customerAudio, customerAudioEnabled, copilot]);
 
   const handleStart = useCallback(async (options = {}) => {
+    // Inbound Twilio calls wire their own audio (remote stream + mic)
+    // in the accept effect above; never open the tab picker for them.
     if (inboundActive) return;
     if (!options?.skipCustomerAudio) {
       await startCustomerAudio();

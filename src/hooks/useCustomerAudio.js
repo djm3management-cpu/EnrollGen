@@ -176,27 +176,35 @@ export function useCustomerAudio() {
     cleaningUpRef.current = false;
   }, []);
 
-  const startCapture = useCallback(async () => {
+  const startCapture = useCallback(async (options = {}) => {
     setError(null);
 
     let stream;
-    try {
-      stream = await requestCustomerAudioStream();
-    } catch (err) {
-      const msg =
-        err?.name === "NotAllowedError"
-          ? "Tab sharing was denied by user."
-          : `Could not open the browser audio picker: ${err?.message || "unknown error"}`;
-      setError(msg);
-      throw new Error(msg);
+    if (options.mediaStream) {
+      // External source (inbound Twilio call remote audio). Clone so
+      // tearing down our processing pipeline never stops the call's
+      // own playback track.
+      stream = options.mediaStream.clone();
+    } else {
+      try {
+        stream = await requestCustomerAudioStream();
+      } catch (err) {
+        const msg =
+          err?.name === "NotAllowedError"
+            ? "Tab sharing was denied by user."
+            : `Could not open the browser audio picker: ${err?.message || "unknown error"}`;
+        setError(msg);
+        throw new Error(msg);
+      }
     }
 
     mediaStreamRef.current = stream;
 
     const audioTracks = stream.getAudioTracks();
     if (audioTracks.length === 0) {
-      const msg =
-        "No audio track in the shared tab. Make sure to check 'Share tab audio' when selecting.";
+      const msg = options.mediaStream
+        ? "The call audio stream has no audio track yet."
+        : "No audio track in the shared tab. Make sure to check 'Share tab audio' when selecting.";
       setError(msg);
       cleanup();
       throw new Error(msg);
