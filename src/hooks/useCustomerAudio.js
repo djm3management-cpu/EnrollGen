@@ -100,6 +100,7 @@ export function useCustomerAudio() {
   const [error, setError] = useState(null);
 
   const mediaStreamRef = useRef(null);
+  const keepAliveAudioRef = useRef(null);
   const audioContextRef = useRef(null);
   const processorRef = useRef(null);
   const silentGainRef = useRef(null);
@@ -160,6 +161,16 @@ export function useCustomerAudio() {
       audioContextRef.current = null;
     }
 
+    if (keepAliveAudioRef.current) {
+      try {
+        keepAliveAudioRef.current.pause();
+        keepAliveAudioRef.current.srcObject = null;
+      } catch {
+        /* ignore */
+      }
+      keepAliveAudioRef.current = null;
+    }
+
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => {
         try {
@@ -185,6 +196,19 @@ export function useCustomerAudio() {
       // tearing down our processing pipeline never stops the call's
       // own playback track.
       stream = options.mediaStream.clone();
+      // Chrome quirk: a WebRTC remote track delivers silence into
+      // WebAudio unless the stream is also attached to a playing media
+      // element. Muted so the caller is not double-played.
+      const keepAlive = new Audio();
+      keepAlive.srcObject = stream;
+      keepAlive.muted = true;
+      keepAlive.playsInline = true;
+      keepAlive.play().catch(() => {});
+      keepAliveAudioRef.current = keepAlive;
+      console.info(
+        "[customerAudio] capturing inbound call audio:",
+        stream.getAudioTracks().map((track) => track.readyState).join(",")
+      );
     } else {
       try {
         stream = await requestCustomerAudioStream();

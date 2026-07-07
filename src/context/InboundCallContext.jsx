@@ -190,11 +190,20 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
             const grabStream = () => {
               const stream = call.getRemoteStream?.();
               if (stream && stream.getAudioTracks().length) {
+                console.info(
+                  `[InboundCall] remote stream ready after ${attempts * 250}ms`
+                );
                 setRemoteStream(stream);
                 return;
               }
               attempts += 1;
-              if (attempts < 20) window.setTimeout(grabStream, 250);
+              if (attempts < 20) {
+                window.setTimeout(grabStream, 250);
+              } else {
+                console.warn(
+                  "[InboundCall] remote stream never became available; customer transcription will not start"
+                );
+              }
             };
             grabStream();
           });
