@@ -11,16 +11,6 @@ const STATUS_OPTIONS = [
   { value: "offline", label: "OFFLINE", color: "var(--status-offline)" },
 ];
 
-const STATUS_MAP = Object.fromEntries(
-  STATUS_OPTIONS.map((status) => [status.value, status])
-);
-
-const TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
-
 const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
   const availability = useAvailability();
   if (!availability) return null;
@@ -30,15 +20,11 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
     identityLoaded,
     hasApiKey,
     status,
-    statusSince,
     isHydrated,
     isSaving,
     error,
     changeStatus,
   } = availability;
-
-  const activeStatus = STATUS_MAP[status] || STATUS_MAP.offline;
-  const sinceLabel = statusSince ? TIME_FORMATTER.format(statusSince) : null;
 
   const disabledReason = !identityLoaded
     ? "Loading agent identity"
@@ -60,20 +46,6 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
       }${!isInteractive ? " is-disabled" : ""}`}
       title={panelTitle}
     >
-      <div className="agent-availability-header">
-        <div className="agent-availability-current">
-          <span
-            className={`agent-availability-dot is-${activeStatus.value}`}
-            style={{ "--availability-color": activeStatus.color }}
-            aria-hidden="true"
-          />
-          <span className="agent-availability-status">{activeStatus.label}</span>
-        </div>
-        <span className="agent-availability-since">
-          {sinceLabel ? `since ${sinceLabel}` : " "}
-        </span>
-      </div>
-
       <div className="agent-availability-buttons" role="group" aria-label="Agent availability">
         {STATUS_OPTIONS.map((option) => (
           <button

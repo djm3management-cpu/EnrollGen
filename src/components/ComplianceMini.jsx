@@ -16,8 +16,6 @@ import {
 import { useScript } from "../context/ScriptContext";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { scoreLive } from "../context/ComplianceScorer";
-import { SECTION_LABELS } from "../context/scriptReducer";
-import { SectionTimer } from "./SharedUI";
 
 /**
  * ComplianceMini v2, Floating score badge with transcript awareness
@@ -64,6 +62,24 @@ const GATE_BOOLEAN_KEYS = [
 
 const DORMANT_COLOR = "var(--text-muted)";
 
+const ACTIVE_CATEGORY_BY_SECTION = {
+  1: "Call Opening",
+  2: "Required Disclosures",
+  3: "Scope of Appointment",
+  4: "Eligibility Verification",
+  5: "Needs Assessment",
+  6: "Presentation / SOB",
+  7: "Consent for Enrollment",
+  8: "Call Closing",
+};
+
+function getActiveCategoryName(activeSection) {
+  const section = Number(activeSection);
+  if (section === 2.5) return "Required Disclosures";
+  const step = Number.isFinite(section) ? Math.ceil(section) : 1;
+  return ACTIVE_CATEGORY_BY_SECTION[step] || null;
+}
+
 const ComplianceMini = memo(function ComplianceMini({
   transcript = "",
   activeSection = 1,
@@ -102,10 +118,7 @@ const ComplianceMini = memo(function ComplianceMini({
   const violationCount =
     result.transcriptStats?.violations?.length ??
     (typeof result.violations === "number" ? result.violations : 0);
-  const currentStep = Number.isInteger(activeSection)
-    ? activeSection
-    : Math.ceil(activeSection);
-  const sectionLabel = SECTION_LABELS[currentStep] || `Section ${currentStep}`;
+  const activeCategoryName = getActiveCategoryName(activeSection);
 
   return (
     <div className="compliance-mini">
@@ -117,54 +130,6 @@ const ComplianceMini = memo(function ComplianceMini({
           animation: pulse ? "compliancePulse 0.6s ease" : "none",
         }}
       >
-        {/* Section indicator */}
-        <div
-          className="compliance-mini__section"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginBottom: 10,
-            paddingBottom: 8,
-            borderBottom: "1px solid var(--border-default)",
-          }}
-        >
-          <span
-            className="compliance-mini__section-dot"
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "var(--status-live)",
-              boxShadow: "none",
-              flexShrink: 0,
-            }}
-          />
-          <span
-            className="compliance-mini__section-label"
-            style={{
-              fontSize: "0.68em",
-              fontFamily: "var(--font-body)",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--status-live)",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
-            {currentStep}. {sectionLabel}
-          </span>
-          <SectionTimer
-            sectionNum={activeSection}
-            timestamps={state.sectionTimestamps}
-            variant="inline"
-          />
-        </div>
-
         {/* Header, score + toggle */}
         <div
           className="compliance-mini__score-toggle"
@@ -264,10 +229,14 @@ const ComplianceMini = memo(function ComplianceMini({
           <div className="compliance-mini__categories">
             {result.categories.map((c) => {
               const col = isDormant ? DORMANT_COLOR : getScoreColor(c.score);
+              const isActiveCategory = c.name === activeCategoryName;
               return (
                 <div
                   key={c.name}
-                  className="compliance-mini__category-row"
+                  className={`compliance-mini__category-row${
+                    isActiveCategory ? " is-active-section" : ""
+                  }`}
+                  aria-current={isActiveCategory ? "step" : undefined}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -291,7 +260,12 @@ const ComplianceMini = memo(function ComplianceMini({
                     style={{
                       flex: 1,
                       fontSize: "0.66em",
-                      color: isDormant ? DORMANT_COLOR : "var(--text-secondary)",
+                      color: isDormant
+                        ? DORMANT_COLOR
+                        : isActiveCategory
+                          ? "var(--status-live)"
+                          : "var(--text-secondary)",
+                      fontWeight: isActiveCategory ? 700 : undefined,
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",

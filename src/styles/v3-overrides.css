@@ -325,14 +325,14 @@ body,
   border-radius: var(--eg-radius-card) !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
-  padding: 12px !important;
-  margin-bottom: 10px !important;
+  padding: 10px 10px 8px !important;
+  margin-bottom: 2px !important;
 }
 
 .right-rail-divider {
   background: var(--eg-border) !important;
   height: 1px !important;
-  margin: 8px 0 !important;
+  margin: 3px 0 4px !important;
 }
 
 .right-rail-toggle,
@@ -376,19 +376,26 @@ body,
 
 .right-rail-widget-header {
   font-family: var(--eg-font-mono) !important;
-  font-size: 9px !important;
+  font-size: 7px !important;
   letter-spacing: 0.06em !important;
   text-transform: uppercase !important;
   color: var(--eg-text-dim) !important;
   background: transparent !important;
   border: none !important;
   border-bottom: 1px solid var(--eg-border) !important;
-  padding: 6px 0 !important;
-  margin-bottom: 6px !important;
+  padding: 4px 0 !important;
+  margin-bottom: 4px !important;
 }
 
 .right-rail-widget-header * {
   color: inherit !important;
+}
+
+.right-rail-widget-title,
+.right-rail-widget-icon,
+.right-rail-widget-chevron {
+  font-size: 7px !important;
+  line-height: 1 !important;
 }
 
 /* Co-pilot ask (AskCopilotMini) */
@@ -396,7 +403,8 @@ body,
   background: var(--eg-surface-2) !important;
   border: 1px solid var(--eg-border) !important;
   border-radius: var(--eg-radius-md) !important;
-  padding: 5px 7px 5px 11px !important;
+  padding: 3px 5px 3px 8px !important;
+  width: 100%;
 }
 
 .ask-copilot-mini__form:focus-within {
@@ -404,8 +412,12 @@ body,
 }
 
 .ask-copilot-mini__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
   font-family: var(--eg-font-body) !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
+  line-height: 1.15 !important;
   color: var(--eg-text) !important;
   background: transparent !important;
   border: none !important;
@@ -416,11 +428,18 @@ body,
 }
 
 .ask-copilot-mini__send {
+  flex: 0 0 18px;
+  margin-left: auto;
   background: var(--eg-accent) !important;
   border-radius: var(--eg-radius-sm) !important;
-  width: 24px !important;
-  height: 24px !important;
+  width: 18px !important;
+  height: 18px !important;
   border: none !important;
+}
+
+.ask-copilot-mini__send svg {
+  width: 9px !important;
+  height: 9px !important;
 }
 
 .ask-copilot-mini__send:disabled {
@@ -668,7 +687,7 @@ body,
 /* ComplianceMini specific overrides: align with v3 mockup */
 .compliance-mini__score-value {
   font-family: var(--eg-font-mono) !important;
-  font-size: 11px !important;
+  font-size: 9px !important;
   font-weight: 500 !important;
   color: var(--eg-green-text) !important;
   letter-spacing: 0 !important;
@@ -687,13 +706,13 @@ body,
 
 .compliance-mini__count {
   font-family: var(--eg-font-mono) !important;
-  font-size: 9px !important;
+  font-size: 7px !important;
   color: var(--eg-text-faint) !important;
   letter-spacing: 0.04em;
 }
 
 .compliance-mini__category-row {
-  padding: 4px 0;
+  padding: 3px 0;
   border-bottom: 1px solid var(--eg-border);
 }
 
@@ -709,7 +728,7 @@ body,
   color: var(--eg-red-text) !important;
   font-family: var(--eg-font-mono) !important;
   font-weight: 500 !important;
-  font-size: 9px !important;
+  font-size: 7px !important;
 }
 
 .compliance-mini__transcript-icon {
@@ -1107,6 +1126,56 @@ body,
 
 .copilot-call-timer.copilot-call-timer--pulse {
   animation: eg-breathe 0.3s ease;
+}
+
+.right-rail-control-panel .copilot-call-duration {
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 0;
+  padding-bottom: 6px;
+}
+
+.right-rail-control-panel .copilot-call-duration__label {
+  font-size: 6px !important;
+  line-height: 1 !important;
+}
+
+.right-rail-control-panel .copilot-call-timer {
+  min-width: 0 !important;
+  padding: 1px 5px !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  letter-spacing: 0.02em !important;
+  gap: 3px !important;
+}
+
+.right-rail-control-panel .copilot-call-timer svg {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+.right-rail-widget-shell .compliance-mini__score-value,
+.right-rail-widget-shell .compliance-mini__category-score {
+  font-size: 8px !important;
+}
+
+.right-rail-widget-shell .compliance-mini__category-name {
+  font-size: 8px !important;
+}
+
+.right-rail-widget-shell .compliance-mini__count,
+.right-rail-widget-shell .compliance-mini__chevron,
+.right-rail-widget-shell .compliance-mini__violation-count {
+  font-size: 7px !important;
+}
+
+.right-rail-widget-shell .compliance-mini__category-row {
+  padding-block: 2px !important;
+}
+
+.right-rail-widget-shell .compliance-mini__category-icon svg {
+  width: 10px !important;
+  height: 10px !important;
 }
 
 .call-timer,

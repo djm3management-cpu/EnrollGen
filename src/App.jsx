@@ -25,7 +25,7 @@ import SmsToastHost from "./components/SmsToastHost";
 import { setPendingCallContact } from "./lib/callLaunch";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
-import { SquareTerminal, Sun } from "lucide-react";
+import { BookOpen, SquareTerminal, Sun } from "lucide-react";
 import { useTheme } from "./context/ThemeContext";
 import {
   LeftRail,
@@ -919,10 +919,16 @@ function AppShell({ currentUser = null }) {
                 type="button"
                 className={`top-bar-tab${activeTabId === tab.id ? " is-active" : ""}`}
                 data-tab-id={tab.id}
+                aria-label={tab.id === "verse" ? tab.label : undefined}
+                title={tab.id === "verse" ? tab.label : undefined}
                 onClick={() => handleTabToggle(tab.id)}
                 onMouseEnter={() => preloadPanel(tab.id)}
               >
-                {tab.label}
+                {tab.id === "verse" ? (
+                  <BookOpen size={15} strokeWidth={2} aria-hidden="true" />
+                ) : (
+                  tab.label
+                )}
                 {tab.id === "contacts" && unreadMessageTotal > 0 && activeTabId !== "contacts" ? (
                   <span className="top-bar-tab-badge">{unreadMessageTotal}</span>
                 ) : null}
@@ -1028,31 +1034,35 @@ function AppShell({ currentUser = null }) {
 
             <div className="app-workspace">
               <main className="app-center">
-                {mode === "medsup" ? (
-                  <MedSupProvider>
-                    <LazyPanel>
-                      <MedSupScriptWorkspace />
-                    </LazyPanel>
-                  </MedSupProvider>
-                ) : null}
+                <div className="main-script-layout">
+                  <div className="main-script-primary">
+                    {mode === "medsup" ? (
+                      <MedSupProvider>
+                        <LazyPanel>
+                          <MedSupScriptWorkspace />
+                        </LazyPanel>
+                      </MedSupProvider>
+                    ) : null}
 
-                {mode === "aca" ? (
-                  <LazyPanel>
-                    <ACAScript />
-                  </LazyPanel>
-                ) : null}
+                    {mode === "aca" ? (
+                      <LazyPanel>
+                        <ACAScript />
+                      </LazyPanel>
+                    ) : null}
 
-                {mode === "u65" ? (
-                  <LazyPanel>
-                    <U65Script />
-                  </LazyPanel>
-                ) : null}
+                    {mode === "u65" ? (
+                      <LazyPanel>
+                        <U65Script />
+                      </LazyPanel>
+                    ) : null}
 
-                {mode === "ancillary" ? (
-                  <LazyPanel>
-                    <AncillaryFlow />
-                  </LazyPanel>
-                ) : null}
+                    {mode === "ancillary" ? (
+                      <LazyPanel>
+                        <AncillaryFlow />
+                      </LazyPanel>
+                    ) : null}
+                  </div>
+                </div>
               </main>
             </div>
           </>
