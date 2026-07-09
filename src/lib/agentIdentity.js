@@ -13,6 +13,10 @@ export const KNOWN_AGENT_ID_MAP = new Map([
   ["markendres", "mark_endres"],
   // Clerk user id user_37aiD3KT6LnoqHp8RKIvXhwRk6U, normalized
   ["user37aid3kt6lnoqhp8rkivxhwrk6u", "mike_shiomos"],
+  // Production Clerk user ids, normalized
+  ["user3gffufxzkbxcjvde5uu8zqu2tb6", "mike_shiomos"],
+  ["user3gfflgge5hzz5j9zmxyovcpf3g", "mark_endres"],
+  ["user3gffhxnknpfrashpqafkcbfge6m", "dylan_maria"],
   ["mikeshiomos", "mike_shiomos"],
   ["dylanmaria", "dylan_maria"],
   ["dylan", "dylan_maria"],
