@@ -59,6 +59,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const [deviceStatus, setDeviceStatus] = useState("offline"); // offline | registering | registered | error
   const [incomingCall, setIncomingCall] = useState(null); // { call, params }
   const [activeCall, setActiveCall] = useState(null); // { call, params }
+  const [dialingCall, setDialingCall] = useState(null); // { call, params } while an outbound call is ringing
   const [remoteStream, setRemoteStream] = useState(null); // customer audio from the Twilio call
   const [contact, setContact] = useState(null);
   const [agentRows, setAgentRows] = useState([]);
@@ -281,7 +282,76 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
   const hangUp = useCallback(() => {
     activeCall?.call?.disconnect();
-  }, [activeCall]);
+    dialingCall?.call?.disconnect();
+  }, [activeCall, dialingCall]);
+
+  // Outbound dial: global dial pad and contact click-to-call both land
+  // here. The Voice SDK Device.connect() request is signed and routed
+  // to the telephony server's /api/voice/outbound TwiML app; once the
+  // callee answers, the call's own "accept" event promotes it to
+  // activeCall so the cockpit transition (App.jsx) fires exactly like
+  // an accepted inbound call.
+  const makeCall = useCallback(
+    async ({ phoneNumber, contactId, contactName }) => {
+      if (!deviceRef.current) throw new Error("Softphone not registered yet");
+      setError("");
+      setAgentRows([]);
+      setCustomerTranscript([]);
+
+      const params = {
+        callerName: contactName || "",
+        callerPhone: phoneNumber,
+        contactId: contactId || "",
+        direction: "outbound",
+      };
+
+      const call = await deviceRef.current.connect({
+        params: { PhoneNumber: phoneNumber, ContactId: contactId || "" },
+      });
+      setDialingCall({ call, params });
+
+      call.on("accept", () => {
+        setActiveCall({ call, params });
+        setDialingCall(null);
+        setAvailabilityStatus(agentId, "busy");
+        let attempts = 0;
+        const grabStream = () => {
+          const stream = call.getRemoteStream?.();
+          if (stream && stream.getAudioTracks().length) {
+            setRemoteStream(stream);
+            return;
+          }
+          attempts += 1;
+          if (attempts < 20) window.setTimeout(grabStream, 250);
+        };
+        grabStream();
+      });
+      call.on("disconnect", () => {
+        setActiveCall(null);
+        setDialingCall(null);
+        setRemoteStream(null);
+        setContact(null);
+        setAvailabilityStatus(agentId, "available");
+      });
+      call.on("cancel", () => setDialingCall(null));
+      call.on("reject", () => setDialingCall(null));
+      call.on("error", (callError) => {
+        console.error("[OutboundCall] call error:", callError);
+        setError(callError?.message || "Call failed");
+        setDialingCall(null);
+      });
+
+      return call;
+    },
+    [agentId]
+  );
+
+  const sendDigits = useCallback(
+    (digits) => {
+      activeCall?.call?.sendDigits(digits);
+    },
+    [activeCall]
+  );
 
   const value = useMemo(
     () => ({
@@ -291,6 +361,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       error,
       incomingCall,
       activeCall,
+      dialingCall,
       remoteStream,
       contact,
       agentRows,
@@ -298,6 +369,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       acceptCall,
       declineCall,
       hangUp,
+      makeCall,
+      sendDigits,
     }),
     [
       agentId,
@@ -305,6 +378,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       error,
       incomingCall,
       activeCall,
+      dialingCall,
       remoteStream,
       contact,
       agentRows,
@@ -312,6 +386,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       acceptCall,
       declineCall,
       hangUp,
+      makeCall,
+      sendDigits,
     ]
   );
 

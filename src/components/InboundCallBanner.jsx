@@ -9,9 +9,38 @@ function fmtPhone(value) {
 }
 
 // Full-width terminal alert bar shown below the top nav while an
-// inbound Twilio call is ringing this agent.
+// inbound Twilio call is ringing this agent, or while an outbound call
+// placed from the dial pad / contact panel is still ringing the callee.
 const InboundCallBanner = memo(function InboundCallBanner() {
   const inbound = useInboundCall();
+
+  if (inbound?.dialingCall && !inbound?.incomingCall) {
+    const dialParams = inbound.dialingCall.params || {};
+    const dialName = dialParams.callerName || fmtPhone(dialParams.callerPhone);
+    return (
+      <div className="inbound-call-banner is-outbound" role="status">
+        <span className="inbound-call-banner__pulse" aria-hidden="true" />
+        <span className="inbound-call-banner__tag">OUTBOUND</span>
+        <span className="inbound-call-banner__caller">
+          {String(dialName || "DIALING").toUpperCase()}
+          <span className="inbound-call-banner__phone">{fmtPhone(dialParams.callerPhone)}</span>
+        </span>
+        <span className="inbound-call-banner__intel">
+          <span>RINGING...</span>
+        </span>
+        <span className="inbound-call-banner__actions">
+          <button
+            type="button"
+            className="inbound-call-banner__btn is-decline"
+            onClick={inbound.hangUp}
+          >
+            CANCEL
+          </button>
+        </span>
+      </div>
+    );
+  }
+
   if (!inbound?.incomingCall) return null;
 
   const { params } = inbound.incomingCall;

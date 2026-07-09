@@ -47,6 +47,8 @@ export function useContactsList(searchTerm) {
 
       const rows = data || [];
       const intelByContact = {};
+      const messageByContact = {};
+      const activityByContact = {};
       if (rows.length) {
         const { data: intel } = await supabaseClient
           .from("contact_lead_intel")
@@ -56,9 +58,41 @@ export function useContactsList(searchTerm) {
         for (const entry of intel || []) {
           if (!intelByContact[entry.contact_id]) intelByContact[entry.contact_id] = entry;
         }
+
+        const contactIds = rows.map((row) => row.id);
+        const { data: messages, error: messageError } = await supabaseClient
+          .from("messages")
+          .select("contact_id, body, direction, status, created_at")
+          .in("contact_id", contactIds)
+          .order("created_at", { ascending: false })
+          .limit(600);
+        if (!messageError) {
+          for (const entry of messages || []) {
+            if (!messageByContact[entry.contact_id]) messageByContact[entry.contact_id] = entry;
+          }
+        }
+
+        const { data: activities, error: activityError } = await supabaseClient
+          .from("contact_activities")
+          .select("contact_id, type, summary, occurred_at")
+          .in("contact_id", contactIds)
+          .order("occurred_at", { ascending: false })
+          .limit(600);
+        if (!activityError) {
+          for (const entry of activities || []) {
+            if (!activityByContact[entry.contact_id]) activityByContact[entry.contact_id] = entry;
+          }
+        }
       }
 
-      setContacts(rows.map((row) => ({ ...row, lead_intel: intelByContact[row.id] || null })));
+      setContacts(
+        rows.map((row) => ({
+          ...row,
+          lead_intel: intelByContact[row.id] || null,
+          last_message: messageByContact[row.id] || null,
+          last_activity: activityByContact[row.id] || null,
+        }))
+      );
     } catch (err) {
       console.error("[useContactsList] load failed:", err);
       setError(err.message || "Contacts unavailable.");
@@ -125,7 +159,7 @@ export function useContactDetail(contactId) {
             .order("effective_date", { ascending: false }),
           supabaseClient
             .from("call_records")
-            .select("id, call_start, call_duration_seconds, call_outcome, product_type, carrier_name, plan_name, enrollment_completed, agent_name")
+            .select("id, call_start, call_duration_seconds, call_outcome, product_type, carrier_name, plan_name, enrollment_completed, agent_name, recording_url, recording_storage_path")
             .eq("contact_id", contactId)
             .order("call_start", { ascending: false })
             .limit(50),
@@ -218,6 +252,57 @@ export function useContactMutations() {
     [supabaseClient]
   );
 
+  const updateLeadIntel = useCallback(
+    async (intelId, updates) => {
+      const { data, error } = await supabaseClient
+        .from("contact_lead_intel")
+        .update(updates)
+        .eq("id", intelId)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    [supabaseClient]
+  );
+
+  const addPolicy = useCallback(
+    async ({ contactId, fields }) => {
+      const { data, error } = await supabaseClient
+        .from("policies")
+        .insert({ tenant_id: tenant?.id, contact_id: contactId, ...fields })
+        .select("*")
+        .single();
+      if (error) throw error;
+
+      const policyLabel =
+        [fields.product_line, fields.carrier, fields.plan_name].filter(Boolean).join(" ") || "Policy";
+      await supabaseClient.from("contact_activities").insert({
+        tenant_id: tenant?.id,
+        contact_id: contactId,
+        type: "enrollment",
+        ref_id: data.id,
+        summary: `Policy added: ${policyLabel.slice(0, 120)}`,
+      });
+      return data;
+    },
+    [supabaseClient, tenant]
+  );
+
+  const updatePolicy = useCallback(
+    async (policyId, updates) => {
+      const { data, error } = await supabaseClient
+        .from("policies")
+        .update(updates)
+        .eq("id", policyId)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    [supabaseClient]
+  );
+
   const addFollowUp = useCallback(
     async ({ contactId, agentId, dueAt, reason }) => {
       const { error } = await supabaseClient.from("follow_ups").insert({
@@ -249,7 +334,17 @@ export function useContactMutations() {
     [supabaseClient]
   );
 
-  return { updateContact, createContact, addNote, toggleNotePin, addFollowUp, setFollowUpStatus };
+  return {
+    updateContact,
+    createContact,
+    addNote,
+    toggleNotePin,
+    updateLeadIntel,
+    addPolicy,
+    updatePolicy,
+    addFollowUp,
+    setFollowUpStatus,
+  };
 }
 
 export function contactDisplayName(contact) {

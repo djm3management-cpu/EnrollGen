@@ -37,6 +37,7 @@ import ComplianceMini from "./ComplianceMini";
 import CopilotFeedMini from "./CopilotFeedMini";
 import AskCopilotMini from "./AskCopilotMini";
 import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
+import DtmfKeypad from "./DtmfKeypad";
 import CrossSellTrigger from "./copilot/CrossSellTrigger";
 
 import CollapsibleWidget from "./CollapsibleWidget";
@@ -269,6 +270,7 @@ function RailWidgets({
           >
             {coachingLoading ? "ANALYZING..." : "ANALYZE"}
           </button>
+          <DtmfKeypad />
         </div>
         <AskCopilotMini />
       </div>
@@ -651,6 +653,15 @@ export default function ScriptFlow() {
     setActivePostCallMetadata({ contactId: contact.id });
     hydrateNotesFromContact(dispatch, contact);
   }, [inbound?.activeCall, inbound?.contact, dispatch]);
+
+  // Outbound calls (dial pad or contact click-to-call) reuse the same
+  // activeCall slot as inbound; tag the session so the post-call
+  // pipeline writes call_records with call_direction = "outbound".
+  useEffect(() => {
+    if (inbound?.activeCall?.params?.direction === "outbound") {
+      dispatch({ type: "SET_FIELD", field: "callDirection", value: "outbound" });
+    }
+  }, [inbound?.activeCall, dispatch]);
 
   // Start-call-from-contact (CRM home): hydrate the left rail from the
   // stashed contact. The session is NOT auto-started; the agent presses

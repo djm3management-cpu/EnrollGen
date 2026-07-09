@@ -25,7 +25,8 @@ import SmsToastHost from "./components/SmsToastHost";
 import { setPendingCallContact } from "./lib/callLaunch";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
-import { BookOpen, SquareTerminal, Sun } from "lucide-react";
+import { BookOpen, Phone, SquareTerminal, Sun } from "lucide-react";
+import DialPad from "./components/DialPad";
 import { useTheme } from "./context/ThemeContext";
 import {
   LeftRail,
@@ -218,31 +219,69 @@ const FLOWS = [
 ];
 
 function FlowSelector({ mode, onChange }) {
+  const [open, setOpen] = useState(false);
+  const activeFlow = FLOWS.find((flow) => flow.id === mode) || FLOWS[0];
+
+  const handleSelect = (flowId) => {
+    onChange(flowId);
+    setOpen(false);
+  };
+
   return (
-    <div className="flow-selector-strip" role="tablist" aria-label="Workflow">
-      {FLOWS.map((flow) => {
-        const active = mode === flow.id;
-        return (
-          <button
-            key={flow.id}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(flow.id)}
-            title={flow.title}
-            className={`flow-pill${active ? " is-active" : ""}`}
-            style={{
-              "--flow-color": flow.color,
-              "--flow-border": flow.border,
-              "--flow-bg": flow.bg,
-              ...(active ? { background: flow.bg, borderColor: flow.border } : null),
-            }}
-          >
-            <span className="flow-beacon" />
-            <span className="flow-label">{flow.label}</span>
-          </button>
-        );
-      })}
+    <div
+      className="flow-selector-dropdown"
+      aria-label="Workflow"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") setOpen(false);
+      }}
+      style={{
+        "--flow-color": activeFlow.color,
+        "--flow-border": activeFlow.border,
+        "--flow-bg": activeFlow.bg,
+      }}
+    >
+      <button
+        type="button"
+        className="flow-select-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        title={activeFlow.title}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <span className="flow-beacon" />
+        <span className="flow-label">{activeFlow.label}</span>
+        <span className="flow-caret" aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="flow-select-menu" role="listbox" aria-label="Workflow">
+          {FLOWS.map((flow) => {
+            const active = mode === flow.id;
+            return (
+              <button
+                key={flow.id}
+                type="button"
+                role="option"
+                aria-selected={active}
+                className={`flow-select-option${active ? " is-active" : ""}`}
+                title={flow.title}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => handleSelect(flow.id)}
+                style={{
+                  "--flow-color": flow.color,
+                  "--flow-border": flow.border,
+                  "--flow-bg": flow.bg,
+                }}
+              >
+                <span className="flow-beacon" />
+                <span className="flow-label">{flow.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -474,6 +513,7 @@ function AppShell({ currentUser = null }) {
   const [mode, setMode] = useState(getModeFromLocation);
   const [appMode, setAppMode] = useState(getAppModeFromLocation);
   const [openPanel, setOpenPanel] = useState(null);
+  const [dialPadOpen, setDialPadOpen] = useState(false);
   const topBarRef = useRef(null);
   const overlayRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
@@ -938,6 +978,17 @@ function AppShell({ currentUser = null }) {
 
           <div className="top-bar-utilities">
             <AvailabilityStrip />
+            {INBOUND_CALLS_ENABLED ? (
+              <button
+                type="button"
+                className={`top-bar-settings-button top-bar-dialer-button${dialPadOpen ? " is-active" : ""}`}
+                onClick={() => setDialPadOpen((current) => !current)}
+                title="Dial a number"
+                aria-label="Open dialer"
+              >
+                <Phone size={14} />
+              </button>
+            ) : null}
             <button
               type="button"
               className="top-bar-settings-button top-bar-theme-button"
@@ -965,6 +1016,9 @@ function AppShell({ currentUser = null }) {
         </header>
 
         {INBOUND_CALLS_ENABLED ? <InboundCallBanner /> : null}
+        {INBOUND_CALLS_ENABLED ? (
+          <DialPad open={dialPadOpen} onClose={() => setDialPadOpen(false)} />
+        ) : null}
 
         <SmsToastHost onOpenContactMessages={handleOpenContactMessages} />
 
