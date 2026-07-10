@@ -17,6 +17,7 @@ import {
   setAvailabilityStatus,
 } from "../lib/agentIdentity";
 import { publishSms } from "../lib/smsEvents";
+import { publishAudioLevel } from "../stores/audioLevelStore";
 
 // Inbound softphone state: Twilio Voice SDK device registration, the
 // incoming-call banner payload, and the server-transcribed AGENT/CUSTOMER
@@ -65,6 +66,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const [agentRows, setAgentRows] = useState([]);
   const [customerTranscript, setCustomerTranscript] = useState([]);
   const [error, setError] = useState("");
+  const [isMuted, setIsMuted] = useState(false);
+  const [isHeld, setIsHeld] = useState(false);
+  const [connectedAt, setConnectedAt] = useState(null);
 
   const deviceRef = useRef(null);
   const wsRef = useRef(null);
@@ -91,6 +95,12 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const handleTranscriptMessage = useCallback((message) => {
     if (message.type === "sms") {
       publishSms(message);
+      return;
+    }
+    if (message.type === "audio_level") {
+      if (message.speaker === "customer") {
+        publishAudioLevel("customer", message.level);
+      }
       return;
     }
     if (message.type !== "transcript" || !message.text) return;
@@ -187,6 +197,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           // MediaStream. It can lag the accept event by a beat, so
           // retry briefly until Twilio exposes it.
           call.on("accept", () => {
+            setConnectedAt(Date.now());
+            setIsMuted(false);
+            setIsHeld(false);
             let attempts = 0;
             const grabStream = () => {
               const stream = call.getRemoteStream?.();
@@ -212,7 +225,11 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
             setActiveCall(null);
             setRemoteStream(null);
             setContact(null);
+            setConnectedAt(null);
+            setIsMuted(false);
+            setIsHeld(false);
             setAvailabilityStatus(agentId, "available");
+            publishAudioLevel("customer", 0, { immediate: true });
           });
         });
 
@@ -313,6 +330,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       call.on("accept", () => {
         setActiveCall({ call, params });
         setDialingCall(null);
+        setConnectedAt(Date.now());
+        setIsMuted(false);
+        setIsHeld(false);
         setAvailabilityStatus(agentId, "busy");
         let attempts = 0;
         const grabStream = () => {
@@ -331,7 +351,11 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         setDialingCall(null);
         setRemoteStream(null);
         setContact(null);
+        setConnectedAt(null);
+        setIsMuted(false);
+        setIsHeld(false);
         setAvailabilityStatus(agentId, "available");
+        publishAudioLevel("customer", 0, { immediate: true });
       });
       call.on("cancel", () => setDialingCall(null));
       call.on("reject", () => setDialingCall(null));
@@ -353,6 +377,25 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     [activeCall]
   );
 
+  // Real mic mute via the Voice SDK. Hold has no server-side redirect
+  // built (that needs a Twilio REST call.update TwiML swap), so it's
+  // approximated as its own mute flag: it silences the agent's mic the
+  // same way, but is tracked separately so the UI can show a distinct
+  // "on hold" state instead of just "muted".
+  const toggleMute = useCallback(() => {
+    if (!activeCall?.call) return;
+    const next = !isMuted;
+    activeCall.call.mute(next);
+    setIsMuted(next);
+  }, [activeCall, isMuted]);
+
+  const toggleHold = useCallback(() => {
+    if (!activeCall?.call) return;
+    const next = !isHeld;
+    activeCall.call.mute(next || isMuted);
+    setIsHeld(next);
+  }, [activeCall, isHeld, isMuted]);
+
   const value = useMemo(
     () => ({
       enabled: true,
@@ -366,11 +409,16 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       contact,
       agentRows,
       customerTranscript,
+      isMuted,
+      isHeld,
+      connectedAt,
       acceptCall,
       declineCall,
       hangUp,
       makeCall,
       sendDigits,
+      toggleMute,
+      toggleHold,
     }),
     [
       agentId,
@@ -383,11 +431,16 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       contact,
       agentRows,
       customerTranscript,
+      isMuted,
+      isHeld,
+      connectedAt,
       acceptCall,
       declineCall,
       hangUp,
       makeCall,
       sendDigits,
+      toggleMute,
+      toggleHold,
     ]
   );
 

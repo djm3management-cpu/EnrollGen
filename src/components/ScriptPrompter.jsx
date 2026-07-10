@@ -42,10 +42,10 @@ const ScriptPrompter = memo(function ScriptPrompter({
     externalTranscriptRef: transcriptRef,
   });
 
-  /* ─── Inbound Twilio call: the caller's voice arrives as the call's
-     remote MediaStream and is routed straight into the customer audio
-     pipeline (Deepgram, waveform, Co-Pilot) the moment the call is
-     accepted. Tab sharing remains the path for non-Twilio calls. ─── */
+  /* ─── Inbound Twilio call: the caller's voice never reaches the
+     browser as a track, it's transcribed server-side (per Twilio Media
+     Stream track) and delivered over the /agent WebSocket, already
+     speaker-labeled. Tab sharing remains the path for non-Twilio calls. ─── */
   const inbound = useInboundCall();
   const inboundActive = Boolean(inbound?.activeCall);
 
@@ -57,8 +57,10 @@ const ScriptPrompter = memo(function ScriptPrompter({
     hasCustomerAudio,
   } = useMergedTranscript({
     agentTranscriptRows: speech.transcriptRows,
-    customerTranscript: customerAudio.customerTranscript,
-    isCustomerCapturing: customerAudio.isCapturing,
+    customerTranscript: inboundActive
+      ? inbound.customerTranscript
+      : customerAudio.customerTranscript,
+    isCustomerCapturing: inboundActive ? inboundActive : customerAudio.isCapturing,
   });
 
   /* ─── Copilot engine (coaching, ask, feed) ─── */
@@ -88,32 +90,15 @@ const ScriptPrompter = memo(function ScriptPrompter({
     if (!speech.listening) speech.startListening();
   }, [inboundActive, speech]);
 
-  // Customer pipeline starts as soon as the call's remote stream is
-  // available (context publishes it only once it has an audio track).
-  const inboundCaptureRef = useRef(false);
-  useEffect(() => {
-    if (!inboundActive || !inbound?.remoteStream) return;
-    if (inboundCaptureRef.current || customerAudio.isCapturing) return;
-    inboundCaptureRef.current = true;
-    void customerAudio
-      .startCapture({ mediaStream: inbound.remoteStream })
-      .catch((err) => {
-        inboundCaptureRef.current = false;
-        copilot.pushFeedEntry("info", err?.message || "Call audio transcription could not start.", {
-          section: copilot.currentStep,
-        });
-      });
-  }, [inboundActive, inbound?.remoteStream, customerAudio, copilot]);
-
-  // Inbound call ended: tear the pipelines down.
+  // Inbound call ended: tear the agent mic pipeline down. The customer
+  // side needs no teardown here, it's server-driven and stops on its
+  // own once the call disconnects.
   useEffect(() => {
     if (inboundActive) return;
-    if (!inboundSpeechRef.current && !inboundCaptureRef.current) return;
-    if (inboundCaptureRef.current && customerAudio.isCapturing) customerAudio.stopCapture();
-    if (inboundSpeechRef.current) speech.stopListening();
+    if (!inboundSpeechRef.current) return;
+    speech.stopListening();
     inboundSpeechRef.current = false;
-    inboundCaptureRef.current = false;
-  }, [inboundActive, customerAudio, speech]);
+  }, [inboundActive, speech]);
 
   // Forward transcript changes to parent
   useEffect(() => {

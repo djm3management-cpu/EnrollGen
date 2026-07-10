@@ -1,6 +1,12 @@
 import WebSocket, { WebSocketServer } from "ws";
 import { config } from "../config.js";
 import { sendToAgent } from "./agentSocket.js";
+import { decodeMulaw, rmsLevel } from "./mulaw.js";
+
+// How often to forward a customer audio level sample to the browser.
+// Twilio media packets arrive every 20ms; batching ~5 of them keeps the
+// waveform smooth without flooding the agent WebSocket.
+const LEVEL_INTERVAL_MS = 100;
 
 // Twilio Media Streams endpoint. Each inbound call opens one stream with
 // track="both_tracks": the inbound track is the caller (CUSTOMER) and the
@@ -86,6 +92,8 @@ mediaWss.on("connection", (twilioWs) => {
   let agentId = null;
   let inboundCallId = null;
   const deepgramByTrack = {};
+  let customerLevelChunks = [];
+  let lastLevelSentAt = 0;
 
   const getAgentId = () => agentId;
   const getInboundCallId = () => inboundCallId;
@@ -121,9 +129,31 @@ mediaWss.on("connection", (twilioWs) => {
       }
       case "media": {
         const track = message.media?.track;
+        const payload = message.media?.payload;
         const target = deepgramByTrack[track];
-        if (target && message.media?.payload) {
-          target.send(Buffer.from(message.media.payload, "base64"));
+        if (target && payload) {
+          target.send(Buffer.from(payload, "base64"));
+        }
+
+        // Customer audio never reaches the browser as a track (it's a
+        // server-side Twilio stream), so the CUSTOMER waveform meter is
+        // driven from here instead of a local AnalyserNode.
+        if (track === "inbound" && payload) {
+          customerLevelChunks.push(Buffer.from(payload, "base64"));
+          const now = Date.now();
+          if (now - lastLevelSentAt >= LEVEL_INTERVAL_MS) {
+            lastLevelSentAt = now;
+            const combined = Buffer.concat(customerLevelChunks);
+            customerLevelChunks = [];
+            if (agentId) {
+              sendToAgent(agentId, {
+                type: "audio_level",
+                speaker: "customer",
+                level: rmsLevel(decodeMulaw(combined)),
+                timestamp: now,
+              });
+            }
+          }
         }
         break;
       }

@@ -168,7 +168,7 @@ function ExpandedRow({ row, supabaseClient }) {
   );
 }
 
-export default function CallLogTab({ onOpenContact = null }) {
+export default function CallLogTab({ onOpenContact = null, onOpenComplianceHub = null }) {
   const { supabaseClient, loading: tenantLoading, error: tenantError } = useTenantConfig();
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -250,8 +250,19 @@ export default function CallLogTab({ onOpenContact = null }) {
   return (
     <div className="call-log-tab">
       <div className="ops-command-line">
-        <span>CALL LOG</span>
-        <span className="ops-section-meta">{pageLabel}</span>
+        <span className="call-log-title-group">
+          <span>CALL LOG</span>
+          <span className="ops-section-meta">{pageLabel}</span>
+        </span>
+        {onOpenComplianceHub ? (
+          <button
+            type="button"
+            className="contacts-mini-btn call-log-compliance-btn"
+            onClick={onOpenComplianceHub}
+          >
+            COMPLIANCE HUB
+          </button>
+        ) : null}
       </div>
 
       <div className="call-log-filters">

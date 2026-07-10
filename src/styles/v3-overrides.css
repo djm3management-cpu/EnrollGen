@@ -2829,7 +2829,7 @@ html.dark body::before {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 1;
+  opacity: 0.6;
   background:
     repeating-linear-gradient(
       0deg,
@@ -3990,360 +3990,6 @@ html.dark .flow-script-callout {
 }
 
 /* ============================================================
-   Inbound call banner: full-width amber terminal alert below the
-   top nav while a Twilio call rings this agent.
-   ============================================================ */
-.inbound-call-banner {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  padding: 8px 16px;
-  background: var(--status-pending-bg, rgba(255, 153, 0, 0.12));
-  border-top: 1px solid var(--eg-accent);
-  border-bottom: 1px solid var(--eg-accent);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 12px;
-  color: var(--text-primary);
-  position: sticky;
-  top: var(--top-bar-height, 0);
-  z-index: 60;
-}
-
-.inbound-call-banner__pulse {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--eg-accent-bright, var(--eg-accent));
-  animation: inbound-pulse 1s ease-in-out infinite;
-  flex: none;
-}
-
-@keyframes inbound-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.25; }
-}
-
-.inbound-call-banner__tag {
-  color: var(--eg-accent-bright, var(--eg-accent));
-  letter-spacing: 2px;
-  font-weight: 700;
-}
-
-.inbound-call-banner__caller {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  letter-spacing: 1px;
-  font-weight: 600;
-}
-
-.inbound-call-banner__phone {
-  color: var(--text-secondary);
-  font-weight: 400;
-}
-
-.inbound-call-banner__intel {
-  display: flex;
-  gap: 14px;
-  color: var(--text-secondary);
-  letter-spacing: 1px;
-  font-size: 11px;
-  flex: 1;
-}
-
-.inbound-call-banner__actions {
-  display: flex;
-  gap: 8px;
-}
-
-.inbound-call-banner__btn {
-  border: 1px solid var(--border-default);
-  background: transparent;
-  font-family: inherit;
-  font-size: 11px;
-  letter-spacing: 1.6px;
-  padding: 6px 16px;
-  cursor: pointer;
-}
-
-.inbound-call-banner__btn.is-accept {
-  color: var(--status-live);
-  border-color: var(--status-live);
-}
-
-.inbound-call-banner__btn.is-accept:hover {
-  background: var(--status-live-bg, rgba(0, 200, 83, 0.12));
-}
-
-.inbound-call-banner__btn.is-decline {
-  color: var(--status-offline);
-  border-color: var(--status-offline);
-}
-
-.inbound-call-banner__btn.is-decline:hover {
-  background: var(--status-offline-bg, rgba(255, 59, 48, 0.12));
-}
-
-.inbound-call-banner.is-outbound {
-  background: var(--info-bg, rgba(62, 199, 255, 0.08));
-  border-top-color: var(--info);
-  border-bottom-color: var(--info);
-}
-
-.inbound-call-banner.is-outbound .inbound-call-banner__tag,
-.inbound-call-banner.is-outbound .inbound-call-banner__pulse {
-  color: var(--info);
-  background: var(--info);
-}
-
-/* ============================================================
-   Global dial pad: nav-triggered outbound dialer modal.
-   ============================================================ */
-.dial-pad-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 72px 14px 14px;
-  background: var(--overlay-backdrop);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.dial-pad-panel {
-  width: 100%;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--eg-radius-card);
-  background: var(--bg-surface);
-  font-family: var(--font-mono);
-}
-
-.dial-pad-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.dial-pad-title {
-  color: var(--text-primary);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-}
-
-.dial-pad-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--eg-radius-sm);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.dial-pad-close:hover {
-  color: var(--eg-red-text);
-  border-color: var(--eg-red);
-}
-
-.dial-pad-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--eg-radius-sm);
-  background: var(--bg-input);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 1rem;
-  letter-spacing: 0.04em;
-  text-align: center;
-}
-
-.dial-pad-input:focus {
-  outline: none;
-  border-color: var(--border-focus);
-}
-
-.dial-pad-keys {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.dial-pad-key {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 0;
-  border: 1px solid var(--border-default);
-  border-radius: var(--eg-radius-sm);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.dial-pad-key:hover {
-  border-color: var(--border-hover, var(--border-focus));
-  background: var(--bg-card-hover);
-}
-
-.dial-pad-key__digit {
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.dial-pad-key__letters {
-  font-size: 0.55rem;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-}
-
-.dial-pad-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dial-pad-backspace {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  flex: none;
-  border: 1px solid var(--border-default);
-  border-radius: var(--eg-radius-sm);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.dial-pad-backspace:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.dial-pad-call-btn {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  border: 1px solid var(--status-live);
-  border-radius: var(--eg-radius-sm);
-  background: var(--status-live-bg);
-  color: var(--status-live);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-}
-
-.dial-pad-call-btn:hover:not(:disabled) {
-  background: var(--status-live);
-  color: var(--selection-text);
-}
-
-.dial-pad-call-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.dial-pad-error {
-  color: var(--eg-red-text);
-  font-size: 0.68rem;
-}
-
-.dial-pad-hint {
-  color: var(--text-muted);
-  font-size: 0.66rem;
-  letter-spacing: 0.05em;
-}
-
-.dial-pad-recent {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-default);
-}
-
-.dial-pad-recent__label {
-  color: var(--text-muted);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  margin-bottom: 2px;
-}
-
-.dial-pad-recent__row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border: 1px solid transparent;
-  border-radius: var(--eg-radius-sm);
-  background: transparent;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  cursor: pointer;
-  text-align: left;
-}
-
-.dial-pad-recent__row:hover:not(:disabled) {
-  border-color: var(--border-default);
-  background: var(--bg-card);
-}
-
-.dial-pad-recent__row:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.dial-pad-recent__dir {
-  flex: none;
-  width: 28px;
-  color: var(--text-muted);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-}
-
-.dial-pad-recent__dir.is-inbound {
-  color: var(--status-live);
-}
-
-.dial-pad-recent__dir.is-outbound {
-  color: var(--info);
-}
-
-.dial-pad-recent__name {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dial-pad-recent__time {
-  flex: none;
-  color: var(--text-muted);
-}
-
-/* ============================================================
    DTMF keypad: small in-call popover for IVR navigation.
    ============================================================ */
 .dtmf-keypad-wrap {
@@ -4478,10 +4124,18 @@ html.dark .flow-script-callout {
 .contacts-conv-center,
 .contacts-conv-right,
 .contacts-conv-right-collapsed {
-  border: 1px solid var(--border-default);
-  background: var(--surface-raised, transparent);
+  border: 1px solid var(--clay-border);
+  background: var(--clay-surface);
+  border-radius: var(--clay-radius);
+  box-shadow:
+    7px 7px 16px var(--clay-shadow-dark),
+    -7px -7px 16px var(--clay-shadow-light);
   min-width: 0;
   min-height: 0;
+}
+
+.contacts-conv-center {
+  background: var(--clay-surface-soft);
 }
 
 .contacts-conv-left {
@@ -4497,7 +4151,9 @@ html.dark .flow-script-callout {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 6px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--clay-border);
+  border-radius: var(--clay-radius-sm);
+  background: var(--clay-surface-soft);
   padding: 6px 8px;
   color: var(--text-secondary);
 }
@@ -4522,8 +4178,9 @@ html.dark .flow-script-callout {
 }
 
 .contacts-conv-filters button {
-  background: transparent;
-  border: 1px solid var(--border-default);
+  background: var(--clay-surface-soft);
+  border: 1px solid var(--clay-border);
+  border-radius: var(--clay-radius-sm);
   color: var(--text-secondary);
   font-family: inherit;
   font-size: 9px;
@@ -4534,8 +4191,8 @@ html.dark .flow-script-callout {
 
 .contacts-conv-filters button.is-active,
 .contacts-conv-filters button:hover {
-  border-color: var(--eg-accent);
-  color: var(--eg-accent);
+  border-color: var(--bubble-agent-bg);
+  color: var(--bubble-agent-bg);
 }
 
 .contacts-conv-list {
@@ -4559,6 +4216,7 @@ html.dark .flow-script-callout {
   align-items: center;
   background: transparent;
   border: 1px solid transparent;
+  border-radius: var(--clay-radius-sm);
   color: var(--text-primary);
   font-family: inherit;
   text-align: left;
@@ -4568,8 +4226,8 @@ html.dark .flow-script-callout {
 
 .contacts-conv-row:hover,
 .contacts-conv-row.is-selected {
-  border-color: var(--eg-accent);
-  background: var(--surface-panel, rgba(255, 153, 0, 0.06));
+  border-color: transparent;
+  background: color-mix(in srgb, var(--bubble-agent-bg) 12%, transparent);
 }
 
 .contacts-avatar {
@@ -4654,7 +4312,7 @@ html.dark .flow-script-callout {
   justify-content: space-between;
   gap: 12px;
   padding: 10px 12px;
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--clay-border);
 }
 
 .contacts-conv-center-head h2 {
@@ -4676,15 +4334,16 @@ html.dark .flow-script-callout {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: 1px solid var(--border-default);
+  background: var(--clay-surface-soft);
+  border: 1px solid var(--clay-border);
+  border-radius: 50%;
   color: var(--text-secondary);
   cursor: pointer;
 }
 
 .contacts-icon-actions button:hover:not(:disabled) {
-  border-color: var(--eg-accent);
-  color: var(--eg-accent);
+  border-color: var(--bubble-agent-bg);
+  color: var(--bubble-agent-bg);
 }
 
 .contacts-icon-actions button:disabled {
@@ -4693,7 +4352,15 @@ html.dark .flow-script-callout {
 }
 
 .contacts-conv-center-tabs {
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--clay-border);
+}
+
+.contacts-conv-center-tabs button {
+  border-radius: var(--clay-radius-sm);
+}
+
+.contacts-conv-center-body .contacts-mini-btn {
+  border-radius: var(--clay-radius-sm);
 }
 
 .contacts-conv-center-body {
@@ -4763,7 +4430,9 @@ html.dark .flow-script-callout {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--clay-border);
+  border-radius: var(--clay-radius-sm);
+  background: var(--clay-surface-soft);
   padding: 8px;
 }
 
@@ -4797,8 +4466,9 @@ html.dark .flow-script-callout {
 }
 
 .contacts-right-tabs button {
-  background: transparent;
-  border: 1px solid var(--border-default);
+  background: var(--clay-surface-soft);
+  border: 1px solid var(--clay-border);
+  border-radius: var(--clay-radius-sm);
   color: var(--text-secondary);
   font-family: inherit;
   font-size: 9px;
@@ -4809,8 +4479,8 @@ html.dark .flow-script-callout {
 
 .contacts-right-tabs button.is-active,
 .contacts-right-tabs button:hover {
-  border-color: var(--eg-accent);
-  color: var(--eg-accent);
+  border-color: var(--bubble-agent-bg);
+  color: var(--bubble-agent-bg);
 }
 
 .contacts-right-body {
@@ -4858,7 +4528,9 @@ html.dark .flow-script-callout {
   align-items: center;
   gap: 8px;
   width: min(520px, 100%);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--clay-border);
+  border-radius: var(--clay-radius-sm);
+  background: var(--clay-surface-soft);
   color: var(--text-secondary);
   font-size: 10px;
   padding: 6px 8px;
@@ -4867,7 +4539,9 @@ html.dark .flow-script-callout {
 .msg-call-recording {
   align-self: center;
   width: min(560px, 100%);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--clay-border);
+  border-radius: var(--clay-radius-sm);
+  background: var(--clay-surface-soft);
   padding: 7px 8px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -5204,13 +4878,14 @@ html.dark .flow-script-callout {
 .msg-bubble {
   max-width: 72%;
   padding: 7px 10px;
-  border: 1px solid var(--border-default);
-  background: var(--surface-raised, rgba(255, 255, 255, 0.04));
+  border: 0;
+  background: var(--bubble-customer-bg);
+  color: var(--bubble-customer-text);
 }
 
 .msg-row.is-outbound .msg-bubble {
-  background: var(--status-pending-bg, rgba(255, 153, 0, 0.12));
-  border-color: var(--eg-accent);
+  background: var(--bubble-agent-bg);
+  color: var(--bubble-agent-text);
 }
 
 .msg-bubble p {
@@ -5239,18 +4914,20 @@ html.dark .flow-script-callout {
   max-width: 220px;
   max-height: 220px;
   margin-top: 6px;
-  border: 1px solid var(--border-default);
+  border: 0;
+  border-radius: 10px;
 }
 
 .msg-media-file {
   display: inline-block;
   margin-top: 6px;
-  color: var(--eg-accent);
+  color: inherit;
   font-size: 10px;
   letter-spacing: 1px;
-  text-decoration: none;
-  border: 1px solid var(--eg-accent);
-  padding: 3px 8px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border: 0;
+  padding: 3px 0;
 }
 
 .msg-compose {
@@ -5261,8 +4938,9 @@ html.dark .flow-script-callout {
 
 .msg-compose textarea {
   flex: 1;
-  background: var(--surface-raised, transparent);
-  border: 1px solid var(--border-default);
+  background: var(--clay-surface-soft);
+  border: 1px solid var(--clay-border);
+  border-radius: var(--clay-radius-sm);
   color: var(--text-primary);
   font-family: inherit;
   font-size: 12px;
@@ -5272,7 +4950,7 @@ html.dark .flow-script-callout {
 
 .msg-compose textarea:focus {
   outline: none;
-  border-color: var(--eg-accent);
+  border-color: var(--bubble-agent-bg);
 }
 
 .msg-compose-side {
@@ -5295,9 +4973,10 @@ html.dark .flow-script-callout {
 }
 
 .msg-send-btn {
-  background: transparent;
-  border: 1px solid var(--eg-accent);
-  color: var(--eg-accent);
+  background: var(--bubble-agent-bg);
+  border: 1px solid var(--bubble-agent-bg);
+  border-radius: var(--clay-radius-sm);
+  color: var(--bubble-agent-text);
   font-family: inherit;
   font-size: 11px;
   letter-spacing: 1.6px;
@@ -5306,7 +4985,7 @@ html.dark .flow-script-callout {
 }
 
 .msg-send-btn:hover:not(:disabled) {
-  background: var(--status-pending-bg, rgba(255, 153, 0, 0.12));
+  opacity: 0.88;
 }
 
 .msg-send-btn:disabled {
@@ -5498,6 +5177,16 @@ html.dark .flow-script-callout {
   letter-spacing: 1.6px;
   font-size: 12px;
   color: var(--text-label);
+}
+
+.call-log-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.call-log-compliance-btn {
+  letter-spacing: 1.2px;
 }
 
 /* ============================================================

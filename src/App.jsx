@@ -17,7 +17,7 @@ import { SignedIn, SignedOut, SignIn, useClerk, useOrganization, useUser } from 
 import { SubscriptionProvider, useSubscription } from "./hooks/useSubscription";
 import { TenantConfigProvider, useTenantConfig } from "./hooks/useTenantConfig";
 import { InboundCallProvider, INBOUND_CALLS_ENABLED, useInboundCall } from "./context/InboundCallContext";
-import InboundCallBanner from "./components/InboundCallBanner";
+import PhoneDropdown from "./components/phone/PhoneDropdown";
 import { AvailabilityProvider } from "./context/AvailabilityContext";
 import AvailabilityStrip from "./components/AvailabilityStrip";
 import { useUnreadMessages } from "./hooks/useMessages";
@@ -25,8 +25,7 @@ import SmsToastHost from "./components/SmsToastHost";
 import { setPendingCallContact } from "./lib/callLaunch";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
-import { BookOpen, Phone, SquareTerminal, Sun } from "lucide-react";
-import DialPad from "./components/DialPad";
+import { BookOpen, SquareTerminal, Sun } from "lucide-react";
 import { useTheme } from "./context/ThemeContext";
 import {
   LeftRail,
@@ -501,7 +500,6 @@ function getTabsForMode(mode) {
     tabs.push({ id: "acaIntel", label: "ACA Intelligence" });
   }
 
-  tabs.push({ id: "complianceHub", label: "Compliance Hub" });
   tabs.push({ id: "operations", label: "CALLS" });
   tabs.push({ id: "contacts", label: "CONTACTS" });
   tabs.push({ id: "verse", label: "Daily Verse" });
@@ -513,7 +511,6 @@ function AppShell({ currentUser = null }) {
   const [mode, setMode] = useState(getModeFromLocation);
   const [appMode, setAppMode] = useState(getAppModeFromLocation);
   const [openPanel, setOpenPanel] = useState(null);
-  const [dialPadOpen, setDialPadOpen] = useState(false);
   const topBarRef = useRef(null);
   const overlayRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
@@ -740,6 +737,15 @@ function AppShell({ currentUser = null }) {
     });
   };
 
+  // Compliance Hub no longer has its own tab; it's opened from a button
+  // in the CALLS tab header instead, via the same overlay panel state.
+  const handleOpenComplianceHub = () => {
+    preloadPanel("complianceHub");
+    startTransition(() => {
+      setOpenPanel("complianceHub");
+    });
+  };
+
   const handleStartCallFromContact = (contact, flow = "ma") => {
     setPendingCallContact(contact);
     preloadScriptForMode(flow);
@@ -860,7 +866,10 @@ function AppShell({ currentUser = null }) {
       case "operations":
         return (
           <LazyPanel>
-            <CallLogTab onOpenContact={handleOpenContactFromLog} />
+            <CallLogTab
+              onOpenContact={handleOpenContactFromLog}
+              onOpenComplianceHub={handleOpenComplianceHub}
+            />
           </LazyPanel>
         );
       case "settings":
@@ -979,15 +988,7 @@ function AppShell({ currentUser = null }) {
           <div className="top-bar-utilities">
             <AvailabilityStrip />
             {INBOUND_CALLS_ENABLED ? (
-              <button
-                type="button"
-                className={`top-bar-settings-button top-bar-dialer-button${dialPadOpen ? " is-active" : ""}`}
-                onClick={() => setDialPadOpen((current) => !current)}
-                title="Dial a number"
-                aria-label="Open dialer"
-              >
-                <Phone size={14} />
-              </button>
+              <PhoneDropdown onOpenMessages={handleOpenContactMessages} />
             ) : null}
             <button
               type="button"
@@ -1014,11 +1015,6 @@ function AppShell({ currentUser = null }) {
             ) : null}
           </div>
         </header>
-
-        {INBOUND_CALLS_ENABLED ? <InboundCallBanner /> : null}
-        {INBOUND_CALLS_ENABLED ? (
-          <DialPad open={dialPadOpen} onClose={() => setDialPadOpen(false)} />
-        ) : null}
 
         <SmsToastHost onOpenContactMessages={handleOpenContactMessages} />
 

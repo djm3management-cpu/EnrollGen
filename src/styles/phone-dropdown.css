@@ -1,0 +1,736 @@
+/* ============================================================
+   GHL-style dropdown phone system: nav-anchored dialer, incoming
+   call toast, minimized active-call bar, and the expanded dropdown
+   (outbound dialer / live-call controls). Replaces the old
+   full-screen dial pad modal and full-width inbound banner.
+   ============================================================ */
+
+.phone-dd {
+  position: relative;
+  display: inline-flex;
+}
+
+.phone-dd__trigger {
+  position: relative;
+}
+
+.phone-dd__badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--phone-answer-bg);
+  box-shadow: 0 0 0 2px var(--phone-panel-bg);
+}
+
+/* ----- Shared floating-panel anchor ----- */
+.phone-toast,
+.phone-active-bar,
+.phone-dd__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  border: 1px solid var(--phone-border);
+  background: var(--phone-panel-bg);
+  border-radius: var(--phone-radius-outer);
+  box-shadow: var(--phone-shadow);
+  font-family: var(--eg-font-mono);
+}
+
+/* ----- 1. Incoming call toast ----- */
+.phone-toast {
+  z-index: 220;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  min-height: 80px;
+}
+
+.phone-toast__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.phone-toast__label {
+  color: var(--phone-header-text);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.phone-toast__name {
+  color: var(--eg-text);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phone-toast__phone {
+  color: var(--phone-body-text);
+  font-size: 11px;
+}
+
+.phone-toast__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+.phone-toast__btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.phone-toast__btn--answer {
+  background: var(--phone-answer-bg);
+}
+
+.phone-toast__btn--answer:hover {
+  background: var(--phone-answer-bg-hover);
+}
+
+.phone-toast__btn--decline {
+  background: var(--phone-decline-bg);
+}
+
+.phone-toast__btn--decline:hover {
+  background: var(--phone-decline-bg-hover);
+}
+
+.phone-toast__pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--phone-answer-bg);
+  animation: phone-ring-pulse 1.4s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes phone-ring-pulse {
+  0% { transform: scale(0.9); opacity: 0.9; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ----- 2. Minimized active-call bar ----- */
+.phone-active-bar {
+  z-index: 200;
+  width: 300px;
+  max-width: calc(100vw - 24px);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.phone-active-bar__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.phone-active-bar__name {
+  color: var(--eg-text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phone-active-bar__timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--phone-body-text);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.phone-active-bar__rec-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--phone-decline-bg);
+  animation: phone-rec-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes phone-rec-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.phone-active-bar__controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.phone-active-bar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--phone-radius-inner);
+  border: 1px solid var(--phone-border);
+  background: transparent;
+  color: var(--phone-body-text);
+  cursor: pointer;
+}
+
+.phone-active-bar__btn:hover {
+  border-color: var(--phone-header-text);
+  color: var(--phone-header-text);
+}
+
+.phone-active-bar__btn.is-active {
+  border-color: var(--phone-header-text);
+  background: var(--eg-accent-dim);
+  color: var(--phone-header-text);
+}
+
+.phone-active-bar__btn--end {
+  border-color: var(--phone-decline-bg);
+  color: var(--phone-decline-bg);
+}
+
+.phone-active-bar__btn--end:hover {
+  background: var(--phone-decline-bg);
+  color: #ffffff;
+}
+
+/* ----- 3. Expanded dropdown panel ----- */
+.phone-dd__panel {
+  z-index: 210;
+  width: 380px;
+  max-width: calc(100vw - 24px);
+  max-height: 600px;
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.phone-dialer,
+.phone-expanded {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Dialer header ("Calling From") */
+.phone-dialer__header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--phone-border);
+}
+
+.phone-dialer__header-label {
+  color: var(--phone-header-text);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.phone-dialer__header-number {
+  color: var(--eg-text);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+/* Tabs */
+.phone-dialer__tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.phone-dialer__tab {
+  background: transparent;
+  border: 1px solid var(--phone-border);
+  border-radius: var(--phone-radius-inner);
+  color: var(--phone-body-text);
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 7px 4px;
+  cursor: pointer;
+}
+
+.phone-dialer__tab.is-active,
+.phone-dialer__tab:hover {
+  border-color: var(--phone-header-text);
+  color: var(--phone-header-text);
+}
+
+.phone-dialer__error {
+  color: var(--phone-decline-bg);
+  font-size: 11px;
+}
+
+.phone-dialer__hint,
+.phone-dialer__empty {
+  color: var(--phone-body-text);
+  font-size: 11px;
+  padding: 4px 0;
+}
+
+.phone-dialer__body {
+  min-height: 0;
+}
+
+/* Recents / contacts row list */
+.phone-dialer__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.phone-dialer__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--phone-radius-inner);
+  background: transparent;
+  color: var(--eg-text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.phone-dialer__row:hover:not(:disabled) {
+  border-color: var(--phone-border);
+  background: var(--eg-surface-3);
+}
+
+.phone-dialer__row:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.phone-dialer__row--contact {
+  cursor: default;
+}
+
+.phone-dialer__dir {
+  flex: none;
+  width: 26px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--phone-body-text);
+}
+
+.phone-dialer__dir.is-inbound { color: var(--phone-answer-bg); }
+.phone-dialer__dir.is-outbound { color: var(--phone-header-text); }
+
+.phone-dialer__row-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.phone-dialer__row-name {
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phone-dialer__row-sub {
+  font-size: 10px;
+  color: var(--phone-body-text);
+}
+
+.phone-dialer__avatar {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--eg-accent-dim);
+  color: var(--phone-header-text);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.phone-dialer__call-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--phone-answer-bg);
+  background: transparent;
+  color: var(--phone-answer-bg);
+  cursor: pointer;
+}
+
+.phone-dialer__call-icon:hover:not(:disabled) {
+  background: var(--phone-answer-bg);
+  color: #ffffff;
+}
+
+.phone-dialer__call-icon:disabled {
+  opacity: 0.35;
+  border-color: var(--phone-border);
+  color: var(--phone-body-text);
+  cursor: not-allowed;
+}
+
+/* Contacts search */
+.phone-dialer__contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.phone-dialer__search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--phone-border);
+  border-radius: var(--phone-radius-inner);
+  padding: 6px 8px;
+  color: var(--phone-body-text);
+}
+
+.phone-dialer__search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  color: var(--eg-text);
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.phone-dialer__search input:focus {
+  outline: none;
+}
+
+/* Keypad */
+.phone-dialer__keypad {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.phone-dialer__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--phone-border);
+  border-radius: var(--phone-radius-inner);
+  background: var(--eg-surface-3);
+  color: var(--eg-text);
+  font-family: inherit;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.phone-dialer__input:focus {
+  outline: none;
+  border-color: var(--phone-header-text);
+}
+
+.phone-dialer__keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.phone-dialer__key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 9px 0;
+  border: 1px solid var(--phone-border);
+  border-radius: var(--phone-radius-inner);
+  background: var(--eg-surface-3);
+  color: var(--eg-text);
+  cursor: pointer;
+}
+
+.phone-dialer__key:hover {
+  border-color: var(--phone-header-text);
+}
+
+.phone-dialer__key-digit {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.phone-dialer__key-letters {
+  font-size: 8px;
+  color: var(--phone-body-text);
+  letter-spacing: 0.08em;
+}
+
+.phone-dialer__keypad-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phone-dialer__backspace {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--phone-radius-inner);
+  border: 1px solid var(--phone-border);
+  background: transparent;
+  color: var(--phone-body-text);
+  cursor: pointer;
+}
+
+.phone-dialer__backspace:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.phone-dialer__call-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  border-radius: var(--phone-radius-inner);
+  border: 1px solid var(--phone-answer-bg);
+  background: var(--phone-answer-bg);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.phone-dialer__call-btn:hover:not(:disabled) {
+  background: var(--phone-answer-bg-hover);
+}
+
+.phone-dialer__call-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ----- Expanded live-call view ----- */
+.phone-expanded__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--phone-border);
+}
+
+.phone-expanded__who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.phone-expanded__name {
+  color: var(--eg-text);
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phone-expanded__phone {
+  color: var(--phone-body-text);
+  font-size: 11px;
+}
+
+.phone-expanded__timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  color: var(--phone-header-text);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.phone-expanded__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.phone-expanded__action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 4px;
+  border: 1px solid var(--phone-border);
+  border-radius: var(--phone-radius-inner);
+  background: transparent;
+  color: var(--phone-body-text);
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.phone-expanded__action:hover:not(:disabled) {
+  border-color: var(--phone-header-text);
+  color: var(--phone-header-text);
+}
+
+.phone-expanded__action.is-active {
+  border-color: var(--phone-header-text);
+  background: var(--eg-accent-dim);
+  color: var(--phone-header-text);
+}
+
+.phone-expanded__action:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.phone-expanded__action--end {
+  grid-column: span 3;
+  border-color: var(--phone-decline-bg);
+  color: var(--phone-decline-bg);
+}
+
+.phone-expanded__action--end:hover {
+  background: var(--phone-decline-bg);
+  color: #ffffff;
+}
+
+.phone-expanded__dtmf {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.phone-expanded__dtmf-key {
+  height: 34px;
+  border: 1px solid var(--phone-border);
+  border-radius: var(--phone-radius-inner);
+  background: var(--eg-surface-3);
+  color: var(--eg-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.phone-expanded__dtmf-key:hover {
+  border-color: var(--phone-header-text);
+}
+
+.phone-expanded__notepad {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.phone-expanded__notepad textarea {
+  width: 100%;
+  resize: vertical;
+  background: var(--eg-surface-3);
+  border: 1px solid var(--phone-border);
+  border-radius: var(--phone-radius-inner);
+  color: var(--eg-text);
+  font-family: var(--eg-font-body);
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.phone-expanded__notepad textarea:focus {
+  outline: none;
+  border-color: var(--phone-header-text);
+}
+
+.phone-expanded__save-note {
+  align-self: flex-end;
+  border: 1px solid var(--phone-header-text);
+  border-radius: var(--phone-radius-inner);
+  background: transparent;
+  color: var(--phone-header-text);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.phone-expanded__save-note:hover:not(:disabled) {
+  background: var(--eg-accent-dim);
+}
+
+.phone-expanded__save-note:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.phone-expanded__hint {
+  color: var(--phone-body-text);
+  font-size: 11px;
+  padding-top: 4px;
+}
+
+/* Uppercase labels throughout the phone system, per spec. */
+.phone-dialer__tab,
+.phone-dialer__call-btn,
+.phone-expanded__action,
+.phone-expanded__save-note,
+.phone-toast__label,
+.phone-dialer__header-label {
+  text-transform: uppercase;
+}
