@@ -225,20 +225,28 @@
   color: #ffffff;
 }
 
-/* ----- 3. Expanded dropdown panel ----- */
+/* ----- 3. Expanded dropdown panel -----
+   GHL proportions: narrow (280px), 16px outer radius. The dialer's own
+   scroll region is .phone-dialer__body, not the outer panel, so the
+   bottom icon nav stays pinned instead of scrolling away. */
 .phone-dd__panel {
   z-index: 210;
-  width: 380px;
+  width: 280px;
   max-width: calc(100vw - 24px);
   max-height: 600px;
-  overflow-y: auto;
-  padding: 14px;
+  border-radius: 16px;
+  padding: 14px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .phone-dialer,
 .phone-expanded {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 10px;
 }
 
@@ -264,28 +272,42 @@
   letter-spacing: 0.02em;
 }
 
-/* Tabs */
-.phone-dialer__tabs {
+/* Bottom icon nav: icon above a small uppercase label, GHL-style,
+   replacing the old top pill tabs. */
+.phone-dialer__nav {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--phone-border);
 }
 
-.phone-dialer__tab {
+.phone-dialer__nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
   background: transparent;
-  border: 1px solid var(--phone-border);
-  border-radius: var(--phone-radius-inner);
+  border: 0;
+  padding: 4px 0 2px;
   color: var(--phone-body-text);
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  padding: 7px 4px;
   cursor: pointer;
 }
 
-.phone-dialer__tab.is-active,
-.phone-dialer__tab:hover {
-  border-color: var(--phone-header-text);
+.phone-dialer__nav-btn span {
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.phone-dialer__nav-btn:hover {
+  color: var(--eg-text);
+}
+
+.phone-dialer__nav-btn.is-active {
   color: var(--phone-header-text);
 }
 
@@ -302,7 +324,9 @@
 }
 
 .phone-dialer__body {
+  flex: 1;
   min-height: 0;
+  overflow-y: auto;
 }
 
 /* Recents / contacts row list */
@@ -310,8 +334,6 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 340px;
-  overflow-y: auto;
 }
 
 .phone-dialer__row {
@@ -341,6 +363,19 @@
 
 .phone-dialer__row--contact {
   cursor: default;
+  flex-wrap: wrap;
+}
+
+.phone-dialer__audio {
+  flex-basis: 100%;
+  width: 100%;
+  height: 28px;
+  margin-top: 4px;
+}
+
+.phone-dialer__call-icon--play {
+  font-size: 10px;
+  line-height: 1;
 }
 
 .phone-dialer__dir {
@@ -472,20 +507,25 @@
   border-color: var(--phone-header-text);
 }
 
+/* GHL-proportioned keypad: 56px circles, 12px gap, digit centered with
+   the letter subtitle below it, inside the same circle. */
 .phone-dialer__keys {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 56px);
+  justify-content: center;
+  gap: 12px;
 }
 
 .phone-dialer__key {
+  width: 56px;
+  height: 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 9px 0;
+  justify-content: center;
+  gap: 1px;
   border: 1px solid var(--phone-border);
-  border-radius: var(--phone-radius-inner);
+  border-radius: 50%;
   background: var(--eg-surface-3);
   color: var(--eg-text);
   cursor: pointer;
@@ -496,56 +536,41 @@
 }
 
 .phone-dialer__key-digit {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
+  line-height: 1;
 }
 
 .phone-dialer__key-letters {
-  font-size: 8px;
+  font-size: 7px;
   color: var(--phone-body-text);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
+  line-height: 1;
 }
 
+/* Call row shares the keypad's 3-column grid so the green circle sits
+   centered under the "5" column and backspace sits to its right,
+   under "6", matching the keypad's own alignment. */
 .phone-dialer__keypad-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.phone-dialer__backspace {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--phone-radius-inner);
-  border: 1px solid var(--phone-border);
-  background: transparent;
-  color: var(--phone-body-text);
-  cursor: pointer;
-}
-
-.phone-dialer__backspace:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+  align-items: center;
+  gap: 12px;
+  margin-top: 2px;
 }
 
 .phone-dialer__call-btn {
-  flex: 1;
+  width: 56px;
+  height: 56px;
+  justify-self: center;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 36px;
-  border-radius: var(--phone-radius-inner);
-  border: 1px solid var(--phone-answer-bg);
+  border-radius: 50%;
+  border: 0;
   background: var(--phone-answer-bg);
   color: #ffffff;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
   cursor: pointer;
 }
 
@@ -555,6 +580,29 @@
 
 .phone-dialer__call-btn:disabled {
   opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.phone-dialer__backspace {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: var(--phone-body-text);
+  cursor: pointer;
+}
+
+.phone-dialer__backspace:hover:not(:disabled) {
+  color: var(--eg-text);
+}
+
+.phone-dialer__backspace:disabled {
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
@@ -726,8 +774,6 @@
 }
 
 /* Uppercase labels throughout the phone system, per spec. */
-.phone-dialer__tab,
-.phone-dialer__call-btn,
 .phone-expanded__action,
 .phone-expanded__save-note,
 .phone-toast__label,

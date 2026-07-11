@@ -70,9 +70,17 @@ twilioStatusRouter.post("/twilio/recording", requireTwilioSignature, async (req,
     });
 
     if (inboundCall) {
+      // RecordingDuration is the voicemail message's own length, which
+      // reads better in a voicemail list than CallDuration from
+      // /twilio/status (that includes the greeting/prompt time too).
+      const recordingSeconds = Number(req.body.RecordingDuration);
+      const updatePayload = { recording_url: recordingUrl };
+      if (Number.isFinite(recordingSeconds)) {
+        updatePayload.duration_seconds = recordingSeconds;
+      }
       await supabase
         .from("inbound_calls")
-        .update({ recording_url: recordingUrl })
+        .update(updatePayload)
         .eq("id", inboundCall.id);
     }
 

@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { Phone, Delete, Search } from "lucide-react";
+import {
+  Delete,
+  Grid3x3,
+  History,
+  Hourglass,
+  Phone,
+  Search,
+  Users,
+  Voicemail as VoicemailIcon,
+} from "lucide-react";
 import { useInboundCall } from "../../context/InboundCallContext";
 import { useContactsList, contactDisplayName } from "../../hooks/useContacts";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
@@ -13,7 +22,14 @@ import { playDtmfTone } from "../../audio/dtmfTones";
 const CALLING_FROM_LABEL = "NGHS MAIN DID";
 const CALLING_FROM_NUMBER = "+16098065996";
 
-const TABS = ["RECENTS", "CONTACTS", "KEYPAD"];
+const NAV_TABS = [
+  { id: "RECENTS", label: "RECENTS", icon: History },
+  { id: "CONTACTS", label: "CONTACTS", icon: Users },
+  { id: "KEYPAD", label: "KEYPAD", icon: Grid3x3 },
+  { id: "VOICEMAIL", label: "VOICEMAIL", icon: VoicemailIcon },
+  { id: "QUEUE", label: "QUEUE", icon: Hourglass },
+];
+
 const DIALABLE_RE = /^[0-9*#]$/;
 
 const KEYS = [
@@ -33,6 +49,19 @@ function fmtWhen(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "--";
   return d.toLocaleString([], { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function fmtDuration(seconds) {
+  if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return "--";
+  const total = Math.max(0, Math.round(Number(seconds)));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function fmtElapsed(sinceIso) {
+  const started = new Date(sinceIso).getTime();
+  if (Number.isNaN(started)) return "--";
+  const seconds = Math.max(0, Math.round((Date.now() - started) / 1000));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
 function initialsFor(contact) {
@@ -173,6 +202,16 @@ function KeypadTab({ onCall, disabled }) {
         ))}
       </div>
       <div className="phone-dialer__keypad-actions">
+        <span aria-hidden="true" />
+        <button
+          type="button"
+          className="phone-dialer__call-btn"
+          disabled={disabled || !input}
+          onClick={() => onCall(input, null, null)}
+          aria-label="Call"
+        >
+          <Phone size={22} fill="currentColor" strokeWidth={0} />
+        </button>
         <button
           type="button"
           className="phone-dialer__backspace"
@@ -180,18 +219,146 @@ function KeypadTab({ onCall, disabled }) {
           onClick={() => setInput((prev) => prev.slice(0, -1))}
           aria-label="Backspace"
         >
-          <Delete size={14} />
-        </button>
-        <button
-          type="button"
-          className="phone-dialer__call-btn"
-          disabled={disabled || !input}
-          onClick={() => onCall(input, null, null)}
-        >
-          <Phone size={14} />
-          CALL
+          <Delete size={16} />
         </button>
       </div>
+    </div>
+  );
+}
+
+function VoicemailTab() {
+  const { supabaseClient } = useTenantConfig();
+  const [voicemails, setVoicemails] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [playingId, setPlayingId] = useState(null);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+
+  useEffect(() => {
+    if (!supabaseClient) return undefined;
+    let cancelled = false;
+    setLoading(true);
+    supabaseClient
+      .from("inbound_calls")
+      .select("id, from_number, duration_seconds, recording_url, recording_storage_path, created_at")
+      .eq("status", "voicemail")
+      .order("created_at", { ascending: false })
+      .limit(30)
+      .then(({ data }) => {
+        if (!cancelled) {
+          setVoicemails(data || []);
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [supabaseClient]);
+
+  const handlePlay = useCallback(
+    async (voicemail) => {
+      if (playingId === voicemail.id) {
+        setPlayingId(null);
+        setAudioUrl(null);
+        return;
+      }
+      setPlayingId(voicemail.id);
+      setAudioUrl(null);
+      setAudioLoading(true);
+      try {
+        if (voicemail.recording_storage_path && supabaseClient) {
+          const { data } = await supabaseClient.storage
+            .from("call-recordings")
+            .createSignedUrl(voicemail.recording_storage_path, 3600);
+          if (data?.signedUrl) {
+            setAudioUrl(data.signedUrl);
+            return;
+          }
+        }
+        if (voicemail.recording_url) setAudioUrl(voicemail.recording_url);
+      } finally {
+        setAudioLoading(false);
+      }
+    },
+    [playingId, supabaseClient]
+  );
+
+  if (loading) return <div className="phone-dialer__empty">Loading voicemails...</div>;
+  if (!voicemails.length) return <div className="phone-dialer__empty">No voicemails</div>;
+
+  return (
+    <div className="phone-dialer__list">
+      {voicemails.map((vm) => (
+        <div key={vm.id} className="phone-dialer__row phone-dialer__row--contact">
+          <button
+            type="button"
+            className="phone-dialer__call-icon phone-dialer__call-icon--play"
+            onClick={() => handlePlay(vm)}
+            disabled={!vm.recording_url && !vm.recording_storage_path}
+            aria-label={playingId === vm.id ? "Stop" : "Play voicemail"}
+          >
+            {playingId === vm.id && audioLoading ? "..." : playingId === vm.id ? "■" : "▶"}
+          </button>
+          <span className="phone-dialer__row-copy">
+            <span className="phone-dialer__row-name">{fmtPhone(vm.from_number) || "UNKNOWN"}</span>
+            <span className="phone-dialer__row-sub">
+              {fmtWhen(vm.created_at)} · {fmtDuration(vm.duration_seconds)}
+            </span>
+          </span>
+          {playingId === vm.id && audioUrl ? (
+            <audio className="phone-dialer__audio" controls autoPlay preload="none" src={audioUrl} />
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function QueueTab() {
+  const { supabaseClient } = useTenantConfig();
+  const [ringing, setRinging] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!supabaseClient) return undefined;
+    let cancelled = false;
+
+    const load = () => {
+      supabaseClient
+        .from("inbound_calls")
+        .select("id, from_number, created_at")
+        .eq("status", "ringing")
+        .order("created_at", { ascending: true })
+        .then(({ data }) => {
+          if (!cancelled) {
+            setRinging(data || []);
+            setLoading(false);
+          }
+        });
+    };
+
+    load();
+    const intervalId = window.setInterval(load, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [supabaseClient]);
+
+  if (loading) return <div className="phone-dialer__empty">Loading queue...</div>;
+  if (!ringing.length) return <div className="phone-dialer__empty">No calls waiting</div>;
+
+  return (
+    <div className="phone-dialer__list">
+      {ringing.map((call) => (
+        <div key={call.id} className="phone-dialer__row phone-dialer__row--contact">
+          <span className="phone-dialer__dir is-inbound">IN</span>
+          <span className="phone-dialer__row-copy">
+            <span className="phone-dialer__row-name">{fmtPhone(call.from_number) || "UNKNOWN"}</span>
+            <span className="phone-dialer__row-sub">Ringing {fmtElapsed(call.created_at)}</span>
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -234,19 +401,6 @@ export default function DialerPanel() {
         </span>
       </div>
 
-      <div className="phone-dialer__tabs">
-        {TABS.map((t) => (
-          <button
-            type="button"
-            key={t}
-            className={`phone-dialer__tab${tab === t ? " is-active" : ""}`}
-            onClick={() => setTab(t)}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
       {callError ? <div className="phone-dialer__error">{callError}</div> : null}
       {disabled && !calling ? (
         <div className="phone-dialer__hint">Softphone status: {inbound?.deviceStatus || "offline"}</div>
@@ -256,6 +410,22 @@ export default function DialerPanel() {
         {tab === "RECENTS" ? <RecentsTab onCall={handleCall} disabled={disabled} /> : null}
         {tab === "CONTACTS" ? <ContactsTabPanel onCall={handleCall} disabled={disabled} /> : null}
         {tab === "KEYPAD" ? <KeypadTab onCall={handleCall} disabled={disabled} /> : null}
+        {tab === "VOICEMAIL" ? <VoicemailTab /> : null}
+        {tab === "QUEUE" ? <QueueTab /> : null}
+      </div>
+
+      <div className="phone-dialer__nav">
+        {NAV_TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            type="button"
+            key={id}
+            className={`phone-dialer__nav-btn${tab === id ? " is-active" : ""}`}
+            onClick={() => setTab(id)}
+          >
+            <Icon size={18} />
+            <span>{label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
