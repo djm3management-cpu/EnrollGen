@@ -99,6 +99,8 @@ export const initialState = {
     customerEmail: "",
     customerDob: "",
     customerState: "",
+    customerAddress: "",
+    customerZip: "",
     customerMbi: "",
     medicaid: "No",
     medicaidNumber: "",

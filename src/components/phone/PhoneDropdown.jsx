@@ -39,11 +39,15 @@ export default function PhoneDropdown({ onOpenMessages }) {
     };
   }, [isOpen]);
 
-  // Auto-collapse to the minimized bar the moment a dialing call
-  // connects, so the agent isn't left staring at the dialer.
+  // Auto-collapse to the minimized bar the moment there's any call to
+  // show (ringing out or connected), so the agent always sees the
+  // timer/mute/hold/end controls without an extra click. Otherwise a
+  // call placed from the open dialer would leave the dropdown open,
+  // swapped to an empty ActiveCallExpanded (which needs a connected
+  // activeCall, not just a ringing dialingCall).
   useEffect(() => {
-    if (inbound?.activeCall) setIsOpen(false);
-  }, [inbound?.activeCall]);
+    if (hasCall) setIsOpen(false);
+  }, [hasCall]);
 
   if (!inbound?.enabled) return null;
 

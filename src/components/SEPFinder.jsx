@@ -73,12 +73,6 @@ export default function SEPFinder({ zip }) {
 
   return (
     <div className="sep-finder-trigger">
-      {!hasZip && !loading && !hasResult && !error ? (
-        <div className="sep-finder-trigger-empty">
-          Enter a 5-digit ZIP above to scan for area-based SEPs.
-        </div>
-      ) : null}
-
       {loading ? (
         <div className="sep-finder-trigger-status">
           <Loader2 size={14} className="sep-finder-spinner" />

@@ -12577,7 +12577,7 @@ body[data-bg-mode="classic"] .viewport-bg {
   --agent-notes-border: var(--eg-surface-3);
   --agent-notes-border-bright: #2a2a2a;
   --agent-notes-amber: #d98b45;
-  --agent-notes-yellow: #f4b24d;
+  --agent-notes-yellow: var(--eg-accent);
   --agent-notes-cyan: #69a7c8;
   --agent-notes-muted: #555555;
   width: 100%;
@@ -12634,14 +12634,14 @@ body[data-bg-mode="classic"] .viewport-bg {
 }
 
 .agent-notes-widget-body {
-  padding: 6px 7px 8px;
+  padding: 6px 0 8px;
 }
 
 .agent-notes-widget-input {
   width: 100%;
   height: clamp(148px, 22vh, 212px);
   padding: 7px;
-  border: 1px solid var(--agent-notes-border);
+  border: none;
   border-radius: 0;
   background: var(--agent-notes-bg-soft);
   color: var(--agent-notes-amber);
@@ -12655,7 +12655,7 @@ body[data-bg-mode="classic"] .viewport-bg {
 }
 
 .left-rail-context-stack + .agent-notes-widget .agent-notes-widget-input {
-  height: clamp(112px, 16vh, 168px);
+  height: clamp(134px, 19.2vh, 202px);
   font-size: 9.5px;
 }
 
@@ -12664,7 +12664,6 @@ body[data-bg-mode="classic"] .viewport-bg {
 }
 
 .agent-notes-widget-input:focus {
-  border-color: var(--agent-notes-border-bright);
   background: var(--agent-notes-bg);
   box-shadow: inset 0 0 0 1px rgba(217, 139, 69, 0.28);
 }

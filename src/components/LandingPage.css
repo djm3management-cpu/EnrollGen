@@ -46,16 +46,19 @@ body {
   align-items: center;
 }
 
-.landing-logo {
-  width: 132px !important;
-}
-
-.landing-logo-image {
+.landing-logo-text {
   display: block;
-  width: 142px !important;
+  font-family: var(--eg-font-wordmark);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--eg-accent);
+  white-space: nowrap;
   max-width: 34vw;
-  height: auto;
-  object-fit: contain;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .landing-logo > div,

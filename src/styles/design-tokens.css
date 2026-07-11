@@ -4,6 +4,19 @@
    See docs/DESIGN_SYSTEM.md for usage rules.
    ============================================================ */
 
+/* Formula 1 Display Bold, used only for the ENROLLGEN wordmark.
+   font-display: swap so the text renders immediately in the
+   fallback stack on first paint / slow networks / older browsers,
+   then swaps to the branded face once it loads, rather than an
+   invisible-text flash. */
+@font-face {
+  font-family: "Formula1";
+  src: url("/fonts/Formula1-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* ----- Core surfaces (darkest to lightest) ----- */
   --eg-base: #171411;
@@ -178,6 +191,7 @@
   --eg-font-display: var(--eg-font-system);
   --eg-font-body: var(--eg-font-system);
   --eg-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  --eg-font-wordmark: "Formula1", Verdana, Arial, sans-serif;
 
   /* ----- Radii ----- */
   --eg-radius-pill: 3px;

@@ -32,14 +32,10 @@ function HeroBackgroundVideo() {
 
 export default function LandingPage() {
   return (
-    <div className="landing-page landing-page--mystery">
+    <div className="landing-page landing-page--mystery dark">
       <header className="landing-nav">
         <a className="landing-logo-link" href="/" aria-label="EnrollGen home">
-          <img
-            className="landing-logo landing-logo-image"
-            src="/enrollgen-logo-v3.png?v=2"
-            alt="EnrollGen"
-          />
+          <span className="landing-logo-text">ENROLLGEN</span>
         </a>
         <span className="landing-nav-spacer" aria-hidden="true" />
         <div className="landing-nav-actions">

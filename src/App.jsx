@@ -80,7 +80,6 @@ const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
 const SEPQualifier = lazy(loadSEPQualifier);
 const AuthenticatedStyleGate = lazy(loadAuthenticatedStyleGate);
-const headerLogoUrl = "/enrollgen-logo-v3.png?v=2";
 const SYSTEM_FONT_STACK = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const SYSTEM_MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
@@ -430,11 +429,14 @@ function getModeFromLocation() {
   return "ma";
 }
 
-// The CRM is the home experience; deep links into a script flow
-// (/script/aca etc.) still land directly in the call cockpit.
+// MA is the default flow (route "/") and lands straight in the call
+// cockpit, same as deep links into another script flow (/script/aca
+// etc). The CRM is reached from there via the CONTACTS tab, not on
+// first load.
 function getAppModeFromLocation() {
-  if (typeof window === "undefined") return "crm";
-  return window.location.pathname.startsWith("/script/") ? "call" : "crm";
+  if (typeof window === "undefined") return "call";
+  const { pathname } = window.location;
+  return pathname === "/" || pathname.startsWith("/script/") ? "call" : "crm";
 }
 
 function syncModePath(mode) {
@@ -941,7 +943,7 @@ function AppShell({ currentUser = null }) {
               title="Refresh and return to the main page"
               aria-label="Refresh and return to the main page"
             >
-              <img className="top-bar-logo-image" src={headerLogoUrl} alt="" />
+              <span className="top-bar-logo-text">ENROLLGEN</span>
             </button>
             {appMode === "call" ? (
               <button

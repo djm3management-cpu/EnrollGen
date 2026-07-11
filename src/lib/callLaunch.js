@@ -27,6 +27,8 @@ export function buildNotesFromContact(contact) {
     customerDob: contact.dob,
     customerState: contact.state,
     customerCounty: contact.county,
+    customerAddress: contact.address,
+    customerZip: contact.zip,
     previousCarrier: contact.current_carrier,
     currentCoverage: [contact.current_carrier, contact.current_plan]
       .filter(Boolean)

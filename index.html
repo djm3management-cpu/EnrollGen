@@ -7,7 +7,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/flag.png" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EnrollGen | Compliant Medicare Enrollment, Guided by AI</title>
+    <title>EnrollGen</title>
     <meta
       name="description"
       content="EnrollGen gives agents AI-guided Medicare enrollment workflows, compliance checkpoints, and real-time call support."
@@ -21,7 +21,7 @@
       content="AI-guided enrollment workflows for compliant Medicare, ACA, Medicare Supplement, U65, and ancillary sales teams."
     />
     <meta property="og:image" content="/logofinalshadow.png" />
-    <meta name="theme-color" content="#171411" />
+    <meta name="theme-color" content="#000000" />
     <script>
       (() => {
         const key = "enrollgen_theme_mode_v1";
@@ -34,9 +34,7 @@
           theme = null;
         }
         if (theme !== "dark" && theme !== "light") {
-          theme = window.matchMedia?.("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light";
+          theme = "dark";
         }
         root.dataset.theme = theme;
         root.classList.toggle("dark", theme === "dark");

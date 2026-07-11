@@ -48,7 +48,7 @@ body,
 }
 
 .top-bar-logo-image-button {
-  width: 118px !important;
+  width: auto !important;
   height: 32px !important;
   display: inline-flex;
   align-items: center;
@@ -57,41 +57,19 @@ body,
   background: transparent;
   border: none;
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
 }
 
-.top-bar-logo-image {
+.top-bar-logo-text {
   display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-}
-
-.top-bar-logo-wordmark {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.top-bar-logo-wordmark .eg-wordmark-enroll {
-  font-family: var(--eg-font-display);
-  font-size: 19px;
+  font-family: var(--eg-font-wordmark);
+  font-weight: 700;
+  font-size: 20px;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   color: var(--eg-accent);
-}
-
-.top-bar-logo-wordmark .eg-wordmark-gen {
-  font-family: var(--eg-font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  color: var(--eg-text-mid);
+  white-space: nowrap;
 }
 
 /* Tab strip */
@@ -829,9 +807,23 @@ body,
 .left-rail,
 .left-rail-panel-shell {
   background: var(--eg-surface-1) !important;
-  border-right: 1px solid var(--eg-border) !important;
   box-shadow: none !important;
   padding: 14px !important;
+}
+
+/* Only the rail itself gets the outer edge; the panel shell nested
+   inside it used to double this up with its own border-right, and
+   the widget cards inside it have their own border, leaving 3 stacked
+   lines. Keep just the rail edge and the widget border. */
+.left-rail {
+  border-right: 1px solid var(--eg-border) !important;
+}
+
+.left-rail-panel-shell,
+html .app-shell-modern .left-rail-panel-shell {
+  border: none !important;
+  border-style: none !important;
+  border-width: 0 !important;
 }
 
 .left-rail-handles {
@@ -2450,7 +2442,7 @@ button.primary.section-complete-btn {
   font-size: 8.5px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--eg-text-faint);
+  color: var(--eg-accent);
   margin-bottom: 7px;
 }
 
@@ -2481,13 +2473,13 @@ button.primary.section-complete-btn {
   font-size: 8px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--eg-text-faint);
+  color: var(--eg-accent);
 }
 
 .eg-rail-card__field-value {
   font-family: var(--eg-font-mono);
   font-size: 10px;
-  color: var(--eg-text-mid);
+  color: var(--eg-accent);
   background: transparent;
   border: none;
   padding: 0;
@@ -2519,52 +2511,15 @@ button.primary.section-complete-btn {
   border-bottom-color: var(--eg-border-active);
 }
 
-.eg-rail-card__plan {
-  font-family: var(--eg-font-body);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--eg-accent);
-  margin-bottom: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.eg-rail-card__plan-meta {
-  font-family: var(--eg-font-mono);
-  font-size: 10px;
-  color: var(--eg-text-dim);
-  margin-bottom: 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.eg-rail-card__pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.eg-plan-context-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.eg-plan-context-head .eg-rail-card__label {
-  margin-bottom: 0;
-}
-
 .eg-plan-lookup {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--eg-border);
+}
+
+.eg-plan-lookup__clear-row {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .eg-plan-lookup__label {

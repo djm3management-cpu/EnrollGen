@@ -27,9 +27,11 @@ function readLocalTheme() {
   }
 }
 
+// Default to the dark terminal theme (not the OS preference) for
+// anyone without a saved choice, matching the bootstrap script in
+// index.html.
 function getSystemTheme() {
-  if (typeof window === "undefined" || !window.matchMedia) return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "dark";
 }
 
 function getInitialTheme() {

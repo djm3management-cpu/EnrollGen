@@ -166,6 +166,8 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
         dob: notes.customerDob || null,
         state: notes.customerState?.trim() || null,
         county: (countyLabel || notes.customerCounty || "").trim() || null,
+        address: notes.customerAddress?.trim() || null,
+        zip: (notes.customerZip || state.tpmoZip || "").trim() || null,
         mbi_last4: mbi.length >= 4 ? mbi.slice(-4) : null,
         current_carrier: (notes.currentCoverage || notes.previousCarrier || "").trim() || null,
         ...(notes.partsABStatus === "Active" ? { medicare_parts: "ab" } : {}),
@@ -188,13 +190,39 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
       window.clearTimeout(saveResetTimerRef.current);
       saveResetTimerRef.current = window.setTimeout(() => setSaveState("idle"), 2500);
     }
-  }, [saveState, notes, countyLabel, linkedContactId, updateContact, createContact]);
+  }, [saveState, notes, countyLabel, state.tpmoZip, linkedContactId, updateContact, createContact]);
 
   const fullName = useMemo(() => {
     const first = (notes.customerFirstName || "").trim();
     const last = (notes.customerLastName || "").trim();
     return [first, last].filter(Boolean).join(" ");
   }, [notes.customerFirstName, notes.customerLastName]);
+
+  // The name input is controlled off of first/last name state rebuilt
+  // as "first last" (single space, no trailing space). Binding the
+  // input directly to that would erase a space the instant you type
+  // it (nothing to join yet), making the spacebar seem broken. A local
+  // draft displays exactly what was typed; it only gets overwritten by
+  // an external change (contact hydration, transcript name inference),
+  // not by the recompute triggered by its own keystroke.
+  const [nameDraft, setNameDraft] = useState(fullName);
+  const nameDraftRef = useRef(nameDraft);
+  nameDraftRef.current = nameDraft;
+
+  useEffect(() => {
+    if (nameDraftRef.current.trim().replace(/\s+/g, " ") !== fullName) {
+      setNameDraft(fullName);
+    }
+  }, [fullName]);
+
+  const handleNameChange = (e) => {
+    const raw = e.target.value;
+    setNameDraft(raw);
+    const parts = raw.trim().split(/\s+/).filter(Boolean);
+    setNote("customerFirstName", parts[0] || "");
+    setNote("customerLastName", parts.slice(1).join(" ") || "");
+  };
+
   const inferredName = useMemo(
     () => inferCustomerName(liveCall.mergedTranscript),
     [liveCall.mergedTranscript]
@@ -236,6 +264,12 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
   const partsAB = notes.partsABStatus || "";
   const currentCoverage = notes.currentCoverage || notes.previousCarrier || "";
   const county = countyLabel || notes.customerCounty || notes.customerState || "";
+  const phone = notes.customerPhone || "";
+  const dob = notes.customerDob || "";
+  const address = notes.customerAddress || "";
+  // Falls back to the ZIP already typed into the SEP Qualifier widget
+  // above, so the agent doesn't have to enter it twice.
+  const zip = notes.customerZip || state.tpmoZip || "";
 
   return (
     <div className="eg-rail-card">
@@ -244,13 +278,9 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
       <input
         className="eg-rail-card__name"
         style={{ background: "transparent", border: "none", outline: "none", width: "100%", padding: 0 }}
-        value={fullName}
+        value={nameDraft}
         placeholder=""
-        onChange={(e) => {
-          const parts = e.target.value.trim().split(/\s+/);
-          setNote("customerFirstName", parts[0] || "");
-          setNote("customerLastName", parts.slice(1).join(" ") || "");
-        }}
+        onChange={handleNameChange}
         aria-label="Client name"
       />
 
@@ -295,6 +325,46 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
             placeholder=""
             onChange={(e) => setNote("currentCoverage", e.target.value)}
             aria-label="Current coverage"
+          />
+        </div>
+        <div className="eg-rail-card__field">
+          <div className="eg-rail-card__field-key">PHONE</div>
+          <input
+            className={`eg-rail-card__field-value${phone ? "" : " is-empty"}`}
+            value={phone}
+            placeholder=""
+            onChange={(e) => setNote("customerPhone", e.target.value)}
+            aria-label="Phone"
+          />
+        </div>
+        <div className="eg-rail-card__field">
+          <div className="eg-rail-card__field-key">DOB</div>
+          <input
+            className={`eg-rail-card__field-value${dob ? "" : " is-empty"}`}
+            value={dob}
+            placeholder=""
+            onChange={(e) => setNote("customerDob", e.target.value)}
+            aria-label="Date of birth"
+          />
+        </div>
+        <div className="eg-rail-card__field">
+          <div className="eg-rail-card__field-key">ADDRESS</div>
+          <input
+            className={`eg-rail-card__field-value${address ? "" : " is-empty"}`}
+            value={address}
+            placeholder=""
+            onChange={(e) => setNote("customerAddress", e.target.value)}
+            aria-label="Address"
+          />
+        </div>
+        <div className="eg-rail-card__field">
+          <div className="eg-rail-card__field-key">ZIP</div>
+          <input
+            className={`eg-rail-card__field-value${zip ? "" : " is-empty"}`}
+            value={zip}
+            placeholder=""
+            onChange={(e) => setNote("customerZip", e.target.value)}
+            aria-label="ZIP"
           />
         </div>
       </div>
