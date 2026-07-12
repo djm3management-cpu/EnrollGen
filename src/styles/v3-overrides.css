@@ -5299,3 +5299,300 @@ html.dark .flow-script-callout {
   border-color: var(--eg-accent);
   color: var(--eg-accent);
 }
+
+/* Call outcome editor (CallLogTab ExpandedRow) */
+.call-log-expand-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.call-log-compliance-warning {
+  margin-right: 3px;
+}
+
+/* Compliance Review modal */
+.compliance-review-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.82);
+  padding: 24px;
+}
+
+.compliance-review-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 1080px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--surface-raised, #111);
+  border: 1px solid var(--border-default);
+  padding: 20px;
+}
+
+.compliance-review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.compliance-review-head h2 {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  color: var(--eg-accent);
+}
+
+.compliance-review-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--border-default);
+}
+
+.compliance-review-meta dt {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--text-label);
+}
+
+.compliance-review-meta dd {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.compliance-review-scoring {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.compliance-review-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--eg-accent);
+  border-radius: 50%;
+  animation: compliance-review-spin 0.8s linear infinite;
+}
+
+@keyframes compliance-review-spin {
+  to { transform: rotate(360deg); }
+}
+
+.compliance-review-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--status-live);
+}
+
+.compliance-review-banner.is-warning {
+  border-color: var(--status-offline);
+}
+
+.compliance-review-score {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.compliance-review-score strong {
+  font-size: 28px;
+  color: var(--status-live);
+}
+
+.compliance-review-banner.is-warning .compliance-review-score strong {
+  color: var(--status-offline);
+}
+
+.compliance-review-score span {
+  font-size: 14px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+
+.compliance-review-banner-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+.compliance-review-banner-meta .is-autofail {
+  color: var(--status-offline);
+  font-weight: 700;
+}
+
+.compliance-review-banner-meta .is-warning-label {
+  color: var(--status-offline);
+  font-weight: 700;
+}
+
+.compliance-review-autofail-reasons p {
+  margin: 0 0 4px;
+  font-size: 11px;
+  color: var(--status-offline);
+}
+
+.compliance-review-body {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 14px;
+  min-height: 0;
+}
+
+@media (max-width: 860px) {
+  .compliance-review-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.compliance-review-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.compliance-review-category {
+  border: 1px solid var(--border-default);
+}
+
+.compliance-review-category-head {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 90px auto;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.compliance-review-category-count {
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.compliance-review-category-track {
+  height: 4px;
+  background: var(--border-default);
+}
+
+.compliance-review-category-track span {
+  display: block;
+  height: 100%;
+  background: var(--status-live);
+}
+
+.compliance-review-category-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 10px 10px;
+}
+
+.compliance-review-flag {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--status-offline);
+  padding: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.compliance-review-flag.is-pass {
+  border-left-color: var(--status-live);
+}
+
+.compliance-review-flag.is-active {
+  border-color: var(--eg-accent);
+}
+
+.compliance-review-flag-result {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--status-offline);
+}
+
+.compliance-review-flag.is-pass .compliance-review-flag-result {
+  color: var(--status-live);
+}
+
+.compliance-review-flag-question {
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+.compliance-review-flag-evidence {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.compliance-review-transcript {
+  overflow-y: auto;
+  max-height: 60vh;
+  border: 1px solid var(--border-default);
+}
+
+.compliance-review-transcript .ops-utterance {
+  display: grid;
+  grid-template-columns: 72px 52px 1fr;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.compliance-review-transcript .ops-utterance .speaker {
+  color: var(--eg-accent);
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 10px;
+}
+
+.compliance-review-transcript .ops-utterance .time {
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.compliance-review-transcript .ops-utterance p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.compliance-review-transcript .ops-utterance.is-highlighted {
+  background: rgba(255, 153, 0, 0.15);
+}

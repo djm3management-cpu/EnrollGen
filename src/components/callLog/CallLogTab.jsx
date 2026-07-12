@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { redactSensitiveText } from "../../lib/redaction";
+import { CALL_OUTCOME_OPTIONS } from "../../lib/postCallPipeline";
 import CallDetailPanel from "../callDetail/CallDetailPanel";
+import ComplianceReviewModal, { COMPLIANCE_WARNING_THRESHOLD } from "../callDetail/ComplianceReviewModal";
 
+const ENROLLED_OUTCOMES = new Set(["enrolled", "enrolled_pending_verification"]);
 const PAGE_SIZE = 50;
 const DISPOSITION_FILTERS = ["ALL", "CONNECTED", "VOICEMAIL", "MISSED", "DECLINED"];
 const DIRECTION_FILTERS = ["ALL", "INBOUND", "OUTBOUND"];
@@ -35,7 +38,12 @@ function ComplianceChip({ score }) {
   if (score === null || score === undefined) return <span className="contacts-muted">--</span>;
   const value = Math.round(Number(score));
   const band = value >= 90 ? "high" : value >= 70 ? "mid" : "low";
-  return <span className={`call-log-chip compliance-${band}`}>{value}%</span>;
+  return (
+    <span className={`call-log-chip compliance-${band}`}>
+      {value < COMPLIANCE_WARNING_THRESHOLD ? <span className="call-log-compliance-warning">⚠</span> : null}
+      {value}%
+    </span>
+  );
 }
 
 function RecordingCell({ row, supabaseClient }) {
@@ -77,49 +85,103 @@ function RecordingCell({ row, supabaseClient }) {
   );
 }
 
+function CallOutcomeEditor({ callRecordId, outcome, supabaseClient, onChanged }) {
+  const [saving, setSaving] = useState(false);
+
+  const handleChange = useCallback(
+    async (event) => {
+      const value = event.target.value;
+      setSaving(true);
+      try {
+        const { error } = await supabaseClient
+          .from("call_records")
+          .update({ call_outcome: value })
+          .eq("id", callRecordId);
+        if (error) throw error;
+        onChanged(value);
+      } catch (err) {
+        console.error("[CallLog] call_outcome update failed:", err);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [callRecordId, supabaseClient, onChanged]
+  );
+
+  return (
+    <select
+      className="contacts-status-select"
+      value={outcome || ""}
+      disabled={saving}
+      onChange={handleChange}
+      aria-label="Call outcome"
+    >
+      <option value="" disabled>Select outcome...</option>
+      {CALL_OUTCOME_OPTIONS.map((group) => (
+        <optgroup key={group.group} label={group.group}>
+          {group.options.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
+  );
+}
+
 function ExpandedRow({ row, supabaseClient }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(Boolean(row.call_record_id));
   const [showFullDetail, setShowFullDetail] = useState(false);
+  const [showComplianceReview, setShowComplianceReview] = useState(false);
+
+  const loadDetail = useCallback(async () => {
+    if (!row.call_record_id || !supabaseClient) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const { data: callRecord, error } = await supabaseClient
+        .from("call_records")
+        .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, plan_name, effective_date, call_start, agent_notes, compliance_scorecard_id, call_outcome")
+        .eq("id", row.call_record_id)
+        .single();
+      if (error) throw error;
+      const { data: scorecards } = await supabaseClient
+        .from("compliance_scorecards")
+        .select("id, overall_score, overall_grade, pass_fail, auto_fail_triggered, auto_fail_reasons, category_scores, risk_flags, coaching_notes, created_at")
+        .eq("call_id", row.call_record_id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      setDetail({ ...callRecord, scorecard: scorecards?.[0] || null });
+    } catch (err) {
+      console.error("[CallLog] detail load failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [row.call_record_id, supabaseClient]);
 
   useEffect(() => {
     let cancelled = false;
-    if (!row.call_record_id || !supabaseClient) {
-      setLoading(false);
-      return undefined;
-    }
-    (async () => {
-      try {
-        const { data: callRecord, error } = await supabaseClient
-          .from("call_records")
-          .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, plan_name, effective_date, call_start, agent_notes, compliance_scorecard_id")
-          .eq("id", row.call_record_id)
-          .single();
-        if (error) throw error;
-        const { data: scorecards } = await supabaseClient
-          .from("compliance_scorecards")
-          .select("id, overall_score, overall_grade, pass_fail, auto_fail_triggered, auto_fail_reasons, category_scores, risk_flags, coaching_notes, created_at")
-          .eq("call_id", row.call_record_id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-        if (!cancelled) {
-          setDetail({ ...callRecord, scorecard: scorecards?.[0] || null });
-        }
-      } catch (err) {
-        console.error("[CallLog] detail load failed:", err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+    loadDetail().then(() => {
+      if (cancelled) return;
+    });
     return () => {
       cancelled = true;
     };
-  }, [row.call_record_id, supabaseClient]);
+  }, [loadDetail]);
 
   const preview = redactSensitiveText(
     (detail?.transcript_raw || row.transcript_preview || "").slice(0, 200)
   );
   const scorecard = detail?.scorecard;
+
+  const handleOutcomeChanged = useCallback(
+    (value) => {
+      setDetail((current) => (current ? { ...current, call_outcome: value } : current));
+      if (ENROLLED_OUTCOMES.has(value)) setShowComplianceReview(true);
+    },
+    []
+  );
 
   return (
     <div className="call-log-expand">
@@ -149,19 +211,50 @@ function ExpandedRow({ row, supabaseClient }) {
           <div className="contacts-section-head">NOTES</div>
           <p className="call-log-preview">{detail?.agent_notes || row.agent_notes || "No notes"}</p>
         </div>
+        {row.call_record_id ? (
+          <div className="contacts-section">
+            <div className="contacts-section-head">CALL OUTCOME</div>
+            <CallOutcomeEditor
+              callRecordId={row.call_record_id}
+              outcome={detail?.call_outcome}
+              supabaseClient={supabaseClient}
+              onChanged={handleOutcomeChanged}
+            />
+          </div>
+        ) : null}
       </div>
 
       {row.call_record_id ? (
-        <button
-          type="button"
-          className="contacts-mini-btn"
-          onClick={() => setShowFullDetail((current) => !current)}
-        >
-          {showFullDetail ? "HIDE FULL DETAIL" : "VIEW FULL DETAIL (TRANSCRIPT / ANALYTICS / ASSESSMENT)"}
-        </button>
+        <div className="call-log-expand-actions">
+          <button
+            type="button"
+            className="contacts-mini-btn"
+            onClick={() => setShowFullDetail((current) => !current)}
+          >
+            {showFullDetail ? "HIDE FULL DETAIL" : "VIEW FULL DETAIL (TRANSCRIPT / ANALYTICS / ASSESSMENT)"}
+          </button>
+          <button
+            type="button"
+            className="contacts-mini-btn"
+            onClick={() => setShowComplianceReview(true)}
+          >
+            COMPLIANCE REVIEW
+          </button>
+        </div>
       ) : (
         <div className="contacts-muted">No call record linked (voicemail or missed call)</div>
       )}
+
+      {showComplianceReview ? (
+        <ComplianceReviewModal
+          callRecordId={row.call_record_id}
+          supabaseClient={supabaseClient}
+          onClose={() => {
+            setShowComplianceReview(false);
+            loadDetail();
+          }}
+        />
+      ) : null}
 
       {showFullDetail ? <CallDetailPanel detail={detail} loading={loading} /> : null}
     </div>

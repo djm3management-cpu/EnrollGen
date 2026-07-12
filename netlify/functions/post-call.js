@@ -121,15 +121,47 @@ function normalizeDirection(value) {
   return safeText(value).toLowerCase() === "outbound" ? "outbound" : "inbound";
 }
 
+// Keep in sync with CALL_OUTCOME_OPTIONS in src/lib/postCallPipeline.js
+// and the CHECK constraint in supabase/migrations/027_call_outcome_taxonomy.sql.
 function normalizeOutcome(value) {
   const raw = safeText(value);
   const allowed = new Set([
-    "enrolled",
+    // Legacy
     "not_enrolled",
-    "callback_scheduled",
-    "transferred",
     "incomplete",
+    // Enrollment Outcomes
+    "enrolled",
+    "enrolled_pending_verification",
+    "partial_enrollment",
+    // Positive Pipeline
+    "callback_scheduled",
+    "interested_needs_info",
+    "spouse_poa_callback",
+    "transferred",
+    "application_in_progress",
+    // Negative / Closed
+    "not_interested",
+    "not_qualified",
+    "already_enrolled_elsewhere",
+    "customer_hung_up",
+    "do_not_call",
+    "requested_removal",
+    // Unable to Reach
     "no_answer",
+    "voicemail_left",
+    "wrong_number",
+    "bad_lead_data",
+    "language_barrier",
+    // Compliance / Concern Flags
+    "mentally_unfit",
+    "possible_cognitive_impairment",
+    "third_party_needed",
+    "hostile_caller",
+    "suspected_fraud",
+    // System / Technical
+    "dropped_call",
+    "test_call",
+    "duplicate_lead",
   ]);
   return allowed.has(raw) ? raw : "incomplete";
 }

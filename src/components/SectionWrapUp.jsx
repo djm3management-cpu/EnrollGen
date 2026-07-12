@@ -19,6 +19,7 @@ import {
   setActivePostCallMetadata,
 } from "../hooks/useSessionTracker";
 import { ScriptBox, LockText, SectionToast } from "./SharedUI";
+import ComplianceReviewModal from "./callDetail/ComplianceReviewModal";
 
 function digitsOnly(value) {
   return String(value || "").replace(/\D/g, "");
@@ -53,6 +54,7 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
     agents,
     carrierOptions,
     agencyDisplayName,
+    supabaseClient,
   } = useTenantConfig();
   const [saveState, setSaveState] = useState({
     status: "idle",
@@ -60,10 +62,11 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
     callRecordId: null,
     webhookStatus: "idle",
   });
+  const [showComplianceReview, setShowComplianceReview] = useState(false);
   const { enrollOk, notes } = state;
   const isActive = activeSection === 8;
   const callOutcome = notes.callOutcome || "enrolled";
-  const isEnrolled = callOutcome === "enrolled";
+  const isEnrolled = callOutcome === "enrolled" || callOutcome === "enrolled_pending_verification";
   const isSaving = saveState.status === "saving";
   const writingAgentOptions = useMemo(
     () => agents.map((agent) => agent.name).filter(Boolean),
@@ -176,6 +179,10 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
         webhookStatus: result.webhook_status || (isEnrolled ? "pending" : "skipped"),
       });
 
+      if (isEnrolled && callRecordId) {
+        setShowComplianceReview(true);
+      }
+
       if (isEnrolled && callRecordId && result.webhook_status === "pending") {
         void sendEnrollmentWebhookAfterSave(getToken, {
           callRecordId,
@@ -266,10 +273,14 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
               onChange={(e) => updateNote("callOutcome", e.target.value)}
               required
             >
-              {CALL_OUTCOME_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
+              {CALL_OUTCOME_OPTIONS.map((group) => (
+                <optgroup key={group.group} label={group.group}>
+                  {group.options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
@@ -576,6 +587,14 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           Flow complete. Save the call record to persist transcript, outcome, and compliance scoring.
         </p>
       )}
+
+      {showComplianceReview && saveState.callRecordId ? (
+        <ComplianceReviewModal
+          callRecordId={saveState.callRecordId}
+          supabaseClient={supabaseClient}
+          onClose={() => setShowComplianceReview(false)}
+        />
+      ) : null}
     </section>
   );
 });

@@ -5,14 +5,82 @@ const POST_CALL_ENDPOINT = "/api/post-call";
 
 export const CHECKPOINT_INTERVAL_MS = 120000;
 
+// Grouped call-outcome taxonomy. Single source of truth for the
+// live wrap-up dropdown (SectionWrapUp.jsx) and the Calls-tab
+// outcome editor (CallLogTab.jsx). Values must stay in sync with
+// supabase/migrations/027_call_outcome_taxonomy.sql's CHECK
+// constraint.
 export const CALL_OUTCOME_OPTIONS = [
-  { value: "enrolled", label: "Enrolled" },
-  { value: "not_enrolled", label: "Not enrolled" },
-  { value: "callback_scheduled", label: "Callback scheduled" },
-  { value: "transferred", label: "Transferred" },
-  { value: "incomplete", label: "Incomplete" },
-  { value: "no_answer", label: "No answer" },
+  {
+    group: "Enrollment Outcomes",
+    options: [
+      { value: "enrolled", label: "Enrolled" },
+      { value: "enrolled_pending_verification", label: "Enrolled - Pending Verification" },
+      { value: "partial_enrollment", label: "Partial Enrollment (App Started, Not Completed)" },
+    ],
+  },
+  {
+    group: "Positive Pipeline",
+    options: [
+      { value: "callback_scheduled", label: "Callback Scheduled" },
+      { value: "interested_needs_info", label: "Interested - Needs More Info" },
+      { value: "spouse_poa_callback", label: "Spouse/POA Callback Required" },
+      { value: "transferred", label: "Transferred to Carrier" },
+      { value: "application_in_progress", label: "Application In Progress" },
+    ],
+  },
+  {
+    group: "Negative / Closed",
+    options: [
+      { value: "not_interested", label: "Not Interested" },
+      { value: "not_qualified", label: "Not Qualified (Age/State/Coverage)" },
+      { value: "already_enrolled_elsewhere", label: "Already Enrolled Elsewhere" },
+      { value: "customer_hung_up", label: "Customer Hung Up" },
+      { value: "do_not_call", label: "Do Not Call (DNC)" },
+      { value: "requested_removal", label: "Requested Removal from List" },
+    ],
+  },
+  {
+    group: "Unable to Reach",
+    options: [
+      { value: "no_answer", label: "No Answer" },
+      { value: "voicemail_left", label: "Voicemail Left" },
+      { value: "wrong_number", label: "Wrong Number / Disconnected" },
+      { value: "bad_lead_data", label: "Bad Lead Data (Name/Info Mismatch)" },
+      { value: "language_barrier", label: "Language Barrier" },
+    ],
+  },
+  {
+    group: "Compliance / Concern Flags",
+    options: [
+      { value: "mentally_unfit", label: "Mentally Unfit (Unable to Understand)" },
+      { value: "possible_cognitive_impairment", label: "Possible Cognitive Impairment" },
+      { value: "third_party_needed", label: "Third Party Needed (Guardian/POA)" },
+      { value: "hostile_caller", label: "Hostile / Abusive Caller" },
+      { value: "suspected_fraud", label: "Suspected Fraud" },
+    ],
+  },
+  {
+    group: "System / Technical",
+    options: [
+      { value: "dropped_call", label: "Dropped Call / Connection Issue" },
+      { value: "test_call", label: "Test Call" },
+      { value: "duplicate_lead", label: "Duplicate Lead" },
+    ],
+  },
 ];
+
+// Flat lookup for label-by-value (includes legacy not_enrolled/incomplete
+// so historical rows still render a readable label).
+const LEGACY_OUTCOME_LABELS = { not_enrolled: "Not Enrolled (legacy)", incomplete: "Incomplete (legacy)" };
+export const CALL_OUTCOME_LABELS = CALL_OUTCOME_OPTIONS.reduce((acc, group) => {
+  for (const option of group.options) acc[option.value] = option.label;
+  return acc;
+}, { ...LEGACY_OUTCOME_LABELS });
+
+export function callOutcomeLabel(value) {
+  return CALL_OUTCOME_LABELS[value] || value || "--";
+}
 
 export const US_STATE_OPTIONS = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
