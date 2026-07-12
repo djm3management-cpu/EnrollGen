@@ -14,6 +14,7 @@ import {
   isAuthDisabled,
   readLocalAgentId,
   resolveAgentId,
+  resolveRequestingAgentUuid,
   setAvailabilityStatus,
 } from "../lib/agentIdentity";
 import { publishSms } from "../lib/smsEvents";
@@ -55,7 +56,8 @@ function formatClock(timestamp) {
 
 function InboundCallProviderCore({ agentId, identityReady, children }) {
   const { getToken } = useAppAuth();
-  const { supabaseClient } = useTenantConfig();
+  const { supabaseClient, agents } = useTenantConfig();
+  const requestingAgentId = resolveRequestingAgentUuid(agents, agentId);
 
   const [deviceStatus, setDeviceStatus] = useState("offline"); // offline | registering | registered | error
   const [incomingCall, setIncomingCall] = useState(null); // { call, params }
@@ -260,7 +262,11 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     };
   }, [identityReady, agentId, fetchTokenBundle, connectAgentSocket]);
 
-  // Hydrate the contact record for the ringing/active call.
+  // Hydrate the contact record for the ringing/active call. Full PII
+  // (name/phone/email/etc) is read via decrypt_pii — the agent needs
+  // to see who's calling, so it isn't gated behind a manual reveal
+  // click like the CRM screens, but it's still permission-checked and
+  // logged (action='view') same as any other decrypt.
   const contactId = incomingCall?.params?.contactId || activeCall?.params?.contactId || null;
   useEffect(() => {
     if (!contactId || !supabaseClient) {
@@ -268,18 +274,33 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       return;
     }
     let cancelled = false;
-    supabaseClient
-      .from("contacts")
-      .select("*")
-      .eq("id", contactId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled) setContact(data || null);
-      });
+    (async () => {
+      const { data: safeContact } = await supabaseClient
+        .from("contacts")
+        .select(
+          "id, tenant_id, status, source, assigned_agent_id, county, state, zip, medicare_parts, current_carrier, current_plan, do_not_call, ghl_contact_id, first_initial, last_initial, phone_last4, email_set, dob_set, created_at, updated_at"
+        )
+        .eq("id", contactId)
+        .maybeSingle();
+      if (cancelled || !safeContact) {
+        if (!cancelled) setContact(safeContact || null);
+        return;
+      }
+      let piiFields = {};
+      if (requestingAgentId) {
+        const { data } = await supabaseClient.rpc("decrypt_pii", {
+          p_contact_id: contactId,
+          p_requesting_agent_id: requestingAgentId,
+          p_action: "view",
+        });
+        piiFields = data || {};
+      }
+      if (!cancelled) setContact({ ...safeContact, ...piiFields });
+    })();
     return () => {
       cancelled = true;
     };
-  }, [contactId, supabaseClient]);
+  }, [contactId, supabaseClient, requestingAgentId]);
 
   const acceptCall = useCallback(() => {
     if (!incomingCall) return;

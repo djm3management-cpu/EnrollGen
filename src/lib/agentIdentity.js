@@ -116,6 +116,17 @@ export function isAuthDisabled() {
   return AUTH_DISABLED;
 }
 
+// Maps the resolved agent_id slug (e.g. "mark_endres") to the
+// tenant_agents.id (uuid) PII RPCs (decrypt_pii, search_contacts_
+// secure, log_pii_access) need as the requesting-agent identity.
+// `agents` is the list from useTenantConfig(), which must include
+// `id` and `agent_slug` (see fetchTenantAgents).
+export function resolveRequestingAgentUuid(agents, agentSlug) {
+  if (!agentSlug || !Array.isArray(agents)) return null;
+  const match = agents.find((agent) => agent.agent_slug === agentSlug);
+  return match?.id || null;
+}
+
 // Fire-and-forget availability sync used by the softphone lifecycle
 // (register -> available, accept -> busy, hangup -> available).
 export async function setAvailabilityStatus(agentId, status) {

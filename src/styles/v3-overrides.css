@@ -3681,6 +3681,12 @@ html.dark .flow-script-callout {
   letter-spacing: 1.2px;
 }
 
+.contacts-right-panel-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .contacts-ghl-right-collapsed {
   display: flex;
   align-items: flex-start;
@@ -5235,4 +5241,109 @@ html.dark .flow-script-callout {
 
 .msg-media-image img {
   border-radius: 10px;
+}
+
+/* PII reveal controls (ContactCard / MaskedField) */
+.pii-reveal-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pii-reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pii-masked-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pii-masked-field-label {
+  color: var(--text-label);
+  font-size: 9px;
+  letter-spacing: 1.2px;
+}
+
+.pii-masked-field-value {
+  font-family: inherit;
+}
+
+.pii-masked-field-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px;
+}
+
+.pii-masked-field-toggle:hover {
+  color: var(--eg-accent);
+}
+
+.contacts-center-head-pii {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Idle session lock overlay */
+.session-lock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(4px);
+}
+
+.session-lock-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 28px;
+  max-width: 420px;
+  width: 100%;
+  background: var(--surface-raised, #111);
+  border: 1px solid var(--border-default);
+}
+
+.session-lock-head {
+  text-align: center;
+}
+
+.session-lock-head h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  color: var(--text-primary);
+}
+
+.session-lock-head p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.session-lock-manual-continue {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.session-lock-manual-continue:hover {
+  border-color: var(--eg-accent);
+  color: var(--eg-accent);
 }

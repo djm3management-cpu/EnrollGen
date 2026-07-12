@@ -1,10 +1,30 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTenantConfig } from "./useTenantConfig";
 
 // CRM data access. All queries run through the tenant-scoped
 // authenticated Supabase client; RLS enforces isolation.
+//
+// Plaintext PII columns (first_name, last_name, phone, email, dob,
+// address) are column-privilege-revoked from the `authenticated` role
+// (see migration 023) — selecting them directly fails with "permission
+// denied for column". Reads go through the masked/initials columns
+// below by default, or through decrypt_pii() via useContactPii() when
+// an agent explicitly reveals a record. mbi_last4 is deliberately NOT
+// in that set (migration 024) — same low-sensitivity "last 4 only"
+// tier as phone_last4, per the original design in migration 017.
+const CONTACT_SAFE_COLUMNS =
+  "id, tenant_id, status, source, assigned_agent_id, county, state, zip, medicare_parts, current_carrier, current_plan, mbi_last4, do_not_call, ghl_contact_id, first_initial, last_initial, phone_last4, email_set, dob_set, created_at, updated_at";
 
-export function useContactsList(searchTerm) {
+// PII fields decrypt_pii() can return, merged onto the safe-column
+// row once an agent reveals a contact. mbi_full has no backing column
+// on contacts at all (write-only into pii_encrypted via
+// update_pii_field(), see migration 025) — decrypt_pii() surfaces it
+// dynamically the same as any other pii_encrypted key.
+const PII_FIELD_KEYS = ["first_name", "last_name", "dob", "phone", "email", "address", "mbi_full"];
+
+const PII_AUTO_HIDE_MS = 30_000;
+
+export function useContactsList(searchTerm, requestingAgentId) {
   const {
     supabaseClient,
     tenant,
@@ -28,19 +48,41 @@ export function useContactsList(searchTerm) {
     setLoading(true);
     setError(null);
     try {
+      const term = String(searchTerm || "").trim();
+      let matchedIds = null;
+
+      // Blind-index search: exact match only (no ilike/"contains" —
+      // the underlying columns are HMAC hashes, not plaintext). This
+      // is a real capability regression vs. the old ilike search,
+      // inherent to searching without decrypting.
+      if (term) {
+        if (!requestingAgentId) {
+          setContacts([]);
+          setLoading(false);
+          setError(null);
+          return;
+        }
+        const { data: matches, error: searchError } = await supabaseClient.rpc("search_contacts_secure", {
+          p_query: term,
+          p_requesting_agent_id: requestingAgentId,
+        });
+        if (searchError) throw searchError;
+        matchedIds = (matches || []).map((row) => row.contact_id);
+        if (matchedIds.length === 0) {
+          setContacts([]);
+          setLoading(false);
+          setError(null);
+          return;
+        }
+      }
+
       let query = supabaseClient
         .from("contacts")
-        .select("id, first_name, last_name, phone, email, status, source, assigned_agent_id, county, state, do_not_call, updated_at")
+        .select(CONTACT_SAFE_COLUMNS)
         .order("updated_at", { ascending: false })
         .limit(200);
 
-      const term = String(searchTerm || "").trim();
-      if (term) {
-        const like = `%${term}%`;
-        query = query.or(
-          `first_name.ilike.${like},last_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`
-        );
-      }
+      if (matchedIds) query = query.in("id", matchedIds);
 
       const { data, error: queryError } = await query;
       if (queryError) throw queryError;
@@ -99,7 +141,7 @@ export function useContactsList(searchTerm) {
     } finally {
       setLoading(false);
     }
-  }, [supabaseClient, searchTerm, tenantLoading, tenantError]);
+  }, [supabaseClient, searchTerm, requestingAgentId, tenantLoading, tenantError]);
 
   useEffect(() => {
     refresh();
@@ -128,7 +170,7 @@ export function useContactDetail(contactId) {
     try {
       const [contactRes, intelRes, activityRes, notesRes, followUpsRes, policiesRes, callsRes] =
         await Promise.all([
-          supabaseClient.from("contacts").select("*").eq("id", contactId).single(),
+          supabaseClient.from("contacts").select(CONTACT_SAFE_COLUMNS).eq("id", contactId).single(),
           supabaseClient
             .from("contact_lead_intel")
             .select("*")
@@ -201,7 +243,7 @@ export function useContactMutations() {
         .from("contacts")
         .update(updates)
         .eq("id", contactId)
-        .select("*")
+        .select(CONTACT_SAFE_COLUMNS)
         .single();
       if (error) throw error;
       return data;
@@ -214,7 +256,7 @@ export function useContactMutations() {
       const { data, error } = await supabaseClient
         .from("contacts")
         .insert({ tenant_id: tenant?.id, source: "manual", ...fields })
-        .select("*")
+        .select(CONTACT_SAFE_COLUMNS)
         .single();
       if (error) throw error;
       return data;
@@ -347,7 +389,144 @@ export function useContactMutations() {
   };
 }
 
+// Prefers real name/phone (available once revealed, or in contexts
+// that still carry them e.g. server-side lead intake). Falls back to
+// the masked-safe initials/last4 columns, which are always readable.
 export function contactDisplayName(contact) {
   const name = [contact?.first_name, contact?.last_name].filter(Boolean).join(" ").trim();
-  return name || contact?.phone || "Unknown contact";
+  if (name) return name;
+  if (contact?.phone) return contact.phone;
+  const initials = [contact?.first_initial, contact?.last_initial ? `${contact.last_initial}.` : null]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  if (initials) return initials;
+  if (contact?.phone_last4) return `Contact --${contact.phone_last4}`;
+  return "Unknown contact";
+}
+
+// Contact-level PII reveal: one decrypt_pii() call fetches every
+// sensitive field at once (cheaper + fewer audit rows than per-field
+// RPCs), merged onto the safe-column row by the caller. Auto-hides
+// after 30s of inactivity and resets whenever the contact changes,
+// so decrypted values never linger in memory longer than displayed.
+export function useContactPii(contactId, requestingAgentId) {
+  const { supabaseClient } = useTenantConfig();
+  const [piiFields, setPiiFields] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const [revealing, setRevealing] = useState(false);
+  const [error, setError] = useState(null);
+  const hideTimerRef = useRef(null);
+  const activityHandlerRef = useRef(null);
+
+  const clearHideTimer = useCallback(() => {
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    if (activityHandlerRef.current) {
+      window.removeEventListener("mousemove", activityHandlerRef.current);
+      window.removeEventListener("keydown", activityHandlerRef.current);
+      activityHandlerRef.current = null;
+    }
+  }, []);
+
+  const hide = useCallback(() => {
+    clearHideTimer();
+    setRevealed(false);
+    setPiiFields(null);
+  }, [clearHideTimer]);
+
+  const armAutoHide = useCallback(() => {
+    clearHideTimer();
+    const schedule = () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = setTimeout(hide, PII_AUTO_HIDE_MS);
+    };
+    activityHandlerRef.current = schedule;
+    window.addEventListener("mousemove", schedule);
+    window.addEventListener("keydown", schedule);
+    schedule();
+  }, [clearHideTimer, hide]);
+
+  const reveal = useCallback(
+    async (action = "view") => {
+      if (!supabaseClient || !contactId) return null;
+      if (!requestingAgentId) {
+        console.warn(
+          "[useContactPii] no tenant_agents match for the signed-in user — check that your tenant_agents row has agent_slug (or clerk_user_id) set correctly."
+        );
+        setError("Your agent account isn't linked to a tenant_agents record, so PII can't be revealed. Contact an admin.");
+        return null;
+      }
+      setRevealing(true);
+      setError(null);
+      try {
+        const { data, error: rpcError } = await supabaseClient.rpc("decrypt_pii", {
+          p_contact_id: contactId,
+          p_requesting_agent_id: requestingAgentId,
+          p_action: action,
+        });
+        if (rpcError) throw rpcError;
+        const fields = {};
+        for (const key of PII_FIELD_KEYS) {
+          if (data && key in data) fields[key] = data[key];
+        }
+        setPiiFields(fields);
+        setRevealed(true);
+        armAutoHide();
+        return fields;
+      } catch (err) {
+        console.error("[useContactPii] reveal failed:", err);
+        setError(err.message || "Could not reveal PII.");
+        return null;
+      } finally {
+        setRevealing(false);
+      }
+    },
+    [supabaseClient, contactId, requestingAgentId, armAutoHide]
+  );
+
+  const logCopy = useCallback(() => {
+    if (!supabaseClient || !contactId || !requestingAgentId) return;
+    supabaseClient
+      .rpc("log_pii_access", { p_contact_id: contactId, p_requesting_agent_id: requestingAgentId, p_action: "export" })
+      .then(({ error: logError }) => {
+        if (logError) console.error("[useContactPii] copy log failed:", logError.message);
+      });
+  }, [supabaseClient, contactId, requestingAgentId]);
+
+  // Keep a locally-revealed field in sync with an edit the agent just
+  // made, without another decrypt_pii round trip.
+  const patchField = useCallback((field, value) => {
+    setPiiFields((prev) => (prev ? { ...prev, [field]: value } : prev));
+  }, []);
+
+  // Fields with no backing column on contacts (mbi_full, ssn) — write
+  // directly into pii_encrypted via update_pii_field() instead of the
+  // normal contacts.update() path, which only knows real columns.
+  const updatePiiField = useCallback(
+    async (field, value) => {
+      if (!supabaseClient || !contactId || !requestingAgentId) {
+        throw new Error("Your agent account isn't linked to a tenant_agents record, so PII can't be edited.");
+      }
+      const { error: rpcError } = await supabaseClient.rpc("update_pii_field", {
+        p_contact_id: contactId,
+        p_requesting_agent_id: requestingAgentId,
+        p_field: field,
+        p_value: value,
+      });
+      if (rpcError) throw rpcError;
+      patchField(field, value || null);
+    },
+    [supabaseClient, contactId, requestingAgentId, patchField]
+  );
+
+  useEffect(() => {
+    hide();
+  }, [contactId, hide]);
+
+  useEffect(() => clearHideTimer, [clearHideTimer]);
+
+  return { piiFields, revealed, revealing, error, reveal, hide, logCopy, patchField, updatePiiField };
 }

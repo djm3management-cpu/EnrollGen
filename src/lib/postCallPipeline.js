@@ -72,17 +72,20 @@ export async function fetchTenantAgents(supabaseClient, tenantId) {
   if (!supabaseClient?.from || !tenantId) return [];
   const { data, error } = await supabaseClient
     .from("tenant_agents")
-    .select("name, ghl_user_id, npn, clerk_user_id")
+    .select("id, name, ghl_user_id, npn, clerk_user_id, agent_slug, role")
     .eq("tenant_id", tenantId)
     .eq("is_active", true)
     .order("name", { ascending: true });
 
   if (error) throw error;
   return (data || []).map((agent) => ({
+    id: agent.id,
     name: agent.name || "",
     ghl_user_id: agent.ghl_user_id || "",
     npn: agent.npn || "",
     clerk_user_id: agent.clerk_user_id || "",
+    agent_slug: agent.agent_slug || "",
+    role: agent.role || "agent",
   }));
 }
 

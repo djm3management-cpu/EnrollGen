@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import Papa from "papaparse";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
+import { useCurrentAgent } from "../../hooks/useCurrentAgent";
 import {
   CONTACT_FIELDS,
   IMPORT_SOURCES,
@@ -28,8 +29,20 @@ const UPDATABLE_FIELDS = [
   "current_plan",
 ];
 
+// first_name/last_name/email/dob are column-privilege-revoked from
+// `authenticated` (migration 023) — presence (not value) is all the
+// fill-blanks-only dedup logic needs, read via the masked-safe proxy
+// columns instead of a decrypt_pii round trip per matched row.
+const PRESENCE_PROXY = {
+  first_name: "first_initial",
+  last_name: "last_initial",
+  email: "email_set",
+  dob: "dob_set",
+};
+
 export default function ContactImportPanel({ onClose }) {
   const { supabaseClient, tenant } = useTenantConfig();
+  const { agentUuid } = useCurrentAgent();
   const [step, setStep] = useState("upload"); // upload | mapping | preview | importing | report
   const [fileName, setFileName] = useState("");
   const [headers, setHeaders] = useState([]);
@@ -94,10 +107,10 @@ export default function ContactImportPanel({ onClose }) {
         const batch = importable.slice(offset, offset + BATCH_SIZE);
         const phones = batch.map((entry) => entry.fields.phone);
 
-        const { data: existingRows, error: findError } = await supabaseClient
-          .from("contacts")
-          .select("*")
-          .in("phone", phones);
+        const { data: existingRows, error: findError } = await supabaseClient.rpc("match_contacts_by_phone", {
+          p_phones: phones,
+          p_requesting_agent_id: agentUuid,
+        });
         if (findError) throw findError;
         const existingByPhone = new Map((existingRows || []).map((row) => [row.phone, row]));
 
@@ -108,7 +121,8 @@ export default function ContactImportPanel({ onClose }) {
             // Fill blanks only; imports never overwrite CRM data.
             const updates = {};
             for (const field of UPDATABLE_FIELDS) {
-              if (entry.fields[field] && !existing[field]) updates[field] = entry.fields[field];
+              const presenceKey = PRESENCE_PROXY[field] || field;
+              if (entry.fields[field] && !existing[presenceKey]) updates[field] = entry.fields[field];
             }
             if (Object.keys(updates).length) {
               const { error: updateError } = await supabaseClient

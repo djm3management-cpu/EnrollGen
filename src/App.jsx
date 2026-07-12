@@ -20,6 +20,8 @@ import { InboundCallProvider, INBOUND_CALLS_ENABLED, useInboundCall } from "./co
 import PhoneDropdown from "./components/phone/PhoneDropdown";
 import { AvailabilityProvider } from "./context/AvailabilityContext";
 import AvailabilityStrip from "./components/AvailabilityStrip";
+import { SessionLockProvider } from "./context/SessionLockContext";
+import SessionLockOverlay from "./components/SessionLockOverlay";
 import { useUnreadMessages } from "./hooks/useMessages";
 import SmsToastHost from "./components/SmsToastHost";
 import { setPendingCallContact } from "./lib/callLaunch";
@@ -1170,7 +1172,10 @@ function AppContent({ currentUser = null }) {
       <LeftRailProvider>
         <AvailabilityProvider>
           <InboundCallProvider>
-            <AppShell currentUser={currentUser} />
+            <SessionLockProvider>
+              <AppShell currentUser={currentUser} />
+              <SessionLockOverlay />
+            </SessionLockProvider>
           </InboundCallProvider>
         </AvailabilityProvider>
       </LeftRailProvider>

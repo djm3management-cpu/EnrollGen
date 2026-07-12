@@ -6,6 +6,7 @@ import { requireTwilioSignature } from "../twilioSecurity.js";
 import { requireClerkUser } from "../clerkAuth.js";
 import { findOrCreateContactByPhone, logContactActivity } from "../contacts.js";
 import { sendToAgent } from "../media/agentSocket.js";
+import { validateOutboundSms } from "../piiValidation.js";
 
 export const smsRouter = Router();
 
@@ -167,6 +168,12 @@ smsRouter.post("/api/sms/send", async (req, res) => {
   }
   if (!config.twilioPhoneNumber) {
     return res.status(500).json({ error: "TWILIO_PHONE_NUMBER is not configured" });
+  }
+  if (body?.trim()) {
+    const validation = validateOutboundSms(body);
+    if (validation.blocked) {
+      return res.status(422).json({ error: validation.reason });
+    }
   }
 
   try {
