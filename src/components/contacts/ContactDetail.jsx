@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, EyeOff, Phone } from "lucide-react";
+import { Phone } from "lucide-react";
 import { useContactDetail, useContactMutations, useContactPii, contactDisplayName } from "../../hooks/useContacts";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { useCurrentAgent } from "../../hooks/useCurrentAgent";
@@ -214,7 +214,7 @@ function LeadIntelChips({ intel }) {
   );
 }
 
-function EditableField({ label, value, type = "text", onCommit, placeholder = "", className = "", autoComplete, disabled = false }) {
+function EditableField({ label, value, type = "text", onCommit, placeholder = "", className = "", autoComplete }) {
   const [draft, setDraft] = useState(value ?? "");
 
   useEffect(() => {
@@ -234,9 +234,6 @@ function EditableField({ label, value, type = "text", onCommit, placeholder = ""
         value={draft}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        disabled={disabled}
-        title={disabled ? "Reveal PII to edit" : undefined}
-        onContextMenu={(event) => event.preventDefault()}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
         onKeyDown={(event) => {
@@ -339,38 +336,19 @@ function ContactCard({
   onStartCall,
   onSaveField,
   onSendMessage,
-  revealed,
-  onRequestReveal,
-  revealing,
 }) {
   return (
-    <section className="contacts-ghl-card" onContextMenu={(event) => event.preventDefault()}>
+    <section className="contacts-ghl-card">
       <div className="contacts-ghl-card-main">
-        <div className="pii-reveal-row">
-          <button
-            type="button"
-            className="contacts-mini-btn pii-reveal-btn"
-            onClick={onRequestReveal}
-            disabled={revealing}
-            title={revealed ? "PII revealed (auto-hides after 30s idle)" : "Reveal PII"}
-          >
-            {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
-            {revealed ? "HIDE" : "REVEAL PII"}
-          </button>
-        </div>
         <div className="contacts-card-name">
           <EditableField
             label="FIRST NAME"
             value={contact.first_name || ""}
-            placeholder={!revealed && contact.first_initial ? `${contact.first_initial}…` : ""}
-            disabled={!revealed}
             onCommit={(value) => onSaveField("first_name", value)}
           />
           <EditableField
             label="LAST NAME"
             value={contact.last_name || ""}
-            placeholder={!revealed && contact.last_initial ? `${contact.last_initial}…` : ""}
-            disabled={!revealed}
             onCommit={(value) => onSaveField("last_name", value)}
           />
         </div>
@@ -378,16 +356,12 @@ function ContactCard({
           <EditableField
             label="PHONE"
             value={contact.phone || ""}
-            placeholder={!revealed && contact.phone_last4 ? `•••-•••-${contact.phone_last4}` : ""}
-            disabled={!revealed}
             onCommit={(value) => onSaveField("phone", value)}
           />
           <EditableField
             label="EMAIL"
             type="email"
             value={contact.email || ""}
-            placeholder={!revealed && contact.email_set ? "•••@•••" : ""}
-            disabled={!revealed}
             onCommit={(value) => onSaveField("email", value)}
           />
           <EditableSelect
@@ -454,44 +428,34 @@ function ContactCard({
   );
 }
 
-function ContactInfoPanel({ contact, onSaveField, onSaveMbiFull, revealed }) {
+function ContactInfoPanel({ contact, onSaveField, onSaveMbiFull }) {
   return (
-    <div className="contacts-edit-grid" onContextMenu={(event) => event.preventDefault()}>
+    <div className="contacts-edit-grid">
       <EditableField
         label="FIRST NAME"
         value={contact.first_name || ""}
-        placeholder={!revealed && contact.first_initial ? `${contact.first_initial}…` : ""}
-        disabled={!revealed}
         onCommit={(value) => onSaveField("first_name", value)}
       />
       <EditableField
         label="LAST NAME"
         value={contact.last_name || ""}
-        placeholder={!revealed && contact.last_initial ? `${contact.last_initial}…` : ""}
-        disabled={!revealed}
         onCommit={(value) => onSaveField("last_name", value)}
       />
       <EditableField
         label="PHONE"
         value={contact.phone || ""}
-        placeholder={!revealed && contact.phone_last4 ? `•••-•••-${contact.phone_last4}` : ""}
-        disabled={!revealed}
         onCommit={(value) => onSaveField("phone", value)}
       />
       <EditableField
         label="EMAIL"
         type="email"
         value={contact.email || ""}
-        placeholder={!revealed && contact.email_set ? "•••@•••" : ""}
-        disabled={!revealed}
         onCommit={(value) => onSaveField("email", value)}
       />
       <EditableField
         label="DOB"
         type="date"
         value={formatDateInput(contact.dob)}
-        placeholder={!revealed && contact.dob_set ? "••/••/••••" : ""}
-        disabled={!revealed}
         autoComplete="off"
         onCommit={(value) => onSaveField("dob", value)}
       />
@@ -507,14 +471,7 @@ function ContactInfoPanel({ contact, onSaveField, onSaveMbiFull, revealed }) {
       <EditableField
         label="MBI (FULL)"
         value={contact.mbi_full || ""}
-        placeholder={
-          !revealed && contact.mbi_last4
-            ? `•••••••${contact.mbi_last4}`
-            : revealed && !contact.mbi_full
-              ? "Not on file — enter full MBI"
-              : ""
-        }
-        disabled={!revealed}
+        placeholder={!contact.mbi_full ? "Not on file — enter full MBI" : ""}
         autoComplete="off"
         onCommit={(value) => onSaveMbiFull(value)}
       />
@@ -850,7 +807,7 @@ export default function ContactDetail({
   const { supabaseClient } = useTenantConfig();
   const { bundle, loading, error, refresh } = useContactDetail(contactId);
   const { agentUuid } = useCurrentAgent();
-  const { piiFields, revealed, revealing, reveal, hide, logCopy, patchField, updatePiiField, error: piiError } = useContactPii(contactId, agentUuid);
+  const { piiFields, reload: reloadPii, logCopy, patchField, updatePiiField, error: piiError } = useContactPii(contactId, agentUuid);
   const {
     addNote,
     toggleNotePin,
@@ -887,8 +844,8 @@ export default function ContactDetail({
   }, [contactId]);
 
   const contact = useMemo(
-    () => (bundle?.contact ? { ...bundle.contact, ...(revealed ? piiFields : null) } : null),
-    [bundle?.contact, revealed, piiFields]
+    () => (bundle?.contact ? { ...bundle.contact, ...piiFields } : null),
+    [bundle?.contact, piiFields]
   );
   const latestIntel = bundle?.leadIntel?.[0] || null;
 
@@ -907,7 +864,7 @@ export default function ContactDetail({
       setInlineError("");
       try {
         await updateContact(contact.id, { [field]: next });
-        if (revealed && PII_FIELD_SET.has(field)) patchField(field, next);
+        if (PII_FIELD_SET.has(field)) patchField(field, next);
         await refresh();
       } catch (err) {
         console.error("[ContactDetail] contact field save failed:", err);
@@ -916,7 +873,7 @@ export default function ContactDetail({
         setSaving(false);
       }
     },
-    [contact, updateContact, refresh, revealed, patchField]
+    [contact, updateContact, refresh, patchField]
   );
 
   const saveMbiFull = useCallback(
@@ -1092,7 +1049,7 @@ export default function ContactDetail({
     if (!contact?.phone_last4 || dialingContact) return;
     setDialingContact(true);
     try {
-      const phone = revealed ? contact.phone : (await reveal("view"))?.phone;
+      const phone = contact.phone || (await reloadPii())?.phone;
       if (!phone) throw new Error("Could not resolve phone number.");
       await inboundCall?.makeCall({
         phoneNumber: phone,
@@ -1105,13 +1062,13 @@ export default function ContactDetail({
     } finally {
       setDialingContact(false);
     }
-  }, [contact, dialingContact, inboundCall, revealed, reveal]);
+  }, [contact, dialingContact, inboundCall, reloadPii]);
 
   if (loading) return <div className="contacts-muted">Loading contact...</div>;
   if (error || !contact) return <div className="ops-error">{error || "Contact not found"}</div>;
 
   return (
-    <div className="contacts-detail contacts-detail-ghl" onCopy={() => revealed && logCopy()}>
+    <div className="contacts-detail contacts-detail-ghl" onCopy={() => logCopy()}>
       <div className="contacts-detail-head">
         <button type="button" className="contacts-back" onClick={onBack}>
           BACK TO CONTACTS
@@ -1126,7 +1083,7 @@ export default function ContactDetail({
               className="contacts-detail-call-btn"
               onClick={handleClickToCall}
               disabled={dialingContact || contact.do_not_call}
-              title={contact.do_not_call ? "Contact is flagged do not call" : `Call •••-•••-${contact.phone_last4}`}
+              title={contact.do_not_call ? "Contact is flagged do not call" : `Call ${contact.phone || contact.phone_last4}`}
               aria-label={`Call ${contactDisplayName(contact)}`}
             >
               <Phone size={14} />
@@ -1164,9 +1121,6 @@ export default function ContactDetail({
               setDetailTab("overview");
               setWorkspaceTab("conversations");
             }}
-            revealed={revealed}
-            revealing={revealing}
-            onRequestReveal={() => (revealed ? hide() : reveal("view"))}
           />
           {inlineError ? <div className="ops-error">{inlineError}</div> : null}
           {piiError ? <div className="ops-error">{piiError}</div> : null}
@@ -1183,7 +1137,6 @@ export default function ContactDetail({
                   contact={contact}
                   onSaveField={saveContactField}
                   onSaveMbiFull={saveMbiFull}
-                  revealed={revealed}
                 />
               </AccordionSection>
               <AccordionSection

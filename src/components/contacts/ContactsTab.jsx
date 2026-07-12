@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Archive, Eye, EyeOff, Mail, Phone, Search, Star } from "lucide-react";
+import { Archive, Mail, Phone, Search, Star } from "lucide-react";
 import {
   useContactsList,
   useContactDetail,
@@ -11,7 +11,6 @@ import { useUnreadMessages } from "../../hooks/useMessages";
 import { useAvailability } from "../../context/AvailabilityContext";
 import { useCurrentAgent } from "../../hooks/useCurrentAgent";
 import MessagesThread from "./MessagesThread";
-import MaskedField from "../common/MaskedField";
 
 const PII_FIELD_SET = new Set(["first_name", "last_name", "dob", "phone", "email", "address", "mbi_full"]);
 
@@ -226,7 +225,7 @@ function usePersistedState(key, fallback) {
   return [value, setValue];
 }
 
-function EditableField({ label, value, type = "text", onCommit, className = "", placeholder = "", autoComplete, disabled = false }) {
+function EditableField({ label, value, type = "text", onCommit, className = "", placeholder = "", autoComplete }) {
   const [draft, setDraft] = useState(value ?? "");
 
   useEffect(() => {
@@ -242,9 +241,6 @@ function EditableField({ label, value, type = "text", onCommit, className = "", 
         value={draft}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        disabled={disabled}
-        title={disabled ? "Reveal PII to edit" : undefined}
-        onContextMenu={(event) => event.preventDefault()}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => onCommit(draft)}
         onKeyDown={(event) => {
@@ -395,39 +391,18 @@ function ContactListPanel({
   );
 }
 
-function CenterTopBar({ contact, onStartCall, onEmail, revealed, revealing, onRequestReveal, onCopy }) {
+function CenterTopBar({ contact, onStartCall, onEmail }) {
   return (
     <div className="contacts-conv-center-head">
       <div>
         <h2>{contact ? contactDisplayName(contact).toUpperCase() : "SELECT CONTACT"}</h2>
         {contact ? (
-          <span className="contacts-muted contacts-center-head-pii">
-            <MaskedField
-              maskedValue={contact.phone_last4 ? `•••-•••-${contact.phone_last4}` : ""}
-              value={fmtPhone(contact.phone)}
-              revealed={revealed}
-              onCopy={onCopy}
-            />
-            <MaskedField
-              maskedValue={contact.email_set ? "•••@•••" : ""}
-              value={contact.email}
-              revealed={revealed}
-              onCopy={onCopy}
-            />
+          <span className="contacts-muted">
+            {[fmtPhone(contact.phone), contact.email].filter(Boolean).join("  ")}
           </span>
         ) : null}
       </div>
       <div className="contacts-icon-actions">
-        {contact ? (
-          <button
-            type="button"
-            title={revealed ? "Hide PII (auto-hides after 30s idle)" : "Reveal PII"}
-            disabled={revealing}
-            onClick={onRequestReveal}
-          >
-            {revealed ? <EyeOff size={15} aria-hidden="true" /> : <Eye size={15} aria-hidden="true" />}
-          </button>
-        ) : null}
         <button
           type="button"
           title="Start call"
@@ -518,44 +493,34 @@ function NotesPanel({ notes, noteDraft, setNoteDraft, onAddNote, onTogglePin, sa
   );
 }
 
-function ContactFields({ contact, onSaveContact, onSaveMbiFull, revealed }) {
+function ContactFields({ contact, onSaveContact, onSaveMbiFull }) {
   return (
-    <div className="contacts-edit-grid contacts-fields-compact" onContextMenu={(event) => event.preventDefault()}>
+    <div className="contacts-edit-grid contacts-fields-compact">
       <EditableField
         label="FIRST NAME"
         value={contact.first_name || ""}
-        placeholder={!revealed && contact.first_initial ? `${contact.first_initial}…` : ""}
-        disabled={!revealed}
         onCommit={(value) => onSaveContact("first_name", value)}
       />
       <EditableField
         label="LAST NAME"
         value={contact.last_name || ""}
-        placeholder={!revealed && contact.last_initial ? `${contact.last_initial}…` : ""}
-        disabled={!revealed}
         onCommit={(value) => onSaveContact("last_name", value)}
       />
       <EditableField
         label="PHONE"
         value={contact.phone || ""}
-        placeholder={!revealed && contact.phone_last4 ? `•••-•••-${contact.phone_last4}` : ""}
-        disabled={!revealed}
         onCommit={(value) => onSaveContact("phone", value)}
       />
       <EditableField
         label="EMAIL"
         type="email"
         value={contact.email || ""}
-        placeholder={!revealed && contact.email_set ? "•••@•••" : ""}
-        disabled={!revealed}
         onCommit={(value) => onSaveContact("email", value)}
       />
       <EditableField
         label="DOB"
         type="date"
         value={formatDateInput(contact.dob)}
-        placeholder={!revealed && contact.dob_set ? "••/••/••••" : ""}
-        disabled={!revealed}
         autoComplete="off"
         onCommit={(value) => onSaveContact("dob", value)}
       />
@@ -571,14 +536,7 @@ function ContactFields({ contact, onSaveContact, onSaveMbiFull, revealed }) {
       <EditableField
         label="MBI (FULL)"
         value={contact.mbi_full || ""}
-        placeholder={
-          !revealed && contact.mbi_last4
-            ? `•••••••${contact.mbi_last4}`
-            : revealed && !contact.mbi_full
-              ? "Not on file — enter full MBI"
-              : ""
-        }
-        disabled={!revealed}
+        placeholder={!contact.mbi_full ? "Not on file — enter full MBI" : ""}
         autoComplete="off"
         onCommit={(value) => onSaveMbiFull(value)}
       />
@@ -745,9 +703,6 @@ function RightPanel({
   setFollowUpDraft,
   onAddFollowUp,
   saving,
-  revealed,
-  revealing,
-  onRequestReveal,
 }) {
   if (!rightOpen) {
     return (
@@ -764,18 +719,6 @@ function RightPanel({
       <div className="contacts-right-panel-head">
         <span>CONTACT DETAILS</span>
         <div className="contacts-right-panel-head-actions">
-          {contact ? (
-            <button
-              type="button"
-              className="contacts-mini-btn pii-reveal-btn"
-              onClick={onRequestReveal}
-              disabled={revealing}
-              title={revealed ? "PII revealed (auto-hides after 30s idle)" : "Reveal PII"}
-            >
-              {revealed ? <EyeOff size={13} /> : <Eye size={13} />}
-              {revealed ? "HIDE PII" : "REVEAL PII"}
-            </button>
-          ) : null}
           <button type="button" className="contacts-mini-btn" onClick={() => setRightOpen(false)}>
             COLLAPSE
           </button>
@@ -818,7 +761,6 @@ function RightPanel({
                     contact={contact}
                     onSaveContact={onSaveContact}
                     onSaveMbiFull={onSaveMbiFull}
-                    revealed={revealed}
                   />
                 </AccordionSection>
                 <AccordionSection
@@ -951,7 +893,7 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
   const { contacts, loading, error, refresh } = useContactsList(search, agentUuid);
   const { unreadByContact } = useUnreadMessages();
   const { bundle, loading: detailLoading, error: detailError, refresh: refreshDetail } = useContactDetail(selectedContactId);
-  const { piiFields, revealed, revealing, reveal, hide, logCopy, patchField, updatePiiField, error: piiError } = useContactPii(selectedContactId, agentUuid);
+  const { piiFields, reload: reloadPii, logCopy, patchField, updatePiiField, error: piiError } = useContactPii(selectedContactId, agentUuid);
   const {
     addNote,
     toggleNotePin,
@@ -996,8 +938,8 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
   const selectedListContact = contacts.find((contact) => contact.id === selectedContactId) || null;
   const baseSelectedContact = bundle?.contact || selectedListContact;
   const selectedContact = useMemo(
-    () => (baseSelectedContact ? { ...baseSelectedContact, ...(revealed ? piiFields : null) } : null),
-    [baseSelectedContact, revealed, piiFields]
+    () => (baseSelectedContact ? { ...baseSelectedContact, ...piiFields } : null),
+    [baseSelectedContact, piiFields]
   );
 
   const agentOptions = useMemo(() => {
@@ -1032,7 +974,7 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
       setInlineError("");
       try {
         await updateContact(selectedContact.id, { [field]: next });
-        if (revealed && PII_FIELD_SET.has(field)) patchField(field, next);
+        if (PII_FIELD_SET.has(field)) patchField(field, next);
         await refreshSelected();
       } catch (err) {
         console.error("[ContactsTab] contact save failed:", err);
@@ -1041,7 +983,7 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
         setSaving(false);
       }
     },
-    [selectedContact, updateContact, refreshSelected, revealed, patchField]
+    [selectedContact, updateContact, refreshSelected, patchField]
   );
 
   const saveMbiFull = useCallback(
@@ -1215,15 +1157,15 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
 
   const handleEmail = useCallback(async () => {
     if (!selectedContact?.email_set || typeof window === "undefined") return;
-    const email = revealed ? selectedContact.email : (await reveal("view"))?.email;
+    const email = selectedContact.email || (await reloadPii())?.email;
     if (email) window.location.href = `mailto:${email}`;
-  }, [selectedContact, revealed, reveal]);
+  }, [selectedContact, reloadPii]);
 
   const shellClass = `contacts-tab contacts-conversations-tab${variant === "home" ? " contacts-tab--home" : ""}`;
   const timelineActivities = (bundle?.activities || []).filter((activity) => activity.type !== "call");
 
   return (
-    <div className={shellClass} onCopy={() => revealed && logCopy()}>
+    <div className={shellClass} onCopy={() => logCopy()}>
       <div className="contacts-conv-shell">
         <ContactListPanel
           contacts={filteredContacts}
@@ -1241,15 +1183,7 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
         />
 
         <main className="contacts-conv-center">
-          <CenterTopBar
-            contact={selectedContact}
-            onStartCall={onStartCall}
-            onEmail={handleEmail}
-            revealed={revealed}
-            revealing={revealing}
-            onRequestReveal={() => (revealed ? hide() : reveal("view"))}
-            onCopy={logCopy}
-          />
+          <CenterTopBar contact={selectedContact} onStartCall={onStartCall} onEmail={handleEmail} />
           <div className="contacts-workspace-tabs contacts-conv-center-tabs">
             {CENTER_TABS.map((tab) => (
               <button
@@ -1313,9 +1247,6 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
           setCallFlow={setCallFlow}
           followUpDraft={followUpDraft}
           setFollowUpDraft={setFollowUpDraft}
-          revealed={revealed}
-          revealing={revealing}
-          onRequestReveal={() => (revealed ? hide() : reveal("view"))}
           onAddFollowUp={handleAddFollowUp}
           saving={saving}
         />

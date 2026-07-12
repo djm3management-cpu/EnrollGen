@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTenantConfig } from "./useTenantConfig";
 
 // CRM data access. All queries run through the tenant-scoped
@@ -21,8 +21,6 @@ const CONTACT_SAFE_COLUMNS =
 // update_pii_field(), see migration 025) — decrypt_pii() surfaces it
 // dynamically the same as any other pii_encrypted key.
 const PII_FIELD_KEYS = ["first_name", "last_name", "dob", "phone", "email", "address", "mbi_full"];
-
-const PII_AUTO_HIDE_MS = 30_000;
 
 export function useContactsList(searchTerm, requestingAgentId) {
   const {
@@ -389,9 +387,10 @@ export function useContactMutations() {
   };
 }
 
-// Prefers real name/phone (available once revealed, or in contexts
-// that still carry them e.g. server-side lead intake). Falls back to
-// the masked-safe initials/last4 columns, which are always readable.
+// Prefers real name/phone (available once useContactPii's decrypt_pii
+// call resolves, or in contexts that still carry them e.g. server-side
+// lead intake). Falls back to the initials/last4 columns while that
+// load is in flight.
 export function contactDisplayName(contact) {
   const name = [contact?.first_name, contact?.last_name].filter(Boolean).join(" ").trim();
   if (name) return name;
@@ -405,87 +404,50 @@ export function contactDisplayName(contact) {
   return "Unknown contact";
 }
 
-// Contact-level PII reveal: one decrypt_pii() call fetches every
-// sensitive field at once (cheaper + fewer audit rows than per-field
-// RPCs), merged onto the safe-column row by the caller. Auto-hides
-// after 30s of inactivity and resets whenever the contact changes,
-// so decrypted values never linger in memory longer than displayed.
+// Contact-level PII loader. Auto-decrypts the instant contactId/
+// requestingAgentId are available — no manual reveal click. This is
+// a UI decision only: decrypt_pii() itself is unchanged (still
+// permission-checked, still logs every call to pii_access_log), so
+// the audit trail stays complete even though nothing is visibly
+// masked. One decrypt_pii call per contact opened, not per field.
 export function useContactPii(contactId, requestingAgentId) {
   const { supabaseClient } = useTenantConfig();
   const [piiFields, setPiiFields] = useState(null);
-  const [revealed, setRevealed] = useState(false);
-  const [revealing, setRevealing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const hideTimerRef = useRef(null);
-  const activityHandlerRef = useRef(null);
 
-  const clearHideTimer = useCallback(() => {
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
+  const load = useCallback(async () => {
+    if (!supabaseClient || !contactId) return null;
+    if (!requestingAgentId) {
+      console.warn(
+        "[useContactPii] no tenant_agents match for the signed-in user — check that your tenant_agents row has agent_slug (or clerk_user_id) set correctly."
+      );
+      setError("Your agent account isn't linked to a tenant_agents record, so PII can't load. Contact an admin.");
+      return null;
     }
-    if (activityHandlerRef.current) {
-      window.removeEventListener("mousemove", activityHandlerRef.current);
-      window.removeEventListener("keydown", activityHandlerRef.current);
-      activityHandlerRef.current = null;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: rpcError } = await supabaseClient.rpc("decrypt_pii", {
+        p_contact_id: contactId,
+        p_requesting_agent_id: requestingAgentId,
+        p_action: "view",
+      });
+      if (rpcError) throw rpcError;
+      const fields = {};
+      for (const key of PII_FIELD_KEYS) {
+        if (data && key in data) fields[key] = data[key];
+      }
+      setPiiFields(fields);
+      return fields;
+    } catch (err) {
+      console.error("[useContactPii] load failed:", err);
+      setError(err.message || "Could not load PII.");
+      return null;
+    } finally {
+      setLoading(false);
     }
-  }, []);
-
-  const hide = useCallback(() => {
-    clearHideTimer();
-    setRevealed(false);
-    setPiiFields(null);
-  }, [clearHideTimer]);
-
-  const armAutoHide = useCallback(() => {
-    clearHideTimer();
-    const schedule = () => {
-      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = setTimeout(hide, PII_AUTO_HIDE_MS);
-    };
-    activityHandlerRef.current = schedule;
-    window.addEventListener("mousemove", schedule);
-    window.addEventListener("keydown", schedule);
-    schedule();
-  }, [clearHideTimer, hide]);
-
-  const reveal = useCallback(
-    async (action = "view") => {
-      if (!supabaseClient || !contactId) return null;
-      if (!requestingAgentId) {
-        console.warn(
-          "[useContactPii] no tenant_agents match for the signed-in user — check that your tenant_agents row has agent_slug (or clerk_user_id) set correctly."
-        );
-        setError("Your agent account isn't linked to a tenant_agents record, so PII can't be revealed. Contact an admin.");
-        return null;
-      }
-      setRevealing(true);
-      setError(null);
-      try {
-        const { data, error: rpcError } = await supabaseClient.rpc("decrypt_pii", {
-          p_contact_id: contactId,
-          p_requesting_agent_id: requestingAgentId,
-          p_action: action,
-        });
-        if (rpcError) throw rpcError;
-        const fields = {};
-        for (const key of PII_FIELD_KEYS) {
-          if (data && key in data) fields[key] = data[key];
-        }
-        setPiiFields(fields);
-        setRevealed(true);
-        armAutoHide();
-        return fields;
-      } catch (err) {
-        console.error("[useContactPii] reveal failed:", err);
-        setError(err.message || "Could not reveal PII.");
-        return null;
-      } finally {
-        setRevealing(false);
-      }
-    },
-    [supabaseClient, contactId, requestingAgentId, armAutoHide]
-  );
+  }, [supabaseClient, contactId, requestingAgentId]);
 
   const logCopy = useCallback(() => {
     if (!supabaseClient || !contactId || !requestingAgentId) return;
@@ -496,7 +458,7 @@ export function useContactPii(contactId, requestingAgentId) {
       });
   }, [supabaseClient, contactId, requestingAgentId]);
 
-  // Keep a locally-revealed field in sync with an edit the agent just
+  // Keep a locally-loaded field in sync with an edit the agent just
   // made, without another decrypt_pii round trip.
   const patchField = useCallback((field, value) => {
     setPiiFields((prev) => (prev ? { ...prev, [field]: value } : prev));
@@ -523,10 +485,9 @@ export function useContactPii(contactId, requestingAgentId) {
   );
 
   useEffect(() => {
-    hide();
-  }, [contactId, hide]);
+    setPiiFields(null);
+    load();
+  }, [contactId, requestingAgentId, load]);
 
-  useEffect(() => clearHideTimer, [clearHideTimer]);
-
-  return { piiFields, revealed, revealing, error, reveal, hide, logCopy, patchField, updatePiiField };
+  return { piiFields, loading, error, reload: load, logCopy, patchField, updatePiiField };
 }
