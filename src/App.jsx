@@ -507,8 +507,8 @@ function getTabsForMode(mode) {
   }
 
   tabs.push({ id: "operations", label: "CALLS" });
-  tabs.push({ id: "rts", label: "RTS" });
   tabs.push({ id: "contacts", label: "CONTACTS" });
+  tabs.push({ id: "rts", label: "RTS" });
   tabs.push({ id: "verse", label: "Daily Verse" });
 
   return tabs;
