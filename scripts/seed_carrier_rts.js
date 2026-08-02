@@ -9,6 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_CSV_PATH = path.resolve(
   __dirname,
   "..",
+  "docs",
   "NGHS_Master_Carrier_Matrix_RTS_Tracker.csv"
 );
 
