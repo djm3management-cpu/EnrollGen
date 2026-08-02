@@ -1,0 +1,53 @@
+Channel,Carrier,Product Line,Mike Shiomos - Status,Mike Shiomos - States,Mike Shiomos - Cert Date,Mike Shiomos - Notes,Mark Endres - Status,Mark Endres - States,Mark Endres - Cert Date,Mark Endres - Notes,Dylan Maria - Status,Dylan Maria - States,Dylan Maria - Cert Date,Dylan Maria - Notes
+SMS/Medigap Life,Aetna - Silverscript,Medicare (MA/MAPD/PDP),Active,Multi-state,07/10/2026,,Active,Multi-state (21 states),07/10/2026,"2026 MAPD, PartD cert",Active,Multi-state,07/10/2026,
+SMS/Medigap Life,Anthem/Elevance (Wellpoint),Medicare (MA/MAPD),Active,"AZ, FL, GA, KS, MO, NJ, TN, TX + more",07/10/2026,,Active,"AZ, FL, GA, MO, NJ, TN, TX + more",,2026 MAPD/Med Supp/PDP certs,Active,"FL, GA, NJ, TX",,
+SMS/Medigap Life,BCBS of TX (HCSC),Medicare,Active,TX,,,Active,TX,,2026 MAPD/Med Supp/PDP,,,,
+SMS/Medigap Life,Centene,Medicare,Active,Multi-state,,,Active,Multi-state (17 states),,"2026 ACT, AHIP",Active,Multi-state,,
+SMS/Medigap Life,Devoted Health,Medicare Advantage (MA/MAPD),Active,Multi-state,07/10/2026,,Active,Multi-state (11 states),07/10/2026,2026 MA cert,Active,Multi-state,07/10/2026,
+SMS/Medigap Life,HealthSpring HCSC (Cigna),Medicare,,,,Agency not setup,,,,Needs contract,,,,Needs contract
+SMS/Medigap Life,Humana,Medicare,,,,Contract terminated; agency setup not available,,,,SCD Hierarchy issue,,,,Needs contract
+SMS/Medigap Life,United Healthcare,Medicare (MA/MAPD/Med Sup/PDP),Active,Multi-state,,No individual login found,Active,Multi-state (14 states),07/10/2026,2026 Chronic SNP/Dual SNP/MA/MAPD/Med Sup/PDP,Active,Multi-state,07/10/2026,
+SMS/Medigap Life,WellCare,Medicare,Active,Multi-state,07/24/2026,,Active,Multi-state (17 states),07/24/2026,,Active,Multi-state,07/24/2026,
+SMS/Medigap Life,Zing Health,Medicare Advantage (MA/MAPD),Active,Multi-state,07/10/2026,,Active,Multi-state (16 states),,2026 Zing cert,,,,Account frozen
+SMS/Medigap Life,AHIP,Certification,Complete,,07/10/2026,,Complete,,07/10/2026,,Complete,,07/10/2026,
+SMS/Medigap Life,Aetna (AHLIC/AHIC/Accendo/American Continental),Medicare Supplement / Final Expense,Active,Multi-state,,,,,,,Active,"AR,DE,FL,GA,MI,NJ,PA,TX,VA",,
+SMS/Medigap Life,Continental Life,Medicare Supplement / LTC / Health,Active,Multi-state,,,,,,,Active,Multi-state,,
+SMS/Medigap Life,GPM Health and Life,Medicare Supplement,Active,Multi-state,,,Active,Multi-state (16 states),,,,,,
+SMS/Medigap Life,Mutual of Omaha,Medicare Supplement / Dental / Hospital Indemnity / LTC / Accidental Death / CHAS,Active,Multi-state,,,Active,Multi-state (20 states),,,Active,Multi-state (9 states),,
+SMS/Medigap Life,Nassau,Medicare Supplement,Submitted,,,,Submitted,AL,,,Submitted,,,
+SMS/Medigap Life,Omaha Insurance Company,Medicare Supplement,Active,Multi-state,,,Active,Multi-state (20 states),,,Active,Multi-state,,
+SMS/Medigap Life,United of Omaha,Medicare Supplement / Life / IUL / Term / SPIA,Active,Multi-state,,,Active,Multi-state (20 states),,,Active,Multi-state (9 states),,
+SMS/Medigap Life,United World,Medicare Supplement,Active,Multi-state,,,Active,Multi-state (20 states),,,Active,Multi-state,,
+SMS/Medigap Life,OSIC (Omaha Supplemental),Medicare Supplement,Active,Multi-state,,,Active,Multi-state (20 states),,,Active,Multi-state (9 states),,
+SMS/Medigap Life,Principal Life,Life,Active,Multi-state,,,Active,Multi-state (20 states),,,,,,
+SMS/Medigap Life,Corebridge Financial,Life / GIWL,Active,Multi-state,,,,,,,Active,Multi-state,,
+SMS/Medigap Life,Liberty Bankers (Supplemental Health),Health,Active,Multi-state,,,Active,Multi-state (20 states),,,Active,Multi-state,,
+SMS/Medigap Life,Ameritas,Dental,Active,Multi-state,,,,,,,Active,Multi-state,,
+SMS/Medigap Life,UOO (Legacy Safeguard),Final Expense,Active,Multi-state,,,Active,Multi-state (20 states),,,Active,Multi-state,,
+SMS/Medigap Life,Aetna (ACA),ACA,Active,"DE,FL,GA,KS,NC,TX",,,Active,"AZ,FL,GA,IN,KS,MO,NC,OH,TX",,,,,,
+SMS/Medigap Life,Ambetter,ACA,Active,"AL,FL,GA,MS,NC,PA,SC,TN,TX",,,Active,"AL,AZ,FL,GA,IN,LA,KS,MS,NC,OH,OK,SC,TN,TX",,,,,,
+SMS/Medigap Life,AmeriHealth Caritas (ACA),ACA,Active,"DE,FL,NC,SC",,,Active,"FL,NC,SC",,,,,,
+SMS/Medigap Life,BCBS (ACA - AZ/TN/TX/IL/MT/OK),ACA,Active,"NC (cert submitted), TN, TX",,,Active,"AZ,OK,TN,TX + NC pending",,,,,,
+SMS/Medigap Life,CareSource (ACA),ACA,Active,"GA,NC",,,Active,"GA,IN,NC,OH",,,,,,
+SMS/Medigap Life,Cigna (ACA),ACA,Active,"FL,GA,MS,SC,TN,TX",,,Active,"FL,GA,KS,MS,NC,TN",,,,,,
+SMS/Medigap Life,Highmark (ACA - DE/WV),ACA,Requested,DE,,,,,,N/a,,,,
+SMS/Medigap Life,Molina (ACA),ACA,Active,"FL,MS,SC,TX",,,Active,"FL,MS,OH,SC,TX",,,,,,
+SMS/Medigap Life,Oscar (ACA),ACA,Active,"FL,GA,KS,NC,NJ,TN,TX",,,Active,"AZ,FL,GA,KS,MO,NC,NJ,OH,OK,TN,TX",,,,,,
+SMS/Medigap Life,UHC (ACA),ACA,,,,Transfer denied; Blackout period,Active,"AL,AZ,FL,GA,IN,KS,MS,MO,NJ,NC,OH,OK,SC,TN,TX",,,,,,
+SMS/Medigap Life,UHOne,ACA,Active,,,,Active,,,,,,,
+SMS/Medigap Life,Anthem (ACA - GA),ACA,Active,GA,,,"Active (GA), Awaiting payment",GA,,,,,,
+SMS/Medigap Life,Wellpoint (ACA - FL/MD/TX),ACA,,,,,Requested,"FL,TX",,,,,,
+Savoy/RPS,AmeriHealth (ACA),ACA,Active,NJ,,Appointed 5/6/26; ROAM access granted; Username: 06853mshio1,Pending,NJ,,Awaiting downline contract from Savoy,Pending,NJ,,Awaiting downline contract from Savoy
+Savoy/RPS,IBX / Independence Blue Cross (ACA),ACA,Active,PA,,Appointed 5/6/26; ROAM access granted; Username: 06853mshio,Pending,PA,,Awaiting downline contract from Savoy,Pending,PA,,Awaiting downline contract from Savoy
+Savoy/RPS,Horizon BCBS (ACA),ACA,Active,NJ,,Onboarded via Miramar; PIN 2026HNJM823,Pending,NJ,,Awaiting downline setup,Pending,NJ,,Awaiting downline setup
+Savoy/RPS,Highmark (ACA),ACA,Pending,PA,,Contracting link sent by Savoy licensing,Pending,PA,,,,,,
+Savoy/RPS,Jefferson Health (ACA),ACA,Pending,PA,,Certification PDF provided by Savoy,Pending,PA,,,,,,
+Savoy/RPS,Horizon BCBS / Braven (Medicare),Medicare (MAPD + Med Sup),Certified,NJ,07/16/2026,Cert complete via Miramar (337HMA2026SavoyPlan); awaiting RTS in portal,Certified,NJ,07/16/2026,Cert complete; awaiting RTS,Certified,NJ,07/16/2026,Cert complete; awaiting RTS
+Savoy/RPS,AmeriHealth (Medicare),Medicare (MAPD),Contract Submitted,NJ,,IBC/AmeriHealth Level 6 form submitted 7/16/26,Pending,NJ,,Awaiting Mike's contract processing,Pending,NJ,,Awaiting Mike's contract processing
+Savoy/RPS,IBC BCBS (Medicare),Medicare (MAPD + Med Sup),Contract Submitted,PA,,IBC Level 6 form submitted 7/16/26,Pending,PA,,Awaiting Mike's contract processing,Pending,PA,,Awaiting Mike's contract processing
+Savoy/RPS,Clover (Medicare),Medicare (MAPD),Blackout,NJ/PA,,Not accepting new contracts,Blackout,NJ/PA,,,Blackout,NJ/PA,,
+Savoy/RPS,Aetna (Med Sup via Savoy),Medicare Supplement,Available,NJ/PA,,Available through Savoy; not yet contracted,,,,,,,,
+Savoy/RPS,Cigna (Med Sup via Savoy),Medicare Supplement,Available,NJ/PA,,Available through Savoy; not yet contracted,,,,,,,,
+Savoy/RPS,Humana (Med Sup via Savoy),Medicare Supplement,Available,NJ/PA,,Available through Savoy; not yet contracted,,,,,,,,
+Savoy/RPS,UHC/AARP (Med Sup via Savoy),Medicare Supplement,Available,NJ/PA,,Available through Savoy; not yet contracted,,,,,,,,
+EnrollPrime / O'Neill,EnrollPrime (MedMax / MedPerformance),U65 Off-Exchange,RTS,All licensed states,,All products via single enrollment portal,RTS,All licensed states,,,RTS,All licensed states,,
