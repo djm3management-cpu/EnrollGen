@@ -27,7 +27,7 @@ import SmsToastHost from "./components/SmsToastHost";
 import { setPendingCallContact } from "./lib/callLaunch";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
-import { BookOpen, SquareTerminal, Sun } from "lucide-react";
+import { BookOpen, SquareTerminal, Sun, TableProperties } from "lucide-react";
 import { useTheme } from "./context/ThemeContext";
 import {
   LeftRail,
@@ -58,6 +58,7 @@ const loadTenantSettings = () => import("./components/TenantSettings");
 const loadOnboarding = () => import("./components/Onboarding");
 const loadSEPQualifier = () => import("./components/leftRail/SEPQualifier");
 const loadAuthenticatedStyleGate = () => import("./components/AuthenticatedStyleGate");
+const loadRTSTab = () => import("./components/RTSTab");
 
 const LandingPage = lazy(loadLandingPage);
 const ScriptFlow = lazy(loadScriptFlow);
@@ -82,6 +83,7 @@ const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
 const SEPQualifier = lazy(loadSEPQualifier);
 const AuthenticatedStyleGate = lazy(loadAuthenticatedStyleGate);
+const RTSTab = lazy(loadRTSTab);
 const SYSTEM_FONT_STACK = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const SYSTEM_MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
@@ -505,6 +507,7 @@ function getTabsForMode(mode) {
   }
 
   tabs.push({ id: "operations", label: "CALLS" });
+  tabs.push({ id: "rts", label: "RTS" });
   tabs.push({ id: "contacts", label: "CONTACTS" });
   tabs.push({ id: "verse", label: "Daily Verse" });
 
@@ -522,6 +525,8 @@ function AppShell({ currentUser = null }) {
   const inbound = useInboundCall();
   const sessionActive = Boolean(liveCall?.callStarted);
   const { total: unreadMessageTotal } = useUnreadMessages();
+  const { supabaseClient } = useTenantConfig();
+  const [rtsNeedsAttention, setRtsNeedsAttention] = useState(false);
 
   const {
     railWidth,
@@ -567,6 +572,39 @@ function AppShell({ currentUser = null }) {
       setOpenPanel(null);
     });
   }, [inboundActiveCall]);
+
+  useEffect(() => {
+    if (!supabaseClient || !currentUser?.id) {
+      setRtsNeedsAttention(false);
+      return undefined;
+    }
+
+    let active = true;
+    const refreshAttention = async () => {
+      const { data, error } = await supabaseClient
+        .from("carrier_rts")
+        .select("id")
+        .eq("clerk_user_id", currentUser.id)
+        .in("status", ["Pending", "Needs Action"])
+        .limit(1);
+      if (active && !error) setRtsNeedsAttention(Boolean(data?.length));
+    };
+
+    refreshAttention();
+    const channel = supabaseClient
+      .channel(`carrier-rts-attention-${currentUser.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "carrier_rts" },
+        refreshAttention
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabaseClient.removeChannel(channel);
+    };
+  }, [currentUser?.id, supabaseClient]);
 
   useEffect(() => {
     document.body.dataset.bgMode = "wallpaper";
@@ -686,6 +724,10 @@ function AppShell({ currentUser = null }) {
     }
     if (panelId === "operations") {
       loadCallLogTab();
+      return;
+    }
+    if (panelId === "rts") {
+      loadRTSTab();
       return;
     }
     if (panelId === "contacts") {
@@ -876,6 +918,12 @@ function AppShell({ currentUser = null }) {
             />
           </LazyPanel>
         );
+      case "rts":
+        return (
+          <LazyPanel>
+            <RTSTab />
+          </LazyPanel>
+        );
       case "settings":
         return (
           <LazyPanel>
@@ -979,11 +1027,19 @@ function AppShell({ currentUser = null }) {
               >
                 {tab.id === "verse" ? (
                   <BookOpen size={15} strokeWidth={2} aria-hidden="true" />
+                ) : tab.id === "rts" ? (
+                  <>
+                    <TableProperties size={14} strokeWidth={2} aria-hidden="true" />
+                    <span>{tab.label}</span>
+                  </>
                 ) : (
                   tab.label
                 )}
                 {tab.id === "contacts" && unreadMessageTotal > 0 && activeTabId !== "contacts" ? (
                   <span className="top-bar-tab-badge">{unreadMessageTotal}</span>
+                ) : null}
+                {tab.id === "rts" && rtsNeedsAttention ? (
+                  <span className="top-bar-rts-dot" title="RTS items need attention" />
                 ) : null}
               </button>
             ))}

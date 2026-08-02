@@ -15777,3 +15777,18 @@ body[data-bg-mode="classic"] .viewport-bg {
   .rts-mobile-agent-1 .rts-carrier-row td:nth-child(n + 7):nth-child(-n + 10),
   .rts-mobile-agent-2 .rts-carrier-row td:nth-child(n + 11):nth-child(-n + 14) { display: table-cell; }
 }
+
+.top-bar-tab[data-tab-id="rts"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.top-bar-rts-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--status-pending);
+  box-shadow: 0 0 6px var(--status-pending);
+}
