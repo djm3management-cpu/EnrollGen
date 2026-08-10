@@ -43,7 +43,10 @@
       "mcp__ghl-mcp__opportunities_search-opportunity",
       "Bash(python3 -c ' *)",
       "mcp__ghl-mcp__opportunities_update-opportunity",
-      "mcp__ghl-mcp__conversations_search-conversation"
+      "mcp__ghl-mcp__conversations_search-conversation",
+      "Bash(npx eslint *)",
+      "Bash(timeout 30 bash -c 'until curl -sf http://localhost:5173 >/dev/null 2>&1 || curl -sf http://localhost:3000 >/dev/null 2>&1; do sleep 1; done')",
+      "Bash(echo \"exit: $?\")"
     ]
   },
   "enableAllProjectMcpServers": true,

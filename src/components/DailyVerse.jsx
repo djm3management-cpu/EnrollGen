@@ -32,6 +32,10 @@ import {
 } from "../data/dailyVerseSelections";
 import { VERSE_THEMES, pickRandomVerseForTheme } from "../data/verseThemes";
 import { fetchBibliaContent } from "../lib/bibliaApi";
+import {
+  fetchOriginalLanguageVerse,
+  strongsLexiconUrl,
+} from "../lib/originalLanguageApi";
 import { getCrossReferences } from "../data/verseCrossReferences";
 
 const TRANSLATIONS = [
@@ -55,22 +59,16 @@ const ORIGINAL_SOURCE = {
     module: "wlc",
     label: "Westminster Leningrad Codex",
     shortLabel: "WLC Hebrew",
-    blbVersion: "WLC",
   },
   NT: {
     module: "tr",
     label: "Textus Receptus",
     shortLabel: "TR Greek",
-    blbVersion: "MGNT",
   },
 };
 
 const STORAGE_STREAK = "enrollgen.dv.streak";
 const STORAGE_FAVS = "enrollgen.dv.favorites";
-
-function normalizeOriginalText(text = "") {
-  return text.replace(/\s+/g, " ").trim();
-}
 
 function todayKey(now = new Date()) {
   const year = now.getFullYear();
@@ -148,7 +146,7 @@ function buildContextReference(ref, pad = 2) {
   return `${parsed.book} ${parsed.chapter}:${start}-${end}`;
 }
 
-function blbUrl(word, version) {
+function blbSearchUrl(word, version) {
   return `https://www.blueletterbible.org/search/preSearch.cfm?Criteria=${encodeURIComponent(
     word
   )}&t=${version}`;
@@ -295,26 +293,16 @@ export default function DailyVerse() {
     }
 
     const controller = new AbortController();
-    const source = ORIGINAL_SOURCE[testament];
 
     async function fetchOriginalVerse() {
       setOriginalLoading(true);
       setOriginalVerse(null);
       try {
-        const params = new URLSearchParams({
-          bible: source.module,
-          reference,
-          data_format: "minimal",
-          markup: "none",
+        const data = await fetchOriginalLanguageVerse(reference, {
+          signal: controller.signal,
+          englishText: verse?.text,
         });
-        const res = await fetch(
-          `https://puredove.ca/path/to/biblesupersearch_api/public/api?${params.toString()}`,
-          { signal: controller.signal }
-        );
-        if (!res.ok) throw new Error("Original language API error");
-        const data = await res.json();
-        const text = data?.results?.[source.module]?.[0]?.text;
-        setOriginalVerse(text ? normalizeOriginalText(text) : null);
+        setOriginalVerse(data?.words?.length ? data : null);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Original verse fetch failed", err);
@@ -330,7 +318,7 @@ export default function DailyVerse() {
     fetchOriginalVerse();
 
     return () => controller.abort();
-  }, [bookData?.testament, verse?.reference]);
+  }, [bookData?.testament, verse?.reference, verse?.text]);
 
   /* parallel translation fetch with WEB fallback for gaps */
   useEffect(() => {
@@ -627,8 +615,7 @@ export default function DailyVerse() {
   }, [verse?.reference]);
 
   const originalWords = useMemo(() => {
-    if (!originalVerse) return [];
-    return originalVerse.split(/\s+/).filter(Boolean);
+    return originalVerse?.words || [];
   }, [originalVerse]);
 
   return (
@@ -910,30 +897,57 @@ export default function DailyVerse() {
                   <span>{originalSource.label}</span>
                   <span className="dv-original-tag">{originalSource.shortLabel}</span>
                 </div>
-                <p className={`dv-original-text${isOT ? " is-hebrew" : ""}`}>
+                <div
+                  className={`dv-original-text dv-original-interlinear${
+                    isOT ? " is-hebrew" : ""
+                  }`}
+                >
                   {originalLoading ? (
                     "Loading original text..."
                   ) : originalWords.length > 0 ? (
-                    originalWords.map((word, i) => (
-                      <span key={`${word}-${i}`}>
+                    originalWords.map((word, i) => {
+                      const strongsUrl = strongsLexiconUrl(word.strong);
+                      const wordUrl =
+                        strongsUrl ||
+                        blbSearchUrl(
+                          word.text,
+                          isOT ? "WLC" : "MGNT"
+                        );
+                      return (
                         <a
+                          key={`${word.text}-${word.strong || i}-${i}`}
                           className="dv-original-word"
-                          href={blbUrl(word, originalSource.blbVersion)}
+                          href={wordUrl}
                           target="_blank"
                           rel="noreferrer"
-                          title={`Study "${word}" on Blue Letter Bible`}
+                          title={
+                            word.strong
+                              ? `${word.gloss} · ${word.strong} · Open Strong's lexicon`
+                              : `Study "${word.text}" on Blue Letter Bible`
+                          }
                         >
-                          {word}
+                          <span className="dv-original-script">{word.text}</span>
+                          <span className="dv-original-gloss">{word.gloss}</span>
                         </a>
-                        {i < originalWords.length - 1 ? " " : ""}
-                      </span>
-                    ))
+                      );
+                    })
                   ) : (
                     "Original text unavailable for this verse."
                   )}
-                </p>
+                </div>
                 <span className="dv-original-hint">
-                  Tap any word to study it on Blue Letter Bible
+                  Tap a word for Strong&apos;s · Word data by{" "}
+                  {originalVerse?.creditUrl ? (
+                    <a
+                      href={originalVerse.creditUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {originalVerse.credit}
+                    </a>
+                  ) : (
+                    originalVerse?.credit
+                  )}
                 </span>
               </div>
             )}
