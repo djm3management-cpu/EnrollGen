@@ -25,8 +25,6 @@ import {
   U65_OPENER_VARIANTS,
 } from "./U65Data";
 
-const LAST_SCREEN_INDEX = U65_GATES.length - 1;
-
 function firstValue(source, keys) {
   for (const key of keys) {
     const value = source?.[key];
@@ -556,7 +554,7 @@ function ScreenSection({
   );
 }
 
-function ObjectionOverlay({ open, onClose, returnFocusRef }) {
+function ObjectionOverlay({ open, onClose, returnFocusRef, objections }) {
   const closeButtonRef = useRef(null);
 
   useEffect(() => {
@@ -612,7 +610,7 @@ function ObjectionOverlay({ open, onClose, returnFocusRef }) {
               </button>
             </div>
             <div className="u65-nepq-objection-modal__body">
-              {U65_OBJECTIONS.map((objection) => (
+              {objections.map((objection) => (
                 <div className="u65-nepq-objection-step" key={objection.step}>
                   <div className="u65-nepq-objection-step__label">
                     <span>{objection.step}</span>
@@ -633,8 +631,14 @@ function ObjectionOverlay({ open, onClose, returnFocusRef }) {
   );
 }
 
-export default function U65Flow() {
-  const screens = useU65TemplateScreens();
+export default function U65Flow({
+  providedScreens = null,
+  flowTitle = "U65",
+  objections = U65_OBJECTIONS,
+}) {
+  const templateScreens = useU65TemplateScreens();
+  const screens = providedScreens || templateScreens;
+  const lastScreenIndex = screens.length - 1;
   const [pendingLead] = useState(() => consumePendingCallContact());
   const leadData = useMemo(
     () => ({
@@ -699,7 +703,7 @@ export default function U65Flow() {
 
   const goNext = () => {
     const nextIndex = currentScreenIndex + 1;
-    if (currentScreenIndex === LAST_SCREEN_INDEX) {
+    if (currentScreenIndex === lastScreenIndex) {
       setComplete(true);
       return;
     }
@@ -729,6 +733,7 @@ export default function U65Flow() {
         open={objectionsOpen}
         onClose={() => setObjectionsOpen(false)}
         returnFocusRef={objectionButtonRef}
+        objections={objections}
       />
 
       {!complete ? (
@@ -800,8 +805,8 @@ export default function U65Flow() {
               className="u65-nepq-nav__button is-next"
               onClick={goNext}
             >
-              {currentScreenIndex === LAST_SCREEN_INDEX ? "Complete" : "Next"}
-              {currentScreenIndex === LAST_SCREEN_INDEX ? (
+              {currentScreenIndex === lastScreenIndex ? "Complete" : "Next"}
+              {currentScreenIndex === lastScreenIndex ? (
                 <Check size={14} aria-hidden="true" />
               ) : (
                 <ArrowRight size={14} aria-hidden="true" />
@@ -816,17 +821,19 @@ export default function U65Flow() {
           animate={{ opacity: 1, y: 0 }}
         >
           <Check size={24} aria-hidden="true" />
-          <h2>U65 Flow Complete</h2>
-          <p>All five NEPQ screens are complete.</p>
+          <h2>{flowTitle} Flow Complete</h2>
+          <p>
+            All {screens.length} {screens.length === 1 ? "screen is" : "screens are"} complete.
+          </p>
           <div className="u65-nepq-complete__actions">
             <button
               type="button"
               onClick={() => {
                 setComplete(false);
-                setCurrentScreenIndex(LAST_SCREEN_INDEX);
+                setCurrentScreenIndex(lastScreenIndex);
               }}
             >
-              Back to Screen 5
+              Back to {screens[lastScreenIndex]?.shortLabel || "Last Screen"}
             </button>
             <button type="button" onClick={resetFlow}>New Call</button>
           </div>

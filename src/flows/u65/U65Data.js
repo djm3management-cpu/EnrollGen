@@ -124,6 +124,29 @@ export const U65_OBJECTIONS = [
   },
 ];
 
+export const U65_SMALL_BUSINESS_OBJECTIONS = [
+  {
+    step: 1,
+    label: "I already have a guy",
+    text: '"Most owners I talk to do. I\'m not asking you to fire anybody, I\'m asking if he\'s shown you what the other 99 carriers look like this year. If I can\'t beat what you\'ve got, I\'ll tell you that on the first call and you\'ve lost nothing."',
+  },
+  {
+    step: 2,
+    label: "Can't afford benefits",
+    text: '"That\'s exactly the setup I mentioned. You pick the number, even a couple hundred a month per guy, and it\'s fixed. It never jumps on you at renewal because it\'s your budget, not the carrier\'s."',
+  },
+  {
+    step: 3,
+    label: "Send me something",
+    text: '"Happy to, but anything I send blind is generic and you\'ll trash it. Give me thirty seconds of basics and what I send will have your actual numbers on it. Fair?"',
+  },
+  {
+    step: 4,
+    label: "Too busy",
+    text: '"I get it, you\'re running crews. That\'s why I do this in fifteen minutes, not a lunch meeting. What\'s better, early morning before dispatch or end of day?"',
+  },
+];
+
 const SPOKEN = (text) => ({ type: "spoken", text });
 const HINT = (text, tone) => ({ type: "hint", text, tone });
 const CALLOUT = (label, items, options = {}) => ({
@@ -461,6 +484,190 @@ const U65_SCREENS = [
   },
 ];
 
+const U65_SMALL_BUSINESS_SCREENS = [
+  {
+    id: "u65-small-business-gate-1",
+    num: 0,
+    code: "G01",
+    key: "smallBusinessGate1Ok",
+    label: "Connect + Situation",
+    shortLabel: "Connect",
+    groups: [
+      {
+        title: "Connect + Situation",
+        blocks: [
+          SPOKEN(
+            '"Hey [Owner Name], this is [Agent First Name] with New Gen Health Solutions, local health insurance agency out of Mt. Laurel. Quick question for you. Are you guys currently offering any kind of health benefits to your crew, or is that something your employees are handling on their own right now?"'
+          ),
+          {
+            type: "branch-set",
+            branches: [
+              {
+                label: "They have coverage",
+                badge: "FOLLOW UP",
+                items: [
+                  SPOKEN(
+                    '"Got it. Are you happy with what you\'re paying, or has that been creeping up on you at renewal?"'
+                  ),
+                ],
+              },
+              {
+                label: "No coverage",
+                badge: "FOLLOW UP",
+                items: [
+                  SPOKEN(
+                    '"That\'s actually why I\'m calling. Are you finding it\'s getting harder to keep good guys without being able to offer something?"'
+                  ),
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    gate: "Connection and current benefits situation established",
+  },
+  {
+    id: "u65-small-business-gate-2",
+    num: 1,
+    code: "G02",
+    key: "smallBusinessGate2Ok",
+    label: "Problem + Consequence",
+    shortLabel: "Problem",
+    groups: [
+      {
+        title: "Problem + Consequence",
+        blocks: [
+          SPOKEN(
+            '"So if I\'m hearing you right, [restate their words: renewals keep jumping / can\'t compete for techs / guys are walking around uninsured]. How long has that been going on?"'
+          ),
+          HINT("Pause. Let them talk."),
+          SPOKEN(
+            '"And if nothing changes, what does that look like a year or two from now?"'
+          ),
+          CALLOUT(
+            'Fallback if they say "it\'s fine" or "we\'re good"',
+            [
+              SPOKEN(
+                '"Fair enough. Out of curiosity, when a good tech leaves for a shop that does offer benefits, what does it cost you to replace him? Between the ad, the ramp-up time, the jobs that slip?"'
+              ),
+            ],
+            { tone: "conditional" }
+          ),
+          HINT(
+            "Goal: owner states the cost of doing nothing in his own words. Do not pitch yet."
+          ),
+        ],
+      },
+    ],
+    gate: "Owner has verbalized the problem and cost of doing nothing",
+  },
+  {
+    id: "u65-small-business-gate-3",
+    num: 2,
+    code: "G03",
+    key: "smallBusinessGate3Ok",
+    label: "Direction + Close",
+    shortLabel: "Close",
+    groups: [
+      {
+        title: "Direction + Close",
+        blocks: [
+          SPOKEN(
+            '"Makes sense. So we work with over 100 carriers, and for a shop your size this usually goes one of two directions. Either a true group plan, or a setup where you put in a set amount per employee and each guy picks his own coverage. Depending on your ages, one of those usually makes a lot more sense than the other. I can pull real numbers for you today. Want me to run it while I\'ve got you, or is it easier to grab fifteen minutes when you\'ve got your roster in front of you?"'
+          ),
+          {
+            type: "branch-set",
+            branches: [
+              {
+                label: "Run it now",
+                badge: "GO TO G04",
+                tone: "continue",
+                items: [HINT("Continue directly to G04 Census Capture.")],
+              },
+              {
+                label: "Book it",
+                badge: "LOCK IT IN",
+                items: [
+                  HINT(
+                    "Lock the date and time, confirm the owner attends, get an email, and tell him you'll text a short form to fill out before the meeting so the numbers are ready when you sit down. Then still do G04's link step."
+                  ),
+                ],
+              },
+              {
+                label: "Solo operator / 1099s only",
+                badge: "STANDARD U65",
+                tone: "switch",
+                items: [
+                  HINT(
+                    "Skip census talk and quote him individually in the product selector. This is a standard U65 sale."
+                  ),
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    gate: "Next step selected and close completed",
+  },
+  {
+    id: "u65-small-business-gate-4",
+    num: 3,
+    code: "G04",
+    key: "smallBusinessGate4Ok",
+    label: "Census Capture",
+    shortLabel: "Census",
+    groups: [
+      {
+        title: "Census Capture",
+        blocks: [
+          SPOKEN(
+            '"Perfect. All I need to run this is the basics on whoever would be on the plan. For each person: date of birth, ZIP code, and whether they use tobacco. No names, no socials, nothing sensitive. How many people are we talking?"'
+          ),
+          {
+            type: "capture",
+            field: "headcount",
+            label: "HEADCOUNT",
+            required: true,
+          },
+          SPOKEN(
+            '"[X] guys, easy. If you\'ve got that in your head we\'ll knock it out right now. If not, I\'ll text you a link, you fill it in from your phone tonight, and I\'ll have numbers for you by tomorrow morning. Which is easier?"'
+          ),
+          {
+            type: "branch-set",
+            branches: [
+              {
+                label: "On the call",
+                badge: "ENTER CENSUS",
+                tone: "continue",
+                items: [
+                  HINT(
+                    "Enter each person into the census panel as he reads them off."
+                  ),
+                ],
+              },
+              {
+                label: "Text the link",
+                badge: "SEND + FOLLOW UP",
+                items: [
+                  HINT(
+                    "Send the GHL census form, set a follow-up task for the next morning, and move the card to Proposal stage when the form lands."
+                  ),
+                ],
+              },
+            ],
+          },
+          HINT(
+            "Family enrollments on EnrollPrime products: quote off the youngest person on the application."
+          ),
+        ],
+      },
+    ],
+    gate: "Census captured or census link sent with follow-up scheduled",
+  },
+];
+
 function collectScreenText(screen) {
   const script = [];
   const directions = [];
@@ -510,3 +717,10 @@ export const U65_GATES = U65_SCREENS.map((screen) => ({
   ...screen,
   ...collectScreenText(screen),
 }));
+
+export const U65_SMALL_BUSINESS_GATES = U65_SMALL_BUSINESS_SCREENS.map(
+  (screen) => ({
+    ...screen,
+    ...collectScreenText(screen),
+  })
+);
