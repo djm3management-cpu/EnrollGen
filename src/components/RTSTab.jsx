@@ -10,7 +10,6 @@ import {
 import { useTenantConfig } from "../hooks/useTenantConfig";
 import { supabase } from "../lib/supabase";
 
-const MIKE_USER_ID = "user_3gFFufXZKbXCjVdE5UU8zQU2Tb6";
 const AGENTS = [
   { name: "Michael Shiomos", short: "Mike S.", mobile: "Mike", npn: "20574678" },
   { name: "Mark Endres", short: "Mark E.", mobile: "Mark", npn: "20856361" },
@@ -49,18 +48,13 @@ function statusTone(status) {
   return "empty";
 }
 
-function isAdmin(user) {
-  const role = user?.publicMetadata?.role || user?.organizationMemberships?.[0]?.role;
-  return (
-    user?.id === MIKE_USER_ID ||
-    role === "admin" ||
-    role === "org:admin" ||
-    user?.publicMetadata?.isAdmin === true
+function canEditRow(row, currentAgent) {
+  return Boolean(
+    row &&
+      currentAgent &&
+      (currentAgent.role === "admin" ||
+        row.clerk_user_id === currentAgent.clerk_user_id)
   );
-}
-
-function canEditRow(row, user, admin) {
-  return Boolean(row && (admin || row.clerk_user_id === user?.id));
 }
 
 function pivotRows(rows) {
@@ -200,18 +194,19 @@ function SortButton({ label, sortKey, agentName, sort, onSort }) {
 
 export default function RTSTab() {
   const { user } = useUser();
-  const { supabaseClient } = useTenantConfig();
+  const { agents, supabaseClient } = useTenantConfig();
   const client = supabaseClient || supabase;
-  const admin = isAdmin(user);
+  const currentAgent = useMemo(
+    () => agents.find((agent) => agent.clerk_user_id === user?.id) || null,
+    [agents, user?.id]
+  );
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [channelFilter, setChannelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [mobileAgent, setMobileAgent] = useState(() => {
-    return AGENTS.find((agent) => rows.find((row) => row.clerk_user_id === user?.id)?.agent_name === agent.name)?.name || AGENTS[0].name;
-  });
+  const [mobileAgent, setMobileAgent] = useState(AGENTS[0].name);
   const [collapsed, setCollapsed] = useState({});
   const [sort, setSort] = useState({ key: "carrier", agentName: "", direction: "asc" });
   const [savingCells, setSavingCells] = useState({});
@@ -262,11 +257,11 @@ export default function RTSTab() {
   }, [client]);
 
   useEffect(() => {
-    const ownRow = rows.find((row) => row.clerk_user_id === user?.id);
-    if (ownRow && AGENTS.some((agent) => agent.name === ownRow.agent_name)) {
-      setMobileAgent(ownRow.agent_name);
+    const rosterAgent = AGENTS.find((agent) => agent.npn === currentAgent?.npn);
+    if (rosterAgent) {
+      setMobileAgent(rosterAgent.name);
     }
-  }, [rows, user?.id]);
+  }, [currentAgent?.npn]);
 
   const saveCell = async (row, field, value) => {
     const cellKey = `${row.id}:${field}`;
@@ -276,12 +271,26 @@ export default function RTSTab() {
       current.map((item) => (item.id === row.id ? { ...item, [field]: value } : item))
     );
 
-    const { data, error: updateError } = await client
-      .from("carrier_rts")
-      .update({ [field]: value })
-      .eq("id", row.id)
-      .select("*")
-      .single();
+    let updatedRow = null;
+    let updateError = null;
+
+    try {
+      const { data, error: writeError } = await client
+        .from("carrier_rts")
+        .update({ [field]: value })
+        .eq("id", row.id)
+        .select("*");
+
+      if (writeError) throw writeError;
+      if (data.length === 0) {
+        throw new Error(
+          `RTS authorization/identity error: Clerk user ${user?.id || "(missing)"} cannot update this carrier row.`
+        );
+      }
+      updatedRow = data[0];
+    } catch (error) {
+      updateError = error;
+    }
 
     setSavingCells((current) => {
       const next = { ...current };
@@ -297,7 +306,7 @@ export default function RTSTab() {
       return;
     }
 
-    setRows((current) => current.map((item) => (item.id === row.id ? data : item)));
+    setRows((current) => current.map((item) => (item.id === row.id ? updatedRow : item)));
     setSavedCells((current) => ({ ...current, [cellKey]: true }));
     window.setTimeout(() => {
       setSavedCells((current) => {
@@ -364,7 +373,7 @@ export default function RTSTab() {
       <EditableCell
         row={agentRow}
         field={field}
-        allowed={canEditRow(agentRow, user, admin)}
+        allowed={canEditRow(agentRow, currentAgent)}
         saving={Boolean(savingCells[key])}
         saved={Boolean(savedCells[key])}
         onSave={(value) => saveCell(agentRow, field, value)}

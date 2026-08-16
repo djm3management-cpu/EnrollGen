@@ -17,20 +17,20 @@ const AGENTS = [
   {
     csvName: "Mike Shiomos",
     agent_name: "Michael Shiomos",
+    agent_slug: "mike_shiomos",
     agent_npn: "20574678",
-    clerk_user_id: "user_3gFFufXZKbXCjVdE5UU8zQU2Tb6",
   },
   {
     csvName: "Mark Endres",
     agent_name: "Mark Endres",
+    agent_slug: "mark_endres",
     agent_npn: "20856361",
-    clerk_user_id: "user_3gFFlGGE5HZZ5J9ZmxYOVCPF3g",
   },
   {
     csvName: "Dylan Maria",
     agent_name: "Dylan Maria",
+    agent_slug: "dylan_maria",
     agent_npn: "22167358",
-    clerk_user_id: "user_3gFFhXnKnpfRashPqAFkcbfGe6M",
   },
 ];
 
@@ -48,7 +48,7 @@ function clean(value) {
   return String(value ?? "").trim();
 }
 
-function buildRows(records) {
+function buildRows(records, agents) {
   return records.flatMap((record, index) => {
     const channel = clean(record.Channel);
     const carrier = clean(record.Carrier);
@@ -95,12 +95,34 @@ async function main() {
     throw new Error(`Unable to parse CSV: ${details}`);
   }
 
-  const rows = buildRows(parsed.data);
   const supabase = createClient(
     requiredEnv("SUPABASE_URL", "VITE_SUPABASE_URL"),
     requiredEnv("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_KEY"),
     { auth: { persistSession: false, autoRefreshToken: false } }
   );
+
+  const { data: tenantAgents, error: agentError } = await supabase
+    .from("tenant_agents")
+    .select("agent_slug, clerk_user_id")
+    .in("agent_slug", AGENTS.map((agent) => agent.agent_slug));
+  if (agentError) throw agentError;
+
+  const rosterBySlug = new Map(
+    (tenantAgents || []).map((agent) => [clean(agent.agent_slug), agent])
+  );
+  const agents = AGENTS.map((agent) => {
+    const rosterAgent = rosterBySlug.get(agent.agent_slug);
+    if (!rosterAgent?.clerk_user_id) {
+      throw new Error(
+        `tenant_agents is missing a Clerk identity for agent_slug ${agent.agent_slug}.`
+      );
+    }
+    return {
+      ...agent,
+      clerk_user_id: rosterAgent.clerk_user_id,
+    };
+  });
+  const rows = buildRows(parsed.data, agents);
 
   const batchSize = 500;
   for (let start = 0; start < rows.length; start += batchSize) {
