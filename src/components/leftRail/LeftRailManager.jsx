@@ -29,8 +29,16 @@ function sortRailItems(itemsById) {
   });
 }
 
-function getHighestPriorityId(itemsById, excludeId = null) {
-  return sortRailItems(itemsById).find((item) => item.id !== excludeId)?.id ?? null;
+function getHighestPriorityId(
+  itemsById,
+  excludeId = null,
+  minimizedIds = new Set()
+) {
+  return (
+    sortRailItems(itemsById).find(
+      (item) => item.id !== excludeId && !minimizedIds.has(item.id)
+    )?.id ?? null
+  );
 }
 
 export function LeftRailProvider({ children }) {
@@ -47,7 +55,13 @@ export function LeftRailProvider({ children }) {
       return;
     }
 
-    const { forceOpen = false, ...railItem } = item;
+    const {
+      forceOpen = false,
+      defaultMinimized = false,
+      ...railItem
+    } = item;
+    const isNewItem = !itemsRef.current[railItem.id];
+    const shouldStartMinimized = defaultMinimized && !forceOpen && isNewItem;
 
     if (forceOpen) {
       setManuallyMinimizedIds((prev) => {
@@ -56,6 +70,15 @@ export function LeftRailProvider({ children }) {
         }
         const next = new Set(prev);
         next.delete(railItem.id);
+        return next;
+      });
+    } else if (shouldStartMinimized) {
+      setManuallyMinimizedIds((prev) => {
+        if (prev.has(railItem.id)) {
+          return prev;
+        }
+        const next = new Set(prev);
+        next.add(railItem.id);
         return next;
       });
     }
@@ -77,6 +100,10 @@ export function LeftRailProvider({ children }) {
     setExpandedId((currentExpandedId) => {
       if (forceOpen) {
         return railItem.id;
+      }
+
+      if (shouldStartMinimized) {
+        return currentExpandedId;
       }
 
       if (manuallyMinimizedIdsRef.current.has(railItem.id)) {
@@ -122,7 +149,9 @@ export function LeftRailProvider({ children }) {
       delete next[id];
 
       setExpandedId((currentExpandedId) =>
-        currentExpandedId === id ? getHighestPriorityId(next) : currentExpandedId
+        currentExpandedId === id
+          ? getHighestPriorityId(next, null, manuallyMinimizedIdsRef.current)
+          : currentExpandedId
       );
 
       return next;
@@ -144,7 +173,11 @@ export function LeftRailProvider({ children }) {
       if (currentExpandedId !== id) {
         return currentExpandedId;
       }
-      return getHighestPriorityId(itemsRef.current, id);
+      return getHighestPriorityId(
+        itemsRef.current,
+        id,
+        manuallyMinimizedIdsRef.current
+      );
     });
   }, []);
 

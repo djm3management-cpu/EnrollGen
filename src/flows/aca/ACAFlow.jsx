@@ -12,6 +12,7 @@ import { ACA_GATES } from "./ACAData";
 import { useScriptTemplate } from "../../hooks/useScriptTemplate";
 import CenterTimerBar from "../../components/CenterTimerBar";
 import ProgressDots from "../../components/ProgressDots";
+import ClientQuickScripts from "../../components/ClientQuickScripts";
 
 // ACA accent color
 const ACCENT = "var(--accent)";
@@ -649,6 +650,8 @@ export default function ACAFlow() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
+      <ClientQuickScripts flowType="aca" />
+
       <CenterTimerBar />
 
       {!state.callStarted ? (

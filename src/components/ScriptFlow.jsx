@@ -39,6 +39,7 @@ import AskCopilotMini from "./AskCopilotMini";
 import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
 import DtmfKeypad from "./DtmfKeypad";
 import CrossSellTrigger from "./copilot/CrossSellTrigger";
+import ClientQuickScripts from "./ClientQuickScripts";
 
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
@@ -978,6 +979,8 @@ export default function ScriptFlow() {
 
       <div className="flow-shell">
         <div className="flow-main">
+
+      <ClientQuickScripts flowType="ma" />
 
       <CenterTimerBar
         agentActive={isListening}

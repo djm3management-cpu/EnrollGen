@@ -1,0 +1,86 @@
+[
+  {
+    "id": "loss-of-qualifying-coverage",
+    "title": "Loss of Qualifying Coverage",
+    "summary": "Job-based or other minimum essential coverage ended or will end, including many Medicaid/CHIP, Medicare Part A or MA, dependent, and discontinued-plan losses.",
+    "questions": [
+      "Did you or anyone in your household lose health coverage, or expect to lose it soon?",
+      "What kind of coverage is ending, and what is the exact last day of coverage?",
+      "Why is it ending: a job or eligibility change, turning 26, loss of Medicaid or CHIP, loss of Medicare Part A or Medicare Advantage, or the plan ending?",
+      "Was the coverage voluntarily canceled, ended for nonpayment, or taken away because of fraud or missing information?"
+    ],
+    "windowNote": "Usually 60 days before or after the coverage loss; Medicaid or CHIP loss may allow 90 days after coverage ends.",
+    "priorCoverageNote": "The coverage being lost must generally be qualifying coverage/MEC. Voluntary cancellation, nonpayment, fraud, or loss of non-MEC generally does not qualify.",
+    "cta": "Likely SEP category: Loss of Qualifying Coverage, proceed to application"
+  },
+  {
+    "id": "change-in-household-size",
+    "title": "Change in Household Size",
+    "summary": "Marriage, birth, adoption, foster placement, court-ordered dependent, or an Exchange-option loss of a dependent after divorce, legal separation, or death.",
+    "questions": [
+      "Did anyone in your household get married, have or adopt a baby, place a child for foster care, or gain a dependent by court order?",
+      "What was the event date, and who joined or left the household?",
+      "If this was a marriage, did either spouse have qualifying health coverage for at least one day during the 60 days before the marriage?",
+      "If this involved divorce, legal separation, or death, did it also cause someone to lose coverage or dependent status?"
+    ],
+    "windowNote": "Generally 60 days after the household event; birth, adoption, foster placement, and court-order coverage may be retroactive to the event date.",
+    "priorCoverageNote": "Marriage generally requires one spouse to have had qualifying coverage for at least 1 day in the prior 60 days, subject to CMS exceptions. The birth/adoption/foster/court-order pathways do not use that rule.",
+    "cta": "Likely SEP category: Change in Household Size, proceed to application"
+  },
+  {
+    "id": "change-in-primary-place-of-living",
+    "title": "Change in Primary Place of Living",
+    "summary": "A qualifying move that gives the household access to new Marketplace plans, including certain school, seasonal-work, shelter, foreign-country, or territory moves.",
+    "questions": [
+      "Did you permanently move to a new ZIP code or county, and what was the move date?",
+      "What were your old and new ZIP codes, and did the move give you access to different health plans?",
+      "Was this a move from another country or U.S. territory, for school or seasonal work, or to or from a shelter or transitional housing?",
+      "Did you have qualifying health coverage for at least one day during the 60 days before the move?"
+    ],
+    "windowNote": "Generally 60 days after the qualifying move. A vacation or move only for medical treatment does not qualify.",
+    "priorCoverageNote": "Usually requires qualifying coverage for at least 1 day in the prior 60 days. Exceptions include certain moves from abroad or a U.S. territory, tribal/ANCSA status, or living where no Marketplace QHP was available.",
+    "cta": "Likely SEP category: Change in Primary Place of Living, proceed to application"
+  },
+  {
+    "id": "change-in-eligibility-or-financial-help",
+    "title": "Change in Eligibility for Coverage/Financial Help",
+    "summary": "A qualifying change involving Marketplace eligibility, APTC/CSR, lawful presence, release from incarceration, tribal status, AmeriCorps, or access to an ICHRA/QSEHRA.",
+    "questions": [
+      "Are you currently enrolled through the Marketplace, and did your income or household information change your eligibility for premium help or cost-sharing reductions?",
+      "Did you recently become a U.S. citizen, national, or lawfully present, or were you released from incarceration?",
+      "Did you gain or maintain federally recognized tribal or ANCSA shareholder status, or start or end AmeriCorps service?",
+      "Did an employer newly offer you an ICHRA or QSEHRA, and what is its start date?"
+    ],
+    "windowNote": "Generally 60 days from the eligibility change; ICHRA/QSEHRA access may be reported within 60 days before or after its start.",
+    "priorCoverageNote": "Requirements vary. Some income-change paths require current Marketplace enrollment; an Exchange-option income-decrease path may require other MEC for at least 1 day in the prior 60 days.",
+    "cta": "Likely SEP category: Change in Eligibility for Coverage/Financial Help, proceed to application"
+  },
+  {
+    "id": "enrollment-or-plan-error",
+    "title": "Enrollment or Plan Error",
+    "summary": "Marketplace or official assister error, technical delay, adverse plan-display error, or a material Marketplace plan contract violation.",
+    "questions": [
+      "What plan or effective date did you expect, and what enrollment result did you actually receive?",
+      "Did the issue come from the Marketplace, an insurance company, agent, broker, Navigator, or another official enrollment helper?",
+      "Was there a technical delay or incorrect plan, benefit, service-area, cost-sharing, or premium information shown when you enrolled?",
+      "Do you have notices, screenshots, confirmation numbers, or other records showing the error or plan contract violation?"
+    ],
+    "windowNote": "This is not a simple automatic 60-day window; contact the Marketplace Call Center or CMS caseworker promptly so the error and available correction date can be determined.",
+    "priorCoverageNote": "No blanket prior-coverage rule applies, but the Marketplace or CMS must confirm the qualifying Exchange error, material plan error, or contract violation.",
+    "cta": "Likely SEP category: Enrollment or Plan Error, proceed to application"
+  },
+  {
+    "id": "other-qualifying-changes",
+    "title": "Other Qualifying Changes",
+    "summary": "Exceptional circumstances, domestic abuse or abandonment, late Medicaid/CHIP denial, untimely notice, or the end of a COBRA subsidy or employer contribution.",
+    "questions": [
+      "Did a disaster, serious medical condition, or another unexpected event keep you from enrolling on time?",
+      "Are you trying to enroll separately because of domestic abuse or spousal abandonment?",
+      "Were you denied Medicaid or CHIP after Open Enrollment or after another SEP window had already passed?",
+      "Did you receive late notice of a qualifying event, or did a COBRA subsidy or employer contribution completely end?"
+    ],
+    "windowNote": "Timing is event-specific rather than one automatic 60-day rule; document the event and contact the Marketplace promptly when Call Center or CMS review is required.",
+    "priorCoverageNote": "Prior-coverage requirements vary by the specific event. The Marketplace application, eligibility notice, Call Center, or CMS caseworker makes the final determination.",
+    "cta": "Likely SEP category: Other Qualifying Changes, proceed to application"
+  }
+]

@@ -405,6 +405,8 @@ const MODE_ROUTES = {
 const LEFT_RAIL_IDS = {
   sepQualifier: "sep-qualifier",
   acaClientInfo: "aca-client-info",
+  acaFfmClientInfo: "aca-ffm-client-info",
+  acaFfmSepFinder: "aca-ffm-sep-finder",
   medsupSalesForum: "medsup-sales-forum",
   u65PrivatePlans: "u65-private-plans",
   ancillaryCustomerInfo: "ancillary-customer-info",
@@ -413,7 +415,11 @@ const LEFT_RAIL_IDS = {
 const EMPTY_LEFT_RAIL_IDS = [];
 const LEFT_RAIL_IDS_BY_MODE = {
   ma: [LEFT_RAIL_IDS.sepQualifier],
-  aca: [LEFT_RAIL_IDS.acaClientInfo],
+  aca: [
+    LEFT_RAIL_IDS.acaClientInfo,
+    LEFT_RAIL_IDS.acaFfmClientInfo,
+    LEFT_RAIL_IDS.acaFfmSepFinder,
+  ],
   medsup: [LEFT_RAIL_IDS.medsupSalesForum],
   u65: [LEFT_RAIL_IDS.u65PrivatePlans],
   ancillary: [

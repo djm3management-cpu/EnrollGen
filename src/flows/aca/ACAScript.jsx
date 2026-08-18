@@ -3,17 +3,20 @@
  * Supports both the original ACA flow and the new default State ACA flow.
  */
 
-import { useEffect, useRef, useState } from "react";
-import { ClipboardList } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ClipboardList, Search } from "lucide-react";
 import { ACAProvider, useACA } from "./ACAContext";
 import ACAFlow from "./ACAFlow";
 import StateACAFlow from "./StateACAFlow";
 import AcaCopilot from "../../components/AcaCopilot";
 import AcaClientSidebar from "../../components/aca/AcaClientSidebar";
+import AcaFfmSepFinder from "../../components/aca/AcaFfmSepFinder";
 import DevotedPopupManager from "../../components/ancillary/DevotedPopupManager";
 import { useLeftRailManager } from "../../components/leftRail/LeftRailManager";
 
-const ACA_CLIENT_INFO_RAIL_ID = "aca-client-info";
+const ACA_STATE_CLIENT_INFO_RAIL_ID = "aca-client-info";
+const ACA_FFM_CLIENT_INFO_RAIL_ID = "aca-ffm-client-info";
+const ACA_FFM_SEP_FINDER_RAIL_ID = "aca-ffm-sep-finder";
 
 const ACA_FLOW_OPTIONS = [
   {
@@ -120,14 +123,36 @@ function ACAFlowSelector({ variant, onChange }) {
 
 function ACAScriptBody({ variant, onVariantChange }) {
   const { state, dispatch } = useACA();
-  const { showLeftRail, openLeftRail, dismissLeftRail } = useLeftRailManager();
+  const {
+    showLeftRail,
+    openLeftRail,
+    minimizeLeftRail,
+    dismissLeftRail,
+  } = useLeftRailManager();
   const [transcript, setTranscript] = useState("");
   const flowShellRef = useRef(null);
   const flowMainRef = useRef(null);
+  const clientInfoRailId =
+    variant === "core"
+      ? ACA_FFM_CLIENT_INFO_RAIL_ID
+      : ACA_STATE_CLIENT_INFO_RAIL_ID;
+
+  const handleSepProceed = useCallback(
+    (category) => {
+      dispatch({ type: "SET_ENROLLMENT_PERIOD", period: "SEP" });
+      dispatch({
+        type: "SET_CLIENT_PROFILE_FIELD",
+        field: "sepType",
+        value: category.title,
+      });
+      minimizeLeftRail(ACA_FFM_SEP_FINDER_RAIL_ID);
+    },
+    [dispatch, minimizeLeftRail]
+  );
 
   useEffect(() => {
     showLeftRail({
-      id: ACA_CLIENT_INFO_RAIL_ID,
+      id: clientInfoRailId,
       priority: 2,
       title: "ACA Client Info",
       shortLabel: "ACA Client",
@@ -139,12 +164,36 @@ function ACAScriptBody({ variant, onVariantChange }) {
         <AcaClientSidebar state={state} dispatch={dispatch} variant={variant} />
       ),
     });
-  }, [dispatch, showLeftRail, state, variant]);
+  }, [clientInfoRailId, dispatch, showLeftRail, state, variant]);
 
   useEffect(() => {
-    openLeftRail(ACA_CLIENT_INFO_RAIL_ID);
-    return () => dismissLeftRail(ACA_CLIENT_INFO_RAIL_ID);
-  }, [dismissLeftRail, openLeftRail]);
+    openLeftRail(clientInfoRailId);
+
+    return () => dismissLeftRail(clientInfoRailId);
+  }, [clientInfoRailId, dismissLeftRail, openLeftRail]);
+
+  useEffect(() => {
+    if (variant !== "core") {
+      dismissLeftRail(ACA_FFM_SEP_FINDER_RAIL_ID);
+      return undefined;
+    }
+
+    showLeftRail({
+      id: ACA_FFM_SEP_FINDER_RAIL_ID,
+      priority: 3,
+      title: "FFM SEP Finder",
+      shortLabel: "SEP Finder",
+      color: "var(--danger)",
+      defaultMinimized: true,
+      icon: <Search size={13} />,
+      railClassName: "left-rail--sep-qualifier left-rail--aca-sep-finder",
+      panelClassName:
+        "left-rail-panel-shell--sep-qualifier left-rail-panel-shell--aca-sep-finder",
+      component: <AcaFfmSepFinder onProceed={handleSepProceed} />,
+    });
+
+    return () => dismissLeftRail(ACA_FFM_SEP_FINDER_RAIL_ID);
+  }, [dismissLeftRail, handleSepProceed, showLeftRail, variant]);
 
   return (
     <>
