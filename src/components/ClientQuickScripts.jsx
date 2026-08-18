@@ -39,9 +39,29 @@ const QUICK_SCRIPTS = {
           ],
         },
         {
-          label: "Close",
+          label: "New Plan Check",
           lines: [
-            "I can pull that up in a couple minutes, no pressure either way.",
+            "Now that we've confirmed you have a new plan, are you happy with the coverage and benefits, or is there anything that doesn't feel right?",
+          ],
+        },
+      ],
+      branches: [
+        {
+          id: "happy",
+          buttonLabel: "Happy With Plan",
+          label: "If Happy With New Plan",
+          hint: "Follow up October 15",
+          lines: [
+            "I'm glad the new plan is working for you. We'll contact you when Medicare's Annual Enrollment Period, often called Open Enrollment, begins on October 15 so we can complete a full benefit review and make sure your coverage still fits your needs for the coming year.",
+          ],
+        },
+        {
+          id: "unhappy",
+          buttonLabel: "Unhappy / Unexpected Switch",
+          label: "If Unhappy or Switch Was Unexpected",
+          hint: "Review now",
+          lines: [
+            "If you're unhappy with the plan, or you did not knowingly authorize the change, let's complete a full benefit review now. We'll verify your current coverage, look for any unauthorized or concerning changes, and go over the options available to you.",
           ],
         },
       ],
@@ -135,14 +155,24 @@ const QUICK_SCRIPTS = {
 
 export default function ClientQuickScripts({ flowType }) {
   const [activeScriptId, setActiveScriptId] = useState(null);
+  const [activeBranchId, setActiveBranchId] = useState(null);
   const flowScripts = QUICK_SCRIPTS[flowType];
   const activeScript = activeScriptId ? flowScripts?.[activeScriptId] : null;
+  const activeBranch = activeScript?.branches?.find(
+    (branch) => branch.id === activeBranchId,
+  );
   const panelId = `${flowType}-client-quick-script`;
 
   if (!flowScripts) return null;
 
   const handleSelect = (scriptId) => {
+    setActiveBranchId(null);
     setActiveScriptId((current) => (current === scriptId ? null : scriptId));
+  };
+
+  const handleClose = () => {
+    setActiveBranchId(null);
+    setActiveScriptId(null);
   };
 
   return (
@@ -177,7 +207,7 @@ export default function ClientQuickScripts({ flowType }) {
             <button
               type="button"
               className="client-quick-script-panel__close"
-              onClick={() => setActiveScriptId(null)}
+              onClick={handleClose}
               aria-label={`Close ${activeScript.title}`}
               title="Close quick script"
             >
@@ -203,6 +233,49 @@ export default function ClientQuickScripts({ flowType }) {
                 </div>
               </div>
             ))}
+
+            {activeScript.branches ? (
+              <div className="client-quick-script-branches">
+                <span className="client-quick-script-branches__prompt">
+                  Choose the client's response
+                </span>
+                <div
+                  className="client-quick-script-branches__choices"
+                  role="group"
+                  aria-label="New plan satisfaction"
+                >
+                  {activeScript.branches.map((branch) => (
+                    <button
+                      key={branch.id}
+                      type="button"
+                      className={`client-quick-script-branch-button client-quick-script-branch-button--${branch.id}${
+                        activeBranchId === branch.id ? " is-active" : ""
+                      }`}
+                      aria-pressed={activeBranchId === branch.id}
+                      onClick={() => setActiveBranchId(branch.id)}
+                    >
+                      {branch.buttonLabel}
+                    </button>
+                  ))}
+                </div>
+
+                {activeBranch ? (
+                  <div className="client-quick-script-section client-quick-script-branch-result">
+                    <div className="client-quick-script-section__label">
+                      {activeBranch.label}
+                      <span className="client-quick-script-section__hint">
+                        ({activeBranch.hint})
+                      </span>
+                    </div>
+                    <div className="client-quick-script-section__lines">
+                      {activeBranch.lines.map((line) => (
+                        <p key={line}>{line}</p>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}

@@ -5498,6 +5498,84 @@ input::placeholder {
   line-height: 1.42;
 }
 
+.client-quick-script-branches {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--script-term-border);
+}
+
+.client-quick-script-branches__prompt {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--script-term-cyan);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.client-quick-script-branches__choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.client-quick-script-branch-button {
+  --client-script-branch-color: var(--client-script-color);
+  appearance: none;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--script-term-border);
+  border-radius: 0;
+  background: var(--script-term-bg);
+  color: var(--script-term-cyan);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.client-quick-script-branch-button--happy {
+  --client-script-branch-color: var(--script-term-green);
+}
+
+.client-quick-script-branch-button--unhappy {
+  --client-script-branch-color: var(--script-term-red);
+}
+
+.client-quick-script-branch-button:hover,
+.client-quick-script-branch-button:focus-visible,
+.client-quick-script-branch-button.is-active {
+  border-color: var(--client-script-branch-color);
+  color: var(--client-script-branch-color);
+}
+
+.client-quick-script-branch-button:focus-visible {
+  outline: 1px solid var(--client-script-branch-color);
+  outline-offset: 2px;
+}
+
+.client-quick-script-branch-button.is-active {
+  background: color-mix(
+    in srgb,
+    var(--client-script-branch-color) 10%,
+    var(--script-term-bg)
+  );
+}
+
+.client-quick-script-branch-result {
+  margin-top: 10px;
+}
+
 @media (max-width: 620px) {
   .client-quick-scripts__buttons {
     width: 100%;
@@ -5513,6 +5591,10 @@ input::placeholder {
 
   .client-quick-script-section__label {
     padding: 6px 8px;
+  }
+
+  .client-quick-script-branches__choices {
+    grid-template-columns: 1fr;
   }
 }
 
