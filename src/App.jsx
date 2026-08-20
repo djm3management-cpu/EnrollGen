@@ -960,6 +960,8 @@ function AppShell({ currentUser = null }) {
         openPanel === "complianceHub" ? " top-panel-overlay--compliance" : ""
       }${
         openPanel === "verse" ? " top-panel-overlay--verse" : ""
+      }${
+        openPanel === "rts" ? " top-panel-overlay--rts" : ""
       }`}
     >
       <div className="top-panel-header">
@@ -972,6 +974,12 @@ function AppShell({ currentUser = null }) {
           type="button"
           className="top-panel-close"
           onClick={() => setOpenPanel(null)}
+          aria-label={
+            openPanel === "rts"
+              ? "Close RTS tracker and return to the current flow"
+              : "Close panel"
+          }
+          title={openPanel === "rts" ? "Return to current flow" : "Close panel"}
         >
           <CloseIcon />
         </button>

@@ -17168,3 +17168,60 @@ body[data-bg-mode="classic"] .viewport-bg {
   background: var(--status-pending);
   box-shadow: 0 0 6px var(--status-pending);
 }
+
+/* RTS needs the full viewport so all agent columns remain usable at once. */
+.top-panel-overlay--rts {
+  inset: 0;
+  z-index: 140;
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+}
+
+.top-panel-overlay--rts .top-panel-header {
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border-bottom-color: var(--border-default);
+}
+
+.top-panel-overlay--rts .top-panel-close {
+  width: 32px;
+  height: 32px;
+  border-color: var(--border-default);
+  border-radius: 3px;
+  color: var(--text-primary);
+}
+
+.top-panel-overlay--rts .top-panel-close:hover,
+.top-panel-overlay--rts .top-panel-close:focus-visible {
+  border-color: var(--border-focus);
+  background: var(--bg-elevated);
+  color: var(--text-label);
+  outline: none;
+}
+
+.top-panel-overlay--rts .top-panel-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.top-panel-overlay--rts .rts-tab {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.top-panel-overlay--rts .rts-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
