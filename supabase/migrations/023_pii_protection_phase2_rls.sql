@@ -209,14 +209,10 @@ GRANT SELECT (
 ) ON public.contacts TO authenticated;
 
 -- ------------------------------------------------------------
--- Seed the admin role now that concrete Clerk user ids are known
--- (src/lib/agentIdentity.js KNOWN_AGENT_ID_MAP maps these to
--- mike_shiomos). Matched via the same normalize-then-compare the
--- frontend uses, since raw Clerk id casing isn't guaranteed here.
+-- Seed the admin role from the tenant roster identity. Clerk user ids are
+-- case-sensitive and are assigned by a later identity backfill migration.
 -- ------------------------------------------------------------
 UPDATE public.tenant_agents
 SET role = 'admin'
-WHERE lower(regexp_replace(clerk_user_id, '[^a-zA-Z0-9]', '', 'g')) IN (
-  'user37aid3kt6lnoqhp8rkivxhwrk6u',
-  'user3gffufxzkbxcjvde5uu8zqu2tb6'
-);
+WHERE agent_slug = 'mike_shiomos'
+   OR lower(btrim(name)) = 'mike shiomos';

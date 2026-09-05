@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { useUser } from "@clerk/clerk-react";
+import { useTenantConfig } from "../hooks/useTenantConfig";
 import {
   AVAILABILITY_API_KEY as API_KEY,
   AVAILABILITY_FUNCTIONS_BASE_URL as FUNCTIONS_BASE_URL,
@@ -197,8 +198,9 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
 
 function AuthedAvailabilityProvider({ children }) {
   const { user, isLoaded } = useUser();
+  const { agents } = useTenantConfig();
   return (
-    <AvailabilityProviderCore agentId={resolveAgentId(user)} identityLoaded={isLoaded}>
+    <AvailabilityProviderCore agentId={resolveAgentId(user, agents)} identityLoaded={isLoaded}>
       {children}
     </AvailabilityProviderCore>
   );

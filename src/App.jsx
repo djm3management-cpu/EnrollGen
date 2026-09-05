@@ -532,7 +532,7 @@ function AppShell({ currentUser = null }) {
   const sessionActive = Boolean(liveCall?.callStarted);
   const { total: unreadMessageTotal } = useUnreadMessages();
   const { supabaseClient } = useTenantConfig();
-  const [rtsNeedsAttention, setRtsNeedsAttention] = useState(false);
+  const [rtsNeedsAttentionCount, setRtsNeedsAttentionCount] = useState(0);
 
   const {
     railWidth,
@@ -581,19 +581,18 @@ function AppShell({ currentUser = null }) {
 
   useEffect(() => {
     if (!supabaseClient || !currentUser?.id) {
-      setRtsNeedsAttention(false);
+      setRtsNeedsAttentionCount(0);
       return undefined;
     }
 
     let active = true;
     const refreshAttention = async () => {
-      const { data, error } = await supabaseClient
+      const { count, error } = await supabaseClient
         .from("carrier_rts")
-        .select("id")
+        .select("id", { count: "exact", head: true })
         .eq("clerk_user_id", currentUser.id)
-        .in("status", ["Pending", "Needs Action"])
-        .limit(1);
-      if (active && !error) setRtsNeedsAttention(Boolean(data?.length));
+        .in("status", ["Pending", "Needs Action", "Blackout", "Terminated"]);
+      if (active && !error) setRtsNeedsAttentionCount(count || 0);
     };
 
     refreshAttention();
@@ -809,14 +808,6 @@ function AppShell({ currentUser = null }) {
     });
   };
 
-  const handleExitCallMode = () => {
-    if (sessionActive) return;
-    startTransition(() => {
-      setAppMode("crm");
-      setOpenPanel(null);
-    });
-  };
-
   // Deep-open a contact from the call log: land on the CRM home with
   // that contact's detail view selected.
   const [crmFocusContact, setCrmFocusContact] = useState(null);
@@ -1009,21 +1000,6 @@ function AppShell({ currentUser = null }) {
             >
               <span className="top-bar-logo-text">ENROLLGEN</span>
             </button>
-            {appMode === "call" ? (
-              <button
-                type="button"
-                className="top-bar-exit-call"
-                onClick={handleExitCallMode}
-                disabled={sessionActive}
-                title={
-                  sessionActive
-                    ? "End the active session before leaving the cockpit"
-                    : "Back to contacts"
-                }
-              >
-                ← CONTACTS
-              </button>
-            ) : null}
             <FlowSelector mode={mode} onChange={handleModeChange} />
           </div>
 
@@ -1052,8 +1028,13 @@ function AppShell({ currentUser = null }) {
                 {tab.id === "contacts" && unreadMessageTotal > 0 && activeTabId !== "contacts" ? (
                   <span className="top-bar-tab-badge">{unreadMessageTotal}</span>
                 ) : null}
-                {tab.id === "rts" && rtsNeedsAttention ? (
-                  <span className="top-bar-rts-dot" title="RTS items need attention" />
+                {tab.id === "rts" && rtsNeedsAttentionCount > 0 ? (
+                  <span
+                    className="top-bar-rts-dot"
+                    title={`${rtsNeedsAttentionCount} RTS items need attention`}
+                  >
+                    {rtsNeedsAttentionCount > 99 ? "99+" : rtsNeedsAttentionCount}
+                  </span>
                 ) : null}
               </button>
             ))}

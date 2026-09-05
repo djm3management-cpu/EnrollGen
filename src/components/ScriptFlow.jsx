@@ -36,7 +36,6 @@ import {
 import ComplianceMini from "./ComplianceMini";
 import CopilotFeedMini from "./CopilotFeedMini";
 import AskCopilotMini from "./AskCopilotMini";
-import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
 import DtmfKeypad from "./DtmfKeypad";
 import CrossSellTrigger from "./copilot/CrossSellTrigger";
 import ClientQuickScripts from "./ClientQuickScripts";
@@ -230,8 +229,6 @@ function RailWidgets({
 
   return (
     <>
-      <AgentAvailabilityToggle />
-
       {/* Copilot Control Strip */}
       <div className="right-rail-control-panel">
         <CallTimer fallbackStartTime={state.tpmoStart} />
@@ -273,10 +270,17 @@ function RailWidgets({
           </button>
           <DtmfKeypad />
         </div>
-        <AskCopilotMini />
       </div>
 
       <div className="right-rail-divider" />
+
+      {/* ── Unified Co-Pilot ── */}
+      <CollapsibleWidget title="Co-Pilot" icon={<MessageSquare size={11} />} accentColor="var(--chart-4)">
+        <div className="unified-copilot-widget">
+          <CopilotFeedMini />
+          <AskCopilotMini />
+        </div>
+      </CollapsibleWidget>
 
       {/* ── Live Transcript ── */}
       <CollapsibleWidget
@@ -286,11 +290,6 @@ function RailWidgets({
         headerRight={<TranscriptTimer startTime={state.tpmoStart} />}
       >
         <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
-      </CollapsibleWidget>
-
-      {/* ── Co-Pilot Feed ── */}
-      <CollapsibleWidget title="Co-Pilot Feed" icon={<MessageSquare size={11} />} accentColor="var(--chart-4)">
-        <CopilotFeedMini />
       </CollapsibleWidget>
 
       {/* ── Compliance ── */}

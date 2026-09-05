@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight, MessageSquare, Radio } from "lucide-react";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import AskCopilotMini from "./AskCopilotMini";
 import CopilotFeedMini from "./CopilotFeedMini";
-import AgentAvailabilityToggle from "./AgentAvailabilityToggle";
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
@@ -80,8 +79,6 @@ function RailWidgets({
 
   return (
     <>
-      <AgentAvailabilityToggle />
-
       <div className="right-rail-control-panel">
         <CallTimer fallbackStartTime={startTime} />
 
@@ -116,10 +113,20 @@ function RailWidgets({
             {analyzing ? "ANALYZING..." : "ANALYZE"}
           </button>
         </div>
-        <AskCopilotMini />
       </div>
 
       <div className="right-rail-divider" />
+
+      <CollapsibleWidget
+        title="Co-Pilot"
+        icon={<MessageSquare size={11} />}
+        accentColor="var(--chart-4)"
+      >
+        <div className="unified-copilot-widget">
+          <CopilotFeedMini />
+          <AskCopilotMini />
+        </div>
+      </CollapsibleWidget>
 
       <CollapsibleWidget
         title="Live Transcript"
@@ -128,14 +135,6 @@ function RailWidgets({
         headerRight={<TranscriptTimer startTime={startTime} />}
       >
         <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
-      </CollapsibleWidget>
-
-      <CollapsibleWidget
-        title="Co-Pilot Feed"
-        icon={<MessageSquare size={11} />}
-        accentColor="var(--chart-4)"
-      >
-        <CopilotFeedMini />
       </CollapsibleWidget>
 
       {extraWidgets}

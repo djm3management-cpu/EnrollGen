@@ -470,8 +470,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
 function AuthedInboundCallProvider({ children }) {
   const { user, isLoaded } = useUser();
+  const { agents } = useTenantConfig();
   return (
-    <InboundCallProviderCore agentId={resolveAgentId(user)} identityReady={isLoaded}>
+    <InboundCallProviderCore agentId={resolveAgentId(user, agents)} identityReady={isLoaded}>
       {children}
     </InboundCallProviderCore>
   );

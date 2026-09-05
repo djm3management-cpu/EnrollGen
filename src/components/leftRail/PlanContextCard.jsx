@@ -1,5 +1,5 @@
 import { memo, useRef, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Loader2, Search, Send, X } from "lucide-react";
 import { useScript } from "../../context/ScriptContext";
 import {
   buildPlanNotesFromLookup,
@@ -110,7 +110,6 @@ const PlanContextCard = memo(function PlanContextCard() {
             </button>
           </div>
         ) : null}
-        <div className="eg-plan-lookup__label">PY2026 PLAN LOOKUP</div>
         <div className="eg-plan-lookup__mode" role="tablist" aria-label="Plan lookup mode">
           <button
             type="button"
@@ -118,6 +117,7 @@ const PlanContextCard = memo(function PlanContextCard() {
             onClick={() => handleLookupMode("name")}
             aria-pressed={lookupMode === "name"}
           >
+            <Search size={10} strokeWidth={2.2} aria-hidden="true" />
             Name
           </button>
           <button
@@ -126,6 +126,7 @@ const PlanContextCard = memo(function PlanContextCard() {
             onClick={() => handleLookupMode("number")}
             aria-pressed={lookupMode === "number"}
           >
+            <Search size={10} strokeWidth={2.2} aria-hidden="true" />
             Plan #
           </button>
         </div>
@@ -144,8 +145,11 @@ const PlanContextCard = memo(function PlanContextCard() {
             disabled={lookupLoading}
             aria-label="Search plans"
           >
-            <Search size={12} />
-            {lookupLoading ? "..." : "Find"}
+            {lookupLoading ? (
+              <Loader2 size={11} style={{ animation: "eg-spin 1s linear infinite" }} />
+            ) : (
+              <Send size={11} strokeWidth={2.2} />
+            )}
           </button>
         </form>
 

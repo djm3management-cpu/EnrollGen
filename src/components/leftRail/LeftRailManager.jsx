@@ -10,7 +10,8 @@ import {
 
 const LeftRailContext = createContext(null);
 
-const DESKTOP_RAIL_WIDTH = 360;
+// Keep the left workspace aligned with the compact right rail width.
+const DESKTOP_RAIL_WIDTH = 310;
 
 function ChevronLeftIcon() {
   return (

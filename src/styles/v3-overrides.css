@@ -364,40 +364,50 @@ body,
    ============================================================ */
 
 .right-rail-full {
-  top: calc(48px + 12px) !important;
-  right: 14px !important;
+  top: max(48px, var(--top-bar-height, 48px)) !important;
+  right: 0 !important;
+  bottom: 0 !important;
 }
 
 .right-rail-full > .right-rail-scroll {
   background: var(--eg-surface-1);
-  border: 1px solid var(--eg-border);
+  border: 0 !important;
   border-radius: var(--eg-radius-card);
-  padding: 12px;
+  padding: 0 12px 12px;
   width: 310px !important;
   max-width: 310px !important;
   min-width: 0 !important;
 }
 
 .right-rail-overlay {
+  top: max(48px, var(--top-bar-height, 48px)) !important;
+  bottom: 0 !important;
   background: var(--eg-surface-1) !important;
-  border-left: 1px solid var(--eg-border) !important;
+  border-left: 0 !important;
   box-shadow: none !important;
 }
 
 .right-rail-control-panel {
   background: var(--eg-surface-2) !important;
-  border: 1px solid var(--eg-border) !important;
+  border: 0 !important;
   border-radius: var(--eg-radius-card) !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
-  padding: 10px 10px 8px !important;
-  margin-bottom: 2px !important;
+  padding: 0 0 4px !important;
+  margin-bottom: 0 !important;
+}
+
+.right-rail-control-panel .right-rail-control-row {
+  margin: 0 0 3px !important;
+}
+
+.right-rail-control-panel .copilot-pill-button {
+  padding: 5px 9px !important;
+  font-size: 8px !important;
 }
 
 .right-rail-divider {
-  background: var(--eg-border) !important;
-  height: 1px !important;
-  margin: 3px 0 4px !important;
+  display: none !important;
 }
 
 .right-rail-toggle,
@@ -447,7 +457,7 @@ body,
   color: var(--eg-text-dim) !important;
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--eg-border) !important;
+  border-bottom: 0 !important;
   padding: 4px 0 !important;
   margin-bottom: 4px !important;
 }
@@ -466,14 +476,15 @@ body,
 /* Co-pilot ask (AskCopilotMini) */
 .ask-copilot-mini__form {
   background: var(--eg-surface-2) !important;
-  border: 1px solid var(--eg-border) !important;
+  border: 0 !important;
   border-radius: var(--eg-radius-md) !important;
   padding: 3px 5px 3px 8px !important;
   width: 100%;
 }
 
 .ask-copilot-mini__form:focus-within {
-  border-color: var(--eg-border-active) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .ask-copilot-mini__input {
@@ -1249,7 +1260,7 @@ html .app-shell-modern .left-rail-panel-shell {
 }
 
 .right-rail-widget-shell .compliance-mini__category-row {
-  padding-block: 2px !important;
+  padding-block: 3px !important;
 }
 
 .right-rail-widget-shell .compliance-mini__category-icon svg {
@@ -1833,11 +1844,7 @@ button.primary.section-complete-btn {
 .app-shell-modern .card,
 .app-shell-modern .eg-card,
 .app-shell-modern .active-card,
-.app-shell-modern .right-rail-control-panel,
-.app-shell-modern .left-rail,
-.app-shell-modern .left-rail-panel-shell,
-.app-shell-modern .top-bar-shell,
-.app-shell-modern .right-rail-full > .right-rail-scroll {
+.app-shell-modern .top-bar-shell {
   border-style: solid !important;
   border-width: 1px !important;
 }
@@ -2965,6 +2972,15 @@ html.dark .left-rail-zip-input:focus {
 html.dark input::placeholder,
 html.dark textarea::placeholder {
   color: var(--text-muted) !important;
+}
+
+html.dark .ask-copilot-mini__form,
+html.dark .ask-copilot-mini__form:focus-within,
+html.dark .ask-copilot-mini__input,
+html.dark .ask-copilot-mini__input:focus {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 html.dark button.primary,
@@ -4620,16 +4636,30 @@ html.dark .flow-script-callout {
 }
 
 .availability-strip {
+  appearance: none;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  border: 1px solid var(--border-default);
+  border: 0;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 9px;
   letter-spacing: 1.4px;
   color: var(--text-secondary);
+  background: var(--eg-base) !important;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.availability-strip:hover:not(:disabled),
+.availability-strip[aria-expanded="true"] {
+  border-color: var(--eg-accent);
+  color: var(--text-primary);
+}
+
+.availability-strip:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .availability-strip__dot {
@@ -4637,6 +4667,87 @@ html.dark .flow-script-callout {
   height: 7px;
   border-radius: 50%;
   flex: none;
+}
+
+.availability-strip__chevron {
+  color: var(--text-muted);
+  font-size: 7px;
+  transition: transform 0.15s ease;
+}
+
+.availability-strip[aria-expanded="true"] .availability-strip__chevron {
+  transform: rotate(180deg);
+}
+
+.availability-control {
+  position: relative;
+  z-index: 2;
+}
+
+.availability-control.is-saving .availability-strip__dot {
+  animation: eg-breathe 0.8s ease-in-out infinite;
+}
+
+.availability-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 180;
+  display: grid;
+  width: 156px;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  background: var(--eg-base);
+  box-shadow: none;
+}
+
+.availability-menu__option {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) 12px;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.availability-menu__option:hover:not(:disabled),
+.availability-menu__option:focus-visible {
+  background: var(--eg-surface-1);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.availability-menu__option.is-active {
+  color: var(--availability-color);
+}
+
+.availability-menu__option:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.availability-menu__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--availability-color);
+}
+
+.availability-menu__check {
+  color: var(--availability-color);
+  font-size: 10px;
+  text-align: right;
 }
 
 .contacts-agent-filter {
@@ -5595,4 +5706,193 @@ html.dark .flow-script-callout {
 
 .compliance-review-transcript .ops-utterance.is-highlighted {
   background: rgba(255, 153, 0, 0.15);
+}
+
+/* ============================================================
+   LEFT RAIL — compact, edge-to-edge workspace
+   Keep borders on interactive controls only; the rail, cards, and
+   section shells use spacing and surface contrast for hierarchy.
+   ============================================================ */
+
+.app-shell-modern .left-rail {
+  top: max(48px, var(--top-bar-height, 48px)) !important;
+  right: auto !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.app-shell-modern .left-rail-panel-shell,
+html.dark .app-shell-modern .left-rail-panel-shell {
+  height: 100% !important;
+  padding: 0 8px 8px !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  scrollbar-gutter: auto !important;
+}
+
+/* The collapse control lives in the rail's first control row now, so it
+   does not reserve a full-height gutter along the left edge. */
+.app-shell-modern .left-rail .left-rail-minimize {
+  top: 4px !important;
+  left: 8px !important;
+}
+
+.app-shell-modern .left-rail-panel-shell--sep-qualifier .left-rail-zip-cell {
+  padding-left: 0 !important;
+}
+
+.app-shell-modern .left-rail-panel-shell--sep-qualifier .left-rail-zip-input {
+  width: calc(100% - 28px) !important;
+  margin-left: 28px !important;
+}
+
+.app-shell-modern .left-rail .sep-qualifier-stage--default {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+}
+
+.app-shell-modern .left-rail .sep-qualifier-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+.app-shell-modern .left-rail :is(
+  .sep-qualifier-body,
+  .sep-qualifier-stage,
+  .left-rail-tools,
+  .left-rail-context-stack
+) {
+  gap: 4px !important;
+}
+
+.app-shell-modern .left-rail :is(
+  .left-rail-zip-cell,
+  .left-rail-tool-panel,
+  .left-rail-tool-panel-inner,
+  .eg-rail-card,
+  .agent-notes-widget,
+  .agent-notes-widget--separated
+) {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.app-shell-modern .left-rail .left-rail-zip-cell,
+.app-shell-modern .left-rail .left-rail-tool-panel,
+.app-shell-modern .left-rail .left-rail-tool-panel-inner {
+  padding: 0 !important;
+}
+
+.app-shell-modern .left-rail .eg-rail-card {
+  padding: 7px 8px !important;
+  margin-bottom: 0 !important;
+}
+
+.app-shell-modern .left-rail .agent-notes-widget-header {
+  border-bottom: 0 !important;
+}
+
+.app-shell-modern .left-rail .sep-qualifier-stage--default .agent-notes-widget {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  min-height: 172px !important;
+  flex-direction: column !important;
+}
+
+.app-shell-modern .left-rail .sep-qualifier-stage--default .agent-notes-widget-body {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+.app-shell-modern .left-rail .sep-qualifier-stage--default .agent-notes-widget-input {
+  flex: 1 1 auto !important;
+  height: auto !important;
+  min-height: 134px !important;
+}
+
+.app-shell-modern .left-rail .left-rail-zip-input {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Tool tabs are lightweight icon controls, not boxed cards. */
+.app-shell-modern .left-rail .left-rail-tool-row {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.app-shell-modern .left-rail .left-rail-tool-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  border: 0 !important;
+  border-right: 0 !important;
+  padding: 0 3px !important;
+}
+
+.app-shell-modern .left-rail .left-rail-tool-btn svg {
+  flex: 0 0 auto;
+}
+
+.app-shell-modern .left-rail .eg-rail-card__save-contact {
+  box-sizing: border-box;
+  border: 0 !important;
+  background: rgba(255, 255, 255, 0.025) !important;
+}
+
+.app-shell-modern .left-rail .eg-rail-card__save-contact:hover {
+  border: 0 !important;
+  background: rgba(255, 153, 0, 0.08) !important;
+}
+
+.app-shell-modern .left-rail .eg-plan-lookup__mode-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 4px !important;
+}
+
+.app-shell-modern .left-rail .eg-plan-lookup__mode-btn:hover,
+.app-shell-modern .left-rail .eg-plan-lookup__mode-btn.is-active {
+  border: 0 !important;
+}
+
+.app-shell-modern .left-rail .eg-plan-lookup__submit {
+  display: inline-flex !important;
+  align-self: center !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--eg-radius-sm) !important;
+  background: var(--eg-accent) !important;
+  color: #fff !important;
+}
+
+.app-shell-modern .left-rail .eg-plan-lookup__submit:hover:not(:disabled) {
+  border: 0 !important;
+  background: var(--eg-accent-bright, var(--eg-accent)) !important;
+  color: #fff !important;
+}
+
+.app-shell-modern .left-rail .eg-plan-lookup__submit svg {
+  width: 10px !important;
+  height: 10px !important;
+  color: #000 !important;
+  stroke: #000 !important;
 }

@@ -11,12 +11,6 @@ export const AVAILABILITY_FUNCTIONS_BASE_URL =
 
 export const KNOWN_AGENT_ID_MAP = new Map([
   ["markendres", "mark_endres"],
-  // Clerk user id user_37aiD3KT6LnoqHp8RKIvXhwRk6U, normalized
-  ["user37aid3kt6lnoqhp8rkivxhwrk6u", "mike_shiomos"],
-  // Production Clerk user ids, normalized
-  ["user3gffufxzkbxcjvde5uu8zqu2tb6", "mike_shiomos"],
-  ["user3gfflgge5hzz5j9zmxyovcpf3g", "mark_endres"],
-  ["user3gffhxnknpfrashpqafkcbfge6m", "dylan_maria"],
   ["mikeshiomos", "mike_shiomos"],
   ["dylanmaria", "dylan_maria"],
   ["dylan", "dylan_maria"],
@@ -65,9 +59,16 @@ export function resolveAgentIdFromCandidates(candidates) {
   return null;
 }
 
-export function resolveAgentId(user) {
+export function resolveAgentId(user, agents = []) {
   if (!user) {
     return null;
+  }
+
+  const rosterAgent = agents.find(
+    (agent) => agent.clerk_user_id && agent.clerk_user_id === user.id
+  );
+  if (rosterAgent?.agent_slug) {
+    return rosterAgent.agent_slug;
   }
 
   return resolveAgentIdFromCandidates([
@@ -79,9 +80,6 @@ export function resolveAgentId(user) {
     user.unsafeMetadata?.availability_agent_id,
     user.unsafeMetadata?.agentId,
     user.unsafeMetadata?.agent_id,
-    // Clerk user id participates in the alias map only; the raw id must
-    // never fall through as an agent_id, so pre-resolve it here.
-    mapKnownAgentId(user.id),
     user.publicMetadata?.agentName,
     user.unsafeMetadata?.agentName,
     user.username,

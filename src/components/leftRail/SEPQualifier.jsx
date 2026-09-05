@@ -13,6 +13,9 @@ import {
   Minimize2,
   Phone,
   RotateCcw,
+  Search,
+  ListChecks,
+  GitBranch,
 } from "lucide-react";
 import {
   SEP_QUALIFIER_CATEGORIES,
@@ -302,8 +305,6 @@ export default function SEPQualifier({ onMinimize }) {
   const normalizedSharedZip = sharedZip.replace(/\D/g, "").slice(0, 5);
   const sharedZipInvalid = sharedZip.length > 0 && sharedZip.length < 5;
   const sepFinderResultsZip = scriptState.sepFinderResults?.zip || null;
-  const sepFinderResultsMatch =
-    sepFinderResultsZip && sepFinderResultsZip === normalizedSharedZip;
   const countyLabel = useMemo(
     () => formatCountyLabel(scriptState.sepFinderResults?.counties),
     [scriptState.sepFinderResults?.counties]
@@ -457,7 +458,8 @@ export default function SEPQualifier({ onMinimize }) {
                   className={`left-rail-tool-btn left-rail-tool-btn--finder${activeTool === "finder" ? " is-active" : ""}`}
                   onClick={() => toggleTool("finder")}
                 >
-                  SEP Finder
+                  <Search size={11} strokeWidth={2.2} aria-hidden="true" />
+                  <span>SEP Finder</span>
                 </button>
                 <button
                   type="button"
@@ -466,7 +468,8 @@ export default function SEPQualifier({ onMinimize }) {
                   className={`left-rail-tool-btn left-rail-tool-btn--qualifier${activeTool === "qualifier" ? " is-active" : ""}`}
                   onClick={() => toggleTool("qualifier")}
                 >
-                  SEP Qualifier
+                  <ListChecks size={11} strokeWidth={2.2} aria-hidden="true" />
+                  <span>SEP Qualifier</span>
                 </button>
                 <button
                   type="button"
@@ -475,7 +478,8 @@ export default function SEPQualifier({ onMinimize }) {
                   className={`left-rail-tool-btn left-rail-tool-btn--snp${activeTool === "snp" ? " is-active" : ""}`}
                   onClick={() => toggleTool("snp")}
                 >
-                  SNP Routing
+                  <GitBranch size={11} strokeWidth={2.2} aria-hidden="true" />
+                  <span>SNP Routing</span>
                 </button>
               </div>
 
@@ -490,11 +494,6 @@ export default function SEPQualifier({ onMinimize }) {
 
                   {activeTool === "qualifier" ? (
                     <div className="left-rail-tool-panel-inner">
-                      {!sepFinderResultsMatch ? (
-                        <div className="left-rail-tool-prompt">
-                          Run SEP Finder first to see available SEPs for this ZIP.
-                        </div>
-                      ) : null}
                       <button
                         type="button"
                         className="left-rail-tool-start-btn"

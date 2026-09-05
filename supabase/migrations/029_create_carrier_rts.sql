@@ -29,11 +29,9 @@ CREATE POLICY "Agents can update their own rows" ON public.carrier_rts
   FOR UPDATE
   USING (
     clerk_user_id = (auth.jwt() ->> 'sub')
-    OR (auth.jwt() ->> 'sub') = 'user_3gFFufXZKbXCjVdE5UU8zQU2Tb6'
   )
   WITH CHECK (
     clerk_user_id = (auth.jwt() ->> 'sub')
-    OR (auth.jwt() ->> 'sub') = 'user_3gFFufXZKbXCjVdE5UU8zQU2Tb6'
   );
 
 CREATE INDEX IF NOT EXISTS idx_carrier_rts_agent

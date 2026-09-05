@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { useUser } from "@clerk/clerk-react";
 import { BarChart3, Plus } from "lucide-react";
 import { fetchMedSupRates, isCsgEnabled } from "../../services/rateQuoteService";
 import { fetchCarrierProfiles } from "../../services/salesForumReferenceService";
+import { useTenantConfig } from "../../hooks/useTenantConfig";
 
 function currency(value) {
   const amount = Number(value);
@@ -35,6 +37,33 @@ function findProfile(profileMap, rate) {
     profileMap.get(normalizeCarrier(rate.carrier)) ||
     null
   );
+}
+
+function findRtsAppointment(rows, rate, profile) {
+  const candidates = [rate.carrier, rate.carrierCode, profile?.carrier_name, profile?.carrier_code]
+    .map(normalizeCarrier)
+    .filter(Boolean);
+  const matches = rows.filter((row) => {
+    const productLine = String(row.product_line || "").toLowerCase();
+    const isMedSupLine =
+      productLine.includes("supp") ||
+      productLine.includes("medsup") ||
+      productLine === "medicare" ||
+      productLine === "health";
+    if (!isMedSupLine) return false;
+    const carrier = normalizeCarrier(row.carrier);
+    return candidates.some(
+      (candidate) =>
+        carrier === candidate ||
+        (candidate.length > 4 && carrier.includes(candidate)) ||
+      (carrier.length > 4 && candidate.includes(carrier))
+    );
+  });
+  return matches.find((row) => isReadyToSell(row.status)) || matches[0] || null;
+}
+
+function isReadyToSell(status) {
+  return ["active", "rts", "complete"].includes(String(status || "").trim().toLowerCase());
 }
 
 function discountSummary(profile) {
@@ -75,12 +104,15 @@ export default function RateComparisonPanel({
   planLetter = "G",
   onManualRateAdded,
 }) {
+  const { user } = useUser();
+  const { supabaseClient } = useTenantConfig();
   const [ratesState, setRatesState] = useState({
     source: isCsgEnabled() ? "loading" : "manual",
     rates: [],
     message: isCsgEnabled() ? "" : "CSG integration pending activation",
   });
   const [profiles, setProfiles] = useState([]);
+  const [rtsAppointments, setRtsAppointments] = useState([]);
   const [manualRate, setManualRate] = useState({ carrier: "", monthlyPremium: "" });
 
   useEffect(() => {
@@ -96,6 +128,34 @@ export default function RateComparisonPanel({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!supabaseClient || !user?.id) {
+      setRtsAppointments([]);
+      return undefined;
+    }
+    let active = true;
+    const loadAppointments = async () => {
+      const { data, error } = await supabaseClient
+        .from("carrier_rts")
+        .select("carrier, product_line, status")
+        .eq("clerk_user_id", user.id);
+      if (active && !error) setRtsAppointments(data || []);
+    };
+    loadAppointments();
+    const channel = supabaseClient
+      .channel(`medsup-rts-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "carrier_rts" },
+        loadAppointments
+      )
+      .subscribe();
+    return () => {
+      active = false;
+      supabaseClient.removeChannel(channel);
+    };
+  }, [supabaseClient, user?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -190,10 +250,14 @@ export default function RateComparisonPanel({
             </div>
             {sortedRates.map((rate, index) => {
               const profile = findProfile(profileMap, rate);
+              const appointment = findRtsAppointment(rtsAppointments, rate, profile);
+              const notContracted = !appointment || !isReadyToSell(appointment.status);
               return (
                 <div
                   key={`${rate.carrier}-${rate.monthlyPremium}-${index}`}
-                  className={`sf-rate-row${index < 3 ? " is-top" : ""}`}
+                  className={`sf-rate-row${index < 3 ? " is-top" : ""}${
+                    notContracted ? " is-not-contracted" : ""
+                  }`}
                   role="row"
                 >
                   <span>{index + 1}</span>
@@ -201,6 +265,11 @@ export default function RateComparisonPanel({
                     {rate.carrier}
                     {rate.ratingType || profile?.rating_type ? (
                       <small>{rate.ratingType || profile?.rating_type}</small>
+                    ) : null}
+                    {notContracted ? (
+                      <small className="sf-rts-warning">
+                        {appointment?.status || "Not contracted"}
+                      </small>
                     ) : null}
                   </span>
                   <span>{currency(rate.monthlyPremium)}</span>

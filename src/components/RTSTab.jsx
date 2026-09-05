@@ -9,8 +9,9 @@ import {
 } from "lucide-react";
 import { useTenantConfig } from "../hooks/useTenantConfig";
 import { supabase } from "../lib/supabase";
+import RTSIngestionPanel from "./RTSIngestionPanel";
 
-const AGENTS = [
+const DEFAULT_AGENTS = [
   { name: "Michael Shiomos", short: "Mike S.", mobile: "Mike", npn: "20574678" },
   { name: "Mark Endres", short: "Mark E.", mobile: "Mark", npn: "20856361" },
   { name: "Dylan Maria", short: "Dylan M.", mobile: "Dylan", npn: "22167358" },
@@ -196,6 +197,19 @@ export default function RTSTab() {
   const { user } = useUser();
   const { agents, supabaseClient } = useTenantConfig();
   const client = supabaseClient || supabase;
+  const visibleAgents = useMemo(() => {
+    if (!agents.length) return DEFAULT_AGENTS;
+    return agents.map((agent) => {
+      const parts = String(agent.name || "Agent").trim().split(/\s+/);
+      const first = parts[0] || "Agent";
+      const last = parts.at(-1) || "";
+      return {
+        ...agent,
+        short: `${first}${last && last !== first ? ` ${last[0]}.` : ""}`,
+        mobile: first,
+      };
+    });
+  }, [agents]);
   const currentAgent = useMemo(
     () => agents.find((agent) => agent.clerk_user_id === user?.id) || null,
     [agents, user?.id]
@@ -206,7 +220,7 @@ export default function RTSTab() {
   const [search, setSearch] = useState("");
   const [channelFilter, setChannelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [mobileAgent, setMobileAgent] = useState(AGENTS[0].name);
+  const [mobileAgent, setMobileAgent] = useState(DEFAULT_AGENTS[0].name);
   const [collapsed, setCollapsed] = useState({});
   const [sort, setSort] = useState({ key: "carrier", agentName: "", direction: "asc" });
   const [savingCells, setSavingCells] = useState({});
@@ -257,11 +271,11 @@ export default function RTSTab() {
   }, [client]);
 
   useEffect(() => {
-    const rosterAgent = AGENTS.find((agent) => agent.npn === currentAgent?.npn);
-    if (rosterAgent) {
-      setMobileAgent(rosterAgent.name);
-    }
-  }, [currentAgent?.npn]);
+    const rosterAgent = visibleAgents.find(
+      (agent) => agent.id === currentAgent?.id || agent.npn === currentAgent?.npn
+    );
+    setMobileAgent(rosterAgent?.name || visibleAgents[0]?.name || "");
+  }, [currentAgent?.id, currentAgent?.npn, visibleAgents]);
 
   const saveCell = async (row, field, value) => {
     const cellKey = `${row.id}:${field}`;
@@ -335,9 +349,20 @@ export default function RTSTab() {
     return matrixRows
       .filter((row) => channelFilter === "all" || row.channel === channelFilter)
       .filter((row) => !needle || row.carrier.toLowerCase().includes(needle))
-      .filter((row) => matchesStatus(row, statusFilter, AGENTS))
+      .filter((row) => matchesStatus(row, statusFilter, visibleAgents))
       .sort((a, b) => compareValue(a, sort).localeCompare(compareValue(b, sort)) * direction);
-  }, [channelFilter, matrixRows, search, sort, statusFilter]);
+  }, [channelFilter, matrixRows, search, sort, statusFilter, visibleAgents]);
+  const availableChannels = useMemo(() => {
+    const channels = [...new Set(rows.map((row) => row.channel).filter(Boolean))];
+    return channels.sort((a, b) => {
+      const ai = CHANNELS.indexOf(a);
+      const bi = CHANNELS.indexOf(b);
+      if (ai === -1 && bi === -1) return a.localeCompare(b);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+  }, [rows]);
   const groups = useMemo(() => {
     const result = new Map();
     filteredRows.forEach((row) => {
@@ -389,6 +414,11 @@ export default function RTSTab() {
           <h2>Carrier Matrix / RTS Tracker</h2>
         </div>
         <div className="rts-controls">
+          <RTSIngestionPanel
+            currentAgent={currentAgent}
+            tenantAgents={agents}
+            onCommitted={loadRows}
+          />
           <label className="rts-search">
             <Search size={13} aria-hidden="true" />
             <input
@@ -405,7 +435,7 @@ export default function RTSTab() {
             onChange={(event) => setChannelFilter(event.target.value)}
           >
             <option value="all">All channels</option>
-            {CHANNELS.map((channel) => (
+            {availableChannels.map((channel) => (
               <option key={channel} value={channel}>
                 {channel === "EnrollPrime / O'Neill" ? "EnrollPrime/O'Neill" : channel}
               </option>
@@ -432,7 +462,7 @@ export default function RTSTab() {
       </div>
 
       <div className="rts-agent-switcher" role="tablist" aria-label="Agent columns">
-        {AGENTS.map((agent) => (
+        {visibleAgents.map((agent) => (
           <button
             key={agent.name}
             type="button"
@@ -454,11 +484,14 @@ export default function RTSTab() {
       ) : null}
 
       <div className="rts-table-wrap">
-        <table className={`rts-table rts-mobile-agent-${AGENTS.findIndex((agent) => agent.name === mobileAgent)}`}>
+        <table
+          className="rts-table"
+          style={{ "--rts-agent-columns-width": `${visibleAgents.length * 432}px` }}
+        >
           <colgroup>
             <col className="rts-col-carrier" />
             <col className="rts-col-product" />
-            {AGENTS.map((agent) => [
+            {visibleAgents.map((agent) => [
               <col key={`${agent.name}-status`} className={`rts-agent-col rts-agent-${agent.name === mobileAgent ? "visible" : "hidden"}`} />,
               <col key={`${agent.name}-states`} className={`rts-agent-col rts-agent-${agent.name === mobileAgent ? "visible" : "hidden"}`} />,
               <col key={`${agent.name}-date`} className={`rts-agent-col rts-agent-${agent.name === mobileAgent ? "visible" : "hidden"}`} />,
@@ -471,7 +504,7 @@ export default function RTSTab() {
                 <SortButton label="Carrier" sortKey="carrier" agentName="" sort={sort} onSort={handleSort} />
               </th>
               <th rowSpan="2">Product Line</th>
-              {AGENTS.map((agent) => (
+              {visibleAgents.map((agent) => (
                 <th
                   key={agent.name}
                   colSpan="4"
@@ -483,7 +516,7 @@ export default function RTSTab() {
               ))}
             </tr>
             <tr className="rts-field-head-row">
-              {AGENTS.map((agent) => (
+              {visibleAgents.map((agent) => (
                 <Fragment key={agent.name}>
                   <th key={`${agent.name}-status`} className={agent.name === mobileAgent ? "is-mobile-active" : ""}>
                     <SortButton label="Status" sortKey="status" agentName={agent.name} sort={sort} onSort={handleSort} />
@@ -501,7 +534,7 @@ export default function RTSTab() {
             <tbody>
               {Array.from({ length: 7 }, (_, index) => (
                 <tr key={index} className="rts-skeleton-row">
-                  {Array.from({ length: 14 }, (__, cell) => (
+                  {Array.from({ length: 2 + visibleAgents.length * 4 }, (__, cell) => (
                     <td key={cell}><span /></td>
                   ))}
                 </tr>
@@ -511,7 +544,7 @@ export default function RTSTab() {
             groups.map(([channel, carrierRows]) => (
               <tbody key={channel}>
                 <tr className="rts-channel-row">
-                  <th colSpan="14">
+                  <th colSpan={2 + visibleAgents.length * 4}>
                     <button
                       type="button"
                       onClick={() => setCollapsed((current) => ({ ...current, [channel]: !current[channel] }))}
@@ -527,14 +560,15 @@ export default function RTSTab() {
                       <tr key={row.key} className="rts-carrier-row">
                         <td className="rts-carrier-name">{row.carrier}</td>
                         <td className="rts-product-line">{row.productLine}</td>
-                        {AGENTS.map((agent) => {
+                        {visibleAgents.map((agent) => {
                           const agentRow = row.agents[agent.name];
+                          const mobileClass = agent.name === mobileAgent ? "is-mobile-active" : "";
                           return (
                             <Fragment key={agent.name}>
-                              <td>{renderCell(agentRow, "status")}</td>
-                              <td>{renderCell(agentRow, "states")}</td>
-                              <td>{renderCell(agentRow, "cert_date")}</td>
-                              <td>{renderCell(agentRow, "notes")}</td>
+                              <td className={mobileClass}>{renderCell(agentRow, "status")}</td>
+                              <td className={mobileClass}>{renderCell(agentRow, "states")}</td>
+                              <td className={mobileClass}>{renderCell(agentRow, "cert_date")}</td>
+                              <td className={mobileClass}>{renderCell(agentRow, "notes")}</td>
                             </Fragment>
                           );
                         })}

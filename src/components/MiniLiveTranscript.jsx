@@ -8,7 +8,7 @@ import PanelIdleSpinner from "./PanelIdleSpinner";
  */
 
 const AUTO_SCROLL_THRESHOLD = 50; // px from bottom to re-enable auto-scroll
-const TRANSCRIPT_PANEL_HEIGHT = "clamp(88px, 13vh, 128px)";
+const TRANSCRIPT_PANEL_HEIGHT = "clamp(104px, 15vh, 144px)";
 const MAX_TRANSCRIPT_ENTRIES = 24;
 
 function getTimerColor(seconds) {

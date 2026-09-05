@@ -9,7 +9,6 @@ const AskCopilotMini = memo(function AskCopilotMini() {
   const { getToken } = useAppAuth();
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
-  const [answer, setAnswer] = useState(null);
   const abortRef = useRef(null);
 
   const handleAsk = useCallback(async () => {
@@ -17,7 +16,6 @@ const AskCopilotMini = memo(function AskCopilotMini() {
     if (!q || loading) return;
 
     setLoading(true);
-    setAnswer(null);
 
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -39,7 +37,9 @@ const AskCopilotMini = memo(function AskCopilotMini() {
       if (controller.signal.aborted) return;
 
       if (!response.ok) {
-        setAnswer("Could not reach copilot service.");
+        logEntry(LOG_TYPES.COPILOT_MSG, "warn", "Could not reach copilot service.", {
+          source: "mini-float",
+        });
         return;
       }
 
@@ -51,17 +51,20 @@ const AskCopilotMini = memo(function AskCopilotMini() {
         "";
 
       if (raw) {
-        setAnswer(raw);
         logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${q} → ${raw}`, {
           source: "mini-float",
         });
       } else {
-        setAnswer("No response received.");
+        logEntry(LOG_TYPES.COPILOT_MSG, "warn", "No response received.", {
+          source: "mini-float",
+        });
       }
       setQuestion("");
     } catch (err) {
       if (err.name === "AbortError") return;
-      setAnswer("Could not reach copilot service.");
+      logEntry(LOG_TYPES.COPILOT_MSG, "warn", "Could not reach copilot service.", {
+        source: "mini-float",
+      });
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
       setLoading(false);
@@ -80,15 +83,6 @@ const AskCopilotMini = memo(function AskCopilotMini() {
 
   return (
     <div className="ask-copilot-mini">
-      {answer && (
-        <div
-          className="right-rail-scroll ask-copilot-mini__answer-scroll"
-          style={{ maxHeight: 110, overflowY: "auto", marginBottom: 8 }}
-        >
-          <div className="ask-copilot-mini__answer">{answer}</div>
-        </div>
-      )}
-
       <div
         className="ask-copilot-mini__form"
         style={{ display: "flex", alignItems: "center", gap: 6 }}
