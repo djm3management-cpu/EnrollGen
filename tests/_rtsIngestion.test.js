@@ -7,7 +7,7 @@ import {
   normalizeChunkResult,
   parseAnthropicJson,
   parseRtsFile,
-} from "./_rtsIngestion.js";
+} from "../netlify/functions/_rtsIngestion.js";
 
 test("parseRtsFile parses a header-based CSV", async () => {
   const file = new File(
