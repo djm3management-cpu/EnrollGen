@@ -50,6 +50,8 @@ const loadCarrierRef = () => import("./components/CarrierRef");
 const loadCallHistory = () => import("./components/CallHistory");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
+const loadAgentDashboard = () => import("./components/AgentDashboard");
+const AgentDashboard = lazy(loadAgentDashboard);
 const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
 const loadComplianceIntentAccordion = () => import("./components/ComplianceIntentAccordion");
 const loadCallLogTab = () => import("./components/callLog/CallLogTab");
@@ -396,7 +398,7 @@ function MedSupScriptWorkspace() {
 }
 
 const MODE_ROUTES = {
-  ma: "/",
+  ma: "/script/ma",
   aca: "/script/aca",
   medsup: "/script/medsup",
   u65: "/script/u65",
@@ -439,14 +441,12 @@ function getModeFromLocation() {
   return "ma";
 }
 
-// MA is the default flow (route "/") and lands straight in the call
-// cockpit, same as deep links into another script flow (/script/aca
-// etc). The CRM is reached from there via the CONTACTS tab, not on
-// first load.
+// The dashboard is home; explicit script links still open the cockpit.
 function getAppModeFromLocation() {
-  if (typeof window === "undefined") return "call";
+  if (typeof window === "undefined") return "dashboard";
   const { pathname } = window.location;
-  return pathname === "/" || pathname.startsWith("/script/") ? "call" : "crm";
+  if (pathname === "/" || pathname === "/dashboard" || pathname === "/login") return "dashboard";
+  return pathname.startsWith("/script/") ? "call" : "crm";
 }
 
 function syncModePath(mode) {
@@ -498,7 +498,7 @@ function isAdminUser(user) {
 }
 
 function getTabsForMode(mode) {
-  const tabs = [{ id: "script", label: "Script" }];
+  const tabs = [{ id: "dashboard", label: "DASHBOARD" }, { id: "script", label: "Script" }];
 
   if (modeSupportsAgentTools(mode)) {
     tabs.push({ id: "tools", label: "Agent Tools" });
@@ -766,7 +766,13 @@ function AppShell({ currentUser = null }) {
   };
 
   const handleTabToggle = (tabId) => {
+    if (tabId === "dashboard") {
+      window.history.pushState(null, "", "/dashboard");
+      startTransition(() => { setAppMode("dashboard"); setOpenPanel(null); });
+      return;
+    }
     if (tabId === "script") {
+      syncModePath(mode);
       startTransition(() => {
         setAppMode("call");
         setOpenPanel(null);
@@ -775,6 +781,7 @@ function AppShell({ currentUser = null }) {
     }
 
     if (tabId === "contacts") {
+      window.history.pushState(null, "", "/contacts");
       startTransition(() => {
         setAppMode("crm");
         setOpenPanel(null);
@@ -862,7 +869,7 @@ function AppShell({ currentUser = null }) {
       </button>
     ) : null;
 
-  const activeTabId = openPanel || (appMode === "crm" ? "contacts" : "script");
+  const activeTabId = openPanel || (appMode === "dashboard" ? "dashboard" : appMode === "crm" ? "contacts" : "script");
 
   const renderOverlayContent = () => {
     switch (openPanel) {
@@ -1073,7 +1080,7 @@ function AppShell({ currentUser = null }) {
 
         <SmsToastHost onOpenContactMessages={handleOpenContactMessages} />
 
-        {appMode === "crm" && sessionActive ? (
+        {appMode !== "call" && sessionActive ? (
           <div className="return-to-call-strip" role="status">
             <span className="return-to-call-strip__pulse" aria-hidden="true" />
             <span className="return-to-call-strip__label">CALL SESSION ACTIVE</span>
@@ -1081,6 +1088,7 @@ function AppShell({ currentUser = null }) {
               type="button"
               className="return-to-call-strip__btn"
               onClick={() => {
+                syncModePath(mode);
                 startTransition(() => {
                   setAppMode("call");
                   setOpenPanel(null);
@@ -1092,7 +1100,16 @@ function AppShell({ currentUser = null }) {
           </div>
         ) : null}
 
-        {appMode === "crm" ? (
+        {appMode === "dashboard" ? (
+          <>
+            <ScriptProvider>{overlayNode}</ScriptProvider>
+            <div className="app-workspace app-workspace--dashboard">
+              <main className="app-center crm-home">
+                <LazyPanel><AgentDashboard userId={currentUser?.id} onOpenContacts={() => handleTabToggle("contacts")} /></LazyPanel>
+              </main>
+            </div>
+          </>
+        ) : appMode === "crm" ? (
           <>
             {/* Overlay panels like the Compliance Hub read ScriptContext;
                 in CRM mode there is no cockpit provider, so give them a
@@ -1414,7 +1431,7 @@ export default function App() {
       <SignedOut>
         {pathname === "/login" ? (
           <div className="auth-shell">
-            <SignIn appearance={clerkTerminalAppearance} />
+            <SignIn appearance={clerkTerminalAppearance} fallbackRedirectUrl="/dashboard" />
           </div>
         ) : (
           <Suspense fallback={<div className="auth-shell" />}>
