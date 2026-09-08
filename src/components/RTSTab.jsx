@@ -50,14 +50,11 @@ function statusTone(status) {
   return "empty";
 }
 
-function canEditRow(row, currentAgent) {
-  return Boolean(
-    row &&
-      currentAgent &&
-      (currentAgent.role === "admin" ||
-        row.clerk_user_id === currentAgent.clerk_user_id ||
-        row.agent_id === currentAgent.id)
-  );
+function canEditRow(row) {
+  // RTS is an agency-shared matrix. Every signed-in agency agent can
+  // maintain the selected agent's status, even for legacy rows without
+  // a reliable ownership link.
+  return Boolean(row);
 }
 
 function pivotRows(rows) {
