@@ -65,7 +65,8 @@ function rowAgentKey(row, visibleAgents) {
   const match = visibleAgents.find((agent) =>
     (row.agent_npn && agent.npn && row.agent_npn === agent.npn) ||
     normalizedName(agent.name) === normalizedName(row.agent_name) ||
-    (normalizedName(agent.name) === "mikeshiomos" && normalizedName(row.agent_name) === "michaelshiomos")
+    ((normalizedName(agent.name) === "mikeshiomos" && normalizedName(row.agent_name) === "michaelshiomos") ||
+      (normalizedName(agent.name) === "michaelshiomos" && normalizedName(row.agent_name) === "mikeshiomos"))
   );
   return match?.name || row.agent_name;
 }
