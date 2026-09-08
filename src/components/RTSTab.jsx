@@ -13,7 +13,7 @@ import { resolveAgentId } from "../lib/agentIdentity";
 import RTSIngestionPanel from "./RTSIngestionPanel";
 
 const DEFAULT_AGENTS = [
-  { name: "Michael Shiomos", short: "Mike S.", mobile: "Mike", npn: "20574678" },
+  { name: "Mike Shiomos", short: "Mike S.", mobile: "Mike", npn: "20574678" },
   { name: "Mark Endres", short: "Mark E.", mobile: "Mark", npn: "20856361" },
   { name: "Dylan Maria", short: "Dylan M.", mobile: "Dylan", npn: "22167358" },
 ];
@@ -57,7 +57,20 @@ function canEditRow(row) {
   return Boolean(row);
 }
 
-function pivotRows(rows) {
+function normalizedName(value) {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function rowAgentKey(row, visibleAgents) {
+  const match = visibleAgents.find((agent) =>
+    (row.agent_npn && agent.npn && row.agent_npn === agent.npn) ||
+    normalizedName(agent.name) === normalizedName(row.agent_name) ||
+    (normalizedName(agent.name) === "mikeshiomos" && normalizedName(row.agent_name) === "michaelshiomos")
+  );
+  return match?.name || row.agent_name;
+}
+
+function pivotRows(rows, visibleAgents) {
   const carriers = new Map();
   rows.forEach((row) => {
     const key = `${row.channel}\u0000${row.carrier}\u0000${row.product_line}`;
@@ -70,7 +83,7 @@ function pivotRows(rows) {
         agents: {},
       });
     }
-    carriers.get(key).agents[row.agent_name] = row;
+    carriers.get(key).agents[rowAgentKey(row, visibleAgents)] = row;
   });
   return [...carriers.values()];
 }
@@ -346,7 +359,7 @@ export default function RTSTab() {
     }));
   };
 
-  const matrixRows = useMemo(() => pivotRows(rows), [rows]);
+  const matrixRows = useMemo(() => pivotRows(rows, visibleAgents), [rows, visibleAgents]);
   const filteredRows = useMemo(() => {
     const needle = search.trim().toLowerCase();
     const direction = sort.direction === "asc" ? 1 : -1;
