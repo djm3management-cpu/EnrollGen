@@ -502,7 +502,7 @@ body {
 
 body {
   color: var(--eg-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--eg-font-body);
   font-weight: 400;
   font-size: 14px;
   line-height: 1.5;
