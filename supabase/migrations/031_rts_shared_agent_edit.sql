@@ -11,6 +11,19 @@ UPDATE public.carrier_rts
 SET tenant_id = '00000000-0000-4000-8000-000000000001'::uuid
 WHERE tenant_id IS NULL;
 
+-- Populate the modern ownership link for rows imported before agent_id was
+-- added. This lets the UI and RLS recognize an agent by NPN or display name.
+UPDATE public.carrier_rts rts
+SET agent_id = agent.id
+FROM public.tenant_agents agent
+WHERE rts.agent_id IS NULL
+  AND agent.tenant_id = rts.tenant_id
+  AND agent.is_active = true
+  AND (
+    (NULLIF(rts.agent_npn, '') IS NOT NULL AND agent.npn = rts.agent_npn)
+    OR lower(trim(agent.name)) = lower(trim(rts.agent_name))
+  );
+
 DROP POLICY IF EXISTS "carrier_rts_agent_update" ON public.carrier_rts;
 CREATE POLICY "carrier_rts_agent_update"
   ON public.carrier_rts FOR UPDATE TO authenticated

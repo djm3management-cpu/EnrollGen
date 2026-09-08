@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useTenantConfig } from "../hooks/useTenantConfig";
 import { supabase } from "../lib/supabase";
+import { resolveAgentId } from "../lib/agentIdentity";
 import RTSIngestionPanel from "./RTSIngestionPanel";
 
 const DEFAULT_AGENTS = [
@@ -54,7 +55,8 @@ function canEditRow(row, currentAgent) {
     row &&
       currentAgent &&
       (currentAgent.role === "admin" ||
-        row.clerk_user_id === currentAgent.clerk_user_id)
+        row.clerk_user_id === currentAgent.clerk_user_id ||
+        row.agent_id === currentAgent.id)
   );
 }
 
@@ -211,8 +213,13 @@ export default function RTSTab() {
     });
   }, [agents]);
   const currentAgent = useMemo(
-    () => agents.find((agent) => agent.clerk_user_id === user?.id) || null,
-    [agents, user?.id]
+    () => {
+      const agentSlug = resolveAgentId(user, agents);
+      return agents.find(
+        (agent) => agent.clerk_user_id === user?.id || agent.agent_slug === agentSlug
+      ) || null;
+    },
+    [agents, user]
   );
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -378,6 +385,10 @@ export default function RTSTab() {
       return ai - bi;
     });
   }, [filteredRows]);
+  const tableAgents = useMemo(
+    () => visibleAgents.filter((agent) => agent.name === mobileAgent),
+    [mobileAgent, visibleAgents]
+  );
   const summary = useMemo(() => {
     const carrierCount = new Set(rows.map((row) => `${row.channel}:${row.carrier}:${row.product_line}`)).size;
     return rows.reduce(
@@ -461,19 +472,11 @@ export default function RTSTab() {
         <span className="is-action"><strong>{summary.action}</strong> Needs Action</span>
       </div>
 
-      <div className="rts-agent-switcher" role="tablist" aria-label="Agent columns">
-        {visibleAgents.map((agent) => (
-          <button
-            key={agent.name}
-            type="button"
-            role="tab"
-            aria-selected={mobileAgent === agent.name}
-            className={mobileAgent === agent.name ? "is-active" : ""}
-            onClick={() => setMobileAgent(agent.name)}
-          >
-            {agent.mobile}
-          </button>
-        ))}
+      <div className="rts-agent-switcher" aria-label="Agent RTS status">
+        <label htmlFor="rts-agent-select">VIEW AGENT</label>
+        <select id="rts-agent-select" value={mobileAgent} onChange={(event) => setMobileAgent(event.target.value)}>
+          {visibleAgents.map((agent) => <option key={agent.name} value={agent.name}>{agent.name}</option>)}
+        </select>
       </div>
 
       {error ? (
@@ -486,12 +489,12 @@ export default function RTSTab() {
       <div className="rts-table-wrap">
         <table
           className="rts-table"
-          style={{ "--rts-agent-columns-width": `${visibleAgents.length * 432}px` }}
+          style={{ "--rts-agent-columns-width": `${tableAgents.length * 432}px` }}
         >
           <colgroup>
             <col className="rts-col-carrier" />
             <col className="rts-col-product" />
-            {visibleAgents.map((agent) => [
+            {tableAgents.map((agent) => [
               <col key={`${agent.name}-status`} className={`rts-agent-col rts-agent-${agent.name === mobileAgent ? "visible" : "hidden"}`} />,
               <col key={`${agent.name}-states`} className={`rts-agent-col rts-agent-${agent.name === mobileAgent ? "visible" : "hidden"}`} />,
               <col key={`${agent.name}-date`} className={`rts-agent-col rts-agent-${agent.name === mobileAgent ? "visible" : "hidden"}`} />,
@@ -504,7 +507,7 @@ export default function RTSTab() {
                 <SortButton label="Carrier" sortKey="carrier" agentName="" sort={sort} onSort={handleSort} />
               </th>
               <th rowSpan="2">Product Line</th>
-              {visibleAgents.map((agent) => (
+              {tableAgents.map((agent) => (
                 <th
                   key={agent.name}
                   colSpan="4"
@@ -516,7 +519,7 @@ export default function RTSTab() {
               ))}
             </tr>
             <tr className="rts-field-head-row">
-              {visibleAgents.map((agent) => (
+              {tableAgents.map((agent) => (
                 <Fragment key={agent.name}>
                   <th key={`${agent.name}-status`} className={agent.name === mobileAgent ? "is-mobile-active" : ""}>
                     <SortButton label="Status" sortKey="status" agentName={agent.name} sort={sort} onSort={handleSort} />
@@ -534,7 +537,7 @@ export default function RTSTab() {
             <tbody>
               {Array.from({ length: 7 }, (_, index) => (
                 <tr key={index} className="rts-skeleton-row">
-                  {Array.from({ length: 2 + visibleAgents.length * 4 }, (__, cell) => (
+                  {Array.from({ length: 2 + tableAgents.length * 4 }, (__, cell) => (
                     <td key={cell}><span /></td>
                   ))}
                 </tr>
@@ -544,7 +547,7 @@ export default function RTSTab() {
             groups.map(([channel, carrierRows]) => (
               <tbody key={channel}>
                 <tr className="rts-channel-row">
-                  <th colSpan={2 + visibleAgents.length * 4}>
+                  <th colSpan={2 + tableAgents.length * 4}>
                     <button
                       type="button"
                       onClick={() => setCollapsed((current) => ({ ...current, [channel]: !current[channel] }))}
@@ -560,7 +563,7 @@ export default function RTSTab() {
                       <tr key={row.key} className="rts-carrier-row">
                         <td className="rts-carrier-name">{row.carrier}</td>
                         <td className="rts-product-line">{row.productLine}</td>
-                        {visibleAgents.map((agent) => {
+                        {tableAgents.map((agent) => {
                           const agentRow = row.agents[agent.name];
                           const mobileClass = agent.name === mobileAgent ? "is-mobile-active" : "";
                           return (
