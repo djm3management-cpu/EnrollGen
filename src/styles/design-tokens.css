@@ -187,7 +187,7 @@
   --phone-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 
   /* ----- Typography ----- */
-  --eg-font-system: "Avenir Pro", Avenir, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --eg-font-system: "Neue Haas Grotesk", "Neue Haas Grotesk Text", Avenir, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --eg-font-display: var(--eg-font-system);
   --eg-font-body: var(--eg-font-system);
   --eg-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
