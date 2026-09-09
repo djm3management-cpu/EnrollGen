@@ -12,12 +12,13 @@ export const AVAILABILITY_FUNCTIONS_BASE_URL =
 export const KNOWN_AGENT_ID_MAP = new Map([
   ["markendres", "mark_endres"],
   ["mikeshiomos", "mike_shiomos"],
+  ["michaelshiomos", "mike_shiomos"],
   ["dylanmaria", "dylan_maria"],
   ["dylan", "dylan_maria"],
   ["m3", "mark_endres"],
   ["nghscontracting", "mark_endres"],
   ["nghs", "mark_endres"],
-  ["michaelshlomos", "mark_endres"],
+  ["michaelshlomos", "mike_shiomos"],
 ]);
 
 function normalizeLookupValue(value) {
