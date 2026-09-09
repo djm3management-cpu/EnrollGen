@@ -2,7 +2,10 @@
 export function assertNoPublicApiKeys(env) {
   for (const [name, value] of Object.entries(env)) {
     if (!name.startsWith('VITE_') || !value) continue;
-    if (/(?:API_?KEY|SECRET|SERVICE_ROLE)/i.test(name) || /(?:sk-(?:proj-|ant-)?[\w-]{8,}|sk_live_[\w]+|sk_test_[\w]+)/.test(value)) {
+    // Preserve the explicitly retained first-party availability integration.
+    // This name-only exception does not permit provider secrets under this name.
+    const retainedAvailabilityKey = name === 'VITE_AGENT_API_KEY';
+    if ((!retainedAvailabilityKey && /(?:API_?KEY|SECRET|SERVICE_ROLE)/i.test(name)) || /(?:sk-(?:proj-|ant-)?[\w-]{8,}|sk_live_[\w]+|sk_test_[\w]+)/.test(value)) {
       throw new Error(`Unsafe public secret: ${name}. API keys must be server-side only.`);
     }
     if (Object.entries(env).some(([key, secret]) => !key.startsWith('VITE_') && /API_?KEY|SECRET|SERVICE_ROLE/i.test(key) && secret && secret === value)) {

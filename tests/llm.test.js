@@ -238,6 +238,16 @@ test('startup rejects public API keys without disclosing secret values', () => {
   assert.doesNotThrow(() => assertNoPublicApiKeys({ OPENAI_API_KEY: 'private', VITE_CLERK_PUBLISHABLE_KEY: 'pk_test_public', VITE_SUPABASE_ANON_KEY: 'public' }));
 });
 
+test('startup preserves the availability key but rejects disguised provider secrets', () => {
+  assert.doesNotThrow(() => assertNoPublicApiKeys({ VITE_AGENT_API_KEY: 'availability-public-integration' }));
+  for (const env of [
+    { VITE_AGENT_API_KEY: 'sk-proj-private12345' },
+    { VITE_AGENT_API_KEY: 'private', OPENAI_API_KEY: 'private' },
+    { VITE_AGENT_API_KEY: 'private', ANTHROPIC_API_KEY: 'private' },
+    { VITE_OTHER_API_KEY: 'private' },
+  ]) assert.throws(() => assertNoPublicApiKeys(env), /Unsafe public secret/);
+});
+
 test('static prompt prefix is stable across transcript and app-state changes', () => {
   const builder = o => `${o.knowledge}\n${o.flowOrder}\n${o.transcriptReferenceBlock}\n${o.sectionKey}\n${o.copilotContextJson}\n${o.recentTranscript}`;
   const options = { knowledge: 'rules', flowOrder: 'script', transcriptReferenceBlock: 'RAG', sectionKey: 'one', copilotContextJson: '{"checked":false}', recentTranscript: 'old' };
