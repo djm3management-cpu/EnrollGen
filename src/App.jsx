@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import ShellTextures from "./components/ShellTextures";
+import ClientQuickScripts from "./components/ClientQuickScripts";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
@@ -27,7 +28,9 @@ import SmsToastHost from "./components/SmsToastHost";
 import { setPendingCallContact } from "./lib/callLaunch";
 import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
-import { BookOpen, SquareTerminal, Sun, TableProperties } from "lucide-react";
+import { BookOpen, SquareTerminal, Sun, TableProperties, ShieldCheck } from "lucide-react";
+import CollapsibleWidget from "./components/CollapsibleWidget";
+import ComplianceMini from "./components/ComplianceMini";
 import { useTheme } from "./context/ThemeContext";
 import {
   LeftRail,
@@ -223,6 +226,11 @@ const FLOWS = [
 
 function FlowSelector({ mode, onChange }) {
   const [open, setOpen] = useState(false);
+  const [quickScript, setQuickScript] = useState(null);
+  const quickScriptDialogRef = useRef(null);
+  useEffect(() => {
+    if (quickScript) quickScriptDialogRef.current?.showModal();
+  }, [quickScript]);
   const activeFlow = FLOWS.find((flow) => flow.id === mode) || FLOWS[0];
 
   const handleSelect = (flowId) => {
@@ -249,7 +257,7 @@ function FlowSelector({ mode, onChange }) {
       <button
         type="button"
         className="flow-select-trigger"
-        aria-haspopup="listbox"
+        aria-haspopup="menu"
         aria-expanded={open}
         title={activeFlow.title}
         onClick={() => setOpen((prev) => !prev)}
@@ -259,15 +267,15 @@ function FlowSelector({ mode, onChange }) {
         <span className="flow-caret" aria-hidden="true" />
       </button>
       {open ? (
-        <div className="flow-select-menu" role="listbox" aria-label="Workflow">
+        <div className="flow-select-menu" role="menu" aria-label="Workflow">
           {FLOWS.map((flow) => {
             const active = mode === flow.id;
             return (
+              <div className="flow-select-item" key={flow.id} role="none">
               <button
-                key={flow.id}
                 type="button"
-                role="option"
-                aria-selected={active}
+                role="menuitem"
+                aria-current={active ? "true" : undefined}
                 className={`flow-select-option${active ? " is-active" : ""}`}
                 title={flow.title}
                 onMouseDown={(event) => event.preventDefault()}
@@ -280,11 +288,46 @@ function FlowSelector({ mode, onChange }) {
               >
                 <span className="flow-beacon" />
                 <span className="flow-label">{flow.label}</span>
+                {modeSupportsAgentTools(flow.id) ? <span className="flow-select-submenu-caret" aria-hidden="true">›</span> : null}
               </button>
+              {modeSupportsAgentTools(flow.id) ? (
+                <div className="flow-select-submenu" role="menu" aria-label={`${flow.label} client scripts`}>
+                  {[{ id: "disenrolled", label: "Disenrolled" }, { id: "check-in", label: "Follow Up" }].map((script) => (
+                    <button
+                      key={script.id}
+                      type="button"
+                      role="menuitem"
+                      className="flow-select-option"
+                      onClick={() => {
+                        setQuickScript({ flowType: flow.id, id: script.id });
+                        setOpen(false);
+                      }}
+                    >
+                      {script.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              </div>
             );
           })}
         </div>
       ) : null}
+      <dialog
+        ref={quickScriptDialogRef}
+        className="flow-quick-script-dialog"
+        aria-label="Client quick script"
+        onClose={() => setQuickScript(null)}
+      >
+        {quickScript ? (
+          <ClientQuickScripts
+            key={`${quickScript.flowType}-${quickScript.id}`}
+            flowType={quickScript.flowType}
+            activeScriptId={quickScript.id}
+            onClose={() => quickScriptDialogRef.current?.close()}
+          />
+        ) : null}
+      </dialog>
     </div>
   );
 }
@@ -344,6 +387,20 @@ class PanelErrorBoundary extends Component {
 
     return this.props.children;
   }
+}
+
+function LeftRailCompliance() {
+  const { liveCall } = useLiveCall();
+
+  return (
+    <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />}>
+      <ComplianceMini
+        transcript={liveCall.transcript}
+        activeSection={liveCall.activeSection}
+        result={liveCall.complianceResult}
+      />
+    </CollapsibleWidget>
+  );
 }
 
 function SessionSummarySlot() {
@@ -1128,7 +1185,7 @@ function AppShell({ currentUser = null }) {
           </>
         ) : mode === "ma" ? (
           <ScriptProvider>
-            <LeftRail launcher={sepLauncher} visibleItemIds={visibleLeftRailIds} />
+            <LeftRail launcher={sepLauncher} visibleItemIds={visibleLeftRailIds} footer={<LeftRailCompliance />} />
 
             {overlayNode}
 

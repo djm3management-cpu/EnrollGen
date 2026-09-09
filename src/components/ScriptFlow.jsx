@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, MessageSquare, ShieldCheck, Radio } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, MessageSquare, Radio } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useAppAuth } from "../context/AuthContext";
 import {
@@ -34,12 +34,10 @@ import { persistBeforeReset } from "../lib/persistBeforeReset";
 import {
   StickyTimerBar,
 } from "./SharedUI";
-import ComplianceMini from "./ComplianceMini";
 import CopilotFeedMini from "./CopilotFeedMini";
 import AskCopilotMini from "./AskCopilotMini";
 import DtmfKeypad from "./DtmfKeypad";
 import CrossSellTrigger from "./copilot/CrossSellTrigger";
-import ClientQuickScripts from "./ClientQuickScripts";
 
 import CollapsibleWidget from "./CollapsibleWidget";
 import CallTimer from "./copilot/CallTimer";
@@ -214,12 +212,10 @@ function useDebouncedValue(value, delayMs) {
 /* ---- Shared widget stack, used by both full rail and overlay ---- */
 function RailWidgets({
   transcript,
-  activeSection,
   state,
   dispatch,
   mergedEntries,
   listening,
-  result,
   copilotHandlersRef,
   coachingLoading,
   onManualCopilotStart,
@@ -292,15 +288,6 @@ function RailWidgets({
         headerRight={<TranscriptTimer startTime={state.tpmoStart} />}
       >
         <MiniLiveTranscript mergedEntries={mergedEntries} listening={listening} />
-      </CollapsibleWidget>
-
-      {/* ── Compliance ── */}
-      <CollapsibleWidget title="Compliance" defaultCollapsed className="right-rail-widget-shell--compliance" icon={<ShieldCheck size={11} />} accentColor="var(--danger)">
-        <ComplianceMini
-          transcript={transcript}
-          activeSection={activeSection}
-          result={result}
-        />
       </CollapsibleWidget>
 
       <CrossSellTrigger
@@ -1020,7 +1007,6 @@ export default function ScriptFlow() {
       <div className="flow-shell">
         <div className="flow-main">
 
-      <ClientQuickScripts flowType="ma" />
 
       <CenterTimerBar
         agentActive={isListening}

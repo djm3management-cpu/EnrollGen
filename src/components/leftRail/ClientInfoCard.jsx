@@ -192,37 +192,6 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
     }
   }, [saveState, notes, countyLabel, state.tpmoZip, linkedContactId, updateContact, createContact]);
 
-  const fullName = useMemo(() => {
-    const first = (notes.customerFirstName || "").trim();
-    const last = (notes.customerLastName || "").trim();
-    return [first, last].filter(Boolean).join(" ");
-  }, [notes.customerFirstName, notes.customerLastName]);
-
-  // The name input is controlled off of first/last name state rebuilt
-  // as "first last" (single space, no trailing space). Binding the
-  // input directly to that would erase a space the instant you type
-  // it (nothing to join yet), making the spacebar seem broken. A local
-  // draft displays exactly what was typed; it only gets overwritten by
-  // an external change (contact hydration, transcript name inference),
-  // not by the recompute triggered by its own keystroke.
-  const [nameDraft, setNameDraft] = useState(fullName);
-  const nameDraftRef = useRef(nameDraft);
-  nameDraftRef.current = nameDraft;
-
-  useEffect(() => {
-    if (nameDraftRef.current.trim().replace(/\s+/g, " ") !== fullName) {
-      setNameDraft(fullName);
-    }
-  }, [fullName]);
-
-  const handleNameChange = (e) => {
-    const raw = e.target.value;
-    setNameDraft(raw);
-    const parts = raw.trim().split(/\s+/).filter(Boolean);
-    setNote("customerFirstName", parts[0] || "");
-    setNote("customerLastName", parts.slice(1).join(" ") || "");
-  };
-
   const inferredName = useMemo(
     () => inferCustomerName(liveCall.mergedTranscript),
     [liveCall.mergedTranscript]
@@ -263,7 +232,7 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
 
   const partsAB = notes.partsABStatus || "";
   const currentCoverage = notes.currentCoverage || notes.previousCarrier || "";
-  const county = countyLabel || notes.customerCounty || notes.customerState || "";
+  const customerState = notes.customerState || "";
   const phone = notes.customerPhone || "";
   const dob = notes.customerDob || "";
   const address = notes.customerAddress || "";
@@ -273,20 +242,29 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
 
   return (
     <div className="eg-rail-card">
-      <div className="eg-rail-card__label">CLIENT</div>
-
-      <input
-        className="eg-rail-card__name"
-        style={{ background: "transparent", border: "none", outline: "none", width: "100%", padding: 0 }}
-        value={nameDraft}
-        placeholder=""
-        onChange={handleNameChange}
-        aria-label="Client name"
-      />
-
-      <div className="eg-rail-card__sub">{subline}</div>
+      {subline ? <div className="eg-rail-card__sub">{subline}</div> : null}
 
       <div className="eg-rail-card__grid">
+        <div className="eg-rail-card__field">
+          <label className="eg-rail-card__field-key" htmlFor="left-rail-first-name">FIRST NAME</label>
+          <input
+            id="left-rail-first-name"
+            className={`eg-rail-card__field-value${notes.customerFirstName ? "" : " is-empty"}`}
+            value={notes.customerFirstName || ""}
+            onChange={(e) => setNote("customerFirstName", e.target.value)}
+            aria-label="First name"
+          />
+        </div>
+        <div className="eg-rail-card__field">
+          <label className="eg-rail-card__field-key" htmlFor="left-rail-last-name">LAST NAME</label>
+          <input
+            id="left-rail-last-name"
+            className={`eg-rail-card__field-value${notes.customerLastName ? "" : " is-empty"}`}
+            value={notes.customerLastName || ""}
+            onChange={(e) => setNote("customerLastName", e.target.value)}
+            aria-label="Last name"
+          />
+        </div>
         <div className="eg-rail-card__field">
           <div className="eg-rail-card__field-key">MBI</div>
           <input
@@ -298,13 +276,13 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
           />
         </div>
         <div className="eg-rail-card__field">
-          <div className="eg-rail-card__field-key">COUNTY</div>
+          <div className="eg-rail-card__field-key">STATE</div>
           <input
-            className={`eg-rail-card__field-value${county ? "" : " is-empty"}`}
-            value={county}
+            className={`eg-rail-card__field-value${customerState ? "" : " is-empty"}`}
+            value={customerState}
             placeholder=""
-            onChange={(e) => setNote("customerCounty", e.target.value)}
-            aria-label="County"
+            onChange={(e) => setNote("customerState", e.target.value)}
+            aria-label="State"
           />
         </div>
         <div className="eg-rail-card__field">

@@ -286,6 +286,7 @@ export function useLeftRailManager() {
 export function LeftRail({
   launcher = null,
   visibleItemIds = null,
+  footer = null,
 }) {
   const {
     expandedItem,
@@ -353,7 +354,7 @@ export function LeftRail({
               visibleExpandedItem.id === "sep-qualifier" ? " left-rail-panel-shell--sep-qualifier" : ""
             }${visibleExpandedItem.panelClassName ? ` ${visibleExpandedItem.panelClassName}` : ""}${
               visibleExpandedItem.isAttention ? " is-attention" : ""
-            }`}
+            }${footer ? " left-rail-panel-shell--with-footer" : ""}`}
           >
             <button
               type="button"
@@ -365,6 +366,7 @@ export function LeftRail({
               <ChevronLeftIcon />
             </button>
             {visibleExpandedItem.component}
+            {footer ? <div className="left-rail-footer">{footer}</div> : null}
           </div>
         ) : null}
       </aside>

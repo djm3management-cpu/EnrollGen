@@ -1,17 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 
-const QUICK_SCRIPT_OPTIONS = [
-  {
-    id: "disenrolled",
-    label: "Disenrolled",
-  },
-  {
-    id: "check-in",
-    label: "Follow Up",
-  },
-];
-
 const QUICK_SCRIPTS = {
   ma: {
     disenrolled: {
@@ -153,8 +142,7 @@ const QUICK_SCRIPTS = {
   },
 };
 
-export default function ClientQuickScripts({ flowType }) {
-  const [activeScriptId, setActiveScriptId] = useState(null);
+export default function ClientQuickScripts({ flowType, activeScriptId, onClose }) {
   const [activeBranchId, setActiveBranchId] = useState(null);
   const flowScripts = QUICK_SCRIPTS[flowType];
   const activeScript = activeScriptId ? flowScripts?.[activeScriptId] : null;
@@ -165,38 +153,8 @@ export default function ClientQuickScripts({ flowType }) {
 
   if (!flowScripts) return null;
 
-  const handleSelect = (scriptId) => {
-    setActiveBranchId(null);
-    setActiveScriptId((current) => (current === scriptId ? null : scriptId));
-  };
-
-  const handleClose = () => {
-    setActiveBranchId(null);
-    setActiveScriptId(null);
-  };
-
   return (
     <div className={`client-quick-scripts client-quick-scripts--${flowType}`}>
-      <div className="client-quick-scripts__buttons" aria-label={`${flowType.toUpperCase()} client scripts`}>
-        {QUICK_SCRIPT_OPTIONS.map((option) => {
-          const active = activeScriptId === option.id;
-
-          return (
-            <button
-              key={option.id}
-              type="button"
-              className={`client-quick-scripts__button${active ? " is-active" : ""}`}
-              aria-controls={panelId}
-              aria-expanded={active}
-              onClick={() => handleSelect(option.id)}
-            >
-              <span className="client-quick-scripts__beacon" aria-hidden="true" />
-              <span>{option.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
       {activeScript ? (
         <section id={panelId} className="client-quick-script-panel">
           <header className="client-quick-script-panel__header">
@@ -207,7 +165,7 @@ export default function ClientQuickScripts({ flowType }) {
             <button
               type="button"
               className="client-quick-script-panel__close"
-              onClick={handleClose}
+              onClick={onClose}
               aria-label={`Close ${activeScript.title}`}
               title="Close quick script"
             >

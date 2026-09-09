@@ -28,7 +28,6 @@ import {
   STATE_SEP_TYPE_META,
 } from "../../data/stateSepData";
 import { useScript } from "../../context/ScriptContext";
-import QuickNotes from "../QuickNotes";
 import SEPFinder from "../SEPFinder";
 import ClientInfoCard from "./ClientInfoCard";
 import PlanContextCard from "./PlanContextCard";
@@ -296,7 +295,6 @@ export default function SEPQualifier({ onMinimize }) {
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedSubtypeId, setSelectedSubtypeId] = useState("");
   const [expandedStateSections, setExpandedStateSections] = useState({});
-  const [agentNotes, setAgentNotes] = useState("");
   const [usedQuestionShortcut, setUsedQuestionShortcut] = useState(false);
   const [showNoSepNotice, setShowNoSepNotice] = useState(false);
   const [sharedZip, setSharedZip] = useState(scriptState.tpmoZip || "");
@@ -524,7 +522,6 @@ export default function SEPQualifier({ onMinimize }) {
               <PlanContextCard />
             </div>
 
-            <QuickNotes value={agentNotes} onChange={setAgentNotes} title="Agent Notes" />
           </div>
         ) : null}
 
