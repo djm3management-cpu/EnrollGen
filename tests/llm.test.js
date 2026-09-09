@@ -238,13 +238,22 @@ test('startup rejects public API keys without disclosing secret values', () => {
   assert.doesNotThrow(() => assertNoPublicApiKeys({ OPENAI_API_KEY: 'private', VITE_CLERK_PUBLISHABLE_KEY: 'pk_test_public', VITE_SUPABASE_ANON_KEY: 'public' }));
 });
 
-test('startup preserves the availability key but rejects disguised provider secrets', () => {
-  assert.doesNotThrow(() => assertNoPublicApiKeys({ VITE_AGENT_API_KEY: 'availability-public-integration' }));
+test('startup allows exactly the migration exceptions but rejects disguised provider secrets', () => {
+  for (const name of ['VITE_BIBLIA_API_KEY', 'VITE_AGENT_API_KEY']) {
+    assert.doesNotThrow(() => assertNoPublicApiKeys({ [name]: 'public-integration' }));
+    for (const env of [
+      { [name]: 'sk-proj-private12345' },
+      { [name]: 'private', OPENAI_API_KEY: 'private' },
+      { [name]: 'private', ANTHROPIC_API_KEY: 'private' },
+    ]) assert.throws(() => assertNoPublicApiKeys(env), /Unsafe public secret/);
+  }
   for (const env of [
-    { VITE_AGENT_API_KEY: 'sk-proj-private12345' },
-    { VITE_AGENT_API_KEY: 'private', OPENAI_API_KEY: 'private' },
-    { VITE_AGENT_API_KEY: 'private', ANTHROPIC_API_KEY: 'private' },
+    { VITE_BIBLIA_API_KEY_EXTRA: 'private' },
+    { VITE_AGENT_API_KEY_EXTRA: 'private' },
+    { VITE_biblia_api_key: 'private' },
     { VITE_OTHER_API_KEY: 'private' },
+    { VITE_OTHER_SECRET: 'private' },
+    { VITE_OTHER_SERVICE_ROLE: 'private' },
   ]) assert.throws(() => assertNoPublicApiKeys(env), /Unsafe public secret/);
 });
 

@@ -402,6 +402,7 @@ export default function DialerPanel() {
       </div>
 
       {callError ? <div className="phone-dialer__error">{callError}</div> : null}
+      {inbound?.error ? <div className="phone-dialer__error">{inbound.error}</div> : null}
       {disabled && !calling ? (
         <div className="phone-dialer__hint">Softphone status: {inbound?.deviceStatus || "offline"}</div>
       ) : null}

@@ -79,7 +79,7 @@ function ACAFlowSelector({ variant, onChange }) {
                 border: "none",
                 cursor: "pointer",
                 padding: 0,
-                fontFamily: "var(--font-body)",
+                fontFamily: "var(--font-primary)",
               }}
             >
               <div
@@ -104,7 +104,7 @@ function ACAFlowSelector({ variant, onChange }) {
                   fontSize: 9,
                   fontWeight: 700,
                   letterSpacing: "0.1em",
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                   color: active ? flow.color : "var(--text-muted)",
                   transition: "color 0.2s ease",
                   textTransform: "uppercase",

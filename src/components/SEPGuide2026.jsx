@@ -140,7 +140,7 @@ function SEPPill({ type }) {
         padding: "2px 8px",
         borderRadius: 999,
         fontSize: 10,
-        fontFamily: "var(--font-body)",
+        fontFamily: "var(--font-primary)",
         fontWeight: 700,
         letterSpacing: "0.1em",
         color: colors.text,
@@ -394,7 +394,7 @@ function DisclosureCallout({ text }) {
       </div>
       <div
         style={{
-          fontFamily: "var(--font-body)",
+          fontFamily: "var(--font-primary)",
           fontSize: 9,
           fontWeight: 700,
           letterSpacing: "0.14em",
@@ -431,7 +431,7 @@ function DisclosureCallout({ text }) {
           alignItems: "center",
           gap: 4,
           fontSize: 9,
-          fontFamily: "var(--font-body)",
+          fontFamily: "var(--font-primary)",
           letterSpacing: "0.08em",
           textTransform: "uppercase",
         }}
@@ -513,7 +513,7 @@ function MandatoryQuestions({ items }) {
                 marginTop: 1,
               }}
             >
-              <span style={{ fontSize: 11, fontWeight: 800, fontFamily: "var(--font-body)", color: isFail ? "var(--status-offline)" : isEnsure ? "var(--status-pending)" : "var(--status-live)" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, fontFamily: "var(--font-primary)", color: isFail ? "var(--status-offline)" : isEnsure ? "var(--status-pending)" : "var(--status-live)" }}>
                 {idx + 1}
               </span>
             </div>
@@ -567,7 +567,7 @@ function MarkdownTable({ rawLines }) {
           width: "100%",
           borderCollapse: "collapse",
           fontSize: 12,
-          fontFamily: "var(--font-body)",
+          fontFamily: "var(--font-primary)",
         }}
       >
         <thead>
@@ -578,7 +578,7 @@ function MarkdownTable({ rawLines }) {
                 style={{
                   textAlign: "left",
                   padding: "6px 10px",
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                   fontSize: 10,
                   fontWeight: 700,
                   letterSpacing: "0.12em",
@@ -657,7 +657,7 @@ function StatePanel({ state }) {
           <span
             style={{
               fontSize: 10,
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
               fontWeight: 600,
               letterSpacing: "0.08em",
               color: "var(--status-offline)",
@@ -674,7 +674,7 @@ function StatePanel({ state }) {
           <span
             style={{
               fontSize: 10,
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
               fontWeight: 600,
               letterSpacing: "0.08em",
               color: "var(--text-muted)",
@@ -711,7 +711,7 @@ export default function SEPGuide2026() {
           <span
             style={{
               fontSize: 9,
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
               fontWeight: 700,
               letterSpacing: "0.14em",
               textTransform: "uppercase",
@@ -768,12 +768,12 @@ export default function SEPGuide2026() {
                     cursor: "pointer",
                     textAlign: "left",
                     transition: "all 0.15s ease",
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-primary)",
                   }}
                 >
                   <span
                     style={{
-                      fontFamily: "var(--font-body)",
+                      fontFamily: "var(--font-primary)",
                       fontSize: 14,
                       fontWeight: 800,
                       letterSpacing: "0.06em",
@@ -828,7 +828,7 @@ export default function SEPGuide2026() {
                   <>
                     <div
                       style={{
-                        fontFamily: "var(--font-body)",
+                        fontFamily: "var(--font-primary)",
                         fontSize: 16,
                         fontWeight: 800,
                         letterSpacing: "0.06em",
@@ -865,7 +865,7 @@ export default function SEPGuide2026() {
                     style={{
                       textAlign: "left",
                       padding: "8px 12px",
-                      fontFamily: "var(--font-body)",
+                      fontFamily: "var(--font-primary)",
                       fontSize: 10,
                       fontWeight: 700,
                       letterSpacing: "0.12em",
@@ -880,7 +880,7 @@ export default function SEPGuide2026() {
                     style={{
                       textAlign: "left",
                       padding: "8px 12px",
-                      fontFamily: "var(--font-body)",
+                      fontFamily: "var(--font-primary)",
                       fontSize: 10,
                       fontWeight: 700,
                       letterSpacing: "0.12em",

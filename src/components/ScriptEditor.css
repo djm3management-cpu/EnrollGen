@@ -3,7 +3,7 @@
   min-height: 100%;
   padding: 18px;
   color: var(--eg-text);
-  font-family: var(--eg-font-body);
+  font-family: var(--font-primary);
   background: var(--eg-base);
 }
 
@@ -11,7 +11,7 @@
 .script-editor-empty h2 {
   margin: 0;
   color: var(--eg-text);
-  font-family: var(--eg-font-display);
+  font-family: var(--font-primary);
   font-size: 30px;
   font-weight: 400;
   line-height: 1.1;
@@ -211,7 +211,7 @@
   min-width: 160px;
   min-height: 34px;
   padding: 7px 9px;
-  font-family: var(--eg-font-body);
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0;
@@ -229,7 +229,7 @@
   resize: vertical;
   min-height: 180px;
   padding: 10px;
-  font-family: var(--eg-font-body);
+  font-family: var(--font-primary);
   font-size: 13px;
   line-height: 1.58;
 }
@@ -268,7 +268,7 @@
 .script-editor-lock-note {
   flex-basis: 100%;
   color: var(--eg-text-faint);
-  font-family: var(--eg-font-body);
+  font-family: var(--font-primary);
   font-size: 11px;
   letter-spacing: 0;
   text-transform: none;

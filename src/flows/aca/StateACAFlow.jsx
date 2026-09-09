@@ -357,7 +357,7 @@ export default function StateACAFlow() {
   return (
     <motion.div
       className="flow"
-      style={{ fontFamily: "var(--font-body)" }}
+      style={{ fontFamily: "var(--font-primary)" }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -381,7 +381,7 @@ export default function StateACAFlow() {
             onClick={() => dispatch({ type: "START_CALL" })}
             style={{
               fontSize: 15,
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
@@ -493,7 +493,7 @@ export default function StateACAFlow() {
                     fontSize: 13,
                     fontWeight: 600,
                     cursor: "pointer",
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-primary)",
                   }}
                 >
                   New Call

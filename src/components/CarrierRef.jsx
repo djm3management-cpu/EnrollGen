@@ -135,7 +135,7 @@ function SegmentSection({ segId, color, label, stateCode, data, startOpen }) {
           />
           <span
             style={{
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
               fontWeight: 800,
               fontSize: "0.72rem",
               letterSpacing: "0.12em",
@@ -188,7 +188,7 @@ function SegmentSection({ segId, color, label, stateCode, data, startOpen }) {
                     border: `1px solid ${tint(color, 20)}`,
                     fontSize: "0.7rem",
                     color: COLOR.text,
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-primary)",
                     whiteSpace: "nowrap",
                     textDecoration: "none",
                     cursor: "pointer",
@@ -217,7 +217,7 @@ function SegmentSection({ segId, color, label, stateCode, data, startOpen }) {
                     border: `1px solid ${tint(color, 20)}`,
                     fontSize: "0.7rem",
                     color: COLOR.text,
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-primary)",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -246,7 +246,7 @@ function SegmentSection({ segId, color, label, stateCode, data, startOpen }) {
                     background: tint(color, 8),
                     color,
                     textDecoration: "none",
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-primary)",
                     fontWeight: 700,
                     fontSize: "0.56rem",
                     letterSpacing: "0.1em",
@@ -294,7 +294,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
         <div>
           <div
             style={{
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
               fontWeight: 800,
               fontSize: "0.56rem",
               letterSpacing: "0.14em",
@@ -312,7 +312,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
               fontSize: "1.15rem",
               letterSpacing: "0.05em",
               textTransform: "uppercase",
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
               fontWeight: 800,
             }}
           >
@@ -329,7 +329,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
             cursor: "pointer",
             padding: "4px 8px",
             fontSize: "0.7rem",
-            fontFamily: "var(--font-body)",
+            fontFamily: "var(--font-primary)",
           }}
         >
           ✕
@@ -363,7 +363,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
               </div>
               <div
                 style={{
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                   fontSize: "0.5rem",
                   fontWeight: 700,
                   letterSpacing: "0.1em",
@@ -409,7 +409,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
           background: "color-mix(in srgb, var(--accent) 3%, transparent)", padding: "10px 14px",
         }}>
           <div style={{
-            fontFamily: "var(--font-body)", fontWeight: 800,
+            fontFamily: "var(--font-primary)", fontWeight: 800,
             fontSize: "0.62rem", letterSpacing: "0.1em", textTransform: "uppercase",
             color: "var(--accent)", marginBottom: 8,
           }}>
@@ -422,7 +422,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
                 background: "color-mix(in srgb, var(--accent) 8%, transparent)",
                 border: "1px solid color-mix(in srgb, var(--accent) 15%, transparent)",
                 fontSize: "0.64rem", color: "var(--text-primary)",
-                fontFamily: "var(--font-body)", whiteSpace: "nowrap",
+                fontFamily: "var(--font-primary)", whiteSpace: "nowrap",
               }}>
                 {iss}
               </span>
@@ -445,7 +445,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
             background: "color-mix(in srgb, var(--text-primary) 3%, transparent)",
             color: "var(--text-secondary)",
             textDecoration: "none",
-            fontFamily: "var(--font-body)",
+            fontFamily: "var(--font-primary)",
             fontWeight: 700,
             fontSize: "0.56rem",
             letterSpacing: "0.1em",
@@ -721,7 +721,7 @@ export default function CarrierRef() {
                     borderRadius: 999,
                     padding: "5px 12px",
                     cursor: "pointer",
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-primary)",
                     fontWeight: 700,
                     fontSize: "0.64rem",
                     letterSpacing: "0.1em",
@@ -863,7 +863,7 @@ export default function CarrierRef() {
                             : "var(--text-secondary)"
                     }
                     style={{
-                      fontFamily: "var(--font-body)",
+                      fontFamily: "var(--font-primary)",
                       fontWeight: 800,
                       fontSize: isSel || isHov ? "11px" : "9px",
                       letterSpacing: "0.06em",
@@ -899,7 +899,7 @@ export default function CarrierRef() {
             >
               <div
                 style={{
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                   fontWeight: 800,
                   fontSize: "0.82rem",
                   letterSpacing: "0.06em",
@@ -935,7 +935,7 @@ export default function CarrierRef() {
                         />
                         <span
                           style={{
-                            fontFamily: "var(--font-body)",
+                            fontFamily: "var(--font-primary)",
                             fontWeight: 700,
                             fontSize: "0.62rem",
                             letterSpacing: "0.08em",
@@ -982,7 +982,7 @@ export default function CarrierRef() {
             >
               <div
                 style={{
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                   fontWeight: 800,
                   fontSize: "0.82rem",
                   letterSpacing: "0.06em",
@@ -1100,7 +1100,7 @@ export default function CarrierRef() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div style={{
-                  fontFamily: "var(--font-body)", fontWeight: 800,
+                  fontFamily: "var(--font-primary)", fontWeight: 800,
                   fontSize: "0.56rem", letterSpacing: "0.14em", textTransform: "uppercase",
                   color: "var(--accent)", marginBottom: 3,
                 }}>
@@ -1109,7 +1109,7 @@ export default function CarrierRef() {
                 <h3 style={{
                   margin: 0, color: "var(--text-primary)", fontSize: "1.15rem",
                   letterSpacing: "0.05em", textTransform: "uppercase",
-                  fontFamily: "var(--font-body)", fontWeight: 800,
+                  fontFamily: "var(--font-primary)", fontWeight: 800,
                 }}>
                   ACA Market Data
                 </h3>
@@ -1119,7 +1119,7 @@ export default function CarrierRef() {
                 style={{
                   background: "color-mix(in srgb, var(--text-primary) 5%, transparent)", border: "1px solid var(--border-default)",
                   borderRadius: 8, color: "var(--text-secondary)", cursor: "pointer",
-                  padding: "4px 8px", fontSize: "0.7rem", fontFamily: "var(--font-body)",
+                  padding: "4px 8px", fontSize: "0.7rem", fontFamily: "var(--font-primary)",
                 }}
               >
                 ✕
@@ -1140,7 +1140,7 @@ export default function CarrierRef() {
                   {acaIssuers[selected]?.length || 0}
                 </div>
                 <div style={{
-                  fontFamily: "var(--font-body)", fontSize: "0.56rem",
+                  fontFamily: "var(--font-primary)", fontSize: "0.56rem",
                   fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
                   color: "var(--text-muted)", marginTop: 2,
                 }}>
@@ -1158,7 +1158,7 @@ export default function CarrierRef() {
                 gap: 10,
               }}>
                 <div style={{
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                   fontWeight: 800,
                   fontSize: "0.68rem",
                   letterSpacing: "0.12em",
@@ -1182,7 +1182,7 @@ export default function CarrierRef() {
                     background: "color-mix(in srgb, var(--accent) 8%, transparent)",
                     color: "var(--accent)",
                     textDecoration: "none",
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-primary)",
                     fontWeight: 700,
                     fontSize: "0.6rem",
                     letterSpacing: "0.1em",
@@ -1201,7 +1201,7 @@ export default function CarrierRef() {
                 padding: "12px 14px",
               }}>
                 <div style={{
-                  fontFamily: "var(--font-body)", fontWeight: 800,
+                  fontFamily: "var(--font-primary)", fontWeight: 800,
                   fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase",
                   color: "var(--accent)", marginBottom: 10,
                 }}>
@@ -1216,7 +1216,7 @@ export default function CarrierRef() {
                         background: "color-mix(in srgb, var(--accent) 10%, transparent)",
                         border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)",
                         fontSize: "0.7rem", color: "var(--text-primary)",
-                        fontFamily: "var(--font-body)", whiteSpace: "nowrap",
+                        fontFamily: "var(--font-primary)", whiteSpace: "nowrap",
                       }}
                     >
                       {iss}
@@ -1259,7 +1259,7 @@ export default function CarrierRef() {
           <h3
             style={{
               margin: 0,
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
               fontWeight: 800,
               fontSize: "0.74rem",
               letterSpacing: "0.12em",
@@ -1294,7 +1294,7 @@ export default function CarrierRef() {
               >
                 <span
                   style={{
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-primary)",
                     fontWeight: 700,
                     fontSize: "0.58rem",
                     letterSpacing: "0.1em",
@@ -1318,7 +1318,7 @@ export default function CarrierRef() {
                       background: tint(seg.color, 6),
                       color: seg.color,
                       textDecoration: "none",
-                      fontFamily: "var(--font-body)",
+                      fontFamily: "var(--font-primary)",
                       fontWeight: 700,
                       fontSize: "0.54rem",
                       letterSpacing: "0.08em",
@@ -1349,7 +1349,7 @@ export default function CarrierRef() {
           <h3
             style={{
               margin: 0,
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
               fontWeight: 800,
               fontSize: "0.74rem",
               letterSpacing: "0.12em",

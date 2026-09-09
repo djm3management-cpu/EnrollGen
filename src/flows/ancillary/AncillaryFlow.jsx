@@ -1491,7 +1491,7 @@ function CompletionPanel({ product, productMeta }) {
           fontSize: 13,
           fontWeight: 600,
           cursor: "pointer",
-          fontFamily: "var(--font-body)",
+          fontFamily: "var(--font-primary)",
         }}
       >
         New Call
@@ -1553,7 +1553,7 @@ function AncillaryHeader({ product, productMeta }) {
         <div
           style={{
             color: ANCILLARY_ACCENT.color,
-            fontFamily: "var(--font-body)",
+            fontFamily: "var(--font-primary)",
             fontSize: 10,
             fontWeight: 800,
             letterSpacing: "0.12em",
@@ -1598,7 +1598,7 @@ function StartCallGate({ product }) {
         onClick={() => dispatch({ type: "START_CALL", product })}
         style={{
           fontSize: 15,
-          fontFamily: "var(--font-body)",
+          fontFamily: "var(--font-primary)",
           fontWeight: 700,
           letterSpacing: "0.1em",
           textTransform: "uppercase",
@@ -1756,7 +1756,7 @@ function AncillaryScriptRenderer({ product, productMeta, steps }) {
   return (
     <motion.div
       className="flow"
-      style={{ fontFamily: "var(--font-body)" }}
+      style={{ fontFamily: "var(--font-primary)" }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}

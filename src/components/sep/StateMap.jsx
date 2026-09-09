@@ -103,7 +103,7 @@ export function StateMap({ selectedState, onStateClick, compact = false }) {
                 dominantBaseline="central"
                 fill={isSel ? "var(--text-primary)" : isHov ? "var(--text-primary)" : "var(--text-muted)"}
                 style={{
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                   fontWeight: 800,
                   fontSize: isSel || isHov ? "11px" : "8px",
                   letterSpacing: "0.06em",
@@ -135,7 +135,7 @@ export function StateMap({ selectedState, onStateClick, compact = false }) {
           }}
         >
           <span style={{
-            fontFamily: "var(--font-body)",
+            fontFamily: "var(--font-primary)",
             fontWeight: 800,
             fontSize: "0.76rem",
             letterSpacing: "0.06em",

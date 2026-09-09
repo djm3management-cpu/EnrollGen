@@ -296,7 +296,7 @@ function G0({ gate }) {
                 fontSize: 12,
                 fontWeight: 600,
                 cursor: "pointer",
-                fontFamily: "var(--font-body)",
+                fontFamily: "var(--font-primary)",
                 letterSpacing: "0.06em",
               }}
             >
@@ -603,7 +603,7 @@ function G6({ gate }) {
               fontSize: 13,
               fontWeight: 600,
               cursor: "pointer",
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
             }}
           >
             New Call
@@ -645,7 +645,7 @@ export default function ACAFlow() {
   return (
     <motion.div
       className="flow"
-      style={{ fontFamily: "var(--font-body)" }}
+      style={{ fontFamily: "var(--font-primary)" }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -657,7 +657,7 @@ export default function ACAFlow() {
       {!state.callStarted ? (
         <section className="script-start-call-gate" style={{ background: `var(--status-pending-bg)`, border: `1px solid var(--status-pending-border)`, borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
           <button className="primary script-start-call-button" onClick={() => dispatch({ type: "START_CALL" })} style={{
-            fontSize: 15, fontFamily: "var(--font-body)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
+            fontSize: 15, fontFamily: "var(--font-primary)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
             background: `linear-gradient(145deg, var(--status-pending-border), var(--status-pending-bg))`, border: `1px solid var(--status-pending-border)`, color: ACCENT, borderRadius: 8, cursor: "pointer",
           }}>
             START

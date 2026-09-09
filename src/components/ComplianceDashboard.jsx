@@ -189,7 +189,7 @@ const CategoryRow = memo(function CategoryRow({ cat, isExpanded, onToggle }) {
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontFamily: "var(--font-body)",
+            fontFamily: "var(--font-primary)",
             fontSize: "13px",
             fontWeight: 700,
             letterSpacing: "0.06em",
@@ -507,7 +507,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{
-              fontFamily: "var(--font-body)",
+              fontFamily: "var(--font-primary)",
               fontSize: "14px",
               fontWeight: 700,
               letterSpacing: "0.10em",
@@ -518,7 +518,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             </span>
             {isExpanded && (
               <span style={{
-                fontFamily: "var(--font-body)",
+                fontFamily: "var(--font-primary)",
                 fontSize: "16px",
                 fontWeight: 800,
                 letterSpacing: "0.06em",
@@ -531,7 +531,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             {isTranscriptScored && (
               <span style={{
                 fontSize: "10px",
-                fontFamily: "var(--font-body)",
+                fontFamily: "var(--font-primary)",
                 fontWeight: 700,
                 letterSpacing: "0.10em",
                 background: "var(--status-live-bg)",
@@ -680,7 +680,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
                   border: "1px solid var(--border-default)",
                   borderRadius: 3,
                   padding: "3px 10px",
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                   fontSize: "11px",
                   fontWeight: 700,
                   letterSpacing: "0.10em",
@@ -747,7 +747,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
               >
                 <Scale size={13} color="var(--text-muted)" />
                 <span style={{
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                   fontSize: "13px",
                   fontWeight: 700,
                   color: "var(--text-label)",

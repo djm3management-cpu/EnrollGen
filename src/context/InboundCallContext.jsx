@@ -10,6 +10,7 @@ import {
 import { useUser } from "@clerk/clerk-react";
 import { useAppAuth } from "./AuthContext";
 import { useTenantConfig } from "../hooks/useTenantConfig";
+import { useAvailability } from "./AvailabilityContext";
 import {
   isAuthDisabled,
   readLocalAgentId,
@@ -58,6 +59,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const { getToken } = useAppAuth();
   const { supabaseClient, agents } = useTenantConfig();
   const requestingAgentId = resolveRequestingAgentUuid(agents, agentId);
+  const availability = useAvailability();
 
   const [deviceStatus, setDeviceStatus] = useState("offline"); // offline | registering | registered | error
   const [incomingCall, setIncomingCall] = useState(null); // { call, params }
@@ -75,6 +77,12 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const deviceRef = useRef(null);
   const wsRef = useRef(null);
   const tokenBundleRef = useRef(null);
+  const manualStatusRef = useRef("offline");
+  const preCallStatusRef = useRef("offline");
+
+  useEffect(() => {
+    if (availability?.status) manualStatusRef.current = availability.status;
+  }, [availability?.status]);
 
   const fetchTokenBundle = useCallback(async () => {
     const clerkToken = await getToken().catch(() => null);
@@ -156,7 +164,15 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
   // Register the softphone device once identity is resolved.
   useEffect(() => {
-    if (!identityReady || !agentId || !TELEPHONY_BASE_URL) return undefined;
+    // AvailabilityProvider loads the persisted manual status before the
+    // device registers. Registration is connectivity only; it must not
+    // promote an offline agent into the routing pool.
+    if (
+      !identityReady ||
+      !agentId ||
+      !TELEPHONY_BASE_URL ||
+      !availability?.isHydrated
+    ) return undefined;
     let cancelled = false;
 
     async function register() {
@@ -175,7 +191,6 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
         device.on("registered", () => {
           setDeviceStatus("registered");
-          setAvailabilityStatus(agentId, "available");
         });
         device.on("error", (deviceError) => {
           console.error("[InboundCall] device error:", deviceError);
@@ -216,9 +231,10 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
               if (attempts < 20) {
                 window.setTimeout(grabStream, 250);
               } else {
-                console.warn(
-                  "[InboundCall] remote stream never became available; customer transcription will not start"
-                );
+                const message =
+                  "Remote customer audio was not exposed by Twilio after 5 seconds; customer transcription cannot start.";
+                console.warn("[InboundCall]", message);
+                setError(message);
               }
             };
             grabStream();
@@ -230,7 +246,10 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
             setConnectedAt(null);
             setIsMuted(false);
             setIsHeld(false);
-            setAvailabilityStatus(agentId, "available");
+            setAvailabilityStatus(
+              agentId,
+              manualStatusRef.current || preCallStatusRef.current || "offline"
+            );
             publishAudioLevel("customer", 0, { immediate: true });
           });
         });
@@ -260,7 +279,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       }
       setDeviceStatus("offline");
     };
-  }, [identityReady, agentId, fetchTokenBundle, connectAgentSocket]);
+  }, [identityReady, agentId, fetchTokenBundle, connectAgentSocket, availability?.isHydrated]);
 
   // Hydrate the contact record for the ringing/active call. Full PII
   // (name/phone/email/etc) is read via decrypt_pii — the agent needs
@@ -309,7 +328,10 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     incomingCall.call.accept();
     setActiveCall(incomingCall);
     setIncomingCall(null);
-    setAvailabilityStatus(agentId, "busy");
+    preCallStatusRef.current = manualStatusRef.current || "offline";
+    if (preCallStatusRef.current !== "offline") {
+      setAvailabilityStatus(agentId, "busy");
+    }
   }, [incomingCall, agentId]);
 
   const declineCall = useCallback(() => {
@@ -354,7 +376,10 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         setConnectedAt(Date.now());
         setIsMuted(false);
         setIsHeld(false);
-        setAvailabilityStatus(agentId, "busy");
+        preCallStatusRef.current = manualStatusRef.current || "offline";
+        if (preCallStatusRef.current !== "offline") {
+          setAvailabilityStatus(agentId, "busy");
+        }
         let attempts = 0;
         const grabStream = () => {
           const stream = call.getRemoteStream?.();
@@ -364,6 +389,12 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           }
           attempts += 1;
           if (attempts < 20) window.setTimeout(grabStream, 250);
+          else {
+            const message =
+              "Remote customer audio was not exposed by Twilio after 5 seconds; customer transcription cannot start.";
+            console.warn("[OutboundCall]", message);
+            setError(message);
+          }
         };
         grabStream();
       });
@@ -375,7 +406,10 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         setConnectedAt(null);
         setIsMuted(false);
         setIsHeld(false);
-        setAvailabilityStatus(agentId, "available");
+        setAvailabilityStatus(
+          agentId,
+          manualStatusRef.current || preCallStatusRef.current || "offline"
+        );
         publishAudioLevel("customer", 0, { immediate: true });
       });
       call.on("cancel", () => setDialingCall(null));

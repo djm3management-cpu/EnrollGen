@@ -86,7 +86,6 @@ const Onboarding = lazy(loadOnboarding);
 const SEPQualifier = lazy(loadSEPQualifier);
 const AuthenticatedStyleGate = lazy(loadAuthenticatedStyleGate);
 const RTSTab = lazy(loadRTSTab);
-const SYSTEM_FONT_STACK = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const SYSTEM_MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const tenantBootstrapAttempts = new Set();
@@ -116,7 +115,7 @@ const clerkTerminalAppearance = {
     colorText: "var(--text-primary)",
     colorTextSecondary: "var(--text-secondary)",
     borderRadius: "5px",
-    fontFamily: SYSTEM_FONT_STACK,
+    fontFamily: "var(--font-primary)",
     fontSize: "14px",
   },
   elements: {
@@ -137,7 +136,7 @@ const clerkTerminalAppearance = {
     },
     headerTitle: {
       color: "var(--text-primary)",
-      fontFamily: SYSTEM_FONT_STACK,
+      fontFamily: "var(--font-primary)",
       fontSize: "28px",
       fontWeight: 600,
       letterSpacing: "-0.02em",
@@ -146,7 +145,7 @@ const clerkTerminalAppearance = {
     },
     headerSubtitle: {
       color: "var(--text-secondary)",
-      fontFamily: SYSTEM_FONT_STACK,
+      fontFamily: "var(--font-primary)",
       fontSize: "14px",
       lineHeight: "1.5",
     },
@@ -156,7 +155,7 @@ const clerkTerminalAppearance = {
       borderRadius: "5px",
       backgroundColor: "var(--bg-elevated)",
       color: "var(--text-primary)",
-      fontFamily: SYSTEM_FONT_STACK,
+      fontFamily: "var(--font-primary)",
       fontSize: "14px",
       fontWeight: 500,
     },
@@ -184,7 +183,7 @@ const clerkTerminalAppearance = {
       borderRadius: "5px",
       backgroundColor: "var(--bg-elevated)",
       color: "var(--text-primary)",
-      fontFamily: SYSTEM_FONT_STACK,
+      fontFamily: "var(--font-primary)",
       fontSize: "14px",
     },
     formButtonPrimary: {

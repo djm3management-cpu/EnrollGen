@@ -130,14 +130,14 @@ function MissingClerkKey() {
         background: "var(--bg-primary)",
         color: "var(--text-primary)",
         padding: 24,
-        fontFamily: 'var(--font-body)',
+        fontFamily: 'var(--font-primary)',
       }}
     >
       <div style={{ maxWidth: 560, lineHeight: 1.5 }}>
         <h1
           style={{
             marginTop: 0,
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-primary)',
             fontSize: 28,
             fontWeight: 600,
             letterSpacing: "-0.02em",

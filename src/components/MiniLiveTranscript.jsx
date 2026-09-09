@@ -137,7 +137,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
                 color: idx === finals.length - 1
                   ? (isCustomer ? "var(--info)" : "var(--text-primary)")
                   : (isCustomer ? "var(--eg-blue-text)" : "var(--text-muted)"),
-                fontFamily: "var(--font-body)",
+                fontFamily: "var(--font-primary)",
                 lineHeight: 1.5,
                 overflowWrap: "break-word",
                 minWidth: 0,
@@ -145,7 +145,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
                 <span className="mini-live-transcript__speaker" style={{
                   fontSize: "0.54rem",
                   fontWeight: 800,
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                   letterSpacing: "0.06em",
                   color: isCustomer ? "var(--info)" : "var(--text-label)",
                   marginRight: 5,

@@ -734,7 +734,7 @@
   border: 1px solid var(--phone-border);
   border-radius: var(--phone-radius-inner);
   color: var(--eg-text);
-  font-family: var(--eg-font-body);
+  font-family: var(--font-primary);
   font-size: 12px;
   padding: 8px 10px;
 }

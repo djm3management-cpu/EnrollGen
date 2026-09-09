@@ -1,11 +1,12 @@
+// Known exceptions pending server-side migration; exact names only.
+const PUBLIC_API_KEY_ALLOWLIST = new Set(['VITE_BIBLIA_API_KEY', 'VITE_AGENT_API_KEY']);
+
 // Used by Vite before bundling and by the server at module startup. Never print values.
 export function assertNoPublicApiKeys(env) {
   for (const [name, value] of Object.entries(env)) {
     if (!name.startsWith('VITE_') || !value) continue;
-    // Preserve the explicitly retained first-party availability integration.
-    // This name-only exception does not permit provider secrets under this name.
-    const retainedAvailabilityKey = name === 'VITE_AGENT_API_KEY';
-    if ((!retainedAvailabilityKey && /(?:API_?KEY|SECRET|SERVICE_ROLE)/i.test(name)) || /(?:sk-(?:proj-|ant-)?[\w-]{8,}|sk_live_[\w]+|sk_test_[\w]+)/.test(value)) {
+    // Name-only exceptions still cannot contain provider secrets or copied server secrets.
+    if ((!PUBLIC_API_KEY_ALLOWLIST.has(name) && /(?:API_?KEY|SECRET|SERVICE_ROLE)/i.test(name)) || /(?:sk-(?:proj-|ant-)?[\w-]{8,}|sk_live_[\w]+|sk_test_[\w]+)/.test(value)) {
       throw new Error(`Unsafe public secret: ${name}. API keys must be server-side only.`);
     }
     if (Object.entries(env).some(([key, secret]) => !key.startsWith('VITE_') && /API_?KEY|SECRET|SERVICE_ROLE/i.test(key) && secret && secret === value)) {

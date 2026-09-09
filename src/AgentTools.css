@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
 }
 
 .at-card-list {
@@ -31,7 +31,7 @@
   background: transparent;
   padding: 5px 8px 7px;
   color: var(--text-muted);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.56rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -87,7 +87,7 @@
   border: none;
   background: transparent;
   color: var(--text-primary);
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.72rem;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -126,7 +126,7 @@
 
 .at-group-label {
   color: var(--text-muted);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.5rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -202,7 +202,7 @@
 
 .at-tool-title {
   color: var(--text-primary);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -276,7 +276,7 @@
 
 .at-modal-kicker {
   color: var(--text-muted);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.52rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -286,7 +286,7 @@
 .at-modal-title {
   margin: 0;
   color: var(--text-primary);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -423,7 +423,7 @@
 .at-doc-status-kicker,
 .at-doc-field-label,
 .at-badge-warning {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -461,7 +461,7 @@
   border: 1px solid var(--border-subtle);
   background: var(--bg-input);
   color: var(--text-primary);
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.72rem;
   font-weight: 500;
   outline: none;
@@ -552,7 +552,7 @@
 
 .at-compliance-status {
   color: var(--accent-gold);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.52rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -580,7 +580,7 @@
   padding: 3px 8px;
   border-radius: 999px;
   text-align: center;
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.52rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -639,7 +639,7 @@
 
 .at-matrix-key {
   color: var(--text-muted);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.52rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -759,7 +759,7 @@
   border: 1px solid var(--border-subtle);
   background: rgba(255, 255, 255, 0.025);
   color: var(--text-secondary);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -781,7 +781,7 @@
 .at-map-title {
   margin: 0 0 6px;
   color: var(--text-muted);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -804,7 +804,7 @@
 .at-doc-detail-title {
   margin: 0;
   color: var(--text-primary);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -838,7 +838,7 @@
   padding: 4px 10px;
   background: var(--bg-input);
   color: var(--text-muted);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.56rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1077,7 +1077,7 @@
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
   color: var(--text-secondary);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -1130,7 +1130,7 @@
 .at-training-summary-title {
   margin: 0;
   color: var(--text-primary);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -1169,7 +1169,7 @@
 
 .at-training-section-title {
   color: var(--text-primary);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -1199,7 +1199,7 @@
 .at-training-subheading {
   margin-top: 3px;
   color: var(--accent-cyan);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -1233,7 +1233,7 @@
 
 .at-training-label {
   color: var(--text-muted);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.56rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -1272,7 +1272,7 @@
 }
 
 .at-training-alert-label {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.56rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -1372,7 +1372,7 @@
 .at-training-table th {
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-primary);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.56rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -1423,7 +1423,7 @@
 
 .at-training-summary-kicker {
   color: var(--accent-cyan);
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 0.52rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -1576,7 +1576,7 @@
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.03);
   color: #f0f6fc;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.85rem;
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -1608,7 +1608,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   color: rgba(240, 246, 252, 0.72);
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1634,7 +1634,7 @@
   border: 1px dashed rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
   color: rgba(240, 246, 252, 0.6);
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.85rem;
   text-align: center;
 }
@@ -1666,7 +1666,7 @@
 
 .carrier-quickref-card-title {
   color: #f0f6fc;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.96rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1687,7 +1687,7 @@
   border-radius: 999px;
   background: rgba(96, 165, 250, 0.16);
   color: #93c5fd;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1702,7 +1702,7 @@
 
 .carrier-quickref-meta-label {
   color: rgba(240, 246, 252, 0.45);
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -1711,7 +1711,7 @@
 
 .carrier-quickref-meta-value {
   color: #c9d1d9;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.78rem;
   line-height: 1.45;
 }
@@ -1755,7 +1755,7 @@
 
 .carrier-quickref-plan-name {
   color: #f0f6fc;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.84rem;
   font-weight: 600;
   line-height: 1.3;
@@ -1768,7 +1768,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   color: rgba(240, 246, 252, 0.78);
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1789,7 +1789,7 @@
   margin: 0;
   padding-left: 16px;
   color: #c9d1d9;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.76rem;
   line-height: 1.45;
   display: flex;
@@ -1831,7 +1831,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   color: rgba(240, 246, 252, 0.78);
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.08em;

@@ -31,6 +31,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
   // Shared transcriptRef, created here, passed to both hooks
   const transcriptRef = useRef("");
   const customerCapturePromiseRef = useRef(null);
+  const outboundCaptureRef = useRef(false);
 
   /* ─── Customer audio capture (opt-in via getDisplayMedia + Deepgram) ─── */
   const customerAudio = useCustomerAudio();
@@ -48,7 +49,10 @@ const ScriptPrompter = memo(function ScriptPrompter({
      Stream track) and delivered over the /agent WebSocket, already
      speaker-labeled. Tab sharing remains the path for non-Twilio calls. ─── */
   const inbound = useInboundCall();
-  const inboundActive = Boolean(inbound?.activeCall);
+  const softphoneActive = Boolean(inbound?.activeCall);
+  const outboundSoftphoneActive =
+    softphoneActive && inbound.activeCall?.params?.direction === "outbound";
+  const inboundActive = softphoneActive && !outboundSoftphoneActive;
 
   /* ─── Merged transcript (agent + customer) ─── */
   const {
@@ -82,21 +86,56 @@ const ScriptPrompter = memo(function ScriptPrompter({
     speechRef.current = copilot;
   }, [copilot]);
 
-  // Inbound call accepted: the agent mic pipeline starts immediately so
+  // Softphone call accepted: the agent mic pipeline starts immediately so
   // the cockpit is live (STOP state, transcript, coaching) the moment
   // the agent accepts, independent of the remote stream's arrival.
   const inboundSpeechRef = useRef(false);
   useEffect(() => {
-    if (!inboundActive || inboundSpeechRef.current) return;
+    if (!softphoneActive || inboundSpeechRef.current) return;
     inboundSpeechRef.current = true;
     if (!speech.listening) speech.startListening();
-  }, [inboundActive, speech]);
+  }, [softphoneActive, speech]);
+
+  // Outbound browser calls expose the callee audio through Twilio's remote
+  // WebRTC stream. Feed that stream into the existing customer Deepgram
+  // pipeline; inbound PSTN calls continue using Railway's server transcript.
+  useEffect(() => {
+    if (!outboundSoftphoneActive || !inbound.remoteStream || customerAudio.isCapturing) {
+      return;
+    }
+    if (!customerCapturePromiseRef.current) {
+      outboundCaptureRef.current = true;
+      customerCapturePromiseRef.current = customerAudio
+        .startCapture({ mediaStream: inbound.remoteStream })
+        .catch((err) => {
+          copilot.pushFeedEntry(
+            "info",
+            err?.message || "Customer audio capture could not start.",
+            { section: copilot.currentStep }
+          );
+        })
+        .finally(() => {
+          customerCapturePromiseRef.current = null;
+        });
+    }
+  }, [
+    outboundSoftphoneActive,
+    inbound.remoteStream,
+    customerAudio,
+    copilot,
+  ]);
+
+  useEffect(() => {
+    if (softphoneActive || !outboundCaptureRef.current) return;
+    outboundCaptureRef.current = false;
+    if (customerAudio.isCapturing) customerAudio.stopCapture();
+  }, [softphoneActive, customerAudio]);
 
   // Inbound call ended: tear the agent mic pipeline down. The customer
   // side needs no teardown here, it's server-driven and stops on its
   // own once the call disconnects.
   useEffect(() => {
-    if (inboundActive) return;
+    if (softphoneActive) return;
     if (!inboundSpeechRef.current) return;
     speech.stopListening();
     inboundSpeechRef.current = false;
@@ -158,7 +197,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
       await startCustomerAudio();
     }
     speech.startListening();
-  }, [speech, startCustomerAudio, inboundActive]);
+  }, [speech, startCustomerAudio, softphoneActive]);
 
   const handleStop = useCallback(() => {
     speech.stopListening();

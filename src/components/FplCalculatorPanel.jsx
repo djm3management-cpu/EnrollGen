@@ -13,7 +13,7 @@ const BASE_INPUT_STYLE = {
   background: "var(--bg-primary)",
   color: "var(--text-primary)",
   fontSize: 13,
-  fontFamily: "var(--font-body)",
+  fontFamily: "var(--font-primary)",
   outline: "none",
   boxSizing: "border-box",
 };
@@ -177,7 +177,7 @@ export default function FplCalculatorPanel({
                 fontSize: 16,
                 fontWeight: 700,
                 color: "var(--text-primary)",
-                fontFamily: "var(--font-body)",
+                fontFamily: "var(--font-primary)",
               }}
             >
               ${baseThreshold.toLocaleString()}/year
@@ -207,7 +207,7 @@ export default function FplCalculatorPanel({
                 fontSize: 16,
                 fontWeight: 700,
                 color: accentColor,
-                fontFamily: "var(--font-body)",
+                fontFamily: "var(--font-primary)",
               }}
             >
               ${(baseThreshold * 4).toLocaleString()}/year
@@ -298,7 +298,7 @@ export default function FplCalculatorPanel({
                 fontSize: 20,
                 fontWeight: 800,
                 color: aboveCliff ? "var(--status-offline)" : "var(--status-live)",
-                fontFamily: "var(--font-body)",
+                fontFamily: "var(--font-primary)",
                 letterSpacing: "0.04em",
               }}
             >
@@ -348,7 +348,7 @@ export default function FplCalculatorPanel({
                   fontSize: 18,
                   fontWeight: 800,
                   color: "var(--status-offline)",
-                  fontFamily: "var(--font-body)",
+                  fontFamily: "var(--font-primary)",
                 }}
               >
                 ${acaEstimate.low} to ${acaEstimate.high}/month

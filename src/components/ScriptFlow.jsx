@@ -30,6 +30,7 @@ import {
   finalizePostCallTranscript,
   initPostCallRecord,
 } from "../lib/postCallPipeline";
+import { persistBeforeReset } from "../lib/persistBeforeReset";
 import {
   StickyTimerBar,
 } from "./SharedUI";
@@ -565,7 +566,10 @@ export default function ScriptFlow() {
   const checkpointKeyRef = useRef("");
   const finalTranscriptSavedRef = useRef(false);
   const latestPostCallRef = useRef(null);
-  const persistPostCallRef = useRef(null);
+  const finalPersistencePromiseRef = useRef(null);
+  const persistFinalTranscriptRef = useRef(null);
+  const previousSoftphoneActiveRef = useRef(false);
+  const [postCallPersistenceError, setPostCallPersistenceError] = useState("");
 
   // Start session only after agent clicks Start Call
   const sessionStartedRef = useRef(false);
@@ -809,9 +813,41 @@ export default function ScriptFlow() {
     [getToken]
   );
 
-  useEffect(() => {
-    persistPostCallRef.current = persistPostCallTranscript;
+  const persistFinalTranscript = useCallback(() => {
+    if (!finalPersistencePromiseRef.current) {
+      finalPersistencePromiseRef.current = persistPostCallTranscript({
+        final: true,
+        force: true,
+      }).finally(() => {
+        finalPersistencePromiseRef.current = null;
+      });
+    }
+    return finalPersistencePromiseRef.current;
   }, [persistPostCallTranscript]);
+
+  useEffect(() => {
+    persistFinalTranscriptRef.current = persistFinalTranscript;
+  }, [persistFinalTranscript]);
+
+  // Twilio clears activeCall on disconnect for both inbound and outbound
+  // softphone calls. Persist the final snapshot at that boundary regardless
+  // of call length or enrollment progress.
+  useEffect(() => {
+    const softphoneActive = Boolean(inbound?.activeCall);
+    const wasActive = previousSoftphoneActiveRef.current;
+    previousSoftphoneActiveRef.current = softphoneActive;
+    if (!wasActive || softphoneActive || !callStarted) return;
+
+    void persistBeforeReset({
+      persist: persistFinalTranscript,
+      onError: (error) => {
+        console.error("[PostCall] disconnect persistence failed:", error);
+        setPostCallPersistenceError(
+          error?.message || "Transcript could not be saved. The transcript remains available."
+        );
+      },
+    });
+  }, [callStarted, inbound?.activeCall, persistFinalTranscript]);
 
   useEffect(() => {
     if (!callStarted) return undefined;
@@ -876,10 +912,14 @@ export default function ScriptFlow() {
 
   useEffect(() => {
     return () => {
-      if (persistPostCallRef.current) {
-        void persistPostCallRef.current({ final: true, force: true });
-      }
-      resetLiveCall();
+      if (!persistFinalTranscriptRef.current) return;
+      void persistBeforeReset({
+        persist: persistFinalTranscriptRef.current,
+        reset: resetLiveCall,
+        onError: (error) => {
+          console.error("[PostCall] unmount persistence failed:", error);
+        },
+      });
     };
   }, [resetLiveCall]);
 
@@ -995,6 +1035,12 @@ export default function ScriptFlow() {
         controlsRef={copilotHandlersRef}
         onCoachingLoadingChange={setCoachingLoading}
       />
+
+      {postCallPersistenceError ? (
+        <div className="call-persistence-error" role="alert">
+          {postCallPersistenceError}
+        </div>
+      ) : null}
 
       {/* Manual idle state: sections stay hidden until the agent starts Copilot. */}
       {!callStarted && (

@@ -1,13 +1,13 @@
 /* Uses project system typography tokens. */
 
 body {
-  font-family: var(--eg-font-body);
+  font-family: var(--font-primary);
 }
 
 .landing-page {
   min-height: 100vh;
   color: var(--text-primary);
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 300;
   background:
@@ -48,7 +48,7 @@ body {
 
 .landing-logo-text {
   display: block;
-  font-family: var(--eg-font-wordmark);
+  font-family: var(--font-primary);
   font-weight: 700;
   font-size: 26px;
   line-height: 1;
@@ -72,7 +72,7 @@ body {
   justify-content: flex-end;
   gap: clamp(12px, 2vw, 26px);
   color: #ffffff;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -96,7 +96,7 @@ body {
   justify-content: center;
   min-height: 34px;
   border-radius: 2px;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -203,7 +203,7 @@ body {
 .landing-hero h1 {
   max-width: 600px;
   margin: 0;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: clamp(1.9rem, 3.2vw, 3.25rem);
   font-weight: 700;
   line-height: 1.04;
@@ -224,7 +224,7 @@ body {
   max-width: 600px;
   margin-top: 16px;
   color: #ffffff;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 15px;
   font-weight: 300;
   line-height: 1.45;
@@ -496,7 +496,7 @@ body {
 .landing-feature-card p {
   margin-top: 14px;
   color: #ffffff;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 300;
   line-height: 1.42;
@@ -517,7 +517,7 @@ body {
 .landing-footer span {
   display: block;
   color: #ffffff;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 300;
   opacity: 0.6;
@@ -586,7 +586,7 @@ body {
 .landing-page {
   background: var(--eg-base) !important;
   color: var(--eg-text);
-  font-family: var(--eg-font-body) !important;
+  font-family: var(--font-primary) !important;
   font-size: 14px;
 }
 
@@ -676,7 +676,7 @@ body {
 
 #landing-hero-title,
 .landing-hero h1 {
-  font-family: var(--eg-font-display) !important;
+  font-family: var(--font-primary) !important;
   font-weight: 400 !important;
   letter-spacing: 0 !important;
   color: var(--eg-text) !important;
@@ -686,7 +686,7 @@ body {
 }
 
 .landing-hero-subhead {
-  font-family: var(--eg-font-body) !important;
+  font-family: var(--font-primary) !important;
   color: var(--eg-text-mid) !important;
   font-size: 16px !important;
   line-height: 1.6 !important;
@@ -749,7 +749,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--eg-font-body);
+  font-family: var(--font-primary);
   font-size: 12px;
   color: var(--eg-text);
   padding: 5px 0;
@@ -781,7 +781,7 @@ body {
 .landing-status-dot.is-faint { background: var(--eg-text-faint); }
 
 .landing-terminal-ai {
-  font-family: var(--eg-font-body) !important;
+  font-family: var(--font-primary) !important;
   font-size: 11px !important;
   color: var(--eg-green-text) !important;
   background: var(--eg-green-dim) !important;
@@ -819,7 +819,7 @@ body {
   flex: 1;
   display: flex;
   justify-content: space-between;
-  font-family: var(--eg-font-body);
+  font-family: var(--font-primary);
   font-size: 11.5px;
   color: var(--eg-text);
 }
@@ -876,7 +876,7 @@ body {
 }
 
 .landing-feature-card p {
-  font-family: var(--eg-font-body) !important;
+  font-family: var(--font-primary) !important;
   color: var(--eg-text-mid) !important;
   font-size: 13px !important;
   line-height: 1.5 !important;
@@ -1002,7 +1002,7 @@ body {
   max-width: none !important;
   margin: 0 auto !important;
   color: rgba(246, 238, 226, 0.9) !important;
-  font-family: var(--eg-font-display) !important;
+  font-family: var(--font-primary) !important;
   font-size: clamp(38px, 7vw, 92px) !important;
   font-weight: 400 !important;
   line-height: 0.98 !important;

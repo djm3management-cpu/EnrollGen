@@ -337,7 +337,7 @@ export default function ACAIntelligence() {
           style={{
             background: "var(--status-pending-bg)", border: "1px solid var(--status-pending-border)",
             borderRadius: 999, padding: "7px 20px", cursor: loading ? "wait" : "pointer",
-            fontFamily: "var(--font-body)", fontWeight: 800,
+            fontFamily: "var(--font-primary)", fontWeight: 800,
             fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase",
             color: "var(--accent)", transition: "all 0.15s ease",
           }}
@@ -527,7 +527,7 @@ function StatBox({ label: lbl, value, color }) {
 
 const th = {
   textAlign: "left", padding: "8px 10px",
-  fontFamily: "var(--font-body)", fontWeight: 700,
+  fontFamily: "var(--font-primary)", fontWeight: 700,
   fontSize: "0.62rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)",
 };
 const td = { padding: "8px 10px", color: "var(--text-secondary)", fontSize: "0.75rem" };
@@ -553,7 +553,7 @@ const reviewButtonStyle = {
   color: "var(--text-secondary)",
   padding: "6px 12px",
   cursor: "pointer",
-  fontFamily: "var(--font-body)",
+  fontFamily: "var(--font-primary)",
   fontWeight: 800,
   fontSize: "0.62rem",
   letterSpacing: "0.1em",
