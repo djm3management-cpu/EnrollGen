@@ -1,7 +1,10 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
+import { assertNoPublicApiKeys } from "./src/lib/llm/config.js";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  assertNoPublicApiKeys({ ...loadEnv(mode, process.cwd(), ""), ...process.env });
+  return {
   plugins: [react()],
   build: {
     rollupOptions: {
@@ -23,4 +26,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });

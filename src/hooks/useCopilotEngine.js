@@ -1,3 +1,5 @@
+import { coachingFormat } from "../lib/llm/schemas/coaching.js";
+import { buildCachedPrompt } from "../lib/llm/prompts.js";
 import { useRef, useEffect, useCallback, useMemo } from "react";
 import { SECTION_LABELS } from "../context/scriptReducer";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
@@ -350,9 +352,7 @@ function shouldSuppressForNuance({ level, issueTag, message, derivedSignals }) {
 function buildComplianceContext(knowledge) {
   if (!knowledge) return "";
   return `
-════════════════════════════════════════════════════════
-SECTION-SPECIFIC COMPLIANCE INTELLIGENCE
-════════════════════════════════════════════════════════
+## SECTION-SPECIFIC COMPLIANCE INTELLIGENCE
 
 VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING (or close paraphrases, speech recognition may garble words slightly):
 ${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
@@ -374,9 +374,7 @@ ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 function buildCoachingModeGuidance(reviewMode) {
   if (reviewMode === "periodic") {
     return `
-═══════════════════════════════════════════════════════
-YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
-═══════════════════════════════════════════════════════
+## YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
 This is a scheduled 90-second review. You MUST respond with either encouragement or correction.
 
 Return rules for this mode:
@@ -389,9 +387,7 @@ Return rules for this mode:
   }
 
   return `
-═══════════════════════════════════════════════════════
-YOUR ROLE: SILENT COMPLIANCE SAFETY NET
-═══════════════════════════════════════════════════════
+## YOUR ROLE: SILENT COMPLIANCE SAFETY NET
 
 DEFAULT STATE: SILENT. You are monitoring, not commentating. You do NOT need to respond to every transcript update. Silence means everything is fine.
 
@@ -410,9 +406,7 @@ ONLY break silence for:
 
 function buildAudioConstraintBlock(hasCustomerAudio) {
   if (hasCustomerAudio) {
-    return `════════════════════════════════════════════════════════
-DUAL AUDIO MODE, AGENT + CUSTOMER
-════════════════════════════════════════════════════════
+    return `## DUAL AUDIO MODE, AGENT + CUSTOMER
 You can hear BOTH the agent and the customer. The transcript below includes lines labeled AGENT: and CUSTOMER:. Use the customer's responses to provide more accurate, contextual coaching.
 
 DUAL AUDIO IMPLICATIONS:
@@ -426,9 +420,7 @@ DUAL AUDIO IMPLICATIONS:
 - The call may have started before capture began. Absence in the transcript is not proof of omission.`;
   }
 
-  return `════════════════════════════════════════════════════════
-CRITICAL AUDIO CONSTRAINT, THIS IS NON-NEGOTIABLE
-════════════════════════════════════════════════════════
+  return `## CRITICAL AUDIO CONSTRAINT, THIS IS NON-NEGOTIABLE
 You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words captured through their microphone. You have ZERO access to what the client/beneficiary says, asks, confirms, or agrees to.
 
 IMPLICATIONS, read carefully:
@@ -443,9 +435,7 @@ IMPLICATIONS, read carefully:
 }
 
 const OBSERVATION_STAY_TALKING_POINT = `
-════════════════════════════════════════════════════════
-OBSERVATION STAY TALKING POINT, USE ONLY FOR MA + HIP CROSS-SELL
-════════════════════════════════════════════════════════
+## OBSERVATION STAY TALKING POINT, USE ONLY FOR MA + HIP CROSS-SELL
 Context for agent: Hospitals frequently place Medicare patients on observation status instead of admitting them as inpatient. This is classified as outpatient care under Medicare, which means:
 1. The client pays outpatient copays or coinsurance instead of inpatient rates.
 2. The stay does not count toward the 3-day inpatient requirement for SNF coverage.
@@ -472,31 +462,11 @@ function buildCoachingSystemPrompt({
   const complianceContext = buildComplianceContext(knowledge);
   const audioBlock = buildAudioConstraintBlock(hasCustomerAudio);
 
-  return `You are an expert CMS Medicare enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required disclosure, or something the agent needs to correct RIGHT NOW.
+  return { staticPrefix: `# Medicare Advantage live coaching
 
-${audioBlock}
+You are an expert CMS Medicare enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required disclosure, or something the agent needs to correct RIGHT NOW.
 
-════════════════════════════════════════════════════════
-CURRENT SECTION: "${sectionKey}"
-════════════════════════════════════════════════════════
-FLOW POSITION (previous → current → next):
-${flowOrder}
-
-${scriptTemplateBlock}
-${complianceContext}
-${cmsBlock}
-${transcriptRefBlock}
-${recentInterventionText ? `════════════════════════════════════════════════════════
-RECENT PRIOR INTERVENTIONS, DO NOT REPEAT THESE UNLESS THERE IS SUBSTANTIAL NEW CONTENT AND THE ISSUE STILL CLEARLY REMAINS:
-════════════════════════════════════════════════════════
-${recentInterventionText}
-` : ""}
-════════════════════════════════════════════════════════
-STRUCTURED CALL CONTEXT, TREAT THIS AS RELIABLE APP STATE
-════════════════════════════════════════════════════════
-${copilotContextJson}
-
-HOW TO USE THIS CONTEXT:
+## HOW TO USE THIS CONTEXT
 - Inspect sectionChecklistState to see exactly which checklist items are complete vs. pending for the current section. If an item is marked complete, do NOT warn that it is missing. If an item is still pending and the agent appears to be moving on, flag it.
 - Use derivedSignals to detect broader patterns: pacing issues, repeated missed items, sections completed out of order, or unusual call progression.
 - Use priorCompletedSections to understand what the agent has already finished, do not accuse them of missing something from a completed section.
@@ -504,56 +474,67 @@ HOW TO USE THIS CONTEXT:
 
 ${OBSERVATION_STAY_TALKING_POINT}
 
-════════════════════════════════════════════════════════
-EMPTY OR SPARSE TRANSCRIPT:
-════════════════════════════════════════════════════════
+## EMPTY OR SPARSE TRANSCRIPT:
 If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
 
-${buildCoachingModeGuidance(reviewMode)}
 
-PRIORITY WEIGHTING:
+## PRIORITY WEIGHTING
 - Prioritize risky language and compliance-danger behaviors over missing-word disclosure checks.
 - Do not escalate on technical wording misses if the semantic intent appears covered.
 
-════════════════════════════════════════════════════════
-RESPONSE FORMAT: TELEPROMPTER MODE
-════════════════════════════════════════════════════════
+## RESPONSE FORMAT: TELEPROMPTER MODE
 
 You are a teleprompter. The agent glances at you for ONE SECOND while talking to a real person.
 
-HARD LIMITS:
+## HARD LIMITS
 - silent/tip: 8 words max
 - remind: 12 words max
 - warn: 15 words max. Format: "[What's wrong]. Say: '[exact fix]'"
 - critical: 18 words max. Format: "[Violation]. Say now: '[exact script]'"
 
-STYLE RULES:
+## STYLE RULES
 - No explanations. No context. No reasoning. Just the fix.
 - Never start with "I noticed" or "It appears" or "You may want to"
 - Never use "consider" or "make sure" or "don't forget"
 - Use imperative voice: "Say:" not "You should say"
 - One thought per message. Never two ideas.
 
-GOOD examples:
+## GOOD examples
 - tip: "Nice TPMO read, clean delivery"
 - remind: "Still need recording consent before moving on"
 - warn: "Skipped SOA disclosure. Say: 'This call covers Medicare Advantage plans only'"
 - critical: "Illegal benefit guarantee. Say now: 'Benefits vary by plan and may change'"
 
-BAD examples (too long, would be ignored):
+## BAD examples (too long, would be ignored)
 - "I noticed the agent hasn't mentioned the recording consent yet. They should make sure to cover this before proceeding to the next section."
 - "The agent did a great job covering the TPMO disclaimer. They clearly stated that they don't represent every plan available in the area, which satisfies the CMS requirement."
 
-RESPONSE FORMAT:
-Respond with ONLY a valid JSON object. No backticks, no wrapper text.
+## RESPONSE FORMAT
 Do NOT include markdown, bold, bullets, dashes, asterisks, emojis, or special characters in the message field.
 
-{
-  "level": "silent | tip | remind | warn | critical",
-  "issue_tag": "short_snake_case_or_empty",
-  "confidence": 0.0,
-  "message": ""
-}`;
+Use a short snake_case issue_tag, or an empty string.
+`, variableSuffix: `
+## Reference context
+${audioBlock}
+
+${scriptTemplateBlock}
+
+${complianceContext}
+
+${buildCoachingModeGuidance(reviewMode)}
+
+## CURRENT SECTION: "${sectionKey}"
+FLOW POSITION (previous → current → next):
+${flowOrder}
+
+${cmsBlock}
+${transcriptRefBlock}
+${recentInterventionText ? `## RECENT PRIOR INTERVENTIONS, DO NOT REPEAT THESE UNLESS THERE IS SUBSTANTIAL NEW CONTENT AND THE ISSUE STILL CLEARLY REMAINS:
+${recentInterventionText}
+` : ""}
+## STRUCTURED CALL CONTEXT, TREAT THIS AS RELIABLE APP STATE
+${copilotContextJson}
+` };
 }
 
 function buildAskSystemPrompt({ sectionKey, knowledge, cmsBlock, transcriptRefBlock, recentTranscript, copilotContextJson, isSpoken, hasCustomerAudio = false, recentCustomerSpeech = "", scriptTemplateBlock = "" }) {
@@ -572,21 +553,14 @@ function buildAskSystemPrompt({ sectionKey, knowledge, cmsBlock, transcriptRefBl
     ? `\nRecent customer speech for context:\n"${recentCustomerSpeech}"\n`
     : "";
 
-  return `You are a knowledgeable Medicare compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer to their question.
-${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting their microphone (customer cannot hear). Answer it directly and concisely." : ""}
-CRITICAL CONTEXT:
-${audioContext}
-- The agent is currently in the "${sectionKey}" section of the enrollment flow
-- They need a fast, practical answer they can use RIGHT NOW on this call
-${sectionContext}
-${scriptTemplateBlock}
-${cmsBlock}
-${transcriptRefBlock}
-${recentTranscript ? `\nRecent agent transcript for context:\n"${recentTranscript.slice(-1000)}"\n` : ""}${customerContext}
-Structured app context:
-${copilotContextJson}
+  return { staticPrefix: `# Medicare Advantage agent questions
 
-YOUR CAPABILITIES, you can answer questions about:
+You are a knowledgeable Medicare compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer to their question.
+## CRITICAL CONTEXT
+- They need a fast, practical answer they can use RIGHT NOW on this call
+
+
+## YOUR CAPABILITIES, you can answer questions about
 - CMS compliance rules and requirements
 - MA plan types, general benefits structure, eligibility
 - Enrollment periods (AEP, OEP, SEP) and eligibility rules
@@ -597,30 +571,29 @@ YOUR CAPABILITIES, you can answer questions about:
 - Disqualifying coverage types (TRICARE, CHAMPVA, employer)
 - How to handle specific client scenarios on the call
 
-HARD BOUNDARY, DO NOT ANSWER (no live data access):
+## HARD BOUNDARY, DO NOT ANSWER (no live data access)
 - Specific drug formulary or tier info for any plan -> tell agent to check Sunfire or carrier formulary tool
 - Whether a specific provider is in-network for a plan -> tell agent to use Sunfire provider search or call carrier
 - Specific premium, copay, or cost-sharing amounts -> tell agent to verify in Sunfire or plan SOB
 - Pharmacy-specific coverage (preferred vs standard, mail order) -> direct to Sunfire or carrier formulary
 Do NOT guess or approximate any plan-specific data. Always redirect to the authoritative tool.
 
-SCOPE RULE: If the question is not directly relevant to the current section or enrollment flow, answer it briefly and then redirect the agent back to completing the current section. Example: "Quick answer: [answer]. You're currently in ${sectionKey}, make sure to cover [key remaining item] before moving on."
 
-STRUCTURED CONTEXT USAGE:
+## STRUCTURED CONTEXT USAGE
 - Check sectionChecklistState for exactly what is complete and pending in the current section.
 - Use derivedSignals to understand call progression and any flagged patterns.
 - If callMetadata.agentName is null, note once that the agent should enter their name in settings.
 
 EMPTY TRANSCRIPT: If no transcript is available, answer based on the agent's question and current section context only. Do not speculate about what was or wasn't said on the call.
 
-RESPONSE RULES:
+## RESPONSE RULES
 - Keep answers concise and actionable, the agent is on a live call
 - If providing script language, put it in quotes so the agent can read it directly
 - Always prioritize CMS compliance in your answers
 - For any plan-specific data question, follow the HARD BOUNDARY rules above
 - If transcript references are provided, cite them inline as [R1], [R2], etc.
 
-RESPONSE FORMAT RULES:
+## RESPONSE FORMAT RULES
 - Respond ONLY in plain, conversational English
 - NEVER include JSON, code, or structured data in your response
 - NEVER include confidence scores, percentages, or numeric ratings
@@ -629,7 +602,29 @@ RESPONSE FORMAT RULES:
 - Write as if you are a senior agent whispering advice during a live call
 - Keep responses very short: 1-3 sentences max. The agent is mid-call and can only glance at the answer.
 - No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters
-- Write natural conversational sentences. Separate multiple items with numbered lines or semicolons, never with dashes or symbols.`;
+- Write natural conversational sentences. Separate multiple items with numbered lines or semicolons, never with dashes or symbols.
+`, variableSuffix: `
+## Reference context
+${audioContext}
+${scriptTemplateBlock}
+
+${sectionContext}
+
+- The agent is currently in the "${sectionKey}" section of the enrollment flow
+
+${cmsBlock}
+
+${transcriptRefBlock}
+
+${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting their microphone (customer cannot hear). Answer it directly and concisely." : ""}
+
+${recentTranscript ? `\nRecent agent transcript for context:\n"${recentTranscript.slice(-1000)}"\n` : ""}${customerContext}
+
+Structured app context:
+${copilotContextJson}
+SCOPE RULE: If the question is not directly relevant to the current section or enrollment flow, answer it briefly and then redirect the agent back to completing the current section. Example: "Quick answer: [answer]. You're currently in ${sectionKey}, make sure to cover [key remaining item] before moving on."
+
+` };
 }
 
 /* ───────────────────────────────────────────────────────
@@ -637,6 +632,7 @@ RESPONSE FORMAT RULES:
    ─────────────────────────────────────────────────────── */
 
 export function useCopilotEngine({
+  callStarted = true,
   transcriptRef,
   activeSection,
   state,
@@ -679,9 +675,13 @@ export function useCopilotEngine({
     coachingAbortRef, askAbortRef, requestCoachingRef,
     pushFeedEntry, surfaceServiceIssue, clearServiceIssue,
     scheduleCoaching, clearFeed,
+    captureCoachingTranscript, markCoachingDispatched,
     getToken, logEntry, setEntryFeedback, exportFeedbackDataset, entries,
     silentHeartbeatMs,
   } = useCopilotEngineCore({
+    engine: "MA",
+    callStarted,
+    additionalTranscript: formattedTranscript,
     transcriptRef,
     activeSection,
     currentStep,
@@ -745,6 +745,7 @@ export function useCopilotEngine({
     periodic = false,
     periodicSignature = "",
   } = {}) => {
+    const transcriptTicket = captureCoachingTranscript();
     const fullTranscript = transcriptRef.current.trim();
     if (!fullTranscript || coachingLoading) {
       if (manual && !coachingLoading) {
@@ -852,7 +853,7 @@ export function useCopilotEngine({
       transcriptReferenceError: transcriptReferenceResult.error || null,
     };
 
-    const systemPrompt = buildCoachingSystemPrompt({
+    const systemPrompt = buildCachedPrompt(buildCoachingSystemPrompt, {
       sectionKey,
       knowledge,
       flowOrder,
@@ -887,14 +888,16 @@ SECTION CONTEXT (rolling window for current section):
 "${analysisWindow}"${dualTranscriptBlock}`;
 
     try {
+      markCoachingDispatched(transcriptTicket);
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 220,
-          system: systemPrompt,
-          messages: [{ role: "user", content: userContent }],
+          engine: "MA",
+          max_completion_tokens: 2048,
+          system: systemPrompt.system,
+          response_format: coachingFormat,
+          messages: [...systemPrompt.contextMessages, { role: "user", content: userContent }],
         }),
         signal: controller.signal,
       });
@@ -1052,7 +1055,7 @@ SECTION CONTEXT (rolling window for current section):
       }
       setCoachingLoading(false);
     }
-  }, [
+  }, [captureCoachingTranscript, markCoachingDispatched,
     activeSection,
     complianceKnowledge,
     currentStep,
@@ -1152,7 +1155,7 @@ SECTION CONTEXT (rolling window for current section):
       transcriptReferenceError: transcriptReferenceResult.error || null,
     };
 
-    const systemPrompt = buildAskSystemPrompt({
+    const systemPrompt = buildCachedPrompt(buildAskSystemPrompt, {
       sectionKey,
       knowledge,
       cmsBlock: cmsKnowledge.promptBlock,
@@ -1170,10 +1173,10 @@ SECTION CONTEXT (rolling window for current section):
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 300,
-          system: systemPrompt,
-          messages: [{ role: "user", content: question }],
+          engine: "MA",
+          max_completion_tokens: 2048,
+          system: systemPrompt.system,
+          messages: [...systemPrompt.contextMessages, { role: "user", content: question }],
         }),
         signal: controller.signal,
       });

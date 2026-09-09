@@ -30,6 +30,7 @@ function emptyUsage() {
 function summarizeUsage(rows = []) {
   const totals = emptyUsage();
   for (const row of rows) {
+    if (row?.record_type === "llm_tokens") totals.claude_tokens += Number(row.quantity || 0);
     if (row?.record_type in totals) {
       totals[row.record_type] += Number(row.quantity || 0);
     }

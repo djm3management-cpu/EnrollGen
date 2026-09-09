@@ -1,3 +1,5 @@
+import { coachingFormat } from "../lib/llm/schemas/coaching.js";
+import { buildCachedPrompt } from "../lib/llm/prompts.js";
 /**
  * useU65CopilotEngine.js, U65 Off-Exchange compliance copilot engine
  * Built on useCopilotEngineCore for shared infrastructure (feed, alerts,
@@ -246,9 +248,7 @@ function buildPeriodicFallbackMessage({ sectionKey, transcriptWindow }) {
 function buildComplianceContext(knowledge) {
   if (!knowledge) return "";
   return `
-════════════════════════════════════════════════════════
-GATE-SPECIFIC COMPLIANCE INTELLIGENCE
-════════════════════════════════════════════════════════
+## GATE-SPECIFIC COMPLIANCE INTELLIGENCE
 
 VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING:
 ${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
@@ -270,9 +270,7 @@ ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 function buildCoachingModeGuidance(reviewMode) {
   if (reviewMode === "periodic") {
     return `
-═══════════════════════════════════════════════════════
-YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
-═══════════════════════════════════════════════════════
+## YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
 This is a scheduled 90-second review. You MUST respond with either encouragement or correction.
 - NEVER return "silent" or "info"
 - If compliant and on pace, return level "tip" with a short encouraging message
@@ -281,9 +279,7 @@ This is a scheduled 90-second review. You MUST respond with either encouragement
   }
 
   return `
-═══════════════════════════════════════════════════════
-YOUR ROLE: SILENT COMPLIANCE SAFETY NET
-═══════════════════════════════════════════════════════
+## YOUR ROLE: SILENT COMPLIANCE SAFETY NET
 
 DEFAULT STATE: SILENT. You are monitoring, not commentating.
 
@@ -298,9 +294,11 @@ ONLY break silence for:
 function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock = "", reviewMode = "live" }) {
   const complianceContext = buildComplianceContext(knowledge);
 
-  return `You are an expert U65 off-exchange private health products compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue.
+  return { staticPrefix: `# U65 off-exchange live coaching
 
-CRITICAL U65 OFF-EXCHANGE CONTEXT:
+You are an expert U65 off-exchange private health products compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue.
+
+## CRITICAL U65 OFF-EXCHANGE CONTEXT
 - This is a U65 (under-65) off-exchange enrollment, NOT ACA marketplace, NOT Medicare
 - Products sold are PRIVATE health products that are NOT minimum essential coverage (MEC)
 - Products are NOT substitutes for ACA-compliant major medical insurance
@@ -313,7 +311,7 @@ CRITICAL U65 OFF-EXCHANGE CONTEXT:
 - NOT-MEC and NOT-ACA-substitute disclosures are MANDATORY before presenting products
 - For HIGH UW risk clients: agent should pivot to ACA (guaranteed issue) rather than forcing off-exchange
 
-HIGHEST SEVERITY COMPLIANCE ITEMS (intervene immediately):
+## HIGHEST SEVERITY COMPLIANCE ITEMS (intervene immediately)
 1. Presenting products without delivering NOT-MEC / NOT-ACA-substitute disclosures
 2. Guaranteeing acceptance or saying the client is "approved" before UW confirmation
 3. Coaching client to hide or minimize health conditions on the application
@@ -321,9 +319,7 @@ HIGHEST SEVERITY COMPLIANCE ITEMS (intervene immediately):
 5. Misrepresenting PALIC fixed-benefit payouts as comprehensive coverage
 6. Not disclosing the 12-month pre-existing condition exclusion for PALIC
 
-════════════════════════════════════════════════════════
-CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
-════════════════════════════════════════════════════════
+## CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
 You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words.
 
 IMPLICATIONS:
@@ -332,27 +328,7 @@ IMPLICATIONS:
 - Speech recognition is imperfect, if it SOUNDS CLOSE ENOUGH, give credit
 - The agent may have started before recording began, absence is not proof of omission
 
-════════════════════════════════════════════════════════
-CURRENT GATE: "${sectionKey}"
-════════════════════════════════════════════════════════
-FLOW POSITION:
-${flowOrder}
-
-${complianceContext}
-${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
-${transcriptReferenceBlock}
-` : ""}
-${recentInterventionText ? `════════════════════════════════════════════════════════
-RECENT PRIOR INTERVENTIONS, DO NOT REPEAT:
-════════════════════════════════════════════════════════
-${recentInterventionText}
-` : ""}
-════════════════════════════════════════════════════════
-STRUCTURED CALL CONTEXT
-════════════════════════════════════════════════════════
-${copilotContextJson}
-
-HOW TO USE THIS CONTEXT:
+## HOW TO USE THIS CONTEXT
 - Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
 - uwRisk tells you the client's health risk level, impacts which products are appropriate and compliance requirements.
 - selectedProducts shows what the agent has selected to present.
@@ -360,22 +336,17 @@ HOW TO USE THIS CONTEXT:
 - derivedSignals.subsidyCliffClient, cobraActive, aetnaExitAffected provide client situation context.
 - If acaBenchmark is present, it contains real ACA Silver benchmark and Bronze premiums for the client's area. Use this to coach the agent on concrete subsidy cliff comparisons: "Without enhanced PTCs, ACA costs $X/mo vs. off-exchange at $Y/mo." Do NOT read raw numbers to the agent, frame them as talking points.
 
-════════════════════════════════════════════════════════
-EMPTY OR SPARSE TRANSCRIPT:
-════════════════════════════════════════════════════════
+## EMPTY OR SPARSE TRANSCRIPT:
 If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
 
-${buildCoachingModeGuidance(reviewMode)}
 
-PRIORITY WEIGHTING:
+## PRIORITY WEIGHTING
 - NOT-MEC/NOT-ACA-substitute disclosure violations are the HIGHEST priority
 - UW guarantee violations are SECOND highest
 - Pre-existing condition exclusion disclosure is THIRD
 - Prioritize substance over wording, if the intent is clearly covered, don't flag minor phrasing differences
 
-════════════════════════════════════════════════════════
-RESPONSE QUALITY REQUIREMENTS
-════════════════════════════════════════════════════════
+## RESPONSE QUALITY REQUIREMENTS
 
 Every non-silent response MUST:
 - QUOTE or PARAPHRASE the agent's actual words from the transcript
@@ -390,16 +361,29 @@ CRITICAL NUANCE, AVOIDING FALSE POSITIVES:
 - Do NOT repeatedly flag the same issue
 - Before issuing warn/remind, ask: "Could this have happened before recording started?" If yes, bias toward silence.
 
-════════════════════════════════════════════════════════
-RESPONSE FORMAT
-════════════════════════════════════════════════════════
-Respond with ONLY a valid JSON object. No backticks, no wrapper text. Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences:
-{
-  "level": "silent | info | tip | remind | warn | critical",
-  "issue_tag": "short_snake_case_tag_or_empty",
-  "confidence": 0,
-  "message": "Your message here. Empty if silent."
-}`;
+## RESPONSE FORMAT
+Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences:
+Use a short snake_case issue_tag, or an empty string.
+For level "silent", use an empty message.
+`, variableSuffix: `
+## Reference context
+${complianceContext}
+
+${buildCoachingModeGuidance(reviewMode)}
+
+## CURRENT GATE: "${sectionKey}"
+FLOW POSITION:
+${flowOrder}
+
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
+${recentInterventionText ? `## RECENT PRIOR INTERVENTIONS, DO NOT REPEAT:
+${recentInterventionText}
+` : ""}
+## STRUCTURED CALL CONTEXT
+${copilotContextJson}
+` };
 }
 
 function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilotContextJson, transcriptReferenceBlock = "", isSpoken }) {
@@ -408,23 +392,17 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
     sectionContext = `\nCurrent gate: "${sectionKey}"\nRequired elements:\n${knowledge.requiredElements.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n`;
   }
 
-  return `You are a knowledgeable U65 off-exchange private health products compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
-${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting. Answer directly and concisely." : ""}
-CRITICAL CONTEXT:
+  return { staticPrefix: `# U65 off-exchange agent questions
+
+You are a knowledgeable U65 off-exchange private health products compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
+## CRITICAL CONTEXT
 - This is a U65 (under-65) OFF-EXCHANGE enrollment. NOT ACA marketplace. NOT Medicare. NOT Medicare Supplement.
 - You can ONLY hear the AGENT speaking
-- The agent is in the "${sectionKey}" gate of the U65 off-exchange enrollment flow
 - Products: MedPerformance (Cigna PPO major medical), MedMax (First Health PPO defined benefit), and MedAccess MVP. These are private off-exchange plans, NOT Medicare products despite the "Med" prefix.
 - Legacy U65 product names may appear in older call scripts.
-${sectionContext}
-${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
-${transcriptReferenceBlock}
-` : ""}
-${recentTranscript ? `\nRecent agent transcript:\n"${recentTranscript.slice(-1000)}"\n` : ""}
-Structured app context:
-${copilotContextJson}
 
-YOUR CAPABILITIES:
+
+## YOUR CAPABILITIES
 - U65 off-exchange product details, including MedPerformance, MedMax, MedAccess MVP, and legacy script references
 - NOT-MEC / NOT-ACA-substitute disclosure requirements
 - Medical underwriting rules and what conditions affect acceptance
@@ -435,18 +413,36 @@ YOUR CAPABILITIES:
 - Ancillary product recommendations and stacking
 - Enrollment platform details (enrollprime.com, apps.neweralife.com)
 
-HARD BOUNDARY, DO NOT ANSWER:
+## HARD BOUNDARY, DO NOT ANSWER
 - Specific premium quotes → tell agent to check the enrollment portal
 - Whether a specific provider is in-network → direct to the First Health or Cigna provider finder for the selected product
 - Specific UW outcomes → tell agent to submit application and await UW decision
 - Exact benefit payout amounts by tier → tell agent to check the plan document
 Do NOT guess product-specific data.
 
-RESPONSE RULES:
+## RESPONSE RULES
 - Keep answers concise and actionable
 - Put script language in quotes so agent can read it directly
 - Always prioritize compliance, especially NOT-MEC disclosure and UW honesty
-Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.`;
+Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.
+`, variableSuffix: `
+## Reference context
+${sectionContext}
+
+- The agent is in the "${sectionKey}" gate of the U65 off-exchange enrollment flow
+
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
+
+
+${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting. Answer directly and concisely." : ""}
+
+${recentTranscript ? `\nRecent agent transcript:\n"${recentTranscript.slice(-1000)}"\n` : ""}
+
+Structured app context:
+${copilotContextJson}
+` };
 }
 
 /* ───────────────────────────────────────────────────────
@@ -464,6 +460,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
 
   /* ─── Core infrastructure ─── */
   const core = useCopilotEngineCore({
+    engine: "U65",
     transcriptRef,
     activeSection: activeGate,
     currentStep,
@@ -493,6 +490,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
     pushFeedEntry,
     surfaceServiceIssue, clearServiceIssue,
     scheduleCoaching, clearFeed,
+    captureCoachingTranscript, markCoachingDispatched,
     // Auth
     getToken,
     // Log context
@@ -617,6 +615,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
     manual = false, sectionEntry = false, forceShortChunk = false,
     periodic = false, periodicSignature = "",
   } = {}) => {
+    const transcriptTicket = captureCoachingTranscript();
     const fullTranscript = transcriptRef.current.trim();
     if (!fullTranscript || coachingLoading) {
       if (manual && !coachingLoading) pushFeedEntry("info", "Analyze skipped. Start the transcript first.", { section: currentStep });
@@ -689,7 +688,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
     };
     const copilotContextJson = JSON.stringify(copilotContext, null, 2);
 
-    const systemPrompt = buildCoachingSystemPrompt({
+    const systemPrompt = buildCachedPrompt(buildCoachingSystemPrompt, {
       sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock, reviewMode,
     });
 
@@ -702,13 +701,15 @@ SECTION CONTEXT (rolling window):
 "${analysisWindow}"`;
 
     try {
+      markCoachingDispatched(transcriptTicket);
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 220,
-          system: systemPrompt,
-          messages: [{ role: "user", content: userContent }],
+          engine: "U65", max_completion_tokens: 2048,
+          system: systemPrompt.system,
+          response_format: coachingFormat,
+          messages: [...systemPrompt.contextMessages, { role: "user", content: userContent }],
         }),
         signal: controller.signal,
       });
@@ -825,7 +826,7 @@ SECTION CONTEXT (rolling window):
       if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
       setCoachingLoading(false);
     }
-  }, [activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, silentHeartbeatMs, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, acaBenchmark, logComplianceFlag]);
+  }, [captureCoachingTranscript, markCoachingDispatched, activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, silentHeartbeatMs, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, acaBenchmark, logComplianceFlag]);
 
   // Store latest requestCoaching for core's periodic timer and section-entry
   useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching, requestCoachingRef]);
@@ -861,7 +862,7 @@ SECTION CONTEXT (rolling window):
     });
     const retrievalTrace = buildTranscriptRetrievalTrace(transcriptReferenceResult);
     const copilotContextJson = JSON.stringify(copilotContext, null, 2);
-    const systemPrompt = buildAskSystemPrompt({
+    const systemPrompt = buildCachedPrompt(buildAskSystemPrompt, {
       sectionKey, knowledge, recentTranscript, copilotContextJson, transcriptReferenceBlock: transcriptReferenceResult.contextBlock, isSpoken,
     });
 
@@ -869,7 +870,7 @@ SECTION CONTEXT (rolling window):
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 300, system: systemPrompt, messages: [{ role: "user", content: question }] }),
+        body: JSON.stringify({ engine: "U65", max_completion_tokens: 2048, system: systemPrompt.system, messages: [...systemPrompt.contextMessages, { role: "user", content: question }] }),
         signal: controller.signal,
       });
       if (controller.signal.aborted) return;

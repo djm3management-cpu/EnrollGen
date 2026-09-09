@@ -1,3 +1,6 @@
+import { complete } from "../../src/lib/llm/client.ts";
+import { resolveEngine } from "../../src/lib/llm/config.js";
+import { llmRuntime } from "./_llmTelemetry.js";
 /**
  * Background function for scoring a call via the compliance engine.
  * Uses the -background suffix so Netlify returns 202 immediately
@@ -15,8 +18,6 @@ import {
   requireActiveSubscription,
 } from "./_subscriptionGate.js";
 
-const AI_TIMEOUT_MS = 120000;
-
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -24,39 +25,7 @@ function getSupabase() {
   return createClient(url, key);
 }
 
-async function callClaude(system, user) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-
-  try {
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 8192,
-        system,
-        messages: [{ role: "user", content: user }],
-      }),
-      signal: controller.signal,
-    });
-
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error?.message || `API error ${resp.status}`);
-    return data.content?.map(b => b.type === "text" ? b.text : "").join("") || "";
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-export default async (request) => {
+export default async (request, context) => {
   if (request.method !== "POST") return;
 
   let body;
@@ -98,7 +67,14 @@ export default async (request) => {
     const result = await generateScorecard({
       supabase: sb,
       callRecord,
-      callLLM: callClaude,
+      callLLM: async (system, user, options = {}) => {
+        const response = await complete({
+          engine: resolveEngine(callRecord.product_type || 'MA'), path: 'summary',
+          system, messages: [{ role: 'user', content: user }], max_completion_tokens: 16384,
+          response_format: options.response_format,
+        }, llmRuntime(sb, callRecord.tenant_id, context, { endpoint: 'score-call-background', call_record_id: callId }));
+        return response.content.filter(block => block.type === 'text').map(block => block.text).join('');
+      },
     });
     try {
       let updateQuery = sb.from("call_records").update({

@@ -987,6 +987,7 @@ export default function ScriptFlow() {
 
       {/* ── AI Co-Pilot, passes transcript up via callback ── */}
       <ScriptPrompter
+        callStarted={callStarted}
         onTranscriptChange={setTranscript}
         onMergedTranscriptChange={setMergedTranscriptEntries}
         onListeningChange={setIsListening}

@@ -26,8 +26,8 @@ const AskCopilotMini = memo(function AskCopilotMini() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 300,
+          engine: "MA",
+          max_completion_tokens: 2048,
           system: "You are a helpful Medicare enrollment copilot assistant. Give concise, actionable answers to agent questions. Keep responses under 3 sentences. CRITICAL FORMATTING: Use PLAIN TEXT ONLY. No dashes, no bullet points, no asterisks, no bold, no markdown, no emojis, no special characters. Write in natural conversational sentences the agent can read at a glance. Separate thoughts with periods, never with dashes or symbols.",
           messages: [{ role: "user", content: q }],
         }),

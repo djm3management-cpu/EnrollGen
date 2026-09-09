@@ -14,6 +14,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { useAppAuth } from "../context/AuthContext";
+import { fetchWithClerk } from "../lib/clerkFetch";
+import { createTranscriptGuard, createSkipCounterReporter } from "../lib/llm/transcriptGuard.js";
 
 /* ═══════════════════════════════════════════════════════
    SHARED HELPERS, exported for product engines
@@ -54,9 +56,9 @@ export function getCopilotHttpErrorMessage(status, detail) {
   if (status === 401)
     return "Co-Pilot is not authorized. Sign in with Clerk, or if you are running locally with auth disabled set DISABLE_CLERK_AUTH=true for Netlify functions too.";
   if (status === 500 && /api key/i.test(detail || ""))
-    return "Co-Pilot is not configured yet. Set ANTHROPIC_API_KEY for the Netlify function runtime.";
+    return "Co-Pilot is not configured yet. Set the selected provider API key for the Netlify function runtime.";
   if (detail) return `Co-Pilot returned an error (HTTP ${status}): ${detail}`;
-  return `Co-Pilot returned an error (HTTP ${status}). Check that the Netlify function is running and ANTHROPIC_API_KEY is set.`;
+  return `Co-Pilot returned an error (HTTP ${status}). Check that the Netlify function is running and the selected provider API key is set.`;
 }
 
 /** Extract text from an Anthropic API response body. */
@@ -79,65 +81,6 @@ const VALID_COACHING_LEVELS = new Set([
 const INCOMPLETE_COACHING_MESSAGE =
   "Copilot response was incomplete. Tap Analyze if needed.";
 
-function stripJsonFences(value) {
-  return (value || "")
-    .toString()
-    .replace(/```(?:json)?/gi, "")
-    .replace(/```/g, "")
-    .trim();
-}
-
-function getJsonObjectCandidate(value) {
-  const text = stripJsonFences(value);
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start === -1) return text;
-  if (end > start) return text.slice(start, end + 1);
-  return text.slice(start);
-}
-
-function tryParseJsonObject(value) {
-  try {
-    const parsed = JSON.parse(value);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? parsed
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-function extractJsonStringField(source, field) {
-  const pattern = new RegExp(`"${field}"\\s*:\\s*"`, "i");
-  const match = pattern.exec(source);
-  if (!match) return null;
-
-  let output = "";
-  let escaped = false;
-  for (let i = match.index + match[0].length; i < source.length; i += 1) {
-    const char = source[i];
-    if (escaped) {
-      output += char;
-      escaped = false;
-      continue;
-    }
-    if (char === "\\") {
-      escaped = true;
-      continue;
-    }
-    if (char === "\"") return output;
-    output += char;
-  }
-  return output;
-}
-
-function extractJsonNumberField(source, field) {
-  const match = new RegExp(`"${field}"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)`, "i").exec(source);
-  if (!match) return null;
-  const value = Number(match[1]);
-  return Number.isFinite(value) ? value : null;
-}
-
 function normalizeCoachingLevel(value) {
   const level = (value || "").toString().trim().toLowerCase();
   return VALID_COACHING_LEVELS.has(level) ? level : "info";
@@ -156,59 +99,25 @@ function normalizePlainMessage(value) {
     .trim();
 }
 
-function looksLikeStructuredCoachingText(value) {
-  return /"?(level|issue_tag|confidence|message)"?\s*:/i.test(value);
-}
-
 export function formatCopilotDisplayMessage(value) {
-  const text = stripJsonFences(value);
-  if (!text) return "";
-
-  const candidate = getJsonObjectCandidate(text);
-  const parsed = tryParseJsonObject(candidate);
-  if (parsed && Object.prototype.hasOwnProperty.call(parsed, "message")) {
-    return normalizePlainMessage(parsed.message);
+  const text = normalizePlainMessage(value);
+  if (!text) return '';
+  if (text.startsWith('{')) {
+    try { return normalizePlainMessage(JSON.parse(text).message) || INCOMPLETE_COACHING_MESSAGE; }
+    catch { return INCOMPLETE_COACHING_MESSAGE; }
   }
-
-  const extractedMessage = extractJsonStringField(text, "message");
-  if (extractedMessage !== null) {
-    return normalizePlainMessage(extractedMessage);
-  }
-
-  if (looksLikeStructuredCoachingText(text)) {
-    return INCOMPLETE_COACHING_MESSAGE;
-  }
-
-  return normalizePlainMessage(text);
+  return text;
 }
 
-/** Parse the coaching model's JSON response into structured fields. */
+/** The server validates the strict response schema before returning JSON. */
 export function parseCoachingJson(raw) {
-  const text = stripJsonFences(raw);
-  const candidate = getJsonObjectCandidate(text);
-  const parsed = tryParseJsonObject(candidate);
-
-  if (parsed) {
-    const message = normalizePlainMessage(parsed.message);
-    return {
-      level: normalizeCoachingLevel(parsed.level),
-      message,
-      issueTag:
-        normalizeIssueTag(parsed.issue_tag) ||
-        normalizeIssueTag(message.split(/[.:!?]/)[0]),
-      confidence: normalizeConfidence(parsed.confidence),
-    };
+  try {
+    const parsed = JSON.parse(raw);
+    return { level: normalizeCoachingLevel(parsed.level), message: normalizePlainMessage(parsed.message),
+      issueTag: normalizeIssueTag(parsed.issue_tag), confidence: normalizeConfidence(parsed.confidence) };
+  } catch {
+    return { level: 'info', message: INCOMPLETE_COACHING_MESSAGE, issueTag: 'service_degraded', confidence: 0 };
   }
-
-  const message = formatCopilotDisplayMessage(text);
-  return {
-    level: normalizeCoachingLevel(extractJsonStringField(text, "level")),
-    message,
-    issueTag:
-      normalizeIssueTag(extractJsonStringField(text, "issue_tag")) ||
-      normalizeIssueTag(message.split(/[.:!?]/)[0]),
-    confidence: normalizeConfidence(extractJsonNumberField(text, "confidence")),
-  };
 }
 
 /**
@@ -307,7 +216,9 @@ const SECTION_ENTRY_DELAY_MS = 12000;
  * Shared copilot engine infrastructure.
  *
  * @param {Object} opts
+ * @param {string} opts.engine MA, MEDSUP, ACA, or U65 (telemetry scope)
  * @param {React.MutableRefObject<string>} opts.transcriptRef
+ * @param {string} [opts.additionalTranscript] MA's merged final transcript
  * @param {number|string} opts.activeSection   current section / gate number
  * @param {string}        opts.currentStep     human-readable section label
  * @param {Object}        opts.state           product-level state (forwarded to periodicInputsRef)
@@ -322,7 +233,9 @@ const SECTION_ENTRY_DELAY_MS = 12000;
  * @param {Function}      opts.buildContextSignature  ({ activeSection, currentStep, transcript, state }) => string
  */
 export function useCopilotEngineCore({
+  engine,
   transcriptRef,
+  additionalTranscript = "",
   activeSection,
   currentStep,
   state,
@@ -341,6 +254,51 @@ export function useCopilotEngineCore({
 
   const { logEntry, setEntryFeedback, exportFeedbackDataset, entries, clearLog } = useCopilotLog();
   const { getToken } = useAppAuth();
+  const getTokenRef = useRef(getToken);
+  const transcriptGuardRef = useRef(null);
+  if (!transcriptGuardRef.current) transcriptGuardRef.current = createTranscriptGuard();
+  const additionalTranscriptRef = useRef(additionalTranscript);
+  const skipReporterRef = useRef(null);
+  if (!skipReporterRef.current) skipReporterRef.current = createSkipCounterReporter(async (counter) => {
+    const response = await fetchWithClerk(getTokenRef.current, "/.netlify/functions/copilot-skip-counter", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ engine, ...counter }), keepalive: true,
+    });
+    if (!response.ok) throw new Error("Skip counter telemetry unavailable");
+  });
+
+  useEffect(() => { getTokenRef.current = getToken; }, [getToken]);
+  useEffect(() => {
+    additionalTranscriptRef.current = additionalTranscript;
+    transcriptGuardRef.current.observe('additional', additionalTranscript);
+  }, [additionalTranscript]);
+
+  const captureCoachingTranscript = useCallback(() => {
+    const guard = transcriptGuardRef.current;
+    guard.observe('agent', transcriptRef.current);
+    guard.observe('additional', additionalTranscriptRef.current);
+    return { guard, revision: guard.capture() };
+  }, [transcriptRef]);
+  const markCoachingDispatched = useCallback(({ guard, revision }) => {
+    guard.dispatched(revision);
+  }, []);
+
+  // New calls get an independent first-turn exemption. Old in-flight tickets
+  // retain the old guard and cannot acknowledge a new call's transcript.
+  useEffect(() => {
+    transcriptGuardRef.current = createTranscriptGuard();
+  }, [state.callStart, callStarted]);
+
+  useEffect(() => {
+    const flush = () => { void skipReporterRef.current.flush(); };
+    const interval = setInterval(flush, 60000);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('pagehide', flush);
+      flush();
+    };
+  }, []);
 
   /* ─── State ─── */
   const [messages, setMessages] = useState([]);
@@ -460,39 +418,51 @@ export function useCopilotEngineCore({
   }, [activeSection, transcriptRef]);
 
   /* ─── Periodic review ─── */
+  const allowScheduledCoaching = useCallback(() => {
+    const { guard } = captureCoachingTranscript();
+    if (guard.shouldDispatch({ timer: true })) return true;
+    skipReporterRef.current.record(guard);
+    return false;
+  }, [captureCoachingTranscript]);
+
   useEffect(() => {
     if (callStarted === false) return;
     const intervalId = setInterval(() => {
-      const transcript = transcriptRef.current.trim();
-      if (!transcript) return;
       const inputs = periodicInputsRef.current;
       if (inputs.coachingLoading) return;
+      if (!allowScheduledCoaching()) return;
+      const transcript = transcriptRef.current.trim();
+      if (!transcript) return;
       const signature = buildContextSignature({
         activeSection: inputs.activeSection,
         currentStep: inputs.currentStep,
         transcript,
         state: inputs.state,
       });
-      if (signature === lastPeriodicContextSignatureRef.current) return;
       requestCoachingRef.current?.({ periodic: true, periodicSignature: signature });
     }, periodicContextCheckMs);
     return () => clearInterval(intervalId);
-  }, [callStarted, transcriptRef, periodicContextCheckMs, buildContextSignature]);
+  }, [callStarted, transcriptRef, periodicContextCheckMs, buildContextSignature, allowScheduledCoaching]);
 
   /* ─── Debounced coaching ─── */
   const scheduleCoaching = useCallback((newFinal = "") => {
+    transcriptGuardRef.current.segment(newFinal);
     const normalizedChunk = (newFinal || "").replace(/\s+/g, " ").trim();
     const forceShortChunk = normalizedChunk.length >= liveVoiceTriggerChars;
     const debounceMs = forceShortChunk ? liveVoiceDebounceMs : coachingDebounceMs;
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(
-      () => requestCoachingRef.current?.({ forceShortChunk }),
+      () => {
+        if (allowScheduledCoaching()) requestCoachingRef.current?.({ forceShortChunk });
+      },
       debounceMs
     );
-  }, [liveVoiceTriggerChars, liveVoiceDebounceMs, coachingDebounceMs]);
+  }, [liveVoiceTriggerChars, liveVoiceDebounceMs, coachingDebounceMs, allowScheduledCoaching]);
 
   /* ─── Clear feed ─── */
   const clearFeed = useCallback(() => {
+    void skipReporterRef.current.flush();
+    transcriptGuardRef.current = createTranscriptGuard();
     setMessages([]);
     setFloatingAlert(null);
     lastCoachingTime.current = 0;
@@ -538,6 +508,7 @@ export function useCopilotEngineCore({
     pushFeedEntry, showFloat, dismissFloat,
     surfaceServiceIssue, clearServiceIssue,
     scheduleCoaching, clearFeed,
+    captureCoachingTranscript, markCoachingDispatched,
 
     // Auth
     getToken,

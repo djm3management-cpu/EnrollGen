@@ -20,6 +20,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
   controlsRef,
   onControlsReadyChange,
   onCoachingLoadingChange,
+  callStarted = true,
 }) {
   const {
     state,
@@ -65,6 +66,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
 
   /* ─── Copilot engine (coaching, ask, feed) ─── */
   const copilot = useCopilotEngine({
+    callStarted,
     transcriptRef,
     activeSection,
     state,

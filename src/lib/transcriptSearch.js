@@ -53,12 +53,12 @@ function toContextBlock(results) {
     .join("\n\n");
 
   return [
-    "<enrollment_call_references>",
+    "## Enrollment call references",
     "The following excerpts are from real, scrubbed calls retrieved from Supabase.",
     "Use them for reference and include citations using [R#] tags when you rely on them.",
     "",
     body,
-    "</enrollment_call_references>",
+    "## End enrollment call references",
   ].join("\n");
 }
 

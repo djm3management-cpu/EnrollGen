@@ -1,7 +1,8 @@
+import { complete } from "../../src/lib/llm/client.ts";
+import { llmRuntime } from "./_llmTelemetry.js";
 import { createClient } from "@supabase/supabase-js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
-const AI_TIMEOUT_MS = 60000;
 const COACHING_SYSTEM_PROMPT =
   "You are a Medicare enrollment agency manager generating a weekly coaching summary for an agent.";
 
@@ -76,38 +77,6 @@ function groupBy(rows, keyFn) {
     groups.get(key).push(row);
   }
   return groups;
-}
-
-async function callClaude(system, user) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 700,
-        system,
-        messages: [{ role: "user", content: user }],
-      }),
-      signal: controller.signal,
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || `API error ${response.status}`);
-    return data.content?.map((block) => block.type === "text" ? block.text : "").join("").trim() || "";
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 async function fetchCallsWithScores(supabase, tenantId, sinceIso) {
@@ -218,7 +187,7 @@ async function fetchLatestAgentInsights(supabase, tenantId) {
   return byAgent;
 }
 
-async function processTenant(supabase, tenant) {
+async function processTenant(supabase, tenant, context) {
   const periodEndDate = startOfToday();
   const periodStartDate = addDays(periodEndDate, -7);
   const periodStart = dateKey(periodStartDate);
@@ -235,7 +204,10 @@ async function processTenant(supabase, tenant) {
       const stats = summarizeAgentWeek(agentCalls);
       const priorities = priorityList(agentCalls);
       const prompt = buildCoachingPrompt(agentName, periodStart, periodEnd, stats, priorities);
-      const coachingSummary = await callClaude(COACHING_SYSTEM_PROMPT, prompt);
+      const completion = await complete({ engine: 'MA', path: 'summary', system: COACHING_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: prompt }], max_completion_tokens: 4096,
+      }, llmRuntime(supabase, tenant.id, context, { endpoint: 'weekly-coaching', agent_name: agentName }));
+      const coachingSummary = completion.content.filter(block => block.type === 'text').map(block => block.text).join('').trim();
       const { error } = await supabase.from("agent_coaching").upsert({
         tenant_id: tenant.id,
         agent_name: agentName,
@@ -260,7 +232,7 @@ async function processTenant(supabase, tenant) {
   return { tenant_id: tenant.id, agents_considered: groups.size, coaching_rows: saved.length };
 }
 
-export default async () => {
+export default async (_request, context) => {
   try {
     const supabase = getSupabase();
     const { data: tenants, error } = await supabase
@@ -273,7 +245,7 @@ export default async () => {
     const results = [];
     for (const tenant of tenants || []) {
       try {
-        results.push(await processTenant(supabase, tenant));
+        results.push(await processTenant(supabase, tenant, context));
       } catch (tenantError) {
         console.error("[weekly-coaching] Tenant failed:", tenant.id, tenantError);
         results.push({ tenant_id: tenant.id, error: tenantError.message });

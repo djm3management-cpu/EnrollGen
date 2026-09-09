@@ -1,3 +1,5 @@
+import { coachingFormat } from "../lib/llm/schemas/coaching.js";
+import { buildCachedPrompt } from "../lib/llm/prompts.js";
 /**
  * useAcaCopilotEngine.js, ACA Marketplace compliance copilot engine
  * Refactored to use the shared useCopilotEngineCore hook for common
@@ -195,9 +197,7 @@ function buildPeriodicFallbackMessage({ sectionKey, transcriptWindow }) {
 function buildComplianceContext(knowledge) {
   if (!knowledge) return "";
   return `
-════════════════════════════════════════════════════════
-SECTION-SPECIFIC COMPLIANCE INTELLIGENCE
-════════════════════════════════════════════════════════
+## SECTION-SPECIFIC COMPLIANCE INTELLIGENCE
 
 VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING (or close paraphrases, speech recognition may garble words):
 ${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
@@ -219,9 +219,7 @@ ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 function buildCoachingModeGuidance(reviewMode) {
   if (reviewMode === "periodic") {
     return `
-═══════════════════════════════════════════════════════
-YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
-═══════════════════════════════════════════════════════
+## YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
 This is a scheduled 90-second review. You MUST respond with either encouragement or correction.
 - NEVER return "silent" or "info"
 - If compliant and on pace, return level "tip" with a short encouraging message
@@ -231,9 +229,7 @@ This is a scheduled 90-second review. You MUST respond with either encouragement
   }
 
   return `
-═══════════════════════════════════════════════════════
-YOUR ROLE: SILENT COMPLIANCE SAFETY NET
-═══════════════════════════════════════════════════════
+## YOUR ROLE: SILENT COMPLIANCE SAFETY NET
 
 DEFAULT STATE: SILENT. You are monitoring, not commentating.
 
@@ -248,18 +244,18 @@ ONLY break silence for:
 function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock = "", reviewMode = "live" }) {
   const complianceContext = buildComplianceContext(knowledge);
 
-  return `You are an expert ACA Marketplace enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required element, or something the agent needs to correct RIGHT NOW.
+  return { staticPrefix: `# ACA Marketplace live coaching
 
-IMPORTANT ACA CONTEXT:
+You are an expert ACA Marketplace enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required element, or something the agent needs to correct RIGHT NOW.
+
+## IMPORTANT ACA CONTEXT
 - This is an ACA On-Exchange (Marketplace) enrollment, NOT Medicare
 - Key regulations: 45 CFR Part 155, ACA Section 1311, CMS Marketplace rules
 - Exchange platforms vary by state: Healthcare.gov (federal), Get Covered NJ, PA Pennie
 - 2026 subsidy cliff: Enhanced PTCs from ARP/IRA expired 12/31/2025, clients above 400% FPL have NO subsidy
 - CSR (Cost Sharing Reductions) only apply to Silver plans for clients 100-250% FPL
 
-════════════════════════════════════════════════════════
-CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
-════════════════════════════════════════════════════════
+## CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
 You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words. You have ZERO access to what the client says.
 
 IMPLICATIONS:
@@ -269,47 +265,22 @@ IMPLICATIONS:
 - Speech recognition is imperfect, if it SOUNDS CLOSE ENOUGH, give credit
 - The agent may have started before recording began, absence is not proof of omission
 
-════════════════════════════════════════════════════════
-CURRENT SECTION: "${sectionKey}"
-════════════════════════════════════════════════════════
-FLOW POSITION:
-${flowOrder}
-
-${complianceContext}
-${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
-${transcriptReferenceBlock}
-` : ""}
-${recentInterventionText ? `════════════════════════════════════════════════════════
-RECENT PRIOR INTERVENTIONS, DO NOT REPEAT UNLESS THE ISSUE CLEARLY REMAINS:
-════════════════════════════════════════════════════════
-${recentInterventionText}
-` : ""}
-════════════════════════════════════════════════════════
-STRUCTURED CALL CONTEXT
-════════════════════════════════════════════════════════
-${copilotContextJson}
-
-HOW TO USE THIS CONTEXT:
+## HOW TO USE THIS CONTEXT
 - Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
 - Use derivedSignals for broader patterns: subsidyCliffRisk, medicaidLikely, csrEligible, sepValid, sepExpiringSoon.
 - Use priorCompletedGates to understand what the agent has already finished.
 - If planData is present, use it to ground your coaching with real market data (plan counts, premium/deductible ranges by metal tier). Do NOT quote exact dollar amounts to the agent, use ranges and tier comparisons.
 
-════════════════════════════════════════════════════════
-EMPTY OR SPARSE TRANSCRIPT:
-════════════════════════════════════════════════════════
+## EMPTY OR SPARSE TRANSCRIPT:
 If the transcript is empty or very short, return silent and wait for meaningful speech.
 
-${buildCoachingModeGuidance(reviewMode)}
 
-PRIORITY WEIGHTING:
+## PRIORITY WEIGHTING
 - Prioritize risky language and compliance-danger behaviors over missing-word checks.
 - Do not escalate on technical wording misses if the semantic intent appears covered.
 - For ACA: subsidy misrepresentation, income falsification coaching, and SSN mishandling are the highest severity items.
 
-════════════════════════════════════════════════════════
-RESPONSE QUALITY REQUIREMENTS
-════════════════════════════════════════════════════════
+## RESPONSE QUALITY REQUIREMENTS
 
 Every non-silent response MUST:
 - QUOTE or PARAPHRASE the agent's actual words from the transcript
@@ -324,16 +295,29 @@ CRITICAL NUANCE, AVOIDING FALSE POSITIVES:
 - Do NOT repeatedly flag the same issue
 - Before issuing warn/remind, ask: "Could this have happened before recording started?" If yes, bias toward silence.
 
-════════════════════════════════════════════════════════
-RESPONSE FORMAT
-════════════════════════════════════════════════════════
-Respond with ONLY a valid JSON object. No backticks, no wrapper text. Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences:
-{
-  "level": "silent | info | tip | remind | warn | critical",
-  "issue_tag": "short_snake_case_tag_or_empty",
-  "confidence": 0,
-  "message": "Your message here. Empty if silent."
-}`;
+## RESPONSE FORMAT
+Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences:
+Use a short snake_case issue_tag, or an empty string.
+For level "silent", use an empty message.
+`, variableSuffix: `
+## Reference context
+${complianceContext}
+
+${buildCoachingModeGuidance(reviewMode)}
+
+## CURRENT SECTION: "${sectionKey}"
+FLOW POSITION:
+${flowOrder}
+
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
+${recentInterventionText ? `## RECENT PRIOR INTERVENTIONS, DO NOT REPEAT UNLESS THE ISSUE CLEARLY REMAINS:
+${recentInterventionText}
+` : ""}
+## STRUCTURED CALL CONTEXT
+${copilotContextJson}
+` };
 }
 
 function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilotContextJson, transcriptReferenceBlock = "", isSpoken }) {
@@ -342,21 +326,15 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
     sectionContext = `\nCurrent section: "${sectionKey}"\nRequired elements:\n${knowledge.requiredElements.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n`;
   }
 
-  return `You are a knowledgeable ACA Marketplace compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
-${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting (customer cannot hear). Answer directly and concisely." : ""}
-CRITICAL CONTEXT:
-- You can ONLY hear the AGENT speaking
-- The agent is currently in the "${sectionKey}" section of the ACA enrollment flow
-- They need a fast, practical answer for this live call
-${sectionContext}
-${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
-${transcriptReferenceBlock}
-` : ""}
-${recentTranscript ? `\nRecent agent transcript:\n"${recentTranscript.slice(-1000)}"\n` : ""}
-Structured app context:
-${copilotContextJson}
+  return { staticPrefix: `# ACA Marketplace agent questions
 
-YOUR CAPABILITIES:
+You are a knowledgeable ACA Marketplace compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
+## CRITICAL CONTEXT
+- You can ONLY hear the AGENT speaking
+- They need a fast, practical answer for this live call
+
+
+## YOUR CAPABILITIES
 - ACA Marketplace compliance rules and regulations (45 CFR 155)
 - APTC/subsidy eligibility and calculation (FPL thresholds, 2026 cliff)
 - CSR eligibility and Silver plan advantages
@@ -366,17 +344,35 @@ YOUR CAPABILITIES:
 - Medicaid screening for expansion states
 - Enrollment process compliance
 
-HARD BOUNDARY, DO NOT ANSWER:
+## HARD BOUNDARY, DO NOT ANSWER
 - Whether a specific provider is in-network → direct to plan's provider directory
 - Specific drug formulary/tier info → direct to plan's formulary tool
 - Exact subsidy amounts → tell agent to run calculation on exchange platform
 If planData is present in the context, you CAN reference plan counts and premium/deductible ranges by metal tier. Do NOT invent specific plan names or exact costs beyond what the data shows.
 
-RESPONSE RULES:
+## RESPONSE RULES
 - Keep answers concise and actionable
 - Put script language in quotes so agent can read it directly
 - Always prioritize compliance
-Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.`;
+Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.
+`, variableSuffix: `
+## Reference context
+${sectionContext}
+
+- The agent is currently in the "${sectionKey}" section of the ACA enrollment flow
+
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
+
+
+${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting (customer cannot hear). Answer directly and concisely." : ""}
+
+${recentTranscript ? `\nRecent agent transcript:\n"${recentTranscript.slice(-1000)}"\n` : ""}
+
+Structured app context:
+${copilotContextJson}
+` };
 }
 
 /* ───────────────────────────────────────────────────────
@@ -403,9 +399,12 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state, logCompl
     coachingAbortRef, askAbortRef, requestCoachingRef,
     pushFeedEntry, surfaceServiceIssue, clearServiceIssue,
     scheduleCoaching, clearFeed,
+    captureCoachingTranscript, markCoachingDispatched,
     getToken, logEntry, setEntryFeedback, exportFeedbackDataset, entries,
     silentHeartbeatMs,
   } = useCopilotEngineCore({
+    engine: "ACA",
+    callStarted: state.callStarted,
     transcriptRef,
     activeSection: activeGate,
     currentStep,
@@ -476,6 +475,7 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state, logCompl
     manual = false, sectionEntry = false, forceShortChunk = false,
     periodic = false, periodicSignature = "",
   } = {}) => {
+    const transcriptTicket = captureCoachingTranscript();
     const fullTranscript = transcriptRef.current.trim();
     if (!fullTranscript || coachingLoading) {
       if (manual && !coachingLoading) {
@@ -556,7 +556,7 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state, logCompl
     const copilotContext = buildCopilotContext(recentInterventions);
     const derivedSignals = copilotContext.derivedSignals;
 
-    const systemPrompt = buildCoachingSystemPrompt({
+    const systemPrompt = buildCachedPrompt(buildCoachingSystemPrompt, {
       sectionKey, knowledge, flowOrder,
       recentInterventionText,
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
@@ -578,14 +578,16 @@ SECTION CONTEXT (rolling window):
 "${analysisWindow}"`;
 
     try {
+      markCoachingDispatched(transcriptTicket);
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
+          engine: "ACA",
           max_tokens: 500,
-          system: systemPrompt,
-          messages: [{ role: "user", content: userContent }],
+          system: systemPrompt.system,
+          response_format: coachingFormat,
+          messages: [...systemPrompt.contextMessages, { role: "user", content: userContent }],
         }),
         signal: controller.signal,
       });
@@ -712,7 +714,7 @@ SECTION CONTEXT (rolling window):
       if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
       setCoachingLoading(false);
     }
-  }, [activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, buildCopilotContext, getToken, transcriptRef, clearServiceIssue, surfaceServiceIssue, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs, logComplianceFlag]);
+  }, [captureCoachingTranscript, markCoachingDispatched, activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, buildCopilotContext, getToken, transcriptRef, clearServiceIssue, surfaceServiceIssue, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, silentHeartbeatMs, logComplianceFlag]);
 
   // Wire requestCoachingRef so core's periodic timer and section-entry logic can call it
   useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching, requestCoachingRef]);
@@ -750,7 +752,7 @@ SECTION CONTEXT (rolling window):
     });
     const retrievalTrace = buildTranscriptRetrievalTrace(transcriptReferenceResult);
 
-    const systemPrompt = buildAskSystemPrompt({
+    const systemPrompt = buildCachedPrompt(buildAskSystemPrompt, {
       sectionKey, knowledge,
       recentTranscript,
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
@@ -763,10 +765,10 @@ SECTION CONTEXT (rolling window):
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
+          engine: "ACA",
           max_tokens: 500,
-          system: systemPrompt,
-          messages: [{ role: "user", content: question }],
+          system: systemPrompt.system,
+          messages: [...systemPrompt.contextMessages, { role: "user", content: question }],
         }),
         signal: controller.signal,
       });

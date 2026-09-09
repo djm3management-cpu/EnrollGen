@@ -1,3 +1,5 @@
+import { coachingFormat } from "../lib/llm/schemas/coaching.js";
+import { buildCachedPrompt } from "../lib/llm/prompts.js";
 /**
  * useMedSupCopilotEngine.js, Medicare Supplement compliance copilot engine
  *
@@ -24,7 +26,7 @@ import {
   parseAnthropicResponse, parseCoachingJson, buildTranscriptWindows,
   formatSectionDuration, makeIsHighRisk, buildTranscriptRetrievalTrace,
 } from "./useCopilotEngineCore";
-import { medicare2026, stateGIRules } from "../data/medicareReference2026";
+import { medicare2026, resolveMedSupStateGIRules } from "../data/medicareReference2026";
 import {
   MEDSUP_COMPLIANCE_KNOWLEDGE, MEDSUP_SECTION_LABELS,
   MEDSUP_COACHING_DEBOUNCE_MS, MEDSUP_MIN_NEW_CHARS, MEDSUP_COOLDOWN_BY_LEVEL,
@@ -131,9 +133,7 @@ function buildPeriodicFallbackMessage({ sectionKey, transcriptWindow }) {
 function buildComplianceContext(knowledge) {
   if (!knowledge) return "";
   return `
-════════════════════════════════════════════════════════
-SECTION-SPECIFIC COMPLIANCE INTELLIGENCE
-════════════════════════════════════════════════════════
+## SECTION-SPECIFIC COMPLIANCE INTELLIGENCE
 
 VERBATIM SCRIPT LINES THE AGENT SHOULD BE SAYING (or close paraphrases, speech recognition may garble words):
 ${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
@@ -155,9 +155,7 @@ ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 function buildCoachingModeGuidance(reviewMode) {
   if (reviewMode === "periodic") {
     return `
-═══════════════════════════════════════════════════════
-YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
-═══════════════════════════════════════════════════════
+## YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
 This is a scheduled 90-second review. You MUST respond with either encouragement or correction.
 - NEVER return "silent" or "info"
 - If compliant and on pace, return level "tip" with a short encouraging message
@@ -167,9 +165,7 @@ This is a scheduled 90-second review. You MUST respond with either encouragement
   }
 
   return `
-═══════════════════════════════════════════════════════
-YOUR ROLE: SILENT COMPLIANCE SAFETY NET
-═══════════════════════════════════════════════════════
+## YOUR ROLE: SILENT COMPLIANCE SAFETY NET
 
 DEFAULT STATE: SILENT. You are monitoring, not commentating.
 
@@ -184,9 +180,11 @@ ONLY break silence for:
 function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock = "", reviewMode = "live" }) {
   const complianceContext = buildComplianceContext(knowledge);
 
-  return `You are an expert Medicare Supplement (Medigap) enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required element, or something the agent needs to correct RIGHT NOW.
+  return { staticPrefix: `# Medicare Supplement live coaching
 
-IMPORTANT MED SUP CONTEXT:
+You are an expert Medicare Supplement (Medigap) enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required element, or something the agent needs to correct RIGHT NOW.
+
+## IMPORTANT MED SUP CONTEXT
 - This is a Medicare Supplement (Medigap) enrollment, NOT Medicare Advantage or ACA
 - Medigap plans are standardized by letter (A, B, C, D, F, G, K, L, M, N)
 - Same letter = same benefits regardless of carrier, only premiums differ
@@ -198,7 +196,7 @@ IMPORTANT MED SUP CONTEXT:
 - Agent cannot guarantee acceptance when underwriting is required
 - Replacement/switching compliance: cannot misrepresent benefits of switching carriers
 
-2026 MEDICARE COST-SHARING REFERENCE (use these verified CMS numbers):
+## 2026 MEDICARE COST-SHARING REFERENCE (use these verified CMS numbers)
 - Part A deductible: $1,736 | Part B deductible: $283 | Part B premium: $202.90/mo
 - Part A coinsurance days 61-90: $434/day | Lifetime reserve: $868/day
 - SNF coinsurance days 21-100: $217/day
@@ -208,14 +206,13 @@ IMPORTANT MED SUP CONTEXT:
 - Plan K OOP limit: $8,000 | Plan L OOP limit: $4,000
 - Part D OOP cap: $2,100 | Part D max deductible: $615 | Insulin cap: $35/mo
 
-STATE GI RULES (included in structured context as stateGIRules):
-- Year-round GI (no UW): CT, ME, MA, NJ, NY
+## STATE GI RULES (included in structured context as stateGIRules)
+- Year-round GI (no UW): CT, ME, MA, NY
 - Birthday rule states (annual 30-day window): CA, ID, IL, LA, NV, OK, OR
-- Federal OEP only: all other states, 6 months from Part B effective date at 65
+- Federal OEP only: all other states except NJ, 6 months from Part B effective date at 65
+- NJ is NOT continuous open enrollment. Use stateGIRules.NJ: age 65+ follows federal OEP/GI rules; disabled ages 50-64 have state-mandated access and age-65 premium caps; under 50 access is limited to Horizon BCBSNJ, Plan D (Plan C for pre-2020 Medicare eligibility). Check the branch's Part B window and underwriting rules before asserting GI. If age, eligibility basis, or dates are unknown, ask the agent to verify them.
 
-════════════════════════════════════════════════════════
-CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
-════════════════════════════════════════════════════════
+## CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
 You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words. You have ZERO access to what the client says.
 
 IMPLICATIONS:
@@ -225,49 +222,24 @@ IMPLICATIONS:
 - Speech recognition is imperfect, if it SOUNDS CLOSE ENOUGH, give credit
 - The agent may have started before recording began, absence is not proof of omission
 
-════════════════════════════════════════════════════════
-CURRENT SECTION: "${sectionKey}"
-════════════════════════════════════════════════════════
-FLOW POSITION:
-${flowOrder}
-
-${complianceContext}
-${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
-${transcriptReferenceBlock}
-` : ""}
-${recentInterventionText ? `════════════════════════════════════════════════════════
-RECENT PRIOR INTERVENTIONS, DO NOT REPEAT UNLESS THE ISSUE CLEARLY REMAINS:
-════════════════════════════════════════════════════════
-${recentInterventionText}
-` : ""}
-════════════════════════════════════════════════════════
-STRUCTURED CALL CONTEXT
-════════════════════════════════════════════════════════
-${copilotContextJson}
-
-HOW TO USE THIS CONTEXT:
+## HOW TO USE THIS CONTEXT
 - Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
 - Use derivedSignals for broader patterns: timeInSectionMs and likelyCoveredByParaphrase.
 - Use priorCompletedSections to understand what the agent has already finished.
 - medicareReference contains verified 2026 CMS cost-sharing amounts. Use these to coach the agent with accurate dollar figures when explaining what Medigap covers.
-- stateGIRules contains state-specific GI rules. If the agent mentions a state, check whether that state has year-round GI, a birthday rule, or federal OEP only, and coach accordingly.
+- stateGIRules contains state-specific GI rules. If the agent mentions a state, check its protections and eligibility conditions. For NJ, select the age/eligibility branch and applicable enrollment or federal GI window; NJ residence alone does not establish GI.
 - salesForumContext contains sidebar values for Plan G vs N rates, HDG + Hospital Protection analysis, carrier selection, and cross-sell acknowledgement. During quoting, use it to remind agents about state excess-charge risk, HDG combo savings, CSG/manual rate workflow, and required ancillary cross-sell acknowledgement.
 
-════════════════════════════════════════════════════════
-EMPTY OR SPARSE TRANSCRIPT:
-════════════════════════════════════════════════════════
+## EMPTY OR SPARSE TRANSCRIPT:
 If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
 
-${buildCoachingModeGuidance(reviewMode)}
 
-PRIORITY WEIGHTING:
+## PRIORITY WEIGHTING
 - Prioritize risky language and compliance-danger behaviors over missing-word checks.
 - Do not escalate on technical wording misses if the semantic intent appears covered.
 - For Med Sup: underwriting misrepresentation, GI rights violations, and TPMO omissions are the highest severity items.
 
-════════════════════════════════════════════════════════
-RESPONSE QUALITY REQUIREMENTS
-════════════════════════════════════════════════════════
+## RESPONSE QUALITY REQUIREMENTS
 
 Every non-silent response MUST:
 - QUOTE or PARAPHRASE the agent's actual words from the transcript
@@ -282,16 +254,29 @@ CRITICAL NUANCE, AVOIDING FALSE POSITIVES:
 - Do NOT repeatedly flag the same issue
 - Before issuing warn/remind, ask: "Could this have happened before recording started?" If yes, bias toward silence.
 
-════════════════════════════════════════════════════════
-RESPONSE FORMAT
-════════════════════════════════════════════════════════
-Respond with ONLY a valid JSON object. No backticks, no wrapper text. Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences:
-{
-  "level": "silent | info | tip | remind | warn | critical",
-  "issue_tag": "short_snake_case_tag_or_empty",
-  "confidence": 0,
-  "message": "Your message here. Empty if silent."
-}`;
+## RESPONSE FORMAT
+Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences:
+Use a short snake_case issue_tag, or an empty string.
+For level "silent", use an empty message.
+`, variableSuffix: `
+## Reference context
+${complianceContext}
+
+${buildCoachingModeGuidance(reviewMode)}
+
+## CURRENT SECTION: "${sectionKey}"
+FLOW POSITION:
+${flowOrder}
+
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
+${recentInterventionText ? `## RECENT PRIOR INTERVENTIONS, DO NOT REPEAT UNLESS THE ISSUE CLEARLY REMAINS:
+${recentInterventionText}
+` : ""}
+## STRUCTURED CALL CONTEXT
+${copilotContextJson}
+` };
 }
 
 function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilotContextJson, transcriptReferenceBlock = "", isSpoken }) {
@@ -300,21 +285,15 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
     sectionContext = `\nCurrent section: "${sectionKey}"\nRequired elements:\n${knowledge.requiredElements.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n`;
   }
 
-  return `You are a knowledgeable Medicare Supplement compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
-${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting (customer cannot hear). Answer directly and concisely." : ""}
-CRITICAL CONTEXT:
-- You can ONLY hear the AGENT speaking
-- The agent is currently in the "${sectionKey}" section of the Med Sup enrollment flow
-- They need a fast, practical answer for this live call
-${sectionContext}
-${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
-${transcriptReferenceBlock}
-` : ""}
-${recentTranscript ? `\nRecent agent transcript:\n"${recentTranscript.slice(-1000)}"\n` : ""}
-Structured app context:
-${copilotContextJson}
+  return { staticPrefix: `# Medicare Supplement agent questions
 
-YOUR CAPABILITIES:
+You are a knowledgeable Medicare Supplement compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
+## CRITICAL CONTEXT
+- You can ONLY hear the AGENT speaking
+- They need a fast, practical answer for this live call
+
+
+## YOUR CAPABILITIES
 - Medicare Supplement (Medigap) plan details and standardized benefits
 - Guaranteed Issue rights and qualifying events
 - Medigap Open Enrollment Period rules (6 months from Part B effective)
@@ -324,17 +303,35 @@ YOUR CAPABILITIES:
 - Replacement/switching compliance requirements
 - TPMO disclosure requirements
 
-HARD BOUNDARY, DO NOT ANSWER:
+## HARD BOUNDARY, DO NOT ANSWER
 - Specific premium quotes → tell agent to check carrier rating tool
 - Whether a specific doctor accepts Medicare → direct to Medicare.gov provider lookup
 - Specific carrier underwriting criteria → direct to carrier guidelines
 You CAN answer Medicare cost-sharing questions using the medicareReference data in context (Part A/B deductibles, coinsurance, MOOP limits). These are verified 2026 CMS numbers.
 
-RESPONSE RULES:
+## RESPONSE RULES
 - Keep answers concise and actionable
 - Put script language in quotes so agent can read it directly
 - Always prioritize compliance
-Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.`;
+Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.
+`, variableSuffix: `
+## Reference context
+${sectionContext}
+
+- The agent is currently in the "${sectionKey}" section of the Med Sup enrollment flow
+
+${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
+${transcriptReferenceBlock}
+` : ""}
+
+
+${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting (customer cannot hear). Answer directly and concisely." : ""}
+
+${recentTranscript ? `\nRecent agent transcript:\n"${recentTranscript.slice(-1000)}"\n` : ""}
+
+Structured app context:
+${copilotContextJson}
+` };
 }
 
 /* ───────────────────────────────────────────────────────
@@ -353,9 +350,9 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, lo
     const costs = getKnowledgeStructuredValue(
       findKnowledgeEntry(dbMedicareEntries, "2026_cost_sharing")
     ) || medicare2026;
-    const giRules = getKnowledgeStructuredValue(
+    const giRules = resolveMedSupStateGIRules(getKnowledgeStructuredValue(
       findKnowledgeEntry(dbMedicareEntries, "state_gi_rules")
-    ) || stateGIRules;
+    ));
     return { costs, giRules };
   }, [dbMedicareEntries]);
   const knowledge = complianceKnowledge[currentStep] || null;
@@ -371,9 +368,11 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, lo
     coachingAbortRef, askAbortRef, requestCoachingRef,
     pushFeedEntry, surfaceServiceIssue, clearServiceIssue,
     scheduleCoaching, clearFeed,
+    captureCoachingTranscript, markCoachingDispatched,
     getToken, logEntry, setEntryFeedback, exportFeedbackDataset, entries,
     silentHeartbeatMs,
   } = useCopilotEngineCore({
+    engine: "MEDSUP",
     transcriptRef,
     activeSection,
     currentStep,
@@ -422,6 +421,7 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, lo
     manual = false, sectionEntry = false, forceShortChunk = false,
     periodic = false, periodicSignature = "",
   } = {}) => {
+    const transcriptTicket = captureCoachingTranscript();
     const fullTranscript = transcriptRef.current.trim();
     if (!fullTranscript || coachingLoading) {
       if (manual && !coachingLoading) {
@@ -495,7 +495,7 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, lo
     const derivedSignals = copilotContext.derivedSignals;
     const copilotContextJson = JSON.stringify(copilotContext, null, 2);
 
-    const systemPrompt = buildCoachingSystemPrompt({
+    const systemPrompt = buildCachedPrompt(buildCoachingSystemPrompt, {
       sectionKey, knowledge, flowOrder,
       recentInterventionText,
       copilotContextJson,
@@ -517,14 +517,16 @@ SECTION CONTEXT (rolling window):
 "${analysisWindow}"`;
 
     try {
+      markCoachingDispatched(transcriptTicket);
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 220,
-          system: systemPrompt,
-          messages: [{ role: "user", content: userContent }],
+          engine: "MEDSUP",
+          max_completion_tokens: 2048,
+          system: systemPrompt.system,
+          response_format: coachingFormat,
+          messages: [...systemPrompt.contextMessages, { role: "user", content: userContent }],
         }),
         signal: controller.signal,
       });
@@ -653,7 +655,7 @@ SECTION CONTEXT (rolling window):
       if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
       setCoachingLoading(false);
     }
-  }, [
+  }, [captureCoachingTranscript, markCoachingDispatched,
     activeSection, currentStep, coachingLoading, knowledge, pushFeedEntry,
     buildCopilotContext, getToken, transcriptRef, clearServiceIssue, surfaceServiceIssue,
     messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel,
@@ -698,7 +700,7 @@ SECTION CONTEXT (rolling window):
     });
     const retrievalTrace = buildTranscriptRetrievalTrace(transcriptReferenceResult);
 
-    const systemPrompt = buildAskSystemPrompt({
+    const systemPrompt = buildCachedPrompt(buildAskSystemPrompt, {
       sectionKey, knowledge,
       recentTranscript,
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
@@ -711,10 +713,10 @@ SECTION CONTEXT (rolling window):
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 300,
-          system: systemPrompt,
-          messages: [{ role: "user", content: question }],
+          engine: "MEDSUP",
+          max_completion_tokens: 2048,
+          system: systemPrompt.system,
+          messages: [...systemPrompt.contextMessages, { role: "user", content: question }],
         }),
         signal: controller.signal,
       });

@@ -1,6 +1,6 @@
 /**
  * LLM prompt templates for intent classification.
- * Used by IntentClassifier to send transcript segments to Claude Sonnet.
+ * Used by IntentClassifier with the shared strict response schema.
  */
 
 export const INTENT_CLASSIFICATION_SYSTEM = `You are an insurance compliance intent classifier. You analyze segments of Medicare, ancillary, and annuity call transcripts and identify which compliance intents are present.
@@ -14,7 +14,7 @@ RULES:
 4. Flag anti-patterns: statements that SOUND compliant but violate the spirit of the requirement
 5. Identify the SPEAKER (agent or beneficiary) for each detection
 6. Note the specific text that triggered each detection
-7. Respond ONLY in valid JSON format, no markdown, no code fences`;
+7. Follow the supplied response schema. Risk indicators are concise text descriptions.`;
 
 export function buildClassificationPrompt({ intents, segment, context }) {
   const intentList = intents.map(i =>
@@ -24,18 +24,6 @@ export function buildClassificationPrompt({ intents, segment, context }) {
   return `Analyze this transcript segment for the following compliance intents:
 
 ${intentList}
-
-TRANSCRIPT SEGMENT:
-Speaker: ${segment.speaker || 'unknown'}
-Timestamp: ${segment.start_ms} - ${segment.end_ms}
-Text: "${segment.text}"
-
-CONTEXT:
-- Call type: ${context.call_type || 'enrollment'}
-- Product type: ${context.product_type || 'MA'}
-- Call direction: ${context.call_direction || 'inbound'}
-- Intents already detected earlier in call: ${(context.detected_intents || []).join(', ') || 'none'}
-- Current sequence position: ${context.sequence_position || 0}
 
 Respond with JSON:
 {
@@ -57,7 +45,21 @@ Respond with JSON:
     "agent": "professional",
     "beneficiary": "engaged"
   }
-}`;
+}
+
+TRANSCRIPT SEGMENT:
+Speaker: ${segment.speaker || 'unknown'}
+Timestamp: ${segment.start_ms} - ${segment.end_ms}
+Text: "${segment.text}"
+
+CONTEXT:
+- Call type: ${context.call_type || 'enrollment'}
+- Product type: ${context.product_type || 'MA'}
+- Call direction: ${context.call_direction || 'inbound'}
+- Intents already detected earlier in call: ${(context.detected_intents || []).join(', ') || 'none'}
+- Current sequence position: ${context.sequence_position || 0}
+
+`;
 }
 
 export const PLAN_FIT_SYSTEM = `You are a Medicare plan-fit analyzer. Given a complete call transcript between an agent and a Medicare beneficiary, you extract the beneficiary's stated needs and compare them against the plan(s) presented by the agent. Your goal is to determine whether the agent recommended a plan that genuinely fits the beneficiary's situation.

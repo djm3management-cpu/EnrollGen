@@ -1,7 +1,8 @@
+import { classificationFormat } from "../../lib/llm/schemas/compliance.js";
 /**
  * IntentClassifier, LLM-based intent detection engine.
- * Sends transcript segments to Claude Sonnet via Netlify function,
- * classifies against 152 MA compliance intents, returns structured detections.
+ * Sends transcript segments through the server-side LLM abstraction,
+ * classifies against the full compliance intent catalog, returns structured detections.
  */
 
 import { ALL_INTENTS } from '../intents/index.js';
@@ -185,7 +186,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress 
         },
       });
 
-      const raw = await callLLM(INTENT_CLASSIFICATION_SYSTEM, prompt);
+      const raw = await callLLM(INTENT_CLASSIFICATION_SYSTEM, prompt, { response_format: classificationFormat });
       const parsed = parseClassificationResponse(raw);
 
       if (parsed?.detections) {
@@ -245,6 +246,9 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress 
       }
     } catch (err) {
       console.error(`Classification error for segment ${segment.start_ms}:`, err);
+      // A failed classification is unavailable evidence, never a set of missing intents.
+      // Let the background scorer mark the call failed instead of persisting a false score.
+      throw err;
     }
 
     completed++;
@@ -290,15 +294,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress 
 }
 
 function parseClassificationResponse(raw) {
-  try {
-    if (typeof raw === 'object') return raw;
-    // Strip markdown fences if present
-    const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    return JSON.parse(cleaned);
-  } catch (e) {
-    console.error('Failed to parse classification response:', e, raw?.slice?.(0, 200));
-    return { detections: [], risk_indicators: [], sentiment: {} };
-  }
+  return typeof raw === 'object' ? raw : JSON.parse(raw);
 }
 
 function validateSequences(detections) {

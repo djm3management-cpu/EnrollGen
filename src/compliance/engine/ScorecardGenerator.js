@@ -1,3 +1,4 @@
+import { assessmentFormat } from "../../lib/llm/schemas/compliance.js";
 /**
  * ScorecardGenerator, Orchestrates the full scoring pipeline:
  * transcript → classification → scoring → scorecard + corrective actions.
@@ -7,31 +8,11 @@
 import { classifyCall } from './IntentClassifier.js';
 import { scoreCall, calculateAverageConfidence } from './ScoringEngine.js';
 
-const ASSESSMENT_SYSTEM_PROMPT = `You are a Medicare enrollment quality analyst. You will receive a call transcript with compliance scoring results. Produce two assessments in JSON format.
+const ASSESSMENT_SYSTEM_PROMPT = `You are a Medicare enrollment quality analyst. You will receive a call transcript with compliance scoring results. Follow the supplied assessment schema.
 
-Respond ONLY with valid JSON, no markdown fences, no preamble:
+For the agent, score rapport, listening, and product knowledge from 1 to 10 with one sentence of notes for each. List missed cross-sell or clarification opportunities and anything a CMS auditor would flag beyond compliance scoring. Identify the single most impactful coaching priority.
 
-{
-  "agent": {
-    "rapport_score": <1-10>,
-    "rapport_notes": "<1 sentence on rapport quality>",
-    "listening_score": <1-10>,
-    "listening_notes": "<1 sentence>",
-    "product_knowledge_score": <1-10>,
-    "product_knowledge_notes": "<1 sentence>",
-    "missed_opportunities": ["<brief description of any missed cross-sell or clarification opportunities>"],
-    "audit_risk_flags": ["<anything a CMS auditor would specifically flag beyond compliance scoring>"],
-    "top_coaching_priority": "<single most impactful thing this agent should work on>"
-  },
-  "beneficiary": {
-    "engagement_score": <1-10 based on how engaged/responsive the beneficiary was>,
-    "confusion_indicators": ["<moments where beneficiary expressed confusion or uncertainty>"],
-    "competing_plan_mentioned": <true/false>,
-    "disenrollment_risk": "<low/medium/high>",
-    "disenrollment_risk_reason": "<1 sentence explaining the risk assessment>",
-    "recommended_followup_days": <number of days recommended before first follow-up, 14-60>
-  }
-}`;
+For the beneficiary, score engagement from 1 to 10 based on their responsiveness. List moments of confusion, indicate whether a competing plan was mentioned, and assess disenrollment risk as low, medium, or high with a one-sentence explanation. Recommend the first follow-up between 14 and 60 days.`;
 
 /**
  * Generate a complete compliance scorecard for a call.
@@ -208,7 +189,7 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     progress(92, 'Assessing agent performance...');
     try {
       const assessmentPrompt = buildAssessmentPrompt(callRecord, diarized, scoreResult);
-      const assessmentRaw = await callLLM(ASSESSMENT_SYSTEM_PROMPT, assessmentPrompt);
+      const assessmentRaw = await callLLM(ASSESSMENT_SYSTEM_PROMPT, assessmentPrompt, { response_format: assessmentFormat });
       const assessment = parseAssessmentResponse(assessmentRaw);
 
       let assessmentQuery = supabase.from('call_records').update({
@@ -455,8 +436,7 @@ ${truncated}`;
 
 function parseAssessmentResponse(raw) {
   try {
-    const cleaned = String(raw || '').replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = typeof raw === "object" ? raw : JSON.parse(raw);
     return {
       agent: parsed.agent || { rapport_score: null, top_coaching_priority: 'Assessment missing agent section' },
       beneficiary: parsed.beneficiary || { disenrollment_risk: 'unknown', recommended_followup_days: 30 },

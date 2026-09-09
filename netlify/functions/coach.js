@@ -1,14 +1,17 @@
+import { complete, completeStream } from "../../src/lib/llm/client.ts";
+import { resolveEngine } from "../../src/lib/llm/config.js";
+import { coachingFormat } from "../../src/lib/llm/schemas/coaching.js";
+import { llmRuntime } from "./_llmTelemetry.js";
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { createClient } from "@supabase/supabase-js";
 import {
-  logUsageRecord,
   requireActiveSubscription,
   requirePlan,
   resolveTenantIdForOrg,
 } from "./_subscriptionGate.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
-const AI_REQUEST_TIMEOUT_MS = 45000;
+
 
 function jsonResponse(status, payload) {
   return new Response(JSON.stringify(payload), {
@@ -24,36 +27,7 @@ function getSupabase() {
   return createClient(url, key);
 }
 
-function countClaudeTokens(usage = {}) {
-  return (
-    Number(usage.input_tokens || 0) +
-    Number(usage.output_tokens || 0) +
-    Number(usage.cache_creation_input_tokens || 0) +
-    Number(usage.cache_read_input_tokens || 0)
-  );
-}
-
-async function readJsonResponse(response) {
-  const raw = await response.text().catch(() => "");
-
-  if (!raw) {
-    return { data: {}, raw: "" };
-  }
-
-  try {
-    return { data: JSON.parse(raw), raw };
-  } catch {
-    return {
-      data: {
-        error: "Invalid AI response",
-        detail: raw.slice(0, 2000),
-      },
-      raw,
-    };
-  }
-}
-
-export default async (request) => {
+export default async (request, context) => {
   if (request.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -71,22 +45,6 @@ export default async (request) => {
   const planGate = requirePlan(subscription, "pro");
   if (planGate.response) return planGate.response;
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.error("ANTHROPIC_API_KEY environment variable is not set");
-    return new Response(
-      JSON.stringify({
-        error: "Server configuration error",
-        detail:
-          "API key not configured. Set ANTHROPIC_API_KEY in Netlify environment variables.",
-      }),
-      {
-        status: 500,
-        headers: JSON_HEADERS,
-      }
-    );
-  }
-
   try {
     let body;
     try {
@@ -98,10 +56,6 @@ export default async (request) => {
       });
     }
 
-    if (!body.model) {
-      body.model = "claude-sonnet-4-6";
-    }
-
     if (!Array.isArray(body.messages) || body.messages.length === 0) {
       return jsonResponse(400, {
         error: "Invalid request body",
@@ -109,50 +63,33 @@ export default async (request) => {
       });
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), AI_REQUEST_TIMEOUT_MS);
-
-    let resp;
-    try {
-      resp = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
+    let engine;
+    try { engine = resolveEngine(body.engine); }
+    catch { return jsonResponse(400, { error: "Unknown Co-Pilot engine" }); }
+    if (!['MA', 'MEDSUP', 'ACA', 'U65'].includes(engine)) return jsonResponse(400, { error: 'This engine does not use the live LLM endpoint' });
+    const runtime = { ...llmRuntime(supabase, tenantId, context, { endpoint: 'coach', user_id: auth.userId }), signal: request.signal };
+    const input = {
+      engine, path: 'live', system: body.system || '',
+      messages: body.messages, static_messages: body.static_messages,
+      max_completion_tokens: 2048,
+      tools: body.tools, tool_choice: body.tool_choice,
+      ...(body.response_format ? { response_format: coachingFormat } : {}),
+    };
+    if (body.stream) {
+      const encoder = new TextEncoder();
+      const events = completeStream(input, runtime);
+      return new Response(new ReadableStream({
+        async pull(controller) {
+          try {
+            const { value, done } = await events.next();
+            if (done) controller.close();
+            else controller.enqueue(encoder.encode(`event: ${value.type}\ndata: ${JSON.stringify(value)}\n\n`));
+          } catch (error) { controller.error(error); }
         },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-    } catch (error) {
-      if (error?.name === "AbortError") {
-        return jsonResponse(504, {
-          error: "AI request timed out",
-          detail: `Anthropic did not respond within ${AI_REQUEST_TIMEOUT_MS / 1000} seconds.`,
-        });
-      }
-      throw error;
-    } finally {
-      clearTimeout(timeoutId);
+        async cancel() { await events.return(); },
+      }), { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' } });
     }
-
-    const { data, raw } = await readJsonResponse(resp);
-
-    if (!resp.ok) {
-      console.error("Anthropic API error:", resp.status, raw || JSON.stringify(data));
-    }
-
-    if (resp.ok) {
-      const tokenCount = countClaudeTokens(data.usage);
-      await logUsageRecord(supabase, tenantId, "claude_tokens", tokenCount || 1, {
-        model: body.model,
-        endpoint: "coach",
-        user_id: auth.userId,
-        status: resp.status,
-      });
-    }
-
-    return jsonResponse(resp.status, data);
+    return jsonResponse(200, await complete(input, runtime));
   } catch (error) {
     console.error("coach function error:", error);
     return jsonResponse(500, {
