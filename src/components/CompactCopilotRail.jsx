@@ -119,6 +119,7 @@ function RailWidgets({
 
       <CollapsibleWidget
         title="Co-Pilot"
+        fillHeight
         icon={<MessageSquare size={11} />}
         accentColor="var(--chart-4)"
       >
@@ -130,6 +131,7 @@ function RailWidgets({
 
       <CollapsibleWidget
         title="Live Transcript"
+        fillHeight
         icon={<Radio size={11} />}
         accentColor="var(--status-live)"
         headerRight={<TranscriptTimer startTime={startTime} />}

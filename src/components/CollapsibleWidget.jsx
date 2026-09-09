@@ -13,6 +13,8 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
   title,
   icon,
   defaultCollapsed = false,
+  fillHeight = false,
+  className = "",
   children,
   /** Extra elements rendered in the header right side (next to chevron) */
   headerRight,
@@ -23,7 +25,7 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
 
   // Keep the wrapper height in sync when inner widget content changes.
   useEffect(() => {
-    if (!contentRef.current || collapsed) {
+    if (!contentRef.current || collapsed || fillHeight) {
       return undefined;
     }
 
@@ -59,18 +61,18 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
       resizeObserver.disconnect();
       mutationObserver.disconnect();
     };
-  }, [collapsed]);
+  }, [collapsed, fillHeight]);
 
   // Update height when collapsed state changes
   useEffect(() => {
-    if (contentRef.current) {
+    if (contentRef.current && !fillHeight) {
       setContentHeight(collapsed ? "0px" : contentRef.current.scrollHeight + "px");
     }
-  }, [collapsed]);
+  }, [collapsed, fillHeight]);
 
   return (
     <div
-      className="right-rail-widget-shell"
+      className={`right-rail-widget-shell${fillHeight ? " right-rail-widget-shell--fill" : ""}${collapsed ? " is-collapsed" : ""}${className ? ` ${className}` : ""}`}
       style={{
         background: "var(--eg-surface-2)",
         border: "1px solid var(--eg-border)",
@@ -156,7 +158,7 @@ const CollapsibleWidget = memo(function CollapsibleWidget({
         className="right-rail-widget-content"
         ref={contentRef}
         style={{
-          maxHeight: contentHeight,
+          maxHeight: fillHeight ? (collapsed ? 0 : undefined) : contentHeight,
           overflow: "hidden",
           transition: "max-height 0.2s ease",
         }}

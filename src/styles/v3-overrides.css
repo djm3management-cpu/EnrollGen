@@ -62,7 +62,7 @@ body,
 
 .top-bar-logo-text {
   display: block;
-  font-family: var(--font-primary);
+  font-family: "Formula1", var(--font-primary);
   font-weight: 700;
   font-size: 20px;
   line-height: 1;

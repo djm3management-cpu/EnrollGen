@@ -276,7 +276,7 @@ function RailWidgets({
       <div className="right-rail-divider" />
 
       {/* ── Unified Co-Pilot ── */}
-      <CollapsibleWidget title="Co-Pilot" icon={<MessageSquare size={11} />} accentColor="var(--chart-4)">
+      <CollapsibleWidget title="Co-Pilot" fillHeight icon={<MessageSquare size={11} />} accentColor="var(--chart-4)">
         <div className="unified-copilot-widget">
           <CopilotFeedMini />
           <AskCopilotMini />
@@ -286,6 +286,7 @@ function RailWidgets({
       {/* ── Live Transcript ── */}
       <CollapsibleWidget
         title="Live Transcript"
+        fillHeight
         icon={<Radio size={11} />}
         accentColor="var(--status-live)"
         headerRight={<TranscriptTimer startTime={state.tpmoStart} />}
@@ -294,7 +295,7 @@ function RailWidgets({
       </CollapsibleWidget>
 
       {/* ── Compliance ── */}
-      <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />} accentColor="var(--danger)">
+      <CollapsibleWidget title="Compliance" defaultCollapsed className="right-rail-widget-shell--compliance" icon={<ShieldCheck size={11} />} accentColor="var(--danger)">
         <ComplianceMini
           transcript={transcript}
           activeSection={activeSection}

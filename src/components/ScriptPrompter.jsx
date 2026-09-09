@@ -49,6 +49,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
      Stream track) and delivered over the /agent WebSocket, already
      speaker-labeled. Tab sharing remains the path for non-Twilio calls. ─── */
   const inbound = useInboundCall();
+  const remoteStream = inbound?.remoteStream;
   const softphoneActive = Boolean(inbound?.activeCall);
   const outboundSoftphoneActive =
     softphoneActive && inbound.activeCall?.params?.direction === "outbound";
@@ -100,13 +101,13 @@ const ScriptPrompter = memo(function ScriptPrompter({
   // WebRTC stream. Feed that stream into the existing customer Deepgram
   // pipeline; inbound PSTN calls continue using Railway's server transcript.
   useEffect(() => {
-    if (!outboundSoftphoneActive || !inbound.remoteStream || customerAudio.isCapturing) {
+    if (!outboundSoftphoneActive || !remoteStream || customerAudio.isCapturing) {
       return;
     }
     if (!customerCapturePromiseRef.current) {
       outboundCaptureRef.current = true;
       customerCapturePromiseRef.current = customerAudio
-        .startCapture({ mediaStream: inbound.remoteStream })
+        .startCapture({ mediaStream: remoteStream })
         .catch((err) => {
           copilot.pushFeedEntry(
             "info",
@@ -120,7 +121,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
     }
   }, [
     outboundSoftphoneActive,
-    inbound.remoteStream,
+    remoteStream,
     customerAudio,
     copilot,
   ]);
