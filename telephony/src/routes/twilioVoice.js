@@ -6,13 +6,11 @@ import { requireTwilioSignature } from "../twilioSecurity.js";
 import { findOrCreateContactByPhone, latestLeadIntel, logContactActivity } from "../contacts.js";
 import { claimNextAvailableAgent, releaseAgent } from "../availability.js";
 
+import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
+
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
 export const twilioVoiceRouter = Router();
-
-function sendTwiml(res, response) {
-  res.type("text/xml").send(response.toString());
-}
 
 function voicemailTwiml() {
   const response = new VoiceResponse();
@@ -45,8 +43,9 @@ async function logEvent({ inboundCallId, callSid, event, payload }) {
 function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds }) {
   const response = new VoiceResponse();
 
+  if (triedAgentIds.length) response.stop().stream({ name: "agent-transcription" });
   const start = response.start();
-  const stream = start.stream({ url: mediaStreamUrl(), track: "both_tracks" });
+  const stream = start.stream({ name: "agent-transcription", url: mediaStreamUrl(), track: "both_tracks" });
   stream.parameter({ name: "inboundCallId", value: inboundCall.id });
   stream.parameter({ name: "agentId", value: agent.agent_id });
 
@@ -62,7 +61,10 @@ function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds }) {
     recordingStatusCallbackEvent: "completed",
   });
 
-  const client = dial.client();
+  const client = dial.client({
+    statusCallback: publicUrl(`/twilio/agent-status?agentId=${encodeURIComponent(agent.agent_id)}`),
+    statusCallbackEvent: ["completed"],
+  });
   client.identity(agent.agent_id);
   const params = {
     inboundCallId: inboundCall.id,
@@ -80,7 +82,7 @@ function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds }) {
 }
 
 // Inbound call from the FMO transfer hits here first.
-twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, async (req, res) => {
+twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, async (req, res) => {
   const callSid = req.body.CallSid;
   const from = req.body.From;
   const to = req.body.To;
@@ -95,7 +97,7 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, async (req, res)
     // Claim (not just read) the agent here: marks them busy the instant
     // they're selected so a second call arriving in the same instant
     // cannot also be routed to them before they've even started ringing.
-    const agent = await claimNextAvailableAgent();
+    const agent = await claimNextAvailableAgent({ callSid });
     claimedAgent = agent;
 
     const { data: inboundCall, error } = await supabase
@@ -142,14 +144,17 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, async (req, res)
     console.error("/twilio/voice failed:", err);
     // Don't strand a claimed agent as busy if we never actually dialed
     // them (e.g. the inbound_calls insert failed after the claim).
-    if (claimedAgent) await releaseAgent(claimedAgent.agent_id);
+    if (claimedAgent) {
+      try { await releaseAgent(claimedAgent.agent_id, callSid); }
+      catch (releaseError) { console.error("Reservation cleanup failed:", releaseError); return res.status(503).end(); }
+    }
     return sendTwiml(res, voicemailTwiml());
   }
 });
 
 // Dial outcome: agent answered, declined, or timed out. Reroute to the
 // next available agent, or voicemail when nobody is left.
-twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, async (req, res) => {
+twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, routingReplay, async (req, res) => {
   const inboundCallId = req.query.inboundCallId;
   const tried = String(req.query.tried || "").split(",").filter(Boolean);
   const dialStatus = req.body.DialCallStatus;
@@ -164,7 +169,8 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, async (req
       payload: { dial_status: dialStatus, tried },
     });
 
-    if (dialStatus === "completed" || dialStatus === "answered") {
+    if (dialStatus === "completed" || dialStatus === "answered" || dialStatus === "canceled") {
+      await releaseAgent(tried[tried.length - 1], callSid);
       await supabase
         .from("inbound_calls")
         .update({ status: "completed", ended_at: new Date().toISOString() })
@@ -179,15 +185,19 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, async (req
       .select("*")
       .eq("id", inboundCallId)
       .maybeSingle();
-    if (!inboundCall) return sendTwiml(res, voicemailTwiml());
+    if (!inboundCall || inboundCall.twilio_call_sid !== callSid) return sendTwiml(res, voicemailTwiml());
+    if (inboundCall.ended_at) {
+      await releaseAgent(null, callSid);
+      const response = new VoiceResponse();
+      response.hangup();
+      return sendTwiml(res, response);
+    }
 
-    // The agent just dialed (last entry in `tried`) didn't answer;
-    // release the claim from /twilio/voice so they're immediately
-    // eligible for the next inbound call instead of stuck "busy".
+    // Release only this call's reservation; late callbacks cannot free a newer call.
     const justTriedAgentId = tried[tried.length - 1];
-    if (justTriedAgentId) await releaseAgent(justTriedAgentId);
+    if (justTriedAgentId) await releaseAgent(justTriedAgentId, callSid);
 
-    const nextAgent = await claimNextAvailableAgent({ exclude: tried });
+    const nextAgent = await claimNextAvailableAgent({ callSid, exclude: tried });
     claimedAgent = nextAgent;
 
     if (!nextAgent) {
@@ -198,10 +208,11 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, async (req
       return sendTwiml(res, voicemailTwiml());
     }
 
-    await supabase
+    const { error: routingError } = await supabase
       .from("inbound_calls")
       .update({ status: "ringing", routed_agent_id: nextAgent.agent_id })
       .eq("id", inboundCallId);
+    if (routingError) throw new Error(`Routing update failed: ${routingError.message}`);
 
     const { data: contact } = inboundCall.contact_id
       ? await supabase
@@ -224,7 +235,10 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, async (req
     );
   } catch (err) {
     console.error("/twilio/dial-result failed:", err);
-    if (claimedAgent) await releaseAgent(claimedAgent.agent_id);
+    if (claimedAgent) {
+      try { await releaseAgent(claimedAgent.agent_id, callSid); }
+      catch (releaseError) { console.error("Reservation cleanup failed:", releaseError); return res.status(503).end(); }
+    }
     return sendTwiml(res, voicemailTwiml());
   }
 });

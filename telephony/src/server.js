@@ -10,6 +10,20 @@ import { smsRouter } from "./routes/sms.js";
 import { handleMediaUpgrade } from "./media/mediaStream.js";
 import { handleAgentUpgrade } from "./media/agentSocket.js";
 
+import { expirePhoneSessions } from "./phonePresence.js";
+
+// Routing checks lease expiry itself, even if this maintenance job is delayed.
+let expiryRunning = false;
+async function sweepPresence() {
+  if (expiryRunning) return;
+  expiryRunning = true;
+  try { await expirePhoneSessions(); }
+  catch (err) { console.error(err.message); }
+  finally { expiryRunning = false; }
+}
+setInterval(sweepPresence, 15_000).unref();
+void sweepPresence();
+
 const app = express();
 app.set("trust proxy", true);
 

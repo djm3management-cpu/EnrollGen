@@ -3,6 +3,8 @@ import { config } from "../config.js";
 import { supabase } from "../supabase.js";
 import { requireTwilioSignature } from "../twilioSecurity.js";
 
+import { releaseAgent } from "../availability.js";
+
 export const twilioStatusRouter = Router();
 
 async function findInboundCall(callSid) {
@@ -21,6 +23,9 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, async (req, re
   const callStatus = req.body.CallStatus;
 
   try {
+    if (["completed", "canceled", "failed", "busy", "no-answer"].includes(callStatus)) {
+      await releaseAgent(null, callSid);
+    }
     const inboundCall = await findInboundCall(callSid);
 
     await supabase.from("telephony_events").insert({
@@ -42,8 +47,22 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, async (req, re
     }
   } catch (err) {
     console.error("/twilio/status failed:", err);
+    return res.status(503).end();
   }
   return res.status(204).end();
+});
+
+// Child-leg completion also fires when the caller hangs up before Dial's action.
+twilioStatusRouter.post("/twilio/agent-status", requireTwilioSignature, async (req, res) => {
+  try {
+    if (["completed", "canceled", "failed", "busy", "no-answer"].includes(req.body.CallStatus)) {
+      await releaseAgent(req.query.agentId, req.body.ParentCallSid);
+    }
+    return res.status(204).end();
+  } catch (err) {
+    console.error("Agent completion failed:", err);
+    return res.status(503).end();
+  }
 });
 
 // Recording completed: store the Twilio URL immediately, then copy the

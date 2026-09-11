@@ -1,4 +1,5 @@
 import { WebSocketServer } from "ws";
+import { attachPhonePresence } from "../phonePresence.js";
 import { verifyAgentWsToken } from "../wsToken.js";
 
 // Browser-facing WebSocket. The softphone connects once per shift with
@@ -23,6 +24,7 @@ export function handleAgentUpgrade(request, socket, head) {
 
 agentWss.on("connection", (ws, _request, claims) => {
   const { agentId } = claims;
+  attachPhonePresence(ws, agentId);
   if (!socketsByAgent.has(agentId)) socketsByAgent.set(agentId, new Set());
   socketsByAgent.get(agentId).add(ws);
   ws.send(JSON.stringify({ type: "connected", agentId }));
