@@ -114,11 +114,13 @@ export function useCustomerAudio() {
     cleaningUpRef.current = true;
 
     if (wsRef.current) {
+      const closingSocket = wsRef.current;
+      wsRef.current = null;
       try {
-        if (wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.send(JSON.stringify({ type: "CloseStream" }));
+        if (closingSocket.readyState === WebSocket.OPEN) {
+          closingSocket.send(JSON.stringify({ type: "CloseStream" }));
         }
-        wsRef.current.close();
+        closingSocket.close();
       } catch {
         /* ignore */
       }
@@ -260,10 +262,12 @@ export function useCustomerAudio() {
     const source = audioContext.createMediaStreamSource(stream);
     sourceRef.current = source;
 
-    const ws = new WebSocket(DEEPGRAM_WS_URL, ["token", deepgramToken]);
+    // /auth/grant returns a JWT, which requires Bearer authentication.
+    const ws = new WebSocket(DEEPGRAM_WS_URL, ["bearer", deepgramToken]);
     wsRef.current = ws;
 
     ws.onopen = () => {
+      if (wsRef.current !== ws) return;
       void (async () => {
         const { agentId, sessionId } = await waitForActiveSessionMetadata();
         if (ws.readyState === WebSocket.OPEN) {
@@ -326,8 +330,14 @@ export function useCustomerAudio() {
     };
 
     ws.onmessage = (event) => {
+      if (wsRef.current !== ws) return;
       try {
         const data = JSON.parse(event.data);
+        if (data.type === "Error") {
+          setError("Customer transcription was rejected by the speech service. Please restart customer capture.");
+          cleanup();
+          return;
+        }
         if (data.type === "Results" && data.channel?.alternatives?.[0]) {
           const alt = data.channel.alternatives[0];
           const text = (alt.transcript || "").trim();
@@ -361,21 +371,25 @@ export function useCustomerAudio() {
     };
 
     ws.onerror = () => {
+      if (wsRef.current !== ws) return;
       setError("Deepgram connection error. Check your API key and network.");
       cleanup();
     };
 
     ws.onclose = (event) => {
+      if (wsRef.current && wsRef.current !== ws) return;
       void useCallStore.getState().endCall();
 
-      if (isCapturing && !cleaningUpRef.current && event.code !== 1000) {
-        setError("Deepgram connection closed unexpectedly. You may need to restart capture.");
-        cleanup();
-      }
+      // This callback closes over the pre-start isCapturing=false value.
+      // Socket ownership, not captured React state, determines whether a live
+      // capture ended. Ignore cleanup and callbacks from an older capture.
+      if (wsRef.current !== ws) return;
+      setError(`Customer transcription disconnected (code ${event.code}). Please restart customer capture.`);
+      cleanup();
     };
 
     setIsCapturing(true);
-  }, [cleanup, getToken, isCapturing]);
+  }, [cleanup, getToken]);
 
   const stopCapture = useCallback(() => {
     cleanup();

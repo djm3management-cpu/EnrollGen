@@ -70,6 +70,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const [agentRows, setAgentRows] = useState([]);
   const [customerTranscript, setCustomerTranscript] = useState([]);
   const [error, setError] = useState("");
+  const [transcriptionError, setTranscriptionError] = useState("");
   const [isMuted, setIsMuted] = useState(false);
   const [isHeld, setIsHeld] = useState(false);
   const [connectedAt, setConnectedAt] = useState(null);
@@ -109,7 +110,12 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       }
       return;
     }
+    if (message.type === "transcription_error") {
+      setTranscriptionError(message.message || "Customer transcription is unavailable.");
+      return;
+    }
     if (message.type !== "transcript" || !message.text) return;
+    if (message.speaker === "customer") setTranscriptionError("");
     if (message.speaker === "agent") {
       if (!message.isFinal) return;
       setAgentRows((prev) => [
@@ -338,6 +344,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     if (!incomingCall) return;
     setAgentRows([]);
     setCustomerTranscript([]);
+    setTranscriptionError("");
     incomingCall.call.accept();
     setActiveCall(incomingCall);
     setIncomingCall(null);
@@ -369,6 +376,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       setError("");
       setAgentRows([]);
       setCustomerTranscript([]);
+      setTranscriptionError("");
 
       const params = {
         callerName: contactName || "",
@@ -469,6 +477,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       agentId,
       deviceStatus,
       error,
+      transcriptionError,
       incomingCall,
       activeCall,
       dialingCall,
@@ -491,6 +500,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       agentId,
       deviceStatus,
       error,
+      transcriptionError,
       incomingCall,
       activeCall,
       dialingCall,

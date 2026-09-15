@@ -37,6 +37,18 @@ function openDeepgram({ speaker, getAgentId, getInboundCallId }) {
     headers: { Authorization: `Token ${config.deepgramApiKey}` },
   });
   const pending = [];
+  let intentionalClose = false;
+  let reportedError = false;
+  function reportFailure() {
+    if (intentionalClose || reportedError || speaker !== "customer") return;
+    reportedError = true;
+    const agentId = getAgentId();
+    if (agentId) sendToAgent(agentId, {
+      type: "transcription_error",
+      inboundCallId: getInboundCallId(),
+      message: "Customer transcription disconnected on the phone server. Check the telephony speech-service connection.",
+    });
+  }
 
   ws.on("open", () => {
     for (const chunk of pending.splice(0)) ws.send(chunk);
@@ -55,6 +67,7 @@ function openDeepgram({ speaker, getAgentId, getInboundCallId }) {
     } catch {
       return;
     }
+    if (data.type === "Error") { reportFailure(); return; }
     if (data.type !== "Results") return;
     const text = data.channel?.alternatives?.[0]?.transcript || "";
     if (!text.trim()) return;
@@ -70,8 +83,11 @@ function openDeepgram({ speaker, getAgentId, getInboundCallId }) {
     });
   });
 
-  ws.on("error", (err) => console.error(`deepgram ws error (${speaker}):`, err.message));
-  ws.on("close", () => clearInterval(keepAlive));
+  ws.on("error", (err) => {
+    console.error(`deepgram ws error (${speaker}):`, err.message);
+    reportFailure();
+  });
+  ws.on("close", () => { clearInterval(keepAlive); reportFailure(); });
 
   return {
     send(chunk) {
@@ -79,6 +95,7 @@ function openDeepgram({ speaker, getAgentId, getInboundCallId }) {
       else if (ws.readyState === WebSocket.CONNECTING) pending.push(chunk);
     },
     close() {
+      intentionalClose = true;
       clearInterval(keepAlive);
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "CloseStream" }));

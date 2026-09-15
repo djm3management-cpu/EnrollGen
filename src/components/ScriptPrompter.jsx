@@ -32,6 +32,8 @@ const ScriptPrompter = memo(function ScriptPrompter({
   const transcriptRef = useRef("");
   const customerCapturePromiseRef = useRef(null);
   const outboundCaptureRef = useRef(false);
+  const attemptedRemoteStreamRef = useRef(null);
+  const lastAudioErrorRef = useRef(null);
 
   /* ─── Customer audio capture (opt-in via getDisplayMedia + Deepgram) ─── */
   const customerAudio = useCustomerAudio();
@@ -104,7 +106,8 @@ const ScriptPrompter = memo(function ScriptPrompter({
     if (!outboundSoftphoneActive || !remoteStream || customerAudio.isCapturing) {
       return;
     }
-    if (!customerCapturePromiseRef.current) {
+    if (!customerCapturePromiseRef.current && attemptedRemoteStreamRef.current !== remoteStream) {
+      attemptedRemoteStreamRef.current = remoteStream;
       outboundCaptureRef.current = true;
       customerCapturePromiseRef.current = customerAudio
         .startCapture({ mediaStream: remoteStream })
@@ -129,6 +132,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
   useEffect(() => {
     if (softphoneActive || !outboundCaptureRef.current) return;
     outboundCaptureRef.current = false;
+    attemptedRemoteStreamRef.current = null;
     if (customerAudio.isCapturing) customerAudio.stopCapture();
   }, [softphoneActive, customerAudio]);
 
@@ -140,7 +144,17 @@ const ScriptPrompter = memo(function ScriptPrompter({
     if (!inboundSpeechRef.current) return;
     speech.stopListening();
     inboundSpeechRef.current = false;
-  }, [inboundActive, speech]);
+  }, [softphoneActive, speech]);
+
+  // Async WebSocket failures occur after startCapture resolves. Surface them
+  // in the existing right-rail feed instead of silently showing agent-only text.
+  useEffect(() => {
+    const message = customerAudio.error || (inboundActive ? inbound?.transcriptionError : "");
+    if (!message) { lastAudioErrorRef.current = null; return; }
+    if (lastAudioErrorRef.current === message) return;
+    lastAudioErrorRef.current = message;
+    copilot.pushFeedEntry("info", message, { section: copilot.currentStep });
+  }, [customerAudio.error, inboundActive, inbound?.transcriptionError, copilot]);
 
   // Forward transcript changes to parent
   useEffect(() => {
@@ -193,12 +207,18 @@ const ScriptPrompter = memo(function ScriptPrompter({
   const handleStart = useCallback(async (options = {}) => {
     // Inbound Twilio calls wire their own audio (remote stream + mic)
     // in the accept effect above; never open the tab picker for them.
-    if (inboundActive) return;
+    if (softphoneActive) {
+      if (outboundSoftphoneActive && remoteStream && !customerAudio.isCapturing) {
+        await customerAudio.startCapture({ mediaStream: remoteStream }).catch(() => {});
+      }
+      if (!speech.listening) speech.startListening();
+      return;
+    }
     if (!options?.skipCustomerAudio) {
       await startCustomerAudio();
     }
     speech.startListening();
-  }, [speech, startCustomerAudio, softphoneActive]);
+  }, [speech, startCustomerAudio, softphoneActive, outboundSoftphoneActive, remoteStream, customerAudio]);
 
   const handleStop = useCallback(() => {
     speech.stopListening();
