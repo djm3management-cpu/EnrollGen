@@ -148,11 +148,25 @@ function buildCompletedSectionHistory(state) {
     .slice(-3);
 }
 
-function buildDerivedSignals(state, activeSection, transcript, recentInterventions) {
+function buildDerivedSignals(state, activeSection, transcript, recentInterventions, newSpeechWindow = "") {
   const recentText = transcript.toLowerCase();
   const currentTs = state.sectionTimestamps?.[activeSection] || {};
+  const newSpeech = newSpeechWindow.toLowerCase().replace(/\s+/g, " ");
+  const carrierNames = (Array.isArray(state.tpmoOrgs)
+    ? state.tpmoOrgs
+    : String(state.tpmoOrgs || "").split(/[,;\n|]+/))
+    .map((name) => String(name).trim().toLowerCase())
+    .filter((name) => /[a-z]/.test(name));
+  const onTopicTerms = [
+    "plan", "premium", "deductible", "copay", "network", "provider", "doctor",
+    "drug", "prescription", "formulary", "enroll", "effective date", "part b",
+    "part d", "medicare", "medicaid", "supplement", "hmo", "ppo", "snp",
+    "scope", "tpmo", "recording", "consent", ...carrierNames,
+  ];
 
   return {
+    // A vocabulary hint only; the LLM must still evaluate all speech for risks.
+    newSpeechLooksOffTopic: !onTopicTerms.some((term) => newSpeech.includes(term)),
     transcriptLikelyStartedMidCall: Boolean(
       activeSection > 1 || recentInterventions.length > 0
     ),
@@ -382,6 +396,7 @@ Return rules for this mode:
 - NEVER return "silent" or "info"
 - If the agent is compliant and on pace, return level "tip" with a short encouraging message
 - If the agent needs course correction, return "remind", "warn", or "critical" based on severity
+- If the recent speech is off-topic per the OFF-TOPIC SPEECH rules, return level "tip" with issue_tag "off_topic", a short rapport acknowledgment and a soft transition, e.g. "Good rapport. Ease back to [section] when ready." Do not return a compliance correction for off-topic speech.
 - Keep the message to 1 sentence (max 2). The agent only glances at the popup for a second mid-call.
 - Anchor the message to specific words the agent recently said whenever possible`;
   }
@@ -477,6 +492,42 @@ ${OBSERVATION_STAY_TALKING_POINT}
 ## EMPTY OR SPARSE TRANSCRIPT:
 If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
 
+## OFF-TOPIC SPEECH
+Rapport is not a compliance event. If NEW SPEECH SINCE LAST ANALYSIS is
+small talk (weather, sports, family, pets, holidays), call logistics
+("can you hear me", "call you back"), or an interruption (third party in
+the room, dead air, background noise), return level "silent" with
+issue_tag "off_topic". Do not warn about pending checklist items during
+off-topic speech. The agent is building rapport and will return to the
+script.
+
+Off-topic speech is still evaluated. Never return "off_topic" if the
+segment contains any of the following, no matter how casual the framing:
+- CUSTOMER: do-not-call request, recording objection, intent to complain,
+  asking whether you work for Medicare or the government, asking for an
+  interpreter, saying they are not the beneficiary, asking to end the
+  call. These are critical.
+- AGENT: superlatives, guarantees, "free", implied Medicare affiliation,
+  disparaging other carriers, urgency or fear, pivoting to life or
+  annuity without a new scope, asking about health conditions during
+  MA enrollment, offering gifts, unqualified benefit amounts.
+- CUSTOMER: repeating back a claim like "so you said it's free".
+- CUSTOMER: moving, snowbird, nursing home, retirement or lost
+  coverage, Medicaid change, plan termination letter, storm or
+  disaster, released from incarceration, chronic condition, "the last
+  agent told me", fixed income, SNAP or Extra Help, dual status,
+  confusion, dementia, hearing trouble, a family member handling their
+  paperwork, POA, VA or TRICARE, employer or union coverage, another
+  agent involved, address change, a specific drug or doctor. These are
+  eligibility signals. Return "remind" with the specific signal.
+Speaker matters: a customer volunteering a condition is a signal, an
+agent asking about conditions is a violation.
+If the speaker label is missing, do not return "off_topic".
+Never return "off_topic" when sectionChecklistState shows a pending gate
+in sections 1, 2, 3, or 7, or when derivedSignals.agentMovedPastCurrentSection
+is true.
+derivedSignals.newSpeechLooksOffTopic is a vocabulary hint, not a decision;
+always apply the speaker, risk, eligibility, and pending-gate rules above.
 
 ## PRIORITY WEIGHTING
 - Prioritize risky language and compliance-danger behaviors over missing-word disclosure checks.
@@ -692,8 +743,13 @@ export function useCopilotEngine({
     buildContextSignature: buildPeriodicContextSignature,
   });
 
+  const offTopicRef = useRef({ active: false, periodicTipShown: false });
+  useEffect(() => {
+    offTopicRef.current = { active: false, periodicTipShown: false };
+  }, [state.callStart, callStarted]);
+
   // Build shared copilot context object
-  const buildCopilotContext = useCallback((recentInterventions) => {
+  const buildCopilotContext = useCallback((recentInterventions, newSpeechWindow = "") => {
     return {
       currentSection: { number: activeSection, label: currentStep },
       callMetadata: {
@@ -732,7 +788,8 @@ export function useCopilotEngine({
         state,
         activeSection,
         transcriptRef.current.trim(),
-        recentInterventions
+        recentInterventions,
+        newSpeechWindow
       ),
     };
   }, [activeSection, currentStep, state, unlocked, transcriptRef]);
@@ -761,7 +818,9 @@ export function useCopilotEngine({
     // Gates (bypassed for manual, section entry, and timed periodic review)
     if (!sectionEntry && !manual && !periodic) {
       const now = Date.now();
-      const cooldown = COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
+      const cooldown = offTopicRef.current.active
+        ? 2 * COOLDOWN_BY_LEVEL.silent
+        : COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
       if (now - lastCoachingTime.current < cooldown) {
         return;
       }
@@ -772,7 +831,9 @@ export function useCopilotEngine({
     }
     if (manual) {
       const now = Date.now();
-      const cooldown = COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
+      const cooldown = offTopicRef.current.active
+        ? 2 * COOLDOWN_BY_LEVEL.silent
+        : COOLDOWN_BY_LEVEL[lastInterventionLevel.current] ?? 30000;
       if (now - lastCoachingTime.current < cooldown) {
         pushFeedEntry("info", `Analyze skipped. Co-Pilot is in cooldown for another ${Math.ceil((cooldown - (now - lastCoachingTime.current)) / 1000)}s.`, { section: currentStep });
         return;
@@ -814,7 +875,7 @@ export function useCopilotEngine({
       periodic,
     });
 
-    const copilotContext = buildCopilotContext(recentInterventions);
+    const copilotContext = buildCopilotContext(recentInterventions, newSpeechWindow);
     const derivedSignals = copilotContext.derivedSignals;
 
     // Fetch CMS knowledge + transcript references
@@ -921,6 +982,28 @@ SECTION CONTEXT (rolling window for current section):
       const raw = parseAnthropicResponse(data);
 
       let { level, message, issueTag, confidence } = parseCoachingJson(raw);
+
+      if (issueTag === "off_topic") {
+        lastAnalyzedLength.current = targetAnalyzedLength;
+        lastCoachingTime.current = Date.now();
+        lastInterventionLevel.current = "silent";
+        sectionCopilotFiredRef.current.add(activeSection);
+        offTopicRef.current.active = true;
+        if (periodic && periodicSignature) {
+          lastPeriodicContextSignatureRef.current = periodicSignature;
+        }
+        const showRapportTip = periodic && !offTopicRef.current.periodicTipShown;
+        if (showRapportTip) offTopicRef.current.periodicTipShown = true;
+        pushFeedEntry(
+          showRapportTip ? "tip" : "silent",
+          showRapportTip
+            ? `Good rapport, ease back to ${sectionKey} when ready`
+            : "Off-topic speech. No compliance intervention.",
+          { issueTag, section: currentStep, contextSnapshot: copilotContext, retrievalTrace, skipLog: false }
+        );
+        return;
+      }
+      offTopicRef.current = { active: false, periodicTipShown: false };
 
       if (periodic) {
         if (level === "info") level = "tip";
