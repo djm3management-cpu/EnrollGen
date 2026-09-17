@@ -46,7 +46,6 @@ let cachedClerkToken = null;
 let cachedClerkTokenExp = 0;
 let inFlightMint = null;
 let warnedWrongAlg = false;
-let loggedTokenClaims = false;
 
 export function registerClerkTokenGetter(getter) {
   clerkTokenGetter = getter;
@@ -95,20 +94,6 @@ async function resolveClerkAccessToken() {
         }
 
         const payload = decodeJwtPart(token, 1);
-        if (!loggedTokenClaims) {
-          loggedTokenClaims = true;
-          console.info(
-            "[supabase] Clerk template token in use:",
-            JSON.stringify({
-              alg: header?.alg,
-              iss: payload?.iss,
-              ref: payload?.ref,
-              role: payload?.role,
-              aud: payload?.aud,
-            }),
-            "- if requests still fail with PGRST301, the Clerk 'supabase' JWT template is signed with a secret that does not match this Supabase project's JWT secret."
-          );
-        }
         cachedClerkToken = token;
         cachedClerkTokenExp = payload?.exp || Date.now() / 1000 + 50;
         return token;
