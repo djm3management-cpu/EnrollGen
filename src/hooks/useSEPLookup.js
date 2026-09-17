@@ -13,10 +13,8 @@ import { getCountyFromZip, getPlansForState } from "../data/sepPlanDb";
 import { getSEPsForZip, getSEPsForState } from "../lib/sepEngine";
 import { supabase } from "../lib/supabase";
 import { parseSepRpcResult } from "../components/SEPResultsPanel";
-import { useAppAuth } from "../context/AuthContext";
 
 export function useSEPLookup() {
-  const { getToken } = useAppAuth();
   const [zip, setZip] = useState("");
   const [searchedZip, setSearchedZip] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
@@ -53,7 +51,7 @@ export function useSEPLookup() {
   const loadTopFeed = useCallback(async () => {
     const [r, b, n] = await Promise.all([
       fetchLiveFemaDisasters(),
-      fetchBulletins(getToken),
+      fetchBulletins(),
       fetchLiveNews(),
     ]);
     femaCache.current = {
@@ -67,7 +65,7 @@ export function useSEPLookup() {
       bulletins: b,
       liveNews: n,
     };
-  }, [getToken]);
+  }, []);
 
   // Fetch FEMA data + bulletins on mount and refresh periodically so the feed stays current.
   useEffect(() => {

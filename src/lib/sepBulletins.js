@@ -4,7 +4,6 @@
 */
 
 import { supabase } from "./supabase";
-import { fetchWithClerk } from "./clerkFetch";
 
 const SEED_BULLETINS = [
   {
@@ -95,10 +94,6 @@ const CARRIER_PRIORITY = {
 };
 
 let bulletinCache = { data: null, fetchedAt: 0 };
-let syncAttemptPromise = null;
-let syncAttemptedAt = 0;
-const SYNC_RETRY_TTL = 15 * 60 * 1000;
-
 function normalizeHost(url) {
   if (!url) return "";
   try {
@@ -203,43 +198,7 @@ async function queryBulletins() {
   return data || [];
 }
 
-function hasRecentBulletins(rows) {
-  if (!rows.length) return false;
-  const latest = rows[0]?.published_at;
-  if (!latest) return false;
-  const ageMs = Date.now() - new Date(latest).getTime();
-  return Number.isFinite(ageMs) && ageMs <= 7 * 24 * 60 * 60 * 1000;
-}
-
-async function triggerBulletinSync(getToken) {
-  if (typeof fetch !== "function") return false;
-
-  const now = Date.now();
-  if (syncAttemptPromise) return syncAttemptPromise;
-  if (now - syncAttemptedAt < SYNC_RETRY_TTL) return false;
-
-  syncAttemptedAt = now;
-  syncAttemptPromise = (async () => {
-    try {
-      const response = await fetchWithClerk(getToken, "/api/sync-bulletins", {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "Cache-Control": "no-cache",
-        },
-      });
-      return response.ok;
-    } catch {
-      return false;
-    } finally {
-      syncAttemptPromise = null;
-    }
-  })();
-
-  return syncAttemptPromise;
-}
-
-export async function fetchBulletins(getToken) {
+export async function fetchBulletins() {
   const now = Date.now();
   if (bulletinCache.data && now - bulletinCache.fetchedAt < CACHE_TTL) {
     return bulletinCache.data;
@@ -247,13 +206,6 @@ export async function fetchBulletins(getToken) {
 
   try {
     let data = await queryBulletins();
-
-    if (!data.length || !hasRecentBulletins(data)) {
-      const syncOk = await triggerBulletinSync(getToken);
-      if (syncOk) {
-        data = await queryBulletins();
-      }
-    }
 
     if (data.length > 0) {
       const mapped = normalizeRows(
