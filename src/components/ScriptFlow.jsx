@@ -900,7 +900,18 @@ export default function ScriptFlow() {
 
   useEffect(() => {
     return () => {
-      if (!persistFinalTranscriptRef.current) return;
+      // ScriptFlow also mounts for an idle script page. Do not interpret that
+      // normal unmount as a failed post-call save; there is no session or
+      // transcript to persist until the agent starts a call.
+      const latestCall = latestPostCallRef.current?.liveCall;
+      if (
+        !sessionStartedRef.current ||
+        !latestCall?.callStarted ||
+        !persistFinalTranscriptRef.current
+      ) {
+        return;
+      }
+
       void persistBeforeReset({
         persist: persistFinalTranscriptRef.current,
         reset: resetLiveCall,
