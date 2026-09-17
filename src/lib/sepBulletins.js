@@ -4,6 +4,7 @@
 */
 
 import { supabase } from "./supabase";
+import { fetchWithClerk } from "./clerkFetch";
 
 const SEED_BULLETINS = [
   {
@@ -210,7 +211,7 @@ function hasRecentBulletins(rows) {
   return Number.isFinite(ageMs) && ageMs <= 7 * 24 * 60 * 60 * 1000;
 }
 
-async function triggerBulletinSync() {
+async function triggerBulletinSync(getToken) {
   if (typeof fetch !== "function") return false;
 
   const now = Date.now();
@@ -220,7 +221,7 @@ async function triggerBulletinSync() {
   syncAttemptedAt = now;
   syncAttemptPromise = (async () => {
     try {
-      const response = await fetch("/api/sync-bulletins", {
+      const response = await fetchWithClerk(getToken, "/api/sync-bulletins", {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -238,7 +239,7 @@ async function triggerBulletinSync() {
   return syncAttemptPromise;
 }
 
-export async function fetchBulletins() {
+export async function fetchBulletins(getToken) {
   const now = Date.now();
   if (bulletinCache.data && now - bulletinCache.fetchedAt < CACHE_TTL) {
     return bulletinCache.data;
@@ -248,7 +249,7 @@ export async function fetchBulletins() {
     let data = await queryBulletins();
 
     if (!data.length || !hasRecentBulletins(data)) {
-      const syncOk = await triggerBulletinSync();
+      const syncOk = await triggerBulletinSync(getToken);
       if (syncOk) {
         data = await queryBulletins();
       }
