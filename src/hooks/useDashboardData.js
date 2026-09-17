@@ -6,6 +6,11 @@ import { dashboardAgents, selectDashboardScope } from '../lib/dashboardScope';
 
 const PAGE_SIZE = 500;
 const EMPTY_DATA = { calls: [], contactCounts: {}, enrolled: [], loading: true, error: null, updatedAt: null };
+
+function normalizeAgent(value) {
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 export function useDashboardData(userId, scope = 'self') {
   const { supabaseClient: client, tenant, agents, loading: tenantLoading, error: tenantError } = useTenantConfig();
   const availability = useAvailability();
@@ -59,17 +64,16 @@ export function useDashboardData(userId, scope = 'self') {
             .eq('tenant_id', tenantId)
             .gte('call_start', shiftDays(dayStart(now), -30).toISOString())
             .lt('call_start', now.toISOString()).order('call_start').order('id')),
-          // Short phone/test calls are stored by the audio call timer in
-          // call_logs rather than call_records. Shape them like dashboard
-          // calls so they appear in Calls vs Sales (with no sale outcome).
-          pages(() => client.from('call_logs')
-            .select('id, call_id, agent_id, started_at, duration_seconds, billable')
-            .gte('started_at', shiftDays(dayStart(now), -30).toISOString())
-            .lt('started_at', now.toISOString()).order('started_at').order('id'))
+          // v_call_log is the canonical read model for all call activity.
+          // Keep the projection aligned with the view; call_logs is not a
+          // public table and older wrapper views used incompatible columns.
+          pages(() => client.from('v_call_log')
+            .select('log_id, call_record_id, inbound_call_id, tenant_id, occurred_at, direction, contact_id, contact_name, contact_phone, duration_seconds, agent, disposition, recording_url, recording_storage_path, compliance_score, transcript_preview, agent_notes')
+            .eq('tenant_id', tenantId)
+            .gte('occurred_at', shiftDays(dayStart(now), -30).toISOString())
+            .lt('occurred_at', now.toISOString()).order('occurred_at').order('log_id'))
             .catch((error) => {
-              // Older databases may not have the optional phone-log table yet.
-              // Keep the primary call_records dashboard usable while migration catches up.
-              console.warn('[Dashboard] call_logs unavailable; showing enrollment calls only.', error?.message || error);
+              console.warn('[Dashboard] v_call_log unavailable; showing enrollment calls only.', error?.message || error);
               return [];
             }),
           pages(() => client.from('contacts').select('id, assigned_agent_id')
@@ -78,18 +82,34 @@ export function useDashboardData(userId, scope = 'self') {
         const recordedCallIds = new Set(
           calls.flatMap((call) => [call.external_call_id, call.session_id].filter(Boolean))
         );
+        const enrolledByAgent = new Map();
+        for (const agent of enrolled) {
+          enrolledByAgent.set(normalizeAgent(agent.id), agent.id);
+          enrolledByAgent.set(normalizeAgent(agent.name), agent.id);
+        }
         const testCalls = callLogs
-          .filter((log) => !recordedCallIds.has(log.call_id))
+          .filter((log) => !recordedCallIds.has(log.call_record_id) && !recordedCallIds.has(log.inbound_call_id))
           .map((log) => ({
-            id: `call-log:${log.id}`,
-            agent_id: log.agent_id,
-            call_start: log.started_at,
+            id: `call-log:${log.log_id}`,
+            agent_id: enrolledByAgent.get(normalizeAgent(log.agent)) || null,
+            call_start: log.occurred_at,
             call_duration_seconds: log.duration_seconds,
-            call_outcome: null,
+            call_outcome: log.disposition || null,
             compliance_scorecard_id: null,
-            compliance_scorecards: [],
+            compliance_scorecards: log.compliance_score == null ? [] : [{
+              overall_score: Number(log.compliance_score),
+              created_at: log.occurred_at,
+              is_thread_composite: false,
+            }],
             source: 'call_log',
-            billable: log.billable,
+            contact_id: log.contact_id,
+            contact_name: log.contact_name,
+            contact_phone: log.contact_phone,
+            direction: log.direction,
+            recording_url: log.recording_url,
+            recording_storage_path: log.recording_storage_path,
+            transcript_preview: log.transcript_preview,
+            agent_notes: log.agent_notes,
           }));
         const dashboardCalls = [...calls, ...testCalls].sort(
           (a, b) => new Date(a.call_start) - new Date(b.call_start) || String(a.id).localeCompare(String(b.id))
