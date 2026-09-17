@@ -208,7 +208,7 @@ export function useCustomerAudio() {
       keepAlive.play().catch(() => {});
       keepAliveAudioRef.current = keepAlive;
       console.info(
-        "[customerAudio] capturing inbound call audio:",
+        "[customerAudio] remote audio track ready (transcription not connected yet):",
         stream.getAudioTracks().map((track) => track.readyState).join(",")
       );
     } else {

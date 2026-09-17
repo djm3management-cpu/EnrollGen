@@ -9,7 +9,7 @@ const isLocalhost =
   self.location.hostname === "127.0.0.1";
 
 function shouldRuntimeCache(request, response) {
-  if (!response.ok || !request.url.startsWith(self.location.origin)) {
+  if (!response.ok || response.status === 206 || request.headers.has("range") || !request.url.startsWith(self.location.origin)) {
     return false;
   }
 
@@ -79,9 +79,11 @@ self.addEventListener("fetch", (event) => {
         // HTTP cache handles those, and stale chunks can break lazy imports.
         if (shouldRuntimeCache(event.request, response)) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clone);
-          });
+          event.waitUntil(
+            caches.open(CACHE_NAME)
+              .then((cache) => cache.put(event.request, clone))
+              .catch(() => { /* Cache failures must not interrupt playback. */ })
+          );
         }
         return response;
       })

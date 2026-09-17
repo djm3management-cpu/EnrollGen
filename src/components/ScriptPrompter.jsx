@@ -34,6 +34,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
   const outboundCaptureRef = useRef(false);
   const attemptedRemoteStreamRef = useRef(null);
   const lastAudioErrorRef = useRef(null);
+  const transcriptSourceRef = useRef("browser");
 
   /* ─── Customer audio capture (opt-in via getDisplayMedia + Deepgram) ─── */
   const customerAudio = useCustomerAudio();
@@ -46,16 +47,21 @@ const ScriptPrompter = memo(function ScriptPrompter({
     externalTranscriptRef: transcriptRef,
   });
 
-  /* ─── Inbound Twilio call: the caller's voice never reaches the
-     browser as a track, it's transcribed server-side (per Twilio Media
-     Stream track) and delivered over the /agent WebSocket, already
-     speaker-labeled. Tab sharing remains the path for non-Twilio calls. ─── */
+  /* ─── Inbound calls have separate server transcripts for each Twilio
+     track. Use those authoritative sources for speaker labels; browser
+     microphone recognition can also hear caller audio from speakers. ─── */
   const inbound = useInboundCall();
   const remoteStream = inbound?.remoteStream;
   const softphoneActive = Boolean(inbound?.activeCall);
   const outboundSoftphoneActive =
     softphoneActive && inbound.activeCall?.params?.direction === "outbound";
   const inboundActive = softphoneActive && !outboundSoftphoneActive;
+  if (softphoneActive) {
+    transcriptSourceRef.current = inboundActive ? "inbound" : "browser";
+  }
+  // Retain the call's source after disconnect so post-call persistence does
+  // not replace track-labeled speech with browser microphone results.
+  const useInboundTranscripts = transcriptSourceRef.current === "inbound";
 
   /* ─── Merged transcript (agent + customer) ─── */
   const {
@@ -64,8 +70,8 @@ const ScriptPrompter = memo(function ScriptPrompter({
     recentCustomerSpeech,
     hasCustomerAudio,
   } = useMergedTranscript({
-    agentTranscriptRows: speech.transcriptRows,
-    customerTranscript: inboundActive
+    agentTranscriptRows: useInboundTranscripts ? inbound.agentRows : speech.transcriptRows,
+    customerTranscript: useInboundTranscripts
       ? inbound.customerTranscript
       : customerAudio.customerTranscript,
     isCustomerCapturing: inboundActive ? inboundActive : customerAudio.isCapturing,
@@ -214,6 +220,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
       if (!speech.listening) speech.startListening();
       return;
     }
+    transcriptSourceRef.current = "browser";
     if (!options?.skipCustomerAudio) {
       await startCustomerAudio();
     }
@@ -227,6 +234,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
 
   /* ─── Clear all ─── */
   const clearAll = useCallback(() => {
+    transcriptSourceRef.current = "browser";
     speech.clearTranscript();
     customerAudio.clearTranscript();
     copilot.clearFeed();

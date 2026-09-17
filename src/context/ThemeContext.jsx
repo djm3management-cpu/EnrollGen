@@ -162,7 +162,9 @@ export function ThemeProvider({ children }) {
           setTheme(remoteTheme);
         }
       } catch (error) {
-        console.warn("[ThemeProvider] Supabase theme preference unavailable:", error);
+        console.warn("[ThemeProvider] Supabase theme preference unavailable:", JSON.stringify({
+          code: error?.code, message: error?.message, details: error?.details, hint: error?.hint,
+        }));
       }
     }
 
@@ -177,7 +179,9 @@ export function ThemeProvider({ children }) {
 
     saveRemoteTheme(remoteSession.client, remoteSession.clerkUserId, theme)
       .catch((error) => {
-        console.warn("[ThemeProvider] Failed to save theme preference:", error);
+        console.warn("[ThemeProvider] Failed to save theme preference:", JSON.stringify({
+          code: error?.code, message: error?.message, details: error?.details, hint: error?.hint,
+        }));
       });
   }, [remoteSession, theme]);
 

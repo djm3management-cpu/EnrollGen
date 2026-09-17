@@ -147,7 +147,9 @@ export function useSessionTracker() {
       startedAtRef.current = Date.now();
       setActiveSessionMetadata({ sessionId: data.id, callRecordId: null, transcriptId: null });
     } catch (err) {
-      console.error("[SessionTracker] startSession:", err);
+      console.error("[SessionTracker] startSession:", JSON.stringify({
+        code: err?.code, message: err?.message, details: err?.details, hint: err?.hint,
+      }));
     }
   }, [getSupabaseToken, resolveAgentId, resolveTenantId]);
 

@@ -68,8 +68,13 @@ export default async (request) => {
   }
 
   if (!response.ok) {
-    console.error("Deepgram token grant failed:", response.status, payload);
-    return json(502, { error: "Deepgram token grant failed" });
+    console.error("Deepgram token grant failed:", response.status, payload.err_code);
+    const detail = response.status === 403
+      ? "Customer transcription is unavailable: the server's Deepgram key lacks permission to issue temporary tokens. An administrator must configure a Deepgram key with Member or higher permissions in Netlify."
+      : response.status === 401
+        ? "Customer transcription is unavailable: the server's Deepgram key was rejected. An administrator must check the Deepgram key in Netlify."
+        : "Customer transcription is temporarily unavailable because the speech service rejected the token request. Please try again.";
+    return json(502, { error: "Deepgram token grant failed", detail, upstream_status: response.status });
   }
 
   await logUsageRecord(supabase, tenantId, "deepgram_minutes", Math.ceil(DEFAULT_TTL_SECONDS / 60), {
