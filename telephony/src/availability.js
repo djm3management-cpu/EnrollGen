@@ -10,11 +10,12 @@ export async function agentExists(agentId) {
 export async function activeTenantAgent(agentId, clerkSubject) {
   const { data, error } = await supabase.from("tenant_agents")
     .select("id, agent_slug, clerk_user_id, is_active")
-    .eq("agent_slug", agentId)
     .eq("clerk_user_id", clerkSubject)
     .eq("is_active", true)
+    .limit(1)
     .maybeSingle();
   if (error) throw new Error(`Active agent lookup failed: ${error.message}`);
+  if (!data || data.agent_slug !== agentId) return null;
   return data;
 }
 
