@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { config } from "./config.js";
 
-const TOKEN_TTL_SECONDS = 60 * 60 * 8; // one shift
+const TOKEN_TTL_SECONDS = 15 * 60;
 
 function hmac(payload) {
   return crypto
@@ -10,10 +10,15 @@ function hmac(payload) {
     .digest("base64url");
 }
 
-// Compact signed token for the /agent WebSocket: agentId.exp.signature
-export function mintAgentWsToken(agentId) {
+// Compact signed token for the /agent WebSocket: base64url(claims).signature
+export function mintAgentWsToken(agentId, clerkSubject, clerkSessionId) {
   const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
-  const payload = `${agentId}.${exp}`;
+  const payload = Buffer.from(JSON.stringify({
+    agentId,
+    clerkSubject,
+    clerkSessionId,
+    exp,
+  })).toString("base64url");
   return `${payload}.${hmac(payload)}`;
 }
 
@@ -27,7 +32,13 @@ export function verifyAgentWsToken(token) {
   const a = Buffer.from(signature);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
-  const [agentId, expRaw] = payload.split(".");
-  if (!agentId || Number(expRaw) < Math.floor(Date.now() / 1000)) return null;
-  return { agentId };
+  let claims;
+  try {
+    claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
+  if (!claims?.agentId || !claims?.clerkSubject || !claims?.clerkSessionId) return null;
+  if (!Number.isFinite(claims.exp) || claims.exp < Math.floor(Date.now() / 1000)) return null;
+  return claims;
 }

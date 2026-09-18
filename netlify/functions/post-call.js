@@ -594,12 +594,15 @@ async function saveCheckpoint(supabase, payload, auth, tenant, { final = false }
   };
 }
 
-async function triggerScoring(request, callRecordId) {
+async function triggerScoring(request, callRecordId, tenantId) {
   const scoringUrl = new URL("/.netlify/functions/score-call-background", request.url);
   const response = await fetch(scoringUrl.toString(), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ callId: callRecordId }),
+    headers: {
+      "Content-Type": "application/json",
+      "x-enrollgen-job-secret": process.env.SCORE_CALL_JOB_SECRET || "",
+    },
+    body: JSON.stringify({ callId: callRecordId, tenantId }),
   });
 
   if (!response.ok && response.status !== 202) {
@@ -792,7 +795,7 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
 
   queueBackground(
     context,
-    triggerScoring(request, updatedCallRecord.id)
+    triggerScoring(request, updatedCallRecord.id, updatedCallRecord.tenant_id)
   );
 
   let webhookStatus = "skipped";

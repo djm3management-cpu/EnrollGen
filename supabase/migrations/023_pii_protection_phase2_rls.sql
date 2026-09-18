@@ -127,6 +127,11 @@ BEGIN
     RAISE EXCEPTION 'requesting agent % not found', p_requesting_agent_id;
   END IF;
 
+  IF auth.role() = 'authenticated'
+     AND v_agent.clerk_user_id IS DISTINCT FROM NULLIF(auth.jwt() ->> 'sub', '') THEN
+    RAISE EXCEPTION 'access denied: requesting agent is not the signed-in Clerk user';
+  END IF;
+
   INSERT INTO public.pii_access_log (contact_id, agent_id, clerk_user_id, action, ip_address, user_agent)
   VALUES (p_contact_id, p_requesting_agent_id, v_agent.clerk_user_id, p_action, p_ip_address, p_user_agent);
 END;
@@ -167,12 +172,17 @@ AS $$
 DECLARE
   v_agent RECORD;
 BEGIN
-  SELECT ta.id, ta.tenant_id INTO v_agent
+  SELECT ta.id, ta.tenant_id, ta.clerk_user_id INTO v_agent
   FROM public.tenant_agents ta
   WHERE ta.id = p_requesting_agent_id;
 
   IF v_agent.id IS NULL THEN
     RAISE EXCEPTION 'requesting agent % not found', p_requesting_agent_id;
+  END IF;
+
+  IF auth.role() = 'authenticated'
+     AND v_agent.clerk_user_id IS DISTINCT FROM NULLIF(auth.jwt() ->> 'sub', '') THEN
+    RAISE EXCEPTION 'access denied: requesting agent is not the signed-in Clerk user';
   END IF;
 
   RETURN QUERY

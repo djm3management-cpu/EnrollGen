@@ -30,6 +30,8 @@ import { publishAudioLevel } from "../stores/audioLevelStore";
 export const INBOUND_CALLS_ENABLED =
   import.meta.env.VITE_INBOUND_CALLS_ENABLED === "true";
 const TELEPHONY_BASE_URL = (import.meta.env.VITE_TELEPHONY_BASE_URL || "").replace(/\/$/, "");
+const WS_TOKEN_REFRESH_MS = 10 * 60 * 1000;
+const WS_TOKEN_REFRESH_RETRY_MS = 30 * 1000;
 
 const InboundCallContext = createContext(null);
 
@@ -164,6 +166,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       !availability?.isHydrated
     ) return undefined;
     let cancelled = false;
+    let wsRefreshTimer = null;
+    let tokenRefreshInFlight = null;
     const setPhoneReady = (ready) => {
       phoneReadyRef.current = ready;
       phoneConnectionRef.current?.setReady(ready);
@@ -171,11 +175,41 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     const handlePageHide = () => phoneConnectionRef.current?.stop();
     const handlePageShow = (event) => {
       if (event.persisted && !cancelled && tokenBundleRef.current) {
-        connectAgentSocket(tokenBundleRef.current);
+        void refreshTokens({ reason: "pageshow", device: deviceRef.current });
       }
     };
     window.addEventListener("pagehide", handlePageHide);
     window.addEventListener("pageshow", handlePageShow);
+
+    const scheduleWebSocketRefresh = (delay = WS_TOKEN_REFRESH_MS) => {
+      if (wsRefreshTimer) window.clearTimeout(wsRefreshTimer);
+      wsRefreshTimer = window.setTimeout(() => {
+        void refreshTokens({ reason: "proactive" });
+      }, delay);
+    };
+
+    const refreshTokens = ({ reason = "unknown", device = null } = {}) => {
+      if (tokenRefreshInFlight) return tokenRefreshInFlight;
+      tokenRefreshInFlight = (async () => {
+        try {
+          const fresh = await fetchTokenBundle();
+          if (cancelled) return;
+          device?.updateToken(fresh.token);
+          // start() establishes the replacement socket while the connection
+          // helper keeps the old socket alive until presence-ready arrives.
+          connectAgentSocket(fresh);
+          scheduleWebSocketRefresh();
+        } catch (err) {
+          if (!cancelled) {
+            console.error(`[InboundCall] ${reason} token refresh failed:`, err);
+            scheduleWebSocketRefresh(WS_TOKEN_REFRESH_RETRY_MS);
+          }
+        } finally {
+          tokenRefreshInFlight = null;
+        }
+      })();
+      return tokenRefreshInFlight;
+    };
 
     async function register() {
       setDeviceStatus("registering");
@@ -207,14 +241,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           setDeviceStatus("error");
         });
         device.on("tokenWillExpire", async () => {
-          try {
-            const fresh = await fetchTokenBundle();
-            if (cancelled) return;
-            device.updateToken(fresh.token);
-            connectAgentSocket(fresh);
-          } catch (err) {
-            console.error("[InboundCall] token refresh failed:", err);
-          }
+          await refreshTokens({ reason: "Twilio", device });
         });
         device.on("incoming", (call) => {
           if (callInProgressRef.current) { call.reject(); return; }
@@ -275,6 +302,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         await device.register();
         if (cancelled) { device.destroy(); return; }
         connectAgentSocket(bundle);
+        scheduleWebSocketRefresh();
       } catch (err) {
         if (cancelled) return;
         console.error("[InboundCall] registration failed:", err);
@@ -287,6 +315,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
     return () => {
       cancelled = true;
+      if (wsRefreshTimer) window.clearTimeout(wsRefreshTimer);
       window.removeEventListener("pagehide", handlePageHide);
       window.removeEventListener("pageshow", handlePageShow);
       phoneReadyRef.current = false;

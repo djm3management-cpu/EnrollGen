@@ -48,6 +48,11 @@ BEGIN
     RAISE EXCEPTION 'requesting agent % not found', p_requesting_agent_id;
   END IF;
 
+  IF auth.role() = 'authenticated'
+     AND v_agent.clerk_user_id IS DISTINCT FROM NULLIF(auth.jwt() ->> 'sub', '') THEN
+    RAISE EXCEPTION 'access denied: requesting agent is not the signed-in Clerk user';
+  END IF;
+
   IF v_agent.tenant_id != v_contact.tenant_id THEN
     RAISE EXCEPTION 'access denied: agent and contact belong to different tenants';
   END IF;

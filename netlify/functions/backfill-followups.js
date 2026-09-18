@@ -16,7 +16,7 @@ function getSupabase() {
 
 function isAuthorized(request) {
   const secret = process.env.BACKFILL_SECRET || process.env.KNOWLEDGE_UPDATE_SECRET;
-  if (!secret) return true;
+  if (!secret) return false;
   return request.headers.get("x-backfill-secret") === secret
     || request.headers.get("x-knowledge-update-secret") === secret;
 }

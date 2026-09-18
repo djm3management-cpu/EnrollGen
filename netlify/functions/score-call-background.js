@@ -25,13 +25,21 @@ function getSupabase() {
   return createClient(url, key);
 }
 
+function hasInternalJobAuthorization(request) {
+  const secret = process.env.SCORE_CALL_JOB_SECRET;
+  return Boolean(secret) && request.headers.get("x-enrollgen-job-secret") === secret;
+}
+
 export default async (request, context) => {
   if (request.method !== "POST") return;
+  if (!hasInternalJobAuthorization(request)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   let body;
   try { body = await request.json(); } catch { return; }
 
-  const { callId } = body;
+  const { callId, tenantId } = body;
   if (!callId) {
     console.error("score-call-background: missing callId");
     return;
@@ -44,6 +52,7 @@ export default async (request, context) => {
     .from("call_records")
     .select("*")
     .eq("id", callId)
+    .eq("tenant_id", tenantId || "")
     .single();
 
   if (error || !callRecord) {

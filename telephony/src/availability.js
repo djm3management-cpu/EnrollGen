@@ -7,6 +7,17 @@ export async function agentExists(agentId) {
   return Boolean(data);
 }
 
+export async function activeTenantAgent(agentId, clerkSubject) {
+  const { data, error } = await supabase.from("tenant_agents")
+    .select("id, agent_slug, clerk_user_id, is_active")
+    .eq("agent_slug", agentId)
+    .eq("clerk_user_id", clerkSubject)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (error) throw new Error(`Active agent lookup failed: ${error.message}`);
+  return data;
+}
+
 // PostgreSQL owns the reservation, across browsers and service instances.
 // A specific agent is used for outbound calls; inbound calls use fair rotation.
 export async function claimNextAvailableAgent({ callSid, exclude = [], agentId = null } = {}) {

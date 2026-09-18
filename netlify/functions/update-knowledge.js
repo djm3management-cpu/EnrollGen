@@ -18,7 +18,7 @@ function json(status, payload) {
 
 function isAuthorized(request) {
   const secret = process.env.KNOWLEDGE_UPDATE_SECRET;
-  if (!secret) return true;
+  if (!secret) return false;
   return request.headers.get("x-knowledge-update-secret") === secret;
 }
 

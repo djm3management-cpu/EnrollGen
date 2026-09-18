@@ -4,6 +4,7 @@ import { config } from "../config.js";
 import { agentExists } from "../availability.js";
 import { mintAgentWsToken } from "../wsToken.js";
 import { requireClerkUser } from "../clerkAuth.js";
+import { supabase } from "../supabase.js";
 
 export const voiceTokenRouter = Router();
 
@@ -22,9 +23,29 @@ voiceTokenRouter.post("/api/voice/token", async (req, res) => {
   const clerkUser = await requireClerkUser(req, res);
   if (!clerkUser) return;
 
-  const agentId = req.body?.agent_id;
+  const clerkSubject = clerkUser.sub;
+  const clerkSessionId = clerkUser.sid;
+  if (!clerkSubject || !clerkSessionId) {
+    return res.status(401).json({ error: "Clerk session identity is incomplete" });
+  }
+
+  // Never trust an agent identity supplied by the browser. Resolve the
+  // telephony identity from the verified Clerk subject instead.
+  const { data: tenantAgent, error: agentError } = await supabase
+    .from("tenant_agents")
+    .select("agent_slug, is_active")
+    .eq("clerk_user_id", clerkSubject)
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle();
+  if (agentError) {
+    console.error("Agent identity lookup failed:", agentError.message);
+    return res.status(503).json({ error: "Agent identity unavailable" });
+  }
+
+  const agentId = tenantAgent?.agent_slug;
   if (!agentId || !/^[a-z0-9_]+$/.test(agentId)) {
-    return res.status(400).json({ error: "agent_id is required (snake_case)" });
+    return res.status(403).json({ error: "No active telephony agent is linked to this Clerk user" });
   }
   if (!(await agentExists(agentId))) {
     return res.status(404).json({ error: `Unknown agent_id: ${agentId}` });
@@ -48,7 +69,7 @@ voiceTokenRouter.post("/api/voice/token", async (req, res) => {
     token: token.toJwt(),
     identity: agentId,
     expires_in: TOKEN_TTL_SECONDS,
-    ws_token: mintAgentWsToken(agentId),
+    ws_token: mintAgentWsToken(agentId, clerkSubject, clerkSessionId),
     ws_url: `${config.publicBaseUrl.replace(/^http/, "ws")}/agent`,
   });
 });
