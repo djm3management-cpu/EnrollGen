@@ -43,8 +43,46 @@ function TimelineChart({ buckets, compliance = false, hourly = false }) {
   </>;
 }
 
-const DISPOSITION_CODES = [...Object.keys(CALL_OUTCOME_LABELS), 'undispositioned'];
-const DISPOSITION_COLORS = ['--eg-amber', '--eg-blue', '--eg-purple', '--eg-green', '--eg-red', '--eg-amber-text', '--eg-blue-text', '--eg-purple-text', '--eg-green-text', '--eg-red-text'];
+// Stable semantic colors keep a disposition recognizable as the chart changes
+// with the selected date range. Each outcome has its own shade within its family.
+const DISPOSITION_COLORS = {
+  enrolled: '#22c55e',
+  enrolled_pending_verification: '#4ade80',
+  partial_enrollment: '#16a34a',
+  callback_scheduled: '#38bdf8',
+  interested_needs_info: '#60a5fa',
+  spouse_poa_callback: '#818cf8',
+  transferred: '#06b6d4',
+  application_in_progress: '#0ea5e9',
+  not_interested: '#ef4444',
+  not_qualified: '#dc2626',
+  already_enrolled_elsewhere: '#f87171',
+  customer_hung_up: '#b91c1c',
+  do_not_call: '#991b1b',
+  requested_removal: '#fb7185',
+  no_answer: '#f97316',
+  voicemail_left: '#3b82f6',
+  wrong_number: '#64748b',
+  bad_lead_data: '#78716c',
+  language_barrier: '#a78bfa',
+  mentally_unfit: '#c084fc',
+  possible_cognitive_impairment: '#a855f7',
+  third_party_needed: '#8b5cf6',
+  hostile_caller: '#e11d48',
+  suspected_fraud: '#7c3aed',
+  dropped_call: '#f59e0b',
+  test_call: '#94a3b8',
+  duplicate_lead: '#a3a3a3',
+  not_enrolled: '#fb923c',
+  incomplete: '#d97706',
+  undispositioned: '#737373',
+  // Call-log disposition values can also flow into this chart.
+  connected: '#22c55e',
+  voicemail: '#3b82f6',
+  missed: '#ef4444',
+  declined: '#f87171',
+  unknown: '#737373',
+};
 
 function DispositionChart({ rows }) {
   const [activeCode, setActiveCode] = useState(null);
@@ -58,7 +96,7 @@ function DispositionChart({ rows }) {
       code, count,
       label: code === 'undispositioned' ? 'Not dispositioned' : callOutcomeLabel(code),
       percent: (count / total * 100).toFixed(1),
-      color: `var(${DISPOSITION_COLORS[Math.max(0, DISPOSITION_CODES.indexOf(code)) % DISPOSITION_COLORS.length]})`,
+      color: DISPOSITION_COLORS[String(code).toLowerCase().replace(/[\s-]+/g, '_')] || DISPOSITION_COLORS.unknown,
       path: `M 110 110 L ${point(start)} A 96 96 0 ${angle - start > Math.PI ? 1 : 0} 1 ${point(angle)} Z`,
     };
   });
