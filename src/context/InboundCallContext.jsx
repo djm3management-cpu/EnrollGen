@@ -62,6 +62,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const { supabaseClient, agents } = useTenantConfig();
   const requestingAgentId = resolveRequestingAgentUuid(agents, agentId);
   const availability = useAvailability();
+  const reportPhoneReady = availability?.setPhoneReady;
 
   const [deviceStatus, setDeviceStatus] = useState("offline"); // offline | registering | registered | error
   const [incomingCall, setIncomingCall] = useState(null); // { call, params }
@@ -148,11 +149,13 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
   const connectAgentSocket = useCallback((bundle) => {
     if (!phoneConnectionRef.current) {
-      phoneConnectionRef.current = createAgentPhoneConnection({ onMessage: handleTranscriptMessage });
+      phoneConnectionRef.current = createAgentPhoneConnection({
+        onMessage: handleTranscriptMessage, onPresenceReady: reportPhoneReady,
+      });
     }
     phoneConnectionRef.current.setReady(phoneReadyRef.current);
     phoneConnectionRef.current.start(bundle);
-  }, [handleTranscriptMessage]);
+  }, [handleTranscriptMessage, reportPhoneReady]);
 
   // Register the softphone device once identity is resolved.
   useEffect(() => {

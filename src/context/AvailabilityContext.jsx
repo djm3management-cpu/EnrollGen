@@ -4,8 +4,10 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { createAvailabilityIntent } from "../lib/availabilityIntent";
 import { useUser } from "@clerk/clerk-react";
 import { useTenantConfig } from "../hooks/useTenantConfig";
 import {
@@ -85,98 +87,71 @@ function buildRequestError(response, fallbackMessage) {
 }
 
 function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
-  const [status, setStatus] = useState("offline");
-  const [statusSince, setStatusSince] = useState(null);
+  const [snapshot, setSnapshot] = useState({
+    status: "offline", statusSince: null, pendingStatus: null, isSaving: false, error: "",
+  });
+  const { status, statusSince, pendingStatus, isSaving, error } = snapshot;
   const [isHydrated, setIsHydrated] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
+  const intentRef = useRef(null);
 
   useEffect(() => {
-    if (!identityLoaded) {
-      return undefined;
-    }
-
-    if (!API_KEY || !agentId) {
-      setIsHydrated(true);
-      if (!agentId) {
-        setStatusSince(null);
-      }
-      return undefined;
-    }
-
     setIsHydrated(false);
+    setSnapshot({ status: "offline", statusSince: null, pendingStatus: null, isSaving: false, error: "" });
     const controller = new AbortController();
-
-    async function loadAvailability() {
-      try {
-        setError("");
-        const response = await fetch(
-          `${FUNCTIONS_BASE_URL}/get-availability?agent_id=${encodeURIComponent(agentId)}`,
-          {
-            headers: { "x-api-key": API_KEY },
-            signal: controller.signal,
-          }
-        );
-        if (!response.ok) {
-          throw new Error(buildRequestError(response, "Availability lookup failed"));
-        }
-        const payload = await response.json().catch(() => ({}));
-        setStatus(extractStatus(payload) || "offline");
-        setStatusSince(extractSince(payload) || new Date());
-      } catch (err) {
-        if (err?.name === "AbortError") return;
-        console.error("[Availability] GET failed:", err);
-        setError(err?.message || "Availability lookup failed");
-      } finally {
-        setIsHydrated(true);
-      }
-    }
-
-    loadAvailability();
-    return () => controller.abort();
-  }, [agentId, identityLoaded]);
-
-  const changeStatus = useCallback(
-    async (nextStatus) => {
-      if (!API_KEY || !agentId || isSaving || nextStatus === status) {
-        return;
-      }
-
-      const previousStatus = status;
-      const previousSince = statusSince;
-      const nextSince = new Date();
-
-      setStatus(nextStatus);
-      setStatusSince(nextSince);
-      setIsSaving(true);
-      setError("");
-
-      try {
+    const intent = createAvailabilityIntent({
+      onChange: setSnapshot,
+      async write(nextStatus) {
         const response = await fetch(`${FUNCTIONS_BASE_URL}/set-availability`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": API_KEY,
-          },
+          headers: { "Content-Type": "application/json", "x-api-key": API_KEY },
           body: JSON.stringify({ agent_id: agentId, status: nextStatus }),
         });
-        if (!response.ok) {
-          throw new Error(buildRequestError(response, "Availability update failed"));
-        }
+        if (!response.ok) throw new Error(buildRequestError(response, "Availability update failed"));
         const payload = await response.json().catch(() => ({}));
-        setStatus(extractStatus(payload) || nextStatus);
-        setStatusSince(extractSince(payload) || nextSince);
+        return { status: extractStatus(payload) || nextStatus, statusSince: extractSince(payload) || new Date() };
+      },
+    });
+    const binding = { agentId, intent };
+    intentRef.current = binding;
+
+    async function loadAvailability() {
+      if (!identityLoaded) return;
+      try {
+        if (!API_KEY || !agentId) return;
+        const response = await fetch(
+          `${FUNCTIONS_BASE_URL}/get-availability?agent_id=${encodeURIComponent(agentId)}`,
+          { headers: { "x-api-key": API_KEY }, signal: controller.signal }
+        );
+        if (!response.ok) throw new Error(buildRequestError(response, "Availability lookup failed"));
+        const payload = await response.json().catch(() => ({}));
+        intent.hydrate({ status: extractStatus(payload) || "offline", statusSince: extractSince(payload) || new Date() });
       } catch (err) {
-        console.error("[Availability] POST failed:", err);
-        setError(err?.message || "Availability update failed");
-        setStatus(previousStatus);
-        setStatusSince(previousSince);
+        if (!controller.signal.aborted) intent.hydrate({ error: err?.message || "Availability lookup failed" });
       } finally {
-        setIsSaving(false);
+        if (!controller.signal.aborted) setIsHydrated(true);
       }
-    },
-    [agentId, isSaving, status, statusSince]
-  );
+    }
+    void loadAvailability();
+    return () => {
+      controller.abort();
+      intent.dispose();
+      if (intentRef.current === binding) intentRef.current = null;
+    };
+  }, [agentId, identityLoaded]);
+
+  const changeStatus = useCallback((nextStatus) => {
+    const binding = intentRef.current;
+    if (API_KEY && agentId && identityLoaded && isHydrated && binding?.agentId === agentId) {
+      binding.intent.select(nextStatus);
+    }
+  }, [agentId, identityLoaded, isHydrated]);
+
+  // Bound to the identity so a late callback from an old phone cannot release
+  // another agent's queued request.
+  const setPhoneReady = useCallback((ready) => {
+    const binding = intentRef.current;
+    if (binding?.agentId === agentId) binding.intent.setPhoneReady(ready);
+  }, [agentId]);
 
   const value = useMemo(
     () => ({
@@ -187,10 +162,12 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       statusSince,
       isHydrated,
       isSaving,
+      pendingStatus,
+      setPhoneReady,
       error,
       changeStatus,
     }),
-    [agentId, identityLoaded, status, statusSince, isHydrated, isSaving, error, changeStatus]
+    [agentId, identityLoaded, status, statusSince, isHydrated, isSaving, pendingStatus, error, changeStatus, setPhoneReady]
   );
 
   return <AvailabilityContext.Provider value={value}>{children}</AvailabilityContext.Provider>;

@@ -48,6 +48,9 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
   if (!availability?.agentId || !availability.hasApiKey) return null;
 
   const status = availability.status || "offline";
+  const selectedStatus = availability.pendingStatus || status;
+  const waiting = availability.pendingStatus === "available" && !availability.isSaving;
+  const label = waiting ? "AVAILABLE — CONNECTING" : availability.pendingStatus ? `${selectedStatus.toUpperCase()} — SAVING` : status.toUpperCase();
   const since = availability.statusSince
     ? TIME_FORMATTER.format(availability.statusSince)
     : null;
@@ -72,7 +75,7 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
         type="button"
         className="availability-strip"
         title={title}
-        aria-label={`Agent availability: ${status}. Change status`}
+        aria-label={`Agent availability: ${label}. Change status`}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
@@ -83,14 +86,14 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
           style={{ background: STATUS_COLORS[status] || STATUS_COLORS.offline }}
           aria-hidden="true"
         />
-        <span className="availability-strip__label">{status.toUpperCase()}</span>
+        <span className="availability-strip__label">{label}</span>
         <span className="availability-strip__chevron" aria-hidden="true">▼</span>
       </button>
 
       {open ? (
         <div className="availability-menu" role="menu" aria-label="Set agent availability">
           {STATUS_OPTIONS.map((option) => {
-            const active = option.value === status;
+            const active = option.value === selectedStatus;
             return (
               <button
                 key={option.value}
@@ -100,7 +103,7 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
                 className={`availability-menu__option${active ? " is-active" : ""}`}
                 style={{ "--availability-color": option.color }}
                 onClick={() => selectStatus(option.value)}
-                disabled={!isInteractive || availability.isSaving}
+                disabled={!isInteractive}
               >
                 <span className="availability-menu__dot" aria-hidden="true" />
                 <span>{option.label}</span>

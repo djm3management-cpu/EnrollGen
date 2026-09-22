@@ -20,6 +20,7 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
     identityLoaded,
     hasApiKey,
     status,
+    pendingStatus,
     isHydrated,
     isSaving,
     error,
@@ -37,7 +38,9 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
         : "";
 
   const isInteractive = !disabledReason && isHydrated;
-  const panelTitle = error || disabledReason || (agentId ? `Agent ID: ${agentId}` : "");
+  const selectedStatus = pendingStatus || status;
+  const waiting = pendingStatus === "available" && !isSaving;
+  const panelTitle = (waiting ? "Available — connecting phone" : error) || disabledReason || (agentId ? `Agent ID: ${agentId}` : "");
 
   return (
     <div
@@ -52,14 +55,14 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
             key={option.value}
             type="button"
             className={`agent-availability-btn${
-              option.value === status ? " is-active" : ""
+              option.value === selectedStatus ? " is-active" : ""
             }`}
             style={{ "--availability-color": option.color }}
             onClick={() => changeStatus(option.value)}
-            disabled={!isInteractive || isSaving}
-            aria-pressed={option.value === status}
+            disabled={!isInteractive}
+            aria-pressed={option.value === selectedStatus}
           >
-            {option.label}
+            {option.value === "available" && waiting ? "CONNECTING…" : option.label}
           </button>
         ))}
       </div>
