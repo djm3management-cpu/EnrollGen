@@ -2,13 +2,13 @@ import {
   Component,
   lazy,
   Suspense,
-  startTransition,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { preloadWorkspace } from "./lib/preloadWorkspace";
 import ShellTextures from "./components/ShellTextures";
 import ClientQuickScripts from "./components/ClientQuickScripts";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
@@ -224,7 +224,7 @@ const FLOWS = [
   { id: "ancillary", label: "ANC", title: "Ancillary", color: "var(--eg-amber)", border: "var(--flow-ancillary-border)", bg: "var(--flow-ancillary-bg)" },
 ];
 
-function FlowSelector({ mode, onChange }) {
+function FlowSelector({ mode, onChange, onPreload }) {
   const [open, setOpen] = useState(false);
   const [quickScript, setQuickScript] = useState(null);
   const quickScriptDialogRef = useRef(null);
@@ -280,6 +280,9 @@ function FlowSelector({ mode, onChange }) {
                 title={flow.title}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => handleSelect(flow.id)}
+                onMouseEnter={() => onPreload?.(flow.id)}
+                onFocus={() => onPreload?.(flow.id)}
+                onPointerDown={() => onPreload?.(flow.id)}
                 style={{
                   "--flow-color": flow.color,
                   "--flow-border": flow.border,
@@ -569,6 +572,7 @@ function getTabsForMode(mode) {
   }
 
   tabs.push({ id: "operations", label: "CALLS" });
+  tabs.push({ id: "complianceHub", label: "COMPLIANCE" });
   tabs.push({ id: "contacts", label: "CONTACTS" });
   tabs.push({ id: "rts", label: "RTS" });
   tabs.push({ id: "verse", label: "Daily Verse" });
@@ -601,6 +605,20 @@ function AppShell({ currentUser = null }) {
     dismissLeftRail,
   } = useLeftRailManager();
 
+  useEffect(() => {
+    const common = [loadCallLogTab, loadContactsTab, loadAgentDashboard];
+    const flow = mode === "ma"
+      ? [loadComplianceIntentAccordion, loadComplianceDashboard, loadScriptFlow, loadAgentTools, loadSEPLookup]
+      : mode === "medsup"
+        ? [loadCallHistory, loadMedSupFlow, loadMedSupAiCopilot]
+        : mode === "aca"
+          ? [loadCallHistory, loadACAScript, loadACAIntelligence]
+          : mode === "u65"
+            ? [loadCallHistory, loadU65Script]
+            : [loadCallHistory, loadAncillaryFlow];
+    return preloadWorkspace([...common, ...flow, loadRTSTab]);
+  }, [mode]);
+
   const canAdmin = LOGIN_DISABLED || isAdminUser(currentUser);
   const navTabs = useMemo(() => getTabsForMode(mode), [mode]);
   const visibleLeftRailIds = LEFT_RAIL_IDS_BY_MODE[mode] || EMPTY_LEFT_RAIL_IDS;
@@ -612,11 +630,9 @@ function AppShell({ currentUser = null }) {
     const handlePopState = () => {
       const nextMode = getModeFromLocation();
       const nextAppMode = getAppModeFromLocation();
-      startTransition(() => {
-        setMode(nextMode);
-        setAppMode(nextAppMode);
-        setOpenPanel(null);
-      });
+      setMode(nextMode);
+      setAppMode(nextAppMode);
+      setOpenPanel(null);
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -628,11 +644,9 @@ function AppShell({ currentUser = null }) {
   useEffect(() => {
     if (!inboundActiveCall) return;
     syncModePath("ma");
-    startTransition(() => {
-      setMode("ma");
-      setAppMode("call");
-      setOpenPanel(null);
-    });
+    setMode("ma");
+    setAppMode("call");
+    setOpenPanel(null);
   }, [inboundActiveCall]);
 
   useEffect(() => {
@@ -731,76 +745,80 @@ function AppShell({ currentUser = null }) {
 
   const preloadScriptForMode = (targetMode) => {
     if (targetMode === "ma") {
-      loadScriptFlow();
-      loadSessionSummary();
+      void loadScriptFlow().catch(() => {});
+      void loadSessionSummary().catch(() => {});
       return;
     }
     if (targetMode === "medsup") {
-      loadMedSupFlow();
-      loadMedSupAiCopilot();
+      void loadMedSupFlow().catch(() => {});
+      void loadMedSupAiCopilot().catch(() => {});
       return;
     }
     if (targetMode === "aca") {
-      loadACAScript();
+      void loadACAScript().catch(() => {});
       return;
     }
     if (targetMode === "u65") {
-      loadU65Script();
+      void loadU65Script().catch(() => {});
       return;
     }
     if (targetMode === "ancillary") {
-      loadAncillaryFlow();
+      void loadAncillaryFlow().catch(() => {});
     }
   };
 
   const preloadPanel = (panelId, targetMode = mode) => {
+    if (panelId === "dashboard") {
+      void loadAgentDashboard().catch(() => {});
+      return;
+    }
     if (panelId === "script") {
       preloadScriptForMode(targetMode);
       return;
     }
     if (panelId === "tools" && modeSupportsAgentTools(targetMode)) {
-      loadAgentTools();
+      void loadAgentTools().catch(() => {});
       return;
     }
     if (panelId === "sepTool" && targetMode === "ma") {
-      loadSEPLookup();
-      loadCarrierRef();
+      void loadSEPLookup().catch(() => {});
+      void loadCarrierRef().catch(() => {});
       return;
     }
     if (panelId === "acaIntel") {
-      loadACAIntelligence();
+      void loadACAIntelligence().catch(() => {});
       return;
     }
     if (panelId === "complianceHub") {
       if (targetMode === "ma") {
-        loadComplianceIntentAccordion();
-        loadComplianceDashboard();
+        void loadComplianceIntentAccordion().catch(() => {});
+        void loadComplianceDashboard().catch(() => {});
       } else {
-        loadCallHistory();
+        void loadCallHistory().catch(() => {});
         if (targetMode === "medsup") {
-          loadTranscriptUpload();
+          void loadTranscriptUpload().catch(() => {});
         }
       }
       return;
     }
     if (panelId === "operations") {
-      loadCallLogTab();
+      void loadCallLogTab().catch(() => {});
       return;
     }
     if (panelId === "rts") {
-      loadRTSTab();
+      void loadRTSTab().catch(() => {});
       return;
     }
     if (panelId === "contacts") {
-      loadContactsTab();
+      void loadContactsTab().catch(() => {});
       return;
     }
     if (panelId === "settings") {
-      loadTenantSettings();
+      void loadTenantSettings().catch(() => {});
       return;
     }
     if (panelId === "verse") {
-      loadDailyVerse();
+      void loadDailyVerse().catch(() => {});
     }
   };
 
@@ -814,61 +832,45 @@ function AppShell({ currentUser = null }) {
 
     preloadScriptForMode(newMode);
     syncModePath(newMode);
-    startTransition(() => {
-      setMode(newMode);
-      setAppMode("call");
-      setOpenPanel(null);
-    });
+    setMode(newMode);
+    setAppMode("call");
+    setOpenPanel(null);
   };
 
   const handleTabToggle = (tabId) => {
     if (tabId === "dashboard") {
       window.history.pushState(null, "", "/dashboard");
-      startTransition(() => { setAppMode("dashboard"); setOpenPanel(null); });
+      setAppMode("dashboard");
+      setOpenPanel(null);
       return;
     }
     if (tabId === "script") {
       syncModePath(mode);
-      startTransition(() => {
-        setAppMode("call");
-        setOpenPanel(null);
-      });
+      setAppMode("call");
+      setOpenPanel(null);
       return;
     }
 
     if (tabId === "contacts") {
       window.history.pushState(null, "", "/contacts");
-      startTransition(() => {
-        setAppMode("crm");
-        setOpenPanel(null);
-      });
+      setAppMode("crm");
+      setOpenPanel(null);
       return;
     }
 
-    preloadPanel(tabId);
-    startTransition(() => {
-      setOpenPanel((current) => (current === tabId ? null : tabId));
-    });
-  };
-
-  // Compliance Hub no longer has its own tab; it's opened from a button
-  // in the CALLS tab header instead, via the same overlay panel state.
-  const handleOpenComplianceHub = () => {
-    preloadPanel("complianceHub");
-    startTransition(() => {
-      setOpenPanel("complianceHub");
-    });
+    // Opening a panel is immediate UI feedback. Deferring this update can
+    // leave the previous panel visible while a lazy module is still loading.
+    // The keyed content boundary below handles loading independently.
+    setOpenPanel((current) => (current === tabId ? null : tabId));
   };
 
   const handleStartCallFromContact = (contact, flow = "ma") => {
     setPendingCallContact(contact);
     preloadScriptForMode(flow);
     syncModePath(flow);
-    startTransition(() => {
-      setMode(flow);
-      setAppMode("call");
-      setOpenPanel(null);
-    });
+    setMode(flow);
+    setAppMode("call");
+    setOpenPanel(null);
   };
 
   // Deep-open a contact from the call log: land on the CRM home with
@@ -876,18 +878,14 @@ function AppShell({ currentUser = null }) {
   const [crmFocusContact, setCrmFocusContact] = useState(null);
   const handleOpenContactFromLog = (contactId) => {
     setCrmFocusContact({ id: contactId, ts: Date.now() });
-    startTransition(() => {
-      setAppMode("crm");
-      setOpenPanel(null);
-    });
+    setAppMode("crm");
+    setOpenPanel(null);
   };
 
   const handleOpenContactMessages = (contactId) => {
     setCrmFocusContact({ id: contactId, ts: Date.now(), tab: "messages" });
-    startTransition(() => {
-      setAppMode("crm");
-      setOpenPanel(null);
-    });
+    setAppMode("crm");
+    setOpenPanel(null);
   };
 
   const handleLogoClick = () => {
@@ -974,7 +972,6 @@ function AppShell({ currentUser = null }) {
           <LazyPanel>
             <CallLogTab
               onOpenContact={handleOpenContactFromLog}
-              onOpenComplianceHub={handleOpenComplianceHub}
             />
           </LazyPanel>
         );
@@ -1006,6 +1003,9 @@ function AppShell({ currentUser = null }) {
   const overlayNode = openPanel ? (
     <div
       ref={overlayRef}
+      id="workspace-panel"
+      role="region"
+      aria-labelledby="workspace-panel-title"
       className={`top-panel-overlay${
         openPanel === "tools" ? " top-panel-overlay--tools" : ""
       }${
@@ -1019,7 +1019,7 @@ function AppShell({ currentUser = null }) {
       }`}
     >
       <div className="top-panel-header">
-        <div className="top-panel-title">
+        <div id="workspace-panel-title" className="top-panel-title">
           {openPanel === "settings"
             ? "Agency Settings"
             : navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
@@ -1038,7 +1038,11 @@ function AppShell({ currentUser = null }) {
           <CloseIcon />
         </button>
       </div>
-      <div className="top-panel-body">{renderOverlayContent()}</div>
+      <div className="top-panel-body">
+        <LazyPanel key={`${mode}:${openPanel}`}>
+          {renderOverlayContent()}
+        </LazyPanel>
+      </div>
     </div>
   ) : null;
 
@@ -1063,7 +1067,7 @@ function AppShell({ currentUser = null }) {
             >
               <span className="top-bar-logo-text">ENROLLGEN</span>
             </button>
-            <FlowSelector mode={mode} onChange={handleModeChange} />
+            <FlowSelector mode={mode} onChange={handleModeChange} onPreload={preloadScriptForMode} />
           </div>
 
           <nav className="top-bar-tabs" aria-label="Workspace tabs">
@@ -1073,10 +1077,14 @@ function AppShell({ currentUser = null }) {
                 type="button"
                 className={`top-bar-tab${activeTabId === tab.id ? " is-active" : ""}`}
                 data-tab-id={tab.id}
+                aria-expanded={["dashboard", "script", "contacts"].includes(tab.id) ? undefined : openPanel === tab.id}
+                aria-controls={["dashboard", "script", "contacts"].includes(tab.id) ? undefined : "workspace-panel"}
                 aria-label={tab.id === "verse" ? tab.label : undefined}
                 title={tab.id === "verse" ? tab.label : undefined}
                 onClick={() => handleTabToggle(tab.id)}
                 onMouseEnter={() => preloadPanel(tab.id)}
+                onFocus={() => preloadPanel(tab.id)}
+                onPointerDown={() => preloadPanel(tab.id)}
               >
                 {tab.id === "verse" ? (
                   <BookOpen size={15} strokeWidth={2} aria-hidden="true" />
@@ -1145,10 +1153,8 @@ function AppShell({ currentUser = null }) {
               className="return-to-call-strip__btn"
               onClick={() => {
                 syncModePath(mode);
-                startTransition(() => {
-                  setAppMode("call");
-                  setOpenPanel(null);
-                });
+                setAppMode("call");
+                setOpenPanel(null);
               }}
             >
               RETURN TO CALL
