@@ -1,3 +1,7 @@
+import { Buffer } from "node:buffer";
+import { randomUUID } from "node:crypto";
+import { normalizePhoneE164 } from "../phone.js";
+import { chooseGif, giphyRequest, downloadGif } from "../giphy.js";
 import { Router } from "express";
 import twilio from "twilio";
 import { config, publicUrl } from "../config.js";
@@ -111,8 +115,8 @@ smsRouter.post("/twilio/sms", requireTwilioSignature, async (req, res) => {
         contact_id: contact.id,
         direction: "inbound",
         channel: "sms",
-        from_number: req.body.From,
-        to_number: req.body.To,
+        from_number: normalizePhoneE164(req.body.From),
+        to_number: normalizePhoneE164(req.body.To),
         body: req.body.Body || "",
         twilio_message_sid: req.body.MessageSid || null,
         status: "received",
@@ -155,14 +159,24 @@ smsRouter.post("/twilio/sms-status", requireTwilioSignature, async (req, res) =>
   if (error) console.error("sms status update failed:", error.message);
 });
 
+smsRouter.get("/api/sms/gifs", async (req, res) => {
+  if (!await requireClerkUser(req, res)) return;
+  try {
+    const payload = await giphyRequest("search", { q: String(req.query.q || "minions").slice(0, 100), limit: "30", rating: "g" });
+    return res.json({ gifs: (payload.data || []).map(chooseGif).filter(Boolean) });
+  } catch (err) { return res.status(503).json({ error: err.message }); }
+});
+
 // Outbound send from the agent browser.
 // Body: { contact_id, body, media_urls?, agent_id? }
 smsRouter.post("/api/sms/send", async (req, res) => {
   const clerkUser = await requireClerkUser(req, res);
   if (!clerkUser) return;
 
-  const { contact_id: contactId, body, media_urls: mediaUrls, agent_id: agentId } = req.body || {};
-  const hasMedia = Array.isArray(mediaUrls) && mediaUrls.length > 0;
+  const { contact_id: contactId, body, media_urls: mediaUrls, gif_id: gifId } = req.body || {};
+  let outgoingMedia = Array.isArray(mediaUrls) ? mediaUrls : [];
+  let gifStoragePath = null;
+  const hasMedia = Boolean(gifId) || outgoingMedia.length > 0;
   if (!contactId || (!body?.trim() && !hasMedia)) {
     return res.status(400).json({ error: "contact_id and body (or media_urls) are required" });
   }
@@ -189,11 +203,29 @@ smsRouter.post("/api/sms/send", async (req, res) => {
       return res.status(403).json({ error: "Contact is flagged do not call" });
     }
 
+    const { data: agent } = await supabase.from("tenant_agents")
+      .select("tenant_id, agent_slug, role").eq("clerk_user_id", clerkUser.sub).eq("tenant_id", contact.tenant_id).maybeSingle();
+    if (!agent) return res.status(403).json({ error: "Contact is outside your workspace" });
+    const phone = normalizePhoneE164(contact.phone);
+    if (!phone) return res.status(422).json({ error: "Contact has an invalid phone number" });
+    if (gifId) {
+      if (typeof gifId !== "string" || !/^[a-zA-Z0-9]+$/.test(gifId)) return res.status(400).json({ error: "Invalid GIF selection" });
+      const payload = await giphyRequest(encodeURIComponent(gifId));
+      const gif = chooseGif(payload.data);
+      if (!gif) return res.status(422).json({ error: "This GIF is not available under 600 KB. Choose another." });
+      const bytes = await downloadGif(gif);
+      gifStoragePath = `${contact.tenant_id}/outbound/${randomUUID()}.gif`;
+      const { error: uploadError } = await supabase.storage.from("message-media").upload(gifStoragePath, bytes, { contentType: "image/gif" });
+      if (uploadError) throw uploadError;
+      const { data: signed, error: signError } = await supabase.storage.from("message-media").createSignedUrl(gifStoragePath, 86400);
+      if (signError) throw signError;
+      outgoingMedia = [signed.signedUrl];
+    }
     const twilioMessage = await twilioClient.messages.create({
       from: config.twilioPhoneNumber,
-      to: contact.phone,
+      to: phone,
       body: body?.trim() || undefined,
-      ...(hasMedia ? { mediaUrl: mediaUrls } : {}),
+      ...(hasMedia ? { mediaUrl: outgoingMedia } : {}),
       statusCallback: publicUrl("/twilio/sms-status"),
     });
 
@@ -205,23 +237,23 @@ smsRouter.post("/api/sms/send", async (req, res) => {
         direction: "outbound",
         channel: "sms",
         from_number: config.twilioPhoneNumber,
-        to_number: contact.phone,
+        to_number: phone,
         body: body?.trim() || "",
         twilio_message_sid: twilioMessage.sid,
         status: normalizeTwilioStatus(twilioMessage.status) || "queued",
-        agent_id: agentId || null,
+        agent_id: agent.agent_slug,
       })
       .select("*")
       .single();
     if (messageError) throw new Error(`message insert failed: ${messageError.message}`);
 
     if (hasMedia) {
-      const mediaRows = mediaUrls.map((url) => ({
+      const mediaRows = outgoingMedia.map((url) => ({
         tenant_id: contact.tenant_id,
         message_id: message.id,
         media_url: url,
-        content_type: null,
-        storage_path: null,
+        content_type: gifId ? "image/gif" : null,
+        storage_path: gifStoragePath,
       }));
       const { error: mediaError } = await supabase.from("message_media").insert(mediaRows);
       if (mediaError) console.error("outbound media insert failed:", mediaError.message);

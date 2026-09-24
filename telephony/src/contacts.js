@@ -29,10 +29,10 @@ export async function findOrCreateContactByPhone({
     .from("contacts")
     .insert({
       tenant_id: tenantId,
-      phone: normalized,
       source,
       status: "lead",
       ...fields,
+      phone: normalized,
     })
     .select("*")
     .single();

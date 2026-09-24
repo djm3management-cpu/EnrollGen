@@ -10,6 +10,8 @@ import {
 import { useUnreadMessages } from "../../hooks/useMessages";
 import { useAvailability } from "../../context/AvailabilityContext";
 import { useCurrentAgent } from "../../hooks/useCurrentAgent";
+import { normalizePhoneE164 } from "../../lib/phone";
+import ContactToast from "../ContactToast";
 import MessagesThread from "./MessagesThread";
 
 const PII_FIELD_SET = new Set(["first_name", "last_name", "dob", "phone", "email", "address", "mbi_full"]);
@@ -33,6 +35,7 @@ const MEDICARE_PART_OPTIONS = [
 
 const SOURCE_OPTIONS = [
   { value: "manual", label: "MANUAL" },
+  { value: "sms_inbound", label: "INBOUND SMS" },
   { value: "fmo_transfer", label: "FMO TRANSFER" },
   { value: "tms", label: "TMS" },
   { value: "ghl_import", label: "GHL IMPORT" },
@@ -877,6 +880,10 @@ function RightPanel({
 
 export default function ContactsTab({ variant = "home", onStartCall = null, focusContact = null }) {
   const [search, setSearch] = useState("");
+  const [newContact, setNewContact] = useState(null);
+  const [merge, setMerge] = useState(null);
+  const [existingContactId, setExistingContactId] = useState(null);
+  const [notice, setNotice] = useState("");
   const [listFilter, setListFilter] = useState("ALL");
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [centerTab, setCenterTab] = useState("CONVERSATIONS");
@@ -899,10 +906,12 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
     toggleNotePin,
     addFollowUp,
     updateContact,
+    createContact,
+    mergeContacts,
     updateLeadIntel,
     addPolicy,
     updatePolicy,
-  } = useContactMutations();
+  } = useContactMutations(agentUuid);
   const availability = useAvailability();
 
   useEffect(() => {
@@ -919,6 +928,7 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
       return right - left;
     });
     if (listFilter === "UNREAD") return sorted.filter((contact) => unreadByContact[contact.id]);
+    if (listFilter === "RECENT") return sorted.filter((contact) => new Date(latestTime(contact)).getTime() >= Date.now() - 30 * 86400000);
     return sorted;
   }, [contacts, listFilter, unreadByContact]);
 
@@ -930,6 +940,7 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
 
   useEffect(() => {
     setInlineError("");
+    setMerge(null);
     setNoteDraft("");
     setFollowUpDraft({ dueAt: "", reason: "" });
     setPolicyDraft(DEFAULT_POLICY_DRAFT);
@@ -974,9 +985,11 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
       setInlineError("");
       try {
         await updateContact(selectedContact.id, { [field]: next });
-        if (PII_FIELD_SET.has(field)) patchField(field, next);
+        if (PII_FIELD_SET.has(field)) patchField(field, field === "phone" ? normalizePhoneE164(next) : next);
         await refreshSelected();
+        setNotice("Contact details saved.");
       } catch (err) {
+        if (err.duplicateId) setMerge({ contactId: selectedContact.id, duplicateId: err.duplicateId, phone: err.phone });
         console.error("[ContactsTab] contact save failed:", err);
         setInlineError(err.message || "Could not save contact.");
       } finally {
@@ -1166,6 +1179,39 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
 
   return (
     <div className={shellClass} onCopy={() => logCopy()}>
+      <ContactToast message={inlineError || notice} error={Boolean(inlineError)} onDismiss={() => { setInlineError(""); setNotice(""); }} />
+      <div className="contacts-create-toolbar">
+        <button className="contacts-mini-btn" type="button" onClick={() => setNewContact({ first_name: "", last_name: "", phone: "", email: "" })}>+ ADD CONTACT</button>
+        <span className="contacts-muted">Details save when you leave a field or press Enter.</span>
+      </div>
+      {newContact && <form className="contacts-new-form" onSubmit={async (event) => {
+        event.preventDefault(); setSaving(true); setInlineError(""); setExistingContactId(null);
+        try {
+          const created = await createContact({ ...newContact, assigned_agent_id: availability?.agentId || null });
+          setNewContact(null); setSearch(""); setListFilter("ALL"); setSelectedContactId(created.id);
+          await refresh(); setNotice("Contact created.");
+        } catch (err) { setExistingContactId(err.duplicateId || null); setInlineError(err.message || "Could not create contact."); }
+        finally { setSaving(false); }
+      }}>
+        {Object.keys(newContact).map((field) => <label className="contacts-edit-field" key={field}>
+          <span>{field.replaceAll("_", " ").toUpperCase()}</span>
+          <input className="contacts-edit-input" type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
+            required={field === "phone"} value={newContact[field]} onChange={(event) => setNewContact({ ...newContact, [field]: event.target.value })} />
+        </label>)}
+        <button className="contacts-mini-btn" disabled={saving || !agentUuid}>SAVE CONTACT</button>
+        {existingContactId && <button className="contacts-mini-btn" type="button" onClick={() => { setSelectedContactId(existingContactId); setNewContact(null); setExistingContactId(null); setInlineError(""); }}>OPEN EXISTING CONTACT</button>}
+        <button className="contacts-mini-btn" type="button" onClick={() => setNewContact(null)}>CANCEL</button>
+      </form>}
+      {merge && <div className="contacts-merge-prompt" role="alert">
+        <span>This phone belongs to another contact. Merge its messages, calls, notes and policies into this contact? Existing details here take priority; conflicting details are archived.</span>
+        <button className="contacts-mini-btn" disabled={saving} onClick={async () => {
+          setSaving(true);
+          try { await mergeContacts(merge.contactId, merge.duplicateId, merge.phone); setMerge(null); setInlineError(""); await refreshSelected(); await reloadPii(); setNotice("Contacts merged."); }
+          catch (err) { setInlineError(err.message || "Could not merge contacts."); }
+          finally { setSaving(false); }
+        }}>MERGE CONTACTS</button>
+        <button className="contacts-mini-btn" disabled={saving} onClick={() => setMerge(null)}>CANCEL</button>
+      </div>}
       <div className="contacts-conv-shell">
         <ContactListPanel
           contacts={filteredContacts}
@@ -1198,13 +1244,14 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
           </div>
           {error ? <div className="ops-error">{error}</div> : null}
           {detailError ? <div className="ops-error">{detailError}</div> : null}
-          {inlineError ? <div className="ops-error">{inlineError}</div> : null}
+
           {piiError ? <div className="ops-error">{piiError}</div> : null}
           <div className="contacts-conv-center-body">
             {!selectedContact ? <div className="contacts-muted">Select a conversation</div> : null}
             {selectedContact && detailLoading ? <div className="contacts-muted">Loading contact...</div> : null}
             {selectedContact && !detailLoading && centerTab === "CONVERSATIONS" ? (
               <MessagesThread
+                key={selectedContact.id}
                 contactId={selectedContact.id}
                 agentId={availability?.agentId || null}
                 activityItems={timelineActivities}

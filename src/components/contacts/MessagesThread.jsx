@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMessageThread } from "../../hooks/useMessages";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 
+import ComposePickers from "./ComposePickers";
+import ContactToast from "../ContactToast";
+
 const SEGMENT_SIZE = 160;
 
 const STATUS_LABELS = {
@@ -126,6 +129,16 @@ export default function MessagesThread({ contactId, agentId = null, activityItem
   const [draft, setDraft] = useState("");
   const [sendError, setSendError] = useState("");
   const scrollRef = useRef(null);
+  const inputRef = useRef(null);
+  const cursorRef = useRef({ start: 0, end: 0 });
+  const [gif, setGif] = useState(null);
+  const [notice, setNotice] = useState("");
+  const insertEmoji = (emoji) => {
+    const { start, end } = cursorRef.current;
+    setDraft((value) => value.slice(0, start) + emoji + value.slice(end));
+    cursorRef.current = { start: start + emoji.length, end: start + emoji.length };
+    requestAnimationFrame(() => { inputRef.current?.focus(); inputRef.current?.setSelectionRange(start + emoji.length, start + emoji.length); });
+  };
 
   // Opening the thread clears the unread state for this contact.
   useEffect(() => {
@@ -181,11 +194,14 @@ export default function MessagesThread({ contactId, agentId = null, activityItem
 
   const handleSend = async () => {
     const body = draft.trim();
-    if (!body || sending) return;
+    if ((!body && !gif) || sending) return;
     setSendError("");
     try {
-      await send({ body, agentId });
+      await send({ body, agentId, gifId: gif?.id });
       setDraft("");
+      setGif(null);
+      cursorRef.current = { start: 0, end: 0 };
+      setNotice("Message sent.");
     } catch (err) {
       setSendError(err.message || "Send failed");
     }
@@ -247,10 +263,14 @@ export default function MessagesThread({ contactId, agentId = null, activityItem
         )}
       </div>
 
-      {sendError ? <div className="ops-error">⚠ {sendError}</div> : null}
+      <ContactToast message={sendError || notice} error={Boolean(sendError)} onDismiss={() => { setSendError(""); setNotice(""); }} />
+      {gif && <div className="compose-gif-preview"><img src={gif.url} alt={gif.title} /><span>MMS preview · {Math.ceil(gif.size / 1000)} KB</span><button className="contacts-mini-btn" type="button" disabled={sending} onClick={() => setGif(null)}>REMOVE GIF</button></div>}
 
       <div className="msg-compose">
         <textarea
+          ref={inputRef}
+          disabled={sending}
+          onSelect={(event) => { cursorRef.current = { start: event.currentTarget.selectionStart, end: event.currentTarget.selectionEnd }; }}
           rows={2}
           placeholder="Type a message"
           value={draft}
@@ -267,11 +287,12 @@ export default function MessagesThread({ contactId, agentId = null, activityItem
             {charCount}/{SEGMENT_SIZE}
             {segments > 1 ? ` (${segments} segments)` : ""}
           </span>
+          <ComposePickers onEmoji={insertEmoji} onGif={setGif} disabled={sending} />
           <button
             type="button"
             className="msg-send-btn"
             onClick={handleSend}
-            disabled={sending || !draft.trim()}
+            disabled={sending || (!draft.trim() && !gif)}
           >
             {sending ? "SENDING..." : "SEND"}
           </button>

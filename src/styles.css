@@ -17977,3 +17977,32 @@ body[data-bg-mode="classic"] .viewport-bg {
   .agent-dash-dispositions { grid-template-columns: minmax(0, 1fr); }
   .agent-dash-pie { max-width: 160px; }
 }
+
+/* Contacts notifications and compose tools use the existing terminal palette. */
+.contact-toast, body > .sms-toast-stack {
+  position: fixed; top: 24px; left: 50%; right: auto; bottom: auto;
+  transform: translateX(-50%); z-index: 100000; width: min(460px, calc(100vw - 32px));
+}
+.contact-toast { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; background: var(--eg-surface-2, #171717); color: var(--eg-text, #eee); border: 1px solid var(--eg-accent, #f97316); box-shadow: 0 8px 32px #0008; font-size: 13px; }
+.contact-toast.is-error { border-color: #ef6464; }
+.contact-toast button, .compose-picker-heading button { background: none; border: 0; color: inherit; cursor: pointer; font-size: 22px; }
+.contacts-create-toolbar, .contacts-new-form, .contacts-merge-prompt { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px; border-bottom: 1px solid var(--eg-border, #333); }
+.contacts-new-form .contacts-edit-field { flex: 1 1 160px; }
+.contacts-merge-prompt { color: var(--eg-accent, #f97316); }
+.compose-pickers { position: relative; display: flex; gap: 6px; }
+.compose-pickers > button { display: flex; align-items: center; gap: 4px; }
+.compose-picker-panel { position: absolute; bottom: calc(100% + 12px); right: 0; z-index: 100; width: min(340px, calc(100vw - 40px)); max-height: min(440px, 65vh); overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: var(--eg-surface-2, #171717); color: var(--eg-text, #eee); border: 1px solid var(--eg-accent, #f97316); box-shadow: 0 8px 30px #0009; }
+.compose-picker-heading { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+.compose-picker-panel input { width: 100%; box-sizing: border-box; }
+.compose-picker-panel small, .compose-picker-panel a { font-size: 10px; color: var(--eg-text-dim, #aaa); }
+.compose-picker-categories { display: flex; flex-wrap: wrap; gap: 5px; }
+.compose-picker-categories button { padding: 5px; background: transparent; border: 1px solid #444; color: inherit; cursor: pointer; font-size: 11px; }
+.compose-picker-categories button.is-active { border-color: var(--eg-accent, #f97316); color: var(--eg-accent, #f97316); }
+.compose-emoji-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.compose-emoji-grid button { background: transparent; border: 0; font-size: 24px; padding: 5px; cursor: pointer; }
+.compose-emoji-grid button:hover, .compose-emoji-grid button:focus-visible { background: #ffffff15; }
+.compose-gif-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.compose-gif-grid button { border: 1px solid #444; padding: 0; background: #111; cursor: pointer; }
+.compose-gif-grid img { width: 100%; height: 100px; object-fit: contain; }
+.compose-gif-preview { display: flex; gap: 12px; align-items: center; padding: 10px; font-size: 11px; }
+.compose-gif-preview img { max-width: 120px; max-height: 100px; }

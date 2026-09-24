@@ -2,15 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { useTenantConfig } from "./useTenantConfig";
 import { useAppAuth } from "../context/AuthContext";
 import { publishSms, subscribeSms } from "../lib/smsEvents";
-import { INBOUND_CALLS_ENABLED } from "../context/InboundCallContext";
+
 
 const TELEPHONY_BASE_URL = (import.meta.env.VITE_TELEPHONY_BASE_URL || "").replace(/\/$/, "");
 const THREAD_POLL_MS = 10000;
 const UNREAD_POLL_MS = 20000;
 
-// The /agent WebSocket only exists when inbound calls are enabled;
-// without it the thread and unread counts fall back to polling.
-const HAS_REALTIME = INBOUND_CALLS_ENABLED;
 
 export function useMessageThread(contactId) {
   const { supabaseClient } = useTenantConfig();
@@ -28,10 +25,10 @@ export function useMessageThread(contactId) {
         .from("messages")
         .select("*")
         .eq("contact_id", contactId)
-        .order("created_at", { ascending: true })
+        .order("created_at", { ascending: false })
         .limit(500);
       if (queryError) throw queryError;
-      setMessages(data || []);
+      setMessages([...(data || [])].reverse());
       setError(null);
 
       const ids = (data || []).map((row) => row.id);
@@ -63,16 +60,14 @@ export function useMessageThread(contactId) {
     refresh();
   }, [refresh, contactId]);
 
-  // Real-time via WS when available, polling otherwise.
+  // Keep polling as a recovery path even when the WebSocket is enabled.
   useEffect(() => {
     if (!contactId) return undefined;
-    if (HAS_REALTIME) {
-      return subscribeSms((event) => {
-        if (event?.message?.contact_id === contactId) refresh();
-      });
-    }
+    const unsubscribe = subscribeSms((event) => {
+      if (event?.message?.contact_id === contactId) refresh();
+    });
     const timer = window.setInterval(refresh, THREAD_POLL_MS);
-    return () => window.clearInterval(timer);
+    return () => { unsubscribe(); window.clearInterval(timer); };
   }, [contactId, refresh]);
 
   const markRead = useCallback(async () => {
@@ -84,10 +79,11 @@ export function useMessageThread(contactId) {
       .eq("direction", "inbound")
       .is("read_at", null);
     if (updateError) console.error("[useMessageThread] markRead failed:", updateError.message);
+    else publishSms({ type: "read", contactId });
   }, [supabaseClient, contactId]);
 
   const send = useCallback(
-    async ({ body, mediaUrls, agentId }) => {
+    async ({ body, mediaUrls, agentId, gifId }) => {
       setSending(true);
       try {
         const token = await getToken().catch(() => null);
@@ -100,6 +96,7 @@ export function useMessageThread(contactId) {
           body: JSON.stringify({
             contact_id: contactId,
             body,
+            ...(gifId ? { gif_id: gifId } : {}),
             ...(mediaUrls?.length ? { media_urls: mediaUrls } : {}),
             ...(agentId ? { agent_id: agentId } : {}),
           }),
@@ -107,6 +104,7 @@ export function useMessageThread(contactId) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || `Send failed (${response.status})`);
         await refresh();
+        publishSms({ type: "sms", message: payload.message });
         return payload.message;
       } finally {
         setSending(false);
@@ -137,18 +135,23 @@ export function useUnreadMessages() {
 
   const refresh = useCallback(async () => {
     if (!supabaseClient) return;
-    const { data, error } = await supabaseClient
-      .from("messages")
-      .select("id, contact_id, body, from_number, created_at, contacts(id, first_name, last_name, phone)")
-      .eq("direction", "inbound")
-      .is("read_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1000);
-    if (error) {
-      // Table may not exist until migration 020 runs; stay quiet.
-      return;
+    const rows = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data, error } = await supabaseClient
+        .from("messages")
+        .select("id, contact_id, body, from_number, created_at, contacts(id, first_initial, last_initial, phone_last4)")
+        .eq("direction", "inbound")
+        .is("read_at", null)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(offset, offset + 499);
+      if (error) {
+        console.error("[useUnreadMessages] load failed:", error.message);
+        return;
+      }
+      rows.push(...(data || []));
+      if (!data || data.length < 500) break;
     }
-    const rows = data || [];
     const counts = {};
     for (const row of rows) {
       counts[row.contact_id] = (counts[row.contact_id] || 0) + 1;

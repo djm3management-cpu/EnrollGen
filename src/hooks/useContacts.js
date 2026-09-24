@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { normalizeContactPhone, normalizePhoneE164 } from "../lib/phone";
+import { subscribeSms } from "../lib/smsEvents";
 import { useTenantConfig } from "./useTenantConfig";
 
 // CRM data access. All queries run through the tenant-scoped
@@ -61,7 +63,7 @@ export function useContactsList(searchTerm, requestingAgentId) {
           return;
         }
         const { data: matches, error: searchError } = await supabaseClient.rpc("search_contacts_secure", {
-          p_query: term,
+          p_query: normalizePhoneE164(term) || term,
           p_requesting_agent_id: requestingAgentId,
         });
         if (searchError) throw searchError;
@@ -74,32 +76,32 @@ export function useContactsList(searchTerm, requestingAgentId) {
         }
       }
 
-      let query = supabaseClient
-        .from("contacts")
-        .select(CONTACT_SAFE_COLUMNS)
-        .order("updated_at", { ascending: false })
-        .limit(200);
-
-      if (matchedIds) query = query.in("id", matchedIds);
-
-      const { data, error: queryError } = await query;
-      if (queryError) throw queryError;
-
-      const rows = data || [];
+      const rows = [];
+      for (let offset = 0; ; offset += 200) {
+        let query = supabaseClient.from("contacts").select(CONTACT_SAFE_COLUMNS)
+          .order("updated_at", { ascending: false }).order("id")
+          .range(offset, offset + 199);
+        if (matchedIds) query = query.in("id", matchedIds);
+        const { data, error: queryError } = await query;
+        if (queryError) throw queryError;
+        rows.push(...(data || []));
+        if (!data || data.length < 200) break;
+      }
       const intelByContact = {};
       const messageByContact = {};
       const activityByContact = {};
-      if (rows.length) {
+      for (let offset = 0; offset < rows.length; offset += 200) {
+        const chunk = rows.slice(offset, offset + 200);
         const { data: intel } = await supabaseClient
           .from("contact_lead_intel")
           .select("contact_id, lead_score, churn_risk, vendor_source, received_at")
-          .in("contact_id", rows.map((row) => row.id))
+          .in("contact_id", chunk.map((row) => row.id))
           .order("received_at", { ascending: false });
         for (const entry of intel || []) {
           if (!intelByContact[entry.contact_id]) intelByContact[entry.contact_id] = entry;
         }
 
-        const contactIds = rows.map((row) => row.id);
+        const contactIds = chunk.map((row) => row.id);
         const { data: messages, error: messageError } = await supabaseClient
           .from("messages")
           .select("contact_id, body, direction, status, created_at")
@@ -143,6 +145,12 @@ export function useContactsList(searchTerm, requestingAgentId) {
 
   useEffect(() => {
     refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeSms(refresh);
+    const timer = window.setInterval(refresh, 20000);
+    return () => { unsubscribe(); window.clearInterval(timer); };
   }, [refresh]);
 
   return { contacts, loading, error, refresh, tenantId: tenant?.id || null };
@@ -232,34 +240,59 @@ export function useContactDetail(contactId) {
   return { bundle, loading, error, refresh };
 }
 
-export function useContactMutations() {
+export function useContactMutations(requestingAgentId) {
   const { supabaseClient, tenant } = useTenantConfig();
+
+  const contactError = useCallback(async (error, phone, contactId) => {
+    if (error.code !== "23505") throw error;
+    let duplicate = null;
+    if (phone && requestingAgentId) {
+      const result = await supabaseClient.rpc("match_contacts_by_phone", {
+        p_phones: [phone], p_requesting_agent_id: requestingAgentId,
+      });
+      duplicate = result.data?.find((row) => row.id !== contactId);
+    }
+    const friendly = new Error("A contact already uses this phone number.");
+    friendly.duplicateId = duplicate?.id;
+    friendly.phone = phone;
+    throw friendly;
+  }, [supabaseClient, requestingAgentId]);
+
+  const mergeContacts = useCallback(async (contactId, duplicateId, phone) => {
+    const { error } = await supabaseClient.rpc("merge_contacts_secure", {
+      p_keep_id: contactId, p_duplicate_id: duplicateId, p_phone: phone,
+      p_requesting_agent_id: requestingAgentId,
+    });
+    if (error) throw error;
+  }, [supabaseClient, requestingAgentId]);
 
   const updateContact = useCallback(
     async (contactId, updates) => {
+      updates = normalizeContactPhone(updates);
       const { data, error } = await supabaseClient
         .from("contacts")
         .update(updates)
         .eq("id", contactId)
         .select(CONTACT_SAFE_COLUMNS)
         .single();
-      if (error) throw error;
+      if (error) await contactError(error, updates.phone, contactId);
       return data;
     },
-    [supabaseClient]
+    [supabaseClient, contactError]
   );
 
   const createContact = useCallback(
     async (fields) => {
+      fields = normalizeContactPhone(fields);
       const { data, error } = await supabaseClient
         .from("contacts")
         .insert({ tenant_id: tenant?.id, source: "manual", ...fields })
         .select(CONTACT_SAFE_COLUMNS)
         .single();
-      if (error) throw error;
+      if (error) await contactError(error, fields.phone);
       return data;
     },
-    [supabaseClient, tenant]
+    [supabaseClient, tenant, contactError]
   );
 
   const addNote = useCallback(
@@ -377,6 +410,7 @@ export function useContactMutations() {
   return {
     updateContact,
     createContact,
+    mergeContacts,
     addNote,
     toggleNotePin,
     updateLeadIntel,

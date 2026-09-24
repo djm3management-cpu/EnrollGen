@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { MessageSquare } from "lucide-react";
 import { subscribeSms } from "../lib/smsEvents";
 
@@ -52,7 +53,7 @@ export default function SmsToastHost({ onOpenContactMessages }) {
 
   if (!toasts.length) return null;
 
-  return (
+  return createPortal(
     <div className="sms-toast-stack" role="status" aria-live="polite">
       {toasts.map((toast) => (
         <div
@@ -83,6 +84,6 @@ export default function SmsToastHost({ onOpenContactMessages }) {
           </button>
         </div>
       ))}
-    </div>
+    </div>, document.body
   );
 }
