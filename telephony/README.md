@@ -229,8 +229,68 @@ Applied `scripts/telephony/pause-phone-presence.sql` to production: restored the
 no-op. Call ownership, privileges, data, and reservations were preserved. Agents
 must manually select Available; the recovery does not assume anyone is ready.
 
-Presence enforcement is currently PAUSED in production. After deploying BOTH
-updated applications and verifying registered phone sessions, run
-`scripts/telephony/enable-phone-presence.sql` to restore the 039 functions without
-recreating tables or repeating its rollout reset. Do not re-run 039 wholesale.
-The local recovery regression test covers pause, reservation safety, and re-enable.
+That pause was temporary. Production presence enforcement is confirmed ENABLED:
+the deployed `claim_call_agent` checks `agent_phone_sessions`. The pause script
+is a recovery tool, not the current production configuration. Re-enabling after
+any future rollback uses `scripts/telephony/enable-phone-presence.sql`; do not
+re-run 039 wholesale. The local recovery regression test covers pause,
+reservation safety, and re-enable.
+
+## Answer attribution (migration 045)
+
+Apply `045_telephony_answer_attribution.sql` before deploying this service. It
+does not replace routing/reservation/presence functions. No agent selection,
+fallback order, dial timeout, or voicemail behavior changes.
+
+Each Dial attempt is persisted in `telephony_call_attempts`, including outbound
+parent SID, agent slug, normalized destination and phone-matched contact. Client
+supplied ContactId is not trusted for outbound identity. New callbacks carry the
+attempt ID so attribution never reads the mutable last-routed agent.
+
+Both `<Dial><Client>` (inbound agent) and `<Dial><Number>` (outbound callee) now
+set `statusCallbackEvent="answered completed"` on `/twilio/agent-status`.
+Twilio's answered event normally supplies `CallStatus=in-progress`. No Twilio
+Console event subscription change is needed: these are emitted in TwiML. Keep
+the number's parent status callback pointing to `/twilio/status` and the TwiML
+app voice URL at `/api/voice/outbound`.
+
+Inbound child answer events set `answered_at`, `answered_agent_id` and `accepted`;
+hangup changes accepted calls to completed. A completed Dial action with positive
+DialCallDuration provides secondary answer evidence. Canceled, no-answer, busy,
+failed, and voicemail do not establish a connection. No-answer/busy/failed dial
+attempts still reroute as before; exhaustion still ends at voicemail. Their
+individual attempt outcomes are retained. Unanswered terminated parent calls
+receive distinct final statuses, rather than being called completed.
+
+Outbound answer alone does not advance contact history. A completed callee leg
+must reach `MIN_CONNECTED_SECONDS` (positive integer, default 30). This is a
+duration filter, not answering-machine detection: a long voicemail can still
+qualify. The threshold is saved per attempt so deployment/config changes do not
+change the meaning of an in-flight call.
+
+Contact last-connected fields advance atomically only for a strictly newer
+answer timestamp. Child callbacks use Twilio's Timestamp. Dial actions without
+Timestamp fetch the completed child Call resource and derive answer time from
+endTime minus DialCallDuration; no arrival-time fallback is used for attribution.
+Failures return 503, and attribution runs before the routing replay guard so
+retries can repair it without repeating routing. The Twilio credentials need
+permission to read Call resources. Old in-flight TwiML without attempt IDs keeps
+its release/routing behavior but cannot be attributed by this new mechanism;
+drain calls during deployment if uninterrupted attribution is required.
+
+Historical pointer backfill (not run automatically or against production):
+
+```sh
+cd telephony
+# Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and explicit DEFAULT_TENANT_ID.
+node scripts/backfillLastConnected.js --dry-run
+# Only after reviewing counts and the target database:
+node scripts/backfillLastConnected.js --apply
+```
+
+Omitting flags also selects dry-run. The script prints counts, skips events
+without completed status/positive duration/attempt agent, and never overwrites a
+newer pointer. Older dial_result payloads omitted duration and cannot safely be
+backfilled. Historical event receipt time minus duration is used only when no
+answer/event timestamp exists; these approximate candidates are counted. The
+script updates contact pointers only, not historical call outcomes.

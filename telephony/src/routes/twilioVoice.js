@@ -5,6 +5,7 @@ import { supabase } from "../supabase.js";
 import { requireTwilioSignature } from "../twilioSecurity.js";
 import { findOrCreateContactByPhone, latestLeadIntel, logContactActivity } from "../contacts.js";
 import { claimNextAvailableAgent, releaseAgent } from "../availability.js";
+import { createCallAttempt, dialAttribution, finishInboundCall } from "../answerAttribution.js";
 
 import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
 
@@ -40,7 +41,12 @@ async function logEvent({ inboundCallId, callSid, event, payload }) {
   if (error) console.error("telephony_events insert failed:", error.message);
 }
 
-function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds }) {
+async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds }) {
+  const attemptId = await createCallAttempt({
+    callSid: inboundCall.twilio_call_sid, agentId: agent.agent_id, contactId: contact?.id || null,
+    direction: "inbound", inboundCallId: inboundCall.id, to: agent.agent_id,
+  });
+  const attributionQuery = `attemptId=${attemptId}&agentId=${encodeURIComponent(agent.agent_id)}`;
   const response = new VoiceResponse();
 
   if (triedAgentIds.length) response.stop().stream({ name: "agent-transcription" });
@@ -54,7 +60,7 @@ function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds }) {
     timeout: config.dialTimeoutSeconds,
     answerOnBridge: true,
     action: publicUrl(
-      `/twilio/dial-result?inboundCallId=${inboundCall.id}&tried=${encodeURIComponent(tried)}`
+      `/twilio/dial-result?inboundCallId=${inboundCall.id}&tried=${encodeURIComponent(tried)}&${attributionQuery}`
     ),
     record: "record-from-answer-dual",
     recordingStatusCallback: publicUrl("/twilio/recording"),
@@ -62,8 +68,8 @@ function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds }) {
   });
 
   const client = dial.client({
-    statusCallback: publicUrl(`/twilio/agent-status?agentId=${encodeURIComponent(agent.agent_id)}`),
-    statusCallbackEvent: ["completed"],
+    statusCallback: publicUrl(`/twilio/agent-status?${attributionQuery}`),
+    statusCallbackEvent: ["answered", "completed"],
   });
   client.identity(agent.agent_id);
   const params = {
@@ -138,7 +144,7 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
     const intel = contact?.id ? await latestLeadIntel(contact.id) : null;
     return sendTwiml(
       res,
-      dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds: [] })
+      await dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds: [] })
     );
   } catch (err) {
     console.error("/twilio/voice failed:", err);
@@ -154,7 +160,7 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
 
 // Dial outcome: agent answered, declined, or timed out. Reroute to the
 // next available agent, or voicemail when nobody is left.
-twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, routingReplay, async (req, res) => {
+twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, dialAttribution, routingReplay, async (req, res) => {
   const inboundCallId = req.query.inboundCallId;
   const tried = String(req.query.tried || "").split(",").filter(Boolean);
   const dialStatus = req.body.DialCallStatus;
@@ -166,15 +172,12 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, routingRep
       inboundCallId,
       callSid,
       event: "dial_result",
-      payload: { dial_status: dialStatus, tried },
+      payload: { ...req.body, dial_status: dialStatus, tried },
     });
 
     if (dialStatus === "completed" || dialStatus === "answered" || dialStatus === "canceled") {
       await releaseAgent(tried[tried.length - 1], callSid);
-      await supabase
-        .from("inbound_calls")
-        .update({ status: "completed", ended_at: new Date().toISOString() })
-        .eq("id", inboundCallId);
+      await finishInboundCall(callSid, dialStatus, req.body);
       const response = new VoiceResponse();
       response.hangup();
       return sendTwiml(res, response);
@@ -225,7 +228,7 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, routingRep
 
     return sendTwiml(
       res,
-      dialAgentTwiml({
+      await dialAgentTwiml({
         agent: nextAgent,
         inboundCall,
         contact,

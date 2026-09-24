@@ -4,6 +4,7 @@ import { supabase } from "../supabase.js";
 import { requireTwilioSignature } from "../twilioSecurity.js";
 
 import { releaseAgent } from "../availability.js";
+import { recordCallbackEvidence, finishInboundCall, terminalStatuses } from "../answerAttribution.js";
 
 export const twilioStatusRouter = Router();
 
@@ -36,14 +37,8 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, async (req, re
       payload: req.body,
     });
 
-    if (inboundCall && callStatus === "completed") {
-      await supabase
-        .from("inbound_calls")
-        .update({
-          ended_at: new Date().toISOString(),
-          duration_seconds: Number(req.body.CallDuration) || null,
-        })
-        .eq("id", inboundCall.id);
+    if (inboundCall && terminalStatuses.has(callStatus)) {
+      await finishInboundCall(callSid, callStatus, req.body);
     }
   } catch (err) {
     console.error("/twilio/status failed:", err);
@@ -55,6 +50,7 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, async (req, re
 // Child-leg completion also fires when the caller hangs up before Dial's action.
 twilioStatusRouter.post("/twilio/agent-status", requireTwilioSignature, async (req, res) => {
   try {
+    await recordCallbackEvidence(req, "child");
     if (["completed", "canceled", "failed", "busy", "no-answer"].includes(req.body.CallStatus)) {
       await releaseAgent(req.query.agentId, req.body.ParentCallSid);
     }

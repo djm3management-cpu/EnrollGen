@@ -3,6 +3,8 @@ import twilio from "twilio";
 import { config, publicUrl } from "../config.js";
 import { requireTwilioSignature } from "../twilioSecurity.js";
 import { normalizePhoneE164 } from "../phone.js";
+import { findOrCreateContactByPhone } from "../contacts.js";
+import { createCallAttempt, dialAttribution } from "../answerAttribution.js";
 
 import { claimNextAvailableAgent, releaseAgent } from "../availability.js";
 
@@ -33,6 +35,8 @@ voiceOutboundRouter.post("/api/voice/outbound", requireTwilioSignature, routingR
   }
 
   const agentId = String(req.body.From || "").replace(/^client:/, "");
+  let attemptId;
+  let reserved = false;
   try {
     if (!String(req.body.From || "").startsWith("client:") ||
         !(await claimNextAvailableAgent({ callSid: req.body.CallSid, agentId }))) {
@@ -40,26 +44,36 @@ voiceOutboundRouter.post("/api/voice/outbound", requireTwilioSignature, routingR
       response.hangup();
       return sendRoutingTwiml(res, response);
     }
+    reserved = true;
+    const { contact, error } = await findOrCreateContactByPhone({ phone: to, source: "manual" });
+    if (!contact) throw new Error(`Outbound contact persistence failed: ${error || "missing contact"}`);
+    attemptId = await createCallAttempt({
+      callSid: req.body.CallSid, agentId, contactId: contact.id, direction: "outbound", to,
+    });
   } catch (err) {
     console.error("Outbound reservation failed:", err);
+    if (reserved) {
+      try { await releaseAgent(agentId, req.body.CallSid); }
+      catch (releaseError) { console.error("Reservation cleanup failed:", releaseError); return res.status(503).end(); }
+    }
     response.say("Calling is temporarily unavailable. Please try again.");
     response.hangup();
     return sendRoutingTwiml(res, response);
   }
 
   const dial = response.dial({
-    action: publicUrl(`/api/voice/outbound-result?agentId=${encodeURIComponent(agentId)}`),
+    action: publicUrl(`/api/voice/outbound-result?agentId=${encodeURIComponent(agentId)}&attemptId=${attemptId}`),
     callerId: config.twilioPhoneNumber || "+16098065996",
     answerOnBridge: true,
   });
   dial.number({
-    statusCallback: publicUrl(`/twilio/agent-status?agentId=${encodeURIComponent(agentId)}`),
-    statusCallbackEvent: ["completed"],
+    statusCallback: publicUrl(`/twilio/agent-status?agentId=${encodeURIComponent(agentId)}&attemptId=${attemptId}`),
+    statusCallbackEvent: ["answered", "completed"],
   }, to);
   return sendRoutingTwiml(res, response);
 });
 
-voiceOutboundRouter.post("/api/voice/outbound-result", requireTwilioSignature, async (req, res) => {
+voiceOutboundRouter.post("/api/voice/outbound-result", requireTwilioSignature, dialAttribution, async (req, res) => {
   try {
     await releaseAgent(req.query.agentId, req.body.CallSid);
     const response = new VoiceResponse();

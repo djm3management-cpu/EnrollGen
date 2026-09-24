@@ -23,6 +23,11 @@ function stripTrailingSlash(url) {
   return url.endsWith("/") ? url.slice(0, -1) : url;
 }
 
+const minConnectedSeconds = Number(process.env.MIN_CONNECTED_SECONDS || 30);
+if (!Number.isInteger(minConnectedSeconds) || minConnectedSeconds < 1) {
+  throw new Error("MIN_CONNECTED_SECONDS must be a positive integer");
+}
+
 export const config = {
   port: Number(process.env.PORT || 8080),
   publicBaseUrl: stripTrailingSlash(process.env.PUBLIC_BASE_URL),
@@ -43,6 +48,7 @@ export const config = {
   defaultTenantId:
     process.env.DEFAULT_TENANT_ID || "00000000-0000-4000-8000-000000000001",
   dialTimeoutSeconds: Number(process.env.DIAL_TIMEOUT_SECONDS || 20),
+  minConnectedSeconds,
 };
 
 export function publicUrl(path) {
