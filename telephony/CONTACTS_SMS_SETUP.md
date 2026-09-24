@@ -9,3 +9,7 @@
 GIPHY integration follows the official API search and rendition schema: https://developers.giphy.com/docs/api/ . The picker defaults to Minions and shows only renditions meeting the size limit. If no key is configured, it displays a setup error instead of mock results.
 
 Local verification: `npm run build`, targeted ESLint, and `node --test telephony/tests/contactIdentity.test.js`. These do not send real messages or apply migrations to a live database.
+
+## Always-visible agent contact details
+
+Apply migration `044_agent_contact_details.sql` after 043. Names, complete phone numbers and full MBIs then load automatically for authenticated agents in the same workspace, including unassigned/team contacts. The contact list hydrates full details using `read_contact_details` and caches unchanged records in component memory. Supabase encryption, column restrictions, Clerk identity checks, tenant boundaries and access logs remain in place. Full MBIs must have been saved; a last-four value cannot reconstruct a full MBI. The migration also fixes the encryption trigger overwriting a newly saved MBI.

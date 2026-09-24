@@ -196,8 +196,7 @@ function previewFor(contact) {
     return `${prefix}: ${contact.last_message.body || contact.last_message.status || "Message"}`;
   }
   if (contact?.last_activity) return contact.last_activity.summary || String(contact.last_activity.type || "Activity");
-  const maskedPhone = contact?.phone_last4 ? `•••-•••-${contact.phone_last4}` : "";
-  return maskedPhone || "No activity yet";
+  return contact?.phone ? fmtPhone(contact.phone) : "No activity yet";
 }
 
 function usePersistedState(key, fallback) {
@@ -364,7 +363,7 @@ function ContactListPanel({
         ))}
       </div>
       <div className="contacts-conv-list">
-        {loading ? <div className="contacts-muted contacts-conv-empty">Loading contacts...</div> : null}
+        {loading && contacts.length === 0 ? <div className="contacts-muted contacts-conv-empty">Loading contacts...</div> : null}
         {!loading && contacts.length === 0 ? (
           <div className="contacts-muted contacts-conv-empty">No contacts found</div>
         ) : null}
@@ -383,6 +382,7 @@ function ContactListPanel({
                   <strong>{contactDisplayName(contact)}</strong>
                   <small className="mono">{fmtShortDate(latestTime(contact))}</small>
                 </span>
+                <span className="contacts-conv-preview">{contact.phone ? fmtPhone(contact.phone) : "No phone on file"}{contact.mbi_full ? ` · MBI: ${contact.mbi_full}` : ""}</span>
                 <span className="contacts-conv-preview">{previewFor(contact)}</span>
               </span>
               {unread ? <span className="contacts-unread-badge">{unread}</span> : null}
@@ -531,13 +531,7 @@ function ContactFields({ contact, onSaveContact, onSaveMbiFull }) {
       <EditableField label="STATE" value={contact.state || ""} onCommit={(value) => onSaveContact("state", value)} />
       <EditableField label="ZIP" value={contact.zip || ""} onCommit={(value) => onSaveContact("zip", value)} />
       <EditableField
-        label="MBI LAST 4"
-        value={contact.mbi_last4 || ""}
-        autoComplete="off"
-        onCommit={(value) => onSaveContact("mbi_last4", value)}
-      />
-      <EditableField
-        label="MBI (FULL)"
+        label="MBI"
         value={contact.mbi_full || ""}
         placeholder={!contact.mbi_full ? "Not on file — enter full MBI" : ""}
         autoComplete="off"
@@ -675,7 +669,7 @@ function PoliciesFields({ policies, policyDraft, setPolicyDraft, onSavePolicy, o
           ))}
         </select>
         <button type="button" className="contacts-mini-btn" disabled={saving} onClick={onAddPolicy}>
-          ADD POLICY
+          SAVE CHANGES
         </button>
       </div>
     </div>
@@ -947,11 +941,10 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
   }, [selectedContactId]);
 
   const selectedListContact = contacts.find((contact) => contact.id === selectedContactId) || null;
-  const baseSelectedContact = bundle?.contact || selectedListContact;
-  const selectedContact = useMemo(
-    () => (baseSelectedContact ? { ...baseSelectedContact, ...piiFields } : null),
-    [baseSelectedContact, piiFields]
-  );
+  const selectedContact = useMemo(() => {
+    const base = bundle?.contact ? { ...selectedListContact, ...bundle.contact } : selectedListContact;
+    return base ? { ...base, ...piiFields } : null;
+  }, [selectedListContact, bundle?.contact, piiFields]);
 
   const agentOptions = useMemo(() => {
     const agents = new Set();
@@ -1107,7 +1100,7 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
       await refreshSelected();
     } catch (err) {
       console.error("[ContactsTab] add policy failed:", err);
-      setInlineError(err.message || "Could not add policy.");
+      setInlineError(err.message || "Could not save changes.");
     } finally {
       setSaving(false);
     }

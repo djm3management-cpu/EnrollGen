@@ -463,13 +463,7 @@ function ContactInfoPanel({ contact, onSaveField, onSaveMbiFull }) {
       <EditableField label="STATE" value={contact.state || ""} onCommit={(value) => onSaveField("state", value)} />
       <EditableField label="ZIP" value={contact.zip || ""} onCommit={(value) => onSaveField("zip", value)} />
       <EditableField
-        label="MBI LAST 4"
-        value={contact.mbi_last4 || ""}
-        autoComplete="off"
-        onCommit={(value) => onSaveField("mbi_last4", value)}
-      />
-      <EditableField
-        label="MBI (FULL)"
+        label="MBI"
         value={contact.mbi_full || ""}
         placeholder={!contact.mbi_full ? "Not on file — enter full MBI" : ""}
         autoComplete="off"
@@ -620,7 +614,7 @@ function PoliciesPanel({ policies, policyDraft, setPolicyDraft, onAddPolicy, sav
           ))}
         </select>
         <button type="button" className="contacts-mini-btn" disabled={saving} onClick={onAddPolicy}>
-          ADD POLICY
+          SAVE CHANGES
         </button>
       </div>
     </div>
@@ -1039,7 +1033,7 @@ export default function ContactDetail({
       await refresh();
     } catch (err) {
       console.error("[ContactDetail] add policy failed:", err);
-      setInlineError(err.message || "Could not add policy.");
+      setInlineError(err.message || "Could not save changes.");
     } finally {
       setSaving(false);
     }

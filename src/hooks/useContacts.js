@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { normalizeContactPhone, normalizePhoneE164 } from "../lib/phone";
 import { subscribeSms } from "../lib/smsEvents";
 import { useTenantConfig } from "./useTenantConfig";
@@ -6,19 +6,13 @@ import { useTenantConfig } from "./useTenantConfig";
 // CRM data access. All queries run through the tenant-scoped
 // authenticated Supabase client; RLS enforces isolation.
 //
-// Plaintext PII columns (first_name, last_name, phone, email, dob,
-// address) are column-privilege-revoked from the `authenticated` role
-// (see migration 023) — selecting them directly fails with "permission
-// denied for column". Reads go through the masked/initials columns
-// below by default, or through decrypt_pii() via useContactPii() when
-// an agent explicitly reveals a record. mbi_last4 is deliberately NOT
-// in that set (migration 024) — same low-sensitivity "last 4 only"
-// tier as phone_last4, per the original design in migration 017.
+// Read metadata directly, then hydrate full agent-visible details through an
+// authenticated, audited RPC. Encryption stays inside Supabase.
 const CONTACT_SAFE_COLUMNS =
   "id, tenant_id, status, source, assigned_agent_id, county, state, zip, medicare_parts, current_carrier, current_plan, mbi_last4, do_not_call, ghl_contact_id, first_initial, last_initial, phone_last4, email_set, dob_set, created_at, updated_at";
 
 // PII fields decrypt_pii() can return, merged onto the safe-column
-// row once an agent reveals a contact. mbi_full has no backing column
+// row automatically for the agent UI. mbi_full has no backing column
 // on contacts at all (write-only into pii_encrypted via
 // update_pii_field(), see migration 025) — decrypt_pii() surfaces it
 // dynamically the same as any other pii_encrypted key.
@@ -32,10 +26,11 @@ export function useContactsList(searchTerm, requestingAgentId) {
     error: tenantError,
   } = useTenantConfig();
   const [contacts, setContacts] = useState([]);
+  const detailsCache = useRef({ client: null, agent: null, rows: new Map() });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async ({ background = false } = {}) => {
     if (!supabaseClient) {
       // Do not spin forever when the workspace client never arrived
       // (tenant bootstrap failed); surface the reason instead.
@@ -45,7 +40,7 @@ export function useContactsList(searchTerm, requestingAgentId) {
       }
       return;
     }
-    setLoading(true);
+    if (!background) setLoading(true);
     setError(null);
     try {
       const term = String(searchTerm || "").trim();
@@ -87,6 +82,25 @@ export function useContactsList(searchTerm, requestingAgentId) {
         rows.push(...(data || []));
         if (!data || data.length < 200) break;
       }
+      if (!requestingAgentId) throw new Error("Your agent account is still connecting. Contact details will load automatically.");
+      if (detailsCache.current.client !== supabaseClient || detailsCache.current.agent !== requestingAgentId) {
+        detailsCache.current = { client: supabaseClient, agent: requestingAgentId, rows: new Map() };
+      }
+      const cache = detailsCache.current.rows;
+      const changed = rows.filter((row) => cache.get(row.id)?.updatedAt !== row.updated_at);
+      for (let offset = 0; offset < changed.length; offset += 200) {
+        const chunk = changed.slice(offset, offset + 200);
+        const { data, error: detailsError } = await supabaseClient.rpc("read_contact_details", {
+          p_contact_ids: chunk.map((row) => row.id), p_requesting_agent_id: requestingAgentId,
+        });
+        if (detailsError) throw detailsError;
+        for (const row of chunk) {
+          const details = data?.find((item) => item.contact_id === row.id);
+          if (!details) throw new Error("Contact details could not be loaded. Please refresh.");
+          cache.set(row.id, { updatedAt: row.updated_at, fields: details.fields });
+        }
+      }
+      for (const id of cache.keys()) if (!rows.some((row) => row.id === id)) cache.delete(id);
       const intelByContact = {};
       const messageByContact = {};
       const activityByContact = {};
@@ -130,6 +144,7 @@ export function useContactsList(searchTerm, requestingAgentId) {
       setContacts(
         rows.map((row) => ({
           ...row,
+          ...cache.get(row.id)?.fields,
           lead_intel: intelByContact[row.id] || null,
           last_message: messageByContact[row.id] || null,
           last_activity: activityByContact[row.id] || null,
@@ -139,7 +154,7 @@ export function useContactsList(searchTerm, requestingAgentId) {
       console.error("[useContactsList] load failed:", err);
       setError(err.message || "Contacts unavailable.");
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [supabaseClient, searchTerm, requestingAgentId, tenantLoading, tenantError]);
 
@@ -148,8 +163,12 @@ export function useContactsList(searchTerm, requestingAgentId) {
   }, [refresh]);
 
   useEffect(() => {
-    const unsubscribe = subscribeSms(refresh);
-    const timer = window.setInterval(refresh, 20000);
+    const refreshInBackground = () => refresh({ background: true });
+    const unsubscribe = subscribeSms((event) => {
+      // Read receipts only change badges, which useUnreadMessages refreshes.
+      if (event?.type === "sms") refreshInBackground();
+    });
+    const timer = window.setInterval(refreshInBackground, 20000);
     return () => { unsubscribe(); window.clearInterval(timer); };
   }, [refresh]);
 
@@ -429,21 +448,11 @@ export function contactDisplayName(contact) {
   const name = [contact?.first_name, contact?.last_name].filter(Boolean).join(" ").trim();
   if (name) return name;
   if (contact?.phone) return contact.phone;
-  const initials = [contact?.first_initial, contact?.last_initial ? `${contact.last_initial}.` : null]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-  if (initials) return initials;
-  if (contact?.phone_last4) return `Contact --${contact.phone_last4}`;
   return "Unknown contact";
 }
 
-// Contact-level PII loader. Auto-decrypts the instant contactId/
-// requestingAgentId are available — no manual reveal click. This is
-// a UI decision only: decrypt_pii() itself is unchanged (still
-// permission-checked, still logs every call to pii_access_log), so
-// the audit trail stays complete even though nothing is visibly
-// masked. One decrypt_pii call per contact opened, not per field.
+// Automatically load full contact details; Supabase handles encryption, tenant
+// access checks, and audit logging without agent-facing reveal controls.
 export function useContactPii(contactId, requestingAgentId) {
   const { supabaseClient } = useTenantConfig();
   const [piiFields, setPiiFields] = useState(null);
@@ -456,7 +465,7 @@ export function useContactPii(contactId, requestingAgentId) {
       console.warn(
         "[useContactPii] no tenant_agents match for the signed-in user — check that your tenant_agents row has agent_slug (or clerk_user_id) set correctly."
       );
-      setError("Your agent account isn't linked to a tenant_agents record, so PII can't load. Contact an admin.");
+      setError("Your agent account isn't linked to a tenant_agents record, so contact details cannot load. Contact an admin.");
       return null;
     }
     setLoading(true);
@@ -476,7 +485,7 @@ export function useContactPii(contactId, requestingAgentId) {
       return fields;
     } catch (err) {
       console.error("[useContactPii] load failed:", err);
-      setError(err.message || "Could not load PII.");
+      setError(err.message || "Could not load contact details.");
       return null;
     } finally {
       setLoading(false);
@@ -504,7 +513,7 @@ export function useContactPii(contactId, requestingAgentId) {
   const updatePiiField = useCallback(
     async (field, value) => {
       if (!supabaseClient || !contactId || !requestingAgentId) {
-        throw new Error("Your agent account isn't linked to a tenant_agents record, so PII can't be edited.");
+        throw new Error("Your agent account isn't linked to a tenant_agents record, so contact details cannot be edited.");
       }
       const { error: rpcError } = await supabaseClient.rpc("update_pii_field", {
         p_contact_id: contactId,
