@@ -49,6 +49,9 @@ export const config = {
     process.env.DEFAULT_TENANT_ID || "00000000-0000-4000-8000-000000000001",
   dialTimeoutSeconds: Number(process.env.DIAL_TIMEOUT_SECONDS || 20),
   minConnectedSeconds,
+  stickyRoutingEnabled: process.env.STICKY_ROUTING_ENABLED?.trim().toLowerCase() === "true",
+  // Invalid lookback is handled by the sticky fail-open path, not a startup failure.
+  stickyLookbackDays: Number(process.env.STICKY_LOOKBACK_DAYS || 180),
 };
 
 export function publicUrl(path) {

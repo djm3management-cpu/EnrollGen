@@ -16,7 +16,8 @@ function database(agents = ['a', 'b']) {
     contact_lead_intel: [], telephony_call_attempts: [], telephony_routing_responses: [] };
   const claims = []; const evidence = []; const releases = []; const finishes = [];
   const reservations = new Map();
-  const state = { tables, claims, evidence, releases, finishes, failEvidence: false, failAttempts: false };
+  const state = { tables, claims, evidence, releases, finishes, failEvidence: false, failAttempts: false,
+    failPreferred: false, failContact: false, contactReads: 0 };
   supabase.from = table => {
     let action = 'select'; let value; let single = false; const filters = [];
     const q = {
@@ -26,6 +27,11 @@ function database(agents = ['a', 'b']) {
       single() { single = true; return this; }, maybeSingle() { single = true; return this; },
       then(resolve, reject) {
         const run = () => {
+          if (table === 'contacts' && action === 'select') {
+            state.contactReads++;
+            if (state.failContact === 'throw') throw new Error('Contact provider unavailable');
+            if (state.failContact) return { error: { message: 'Contact lookup failed' } };
+          }
           if (table === 'telephony_call_attempts' && state.failAttempts) return { error: { message: 'write failed' } };
           if (action === 'insert') {
             if (table === 'telephony_routing_responses' && tables[table].some(r => r.request_key === value.request_key)) {
@@ -46,10 +52,14 @@ function database(agents = ['a', 'b']) {
   supabase.rpc = async (name, args) => {
     if (name === 'claim_call_agent') {
       claims.push(args);
-      const agent = agents.find(a => (!args.p_agent_id || a === args.p_agent_id) &&
+      if (args.p_preferred_agent_id && state.failPreferred) return { error: { message: 'Preferred claim failed' } };
+      const eligible = agents.filter(a => (!args.p_agent_id || a === args.p_agent_id) &&
         !args.p_exclude.includes(a) && !reservations.has(a));
+      const agent = eligible.includes(args.p_preferred_agent_id) ? args.p_preferred_agent_id : eligible[0];
       if (agent) reservations.set(agent, args.p_call_sid);
-      return { data: agent ? [{ agent_id: agent, agent_name: agent }] : [] };
+      return { data: agent ? [{ agent_id: agent, agent_name: agent,
+        ...(args.p_preferred_agent_id ? { claim_path: agent === args.p_preferred_agent_id ? 'preferred' : 'round_robin' } : {}),
+      }] : [] };
     }
     if (name === 'release_call_agent') {
       releases.push(args);
@@ -169,4 +179,95 @@ test('outbound persistence failure releases reservation and does not dial untrac
   });
   assert.match(res.body, /<Hangup\/>/); assert.doesNotMatch(res.body, /<Dial/);
   assert.equal(db.releases[0].p_call_sid, 'OUT');
+});
+
+function enableSticky(t) {
+  const previous = config.stickyRoutingEnabled;
+  config.stickyRoutingEnabled = true;
+  t.after(() => { config.stickyRoutingEnabled = previous; });
+}
+function seedHistory(db, fields = {}) {
+  db.tables.contacts.push({ id: 'known', tenant_id: config.defaultTenantId, phone: incoming.From,
+    last_connected_agent_id: 'c', last_connected_at: new Date().toISOString(), assigned_agent_id: 'b', ...fields });
+}
+
+test('sticky first attempt uses the loaded pointer, masks logs and keeps 20-second ring; no-answer/decline never re-prefer', async t => {
+  enableSticky(t);
+  for (const dialStatus of ['no-answer', 'busy']) {
+    const db = database(['a', 'b', 'c']); seedHistory(db);
+    const first = await request(twilioVoiceRouter, '/twilio/voice', incoming);
+    assert.match(first.body, /<Identity>c<\/Identity>/); assert.match(first.body, /timeout="20"/);
+    assert.equal(db.contactReads, 1); // Existing contact loaded once; no sticky lookup.
+    const initial = db.tables.telephony_events[0].payload;
+    assert.deepEqual(initial, { phone_last4: '7669', agent_id: 'c', preferred_agent_id: 'c', routing_method: 'sticky_last_connected' });
+    assert.ok(!JSON.stringify(initial).includes(incoming.From));
+    assert.ok(!JSON.stringify(initial).includes(incoming.To));
+    assert.equal(db.tables.contact_activities[0].summary, 'Inbound call from ***7669');
+    const query = { inboundCallId: db.tables.inbound_calls[0].id, tried: 'c', agentId: 'c', attemptId: db.tables.telephony_call_attempts[0].id };
+    const body = { CallSid: 'PARENT', DialCallSid: 'CHILD', DialCallStatus: dialStatus, DialCallDuration: '0' };
+    const reroute = await request(twilioVoiceRouter, '/twilio/dial-result', body, query);
+    assert.match(reroute.body, /<Identity>a<\/Identity>/);
+    assert.deepEqual(db.claims.map(c => c.p_preferred_agent_id), ['c', undefined]);
+    assert.deepEqual(db.claims[1].p_exclude, ['c']);
+    assert.equal((await request(twilioVoiceRouter, '/twilio/dial-result', body, query)).body, reroute.body);
+    assert.equal(db.claims.length, 2); // Replay did not claim a third agent.
+  }
+});
+
+test('initial event distinguishes owner, ineligible preference and no history', async t => {
+  enableSticky(t);
+  for (const [fields, agents, method, preferred] of [
+    [{ last_connected_at: '2000-01-01' }, ['a', 'b', 'c'], 'sticky_owner', 'b'],
+    [{}, ['a', 'b'], 'round_robin_preferred_ineligible', 'c'],
+    [{ last_connected_agent_id: null, assigned_agent_id: null }, ['a'], 'round_robin_no_history', null],
+  ]) {
+    const db = database(agents); seedHistory(db, fields);
+    await request(twilioVoiceRouter, '/twilio/voice', incoming);
+    const payload = db.tables.telephony_events[0].payload;
+    assert.equal(payload.routing_method, method); assert.equal(payload.preferred_agent_id, preferred);
+  }
+});
+
+test('anonymous and malformed inbound calls route normally without preference or full-number logs', async t => {
+  enableSticky(t);
+  for (const From of ['anonymous', 'blocked', 'restricted', 'bad number']) {
+    const db = database(['a']);
+    const res = await request(twilioVoiceRouter, '/twilio/voice', { ...incoming, From });
+    assert.match(res.body, /<Identity>a<\/Identity>/);
+    assert.equal(db.claims[0].p_preferred_agent_id, undefined);
+    assert.deepEqual(db.tables.telephony_events[0].payload, {
+      phone_last4: null, agent_id: 'a', preferred_agent_id: null, routing_method: 'round_robin_anonymous',
+    });
+  }
+});
+
+test('sticky RPC error and returned/thrown contact errors still dial available agents', async t => {
+  enableSticky(t);
+  for (const failure of ['preferred', 'contact', 'throw']) {
+    const db = database(['a', 'b', 'c']); seedHistory(db);
+    db.failPreferred = failure === 'preferred';
+    db.failContact = failure === 'preferred' ? false : failure;
+    const res = await request(twilioVoiceRouter, '/twilio/voice', incoming);
+    assert.match(res.body, /<Identity>a<\/Identity>/); assert.doesNotMatch(res.body, /<Record /);
+    assert.equal(db.tables.telephony_events[0].payload.routing_method, 'round_robin_sticky_error');
+    assert.equal(db.claims.at(-1).p_preferred_agent_id, undefined);
+    assert.equal(db.claims.length, failure === 'preferred' ? 2 : 1);
+  }
+});
+
+test('flag-off ignores existing history and preserves legacy claim; outbound ignores sticky even when enabled', async t => {
+  const previous = config.stickyRoutingEnabled;
+  t.after(() => { config.stickyRoutingEnabled = previous; });
+  config.stickyRoutingEnabled = false;
+  const db = database(['a', 'b', 'c']); seedHistory(db);
+  const res = await request(twilioVoiceRouter, '/twilio/voice', incoming);
+  assert.match(res.body, /<Identity>a<\/Identity>/);
+  assert.deepEqual(db.claims[0], { p_call_sid: 'PARENT', p_exclude: [], p_agent_id: null });
+  assert.equal(db.tables.telephony_events[0].payload.routing_method, 'round_robin_flag_off');
+  config.stickyRoutingEnabled = true;
+  const outbound = database(['a', 'b', 'c']); seedHistory(outbound);
+  await request(voiceOutboundRouter, '/api/voice/outbound', {
+    CallSid: 'OUT', From: 'client:a', PhoneNumber: incoming.From,
+  });
+  assert.deepEqual(outbound.claims[0], { p_call_sid: 'OUT', p_exclude: [], p_agent_id: 'a' });
 });

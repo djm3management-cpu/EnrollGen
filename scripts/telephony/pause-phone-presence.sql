@@ -46,4 +46,21 @@ BEGIN
   RETURN;
 END;
 $$;
+-- Keep migration 046's overload in sync without breaking pre-046 recovery.
+DO $migration$
+BEGIN
+  IF to_regprocedure('public.claim_call_agent(text,text[],text,text)') IS NOT NULL THEN
+    EXECUTE $definition$
+      CREATE OR REPLACE FUNCTION public.claim_call_agent(p_call_sid TEXT, p_exclude TEXT[],
+        p_agent_id TEXT, p_preferred_agent_id TEXT)
+      RETURNS TABLE(agent_id TEXT, agent_name TEXT, claim_path TEXT)
+      LANGUAGE sql SECURITY DEFINER SET search_path = public AS $body$
+        SELECT * FROM claim_call_agent_with_preference(
+          p_call_sid, p_exclude, p_agent_id, p_preferred_agent_id, false);
+      $body$;
+    $definition$;
+  END IF;
+END;
+$migration$;
+NOTIFY pgrst, 'reload schema';
 COMMIT;

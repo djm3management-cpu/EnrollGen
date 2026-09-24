@@ -294,3 +294,63 @@ newer pointer. Older dial_result payloads omitted duration and cannot safely be
 backfilled. Historical event receipt time minus duration is used only when no
 answer/event timestamp exists; these approximate candidates are counted. The
 script updates contact pointers only, not historical call outcomes.
+
+## Sticky inbound routing (migration 046; disabled by default)
+
+The initial inbound attempt uses the contact already loaded by phone lookup.
+With `STICKY_ROUTING_ENABLED=true`, a last-connected agent within
+`STICKY_LOOKBACK_DAYS` (default 180) takes precedence over the assigned owner.
+An older/invalid/future pointer falls back to the owner. No history uses normal
+rotation. Anonymous/blocked/restricted or unnormalizable caller IDs and failed
+contact lookups never supply a preferred agent. There is no extra contact query.
+
+The new four-argument `claim_call_agent` overload requires an explicit
+`p_preferred_agent_id` argument and returns `claim_path` (`preferred`,
+`round_robin`, `existing`, or `outbound`). It uses the same per-call transaction
+lock and `FOR UPDATE SKIP LOCKED`, reserving the preferred agent only if manually
+available, unreserved, unexcluded, active in `tenant_agents`, and holding a live
+phone session when presence enforcement is enabled. A rejected preferred agent
+is excluded from the fallback within that RPC, including an inactive roster
+entry that the legacy rotation would not itself filter. Sticky assignment
+updates `last_assigned_at` exactly like normal assignment.
+
+The original three-argument function is intentionally retained, with no change
+to its body or return type. Flag-off calls, calls without a preference, reroutes,
+and outbound claims still use it. The new overload has no default arguments,
+so PostgREST can distinguish the signatures by their supplied argument names.
+Preferred selection errors retry the original claim without a preference, using
+the same CallSid so any committed reservation is reused. The same 20-second
+default ring, tried-agent exclusions, release callbacks, replay guard and
+voicemail overflow remain in effect. The owner is not a second sticky attempt
+if a recent last-connected agent is ineligible; fallback is normal rotation.
+
+Initial routing events contain `routing_method`, `preferred_agent_id`,
+`agent_id`, and only `phone_last4` for caller identity (no full from/to numbers).
+Methods: `sticky_last_connected`, `sticky_owner`,
+`round_robin_preferred_ineligible`, `round_robin_no_history`,
+`round_robin_anonymous`, `round_robin_sticky_error`, `round_robin_flag_off`.
+The initial contact activity summary also masks the number.
+
+Deployment order (manual; migration/deployment are not performed by tests):
+
+1. Leave/set `STICKY_ROUTING_ENABLED=false` on the telephony service. Optionally
+   set `STICKY_LOOKBACK_DAYS=180`. This deploy must remain flag-off.
+2. Apply `046_sticky_agent_routing.sql` after 045. It preserves the installed
+   presence mode by inspecting the legacy claim definition once, retains the
+   old RPC, grants the new RPC to service_role only, and reloads the PostgREST
+   schema cache. No backfill, schema reset or presence toggle is needed.
+3. Deploy the telephony service with the flag still false. No frontend or Twilio
+   callback configuration change is required. Verify ordinary inbound/outbound
+   calling and initial `round_robin_flag_off` events.
+4. Only when ready, manually set `STICKY_ROUTING_ENABLED=true` and restart/redeploy
+   the service so it reads the environment. Check a recent caller, an owner-only
+   caller, an unavailable preferred agent, and a declined/timed-out sticky ring.
+5. To disable, set the flag back to false and restart/redeploy. Leave migration
+   046 installed. Presence remains enabled; do not use presence-pause to disable
+   sticky routing.
+
+Both presence recovery scripts update the four-argument overload when installed
+and still work before 046. Tests cover both modes and migration into an already
+paused database. PGlite tests submit concurrent claims and verify exclusive
+outcomes, but serialize SQL execution; real multi-connection lock contention
+still requires a separate PostgreSQL integration environment.

@@ -6,6 +6,7 @@ import { requireTwilioSignature } from "../twilioSecurity.js";
 import { findOrCreateContactByPhone, latestLeadIntel, logContactActivity } from "../contacts.js";
 import { claimNextAvailableAgent, releaseAgent } from "../availability.js";
 import { createCallAttempt, dialAttribution, finishInboundCall } from "../answerAttribution.js";
+import { claimInitialInboundAgent, routingPhoneLast4 } from "../stickyRouting.js";
 
 import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
 
@@ -92,18 +93,27 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
   const callSid = req.body.CallSid;
   const from = req.body.From;
   const to = req.body.To;
+  const phoneLast4 = routingPhoneLast4(from);
   let claimedAgent = null;
 
   try {
-    const { contact } = await findOrCreateContactByPhone({
-      phone: from,
-      source: "fmo_transfer",
-    });
+    let contact = null;
+    let lookupError = null;
+    try {
+      ({ contact, error: lookupError } = await findOrCreateContactByPhone({
+        phone: from, source: "fmo_transfer",
+      }));
+    } catch (err) {
+      if (!config.stickyRoutingEnabled) throw err;
+      lookupError = true; // Fail open even if the contact provider throws.
+    }
 
     // Claim (not just read) the agent here: marks them busy the instant
     // they're selected so a second call arriving in the same instant
     // cannot also be routed to them before they've even started ringing.
-    const agent = await claimNextAvailableAgent({ callSid });
+    const { agent, method, preferredAgentId } = await claimInitialInboundAgent({
+      callSid, callerId: from, contact, lookupError,
+    });
     claimedAgent = agent;
 
     const { data: inboundCall, error } = await supabase
@@ -125,7 +135,8 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
       inboundCallId: inboundCall.id,
       callSid,
       event: agent ? "routing_agent_selected" : "routing_no_agents",
-      payload: { from, to, agent_id: agent?.agent_id || null },
+      payload: { phone_last4: phoneLast4, agent_id: agent?.agent_id || null,
+        preferred_agent_id: preferredAgentId, routing_method: method },
     });
 
     if (contact?.id) {
@@ -133,7 +144,7 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
         contactId: contact.id,
         type: "call",
         refId: inboundCall.id,
-        summary: `Inbound call from ${from}`,
+        summary: `Inbound call${phoneLast4 ? ` from ***${phoneLast4}` : ""}`,
       });
     }
 
