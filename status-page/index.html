@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NGHS Agent Status</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #080c10;
+    font-family: 'Barlow Condensed', sans-serif;
+    color: #e8edf3;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .grid-bg {
+    position: fixed; inset: 0; opacity: 0.03;
+    background-image: linear-gradient(#00ff87 1px, transparent 1px), linear-gradient(90deg, #00ff87 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+  .container { width: 100%; max-width: 520px; position: relative; z-index: 1; }
+
+  .header { margin-bottom: 32px; }
+  .label-small { font-size: 11px; font-weight: 700; letter-spacing: 4px; color: #3d4a5a; margin-bottom: 4px; }
+  .title { font-size: 28px; font-weight: 800; letter-spacing: 1px; }
+
+  .summary {
+    display: inline-flex; align-items: center; gap: 10px;
+    border-radius: 8px; padding: 8px 16px; margin-top: 16px;
+    font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
+    transition: all 0.3s;
+  }
+  .summary.is-available { background: rgba(0,255,135,0.06); border: 1px solid rgba(0,255,135,0.2); color: #00ff87; }
+  .summary.is-unavailable { background: rgba(85,94,110,0.06); border: 1px solid rgba(85,94,110,0.15); color: #555e6e; }
+
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+    transition: background 0.3s;
+  }
+  .dot.available { background: #00ff87; animation: ping 1.5s ease-out infinite; }
+  .dot.busy { background: #ff3b3b; }
+  .dot.offline { background: #555e6e; }
+
+  @keyframes ping {
+    0% { box-shadow: 0 0 0 0 rgba(0,255,135,0.6); }
+    70% { box-shadow: 0 0 0 8px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
+  .cards { display: flex; flex-direction: column; gap: 12px; }
+  .card {
+    background: linear-gradient(135deg, #0d1117 0%, #111820 100%);
+    border-radius: 12px; padding: 24px 28px;
+    display: flex; align-items: center; gap: 20px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .card.available { border: 1px solid rgba(0,255,135,0.3); box-shadow: 0 0 24px rgba(0,255,135,0.08); }
+  .card.busy { border: 1px solid rgba(255,59,59,0.3); }
+  .card.offline { border: 1px solid rgba(85,94,110,0.15); }
+
+  .avatar {
+    width: 48px; height: 48px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 17px; letter-spacing: 1px; flex-shrink: 0;
+  }
+  .avatar.available { background: rgba(0,255,135,0.08); border: 1.5px solid rgba(0,255,135,0.3); color: #00ff87; }
+  .avatar.busy { background: rgba(255,59,59,0.08); border: 1.5px solid rgba(255,59,59,0.3); color: #ff3b3b; }
+  .avatar.offline { background: rgba(85,94,110,0.08); border: 1.5px solid rgba(85,94,110,0.3); color: #555e6e; }
+
+  .info { flex: 1; }
+  .agent-name { font-weight: 600; font-size: 17px; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .status-row { display: flex; align-items: center; gap: 8px; }
+  .status-label { font-size: 12px; font-weight: 700; letter-spacing: 2px; }
+  .status-label.available { color: #00ff87; }
+  .status-label.busy { color: #ff3b3b; }
+  .status-label.offline { color: #555e6e; }
+  .since { font-size: 11px; color: #3d4a5a; margin-left: 4px; }
+
+  .footer {
+    margin-top: 20px; display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: #2a3340; letter-spacing: 1px;
+  }
+
+  .loading { text-align: center; color: #3d4a5a; font-size: 14px; letter-spacing: 2px; padding: 40px 0; }
+  .error-msg { text-align: center; color: #ff3b3b; font-size: 13px; padding: 20px 0; }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="container">
+  <div class="header">
+    <div class="label-small">NEW GEN HEALTH SOLUTIONS</div>
+    <div class="title">AGENT STATUS</div>
+    <div id="summary" class="summary is-unavailable">
+      <span class="dot offline"></span>
+      LOADING...
+    </div>
+  </div>
+  <div id="cards" class="cards">
+    <div class="loading">CONNECTING...</div>
+  </div>
+  <div class="footer">
+    <span>AUTO-REFRESH 10s</span>
+    <span id="lastSync"></span>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://qzjtagnpklaxefwurorc.supabase.co/functions/v1/get-availability';
+// Dedicated, public read-only consumer: nghs-status. Revocable in availability_consumers.
+const API_KEY = 'av_9vtCeVDInrHCtQyCfY9NkMUI7pdohO5v1dmnLPZhXY8';
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function getInitials(name) {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase();
+}
+
+function statusLabel(status) {
+  return (status || 'offline').toUpperCase();
+}
+
+async function fetchStatus() {
+  try {
+    const res = await fetch(API_URL, { headers: { 'x-api-key': API_KEY }, cache: 'no-store', signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    render(data);
+  } catch (err) {
+    const summary = document.getElementById('summary');
+    summary.className = 'summary is-unavailable';
+    summary.innerHTML = '<span class="dot offline"></span>STATUS UNAVAILABLE';
+    document.getElementById('cards').innerHTML = '<div class="error-msg">CONNECTION ERROR — RETRYING</div>';
+    document.getElementById('lastSync').textContent = 'AWAITING FRESH STATUS';
+  }
+}
+
+function render(data) {
+  const { any_available, available_count, agents } = data;
+
+  const summary = document.getElementById('summary');
+  if (any_available) {
+    summary.className = 'summary is-available';
+    summary.innerHTML = `<span class="dot available"></span>${available_count} AGENT${available_count > 1 ? 'S' : ''} READY FOR CALLS`;
+  } else {
+    summary.className = 'summary is-unavailable';
+    summary.innerHTML = `<span class="dot offline"></span>NO AGENTS AVAILABLE`;
+  }
+
+  const cardsEl = document.getElementById('cards');
+  cardsEl.innerHTML = agents.map(a => {
+    const s = a.available === true ? 'available' : a.status === 'busy' ? 'busy' : 'offline';
+    const name = a.agent_name || a.agent_id;
+    return `
+      <div class="card ${s}">
+        <div class="avatar ${s}">${escapeHtml(getInitials(name))}</div>
+        <div class="info">
+          <div class="agent-name">${escapeHtml(name)}</div>
+          <div class="status-row">
+            <span class="dot ${s}"></span>
+            <span class="status-label ${s}">${statusLabel(s)}</span>
+            <span class="since">${escapeHtml((a.licensed_states || []).join(', '))}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('lastSync').textContent = `LAST SYNC ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+}
+
+fetchStatus();
+setInterval(fetchStatus, 10000);
+</script>
+</body>
+</html>

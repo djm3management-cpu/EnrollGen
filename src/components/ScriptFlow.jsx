@@ -20,6 +20,7 @@ import {
 } from "../hooks/useSessionTracker";
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { useLiveCall } from "../context/LiveCallContext";
+import { telephonyCallIdentity } from "../lib/telephonyCallIdentity.js";
 import { useInboundCall } from "../context/InboundCallContext";
 import { consumePendingCallContact, hydrateNotesFromContact } from "../lib/callLaunch";
 import { useComplianceScoringWorker } from "../hooks/useComplianceScoringWorker";
@@ -628,6 +629,14 @@ export default function ScriptFlow() {
   // Co-Pilot come from the telephony service) and hydrate the left rail
   // client panel from the matched contact record.
   const inbound = useInboundCall();
+  const identityCallStartedRef = useRef(false);
+  useEffect(() => {
+    if (inbound?.activeCall) setActivePostCallMetadata(telephonyCallIdentity(inbound.activeCall));
+    else if (callStarted && !identityCallStartedRef.current) {
+      setActivePostCallMetadata({ telephonyCall: false, twilioCallSid: null });
+    }
+    identityCallStartedRef.current = callStarted;
+  }, [inbound?.activeCall, callStarted]);
   const inboundStartedRef = useRef(false);
   const inboundContactHydratedRef = useRef("");
   useEffect(() => {

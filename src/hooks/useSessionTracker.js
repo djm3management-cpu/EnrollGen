@@ -10,6 +10,8 @@ const EMPTY_SESSION_METADATA = {
   sessionId: null,
   callRecordId: null,
   transcriptId: null,
+  twilioCallSid: null,
+  telephonyCall: false,
 };
 
 const noop = () => {};

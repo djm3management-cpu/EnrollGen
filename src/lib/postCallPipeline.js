@@ -294,6 +294,8 @@ export function buildPostCallPayload({
 
   return {
     session_id: sessionMetadata?.sessionId || null,
+    twilio_call_sid: sessionMetadata?.twilioCallSid || null,
+    telephony_call: sessionMetadata?.telephonyCall === true,
     agent_id: sessionMetadata?.agentId || null,
     call_record_id: sessionMetadata?.callRecordId || null,
     transcript_id: sessionMetadata?.transcriptId || null,

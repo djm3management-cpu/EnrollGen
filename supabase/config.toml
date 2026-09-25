@@ -1,0 +1,3 @@
+[functions.get-availability]
+# This endpoint authenticates its own hashed, revocable x-api-key credentials.
+verify_jwt = false

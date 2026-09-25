@@ -52,6 +52,13 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+-- Migration 047 centralizes eligibility. Older installations retain the legacy RPC.
+DO $presence$
+BEGIN
+  IF to_regclass('public.telephony_presence_policy') IS NOT NULL THEN
+    UPDATE public.telephony_presence_policy SET enforced = true WHERE singleton;
+  ELSE
+    EXECUTE $legacy$
 CREATE OR REPLACE FUNCTION public.claim_call_agent(p_call_sid text, p_exclude text[] DEFAULT '{}', p_agent_id text DEFAULT NULL)
 RETURNS TABLE(agent_id text, agent_name text)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -77,6 +84,10 @@ BEGIN
     WHERE a.agent_id = selected_id RETURNING a.agent_id, a.agent_name;
 END;
 $$;
+    $legacy$;
+  END IF;
+END;
+$presence$;
 
 
 REVOKE ALL ON FUNCTION public.update_agent_phone_session(text,uuid,boolean) FROM PUBLIC, anon, authenticated;

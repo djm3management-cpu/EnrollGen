@@ -8,6 +8,7 @@ import { claimNextAvailableAgent, releaseAgent } from "../availability.js";
 import { createCallAttempt, dialAttribution, finishInboundCall } from "../answerAttribution.js";
 import { claimInitialInboundAgent, routingPhoneLast4 } from "../stickyRouting.js";
 
+import { vendorMetadata } from "../vendorMetadata.js";
 import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -75,6 +76,7 @@ async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentId
   client.identity(agent.agent_id);
   const params = {
     inboundCallId: inboundCall.id,
+    twilioCallSid: inboundCall.twilio_call_sid,
     contactId: contact?.id || "",
     callerPhone: inboundCall.from_number || "",
     callerName: [contact?.first_name, contact?.last_name].filter(Boolean).join(" "),
@@ -123,6 +125,7 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
         contact_id: contact?.id || null,
         twilio_call_sid: callSid,
         from_number: from,
+        vendor_metadata: vendorMetadata(req),
         to_number: to,
         routed_agent_id: agent?.agent_id || null,
         status: agent ? "ringing" : "voicemail",

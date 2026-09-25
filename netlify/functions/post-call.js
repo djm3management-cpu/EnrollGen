@@ -1,3 +1,4 @@
+import { linkTelephonyRecord } from "./_telephonyLink.js";
 import { createClient } from "@supabase/supabase-js";
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { redactDiarizedTranscript, redactSensitiveText } from "./_redaction.js";
@@ -324,6 +325,12 @@ async function resolveTranscriptAgentId(supabase, agent, tenant) {
 }
 
 async function ensureCallRecord(supabase, payload, auth, tenant) {
+  const record = await ensureCallRecordRow(supabase, payload, auth, tenant);
+  await linkTelephonyRecord(supabase, record, payload, auth, tenant);
+  return record;
+}
+
+async function ensureCallRecordRow(supabase, payload, auth, tenant) {
   if (payload.call_record_id) {
     let query = supabase
       .from("call_records")
@@ -374,6 +381,9 @@ async function ensureCallRecord(supabase, payload, auth, tenant) {
     metadata: {
       created_from: LIVE_SOURCE_SYSTEM,
       source_session_id: payload.session_id || null,
+      telephony_call: payload.telephony_call === true,
+      twilio_call_sid: /^CA[0-9a-f]{32}$/i.test(payload.twilio_call_sid || '') ? payload.twilio_call_sid : null,
+      telephony_user_id: auth.userId || null,
     },
   };
 
@@ -556,6 +566,8 @@ async function saveCheckpoint(supabase, payload, auth, tenant, { final = false }
 
   const metadata = mergeMetadata(callRecord.metadata, {
     last_transcript_checkpoint_at: now,
+    ...(payload.telephony_call ? { telephony_call: true, telephony_user_id: auth.userId || null,
+      twilio_call_sid: /^CA[0-9a-f]{32}$/i.test(payload.twilio_call_sid || '') ? payload.twilio_call_sid : callRecord.metadata?.twilio_call_sid || null } : {}),
     transcript_source: LIVE_SOURCE_SYSTEM,
     transcript_finalized_at: final ? now : callRecord.metadata?.transcript_finalized_at || null,
   });
