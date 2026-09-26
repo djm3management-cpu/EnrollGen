@@ -10,6 +10,7 @@ import { claimInitialInboundAgent, routingPhoneLast4 } from "../stickyRouting.js
 
 import { vendorMetadata } from "../vendorMetadata.js";
 import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
+import { classifyCaller, isDuplicateParagonCall, shouldFallbackToParagon } from "../paragonRouting.js";
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
@@ -30,6 +31,16 @@ function voicemailTwiml() {
   });
   response.hangup();
   return response;
+}
+
+function busyRejectTwiml() {
+  const response = new VoiceResponse();
+  response.reject({ reason: "busy" });
+  return response;
+}
+
+function isParagon(metadata) {
+  return /paragon/i.test(metadata?.publisher || "") || /paragon/i.test(metadata?.aggregator_call_id || "");
 }
 
 async function logEvent({ inboundCallId, callSid, event, payload }) {
@@ -101,14 +112,23 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
   try {
     let contact = null;
     let lookupError = null;
+    let created = false;
     try {
-      ({ contact, error: lookupError } = await findOrCreateContactByPhone({
+      ({ contact, created, error: lookupError } = await findOrCreateContactByPhone({
         phone: from, source: "fmo_transfer",
       }));
     } catch (err) {
       if (!config.stickyRoutingEnabled) throw err;
       lookupError = true; // Fail open even if the contact provider throws.
     }
+
+    const metadata = vendorMetadata(req);
+    const priorLookup = (!contact || created) ? await supabase.from("inbound_calls").select("created_at,source_kind").eq("from_number", from).limit(20) : { data: [] };
+    const priorCalls = priorLookup.data || [];
+    const classification = classifyCaller({ contact: created ? null : contact, priorCalls });
+    const sharedMaNumber = Boolean(config.twilioPhoneNumber && to === config.twilioPhoneNumber);
+    const paragon = isParagon(metadata) || (sharedMaNumber && shouldFallbackToParagon({ metadata, contact: created ? null : contact, priorCalls, lookupError }));
+    const duplicate = paragon && classification === "new" && priorCalls.some(row => row.source_kind === "publisher" && isDuplicateParagonCall({ deliveredAt: row.created_at }));
 
     // Claim (not just read) the agent here: marks them busy the instant
     // they're selected so a second call arriving in the same instant
@@ -118,6 +138,17 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
     });
     claimedAgent = agent;
 
+    if (paragon && classification === "new" && !agent) {
+      const { data: rejected, error: rejectError } = await supabase.from("inbound_calls").insert({
+        tenant_id: config.defaultTenantId, twilio_call_sid: callSid, from_number: from, to_number: to,
+        vendor_metadata: metadata, caller_classification: classification, duplicate_flag: duplicate,
+        status: "rejected", source_kind: "publisher",
+      }).select("*").single();
+      if (rejectError) throw new Error(`inbound_calls insert failed: ${rejectError.message}`);
+      await logEvent({ inboundCallId: rejected.id, callSid, event: "paragon_fast_reject", payload: { reason: "busy", duplicate } });
+      return sendTwiml(res, busyRejectTwiml());
+    }
+
     const { data: inboundCall, error } = await supabase
       .from("inbound_calls")
       .insert({
@@ -125,10 +156,13 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
         contact_id: contact?.id || null,
         twilio_call_sid: callSid,
         from_number: from,
-        vendor_metadata: vendorMetadata(req),
+        vendor_metadata: metadata,
         to_number: to,
         routed_agent_id: agent?.agent_id || null,
         status: agent ? "ringing" : "voicemail",
+        source_kind: paragon ? "publisher" : "direct",
+        caller_classification: classification,
+        duplicate_flag: duplicate,
       })
       .select("*")
       .single();

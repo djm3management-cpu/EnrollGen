@@ -278,6 +278,8 @@ export default function TenantSettings({ currentUser = null }) {
   );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [vendorPaused, setVendorPaused] = useState(false);
+  const [vendorPauseSaving, setVendorPauseSaving] = useState(false);
 
   const seatLimit = isInternal ? Infinity : Number(subscription?.seat_count || 0);
   const activeAgentCount = agents.filter((agent) => agent.is_active !== false).length || activeAgents.length;
@@ -313,6 +315,26 @@ export default function TenantSettings({ currentUser = null }) {
   useEffect(() => {
     loadAgents().catch((error) => setMessage(error?.message || "Unable to load agents."));
   }, [loadAgents]);
+
+  useEffect(() => {
+    if (!canAdmin) return;
+    fetchWithClerk(getToken, "/.netlify/functions/vendor-pause").then((response) => response.json())
+      .then((data) => setVendorPaused(data.vendor_pause === true)).catch(() => {});
+  }, [canAdmin, getToken]);
+
+  const toggleVendorPause = async () => {
+    setVendorPauseSaving(true);
+    try {
+      const next = !vendorPaused;
+      const response = await fetchWithClerk(getToken, "/.netlify/functions/vendor-pause", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paused: next }),
+      });
+      if (!response.ok) throw new Error("Unable to update vendor pause.");
+      setVendorPaused(next);
+      setMessage(`Vendor pause ${next ? "enabled" : "disabled"}.`);
+    } catch (error) { setMessage(error?.message || "Unable to update vendor pause."); }
+    finally { setVendorPauseSaving(false); }
+  };
 
   const updateProfile = (field, value) => {
     setProfile((current) => ({ ...current, [field]: value }));
@@ -476,6 +498,16 @@ export default function TenantSettings({ currentUser = null }) {
       </div>
 
       {message ? <div className="billing-alert">{message}</div> : null}
+
+      <section className="tenant-settings-card tenant-settings-card-wide">
+        <div className="tenant-settings-section-title">Vendor availability</div>
+        <div className="tenant-settings-inline">
+          <span className="tenant-settings-muted">Global vendor pause immediately reports unavailable and is audit logged.</span>
+          <button type="button" className={`billing-button${vendorPaused ? " is-primary" : ""}`} onClick={toggleVendorPause} disabled={vendorPauseSaving}>
+            {vendorPauseSaving ? "Saving" : vendorPaused ? "Resume vendors" : "Pause vendors"}
+          </button>
+        </div>
+      </section>
 
       <div className="tenant-settings-grid">
         <section className="tenant-settings-card">
