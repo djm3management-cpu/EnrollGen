@@ -11,6 +11,11 @@ export const AVAILABILITY_FUNCTIONS_BASE_URL =
 
 export const KNOWN_AGENT_ID_MAP = new Map([
   ["markendres", "mark_endres"],
+  // Production Clerk user ids, normalized. Keep these as a fallback for
+  // accounts whose tenant_agents row has not been linked to Clerk yet.
+  ["user3gfflgge5hzz5j9zmxyovcpf3g", "mark_endres"],
+  ["user3gffufxzkbxcjvde5uu8zqu2tb6", "mike_shiomos"],
+  ["user3gffhxnknpfrashpqafkcbfge6m", "dylan_maria"],
   ["mikeshiomos", "mike_shiomos"],
   ["michaelshiomos", "mike_shiomos"],
   ["dylanmaria", "dylan_maria"],
@@ -81,6 +86,9 @@ export function resolveAgentId(user, agents = []) {
     user.unsafeMetadata?.availability_agent_id,
     user.unsafeMetadata?.agentId,
     user.unsafeMetadata?.agent_id,
+    // Use the known Clerk identity before username/full-name fallbacks. A
+    // raw Clerk id is not a valid agent_availability.agent_id.
+    mapKnownAgentId(user.id),
     user.publicMetadata?.agentName,
     user.unsafeMetadata?.agentName,
     user.username,
