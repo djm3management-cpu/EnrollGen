@@ -193,10 +193,14 @@ export function buildPlanNotesFromLookup(plan) {
   };
 }
 
-export async function searchManualPlans({ term, mode = "name", zipOrState = "", limit = 8 } = {}) {
+export async function searchManualPlans({ term, mode = "auto", zipOrState = "", limit = 8 } = {}) {
   const cleanTerm = String(term || "").trim();
   if (cleanTerm.length < 2) {
     return { plans: [], source: "empty", area: resolveLookupArea(zipOrState) };
+  }
+
+  if (mode === "auto") {
+    mode = /^(?:[A-Za-z]\s*)?\d[\d\s-]*$/.test(cleanTerm) ? "number" : "name";
   }
 
   const area = resolveLookupArea(zipOrState);

@@ -43,6 +43,7 @@ function getHighestPriorityId(
 }
 
 export function LeftRailProvider({ children }) {
+  const [promptTarget, setPromptTarget] = useState(null);
   const [itemsById, setItemsById] = useState({});
   const [expandedId, setExpandedId] = useState(null);
   const [manuallyMinimizedIds, setManuallyMinimizedIds] = useState(() => new Set());
@@ -242,6 +243,8 @@ export function LeftRailProvider({ children }) {
 
   const value = useMemo(
     () => ({
+      promptTarget,
+      setPromptTarget,
       items: sortedItems,
       itemsById,
       expandedItem,
@@ -256,6 +259,7 @@ export function LeftRailProvider({ children }) {
       hasLeftRailItem,
     }),
     [
+      promptTarget,
       sortedItems,
       itemsById,
       expandedItem,

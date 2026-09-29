@@ -1,6 +1,6 @@
 // Source of truth: docs/MULTIPLAN_2113SMS_SalesScript2027_M draft 09.28.2026.docx.
 // Spoken wording follows the supplied draft; notes retain only operational requirements.
-export const MA_SCRIPT_REVISION = "sms-2027-2026-09-28";
+export const MA_SCRIPT_REVISION = "sms-2027-2026-09-29";
 const say = (text) => ({ type: "text", text });
 const cue = (text) => ({ type: "cue", text });
 const note = (text) => ({ type: "note", text });
@@ -15,14 +15,9 @@ const location = say("In order to provide you information about the plans availa
 export const MA_CLOSING = `“It’s been a pleasure speaking with you today. If you have any family members or friends that would benefit by speaking with me, please give them my number and I would be happy to assist them too.”\n\n“Thank you for [calling/choosing] [Carrier name] and have a great day!”`;
 
 function tpmo(id, callback = false) {
-  return choice(id, "Organizations represented in the service area", [
-    option("some", "Not all organizations", [say(callback
+  return { id, ...say(callback
       ? "We do not offer every plan available in your area. Currently we represent [insert number of organizations] organizations which offer [insert number of plans] products in your area. Please contact Medicare.gov, 1-800-MEDICARE."
-      : "We do not offer every plan available in your area. Currently we represent [insert number of organizations] organizations which offer [insert number of plans] products in your area. Please contact Medicare.gov, 1-800-MEDICARE, to get information on all of your options.")]),
-    option("all", "All organizations", [say(callback
-      ? "Currently we represent [insert number of organizations] organizations which offer [insert number of plans] products in your area. You can always contact Medicare.gov, 1800–MEDICARE."
-      : "Currently we represent [insert number of organizations] organizations which offer [insert number of plans] products in your area. You can always contact Medicare.gov, 1800–MEDICARE for help with plan choices.")]),
-  ]);
+      : "We do not offer every plan available in your area. Currently we represent [insert number of organizations] organizations which offer [insert number of plans] products in your area. Please contact Medicare.gov, 1-800-MEDICARE, to get information on all of your options.") };
 }
 
 const representative = [
@@ -152,17 +147,16 @@ const definitions = [
       cue("Confirm a valid PTC or BRC was completed by the beneficiary before calling"),
       say("Hi, may I please speak with [First Name]?"),
       cue("If the beneficiary is unavailable, arrange a callback"),
-      say("Hello, this is [Agent First and Last Name], and I am a Licensed Sales Agent with [Agency Name] on a recorded line. I am calling today in response to your request for Medicare plan information [in your voice mail/through the mail or form on our website]."),
+      say("Hello, this is [Agent First and Last Name], and I am a Licensed Sales Agent with New Gen Health Solutions on a recorded line. I am calling today in response to your request for Medicare plan information [in your voice mail/through the mail or form on our website]."),
       cue("Greet customer"),
       recording,
       location,
     ]),
   ]],
   ["tpmo", "TPMO & Federal Contracting Statement", "tpmoOk", [
-    note("Use the organization and product counts for the caller’s area. Read the selected disclaimer before discussing benefits."),
     tpmo("tpmo"),
-    say("Just so you know who you are speaking with, and how we can help you find a Medicare plan with the benefits you are looking for, let me tell you a little bit about [Agency Name]."),
-    say("[Agency Name] is not a government agency or an insurance company, and I am licensed to sell Medicare plans in the state of [CLIENT STATE]. My goal is to help educate you on your options, we will review what your goals are for coverage and what benefits are most important to you. I may ask a few questions to determine your eligibility you do not have to provide any health information unless it’s used to determine enrollment eligibility. Reviewing plan options with me will not impact your current or future Medicare status nor will you be automatically enrolled into a plan. If we find a plan that you feel better fits your needs and you are ready and eligible to enroll in that plan, I can help you get enrolled into it today, so you can start using your benefits after the application is approved and the plan is effective."),
+    say("Just so you know who you are speaking with, and how we can help you find a Medicare plan with the benefits you are looking for, let me tell you a little bit about New Gen Health Solutions."),
+    say("New Gen Health Solutions is not a government agency or an insurance company, and I am licensed to sell Medicare plans in the state of [CLIENT STATE]. My goal is to help educate you on your options, we will review what your goals are for coverage and what benefits are most important to you. I may ask a few questions to determine your eligibility you do not have to provide any health information unless it’s used to determine enrollment eligibility. Reviewing plan options with me will not impact your current or future Medicare status nor will you be automatically enrolled into a plan. If we find a plan that you feel better fits your needs and you are ready and eligible to enroll in that plan, I can help you get enrolled into it today, so you can start using your benefits after the application is approved and the plan is effective."),
     say("Plans are insured or covered by a Medicare Advantage (HMO, PPO, PFFS) organization with a Medicare contract and/or a Medicare-approved Part D sponsor. Enrollment in the plan depends on the plan’s contract renewal with Medicare."),
   ]],
   ["soa", "Healthcare Decisions & Scope of Appointment", "soaOk", [
@@ -172,7 +166,7 @@ const definitions = [
       option("other", "Someone else", representative),
     ]),
     note("Collect scope of appointment for both inbound and outbound calls. Mention all product types available in the area; discuss only the options agreed to."),
-    say("I work for [Agency Name], and in your area, we have a wide variety of plans such as [Medicare Advantage plans, Medicare Advantage Prescription Drug plans, Stand-alone Prescription Drug plans, Medicare Supplements Insurance Plans, Optional Supplemental Benefits (OSBs), Stand-Alone Vision, Stand-Alone Dental]. Would you like to discuss all of these options or are you only interested in certain ones?"),
+    say("I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as [Medicare Advantage plans, Medicare Advantage Prescription Drug plans, Stand-alone Prescription Drug plans, Medicare Supplements Insurance Plans, Optional Supplemental Benefits (OSBs), Stand-Alone Vision, Stand-Alone Dental]. Would you like to discuss all of these options or are you only interested in certain ones?"),
     choice("scope", "Options the beneficiary agrees to discuss", [option("all", "All available options"), option("selected", "Selected options", [note("Record the agreed product types in the call notes.")]), option("declined", "Declined", [close()])]),
     say("I can give you a brief overview of each of these plans, then you can decide which plan might be best for you based on your needs. Would that be ok?"),
     yesNo("overview", "Overview accepted?", [], [close()]),
@@ -183,7 +177,7 @@ const definitions = [
     say("Before we continue, I have a few qualifying questions to ensure you are eligible for the types of plans available in your area. These questions are optional to answer; however they will help me determine what type of plan may be right for your needs."),
     say("Do you have or will soon have Medicare Parts A and B?"),
     choice("medicare", "Medicare coverage", [
-      option("both", "Parts A & B / soon"),
+      option("both", "A & B"),
       option("one", "Part A or B only", [say("I’m sorry, but right now you don’t qualify for a Medicare health plan. But you may qualify for a Part D plan which only requires Medicare Part A and/or B. Would you like to hear more about part D plans only or other Medicare health plans in your area"), choice("partD", "Plans to discuss", [option("pdp", "Part D plans", [{ type: "restriction", reason: "pdpOnly" }]), option("other", "Other Medicare plans", generalInformation)])]),
       option("none", "No Medicare soon", [say("I’m sorry, but right now you don’t qualify for a Medicare health plan. Would you still like to hear more about the plans available in your area?"), yesNo("learn", "Continue learning about plans?", generalInformation, [say("Please give us a call back approximately three months prior to your Medicare benefits becoming effective."), close()])]),
       option("unknown", "Unknown / declines to answer", generalInformation),
@@ -197,7 +191,7 @@ const definitions = [
     ]),
     say("Can you please provide your permanent home address?"), note("If the caller declines, continue without it."),
     say("Would you like to provide your phone number so we can contact you in the future? This is optional."),
-    say("Does [Agency name] have permission to have a licensed sales agent contact you in the future about plan information and your Medicare enrollment options? Your consent is voluntary and allows us to contact you via text messaging or automatic dialing. You may contact us to change your preferences at any time. Changing your preferences will not affect your eligibility for enrollment or benefits of plans in your area. Data use charges and rates from your cellular carrier may apply"),
+    say("Does New Gen Health Solutions have permission to have a licensed sales agent contact you in the future about plan information and your Medicare enrollment options? Your consent is voluntary and allows us to contact you via text messaging or automatic dialing. You may contact us to change your preferences at any time. Changing your preferences will not affect your eligibility for enrollment or benefits of plans in your area. Data use charges and rates from your cellular carrier may apply"),
     yesNo("futureContact", "Future contact permission?", [note("Confirm the phone number.")], [note("Document the refusal and follow the agency’s DNC procedure.")]),
     say("Would you like to provide an email address that we can use to contact you? This is the fastest and easiest way for us to send you information, but this is optional, and you can opt-out of the messages at any time. The email would be used to contact you as an alternate line of communication with updates to plan details or marketing information."),
     say("Would you like to tell us if you are you a veteran?"),

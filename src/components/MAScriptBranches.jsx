@@ -1,26 +1,52 @@
 import { ScriptBox } from "./SharedUI";
 
 export default function MAScriptBranches({ view, sectionKey, dispatch }) {
+  const isIntro = sectionKey === "recording";
   const rendered = [];
   let scriptParts = [];
   const flushScript = () => {
     if (!scriptParts.length) return;
-    rendered.push(
-      <ScriptBox key={`script-${rendered.length}`} verbatim editable={false}>
-        {scriptParts}
-      </ScriptBox>
-    );
+    if (isIntro) {
+      rendered.push(
+        <div key={`script-${rendered.length}`} className="script-box verbatim">
+          <ul className="ma-script-lines">
+            {scriptParts}
+          </ul>
+        </div>
+      );
+    } else {
+      rendered.push(
+        <ScriptBox key={`script-${rendered.length}`} verbatim editable={false}>
+          {scriptParts}
+        </ScriptBox>
+      );
+    }
     scriptParts = [];
   };
 
   view.items.forEach((node) => {
     if (node.type === "restriction") return;
     if (node.type === "text") {
-      scriptParts.push(<span key={node.key}>{node.text}</span>, "\n\n");
+      scriptParts.push(
+        isIntro
+          ? <li key={node.key} className="ma-script-line">{node.text}</li>
+          : <span key={node.key}>{node.text}</span>
+      );
+      if (!isIntro) scriptParts.push("\n\n");
       return;
     }
     if (node.type === "cue") {
-      scriptParts.push(<em key={node.key} className="ma-script-cue">{node.text}</em>, "\n\n");
+      const isGreet = node.text === "Greet customer";
+      scriptParts.push(
+        isIntro
+          ? (
+            <li key={node.key} className="ma-script-line">
+              <em className={`ma-script-cue${isGreet ? " ma-script-cue--greet" : ""}`}>{node.text}</em>
+            </li>
+          )
+          : <em key={node.key} className="ma-script-cue">{node.text}</em>
+      );
+      if (!isIntro) scriptParts.push("\n\n");
       return;
     }
     flushScript();

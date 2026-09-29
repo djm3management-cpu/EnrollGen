@@ -1,5 +1,5 @@
 import { memo, useRef, useState } from "react";
-import { Loader2, Search, Send, X } from "lucide-react";
+import { Loader2, Send, X } from "lucide-react";
 import { useScript } from "../../context/ScriptContext";
 import {
   buildPlanNotesFromLookup,
@@ -24,7 +24,6 @@ function getPlanResultKey(plan, index) {
 const PlanContextCard = memo(function PlanContextCard() {
   const { state, dispatch } = useScript();
   const notes = state.notes || {};
-  const [lookupMode, setLookupMode] = useState("name");
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupResults, setLookupResults] = useState([]);
   const [lookupMessage, setLookupMessage] = useState("");
@@ -32,14 +31,6 @@ const PlanContextCard = memo(function PlanContextCard() {
   const lookupRunRef = useRef(0);
 
   const manualOverride = Boolean(notes.planManualOverride);
-  const lookupPlaceholder = lookupMode === "name" ? "Plan name" : "H1234-001";
-
-  const handleLookupMode = (nextMode) => {
-    setLookupMode(nextMode);
-    setLookupResults([]);
-    setLookupMessage("");
-  };
-
   const handleLookupSubmit = async (event) => {
     event.preventDefault();
     const term = lookupQuery.trim();
@@ -57,7 +48,7 @@ const PlanContextCard = memo(function PlanContextCard() {
     try {
       const { plans } = await searchManualPlans({
         term,
-        mode: lookupMode,
+        mode: "auto",
         zipOrState: state.tpmoZip || notes.customerState || "",
         limit: LOOKUP_LIMIT,
       });
@@ -94,50 +85,15 @@ const PlanContextCard = memo(function PlanContextCard() {
   };
 
   return (
-    <div className="eg-rail-card">
+    <div className="eg-plan-search">
       <div className="eg-plan-lookup">
-        {manualOverride ? (
-          <div className="eg-plan-lookup__clear-row">
-            <button
-              type="button"
-              className="eg-plan-lookup__clear"
-              onClick={handleClearPlan}
-              aria-label="Clear selected plan"
-              title="Clear selected plan"
-            >
-              <X size={11} />
-              Clear selected plan
-            </button>
-          </div>
-        ) : null}
-        <div className="eg-plan-lookup__mode" role="tablist" aria-label="Plan lookup mode">
-          <button
-            type="button"
-            className={`eg-plan-lookup__mode-btn${lookupMode === "name" ? " is-active" : ""}`}
-            onClick={() => handleLookupMode("name")}
-            aria-pressed={lookupMode === "name"}
-          >
-            <Search size={10} strokeWidth={2.2} aria-hidden="true" />
-            Name
-          </button>
-          <button
-            type="button"
-            className={`eg-plan-lookup__mode-btn${lookupMode === "number" ? " is-active" : ""}`}
-            onClick={() => handleLookupMode("number")}
-            aria-pressed={lookupMode === "number"}
-          >
-            <Search size={10} strokeWidth={2.2} aria-hidden="true" />
-            Plan #
-          </button>
-        </div>
-
         <form className="eg-plan-lookup__form" onSubmit={handleLookupSubmit}>
           <input
             className="eg-plan-lookup__input"
             value={lookupQuery}
             onChange={(event) => setLookupQuery(event.target.value)}
-            placeholder={lookupPlaceholder}
-            aria-label="Manual plan lookup"
+            placeholder="Plan name / #"
+            aria-label="Plan name or number"
           />
           <button
             type="submit"
@@ -152,6 +108,21 @@ const PlanContextCard = memo(function PlanContextCard() {
             )}
           </button>
         </form>
+
+        {manualOverride ? (
+          <div className="eg-plan-lookup__clear-row">
+            <button
+              type="button"
+              className="eg-plan-lookup__clear"
+              onClick={handleClearPlan}
+              aria-label="Clear selected plan"
+              title="Clear selected plan"
+            >
+              <X size={11} />
+              Clear selected plan
+            </button>
+          </div>
+        ) : null}
 
         {lookupMessage ? (
           <div className="eg-plan-lookup__message">{lookupMessage}</div>

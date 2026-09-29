@@ -46,7 +46,8 @@
       "mcp__ghl-mcp__conversations_search-conversation",
       "Bash(npx eslint *)",
       "Bash(timeout 30 bash -c 'until curl -sf http://localhost:5173 >/dev/null 2>&1 || curl -sf http://localhost:3000 >/dev/null 2>&1; do sleep 1; done')",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(xargs -I{} echo {})"
     ]
   },
   "enableAllProjectMcpServers": true,

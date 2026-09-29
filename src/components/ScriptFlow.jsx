@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { useLeftRailManager } from "./leftRail/LeftRailManager";
 import { ArrowLeft, ChevronLeft, ChevronRight, MessageSquare, Radio } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import { useAppAuth } from "../context/AuthContext";
@@ -540,6 +541,7 @@ function DeferredComplianceDashboard({
 }
 
 export default function ScriptFlow() {
+  const { promptTarget } = useLeftRailManager();
   const { state, dispatch, activeSection } = useScript();
   const { clearLog, entries } = useCopilotLog();
   const { updateLiveCall, resetLiveCall } = useLiveCall();
@@ -977,7 +979,7 @@ export default function ScriptFlow() {
   }, [dispatch, state.maClosed, state.undoHistory.length]);
 
   const leftPopupStack = (
-    <div className="left-floating-popup-stack">
+    <div className="left-rail-prompt-content">
       <DevotedPopupManager
         callStarted={callStarted}
         transcript={transcript}
@@ -992,8 +994,8 @@ export default function ScriptFlow() {
 
   return (
     <>
-    {typeof document !== "undefined"
-      ? createPortal(leftPopupStack, document.body)
+    {promptTarget
+      ? createPortal(leftPopupStack, promptTarget)
       : null}
     <motion.div
       className="flow"
@@ -1060,15 +1062,17 @@ export default function ScriptFlow() {
         <section
           className="script-start-call-gate script-start-call-gate--manual"
         >
-          <div className="ma-script-options" role="group" aria-label="Call direction">
-            {["inbound", "outbound"].map((direction) => (
-              <button key={direction} type="button"
-                className={`script-start-call-button ma-script-option${state.callDirection === direction ? " is-active" : ""}`}
-                aria-pressed={state.callDirection === direction}
-                onClick={() => dispatch({ type: "SET_MA_DIRECTION", value: direction })}>
-                {state.callDirection === direction ? "✓ " : ""}{direction === "inbound" ? "Inbound" : "Outbound"}
-              </button>
-            ))}
+          <div className="ma-script-direction-wrap">
+            <select
+              className="ma-script-direction-select"
+              aria-label="Call direction"
+              value={state.callDirection}
+              onChange={(e) => dispatch({ type: "SET_MA_DIRECTION", value: e.target.value })}
+            >
+              <option value="inbound">Inbound</option>
+              <option value="outbound">Outbound</option>
+            </select>
+            <span className="ma-script-direction-caret" aria-hidden="true">▾</span>
           </div>
           <button
             type="button"

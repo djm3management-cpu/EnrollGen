@@ -31,6 +31,7 @@ import { useScript } from "../../context/ScriptContext";
 import SEPFinder from "../SEPFinder";
 import ClientInfoCard from "./ClientInfoCard";
 import PlanContextCard from "./PlanContextCard";
+import { useLeftRailManager } from "./LeftRailManager";
 import SNPRoutingWidget from "./SNPRoutingWidget";
 
 const OPENER_SCRIPT =
@@ -289,6 +290,7 @@ function StateInfoCard({
 
 export default function SEPQualifier({ onMinimize }) {
   const { state: scriptState, dispatch: scriptDispatch } = useScript();
+  const { setPromptTarget } = useLeftRailManager();
   const [stageIndex, setStageIndex] = useState(0);
   const [hasPartAandB, setHasPartAandB] = useState(null);
   const [residentState, setResidentState] = useState("");
@@ -434,18 +436,22 @@ export default function SEPQualifier({ onMinimize }) {
         {stageIndex === 0 ? (
           <div className="sep-qualifier-stage sep-qualifier-stage--default">
             <div className="left-rail-tools">
-              <div className="left-rail-zip-cell">
-                <input
-                  id="left-rail-shared-zip"
-                  className={`left-rail-zip-input${sharedZipInvalid ? " is-invalid" : ""}`}
-                  inputMode="numeric"
-                  maxLength={5}
-                  placeholder="Enter ZIP"
-                  value={sharedZip}
-                  onChange={handleSharedZipChange}
-                  autoComplete="postal-code"
-                  aria-label="Enter ZIP"
-                />
+              <div className="left-rail-search-row">
+                <div className="left-rail-zip-cell">
+                  <input
+                    id="left-rail-shared-zip"
+                    className={`left-rail-zip-input${sharedZipInvalid ? " is-invalid" : ""}`}
+                    inputMode="numeric"
+                    maxLength={5}
+                    placeholder="Enter ZIP"
+                    value={sharedZip}
+                    onChange={handleSharedZipChange}
+                    autoComplete="postal-code"
+                    aria-label="Enter ZIP"
+                  />
+                </div>
+
+                <PlanContextCard />
               </div>
 
               <div className="left-rail-tool-row" role="tablist" aria-label="Left rail tools">
@@ -519,7 +525,10 @@ export default function SEPQualifier({ onMinimize }) {
 
             <div className="left-rail-context-stack">
               <ClientInfoCard countyLabel={countyLabel} />
-              <PlanContextCard />
+              <section className="left-rail-guidance" aria-label="Plan & Product Guidance">
+                <div className="left-rail-zip-label">Plan &amp; Product Guidance</div>
+                <div className="left-rail-prompt-stack" ref={setPromptTarget} />
+              </section>
             </div>
 
           </div>
