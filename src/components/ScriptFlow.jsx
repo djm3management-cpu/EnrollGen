@@ -1,6 +1,5 @@
 import {
   lazy,
-  Fragment,
   Suspense,
   useEffect,
   useMemo,
@@ -46,7 +45,6 @@ import CenterTimerBar from "./CenterTimerBar";
 import ProgressDots from "./ProgressDots";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
-import SectionSNP from "./SectionSNP";
 import SectionWrapUp from "./SectionWrapUp";
 import ScriptSection from "./ScriptSection";
 import ScriptPrompter from "./ScriptPrompter";
@@ -608,6 +606,7 @@ export default function ScriptFlow() {
   const [transcript, setTranscript] = useState("");
   const [mergedTranscriptEntries, setMergedTranscriptEntries] = useState([]);
   const [isListening, setIsListening] = useState(false);
+  const [customerAudioSharing, setCustomerAudioSharing] = useState(false);
   const [coachingLoading, setCoachingLoading] = useState(false);
   const copilotHandlersRef = useRef({});
   const supportsRecognition = useMemo(
@@ -969,13 +968,13 @@ export default function ScriptFlow() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  const canGoBack = state.undoHistory.length > 0;
+  const canGoBack = state.maClosed || state.undoHistory.length > 0;
   const handleGoBack = useCallback(() => {
-    if (!state.undoHistory.length) {
+    if (!state.maClosed && !state.undoHistory.length) {
       return;
     }
     dispatch({ type: "UNDO_LAST_GATE" });
-  }, [dispatch, state.undoHistory.length]);
+  }, [dispatch, state.maClosed, state.undoHistory.length]);
 
   const leftPopupStack = (
     <div className="left-floating-popup-stack">
@@ -1030,6 +1029,12 @@ export default function ScriptFlow() {
 
       <CenterTimerBar
         agentActive={isListening}
+        onShareAudio={() => {
+          const shareAudio = copilotHandlersRef.current?.shareCustomerAudio;
+          if (shareAudio) void shareAudio();
+        }}
+        audioSharing={customerAudioSharing}
+        audioShareAvailable={callStarted}
       />
 
       {/* ── AI Co-Pilot, passes transcript up via callback ── */}
@@ -1040,6 +1045,7 @@ export default function ScriptFlow() {
         onListeningChange={setIsListening}
         logComplianceFlag={session.logComplianceFlag}
         controlsRef={copilotHandlersRef}
+        onCustomerAudioChange={setCustomerAudioSharing}
         onCoachingLoadingChange={setCoachingLoading}
       />
 
@@ -1054,6 +1060,16 @@ export default function ScriptFlow() {
         <section
           className="script-start-call-gate script-start-call-gate--manual"
         >
+          <div className="ma-script-options" role="group" aria-label="Call direction">
+            {["inbound", "outbound"].map((direction) => (
+              <button key={direction} type="button"
+                className={`script-start-call-button ma-script-option${state.callDirection === direction ? " is-active" : ""}`}
+                aria-pressed={state.callDirection === direction}
+                onClick={() => dispatch({ type: "SET_MA_DIRECTION", value: direction })}>
+                {state.callDirection === direction ? "✓ " : ""}{direction === "inbound" ? "Inbound" : "Outbound"}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             className="script-start-call-button"
@@ -1100,15 +1116,6 @@ export default function ScriptFlow() {
               <ScriptSection section={section} />
             </CollapsibleSection>
           );
-
-          if (section.gate_field === "tpmoOk") {
-            return (
-              <Fragment key={section.key}>
-                {rendered}
-                <SectionSNP />
-              </Fragment>
-            );
-          }
 
           return rendered;
         })}

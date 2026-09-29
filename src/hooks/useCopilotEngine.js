@@ -1,3 +1,4 @@
+import { getMASelectedKnowledge, getMASelectedScriptText } from "../lib/maScriptFlow.js";
 import { coachingFormat } from "../lib/llm/schemas/coaching.js";
 import { buildCachedPrompt } from "../lib/llm/prompts.js";
 import { useRef, useEffect, useCallback, useMemo } from "react";
@@ -230,7 +231,7 @@ function buildTemplateSectionLookup(sections) {
   );
 }
 
-function buildScriptTemplatePromptBlock(sections) {
+function buildScriptTemplatePromptBlock(sections, state) {
   if (!sections?.length) {
     return "";
   }
@@ -248,14 +249,14 @@ function buildScriptTemplatePromptBlock(sections) {
       return `SECTION ${section.section_number}: ${section.title}${flags ? ` (${flags})` : ""}
 Gate field: ${section.gate_field || "none"}
 Script body:
-${String(section.body || "").trim() || "[No script body]"}`;
+${section.nodes ? getMASelectedScriptText(section, state) : String(section.body || "").trim() || "[No script body]"}`;
     })
     .join("\n\n");
 
   return `════════════════════════════════════════════════════════
 TENANT SCRIPT TEMPLATE, AUTHORITATIVE CURRENT SCRIPT
 ════════════════════════════════════════════════════════
-Use these section titles and script bodies when coaching. If this differs from older hardcoded descriptions, this tenant script wins.
+Use these section titles and selected script paths when coaching. If this differs from older hardcoded descriptions or retrieved script requirements, this script wins. Unanswered choices are pending; do not require hidden alternative paths or infer completion from a button click.
 
 ${rows}
 `;
@@ -703,13 +704,13 @@ export function useCopilotEngine({
     activeTemplateSection?.title || SECTION_LABELS[activeSection] || `Section ${activeSection}`;
   const currentKnowledgeStep = SECTION_LABELS[activeSection] || currentStep;
   const scriptTemplateBlock = useMemo(
-    () => buildScriptTemplatePromptBlock(templateSections),
-    [templateSections]
+    () => buildScriptTemplatePromptBlock(templateSections, state),
+    [templateSections, state]
   );
   const { entries: dbComplianceEntries } = useKnowledge("compliance_ma");
   const complianceKnowledge = useMemo(
-    () => mergeStructuredKnowledgeMap(COMPLIANCE_KNOWLEDGE, dbComplianceEntries),
-    [dbComplianceEntries]
+    () => ({ ...mergeStructuredKnowledgeMap(COMPLIANCE_KNOWLEDGE, dbComplianceEntries), ...getMASelectedKnowledge(state) }),
+    [dbComplianceEntries, state]
   );
 
   useEffect(() => {

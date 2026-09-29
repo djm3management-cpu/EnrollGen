@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTenantConfig } from "./useTenantConfig";
 import { getDefaultScriptSections } from "../data/defaultScriptTemplates";
 
+import { resolveMASections } from "../data/maScript2027.js";
+
 const templateCache = new Map();
 const MA_GATE_SECTION_NUMBERS = {
   recordingOk: 1,
@@ -72,9 +74,10 @@ export function applyFlowSectionNumbers(sections, flowType) {
 
 function normalizeSections(sections, flowType) {
   const fallback = getDefaultScriptSections(flowType);
-  const source = Array.isArray(sections) && sections.length ? sections : fallback;
+  const source = flowType === "ma" ? resolveMASections(sections) : Array.isArray(sections) && sections.length ? sections : fallback;
   const normalized = [...source]
     .map((section, index) => ({
+      ...section,
       key: section.key || `section_${index + 1}`,
       section_number: Number(section.section_number || index + 1),
       title: section.title || `Section ${index + 1}`,

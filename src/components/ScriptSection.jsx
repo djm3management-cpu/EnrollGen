@@ -1,4 +1,6 @@
 import React from "react";
+import MAScriptBranches from "./MAScriptBranches";
+import { getMAScriptView } from "../lib/maScriptFlow.js";
 import { ShieldCheck } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import {
@@ -41,8 +43,7 @@ function PreEnrollCheck({ state }) {
 function EnrollmentExtras({ state, dispatch, disabled }) {
   const { notes, enrollOk } = state;
   const handleNoEnrollmentWrapUp = () => {
-    dispatch({ type: "SET_NOTE", field: "callOutcome", value: "not_enrolled" });
-    dispatch({ type: "SET_GATE", field: "enrollOk", value: true });
+    dispatch({ type: "CLOSE_MA_SCRIPT", outcome: "not_interested" });
   };
 
   return (
@@ -110,33 +111,6 @@ function EnrollmentExtras({ state, dispatch, disabled }) {
   );
 }
 
-function SobExtras({ state, dispatch, unlocked }) {
-  if (!unlocked) return null;
-
-  return (
-    <div className="part-b-toggle">
-      <button
-        type="button"
-        className={`secondary part-b-premium-trigger${state.partBReduction ? " is-active" : ""}`}
-        aria-pressed={state.partBReduction}
-        onClick={() => dispatch({ type: "TOGGLE_PRODUCT", field: "partBReduction" })}
-      >
-        Part B Premium Reduction Applies
-      </button>
-
-      {state.partBReduction ? (
-        <ScriptBox verbatim editable={false}>
-          {`"This plan includes a Part B premium reduction. There may be a delay - it can take one or more payment cycles to take effect."
-
-"If your Part B premium comes out of Social Security, the reduction will show as an increase in your Social Security payment. If you pay Part B directly, you will receive a credit on your statement."
-
-"Your Part B premium reduction for this plan is [amount], however that may change based on the amount you pay for Part B."`}
-        </ScriptBox>
-      ) : null}
-    </div>
-  );
-}
-
 export default React.memo(function ScriptSection({ section }) {
   const { state, dispatch, activeSection, unlocked } = useScript();
   const sectionNumber = Number(section.section_number);
@@ -145,7 +119,7 @@ export default React.memo(function ScriptSection({ section }) {
   const isUnlocked = sectionNumber === 1 || Boolean(unlocked[unlockKey(sectionNumber)]);
   const gateDone = gateField ? Boolean(state[gateField]) : false;
   const isEnrollment = section.key === "enrollment";
-  const isSob = section.key === "sob";
+  const view = section.nodes ? getMAScriptView(section, state) : null;
 
   return (
     <section className={`card ${isActive ? "active-card" : ""} ${isUnlocked ? "" : "disabled"}`}>
@@ -157,13 +131,12 @@ export default React.memo(function ScriptSection({ section }) {
         ) : null}
       </h2>
 
-      {isUnlocked ? (
+      {isUnlocked && view ? <MAScriptBranches view={view} sectionKey={section.key} dispatch={dispatch} /> : isUnlocked ? (
         <ScriptBox verbatim={section.verbatim !== false} editable={!section.compliance_locked}>
           {section.body || ""}
         </ScriptBox>
       ) : null}
 
-      {isSob ? <SobExtras state={state} dispatch={dispatch} unlocked={isUnlocked} /> : null}
       {isEnrollment ? (
         <EnrollmentExtras state={state} dispatch={dispatch} disabled={!state.sobOk} />
       ) : null}
@@ -171,7 +144,7 @@ export default React.memo(function ScriptSection({ section }) {
       {gateField ? (
         <div className={`section-next-action${isEnrollment ? " section-next-action-wrap" : ""}`}>
           <SectionAdvanceButton
-            disabled={!isUnlocked || gateDone}
+            disabled={!isUnlocked || gateDone || (view && !view.complete)}
             ariaLabel={`Mark ${section.title} complete`}
             title={`Mark ${section.title} complete`}
             onClick={() =>

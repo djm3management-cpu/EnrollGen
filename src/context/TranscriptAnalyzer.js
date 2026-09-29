@@ -32,6 +32,7 @@
 function normalize(text) {
   return text
     .toLowerCase()
+    .replace(/[‐‑‒–—]/g, "-")
     .replace(/['']/g, "'")
     .replace(/[""]/g, '"')
     .replace(/\s+/g, " ")
@@ -420,7 +421,7 @@ const INTENT_MAP = {
       "Agent stated 'we do not offer every plan available in your area'",
     critical: true,
     detect: (t) => {
-      // This is the MOST CRITICAL TPMO line
+      // The supplied 2027 draft has separate all-organization and partial-organization versions.
       const positive = findPhrase(t, [
         "do not offer every plan",
         "don't offer every plan",
@@ -433,6 +434,15 @@ const INTENT_MAP = {
         "we may not offer every",
         "we do not carry every",
       ]);
+
+      const allOrganizations = findPhrase(t, ["currently we represent", "we currently represent"]).found &&
+        findPhrase(t, ["you can always contact medicare", "you can always contact medicare.gov"]).found;
+      if (allOrganizations) {
+        return {
+          detected: true, confidence: 90,
+          evidence: "All-organization TPMO version from the supplied 2027 script detected; verify that it matches the agency’s service-area representation.",
+        };
+      }
 
       // Check for WRONG version: "we DO offer every plan"
       const wrong = findPhrase(t, [
@@ -447,7 +457,7 @@ const INTENT_MAP = {
           detected: false,
           confidence: 0,
           violation: true,
-          evidence: `⚠️ VIOLATION: Agent said "${wrong.match}", this MUST be "we do NOT offer every plan available in your area"`,
+          evidence: `⚠️ VIOLATION: Agent said "${wrong.match}", use the applicable all-organization or partial-organization TPMO version from the supplied script`,
         };
       }
 
@@ -456,7 +466,7 @@ const INTENT_MAP = {
         confidence: positive.found ? 98 : 0,
         evidence: positive.found
           ? `Critical TPMO disclosure stated: "${positive.match}"`
-          : "Agent has NOT stated 'we do not offer every plan', this is the most critical TPMO line",
+          : "Neither version of the supplied 2027 TPMO introduction has been detected",
       };
     },
   },
@@ -509,7 +519,7 @@ const INTENT_MAP = {
   tpmo_medicare_gov_referral: {
     section: "Required Disclosures",
     description:
-      "Agent referred beneficiary to Medicare.gov, 1-800-MEDICARE, or SHIP",
+      "Agent referred beneficiary to Medicare.gov and 1-800-MEDICARE",
     critical: true,
     detect: (t) => {
       const groups = [
@@ -523,14 +533,9 @@ const INTENT_MAP = {
           "1-800-medicare",
           "1 800 medicare",
           "1800 medicare",
+          "1800-medicare",
           "800 medicare",
           "call medicare",
-        ],
-        [
-          "ship",
-          "state health insurance",
-          "state health program",
-          "health insurance assistance",
         ],
       ];
 
@@ -553,7 +558,7 @@ const INTENT_MAP = {
             result.detected[0]
           } but should also reference ${
             result.count === 0
-              ? "Medicare.gov, 1-800-MEDICARE, and SHIP"
+              ? "Medicare.gov and 1-800-MEDICARE"
               : "additional resources"
           }`,
         };
@@ -562,7 +567,7 @@ const INTENT_MAP = {
         detected: false,
         confidence: 0,
         evidence:
-          "Agent did not refer to Medicare.gov, 1-800-MEDICARE, or SHIP, all three are legally required",
+          "Agent has not provided the Medicare.gov and 1-800-MEDICARE referral from the supplied 2027 script",
       };
     },
   },

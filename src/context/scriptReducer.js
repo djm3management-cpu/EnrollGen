@@ -1,3 +1,6 @@
+import { changeMAAnswer, getMAScriptView } from "../lib/maScriptFlow.js";
+import { MA_SCRIPT_SECTIONS } from "../data/maScript2027.js";
+
 /* =====================================================
    SCRIPT FLOW REDUCER
    Centralizes all enrollment flow state in one place.
@@ -71,6 +74,8 @@ export const initialState = {
   // Agent & TPMO fields, auto-filled from localStorage
   agentName: persisted.agentName || "",
   callDirection: "inbound",
+  maAnswers: {},
+  maClosed: false,
   tpmoZip: "",
   tpmoOrgs: persisted.tpmoOrgs || "",
   tpmoPlans: persisted.tpmoPlans || "",
@@ -180,8 +185,27 @@ function persistFields(state) {
 export function scriptReducer(state, action) {
   let next;
   switch (action.type) {
+    case "SET_MA_ANSWER":
+      return changeMAAnswer(state, action.section, action.key, action.value);
+
+    case "SET_MA_DIRECTION":
+      if (state.tpmoStart || !["inbound", "outbound"].includes(action.value)) return state;
+      return { ...state, callDirection: action.value, maAnswers: {} };
+
+    case "CLOSE_MA_SCRIPT":
+      return {
+        ...state,
+        maClosed: true,
+        enrollOk: false,
+        notes: { ...state.notes, callOutcome: action.outcome || "not_interested" },
+      };
+
     /* ---- Simple boolean gates ---- */
     case "SET_GATE": {
+      const scriptSection = MA_SCRIPT_SECTIONS.find((section) => section.gate_field === action.field);
+      if (action.value === true && scriptSection &&
+          (state.maClosed || getActiveSection(state) !== scriptSection.section_number ||
+           !getMAScriptView(scriptSection, state).complete)) return state;
       const prevValue = state[action.field];
       const undoEntry = {
         field: action.field,
@@ -192,6 +216,7 @@ export function scriptReducer(state, action) {
       next = {
         ...state,
         [action.field]: action.value,
+        ...(action.field === "enrollOk" && action.value ? { notes: { ...state.notes, callOutcome: "enrolled" } } : {}),
         undoHistory: [...state.undoHistory, undoEntry],
       };
 
@@ -349,6 +374,7 @@ export function scriptReducer(state, action) {
 
     /* ---- Undo last critical gate ---- */
     case "UNDO_LAST_GATE": {
+      if (state.maClosed) return { ...state, maClosed: false };
       if (state.undoHistory.length === 0) return state;
       const lastEntry = state.undoHistory[state.undoHistory.length - 1];
       return {
@@ -380,10 +406,9 @@ function gateToSection(field) {
 
 /* ---- Derived state helpers ---- */
 export function getActiveSection(state) {
+  if (state.maClosed) return 8;
   if (!state.recordingOk) return 1;
   if (!state.tpmoOk) return 2;
-  // SNP section shows between TPMO and SOA when SNP type is selected but not confirmed
-  if (state.snpType && !state.snpOk) return 2.5;
   if (!state.soaOk) return 3;
   if (!state.qualOk) return 4;
   if (!state.neadsOk) return 5;
@@ -397,12 +422,12 @@ export function getSectionUnlocked(state) {
     s1: true,
     s2: state.recordingOk,
     s2_5: state.tpmoOk,
-    s3: state.tpmoOk && (!state.snpType || state.snpOk),
+    s3: state.tpmoOk,
     s4: state.soaOk,
     s5: state.qualOk,
     s6: state.neadsOk,
     s7: state.sobOk,
-    s8: state.enrollOk,
+    s8: state.enrollOk || state.maClosed,
   };
 }
 

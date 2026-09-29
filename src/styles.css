@@ -18006,3 +18006,102 @@ body[data-bg-mode="classic"] .viewport-bg {
 .compose-gif-grid img { width: 100%; height: 100px; object-fit: contain; }
 .compose-gif-preview { display: flex; gap: 12px; align-items: center; padding: 10px; font-size: 11px; }
 .compose-gif-preview img { max-width: 120px; max-height: 100px; }
+
+/* SMS 2027 MA paths: reuse the script terminal palette and secondary buttons. */
+.script-start-call-gate--manual {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ma-script-branches {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ma-script-choice {
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+}
+
+.ma-script-choice legend,
+.ma-script-instruction {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.ma-script-choice legend {
+  margin-bottom: 8px;
+}
+
+.ma-script-instruction {
+  margin: 0;
+}
+
+.ma-script-cue {
+  display: block;
+  color: var(--script-term-cyan, #69a7c8);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ma-script-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Direction and branch choices share START’s existing button treatment. */
+.ma-script-options .script-start-call-button {
+  min-width: 132px !important;
+  margin: 0;
+  white-space: normal;
+}
+
+.ma-script-option:focus-visible {
+  outline: 2px solid var(--script-term-amber, #d98b45);
+  outline-offset: 3px;
+}
+
+.eg-audio-meter-bar {
+  position: relative;
+}
+
+.eg-audio-share-button {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--script-term-border, var(--eg-surface-3));
+  border-radius: 0;
+  background: var(--script-term-bg, var(--eg-base));
+  color: var(--script-term-amber, #d98b45);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.eg-audio-share-button:hover:not(:disabled),
+.eg-audio-share-button.is-active {
+  border-color: var(--script-term-green, #33cc66);
+  background: #053d17;
+  color: var(--script-term-green, #33cc66);
+}
+
+.eg-audio-share-button:disabled {
+  cursor: default;
+  opacity: 0.72;
+}

@@ -20,6 +20,7 @@ import {
 } from "../hooks/useSessionTracker";
 import { ScriptBox, LockText, SectionToast } from "./SharedUI";
 import ComplianceReviewModal from "./callDetail/ComplianceReviewModal";
+import { MA_CLOSING } from "../data/maScript2027.js";
 
 function digitsOnly(value) {
   return String(value || "").replace(/\D/g, "");
@@ -63,7 +64,8 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
     webhookStatus: "idle",
   });
   const [showComplianceReview, setShowComplianceReview] = useState(false);
-  const { enrollOk, notes } = state;
+  const { notes } = state;
+  const wrapUpReady = Boolean(state.enrollOk || state.maClosed);
   const isActive = activeSection === 8;
   const callOutcome = notes.callOutcome || "enrolled";
   const isEnrolled = callOutcome === "enrolled" || callOutcome === "enrolled_pending_verification";
@@ -220,12 +222,10 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
       <SectionToast sectionNum={8} timestamps={state.sectionTimestamps} />
       <h2>8) Wrap-Up</h2>
 
-      {unlocked.s8 && isEnrolled && (
-        <ScriptBox verbatim>
-          {scriptBody || `"Great news, your Medicare enrollment is all set."
-
-Call closing: "It's been a pleasure speaking with you today. If you have any family members or friends that would benefit by speaking with me, please give them my number and I would be happy to assist them too."
-End the call: "Thank you for [calling/choosing] [Carrier name] and have a great day!"`}
+      {unlocked.s8 && (
+        <ScriptBox verbatim editable={false}>
+          {state.enrollOk && isEnrolled ? "Acknowledge submission to the carrier and provide the application confirmation number.\n\n" : ""}
+          {scriptBody || MA_CLOSING}
         </ScriptBox>
       )}
 
@@ -234,7 +234,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Customer First Name
             <input
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.customerFirstName}
               onChange={(e) => updateNote("customerFirstName", e.target.value)}
               placeholder="First name"
@@ -245,7 +245,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Customer Last Name
             <input
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.customerLastName}
               onChange={(e) => updateNote("customerLastName", e.target.value)}
               placeholder="Last name"
@@ -257,7 +257,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
             Phone
             <input
               type="tel"
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.customerPhone}
               onChange={(e) => updateNote("customerPhone", formatPhoneInput(e.target.value))}
               placeholder="(000) 000-0000"
@@ -268,7 +268,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Call Outcome
             <select
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={callOutcome}
               onChange={(e) => updateNote("callOutcome", e.target.value)}
               required
@@ -298,7 +298,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
             Email
             <input
               type="email"
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.customerEmail}
               onChange={(e) => updateNote("customerEmail", e.target.value)}
               placeholder="name@example.com"
@@ -309,7 +309,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
             Date of Birth
             <input
               type="date"
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.customerDob}
               onChange={(e) => updateNote("customerDob", e.target.value)}
               required={isEnrolled}
@@ -319,7 +319,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             State
             <select
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.customerState}
               onChange={(e) => updateNote("customerState", e.target.value)}
               required={isEnrolled}
@@ -334,7 +334,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             MBI / Member ID
             <input
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.customerMbi}
               onChange={(e) => updateNote("customerMbi", formatMbiInput(e.target.value))}
               placeholder="XXXX-XXX-XXXX"
@@ -347,7 +347,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
             {yesNoControl({
               name: "medicaid",
               value: notes.medicaid,
-              disabled: !enrollOk || isSaving,
+              disabled: !wrapUpReady || isSaving,
               onChange: (value) => updateNote("medicaid", value),
             })}
           </label>
@@ -356,7 +356,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
             <label>
               Medicaid Number
               <input
-                disabled={!enrollOk || isSaving}
+                disabled={!wrapUpReady || isSaving}
                 value={notes.medicaidNumber}
                 onChange={(e) => updateNote("medicaidNumber", e.target.value)}
                 placeholder="Medicaid ID"
@@ -367,7 +367,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Previous Carrier
             <input
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.previousCarrier}
               onChange={(e) => updateNote("previousCarrier", e.target.value)}
               placeholder="Previous carrier"
@@ -378,7 +378,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             New Carrier
             <select
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.carrierName}
               onChange={(e) => updateNote("carrierName", e.target.value)}
               required={isEnrolled}
@@ -393,7 +393,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Plan Name
             <input
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.planName}
               onChange={(e) => updateNote("planName", e.target.value)}
               placeholder="Plan name"
@@ -403,7 +403,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Plan ID
             <input
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.planId}
               onChange={(e) => updateNote("planId", e.target.value)}
               placeholder="HMO/PPO ID"
@@ -413,7 +413,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Plan / Enrollment Code
             <input
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.enrollmentCode}
               onChange={(e) => updateNote("enrollmentCode", e.target.value)}
               placeholder="Enrollment code"
@@ -424,7 +424,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Monthly Premium
             <input
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.premium}
               onChange={(e) => updateNote("premium", e.target.value)}
               onBlur={(e) => updateNote("premium", formatPremiumInput(e.target.value))}
@@ -436,7 +436,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Sunfire Code
             <input
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.sunfireCode}
               onChange={(e) => updateNote("sunfireCode", e.target.value)}
               placeholder="Sunfire code"
@@ -447,7 +447,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
             Effective Date
             <input
               type="date"
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.effectiveDate}
               onChange={(e) => handleEffectiveDateChange(e.target.value)}
               required={isEnrolled}
@@ -458,7 +458,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
             60 Day Follow-Up Date
             <input
               type="date"
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.sixtyDayDate}
               onChange={(e) => updateNote("sixtyDayDate", e.target.value)}
               required={isEnrolled}
@@ -468,7 +468,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Confirmation Number
             <input
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.confirmation}
               onChange={(e) => updateNote("confirmation", e.target.value)}
               placeholder="Confirmation / reference #"
@@ -480,7 +480,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
             {yesNoControl({
               name: "sep",
               value: notes.sep,
-              disabled: !enrollOk || isSaving,
+              disabled: !wrapUpReady || isSaving,
               onChange: (value) => updateNote("sep", value),
             })}
           </label>
@@ -488,7 +488,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Agency
             <select
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.agency}
               onChange={(e) => updateNote("agency", e.target.value)}
               required={isEnrolled}
@@ -503,7 +503,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
           <label>
             Writing Agent
             <select
-              disabled={!enrollOk || isSaving}
+              disabled={!wrapUpReady || isSaving}
               value={notes.writingAgent}
               onChange={(e) => updateNote("writingAgent", e.target.value)}
               required={isEnrolled}
@@ -520,7 +520,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
             {yesNoControl({
               name: "hra",
               value: notes.hra,
-              disabled: !enrollOk || isSaving,
+              disabled: !wrapUpReady || isSaving,
               onChange: (value) => updateNote("hra", value),
             })}
           </label>
@@ -530,7 +530,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
               HRA Date
               <input
                 type="date"
-                disabled={!enrollOk || isSaving}
+                disabled={!wrapUpReady || isSaving}
                 value={notes.hraDate}
                 onChange={(e) => updateNote("hraDate", e.target.value)}
               />
@@ -542,7 +542,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
       <label>
         Agent Notes (optional)
         <textarea
-          disabled={!enrollOk || isSaving}
+          disabled={!wrapUpReady || isSaving}
           value={notes.agentNotes}
           onChange={(e) => updateNote("agentNotes", e.target.value)}
           placeholder="Disposition notes, callback details, carrier follow-up..."
@@ -550,7 +550,7 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
         />
       </label>
 
-      {enrollOk && (
+      {wrapUpReady && (
         <div className="post-call-save-row">
           <button
             type="button"
@@ -575,14 +575,14 @@ End the call: "Thank you for [calling/choosing] [Carrier name] and have a great 
         </div>
       )}
 
-      {enrollOk && validationError ? (
+      {wrapUpReady && validationError ? (
         <p className="sf-inline-lock">{validationError}</p>
       ) : null}
 
-      {!enrollOk && (
+      {!wrapUpReady && (
         <LockText>Locked until Enrollment is marked submitted.</LockText>
       )}
-      {enrollOk && (
+      {wrapUpReady && (
         <p className="ok">
           Flow complete. Save the call record to persist transcript, outcome, and compliance scoring.
         </p>

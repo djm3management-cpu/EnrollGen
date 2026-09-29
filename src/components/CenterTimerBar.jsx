@@ -1,6 +1,7 @@
 import { memo } from "react";
 import Waveform from "./copilot/Waveform";
 import { useAudioLevels } from "../stores/audioLevelStore";
+import { MonitorUp } from "lucide-react";
 
 function normalizeLevel(value) {
   if (!Number.isFinite(value)) return 0;
@@ -10,6 +11,9 @@ function normalizeLevel(value) {
 const CenterTimerBar = memo(function CenterTimerBar({
   agentActive = false,
   customerActive = false,
+  onShareAudio,
+  audioSharing = false,
+  audioShareAvailable = true,
 }) {
   const { agentLevel, customerLevel, agentPeaks, customerPeaks } = useAudioLevels();
   const safeAgentLevel = normalizeLevel(agentLevel);
@@ -19,6 +23,18 @@ const CenterTimerBar = memo(function CenterTimerBar({
 
   return (
     <div className="eg-timer-bar eg-audio-meter-bar" aria-label="Live audio levels">
+      {onShareAudio ? (
+        <button
+          type="button"
+          className={`eg-audio-share-button${audioSharing ? " is-active" : ""}`}
+          onClick={onShareAudio}
+          disabled={!audioShareAvailable || audioSharing}
+          aria-label={audioSharing ? "Shared tab audio active" : "Share tab audio"}
+          title={audioSharing ? "Shared tab audio active" : "Share tab audio"}
+        >
+          <MonitorUp size={15} aria-hidden="true" />
+        </button>
+      ) : null}
       <div className="eg-audio-meter-row">
         <span className="eg-audio-meter-label">
           Customer

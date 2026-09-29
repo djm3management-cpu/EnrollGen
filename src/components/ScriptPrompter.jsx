@@ -19,6 +19,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
   logComplianceFlag,
   controlsRef,
   onControlsReadyChange,
+  onCustomerAudioChange,
   onCoachingLoadingChange,
   callStarted = true,
 }) {
@@ -72,7 +73,9 @@ const ScriptPrompter = memo(function ScriptPrompter({
   } = useMergedTranscript({
     agentTranscriptRows: useInboundTranscripts ? inbound.agentRows : speech.transcriptRows,
     customerTranscript: useInboundTranscripts
-      ? inbound.customerTranscript
+      ? customerAudio.isCapturing
+        ? [...inbound.customerTranscript, ...customerAudio.customerTranscript]
+        : inbound.customerTranscript
       : customerAudio.customerTranscript,
     isCustomerCapturing: inboundActive ? inboundActive : customerAudio.isCapturing,
   });
@@ -178,6 +181,10 @@ const ScriptPrompter = memo(function ScriptPrompter({
     if (onListeningChange) onListeningChange(speech.listening);
   }, [speech.listening, onListeningChange]);
 
+  useEffect(() => {
+    onCustomerAudioChange?.(customerAudio.isCapturing);
+  }, [customerAudio.isCapturing, onCustomerAudioChange]);
+
   // Forward coaching loading state
   useEffect(() => {
     if (onCoachingLoadingChange) onCoachingLoadingChange(copilot.coachingLoading);
@@ -210,7 +217,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
     return customerCapturePromiseRef.current;
   }, [customerAudio, customerAudioEnabled, copilot]);
 
-  const handleStart = useCallback(async (options = {}) => {
+  const handleStart = useCallback(async () => {
     // Inbound Twilio calls wire their own audio (remote stream + mic)
     // in the accept effect above; never open the tab picker for them.
     if (softphoneActive) {
@@ -221,11 +228,8 @@ const ScriptPrompter = memo(function ScriptPrompter({
       return;
     }
     transcriptSourceRef.current = "browser";
-    if (!options?.skipCustomerAudio) {
-      await startCustomerAudio();
-    }
     speech.startListening();
-  }, [speech, startCustomerAudio, softphoneActive, outboundSoftphoneActive, remoteStream, customerAudio]);
+  }, [speech, softphoneActive, outboundSoftphoneActive, remoteStream, customerAudio]);
 
   const handleStop = useCallback(() => {
     speech.stopListening();
@@ -247,13 +251,15 @@ const ScriptPrompter = memo(function ScriptPrompter({
       controlsRef.current = {
         handleStart,
         handleStop,
+        shareCustomerAudio: startCustomerAudio,
+        customerAudioActive: customerAudio.isCapturing,
         clearAll,
         requestCoaching: () => copilot.requestCoaching({ manual: true }),
         supportsRecognition: speech.supportsRecognition,
       };
       onControlsReadyChange?.(true);
     }
-  });
+  }, [controlsRef, handleStart, handleStop, startCustomerAudio, customerAudio.isCapturing, clearAll, copilot, speech.supportsRecognition, onControlsReadyChange]);
 
   useEffect(() => {
     return () => onControlsReadyChange?.(false);

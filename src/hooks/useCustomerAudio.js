@@ -206,7 +206,8 @@ export function useCustomerAudio() {
       keepAlive.muted = true;
       keepAlive.playsInline = true;
       keepAlive.play().catch(() => {});
-      keepAliveAudioRef.current = keepAlive;
+      // Attach only after the candidate stream has been validated below.
+      stream.captureKeepAlive = keepAlive;
       console.info(
         "[customerAudio] remote audio track ready (transcription not connected yet):",
         stream.getAudioTracks().map((track) => track.readyState).join(",")
@@ -224,21 +225,26 @@ export function useCustomerAudio() {
       }
     }
 
-    mediaStreamRef.current = stream;
-
+    const releaseCandidate = () => {
+      stream.captureKeepAlive?.pause();
+      if (stream.captureKeepAlive) stream.captureKeepAlive.srcObject = null;
+      stream.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch {
+          /* ignore */
+        }
+      });
+    };
     const audioTracks = stream.getAudioTracks();
     if (audioTracks.length === 0) {
       const msg = options.mediaStream
         ? "The call audio stream has no audio track yet."
         : "No audio track in the shared tab. Make sure to check 'Share tab audio' when selecting.";
       setError(msg);
-      cleanup();
+      releaseCandidate();
       throw new Error(msg);
     }
-
-    audioTracks[0].onended = () => {
-      cleanup();
-    };
 
     let deepgramToken;
     try {
@@ -246,9 +252,20 @@ export function useCustomerAudio() {
     } catch (err) {
       const msg = err.message || "Deepgram token service is not configured.";
       setError(msg);
-      cleanup();
+      releaseCandidate();
       throw new Error(msg);
     }
+
+    // Keep the working source alive while the picker is open or cancelled.
+    // Swap only after the replacement has audio and authentication succeeded.
+    cleanup();
+    mediaStreamRef.current = stream;
+    keepAliveAudioRef.current = stream.captureKeepAlive || null;
+    const onEnded = () => {
+      if (mediaStreamRef.current === stream) cleanup();
+    };
+    audioTracks[0].onended = onEnded;
+    stream.getVideoTracks?.().forEach((track) => { track.onended = onEnded; });
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     audioContextRef.current = audioContext;

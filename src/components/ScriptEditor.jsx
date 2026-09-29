@@ -5,6 +5,7 @@ import { useTenantConfig } from "../hooks/useTenantConfig";
 import { applyFlowSectionNumbers } from "../hooks/useScriptTemplate";
 import { getDefaultScriptSections } from "../data/defaultScriptTemplates";
 import "./ScriptEditor.css";
+import { resolveMASections } from "../data/maScript2027.js";
 
 const FLOWS = [
   ["ma", "MA"],
@@ -25,9 +26,10 @@ function isAdminUser(user) {
 }
 
 function normalizeSections(sections, flow) {
-  const source = Array.isArray(sections) && sections.length ? sections : getDefaultScriptSections(flow);
+  const source = flow === "ma" ? resolveMASections(sections) : Array.isArray(sections) && sections.length ? sections : getDefaultScriptSections(flow);
   const normalized = source
     .map((section, index) => ({
+      ...section,
       key: section.key || `section_${index + 1}`,
       section_number: Number(section.section_number || index + 1),
       title: section.title || `Section ${index + 1}`,
@@ -149,7 +151,7 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
   };
 
   const saveTemplate = async () => {
-    if (!tenantId) return;
+    if (!tenantId || flow === "ma") return;
     setSaving(true);
     setMessage("");
     const payloadSections = applyFlowSectionNumbers(
@@ -216,7 +218,7 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
           <button type="button" className="secondary" onClick={loadTemplate} disabled={saving}>
             <RotateCcw size={14} /> Revert to Default
           </button>
-          <button type="button" className="primary" onClick={saveTemplate} disabled={saving || !changedCount}>
+          <button type="button" className="primary" onClick={saveTemplate} disabled={flow === "ma" || saving || !changedCount}>
             <Save size={14} /> {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
@@ -237,6 +239,9 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
 
       {message ? <div className="script-editor-message">{message}</div> : null}
 
+      {flow === "ma" ? <div className="script-editor-message">
+        MA uses the September 28, 2026 SMS draft for 2027. This is a read-only preview of all call paths; agents see the wording for their selected path.
+      </div> : null}
       <div className="script-editor-diff">
         {changedCount ? "Unsaved changes pending." : "No pending changes."}
       </div>
@@ -247,19 +252,20 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
             <div className="script-editor-card-head">
               <span>{String(index + 1).padStart(2, "0")}</span>
               <input
+                readOnly={flow === "ma"}
                 value={section.title}
                 onChange={(event) => patchSection(index, { title: event.target.value })}
               />
-              <button type="button" title="Move up" onClick={() => moveSection(index, -1)}>
+              <button type="button" title="Move up" disabled={flow === "ma"} onClick={() => moveSection(index, -1)}>
                 <ArrowUp size={14} />
               </button>
-              <button type="button" title="Move down" onClick={() => moveSection(index, 1)}>
+              <button type="button" title="Move down" disabled={flow === "ma"} onClick={() => moveSection(index, 1)}>
                 <ArrowDown size={14} />
               </button>
               <button
                 type="button"
                 title={section.compliance_locked ? "Compliance-locked sections cannot be deleted" : "Delete section"}
-                disabled={section.compliance_locked}
+                disabled={flow === "ma" || section.compliance_locked}
                 onClick={() => deleteSection(index)}
               >
                 <Trash2 size={14} />
@@ -267,6 +273,7 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
             </div>
 
             <textarea
+              readOnly={flow === "ma"}
               value={section.body}
               onChange={(event) => patchSection(index, { body: event.target.value })}
               rows={8}
@@ -276,6 +283,7 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
               <label>
                 <input
                   type="checkbox"
+                  disabled={flow === "ma"}
                   checked={section.compliance_locked}
                   onChange={(event) =>
                     patchSection(index, { compliance_locked: event.target.checked })
@@ -291,6 +299,7 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
               <label>
                 <input
                   type="checkbox"
+                  disabled={flow === "ma"}
                   checked={section.verbatim}
                   onChange={(event) => patchSection(index, { verbatim: event.target.checked })}
                 />
@@ -300,6 +309,7 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
                 Sort
                 <input
                   type="number"
+                  disabled={flow === "ma"}
                   value={section.sort_order}
                   onChange={(event) =>
                     patchSection(index, { sort_order: Number(event.target.value) || index + 1 })
@@ -311,7 +321,7 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
         ))}
       </div>
 
-      <button type="button" className="script-editor-add" onClick={addSection}>
+      <button type="button" className="script-editor-add" disabled={flow === "ma"} onClick={addSection}>
         <Plus size={14} /> Add Section
       </button>
     </section>
