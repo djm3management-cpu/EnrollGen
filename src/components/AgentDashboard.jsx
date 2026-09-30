@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { buildDashboard, DASHBOARD_RANGES, formatMetric, metricDelta } from '../lib/dashboardMetrics';
-import { CALL_OUTCOME_LABELS, callOutcomeLabel } from '../lib/postCallPipeline';
+import { callOutcomeLabel } from '../lib/postCallPipeline';
+import ParagonCallbackTasks from './ParagonCallbackTasks';
 
 const METRICS = [['calls', 'Calls Today'], ['sales', 'Sales Today'], ['conversion', 'Conversion Rate'], ['duration', 'Avg Call Duration'], ['compliance', 'Compliance Score']];
 const TICKER_LABELS = { calls: 'CALLS', sales: 'SALES', conversion: 'CVR', duration: 'AVG DUR', compliance: 'COMPLIANCE' };
@@ -135,6 +136,7 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
   const rangeLabel = DASHBOARD_RANGES.find(([value]) => value === range)[1];
   const summary = useMemo(() => buildDashboard(data.calls, range, data.updatedAt || new Date()), [data.calls, data.updatedAt, range]);
   return <div className="agent-dashboard" aria-busy={data.loading}>
+    <ParagonCallbackTasks />
     <header className="agent-dash-heading">
       <div className="agent-dash-scope"><h1>Dashboard</h1><label htmlFor="dashboard-scope">VIEW</label>
         <select id="dashboard-scope" value={scope} onChange={event => setScope(event.target.value)} aria-label="Dashboard data scope">

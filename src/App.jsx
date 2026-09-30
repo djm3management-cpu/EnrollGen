@@ -641,6 +641,18 @@ function AppShell({ currentUser = null }) {
 
   // Inbound call accepted: always surface the MA cockpit.
   const inboundActiveCall = inbound?.activeCall || null;
+  const [confirmedParagonCallSid,setConfirmedParagonCallSid] = useState(null);
+  const paragonCallSid = inboundActiveCall?.params?.paragon === 'true'
+    ? inboundActiveCall.params.twilioCallSid : null;
+  const paragonLocked = Boolean(paragonCallSid && confirmedParagonCallSid !== paragonCallSid);
+  useEffect(() => {
+    const onZipStatus = event => {
+      if (event.detail?.callSid !== paragonCallSid) return;
+      setConfirmedParagonCallSid(event.detail.status === 'confirmed' ? paragonCallSid : null);
+    };
+    window.addEventListener('paragon-zip-status',onZipStatus);
+    return () => window.removeEventListener('paragon-zip-status',onZipStatus);
+  },[paragonCallSid]);
   useEffect(() => {
     if (!inboundActiveCall) return;
     syncModePath("ma");
@@ -1191,7 +1203,7 @@ function AppShell({ currentUser = null }) {
           </>
         ) : mode === "ma" ? (
           <ScriptProvider>
-            <LeftRail launcher={sepLauncher} visibleItemIds={visibleLeftRailIds} footer={<LeftRailCompliance />} />
+            <div className="paragon-inert-container" inert={paragonLocked ? '' : undefined}><LeftRail launcher={sepLauncher} visibleItemIds={visibleLeftRailIds} footer={<LeftRailCompliance />} /></div>
 
             {overlayNode}
 
@@ -1199,9 +1211,8 @@ function AppShell({ currentUser = null }) {
               <main className="app-center">
                 <div className="main-script-layout">
                   <div className="main-script-primary">
-                    <LazyPanel>
-                      <ScriptFlow />
-                    </LazyPanel>
+                    {paragonLocked && <div className="billing-alert">Confirm the beneficiary ZIP in the active call panel before using Co-Pilot or plan tools.</div>}
+                    <div className="paragon-inert-container" inert={paragonLocked ? '' : undefined}><LazyPanel><ScriptFlow /></LazyPanel></div>
                     <SessionSummarySlot />
                   </div>
                 </div>

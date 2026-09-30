@@ -1,3 +1,4 @@
+/* global process */
 const REQUIRED_VARS = [
   "PUBLIC_BASE_URL",
   "SUPABASE_URL",
@@ -50,6 +51,8 @@ export const config = {
   dialTimeoutSeconds: Number(process.env.DIAL_TIMEOUT_SECONDS || 20),
   minConnectedSeconds,
   stickyRoutingEnabled: process.env.STICKY_ROUTING_ENABLED?.trim().toLowerCase() === "true",
+  paragonStateRoutingEnabled: process.env.PARAGON_STATE_ROUTING_ENABLED?.trim().toLowerCase() === "true",
+  paragonPingFieldMap: process.env.PARAGON_PING_FIELD_MAP || null,
   // Invalid lookback is handled by the sticky fail-open path, not a startup failure.
   stickyLookbackDays: Number(process.env.STICKY_LOOKBACK_DAYS || 180),
 };

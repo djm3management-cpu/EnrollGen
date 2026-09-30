@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeftRight,
   Grid3x3,
@@ -12,6 +12,8 @@ import {
   Users,
 } from "lucide-react";
 import { useInboundCall } from "../../context/InboundCallContext";
+import { useAppAuth } from "../../context/AuthContext";
+import { fetchWithClerk } from "../../lib/clerkFetch";
 import { useContactMutations, contactDisplayName } from "../../hooks/useContacts";
 import { formatTime } from "../SharedUI";
 import { playDtmfTone } from "../../audio/dtmfTones";
@@ -24,6 +26,48 @@ function fmtPhone(value) {
 }
 
 const DTMF_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"];
+
+function ParagonZipConfirm({ inboundCallId, callSid }) {
+  const { getToken } = useAppAuth();
+  const [zip,setZip] = useState('');
+  const [states,setStates] = useState([]);
+  const [state,setState] = useState('');
+  const [result,setResult] = useState(null);
+  const [error,setError] = useState('');
+  const [saving,setSaving] = useState(false);
+  useEffect(() => { setZip('');setStates([]);setState('');setResult(null);setError(''); },[inboundCallId]);
+  const confirm = async () => {
+    setSaving(true);setError('');
+    try {
+      const response = await fetchWithClerk(getToken,'/.netlify/functions/paragon-zip-confirm',{
+        method:'POST',headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify({ inbound_call_id:inboundCallId,zip,state:state || null }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || 'ZIP confirmation failed.');
+      if (body.needs_state_selection) { setStates(body.states);return; }
+      setResult(body);
+      window.dispatchEvent(new CustomEvent('paragon-zip-status',{
+        detail:{ callSid,status:body.wrong_state ? 'wrong' : 'confirmed' },
+      }));
+    } catch(err) { setError(err.message); }
+    finally { setSaving(false); }
+  };
+  return <div className="phone-expanded__zip-gate">
+    <strong>Confirm beneficiary residence ZIP before discussing plans</strong>
+    <div className="phone-expanded__zip-fields">
+      <input aria-label="Beneficiary ZIP" inputMode="numeric" maxLength={5} placeholder="5-digit ZIP" value={zip}
+        disabled={Boolean(result)} onChange={event => {setZip(event.target.value.replace(/\D/g,'').slice(0,5));setStates([]);setState('');}} />
+      {states.length>1 && <select aria-label="Residence state" value={state} onChange={event => setState(event.target.value)}>
+        <option value="">Choose residence state</option>{states.map(item => <option key={item} value={item}>{item}</option>)}
+      </select>}
+      {!result && <button type="button" disabled={saving || zip.length!==5 || (states.length>1 && !state)} onClick={confirm}>{saving?'Checking…':'Confirm ZIP'}</button>}
+    </div>
+    {error && <div role="alert">{error}</div>}
+    {result?.wrong_state && <div className="phone-expanded__zip-block" role="alert">Not licensed/RTS in {result.state}. Do not discuss plans. A callback task was assigned to {result.callback_agent_id || 'the agency'}.</div>}
+    {result && !result.wrong_state && <div>ZIP {result.zip} confirmed in {result.state}. Plan tools are available.</div>}
+  </div>;
+}
 
 function NotesPad({ contact }) {
   const { addNote } = useContactMutations();
@@ -120,6 +164,8 @@ export default function ActiveCallExpanded({ onOpenMessages }) {
           {formatTime(elapsedMs)}
         </span>
       </div>
+
+      {params.paragon === 'true' && <ParagonZipConfirm inboundCallId={params.inboundCallId} callSid={params.twilioCallSid} />}
 
       <div className="phone-expanded__grid">
         <button

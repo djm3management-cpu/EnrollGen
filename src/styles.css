@@ -18245,3 +18245,22 @@ body[data-bg-mode="classic"] .viewport-bg {
   cursor: default;
   opacity: 0.72;
 }
+.vendor-routing__config { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin: 16px 0; }
+.vendor-routing__config label { display: flex; flex-direction: column; gap: 5px; min-width: 130px; font-size: 12px; }
+.vendor-routing__config input, .vendor-routing select { color: inherit; background: var(--surface, #151c2b); border: 1px solid var(--border, #334155); border-radius: 7px; padding: 8px; }
+.vendor-routing__config label:nth-child(n+3) { min-width: 210px; flex: 1; }
+.vendor-routing__age { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; font-size: 12px; }
+.vendor-routing__age span { border: 1px solid var(--border, #334155); border-radius: 7px; padding: 8px; }
+.vendor-routing__stale { color: #fbbf24; border-color: #b45309 !important; }
+.vendor-routing__table-wrap { overflow-x: auto; }
+.vendor-routing__table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.vendor-routing__table th, .vendor-routing__table td { border-bottom: 1px solid var(--border, #334155); padding: 8px; text-align: left; white-space: nowrap; }
+.vendor-routing__table input[type=checkbox] { width: 16px; height: 16px; }
+.phone-expanded__zip-gate { border: 1px solid #b45309; border-radius: 8px; padding: 12px; margin: 10px 0; background: rgba(180,83,9,.12); color: inherit; }
+.phone-expanded__zip-fields { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.phone-expanded__zip-fields input, .phone-expanded__zip-fields select { min-width: 110px; padding: 8px; border-radius: 6px; }
+.phone-expanded__zip-fields button { border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+.phone-expanded__zip-block { margin-top: 10px; padding: 10px; border-radius: 6px; background: #7f1d1d; color: #fff; font-weight: 700; }
+.paragon-callbacks { padding: 16px; margin-bottom: 16px; }
+.paragon-callbacks__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border, #334155); }
+.paragon-inert-container { display: contents; }

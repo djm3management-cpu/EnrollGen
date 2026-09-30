@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Plus, RefreshCcw, Send, Trash2 } from "lucide-react";
 import BillingSettings from "./BillingSettings";
+import VendorRoutingSettings from "./VendorRoutingSettings";
 import { useAppAuth } from "../context/AuthContext";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import { useSubscription } from "../hooks/useSubscription";
@@ -508,6 +509,8 @@ export default function TenantSettings({ currentUser = null }) {
           </button>
         </div>
       </section>
+
+      {canAdmin ? <VendorRoutingSettings getToken={getToken} /> : null}
 
       <div className="tenant-settings-grid">
         <section className="tenant-settings-card">

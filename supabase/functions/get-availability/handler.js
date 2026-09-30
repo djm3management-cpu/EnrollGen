@@ -1,3 +1,5 @@
+import { parseParagonFieldMap, readParagonPing } from '../_shared/paragonPingAdapter.js';
+
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-api-key, content-type',
@@ -10,14 +12,16 @@ export async function hashKey(key) {
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function createHandler({ rpc, log = console.log, now = () => performance.now() }) {
+export function createHandler({ rpc, paragonPing, routingEnabled = false, fieldMap, log = console.log, now = () => performance.now() }) {
   return async request => {
     const start = now();
     let consumer = 'unknown';
     let status = 500;
     let authMethod = 'none';
+    let decisionReason = null;
     const respond = (body, code = 200) => {
       status = code;
+      decisionReason = body?.reason || null;
       return new Response(request.method === 'HEAD' ? null : JSON.stringify(body), { status: code, headers: cors });
     };
     try {
@@ -33,16 +37,29 @@ export function createHandler({ rpc, log = console.log, now = () => performance.
       if (!key || key.length > 512) return respond({ error: 'Unauthorized' }, 401);
       const agentId = url.searchParams.get('agent_id');
       const format = url.searchParams.get('format') || 'json';
-      const state = url.searchParams.get('state')?.toUpperCase();
+      const pingFields = readParagonPing(url.searchParams,parseParagonFieldMap(fieldMap));
+      const { phone, callId } = pingFields;
+      const state = pingFields.state || undefined;
       const minimum = url.searchParams.get('min') ?? '1';
       if (!['json', 'simple', 'text'].includes(format) ||
-        (state !== undefined && !/^(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)$/.test(state)) ||
         !/^[1-9][0-9]{0,5}$/.test(minimum)) return respond({ error: 'Invalid availability options' }, 400);
       if (agentId !== null && (!agentId || agentId.length > 128)) return respond({ error: 'Invalid agent_id' }, 400);
       const { data, error } = await rpc({ p_key_hash: await hashKey(key), p_agent_id: agentId });
       if (error || !data) return respond({ error: 'Availability temporarily unavailable' }, 503);
       consumer = data.consumer_name || 'unknown';
       if (!data.authorized) return respond({ error: 'Unauthorized' }, 401);
+      if (consumer === 'Paragon Media') {
+        if (pingFields.invalidPhone) return respond({ available:false,reason:'invalid_phone' });
+        if (!paragonPing) return respond({ available: false, reason: 'routing_disabled' });
+        const { data: decision, error: pingError } = await paragonPing({
+          p_key_hash: await hashKey(key), p_state: state || null, p_phone: phone || null,
+          p_call_id: callId || null, p_routing_enabled: routingEnabled,
+        });
+        if (pingError || !decision) return respond({ available: false, reason: 'temporarily_unavailable' });
+        return respond({ available: decision.available === true, reason: decision.reason });
+      }
+      if (state !== undefined && !/^(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)$/.test(state))
+        return respond({ error:'Invalid availability options' },400);
       // Explicit allowlist protects the public contract if the RPC gains fields.
       let agents = data.feed.agents.map(a => ({
         agent_id: a.agent_id, agent_name: a.agent_name, available: a.available,
@@ -73,7 +90,8 @@ export function createHandler({ rpc, log = console.log, now = () => performance.
       return respond({ error: 'Availability temporarily unavailable' }, 503);
     } finally {
       log(JSON.stringify({ event: 'availability_request', consumer,
-        status, auth_method: authMethod, latency_ms: Math.round((now() - start) * 100) / 100 }));
+        status, auth_method: authMethod, reason:decisionReason,
+        latency_ms: Math.round((now() - start) * 100) / 100 }));
     }
   };
 }

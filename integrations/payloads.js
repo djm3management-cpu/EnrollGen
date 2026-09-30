@@ -1,6 +1,6 @@
 // All vendor exports are built from explicit allowlists, never CRM row spreads.
 export const dispositionFields = ['aggregator_call_id', 'twilio_call_sid', 'publisher', 'call_start_time', 'caller_phone', 'duration', 'disposition_code', 'sale'];
-export const reportFields = [...dispositionFields, 'state', 'billable', 'app_written'];
+export const reportFields = [...dispositionFields, 'state', 'billable', 'app_written', 'wrong_state', 'zip', 'billing_dispute'];
 const safeOutcomes = new Set(['enrolled','enrolled_pending_verification','partial_enrollment','callback_scheduled','interested_needs_info','spouse_poa_callback','transferred','application_in_progress','not_interested','not_qualified','already_enrolled_elsewhere','customer_hung_up','do_not_call','requested_removal','no_answer','no-answer','voicemail_left','voicemail','wrong_number','bad_lead_data','language_barrier','third_party_needed','hostile_caller','suspected_fraud','dropped_call','test_call','duplicate_lead','not_enrolled','incomplete','completed','canceled','busy','failed','declined','ringing','accepted','other']);
 const forbidden = /health|diagnos|medical|medicaid|medicare|cognitive|mentally|plan|carrier|mbi|dob|birth|address|notes?|transcript|recording/i;
 export function dispositionPayload(row) {
@@ -51,7 +51,13 @@ export function csvReport(rows) {
   };
   return [reportFields.join(','), ...rows.map(row => {
     const safe = dispositionPayload(row);
-    return reportFields.map(k => cell(k === 'billable' ? Number(safe.duration) >= 90 : k === 'app_written' ? row.app_written === true : k === 'state' ? identifier(row.state) : safe[k])).join(',');
+    return reportFields.map(k => cell(k === 'billable' ? Number(safe.duration) >= 90
+      : k === 'app_written' ? row.app_written === true
+      : k === 'state' ? identifier(row.state)
+      : k === 'wrong_state' ? row.wrong_state === true
+      : k === 'zip' ? /^\d{5}$/.test(row.zip || '') ? row.zip : null
+      : k === 'billing_dispute' ? row.wrong_state === true && Number(safe.duration) >= 90
+      : safe[k])).join(',');
   })].join('\r\n') + '\r\n';
 }
 export function assertPrivateFieldsAbsent(payload) {
