@@ -94,7 +94,7 @@ async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentId
     leadScore: intel?.lead_score != null ? String(intel.lead_score) : "",
     churnRisk: intel?.churn_risk || "",
     vendorSource: intel?.vendor_source || "",
-    paragon: inboundCall.source_kind === 'publisher' ? 'true' : 'false',
+    paragon: config.paragonStateRoutingEnabled && inboundCall.source_kind === 'publisher' ? 'true' : 'false',
     callerState: inboundCall.caller_state || '',
   };
   for (const [name, value] of Object.entries(params)) {
