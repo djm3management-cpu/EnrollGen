@@ -244,6 +244,7 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, dialAttrib
   const dialStatus = req.body.DialCallStatus;
   const callSid = req.body.CallSid;
   let claimedAgent = null;
+  let paragonCall = false;
 
   try {
     await logEvent({
@@ -266,7 +267,8 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, dialAttrib
       .select("*")
       .eq("id", inboundCallId)
       .maybeSingle();
-    if (!inboundCall || inboundCall.twilio_call_sid !== callSid) return sendTwiml(res, busyRejectTwiml());
+    if (!inboundCall || inboundCall.twilio_call_sid !== callSid) return sendTwiml(res, voicemailTwiml());
+    paragonCall = config.paragonStateRoutingEnabled && inboundCall.source_kind === 'publisher';
     if (inboundCall.ended_at) {
       await releaseAgent(null, callSid);
       const response = new VoiceResponse();
@@ -278,7 +280,7 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, dialAttrib
     const justTriedAgentId = tried[tried.length - 1];
     if (justTriedAgentId) await releaseAgent(justTriedAgentId, callSid);
 
-    if (config.paragonStateRoutingEnabled && inboundCall.source_kind === 'publisher') {
+    if (paragonCall) {
       await supabase.from('inbound_calls').update({ status:'rejected' }).eq('id',inboundCallId);
       await logEvent({ inboundCallId,callSid,event:'paragon_fast_reject',payload:{ reason:'dial_failed',tried } });
       return sendTwiml(res,busyRejectTwiml());
@@ -325,6 +327,6 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, dialAttrib
       try { await releaseAgent(claimedAgent.agent_id, callSid); }
       catch (releaseError) { console.error("Reservation cleanup failed:", releaseError); return res.status(503).end(); }
     }
-    return sendTwiml(res, busyRejectTwiml());
+    return sendTwiml(res, paragonCall ? busyRejectTwiml() : voicemailTwiml());
   }
 });
