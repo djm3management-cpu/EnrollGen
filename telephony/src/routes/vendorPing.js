@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { supabase } from '../supabase.js';
 import { normalizePhoneE164 } from '../phone.js';
 import { config } from '../config.js';
-import { parseParagonFieldMap, readParagonPing } from '../../../supabase/functions/_shared/paragonPingAdapter.js';
+import { parseParagonFieldMap, readParagonPing } from '../paragonPingAdapter.js';
 export const vendorPingRouter = Router();
 vendorPingRouter.post('/api/leads/ping',async(req,res)=>{
   const decision=(body,status=200)=>{
