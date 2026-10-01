@@ -10,8 +10,18 @@ export default async request => {
   if (!['GET','POST'].includes(request.method)) return json({ error:'Method not allowed' },405);
   const auth = await requireClerkAuth(request);
   if (auth.response) return auth.response;
-  if (!isAdminAuth(auth)) return json({ error:'Forbidden' },403);
   const db = getSupabase();
+  if (!isAdminAuth(auth)) {
+    // Clerk's frontend user object can expose the tenant membership role even
+    // when the session token omits org_role. Resolve that role through the
+    // authenticated Clerk subject, scoped to this tenant and active roster.
+    if (!auth.userId) return json({ error:'Forbidden' },403);
+    const { data:membership,error:membershipError } = await db.from('tenant_agents').select('id')
+      .eq('tenant_id',NGHS_TENANT_ID).eq('clerk_user_id',auth.userId)
+      .eq('role','admin').eq('is_active',true).maybeSingle();
+    if (membershipError) return json({ error:'Admin authorization unavailable' },503);
+    if (!membership) return json({ error:'Forbidden' },403);
+  }
   const { data:source,error:sourceError } = await db.from('lead_sources').select('id').eq('tenant_id',NGHS_TENANT_ID)
     .eq('name','Paragon Media').eq('type','publisher').maybeSingle();
   if (sourceError || !source) return json({ error:'Paragon source unavailable' },503);
