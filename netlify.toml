@@ -8,6 +8,11 @@
 
 # Redirect /api/* to Netlify Functions
 [[redirects]]
+  from = "/vendor/paragon"
+  to = "/.netlify/functions/paragon-vendor-report"
+  status = 200
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
@@ -31,6 +36,10 @@
 
 [functions."update-knowledge"]
   schedule = "0 7 * * 0"
+
+# Try at 18:00 ET, with retries at 18:15 and 18:30 if needed.
+[functions."paragon-daily-email"]
+  schedule = "0,15,30 22,23 * * *"
 
 [dev]
   command = "npm run dev"

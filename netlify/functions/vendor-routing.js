@@ -1,10 +1,11 @@
 import { requireClerkAuth } from './_clerkAuth.js';
 import { isAdminAuth, NGHS_TENANT_ID, JSON_HEADERS, getSupabase } from './_tenantSettings.js';
 import { normalizeCarrier } from '../../telephony/src/paragonEligibility.js';
+import { createHash, randomBytes } from 'node:crypto';
 
 const CARRIERS = ['aetna','humana','uhc','wellcare','devoted','healthspring'];
 const STATES = new Set('AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC'.split(' '));
-const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS,'Cache-Control':'no-store' } });
 
 export default async request => {
   if (!['GET','POST'].includes(request.method)) return json({ error:'Method not allowed' },405);
@@ -28,6 +29,7 @@ export default async request => {
   const { data:currentConfig,error:configLookupError } = await db.from('vendor_routing_config')
     .select('*').eq('source_id',source.id).single();
   if (configLookupError || !currentConfig) return json({ error:'Routing settings unavailable' },503);
+  let newReportToken = null;
   if (request.method === 'POST') {
     const body = await request.json().catch(() => ({}));
     if (body.action === 'config') {
@@ -67,14 +69,28 @@ export default async request => {
         },{ onConflict:'source_id,plan_year,agent_id,state' });
         if (error) return json({ error:error.message },500);
       }
+    } else if (body.action === 'report_token_rotate') {
+      newReportToken = randomBytes(32).toString('base64url');
+      const token_hash = createHash('sha256').update(newReportToken).digest('hex');
+      const { error } = await db.from('paragon_report_tokens').upsert({
+        source_id:source.id,token_hash,updated_at:new Date().toISOString(),updated_by:auth.userId || 'admin',
+      },{onConflict:'source_id'});
+      if (error) return json({ error:'Unable to rotate report token' },503);
+    } else if (body.action === 'report_token_revoke') {
+      const { error } = await db.from('paragon_report_tokens').delete().eq('source_id',source.id);
+      if (error) return json({ error:'Unable to revoke report token' },503);
     } else return json({ error:'Invalid action' },400);
   }
   const config = request.method === 'POST' && (await db.from('vendor_routing_config').select('*').eq('source_id',source.id).single()) || { data:currentConfig };
-  const [matrix,agents] = await Promise.all([
+  const [matrix,agents,reportToken] = await Promise.all([
     db.from('vendor_agent_state_eligibility').select('*').eq('source_id',source.id)
       .eq('plan_year',config.data.plan_year).order('state'),
     db.from('tenant_agents').select('id,name,npn,agent_slug,is_active').eq('tenant_id',NGHS_TENANT_ID).eq('is_active',true).order('name'),
+    db.from('paragon_report_tokens').select('updated_at').eq('source_id',source.id).maybeSingle(),
   ]);
-  if (config.error || matrix.error || agents.error) return json({ error:'Routing settings unavailable' },503);
-  return json({ config:config.data,matrix:matrix.data,agents:agents.data });
+  if (config.error || matrix.error || agents.error || reportToken.error) return json({ error:'Routing settings unavailable' },503);
+  return json({ config:config.data,matrix:matrix.data,agents:agents.data,
+    report_token_updated_at:reportToken.data?.updated_at || null,
+    ...(newReportToken ? {report_link:`/vendor/paragon?token=${newReportToken}`} : {}),
+  });
 };

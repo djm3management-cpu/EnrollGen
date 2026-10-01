@@ -10,6 +10,7 @@ export default function VendorRoutingSettings({ getToken }) {
   const [saving,setSaving] = useState(false);
   const [newAgent,setNewAgent] = useState('');
   const [newState,setNewState] = useState('');
+  const [reportLink,setReportLink] = useState('');
   const load = useCallback(async () => {
     const response = await fetchWithClerk(getToken,'/.netlify/functions/vendor-routing');
     const body = await response.json();
@@ -34,7 +35,8 @@ export default function VendorRoutingSettings({ getToken }) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Unable to save routing.');
       setData(result);
-      setMessage('Vendor routing saved.');
+      setReportLink(result.report_link || '');
+      setMessage(body.action === 'report_token_rotate' ? 'New report link created. Copy it now; it will not be shown again.' : body.action === 'report_token_revoke' ? 'Report link revoked.' : 'Vendor routing saved.');
     } catch(error) { setMessage(error.message); }
     finally { setSaving(false); }
   };
@@ -52,6 +54,16 @@ export default function VendorRoutingSettings({ getToken }) {
     <div className="tenant-settings-section-title">Paragon state and carrier routing</div>
     <p className="tenant-settings-muted">A matrix row asserts the agent is licensed in that state. Carrier checks control full and partial routing. Missing rows are ineligible.</p>
     {message && <div className="billing-alert">{message}</div>}
+    <div className="tenant-settings-card vendor-routing__report">
+      <div className="tenant-settings-section-title">Paragon vendor report link</div>
+      <p className="tenant-settings-muted">Read-only call report. Rotating creates a new link and immediately invalidates the old one.</p>
+      <p className="tenant-settings-muted">{data.report_token_updated_at ? `Active · rotated ${new Date(data.report_token_updated_at).toLocaleString()}` : 'No active link'}</p>
+      {reportLink && <label>New link — copy now <input readOnly aria-label="New Paragon report link" value={`${window.location.origin}${reportLink}`} onFocus={event => event.target.select()} /></label>}
+      <div className="tenant-settings-inline">
+        <button className="billing-button is-primary" type="button" disabled={saving} onClick={() => save({action:'report_token_rotate'})}>{data.report_token_updated_at ? 'Rotate report link' : 'Create report link'}</button>
+        {data.report_token_updated_at && <button className="billing-button" type="button" disabled={saving} onClick={() => save({action:'report_token_revoke'})}>Revoke report link</button>}
+      </div>
+    </div>
     {staleAgents.length>0 && <div className="billing-alert" role="alert">
       Routing matrix review overdue (30+ days): {staleAgents.map(agent => agent.name).join(', ')}.
     </div>}
