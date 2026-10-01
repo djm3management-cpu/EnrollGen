@@ -10,7 +10,7 @@ import { claimInitialInboundAgent, chooseInboundPreference, routingPhoneLast4 } 
 
 import { vendorMetadata } from "../vendorMetadata.js";
 import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
-import { classifyCaller, isDuplicateParagonCall, shouldFallbackToParagon } from "../paragonRouting.js";
+import { classifyCaller, decideMatchedParagon, isDuplicateParagonCall } from "../paragonRouting.js";
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
@@ -41,6 +41,10 @@ function busyRejectTwiml() {
 
 function isParagon(metadata) {
   return /paragon/i.test(metadata?.publisher || "") || /paragon/i.test(metadata?.aggregator_call_id || "");
+}
+
+function isMatchedParagonCall(inboundCall) {
+  return inboundCall?.vendor_metadata?.paragon_matched_ping === true;
 }
 
 async function logEvent({ inboundCallId, callSid, event, payload }) {
@@ -94,7 +98,7 @@ async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentId
     leadScore: intel?.lead_score != null ? String(intel.lead_score) : "",
     churnRisk: intel?.churn_risk || "",
     vendorSource: intel?.vendor_source || "",
-    paragon: config.paragonStateRoutingEnabled && inboundCall.source_kind === 'publisher' ? 'true' : 'false',
+    paragon: config.paragonStateRoutingEnabled && isMatchedParagonCall(inboundCall) ? 'true' : 'false',
     callerState: inboundCall.caller_state || '',
   };
   for (const [name, value] of Object.entries(params)) {
@@ -130,10 +134,19 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
     const priorCalls = priorLookup.data || [];
     const classification = classifyCaller({ contact: created ? null : contact, priorCalls });
     const sharedMaNumber = Boolean(config.twilioPhoneNumber && to === config.twilioPhoneNumber);
-    const paragon = isParagon(metadata) || (sharedMaNumber &&
-      (config.paragonStateRoutingEnabled || shouldFallbackToParagon({ metadata, contact: created ? null : contact, priorCalls, lookupError })));
+    // Paragon metadata alone is not proof that this call followed a Paragon
+    // availability ping. Only a recent, matching ping selects Paragon rules.
+    const pingLookup = config.paragonStateRoutingEnabled && sharedMaNumber
+      ? await supabase.rpc('resolve_recent_paragon_ping', {
+          p_phone: from, p_call_id: metadata.aggregator_call_id || null, p_call_sid: callSid,
+        })
+      : { data: [{ matched: false }] };
+    if (pingLookup?.error) throw new Error(`Paragon ping lookup failed: ${pingLookup.error.message}`);
+    const ping = Array.isArray(pingLookup?.data) ? pingLookup.data[0] : pingLookup?.data;
+    const paragon = Boolean(ping?.matched);
     paragonCall = paragon;
-    const paragonSource = config.paragonStateRoutingEnabled && paragon
+    const publisherCall = isParagon(metadata) || Boolean(metadata.publisher);
+    const paragonSource = paragon
       ? await supabase.from('lead_sources').select('id').eq('tenant_id',config.defaultTenantId)
         .eq('name','Paragon Media').eq('type','publisher').eq('active',true).maybeSingle()
       : null;
@@ -143,26 +156,28 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
     // Claim (not just read) the agent here: marks them busy the instant
     // they're selected so a second call arriving in the same instant
     // cannot also be routed to them before they've even started ringing.
-    const preferred = config.paragonStateRoutingEnabled && paragon
+    const preferred = paragon
       ? chooseInboundPreference({ callerId:from, contact, lookupError,
         enabled:config.stickyRoutingEnabled,lookbackDays:config.stickyLookbackDays }) : null;
-    const claimed = config.paragonStateRoutingEnabled && paragon
+    const claimed = paragon && ping?.available
       ? await supabase.rpc('claim_paragon_call',{ p_call_sid:callSid,p_phone:from,
           p_call_id:metadata.aggregator_call_id,p_exclude:[],
           p_preferred_agent_id:preferred?.preferredAgentId || null,p_routing_enabled:true })
       : null;
     if (claimed?.error) throw new Error(`Paragon claim failed: ${claimed.error.message}`);
-    const { agent, method, preferredAgentId, callerState, vendorCallId } = config.paragonStateRoutingEnabled && paragon
-      ? { agent:claimed.data?.[0]?.agent_id ? claimed.data[0] : null,method:claimed.data?.[0]?.claim_path || 'state_no_agent',
-          preferredAgentId:preferred?.preferredAgentId || null,callerState:claimed.data?.[0]?.caller_state || null,
-          vendorCallId:claimed.data?.[0]?.vendor_call_id || null }
+    const { agent, method, preferredAgentId, callerState, vendorCallId } = paragon
+      ? { agent:claimed?.data?.[0]?.agent_id ? claimed.data[0] : null,method:claimed?.data?.[0]?.claim_path || 'state_no_agent',
+          preferredAgentId:preferred?.preferredAgentId || null,callerState:claimed?.data?.[0]?.caller_state || ping?.caller_state || null,
+          vendorCallId:claimed?.data?.[0]?.vendor_call_id || ping?.vendor_call_id || null }
       : { ...(await claimInitialInboundAgent({ callSid,callerId:from,contact,lookupError })),callerState:null,vendorCallId:null };
     claimedAgent = agent;
+    const finalParagonDecision = decideMatchedParagon({ routingEnabled: config.paragonStateRoutingEnabled, ping, agent });
 
-    if (paragon && !agent && (config.paragonStateRoutingEnabled || classification === 'new')) {
+    if (paragon && finalParagonDecision.path === 'reject') {
       const { data: rejected, error: rejectError } = await supabase.from("inbound_calls").insert({
         tenant_id: config.defaultTenantId, twilio_call_sid: callSid, from_number: from, to_number: to,
-        vendor_metadata: { ...metadata,aggregator_call_id:vendorCallId || metadata.aggregator_call_id },
+        vendor_metadata: { ...metadata,aggregator_call_id:vendorCallId || metadata.aggregator_call_id,
+          paragon_matched_ping:true },
         aggregator_call_id:vendorCallId || metadata.aggregator_call_id,
         caller_state:callerState,
         caller_classification: classification, duplicate_flag: duplicate,
@@ -170,8 +185,7 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
       }).select("*").single();
       if (rejectError) throw new Error(`inbound_calls insert failed: ${rejectError.message}`);
       await logEvent({ inboundCallId: rejected.id, callSid, event: "paragon_fast_reject",
-        payload: { reason:config.paragonStateRoutingEnabled
-          ? callerState ? 'all_eligible_busy' : 'missing_matching_ping' : 'busy',duplicate } });
+        payload: { reason: finalParagonDecision.reason,duplicate } });
       return sendTwiml(res, busyRejectTwiml());
     }
 
@@ -182,12 +196,13 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
         contact_id: contact?.id || null,
         twilio_call_sid: callSid,
         from_number: from,
-        vendor_metadata: { ...metadata,aggregator_call_id:vendorCallId || metadata.aggregator_call_id },
+        vendor_metadata: { ...metadata,aggregator_call_id:vendorCallId || metadata.aggregator_call_id,
+          ...(paragon ? { paragon_matched_ping:true } : {}) },
         aggregator_call_id:vendorCallId || metadata.aggregator_call_id,
         to_number: to,
         routed_agent_id: agent?.agent_id || null,
         status: agent ? "ringing" : "voicemail",
-        source_kind: paragon ? "publisher" : "direct",
+        source_kind: paragon || publisherCall ? "publisher" : "direct",
         lead_source_id: paragonSource?.data?.id || null,
         caller_classification: classification,
         duplicate_flag: duplicate,
@@ -232,7 +247,7 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
       try { await releaseAgent(claimedAgent.agent_id, callSid); }
       catch (releaseError) { console.error("Reservation cleanup failed:", releaseError); return res.status(503).end(); }
     }
-    return sendTwiml(res, paragonCall && config.paragonStateRoutingEnabled ? busyRejectTwiml() : voicemailTwiml());
+    return sendTwiml(res, voicemailTwiml());
   }
 });
 
@@ -268,7 +283,7 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, dialAttrib
       .eq("id", inboundCallId)
       .maybeSingle();
     if (!inboundCall || inboundCall.twilio_call_sid !== callSid) return sendTwiml(res, voicemailTwiml());
-    paragonCall = config.paragonStateRoutingEnabled && inboundCall.source_kind === 'publisher';
+    paragonCall = config.paragonStateRoutingEnabled && isMatchedParagonCall(inboundCall);
     if (inboundCall.ended_at) {
       await releaseAgent(null, callSid);
       const response = new VoiceResponse();

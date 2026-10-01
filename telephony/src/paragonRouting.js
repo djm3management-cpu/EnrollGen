@@ -5,9 +5,12 @@ export function classifyCaller({ contact, priorCalls = [] } = {}) {
   return known ? 'known' : 'new';
 }
 
-export function shouldFallbackToParagon({ metadata = {}, contact, priorCalls = [], lookupError = false } = {}) {
-  return !lookupError && !metadata.publisher && !metadata.aggregator_call_id &&
-    classifyCaller({ contact, priorCalls }) === 'new';
+/** Choose the inbound path only after a recent ping has been resolved. */
+export function decideMatchedParagon({ routingEnabled, ping, agent } = {}) {
+  if (!routingEnabled || !ping?.matched) return { path: 'normal' };
+  if (!ping.available) return { path: 'reject', reason: ping.reason || 'ping_unavailable' };
+  if (!agent) return { path: 'reject', reason: 'all_eligible_busy' };
+  return { path: 'paragon', agent };
 }
 
 export function decideInbound({ classification, agent, stickyEnabled = true } = {}) {

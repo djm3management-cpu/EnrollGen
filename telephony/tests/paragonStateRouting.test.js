@@ -46,7 +46,7 @@ before(async () => {
     CREATE TABLE tenant_agents(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,name text,npn text,agent_slug text,is_active boolean);
     INSERT INTO tenant_agents(tenant_id,name,npn,agent_slug,is_active) VALUES
       ('${tenant}','Mark','20856361','mark',true),
-      ('${tenant}','Dylan Maria','22167368','dylan_maria',true),
+      ('${tenant}','Dylan Maria','22167358','dylan_maria',true),
       ('${tenant}','Mike','20574678','mike',true);
     CREATE TABLE agent_availability(agent_id text PRIMARY KEY,agent_name text,status text,available boolean,
       active_call_sid text,resume_status text,last_assigned_at timestamptz,toggled_at timestamptz);
@@ -62,6 +62,7 @@ before(async () => {
   await db.exec(await migration('051_paragon_vendor_matrix.sql'));
   await db.exec(await migration('052_paragon_ping_and_claim.sql'));
   await db.exec(await migration('053_paragon_zip_and_reports.sql'));
+  await db.exec(await migration('056_resolve_recent_paragon_ping.sql'));
 });
 after(async () => db?.close());
 
@@ -120,6 +121,26 @@ test('claim only uses matching eligible reservation and sticky cannot bypass tie
   assert.equal(claim.claim_path,'reserved');
 });
 
+test('recent ping resolver distinguishes no match, matched rejection, and accepted reservation', async () => {
+  let result = (await db.query(`SELECT * FROM resolve_recent_paragon_ping($1,$2,$3)`,
+    ['+15550000040','resolver-missing','CAresolver0'])).rows[0];
+  assert.equal(result.matched,false);
+
+  result = await ping('NC','+15550000041','resolver-denied');
+  assert.equal(result.available,false);
+  const denied = (await db.query(`SELECT * FROM resolve_recent_paragon_ping($1,$2,$3)`,
+    ['+15550000041','resolver-denied','CAresolver1'])).rows[0];
+  assert.deepEqual([denied.matched,denied.available,denied.caller_state,denied.reason],
+    [true,false,'NC','no_eligible_agent']);
+
+  const acceptedPing = await ping('AR','+15550000042','resolver-accepted');
+  const accepted = (await db.query(`SELECT * FROM resolve_recent_paragon_ping($1,$2,$3)`,
+    ['+15550000042','resolver-accepted','CAresolver2'])).rows[0];
+  assert.deepEqual([accepted.matched,accepted.available,accepted.caller_state,accepted.vendor_call_id],
+    [true,true,'AR','resolver-accepted']);
+  assert.equal(acceptedPing.available,true);
+});
+
 test('pause, staffed hours and kill switch override every tier', async () => {
   assert.equal((await ping('AR','+15550000006','disabled',false)).reason,'routing_disabled');
   await db.exec(`UPDATE vendor_controls SET vendor_pause=true`);
@@ -154,6 +175,20 @@ test('a lost reserved agent falls through to another eligible agent', async () =
   assert.ok(claim);
   assert.notEqual(claim.agent_id,decision.agent_id);
   assert.equal(claim.caller_state,'AR');
+  assert.equal(claim.claim_path,'round_robin');
+});
+
+test('a matched available ping rejects only when every eligible agent is busy', async () => {
+  await db.exec(`DELETE FROM paragon_agent_reservations;
+    UPDATE agent_availability SET status='busy',available=false,active_call_sid='busy-call'`);
+  const decision = await ping('AR','+15550000043','all-busy');
+  assert.equal(decision.available,false);
+  assert.equal(decision.reason,'all_eligible_busy');
+  const matched = (await db.query(`SELECT * FROM resolve_recent_paragon_ping($1,$2,$3)`,
+    ['+15550000043','all-busy','CA126'])).rows[0];
+  assert.equal(matched.matched,true);
+  assert.equal(matched.available,false);
+  assert.equal(matched.reason,'all_eligible_busy');
 });
 
 test('wrong state calls appear in weekly reconciliation and daily CSV with 90 second dispute rule', async () => {
