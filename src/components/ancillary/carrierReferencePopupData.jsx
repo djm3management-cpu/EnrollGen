@@ -36,8 +36,8 @@ export const CARRIER_REFERENCE_POPUPS = [
           </>,
           <>Covers healthy food, utilities, rent, and mortgage.</>,
           <>
-            Available on <strong>50%+ of Devoted plans</strong> in 2026; the
-            amount varies by plan.
+            Confirm PY2027 availability and allowance amounts in the selected
+            plan's current Summary of Benefits.
           </>,
           <>
             Eligibility follows CMS SSBCI guidelines; members check status in
@@ -230,10 +230,8 @@ export const CARRIER_REFERENCE_POPUPS = [
             verification required.
           </>,
           <>
-            <strong>2026 SSBCI change:</strong> healthy food and utility bill
-            credits now require a verified qualifying chronic condition such as
-            diabetes, cardiovascular disease, CHF, high blood pressure, or high
-            cholesterol.
+            Confirm PY2027 SSBCI eligibility and qualifying conditions in the
+            selected plan's current benefit documents.
           </>,
           <>
             UHC has already verified <strong>95% of eligible D-SNP members</strong>.
@@ -309,11 +307,11 @@ export const CARRIER_REFERENCE_POPUPS = [
       },
       {
         id: "agent-alert",
-        title: "Section C: 2026 Agent Alert",
+        title: "Section C: Agent Alert",
         notes: [
           <>
-            Elevance prioritized <strong>HMO and D-SNP</strong> plans for 2026,
-            cut some PPO offerings, and exited standalone Part D.
+            Check the selected county's PY2027 Elevance plan inventory before
+            presenting HMO, PPO, D-SNP, or Part D options.
           </>,
           <>
             Most standard MA plans were pulled from online broker platforms in{" "}

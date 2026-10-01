@@ -149,7 +149,7 @@ export const enrollmentClosing = [
     auto_fail: false,
     sample_phrases: [
       'Your new plan will go into effect on January 1st, 2027. That is when your coverage under this plan will begin.',
-      'The effective date for your enrollment is April 1st, 2026. Your current plan will cover you until then, and the new plan takes over on that date.',
+      'The effective date for your enrollment is April 1st, 2027. Your current plan will cover you until then, and the new plan takes over on that date.',
       'Just to confirm, your new coverage will start on July 1st. You will receive your new plan ID card before that date.',
       'Your plan effective date is February 1st, 2027. Make sure you continue using your current plan until that date.',
     ],

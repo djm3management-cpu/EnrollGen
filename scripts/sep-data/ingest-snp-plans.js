@@ -82,7 +82,8 @@ function buildServiceAreaMap(rows, countyLookup) {
 
 async function main() {
   const args = parseArgs();
-  const planYear = Number(args.year || 2026);
+  const planYear = Number(args.year || 2027);
+  if (planYear !== 2027) throw new Error("Only PY2027 Medicare data may be ingested");
   const rows = await readTabularFile({
     file: args.file,
     url: args.url,

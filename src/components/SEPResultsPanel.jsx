@@ -118,8 +118,12 @@ export default function SEPResultsPanel({
 }) {
   const [expanded, setExpanded] = useState({});
   const normalizedZip = normalizeSepZip(zip);
-  const seps = asArray(result?.seps);
+  const seps = asArray(result?.seps).filter((sep) =>
+    !/Involuntary Disenrollment \/ Plan Termination SEP/i.test(sep?.sep_type || "") ||
+    asArray(sep?.terminated_plans).length > 0
+  );
   const hasAvailableSep = seps.some((sep) => sep?.available);
+  const starsPending = seps.some((sep) => /5.star/i.test(sep?.sep_type || "") && !asArray(sep?.plans).length);
 
   const toggleRow = (index) => {
     setExpanded((current) => ({ ...current, [index]: !current[index] }));
@@ -142,6 +146,7 @@ export default function SEPResultsPanel({
               {formatCountyList(result.counties)}
             </div>
           ) : null}
+          {starsPending ? <div className="sep-finder-panel-counties">2027 Stars pending</div> : null}
         </div>
         {onRefresh ? (
           <button

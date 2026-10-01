@@ -100,7 +100,7 @@ export const SNP_CURRENT_CARRIER_OPTIONS = [
   })),
 ];
 
-// County-level EAE rows should be loaded from Supabase once the official CMS 2026
+// County-level EAE rows require a current-year official CMS
 // integrated D-SNP file has been imported. The widget treats this as optional data.
 export const DEFAULT_DSNP_EAE_LOOKUP = [];
 

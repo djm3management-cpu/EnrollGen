@@ -55,7 +55,7 @@ const PlanContextCard = memo(function PlanContextCard() {
 
       if (lookupRunRef.current !== runId) return;
       setLookupResults(plans);
-      setLookupMessage(plans.length ? "" : "No matching PY2026 plans.");
+      setLookupMessage(plans.length ? "" : "No matching PY2027 plans.");
     } catch (error) {
       if (lookupRunRef.current !== runId) return;
       console.error("Manual plan lookup error:", error);
@@ -92,7 +92,7 @@ const PlanContextCard = memo(function PlanContextCard() {
             className="eg-plan-lookup__input"
             value={lookupQuery}
             onChange={(event) => setLookupQuery(event.target.value)}
-            placeholder="Plan name / #"
+            placeholder="PLAN NAME / #"
             aria-label="Plan name or number"
           />
           <button

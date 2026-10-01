@@ -46,10 +46,10 @@ export default async (req) => {
     });
   }
 
-  // Lookup county FIPS from zip (use the zip_county table)
+  // Resolve the ZIP through the shared Census county crosswalk.
   const { data: zipData, error: zipError } = await supabase
-    .from("zip_county")
-    .select("county_fips, state")
+    .from("zip_county_crosswalk")
+    .select("county_fips, state_code")
     .eq("zip", zip)
     .limit(1)
     .single();
@@ -65,10 +65,11 @@ export default async (req) => {
 
   // Get plans available in this county
   const { data: plans, error: plansError } = await supabase
-    .from("ma_plans")
+    .from("cms_plans_py2027")
     .select("*")
     .eq("county_fips", zipData.county_fips)
-    .order("premium", { ascending: true });
+    .eq("plan_year", 2027)
+    .order("monthly_premium", { ascending: true });
 
   if (plansError) {
     console.error("cms-plans plan lookup failed:", plansError);
@@ -79,7 +80,7 @@ export default async (req) => {
     JSON.stringify({
       source: "cms-database",
       zip,
-      state: zipData.state,
+      state: zipData.state_code,
       county_fips: zipData.county_fips,
       plans: plans || [],
       count: plans?.length || 0,

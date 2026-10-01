@@ -11,6 +11,7 @@ import {
   setDbCmsKnowledgeEntries,
 } from "../context/CopilotCmsKnowledge";
 import { fetchTranscriptReferences } from "../lib/transcriptSearch";
+import { fetchCmsPlanReferences } from "../lib/cmsPlanRag";
 import { mergeStructuredKnowledgeMap } from "../lib/knowledgeBase";
 import { useKnowledge } from "./useKnowledge";
 import {
@@ -904,12 +905,21 @@ export function useCopilotEngine({
       // Transcript references improve context but are not required to coach.
     }
 
+    const selectedArea = copilotContext.callMetadata.selectedPlanContext;
+    const planReferenceResult = await fetchCmsPlanReferences({
+      getToken,
+      query: newSpeechWindow || analysisWindow.slice(-1400),
+      state: selectedArea?.state,
+      county: selectedArea?.countyName,
+    });
+
     const retrievalTrace = {
       topics: cmsKnowledge.topics.map((t) => t.id),
       scenarios: cmsKnowledge.scenarios.map((s) => s.id),
       sources: [
         ...cmsKnowledge.sources.map((s) => `cms:${s.id}`),
         ...transcriptReferenceResult.sources.map((s) => `call:${s}`),
+        ...planReferenceResult.sources.map((s) => `plan:${s}`),
       ],
       transcriptReferenceCount: transcriptReferenceResult.results.length,
       transcriptReferenceError: transcriptReferenceResult.error || null,
@@ -920,7 +930,7 @@ export function useCopilotEngine({
       knowledge,
       flowOrder,
       cmsBlock: cmsKnowledge.promptBlock,
-      transcriptRefBlock: transcriptReferenceResult.contextBlock,
+      transcriptRefBlock: [transcriptReferenceResult.contextBlock, planReferenceResult.contextBlock].filter(Boolean).join("\n\n"),
       recentInterventionText,
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
       reviewMode,
@@ -1228,12 +1238,21 @@ SECTION CONTEXT (rolling window for current section):
       // Transcript references improve answer quality but are not required.
     }
 
+    const selectedArea = copilotContext.callMetadata.selectedPlanContext;
+    const planReferenceResult = await fetchCmsPlanReferences({
+      getToken,
+      query: [question, recentTranscript].filter(Boolean).join("\n\n"),
+      state: selectedArea?.state,
+      county: selectedArea?.countyName,
+    });
+
     const retrievalTrace = {
       topics: cmsKnowledge.topics.map((t) => t.id),
       scenarios: cmsKnowledge.scenarios.map((s) => s.id),
       sources: [
         ...cmsKnowledge.sources.map((s) => `cms:${s.id}`),
         ...transcriptReferenceResult.sources.map((s) => `call:${s}`),
+        ...planReferenceResult.sources.map((s) => `plan:${s}`),
       ],
       transcriptReferenceCount: transcriptReferenceResult.results.length,
       transcriptReferenceError: transcriptReferenceResult.error || null,
@@ -1243,7 +1262,7 @@ SECTION CONTEXT (rolling window for current section):
       sectionKey,
       knowledge,
       cmsBlock: cmsKnowledge.promptBlock,
-      transcriptRefBlock: transcriptReferenceResult.contextBlock,
+      transcriptRefBlock: [transcriptReferenceResult.contextBlock, planReferenceResult.contextBlock].filter(Boolean).join("\n\n"),
       recentTranscript,
       copilotContextJson: JSON.stringify(copilotContext, null, 2),
       isSpoken,

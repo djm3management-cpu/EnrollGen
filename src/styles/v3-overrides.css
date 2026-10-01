@@ -884,8 +884,144 @@ html .app-shell-modern .left-rail-panel-shell {
   font-size: 8px !important;
   letter-spacing: 0.06em !important;
   text-transform: uppercase !important;
-  color: var(--eg-text-faint) !important;
+  color: var(--eg-accent) !important;
   margin-bottom: 6px !important;
+}
+
+.left-rail-guidance__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.left-rail-guidance__header .left-rail-zip-label {
+  margin-bottom: 0 !important;
+}
+
+.glp1-bridge-guide__trigger {
+  width: auto;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--eg-accent);
+  font-family: var(--eg-font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.glp1-bridge-guide__trigger:hover,
+.glp1-bridge-guide__trigger:focus-visible {
+  color: var(--eg-accent-bright, var(--eg-accent));
+  text-decoration: underline;
+}
+
+.glp1-bridge-guide__trigger svg:last-child {
+  margin-left: auto;
+  transition: transform 0.15s ease;
+}
+
+.glp1-bridge-guide__trigger svg:last-child.is-open {
+  transform: rotate(180deg);
+}
+
+.glp1-bridge-guide__panel {
+  position: fixed;
+  z-index: 130;
+  top: 110px;
+  left: 320px;
+  width: min(390px, calc(100vw - 332px));
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-sm);
+  background: var(--eg-surface-1);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.glp1-bridge-guide__panel-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--eg-border);
+  background: var(--eg-surface-1);
+  color: var(--eg-accent);
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+}
+
+.glp1-bridge-guide__panel-header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--eg-accent);
+  cursor: pointer;
+}
+
+.glp1-bridge-guide__content {
+  padding: 9px 8px;
+  color: var(--eg-text);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+@media (max-width: 740px) {
+  .glp1-bridge-guide__panel {
+    top: 100px;
+    left: 12px;
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 112px);
+  }
+}
+
+.glp1-bridge-guide__content h4 {
+  margin: 11px 0 4px;
+  color: var(--eg-accent);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.glp1-bridge-guide__content p,
+.glp1-bridge-guide__content ul,
+.glp1-bridge-guide__content ol {
+  margin: 0 0 6px;
+}
+
+.glp1-bridge-guide__content ul,
+.glp1-bridge-guide__content ol {
+  padding-left: 18px;
+}
+
+.glp1-bridge-guide__content li {
+  margin-bottom: 4px;
+}
+
+.glp1-bridge-guide__links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.glp1-bridge-guide__links a {
+  color: var(--eg-accent);
+  text-decoration: underline;
 }
 
 .left-rail-zip-input {
@@ -2516,6 +2652,34 @@ button.primary.section-complete-btn {
 
 .eg-rail-card__field input.eg-rail-card__field-value:focus {
   border-bottom-color: var(--eg-border-active);
+}
+
+.eg-rail-card__field--zip .eg-rail-card__field-value {
+  width: 5ch;
+}
+
+.eg-rail-card__field--dob {
+  position: relative;
+}
+
+.eg-rail-card__field--dob .eg-rail-card__field-value {
+  width: 10ch;
+}
+
+.app-shell-modern .left-rail .eg-rail-card__save-contact--icon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 23px;
+  height: 23px;
+  min-height: 23px;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: normal;
+  color: var(--eg-accent) !important;
 }
 
 .eg-plan-lookup {
@@ -5733,11 +5897,12 @@ html.dark .app-shell-modern .left-rail-panel-shell {
   scrollbar-gutter: auto !important;
 }
 
-/* The collapse control lives in the rail's first control row now, so it
-   does not reserve a full-height gutter along the left edge. */
-.app-shell-modern .left-rail .left-rail-minimize {
-  top: 4px !important;
-  left: 8px !important;
+/* The collapse control sits just outside the rail so inputs keep the first row. */
+.app-shell-modern .left-rail-minimize--external {
+  position: fixed;
+  top: calc(max(48px, var(--top-bar-height, 48px)) + 4px);
+  z-index: 106;
+  border-radius: 0 var(--eg-radius-sm) var(--eg-radius-sm) 0 !important;
 }
 
 .app-shell-modern .left-rail-panel-shell--sep-qualifier .left-rail-zip-cell {
@@ -5745,8 +5910,13 @@ html.dark .app-shell-modern .left-rail-panel-shell {
 }
 
 .app-shell-modern .left-rail-panel-shell--sep-qualifier .left-rail-zip-input {
-  width: calc(100% - 28px) !important;
-  margin-left: 28px !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+}
+
+.app-shell-modern .left-rail .left-rail-search-row :is(.left-rail-zip-input, .eg-plan-lookup__input) {
+  height: 23px !important;
+  min-height: 23px !important;
 }
 
 .app-shell-modern .left-rail .sep-qualifier-stage--default {

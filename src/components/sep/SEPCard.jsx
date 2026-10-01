@@ -2,7 +2,7 @@ import { ChevronRight, Clock, Shield, MapPin, Star as StarIcon } from "lucide-re
 import { CARRIERS } from "../../data/sepCarriers";
 
 export function Stars({ count }) {
-  if (count == null) return <span className="muted">-</span>;
+  if (count == null) return <span className="muted">2027 Stars pending</span>;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: "1px" }}>
       {[1, 2, 3, 4, 5].map((i) => (

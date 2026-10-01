@@ -631,7 +631,7 @@ export const DATA_VERSION = {
   lastUpdated: "2026-03-14",
   sources: [
     "KFF Medicare Advantage Enrollment Update 2025",
-    "CMS 2026 MA-PD Landscape",
+    "CMS MA/Part D landscape (historical; verify current county plans)",
     "Becker's: Largest MA Insurer by State",
     "healthinsurance.org State ACA Guides 2026",
     "NerdWallet Best Medigap Companies 2026",

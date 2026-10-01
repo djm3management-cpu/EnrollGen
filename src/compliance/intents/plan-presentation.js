@@ -889,7 +889,7 @@ export const planPresentation = [
     auto_fail: true,
     sample_phrases: [
       'According to the plan Summary of Benefits, the inpatient copay is $250 per day for days 1 through 5.',
-      'Medicare gave this plan a 4.5 star rating for 2026. That information is available on Medicare.gov if you would like to verify it.',
+      'We will verify this plan’s current star rating on Medicare.gov before quoting it.',
       'Based on the official formulary, your Metformin is covered on Tier 1 at a $1 copay at preferred pharmacies.',
       'The plan documents show that the dental benefit maximum is $1,500 per year for comprehensive services.',
     ],

@@ -5,7 +5,6 @@
 */
 
 import { getStateFromZip, hasFiveStarPlans, daysRemaining, isActiveNow } from "./sepGeo";
-import { getPlansForState } from "../data/sepPlanDb";
 
 export function getSEPsForState(stateCode, femaDisasters = []) {
   const today = new Date();
@@ -113,7 +112,7 @@ export function getSEPsForZip(zip, femaDisasters = []) {
   const state = getStateFromZip(zip);
   const today = new Date();
   const seps = [];
-  const zipPlans = getPlansForState(zip);
+  const zipPlans = [];
   const maPlans = (filter) => zipPlans.filter(filter);
 
   // FEMA disaster SEPs

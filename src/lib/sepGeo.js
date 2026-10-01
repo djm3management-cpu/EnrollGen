@@ -4,7 +4,6 @@
 */
 
 import { CARRIERS } from "../data/sepCarriers";
-import { PLAN_DB } from "../data/sepPlanDb";
 
 export function getStateFromZip(zip) {
   const z = parseInt(zip);
@@ -76,11 +75,8 @@ export function getCarriersForZip(zip) {
     .map((key) => ({ key, ...CARRIERS[key] }));
 }
 
-export function hasFiveStarPlans(zip) {
-  const st = getStateFromZip(zip);
-  return PLAN_DB.some(
-    (p) => p.stars >= 5 && (p.states.includes("ALL") || p.states.includes(st))
-  );
+export function hasFiveStarPlans() {
+  return false;
 }
 
 export function daysRemaining(dateStr) {

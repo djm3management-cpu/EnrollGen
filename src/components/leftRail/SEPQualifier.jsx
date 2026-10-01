@@ -30,6 +30,7 @@ import {
 import { useScript } from "../../context/ScriptContext";
 import SEPFinder from "../SEPFinder";
 import ClientInfoCard from "./ClientInfoCard";
+import GLP1BridgeGuide from "./GLP1BridgeGuide";
 import PlanContextCard from "./PlanContextCard";
 import { useLeftRailManager } from "./LeftRailManager";
 import SNPRoutingWidget from "./SNPRoutingWidget";
@@ -526,7 +527,10 @@ export default function SEPQualifier({ onMinimize }) {
             <div className="left-rail-context-stack">
               <ClientInfoCard countyLabel={countyLabel} />
               <section className="left-rail-guidance" aria-label="Plan & Product Guidance">
-                <div className="left-rail-zip-label">Plan &amp; Product Guidance</div>
+                <div className="left-rail-guidance__header">
+                  <div className="left-rail-zip-label">Plan &amp; Product Guidance</div>
+                  <GLP1BridgeGuide />
+                </div>
                 <div className="left-rail-prompt-stack" ref={setPromptTarget} />
               </section>
             </div>

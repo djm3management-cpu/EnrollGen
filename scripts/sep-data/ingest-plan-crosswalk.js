@@ -109,11 +109,10 @@ function terminationType(row, newContractId, newPlanId) {
 
 async function main() {
   const args = parseArgs();
-  if (!args["service-area-file"] && !args["service-area-url"]) {
-    throw new Error("Provide --service-area-file or --service-area-url.");
-  }
+  if (!args.file && !args.url) throw new Error("Provide --file PATH (or --url URL) for the CMS 2027 Part C&D Plan Crosswalk.");
 
-  const planYear = Number(args.year || 2026);
+  const planYear = Number(args.year || 2027);
+  if (planYear !== 2027) throw new Error("Only PY2027 Medicare data may be ingested");
   const defaultEffectiveDate = args.effective || `${planYear}-01-01`;
   const rows = await readTabularFile({
     file: args.file,
@@ -125,14 +124,31 @@ async function main() {
     file: args["county-reference-file"],
     url: args["county-reference-url"],
   });
-  const serviceMap = buildServiceAreaMap(
-    await readTabularFile({
+  const supabase = await createSupabaseAdminClient();
+  let serviceRows = [];
+  if (args["service-area-file"] || args["service-area-url"]) {
+    serviceRows = await readTabularFile({
       file: args["service-area-file"],
       url: args["service-area-url"],
       sheet: args["service-area-sheet"],
-    }),
-    countyLookup
-  );
+    });
+  } else {
+    for (let offset = 0;; offset += 1000) {
+      const { data, error } = await supabase.from("cms_plans_py2027")
+        .select("contract_id,plan_id,county_fips,county_name,state_code")
+        .eq("plan_year", 2027).range(offset, offset + 999);
+      if (error) throw error;
+      serviceRows.push(...data.map((plan) => ({
+        "Contract ID": plan.contract_id,
+        "Plan ID": plan.plan_id,
+        "County FIPS": plan.county_fips,
+        "County Name": plan.county_name,
+        State: plan.state_code,
+      })));
+      if (data.length < 1000) break;
+    }
+  }
+  const serviceMap = buildServiceAreaMap(serviceRows, countyLookup);
 
   let skippedNoCounty = 0;
   const records = [];
@@ -149,7 +165,9 @@ async function main() {
     const serviceAreas =
       directServiceAreas.length > 0
         ? directServiceAreas
-        : serviceMap.get(`${oldContractId}:${oldPlanId || ""}`) ||
+        : serviceMap.get(`${newContractId}:${newPlanId || ""}`) ||
+          serviceMap.get(`${newContractId}:`) ||
+          serviceMap.get(`${oldContractId}:${oldPlanId || ""}`) ||
           serviceMap.get(`${oldContractId}:`) ||
           [];
 
@@ -191,8 +209,8 @@ async function main() {
       `${row.old_contract_id}:${row.old_plan_id || ""}:${row.county_fips || ""}:${row.plan_year}`
   );
   console.log(`Prepared ${deduped.length} plan_terminations rows`);
+  if (skippedNoCounty) throw new Error(`${skippedNoCounty} crosswalk rows lack county FIPS coverage. Provide the matching CMS service-area file with --service-area-file; no partial ingest was written.`);
   if (args["dry-run"]) return;
-  const supabase = await createSupabaseAdminClient();
   await upsertRows({
     supabase,
     table: "plan_terminations",

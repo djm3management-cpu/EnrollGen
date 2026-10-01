@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS public.star_ratings_by_county (
   county_fips TEXT NOT NULL,
   county_name TEXT,
   state_code TEXT,
-  plan_year INTEGER DEFAULT 2026,
+  plan_year INTEGER DEFAULT 2027,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS public.snp_plans_by_county (
   county_fips TEXT NOT NULL,
   county_name TEXT,
   state_code TEXT,
-  plan_year INTEGER DEFAULT 2026,
+  plan_year INTEGER DEFAULT 2027,
   enrollment_count INTEGER,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS public.plan_terminations (
   county_name TEXT,
   state_code TEXT,
   effective_date DATE,
-  plan_year INTEGER DEFAULT 2026,
+  plan_year INTEGER DEFAULT 2027,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -192,7 +192,7 @@ BEGIN
   LEFT JOIN public.star_ratings_by_county sr
     ON sr.county_fips = zc.county_fips
     AND sr.overall_star_rating >= 5.0
-    AND sr.plan_year = 2026
+    AND sr.plan_year = 2027
   WHERE zc.zip = input_zip;
 
   SELECT jsonb_build_object(
@@ -243,7 +243,7 @@ BEGIN
   LEFT JOIN public.snp_plans_by_county sp
     ON sp.county_fips = zc.county_fips
     AND sp.snp_type = 'C-SNP'
-    AND sp.plan_year = 2026
+    AND sp.plan_year = 2027
   WHERE zc.zip = input_zip;
 
   SELECT jsonb_build_object(
@@ -269,7 +269,7 @@ BEGIN
   LEFT JOIN public.snp_plans_by_county sp
     ON sp.county_fips = zc.county_fips
     AND sp.snp_type = 'D-SNP'
-    AND sp.plan_year = 2026
+    AND sp.plan_year = 2027
   WHERE zc.zip = input_zip;
 
   SELECT jsonb_build_object(
@@ -295,7 +295,7 @@ BEGIN
   LEFT JOIN public.snp_plans_by_county sp
     ON sp.county_fips = zc.county_fips
     AND sp.snp_type = 'I-SNP'
-    AND sp.plan_year = 2026
+    AND sp.plan_year = 2027
   WHERE zc.zip = input_zip;
 
   SELECT jsonb_build_object(
@@ -319,7 +319,7 @@ BEGIN
   FROM public.zip_county_crosswalk zc
   LEFT JOIN public.plan_terminations pt
     ON pt.county_fips = zc.county_fips
-    AND pt.plan_year = 2026
+    AND pt.plan_year = 2027
     AND (pt.effective_date IS NULL OR pt.effective_date + INTERVAL '2 months' >= CURRENT_DATE)
   WHERE zc.zip = input_zip;
 

@@ -9,7 +9,7 @@ import { fetchLiveFemaDisasters } from "../lib/sepFema";
 import { fetchBulletins } from "../lib/sepBulletins";
 import { fetchLiveNews } from "../lib/sepLiveNews";
 import { fetchCountiesForState, fetchPlansFromSupabase, fetchCountyPlanCounts, transformCmsPlan } from "../lib/sepCms";
-import { getCountyFromZip, getPlansForState } from "../data/sepPlanDb";
+import { getCountyFromZip } from "../data/sepPlanDb";
 import { getSEPsForZip, getSEPsForState } from "../lib/sepEngine";
 import { supabase } from "../lib/supabase";
 import { parseSepRpcResult } from "../components/SEPResultsPanel";
@@ -114,13 +114,13 @@ export function useSEPLookup() {
     try {
       const cmsRows = await fetchPlansFromSupabase(st, county);
       if (!cmsRows.length) {
-        setPlans(getPlansForState(st));
+        setPlans([]);
         return;
       }
       const seen = new Set();
       const transformed = [];
       for (const row of cmsRows) {
-        const key = `${row["Contract ID"]}-${row["Plan ID"]}`;
+        const key = row["ContractPlanSegmentID"];
         if (seen.has(key)) continue;
         seen.add(key);
         transformed.push(transformCmsPlan(row));
@@ -133,7 +133,7 @@ export function useSEPLookup() {
       setPlans(transformed);
     } catch (err) {
       console.error("Supabase plan fetch error:", err);
-      setPlans(getPlansForState(st));
+      setPlans([]);
     } finally {
       setCountyLoading(false);
     }
@@ -300,7 +300,7 @@ export function useSEPLookup() {
         setPlans([]);
       } else {
         setSelectedCounty(null);
-        setPlans(getPlansForState(cleanZip));
+        setPlans([]);
       }
       await sepFinderPromise;
     } catch (err) {

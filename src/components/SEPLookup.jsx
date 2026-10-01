@@ -290,7 +290,7 @@ export default function SEPLookupTool() {
             <div className="sep-disclaimer">
               <p>
                 <strong>Disclaimer:</strong> FEMA disaster data is fetched live from the OpenFEMA API with verified
-                fallback data. Plan data is sourced from CMS Landscape Files for CY2026 (138K rows via Supabase,
+                county data. Plan data is sourced from CMS Landscape Files for CY2027 (via Supabase,
                 county-level precision). Premiums, benefits, and service areas may vary, always verify on Medicare.gov.
                 For agent/broker use only.
                 {s.femaSource !== "unknown" && (

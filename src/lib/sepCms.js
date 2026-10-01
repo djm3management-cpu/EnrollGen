@@ -1,6 +1,6 @@
 /*
   CMS / Supabase integration for SEP Lookup.
-  Fetches county lists and plan data from cms_plans_PY2026.
+  Fetches county lists and plan data from the PY2027-only CMS view.
   Prefer RPC helpers when available, but fall back to direct table queries
   so the county grid still works if the active Supabase project is missing
   those functions.
@@ -8,12 +8,11 @@
 
 import { supabaseCms } from "./supabase";
 
-const CMS_TABLE = "cms_plans_PY2026";
+const CMS_TABLE = "cms_plans_PY2027";
 const PAGE_SIZE = 5000;
-const CMS_SUPABASE_ENABLED =
-  import.meta.env.VITE_ENABLE_CMS_SUPABASE === "true" ||
-  Boolean(import.meta.env.VITE_SUPABASE_CMS_URL && import.meta.env.VITE_SUPABASE_CMS_ANON_KEY);
-const CMS_RPC_ENABLED = import.meta.env.VITE_ENABLE_CMS_RPC === "true";
+const CMS_SUPABASE_ENABLED = import.meta.env.VITE_ENABLE_CMS_SUPABASE !== "false";
+// Legacy RPC functions are not guaranteed to filter by plan year.
+const CMS_RPC_ENABLED = false;
 let cmsUnavailable = false;
 let fallbackCountiesByState = null;
 let fallbackCountiesByStatePromise = null;
@@ -219,7 +218,7 @@ async function fetchCountyPlanCountsDirect(state) {
   const rows = await fetchPagedRows((from, to) =>
     supabaseCms
       .from(CMS_TABLE)
-      .select('"County Name", "Contract ID", "Plan ID"')
+      .select('"County Name", "ContractPlanSegmentID"')
       .eq("State Territory Abbreviation", state)
       .neq("County Name", "All Counties")
       .neq("Sanctioned Plan", "Yes")
@@ -231,7 +230,7 @@ async function fetchCountyPlanCountsDirect(state) {
 
   for (const row of rows) {
     const county = row["County Name"];
-    const key = `${row["Contract ID"]}-${row["Plan ID"]}`;
+    const key = row["ContractPlanSegmentID"];
     if (!county) continue;
 
     if (!seenByCounty[county]) seenByCounty[county] = new Set();
@@ -370,6 +369,9 @@ export function mapCarrierKey(parentOrg, contractName, orgMarketing) {
 }
 
 export function transformCmsPlan(row) {
+  if (String(row["Contract Year"]) !== "2027") {
+    throw new Error("Rejected CMS plan outside PY2027");
+  }
   const cid = row["Contract ID"] || "";
   const pbp = String(row["Plan ID"] || "").padStart(3, "0");
   const planName = row["Plan Name"] || "Unknown Plan";
@@ -411,6 +413,7 @@ export function transformCmsPlan(row) {
   const carrier = mapCarrierKey(parentOrg, contractName, orgMarketing);
 
   return {
+    planYear: 2027,
     cid,
     pbp,
     carrier,
@@ -421,6 +424,11 @@ export function transformCmsPlan(row) {
     stars,
     prem,
     moop,
+    deductible: parseFloat(row["Annual Part D Deductible Amount"] || "") || null,
+    countyFips: row["County FIPS"] || "",
+    segmentId: row["Segment ID"] || "",
+    dsnpIntegrationStatus: row["Dual Eligible SNP (D-SNP) Integration Status"] || "",
+    dsnpAipIdentifier: row["D-SNP Applicable Integrated Plan (AIP) Identifier"] || "",
     partD: catType === "MA-PD" || catType === "PDP" || catType === "SNP",
     dental: true,
     vision: true,

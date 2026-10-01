@@ -33,3 +33,5 @@ dist-ssr
 
 # Checked-in placeholders only
 !/.env.example
+data/
+supabase/.temp/

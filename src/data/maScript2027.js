@@ -137,7 +137,7 @@ const enrollmentPlatform = [note("Move to the CMS / carrier-approved telephonic 
 const definitions = [
   ["recording", "Introduction & Recording", "recordingOk", [
     direction([
-      say("Thank you for calling [agency partner name]. My name is [First and Last Name]. I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?"),
+      say("Thank you for calling New Gen Health Solutions. My name is [First and Last Name]. I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?"),
       cue("Greet customer"),
       say("Are you prepared to review your coverage and potentially enroll into a new 2027 health plan, pending it makes sense for you to do so today?"),
       say("To make sure we have the accurate information, May I have your Phone Number, in case we get disconnected?"),
@@ -262,7 +262,7 @@ const definitions = [
       choice("callback", "Inbound callback", [
         option("waiting", "Awaiting callback", [close("Close — awaiting inbound callback", "callback_scheduled")]),
         option("received", "Inbound callback received", [
-          say("Thank you for calling [agency partner name]. My name is [First and Last Name]. I am a licensed sales agent. Who do I have the pleasure of speaking with?"),
+          say("Thank you for calling New Gen Health Solutions. My name is [First and Last Name]. I am a licensed sales agent. Who do I have the pleasure of speaking with?"),
           recording, consent("callbackRecording"), tpmo("callbackTpmo", true), ...enrollmentPlatform,
         ]),
       ]),

@@ -1,5 +1,5 @@
 import { CARRIERS } from "../data/sepCarriers";
-import { PLAN_DB, getCountyFromZip, getPlansForState } from "../data/sepPlanDb";
+import { getCountyFromZip } from "../data/sepPlanDb";
 import { getStateFromZip } from "./sepGeo";
 import { searchCmsPlans, transformCmsPlan } from "./sepCms";
 
@@ -46,6 +46,7 @@ function makePlanKey(plan) {
   return [
     plan.cid || "",
     plan.pbp || "",
+    plan.segmentId || "",
     plan.name || "",
     state || "",
     plan.orgName || plan.carrier || "",
@@ -96,45 +97,11 @@ function planSearchScore(plan, term, mode, area) {
   return score;
 }
 
-function filterFallbackPlans(term, mode, area) {
-  const q = normalizeSearch(term);
-  const compactQuery = normalizePlanNumber(term);
-  const plans = area.state ? getPlansForState(area.state) : PLAN_DB;
-
-  return plans
-    .filter((plan) => {
-      if (mode === "number") {
-        const planNumber = normalizePlanNumber(formatPlanNumber(plan));
-        return (
-          planNumber.includes(compactQuery) ||
-          normalizePlanNumber(plan.cid).includes(compactQuery) ||
-          normalizePlanNumber(plan.pbp).includes(compactQuery)
-        );
-      }
-
-      return [
-        plan.name,
-        plan.carrier,
-        getPlanCarrierDisplay(plan),
-        plan.type,
-        plan.snp,
-      ]
-        .filter(Boolean)
-        .some((value) => normalizeSearch(value).includes(q));
-    })
-    .map((plan) => ({
-      ...plan,
-      orgName: plan.orgName || getPlanCarrierDisplay(plan),
-      countyName: plan.countyName || "",
-      lookupSource: "fallback",
-      lookupScope: area.state ? "state" : "national",
-    }));
-}
-
 export function formatPlanNumber(plan) {
   const cid = String(plan?.cid || "").trim();
   const pbp = String(plan?.pbp || "").trim();
-  return [cid, pbp].filter(Boolean).join("-");
+  const segment = String(plan?.segmentId ?? "").trim();
+  return [cid, pbp, segment].filter(Boolean).join("-");
 }
 
 export function getPlanCarrierDisplay(plan) {
@@ -173,7 +140,7 @@ export function buildPlanNotesFromLookup(plan) {
     planManualOverride: true,
     planContextSource: "manual",
     selectedPlanContext: {
-      source: plan.lookupSource || "cms_py2026",
+      source: plan.lookupSource || "cms_py2027",
       scope: plan.lookupScope || "",
       planName: plan.name || "",
       carrierName: getPlanCarrierDisplay(plan),
@@ -218,7 +185,7 @@ export async function searchManualPlans({ term, mode = "auto", zipOrState = "", 
     cmsPlans.push(
       ...rows.map((row) => ({
         ...transformCmsPlan(row),
-        lookupSource: "cms_py2026",
+        lookupSource: "cms_py2027",
         lookupScope: scope.scope,
       }))
     );
@@ -229,12 +196,8 @@ export async function searchManualPlans({ term, mode = "auto", zipOrState = "", 
     .slice(0, limit);
 
   if (dedupedCmsPlans.length) {
-    return { plans: dedupedCmsPlans, source: "cms_py2026", area };
+    return { plans: dedupedCmsPlans, source: "cms_py2027", area };
   }
 
-  const fallbackPlans = dedupePlans(filterFallbackPlans(cleanTerm, mode, area))
-    .sort((a, b) => planSearchScore(b, cleanTerm, mode, area) - planSearchScore(a, cleanTerm, mode, area))
-    .slice(0, limit);
-
-  return { plans: fallbackPlans, source: "fallback", area };
+  return { plans: [], source: "cms_py2027", area };
 }

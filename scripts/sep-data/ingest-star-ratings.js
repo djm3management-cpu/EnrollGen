@@ -81,11 +81,10 @@ function buildServiceAreaRows(rows, countyLookup) {
 
 async function main() {
   const args = parseArgs();
-  if (!args["service-area-file"] && !args["service-area-url"]) {
-    throw new Error("Provide --service-area-file or --service-area-url.");
-  }
+  if (!args.file && !args.url) throw new Error("Provide --file PATH (or --url URL) for the CMS 2027 Star Ratings file.");
 
-  const planYear = Number(args.year || 2026);
+  const planYear = Number(args.year || 2027);
+  if (planYear !== 2027) throw new Error("Only PY2027 Medicare data may be ingested");
   const ratingsRows = await readTabularFile({
     file: args.file,
     url: args.url,
@@ -96,14 +95,25 @@ async function main() {
     file: args["county-reference-file"],
     url: args["county-reference-url"],
   });
-  const serviceRows = buildServiceAreaRows(
-    await readTabularFile({
+  const supabase = await createSupabaseAdminClient();
+  let serviceRows;
+  if (args["service-area-file"] || args["service-area-url"]) {
+    serviceRows = buildServiceAreaRows(await readTabularFile({
       file: args["service-area-file"],
       url: args["service-area-url"],
       sheet: args["service-area-sheet"],
-    }),
-    countyLookup
-  );
+    }), countyLookup);
+  } else {
+    serviceRows = [];
+    for (let offset = 0;; offset += 1000) {
+      const { data, error } = await supabase.from("cms_plans_py2027")
+        .select("contract_id,county_fips,county_name,state_code")
+        .eq("plan_year", 2027).range(offset, offset + 999);
+      if (error) throw error;
+      serviceRows.push(...data);
+      if (data.length < 1000) break;
+    }
+  }
 
   const serviceByContract = new Map();
   for (const row of serviceRows) {
@@ -113,6 +123,8 @@ async function main() {
   }
 
   const records = [];
+  let ratedContracts = 0;
+  let unmatchedContracts = 0;
   for (const row of ratingsRows) {
     const contractId = contractIdFrom(row);
     const stars = toNumber(
@@ -122,12 +134,14 @@ async function main() {
         "overall_star_rating",
         "Star Rating",
         "Overall",
-        "2026 Overall",
+        "2027 Overall",
       ])
     );
-    if (!contractId || stars < 5) continue;
+    if (!contractId || !Number.isFinite(stars) || stars <= 0) continue;
+    ratedContracts += 1;
 
     const serviceAreas = serviceByContract.get(contractId) || [];
+    if (!serviceAreas.length) unmatchedContracts += 1;
     for (const area of serviceAreas) {
       records.push({
         contract_id: contractId,
@@ -156,8 +170,10 @@ async function main() {
     (row) => `${row.contract_id}:${row.county_fips}:${row.plan_year}`
   );
   console.log(`Prepared ${deduped.length} star_ratings_by_county rows`);
+  if (!ratedContracts || !deduped.length || unmatchedContracts) {
+    throw new Error(`Star file validation failed: ${ratedContracts} rated contracts, ${unmatchedContracts} without 2027 county coverage. Review CMS columns and service areas.`);
+  }
   if (args["dry-run"]) return;
-  const supabase = await createSupabaseAdminClient();
   await upsertRows({
     supabase,
     table: "star_ratings_by_county",

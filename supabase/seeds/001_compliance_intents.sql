@@ -1943,7 +1943,7 @@ INSERT INTO compliance_intents (
   1.0,
   'critical',
   true,
-  ARRAY['According to the plan Summary of Benefits, the inpatient copay is $250 per day for days 1 through 5.', 'Medicare gave this plan a 4.5 star rating for 2026. That information is available on Medicare.gov if you would like to verify it.', 'Based on the official formulary, your Metformin is covered on Tier 1 at a $1 copay at preferred pharmacies.', 'The plan documents show that the dental benefit maximum is $1,500 per year for comprehensive services.'],
+  ARRAY['According to the plan Summary of Benefits, the inpatient copay is $250 per day for days 1 through 5.', 'We will verify this plan’s current star rating on Medicare.gov before quoting it.', 'Based on the official formulary, your Metformin is covered on Tier 1 at a $1 copay at preferred pharmacies.', 'The plan documents show that the dental benefit maximum is $1,500 per year for comprehensive services.'],
   ARRAY['Everyone who enrolls in this plan saves thousands of dollars.', 'Most of our members say this is the best coverage they have ever had.', 'Ninety-nine percent of doctors accept this plan.']
 ),
 
@@ -2668,7 +2668,7 @@ INSERT INTO compliance_intents (
   1.0,
   'major',
   false,
-  ARRAY['Your new plan will go into effect on January 1st, 2027. That is when your coverage under this plan will begin.', 'The effective date for your enrollment is April 1st, 2026. Your current plan will cover you until then, and the new plan takes over on that date.', 'Just to confirm, your new coverage will start on July 1st. You will receive your new plan ID card before that date.', 'Your plan effective date is February 1st, 2027. Make sure you continue using your current plan until that date.'],
+  ARRAY['Your new plan will go into effect on January 1st, 2027. That is when your coverage under this plan will begin.', 'The effective date for your enrollment is April 1st, 2027. Your current plan will cover you until then, and the new plan takes over on that date.', 'Just to confirm, your new coverage will start on July 1st. You will receive your new plan ID card before that date.', 'Your plan effective date is February 1st, 2027. Make sure you continue using your current plan until that date.'],
   ARRAY['Your coverage starts right away.', 'I am not sure when it starts exactly, but it should be soon.', 'Do not worry about the date, just start using the new card when it arrives.']
 ),
 

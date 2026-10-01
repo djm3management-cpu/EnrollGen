@@ -1,10 +1,9 @@
 import { supabase } from "./supabase";
 import { getStateFromZip } from "./sepGeo";
 import { fetchPlansFromSupabase, transformCmsPlan } from "./sepCms";
-import { getCountyFromZip, getPlansForState } from "../data/sepPlanDb";
+import { getCountyFromZip } from "../data/sepPlanDb";
 import {
   DEFAULT_CSNP_CARRIER_VERIFICATION,
-  DEFAULT_DSNP_EAE_LOOKUP,
   getSnpMedicaidBucket,
   SNP_CARRIER_LABELS,
   SNP_ROUTING_RULE_SUMMARIES,
@@ -42,10 +41,6 @@ function parseBenefitAmount(value) {
 
   const match = String(value).match(/-?\d+(?:\.\d+)?/);
   return match ? Number(match[0]) : 0;
-}
-
-function normalizePlanCarrier(plan) {
-  return normalizeText(plan?.carrier || plan?.orgName || plan?.name);
 }
 
 function isSameCarrier(currentCarrier, selectedPlan) {
@@ -142,44 +137,6 @@ function getCarrierVerificationMap(rows) {
   }, {});
 }
 
-function matchAlignmentRow(dsnpRows, plan) {
-  if (!plan) {
-    return null;
-  }
-
-  const matchingById = dsnpRows.find(
-    (row) =>
-      normalizeText(row.contract_id) === normalizeText(plan.cid) &&
-      normalizeText(row.plan_id) === normalizeText(plan.pbp)
-  );
-
-  if (matchingById) {
-    return matchingById;
-  }
-
-  return (
-    dsnpRows.find(
-      (row) =>
-        normalizeText(row.carrier) === normalizePlanCarrier(plan) ||
-        normalizeText(row.plan_name) === normalizeText(plan.name)
-    ) || null
-  );
-}
-
-function medicaidMcoMatches(input, expected) {
-  if (!input || !expected) {
-    return false;
-  }
-
-  const normalizedInput = normalizeText(input);
-  const normalizedExpected = normalizeText(expected);
-
-  return (
-    normalizedInput.includes(normalizedExpected) ||
-    normalizedExpected.includes(normalizedInput)
-  );
-}
-
 async function fetchCarrierVerificationRows() {
   try {
     const { data, error } = await supabase
@@ -200,29 +157,9 @@ async function fetchCarrierVerificationRows() {
   return DEFAULT_CSNP_CARRIER_VERIFICATION;
 }
 
-async function fetchDsnpAlignmentRows(state) {
-  if (!state) {
-    return DEFAULT_DSNP_EAE_LOOKUP;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("dsnp_eae_lookup")
-      .select("*")
-      .eq("state", state);
-
-    if (error) {
-      throw error;
-    }
-
-    if (data?.length) {
-      return data;
-    }
-  } catch (error) {
-    console.warn("[SNP Routing] D-SNP alignment lookup failed, using seed data.", error);
-  }
-
-  return DEFAULT_DSNP_EAE_LOOKUP.filter((row) => row.state === state);
+async function fetchDsnpAlignmentRows() {
+  // The available integrated D-SNP workbook is for 2026. No carry-forward.
+  return [];
 }
 
 async function fetchRoutingRules() {
@@ -264,7 +201,7 @@ export async function loadSnpRoutingContext(zip) {
       planInventoryChecked: false,
       planInventorySource: "none",
       plans: [],
-      dsnpAlignmentRows: DEFAULT_DSNP_EAE_LOOKUP,
+      dsnpAlignmentRows: [],
       carrierVerificationMap: getCarrierVerificationMap(
         DEFAULT_CSNP_CARRIER_VERIFICATION
       ),
@@ -281,21 +218,17 @@ export async function loadSnpRoutingContext(zip) {
       const rows = await fetchPlansFromSupabase(state, county);
       cmsPlans = rows.map(transformCmsPlan);
     } catch (error) {
-      console.warn("[SNP Routing] CMS plan lookup failed, using seed inventory.", error);
+      console.warn("[SNP Routing] PY2027 CMS plan lookup failed.", error);
     }
   }
 
-  const seedPlans = getPlansForState(sanitizedZip).filter((plan) =>
-    plan.states?.includes?.("ALL") || plan.states?.includes?.(state)
-  );
-
-  const plans = dedupeBy(cmsPlans.length ? cmsPlans : seedPlans, (plan) =>
+  const plans = dedupeBy(cmsPlans, (plan) =>
     [plan.cid, plan.pbp, normalizeText(plan.name)].join("|")
   );
 
   const [carrierVerificationRows, dsnpAlignmentRows, routingRules] = await Promise.all([
     fetchCarrierVerificationRows(),
-    fetchDsnpAlignmentRows(state),
+    fetchDsnpAlignmentRows(),
     fetchRoutingRules(),
   ]);
 
@@ -305,7 +238,7 @@ export async function loadSnpRoutingContext(zip) {
     county: county || "",
     countyResolved: Boolean(county),
     planInventoryChecked: true,
-    planInventorySource: cmsPlans.length ? "cms" : seedPlans.length ? "seed" : "none",
+    planInventorySource: cmsPlans.length ? "cms" : "none",
     plans,
     dsnpAlignmentRows,
     carrierVerificationMap: getCarrierVerificationMap(carrierVerificationRows),
@@ -410,9 +343,7 @@ function buildRecommendationBase({
 
 function resolveDsnpChoice({
   dsnpPlans,
-  dsnpAlignmentRows,
   memberPriority,
-  medicaidMco,
   countyResolved,
 }) {
   if (!dsnpPlans.length) {
@@ -444,94 +375,23 @@ function resolveDsnpChoice({
       return String(a.plan.name || "").localeCompare(String(b.plan.name || ""));
     });
 
-  const candidates = dsnpPlans.map((plan) => ({
-    plan,
-    alignmentRow: matchAlignmentRow(dsnpAlignmentRows, plan),
-  }));
-  const unrestrictedCandidates = sortCandidates(
-    candidates.filter((candidate) => !candidate.alignmentRow?.eae_status)
-  );
-  const restrictedCandidates = sortCandidates(
-    candidates.filter((candidate) => candidate.alignmentRow?.eae_status)
-  );
-
-  if (unrestrictedCandidates.length) {
-    const { plan: selectedPlan, alignmentRow } = unrestrictedCandidates[0];
-
-    if (!alignmentRow) {
-      return {
-        available: true,
-        selectedPlan,
-        summary:
-          "A county-level D-SNP is available and is not listed as an aligned integrated D-SNP in the CMS CY 2026 file.",
-        alignment: {
-          integratedPlan: false,
-          eaeStatus: false,
-          integrationLevel: "",
-          affiliatedMedicaidMco: "",
-        },
-        alerts: [],
-      };
-    }
-
-    return {
-      available: true,
-      selectedPlan,
-      summary:
-        normalizeText(alignmentRow.integration_level) === "co"
-          ? "A coordination-only D-SNP is available in this county, so no Medicaid alignment restriction is flagged."
-          : "An integrated D-SNP without an exclusive alignment restriction is available in this county.",
-      alignment: {
-        integratedPlan: true,
-        eaeStatus: false,
-        integrationLevel: alignmentRow.integration_level,
-        affiliatedMedicaidMco: alignmentRow.affiliated_medicaid_mco || "",
-      },
-      alerts: [],
-    };
-  }
-
-  const { plan: selectedPlan, alignmentRow } = restrictedCandidates[0];
-  if (!alignmentRow) {
-    return {
-      available: false,
-      blockedMessage:
-        "County-level D-SNP alignment could not be matched for this plan. Use the standard MA fallback.",
-    };
-  }
-
-  const requiredMco = alignmentRow.affiliated_medicaid_mco || "";
-  if (requiredMco && medicaidMco && !medicaidMcoMatches(medicaidMco, requiredMco)) {
-    return {
-      available: false,
-      blockedMessage: `This D-SNP requires Medicaid through ${requiredMco}. Member's Medicaid MCO does not align. Recommend C-SNP or Standard MA instead.`,
-      alignment: {
-        integratedPlan: true,
-        eaeStatus: true,
-        integrationLevel: alignmentRow.integration_level,
-        affiliatedMedicaidMco: requiredMco,
-      },
-    };
-  }
-
+  const selectedPlan = sortCandidates(dsnpPlans.map((plan) => ({ plan })))[0].plan;
+  const integrationLevel = selectedPlan.dsnpIntegrationStatus || "";
   return {
     available: true,
     selectedPlan,
-    summary: requiredMco
-      ? "All matched county D-SNP options are aligned plans, so Medicaid MCO alignment must be confirmed before submission."
-      : "All matched county D-SNP options are aligned plans in the CMS CY 2026 file. Confirm Medicaid alignment before submission.",
+    summary: `A 2027 D-SNP is available in this county${integrationLevel ? ` (${integrationLevel})` : ""}. Confirm Medicaid MCO alignment and enrollment restrictions before submission.`,
     alignment: {
-      integratedPlan: true,
-      eaeStatus: true,
-      integrationLevel: alignmentRow.integration_level,
-      affiliatedMedicaidMco: requiredMco,
+      integratedPlan: /HIDE|FIDE/i.test(integrationLevel),
+      eaeStatus: null,
+      integrationLevel,
+      aipIdentifier: selectedPlan.dsnpAipIdentifier || "",
+      affiliatedMedicaidMco: "",
     },
     alerts: [
       {
         tone: "conditional",
-        text: requiredMco
-          ? `D-SNPs in this area require Medicaid through ${requiredMco}. Confirm member's Medicaid MCO matches before submitting.`
-          : "D-SNPs in this area are aligned plans in the CMS CY 2026 integrated D-SNP file. The source file does not list the affiliated Medicaid MCO, so confirm Medicaid alignment before submitting.",
+        text: "The 2027 landscape does not identify the affiliated Medicaid MCO or exclusive aligned enrollment rule. Verify both with the carrier before submitting.",
       },
     ],
   };

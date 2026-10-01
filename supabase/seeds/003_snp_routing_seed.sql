@@ -183,4 +183,4 @@ set
   disclosure_points = excluded.disclosure_points,
   sep_paths = excluded.sep_paths;
 
--- dsnp_eae_lookup is intentionally left for the official CMS 2026 integrated D-SNP import.
+-- Do not seed dsnp_eae_lookup from the retired CMS 2026 integrated D-SNP import.

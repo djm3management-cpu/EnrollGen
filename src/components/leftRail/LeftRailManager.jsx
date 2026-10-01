@@ -11,7 +11,7 @@ import {
 const LeftRailContext = createContext(null);
 
 // Keep the left workspace aligned with the compact right rail width.
-const DESKTOP_RAIL_WIDTH = 310;
+const DESKTOP_RAIL_WIDTH = 288;
 
 function ChevronLeftIcon() {
   return (
@@ -360,20 +360,23 @@ export function LeftRail({
               visibleExpandedItem.isAttention ? " is-attention" : ""
             }${footer ? " left-rail-panel-shell--with-footer" : ""}`}
           >
-            <button
-              type="button"
-              className="rail-minimize-btn left-rail-minimize"
-              onClick={() => minimizeLeftRail(visibleExpandedItem.id)}
-              title={`Minimize ${visibleExpandedItem.title}`}
-              aria-label={`Minimize ${visibleExpandedItem.title}`}
-            >
-              <ChevronLeftIcon />
-            </button>
             {visibleExpandedItem.component}
             {footer ? <div className="left-rail-footer">{footer}</div> : null}
           </div>
         ) : null}
       </aside>
+      {visibleExpandedItem ? (
+        <button
+          type="button"
+          className="rail-minimize-btn left-rail-minimize left-rail-minimize--external"
+          style={{ left: visibleRailWidth }}
+          onClick={() => minimizeLeftRail(visibleExpandedItem.id)}
+          title={`Minimize ${visibleExpandedItem.title}`}
+          aria-label={`Minimize ${visibleExpandedItem.title}`}
+        >
+          <ChevronLeftIcon />
+        </button>
+      ) : null}
     </>
   );
 }
