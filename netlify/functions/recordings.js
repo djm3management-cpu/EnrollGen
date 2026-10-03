@@ -38,13 +38,13 @@ export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb
       if (request.method === 'POST') {
         try { input = await request.json(); } catch { throw new EvidenceError(400, 'Invalid JSON body.'); }
         if (!input || Array.isArray(input) || Object.keys(input).some(key =>
-          !['call_record_id', 'inbound_call_id', 'recording_id', 'download', 'action', 'source'].includes(key))) {
+          !['call_record_id', 'inbound_call_id', 'attempt_id', 'recording_id', 'download', 'action', 'source'].includes(key))) {
           throw new EvidenceError(400, 'Invalid recording request.');
         }
         if (!['media', 'retry'].includes(input.action)) throw new EvidenceError(400, 'Invalid recording action.');
         if (input.source != null && input.source !== 'twilio') throw new EvidenceError(400, 'Invalid recording source.');
         if (input.download != null && typeof input.download !== 'boolean') throw new EvidenceError(400, 'Invalid download option.');
-      } else input = { call_record_id: params.get('call_record_id'), inbound_call_id: params.get('inbound_call_id') };
+      } else input = { call_record_id: params.get('call_record_id'), inbound_call_id: params.get('inbound_call_id'), attempt_id: params.get('attempt_id') };
       const target = await authorizeRecordingTarget(db, identity, input);
       const rows = await listTargetRecordings(db, identity, target);
       if (request.method === 'GET') return evidenceJson(200, { recordings: rows.map(publicRecording) });

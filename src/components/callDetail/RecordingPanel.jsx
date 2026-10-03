@@ -3,7 +3,7 @@ import { useAuth } from '@clerk/clerk-react';
 import { evidenceRequest } from '../../lib/evidenceApi';
 import { listRecordings, recordingMedia, downloadRecordingUrl } from '../../lib/recordingsApi';
 
-export default function RecordingPanel({ callRecordId, inboundCallId }) {
+export default function RecordingPanel({ callRecordId, inboundCallId, attemptId }) {
   const { getToken } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,16 +11,16 @@ export default function RecordingPanel({ callRecordId, inboundCallId }) {
   const [busy, setBusy] = useState(null);
   const [audio, setAudio] = useState(null);
   const version = useRef(null);
-  const target = callRecordId ? { call_record_id: callRecordId } : { inbound_call_id: inboundCallId };
+  const target = attemptId ? { attempt_id: attemptId } : callRecordId ? { call_record_id: callRecordId } : { inbound_call_id: inboundCallId };
   const load = useCallback(async () => {
     const current = Symbol(); version.current = current;
     setLoading(true); setError('');
     try {
-      const data = await listRecordings(getToken, callRecordId ? { call_record_id: callRecordId } : { inbound_call_id: inboundCallId });
+      const data = await listRecordings(getToken, attemptId ? { attempt_id: attemptId } : callRecordId ? { call_record_id: callRecordId } : { inbound_call_id: inboundCallId });
       if (current === version.current) setRows(data.recordings || []);
     } catch (err) { if (current === version.current) setError(err.message); }
     finally { if (current === version.current) setLoading(false); }
-  }, [getToken, callRecordId, inboundCallId]);
+  }, [getToken, callRecordId, inboundCallId, attemptId]);
   useEffect(() => { setAudio(null); setRows([]); void load(); return () => { version.current = Symbol(); }; }, [load]);
   const media = async (row, download, provider = false) => {
     const current = version.current;

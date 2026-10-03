@@ -1,3 +1,4 @@
+import { loadCallLog } from "../../lib/callLogApi";
 import { useAuth } from "@clerk/clerk-react";
 import { recordingMedia } from "../../lib/recordingsApi";
 import { useCallback, useEffect, useState } from "react";
@@ -75,25 +76,24 @@ function initialsFor(contact) {
 }
 
 function RecentsTab({ onCall, disabled }) {
+  const { getToken } = useAuth();
+  const [error, setError] = useState("");
   const { supabaseClient } = useTenantConfig();
   const [recent, setRecent] = useState([]);
 
   useEffect(() => {
     if (!supabaseClient) return undefined;
     let cancelled = false;
-    supabaseClient
-      .from("v_call_log")
-      .select("log_id, occurred_at, direction, contact_id, contact_name, contact_phone")
-      .order("occurred_at", { ascending: false })
-      .limit(20)
-      .then(({ data }) => {
-        if (!cancelled) setRecent(data || []);
-      });
+    setError("");
+    loadCallLog(getToken, { limit: 20 }).then(({ rows }) => {
+      if (!cancelled) setRecent(rows || []);
+    }).catch(err => { if (!cancelled) setError(err.message); });
     return () => {
       cancelled = true;
     };
-  }, [supabaseClient]);
+  }, [supabaseClient, getToken]);
 
+  if (error) return <div className="ops-error" role="alert">{error}</div>;
   if (!recent.length) {
     return <div className="phone-dialer__empty">No recent calls</div>;
   }

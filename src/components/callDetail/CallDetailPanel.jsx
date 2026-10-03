@@ -339,7 +339,7 @@ function ComplianceDetail({ detail }) {
   );
 }
 
-export default function CallDetailPanel({ detail, loading }) {
+export default function CallDetailPanel({ attemptId, detail, loading }) {
   const [activeTab, setActiveTab] = useState("Transcript");
 
   if (loading) {
@@ -352,7 +352,7 @@ export default function CallDetailPanel({ detail, loading }) {
   return (
     <div className="ops-detail-panel">
       <DetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
-      {activeTab === "Recording" ? <RecordingPanel callRecordId={detail.id} /> : null}
+      {activeTab === "Recording" ? <RecordingPanel callRecordId={detail.id} attemptId={attemptId} /> : null}
       {activeTab === "Transcript" ? <TranscriptDetail detail={detail} /> : null}
       {activeTab === "Analytics" ? <AnalyticsDetail detail={detail} /> : null}
       {activeTab === "Assessment" ? <AssessmentDetail detail={detail} /> : null}

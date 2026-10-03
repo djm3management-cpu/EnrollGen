@@ -1,5 +1,6 @@
 import { useAuth } from "@clerk/clerk-react";
-import { recordingMedia, recordingTarget } from "../../lib/recordingsApi";
+import { loadCallLog } from "../../lib/callLogApi";
+import { recordingMedia, recordingTarget, downloadRecordingUrl } from "../../lib/recordingsApi";
 import RecordingPanel from "../callDetail/RecordingPanel";
 import MissingRecordings from "./MissingRecordings";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -58,16 +59,17 @@ function RecordingCell({ row }) {
   const [loading, setLoading] = useState(false);
   const hasRecording = Boolean(row.recording_storage_path || row.recording_url);
 
-  const handlePlay = useCallback(async () => {
-    if (audioUrl) {
+  const handlePlay = useCallback(async (download = false, provider = false) => {
+    if (audioUrl && !download && !provider) {
       setAudioUrl(null);
       return;
     }
     setLoading(true);
     try {
       setError("");
-      const grant = await recordingMedia(getToken, recordingTarget(row));
-      setAudioUrl(grant.url);
+      const grant = await recordingMedia(getToken, recordingTarget(row), { download, provider });
+      if (download) downloadRecordingUrl(grant.url, grant.filename);
+      else setAudioUrl({ url: grant.url, source: grant.source });
     } catch (err) { setError(err.message);
     } finally {
       setLoading(false);
@@ -78,11 +80,12 @@ function RecordingCell({ row }) {
 
   return (
     <span className="call-log-recording" onClick={(event) => event.stopPropagation()}>
-      <button type="button" className="contacts-mini-btn" onClick={handlePlay} disabled={loading}>
+      <button type="button" className="contacts-mini-btn" onClick={() => handlePlay()} disabled={loading}>
         {loading ? "..." : audioUrl ? "HIDE" : "▶ PLAY"}
       </button>
+      <button type="button" className="contacts-mini-btn" onClick={() => handlePlay(true)} disabled={loading}>DOWNLOAD WAV</button>
       {error ? <span className="ops-error" role="alert">{error}</span> : null}
-      {audioUrl ? <audio controls autoPlay preload="none" src={audioUrl} /> : null}
+      {audioUrl ? <audio controls autoPlay preload="none" src={audioUrl.url} onError={() => { if (audioUrl.source === "storage") void handlePlay(false, true); else setError("Playback failed. Expand the call to download the retained Twilio copy."); }} /> : null}
     </span>
   );
 }
@@ -245,12 +248,13 @@ function ExpandedRow({ row, supabaseClient }) {
           </button>
         </div>
       ) : (
-        <div className="contacts-muted">No call record linked (voicemail or missed call)</div>
+        <div className="contacts-muted">No call record linked</div>
       )}
 
       {showComplianceReview ? (
         <ComplianceReviewModal
           callRecordId={row.call_record_id}
+          displayDurationSeconds={row.duration_seconds}
           supabaseClient={supabaseClient}
           onClose={() => {
             setShowComplianceReview(false);
@@ -259,14 +263,15 @@ function ExpandedRow({ row, supabaseClient }) {
         />
       ) : null}
 
-      {!row.call_record_id && row.inbound_call_id ? <RecordingPanel inboundCallId={row.inbound_call_id} /> : null}
-      {showFullDetail ? <CallDetailPanel detail={detail} loading={loading} /> : null}
+      {!row.call_record_id && (row.inbound_call_id || row.attempt_id) ? <RecordingPanel inboundCallId={row.inbound_call_id} attemptId={row.attempt_id} /> : null}
+      {showFullDetail ? <CallDetailPanel detail={detail ? { ...detail, call_duration_seconds: row.duration_seconds } : detail} loading={loading} attemptId={row.attempt_id} /> : null}
     </div>
   );
 }
 
 export default function CallLogTab({ onOpenContact = null }) {
   const { supabaseClient, loading: tenantLoading, error: tenantError } = useTenantConfig();
+  const { getToken } = useAuth();
   const [showMissingRecordings, setShowMissingRecordings] = useState(false);
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -294,25 +299,17 @@ export default function CallLogTab({ onOpenContact = null }) {
     setLoading(true);
     setError(null);
     try {
-      let query = supabaseClient
-        .from("v_call_log")
-        .select("*", { count: "exact" })
-        .order("occurred_at", { ascending: false })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
-
-      if (dateFrom) query = query.gte("occurred_at", `${dateFrom}T00:00:00`);
-      if (dateTo) query = query.lte("occurred_at", `${dateTo}T23:59:59`);
-      if (directionFilter !== "ALL") query = query.eq("direction", directionFilter.toLowerCase());
-      if (dispositionFilter !== "ALL") query = query.eq("disposition", dispositionFilter.toLowerCase());
-      if (agentFilter !== "ALL") query = query.eq("agent", agentFilter);
-      const term = search.trim();
-      if (term) {
-        const like = `%${term}%`;
-        query = query.or(`contact_name.ilike.${like},contact_phone.ilike.${like}`);
-      }
-
-      const { data, count, error: queryError } = await query;
-      if (queryError) throw queryError;
+      const to = dateTo ? new Date(`${dateTo}T00:00:00`) : null;
+      if (to) to.setDate(to.getDate() + 1);
+      const { rows: data, count } = await loadCallLog(getToken, {
+        offset: page * PAGE_SIZE, limit: PAGE_SIZE,
+        from: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : null,
+        to: to?.toISOString(),
+        direction: directionFilter === "ALL" ? null : directionFilter.toLowerCase(),
+        disposition: dispositionFilter === "ALL" ? null : dispositionFilter.toLowerCase(),
+        agent: agentFilter === "ALL" ? null : agentFilter,
+        search: search.trim(),
+      });
       setRows(data || []);
       setTotalCount(count || 0);
       setAgentOptions((prev) => {
@@ -324,11 +321,11 @@ export default function CallLogTab({ onOpenContact = null }) {
       });
     } catch (err) {
       console.error("[CallLog] load failed:", err);
-      setError(err.message || "Call log unavailable. Has migration 020 been run?");
+      setError(err.message || "Call log unavailable. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [supabaseClient, tenantLoading, tenantError, page, dateFrom, dateTo, directionFilter, dispositionFilter, agentFilter, search]);
+  }, [getToken, supabaseClient, tenantLoading, tenantError, page, dateFrom, dateTo, directionFilter, dispositionFilter, agentFilter, search]);
 
   useEffect(() => {
     load();

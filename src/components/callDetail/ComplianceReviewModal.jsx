@@ -151,7 +151,7 @@ function TranscriptPanel({ utterances, highlightIndex, containerRef }) {
   );
 }
 
-export default function ComplianceReviewModal({ callRecordId, supabaseClient, onClose }) {
+export default function ComplianceReviewModal({ callRecordId, supabaseClient, onClose, displayDurationSeconds }) {
   const [callRecord, setCallRecord] = useState(null);
   const [contactSource, setContactSource] = useState(null);
   const [scorecard, setScorecard] = useState(null);
@@ -300,7 +300,7 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
           <>
             <dl className="compliance-review-meta">
               <div><dt>CALL DATE</dt><dd className="mono">{fmtDateTime(callRecord.call_start)}</dd></div>
-              <div><dt>DURATION</dt><dd className="mono">{fmtDuration(callRecord.call_duration_seconds)}</dd></div>
+              <div><dt>DURATION</dt><dd className="mono">{fmtDuration(displayDurationSeconds === undefined ? callRecord.call_duration_seconds : displayDurationSeconds)}</dd></div>
               <div><dt>AGENT</dt><dd>{callRecord.agent_name || "--"}</dd></div>
               <div><dt>CONSUMER</dt><dd>{callRecord.beneficiary_name || "--"}</dd></div>
               <div><dt>OUTCOME</dt><dd>{callOutcomeLabel(callRecord.call_outcome)}</dd></div>

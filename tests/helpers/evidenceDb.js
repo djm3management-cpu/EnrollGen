@@ -19,6 +19,8 @@ export function evidenceDb(pg, onError = () => {}) {
         select(columns = "*", options = {}) { projection = columns; head = options.head; count = options.count; return chain; },
         insert(input) { operation = "insert"; rows = Array.isArray(input) ? input : [input]; return chain; },
         update(input) { operation = "update"; rows = [input]; return chain; },
+        gte(column, item) { filters.push(q(column) + ">=" + value(item)); return chain; },
+        lt(column, item) { filters.push(q(column) + "<" + value(item)); return chain; },
         eq(column, item) { filters.push(q(column) + "=" + value(item)); return chain; },
         is(column, item) { if (item !== null) throw new Error('Fixture IS only supports NULL'); filters.push(q(column) + ' IS NULL'); return chain; },
         range(from, to) { offset = Number(from); limit = Number(to) - offset + 1; return chain; },
@@ -82,7 +84,8 @@ export function evidenceDb(pg, onError = () => {}) {
               if (single && (data.length > 1 || (single === "required" && data.length !== 1))) {
                 return { data: null, error: { code: "PGRST116", message: "Unexpected row count" } };
               }
-              return { data: head ? null : single ? data[0] || null : data, count: count ? data.length : null, error: null };
+              const total = count ? Number((await pg.query("SELECT count(*) AS total FROM public." + q(table) + where, args)).rows[0].total) : null;
+              return { data: head ? null : single ? data[0] || null : data, count: total, error: null };
             } catch (error) { onError({table,code:error.code,message:error.message}); return { data: null, error }; }
           };
           return run().then(resolve, reject);

@@ -19,10 +19,20 @@ export async function recordingIdentity(db, auth) {
 export async function authorizeRecordingTarget(db, identity, target) {
   const callId = target.call_record_id;
   const inboundId = target.inbound_call_id;
-  if (Boolean(callId) === Boolean(inboundId) || !UUID.test(callId || inboundId || '')) {
-    throw new EvidenceError(400, 'Choose one call or inbound-call ID.');
+  const attemptId = target.attempt_id;
+  if ([callId, inboundId, attemptId].filter(Boolean).length !== 1 || !UUID.test(callId || inboundId || attemptId || '')) {
+    throw new EvidenceError(400, 'Choose one call, inbound-call, or attempt ID.');
   }
   const tenantId = identity.tenant.id;
+  if (attemptId) {
+    const attempt = checked(await db.from('telephony_call_attempts').select('*')
+      .eq('id', attemptId).eq('tenant_id', tenantId).maybeSingle());
+    if (!attempt || attempt.direction !== 'outbound' ||
+      (!identity.admin && (!identity.slug || attempt.agent_id !== identity.slug))) {
+      throw new EvidenceError(403, 'Call is unavailable for this agent.');
+    }
+    return { record: attempt, field: 'attempt_id', id: attemptId, trustedSid: attempt.parent_call_sid };
+  }
   if (callId) {
     const record = checked(await db.from('call_records').select('*').eq('id', callId).eq('tenant_id', tenantId).maybeSingle());
     if (!record) throw new EvidenceError(403, 'Call is unavailable.');

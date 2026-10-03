@@ -1,3 +1,4 @@
+import { loadCallLogPages } from '../lib/callLogApi';
 import { useEffect, useMemo, useState } from 'react';
 import { useTenantConfig } from './useTenantConfig';
 import { useAvailability } from '../context/AvailabilityContext';
@@ -68,28 +69,24 @@ export function useDashboardData(userId, scope = 'self') {
             .eq('tenant_id', tenantId)
             .gte('call_start', shiftDays(dayStart(now), -30).toISOString())
             .lt('call_start', now.toISOString()).order('call_start').order('id')),
-          // v_call_log is the canonical read model for all call activity.
-          // Keep the projection aligned with the view; call_logs is not a
-          // public table and older wrapper views used incompatible columns.
-          pages(() => client.from('v_call_log')
-            .select('log_id, call_record_id, inbound_call_id, tenant_id, occurred_at, direction, contact_id, contact_name, contact_phone, duration_seconds, agent, disposition, recording_url, recording_storage_path, compliance_score, transcript_preview, agent_notes')
-            .eq('tenant_id', tenantId)
-            .gte('occurred_at', shiftDays(dayStart(now), -30).toISOString())
-            .lt('occurred_at', now.toISOString()).order('occurred_at').order('log_id'))
-            .catch((error) => {
-              console.warn('[Dashboard] v_call_log unavailable; showing enrollment calls only.', error?.message || error);
-              return [];
-            }),
+          loadCallLogPages(getToken, {
+            from: shiftDays(dayStart(now), -30).toISOString(),
+            to: now.toISOString(), ascending: '1',
+          }, () => cancelled),
           pages(() => client.from('contacts').select('id, assigned_agent_id')
             .eq('tenant_id', tenantId).order('id')),
         ]);
         const recordedCallIds = new Set(
-          calls.flatMap((call) => [call.external_call_id, call.session_id].filter(Boolean))
+          calls.flatMap((call) => [call.id, call.external_call_id, call.session_id].filter(Boolean))
         );
         const enrolledByAgent = new Map();
         for (const agent of enrolled) {
           enrolledByAgent.set(normalizeAgent(agent.id), agent.id);
           enrolledByAgent.set(normalizeAgent(agent.name), agent.id);
+        }
+        for (const agent of roster) {
+          const id = enrolled.find(item => item.clerk_user_id === agent.clerk_user_id)?.id;
+          if (id) enrolledByAgent.set(normalizeAgent(agent.agent_slug), id);
         }
         const testCalls = callLogs
           .filter((log) => !recordedCallIds.has(log.call_record_id) && !recordedCallIds.has(log.inbound_call_id))
@@ -115,7 +112,9 @@ export function useDashboardData(userId, scope = 'self') {
             transcript_preview: log.transcript_preview,
             agent_notes: log.agent_notes,
           }));
-        const dashboardCalls = [...calls, ...testCalls].sort(
+        const measuredByRecord = new Map(callLogs.filter(log => log.call_record_id).map(log => [log.call_record_id, log.duration_seconds]));
+        const measuredCalls = calls.map(call => ({ ...call, call_duration_seconds: measuredByRecord.get(call.id) ?? null }));
+        const dashboardCalls = [...measuredCalls, ...testCalls].sort(
           (a, b) => new Date(a.call_start) - new Date(b.call_start) || String(a.id).localeCompare(String(b.id))
         );
         const contactCounts = Object.create(null);
@@ -136,7 +135,7 @@ export function useDashboardData(userId, scope = 'self') {
     const onFocus = () => refresh();
     window.addEventListener('focus', onFocus);
     return () => { cancelled = true; window.clearInterval(timer); window.removeEventListener('focus', onFocus); };
-  }, [client, tenantId, userId, contextKey, tenantLoading, tenantError, version, getToken]);
+  }, [client, tenantId, userId, contextKey, tenantLoading, tenantError, version, getToken, roster]);
   const current = state.contextKey === contextKey ? state : EMPTY_DATA;
   const agentOptions = useMemo(() => dashboardAgents(roster, current.enrolled), [roster, current.enrolled]);
   const scoped = useMemo(() => selectDashboardScope(current.calls, current.contactCounts, agentOptions, scope, userId), [current.calls, current.contactCounts, agentOptions, scope, userId]);

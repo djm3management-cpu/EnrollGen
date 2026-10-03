@@ -1,6 +1,6 @@
 import { evidenceRequest } from './evidenceApi';
 export function recordingTarget(row) {
-  return row.call_record_id ? { call_record_id: row.call_record_id }
+  return row.attempt_id ? { attempt_id: row.attempt_id } : row.call_record_id ? { call_record_id: row.call_record_id }
     : row.inbound_call_id ? { inbound_call_id: row.inbound_call_id } : { call_record_id: row.id };
 }
 export function listRecordings(getToken, target) {
