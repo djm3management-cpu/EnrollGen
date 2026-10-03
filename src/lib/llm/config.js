@@ -1,5 +1,5 @@
 // Known exceptions pending server-side migration; exact names only.
-const PUBLIC_API_KEY_ALLOWLIST = new Set(['VITE_BIBLIA_API_KEY', 'VITE_AGENT_API_KEY']);
+const PUBLIC_API_KEY_ALLOWLIST = new Set(['VITE_BIBLIA_API_KEY']);
 
 // Used by Vite before bundling and by the server at module startup. Never print values.
 export function assertNoPublicApiKeys(env) {

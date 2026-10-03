@@ -67,11 +67,11 @@ another call can reserve an agent immediately afterward.
    `node scripts/availability/consumer-key.mjs vendor-name /private/tmp/vendor-key.txt`.
    The raw key is written to a new mode-0600 file; stdout contains only its hash
    and SQL. Apply that SQL manually and give that vendor its raw key.
-3. To keep the existing EnrollGen app working without changing its build, register
-   its current `VITE_AGENT_API_KEY` as consumer `enrollgen` using the script's
-   `--import` option and a private file containing that key. This adds a hashed
-   read credential; `set-availability` and its existing authentication are
-   unchanged. Do not distribute this application's write credential to vendors.
+3. EnrollGen now reads and writes its own status through the Clerk-authenticated
+   Netlify endpoint. Do not register a browser-visible application write key as
+   a feed consumer. For migration 073 rollout and retirement of the legacy
+   `enrollgen` consumer, follow `docs/availability-auth-rollout.md`. Vendor and
+   status-page consumers retain their existing independent feed credentials.
 4. Deploy `get-availability` with JWT verification disabled as specified in
    `supabase/config.toml`. It uses Supabase's service-role and URL environment
    variables; the old `VENDOR_API_KEY`/`AGENT_API_KEY` values are no longer accepted

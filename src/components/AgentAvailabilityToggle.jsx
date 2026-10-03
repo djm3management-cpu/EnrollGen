@@ -18,7 +18,7 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
   const {
     agentId,
     identityLoaded,
-    hasApiKey,
+    canAuthenticate,
     status,
     pendingStatus,
     isHydrated,
@@ -29,8 +29,8 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
 
   const disabledReason = !identityLoaded
     ? "Loading agent identity"
-    : !hasApiKey
-      ? "VITE_AGENT_API_KEY is not configured"
+    : !canAuthenticate
+      ? "Sign in with Clerk to change availability"
       : !agentId
         ? isAuthDisabled()
           ? "Set a local agent name or VITE_AGENT_AVAILABILITY_AGENT_ID for localhost"

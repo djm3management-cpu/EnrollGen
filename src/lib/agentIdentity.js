@@ -2,12 +2,11 @@
 // inbound softphone. Maps Clerk user attributes to the snake_case
 // agent_id convention used by agent_availability.
 
+import { getAuthToken } from '../context/AuthContext';
+import { availabilityRequest } from './availabilityApi';
+
 const AUTH_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const LOCAL_AGENT_ID = import.meta.env.VITE_AGENT_AVAILABILITY_AGENT_ID;
-
-export const AVAILABILITY_API_KEY = import.meta.env.VITE_AGENT_API_KEY;
-export const AVAILABILITY_FUNCTIONS_BASE_URL =
-  "https://qzjtagnpklaxefwurorc.supabase.co/functions/v1";
 
 export const KNOWN_AGENT_ID_MAP = new Map([
   ["markendres", "mark_endres"],
@@ -134,20 +133,12 @@ export function resolveRequestingAgentUuid(agents, agentSlug) {
   return match?.id || null;
 }
 
-// Fire-and-forget availability sync used by the softphone lifecycle
-// (register -> available, accept -> busy, hangup -> available).
+// Legacy callers still receive a boolean; all writes now require a Clerk token.
 export async function setAvailabilityStatus(agentId, status) {
-  if (!AVAILABILITY_API_KEY || !agentId) return false;
+  if (!agentId) return false;
   try {
-    const response = await fetch(`${AVAILABILITY_FUNCTIONS_BASE_URL}/set-availability`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": AVAILABILITY_API_KEY,
-      },
-      body: JSON.stringify({ agent_id: agentId, status }),
-    });
-    return response.ok;
+    await availabilityRequest(getAuthToken, { agent_id: agentId, status });
+    return true;
   } catch (err) {
     console.error("[agentIdentity] set-availability failed:", err);
     return false;

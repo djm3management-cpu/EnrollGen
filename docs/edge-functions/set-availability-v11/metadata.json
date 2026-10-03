@@ -1,0 +1,13 @@
+{
+  "project_ref": "qzjtagnpklaxefwurorc",
+  "slug": "set-availability",
+  "version": 11,
+  "status": "ACTIVE",
+  "verify_jwt": false,
+  "function_id": "6f2be59c-818c-4d3a-baa0-28aa52df990c",
+  "deployed_bundle_sha256": "1eafbc9d632e0022b302c4899f7591bc84ffa5e93b2131232f5f9cd69dd67d57",
+  "downloaded_source_sha256": "3dd1396fe5629c630d36baf17375972512ce51dc756d9d842ef4974ff8cf755b",
+  "captured_on": "2026-10-03",
+  "source_command": "npx supabase functions download set-availability --project-ref qzjtagnpklaxefwurorc",
+  "metadata_command": "npx supabase functions list --project-ref qzjtagnpklaxefwurorc --output json"
+}

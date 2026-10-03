@@ -45,7 +45,7 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
     };
   }, [open]);
 
-  if (!availability?.agentId || !availability.hasApiKey) return null;
+  if (!availability?.agentId || !availability.canAuthenticate) return null;
 
   const status = availability.status || "offline";
   const selectedStatus = availability.pendingStatus || status;

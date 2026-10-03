@@ -239,7 +239,7 @@ test('startup rejects public API keys without disclosing secret values', () => {
 });
 
 test('startup allows exactly the migration exceptions but rejects disguised provider secrets', () => {
-  for (const name of ['VITE_BIBLIA_API_KEY', 'VITE_AGENT_API_KEY']) {
+  for (const name of ['VITE_BIBLIA_API_KEY']) {
     assert.doesNotThrow(() => assertNoPublicApiKeys({ [name]: 'public-integration' }));
     for (const env of [
       { [name]: 'sk-proj-private12345' },
@@ -249,6 +249,7 @@ test('startup allows exactly the migration exceptions but rejects disguised prov
   }
   for (const env of [
     { VITE_BIBLIA_API_KEY_EXTRA: 'private' },
+    { VITE_AGENT_API_KEY: 'private' },
     { VITE_AGENT_API_KEY_EXTRA: 'private' },
     { VITE_biblia_api_key: 'private' },
     { VITE_OTHER_API_KEY: 'private' },

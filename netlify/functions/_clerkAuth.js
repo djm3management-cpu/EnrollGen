@@ -33,8 +33,8 @@ function isAuthBypassed() {
   );
 }
 
-export async function requireClerkAuth(request) {
-  if (isAuthBypassed()) {
+export async function requireClerkAuth(request, { allowBypass = true } = {}) {
+  if (allowBypass && isAuthBypassed()) {
     return { userId: "dev-bypass", sessionId: null, orgId: null, tokenPayload: {} };
   }
 

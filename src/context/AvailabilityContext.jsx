@@ -7,12 +7,12 @@ import {
   useRef,
   useState,
 } from "react";
+import { availabilityRequest } from "../lib/availabilityApi";
+import { useAppAuth } from "./AuthContext";
 import { createAvailabilityIntent } from "../lib/availabilityIntent";
 import { useUser } from "@clerk/clerk-react";
 import { useTenantConfig } from "../hooks/useTenantConfig";
 import {
-  AVAILABILITY_API_KEY as API_KEY,
-  AVAILABILITY_FUNCTIONS_BASE_URL as FUNCTIONS_BASE_URL,
   isAuthDisabled,
   readLocalAgentId,
   resolveAgentId,
@@ -68,6 +68,7 @@ export function extractSince(payload) {
     payload?.changedAt,
     payload?.updated_at,
     payload?.updatedAt,
+    payload?.toggled_at,
     payload?.availability?.since,
     payload?.availability?.changed_at,
     payload?.availability?.updated_at,
@@ -82,11 +83,9 @@ export function extractSince(payload) {
   return null;
 }
 
-function buildRequestError(response, fallbackMessage) {
-  return `${fallbackMessage} (${response.status})`;
-}
-
 function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
+  const { getToken } = useAppAuth();
+  const canAuthenticate = !isAuthDisabled();
   const [snapshot, setSnapshot] = useState({
     status: "offline", statusSince: null, pendingStatus: null, isSaving: false, error: "",
   });
@@ -101,13 +100,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
     const intent = createAvailabilityIntent({
       onChange: setSnapshot,
       async write(nextStatus) {
-        const response = await fetch(`${FUNCTIONS_BASE_URL}/set-availability`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": API_KEY },
-          body: JSON.stringify({ agent_id: agentId, status: nextStatus }),
-        });
-        if (!response.ok) throw new Error(buildRequestError(response, "Availability update failed"));
-        const payload = await response.json().catch(() => ({}));
+        const payload = await availabilityRequest(getToken, { status: nextStatus });
         return { status: extractStatus(payload) || nextStatus, statusSince: extractSince(payload) || new Date() };
       },
     });
@@ -117,13 +110,8 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
     async function loadAvailability() {
       if (!identityLoaded) return;
       try {
-        if (!API_KEY || !agentId) return;
-        const response = await fetch(
-          `${FUNCTIONS_BASE_URL}/get-availability?agent_id=${encodeURIComponent(agentId)}`,
-          { headers: { "x-api-key": API_KEY }, signal: controller.signal }
-        );
-        if (!response.ok) throw new Error(buildRequestError(response, "Availability lookup failed"));
-        const payload = await response.json().catch(() => ({}));
+        if (!canAuthenticate || !agentId) return;
+        const payload = await availabilityRequest(getToken, null, { signal: controller.signal });
         intent.hydrate({ status: extractStatus(payload) || "offline", statusSince: extractSince(payload) || new Date() });
       } catch (err) {
         if (!controller.signal.aborted) intent.hydrate({ error: err?.message || "Availability lookup failed" });
@@ -137,14 +125,14 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       intent.dispose();
       if (intentRef.current === binding) intentRef.current = null;
     };
-  }, [agentId, identityLoaded]);
+  }, [agentId, identityLoaded, getToken, canAuthenticate]);
 
   const changeStatus = useCallback((nextStatus) => {
     const binding = intentRef.current;
-    if (API_KEY && agentId && identityLoaded && isHydrated && binding?.agentId === agentId) {
+    if (canAuthenticate && agentId && identityLoaded && isHydrated && binding?.agentId === agentId) {
       binding.intent.select(nextStatus);
     }
-  }, [agentId, identityLoaded, isHydrated]);
+  }, [agentId, identityLoaded, isHydrated, canAuthenticate]);
 
   // Bound to the identity so a late callback from an old phone cannot release
   // another agent's queued request.
@@ -157,7 +145,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
     () => ({
       agentId,
       identityLoaded,
-      hasApiKey: Boolean(API_KEY),
+      canAuthenticate,
       status,
       statusSince,
       isHydrated,
@@ -167,7 +155,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       error,
       changeStatus,
     }),
-    [agentId, identityLoaded, status, statusSince, isHydrated, isSaving, pendingStatus, error, changeStatus, setPhoneReady]
+    [agentId, identityLoaded, canAuthenticate, status, statusSince, isHydrated, isSaving, pendingStatus, error, changeStatus, setPhoneReady]
   );
 
   return <AvailabilityContext.Provider value={value}>{children}</AvailabilityContext.Provider>;
