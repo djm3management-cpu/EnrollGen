@@ -12,7 +12,7 @@ import { claimInitialInboundAgent, chooseInboundPreference, routingPhoneLast4 } 
 
 import { vendorMetadata } from "../vendorMetadata.js";
 import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
-import { classifyCaller, decideMatchedParagon, isDuplicateParagonCall } from "../paragonRouting.js";
+import { classifyCaller, decideMatchedParagon } from "../paragonRouting.js";
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
@@ -167,7 +167,8 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next
         .eq('name','Paragon Media').eq('type','publisher').eq('active',true).maybeSingle()
       : null;
     if (paragonSource?.error) throw new Error(`Paragon source lookup failed: ${paragonSource.error.message}`);
-    const duplicate = paragon && classification === "new" && priorCalls.some(row => row.source_kind === "publisher" && isDuplicateParagonCall({ deliveredAt: row.created_at }));
+    // Duplicate evidence is computed atomically by 076 on insert, independently
+    // of identity classification, including existing contacts.
 
     // Claim (not just read) the agent here: marks them busy the instant
     // they're selected so a second call arriving in the same instant
@@ -196,12 +197,13 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next
           paragon_matched_ping:true },
         aggregator_call_id:vendorCallId || metadata.aggregator_call_id,
         caller_state:callerState,
-        caller_classification: classification, duplicate_flag: duplicate,
+        caller_classification: classification,
         status: "rejected", source_kind: "publisher",lead_source_id:paragonSource?.data?.id || null,
       }).select("*").single();
       if (rejectError) throw new Error(`inbound_calls insert failed: ${rejectError.message}`);
       await logEvent({ inboundCallId: rejected.id, callSid, event: "paragon_fast_reject",
-        payload: { reason: finalParagonDecision.reason,duplicate } });
+        payload: { reason: finalParagonDecision.reason, duplicate: rejected.duplicate_flag,
+          duplicate_prior_call_id: rejected.duplicate_prior_call_id || null } });
       return sendTwiml(res, busyRejectTwiml());
     }
 
@@ -221,7 +223,6 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next
         source_kind: paragon || publisherCall ? "publisher" : "direct",
         lead_source_id: paragonSource?.data?.id || null,
         caller_classification: classification,
-        duplicate_flag: duplicate,
         caller_state: callerState,
       })
       .select("*")
