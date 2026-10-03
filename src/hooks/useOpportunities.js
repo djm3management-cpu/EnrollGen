@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTenantConfig } from './useTenantConfig';
 import { useCurrentAgent } from './useCurrentAgent';
-import { persistStageMove, stageStatus, opportunityFields } from '../lib/opportunities';
+import { persistStageMove, stageStatus, opportunityFields, readOpportunityMetadata } from '../lib/opportunities';
 
 const UPDATED = 'enrollgen:opportunities-updated';
 export function notifyOpportunitiesUpdated() {
@@ -15,6 +15,7 @@ export function useOpportunities(contactId = null) {
   const [pipelines, setPipelines] = useState([]);
   const [stages, setStages] = useState([]);
   const [sources, setSources] = useState([]);
+  const [activeSources, setActiveSources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pendingIds, setPendingIds] = useState(new Set());
@@ -37,12 +38,7 @@ export function useOpportunities(contactId = null) {
         p_tenant_id: tenantId, p_requesting_agent_id: agentUuid,
       });
       if (seedError) throw seedError;
-      const meta = await Promise.all([
-        supabaseClient.from('pipelines').select('*').eq('tenant_id', tenantId).order('created_at'),
-        supabaseClient.from('pipeline_stages').select('*').eq('tenant_id', tenantId).order('position'),
-        supabaseClient.from('lead_sources').select('id, name, active').eq('tenant_id', tenantId).order('name'),
-      ]);
-      for (const result of meta) if (result.error) throw result.error;
+      const meta = await readOpportunityMetadata(supabaseClient, tenantId, agentUuid);
       const all = [];
       for (let offset = 0; ; offset += 200) {
         const { data, error: readError } = await supabaseClient.rpc('read_opportunities', {
@@ -53,7 +49,7 @@ export function useOpportunities(contactId = null) {
         if (!data || data.length < 200) break;
       }
       if (request !== generation.current) return;
-      setPipelines(meta[0].data || []); setStages(meta[1].data || []); setSources(meta[2].data || []);
+      setPipelines(meta.pipelines); setStages(meta.stages); setSources(meta.sources); setActiveSources(meta.activeSources);
       setRows((current) => all.map((row) => pending.current.has(row.id) ? current.find((item) => item.id === row.id) || row : row));
     } catch (err) {
       if (request === generation.current) setError(err.message || 'Opportunities could not be loaded.');
@@ -106,6 +102,6 @@ export function useOpportunities(contactId = null) {
     return data;
   }, [supabaseClient, tenantId, agentUuid]);
 
-  return { rows, pipelines, stages, sources, agents, loading, error, setError, pendingIds, moveStage, save, refresh,
+  return { rows, pipelines, stages, sources, activeSources, agents, loading, error, setError, pendingIds, moveStage, save, refresh,
     supabaseClient, tenantId, agentUuid, isAdmin };
 }

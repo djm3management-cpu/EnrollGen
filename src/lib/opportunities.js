@@ -4,6 +4,21 @@ export const LINES_OF_BUSINESS = ['MA', 'Med Supp', 'ACA', 'U65', 'Annuity', 'An
 // Never create an opportunity from a call automatically in this MVP.
 export const AUTO_CREATE_OPPS_FROM_CALLS = false;
 
+export async function readOpportunityMetadata(client, tenantId, agentId) {
+  const sourceArgs = { p_tenant_id: tenantId, p_requesting_agent_id: agentId };
+  const results = await Promise.all([
+    client.from('pipelines').select('*').eq('tenant_id', tenantId).order('created_at'),
+    client.from('pipeline_stages').select('*').eq('tenant_id', tenantId).order('position'),
+    // lead_sources is service-only and contains credentials/configuration.
+    // The authenticated RPC returns exactly id/name, with identity binding.
+    client.rpc('read_opportunity_sources', { ...sourceArgs, p_active_only: false }),
+    client.rpc('read_opportunity_sources', { ...sourceArgs, p_active_only: true }),
+  ]);
+  for (const result of results) if (result.error) throw result.error;
+  return { pipelines: results[0].data || [], stages: results[1].data || [],
+    sources: results[2].data || [], activeSources: results[3].data || [] };
+}
+
 export function stageStatus(stage) {
   return stage?.is_won ? 'won' : stage?.is_lost ? 'lost' : 'open';
 }

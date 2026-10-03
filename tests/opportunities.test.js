@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { before, after, beforeEach, afterEach, test } from 'node:test';
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
-import { AUTO_CREATE_OPPS_FROM_CALLS, filterOpportunities, sortOpportunities, persistStageMove, opportunityKeyboardCoordinates, money, daysInStage, opportunityStatus } from '../src/lib/opportunities.js';
+import { AUTO_CREATE_OPPS_FROM_CALLS, filterOpportunities, sortOpportunities, persistStageMove, opportunityKeyboardCoordinates, money, daysInStage, opportunityStatus, readOpportunityMetadata } from '../src/lib/opportunities.js';
 
 // Real PostgreSQL (including RLS, FKs, PL/pgSQL and pgcrypto), no live credentials.
 // Only Supabase's Vault key source and JWT provider are represented by fixtures.
@@ -15,6 +15,9 @@ const agentB = '10000000-0000-4000-8000-000000000002';
 const contactA = '20000000-0000-4000-8000-000000000001';
 const contactB = '20000000-0000-4000-8000-000000000002';
 const callA = '30000000-0000-4000-8000-000000000001';
+const sourceA = '60000000-0000-4000-8000-000000000001';
+const sourceB = '60000000-0000-4000-8000-000000000002';
+const archivedSourceA = '60000000-0000-4000-8000-000000000003';
 let pipelineA, pipelineB, stagesA, stagesB, opportunityA, opportunityB;
 const query = async (sql, args = []) => (await db.query(sql, args)).rows;
 const asUser = async (sub = 'user-a') => {
@@ -24,13 +27,38 @@ const asUser = async (sub = 'user-a') => {
 const fields = (tenant, overrides = {}) => ({ contact_id: tenant === tenantA ? contactA : contactB,
   pipeline_id: tenant === tenantA ? pipelineA : pipelineB, stage_id: tenant === tenantA ? stagesA[0].id : stagesB[0].id,
   title: 'MA application', notes: 'Private application notes', line_of_business: 'MA', est_value: 125.50,
-  assigned_agent_id: tenant === tenantA ? agentA : agentB, ...overrides });
+  assigned_agent_id: tenant === tenantA ? agentA : agentB, lead_source_id: tenant === tenantA ? sourceA : sourceB, ...overrides });
 const save = async (tenant, agent, input) => (await query('SELECT public.save_opportunity($1,$2,$3) AS id', [tenant, agent, input]))[0].id;
 const move = async (id, destination, expected, agent = agentA) => (await query('SELECT public.move_opportunity_stage($1,$2,$3,$4) AS row', [id, destination, agent, expected]))[0].row;
 const expectFailure = async (work, pattern) => {
   await db.exec('SAVEPOINT expected_failure');
   await assert.rejects(work, pattern);
   await db.exec('ROLLBACK TO SAVEPOINT expected_failure');
+};
+
+const quoteIdentifier = (name) => `"${name.replaceAll('"', '""')}"`;
+// Thin Supabase-shaped adapter: every SELECT/RPC is executed by real PostgreSQL
+// as the current role. There are no mocked permission or source-read results.
+const authenticatedClient = {
+  from(table) {
+    let projection = '*';
+    const filters = [], order = [], values = [];
+    const chain = {
+      select(columns) { projection = columns === '*' ? '*' : columns.split(',').map((column) => quoteIdentifier(column.trim())).join(','); return chain; },
+      eq(column, value) { values.push(value); filters.push(`${quoteIdentifier(column)}=$${values.length}`); return chain; },
+      order(column) { order.push(quoteIdentifier(column)); return chain; },
+      then(resolve, reject) {
+        const sql = `SELECT ${projection} FROM public.${quoteIdentifier(table)}${filters.length ? ` WHERE ${filters.join(' AND ')}` : ''}${order.length ? ` ORDER BY ${order.join(',')}` : ''}`;
+        return query(sql, values).then((data) => ({ data, error: null }), (error) => ({ data: null, error })).then(resolve, reject);
+      },
+    };
+    return chain;
+  },
+  rpc(name, args) {
+    const entries = Object.entries(args);
+    const sql = `SELECT * FROM public.${quoteIdentifier(name)}(${entries.map(([key], index) => `${quoteIdentifier(key)}=>$${index + 1}`).join(',')})`;
+    return query(sql, entries.map(([, value]) => value)).then((data) => ({ data, error: null }), (error) => ({ data: null, error }));
+  },
 };
 
 before(async () => {
@@ -42,10 +70,15 @@ before(async () => {
     CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$ SELECT auth.jwt()->>'role' $$;
     GRANT USAGE ON SCHEMA auth TO authenticated,service_role;
     CREATE TABLE tenants(id uuid PRIMARY KEY, name text);
-    CREATE TABLE tenant_agents(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants, name text,role text,agent_slug text,clerk_user_id text,is_active boolean DEFAULT true);
-    CREATE TABLE contacts(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants,assigned_agent_id text,pii_encrypted jsonb);
-    CREATE TABLE lead_sources(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants,name text,active boolean DEFAULT true);
-    CREATE TABLE call_records(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants,contact_id uuid REFERENCES contacts,call_start timestamptz);
+    CREATE TABLE tenant_agents(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants, name text,role text,agent_slug text,clerk_user_id text,is_active boolean DEFAULT true,ghl_user_id text,npn text);
+    CREATE TABLE contacts(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants,assigned_agent_id text,pii_encrypted jsonb,
+      status text,source text,county text,state text,zip text,medicare_parts text,current_carrier text,current_plan text,mbi_last4 text,
+      do_not_call boolean,ghl_contact_id text,first_initial text,last_initial text,phone_last4 text,email_set boolean,dob_set boolean,
+      created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now());
+    CREATE TABLE call_records(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants,contact_id uuid REFERENCES contacts,call_start timestamptz,
+      call_outcome text,product_type text,call_duration_seconds integer,transcript_raw text,transcript_diarized text,
+      dg_sentiment jsonb,dg_intents jsonb,dg_topics jsonb,dg_summary jsonb,call_analytics jsonb,agent_assessment jsonb,beneficiary_risk jsonb,
+      agent_notes text,carrier_name text,plan_name text,effective_date date);
     CREATE TABLE pii_access_log(id uuid DEFAULT gen_random_uuid(),contact_id uuid,agent_id uuid,clerk_user_id text,action text,ip_address text,user_agent text);
     CREATE TABLE vault.decrypted_secrets(id uuid PRIMARY KEY,decrypted_secret text);
     CREATE TABLE pii_vault.encryption_keys(key_id uuid PRIMARY KEY,vault_secret_id uuid,key_version integer,is_active boolean,created_at timestamptz DEFAULT now());
@@ -53,17 +86,31 @@ before(async () => {
     INSERT INTO pii_vault.encryption_keys VALUES('50000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000001',1,true,now());
     INSERT INTO tenants VALUES('${tenantA}','A'),('${tenantB}','B');
     INSERT INTO tenant_agents(id,tenant_id,name,role,agent_slug,clerk_user_id) VALUES('${agentA}','${tenantA}','Agent A','admin','agent_a','user-a'),('${agentB}','${tenantB}','Agent B','admin','agent_b','user-b');
-    -- Existing CRM reads are deliberately broad, matching migration 028.
-    GRANT SELECT ON tenants,tenant_agents,contacts,lead_sources,call_records TO authenticated;
+    -- Production catalog: existing CRM reads are broad, but lead_sources
+    -- is service-only. Never grant the authenticated fixture source access.
+    GRANT SELECT ON tenants,tenant_agents,contacts,call_records TO authenticated;
   `);
+  const integrations = readFileSync(new URL('../supabase/migrations/048_vendor_integrations.sql', import.meta.url), 'utf8');
+  // Use the real source schema (including credentials/configuration), without
+  // executing any integration workers, triggers or other vendor objects.
+  await db.exec(integrations.slice(integrations.indexOf('CREATE TABLE public.lead_sources ('), integrations.indexOf('CREATE UNIQUE INDEX lead_source_number')));
+  await db.exec(`ALTER TABLE lead_sources ENABLE ROW LEVEL SECURITY;
+    REVOKE ALL ON lead_sources FROM PUBLIC,anon,authenticated;
+    GRANT ALL ON lead_sources TO service_role;
+    INSERT INTO lead_sources(id,tenant_id,name,type,active,ping_key_hash,postback_url,postback_secret,postback_field_map,report_emails,twilio_number,external_id) VALUES
+      ('${sourceA}','${tenantA}','Paragon Media','publisher',true,'test-only-hash-a','https://example.invalid/postback','test-only-secret-a','{"field":"private-config"}',ARRAY['test@example.invalid'],'+12025550100','test-external-a'),
+      ('${sourceB}','${tenantB}','Other tenant source','publisher',true,'test-only-hash-b','https://example.invalid/other','test-only-secret-b','{}',ARRAY['other@example.invalid'],'+12025550101','test-external-b'),
+      ('${archivedSourceA}','${tenantA}','Archived source','direct',false,NULL,NULL,NULL,NULL,'{}',NULL,NULL);`);
   const pii = readFileSync(new URL('../supabase/migrations/022_pii_protection_phase1.sql', import.meta.url), 'utf8');
   await db.exec(pii.slice(pii.indexOf('CREATE OR REPLACE FUNCTION pii_vault.get_active_key()'), pii.indexOf('-- Blind-index HMAC key')));
   const details = readFileSync(new URL('../supabase/migrations/044_agent_contact_details.sql', import.meta.url), 'utf8');
   await db.exec(details.slice(details.indexOf('CREATE OR REPLACE FUNCTION public.decrypt_pii('), details.indexOf('CREATE OR REPLACE FUNCTION public.search_contacts_secure(')));
-  await db.exec(`INSERT INTO contacts VALUES('${contactA}','${tenantA}','agent_a',jsonb_build_object('first_name',encrypt_pii_value('Ada'),'last_name',encrypt_pii_value('Lovelace'))),('${contactB}','${tenantB}','agent_b',jsonb_build_object('first_name',encrypt_pii_value('Other'),'last_name',encrypt_pii_value('Tenant')));
-    INSERT INTO call_records VALUES('${callA}','${tenantA}','${contactA}',now());`);
+  await db.exec(details.slice(details.indexOf('CREATE OR REPLACE FUNCTION public.read_contact_details('), details.indexOf('COMMIT;')));
+  await db.exec(`INSERT INTO contacts(id,tenant_id,assigned_agent_id,pii_encrypted) VALUES('${contactA}','${tenantA}','agent_a',jsonb_build_object('first_name',encrypt_pii_value('Ada'),'last_name',encrypt_pii_value('Lovelace'))),('${contactB}','${tenantB}','agent_b',jsonb_build_object('first_name',encrypt_pii_value('Other'),'last_name',encrypt_pii_value('Tenant')));
+    INSERT INTO call_records(id,tenant_id,contact_id,call_start) VALUES('${callA}','${tenantA}','${contactA}',now());`);
   await db.exec(readFileSync(new URL('../supabase/migrations/058_opportunities_board.sql', import.meta.url), 'utf8'));
   await db.exec(readFileSync(new URL('../supabase/migrations/059_opportunity_contact_tags.sql', import.meta.url), 'utf8'));
+  await db.exec(readFileSync(new URL('../supabase/migrations/061_opportunity_source_reader.sql', import.meta.url), 'utf8'));
   pipelineA = (await query('SELECT id FROM pipelines WHERE tenant_id=$1', [tenantA]))[0].id;
   pipelineB = (await query('SELECT id FROM pipelines WHERE tenant_id=$1', [tenantB]))[0].id;
   stagesA = await query('SELECT * FROM pipeline_stages WHERE pipeline_id=$1 ORDER BY position', [pipelineA]);
@@ -83,6 +130,61 @@ test('seeded stages have the requested editable dark-theme colors and outcome fl
     ['New Lead','#a78bfa',false,false],['Contacted','#facc15',false,false],['Pending','#fb923c',false,false],['Enrolled','#4ade80',true,false],['Disenrolled','#f87171',false,true],
   ]);
   assert.equal(AUTO_CREATE_OPPS_FROM_CALLS, false);
+});
+
+test('authenticated board metadata loads with production-like grants while direct source reads stay denied', async () => {
+  assert.equal((await query('SELECT current_user AS role'))[0].role,'authenticated');
+  await expectFailure(() => query('SELECT id,name,active FROM lead_sources WHERE tenant_id=$1',[tenantA]),/permission denied/);
+  const meta = await readOpportunityMetadata(authenticatedClient,tenantA,agentA);
+  assert.deepEqual(meta.pipelines.map((row) => row.id),[pipelineA]);
+  assert.deepEqual(meta.stages.map((row) => row.id),stagesA.map((row) => row.id));
+  assert.deepEqual(meta.sources,[{id:archivedSourceA,name:'Archived source'},{id:sourceA,name:'Paragon Media'}]);
+  assert.deepEqual(meta.activeSources,[{id:sourceA,name:'Paragon Media'}]);
+  for (const source of [...meta.sources,...meta.activeSources]) assert.deepEqual(Object.keys(source).sort(),['id','name']);
+  const rows = await query('SELECT read_opportunities($1,$2) AS row',[tenantA,agentA]);
+  assert.equal(rows.length,1); assert.equal(rows[0].row.lead_source_id,sourceA);
+  for (const column of ['*','id,name','ping_key_hash','postback_secret','postback_url','postback_field_map','report_emails','twilio_number']) {
+    await expectFailure(() => query(`SELECT ${column} FROM lead_sources`),/permission denied/);
+  }
+});
+
+test('source reader binds tenant and agent identity, denies anonymous callers, and preserves service access', async () => {
+  await expectFailure(() => query('SELECT * FROM read_opportunity_sources($1,$2)',[tenantB,agentB]),/Access denied/);
+  await expectFailure(() => query('SELECT * FROM read_opportunity_sources($1,$2)',[tenantA,agentB]),/Access denied/);
+  await asUser('user-b');
+  assert.deepEqual(await query('SELECT * FROM read_opportunity_sources($1,$2)',[tenantB,agentB]),[{id:sourceB,name:'Other tenant source'}]);
+  await expectFailure(() => query('SELECT * FROM read_opportunity_sources($1,$2)',[tenantA,agentA]),/Access denied/);
+  await db.exec('RESET ROLE; SET ROLE anon');
+  await expectFailure(() => query('SELECT * FROM read_opportunity_sources($1,$2)',[tenantA,agentA]),/permission denied/);
+  await db.exec('RESET ROLE; SET ROLE service_role');
+  const serviceRows = await query('SELECT postback_secret FROM lead_sources WHERE id=$1',[sourceA]);
+  assert.equal(serviceRows[0].postback_secret,'test-only-secret-a');
+});
+
+test('remaining Opportunity contact, agent, call and timeline projections work as authenticated', async () => {
+  const contactsHook = readFileSync(new URL('../src/hooks/useContacts.js', import.meta.url), 'utf8');
+  const contactColumns = contactsHook.match(/const CONTACT_SAFE_COLUMNS =\s*"([^"]+)"/)[1];
+  // Also exercise the intended stronger contact column boundary. The UI must
+  // continue to use the audited detail reader, even if table grants narrow.
+  await db.exec(`RESET ROLE; REVOKE SELECT ON contacts FROM authenticated;
+    GRANT SELECT (${contactColumns}) ON contacts TO authenticated`);
+  await asUser();
+  assert.equal((await query(`SELECT ${contactColumns} FROM contacts WHERE tenant_id=$1`,[tenantA])).length,1);
+  await expectFailure(() => query('SELECT pii_encrypted FROM contacts'),/permission denied/);
+  const detail = (await query('SELECT * FROM read_contact_details($1,$2)',[[contactA],agentA]))[0];
+  assert.equal(detail.fields.first_name,'Ada');
+  assert.equal((await query('SELECT id,name,ghl_user_id,npn,clerk_user_id,agent_slug,role FROM tenant_agents WHERE tenant_id=$1 AND is_active',[tenantA])).length,1);
+  // Read each actual call projection used by the picker and drawer; a later
+  // frontend change cannot silently depend on a missing/locked call column.
+  for (const file of ['OpportunityEditor.jsx','OpportunityDrawer.jsx']) {
+    const source = readFileSync(new URL(`../src/components/opportunities/${file}`, import.meta.url), 'utf8');
+    const projections = [...source.matchAll(/from\('call_records'\)\s*\.select\('([^']+)'\)/g)];
+    assert.ok(projections.length > 0,`${file}: expected to exercise its actual call projections`);
+    for (const match of projections) {
+      assert.equal((await query(`SELECT ${match[1]} FROM call_records WHERE tenant_id=$1 AND contact_id=$2`,[tenantA,contactA])).length,1);
+    }
+  }
+  assert.equal((await query('SELECT * FROM opportunity_stage_history WHERE tenant_id=$1',[tenantA])).length,1);
 });
 
 test('list display always has a valid status and numeric days, including incomplete rows and zero', () => {
