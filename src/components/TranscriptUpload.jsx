@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAppAuth } from "../context/AuthContext";
-import { supabase } from "../lib/supabase";
+import { evidenceRequest } from "../lib/evidenceApi";
 import { ingestTranscript } from "../lib/transcriptIngestion";
 
 const DIRECTION_OPTIONS = [
@@ -26,6 +26,7 @@ const SOURCE_SYSTEM_OPTIONS = [
 
 const INITIAL_FORM = {
   agentName: "",
+  agentId: "",
   callDate: "",
   duration: "",
   direction: "inbound",
@@ -73,18 +74,18 @@ export default function TranscriptUpload() {
 
     async function loadAgents() {
       setLoadingAgents(true);
-      const { data, error: fetchError } = await supabase
-        .from("agents")
-        .select("id, name")
-        .order("name", { ascending: true })
-        .limit(500);
-
-      if (!alive) return;
-
-      if (fetchError) {
-        setError(asFriendlyError(fetchError));
-      } else {
-        setAgents(data || []);
+      try {
+        const data = await evidenceRequest(getToken, "transcript-import");
+        if (!alive) return;
+        setAgents(data.agents || []);
+        const selected = data.agents?.find(agent => agent.id === data.current_agent_id);
+        if (selected) {
+          setAgentSelect(selected.id);
+          setForm(current => ({ ...current, agentId: selected.id, agentName: selected.name }));
+        }
+      } catch (error) {
+        if (!alive) return;
+        setError(asFriendlyError(error));
       }
       setLoadingAgents(false);
     }
@@ -93,7 +94,7 @@ export default function TranscriptUpload() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [getToken]);
 
   function onFieldChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -101,19 +102,16 @@ export default function TranscriptUpload() {
 
   function onSelectAgent(value) {
     setAgentSelect(value);
-    if (value === "__new__") {
-      onFieldChange("agentName", "");
-      return;
-    }
-
     const selected = agents.find((agent) => agent.id === value);
     if (selected) {
-      onFieldChange("agentName", selected.name || "");
+      setForm(current => ({ ...current, agentId: selected.id, agentName: selected.name || "" }));
+    } else {
+      setForm(current => ({ ...current, agentId: "", agentName: "" }));
     }
   }
 
   function validate() {
-    if (!form.agentName.trim()) return "Agent name is required.";
+    if (!form.agentId) return "Select an enrolled agent.";
     if (!form.callDate) return "Call date is required.";
     if (!form.carrier.trim()) return "Carrier is required.";
     if (!form.transcriptText.trim()) return "Transcript text is required.";
@@ -137,8 +135,7 @@ export default function TranscriptUpload() {
     try {
       const result = await ingestTranscript(form, setProgress, getToken);
       setSuccess(result);
-      setForm(INITIAL_FORM);
-      setAgentSelect("");
+      setForm({ ...INITIAL_FORM, agentId: form.agentId, agentName: form.agentName });
       setProgress({ stage: "done", label: "Upload complete", percent: 100 });
     } catch (submitError) {
       setError(asFriendlyError(submitError));
@@ -174,24 +171,10 @@ export default function TranscriptUpload() {
                   {agent.name}
                 </option>
               ))}
-              <option value="__new__">+ Add New Agent</option>
             </select>
           </label>
 
-          {(agentSelect === "__new__" || !agentSelect) && (
-            <label>
-              New Agent Name
-              <input
-                type="text"
-                value={form.agentName}
-                onChange={(e) => onFieldChange("agentName", e.target.value)}
-                placeholder="Enter full agent name"
-                disabled={submitting}
-              />
-            </label>
-          )}
-
-          {agentSelect && agentSelect !== "__new__" && (
+          {agentSelect && (
             <label>
               Selected Agent
               <input type="text" value={form.agentName} readOnly disabled />

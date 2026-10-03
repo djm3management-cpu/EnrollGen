@@ -1,5 +1,8 @@
 import { linkTelephonyRecord } from "./_telephonyLink.js";
-import { createClient } from "@supabase/supabase-js";
+import {
+  EvidenceError, bindPostCallPayload, checked, evidenceFailure,
+  getEvidenceServiceClient, requireOwnedTranscript, resolveEvidenceIdentity, writeOwnedTranscript,
+} from "./_evidenceAccess.js";
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { redactDiarizedTranscript, redactSensitiveText } from "./_redaction.js";
 import {
@@ -9,19 +12,11 @@ import {
   requirePlan,
 } from "./_subscriptionGate.js";
 
-const JSON_HEADERS = { "Content-Type": "application/json" };
+const JSON_HEADERS = { "Content-Type": "application/json", "Cache-Control": "no-store" };
 const LIVE_SOURCE_SYSTEM = "enrollgen_live";
-const NGHS_TENANT_ID = "00000000-0000-4000-8000-000000000001";
 
 function json(status, payload) {
   return new Response(JSON.stringify(payload), { status, headers: JSON_HEADERS });
-}
-
-function getSupabase() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error("Supabase env vars not configured");
-  return createClient(url, key);
 }
 
 function safeText(value) {
@@ -63,29 +58,6 @@ function normalizeTenant(row) {
     carrier_options: Array.isArray(row.carrier_options) ? row.carrier_options : [],
     agency_display_name: row.agency_display_name || row.name || "",
   };
-}
-
-async function resolveTenant(supabase, orgId) {
-  if (orgId) {
-    const { data, error } = await supabase
-      .from("tenants")
-      .select("id, name, ghl_webhook_url, ghl_location_id, coop_rates, carrier_options, agency_display_name")
-      .eq("clerk_org_id", orgId)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (data) return normalizeTenant(data);
-  }
-
-  const { data, error } = await supabase
-    .from("tenants")
-    .select("id, name, ghl_webhook_url, ghl_location_id, coop_rates, carrier_options, agency_display_name")
-    .eq("id", NGHS_TENANT_ID)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) throw new Error("Unable to resolve tenant for Clerk organization.");
-  return normalizeTenant(data);
 }
 
 async function fetchTenantAgents(supabase, tenantId) {
@@ -203,125 +175,24 @@ function mergeMetadata(current, patch) {
   };
 }
 
-async function fetchTenantAgentForPayload(supabase, payload, auth, tenantId) {
-  const writingAgent = humanAgentText(payload.writing_agent || payload.agent_name);
-
-  if (auth.userId) {
-    const { data } = await supabase
-      .from("tenant_agents")
-      .select("id, name, npn, clerk_user_id, ghl_user_id")
-      .eq("tenant_id", tenantId)
-      .eq("clerk_user_id", auth.userId)
-      .eq("is_active", true)
-      .maybeSingle();
-    if (data) return data;
-  }
-
-  if (writingAgent) {
-    const { data } = await supabase
-      .from("tenant_agents")
-      .select("id, name, npn, clerk_user_id, ghl_user_id")
-      .eq("tenant_id", tenantId)
-      .ilike("name", writingAgent)
-      .eq("is_active", true)
-      .maybeSingle();
-    if (data) return data;
-  }
-
-  return null;
+async function fetchAgent(_supabase, _payload, auth, tenant) {
+  const agent = auth.evidenceIdentity?.agent;
+  if (!agent || agent.tenant_id !== tenant.id) throw new EvidenceError(403, "Agent identity is unavailable.");
+  return agent;
 }
 
-async function fetchEnrolledAgentForPayload(supabase, payload, auth, tenantId) {
-  if (payload.agent_id) {
-    let query = supabase
-      .from("enrolled_agents")
-      .select("id, name, npn, clerk_user_id")
-      .eq("id", payload.agent_id);
-    if (tenantId) query = query.eq("tenant_id", tenantId);
-    const { data } = await query.maybeSingle();
-    if (data) return data;
-  }
-
-  if (auth.userId) {
-    let query = supabase
-      .from("enrolled_agents")
-      .select("id, name, npn, clerk_user_id")
-      .eq("clerk_user_id", auth.userId);
-    if (tenantId) query = query.eq("tenant_id", tenantId);
-    const { data } = await query.maybeSingle();
-    if (data) return data;
-  }
-
-  return null;
-}
-
-function resolveHumanAgentName(payload, tenantAgent, enrolledAgent) {
-  return (
-    humanAgentText(payload.writing_agent) ||
-    humanAgentText(tenantAgent?.name) ||
-    humanAgentText(enrolledAgent?.name) ||
-    "Unknown Agent"
-  );
-}
-
-async function fetchAgent(supabase, payload, auth, tenant) {
-  const tenantId = tenant?.id;
-  const tenantAgent = tenantId
-    ? await fetchTenantAgentForPayload(supabase, payload, auth, tenantId)
-    : null;
-
-  const enrolledAgent = await fetchEnrolledAgentForPayload(supabase, payload, auth, tenantId);
-  const agentName = resolveHumanAgentName(payload, tenantAgent, enrolledAgent);
-
-  return {
-    id: enrolledAgent?.id || payload.agent_id || tenantAgent?.id || null,
-    name: agentName,
-    npn: tenantAgent?.npn || enrolledAgent?.npn || null,
-    clerk_user_id: tenantAgent?.clerk_user_id || enrolledAgent?.clerk_user_id || auth.userId,
-  };
-}
-
-function resolveHumanAgentNameFromLoaded(payload, auth, tenantAgents, fallbackAgent) {
-  const tenantAgent = auth.userId
-    ? tenantAgents.find((agent) => agent.clerk_user_id === auth.userId)
-    : null;
-  return resolveHumanAgentName(payload, tenantAgent, fallbackAgent);
+function resolveHumanAgentNameFromLoaded(_payload, _auth, _tenantAgents, agent) {
+  return humanAgentText(agent?.name) || "Agent";
 }
 
 async function resolveTranscriptAgentId(supabase, agent, tenant) {
-  try {
-    const agency = tenant?.agency_display_name || tenant?.name || "Unknown";
-    const { data: existing, error: fetchError } = await supabase
-      .from("agents")
-      .select("id, name")
-      .ilike("name", agent.name || "Agent")
-      .eq("agency", agency)
-      .limit(1)
-      .maybeSingle();
-
-    if (fetchError?.code === "42P01") return null;
-    if (existing) return existing.id;
-
-    const { data: inserted, error: insertError } = await supabase
-      .from("agents")
-      .insert({
-        name: agent.name || "Agent",
-        agency,
-        is_active: true,
-      })
-      .select("id")
-      .single();
-
-    if (insertError) {
-      if (insertError.code === "42P01") return null;
-      throw insertError;
-    }
-
-    return inserted?.id || null;
-  } catch (error) {
-    console.warn("[post-call] Could not resolve transcript agent:", error.message);
-    return null;
-  }
+  const agency = tenant?.agency_display_name || tenant?.name || "Unknown";
+  const existing = checked(await supabase.from("agents").select("id, name")
+    .eq("name", agent.name || "Agent").eq("agency", agency).limit(1).maybeSingle());
+  if (existing) return existing.id;
+  return checked(await supabase.from("agents").insert({
+    name: agent.name || "Agent", agency, is_active: true,
+  }).select("id").single()).id;
 }
 
 async function ensureCallRecord(supabase, payload, auth, tenant) {
@@ -337,7 +208,7 @@ async function ensureCallRecordRow(supabase, payload, auth, tenant) {
       .select("*")
       .eq("id", payload.call_record_id);
     if (tenant?.id) query = query.eq("tenant_id", tenant.id);
-    const { data } = await query.maybeSingle();
+    const data = checked(await query.maybeSingle());
     if (data) return data;
   }
 
@@ -349,7 +220,8 @@ async function ensureCallRecordRow(supabase, payload, auth, tenant) {
       .order("created_at", { ascending: false })
       .limit(1);
     if (tenant?.id) query = query.eq("tenant_id", tenant.id);
-    const { data } = await query.maybeSingle();
+    query = query.eq("agent_id", auth.evidenceIdentity.agent.id);
+    const data = checked(await query.maybeSingle());
     if (data) return data;
   }
 
@@ -396,14 +268,15 @@ async function ensureCallRecordRow(supabase, payload, auth, tenant) {
   if (error) throw error;
 
   if (payload.session_id) {
-    await supabase
+    checked(await supabase
       .from("sessions")
       .update({
         call_record_id: callRecord.id,
         ...(safeUuid(payload.contact_id) ? { contact_id: safeUuid(payload.contact_id) } : {}),
       })
       .eq("id", payload.session_id)
-      .eq("tenant_id", tenant.id);
+      .eq("agent_id", auth.evidenceIdentity.agent.id)
+      .eq("tenant_id", tenant.id));
   }
 
   return callRecord;
@@ -416,7 +289,7 @@ async function findTranscript(supabase, callRecord, payload, tenant) {
       .select("*")
       .eq("id", payload.transcript_id || callRecord.transcript_id);
     if (tenant?.id) query = query.eq("tenant_id", tenant.id);
-    const { data } = await query.maybeSingle();
+    const data = checked(await query.maybeSingle());
     if (data) return data;
   }
 
@@ -428,7 +301,7 @@ async function findTranscript(supabase, callRecord, payload, tenant) {
       .order("created_at", { ascending: false })
       .limit(1);
     if (tenant?.id) query = query.eq("tenant_id", tenant.id);
-    const { data } = await query.maybeSingle();
+    const data = checked(await query.maybeSingle());
     if (data) return data;
   }
 
@@ -441,7 +314,7 @@ async function findTranscript(supabase, callRecord, payload, tenant) {
       .order("created_at", { ascending: false })
       .limit(1);
     if (tenant?.id) query = query.eq("tenant_id", tenant.id);
-    const { data } = await query.maybeSingle();
+    const data = checked(await query.maybeSingle());
     if (data) return data;
   }
 
@@ -456,22 +329,8 @@ async function saveTranscript(supabase, callRecord, payload, auth, tenant, { fin
 
   const agent = await fetchAgent(supabase, payload, auth, tenant);
   const transcriptAgentId = await resolveTranscriptAgentId(supabase, agent, tenant);
-  if (!transcriptAgentId) {
-    console.warn("[post-call] call_transcripts was not available; transcript stored on call_records only.");
-    return { transcript: null, callRecord };
-  }
-
   const now = new Date().toISOString();
-  let existing = null;
-  try {
-    existing = await findTranscript(supabase, callRecord, payload, tenant);
-  } catch (error) {
-    if (error?.code === "42P01" || /call_transcripts/i.test(error.message || "")) {
-      console.warn("[post-call] call_transcripts was not available; transcript stored on call_records only.");
-      return { transcript: null, callRecord };
-    }
-    throw error;
-  }
+  const existing = await findTranscript(supabase, callRecord, payload, tenant);
 
   const basePayload = {
     tenant_id: tenant.id,
@@ -498,36 +357,13 @@ async function saveTranscript(supabase, callRecord, payload, auth, tenant, { fin
     updated_at: now,
   };
 
-  let transcript;
-  try {
-    if (existing) {
-      const { data, error } = await supabase
-        .from("call_transcripts")
-        .update(basePayload)
-        .eq("id", existing.id)
-        .eq("tenant_id", tenant.id)
-        .select("*")
-        .single();
-      if (error) throw error;
-      transcript = data;
-    } else {
-      const { data, error } = await supabase
-        .from("call_transcripts")
-        .insert(basePayload)
-        .select("*")
-        .single();
-      if (error) throw error;
-      transcript = data;
-    }
-  } catch (error) {
-    if (error?.code === "42P01" || /call_transcripts/i.test(error.message || "")) {
-      console.warn("[post-call] call_transcripts was not available; transcript stored on call_records only.");
-      return { transcript: null, callRecord };
-    }
-    throw error;
+  if (existing) {
+    const owned = await requireOwnedTranscript(supabase, existing.id, auth.evidenceIdentity);
+    if (owned.session_id !== payload.session_id) throw new EvidenceError(403, "Transcript does not belong to this session.");
   }
+  const transcript = await writeOwnedTranscript(supabase, basePayload, agent.id, existing?.id);
 
-  const { data: updatedCallRecord } = await supabase
+  const updatedCallRecord = checked(await supabase
     .from("call_records")
     .update({
       transcript_id: transcript.id,
@@ -536,7 +372,7 @@ async function saveTranscript(supabase, callRecord, payload, auth, tenant, { fin
     .eq("id", callRecord.id)
     .eq("tenant_id", tenant.id)
     .select("*")
-    .single();
+    .single());
 
   return { transcript, callRecord: updatedCallRecord || callRecord };
 }
@@ -551,11 +387,11 @@ async function updateCallTranscriptFields(supabase, transcriptId, payload, tenan
     updated_at: new Date().toISOString(),
   };
 
-  await supabase
+  checked(await supabase
     .from("call_transcripts")
     .update(updatePayload)
     .eq("id", transcriptId)
-    .eq("tenant_id", tenant.id);
+    .eq("tenant_id", tenant.id));
 }
 
 async function saveCheckpoint(supabase, payload, auth, tenant, { final = false } = {}) {
@@ -766,7 +602,7 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
   if (error) throw error;
 
   if (updatedCallRecord.session_id) {
-    await supabase
+    checked(await supabase
       .from("sessions")
       .update({
         ended_at: now,
@@ -774,7 +610,8 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
         duration_seconds: updatePayload.call_duration_seconds,
       })
       .eq("id", updatedCallRecord.session_id)
-      .eq("tenant_id", tenant.id);
+      .eq("agent_id", auth.evidenceIdentity.agent.id)
+      .eq("tenant_id", tenant.id));
   }
 
   await updateCallTranscriptFields(
@@ -886,12 +723,13 @@ async function handleWebhookResult(supabase, payload, tenant) {
   };
 }
 
-export default async (request, context) => {
+export function createPostCallHandler({ authenticate = requireClerkAuth, getDb = getEvidenceServiceClient } = {}) {
+return async (request, context) => {
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
   }
 
-  const auth = await requireClerkAuth(request);
+  let auth = await authenticate(request);
   if (auth.response) return auth.response;
 
   let body;
@@ -900,13 +738,21 @@ export default async (request, context) => {
   } catch {
     return json(400, { error: "Invalid JSON body" });
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return json(400, { error: "Invalid request" });
+  }
 
   const action = safeText(body.action);
-  if (!action) return json(400, { error: "Missing action" });
+  if (!["init", "checkpoint", "finalize", "wrap_up", "webhook_result"].includes(action)) {
+    return json(400, { error: "Invalid action" });
+  }
 
   try {
-    const supabase = getSupabase();
-    const tenant = await resolveTenant(supabase, auth.orgId);
+    const supabase = getDb();
+    const identity = await resolveEvidenceIdentity(supabase, auth);
+    body = await bindPostCallPayload(supabase, body, identity);
+    auth = { ...auth, evidenceIdentity: identity };
+    const tenant = normalizeTenant(identity.tenant);
     const subscription = await requireActiveSubscription(supabase, tenant.id);
     if (subscription.response) return subscription.response;
     const seatLimit = await checkSeatLimit(supabase, tenant.id, subscription);
@@ -958,7 +804,9 @@ export default async (request, context) => {
 
     return json(400, { error: `Unknown action: ${action}` });
   } catch (error) {
-    console.error("[post-call] failed:", error);
-    return json(500, { error: error.message || "Post-call pipeline failed" });
+    return evidenceFailure(error);
   }
 };
+}
+
+export default createPostCallHandler();

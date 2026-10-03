@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { getEvidenceSupabase } from "./evidenceSupabase";
 import { getQueryEmbedding } from "./embeddings";
 
 const DEFAULT_REAL_SYSTEMS = ["conversely", "enrollhere", "manual"];
@@ -88,6 +88,7 @@ export async function fetchTranscriptReferences({
   }
 
   try {
+    const supabase = getEvidenceSupabase(getToken);
     const embedding = await getQueryEmbedding(normalizedQuery, getToken);
     const { data, error } = await supabase.rpc("search_transcript_chunks", {
       query_embedding: embedding,
@@ -149,7 +150,7 @@ export async function fetchTranscriptReferences({
       error: null,
     };
   } catch (error) {
-    console.error("Supabase transcript retrieval failed:", error);
+    console.warn("Transcript references unavailable.");
     return {
       results: [],
       contextBlock: "",

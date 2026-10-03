@@ -10,7 +10,7 @@ import { llmRuntime } from "./_llmTelemetry.js";
  * Body: { callId: "uuid" }
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { getEvidenceServiceClient } from "./_evidenceAccess.js";
 import { generateScorecard } from "../../src/compliance/engine/ScorecardGenerator.js";
 import {
   checkSeatLimit,
@@ -18,19 +18,13 @@ import {
   requireActiveSubscription,
 } from "./_subscriptionGate.js";
 
-function getSupabase() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error("Supabase env vars not configured");
-  return createClient(url, key);
-}
-
 function hasInternalJobAuthorization(request) {
   const secret = process.env.SCORE_CALL_JOB_SECRET;
   return Boolean(secret) && request.headers.get("x-enrollgen-job-secret") === secret;
 }
 
-export default async (request, context) => {
+export function createScoreCallHandler({ getDb = getEvidenceServiceClient, classify } = {}) {
+return async (request, context) => {
   if (request.method !== "POST") return;
   if (!hasInternalJobAuthorization(request)) {
     return new Response("Unauthorized", { status: 401 });
@@ -46,7 +40,7 @@ export default async (request, context) => {
   }
 
   console.log(`[score-bg] Starting scoring for call ${callId}`);
-  const sb = getSupabase();
+  const sb = getDb();
 
   const { data: callRecord, error } = await sb
     .from("call_records")
@@ -76,14 +70,14 @@ export default async (request, context) => {
     const result = await generateScorecard({
       supabase: sb,
       callRecord,
-      callLLM: async (system, user, options = {}) => {
+      callLLM: classify || (async (system, user, options = {}) => {
         const response = await complete({
           engine: resolveEngine(callRecord.product_type || 'MA'), path: 'summary',
           system, messages: [{ role: 'user', content: user }], max_completion_tokens: 16384,
           response_format: options.response_format,
         }, llmRuntime(sb, callRecord.tenant_id, context, { endpoint: 'score-call-background', call_record_id: callId }));
         return response.content.filter(block => block.type === 'text').map(block => block.text).join('');
-      },
+      }),
     });
     try {
       let updateQuery = sb.from("call_records").update({
@@ -123,3 +117,6 @@ export default async (request, context) => {
     await updateQuery;
   }
 };
+}
+
+export default createScoreCallHandler();

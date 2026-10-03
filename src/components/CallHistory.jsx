@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAppAuth } from "../context/AuthContext";
-import { getAuthSupabase } from "../lib/supabase";
+import { evidenceRequest } from "../lib/evidenceApi";
 
 const FLOW_COLORS = {
   ma: "var(--eg-flow-ma)",
@@ -46,26 +46,7 @@ export default function CallHistory() {
     let cancelled = false;
     async function load() {
       try {
-        const token = await getToken({ template: "supabase" });
-        if (!token) {
-          setError("auth_disabled");
-          setLoading(false);
-          return;
-        }
-        const sb = getAuthSupabase(token);
-
-        const { data, error: err } = await sb
-          .from("sessions")
-          .select(`
-            id, flow, started_at, ended_at, final_section,
-            completed, duration_seconds,
-            compliance_flags(count),
-            section_scores(count)
-          `)
-          .order("started_at", { ascending: false })
-          .limit(50);
-
-        if (err) throw err;
+        const { sessions: data } = await evidenceRequest(getToken, "evidence-session");
         if (!cancelled) setSessions(data || []);
       } catch (err) {
         console.error("CallHistory load error:", err);

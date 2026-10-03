@@ -1,7 +1,7 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { useAppAuth } from "../context/AuthContext";
-import { getAuthSupabase } from "../lib/supabase";
-import { fetchTenantConfig } from "../lib/postCallPipeline";
+import { evidenceRequest } from "../lib/evidenceApi";
+import { runSessionTrackingDiagnostic } from "../lib/sessionTrackingDiagnostic";
 
 const DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const EMPTY_SESSION_METADATA = {
@@ -23,6 +23,7 @@ const STUB = {
   logSectionScore: noop,
 };
 let activeSessionMetadata = { ...EMPTY_SESSION_METADATA };
+let pendingSessionStart = null;
 
 function setActiveSessionMetadata(patch) {
   activeSessionMetadata = {
@@ -40,6 +41,7 @@ export function getActiveSessionMetadata() {
 }
 
 export async function waitForActiveSessionMetadata(timeoutMs = 1500) {
+  if (pendingSessionStart) await pendingSessionStart;
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
@@ -55,191 +57,71 @@ export async function waitForActiveSessionMetadata(timeoutMs = 1500) {
 export function useSessionTracker() {
   const { getToken } = useAppAuth();
   const sessionIdRef = useRef(null);
-  const agentIdRef = useRef(null);
-  const tenantIdRef = useRef(null);
   const startedAtRef = useRef(null);
+  const startingRef = useRef(null);
 
-  // Extract the Clerk user ID (sub claim) from a JWT
-  const getClerkSub = useCallback((token) => {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      return payload.sub || null;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const getSupabaseToken = useCallback(async () => {
-    try {
-      const token = await getToken({ template: "supabase" });
-      if (token) return token;
-    } catch {
-      // Fall back to the default Clerk token for local/dev JWT setups.
-    }
-    return getToken();
+  useEffect(() => {
+    if (import.meta.env.DEV && !DISABLED) void runSessionTrackingDiagnostic(getToken);
   }, [getToken]);
 
-  const resolveTenantId = useCallback(async (sb) => {
-    if (tenantIdRef.current) return tenantIdRef.current;
-    try {
-      const tenant = await fetchTenantConfig(sb);
-      tenantIdRef.current = tenant?.id || null;
-      return tenantIdRef.current;
-    } catch (err) {
-      console.error("[SessionTracker] resolveTenantId:", err);
-      return null;
-    }
-  }, []);
-
-  // Resolve or create the enrolled_agents row for this Clerk user
-  const resolveAgentId = useCallback(async (sb, token, tenantId) => {
-    if (agentIdRef.current) return agentIdRef.current;
-    const clerkUserId = getClerkSub(token);
-    try {
-      const query = sb.from("enrolled_agents").select("id, name").limit(1);
-      if (tenantId) query.eq("tenant_id", tenantId);
-      if (clerkUserId) query.eq("clerk_user_id", clerkUserId);
-      const { data, error } = await query.single();
-      if (data) {
-        agentIdRef.current = data.id;
-        setActiveSessionMetadata({ agentId: data.id, agentName: data.name || "Agent" });
-        return data.id;
+  const startSession = useCallback((flow = "ma") => {
+    if (DISABLED) return Promise.resolve();
+    if (startingRef.current) return startingRef.current;
+    const start = (async () => {
+      try {
+        const result = await evidenceRequest(getToken, "evidence-session", { action: "start", flow });
+        sessionIdRef.current = result.session_id;
+        startedAtRef.current = Date.now();
+        setActiveSessionMetadata({
+          agentId: result.agent_id, agentName: result.agent_name,
+          sessionId: result.session_id, callRecordId: null, transcriptId: null,
+        });
+      } catch {
+        console.error("[SessionTracker] Unable to start session. Check sign-in and retry.");
+      } finally {
+        startingRef.current = null;
+        if (pendingSessionStart === start) pendingSessionStart = null;
       }
-      // Auto-create agent row if missing (RLS lets user insert their own)
-      if (error?.code === "PGRST116") {
-        if (!clerkUserId) throw new Error("Could not extract sub from Clerk JWT");
-        if (!tenantId) throw new Error("Could not resolve tenant for Clerk organization");
-        const { data: inserted, error: insertErr } = await sb
-          .from("enrolled_agents")
-          .insert({ tenant_id: tenantId, clerk_user_id: clerkUserId, name: "Agent" })
-          .select("id")
-          .single();
-        if (insertErr) throw insertErr;
-        agentIdRef.current = inserted.id;
-        setActiveSessionMetadata({ agentId: inserted.id, agentName: "Agent" });
-        return inserted.id;
-      }
-      if (error) throw error;
-    } catch (err) {
-      console.error("[SessionTracker] resolveAgentId:", err);
-      return null;
-    }
-  }, [getClerkSub]);
+    })();
+    startingRef.current = start;
+    pendingSessionStart = start;
+    return start;
+  }, [getToken]);
 
-  const startSession = useCallback(async (flow = "ma") => {
-    if (DISABLED) return;
+  const send = useCallback(async (action, fields) => {
+    if (DISABLED) return false;
+    await startingRef.current;
+    if (!sessionIdRef.current) return false;
     try {
-      const token = await getSupabaseToken();
-      if (!token) return;
-      const sb = getAuthSupabase(token);
-      const tenantId = await resolveTenantId(sb);
-      const agentId = await resolveAgentId(sb, token, tenantId);
-      if (!agentId) return;
-      setActiveSessionMetadata({ agentId });
-      const sessionPayload = { agent_id: agentId, flow };
-      if (tenantId) sessionPayload.tenant_id = tenantId;
-
-      const { data, error } = await sb
-        .from("sessions")
-        .insert(sessionPayload)
-        .select("id")
-        .single();
-      if (error) throw error;
-      sessionIdRef.current = data.id;
-      startedAtRef.current = Date.now();
-      setActiveSessionMetadata({ sessionId: data.id, callRecordId: null, transcriptId: null });
-    } catch (err) {
-      console.error("[SessionTracker] startSession:", JSON.stringify({
-        code: err?.code, message: err?.message, details: err?.details, hint: err?.hint,
-      }));
+      await evidenceRequest(getToken, "evidence-session", { action, session_id: sessionIdRef.current, ...fields });
+      return true;
+    } catch {
+      console.error(`[SessionTracker] Unable to save ${action}. Check sign-in and retry.`);
+      return false;
     }
-  }, [getSupabaseToken, resolveAgentId, resolveTenantId]);
+  }, [getToken]);
 
   const endSession = useCallback(async (finalSection, completed = false) => {
-    if (DISABLED || !sessionIdRef.current) return;
-    try {
-      const token = await getSupabaseToken();
-      if (!token) return;
-      const sb = getAuthSupabase(token);
-      const durationSeconds = startedAtRef.current
-        ? Math.round((Date.now() - startedAtRef.current) / 1000)
-        : null;
-
-      const { error } = await sb
-        .from("sessions")
-        .update({
-          ended_at: new Date().toISOString(),
-          final_section: finalSection ?? null,
-          completed,
-          duration_seconds: durationSeconds,
-        })
-        .eq("id", sessionIdRef.current);
-      if (error) throw error;
+    const saved = await send("end", {
+      final_section: finalSection ?? null, completed,
+      duration_seconds: startedAtRef.current ? Math.round((Date.now() - startedAtRef.current) / 1000) : null,
+    });
+    if (saved) {
       sessionIdRef.current = null;
       setActiveSessionMetadata({ sessionId: null });
-    } catch (err) {
-      console.error("[SessionTracker] endSession:", err);
     }
-  }, [getSupabaseToken]);
+  }, [send]);
 
-  const logComplianceFlag = useCallback(async (sectionLabel, level, issueTag, confidence, message, addressed = false) => {
-    if (DISABLED || !sessionIdRef.current) return;
-    try {
-      const token = await getSupabaseToken();
-      if (!token) return;
-      const sb = getAuthSupabase(token);
+  const logComplianceFlag = useCallback((sectionLabel, level, issueTag, confidence, message, addressed = false) =>
+    send("flag", { section_label: sectionLabel, level, issue_tag: issueTag, confidence, message, addressed }), [send]);
 
-      const { error } = await sb
-        .from("compliance_flags")
-        .insert({
-          session_id: sessionIdRef.current,
-          section_label: sectionLabel,
-          level,
-          issue_tag: issueTag || null,
-          confidence: confidence != null ? Math.round(confidence) : null,
-          message: message || null,
-          addressed,
-        });
-      if (error) throw error;
-    } catch (err) {
-      console.error("[SessionTracker] logComplianceFlag:", err);
-    }
-  }, [getSupabaseToken]);
-
-  const logSectionScore = useCallback(async (sectionNumber, sectionLabel, completed, durationSeconds, checklistTotal, checklistDone) => {
-    if (DISABLED || !sessionIdRef.current) return;
-    try {
-      const token = await getSupabaseToken();
-      if (!token) return;
-      const sb = getAuthSupabase(token);
-
-      const { error } = await sb
-        .from("section_scores")
-        .insert({
-          session_id: sessionIdRef.current,
-          section_number: sectionNumber,
-          section_label: sectionLabel,
-          completed,
-          duration_seconds: durationSeconds ?? null,
-          checklist_total: checklistTotal ?? null,
-          checklist_done: checklistDone ?? null,
-        });
-      if (error) throw error;
-    } catch (err) {
-      console.error("[SessionTracker] logSectionScore:", err);
-    }
-  }, [getSupabaseToken]);
+  const logSectionScore = useCallback((sectionNumber, sectionLabel, completed, durationSeconds, checklistTotal, checklistDone) =>
+    send("section", { section_number: sectionNumber, section_label: sectionLabel, completed,
+      duration_seconds: durationSeconds, checklist_total: checklistTotal, checklist_done: checklistDone }), [send]);
 
   if (DISABLED) {
     activeSessionMetadata = { ...EMPTY_SESSION_METADATA };
     return STUB;
   }
-
-  return {
-    sessionId: sessionIdRef.current,
-    startSession,
-    endSession,
-    logComplianceFlag,
-    logSectionScore,
-  };
+  return { sessionId: sessionIdRef.current, startSession, endSession, logComplianceFlag, logSectionScore };
 }

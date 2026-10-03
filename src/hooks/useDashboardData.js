@@ -3,6 +3,8 @@ import { useTenantConfig } from './useTenantConfig';
 import { useAvailability } from '../context/AvailabilityContext';
 import { dayStart, shiftDays } from '../lib/dashboardMetrics';
 import { dashboardAgents, selectDashboardScope } from '../lib/dashboardScope';
+import { useAppAuth } from '../context/AuthContext';
+import { getEvidenceSupabase } from '../lib/evidenceSupabase';
 
 const PAGE_SIZE = 500;
 const EMPTY_DATA = { calls: [], contactCounts: {}, enrolled: [], loading: true, error: null, updatedAt: null };
@@ -12,6 +14,7 @@ function normalizeAgent(value) {
 }
 
 export function useDashboardData(userId, scope = 'self') {
+  const { getToken } = useAppAuth();
   const { supabaseClient: client, tenant, agents, loading: tenantLoading, error: tenantError } = useTenantConfig();
   const availability = useAvailability();
   const currentSlug = availability?.agentId;
@@ -56,8 +59,9 @@ export function useDashboardData(userId, scope = 'self') {
       try {
         const now = new Date();
         // Existing agency read access is enforced by RLS. Every query also pins the active tenant.
+        const evidenceClient = getEvidenceSupabase(getToken);
         const [enrolled, calls, callLogs, contacts] = await Promise.all([
-          pages(() => client.from('enrolled_agents').select('id, name, clerk_user_id')
+          pages(() => evidenceClient.from('enrolled_agents').select('id, name, clerk_user_id')
             .eq('tenant_id', tenantId).order('id')),
           pages(() => client.from('call_records')
             .select('id, external_call_id, session_id, agent_id, call_start, call_duration_seconds, call_outcome, compliance_scorecard_id, compliance_scorecards!compliance_scorecards_call_id_fkey(id, overall_score, created_at, is_thread_composite)')
@@ -132,7 +136,7 @@ export function useDashboardData(userId, scope = 'self') {
     const onFocus = () => refresh();
     window.addEventListener('focus', onFocus);
     return () => { cancelled = true; window.clearInterval(timer); window.removeEventListener('focus', onFocus); };
-  }, [client, tenantId, userId, contextKey, tenantLoading, tenantError, version]);
+  }, [client, tenantId, userId, contextKey, tenantLoading, tenantError, version, getToken]);
   const current = state.contextKey === contextKey ? state : EMPTY_DATA;
   const agentOptions = useMemo(() => dashboardAgents(roster, current.enrolled), [roster, current.enrolled]);
   const scoped = useMemo(() => selectDashboardScope(current.calls, current.contactCounts, agentOptions, scope, userId), [current.calls, current.contactCounts, agentOptions, scope, userId]);

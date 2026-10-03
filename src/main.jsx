@@ -14,11 +14,6 @@ const CLERK_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const LEGACY_TRAINING_MODE_STORAGE_KEY = "enrollgen_training_mode_v1";
 const PRELOAD_RELOAD_STORAGE_KEY = "enrollgen_preload_reload_v1";
 
-if (import.meta.env.DEV) {
-  void import("./lib/sessionTrackingDiagnostic").then(
-    ({ runSessionTrackingDiagnostic }) => runSessionTrackingDiagnostic()
-  );
-}
 
 function installPreloadErrorHandler() {
   if (typeof window === "undefined") return;
