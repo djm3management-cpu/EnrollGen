@@ -24,7 +24,7 @@ before(async()=>{
  CREATE TABLE call_records(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,metadata jsonb DEFAULT '{}',call_outcome text,call_duration_seconds integer,created_at timestamptz DEFAULT now());
  CREATE TABLE inbound_calls(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,twilio_call_sid text UNIQUE,from_number text,to_number text,status text DEFAULT 'ringing',call_record_id uuid,created_at timestamptz DEFAULT now(),duration_seconds integer);
  CREATE TABLE telephony_call_attempts(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,parent_call_sid text,child_call_sid text,inbound_call_id uuid,agent_id text,created_at timestamptz DEFAULT now());`);
- for(const path of ['038_call_owned_agent_reservations','039_agent_phone_presence','046_sticky_agent_routing','047_availability_feed','048_vendor_integrations'])await db.exec(await sql('supabase/migrations/'+path+'.sql'));
+ for(const path of ['038_call_owned_agent_reservations','039_agent_phone_presence','046_sticky_agent_routing','047_availability_feed','048_vendor_integrations','077_integrations_delivery_diagnostics'])await db.exec(await sql('supabase/migrations/'+path+'.sql'));
 });
 after(async()=>db?.close());
 async function reset(){
@@ -163,7 +163,13 @@ test('postback queue is idempotent, retries for 24 hours, logs attempts and supp
  let jobs=(await db.query('SELECT * FROM integration_deliveries')).rows;assert.equal(jobs.length,1);assert.equal(jobs[0].source_id,agg.id);
  assert.equal(jobs[0].payload.twilio_call_sid,sid);assert.equal(jobs[0].payload.sale,true);
  let job=(await db.query('SELECT * FROM claim_integration_delivery()')).rows[0];assert.equal(job.attempts,1);
- await db.query('SELECT finish_integration_delivery($1,$2,500,$3,5)',[job.id,job.lease_token,'http_error']);
+ const diagnostic={name:'Error',code:'ENOTFOUND',message:'Error text withheld (may contain secrets or personal data)'};
+ await db.query('SELECT finish_integration_delivery($1,$2,500,$3,5,$4)',[job.id,job.lease_token,'http_error',diagnostic]);
+ const attempt=(await db.query('SELECT * FROM integration_delivery_attempts')).rows[0];
+ assert.deepEqual(attempt.error_detail,diagnostic);
+ assert.equal(attempt.result,'http_error');
+ await db.query('SELECT finish_integration_delivery($1,$2,200,$3,0,$4)',[job.id,'00000000-0000-4000-8000-000000000099','sent',null]);
+ assert.deepEqual((await db.query('SELECT * FROM integration_delivery_attempts')).rows[0].error_detail,diagnostic);
  assert.equal((await db.query('SELECT * FROM claim_integration_delivery()')).rows.length,0);
  await db.query("UPDATE integration_deliveries SET available_at=now()-interval '1 second' WHERE id=$1",[job.id]);
  job=(await db.query('SELECT * FROM claim_integration_delivery()')).rows[0];assert.equal(job.attempts,2);
@@ -242,6 +248,9 @@ test('worker records transport failures and proceeds to the next delivery',async
  await createWorker(fake,{send:async()=>{sends++;if(sends===1)throw Error('vendor offline');return{status:200};},log:l=>logs.push(l)})();
  assert.equal(finished.length,2);assert.equal(finished[0].p_result,'delivery_error');assert.equal(finished[1].p_result,'sent');assert.equal(finished[0].p_delay,5);
  assert.ok(logs.every(l=>!l.includes(disposition.caller_phone)));
+ assert.equal(finished[0].p_error.message,'Error text withheld (may contain secrets or personal data)');
+ assert.equal(finished[1].p_error,null);
+ assert.deepEqual(JSON.parse(logs[0]).error,finished[0].p_error);
 });
 test('credential selection and query authentication hash the actual supplied key',async()=>{
  const received=[];const h=createHandler({rpc:async p=>{received.push(p.p_key_hash);return{data:{authorized:p.p_key_hash===await (await import('../../supabase/functions/get-availability/handler.js')).hashKey('valid'),consumer_name:'vendor',feed:sample}};},log:()=>{}});

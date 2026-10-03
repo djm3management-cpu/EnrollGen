@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { pathToFileURL } from 'node:url';
 import { availabilityPayload, mappedDisposition, csvReport, assertPrivateFieldsAbsent } from './payloads.js';
 import { postJson, signature } from './transport.js';
+import { deliveryDiagnostic } from './diagnostics.js';
 
 export function retryDelay(kind, attempt) {
   return Math.min(kind==='push'?60:3600,5*2**Math.min(Math.max(attempt-1,0),12));
@@ -31,7 +32,9 @@ export async function deliver(job, target, { send=postJson, env=process.env } = 
   const body=JSON.stringify(payload);
   if(secret) headers['X-Signature']=signature(body,secret);
   const response=await send(url,body,headers);
-  return {status:response.status,result:response.status>=200 && response.status<300?'sent':'http_error'};
+  const sent = response.status>=200 && response.status<300;
+  return {status:response.status,result:sent?'sent':'http_error',
+    ...(!sent && response.error ? {error:deliveryDiagnostic(response.error,{provider:job.kind==='report'})} : {})};
 }
 export function createWorker(db, { send, env=process.env, log=console.log }={}) {
   const rpc=async(name,params={})=>{const {data,error}=await db.rpc(name,params);if(error)throw Error(name+' failed');return data;};
@@ -54,11 +57,11 @@ export function createWorker(db, { send, env=process.env, log=console.log }={}) 
       try {
         const {data:target,error}=await db.from(job.kind==='push'?'availability_consumers':'lead_sources')
           .select('*').eq(job.kind==='push'?'name':'id',job.consumer_name||job.source_id).maybeSingle();
-        if(error)throw Error('Config unavailable');
+        if(error)throw Object.assign(Error('Config unavailable'),{code:error.code});
         result=await deliver(job,target,{send,env});
-      }catch{result={status:0,result:'delivery_error'};}
+      }catch(error){result={status:0,result:'delivery_error',error:deliveryDiagnostic(error,{env})};}
       const delay=retryDelay(job.kind,job.attempts);
-      try { await rpc('finish_integration_delivery',{p_id:job.id,p_token:job.lease_token,p_status:result.status,p_result:result.result,p_delay:delay}); }
+      try { await rpc('finish_integration_delivery',{p_id:job.id,p_token:job.lease_token,p_status:result.status,p_result:result.result,p_delay:delay,p_error:result.error ?? null}); }
       catch{log(JSON.stringify({event:'integration_finish_failed',delivery_id:job.id}));}
       log(JSON.stringify({event:'integration_delivery',delivery_id:job.id,kind:job.kind,attempt:job.attempts,...result,
         exhausted:result.result!=='sent' && Date.now()+delay*1000>=new Date(job.expires_at).getTime()}));
