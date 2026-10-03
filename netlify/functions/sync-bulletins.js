@@ -50,13 +50,14 @@ function googleNewsUrl(query) {
 
 const CMS_FEEDS = [
   {
-    url: "https://www.cms.gov/files/document/cms-newsroom-rss.xml",
+    url: "https://www.cms.gov/about-cms/contact/newsroom",
     carrier: "CMS",
     label: "CMS Newsroom",
+    format: "cms-newsroom",
     keywords: CMS_KEYWORDS,
   },
   {
-    url: "https://www.cms.gov/files/document/medicare-learning-network-rss.xml",
+    url: "https://www.cms.gov/rss/31241",
     carrier: "CMS",
     label: "Medicare Learning Network",
     keywords: CMS_KEYWORDS,
@@ -97,7 +98,7 @@ const CARRIER_FEEDS = [
   },
   {
     carrier: "Humana",
-    url: "https://press.humana.com/rss/news-releases.xml",
+    url: "https://humana.gcs-web.com/rss/news-releases.xml",
     label: "Humana Press Releases",
     keywords: MA_KEYWORDS,
     mustInclude: ["humana"],
@@ -127,8 +128,9 @@ const CARRIER_FEEDS = [
   },
   {
     carrier: "BCBS",
-    url: "https://www.bcbs.com/press-releases/feed",
+    url: "https://www.bcbs.com/about-us/association-news",
     label: "BCBS Press Releases",
+    format: "bcbs-newsroom",
     keywords: MA_KEYWORDS,
     mustInclude: ["blue cross", "blue shield", "bcbs"],
   },
@@ -142,7 +144,7 @@ const CARRIER_FEEDS = [
   },
   {
     carrier: "Cigna",
-    url: "https://newsroom.cigna.com/rss",
+    url: "https://newsroom.thecignagroup.com/latest-press-releases?pagetemplate=rss",
     label: "Cigna Newsroom",
     keywords: MA_KEYWORDS,
     mustInclude: ["cigna"],
@@ -157,7 +159,7 @@ const CARRIER_FEEDS = [
   },
   {
     carrier: "Wellcare",
-    url: "https://news.centene.com/rss/news-releases.xml",
+    url: "https://investors.centene.com/press-releases?pagetemplate=rss",
     label: "Centene / Wellcare News",
     keywords: MA_KEYWORDS,
     mustInclude: ["wellcare", "centene"],
@@ -228,7 +230,7 @@ const CARRIER_FEEDS = [
   },
 ];
 
-const ALL_FEEDS = [...CMS_FEEDS, ...CARRIER_FEEDS];
+export const ALL_FEEDS = [...CMS_FEEDS, ...CARRIER_FEEDS];
 
 const US_STATES = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
@@ -373,6 +375,149 @@ function buildSourceId(feed, item, publishedAt) {
   );
 }
 
+// Official HTML listings expose publication dates and canonical article links.
+export function parseFeed(content, feed) {
+  if (!feed.format) {
+    if (!/<(?:rss|feed)\b/i.test(content)) throw new Error("Expected RSS or Atom feed");
+    return parseItems(content);
+  }
+  const blocks = feed.format === "cms-newsroom"
+    ? content.split(/<div class="views-row">/i).slice(1)
+    : [...content.matchAll(/<article\b[^>]*>([\s\S]*?)<\/article>/gi)].map(m => m[1]);
+  const items = blocks.map(block => {
+    const heading = block.match(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i)?.[1] || "";
+    const href = block.match(/href=["']([^"']*(?:\/newsroom\/|\/association-news\/)[^"']+)["']/i)?.[1];
+    const link = href ? new URL(decodeEntities(href), feed.url).href : "";
+    return { title: stripHtml(heading), link, guid: link,
+      desc: stripHtml(block.match(/<(?:span|p)[^>]*class="(?:newsroom-main-view-body|bcbs-news-item-listing-content__text)[^"]*"[^>]*>([\s\S]*?)<\/(?:span|p)>/i)?.[1] || ""),
+      pubDate: block.match(/datetime=["']([^"']+)["']/i)?.[1] || "" };
+  }).filter(item => item.title && item.link && item.pubDate);
+  if (!items.length) throw new Error("Official newsroom listing could not be parsed");
+  return items;
+}
+
+export async function syncBulletins(supabase, { feeds = ALL_FEEDS, fetchImpl = fetch, now = new Date() } = {}) {
+  console.log("[sync-bulletins] Starting daily bulletin sync...");
+
+  let totalInserted = 0;
+  let totalSkipped = 0;
+  let feedErrors = 0;
+  const seenIds = new Set();
+
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - LOOKBACK_DAYS);
+
+  let statusErrors = 0;
+  // Fetch independently so multiple 15-second timeouts do not accumulate.
+  const fetched = await Promise.allSettled(feeds.map(async feed => {
+    const res = await fetchImpl(feed.url, {
+      signal: AbortSignal.timeout(15000),
+      headers: { "User-Agent": "EnrollGen-BulletinSync/2.0" },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return parseFeed(await res.text(), feed).slice(0, MAX_ITEMS_PER_FEED);
+  }));
+  for (const [index, feed] of feeds.entries()) {
+    let feedError = null;
+    let upserted = 0;
+    const skippedBefore = totalSkipped;
+    try {
+      if (fetched[index].status === "rejected") throw fetched[index].reason;
+      const items = fetched[index].value;
+
+      for (const item of items) {
+        if (!item.title) {
+          totalSkipped += 1;
+          continue;
+        }
+
+        const publishedAt = item.pubDate ? new Date(item.pubDate) : null;
+        // Never invent a current publication date for undated/invalid news.
+        if (!publishedAt || !Number.isFinite(publishedAt.valueOf()) || publishedAt > now) {
+          totalSkipped += 1;
+          continue;
+        }
+        if (publishedAt && Number.isFinite(publishedAt.valueOf()) && publishedAt < cutoff) {
+          totalSkipped += 1;
+          continue;
+        }
+
+        const body = stripHtml(item.desc).slice(0, 1000);
+        if (!isRelevant(feed, item.title, body)) {
+          totalSkipped += 1;
+          continue;
+        }
+
+        const sourceId = buildSourceId(feed, item, publishedAt).slice(0, 500);
+        if (seenIds.has(sourceId)) {
+          totalSkipped += 1;
+          continue;
+        }
+
+        const stateText = normalizeText(`${item.title} ${body}`).toUpperCase();
+        const row = {
+          carrier: feed.carrier,
+          title: decodeEntities(item.title).slice(0, 500),
+          body,
+          states: extractStates(stateText),
+          link: item.link || null,
+          published_at: publishedAt.toISOString().slice(0, 10),
+          source_id: sourceId.slice(0, 500),
+          updated_at: now.toISOString(),
+        };
+
+        const { error } = await supabase
+          .from("bulletins")
+          .upsert(row, { onConflict: "source_id" });
+
+        if (error) {
+          console.warn(
+            `[sync-bulletins] Upsert error for "${item.title}":`,
+            error.message
+          );
+          feedError = `Bulletin upsert failed: ${error.message}`;
+          totalSkipped += 1;
+        } else {
+          seenIds.add(sourceId);
+          upserted += 1;
+          totalInserted += 1;
+        }
+      }
+
+      console.log(
+        `[sync-bulletins] ${feed.carrier}/${feed.label}: processed ${items.length} items`
+      );
+    } catch (err) {
+      console.error(
+        `[sync-bulletins] ${feed.carrier}/${feed.label} failed:`,
+        err.message
+      );
+      feedError = err.message;
+    }
+    const skipped = totalSkipped - skippedBefore;
+    if (feedError) feedErrors += 1;
+    const status = {
+      feed_id: feed.label, label: feed.label, carrier: feed.carrier, url: feed.url,
+      checked_at: now.toISOString(), status: feedError ? "error" : "ok",
+      error: feedError ? feedError.slice(0, 500) : null, upserted, skipped,
+      ...(!feedError ? { last_success_at: now.toISOString() } : {}),
+    };
+    try {
+      const { error: statusError } = await supabase.from("bulletin_feed_status").upsert(status, { onConflict: "feed_id" });
+      if (statusError) throw statusError;
+    } catch (statusError) {
+      statusErrors += 1;
+      console.error("[sync-bulletins] Status write failed:", statusError.message);
+    }
+  }
+
+  console.log(
+    `[sync-bulletins] Done. Inserted: ${totalInserted}, Skipped: ${totalSkipped}, Feed errors: ${feedErrors}`
+  );
+
+  return { upserted: totalInserted, skipped: totalSkipped, feedErrors, statusErrors };
+}
+
 export default async () => {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     console.error("[sync-bulletins] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
@@ -392,112 +537,11 @@ export default async () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  console.log("[sync-bulletins] Starting daily bulletin sync...");
-
-  let totalInserted = 0;
-  let totalSkipped = 0;
-  let feedErrors = 0;
-  const seenIds = new Set();
-
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - LOOKBACK_DAYS);
-
-  for (const feed of ALL_FEEDS) {
-    try {
-      const res = await fetch(feed.url, {
-        signal: AbortSignal.timeout(15000),
-        headers: { "User-Agent": "EnrollGen-BulletinSync/2.0" },
-      });
-
-      if (!res.ok) {
-        console.warn(
-          `[sync-bulletins] ${feed.carrier}/${feed.label}: HTTP ${res.status}`
-        );
-        feedErrors += 1;
-        continue;
-      }
-
-      const xml = await res.text();
-      const items = parseItems(xml).slice(0, MAX_ITEMS_PER_FEED);
-
-      for (const item of items) {
-        if (!item.title) {
-          totalSkipped += 1;
-          continue;
-        }
-
-        const publishedAt = item.pubDate ? new Date(item.pubDate) : null;
-        if (publishedAt && Number.isFinite(publishedAt.valueOf()) && publishedAt < cutoff) {
-          totalSkipped += 1;
-          continue;
-        }
-
-        const body = stripHtml(item.desc).slice(0, 1000);
-        if (!isRelevant(feed, item.title, body)) {
-          totalSkipped += 1;
-          continue;
-        }
-
-        const sourceId = buildSourceId(feed, item, publishedAt);
-        if (seenIds.has(sourceId)) {
-          totalSkipped += 1;
-          continue;
-        }
-        seenIds.add(sourceId);
-
-        const stateText = normalizeText(`${item.title} ${body}`).toUpperCase();
-        const row = {
-          carrier: feed.carrier,
-          title: decodeEntities(item.title).slice(0, 500),
-          body,
-          states: extractStates(stateText),
-          link: item.link || null,
-          published_at:
-            publishedAt && Number.isFinite(publishedAt.valueOf())
-              ? publishedAt.toISOString().slice(0, 10)
-              : new Date().toISOString().slice(0, 10),
-          source_id: sourceId.slice(0, 500),
-          updated_at: new Date().toISOString(),
-        };
-
-        const { error } = await supabase
-          .from("bulletins")
-          .upsert(row, { onConflict: "source_id" });
-
-        if (error) {
-          console.warn(
-            `[sync-bulletins] Upsert error for "${item.title}":`,
-            error.message
-          );
-          totalSkipped += 1;
-        } else {
-          totalInserted += 1;
-        }
-      }
-
-      console.log(
-        `[sync-bulletins] ${feed.carrier}/${feed.label}: processed ${items.length} items`
-      );
-    } catch (err) {
-      console.error(
-        `[sync-bulletins] ${feed.carrier}/${feed.label} failed:`,
-        err.message
-      );
-      feedErrors += 1;
-    }
-  }
-
-  console.log(
-    `[sync-bulletins] Done. Inserted: ${totalInserted}, Skipped: ${totalSkipped}, Feed errors: ${feedErrors}`
-  );
-
-  return new Response(
-    JSON.stringify({ inserted: totalInserted, skipped: totalSkipped, feedErrors }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+  const result = await syncBulletins(supabase);
+  return new Response(JSON.stringify(result), {
+    status: result.statusErrors ? 500 : 200,
+    headers: { "Content-Type": "application/json" },
+  });
 };
 
 export const config = {

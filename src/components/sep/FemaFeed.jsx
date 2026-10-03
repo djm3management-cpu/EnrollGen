@@ -57,6 +57,7 @@ export function FemaFeed({
   femaFetchedAt = null,
   liveNews = [],
   bulletins = [],
+  bulletinStatus = { feeds: [], error: null },
   feedLoading = false,
 }) {
   const [expandedItems, setExpandedItems] = useState({});
@@ -311,6 +312,26 @@ export function FemaFeed({
 
             {rightTab === "bulletins" && (
               <div className="fema-feed-hz-items fema-feed-stack-items">
+                <div className="fema-feed-detail">
+                  <span>Last successful feed sync: {bulletinStatus.feeds.some(feed => feed.last_success_at)
+                    ? new Date(Math.max(...bulletinStatus.feeds.map(feed => Date.parse(feed.last_success_at) || 0))).toLocaleString()
+                    : "No recorded success"}</span>
+                </div>
+                {bulletinStatus.error && <div className="fema-feed-hz-empty">{bulletinStatus.error}</div>}
+                <details className="fema-feed-detail">
+                  <summary>Per-feed sync status ({bulletinStatus.feeds.length})</summary>
+                  {bulletinStatus.feeds.map(feed => (
+                    <div key={feed.feed_id}>
+                      {feed.label}: {feed.status === "error" ? `Error: ${feed.error}` : "OK"}
+                      {Date.now() - Date.parse(feed.checked_at) > 36 * 60 * 60 * 1000 ? " · Stale" : ""}
+                      {" · Last success: "}{feed.last_success_at ? new Date(feed.last_success_at).toLocaleString() : "Never"}
+                      {" · Checked: "}{new Date(feed.checked_at).toLocaleString()}
+                    </div>
+                  ))}
+                </details>
+                {bulletins.some(item => item.historicalSample) && (
+                  <div className="fema-feed-hz-empty">Historical samples from 2025 — current bulletins are unavailable. These samples are not current news or eligibility guidance.</div>
+                )}
                 {displayBulletins.length === 0 &&
                   (feedLoading ? (
                     <FeedLoading label="Loading bulletins..." />

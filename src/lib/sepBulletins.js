@@ -3,7 +3,7 @@
   Falls back to seed data if the table is empty or unreachable.
 */
 
-import { supabase } from "./supabase";
+import { supabase } from "./supabase.js";
 
 const SEED_BULLETINS = [
   {
@@ -58,10 +58,10 @@ const CACHE_TTL = 60 * 60 * 1000;
 const CMS_HOSTS = new Set(["cms.gov", "medicare.gov"]);
 const CARRIER_HOSTS = {
   UHC: ["uhcprovider.com", "uhc.com", "unitedhealthgroup.com"],
-  Humana: ["humana.com", "press.humana.com"],
+  Humana: ["humana.com", "press.humana.com", "humana.gcs-web.com"],
   Aetna: ["aetna.com", "news.aetna.com", "cvshealth.com"],
   BCBS: ["bcbs.com"],
-  Cigna: ["cigna.com", "newsroom.cigna.com"],
+  Cigna: ["cigna.com", "newsroom.cigna.com", "thecignagroup.com"],
   Wellcare: ["wellcare.com", "centene.com", "news.centene.com"],
   Centene: ["centene.com", "news.centene.com"],
   Elevance: ["elevancehealth.com"],
@@ -166,7 +166,8 @@ function enrichBulletin(item) {
     sourceId: item.sourceId || `${carrier}-${item.title}`,
     sourceHost: host,
     sourceLabel: getSourceLabel(host, carrier),
-    kindLabel: kind.label,
+    kindLabel: item.historicalSample ? `Historical sample · ${item.date}` : kind.label,
+    historicalSample: Boolean(item.historicalSample),
     kindTone: kind.tone,
     priority: (CARRIER_PRIORITY[carrier] || 1) + kind.priority,
   };
@@ -187,8 +188,8 @@ function normalizeRows(rows) {
     .sort(sortBulletins);
 }
 
-async function queryBulletins() {
-  const { data, error } = await supabase
+async function queryBulletins(client) {
+  const { data, error } = await client
     .from("bulletins")
     .select("carrier, title, body, states, link, published_at, source_id")
     .order("published_at", { ascending: false })
@@ -198,14 +199,28 @@ async function queryBulletins() {
   return data || [];
 }
 
-export async function fetchBulletins() {
+export function historicalBulletins() {
+  return normalizeRows(SEED_BULLETINS.map(item => ({ ...item, historicalSample: true })));
+}
+
+export async function fetchBulletinStatus(client = supabase) {
+  try {
+    const { data, error } = await client.from("bulletin_feed_status").select("*").order("label");
+    if (error) throw error;
+    return { feeds: data || [], error: null };
+  } catch (error) {
+    return { feeds: [], error: `Feed status unavailable: ${error.message}` };
+  }
+}
+
+export async function fetchBulletins(client = supabase) {
   const now = Date.now();
-  if (bulletinCache.data && now - bulletinCache.fetchedAt < CACHE_TTL) {
+  if (client === supabase && bulletinCache.data && now - bulletinCache.fetchedAt < CACHE_TTL) {
     return bulletinCache.data;
   }
 
   try {
-    let data = await queryBulletins();
+    let data = await queryBulletins(client);
 
     if (data.length > 0) {
       const mapped = normalizeRows(
@@ -226,7 +241,7 @@ export async function fetchBulletins() {
     console.warn("Bulletin fetch failed, using seed data:", err.message);
   }
 
-  const fallback = normalizeRows(SEED_BULLETINS);
+  const fallback = historicalBulletins();
   bulletinCache = { data: fallback, fetchedAt: now };
   return fallback;
 }

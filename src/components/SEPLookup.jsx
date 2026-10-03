@@ -33,6 +33,7 @@ export default function SEPLookupTool() {
           femaFetchedAt={s.femaFetchedAt}
           liveNews={s.liveNews}
           bulletins={s.bulletins}
+          bulletinStatus={s.bulletinStatus}
           feedLoading={s.feedLoading}
         />
 

@@ -6,7 +6,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { getStateFromZip, getCarriersForZip } from "../lib/sepGeo";
 import { fetchLiveFemaDisasters, withLiveFemaResult } from "../lib/sepFema";
-import { fetchBulletins } from "../lib/sepBulletins";
+import { fetchBulletins, fetchBulletinStatus } from "../lib/sepBulletins";
 import { fetchLiveNews } from "../lib/sepLiveNews";
 import { fetchCountiesForState, fetchPlansFromSupabase, fetchCountyPlanCounts, transformCmsPlan } from "../lib/sepCms";
 import { getCountyFromZip } from "../data/sepPlanDb";
@@ -40,6 +40,7 @@ export function useSEPLookup() {
   const [femaSource, setFemaSource] = useState("unknown");
   const [femaDisasters, setFemaDisasters] = useState([]);
   const [bulletins, setBulletins] = useState([]);
+  const [bulletinStatus, setBulletinStatus] = useState({ feeds: [], error: null });
   const [liveNews, setLiveNews] = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [sepFinderZip, setSepFinderZip] = useState(null);
@@ -51,10 +52,11 @@ export function useSEPLookup() {
   const femaSelection = useRef({ zip: null, state: null, countyFips: [] });
 
   const loadTopFeed = useCallback(async () => {
-    const [r, b, n] = await Promise.all([
+    const [r, b, n, bs] = await Promise.all([
       fetchLiveFemaDisasters(),
       fetchBulletins(),
       fetchLiveNews(),
+      fetchBulletinStatus(),
     ]);
     femaCache.current = {
       data: r.disasters,
@@ -67,6 +69,7 @@ export function useSEPLookup() {
       fetchedAt: r.fetchedAt,
       source: r.apiFailed ? "unavailable" : "live",
       bulletins: b,
+      bulletinStatus: bs,
       liveNews: n,
     };
   }, []);
@@ -91,6 +94,7 @@ export function useSEPLookup() {
         });
         setSepFinderResult(current => withLiveFemaResult(current, { disasters: next.disasters, fetchedAt: next.fetchedAt, apiFailed: next.source !== "live" }));
         setBulletins(next.bulletins);
+        setBulletinStatus(next.bulletinStatus);
         setLiveNews(next.liveNews);
       } catch (err) {
         console.error("Top feed refresh error:", err);
@@ -386,7 +390,7 @@ export function useSEPLookup() {
     planFilterSnp, setPlanFilterSnp,
     planSearch, setPlanSearch,
     selectedCounty, setSelectedCounty, countyList,
-    countyLoading, countyPlanCounts, femaSource, femaFetchedAt, femaDisasters, bulletins, liveNews, feedLoading, inputRef,
+    countyLoading, countyPlanCounts, femaSource, femaFetchedAt, femaDisasters, bulletins, bulletinStatus, liveNews, feedLoading, inputRef,
     sepFinderZip, sepFinderResult, sepFinderLoading, sepFinderError,
     handleSearch, handleKeyDown, handleStateClick, loadPlansForCounty,
     isValidZip, filtered, femaActive, state,
