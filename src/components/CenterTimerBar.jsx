@@ -10,6 +10,7 @@ function normalizeLevel(value) {
 
 const CenterTimerBar = memo(function CenterTimerBar({
   agentActive = false,
+  agentTrackHealthy,
   customerActive = false,
   onShareAudio,
   audioSharing = false,
@@ -18,7 +19,7 @@ const CenterTimerBar = memo(function CenterTimerBar({
   const { agentLevel, customerLevel, agentPeaks, customerPeaks } = useAudioLevels();
   const safeAgentLevel = normalizeLevel(agentLevel);
   const safeCustomerLevel = normalizeLevel(customerLevel);
-  const agentLive = agentActive || safeAgentLevel > 0.015;
+  const agentLive = agentTrackHealthy ?? (agentActive || safeAgentLevel > 0.015);
   const customerLive = customerActive || safeCustomerLevel > 0.015;
 
   return (

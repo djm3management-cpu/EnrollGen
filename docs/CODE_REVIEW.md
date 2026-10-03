@@ -196,7 +196,6 @@ Status: partially built.
 - `SectionWrapUp.jsx` exposes webhook status.
 - Inbound webhooks for Medicare intake, ACA intake, Moonshot 2030, Life insurance, and EnrollPrime were not found.
 - Agent availability API is represented by a client component calling an external API; no internal Netlify API was found.
-- Medigap Life transfer routing is not implemented beyond post-call product options.
 
 ## Build, Deploy, Git
 

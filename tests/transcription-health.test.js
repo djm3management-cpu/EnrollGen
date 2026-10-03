@@ -20,7 +20,9 @@ test('accepting a ringing call retains its early speaker failure and discards an
 test('legacy customer failures are supported; transcript messages cannot clear another speaker failure', () => {
   const state = updateTranscriptionHealth({}, { type:'transcription_error',message:'Legacy customer failure' });
   assert.equal(transcriptionHealthError(state),'Legacy customer failure');
-  assert.equal(updateTranscriptionHealth(state, { type:'transcript',speaker:'agent',text:'Speech' }),state);
+  const withAgent = updateTranscriptionHealth(state, { type:'transcript',speaker:'agent',text:'Speech' });
+  assert.equal(withAgent.agent.status, 'connected');
+  assert.equal(withAgent.customer, state.customer);
   assert.equal(updateTranscriptionHealth(state, { type:'transcription_error',speaker:'spoofed' }),state);
   assert.equal(transcriptionHealthError(updateTranscriptionHealth(state, { type:'transcript',speaker:'customer',text:'Recovered speech' })), '');
 });

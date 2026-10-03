@@ -3,8 +3,9 @@
 export function updateTranscriptionHealth(previous, message) {
   if (message.type === 'transcript') {
     const track = previous[message.speaker];
-    if (!message.text || !track || track.status === 'connected') return previous;
-    return { ...previous, [message.speaker]: { ...track, status: 'connected', message: '', gapUntil: message.timestamp ?? track.gapUntil } };
+    if (!message.text?.trim() || !['agent', 'customer'].includes(message.speaker)) return previous;
+    if (track?.status === 'connected') return previous;
+    return { ...previous, [message.speaker]: { ...track, status: 'connected', message: '', inboundCallId: message.inboundCallId ?? track?.inboundCallId ?? null, gapUntil: track?.coverageGap ? message.timestamp ?? track.gapUntil : null } };
   }
   if (!['transcription_error', 'transcription_health'].includes(message.type)) return previous;
   const speaker = message.speaker || 'customer'; // Older Railway messages.
@@ -26,4 +27,12 @@ export function transcriptionHealthError(health) {
 
 export function transcriptionHealthForCall(health, inboundCallId) {
   return Object.fromEntries(Object.entries(health).filter(([, track]) => track.inboundCallId === inboundCallId));
+}
+
+// The server agent track is authoritative for inbound calls. Browser mic
+// listening remains authoritative for outbound and manual sessions.
+export function agentTrackActive(inbound, browserListening) {
+  if (!inbound?.activeCall) return Boolean(browserListening);
+  if (inbound.activeCall.params?.direction === 'outbound') return Boolean(browserListening);
+  return inbound.transcriptionHealth?.agent?.status === 'connected';
 }

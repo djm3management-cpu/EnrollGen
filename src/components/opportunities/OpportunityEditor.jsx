@@ -61,7 +61,7 @@ export function OpportunityEditor({ data, prefill = {}, existing = null, onSaved
     event.preventDefault(); setSaving(true); onBusyChange(true); setError('');
     try {
       const draft = { ...fields };
-      if (createNew) {
+      if (!existing && createNew) {
         const contact = await createContact({ ...newContact, assigned_agent_id: data.agents.find((agent) => agent.id === draft.assigned_agent_id)?.agent_slug || null });
         draft.contact_id = contact.id;
         // Retain a successfully created contact if saving the opportunity fails.
@@ -80,6 +80,7 @@ export function OpportunityEditor({ data, prefill = {}, existing = null, onSaved
     {error && <div className="ops-error" role="alert">{error}</div>}
     {duplicateId && <button type="button" className="contacts-mini-btn" onClick={() => { set('contact_id', duplicateId); setCreateNew(false); setError(''); setDuplicateId(null); }}>USE EXISTING CONTACT</button>}
     <fieldset disabled={saving}>
+      {!existing && <>
       <div className="opps-actions contacts-filters">
         <button type="button" className={!createNew ? 'is-active' : ''} onClick={() => setCreateNew(false)}>Existing contact</button>
         <button type="button" className={createNew ? 'is-active' : ''} onClick={() => {
@@ -101,6 +102,7 @@ export function OpportunityEditor({ data, prefill = {}, existing = null, onSaved
         </select></label>
         {contactsError && <div className="ops-error" role="alert">{contactsError}</div>}
       </div>}
+      </>}
       <div className="contacts-edit-grid">
         <label className="contacts-edit-field contacts-edit-field-wide"><span>TITLE</span><input className="contacts-edit-input" required maxLength={200} value={fields.title} onChange={(event) => set('title', event.target.value)} /></label>
         <label className="contacts-edit-field"><span>PIPELINE</span><select className="contacts-edit-input" required value={fields.pipeline_id} onChange={(event) => {

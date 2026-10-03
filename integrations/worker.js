@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { pathToFileURL } from 'node:url';
+import { parseArgs } from 'node:util';
 import { availabilityPayload, mappedDisposition, csvReport, assertPrivateFieldsAbsent } from './payloads.js';
 import { postJson, signature } from './transport.js';
 import { deliveryDiagnostic } from './diagnostics.js';
@@ -68,7 +69,40 @@ export function createWorker(db, { send, env=process.env, log=console.log }={}) 
     }
   };
 }
+// Explicit operator-only probe: synthetic data, one fixed recipient, no queue,
+// source lookup, scheduler, retry, postback or availability push.
+export async function sendSampleReport(testId, options = {}) {
+  if (!/^[a-zA-Z0-9_-]{1,64}$/.test(testId || '')) throw Error('A test ID of 1–64 letters, numbers, underscores or hyphens is required');
+  return deliver({
+    id: `mike-report-test-${testId}`, kind: 'report',
+    payload: { date: 'sample', calls: [{
+      aggregator_call_id: 'sample-report-only', twilio_call_sid: 'sample',
+      publisher: 'SAMPLE', call_start_time: '2026-10-03T14:00:00Z',
+      caller_phone: null, duration: 0, disposition_code: 'test_call', sale: false,
+      state: 'NJ', app_written: false, wrong_state: false, zip: '08054',
+    }] },
+  }, { active: true, report_emails: ['mike@newgenhealthsolutions.com'] }, options);
+}
+
+export async function runManualReport(args, options = {}) {
+  const { values } = parseArgs({ args, options: {
+    'test-report': { type: 'boolean' }, 'test-id': { type: 'string' },
+  }, strict: true, allowPositionals: false });
+  if (!values['test-report']) throw Error('--test-report is required for manual mode');
+  return sendSampleReport(values['test-id'], options);
+}
+
 if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href){
+  if (process.argv.length > 2) {
+    try {
+      const result = await runManualReport(process.argv.slice(2));
+      console.log(JSON.stringify({ event: 'integration_manual_report', ...result }));
+      if (result.result !== 'sent') process.exitCode = 1;
+    } catch (error) {
+      console.error(JSON.stringify({ event: 'integration_manual_report_failed', error: deliveryDiagnostic(error, { env: process.env }) }));
+      process.exitCode = 1;
+    }
+  } else {
   const db=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false},
     global:{fetch:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(15000)})}});
   const tick=createWorker(db);
@@ -81,4 +115,5 @@ if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href){
   void schedule();
   while(!stopped){try{await tick({schedule:false});}catch{console.error('integration_worker_tick_failed');}await new Promise(r=>setTimeout(r,250));}
   clearInterval(timer);
+  }
 }

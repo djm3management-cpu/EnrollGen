@@ -592,7 +592,7 @@ No live Demo tab exists. A v3 mockup is stored under `docs/enrollgen-v3-mockup.j
 
 ### 7.9 Other views and dormant UI
 
-- **RTS:** realtime ready-to-sell grid with channels/groups for SMS/Medigap Life, Savoy/RPS, EnrollPrime/O'Neill, attention states, and carrier appointment status.
+- **RTS:** realtime ready-to-sell grid with channels/groups for SMS, Savoy/RPS, EnrollPrime/O'Neill, attention states, and carrier appointment status.
 - **Daily Verse:** devotional/Biblia-powered view.
 - **Admin settings:** agency profile/states, GHL webhook URL/test/location, agents/seats, carriers, co-op rates, compliance thresholds/sliders, and billing.
 - **Onboarding:** Welcome, Agents, CRM, Plan, and Ready steps for organizations without a bootstrapped tenant.

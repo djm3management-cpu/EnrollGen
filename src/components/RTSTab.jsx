@@ -12,12 +12,7 @@ import { supabase } from "../lib/supabase";
 import { resolveAgentId } from "../lib/agentIdentity";
 import RTSIngestionPanel from "./RTSIngestionPanel";
 
-const DEFAULT_AGENTS = [
-  { name: "Mike Shiomos", short: "Mike S.", mobile: "Mike", npn: "20574678" },
-  { name: "Mark Endres", short: "Mark E.", mobile: "Mark", npn: "20856361" },
-  { name: "Dylan Maria", short: "Dylan M.", mobile: "Dylan", npn: "22167358" },
-];
-const CHANNELS = ["SMS/Medigap Life", "Savoy/RPS", "EnrollPrime / O'Neill"];
+const CHANNELS = ["SMS", "Savoy/RPS", "EnrollPrime / O'Neill"];
 const STATUSES = [
   "",
   "Active",
@@ -208,10 +203,9 @@ function SortButton({ label, sortKey, agentName, sort, onSort }) {
 
 export default function RTSTab() {
   const { user } = useUser();
-  const { agents, supabaseClient } = useTenantConfig();
+  const { agents, supabaseClient, loading: rosterLoading, error: rosterError } = useTenantConfig();
   const client = supabaseClient || supabase;
   const visibleAgents = useMemo(() => {
-    if (!agents.length) return DEFAULT_AGENTS;
     return agents.map((agent) => {
       const parts = String(agent.name || "Agent").trim().split(/\s+/);
       const first = parts[0] || "Agent";
@@ -238,7 +232,7 @@ export default function RTSTab() {
   const [search, setSearch] = useState("");
   const [channelFilter, setChannelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [mobileAgent, setMobileAgent] = useState(DEFAULT_AGENTS[0].name);
+  const [mobileAgent, setMobileAgent] = useState("");
   const [collapsed, setCollapsed] = useState({});
   const [sort, setSort] = useState({ key: "carrier", agentName: "", direction: "asc" });
   const [savingCells, setSavingCells] = useState({});
@@ -483,9 +477,13 @@ export default function RTSTab() {
         <span className="is-action"><strong>{summary.action}</strong> Needs Action</span>
       </div>
 
+      {!visibleAgents.length && <div className="rts-empty" role="status">
+        {rosterLoading ? "Loading agent roster…" : rosterError || "Agent roster unavailable."}
+      </div>}
       <div className="rts-agent-switcher" aria-label="Agent RTS status">
         <label htmlFor="rts-agent-select">VIEW AGENT</label>
-        <select id="rts-agent-select" value={mobileAgent} onChange={(event) => setMobileAgent(event.target.value)}>
+        <select id="rts-agent-select" disabled={!visibleAgents.length} value={mobileAgent} onChange={(event) => setMobileAgent(event.target.value)}>
+          {!visibleAgents.length && <option value="">{rosterLoading ? "Loading…" : "Unavailable"}</option>}
           {visibleAgents.map((agent) => <option key={agent.name} value={agent.name}>{agent.name}</option>)}
         </select>
       </div>

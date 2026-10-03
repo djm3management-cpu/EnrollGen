@@ -11,7 +11,7 @@ This document is the single source of truth for all EnrollGen UI styling. Every 
 
 EnrollGen is a compliance-first enrollment operations platform. It needs to feel warm, grounded, and professional — not sterile, not flashy, not like dev tooling. The aesthetic is "sedimentary command center": layered earth tones, geological texture, analog warmth with digital precision.
 
-The audience is twofold: NGHS agents using it daily on live calls, and upline partners (Medigap Life, Alliant/SMS) seeing it in demos. It must feel like a product, not a project.
+The audience is twofold: NGHS agents using it daily on live calls, and upline partners (Alliant/SMS) seeing it in demos. It must feel like a product, not a project.
 
 ---
 

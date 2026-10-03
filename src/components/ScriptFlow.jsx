@@ -21,6 +21,7 @@ import {
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { useLiveCall } from "../context/LiveCallContext";
 import { telephonyCallIdentity } from "../lib/telephonyCallIdentity.js";
+import { agentTrackActive } from "../lib/transcriptionHealth.js";
 import { useInboundCall } from "../context/InboundCallContext";
 import { consumePendingCallContact, hydrateNotesFromContact } from "../lib/callLaunch";
 import { useComplianceScoringWorker } from "../hooks/useComplianceScoringWorker";
@@ -1031,6 +1032,8 @@ export default function ScriptFlow() {
 
       <CenterTimerBar
         agentActive={isListening}
+        agentTrackHealthy={inbound?.activeCall && inbound.activeCall.params?.direction !== "outbound"
+          ? agentTrackActive(inbound, isListening) : undefined}
         onShareAudio={() => {
           const shareAudio = copilotHandlersRef.current?.shareCustomerAudio;
           if (shareAudio) void shareAudio();

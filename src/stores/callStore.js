@@ -1,6 +1,4 @@
 import { useSyncExternalStore } from "react";
-import { getAuthToken } from "../context/AuthContext";
-import { getAuthSupabase, supabase } from "../lib/supabase";
 
 const initialState = {
   callActive: false,
@@ -57,29 +55,6 @@ function updateState(nextState) {
   emit();
 }
 
-async function persistCallLog(record) {
-  if (!record || isDevCall(record.call_id)) {
-    return;
-  }
-
-  if (!record.call_id || !record.agent_id) {
-    console.error("[CallStore] Missing call metadata for call_logs insert.", record);
-    return;
-  }
-
-  try {
-    const token = await getAuthToken();
-    const sb = token ? getAuthSupabase(token) : supabase;
-    const { error } = await sb.from("call_logs").insert(record);
-
-    if (error) {
-      throw error;
-    }
-  } catch (err) {
-    console.error("[CallStore] call_logs insert failed:", err);
-  }
-}
-
 const actions = {
   startCall(agentId, callId) {
     const nextAgentId = isNonEmptyString(agentId) ? agentId : null;
@@ -123,7 +98,7 @@ const actions = {
     };
 
     updateState({ ...initialState });
-    await persistCallLog(finalizedCall);
+    // Canonical call persistence is owned by the post-call pipeline.
     return finalizedCall;
   },
 
