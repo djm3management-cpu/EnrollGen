@@ -5,6 +5,7 @@ import IncomingCallToast from "./IncomingCallToast";
 import ActiveCallBar from "./ActiveCallBar";
 import ActiveCallExpanded from "./ActiveCallExpanded";
 import DialerPanel from "./DialerPanel";
+import { OPEN_DIALER_EVENT } from "../../lib/dialerUi";
 
 // GHL-style dropdown phone system: a single nav icon that owns three
 // states depending on call activity -
@@ -15,9 +16,22 @@ import DialerPanel from "./DialerPanel";
 export default function PhoneDropdown({ onOpenMessages }) {
   const inbound = useInboundCall();
   const [isOpen, setIsOpen] = useState(false);
+  const [prefillContact, setPrefillContact] = useState(null);
+  const [prefillVersion, setPrefillVersion] = useState(0);
   const rootRef = useRef(null);
 
   const hasCall = Boolean(inbound?.activeCall || inbound?.dialingCall);
+
+  useEffect(() => {
+    const openPrefilledDialer = (event) => {
+      if (!inbound?.enabled || hasCall || !event.detail?.contact?.phone) return;
+      setPrefillContact(event.detail.contact);
+      setPrefillVersion((current) => current + 1);
+      setIsOpen(true);
+    };
+    window.addEventListener(OPEN_DIALER_EVENT, openPrefilledDialer);
+    return () => window.removeEventListener(OPEN_DIALER_EVENT, openPrefilledDialer);
+  }, [inbound?.enabled, hasCall]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -56,7 +70,7 @@ export default function PhoneDropdown({ onOpenMessages }) {
       <button
         type="button"
         className={`top-bar-settings-button phone-dd__trigger${isOpen ? " is-active" : ""}`}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => { setPrefillContact(null); setIsOpen((current) => !current); }}
         title="Phone"
         aria-label="Phone dialer"
       >
@@ -73,7 +87,7 @@ export default function PhoneDropdown({ onOpenMessages }) {
           {hasCall ? (
             <ActiveCallExpanded onOpenMessages={onOpenMessages} />
           ) : (
-            <DialerPanel />
+            <DialerPanel key={prefillContact ? `${prefillContact.id}:${prefillVersion}` : 'manual'} initialContact={prefillContact} />
           )}
         </div>
       ) : null}

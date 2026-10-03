@@ -167,8 +167,8 @@ function ContactsTabPanel({ onCall, disabled }) {
   );
 }
 
-function KeypadTab({ onCall, disabled }) {
-  const [input, setInput] = useState("");
+function KeypadTab({ onCall, disabled, initialContact }) {
+  const [input, setInput] = useState(initialContact?.phone || "");
 
   const handleKey = useCallback((digit) => {
     playDtmfTone(digit);
@@ -207,7 +207,10 @@ function KeypadTab({ onCall, disabled }) {
           type="button"
           className="phone-dialer__call-btn"
           disabled={disabled || !input}
-          onClick={() => onCall(input, null, null)}
+          onClick={() => {
+            const matchesContact = initialContact && normalizePhoneE164(input) === normalizePhoneE164(initialContact.phone);
+            onCall(input, matchesContact ? initialContact.id : null, matchesContact ? contactDisplayName(initialContact) : null);
+          }}
           aria-label="Call"
         >
           <Phone size={22} fill="currentColor" strokeWidth={0} />
@@ -363,7 +366,7 @@ function QueueTab() {
   );
 }
 
-export default function DialerPanel() {
+export default function DialerPanel({ initialContact = null }) {
   const inbound = useInboundCall();
   const [tab, setTab] = useState("KEYPAD");
   const [calling, setCalling] = useState(false);
@@ -410,7 +413,7 @@ export default function DialerPanel() {
       <div className="phone-dialer__body">
         {tab === "RECENTS" ? <RecentsTab onCall={handleCall} disabled={disabled} /> : null}
         {tab === "CONTACTS" ? <ContactsTabPanel onCall={handleCall} disabled={disabled} /> : null}
-        {tab === "KEYPAD" ? <KeypadTab onCall={handleCall} disabled={disabled} /> : null}
+        {tab === "KEYPAD" ? <KeypadTab onCall={handleCall} disabled={disabled} initialContact={initialContact} /> : null}
         {tab === "VOICEMAIL" ? <VoicemailTab /> : null}
         {tab === "QUEUE" ? <QueueTab /> : null}
       </div>

@@ -4,6 +4,7 @@ import { redactSensitiveText } from "../../lib/redaction";
 import { CALL_OUTCOME_OPTIONS } from "../../lib/postCallPipeline";
 import CallDetailPanel from "../callDetail/CallDetailPanel";
 import ComplianceReviewModal, { COMPLIANCE_WARNING_THRESHOLD } from "../callDetail/ComplianceReviewModal";
+import { CreateOpportunityButton } from "../opportunities/ContactOpportunities";
 
 const ENROLLED_OUTCOMES = new Set(["enrolled", "enrolled_pending_verification"]);
 const PAGE_SIZE = 50;
@@ -226,6 +227,7 @@ function ExpandedRow({ row, supabaseClient }) {
 
       {row.call_record_id ? (
         <div className="call-log-expand-actions">
+          <CreateOpportunityButton contactId={row.contact_id} callId={row.call_record_id} contactName={row.contact_name} />
           <button
             type="button"
             className="contacts-mini-btn"

@@ -3,10 +3,12 @@ import { Phone } from "lucide-react";
 import { useContactDetail, useContactMutations, useContactPii, contactDisplayName } from "../../hooks/useContacts";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { useCurrentAgent } from "../../hooks/useCurrentAgent";
+import { useContactTags } from "../../hooks/useContactTags";
 import { useAvailability } from "../../context/AvailabilityContext";
 import { useInboundCall } from "../../context/InboundCallContext";
 import CallDetailPanel from "../callDetail/CallDetailPanel";
 import MessagesThread from "./MessagesThread";
+import ContactOpportunities, { CreateOpportunityButton } from "../opportunities/ContactOpportunities";
 
 const PII_FIELD_SET = new Set(["first_name", "last_name", "dob", "phone", "email", "address", "mbi_full"]);
 
@@ -622,6 +624,7 @@ function PoliciesPanel({ policies, policyDraft, setPolicyDraft, onAddPolicy, sav
 }
 
 function TagsPanel({ contact }) {
+  const { tags, loading, error } = useContactTags([contact?.id]);
   const labels = useMemo(() => {
     const raw = contact?.tags || contact?.labels || [];
     if (Array.isArray(raw)) return raw;
@@ -629,10 +632,12 @@ function TagsPanel({ contact }) {
     return [];
   }, [contact]);
 
-  if (!labels.length) return <div className="contacts-muted">No labels configured</div>;
+  const combined = [...new Set([...labels, ...tags.map((tag) => tag.name)])];
+  if (error) return <div className="ops-error" role="alert">{error}</div>;
+  if (!combined.length) return <div className="contacts-muted">{loading ? 'Loading tags…' : 'No labels configured'}</div>;
   return (
     <div className="contacts-chip-row">
-      {labels.map((label) => (
+      {combined.map((label) => (
         <span key={label} className="contacts-chip">
           {String(label).toUpperCase()}
         </span>
@@ -730,7 +735,7 @@ function AppointmentsPanel() {
   return <div className="contacts-muted">Appointments not configured</div>;
 }
 
-function CallHistorySection({ calls, supabaseClient }) {
+function CallHistorySection({ calls, supabaseClient, contactId }) {
   const [expandedCallId, setExpandedCallId] = useState(null);
   const [details, setDetails] = useState({});
   const [loadingId, setLoadingId] = useState(null);
@@ -781,6 +786,7 @@ function CallHistorySection({ calls, supabaseClient }) {
                 {call.enrollment_completed ? "ENROLLED" : (call.call_outcome || "--").toUpperCase()}
               </span>
             </button>
+            <CreateOpportunityButton contactId={contactId} callId={call.id} />
             {expandedCallId === call.id ? (
               <CallDetailPanel detail={details[call.id]} loading={loadingId === call.id} />
             ) : null}
@@ -1164,6 +1170,7 @@ export default function ContactDetail({
               >
                 <TagsPanel contact={contact} />
               </AccordionSection>
+              <ContactOpportunities key={contact.id} contactId={contact.id} />
             </aside>
 
             <main className="contacts-ghl-center">
@@ -1195,7 +1202,7 @@ export default function ContactDetail({
                   />
                 ) : null}
                 {workspaceTab === "calls" ? (
-                  <CallHistorySection calls={bundle.calls} supabaseClient={supabaseClient} />
+                  <CallHistorySection calls={bundle.calls} supabaseClient={supabaseClient} contactId={contact.id} />
                 ) : null}
               </div>
             </main>

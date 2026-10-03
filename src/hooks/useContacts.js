@@ -18,7 +18,7 @@ const CONTACT_SAFE_COLUMNS =
 // dynamically the same as any other pii_encrypted key.
 const PII_FIELD_KEYS = ["first_name", "last_name", "dob", "phone", "email", "address", "mbi_full"];
 
-export function useContactsList(searchTerm, requestingAgentId) {
+export function useContactsList(searchTerm, requestingAgentId, tenantScoped = false) {
   const {
     supabaseClient,
     tenant,
@@ -76,6 +76,8 @@ export function useContactsList(searchTerm, requestingAgentId) {
         let query = supabaseClient.from("contacts").select(CONTACT_SAFE_COLUMNS)
           .order("updated_at", { ascending: false }).order("id")
           .range(offset, offset + 199);
+        // Opportunities opts in; the existing Contacts list keeps its behavior.
+        if (tenantScoped) query = query.eq("tenant_id", tenant?.id);
         if (matchedIds) query = query.in("id", matchedIds);
         const { data, error: queryError } = await query;
         if (queryError) throw queryError;
@@ -156,7 +158,7 @@ export function useContactsList(searchTerm, requestingAgentId) {
     } finally {
       if (!background) setLoading(false);
     }
-  }, [supabaseClient, searchTerm, requestingAgentId, tenantLoading, tenantError]);
+  }, [supabaseClient, searchTerm, requestingAgentId, tenantLoading, tenantError, tenantScoped, tenant?.id]);
 
   useEffect(() => {
     refresh();

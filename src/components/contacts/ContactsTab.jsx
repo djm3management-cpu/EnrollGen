@@ -13,6 +13,8 @@ import { useCurrentAgent } from "../../hooks/useCurrentAgent";
 import { normalizePhoneE164 } from "../../lib/phone";
 import ContactToast from "../ContactToast";
 import MessagesThread from "./MessagesThread";
+import OpportunitiesView from "../opportunities/OpportunitiesView";
+import ContactOpportunities, { CreateOpportunityButton } from "../opportunities/ContactOpportunities";
 
 const PII_FIELD_SET = new Set(["first_name", "last_name", "dob", "phone", "email", "address", "mbi_full"]);
 
@@ -438,6 +440,7 @@ function ActivityPanel({ bundle }) {
     }));
     const callRows = (bundle?.calls || []).map((call) => ({
       id: `call-${call.id}`,
+      callId: call.id,
       at: call.call_start,
       type: "CALL",
       summary:
@@ -460,6 +463,7 @@ function ActivityPanel({ bundle }) {
           <span className="mono">{fmtDateTime(item.at)}</span>
           <span>{item.summary}</span>
           {item.meta ? <small>{item.meta}</small> : null}
+          {item.callId ? <CreateOpportunityButton contactId={bundle?.contact?.id} callId={item.callId} /> : null}
         </div>
       ))}
     </div>
@@ -784,6 +788,7 @@ function RightPanel({
                     saving={saving}
                   />
                 </AccordionSection>
+                <ContactOpportunities key={contact.id} contactId={contact.id} />
               </>
             ) : null}
             {rightTab === "DND" ? (
@@ -872,7 +877,7 @@ function RightPanel({
   );
 }
 
-export default function ContactsTab({ variant = "home", onStartCall = null, focusContact = null }) {
+function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact = null }) {
   const [search, setSearch] = useState("");
   const [newContact, setNewContact] = useState(null);
   const [merge, setMerge] = useState(null);
@@ -1294,4 +1299,39 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
       {saving ? <span className="contacts-save-state">SAVING...</span> : null}
     </div>
   );
+}
+
+function contactsLocation() {
+  const params = new URLSearchParams(window.location.search);
+  return { view: params.get('view') === 'opportunities' ? 'opportunities' : 'contacts', contactId: params.get('contact') || null };
+}
+
+// Both views remain inside the existing Contacts route and navigation item.
+export default function ContactsTab({ variant = "home", onStartCall = null, focusContact = null }) {
+  const [location, setLocation] = useState(contactsLocation);
+  const updateLocation = useCallback((view, contactId = null, replace = false) => {
+    const url = new URL(window.location.href);
+    if (view === 'opportunities') url.searchParams.set('view', view); else url.searchParams.delete('view');
+    if (contactId) url.searchParams.set('contact', contactId); else url.searchParams.delete('contact');
+    window.history[replace ? 'replaceState' : 'pushState'](null, '', url.pathname + url.search + url.hash);
+    setLocation({ view, contactId });
+  }, []);
+  useEffect(() => {
+    const onPopState = () => setLocation(contactsLocation());
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+  useEffect(() => {
+    if (focusContact?.id) updateLocation('contacts', focusContact.id, true);
+  }, [focusContact?.id, focusContact?.ts, updateLocation]);
+  return <div className="contacts-views">
+    <div className="contacts-workspace-tabs contacts-subviews" role="group" aria-label="Contacts view">
+      <button type="button" className={location.view === 'contacts' ? 'is-active' : ''} aria-pressed={location.view === 'contacts'} onClick={() => updateLocation('contacts', location.contactId)}>Contacts</button>
+      <button type="button" className={location.view === 'opportunities' ? 'is-active' : ''} aria-pressed={location.view === 'opportunities'} onClick={() => updateLocation('opportunities')}>Opportunities</button>
+    </div>
+    <div hidden={location.view !== 'contacts'}>
+      <ContactsWorkspace variant={variant} onStartCall={onStartCall} focusContact={location.contactId ? { id: location.contactId, ts: focusContact?.ts || 0 } : focusContact} />
+    </div>
+    {location.view === 'opportunities' && <OpportunitiesView onOpenContact={(id) => updateLocation('contacts', id)} />}
+  </div>;
 }
