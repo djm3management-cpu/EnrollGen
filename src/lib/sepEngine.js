@@ -4,9 +4,11 @@
   including FEMA disaster SEPs, Medicare standard SEPs, and condition-based SEPs.
 */
 
-import { getStateFromZip, hasFiveStarPlans, daysRemaining, isActiveNow } from "./sepGeo";
+import { dualLisSepCards } from "./dualLisSep.js";
 
-export function getSEPsForState(stateCode, femaDisasters = []) {
+import { getStateFromZip, hasFiveStarPlans, daysRemaining, isActiveNow } from "./sepGeo.js";
+
+export function getSEPsForState(stateCode, femaDisasters = [], beneficiaryOptions = {}) {
   const today = new Date();
   const seps = [];
 
@@ -87,10 +89,7 @@ export function getSEPsForState(stateCode, femaDisasters = []) {
       event: "First eligible for Medicare Part A/B", description: "7-month period to sign up for Part A/B, then enroll in MA/MAPD. Late Part B enrollment may trigger penalties.",
       startDate: "Varies by individual", endDate: "Varies by individual", duration: "7-month window around 65th birthday or 25th month of disability",
       eligibleProducts: ["MA", "MAPD", "PDP", "Medigap"], source: "CMS", urgency: "info", matchingPlans: [] },
-    { id: "medicare-dual-lis", category: "Medicare", type: "Dual-Eligible / LIS (Extra Help) SEP", code: "DUAL/LIS",
-      event: "Dual-eligible (Medicare+Medicaid) or Extra Help/LIS", description: "Continuous SEP, change MA/MAPD once per quarter (Q1–Q3). D-SNP plans designed for dual-eligible beneficiaries.",
-      startDate: "Year-round", endDate: "Year-round", duration: "Continuous, once per quarter",
-      eligibleProducts: ["MA", "MAPD", "D-SNP"], source: "CMS", urgency: "info", matchingPlans: [] },
+    ...dualLisSepCards(beneficiaryOptions),
     { id: "medicare-move", category: "Medicare", type: "Moved Out of Service Area SEP", code: "SEP-MOVE",
       event: "Permanent move, current plan no longer available", description: "63-day SEP to enroll in a new MA/MAPD plan in new service area after permanent address change.",
       startDate: "Varies by individual", endDate: "63 days from move date", duration: "63 days from move",
@@ -108,7 +107,7 @@ export function getSEPsForState(stateCode, femaDisasters = []) {
   return seps;
 }
 
-export function getSEPsForZip(zip, femaDisasters = []) {
+export function getSEPsForZip(zip, femaDisasters = [], beneficiaryOptions = {}) {
   const state = getStateFromZip(zip);
   const today = new Date();
   const seps = [];
@@ -249,25 +248,8 @@ export function getSEPsForZip(zip, femaDisasters = []) {
     });
   }
 
-  // Dual/LIS
-  seps.push({
-    id: "medicare-dual-lis",
-    category: "Medicare",
-    type: "Dual-Eligible / LIS (Extra Help) SEP",
-    code: "DUAL/LIS",
-    event: "Dual-eligible (Medicare+Medicaid) or Extra Help/LIS",
-    description:
-      "Continuous SEP, change MA/MAPD once per quarter (Q1–Q3). D-SNP plans designed for dual-eligible beneficiaries.",
-    startDate: "Year-round",
-    endDate: "Year-round",
-    duration: "Continuous, once per quarter",
-    eligibleProducts: ["MA", "MAPD", "D-SNP"],
-    source: "CMS",
-    urgency: "info",
-    matchingPlans: maPlans(
-      (p) => p.snp === "D-SNP" || ["MA", "MAPD"].includes(p.cat)
-    ),
-  });
+  // Separate product-specific rights; area lookup does not verify the member.
+  seps.push(...dualLisSepCards(beneficiaryOptions));
 
   // Move SEP
   seps.push({

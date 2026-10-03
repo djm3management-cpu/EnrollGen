@@ -217,7 +217,7 @@ export const eligibilityVerification = [
     sample_phrases: [
       'You mentioned you recently moved from Ohio to Florida. That qualifies you for a Special Enrollment Period based on a permanent change of address. When was your move date?',
       'Since you are losing your employer coverage at the end of the month, that gives you a Special Enrollment Period. I just need to document the date your coverage ends.',
-      'Your dual-eligible status qualifies you for a continuous SEP, which means you can make changes to your plan at any time.',
+      'Your verified Medicaid or Extra Help status may support one standalone PDP election per calendar month, including returning from MA-PD to Original Medicare plus a PDP. It does not permit an MA-to-MA switch; we must verify monthly use and Part D at-risk status.',
       'Because you were recently released from incarceration, you have a Special Enrollment Period. Let me document that qualifying event.',
     ],
     anti_patterns: [

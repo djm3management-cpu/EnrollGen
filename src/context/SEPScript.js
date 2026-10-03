@@ -144,14 +144,15 @@ export const NGHS_SEP_SCRIPT = {
       items: [
         {
           id: "dual_or_lis",
-          ask: "Does the customer have both Medicare and Medicaid, or receive Extra Help (LIS)?",
-          allowed_actions: [
-            "Switch PDP monthly",
-            "Drop MA plus Rx and join stand alone PDP",
-            "Join or switch integrated D SNP for full Medicaid only",
-          ],
-          window:
-            "Once per calendar month. Effective 1st of the following month. Not available if beneficiary is flagged as at risk under Part D drug management program.",
+          ask: "Does the customer have full/partial Medicaid or receive Extra Help, and want a standalone PDP?",
+          allowed_actions: ["Join or switch a standalone PDP", "Leave MA-PD for Original Medicare plus a standalone PDP; no MA-to-MA switch"],
+          window: "Once per calendar month, effective first day of next month. Verify monthly use. Not available to Part D at-risk or potential-at-risk beneficiaries.",
+        },
+        {
+          id: "integrated_care",
+          ask: "Does the customer have full-benefit Medicaid (QMB+, SLMB+, FBDE), an eligible FIDE/HIDE/AIP D-SNP in the service area, and verified aligned Medicaid MCO enrollment?",
+          allowed_actions: ["Join or switch to the eligible aligned integrated D-SNP; partial dual or LIS-only status does not qualify"],
+          window: "Once per calendar month, effective first day of next month. Verify monthly use and alignment; remaining in Medicaid FFS or an unaligned MCO does not qualify.",
         },
         {
           id: "lose_lis_next_year",

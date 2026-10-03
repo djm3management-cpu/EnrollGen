@@ -7,7 +7,7 @@
 
 ## Upcoming Changes — CMS Mission
 
-CMS wants Medicare and Medicaid aligned — the Medicaid carrier and the Medicare carrier must match. If the member has a UHC DSNP, they must have the coordinated UHC MCO. This coordination streamlines access to both Medicare and Medicaid benefits, making it easier for beneficiaries to understand and use their coverage.
+Full-benefit duals (QMB+, SLMB+, FBDE) may elect an eligible FIDE SNP, HIDE SNP, or applicable integrated plan (AIP) once per calendar month to align Medicare and Medicaid MCO enrollment. Verify full-benefit status, target plan eligibility and service area, and aligned enrollment. Partial dual or LIS-only status does not qualify. Effective the first day of the next month.
 
 ---
 
@@ -15,13 +15,13 @@ CMS wants Medicare and Medicaid aligned — the Medicaid carrier and the Medicar
 
 ### INT — Integrated DSNP Election
 
-- Not all DSNP plans allow INT. Reserved for **HIDE** or **FIDE** plans only.
+- Full-benefit duals (QMB+, SLMB+, FBDE) may elect an eligible FIDE SNP, HIDE SNP, or applicable integrated plan (AIP) once per calendar month to align Medicare and Medicaid MCO enrollment. Verify full-benefit status, target plan eligibility and service area, and aligned enrollment. Partial dual or LIS-only status does not qualify. Effective the first day of the next month.
 - Specifically for members with **QMB+, SLMB+, or FBDE** level of Medicaid.
-- Sunfire labels all eligible plans as **INT Eligible**.
+- Check the current CMS integrated-plan list and carrier eligibility; an enrollment-platform label alone is not proof.
 
 ### DEP — Dual Eligible Plan Change
 
-- Member has Medicare and Medicaid **or** Extra Help.
+- Full-benefit duals, partial-benefit duals, and people with Extra Help may make one election per calendar month to a standalone PDP, including leaving MA-PD for Original Medicare plus a PDP. Effective the first day of the next month. This SEP does not authorize an MA-to-MA switch. Not available to Part D at-risk or potential-at-risk beneficiaries.
 - Wants to switch from a standalone PDP to another, OR disenroll from an MAPD, return to Original Medicare, and enroll in a standalone PDP.
 
 ### NLS — New LIS Status
@@ -41,7 +41,7 @@ A plan that is Highly Integrated with Medicaid — but the member's Medicaid and
 A plan that is Fully Integrated with Medicaid and coordinates all benefits in one health plan.
 
 ### MCO — Medicaid Managed Care Organization
-Think of this as a Medicaid Medicare Advantage plan. MCO election periods go state by state. When enrolling someone using the INT SEP, the state in most cases must also have an MCO election period available.
+A Medicaid MCO administers Medicaid managed care benefits. Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.
 
 ---
 
@@ -49,8 +49,8 @@ Think of this as a Medicaid Medicare Advantage plan. MCO election periods go sta
 
 ### Tools & Accessibility
 
-- Sunfire has a HIDE/FIDE filter to view exclusively those plans.
-- Sunfire labels all HIDE/FIDE plans as INT-Eligible.
+- Use current CMS FIDE/HIDE/AIP data and carrier verification; platform filters are only a lookup aid.
+- Verify the specific FIDE/HIDE/AIP plan in current CMS data and confirm aligned enrollment with the carrier.
 - **MCO Verification:**
   - Sunfire shows the member's current MCO in many cases when you run a Medicaid check.
   - Call Wellcare SPOP for member's present MCO: **(866) 211-0544**
@@ -59,19 +59,19 @@ Think of this as a Medicaid Medicare Advantage plan. MCO election periods go sta
 
 ### Qualifying Questions (Mandatory)
 
-1. "Do you currently receive home healthcare or assistance with activities of daily living?" → **If yes, election is NOT available.**
-2. "Do you currently reside in a nursing home or long term care facility?" → **If yes, election is NOT available.**
+1. "Do you currently receive home healthcare or assistance with activities of daily living?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
+2. "Do you currently reside in a nursing home or long term care facility?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
 3. "Do you currently see behavioral health professionals?" → **If yes, ensure those providers are covered under the DSNP plan.**
 
 ### Out-of-Footprint INT Rule
 
-If using the INT Election in a state outside of the footprint, the MCO must already be matching the DSNP plan you would like to enroll them in. Ask the member who they have their Medicaid through, and call the carrier to verify prior to submitting an application.
+Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.
 
-**THIS IS NOT APPLICABLE FOR VA, FL & N** — those plans will auto enroll the member. In NY, the member can call the carrier to change their MCO.
+Alignment must be verified in every state. Confirm any state/plan-specific enrollment process rather than assuming automatic enrollment.
 
 ### Mandatory Disclosure (INT)
 
-> "By selecting this election, your care will be coordinated between both Medicare and Medicaid under [carrier name]. This means your Medicaid carrier will change to align with your Medicare Advantage plan. This integration helps simplify your healthcare experience by reducing confusion, streamlining access to your benefits, and ensuring a more seamless and efficient coordination of your care."
+> "This integrated plan coordinates Medicare and Medicaid through aligned enrollment. We will verify whether your Medicaid MCO already aligns or whether a permitted change is needed, explain any change and effective date, and confirm the plan covers your providers and services before submitting."
 
 ---
 
@@ -135,20 +135,20 @@ If using the INT Election in a state outside of the footprint, the MCO must alre
 **Availability:**
 - Florida has INT eligible plans with Careplus, Humana, Preferred, Aetna, United Healthcare, Cigna, and Simply.
 - This SEP can only be used for members with **QMB+, SLMB+, or FBDE** level of Medicaid.
-- Use the HIDE or FIDE filter or look for INT Eligible labeling in Sunfire to see which plans are eligible.
+- Verify the eligible FIDE/HIDE/AIP plan in current CMS data and confirm Medicaid MCO alignment; platform labels alone do not establish eligibility.
 
 **Process:**
-- Full Dual Eligible beneficiaries can change eligible HIDE/FIDE D-SNPs monthly, regardless of their Medicaid carrier.
-- Once enrolled in an eligible D-SNP, they lose their Medicaid coverage, and the D-SNP then covers their Medicaid benefits.
-- This allows full dual eligible beneficiaries to change plans monthly if they choose.
+- Full-benefit duals (QMB+, SLMB+, FBDE) may elect an eligible FIDE SNP, HIDE SNP, or applicable integrated plan (AIP) once per calendar month to align Medicare and Medicaid MCO enrollment. Verify full-benefit status, target plan eligibility and service area, and aligned enrollment. Partial dual or LIS-only status does not qualify. Effective the first day of the next month.
+- Integrated D-SNP enrollment coordinates Medicare and Medicaid; it does not itself terminate Medicaid eligibility or coverage.
+- Full-benefit duals (QMB+, SLMB+, FBDE) may elect an eligible FIDE SNP, HIDE SNP, or applicable integrated plan (AIP) once per calendar month to align Medicare and Medicaid MCO enrollment. Verify full-benefit status, target plan eligibility and service area, and aligned enrollment. Partial dual or LIS-only status does not qualify. Effective the first day of the next month.
 
 **Mandatory Questions:**
-1. "Do you currently receive home healthcare or assistance with activities of daily living?" → If yes, election is NOT available.
-2. "Do you currently reside in a nursing home or long term care facility?" → If yes, election is NOT available.
+1. "Do you currently receive home healthcare or assistance with activities of daily living?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
+2. "Do you currently reside in a nursing home or long term care facility?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
 3. "Do you currently see behavioral health professionals?" → If yes, ensure those providers are covered under the DSNP plan.
 
 **Mandatory Disclosure:**
-> "By selecting this election, your care will be coordinated between both Medicare and Medicaid under [carrier name]. This means your Medicaid carrier will change to align with your Medicare Advantage plan. This integration helps simplify your healthcare experience by reducing confusion, streamlining access to your benefits, and ensuring a more seamless and efficient coordination of your care."
+> "This integrated plan coordinates Medicare and Medicaid through aligned enrollment. We will verify whether your Medicaid MCO already aligns or whether a permitted change is needed, explain any change and effective date, and confirm the plan covers your providers and services before submitting."
 
 **DST and CSNPs also widely available.**
 
@@ -184,10 +184,10 @@ If using the INT Election in a state outside of the footprint, the MCO must alre
 **Availability:**
 - Kentucky has INT eligible plans with Aetna, United Healthcare, Humana, and Wellcare.
 - This SEP can only be used for members with **QMB+, SLMB+, or FBDE** level of Medicaid.
-- Use the HIDE or FIDE filter or look for INT Eligible labeling in Sunfire.
+- Verify the eligible FIDE/HIDE/AIP plan in current CMS data and confirm Medicaid MCO alignment; do not rely solely on platform labels.
 
 **Process:**
-- Kentucky is **NOT an Auto Enroll state** — member will need to switch their Medicaid MCO to be the same as the carrier for the DSNP you would like to place them in.
+- Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.
 - Ask the member early on in the call which Medicaid/MCO they have to see if you can help them with that coordinating DSNP.
 - If the member does not have the proper MCO, direct the client to the Medicaid enrollment number below.
 
@@ -201,12 +201,12 @@ If using the INT Election in a state outside of the footprint, the MCO must alre
 - Often times "just cause" can be they want their MCO to be coordinated with their Medicare.
 
 **Mandatory Questions:**
-1. "Do you currently receive home healthcare or assistance with activities of daily living?" → If yes, election is NOT available.
-2. "Do you currently reside in a nursing home or long term care facility?" → If yes, election is NOT available.
+1. "Do you currently receive home healthcare or assistance with activities of daily living?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
+2. "Do you currently reside in a nursing home or long term care facility?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
 3. "Do you currently see behavioral health professionals?" → If yes, ensure those providers are covered under the DSNP plan.
 
 **Mandatory Disclosure:**
-> "By selecting this election, your care will be coordinated between both Medicare and Medicaid under [carrier name]. This means your Medicaid carrier will change to align with your Medicare Advantage plan. This integration helps simplify your healthcare experience by reducing confusion, streamlining access to your benefits, and ensuring a more seamless and efficient coordination of your care."
+> "This integrated plan coordinates Medicare and Medicaid through aligned enrollment. We will verify whether your Medicaid MCO already aligns or whether a permitted change is needed, explain any change and effective date, and confirm the plan covers your providers and services before submitting."
 
 ---
 
@@ -286,21 +286,21 @@ If using the INT Election in a state outside of the footprint, the MCO must alre
 **Availability:**
 - New Jersey has INT eligible plans with Wellcare, Wellpoint, Aetna, and United Healthcare.
 - This SEP can only be used for members with **QMB+, SLMB+, or FBDE** level of Medicaid.
-- Use the HIDE or FIDE filter or look for INT Eligible labeling in Sunfire.
+- Verify the eligible FIDE/HIDE/AIP plan in current CMS data and confirm Medicaid MCO alignment; do not rely solely on platform labels.
 
 **Process:**
-- "Auto Enroll" enrollment in this plan will coordinate their Medicare and Medicaid benefits, meaning it will automatically enroll them into the aligned MCO.
-- IE: If enrolling the member into the United Healthcare Dual Complete and they previously had Medicaid (MCO) through Horizon, they will now receive their Medicaid (MCO) through United Healthcare.
+- Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.
+- Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.
 - Do **NOT** use this SEP if the member is also enrolled in **PACE** (Programs of All-Inclusive Care for Elderly).
 - While most HIDE SNP services are covered through Medicare, some are exclusively by Medicaid. These include dental, vision, hearing aids and fittings, certain private duty nursing services, and home and community-based services such as medical day care and personal care assistance and long-term nursing facility stays.
 
 **Mandatory Questions:**
-1. "Do you currently receive home healthcare or assistance with activities of daily living?" → If yes, election is NOT available.
-2. "Do you currently reside in a nursing home or long term care facility?" → If yes, election is NOT available.
+1. "Do you currently receive home healthcare or assistance with activities of daily living?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
+2. "Do you currently reside in a nursing home or long term care facility?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
 3. "Do you currently see behavioral health professionals?" → If yes, ensure those providers are covered under the DSNP plan.
 
 **Mandatory Disclosure:**
-> "By selecting this election, your care will be coordinated between both Medicare and Medicaid under [carrier name]. This means your Medicaid carrier will change to align with your Medicare Advantage plan. This integration helps simplify your healthcare experience by reducing confusion, streamlining access to your benefits, and ensuring a more seamless and efficient coordination of your care."
+> "This integrated plan coordinates Medicare and Medicaid through aligned enrollment. We will verify whether your Medicaid MCO already aligns or whether a permitted change is needed, explain any change and effective date, and confirm the plan covers your providers and services before submitting."
 
 ---
 
@@ -315,15 +315,15 @@ If using the INT Election in a state outside of the footprint, the MCO must alre
 **Availability:**
 - New York has INT eligible plans with Aetna, United Healthcare, Humana, and Anthem.
 - This SEP can only be used for members with **QMB+, SLMB+, or FBDE** level of Medicaid.
-- Use the HIDE or FIDE filter or look for INT Eligible labeling in Sunfire.
+- Verify the eligible FIDE/HIDE/AIP plan in current CMS data and confirm Medicaid MCO alignment; do not rely solely on platform labels.
 
 **Mandatory Questions:**
-1. "Do you currently receive home healthcare or assistance with activities of daily living?" → If yes, election is NOT available.
-2. "Do you currently reside in a nursing home or long term care facility?" → If yes, election is NOT available.
+1. "Do you currently receive home healthcare or assistance with activities of daily living?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
+2. "Do you currently reside in a nursing home or long term care facility?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
 3. "Do you currently see behavioral health professionals?" → If yes, ensure those providers are covered under the DSNP plan.
 
 **Mandatory Disclosure:**
-> "By selecting this election, your care will be coordinated between both Medicare and Medicaid under [carrier name]. This means your Medicaid carrier will change to align with your Medicare Advantage plan. This integration helps simplify your healthcare experience by reducing confusion, streamlining access to your benefits, and ensuring a more seamless and efficient coordination of your care."
+> "This integrated plan coordinates Medicare and Medicaid through aligned enrollment. We will verify whether your Medicaid MCO already aligns or whether a permitted change is needed, explain any change and effective date, and confirm the plan covers your providers and services before submitting."
 
 ---
 
@@ -385,10 +385,10 @@ If using the INT Election in a state outside of the footprint, the MCO must alre
 **Availability:**
 - Texas has INT eligible plans available. Check Sunfire for current INT Eligible plan labeling.
 - This SEP can only be used for members with **QMB+, SLMB+, or FBDE** level of Medicaid.
-- Use the HIDE or FIDE filter or look for INT Eligible labeling in Sunfire.
+- Verify the eligible FIDE/HIDE/AIP plan in current CMS data and confirm Medicaid MCO alignment; do not rely solely on platform labels.
 
 **Process:**
-- Texas is **NOT an Auto Enroll state** — member will need to switch their Medicaid MCO to be the same as the carrier for the DSNP you would like to place them in.
+- Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.
 - Ask the member early on in the call which Medicaid/MCO they have to see if you can help them with that coordinating DSNP.
 - If the member does not have the proper MCO, direct the member to call Medicaid.
 
@@ -398,12 +398,12 @@ If using the INT Election in a state outside of the footprint, the MCO must alre
 - Often times "just cause" can be they want their MCO to be coordinated with their Medicare.
 
 **Mandatory Questions:**
-1. "Do you currently receive home healthcare or assistance with activities of daily living?" → If yes, election is NOT available.
-2. "Do you currently reside in a nursing home or long term care facility?" → If yes, election is NOT available.
+1. "Do you currently receive home healthcare or assistance with activities of daily living?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
+2. "Do you currently reside in a nursing home or long term care facility?" → Verify plan-specific eligibility and service coverage; this answer alone does not invalidate the integrated-care SEP.
 3. "Do you currently see behavioral health professionals?" → If yes, ensure those providers are covered under the DSNP plan.
 
 **Mandatory Disclosure:**
-> "By selecting this election, your care will be coordinated between both Medicare and Medicaid under [carrier name]. This means your Medicaid carrier will change to align with your Medicare Advantage plan. This integration helps simplify your healthcare experience by reducing confusion, streamlining access to your benefits, and ensuring a more seamless and efficient coordination of your care."
+> "This integrated plan coordinates Medicare and Medicaid through aligned enrollment. We will verify whether your Medicaid MCO already aligns or whether a permitted change is needed, explain any change and effective date, and confirm the plan covers your providers and services before submitting."
 
 ---
 

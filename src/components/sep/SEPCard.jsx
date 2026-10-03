@@ -72,6 +72,7 @@ export function SEPCard({ sep, isExpanded, onToggle }) {
           <div style={{ fontSize: "13px", color: "var(--text-secondary)", marginTop: "2px" }}>
             {sep.event}
           </div>
+          {sep.eligibilityStatus && <div className="muted">{sep.eligibilityStatus==='eligible' ? 'Qualifying evidence confirmed; verify before submission' : sep.eligibilityStatus==='ineligible' ? 'This election right does not apply to the supplied facts' : 'Verify member eligibility, monthly use and plan requirements'}</div>}
         </div>
         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "200px" }}>
           {sep.eligibleProducts.slice(0, 4).map((p) => (
@@ -125,7 +126,7 @@ export function SEPCard({ sep, isExpanded, onToggle }) {
           {sep.matchingPlans && sep.matchingPlans.length > 0 && (
             <div className="sep-info-box">
               <div className="sep-info-box-label">
-                Eligible Plans Under This SEP ({sep.matchingPlans.length})
+                {sep.eligibilityStatus ? 'Plans to verify for this election' : 'Eligible Plans Under This SEP'} ({sep.matchingPlans.length})
               </div>
               <div style={{ overflowX: "auto", marginTop: "8px" }}>
                 <table className="sep-sub-table">

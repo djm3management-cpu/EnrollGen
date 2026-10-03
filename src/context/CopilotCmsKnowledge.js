@@ -12,6 +12,12 @@ export function setDbCmsKnowledgeEntries(entries = []) {
 }
 
 const CMS_SOURCES = {
+  cms_dual_lis_sep: {
+    id: "cms_dual_lis_sep",
+    title: "Monthly Dual/LIS and Integrated-care SEP Job Aid",
+    organization: "Centers for Medicare & Medicaid Services",
+    url: "https://www.cms.gov/files/document/duals-lissepsjobaid01012025.pdf",
+  },
   mmcm_ch2: {
     id: "mmcm_ch2",
     title: "Medicare Communications and Marketing Guidelines, Chapter 2",
@@ -553,7 +559,7 @@ const CMS_TOPIC_LIBRARY = [
       "released",
     ],
     summary:
-      "SEP rights depend on the beneficiary's life event. Common triggers include moving, losing Medicaid or employer coverage, gaining or using LIS/Medicaid monthly flexibility, institutional status, release from incarceration, contract changes, 5-star availability, chronic-condition SNP eligibility, and Medicare-recognized errors or exceptional circumstances.",
+      "SEP rights depend on the specific event and permitted product. Full-benefit duals, partial-benefit duals, and people with Extra Help may make one election per calendar month to a standalone PDP, including leaving MA-PD for Original Medicare plus a PDP. Effective the first day of the next month. This SEP does not authorize an MA-to-MA switch. Not available to Part D at-risk or potential-at-risk beneficiaries. Full-benefit duals (QMB+, SLMB+, FBDE) may elect an eligible FIDE SNP, HIDE SNP, or applicable integrated plan (AIP) once per calendar month to align Medicare and Medicaid MCO enrollment. Verify full-benefit status, target plan eligibility and service area, and aligned enrollment. Partial dual or LIS-only status does not qualify. Effective the first day of the next month.",
     requirements: [
       "The agent should tie the enrollment to a specific trigger, not a vague feeling that an SEP probably exists.",
       "The timing window matters. If the triggering event happened outside the allowed window, the SEP may not be valid.",
@@ -569,7 +575,7 @@ const CMS_TOPIC_LIBRARY = [
     coachingFocus: [
       "If the app or transcript suggests an SEP, guide the agent to validate the trigger and window instead of guessing.",
     ],
-    citations: ["medicare_sep", "medicare_joining"],
+    citations: ["cms_dual_lis_sep", "medicare_sep", "medicare_joining"],
   },
   {
     id: "effective_dates",
@@ -647,7 +653,7 @@ const CMS_TOPIC_LIBRARY = [
       "integrated",
     ],
     summary:
-      "D-SNP enrollment should be presented as dependent on the beneficiary's actual dual-eligible status. Integrated D-SNP monthly SEP rights are tied to full Medicaid and plan availability, not to every D-SNP broadly.",
+      "Full-benefit duals (QMB+, SLMB+, FBDE) may elect an eligible FIDE SNP, HIDE SNP, or applicable integrated plan (AIP) once per calendar month to align Medicare and Medicaid MCO enrollment. Verify full-benefit status, target plan eligibility and service area, and aligned enrollment. Partial dual or LIS-only status does not qualify. Effective the first day of the next month.",
     requirements: [
       "Do not tell a beneficiary they qualify for a D-SNP unless Medicaid status and plan eligibility are actually supported.",
       "If the conversation relies on integrated D-SNP flexibility, make sure the plan is integrated and available in the area.",
@@ -662,7 +668,7 @@ const CMS_TOPIC_LIBRARY = [
     coachingFocus: [
       "Correct overstatements around dual eligibility quickly and specifically.",
     ],
-    citations: ["medicare_sep", "mmcm_ch2"],
+    citations: ["cms_dual_lis_sep", "medicare_sep", "mmcm_ch2"],
   },
   {
     id: "csnp_eligibility",
@@ -710,7 +716,7 @@ const CMS_TOPIC_LIBRARY = [
       "Extra Help and Medicaid can create SEP rights, but they are not interchangeable. LIS does not automatically mean the beneficiary is eligible for a D-SNP.",
     requirements: [
       "Do not use LIS as shorthand for full Medicaid unless actual Medicaid status is confirmed.",
-      "When using LIS or Medicaid monthly SEP flexibility, be precise about which right supports which plan change.",
+      "Full-benefit duals, partial-benefit duals, and people with Extra Help may make one election per calendar month to a standalone PDP, including leaving MA-PD for Original Medicare plus a PDP. Effective the first day of the next month. This SEP does not authorize an MA-to-MA switch. Not available to Part D at-risk or potential-at-risk beneficiaries. Full-benefit duals (QMB+, SLMB+, FBDE) may elect an eligible FIDE SNP, HIDE SNP, or applicable integrated plan (AIP) once per calendar month to align Medicare and Medicaid MCO enrollment. Verify full-benefit status, target plan eligibility and service area, and aligned enrollment. Partial dual or LIS-only status does not qualify. Effective the first day of the next month.",
     ],
     approvedParaphrases: [
       "A concise distinction such as 'Extra Help may give you drug-plan flexibility, but D-SNP eligibility depends on your Medicaid status' is appropriate.",
@@ -722,7 +728,7 @@ const CMS_TOPIC_LIBRARY = [
     coachingFocus: [
       "This is often a narrow correction. Fix the exact confusion rather than relitigating the whole SEP section.",
     ],
-    citations: ["medicare_sep"],
+    citations: ["cms_dual_lis_sep", "medicare_sep"],
   },
   {
     id: "marketing_conduct",
@@ -854,9 +860,9 @@ const SEP_SCENARIOS = [
     id: "sep_lis_monthly",
     title: "Has Medicaid or Extra Help monthly flexibility",
     triggerTerms: ["extra help", "lis", "medicaid", "monthly"],
-    window: "Once per calendar month, effective the first day of the following month, subject to Medicare's listed limitations.",
+    window: "Once per calendar month, effective first day of next month. Verify monthly use; excluded for Part D at-risk or potential-at-risk beneficiaries.",
     allowedChanges: [
-      "Switch Part D",
+      "Join or switch a standalone PDP; no MA-to-MA switch",
       "Drop MA-PD and return to Original Medicare with a stand-alone Part D",
     ],
     sourceId: "medicare_sep",
@@ -865,8 +871,8 @@ const SEP_SCENARIOS = [
     id: "sep_integrated_dsnp",
     title: "Integrated D-SNP monthly SEP for full Medicaid",
     triggerTerms: ["integrated dsnp", "full medicaid", "dual", "d-snp"],
-    window: "Once per calendar month when the beneficiary qualifies and an integrated D-SNP is available.",
-    allowedChanges: ["Join or switch to an integrated D-SNP"],
+    window: "Full-benefit duals (QMB+, SLMB+, FBDE) may elect an eligible FIDE SNP, HIDE SNP, or applicable integrated plan (AIP) once per calendar month to align Medicare and Medicaid MCO enrollment. Verify full-benefit status, target plan eligibility and service area, and aligned enrollment. Partial dual or LIS-only status does not qualify. Effective the first day of the next month.",
+    allowedChanges: ["Join or switch to an eligible aligned FIDE/HIDE/AIP D-SNP; verify service area and monthly election use"],
     sourceId: "medicare_sep",
   },
   {

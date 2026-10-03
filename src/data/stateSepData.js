@@ -83,15 +83,14 @@ export const STATE_FEMA_END_DATES = {
 };
 
 export const INT_MANDATORY_QUESTIONS = [
-  "Do you currently receive home healthcare or assistance with activities of daily living? If yes, election is not available.",
-  "Do you currently reside in a nursing home or long term care facility? If yes, election is not available.",
+  "Do you receive home healthcare or help with activities of daily living? Verify plan-specific service coverage; this answer alone does not invalidate the integrated-care SEP.",
+  "Do you reside in a nursing home or long-term care facility? Verify plan-specific enrollment and service requirements; residence alone does not invalidate the integrated-care SEP.",
   "Do you currently see behavioral health professionals? If yes, ensure those providers are covered under the D-SNP plan.",
 ];
 
 export const INT_MANDATORY_DISCLOSURE =
-  "By selecting this election, your care will be coordinated between both Medicare and Medicaid under [carrier name]. This means your Medicaid carrier will change to align with your Medicare Advantage plan. This integration helps simplify your healthcare experience by reducing confusion, streamlining access to your benefits, and ensuring a more seamless and efficient coordination of your care.";
+  "This integrated plan coordinates Medicare and Medicaid through aligned enrollment. We will verify whether your Medicaid MCO already aligns or whether a permitted change is needed, explain any change and effective date, and confirm the plan covers your providers and services before submitting.";
 
-const AUTO_ENROLL_INT_STATES = new Set(["FL", "NJ", "VA"]);
 
 function getPapPlay(stateCode) {
   const statePlay = {
@@ -125,19 +124,11 @@ function getPapPlay(stateCode) {
   );
 }
 
-function getIntPlay(stateCode) {
-  if (AUTO_ENROLL_INT_STATES.has(stateCode)) {
-    return [
-      "Member has full Medicaid and you are moving them into a D-SNP that covers both Medicare and Medicaid.",
-      "Confirm QMB+, SLMB+, or FBDE, ask the 3 mandatory questions, read the disclosure, then enroll.",
-      "The plan will auto-enroll them into the aligned Medicaid MCO.",
-    ];
-  }
-
+function getIntPlay() {
   return [
-    "Member has full Medicaid and you are moving them into a D-SNP, but this state does not auto-enroll the Medicaid MCO.",
-    "Ask which MCO they have first. If it does not match the D-SNP carrier, call the Medicaid line together and switch it before enrolling.",
-    "Then confirm Medicaid level, ask the 3 mandatory questions, read the disclosure, and enroll.",
+    "Full-benefit duals may use the integrated-care SEP once per calendar month only for an eligible FIDE/HIDE/AIP plan in their service area.",
+    "Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment; do not assume automatic enrollment.",
+    "Confirm full-benefit status, plan eligibility and service area, aligned enrollment and monthly election use before submitting.",
   ];
 }
 
@@ -296,10 +287,10 @@ export const STATE_SEP_DATA = {
           carriers: ["Careplus", "Humana", "Preferred", "Aetna", "UHC", "Cigna", "Simply"],
           restrictions: [
             "Only for members with QMB+, SLMB+, or FBDE level of Medicaid.",
-            "Use the HIDE or FIDE filter in Sunfire or look for INT Eligible labeling.",
-            "Full Dual Eligible benes can change HIDE/FIDE D-SNPs monthly regardless of Medicaid carrier.",
-            "Once enrolled in an eligible D-SNP, the member loses Medicaid coverage and the D-SNP covers Medicaid benefits.",
-            "Florida is an auto-enroll state. Plans will auto-enroll the member into the aligned MCO.",
+            "Verify the eligible FIDE/HIDE/AIP plan in current CMS data and confirm Medicaid MCO alignment; do not rely solely on platform labels.",
+            "Full-benefit duals (QMB+, SLMB+, FBDE) may elect an eligible FIDE SNP, HIDE SNP, or applicable integrated plan (AIP) once per calendar month to align Medicare and Medicaid MCO enrollment. Verify full-benefit status, target plan eligibility and service area, and aligned enrollment. Partial dual or LIS-only status does not qualify. Effective the first day of the next month.",
+            "Integrated D-SNP enrollment coordinates Medicare and Medicaid; it does not itself terminate Medicaid eligibility or coverage.",
+            "Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.",
           ],
           checklist: INT_MANDATORY_QUESTIONS,
           disclosure: INT_MANDATORY_DISCLOSURE,
@@ -348,7 +339,7 @@ export const STATE_SEP_DATA = {
           carriers: ["Aetna", "UHC", "Humana", "Wellcare"],
           restrictions: [
             "Only for members with QMB+, SLMB+, or FBDE level of Medicaid.",
-            "Kentucky is not an auto-enroll state. The member must switch Medicaid MCO to match the D-SNP carrier.",
+            "Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.",
             "Ask early in the call which Medicaid / MCO the member currently has.",
           ],
           phoneNumbers: [
@@ -441,7 +432,7 @@ export const STATE_SEP_DATA = {
           carriers: ["Wellcare", "Wellpoint", "Aetna", "UHC"],
           restrictions: [
             "Only for members with QMB+, SLMB+, or FBDE level of Medicaid.",
-            "NJ is an auto-enroll state. The member auto-enrolls into the aligned MCO.",
+            "Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.",
           ],
           warnings: ["Do not use INT if the member is enrolled in the PACE program."],
           checklist: INT_MANDATORY_QUESTIONS,
@@ -516,7 +507,7 @@ export const STATE_SEP_DATA = {
           carriers: ["Aetna", "UHC", "Wellcare", "Anthem"],
           restrictions: [
             "Only for members with QMB+, SLMB+, or FBDE level of Medicaid.",
-            "Texas is not an auto-enroll state. The member must switch Medicaid MCO.",
+            "Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.",
           ],
           phoneNumbers: [
             {
@@ -546,7 +537,7 @@ export const STATE_SEP_DATA = {
         content: {
           play: getIntPlay("VA"),
           restrictions: [
-            "VA is an auto-enroll state. Plans will auto-enroll the member into the aligned MCO.",
+            "Verify existing Medicaid MCO alignment or the approved process and effective date for establishing aligned enrollment with the eligible integrated D-SNP. Do not assume automatic enrollment. Remaining in Medicaid fee-for-service or an unaligned MCO does not qualify for this SEP.",
             "Only for members with QMB+, SLMB+, or FBDE level of Medicaid.",
           ],
           checklist: INT_MANDATORY_QUESTIONS,

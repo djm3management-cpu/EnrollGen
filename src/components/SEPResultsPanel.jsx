@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, Loader2, RefreshCcw } from "lucide-react";
+import { normalizeDualLisRpcResult } from "../lib/dualLisSep.js";
 
 export const SEP_FINDER_COMPACT_DISCLAIMER =
   "Guidance only. Verify member-level eligibility per CMS procedures.";
@@ -12,9 +13,9 @@ export function normalizeSepZip(zip) {
 }
 
 export function parseSepRpcResult(data) {
-  if (typeof data !== "string") return data;
+  if (typeof data !== "string") return normalizeDualLisRpcResult(data);
   try {
-    return JSON.parse(data);
+    return normalizeDualLisRpcResult(JSON.parse(data));
   } catch {
     return null;
   }
@@ -118,7 +119,7 @@ export default function SEPResultsPanel({
 }) {
   const [expanded, setExpanded] = useState({});
   const normalizedZip = normalizeSepZip(zip);
-  const seps = asArray(result?.seps).filter((sep) =>
+  const seps = asArray(normalizeDualLisRpcResult(result)?.seps).filter((sep) =>
     !/Involuntary Disenrollment \/ Plan Termination SEP/i.test(sep?.sep_type || "") ||
     asArray(sep?.terminated_plans).length > 0
   );
@@ -199,7 +200,7 @@ export default function SEPResultsPanel({
                     <span
                       className={`sep-finder-card-pill${sep.available ? " is-yes" : " is-no"}`}
                     >
-                      {sep.available ? "Yes" : "No"}
+                      {sep.eligibility_status==='verification_required' ? (sep.available===false ? 'No verified plans' : 'Verify eligibility') : sep.available ? "Yes" : "No"}
                     </span>
                   </div>
                   {sep.cfr_reference ? (

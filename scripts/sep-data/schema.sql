@@ -141,6 +141,7 @@ CREATE OR REPLACE FUNCTION public.get_available_seps(input_zip TEXT)
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   result JSONB;
@@ -149,6 +150,7 @@ DECLARE
   disasters JSONB;
   csnp JSONB;
   dsnp JSONB;
+  dual_lis JSONB;
   isnp JSONB;
   terminations JSONB;
 BEGIN
@@ -246,31 +248,45 @@ BEGIN
     AND sp.plan_year = 2027
   WHERE zc.zip = input_zip;
 
+  -- A ZIP is not evidence of Medicaid/LIS, drug-management status or monthly use.
+  dual_lis := jsonb_build_object(
+    'sep_type', 'Dual / LIS monthly PDP SEP',
+    'cfr_reference', '42 CFR 423.38(c)(4)',
+    'available', NULL, 'area_based', false,
+    'eligibility_status', 'verification_required',
+    'eligible_products', jsonb_build_array('PDP'),
+    'period', 'Once per calendar month; effective first day of next month',
+    'evidence', 'Verify full/partial Medicaid or Extra Help, monthly election use, and absence of Part D at-risk/potential-at-risk designation. Standalone PDP only, including leaving MA-PD for Original Medicare plus PDP; no MA-to-MA switch.',
+    'plans', '[]'::jsonb
+  );
+
+  -- Integration is plan-specific, not inferred from being any D-SNP or from
+  -- another plan's status. This is area availability, never member eligibility.
   SELECT jsonb_build_object(
-    'sep_type', 'Dual Eligible SNP (D-SNP) SEP',
-    'cfr_reference', '42 CFR Sec. 422.62(b)(4); CY2025+ monthly SEP for full-benefit duals',
-    'available', COUNT(sp.id) > 0,
-    'period', 'Monthly enrollment for full-benefit duals; quarterly for partial duals',
-    'evidence', CASE
-      WHEN COUNT(sp.id) > 0 THEN COUNT(sp.id)::TEXT || ' D-SNP plan(s) available'
-      ELSE 'No D-SNP plans in this area'
-    END,
-    'plan_count', COUNT(sp.id),
+    'sep_type', 'Integrated-care monthly D-SNP SEP',
+    'cfr_reference', '42 CFR 423.38(c)(35); aligned enrollment as defined in 42 CFR 422.2',
+    'available', COUNT(DISTINCT sp.id)>0, 'area_based', true,
+    'eligibility_status', 'verification_required',
+    'eligible_products', jsonb_build_array('D-SNP'),
+    'period', 'Once per calendar month; effective first day of next month',
+    'evidence', CASE WHEN COUNT(DISTINCT sp.id)>0
+      THEN 'Eligible integrated plans found. Verify full-benefit Medicaid (QMB+, SLMB+, FBDE), plan/service-area eligibility, monthly use, and aligned Medicaid MCO enrollment. Remaining in Medicaid FFS or an unaligned MCO does not qualify; partial dual or LIS-only status does not qualify.'
+      ELSE 'No verified FIDE/HIDE/AIP D-SNP found in current county data. Missing integration evidence does not establish eligibility. Full-benefit status and aligned Medicaid MCO enrollment are required.' END,
+    'plan_count', COUNT(DISTINCT sp.id),
     'plans', COALESCE(jsonb_agg(DISTINCT jsonb_build_object(
-      'contract_id', sp.contract_id,
-      'plan_id', sp.plan_id,
-      'plan_name', sp.plan_name,
-      'organization', sp.organization_name,
-      'enrollment_count', sp.enrollment_count
+      'contract_id', sp.contract_id, 'plan_id', sp.plan_id,
+      'plan_name', sp.plan_name, 'organization', sp.carrier,
+      'integration_status', sp.dsnp_integration_status,
+      'aip_identifier', sp.dsnp_aip_identifier
     )) FILTER (WHERE sp.id IS NOT NULL), '[]'::jsonb)
-  )
-  INTO dsnp
+  ) INTO dsnp
   FROM public.zip_county_crosswalk zc
-  LEFT JOIN public.snp_plans_by_county sp
-    ON sp.county_fips = zc.county_fips
-    AND sp.snp_type = 'D-SNP'
-    AND sp.plan_year = 2027
-  WHERE zc.zip = input_zip;
+  LEFT JOIN public.cms_plans_py2027 sp ON sp.county_fips=zc.county_fips
+    AND sp.state_code=zc.state_code AND sp.plan_year=2027
+    AND sp.snp_type='Dual-Eligible'
+    AND (upper(trim(coalesce(sp.dsnp_integration_status,''))) IN ('FIDE','HIDE','FIDE SNP','HIDE SNP','FIDE-SNP','HIDE-SNP')
+      OR lower(trim(coalesce(sp.dsnp_aip_identifier,''))) IN ('yes','y','1','true','aip'))
+  WHERE zc.zip=input_zip;
 
   SELECT jsonb_build_object(
     'sep_type', 'Institutional SNP (I-SNP) SEP',
@@ -331,6 +347,7 @@ BEGIN
       five_star,
       disasters,
       csnp,
+      dual_lis,
       dsnp,
       isnp,
       terminations

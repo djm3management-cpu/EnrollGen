@@ -739,7 +739,7 @@ INSERT INTO compliance_intents (
   1.0,
   'major',
   false,
-  ARRAY['You mentioned you recently moved from Ohio to Florida. That qualifies you for a Special Enrollment Period based on a permanent change of address. When was your move date?', 'Since you are losing your employer coverage at the end of the month, that gives you a Special Enrollment Period. I just need to document the date your coverage ends.', 'Your dual-eligible status qualifies you for a continuous SEP, which means you can make changes to your plan at any time.', 'Because you were recently released from incarceration, you have a Special Enrollment Period. Let me document that qualifying event.'],
+  ARRAY['You mentioned you recently moved from Ohio to Florida. That qualifies you for a Special Enrollment Period based on a permanent change of address. When was your move date?', 'Since you are losing your employer coverage at the end of the month, that gives you a Special Enrollment Period. I just need to document the date your coverage ends.', 'Your verified Medicaid or Extra Help status may support one standalone PDP election per calendar month, including returning from MA-PD to Original Medicare plus a PDP. It does not permit an MA-to-MA switch; we must verify monthly use and Part D at-risk status.', 'Because you were recently released from incarceration, you have a Special Enrollment Period. Let me document that qualifying event.'],
   ARRAY['Everyone qualifies for a special enrollment, do not worry about it.', 'I will just mark down that you have a qualifying event.', 'We will figure out the reason later, let us just get you enrolled.']
 ),
 

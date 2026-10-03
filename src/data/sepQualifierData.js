@@ -1,3 +1,5 @@
+import { DUAL_LIS_GUIDANCE, INTEGRATED_CARE_GUIDANCE } from "../lib/dualLisSep.js";
+
 export const SEP_QUALIFIER_CATEGORIES = [
   {
     id: "move",
@@ -86,12 +88,12 @@ export const SEP_QUALIFIER_CATEGORIES = [
     subTypes: [
       {
         id: "extra_help_pdp",
-        label: "Has Extra Help (LIS) - wants PDP change",
+        label: "Full/partial dual or Extra Help - wants standalone PDP",
         code: "SEP-DEP",
         window: "Monthly - once per calendar month",
         effective: "1st of next month",
-        docs: "LIS/Extra Help award letter or verify via Medicare.gov",
-        note: "Cannot be used if bene is at-risk or potential at-risk for medication abuse.",
+        docs: "Verify Medicaid/Extra Help status, Part D drug-management status, and monthly election use",
+        note: DUAL_LIS_GUIDANCE,
       },
       {
         id: "integrated_dsnp",
@@ -99,8 +101,8 @@ export const SEP_QUALIFIER_CATEGORIES = [
         code: "SEP-INT",
         window: "Monthly - once per calendar month",
         effective: "1st of next month",
-        docs: "Verify full Medicaid status",
-        note: "Not all D-SNPs are Integrated - verify with carrier.",
+        docs: "Verify full Medicaid, eligible FIDE/HIDE/AIP plan, service area, Medicaid MCO alignment, and monthly election use",
+        note: INTEGRATED_CARE_GUIDANCE,
       },
       {
         id: "medicaid_status_change",
@@ -298,7 +300,7 @@ export const SEP_QUALIFIER_QUESTIONS = [
     prompt:
       "Do you have Medicaid in addition to Medicare? Or do you get Extra Help paying for your prescriptions?",
     note:
-      "If yes, check their Medicaid level - QMB+, SLMB+, or FBDE qualifies for monthly INT election.",
+      "Verify full/partial dual or Extra Help for the monthly standalone PDP right. Integrated care additionally requires full-benefit Medicaid, an eligible FIDE/HIDE/AIP plan, and verified Medicaid MCO alignment.",
   },
   {
     id: "q-institution",

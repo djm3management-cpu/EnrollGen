@@ -3,7 +3,7 @@
   Zip-to-state mapping, carrier availability, and date helpers.
 */
 
-import { CARRIERS } from "../data/sepCarriers";
+import { CARRIERS } from "../data/sepCarriers.js";
 
 export function getStateFromZip(zip) {
   const z = parseInt(zip);

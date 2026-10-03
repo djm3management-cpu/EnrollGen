@@ -1,3 +1,4 @@
+import { PDP_LANE, INTEGRATED_LANE } from "./dualLisSep.js";
 import { supabase } from "./supabase";
 import { getStateFromZip } from "./sepGeo";
 import { fetchPlansFromSupabase, transformCmsPlan } from "./sepCms";
@@ -279,11 +280,11 @@ function buildSepLanes(routeLabel, medicaidStatus, hasIntegratedDsnp) {
     if (medicaidStatus === "full_dual") {
       lanes.push(
         hasIntegratedDsnp
-          ? "Integrated Care SEP: full-benefit duals can align into an integrated D-SNP in any month."
-          : "Integrated Care SEP applies only when an integrated D-SNP is available in the county."
+          ? INTEGRATED_LANE
+          : "Integrated Care SEP requires an eligible integrated D-SNP in the county and verified Medicaid MCO alignment."
       );
     }
-    lanes.push("Dual/LIS SEP: monthly PDP changes and dual-eligible MA movement rules may apply.");
+    lanes.push(PDP_LANE);
     lanes.push("AEP: October 15-December 7.");
     lanes.push("MA OEP: January 1-March 31 for beneficiaries already enrolled in MA.");
     return lanes;
@@ -297,7 +298,7 @@ function buildSepLanes(routeLabel, medicaidStatus, hasIntegratedDsnp) {
 
   if (medicaidStatus === "full_dual" || medicaidStatus === "partial_dual") {
     standardLanes.unshift(
-      "Dual/LIS SEP: monthly SEP rules may support a standard MA fallback when Medicaid or Extra Help applies."
+      PDP_LANE
     );
   }
 

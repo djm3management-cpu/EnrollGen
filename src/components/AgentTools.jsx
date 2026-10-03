@@ -16,6 +16,7 @@ import {
   UserCheck,
   X,
 } from "lucide-react";
+import { DUAL_LIS_SEP_QUIZ } from "../data/dualLisSepQuiz.js";
 import SEPGuide2026 from "./SEPGuide2026";
 import CarrierQuickRef from "./CarrierQuickRef";
 import ScriptEditor from "./ScriptEditor";
@@ -154,6 +155,12 @@ const TOOL_GROUPS = [
     label: "Training & Quizzes",
     color: "var(--chart-4)",
     tools: [
+      {
+        id: "dual-lis-sep-quiz",
+        title: "Dual / LIS SEP Quiz",
+        description: "8 scenarios: monthly PDP rights, full/partial duals, Extra Help, and integrated-plan alignment.",
+        icon: <ClipboardCheck size={16} />,
+      },
       {
         id: "off-market-product-quiz",
         title: "Off-Market Product Quiz",
@@ -756,6 +763,8 @@ export default function AgentTools() {
         return <SEPGuide2026 />;
       case "script-editor":
         return <ScriptEditor />;
+      case "dual-lis-sep-quiz":
+        return <AgentToolsProductQuiz questions={DUAL_LIS_SEP_QUIZ} passingScore={7} perfectText="Perfect - SEP knowledge check" passText="Passed - SEP knowledge check" />;
       case "off-market-product-quiz":
         return <AgentToolsProductQuiz />;
       case "medmax-scenario-quiz":

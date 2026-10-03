@@ -199,8 +199,8 @@ export const SNP_ROUTING_RULE_SUMMARIES = [
       "This plan does not coordinate your Medicaid benefits. Your Medicare and Medicaid will operate as separate coverage.",
     ],
     sep_paths: [
-      "Integrated Care SEP (full duals joining an integrated D-SNP)",
-      "Dual/LIS SEP for dual-eligible members",
+      "Integrated Care SEP: monthly election for full-benefit duals into an eligible FIDE/HIDE/AIP D-SNP with verified Medicaid MCO alignment.",
+      "Dual/LIS SEP: monthly standalone PDP elections, including Original Medicare plus PDP; does not authorize standard MA enrollment. A standard MA fallback requires another valid election period.",
       "AEP (October 15-December 7)",
       "MA OEP (January 1-March 31 for existing MA members)",
     ],
@@ -221,8 +221,8 @@ export const SNP_ROUTING_RULE_SUMMARIES = [
     ],
     sep_paths: [
       "Chronic Condition SEP (year-round when the diagnosis qualifies)",
-      "Integrated Care SEP (full duals joining an integrated D-SNP)",
-      "Dual/LIS SEP for dual-eligible members",
+      "Integrated Care SEP: monthly election for full-benefit duals into an eligible FIDE/HIDE/AIP D-SNP with verified Medicaid MCO alignment.",
+      "Dual/LIS SEP: monthly standalone PDP elections, including Original Medicare plus PDP; does not authorize standard MA enrollment. A standard MA fallback requires another valid election period.",
       "AEP (October 15-December 7)",
       "MA OEP (January 1-March 31 for existing MA members)",
     ],
@@ -240,7 +240,7 @@ export const SNP_ROUTING_RULE_SUMMARIES = [
       "This plan does not coordinate your Medicaid benefits. Your Medicare and Medicaid will operate as separate coverage.",
     ],
     sep_paths: [
-      "Dual/LIS SEP when Medicaid or Extra Help applies",
+      "Dual/LIS SEP: monthly standalone PDP elections, including Original Medicare plus PDP; does not authorize standard MA enrollment. A standard MA fallback requires another valid election period.",
       "AEP (October 15-December 7)",
       "MA OEP (January 1-March 31 for existing MA members)",
       "ICEP when first eligible for MA",
@@ -261,7 +261,7 @@ export const SNP_ROUTING_RULE_SUMMARIES = [
     ],
     sep_paths: [
       "Chronic Condition SEP (year-round when the diagnosis qualifies)",
-      "Dual/LIS SEP when Medicaid or Extra Help applies",
+      "Dual/LIS SEP: monthly standalone PDP elections, including Original Medicare plus PDP; does not authorize standard MA enrollment. A standard MA fallback requires another valid election period.",
       "AEP (October 15-December 7)",
       "MA OEP (January 1-March 31 for existing MA members)",
       "ICEP when first eligible for MA",
