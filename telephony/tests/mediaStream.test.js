@@ -11,6 +11,8 @@ import WebSocket from 'ws';
 for (const name of ['PUBLIC_BASE_URL', 'SUPABASE_URL']) process.env[name] = 'https://example.test';
 for (const name of ['SUPABASE_SERVICE_ROLE_KEY','TWILIO_ACCOUNT_SID','TWILIO_AUTH_TOKEN','TWILIO_API_KEY_SID',
   'TWILIO_API_KEY_SECRET','TWILIO_TWIML_APP_SID','DEEPGRAM_API_KEY','INBOUND_VENDOR_API_KEY','CLERK_SECRET_KEY','AGENT_WS_SIGNING_SECRET']) process.env[name] = 'fixture';
+const accountSid = 'AC' + '1'.repeat(32);
+process.env.TWILIO_ACCOUNT_SID = accountSid;
 const { createMediaServer, MEDIA_LIMITS } = await import('../src/media/mediaStream.js');
 const { mintMediaStreamToken, verifyMediaStreamToken } = await import('../src/media/streamToken.js');
 const { createMediaLeaseClient } = await import('../src/media/streamLease.js');
@@ -18,7 +20,7 @@ const { openDeepgramTrack } = await import('../src/media/deepgramTrack.js');
 const { mintAgentWsToken } = await import('../src/wsToken.js');
 
 const pg = new PGlite();
-const tenant = randomUUID();
+const tenant = '00000000-0000-4000-8000-000000000001';
 const sid = prefix => prefix + randomBytes(16).toString('hex');
 const sql = (text, args = []) => pg.query(text, args);
 const db = { rpc(name, input) {
@@ -49,8 +51,8 @@ async function seedCall(direction = 'inbound') {
   await sql('INSERT INTO agent_availability VALUES($1,$2)', [claims.agentId,claims.callSid]);
   return claims;
 }
-function start(claims, streamSid = sid('SM')) {
-  return { event: 'start', streamSid, start: { streamSid, accountSid: 'fixture', callSid: claims.callSid,
+function start(claims, streamSid = sid('MZ')) {
+  return { event: 'start', streamSid, start: { streamSid, accountSid, callSid: claims.callSid,
     tracks: ['inbound','outbound'], mediaFormat: { encoding: 'audio/x-mulaw',sampleRate: 8000,channels: 1 },
     customParameters: { agentId: claims.agentId,attemptId: claims.attemptId,...(claims.inboundCallId ? { inboundCallId: claims.inboundCallId } : {}) } } };
 }
@@ -112,7 +114,7 @@ test('valid stream routes both tracks and final transcripts only to the bound ag
   assert.deepEqual(transcripts.map(event => event.speaker),['customer','agent']);
   assert.ok(transcripts.every(event => event.agentId === claims.agentId && event.inboundCallId === claims.inboundCallId));
   const closed = once(ws,'close');
-  ws.send(JSON.stringify({ event: 'stop',streamSid: message.streamSid,stop: { callSid: claims.callSid,accountSid: 'fixture' } }));
+  ws.send(JSON.stringify({ event: 'stop',streamSid: message.streamSid,stop: { callSid: claims.callSid,accountSid } }));
   assert.equal((await closed)[0],1000);
   await until(() => h.tracks.every(track => track.closed));
   await new Promise(resolve => setTimeout(resolve,10));
@@ -147,35 +149,35 @@ test('second stream for the same call is rejected across separate server instanc
 
 test('DB rejects terminal attempts, lost reservations, stale renewals and cross-tenant bindings', async () => {
   const claims = await seedCall(), lease = createMediaLeaseClient(db), owner = randomUUID();
-  assert.equal(await lease.claim({ ...claims,tenantId: randomUUID() },sid('SM'),owner),false);
-  assert.equal(await lease.claim(claims,sid('SM'),owner),true);
+  assert.equal(await lease.claim({ ...claims,tenantId: randomUUID() },sid('MZ'),owner),false);
+  assert.equal(await lease.claim(claims,sid('MZ'),owner),true);
   assert.equal(await lease.renew(claims.callSid,randomUUID()),false);
   assert.equal(await lease.release(claims.callSid,randomUUID()),false);
   await sql('UPDATE agent_availability SET active_call_sid=NULL WHERE agent_id=$1',[claims.agentId]);
   assert.equal(await lease.renew(claims.callSid,owner),false);
-  assert.equal(await lease.claim(claims,sid('SM'),randomUUID()),false);
+  assert.equal(await lease.claim(claims,sid('MZ'),randomUUID()),false);
   await sql('UPDATE agent_availability SET active_call_sid=$1 WHERE agent_id=$2',[claims.callSid,claims.agentId]);
   await sql("UPDATE telephony_call_attempts SET status='completed',ended_at=now() WHERE id=$1",[claims.attemptId]);
-  assert.equal(await lease.claim(claims,sid('SM'),randomUUID()),false);
+  assert.equal(await lease.claim(claims,sid('MZ'),randomUUID()),false);
 });
 
 test('finished attempt can be replaced on reroute; its late close cannot release successor', async () => {
   const claims = await seedCall(), lease = createMediaLeaseClient(db), oldOwner = randomUUID(), newOwner = randomUUID();
-  assert.equal(await lease.claim(claims,sid('SM'),oldOwner),true);
+  assert.equal(await lease.claim(claims,sid('MZ'),oldOwner),true);
   await sql("UPDATE telephony_call_attempts SET status='no-answer',ended_at=now() WHERE id=$1",[claims.attemptId]);
   const next = { ...claims,attemptId: randomUUID(),agentId: 'next-agent-' + randomUUID() };
   await sql('INSERT INTO telephony_call_attempts(id,tenant_id,parent_call_sid,agent_id,inbound_call_id,direction) VALUES($1,$2,$3,$4,$5,$6)',
     [next.attemptId,tenant,next.callSid,next.agentId,next.inboundCallId,next.direction]);
   await sql('UPDATE inbound_calls SET routed_agent_id=$1 WHERE id=$2',[next.agentId,next.inboundCallId]);
   await sql('INSERT INTO agent_availability VALUES($1,$2)',[next.agentId,next.callSid]);
-  assert.equal(await lease.claim(next,sid('SM'),newOwner),true);
+  assert.equal(await lease.claim(next,sid('MZ'),newOwner),true);
   assert.equal(await lease.release(claims.callSid,oldOwner),false);
   assert.equal(await lease.renew(claims.callSid,newOwner),true);
 });
 
 test('oversized frames, binary data, repeated starts and stream-ID substitution close the stream', async t => {
   const h = await harness(t), claims = await seedCall();
-  for (const input of ['x'.repeat(MEDIA_LIMITS.frameBytes+1),Buffer.alloc(160),JSON.stringify(frame(sid('SM')))]) {
+  for (const input of ['x'.repeat(MEDIA_LIMITS.frameBytes+1),Buffer.alloc(160),JSON.stringify(frame(sid('MZ')))]) {
     const ws = await h.connect(claims), closed = once(ws,'close'); ws.send(input);
     assert.ok([1008,1009].includes((await closed)[0]));
   }
@@ -219,10 +221,10 @@ test('a timed out start cleans up a claim completing after the socket has gone',
 
 test('expired leases can be replaced and cannot be renewed or released by the old owner', async () => {
   const claims = await seedCall(), lease = createMediaLeaseClient(db), oldOwner = randomUUID(), nextOwner = randomUUID();
-  assert.equal(await lease.claim(claims,sid('SM'),oldOwner),true);
+  assert.equal(await lease.claim(claims,sid('MZ'),oldOwner),true);
   await sql("UPDATE media_stream_leases SET expires_at=now()-interval '1 second' WHERE call_sid=$1",[claims.callSid]);
   assert.equal(await lease.renew(claims.callSid,oldOwner),false);
-  assert.equal(await lease.claim(claims,sid('SM'),nextOwner),true);
+  assert.equal(await lease.claim(claims,sid('MZ'),nextOwner),true);
   assert.equal(await lease.release(claims.callSid,oldOwner),false);
 });
 
@@ -258,7 +260,7 @@ test('renewal failure stops only transcription and reports both speaker failures
 test('a substituted stream SID on an active media packet is rejected', async t => {
   const h = await harness(t), claims = await seedCall(), ws = await h.connect(claims);
   ws.send(JSON.stringify(start(claims))); await until(() => h.tracks.length === 2);
-  const closed = once(ws,'close'); ws.send(JSON.stringify(frame(sid('SM'))));
+  const closed = once(ws,'close'); ws.send(JSON.stringify(frame(sid('MZ'))));
   assert.equal((await closed)[0],1008); assert.ok(h.tracks.every(track => track.audio.length === 0));
 });
 
@@ -318,4 +320,55 @@ test('Deepgram connect timeout notifies and retries; normal stop preserves final
   assert.equal(h.messages.at(-1).text,'Last final speech');
   assert.ok(!h.messages.some(message => message.type === 'transcription_error'));
   h.sockets[0].emit('close'); assert.equal(h.timers.size,0); assert.equal(h.intervals.size,0);
+});
+
+test('production inbound parent/child identity accepts documented MZ start and denies child reservation', async t => {
+  const claims={callSid:'CAa44621807f498d3dede1eb16ce02d192',attemptId:'fb43fb0a-cb98-47ca-837c-b889006de579',
+    tenantId:tenant,agentId:'mike_shiomos',inboundCallId:'5fcbe3a8-887e-4b12-8275-8c6ae3e93508',direction:'inbound'};
+  const childSid='CA060f237b887be453e64adf7698149a19';
+  await sql('INSERT INTO inbound_calls VALUES($1,$2,$3,$4,NULL)',[claims.inboundCallId,tenant,claims.callSid,claims.agentId]);
+  await sql('INSERT INTO telephony_call_attempts(id,tenant_id,parent_call_sid,agent_id,inbound_call_id,direction,status) VALUES($1,$2,$3,$4,$5,$6,$7)',
+    [claims.attemptId,tenant,claims.callSid,claims.agentId,claims.inboundCallId,'inbound','in-progress']);
+  await sql('INSERT INTO agent_availability VALUES($1,$2)',[claims.agentId,childSid]);
+  const lease=createMediaLeaseClient(db);
+  assert.equal(await lease.claim(claims,sid('MZ'),randomUUID()),false);
+  await sql('UPDATE agent_availability SET active_call_sid=$1 WHERE agent_id=$2',[claims.callSid,claims.agentId]);
+  const h=await harness(t),ws=await h.connect(claims),packet=start(claims);
+  ws.send(JSON.stringify({event:'connected',protocol:'Call',version:'1.0.0'}));
+  ws.send(JSON.stringify({...packet,sequenceNumber:'1'}));
+  await until(()=>h.tracks.length===2);
+  for(const track of ['inbound','outbound'])ws.send(JSON.stringify({...frame(packet.streamSid,track),sequenceNumber:'2'}));
+  await until(()=>h.tracks.every(track=>track.audio.length===1));
+  assert.equal((await sql('SELECT active_call_sid FROM agent_availability WHERE agent_id=$1',[claims.agentId])).rows[0].active_call_sid,claims.callSid);
+});
+
+test('SM IDs from the old synthetic fixture are rejected and log only a reason',async t=>{
+  const h=await harness(t),claims=await seedCall(),ws=await h.connect(claims);
+  const lines=[],warn=console.warn;console.warn=line=>lines.push(line);
+  try{const closed=once(ws,'close');ws.send(JSON.stringify(start(claims,sid('SM'))));assert.equal((await closed)[0],1008);}
+  finally{console.warn=warn;}
+  assert.deepEqual(lines,['[media] rejected: Invalid stream SID']);assert.equal(h.tracks.length,0);
+});
+
+test('forward SQL repair upgrades already-applied 074 and is safe to apply twice',async()=>{
+  await pg.exec('RESET ROLE');
+  const patch=readFileSync(new URL('../../supabase/patches/074_media_stream_sid_fix.sql',import.meta.url),'utf8');
+  const legacy=patch.replace('^MZ[0-9a-fA-F]{32}$','^SM[0-9a-fA-F]{32}$');
+  await pg.exec(legacy);await pg.exec('SET ROLE service_role');
+  const claims=await seedCall(),owner=randomUUID();
+  assert.equal(await createMediaLeaseClient(db).claim(claims,sid('MZ'),owner),false);
+  await pg.exec('RESET ROLE');await pg.exec(patch);await pg.exec(patch);await pg.exec('SET ROLE service_role');
+  assert.equal(await createMediaLeaseClient(db).claim(claims,sid('MZ'),owner),true);
+  const rights=await sql("SELECT has_function_privilege('anon','claim_media_stream(text,uuid,text,uuid,uuid,text,text,uuid)','EXECUTE') AS anon,has_function_privilege('authenticated','claim_media_stream(text,uuid,text,uuid,uuid,text,text,uuid)','EXECUTE') AS authenticated");
+  assert.deepEqual(rights.rows[0],{anon:false,authenticated:false});
+});
+
+test('media upgrade and failed lease logging never contains credentials or caller parameters',async t=>{
+  const h=await harness(t),lines=[],warn=console.warn;console.warn=line=>lines.push(line);
+  try{
+    h.media.handleUpgrade({url:'/media/secret-capability.invalid'}, {write(){},destroy(){}},Buffer.alloc(0));
+    const badDb={rpc(){return {abortSignal:async()=>({data:false})};}};
+    assert.equal(await createMediaLeaseClient(badDb).claim({callSid:'secret-call',agentId:'secret-agent'},'MZsecret','secret-owner'),false);
+  }finally{console.warn=warn;}
+  assert.deepEqual(lines,['[media] rejected: invalid_upgrade_token_or_path','[media] rejected: lease_claim_denied']);
 });

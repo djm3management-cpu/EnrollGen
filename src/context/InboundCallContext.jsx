@@ -155,11 +155,12 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     if (!phoneConnectionRef.current) {
       phoneConnectionRef.current = createAgentPhoneConnection({
         onMessage: handleTranscriptMessage, onPresenceReady: reportPhoneReady,
+        refreshBundle: fetchTokenBundle,
       });
     }
     phoneConnectionRef.current.setReady(phoneReadyRef.current);
-    phoneConnectionRef.current.start(bundle);
-  }, [handleTranscriptMessage, reportPhoneReady]);
+    phoneConnectionRef.current.start(bundle, fetchTokenBundle);
+  }, [handleTranscriptMessage, reportPhoneReady, fetchTokenBundle]);
 
   // Register the softphone device once identity is resolved.
   useEffect(() => {

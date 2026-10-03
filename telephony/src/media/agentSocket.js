@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import { attachPhonePresence } from "../phonePresence.js";
-import { verifyAgentWsToken } from "../wsToken.js";
+import { inspectAgentWsToken } from "../wsToken.js";
 import { activeTenantAgent } from "../availability.js";
 
 // Browser-facing WebSocket. The softphone connects once per shift with
@@ -9,11 +9,20 @@ import { activeTenantAgent } from "../availability.js";
 const socketsByAgent = new Map();
 
 export const agentWss = new WebSocketServer({ noServer: true });
+agentWss.on('wsClientError', (_error, socket) => {
+  console.warn('[agent] rejected: invalid_websocket_handshake');
+  socket.end('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
+});
 
 export function handleAgentUpgrade(request, socket, head) {
-  const url = new URL(request.url, "http://localhost");
-  const claims = verifyAgentWsToken(url.searchParams.get("token"));
+  let result;
+  try {
+    const url = new URL(request.url, "http://localhost");
+    result = inspectAgentWsToken(url.searchParams.get("token"));
+  } catch { result = { claims: null, reason: "invalid_url" }; }
+  const { claims, reason } = result;
   if (!claims) {
+    console.warn(`[agent] rejected: ${reason}`);
     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
     socket.destroy();
     return;
@@ -28,11 +37,12 @@ agentWss.on("connection", async (ws, _request, claims) => {
   try {
     const agent = await activeTenantAgent(agentId, claims.clerkSubject);
     if (!agent || agent.clerk_user_id !== claims.clerkSubject) {
+      console.warn("[agent] rejected: inactive_identity");
       ws.close(1008, "Agent is no longer active");
       return;
     }
-  } catch (error) {
-    console.error(`Agent websocket identity check failed (${agentId}):`, error.message);
+  } catch {
+    console.warn("[agent] rejected: identity_check_unavailable");
     ws.close(1011, "Identity check failed");
     return;
   }
@@ -48,7 +58,7 @@ agentWss.on("connection", async (ws, _request, claims) => {
       if (!set.size) socketsByAgent.delete(agentId);
     }
   });
-  ws.on("error", (err) => console.error(`agent ws error (${agentId}):`, err.message));
+  ws.on("error", () => console.warn("[agent] transport_error"));
 });
 
 export function sendToAgent(agentId, message) {

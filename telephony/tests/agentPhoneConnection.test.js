@@ -58,3 +58,48 @@ test('token refresh preserves readiness while a confirmed old socket remains ali
   assert.ok(h.presence.every(Boolean));
   h.sockets[1].close(); assert.equal(h.presence.at(-1),false);
 });
+
+function recoveryHarness(refreshBundle) {
+  const sockets=[], timers=[];
+  class Socket {
+    static OPEN=1;
+    constructor(url){this.url=url;this.readyState=0;sockets.push(this);}
+    close(){this.readyState=3;this.onclose?.();}
+    send(){}
+  }
+  const connection=createAgentPhoneConnection({onMessage:()=>{},Socket,refreshBundle,
+    schedule:(fn,delay)=>{const timer={fn,delay};timers.push(timer);return timer;},
+    cancel:timer=>{const index=timers.indexOf(timer);if(index>=0)timers.splice(index,1);}});
+  connection.start({ws_url:'wss://test/agent',ws_token:'old-expired-or-rotated'});
+  return {connection,sockets,timers};
+}
+test('rejected handshake fetches fresh credentials before retry instead of repeating stale token',async()=>{
+  let fetched=0;
+  const h=recoveryHarness(async()=>{fetched++;return {ws_url:'wss://test/agent',ws_token:'fresh'};});
+  h.sockets[0].close();
+  await h.timers.shift().fn();
+  assert.equal(fetched,1);assert.equal(h.sockets.length,2);
+  assert.equal(h.sockets[1].url,'wss://test/agent?token=fresh');h.connection.stop();
+});
+test('failed credential refresh backs off and never retries the stale credential',async()=>{
+  const h=recoveryHarness(async()=>{throw new Error('401');});h.sockets[0].close();
+  for(let i=0;i<7;i++){const timer=h.timers.shift();assert.ok(timer.delay<=30000);await timer.fn();}
+  assert.equal(h.sockets.length,1);assert.equal(h.timers[0].delay,30000);h.connection.stop();
+});
+test('stop or proactive refresh during credential fetch cannot resurrect an obsolete socket',async()=>{
+  for(const stop of [true,false]){
+    let resolve;const h=recoveryHarness(()=>new Promise(r=>{resolve=r;}));h.sockets[0].close();
+    const pending=h.timers.shift().fn();
+    if(stop)h.connection.stop();else h.connection.start({ws_url:'wss://test/agent',ws_token:'proactive'});
+    resolve({ws_url:'wss://test/agent',ws_token:'obsolete'});await pending;
+    assert.equal(h.sockets.length,stop?1:2);
+    if(!stop)assert.match(h.sockets[1].url,/proactive$/);h.connection.stop();
+  }
+});
+
+test('changing identity updates the credential fetcher used by subsequent reconnects',async()=>{
+  const h=recoveryHarness(async()=>{throw new Error('obsolete identity fetcher');});
+  h.connection.start({ws_url:'wss://test/agent',ws_token:'second-agent'},async()=>({ws_url:'wss://test/agent',ws_token:'fresh-second-agent'}));
+  h.sockets[1].close();await h.timers.shift().fn();
+  assert.equal(h.sockets[2].url,'wss://test/agent?token=fresh-second-agent');h.connection.stop();
+});

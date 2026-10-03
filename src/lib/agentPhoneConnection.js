@@ -1,13 +1,16 @@
 // Connectivity only: reopening a phone never changes the manual availability
 // preference. The server owns session leases and detects silent disconnects.
 export function createAgentPhoneConnection({
-  onMessage, onPresenceReady = () => {}, Socket = WebSocket, schedule = setTimeout, cancel = clearTimeout,
+  onMessage, onPresenceReady = () => {}, refreshBundle, Socket = WebSocket, schedule = setTimeout, cancel = clearTimeout,
 }) {
   let bundle;
+  let refreshCredentials = refreshBundle;
   let current;
   let ready = false;
   let stopped = true;
   let retry;
+  let generation = 0;
+  let failures = 0;
   const sockets = new Set();
   const acknowledged = new Set();
   const reportPresence = () => onPresenceReady(!stopped && ready && acknowledged.size > 0);
@@ -29,6 +32,7 @@ export function createAgentPhoneConnection({
       if (stopped || !sockets.has(socket) || socket.readyState !== Socket.OPEN) return;
       if (message.type === "presence-ready") {
         if (!ready) return;
+        failures = 0;
         acknowledged.add(socket);
         reportPresence();
         // Commit the replacement lease before closing the old connection.
@@ -43,12 +47,31 @@ export function createAgentPhoneConnection({
       sockets.delete(socket);
       acknowledged.delete(socket);
       reportPresence();
-      if (socket === current && !stopped) retry = schedule(connect, 2000);
+      if (socket !== current || stopped) return;
+      const expectedGeneration = generation;
+      const stillCurrent = () => !stopped && generation === expectedGeneration;
+      const delay = () => Math.min(30000, 2000 * 2 ** Math.min(failures++, 4));
+      const reconnect = async () => {
+        if (!stillCurrent()) return;
+        try {
+          // Browsers hide the HTTP handshake status. Refresh on disconnect so
+          // an expired/rotated token cannot trap us in repeated 401 upgrades.
+          const fresh = refreshCredentials ? await refreshCredentials() : bundle;
+          if (!stillCurrent()) return;
+          bundle = fresh;
+          connect();
+        } catch {
+          if (stillCurrent()) retry = schedule(reconnect, delay());
+        }
+      };
+      retry = schedule(reconnect, delay());
     };
     socket.onerror = () => socket.close();
   }
   return {
-    start(nextBundle) {
+    start(nextBundle, nextRefreshBundle = refreshCredentials) {
+      generation++;
+      refreshCredentials = nextRefreshBundle;
       bundle = nextBundle;
       stopped = false;
       connect();
@@ -62,6 +85,7 @@ export function createAgentPhoneConnection({
       for (const socket of sockets) announce(socket);
     },
     stop() {
+      generation++;
       stopped = true;
       acknowledged.clear();
       reportPresence();

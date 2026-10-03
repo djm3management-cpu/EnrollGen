@@ -32,7 +32,7 @@ CREATE FUNCTION public.claim_media_stream(p_call_sid text, p_attempt_id uuid, p_
   p_tenant_id uuid, p_inbound_call_id uuid, p_direction text, p_stream_sid text, p_owner uuid)
 RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  IF p_owner IS NULL OR p_stream_sid IS NULL OR p_stream_sid !~ '^SM[0-9a-fA-F]{32}$'
+  IF p_owner IS NULL OR p_stream_sid IS NULL OR p_stream_sid !~ '^MZ[0-9a-fA-F]{32}$'
     OR NOT EXISTS (SELECT 1 FROM telephony_call_attempts a
       WHERE a.id = p_attempt_id AND a.parent_call_sid = p_call_sid AND a.agent_id = p_agent_id
         AND a.tenant_id = p_tenant_id AND a.direction = p_direction

@@ -4,7 +4,11 @@ import { supabase } from '../supabase.js';
 export function createMediaLeaseClient(db = supabase) {
   const rpc = async (name, input) => {
     const { data, error } = await db.rpc(name, input).abortSignal(AbortSignal.timeout(3000));
-    if (error) throw new Error('Media stream binding unavailable');
+    if (error) {
+      if (name === 'claim_media_stream') console.warn('[media] rejected: lease_rpc_error');
+      throw new Error('Media stream binding unavailable');
+    }
+    if (name === 'claim_media_stream' && data !== true) console.warn('[media] rejected: lease_claim_denied');
     return data === true;
   };
   return {
