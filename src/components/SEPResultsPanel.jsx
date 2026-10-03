@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, Loader2, RefreshCcw } from "lucide-react";
 import { normalizeDualLisRpcResult } from "../lib/dualLisSep.js";
+import { DSNP_INTEGRATION_PENDING, hasCurrentDsnpList } from "../lib/dsnpIntegration";
 
 export const SEP_FINDER_COMPACT_DISCLAIMER =
   "Guidance only. Verify member-level eligibility per CMS procedures.";
@@ -118,6 +119,12 @@ export default function SEPResultsPanel({
   emptyPrompt = "Enter a 5-digit ZIP above to scan for area-based SEPs.",
 }) {
   const [expanded, setExpanded] = useState({});
+  const [dsnpListLoaded, setDsnpListLoaded] = useState(false);
+  useEffect(() => {
+    let active = true;
+    hasCurrentDsnpList().then((loaded) => { if (active) setDsnpListLoaded(loaded); });
+    return () => { active = false; };
+  }, [result]);
   const normalizedZip = normalizeSepZip(zip);
   const seps = asArray(normalizeDualLisRpcResult(result)?.seps).filter((sep) =>
     !/Involuntary Disenrollment \/ Plan Termination SEP/i.test(sep?.sep_type || "") ||
@@ -148,6 +155,9 @@ export default function SEPResultsPanel({
             </div>
           ) : null}
           {starsPending ? <div className="sep-finder-panel-counties">2027 Stars pending</div> : null}
+          {!dsnpListLoaded && seps.some((sep) => /D-SNP/.test(sep?.sep_type || "")) ? (
+            <div className="sep-finder-panel-counties">{DSNP_INTEGRATION_PENDING}</div>
+          ) : null}
         </div>
         {onRefresh ? (
           <button

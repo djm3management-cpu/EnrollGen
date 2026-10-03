@@ -73,7 +73,15 @@ The source exposes an annual **Part D** deductible. It does not contain an MA me
 
 The archive also has no old-to-new plan crosswalk or termination event file. The PY2027 plan termination support table remains empty pending that separate CMS source.
 
-When CMS posts the files, run `node scripts/sep-data/ingest-star-ratings.js --file PATH` and `node scripts/sep-data/ingest-plan-crosswalk.js --file PATH`. Each uses the loaded 2027 county inventory for service areas. Validate first with `--dry-run`. The crosswalk ingest refuses a partial load if a terminated plan cannot be mapped to a county; in that case supply the CMS service-area file with `--service-area-file PATH` in the same command.
+## Supplemental CMS files
+
+| File | Ingest command | Current state |
+|---|---|---|
+| 2027 Star Ratings | `node scripts/sep-data/ingest-star-ratings.js --file PATH` | Pending CMS publication |
+| 2027 Part C&D Plan Crosswalk | `node scripts/sep-data/ingest-plan-crosswalk.js --file PATH` | Pending CMS publication |
+| CY2027 Integrated D-SNPs List | `node scripts/parse_cms_dsnp.js --file PATH` | Published; parser validated against the official CY2027 workbook (945 plans) |
+
+Each command accepts `--dry-run` for validation. Star and crosswalk ingests use the loaded 2027 county inventory for service areas. The crosswalk ingest refuses a partial load if a terminated plan cannot be mapped to a county; in that case supply the CMS service-area file with `--service-area-file PATH` in the same command. The D-SNP command recognizes the CY2027 `D-SNP Integration Status` column and the earlier `Integration Status` column, but rejects non-2027 files for a live load. Apply migration `081_dsnp_alignment_2027.sql` first; the parser does not change the schema. Its source may omit county, affiliated Medicaid MCO, and EAE status; those remain unknown rather than inferred.
 
 The MA Copilot uses the new county-scoped PY2027 vector search only after a county and state are selected. A live retrieval against Burlington, NJ returned PY2027 plan rows from that county. Its RAG block cites matched plan rows and warns that rating and MA medical deductible fields are unavailable in this source.
 
@@ -84,3 +92,19 @@ The MA Copilot uses the new county-scoped PY2027 vector search only after a coun
 - `src/context/CopilotCmsKnowledge.js` cites the 2026 Medicare Communications and Marketing Guidelines. This is guidance, not county plan data.
 - `src/data/sepFemaDb.js` has 2026 disaster event dates; these are historical event dates.
 - Retired PY2026 loader files and the new migration/verification files mention 2026 solely to reject or remove old plan rows. ACA/QHP 2026 references were left untouched as requested.
+
+### CY2027 D-SNP rollout
+
+CMS has published the [CY2027 Integrated D-SNPs List](https://www.cms.gov/files/document/cy-2027-integrated-d-snps-list.xlsx) on its [D-SNP integration page](https://www.cms.gov/medicare/medicaid-coordination/about/dsnps). The official workbook was downloaded for local dry-run validation only; no live data was loaded. Its 945 plan/state rows use sheet `CY 2027 Data`, have no county field, and report neither EAE nor affiliated Medicaid MCO. Legal entity names are retained as source labels, not inferred marketing names. Integration/AIP evidence does not establish member eligibility.
+
+1. Deploy this feature code on top of current main, retaining F35 and F34. Until 081/data are present, absent tables/columns, errors, and an empty alignment table show `2027 D-SNP integration status pending CMS list`. County plan inventory and F35 landscape-based FIDE/HIDE/AIP evidence remain available; full-benefit status, monthly use and aligned MCO enrollment still require verification.
+2. Apply `supabase/migrations/081_dsnp_alignment_2027.sql` after migrations through 080 (including 054, 068 and 078). The historical `055_paragon_vendor_report.sql` stays unchanged; the new D-SNP migration is 081. If undated alignment rows remain, 081 aborts transactionally for inspection instead of silently relabeling them as 2027.
+3. Download the linked CMS workbook. Validate with `node scripts/parse_cms_dsnp.js --file /path/to/cy-2027-integrated-d-snps-list.xlsx --dry-run`.
+4. With `SUPABASE_DB_URL` or `SUPABASE_DB_PASSWORD` configured locally, the single load command is:
+
+   ```sh
+   node scripts/parse_cms_dsnp.js --file /path/to/cy-2027-integrated-d-snps-list.xlsx
+   ```
+
+   This atomically replaces only the 2027 alignment rows. Malformed rows, conflicting duplicates, changed integration values, and mismatched years abort before replacement. Database insert failures roll back the replacement.
+5. Reload the SEP and SNP screens and verify county plan availability, plan/state matching, and member-specific alignment with the carrier. Missing per-plan alignment evidence remains pending even when other list rows exist. No telephony, call routing, billing, recording, FEMA RPC, or F35 wording changes are part of this rollout.

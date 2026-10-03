@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Filter, X, ChevronRight } from "lucide-react";
 import { CARRIERS } from "../../data/sepCarriers";
 import { Stars } from "./SEPCard";
+import { DSNP_INTEGRATION_PENDING, hasCurrentDsnpList } from "../../lib/dsnpIntegration";
 
 function CarrierLogo({ carrierKey, size = 20 }) {
   const c = CARRIERS[carrierKey] || {};
@@ -40,8 +41,17 @@ export function PlanTable({
   filteredPlans, planCarrierOpts, planTypeOpts,
   expandedPlans, setExpandedPlans,
 }) {
+  const [dsnpListLoaded, setDsnpListLoaded] = useState(false);
+  useEffect(() => {
+    let active = true;
+    hasCurrentDsnpList().then((loaded) => { if (active) setDsnpListLoaded(loaded); });
+    return () => { active = false; };
+  }, []);
   return (
     <>
+      {!dsnpListLoaded && filteredPlans.some((plan) => plan.snp === "D-SNP") ? (
+        <div className="sep-finder-panel-counties">{DSNP_INTEGRATION_PENDING}</div>
+      ) : null}
       {/* Filters */}
       <div className="card sep-filter-bar">
         <span className="sep-filter-label">

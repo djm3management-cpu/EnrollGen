@@ -1,8 +1,9 @@
-import { PDP_LANE, INTEGRATED_LANE } from "./dualLisSep.js";
+import { PDP_LANE, INTEGRATED_LANE, isIntegratedDsnp } from "./dualLisSep.js";
 import { supabase } from "./supabase";
 import { getStateFromZip } from "./sepGeo";
 import { fetchPlansFromSupabase, transformCmsPlan } from "./sepCms";
 import { getCountyFromZip } from "../data/sepPlanDb";
+import { DSNP_INTEGRATION_PENDING } from "./dsnpIntegration";
 import {
   DEFAULT_CSNP_CARRIER_VERIFICATION,
   getSnpMedicaidBucket,
@@ -158,9 +159,15 @@ async function fetchCarrierVerificationRows() {
   return DEFAULT_CSNP_CARRIER_VERIFICATION;
 }
 
-async function fetchDsnpAlignmentRows() {
-  // The available integrated D-SNP workbook is for 2026. No carry-forward.
-  return [];
+async function fetchDsnpAlignmentRows(state) {
+  try {
+    const { data, error } = await supabase.from("dsnp_eae_lookup").select("*").eq("plan_year", 2027).eq("state", state);
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.warn("[SNP Routing] 2027 D-SNP integration list unavailable.", error);
+    return [];
+  }
 }
 
 async function fetchRoutingRules() {
@@ -229,7 +236,7 @@ export async function loadSnpRoutingContext(zip) {
 
   const [carrierVerificationRows, dsnpAlignmentRows, routingRules] = await Promise.all([
     fetchCarrierVerificationRows(),
-    fetchDsnpAlignmentRows(),
+    fetchDsnpAlignmentRows(state),
     fetchRoutingRules(),
   ]);
 
@@ -344,6 +351,7 @@ function buildRecommendationBase({
 
 function resolveDsnpChoice({
   dsnpPlans,
+  dsnpAlignmentRows,
   memberPriority,
   countyResolved,
 }) {
@@ -377,22 +385,32 @@ function resolveDsnpChoice({
     });
 
   const selectedPlan = sortCandidates(dsnpPlans.map((plan) => ({ plan })))[0].plan;
-  const integrationLevel = selectedPlan.dsnpIntegrationStatus || "";
+  const alignmentRow = dsnpAlignmentRows.find((row) =>
+    Number(row.plan_year) === 2027 && selectedPlan.states?.includes(row.state) &&
+    (!row.county || normalizeText(row.county) === normalizeText(selectedPlan.countyName)) &&
+    row.contract_id === selectedPlan.cid && row.plan_id === selectedPlan.pbp
+  );
+  const integrationLevel = alignmentRow?.integration_level || selectedPlan.dsnpIntegrationStatus || "";
+  const integrationPending = !alignmentRow;
   return {
     available: true,
     selectedPlan,
-    summary: `A 2027 D-SNP is available in this county${integrationLevel ? ` (${integrationLevel})` : ""}. Confirm Medicaid MCO alignment and enrollment restrictions before submission.`,
+    summary: `A 2027 D-SNP is available in this county. ${integrationPending ? DSNP_INTEGRATION_PENDING + "." : `CMS integration list: ${integrationLevel}.`} Confirm Medicaid MCO alignment and enrollment restrictions before submission.`,
     alignment: {
-      integratedPlan: /HIDE|FIDE/i.test(integrationLevel),
-      eaeStatus: null,
+      integratedPlan: isIntegratedDsnp({
+        ...selectedPlan, dsnpIntegrationStatus: integrationLevel,
+        dsnpAipIdentifier: alignmentRow ? (integrationLevel === "AIP" ? "Yes" : "No") : selectedPlan.dsnpAipIdentifier,
+      }),
+      eaeStatus: alignmentRow?.eae_status ?? null,
       integrationLevel,
-      aipIdentifier: selectedPlan.dsnpAipIdentifier || "",
-      affiliatedMedicaidMco: "",
+      aipIdentifier: alignmentRow ? (integrationLevel === "AIP" ? "Yes" : "") : selectedPlan.dsnpAipIdentifier || "",
+      affiliatedMedicaidMco: alignmentRow?.affiliated_medicaid_mco || "",
+      pending: integrationPending,
     },
     alerts: [
       {
         tone: "conditional",
-        text: "The 2027 landscape does not identify the affiliated Medicaid MCO or exclusive aligned enrollment rule. Verify both with the carrier before submitting.",
+        text: integrationPending ? DSNP_INTEGRATION_PENDING : "Verify affiliated Medicaid MCO and exclusive aligned enrollment requirements with the carrier before submitting.",
       },
     ],
   };

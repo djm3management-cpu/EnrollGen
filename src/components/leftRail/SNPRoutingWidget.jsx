@@ -13,6 +13,7 @@ import {
   buildSnpRoutingRecommendation,
   loadSnpRoutingContext,
 } from "../../lib/snpRouting";
+import { DSNP_INTEGRATION_PENDING } from "../../lib/dsnpIntegration";
 
 const EMPTY_LOOKUP = {
   zip: "",
@@ -137,6 +138,9 @@ export default function SNPRoutingWidget({ zip = "" }) {
 
   return (
     <div className="snp-routing-panel">
+      {medicaidBucket === "full_dual" && !lookup.dsnpAlignmentRows?.length ? (
+        <div className="snp-routing-muted-line">{DSNP_INTEGRATION_PENDING}</div>
+      ) : null}
       <div className="snp-routing-progress-bar">
         <div
           className="snp-routing-progress-fill"
@@ -205,7 +209,7 @@ export default function SNPRoutingWidget({ zip = "" }) {
         {medicaidBucket === "full_dual" ? (
           <div className="snp-routing-data-cell">
             <label className="snp-routing-cell-label">
-              Medicaid MCO (D-SNP Alignment)
+              Medicaid MCO (confirm with carrier)
             </label>
             <input
               className="snp-routing-cell-input"
