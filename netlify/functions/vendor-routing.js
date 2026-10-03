@@ -1,3 +1,4 @@
+import { validateParagonControls, isMissing067 } from './_paragonControls.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { isAdminAuth, NGHS_TENANT_ID, JSON_HEADERS, getSupabase } from './_tenantSettings.js';
 import { normalizeCarrier } from '../../telephony/src/paragonEligibility.js';
@@ -32,7 +33,14 @@ export default async request => {
   let newReportToken = null;
   if (request.method === 'POST') {
     const body = await request.json().catch(() => ({}));
-    if (body.action === 'config') {
+    if (body.action === 'controls') {
+      let parsed;
+      try { parsed=validateParagonControls(body); }
+      catch(error) { return json({error:error.message},400); }
+      const {error}=await db.rpc('set_paragon_controls',{p_tenant:NGHS_TENANT_ID,p_hours:parsed.hours,
+        p_cap:parsed.cap,p_mode:parsed.mode,p_rate:parsed.rate,p_actor:auth.userId});
+      if(error) return json({error:isMissing067(error)?'Controls become editable after migration 067.':'Unable to save Paragon controls.'},503);
+    } else if (body.action === 'config') {
       const states = body.allowed_states;
       const required = Array.isArray(body.required_carriers) ? body.required_carriers.map(normalizeCarrier) : null;
       const critical = Array.isArray(body.critical_carriers) ? body.critical_carriers.map(normalizeCarrier) : null;
@@ -82,14 +90,18 @@ export default async request => {
     } else return json({ error:'Invalid action' },400);
   }
   const config = request.method === 'POST' && (await db.from('vendor_routing_config').select('*').eq('source_id',source.id).single()) || { data:currentConfig };
-  const [matrix,agents,reportToken] = await Promise.all([
+  const [matrix,agents,reportToken,controls,counter] = await Promise.all([
     db.from('vendor_agent_state_eligibility').select('*').eq('source_id',source.id)
       .eq('plan_year',config.data.plan_year).order('state'),
     db.from('tenant_agents').select('id,name,npn,agent_slug,is_active').eq('tenant_id',NGHS_TENANT_ID).eq('is_active',true).order('name'),
     db.from('paragon_report_tokens').select('updated_at').eq('source_id',source.id).maybeSingle(),
+    db.from('vendor_controls').select('*').eq('tenant_id',NGHS_TENANT_ID).maybeSingle(),
+    db.rpc('paragon_daily_status',{p_tenant:NGHS_TENANT_ID}),
   ]);
   if (config.error || matrix.error || agents.error || reportToken.error) return json({ error:'Routing settings unavailable' },503);
-  return json({ config:config.data,matrix:matrix.data,agents:agents.data,
+  if(controls.error || (counter.error && !isMissing067(counter.error))) return json({error:'Paragon controls unavailable'},503);
+  return json({ controls:controls.data,counter:counter.error?null:counter.data,
+    billing_ready:!counter.error, config:config.data,matrix:matrix.data,agents:agents.data,
     report_token_updated_at:reportToken.data?.updated_at || null,
     ...(newReportToken ? {report_link:`/vendor/paragon?token=${newReportToken}`} : {}),
   });

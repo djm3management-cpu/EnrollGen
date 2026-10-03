@@ -1,3 +1,4 @@
+import { resolveParagonArrival, claimParagonArrival, enqueueBillingCallback, verifiedParagonArrival } from "../paragonBilling.js";
 import { Router } from "express";
 import twilio from "twilio";
 import { config, publicUrl, mediaStreamUrl } from "../config.js";
@@ -108,7 +109,8 @@ async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentId
 }
 
 // Inbound call from the FMO transfer hits here first.
-twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, async (req, res) => {
+twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next) => { req.paragonArrivalAt = new Date().toISOString(); return next(); }, routingReplay, async (req, res) => {
+  let arrivedAt = req.paragonArrivalAt;
   const callSid = req.body.CallSid;
   const from = req.body.From;
   const to = req.body.To;
@@ -136,15 +138,24 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
     const sharedMaNumber = Boolean(config.twilioPhoneNumber && to === config.twilioPhoneNumber);
     // Paragon metadata alone is not proof that this call followed a Paragon
     // availability ping. Only a recent, matching ping selects Paragon rules.
-    const pingLookup = config.paragonStateRoutingEnabled && sharedMaNumber
-      ? await supabase.rpc('resolve_recent_paragon_ping', {
+    let pingLookup = config.paragonStateRoutingEnabled && sharedMaNumber
+      ? await resolveParagonArrival(supabase, {
           p_phone: from, p_call_id: metadata.aggregator_call_id || null, p_call_sid: callSid,
-        })
+        }, arrivedAt)
       : { data: [{ matched: false }] };
     if (pingLookup?.error) throw new Error(`Paragon ping lookup failed: ${pingLookup.error.message}`);
+    const candidate = Array.isArray(pingLookup?.data) ? pingLookup.data[0] : pingLookup?.data;
+    if(candidate?.matched && pingLookup.billingReady) {
+      // Twilio's parent arrival, not callback network/processing latency, owns
+      // the commitment deadline. A late webhook still honors an on-time call.
+      arrivedAt=await verifiedParagonArrival(config,callSid);
+      pingLookup=await resolveParagonArrival(supabase,{p_phone:from,p_call_id:metadata.aggregator_call_id || null,p_call_sid:callSid},arrivedAt);
+      if(pingLookup.error) throw new Error('Paragon arrival lookup failed');
+    }
     const ping = Array.isArray(pingLookup?.data) ? pingLookup.data[0] : pingLookup?.data;
     const paragon = Boolean(ping?.matched);
     paragonCall = paragon;
+    if (paragon) await enqueueBillingCallback(supabase,config,req.body);
     const publisherCall = isParagon(metadata) || Boolean(metadata.publisher);
     const paragonSource = paragon
       ? await supabase.from('lead_sources').select('id').eq('tenant_id',config.defaultTenantId)
@@ -160,9 +171,9 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, routingReplay, a
       ? chooseInboundPreference({ callerId:from, contact, lookupError,
         enabled:config.stickyRoutingEnabled,lookbackDays:config.stickyLookbackDays }) : null;
     const claimed = paragon && ping?.available
-      ? await supabase.rpc('claim_paragon_call',{ p_call_sid:callSid,p_phone:from,
+      ? await claimParagonArrival(supabase,{ p_call_sid:callSid,p_phone:from,
           p_call_id:metadata.aggregator_call_id,p_exclude:[],
-          p_preferred_agent_id:preferred?.preferredAgentId || null,p_routing_enabled:true })
+          p_preferred_agent_id:preferred?.preferredAgentId || null,p_routing_enabled:true },arrivedAt)
       : null;
     if (claimed?.error) throw new Error(`Paragon claim failed: ${claimed.error.message}`);
     const { agent, method, preferredAgentId, callerState, vendorCallId } = paragon

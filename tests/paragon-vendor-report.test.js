@@ -37,6 +37,7 @@ test('CSV and page expose only approved columns', async () => {
     const row = {call_id:'vendor-1',received_at:'2026-10-01T14:00:00Z',caller_phone:'+15551234567',caller_state:'FL',duration_seconds:100,billable:'yes',non_billable_reason:null,disposition_category:'completed',name:'PRIVATE_NAME',notes:'PRIVATE_NOTES',transcript:'PRIVATE_TRANSCRIPT',recording_url:'PRIVATE_RECORDING'};
     const handler = createHandler(() => ({rpc(name) {
       if (name === 'authorize_paragon_report') return Promise.resolve({data:'source-id',error:null});
+      if (name==='paragon_report_totals') return Promise.resolve({data:[{day:'2026-10-01',calls:1,billable:1,amount_due:28}],error:null});
       assert.equal(name,'paragon_vendor_report');
       return {range() { return Promise.resolve({data:[row],error:null}); }};
     }}));

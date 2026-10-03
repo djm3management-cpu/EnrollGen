@@ -1,3 +1,4 @@
+import { startParagonBillingWorker } from "./paragonBilling.js";
 import { startRecordingWorker } from "./recordings.js";
 import { recordingMediaRouter } from "./routes/recordingMedia.js";
 import { createRecordingServiceClient } from "./supabase.js";
@@ -55,6 +56,7 @@ app.use(voiceOutboundRouter);
 app.use(smsRouter);
 app.use(recordingMediaRouter);
 startRecordingWorker({ db: createRecordingServiceClient(), config });
+startParagonBillingWorker({ db: createRecordingServiceClient(), config });
 
 const server = http.createServer(app);
 

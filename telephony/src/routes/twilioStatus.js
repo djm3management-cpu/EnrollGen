@@ -1,3 +1,4 @@
+import { enqueueBillingCallback } from "../paragonBilling.js";
 import { createRecordingCallback } from "../recordings.js";
 import { Router } from "express";
 import { config } from "../config.js";
@@ -25,6 +26,7 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, async (req, re
   const callStatus = req.body.CallStatus;
 
   try {
+    await enqueueBillingCallback(supabase,config,req.body);
     if (["completed", "canceled", "failed", "busy", "no-answer"].includes(callStatus)) {
       await releaseAgent(null, callSid);
     }
@@ -51,6 +53,7 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, async (req, re
 // Child-leg completion also fires when the caller hangs up before Dial's action.
 twilioStatusRouter.post("/twilio/agent-status", requireTwilioSignature, async (req, res) => {
   try {
+    await enqueueBillingCallback(supabase,config,req.body);
     await recordCallbackEvidence(req, "child");
     if (["completed", "canceled", "failed", "busy", "no-answer"].includes(req.body.CallStatus)) {
       await releaseAgent(req.query.agentId, req.body.ParentCallSid);

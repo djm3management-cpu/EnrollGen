@@ -41,7 +41,7 @@ export default function VendorRoutingSettings({ getToken }) {
     finally { setSaving(false); }
   };
   if (!data) return <section className="tenant-settings-card tenant-settings-card-wide"><div className="tenant-settings-section-title">Paragon routing</div>{message || 'Loading routing matrix…'}</section>;
-  const { config,matrix,agents } = data;
+  const { config,matrix,agents,controls,counter,billing_ready } = data;
   const staleAgents = agents.filter(agent => {
     const stamp = lastEdited.get(agent.id);
     return !stamp || Date.now()-new Date(stamp).getTime()>=AGE_LIMIT;
@@ -67,6 +67,30 @@ export default function VendorRoutingSettings({ getToken }) {
     {staleAgents.length>0 && <div className="billing-alert" role="alert">
       Routing matrix review overdue (30+ days): {staleAgents.map(agent => agent.name).join(', ')}.
     </div>}
+    <div className="tenant-settings-card vendor-routing__report">
+      <div className="tenant-settings-section-title">Hours and billing</div>
+      <p className="tenant-settings-muted">Eastern Time. Accepted pings remain valid for calls arriving within 30 seconds. Existing calls continue after closing.</p>
+      {!billing_ready && <p className="billing-alert">Hours, cap and rate become editable after migration 067.</p>}
+      {counter && <p className={controls?.paragon_daily_cap != null && counter.billable_count>=controls.paragon_daily_cap ? 'billing-alert' : 'tenant-settings-muted'}>
+        {counter.billable_count} / {controls?.paragon_daily_cap ?? 'no cap'} billable today · ${Number(counter.amount_due).toFixed(2)}
+        {controls?.paragon_daily_cap != null && counter.billable_count>=controls.paragon_daily_cap ? (controls.paragon_cap_mode==='soft' ? ' · Soft cap reached; accepting calls' : ' · Hard cap reached; new pings blocked') : ''}
+      </p>}
+      {['mon','tue','wed','thu','fri','sat','sun'].map(day => {
+        const cfg=controls?.staffed_hours?.days?.[day] || {enabled:false,start:'10:15',end:'17:15'};
+        const update=(field,value)=>setData(current=>({...current,controls:{...current.controls,staffed_hours:{timezone:'America/New_York',days:{...current.controls?.staffed_hours?.days,[day]:{start:'10:15',end:'17:15',...cfg,[field]:value}}}}}));
+        return <div className="tenant-settings-inline" key={day}>
+          <label><input type="checkbox" checked={cfg.enabled} disabled={!billing_ready || saving} onChange={event=>update('enabled',event.target.checked)} /> {day.toUpperCase()}</label>
+          <label>Open <input type="time" value={cfg.start || '10:15'} disabled={!billing_ready || !cfg.enabled || saving} onChange={event=>update('start',event.target.value)} /></label>
+          <label>Close <input type="time" value={cfg.end || '17:15'} disabled={!billing_ready || !cfg.enabled || saving} onChange={event=>update('end',event.target.value)} /></label>
+        </div>;
+      })}
+      <div className="tenant-settings-inline">
+        <label>Daily billable cap (blank = unlimited) <input type="number" min="1" value={controls?.paragon_daily_cap ?? ''} disabled={!billing_ready || saving} onChange={event=>setData(current=>({...current,controls:{...current.controls,paragon_daily_cap:event.target.value===''?null:Number(event.target.value)}}))} /></label>
+        <label>Cap mode <select value={controls?.paragon_cap_mode || 'soft'} disabled={!billing_ready || saving} onChange={event=>setData(current=>({...current,controls:{...current.controls,paragon_cap_mode:event.target.value}}))}><option value="soft">Soft — counter and alert</option><option value="hard">Hard — stop new pings</option></select></label>
+        <label>Rate per billable call ($) <input type="number" min="0.01" step="0.01" value={controls?.paragon_rate ?? 28} disabled={!billing_ready || saving} onChange={event=>setData(current=>({...current,controls:{...current.controls,paragon_rate:Number(event.target.value)}}))} /></label>
+        <button className="billing-button is-primary" type="button" disabled={!billing_ready || saving} onClick={()=>save({action:'controls',staffed_hours:controls.staffed_hours,daily_cap:controls.paragon_daily_cap,cap_mode:controls.paragon_cap_mode,rate:Number(controls.paragon_rate)})}>Save hours and billing</button>
+      </div>
+    </div>
     <div className="vendor-routing__config">
       <label>Plan year <input type="number" value={config.plan_year} onChange={event => updateConfig('plan_year',Number(event.target.value))} /></label>
       <label>Reservation TTL (seconds) <input type="number" min="5" max="120" value={config.reservation_ttl_seconds} onChange={event => updateConfig('reservation_ttl_seconds',Number(event.target.value))} /></label>

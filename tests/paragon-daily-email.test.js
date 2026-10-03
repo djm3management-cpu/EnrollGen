@@ -16,6 +16,7 @@ async function run(calls) {
     from() { return {select() { return this; },eq() { return this; },maybeSingle() { return Promise.resolve({data:{id:'source-1'},error:null}); }}; },
     rpc(name,args) {
       events.push([name,args]);
+      if(name==='paragon_report_totals') return Promise.resolve({data:[{day:'2026-10-01',calls:calls.length,billable:calls.length,amount_due:calls.length*28}],error:null});
       if (name === 'paragon_vendor_report') return {range() { return Promise.resolve({data:calls,error:null}); }};
       return Promise.resolve({data:name === 'claim_paragon_report_email' ? 1 : null,error:null});
     },

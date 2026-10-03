@@ -1,3 +1,4 @@
+import { paragonReportTotals } from './_paragonControls.js';
 import { createClient } from '@supabase/supabase-js';
 import { addDays, etDate, etMidnight, reportCsv } from './paragon-vendor-report.js';
 
@@ -21,6 +22,10 @@ export const createDailyHandler = ({now = () => new Date(),fetchImpl = fetch,mak
     calls.push(...data);
     if (data.length < 1000) break;
   }
+  let totals;
+  try { totals=await paragonReportTotals(db,source.id,params.p_start,params.p_end,calls); }
+  catch { return new Response('Billing totals unavailable',{status:503}); }
+  const amount=totals.reduce((sum,day)=>sum+Number(day.amount_due),0);
   const {data:logId,error:claimError} = await db.rpc('claim_paragon_report_email',{p_date:day,p_call_count:calls.length});
   if (claimError) return new Response('Send log unavailable',{status:503});
   if (!logId) return new Response('Already processed');
@@ -38,7 +43,7 @@ export const createDailyHandler = ({now = () => new Date(),fetchImpl = fetch,mak
         from:'reports@newgenhealthsolutions.com',reply_to:'mike@newgenhealthsolutions.com',
         to:['dispo@paragonmedia.io'],
         subject:`Paragon daily dispositions — ${day} ET`,
-        text:`Attached: ${calls.length} Paragon calls received on ${day} Eastern Time.`,
+        text:`Attached: ${calls.length} Paragon calls received on ${day} Eastern Time. Expected amount: $${amount.toFixed(2)} using stored contract rates.`,
         attachments:[{filename:`paragon-dispositions-${day}.csv`,content:Buffer.from(csv,'utf8').toString('base64')}],
       }),signal:AbortSignal.timeout(20000),
     });

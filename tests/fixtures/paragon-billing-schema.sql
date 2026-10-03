@@ -1,0 +1,12 @@
+CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
+GRANT USAGE ON SCHEMA public TO anon,authenticated,service_role;
+CREATE TABLE tenants(id uuid PRIMARY KEY);
+CREATE TABLE lead_sources(id uuid PRIMARY KEY,tenant_id uuid,name text,type text,active boolean,ping_key_hash text);
+CREATE TABLE availability_consumers(name text,active boolean,key_hash text);
+CREATE TABLE vendor_controls(tenant_id uuid PRIMARY KEY,vendor_pause boolean,staffed_hours jsonb,updated_at timestamptz,updated_by text);
+CREATE TABLE tenant_agents(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,name text,npn text,agent_slug text,is_active boolean);
+CREATE TABLE agent_availability(agent_id text PRIMARY KEY,agent_name text,status text,available boolean,active_call_sid text,resume_status text,last_assigned_at timestamptz,toggled_at timestamptz);
+CREATE TABLE call_records(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,call_duration_seconds integer,call_outcome text,app_written boolean,metadata jsonb DEFAULT '{}',vendor_disposition text);
+CREATE TABLE inbound_calls(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,twilio_call_sid text,from_number text,source_kind text,lead_source_id uuid,created_at timestamptz DEFAULT now(),duration_seconds integer,call_record_id uuid,status text,aggregator_call_id text,publisher text);
+CREATE FUNCTION agent_inbound_routable(text,text,boolean,text) RETURNS boolean LANGUAGE sql AS $$ SELECT $2='available' AND $3=true AND $4 IS NULL $$;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;

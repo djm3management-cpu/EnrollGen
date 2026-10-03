@@ -50,6 +50,7 @@ function database(agents = ['a', 'b']) {
     return q;
   };
   supabase.rpc = async (name, args) => {
+    if(name==='enqueue_paragon_billing_event') return {data:null,error:{code:'PGRST202'}};
     if (name === 'claim_call_agent') {
       claims.push(args);
       if (args.p_preferred_agent_id && state.failPreferred) return { error: { message: 'Preferred claim failed' } };
@@ -77,6 +78,7 @@ function database(agents = ['a', 'b']) {
 }
 
 async function request(router, path, body, query = {}) {
+  body={ AccountSid:config.twilioAccountSid, ...body };
   const originalUrl = `${path}${Object.keys(query).length ? '?' + new URLSearchParams(query) : ''}`;
   const signature = twilio.getExpectedTwilioSignature(config.twilioAuthToken, config.publicBaseUrl + originalUrl, body);
   const req = { path, originalUrl, body, query, header: () => signature };
