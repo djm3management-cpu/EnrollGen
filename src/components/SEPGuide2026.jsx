@@ -1,3 +1,4 @@
+import DncCallControl from "./phone/DncCallControl";
 import { useState, useMemo } from "react";
 import { Check, ChevronDown, Copy, Phone, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import rawMarkdown from "../../docs/MA_SEP_Guide_2026.md?raw";
@@ -325,7 +326,7 @@ function InlineContent({ text }) {
     }
     if (seg.type === "phone") {
       return (
-        <a
+        <DncCallControl as="a" phone={seg.value}
           key={idx}
           href={phoneToTel(seg.value)}
           style={{
@@ -336,7 +337,7 @@ function InlineContent({ text }) {
         >
           <Phone size={10} style={{ display: "inline", verticalAlign: "middle", marginRight: 3 }} />
           {seg.value}
-        </a>
+        </DncCallControl>
       );
     }
     return <span key={idx}>{seg.value}</span>;
@@ -911,7 +912,7 @@ export default function SEPGuide2026() {
                         borderBottom: "1px solid var(--border-default)",
                       }}
                     >
-                      <a
+                      <DncCallControl as="a" phone={row.number}
                         href={phoneToTel(row.number)}
                         style={{
                           color: "var(--info)",
@@ -924,7 +925,7 @@ export default function SEPGuide2026() {
                       >
                         <Phone size={11} />
                         {row.number}
-                      </a>
+                      </DncCallControl>
                     </td>
                   </tr>
                 ))}

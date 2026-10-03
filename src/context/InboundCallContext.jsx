@@ -1,3 +1,4 @@
+import { checkOutbound, canonicalOutbound } from "../lib/outboundApi";
 import {
   createContext,
   useCallback,
@@ -83,6 +84,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const phoneReadyRef = useRef(false);
   const tokenBundleRef = useRef(null);
   const callInProgressRef = useRef(false);
+  const outboundCallRef = useRef(null);
 
   const fetchTokenBundle = useCallback(async () => {
     const clerkToken = await getToken().catch(() => null);
@@ -413,12 +415,14 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       const params = {
         callerName: contactName || "",
         callerPhone: phoneNumber,
-        contactId: contactId || "",
+        contactId: "",
         direction: "outbound",
       };
 
       let call;
       try {
+        const policy = await checkOutbound(getToken, phoneNumber);
+        if (policy.blocked) throw new Error("Do Not Call");
         call = await deviceRef.current.connect({
           params: { PhoneNumber: phoneNumber, ContactId: contactId || "" },
         });
@@ -426,9 +430,22 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         callInProgressRef.current = false;
         throw err;
       }
+      outboundCallRef.current = call;
       setDialingCall({ call, params });
 
-      call.on("accept", () => {
+      call.on("accept", async () => {
+        try {
+          const canonical = await canonicalOutbound(getToken, call.parameters.CallSid);
+          if (!callInProgressRef.current || outboundCallRef.current !== call) return;
+          params.contactId = canonical.contactId;
+          params.attemptId = canonical.attemptId;
+          params.callerPhone = canonical.phoneNumber;
+          params.callerName = "";
+        } catch (error) {
+          setError(error.message);
+          call.disconnect();
+          return;
+        }
         setActiveCall({ call, params });
         setDialingCall(null);
         setConnectedAt(Date.now());
@@ -453,6 +470,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         grabStream();
       });
       call.on("disconnect", () => {
+        if (outboundCallRef.current === call) outboundCallRef.current = null;
         setActiveCall(null);
         setDialingCall(null);
         setRemoteStream(null);
@@ -474,7 +492,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
       return call;
     },
-    []
+    [getToken]
   );
 
   const sendDigits = useCallback(
@@ -523,6 +541,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       acceptCall,
       declineCall,
       hangUp,
+      requestingAgentId,
       makeCall,
       sendDigits,
       toggleMute,
@@ -546,6 +565,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       acceptCall,
       declineCall,
       hangUp,
+      requestingAgentId,
       makeCall,
       sendDigits,
       toggleMute,

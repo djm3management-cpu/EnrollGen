@@ -1,3 +1,4 @@
+import DncCallControl from "../phone/DncCallControl";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DndContext, DragOverlay, KeyboardSensor, MouseSensor, TouchSensor, closestCorners, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -39,7 +40,7 @@ function OpportunityCard({ row, stage, source, pending, onOpen, actions }) {
       else listeners?.onKeyDown?.(event);
     }}><CardSummary row={row} source={source} /></div>
     <div className="opps-card-icons">
-      <CardAction label="Call" disabled={pending || !actions.canCall(row.contact_id)} onClick={() => actions.call(row.contact_id)}><Phone size={16} strokeWidth={1.5} /></CardAction>
+      <DncCallControl type="button" className="opps-card-action" aria-label="Call" title="Call" phone={actions.contact(row.contact_id)?.phone} doNotCall={actions.contact(row.contact_id)?.do_not_call} disabled={pending || !actions.canCall(row.contact_id)} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); actions.call(row.contact_id); }}><Phone size={16} strokeWidth={1.5} /></DncCallControl>
       <CardAction label="Conversation" count={actions.unread[row.contact_id] || 0} disabled={pending} onClick={() => actions.conversation(row.contact_id)}><MessageCircle size={16} strokeWidth={1.5} /></CardAction>
       <CardAction label="Tags" count={actions.tags.tags.filter((tag) => tag.contact_id === row.contact_id).length} disabled={pending} expanded={actions.tagContact === row.contact_id} onClick={(event) => actions.openTags(row, event.currentTarget)}><Tag size={16} strokeWidth={1.5} /></CardAction>
       <CardAction label="Notes" count={row.notes?.trim() ? 1 : 0} disabled={pending} onClick={() => actions.notes(row.id)}><FileText size={16} strokeWidth={1.5} /></CardAction>
@@ -134,6 +135,7 @@ export default function OpportunitiesView({ onOpenContact }) {
   const closeRowMenu = useCallback(() => setRowMenu(null), []);
   const openDrawer = (id, section = null) => { closeTags(); setDrawerSection(section); setSelectedId(id); };
   const actions = {
+    contact: (contactId) => contacts.find(contact => contact.id === contactId),
     canCall: (contactId) => Boolean(inbound?.enabled && !inbound.activeCall && !inbound.dialingCall && contacts.find((contact) => contact.id === contactId)?.phone),
     call: (contactId) => openContactDialer(contacts.find((contact) => contact.id === contactId)),
     conversation: onOpenContact, unread: unreadByContact, tags, tagContact: tagPopover?.contactId,

@@ -11,9 +11,9 @@ async function fetchChildCall(sid) {
   return twilio(config.twilioAccountSid, config.twilioAuthToken, { timeout: 5000 }).calls(sid).fetch();
 }
 
-export async function createCallAttempt({ callSid, agentId, contactId, direction, to, inboundCallId = null }) {
+export async function createCallAttempt({ callSid, agentId, contactId, direction, to, inboundCallId = null, tenantId = config.defaultTenantId }) {
   const { data, error } = await supabase.from("telephony_call_attempts").insert({
-    tenant_id: config.defaultTenantId, parent_call_sid: callSid, agent_id: agentId,
+    tenant_id: tenantId, parent_call_sid: callSid, agent_id: agentId,
     contact_id: contactId, direction, to_number: to, inbound_call_id: inboundCallId,
     min_connected_seconds: config.minConnectedSeconds,
   }).select("id").single();

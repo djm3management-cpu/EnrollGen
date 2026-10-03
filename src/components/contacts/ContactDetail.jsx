@@ -1,3 +1,4 @@
+import DncCallControl from "../phone/DncCallControl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Phone } from "lucide-react";
 import { useContactDetail, useContactMutations, useContactPii, contactDisplayName } from "../../hooks/useContacts";
@@ -411,7 +412,7 @@ function ContactCard({
                 </option>
               ))}
             </select>
-            <button
+            <DncCallControl phone={contact.phone} doNotCall={contact.do_not_call}
               type="button"
               className="contacts-start-call-btn"
               onClick={() => onStartCall(contact, callFlow)}
@@ -419,7 +420,7 @@ function ContactCard({
               title={contact.do_not_call ? "Contact is flagged do not call" : "Open the call cockpit"}
             >
               START CALL
-            </button>
+            </DncCallControl>
           </div>
         ) : null}
         <button type="button" className="contacts-mini-btn contacts-message-btn" onClick={onSendMessage}>
@@ -1078,7 +1079,7 @@ export default function ContactDetail({
           <span className={`contacts-chip status-${contact.status}`}>{String(contact.status || "lead").toUpperCase()}</span>
           {saving ? <span className="contacts-muted">Saving...</span> : null}
           {inboundCall && contact.phone_last4 ? (
-            <button
+            <DncCallControl phone={contact.phone || piiFields?.phone} doNotCall={contact.do_not_call}
               type="button"
               className="contacts-detail-call-btn"
               onClick={handleClickToCall}
@@ -1087,7 +1088,7 @@ export default function ContactDetail({
               aria-label={`Call ${contactDisplayName(contact)}`}
             >
               <Phone size={14} />
-            </button>
+            </DncCallControl>
           ) : null}
         </div>
       </div>

@@ -54,7 +54,7 @@ export function useContactsList(searchTerm, requestingAgentId, tenantScoped = fa
         if (!requestingAgentId) {
           setContacts([]);
           setLoading(false);
-          setError(null);
+          setError("Your agent account is still connecting. Contact details will load automatically.");
           return;
         }
         const { data: matches, error: searchError } = await supabaseClient.rpc("search_contacts_secure", {
