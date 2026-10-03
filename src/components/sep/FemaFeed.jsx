@@ -54,6 +54,7 @@ function FeedLoading({ label }) {
 export function FemaFeed({
   femaDisasters = [],
   femaSource = "unknown",
+  femaFetchedAt = null,
   liveNews = [],
   bulletins = [],
   feedLoading = false,
@@ -156,15 +157,15 @@ export function FemaFeed({
         </div>
         <div className="fema-feed-source">
           {femaSource === "live" && <span className="fema-dot live" />}
-          {femaSource === "fallback" && <span className="fema-dot fallback" />}
+          {femaSource === "unavailable" && <span className="fema-dot fallback" />}
           <span>
             {femaSource === "live"
               ? "Live FEMA"
-              : femaSource === "fallback"
-                ? "Cached FEMA"
+              : femaSource === "unavailable"
+                ? "FEMA data unavailable"
                 : ""}
           </span>
-          <span className="fema-feed-hz-footnote">Carrier sync daily</span>
+          <span className="fema-feed-hz-footnote">{femaFetchedAt ? `FEMA data from ${femaFetchedAt}` : "FEMA: no verified timestamp"} · Carrier sync daily</span>
         </div>
       </div>
 
@@ -184,7 +185,7 @@ export function FemaFeed({
                 <FeedLoading label="Loading FEMA declarations..." />
               ) : (
                 <div className="fema-feed-hz-empty">
-                  No active FEMA data loaded yet. Search a zip or click a state.
+                  {femaSource === "unavailable" ? "FEMA data unavailable" : "No active county FEMA declarations."}
                 </div>
               ))}
             {displayDisasters.map((disaster) => {
@@ -231,7 +232,7 @@ export function FemaFeed({
                             : ""}
                         </span>
                       </div>
-                      {hasIA && disaster.sepEndDate && (
+                      {hasIA && (disaster.sepEndDate || disaster.isOngoing) && (
                         <div className="fema-feed-detail">
                           <span className="fema-feed-sep-window">
                             {`SEP Window -> ${

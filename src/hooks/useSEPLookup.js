@@ -5,7 +5,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { getStateFromZip, getCarriersForZip } from "../lib/sepGeo";
-import { fetchLiveFemaDisasters } from "../lib/sepFema";
+import { fetchLiveFemaDisasters, withLiveFemaResult } from "../lib/sepFema";
 import { fetchBulletins } from "../lib/sepBulletins";
 import { fetchLiveNews } from "../lib/sepLiveNews";
 import { fetchCountiesForState, fetchPlansFromSupabase, fetchCountyPlanCounts, transformCmsPlan } from "../lib/sepCms";
@@ -36,6 +36,7 @@ export function useSEPLookup() {
   const [countyList, setCountyList] = useState([]);
   const [countyLoading, setCountyLoading] = useState(false);
   const [countyPlanCounts, setCountyPlanCounts] = useState({});
+  const [femaFetchedAt, setFemaFetchedAt] = useState(null);
   const [femaSource, setFemaSource] = useState("unknown");
   const [femaDisasters, setFemaDisasters] = useState([]);
   const [bulletins, setBulletins] = useState([]);
@@ -47,6 +48,7 @@ export function useSEPLookup() {
   const [sepFinderError, setSepFinderError] = useState("");
   const femaCache = useRef({ data: null, fetchedAt: 0 });
   const countyCache = useRef({});
+  const femaSelection = useRef({ zip: null, state: null, countyFips: [] });
 
   const loadTopFeed = useCallback(async () => {
     const [r, b, n] = await Promise.all([
@@ -58,10 +60,12 @@ export function useSEPLookup() {
       data: r.disasters,
       fetchedAt: Date.now(),
       apiFailed: r.apiFailed,
+      verifiedAt: r.fetchedAt,
     };
     return {
       disasters: r.disasters,
-      source: r.apiFailed ? "fallback" : "live",
+      fetchedAt: r.fetchedAt,
+      source: r.apiFailed ? "unavailable" : "live",
       bulletins: b,
       liveNews: n,
     };
@@ -77,6 +81,15 @@ export function useSEPLookup() {
         if (cancelled) return;
         setFemaDisasters(next.disasters);
         setFemaSource(next.source);
+        setFemaFetchedAt(next.fetchedAt);
+        setResults(current => {
+          if (!current) return current;
+          const selection = femaSelection.current;
+          return selection.zip
+            ? getSEPsForZip(selection.zip, next.disasters, { countyFips: selection.countyFips })
+            : getSEPsForState(selection.state, next.disasters);
+        });
+        setSepFinderResult(current => withLiveFemaResult(current, { disasters: next.disasters, fetchedAt: next.fetchedAt, apiFailed: next.source !== "live" }));
         setBulletins(next.bulletins);
         setLiveNews(next.liveNews);
       } catch (err) {
@@ -146,12 +159,13 @@ export function useSEPLookup() {
     setSepFinderResult(null);
 
     try {
-      const { data, error } = await supabase.rpc("get_available_seps", {
-        input_zip: cleanZip,
-      });
+      const [{ data, error }, feed] = await Promise.all([
+        supabase.rpc("get_available_seps", { input_zip: cleanZip }),
+        fetchLiveFemaDisasters(),
+      ]);
       if (error) throw error;
 
-      const parsed = parseSepRpcResult(data);
+      const parsed = withLiveFemaResult(parseSepRpcResult(data), feed);
       if (!parsed) throw new Error("SEP lookup returned an unreadable response.");
 
       if (parsed.error) {
@@ -172,6 +186,7 @@ export function useSEPLookup() {
 
   /* ── State map click entry ── */
   const handleStateClick = useCallback(async (stateCode) => {
+    femaSelection.current = { zip: null, state: stateCode, countyFips: [] };
     setSelectedState(stateCode);
     setSelectedCounty(null);
     setPlans(null);
@@ -206,12 +221,13 @@ export function useSEPLookup() {
       if (!femaData || now - femaCache.current.fetchedAt > 30 * 60 * 1000) {
         const r = await fetchLiveFemaDisasters();
         femaData = r.disasters;
-        femaCache.current = { data: femaData, fetchedAt: now, apiFailed: r.apiFailed };
-        setFemaSource(r.apiFailed ? "fallback" : "live");
+        femaCache.current = { data: femaData, fetchedAt: now, apiFailed: r.apiFailed, verifiedAt: r.fetchedAt };
+        setFemaSource(r.apiFailed ? "unavailable" : "live");
       } else {
-        setFemaSource(femaCache.current.apiFailed ? "fallback" : "live");
+        setFemaSource(femaCache.current.apiFailed ? "unavailable" : "live");
       }
       setFemaDisasters(femaData);
+      setFemaFetchedAt(femaCache.current.verifiedAt);
       const seps = getSEPsForState(stateCode, femaData);
       setResults(seps);
 
@@ -253,14 +269,18 @@ export function useSEPLookup() {
       if (!femaData || now - femaCache.current.fetchedAt > 30 * 60 * 1000) {
         const r = await fetchLiveFemaDisasters();
         femaData = r.disasters;
-        femaCache.current = { data: femaData, fetchedAt: now, apiFailed: r.apiFailed };
-        setFemaSource(r.apiFailed ? "fallback" : "live");
+        femaCache.current = { data: femaData, fetchedAt: now, apiFailed: r.apiFailed, verifiedAt: r.fetchedAt };
+        setFemaSource(r.apiFailed ? "unavailable" : "live");
       } else {
-        setFemaSource(femaCache.current.apiFailed ? "fallback" : "live");
+        setFemaSource(femaCache.current.apiFailed ? "unavailable" : "live");
       }
       setFemaDisasters(femaData);
+      setFemaFetchedAt(femaCache.current.verifiedAt);
       const st = getStateFromZip(cleanZip);
-      const seps = getSEPsForZip(cleanZip, femaData);
+      const { data: countyRows, error: countyError } = await supabase.from("zip_county_crosswalk").select("county_fips").eq("zip", cleanZip);
+      const countyFips = countyError ? [] : (countyRows || []).map(row => row.county_fips);
+      femaSelection.current = { zip: cleanZip, state: st, countyFips };
+      const seps = getSEPsForZip(cleanZip, femaData, { countyFips });
       const zipCarriers = getCarriersForZip(cleanZip);
       setResults(seps);
       setCarriers(zipCarriers);
@@ -366,7 +386,7 @@ export function useSEPLookup() {
     planFilterSnp, setPlanFilterSnp,
     planSearch, setPlanSearch,
     selectedCounty, setSelectedCounty, countyList,
-    countyLoading, countyPlanCounts, femaSource, femaDisasters, bulletins, liveNews, feedLoading, inputRef,
+    countyLoading, countyPlanCounts, femaSource, femaFetchedAt, femaDisasters, bulletins, liveNews, feedLoading, inputRef,
     sepFinderZip, sepFinderResult, sepFinderLoading, sepFinderError,
     handleSearch, handleKeyDown, handleStateClick, loadPlansForCounty,
     isValidZip, filtered, femaActive, state,

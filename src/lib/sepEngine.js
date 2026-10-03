@@ -7,16 +7,17 @@
 import { dualLisSepCards } from "./dualLisSep.js";
 
 import { getStateFromZip, hasFiveStarPlans, daysRemaining, isActiveNow } from "./sepGeo.js";
+import { matchFemaDisasters } from "./sepFema.js";
 
 export function getSEPsForState(stateCode, femaDisasters = [], beneficiaryOptions = {}) {
   const today = new Date();
   const seps = [];
 
   // FEMA disaster SEPs for this state
-  femaDisasters
+  matchFemaDisasters(femaDisasters, beneficiaryOptions.countyFips)
     .filter((d) => d.state === stateCode)
     .forEach((d) => {
-      if (new Date(d.sepEndDate) > today) {
+      if (d.isOngoing || d.sepEndDate >= today.toISOString().slice(0, 10)) {
         const isPAOnly = d.paOnly && !d.iaProgram && !d.ihProgram;
         seps.push({
           id: `fema-${d.id}`,
@@ -115,10 +116,10 @@ export function getSEPsForZip(zip, femaDisasters = [], beneficiaryOptions = {}) 
   const maPlans = (filter) => zipPlans.filter(filter);
 
   // FEMA disaster SEPs
-  femaDisasters
+  matchFemaDisasters(femaDisasters, beneficiaryOptions.countyFips)
     .filter((d) => d.state === state)
     .forEach((d) => {
-      if (new Date(d.sepEndDate) > today) {
+      if (d.isOngoing || d.sepEndDate >= today.toISOString().slice(0, 10)) {
         const isPAOnly = d.paOnly && !d.iaProgram && !d.ihProgram;
         seps.push({
           id: `fema-${d.id}`,

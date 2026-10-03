@@ -7,11 +7,6 @@ import rawMarkdown from "../../docs/MA_SEP_Guide_2026.md?raw";
 
 const TARGET_STATES = ["AL", "AR", "FL", "IN", "KY", "MO", "NC", "NJ", "PA", "TN", "TX"];
 
-const FEMA_END_DATES = {
-  AL: "5/31", AR: "4/30", FL: "6/30", IN: null, KY: "4/30",
-  MO: "4/30", NC: "4/30", NJ: "10/31", PA: "4/30", TN: "4/30", TX: "4/30",
-};
-
 const STATE_ABBREVS = {
   Alabama: "AL", Arkansas: "AR", Florida: "FL", Indiana: "IN", Kentucky: "KY",
   Missouri: "MO", "North Carolina": "NC", "New Jersey": "NJ",
@@ -645,32 +640,15 @@ function Accordion({ title, defaultOpen, children }) {
 
 function StatePanel({ state }) {
   const { abbrev, sepTypes, content } = state;
-  const femaEnd = FEMA_END_DATES[abbrev];
+
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {/* SEP type pills + FEMA date */}
+      {/* SEP reference types; active FEMA eligibility requires county verification. */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         {sepTypes.map((t) => (
           <SEPPill key={t} type={t} />
         ))}
-        {femaEnd && (
-          <span
-            style={{
-              fontSize: 10,
-              fontFamily: "var(--font-primary)",
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              color: "var(--status-offline)",
-              padding: "2px 8px",
-              borderRadius: 999,
-              background: "var(--status-offline-bg)",
-              border: "1px solid var(--status-offline-border)",
-            }}
-          >
-            FEMA END {femaEnd}
-          </span>
-        )}
         {abbrev === "IN" && (
           <span
             style={{

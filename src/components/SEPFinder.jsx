@@ -1,3 +1,4 @@
+import { fetchLiveFemaDisasters, withLiveFemaResult } from "../lib/sepFema.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, RefreshCcw, Search } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
@@ -28,12 +29,13 @@ export default function SEPFinder({ zip }) {
 
     try {
       const { supabase } = await import("../lib/supabase");
-      const { data, error: rpcError } = await supabase.rpc("get_available_seps", {
-        input_zip: normalizedZip,
-      });
+      const [{ data, error: rpcError }, feed] = await Promise.all([
+        supabase.rpc("get_available_seps", { input_zip: normalizedZip }),
+        fetchLiveFemaDisasters(),
+      ]);
       if (rpcError) throw rpcError;
 
-      const parsed = parseSepRpcResult(data);
+      const parsed = withLiveFemaResult(parseSepRpcResult(data), feed);
       if (!parsed) throw new Error("SEP lookup returned an unreadable response.");
 
       if (parsed.error) {

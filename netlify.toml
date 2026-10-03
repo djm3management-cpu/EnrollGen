@@ -46,3 +46,6 @@
   port = 5173
   targetPort = 5173
   autoLaunch = false
+
+[functions."sync-fema"]
+  schedule = "0 9 * * *"

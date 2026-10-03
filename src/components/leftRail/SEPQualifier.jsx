@@ -28,6 +28,7 @@ import {
   STATE_SEP_TYPE_META,
 } from "../../data/stateSepData";
 import { useScript } from "../../context/ScriptContext";
+import { useFemaCounty } from "../../hooks/useFemaCounty";
 import SEPFinder from "../SEPFinder";
 import ClientInfoCard from "./ClientInfoCard";
 import GLP1BridgeGuide from "./GLP1BridgeGuide";
@@ -57,32 +58,6 @@ const CATEGORY_ICON_MAP = {
 function renderCategoryIcon(iconKey, color) {
   const Icon = CATEGORY_ICON_MAP[iconKey] || FileText;
   return <Icon size={18} strokeWidth={2.2} style={{ color }} />;
-}
-
-function getFemaEndStatus(femaEnd) {
-  if (!femaEnd) {
-    return null;
-  }
-
-  const [monthText, dayText] = femaEnd.split("/");
-  const month = Number(monthText);
-  const day = Number(dayText);
-
-  if (!month || !day) {
-    return {
-      label: `FEMA SEP available through ${femaEnd}`,
-      isUrgent: false,
-    };
-  }
-
-  const today = new Date();
-  const endDate = new Date(today.getFullYear(), month - 1, day);
-  const dayDiff = Math.ceil((endDate - today) / 86400000);
-
-  return {
-    label: `FEMA SEP available through ${femaEnd}`,
-    isUrgent: dayDiff >= 0 && dayDiff <= 30,
-  };
 }
 
 function renderStateContentField(title, items, className = "") {
@@ -346,10 +321,7 @@ export default function SEPQualifier({ onMinimize }) {
     () => getStateSepInfo(resolvedStateCode),
     [resolvedStateCode]
   );
-  const femaEndStatus = useMemo(
-    () => getFemaEndStatus(stateSepInfo?.femaEnd),
-    [stateSepInfo?.femaEnd]
-  );
+  const femaEndStatus = useFemaCounty(normalizedSharedZip, resolvedStateCode);
 
   useEffect(() => {
     if (!stateSepInfo?.sections?.length) {

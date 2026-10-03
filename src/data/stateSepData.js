@@ -59,29 +59,6 @@ export const STATE_NAME_MAP = {
   DC: "District of Columbia",
 };
 
-export const STATE_FEMA_END_DATES = {
-  AL: "5/31",
-  AR: "4/30",
-  FL: "6/30",
-  KY: "4/30",
-  MO: "4/30",
-  NC: "4/30",
-  NJ: "10/31",
-  PA: "4/30",
-  TN: "4/30",
-  TX: "4/30",
-  VA: "4/30",
-  OH: "6/30",
-  WA: "5/31",
-  WI: "12/31",
-  NM: "8/31",
-  WY: "10/31",
-  SC: "4/30",
-  LA: "4/30",
-  WV: "4/30",
-  NY: "5/31",
-};
-
 export const INT_MANDATORY_QUESTIONS = [
   "Do you receive home healthcare or help with activities of daily living? Verify plan-specific service coverage; this answer alone does not invalidate the integrated-care SEP.",
   "Do you reside in a nursing home or long-term care facility? Verify plan-specific enrollment and service requirements; residence alone does not invalidate the integrated-care SEP.",
@@ -171,11 +148,10 @@ function withStateMeta(stateCode, config) {
   };
 }
 
-function createDstOnlyState(stateCode, femaEnd) {
+function createDstOnlyState(stateCode) {
   return withStateMeta(stateCode, {
     sepTypes: ["DST"],
     dominantType: "DST",
-    femaEnd,
     notes: DST_ONLY_NOTES,
   });
 }
@@ -223,7 +199,6 @@ function enrichStateInfo(stateInfo) {
 
   if (
     stateInfo.sepTypes.includes("DST") &&
-    stateInfo.femaEnd &&
     !existingSectionTypes.has("DST")
   ) {
     sections.push(createDstSection(stateInfo.stateCode));
@@ -243,7 +218,6 @@ export const STATE_SEP_DATA = {
   AL: withStateMeta("AL", {
     sepTypes: ["PAP", "DST"],
     dominantType: "PAP",
-    femaEnd: "5/31",
     sections: [
       {
         id: "al-senior-rx",
@@ -272,11 +246,10 @@ export const STATE_SEP_DATA = {
       },
     ],
   }),
-  AR: createDstOnlyState("AR", "4/30"),
+  AR: createDstOnlyState("AR"),
   FL: withStateMeta("FL", {
     sepTypes: ["DST", "INT"],
     dominantType: "INT",
-    femaEnd: "6/30",
     sections: [
       {
         id: "fl-int-election",
@@ -301,7 +274,6 @@ export const STATE_SEP_DATA = {
   IN: withStateMeta("IN", {
     sepTypes: ["PAP"],
     dominantType: "PAP",
-    femaEnd: null,
     sections: [
       {
         id: "in-hoosier-rx",
@@ -328,7 +300,6 @@ export const STATE_SEP_DATA = {
   KY: withStateMeta("KY", {
     sepTypes: ["INT", "CSNP", "DST"],
     dominantType: "INT",
-    femaEnd: "4/30",
     sections: [
       {
         id: "ky-int-election",
@@ -365,7 +336,6 @@ export const STATE_SEP_DATA = {
   MO: withStateMeta("MO", {
     sepTypes: ["PAP", "DST"],
     dominantType: "PAP",
-    femaEnd: "4/30",
     sections: [
       {
         id: "mo-mo-rx",
@@ -387,11 +357,10 @@ export const STATE_SEP_DATA = {
       },
     ],
   }),
-  NC: createDstOnlyState("NC", "4/30"),
+  NC: createDstOnlyState("NC"),
   NJ: withStateMeta("NJ", {
     sepTypes: ["DST", "INT", "PAP", "CSNP"],
     dominantType: "INT",
-    femaEnd: "10/31",
     sections: [
       {
         id: "nj-pap",
@@ -444,7 +413,6 @@ export const STATE_SEP_DATA = {
   PA: withStateMeta("PA", {
     sepTypes: ["PAP", "DST"],
     dominantType: "PAP",
-    femaEnd: "4/30",
     sections: [
       {
         id: "pa-pace-pacenet",
@@ -492,11 +460,10 @@ export const STATE_SEP_DATA = {
       },
     ],
   }),
-  TN: createDstOnlyState("TN", "4/30"),
+  TN: createDstOnlyState("TN"),
   TX: withStateMeta("TX", {
     sepTypes: ["DST", "INT", "CSNP"],
     dominantType: "INT",
-    femaEnd: "4/30",
     sections: [
       {
         id: "tx-int-election",
@@ -528,7 +495,6 @@ export const STATE_SEP_DATA = {
   VA: withStateMeta("VA", {
     sepTypes: ["DST", "INT", "CSNP"],
     dominantType: "INT",
-    femaEnd: "4/30",
     sections: [
       {
         id: "va-int-election",
@@ -574,7 +540,6 @@ export function getStateSepInfo(stateCode) {
     withStateMeta(stateCode, {
       sepTypes: ["DST"],
       dominantType: "DST",
-      femaEnd: STATE_FEMA_END_DATES[stateCode] ?? null,
       notes: DST_ONLY_NOTES,
     })
   );
