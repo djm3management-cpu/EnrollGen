@@ -1,3 +1,4 @@
+import { hasMedicareResource, hasTpmoOrgCount, hasTpmoPlanCount } from '../compliance/shared/tpmo2027.js';
 /**
  * TranscriptAnalyzer, Real-Time Medicare Intent Detection Engine
  *
@@ -436,7 +437,7 @@ const INTENT_MAP = {
       ]);
 
       const allOrganizations = findPhrase(t, ["currently we represent", "we currently represent"]).found &&
-        findPhrase(t, ["you can always contact medicare", "you can always contact medicare.gov"]).found;
+        /you can always contact/i.test(t) && hasMedicareResource(t);
       if (allOrganizations) {
         return {
           detected: true, confidence: 90,
@@ -488,10 +489,7 @@ const INTENT_MAP = {
 
       // Check for specific numbers near "represent" or "organizations"
       const norm = normalize(t);
-      const hasNumbers =
-        /represent\s+\d+\s+organization|represent\s+\w+\s+organization|\d+\s+organization|\d+\s+plan/i.test(
-          norm
-        );
+      const hasNumbers = hasTpmoOrgCount(norm) && hasTpmoPlanCount(norm);
 
       if (r.found && hasNumbers) {
         return {
@@ -519,55 +517,14 @@ const INTENT_MAP = {
   tpmo_medicare_gov_referral: {
     section: "Required Disclosures",
     description:
-      "Agent referred beneficiary to Medicare.gov and 1-800-MEDICARE",
+      "Agent referred beneficiary to Medicare.gov or 1-800-MEDICARE",
     critical: true,
     detect: (t) => {
-      const groups = [
-        [
-          "medicare.gov",
-          "medicare dot gov",
-          "medicare website",
-          "go to medicare",
-        ],
-        [
-          "1-800-medicare",
-          "1 800 medicare",
-          "1800 medicare",
-          "1800-medicare",
-          "800 medicare",
-          "call medicare",
-        ],
-      ];
-
-      const result = countGroups(t, groups);
-
-      if (result.count >= 2) {
-        return {
-          detected: true,
-          confidence: 95,
-          evidence: `Medicare referrals provided: ${result.detected.join(
-            ", "
-          )}`,
-        };
-      }
-      if (result.count === 1) {
-        return {
-          detected: true,
-          confidence: 70,
-          evidence: `Partial referral, mentioned ${
-            result.detected[0]
-          } but should also reference ${
-            result.count === 0
-              ? "Medicare.gov and 1-800-MEDICARE"
-              : "additional resources"
-          }`,
-        };
-      }
+      const found = hasMedicareResource(t);
       return {
-        detected: false,
-        confidence: 0,
-        evidence:
-          "Agent has not provided the Medicare.gov and 1-800-MEDICARE referral from the supplied 2027 script",
+        detected: found, confidence: found ? 95 : 0,
+        evidence: found ? 'Medicare.gov or 1-800-MEDICARE referral provided.' :
+          'Medicare.gov or 1-800-MEDICARE referral missing.',
       };
     },
   },
@@ -1929,7 +1886,7 @@ export function getTranscriptEvidence(questionId, analysis) {
       "tpmo_medicare_contract",
       "tpmo_contract_renewal",
     ],
-    disclosures_tpmo_timing: ["tpmo_not_every_plan"], // timing checked separately
+    disclosures_tpmo_timing: ["tpmo_not_every_plan"], // utterance timing checked separately
     disclosures_snp: ["snp_disclosure_dsnp", "snp_disclosure_csnp"],
     disclosures_no_misleading: ["no_misleading_claims"],
 

@@ -1,3 +1,4 @@
+import { evaluateTpmo2027, hasMedicareResource, hasTpmoOrgCount, hasTpmoPlanCount } from '../shared/tpmo2027.js';
 import { classificationFormat } from "../../lib/llm/schemas/compliance.js";
 /**
  * IntentClassifier, LLM-based intent detection engine.
@@ -280,6 +281,27 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress 
     }
   }
 
+  // Use actual utterance order/completion rather than overlapping LLM windows.
+  const tpmo = evaluateTpmo2027(diarized);
+  for (const [code, found] of [
+    ['CALL_OPEN_008_TPMO_DISCLAIMER_2027', !!tpmo.disclaimer],
+    ['CALL_OPEN_009_TPMO_TIMING_2027', tpmo.timingOk],
+    ['CALL_OPEN_010_TPMO_ORG_COUNT', !!tpmo.disclaimer && hasTpmoOrgCount(tpmo.disclaimer.text)],
+    ['CALL_OPEN_011_TPMO_PLAN_COUNT', !!tpmo.disclaimer && hasTpmoPlanCount(tpmo.disclaimer.text)],
+    ['CALL_OPEN_013_TPMO_RESOURCE_2027', !!tpmo.disclaimer && hasMedicareResource(tpmo.disclaimer.text)],
+  ]) {
+    const det = allDetections.find(d => d.intent_code === code);
+    Object.assign(det, {
+      detected: found, confidence: found ? 1 : 0, detection_method: 'tpmo_2027_policy',
+      speaker: tpmo.disclaimer?.speaker || null, transcript_segment: tpmo.disclaimer?.text || null,
+      segment_start_ms: tpmo.disclaimer?.start_ms ?? null, segment_end_ms: tpmo.disclaimer?.completion_ms ?? null,
+      anti_pattern_match: false, anti_pattern_detail: null,
+      sequence_violation: !!tpmo.disclaimer && !tpmo.beforeBenefits,
+      sequence_violation_detail: tpmo.disclaimer && !tpmo.beforeBenefits ? 'TPMO disclaimer completed after benefits discussion began' : null,
+      llm_reasoning: found ? 'Approved 2027 TPMO policy satisfied' : !tpmo.disclaimer ? 'Complete TPMO disclaimer missing' : 'TPMO timing failed: complete within 60 seconds and before benefits',
+    });
+  }
+
   // Validate sequence ordering (only for applicable intents)
   validateSequences(allDetections);
 
@@ -317,16 +339,6 @@ function validateSequences(detections) {
       } else if (prereq.segment_start_ms != null && det.segment_start_ms != null && prereq.segment_start_ms > det.segment_start_ms) {
         det.sequence_violation = true;
         det.sequence_violation_detail = `${intent.intent_code} occurred at ${det.segment_start_ms}ms but ${prereqCode} occurred later at ${prereq.segment_start_ms}ms`;
-      }
-    }
-
-    // Check TPMO timing constraint
-    if (intent.intent_code === 'CALL_OPEN_009_TPMO_WITHIN_60SEC') {
-      const tpmo = detectedByCode['CALL_OPEN_008_TPMO_DISCLAIMER'];
-      if (tpmo && tpmo.segment_start_ms != null && tpmo.segment_start_ms > 60000) {
-        det.detected = false;
-        det.confidence = 0;
-        det.llm_reasoning = `TPMO disclaimer delivered at ${tpmo.segment_start_ms}ms, exceeds 60-second requirement`;
       }
     }
   }

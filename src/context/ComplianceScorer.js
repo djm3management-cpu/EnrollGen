@@ -1,3 +1,4 @@
+import { evaluateTpmo2027 } from '../compliance/shared/tpmo2027.js';
 /**
  * ComplianceScorer v3, DUAL-LAYER Live Compliance Engine
  *
@@ -17,8 +18,8 @@ import {
   detectCustomerObjections,
   verifyCustomerAcknowledgments,
   detectMisleadingClaimEvidence,
-} from "./TranscriptAnalyzer";
-import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
+} from "./TranscriptAnalyzer.js";
+import { calculateServerGrade } from "../compliance/shared/serverGradeScale.js";
 
 /* ═══════════════════════════════════════════════════════════════
      HELPERS
@@ -174,46 +175,18 @@ function buildTpmoTimingEvidence(scriptState, options = {}) {
   const entries = getFinalMergedEntries(options);
   if (entries.length === 0) return null;
 
-  const numberWords =
-    "(?:\\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)";
-  const countRegex = new RegExp(
-    `${numberWords}\\s+(?:organizations?|carriers?).{0,48}${numberWords}\\s+plans?`,
-    "i"
-  );
-  const fallbackPhrases = [
-    "we do not offer every plan",
-    "not every plan available",
-    "represent",
-    "organizations and plans",
-    "plans available",
-  ];
-
-  const agentEntry = findAgentEntry(entries, (entry) => {
-    const normalized = normalizeEvidenceText(entry.text);
-    return (
-      countRegex.test(normalized) ||
-      (matchesPhrase(normalized, fallbackPhrases) &&
-        normalized.includes("plan") &&
-        normalized.includes("organization"))
-    );
-  });
-
-  if (!agentEntry) return null;
-
-  const callStartTs =
-    entries[0]?.timestamp || scriptState?.sectionTimestamps?.[1]?.start || 0;
-  const elapsedSec = Math.max(
-    0,
-    Math.round(((agentEntry.timestamp || callStartTs) - callStartTs) / 1000)
-  );
-
+  const callStart = scriptState?.tpmoStart || scriptState?.sectionTimestamps?.[1]?.start || entries[0]?.timestamp;
+  const policy = evaluateTpmo2027(entries.map(entry => ({
+    ...entry, start_ms: entry.timestamp - callStart,
+    // Live entries have a receipt timestamp, not word-level completion times.
+    end_ms: entry.timestamp - callStart,
+  })));
   return {
     hasTranscriptEvidence: true,
-    confidence: elapsedSec <= 90 ? 96 : 58,
-    evidence:
-      elapsedSec <= 90
-        ? `TPMO disclaimer detected ${elapsedSec}s into the call.`
-        : `TPMO disclaimer detected ${elapsedSec}s into the call, after the 90-second target.`,
+    confidence: policy.timingOk ? 96 : 0,
+    violation: !policy.timingOk,
+    evidence: policy.timingOk ? 'TPMO completed within 60 seconds and before benefits.' :
+      !policy.disclaimer ? 'Complete TPMO disclaimer missing.' : 'TPMO timing failed: complete within 60 seconds and before benefits.',
     intents: [],
   };
 }
@@ -504,18 +477,18 @@ const CATEGORIES = [
       {
         id: "disclosures_tpmo_timing",
         question:
-          "Was the TPMO disclaimer read within the first minute of the call?",
+          "Was the TPMO disclaimer read within the first minute and before benefits discussion?",
         points: 3,
         evaluate: (s) => {
-          const w = sectionCompletedWithinMs(s, 2, 90000);
+          const w = sectionCompletedWithinMs(s, 2, 60000);
           if (w === null)
             return { score: 35, evidence: "TPMO timing data unavailable yet." };
           return w
-            ? { score: 65, evidence: "TPMO completed within the first 90 seconds." }
+            ? { score: 65, evidence: "TPMO completed within the first 60 seconds." }
             : {
                 score: 45,
                 evidence:
-                  "TPMO completed after the first 90 seconds.",
+                  "TPMO completed after the first 60 seconds.",
               };
         },
       },

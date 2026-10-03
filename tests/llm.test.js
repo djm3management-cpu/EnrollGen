@@ -267,7 +267,7 @@ test('static prompt prefix is stable across transcript and app-state changes', (
   assert.notDeepEqual(first.contextMessages, second.contextMessages);
   const prompt = buildClassificationPrompt({ intents: ALL_INTENTS, segment: { text: 'volatile transcript' }, context: {} });
   assert.ok(prompt.indexOf(ALL_INTENTS.at(-1).intent_code) < prompt.indexOf('volatile transcript'));
-  assert.equal(classificationFormat.json_schema.schema.properties.detections.items.properties.intent_code.enum.length, 167);
+  assert.equal(classificationFormat.json_schema.schema.properties.detections.items.properties.intent_code.enum.length, ALL_INTENTS.length);
 });
 
 test('Supabase telemetry preserves tenant, token columns, and shadow outputs', async () => {
@@ -289,6 +289,6 @@ test('classifier passes the strict schema and aborts scoring on unavailable evid
     return JSON.stringify({ detections: [], risk_indicators: [], sentiment: { agent: 'professional', beneficiary: 'engaged' } });
   } });
   assert.equal(receivedFormat, classificationFormat);
-  assert.equal(result.detections.length, 167);
+  assert.equal(result.detections.length, ALL_INTENTS.length);
   await assert.rejects(classifyCall({ diarized, callContext: {}, callLLM: async () => { throw new Error('unavailable'); } }), /unavailable/);
 });
