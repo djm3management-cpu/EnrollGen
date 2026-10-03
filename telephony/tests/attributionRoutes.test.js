@@ -12,7 +12,7 @@ const { twilioStatusRouter } = await import('../src/routes/twilioStatus.js');
 const { voiceOutboundRouter } = await import('../src/routes/voiceOutbound.js');
 
 function database(agents = ['a', 'b']) {
-  const tables = { contacts: [], inbound_calls: [], telephony_events: [], contact_activities: [],
+  const tables = { tenant_agents: agents.map(agent_slug => ({ agent_slug, is_active: true, tenant_id: config.defaultTenantId })), contacts: [], inbound_calls: [], telephony_events: [], contact_activities: [],
     contact_lead_intel: [], telephony_call_attempts: [], telephony_routing_responses: [] };
   const claims = []; const evidence = []; const releases = []; const finishes = [];
   const reservations = new Map();
@@ -50,6 +50,11 @@ function database(agents = ['a', 'b']) {
     return q;
   };
   supabase.rpc = async (name, args) => {
+    if (name === 'outbound_dnc_status') {
+      if (state.failDnc) return { error: { message: 'unavailable' } };
+      return { data: tables.contacts.some(c => c.tenant_id === args.p_tenant_id && c.do_not_call &&
+        String(c.phone).replace(/[^0-9]/g, '').replace(/^1(?=.{10}$)/, '') === args.p_phone.slice(-10)) };
+    }
     if(name==='enqueue_paragon_billing_event') return {data:null,error:{code:'PGRST202'}};
     if (name === 'claim_call_agent') {
       claims.push(args);
@@ -289,4 +294,33 @@ test('outbound requests dual-channel recording through the same callback without
   assert.equal(db.claims.length, 1);
   assert.equal((await request(voiceOutboundRouter, '/api/voice/outbound', { CallSid: 'OUT', From: 'client:a', PhoneNumber: '+16097787669' })).body, result.body);
   assert.equal(db.claims.length, 1);
+});
+
+
+test('every outbound source, edited numbers and replay are DNC-gated before reservation', async () => {
+  for (const source of ['keypad', 'Recents', 'dialer Contacts', 'opportunity', 'contact detail', 'Calls', 'other click-to-call']) {
+    const db = database();
+    db.tables.contacts.push({ id: 'dnc-other-owner', tenant_id: config.defaultTenantId, phone: '(609) 778-7669', do_not_call: true, assigned_agent_id: 'b' });
+    const result = await request(voiceOutboundRouter, '/api/voice/outbound', {
+      CallSid: source, From: 'client:a', PhoneNumber: '6097787669', ContactId: 'non-dnc-original-prefill',
+    });
+    assert.match(result.body, /Do Not Call/); assert.doesNotMatch(result.body, /<Dial/);
+    assert.equal(db.claims.length, 0); assert.equal(db.tables.telephony_call_attempts.length, 0);
+  }
+  const db = database();
+  const body = { CallSid: 'REPLAY', From: 'client:a', PhoneNumber: '6097787669' };
+  assert.match((await request(voiceOutboundRouter, '/api/voice/outbound', body)).body, /<Dial/);
+  db.tables.contacts[0].do_not_call = true;
+  assert.doesNotMatch((await request(voiceOutboundRouter, '/api/voice/outbound', body)).body, /<Dial/);
+  assert.equal(db.claims.length, 1);
+});
+test('DNC lookup errors fail closed and another tenant DNC does not block', async () => {
+  const db = database(); db.failDnc = true;
+  const body = { CallSid: 'OUT', From: 'client:a', PhoneNumber: '6097787669' };
+  const failed = await request(voiceOutboundRouter, '/api/voice/outbound', body);
+  assert.match(failed.body, /check unavailable/); assert.doesNotMatch(failed.body, /<Dial/);
+  assert.equal(db.claims.length, 0);
+  db.failDnc = false;
+  db.tables.contacts.push({ id: 'other', tenant_id: 'other-tenant', phone: '+16097787669', do_not_call: true });
+  assert.match((await request(voiceOutboundRouter, '/api/voice/outbound', body)).body, /<Dial/);
 });

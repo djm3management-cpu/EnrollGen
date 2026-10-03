@@ -1,3 +1,4 @@
+import DncCallControl from "./phone/DncCallControl";
 import { useMemo, useState } from "react";
 import { ChevronDown, ExternalLink, Phone, Search } from "lucide-react";
 import {
@@ -206,13 +207,13 @@ export default function CarrierQuickRef() {
                   </a>
                 ) : null}
                 {carrier.phone ? (
-                  <a
+                  <DncCallControl as="a" phone={carrier.phone}
                     className="carrier-quickref-link"
                     href={`tel:${carrier.phone.replace(/[^0-9+]/g, "")}`}
                   >
                     <Phone size={11} />
                     {carrier.phone}
-                  </a>
+                  </DncCallControl>
                 ) : null}
               </footer>
             </article>

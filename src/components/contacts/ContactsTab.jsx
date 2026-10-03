@@ -1,3 +1,4 @@
+import DncCallControl from "../phone/DncCallControl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Archive, Mail, Phone, Search, Star } from "lucide-react";
 import {
@@ -408,14 +409,14 @@ function CenterTopBar({ contact, onStartCall, onEmail }) {
         ) : null}
       </div>
       <div className="contacts-icon-actions">
-        <button
+        <DncCallControl phone={contact?.phone} doNotCall={contact?.do_not_call}
           type="button"
           title="Start call"
           disabled={!contact || contact.do_not_call || !onStartCall}
           onClick={() => contact && onStartCall?.(contact, "ma")}
         >
           <Phone size={15} aria-hidden="true" />
-        </button>
+        </DncCallControl>
         <button type="button" title="Email" disabled={!contact?.email_set} onClick={onEmail}>
           <Mail size={15} aria-hidden="true" />
         </button>
@@ -830,14 +831,14 @@ function RightPanel({
                         </option>
                       ))}
                     </select>
-                    <button
+                    <DncCallControl phone={contact.phone} doNotCall={contact.do_not_call}
                       type="button"
                       className="contacts-start-call-btn"
                       onClick={() => onStartCall(contact, callFlow)}
                       disabled={contact.do_not_call}
                     >
                       START CALL
-                    </button>
+                    </DncCallControl>
                   </div>
                 ) : null}
                 <EditableSelect

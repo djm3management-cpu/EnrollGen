@@ -1,3 +1,4 @@
+import DncCallControl from "./DncCallControl";
 import { loadCallLog } from "../../lib/callLogApi";
 import { useAuth } from "@clerk/clerk-react";
 import { recordingMedia } from "../../lib/recordingsApi";
@@ -101,7 +102,7 @@ function RecentsTab({ onCall, disabled }) {
   return (
     <div className="phone-dialer__list">
       {recent.map((row) => (
-        <button
+        <DncCallControl phone={row.contact_phone}
           type="button"
           key={row.log_id}
           className="phone-dialer__row"
@@ -118,7 +119,7 @@ function RecentsTab({ onCall, disabled }) {
             <span className="phone-dialer__row-sub">{fmtWhen(row.occurred_at)}</span>
           </span>
           <Phone size={13} />
-        </button>
+        </DncCallControl>
       ))}
     </div>
   );
@@ -126,7 +127,8 @@ function RecentsTab({ onCall, disabled }) {
 
 function ContactsTabPanel({ onCall, disabled }) {
   const [search, setSearch] = useState("");
-  const { contacts, loading } = useContactsList(search);
+  const inbound = useInboundCall();
+  const { contacts, loading, error } = useContactsList(search, inbound?.requestingAgentId, true);
 
   return (
     <div className="phone-dialer__contacts">
@@ -139,7 +141,7 @@ function ContactsTabPanel({ onCall, disabled }) {
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>
-      {loading ? (
+      {error ? <div className="ops-error" role="alert">{error}</div> : loading ? (
         <div className="phone-dialer__empty">Loading contacts...</div>
       ) : !contacts.length ? (
         <div className="phone-dialer__empty">No contacts found</div>
@@ -152,7 +154,7 @@ function ContactsTabPanel({ onCall, disabled }) {
                 <span className="phone-dialer__row-name">{contactDisplayName(contact)}</span>
                 <span className="phone-dialer__row-sub">{fmtPhone(contact.phone)}</span>
               </span>
-              <button
+              <DncCallControl phone={contact.phone} doNotCall={contact.do_not_call}
                 type="button"
                 className="phone-dialer__call-icon"
                 disabled={disabled || !contact.phone || contact.do_not_call}
@@ -160,7 +162,7 @@ function ContactsTabPanel({ onCall, disabled }) {
                 onClick={() => onCall(contact.phone, contact.id, contactDisplayName(contact))}
               >
                 <Phone size={13} />
-              </button>
+              </DncCallControl>
             </div>
           ))}
         </div>
@@ -205,7 +207,7 @@ function KeypadTab({ onCall, disabled, initialContact }) {
       </div>
       <div className="phone-dialer__keypad-actions">
         <span aria-hidden="true" />
-        <button
+        <DncCallControl phone={input} doNotCall={Boolean(initialContact?.do_not_call && normalizePhoneE164(input) === normalizePhoneE164(initialContact.phone))}
           type="button"
           className="phone-dialer__call-btn"
           disabled={disabled || !input}
@@ -216,7 +218,7 @@ function KeypadTab({ onCall, disabled, initialContact }) {
           aria-label="Call"
         >
           <Phone size={22} fill="currentColor" strokeWidth={0} />
-        </button>
+        </DncCallControl>
         <button
           type="button"
           className="phone-dialer__backspace"
