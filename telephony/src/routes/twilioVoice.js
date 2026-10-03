@@ -1,7 +1,8 @@
 import { resolveParagonArrival, claimParagonArrival, enqueueBillingCallback, verifiedParagonArrival } from "../paragonBilling.js";
 import { Router } from "express";
 import twilio from "twilio";
-import { config, publicUrl, mediaStreamUrl } from "../config.js";
+import { config, publicUrl } from "../config.js";
+import { authenticatedStreamUrl } from "../media/streamToken.js";
 import { supabase } from "../supabase.js";
 import { requireTwilioSignature } from "../twilioSecurity.js";
 import { findOrCreateContactByPhone, latestLeadIntel, logContactActivity } from "../contacts.js";
@@ -69,9 +70,13 @@ async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentId
 
   if (triedAgentIds.length) response.stop().stream({ name: "agent-transcription" });
   const start = response.start();
-  const stream = start.stream({ name: "agent-transcription", url: mediaStreamUrl(), track: "both_tracks" });
+  const stream = start.stream({ name: "agent-transcription", url: authenticatedStreamUrl({
+    callSid: inboundCall.twilio_call_sid, agentId: agent.agent_id, attemptId,
+    tenantId: inboundCall.tenant_id || config.defaultTenantId, inboundCallId: inboundCall.id,
+  }), track: "both_tracks" });
   stream.parameter({ name: "inboundCallId", value: inboundCall.id });
   stream.parameter({ name: "agentId", value: agent.agent_id });
+  stream.parameter({ name: "attemptId", value: attemptId });
 
   const tried = [...triedAgentIds, agent.agent_id].join(",");
   const dial = response.dial({

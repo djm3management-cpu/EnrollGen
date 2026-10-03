@@ -64,7 +64,7 @@ const server = http.createServer(app);
 
 server.on("upgrade", (request, socket, head) => {
   const { pathname } = new URL(request.url, "http://localhost");
-  if (pathname === "/media") return handleMediaUpgrade(request, socket, head);
+  if (pathname === "/media" || pathname.startsWith("/media/")) return handleMediaUpgrade(request, socket, head);
   if (pathname === "/agent") return handleAgentUpgrade(request, socket, head);
   socket.destroy();
 });

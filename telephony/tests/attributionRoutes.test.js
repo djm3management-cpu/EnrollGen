@@ -10,6 +10,7 @@ const { config } = await import('../src/config.js');
 const { twilioVoiceRouter } = await import('../src/routes/twilioVoice.js');
 const { twilioStatusRouter } = await import('../src/routes/twilioStatus.js');
 const { voiceOutboundRouter } = await import('../src/routes/voiceOutbound.js');
+const { verifyMediaStreamToken } = await import('../src/media/streamToken.js');
 
 function database(agents = ['a', 'b']) {
   const tables = { tenant_agents: agents.map(agent_slug => ({ agent_slug, is_active: true, tenant_id: config.defaultTenantId })), contacts: [], inbound_calls: [], telephony_events: [], contact_activities: [],
@@ -109,6 +110,14 @@ test('inbound TwiML persists attempt and requests answer/completion; replay neve
   const replay = await request(twilioVoiceRouter, '/twilio/voice', incoming);
   assert.equal(replay.body, first.body); assert.equal(db.claims.length, 1);
   assert.equal(db.tables.telephony_call_attempts.length, 1);
+  const token = /<Stream[^>]*url="wss:\/\/example.test\/media\/([^"]+)"/.exec(first.body)?.[1];
+  const streamClaims = verifyMediaStreamToken(token);
+  assert.equal(streamClaims.callSid, incoming.CallSid);
+  assert.equal(streamClaims.agentId, db.tables.telephony_call_attempts[0].agent_id);
+  assert.equal(streamClaims.attemptId, db.tables.telephony_call_attempts[0].id);
+  assert.equal(streamClaims.inboundCallId, db.tables.inbound_calls[0].id);
+  assert.match(first.body, /track="both_tracks"/);
+  assert.match(first.body, /<Parameter name="attemptId"/);
   assert.match(first.body, /record="record-from-answer-dual"/);
   assert.match(first.body, /recordingStatusCallbackEvent="completed absent"/);
   assert.match(first.body, /recordingStatusCallback="https:\/\/example.test\/twilio\/recording\?attemptId=telephony_call_attempts-1"/);
@@ -123,6 +132,9 @@ test('no-answer still excludes first agent and reroutes; exhausted capacity stil
   assert.match(result.body, /<Identity>b<\/Identity>/);
   assert.deepEqual(db.claims[1].p_exclude, ['a']);
   assert.equal(db.tables.telephony_call_attempts.length, 2);
+  const nextToken = /<Stream[^>]*url="wss:\/\/example.test\/media\/([^"]+)"/.exec(result.body)?.[1];
+  assert.equal(verifyMediaStreamToken(nextToken).agentId,'b');
+  assert.equal(verifyMediaStreamToken(nextToken).attemptId,db.tables.telephony_call_attempts[1].id);
   const overflow = await request(twilioVoiceRouter, '/twilio/dial-result', {
     CallSid: 'PARENT', DialCallSid: 'CHILD2', DialCallStatus: 'busy',
   }, { ...query, tried: 'a,b', agentId: 'b', attemptId: db.tables.telephony_call_attempts[1].id });
@@ -149,6 +161,7 @@ test('outbound matches normalized phone, ignores supplied ContactId and persists
   });
   assert.equal(db.tables.contacts[0].phone, '+16097787669');
   const a = db.tables.telephony_call_attempts[0];
+  assert.doesNotMatch(res.body, /<Stream/); // Outbound remains browser-transcribed.
   assert.equal(a.parent_call_sid, 'OUT'); assert.equal(a.agent_id, 'a'); assert.equal(a.direction, 'outbound');
   assert.equal(a.contact_id, db.tables.contacts[0].id); assert.equal(a.to_number, '+16097787669');
   assert.equal(a.min_connected_seconds, 30);

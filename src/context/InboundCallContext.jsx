@@ -21,6 +21,7 @@ import {
 import { createAgentPhoneConnection } from "../lib/agentPhoneConnection";
 import { publishSms } from "../lib/smsEvents";
 import { publishAudioLevel } from "../stores/audioLevelStore";
+import { updateTranscriptionHealth, transcriptionHealthError, transcriptionHealthForCall } from "../lib/transcriptionHealth";
 
 // Inbound softphone state: Twilio Voice SDK device registration, the
 // incoming-call banner payload, and the server-transcribed AGENT/CUSTOMER
@@ -74,7 +75,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const [agentRows, setAgentRows] = useState([]);
   const [customerTranscript, setCustomerTranscript] = useState([]);
   const [error, setError] = useState("");
-  const [transcriptionError, setTranscriptionError] = useState("");
+  const [transcriptionHealth, setTranscriptionHealth] = useState({});
+  const transcriptionError = transcriptionHealthError(transcriptionHealth);
   const [isMuted, setIsMuted] = useState(false);
   const [isHeld, setIsHeld] = useState(false);
   const [connectedAt, setConnectedAt] = useState(null);
@@ -115,12 +117,12 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       }
       return;
     }
-    if (message.type === "transcription_error") {
-      setTranscriptionError(message.message || "Customer transcription is unavailable.");
+    if (["transcription_error", "transcription_health"].includes(message.type)) {
+      setTranscriptionHealth(previous => updateTranscriptionHealth(previous, message));
       return;
     }
     if (message.type !== "transcript" || !message.text) return;
-    if (message.speaker === "customer") setTranscriptionError("");
+    setTranscriptionHealth(previous => updateTranscriptionHealth(previous, message));
     if (message.speaker === "agent") {
       if (!message.isFinal) return;
       setAgentRows((prev) => [
@@ -378,7 +380,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     if (!incomingCall) return;
     setAgentRows([]);
     setCustomerTranscript([]);
-    setTranscriptionError("");
+    // Streams start while the agent is ringing. Preserve a failure already
+    // reported for this call; discard health left over from another call.
+    setTranscriptionHealth(previous => transcriptionHealthForCall(previous, incomingCall.params?.inboundCallId));
     incomingCall.call.accept();
     setActiveCall(incomingCall);
     setIncomingCall(null);
@@ -410,7 +414,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       setError("");
       setAgentRows([]);
       setCustomerTranscript([]);
-      setTranscriptionError("");
+      setTranscriptionHealth({});
 
       const params = {
         callerName: contactName || "",
@@ -528,6 +532,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       deviceStatus,
       error,
       transcriptionError,
+      transcriptionHealth,
       incomingCall,
       activeCall,
       dialingCall,
@@ -552,6 +557,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       deviceStatus,
       error,
       transcriptionError,
+      transcriptionHealth,
       incomingCall,
       activeCall,
       dialingCall,
