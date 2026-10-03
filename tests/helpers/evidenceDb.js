@@ -8,7 +8,11 @@ export function evidenceDb(pg, onError = () => {}) {
       try {
         const sql = "SELECT * FROM public." + q(name) + "(" + entries.map(([key], index) =>
           q(key) + "=>$" + (index + 1) + (key === "query_embedding" ? "::vector" : "")).join(",") + ")";
-        return { data: (await pg.query(sql, entries.map(([key,item]) => key === "query_embedding" ? "{" + item.join(",") + "}" : item))).rows, error: null };
+        const jsonArgs = new Set(['p_transcript', 'p_result']);
+        const rows = (await pg.query(sql, entries.map(([key,item]) => key === "query_embedding" ? "{" + item.join(",") + "}"
+          : jsonArgs.has(key) ? JSON.stringify(item) : item))).rows;
+        const scalarScoring = ['begin_scoring_job','persist_scoring_result','fail_scoring_job'].includes(name);
+        return { data: scalarScoring ? rows[0]?.[name] : rows, error: null };
       } catch (error) { return { data: null, error }; }
     },
     from(table) {

@@ -79,21 +79,8 @@ return async (request, context) => {
         return response.content.filter(block => block.type === 'text').map(block => block.text).join('');
       }),
     });
-    try {
-      let updateQuery = sb.from("call_records").update({
-        metadata: {
-          ...(callRecord.metadata || {}),
-          scoring_status: "complete",
-          scoring_completed_at: new Date().toISOString(),
-        },
-        compliance_scorecard_id: result.scorecard?.id || callRecord.compliance_scorecard_id || null,
-        updated_at: new Date().toISOString(),
-      }).eq("id", callId);
-      if (callRecord.tenant_id) updateQuery = updateQuery.eq("tenant_id", callRecord.tenant_id);
-      await updateQuery;
-    } catch (updateError) {
-      console.warn(`[score-bg] Could not mark scoring complete for ${callId}:`, updateError);
-    }
+    // The scoring transaction owns completion and linkage; busy/replayed jobs don't rerun side effects.
+    if (result.pending || result.reused) return new Response(null, { status: 202 });
 
     await logUsageRecord(sb, callRecord.tenant_id, "compliance_score", 1, {
       call_record_id: callId,
@@ -105,16 +92,9 @@ return async (request, context) => {
     console.log(`[score-bg] Scoring complete for ${callId}: ${result.scorecard?.overall_grade} (${result.scorecard?.overall_score?.toFixed(1)}%)`);
   } catch (err) {
     console.error(`[score-bg] Scoring failed for ${callId}:`, err);
-    // Store error on the call record so the client can detect failure
-    let updateQuery = sb.from("call_records").update({
-      metadata: {
-        ...(callRecord.metadata || {}),
-        scoring_error: err.message,
-        scoring_failed_at: new Date().toISOString(),
-      },
-    }).eq("id", callId);
-    if (callRecord.tenant_id) updateQuery = updateQuery.eq("tenant_id", callRecord.tenant_id);
-    await updateQuery;
+    // generateScorecard records a checked failed status using the claimed worker token.
+    // If even that write fails, return a retryable error instead of claiming completion.
+    return new Response("Scoring failed", { status: 503 });
   }
 };
 }

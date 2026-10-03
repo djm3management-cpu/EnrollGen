@@ -85,7 +85,7 @@ before(async () => {
   // Scoring uses its real table definitions and the real classifier/scorer.
   const scoring = readFileSync(new URL("../supabase/migrations/001_compliance_engine.sql",import.meta.url),"utf8");
   for (const table of ["compliance_intents","scoring_templates","scoring_template_items","intent_detections",
-    "compliance_scorecards","scorecard_items","corrective_actions","agent_compliance_profiles"]) {
+    "compliance_scorecards","scorecard_items","corrective_actions","agent_compliance_profiles","phi_redactions"]) {
     const start = scoring.indexOf("CREATE TABLE IF NOT EXISTS " + table + " (");
     await pg.exec(scoring.slice(start, scoring.indexOf("\n);",start)+4));
   }
@@ -147,7 +147,9 @@ test("compatible handlers work before 063, including imported ownership and chec
   assert.equal((await call(h.session,null,200,"GET")).sessions.some(row=>row.id===windowSession),true);
 });
 
-test("pre-063 scoring baseline captures successful scorecard/items and existing F13 detection overflow", async () => {
+test("072 scoring before 063 saves the long intent and complete evidence", async () => {
+  await role("postgres");
+  await pg.exec(readFileSync(new URL("../supabase/migrations/072_scoring_integrity.sql",import.meta.url),"utf8"));
   preMigrationScoring = await scoreFixtureCall();
 });
 
@@ -347,6 +349,7 @@ async function scoreFixtureCall() {
   await query("UPDATE call_records SET call_duration_seconds=180,transcript_raw='This call is recorded.',transcript_diarized='[]' WHERE id=$1",[windowCall.call_record_id]);
   process.env.SCORE_CALL_JOB_SECRET = "fixture-only-job-secret";
   const firstError = sqlErrors.length;
+  const priorScores = (await query("SELECT count(*)::int AS n FROM scoring_jobs WHERE call_id=$1 AND status='complete'",[windowCall.call_record_id]))[0].n;
   let llmCalls = 0;
   const scoring = createScoreCallHandler({getDb:()=>db,classify:async()=> {
     llmCalls++;
@@ -356,7 +359,8 @@ async function scoreFixtureCall() {
   assert.equal((await scoring(bodyRequest({callId:windowCall.call_record_id,tenantId:tenant}))).status,401);
   await scoring(new Request("https://example.invalid", {method:"POST",headers:{"x-enrollgen-job-secret":"fixture-only-job-secret"},
     body:JSON.stringify({callId:windowCall.call_record_id,tenantId:tenant})}),{});
-  assert.ok(llmCalls>0);
+  if (priorScores) assert.equal(llmCalls,0);
+  else assert.ok(llmCalls>0);
   const record = (await query("SELECT * FROM call_records WHERE id=$1",[windowCall.call_record_id]))[0];
   assert.equal(record.metadata.scoring_status,"complete");
   assert.ok(record.compliance_scorecard_id);
@@ -365,16 +369,14 @@ async function scoreFixtureCall() {
   assert.equal((await query("SELECT count(*)::integer AS n FROM scorecard_items WHERE scorecard_id=$1",[score.id]))[0].n,1);
   const detections = (await query("SELECT id FROM intent_detections WHERE call_id=$1",[record.id])).length;
   const errors = sqlErrors.slice(firstError);
-  // Existing F13: the catalog has a 53-character intent, live varchar(50)
-  // rejects the bulk insert, and the legacy generator ignores its error.
-  // Preserve and expose this baseline; 063 must not add permission failures.
-  assert.equal(detections,0);
-  assert.deepEqual(errors.map(error=>[error.table,error.code]),[["intent_detections","22001"]]);
+  assert.ok(detections > 0);
+  assert.deepEqual(errors, []);
+  assert.equal((await query("SELECT count(*)::integer AS n FROM compliance_scorecards WHERE call_id=$1 AND transcript_revision IS NOT NULL",[record.id]))[0].n,1);
   return { overallScore:Number(score.overall_score),passFail:score.pass_fail,scoringStatus:record.metadata.scoring_status,
     detections,errorCodes:errors.map(error=>error.code) };
 }
 
-test("service scoring after 063 matches pre-063 baseline; known F13 detection failure is explicit", async () => {
+test("service scoring stays intact after 063 and repeats reuse the 072 versioned result", async () => {
   assert.deepEqual(await scoreFixtureCall(),preMigrationScoring);
 });
 
