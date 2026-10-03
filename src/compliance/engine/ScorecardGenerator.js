@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { assessmentFormat } from "../../lib/llm/schemas/compliance.js";
 /**
  * ScorecardGenerator, Orchestrates the full scoring pipeline:
@@ -24,12 +25,41 @@ For the beneficiary, score engagement from 1 to 10 based on their responsiveness
  * @param {Function} [params.onProgress] - (pct, message) => void
  * @returns {Object} { scorecard, scorecardItems, detections, correctiveActions }
  */
-export async function generateScorecard({ supabase, callRecord, callLLM, onProgress }) {
+async function checked(query, label) {
+  const { data, error } = await query;
+  if (error) throw new Error(`${label}: ${error.message || error}`);
+  return data;
+}
+
+export async function generateScorecard(params) {
+  let job;
+  try {
+    return await generateScorecardWork({ ...params, setJob: value => { job = value; } });
+  } catch (error) {
+    try {
+      if (job) {
+        await checked(params.supabase.rpc('fail_scoring_job', {
+          p_job_id: job.jobId, p_attempt_token: job.attemptToken, p_error: error.message,
+        }), 'Record failed scoring job');
+      } else {
+        await checked(params.supabase.from('call_records').update({
+          metadata: { ...(params.callRecord.metadata || {}), scoring_status: 'failed', scoring_error: error.message,
+            scoring_failed_at: new Date().toISOString() },
+        }).eq('id', params.callRecord.id).eq('tenant_id', params.callRecord.tenant_id), 'Record scoring failure');
+      }
+    } catch (statusError) {
+      throw new globalThis.AggregateError([error, statusError], `Scoring failed; failure status could not be saved: ${statusError.message}`);
+    }
+    throw error;
+  }
+}
+
+async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress, setJob }) {
   const progress = (pct, msg) => onProgress && onProgress(pct, msg);
 
   // 1. Get the active scoring template
   progress(5, 'Loading scoring template...');
-  const { data: template } = await supabase
+  const { data: template, error: templateError } = await supabase
     .from('scoring_templates')
     .select('*')
     .eq('product_type', callRecord.product_type || 'MA')
@@ -38,14 +68,37 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     .limit(1)
     .single();
 
+  if (templateError) throw new Error(`Load scoring template: ${templateError.message}`);
   if (!template) throw new Error('No active scoring template found');
 
   // 2. Get template items with linked intent data
-  const { data: templateItems } = await supabase
+  const { data: templateItems, error: itemsError } = await supabase
     .from('scoring_template_items')
     .select('*, compliance_intents(intent_code)')
     .eq('template_id', template.id)
     .order('display_order');
+
+  if (itemsError) throw new Error(`Load scoring template items: ${itemsError.message}`);
+  if (!templateItems?.length) throw new Error('Scoring template has no items');
+  const job = await checked(supabase.rpc('begin_scoring_job', {
+    p_call_id: callRecord.id, p_template_id: template.id,
+    p_transcript: { raw: callRecord.transcript_raw ?? null, diarized: callRecord.transcript_diarized ?? null,
+      duration: callRecord.call_duration_seconds ?? null },
+  }), 'Begin scoring job');
+  if (job?.status === 'pending') return { pending: true };
+  if (job?.status === 'complete') return { ...job.result, reused: true,
+    avgConfidence: calculateAverageConfidence(job.result.scorecardItems) };
+  if (job?.status !== 'claimed' || !job.jobId || !job.attemptToken) throw new Error('Scoring job was not claimed');
+  setJob(job);
+  const persist = async result => {
+    const saved = await checked(supabase.rpc('persist_scoring_result', {
+      p_job_id: job.jobId, p_attempt_token: job.attemptToken, p_result: result,
+    }), 'Persist scoring result');
+    if (!saved?.scorecard?.id) throw new Error('Scoring transaction returned no scorecard');
+    if (!saved.reused) await updateAgentProfile(supabase, callRecord, saved.scorecard);
+    progress(100, 'Scorecard complete');
+    return { ...saved, avgConfidence: calculateAverageConfidence(saved.scorecardItems) };
+  };
 
   // Flatten intent_code onto each template item
   const enrichedItems = (templateItems || []).map(item => ({
@@ -55,7 +108,7 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
 
   // 3. Parse transcript
   progress(10, 'Preparing transcript...');
-  const diarized = callRecord.transcript_diarized || [];
+  const diarized = structuredClone(callRecord.transcript_diarized || []);
   if (diarized.length === 0 && callRecord.transcript_raw) {
     // Fallback: treat raw transcript as single agent segment
     diarized.push({
@@ -72,9 +125,7 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
 
   if (callDurationS > 0 && callDurationS < 120) {
     progress(90, 'Short call, insufficient for scoring');
-    const { data: scorecard } = await supabase
-      .from('compliance_scorecards')
-      .insert({
+    const scorecard = {
         tenant_id: callRecord.tenant_id,
         call_id: callRecord.id,
         template_id: template.id,
@@ -94,13 +145,8 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
         sentiment_summary: {},
         coaching_notes: [`Short call (${Math.round(callDurationS)}s) flagged as insufficient rather than scored at 0%`],
         corrective_actions_needed: false,
-      })
-      .select()
-      .single();
-
-    progress(100, 'Scorecard complete (insufficient call)');
-    await updatePostScorecardState(supabase, callRecord, scorecard);
-    return { scorecard, scorecardItems: [], detections: [], correctiveActions: [], avgConfidence: 0, isShortCall: true };
+      };
+    return persist({ scorecard, items: [], detections: [], actions: [], redactions: [], isShortCall: true });
   }
 
   // 4. Classify intents
@@ -116,9 +162,10 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     onProgress: (innerPct, msg) => progress(15 + Math.round(innerPct * 0.6), msg),
   });
 
-  // 5. Store intent detections
-  progress(80, 'Storing detections...');
+  // 5. Prepare intent detections for the atomic save
+  progress(80, 'Preparing detections...');
   const detectionRows = classificationResult.detections.map(d => ({
+    id: randomUUID(),
     call_id: callRecord.id,
     intent_code: d.intent_code,
     detected: d.detected,
@@ -136,15 +183,9 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     llm_reasoning: d.llm_reasoning,
   }));
 
-  const { data: savedDetections } = await supabase
-    .from('intent_detections')
-    .insert(detectionRows)
-    .select();
-
-  // Map detection IDs back for scoring
+  // IDs are allocated before scoring; the transaction saves evidence and links together.
   const detectionsWithIds = classificationResult.detections.map((d, i) => ({
-    ...d,
-    id: savedDetections?.[i]?.id || null,
+    ...d, id: detectionRows[i].id,
   }));
 
   // 6. Score the call
@@ -157,10 +198,7 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
 
   // 7. Create the scorecard record
   progress(90, 'Generating scorecard...');
-  const avgConfidence = calculateAverageConfidence(scoreResult.scorecard_items);
-  const { data: scorecard } = await supabase
-    .from('compliance_scorecards')
-    .insert({
+  const scorecard = {
       tenant_id: callRecord.tenant_id,
       call_id: callRecord.id,
       template_id: template.id,
@@ -180,17 +218,20 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
       sentiment_summary: classificationResult.sentiment,
       coaching_notes: scoreResult.coaching_notes,
       corrective_actions_needed: scoreResult.corrective_actions_needed,
-    })
-    .select()
-    .single();
+    };
 
   // 7b. Agent performance + beneficiary risk assessment
   if (callDurationS >= 120 && diarized.length >= 10) {
     progress(92, 'Assessing agent performance...');
+    let assessment;
     try {
       const assessmentPrompt = buildAssessmentPrompt(callRecord, diarized, scoreResult);
       const assessmentRaw = await callLLM(ASSESSMENT_SYSTEM_PROMPT, assessmentPrompt, { response_format: assessmentFormat });
-      const assessment = parseAssessmentResponse(assessmentRaw);
+      assessment = parseAssessmentResponse(assessmentRaw);
+    } catch (err) {
+      console.warn('[ScorecardGenerator] Assessment generation failed:', err.message);
+    }
+    if (assessment) {
 
       let assessmentQuery = supabase.from('call_records').update({
         agent_assessment: assessment.agent,
@@ -202,27 +243,11 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
       if (assessmentError) throw assessmentError;
 
       await upsertFollowupQueue(supabase, callRecord, assessment.beneficiary);
-    } catch (err) {
-      console.warn('[ScorecardGenerator] Assessment generation failed:', err.message);
     }
   }
 
-  // Update call record with detected direction if classifier overrode it
-  if (classificationResult.detectedDirection) {
-    let directionQuery = supabase.from('call_records').update({
-      call_direction: classificationResult.detectedDirection,
-      metadata: {
-        ...(callRecord.metadata || {}),
-        direction_detected_from: 'transcript_analysis',
-      },
-    }).eq('id', callRecord.id);
-    if (callRecord.tenant_id) directionQuery = directionQuery.eq('tenant_id', callRecord.tenant_id);
-    await directionQuery;
-  }
-
-  // 8. Insert scorecard line items
+  // 8. Prepare scorecard line items
   const itemRows = scoreResult.scorecard_items.map(item => ({
-    scorecard_id: scorecard.id,
     template_item_id: item.template_item_id,
     intent_id: item.intent_id,
     detection_id: item.detection_id,
@@ -240,13 +265,11 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
     display_order: item.display_order,
   }));
 
-  await supabase.from('scorecard_items').insert(itemRows);
 
   // 9. Create corrective actions if needed
   let correctiveActions = [];
   if (scoreResult.corrective_actions_needed && scoreResult.corrective_bucket) {
     const action = {
-      scorecard_id: scorecard.id,
       call_id: callRecord.id,
       agent_id: callRecord.agent_id,
       agent_name: callRecord.agent_name,
@@ -266,56 +289,24 @@ export async function generateScorecard({ supabase, callRecord, callLLM, onProgr
       status: 'open',
     };
 
-    const { data: savedAction } = await supabase
-      .from('corrective_actions')
-      .insert(action)
-      .select()
-      .single();
-
-    correctiveActions = savedAction ? [savedAction] : [];
+    correctiveActions = [action];
   }
 
-  // 10. Store PHI redactions
+  // 10. Persist scorecard, detections, items, actions and PHI evidence together
   const allRedactions = classificationResult.detections
     .flatMap(d => d.phi_redactions || [])
     .map(r => ({ call_id: callRecord.id, ...r }));
 
-  if (allRedactions.length > 0) {
-    await supabase.from('phi_redactions').insert(allRedactions);
-  }
-
-  progress(100, 'Scorecard complete');
-
-  await updatePostScorecardState(supabase, callRecord, scorecard);
-
-  return {
-    scorecard,
-    scorecardItems: scoreResult.scorecard_items,
-    detections: detectionsWithIds,
-    correctiveActions,
-    avgConfidence,
-  };
+  return persist({ scorecard, items: itemRows, detections: detectionRows,
+    actions: correctiveActions, redactions: allRedactions, isShortCall: false,
+    detectedDirection: classificationResult.detectedDirection || null });
 }
 
-async function updatePostScorecardState(supabase, callRecord, scorecard) {
+async function updateAgentProfile(supabase, callRecord, scorecard) {
   if (!supabase || !callRecord?.id || !scorecard?.id) return;
 
   try {
-    let updateQuery = supabase
-      .from('call_records')
-      .update({
-        compliance_scorecard_id: scorecard.id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', callRecord.id);
-    if (callRecord.tenant_id) updateQuery = updateQuery.eq('tenant_id', callRecord.tenant_id);
-    await updateQuery;
-  } catch (error) {
-    console.warn('[ScorecardGenerator] Could not link scorecard to call record:', error?.message || error);
-  }
-
-  try {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('agent_compliance_profiles')
       .select('*')
       .eq('agent_id', callRecord.agent_id)
@@ -323,6 +314,7 @@ async function updatePostScorecardState(supabase, callRecord, scorecard) {
       .limit(1)
       .maybeSingle();
 
+    if (profileError) throw profileError;
     const previousTotal = Number(profile?.total_calls_scored || 0);
     const nextTotal = previousTotal + 1;
     const priorAllTime = Number(profile?.all_time_score || 0);
@@ -344,23 +336,18 @@ async function updatePostScorecardState(supabase, callRecord, scorecard) {
     };
 
     if (profile?.id) {
-      await supabase
-        .from('agent_compliance_profiles')
-        .update(profilePayload)
-        .eq('id', profile.id);
+      await checked(supabase.from('agent_compliance_profiles').update(profilePayload).eq('id', profile.id), 'Update agent profile');
       return;
     }
 
-    await supabase
-      .from('agent_compliance_profiles')
-      .insert({
+    await checked(supabase.from('agent_compliance_profiles').insert({
         ...profilePayload,
         rolling_30d_score: Number(scorecard.overall_score || 0),
         rolling_90d_score: Number(scorecard.overall_score || 0),
         risk_tier: scorecard.risk_level === 'critical' || scorecard.risk_level === 'high'
           ? 'elevated'
           : 'standard',
-      });
+      }), 'Insert agent profile');
   } catch (error) {
     console.warn('[ScorecardGenerator] Could not update agent compliance profile:', error?.message || error);
   }
@@ -493,6 +480,6 @@ async function upsertFollowupQueue(supabase, callRecord, beneficiaryRisk) {
     }, { onConflict: 'call_id' });
     if (error) throw error;
   } catch (error) {
-    console.warn('[ScorecardGenerator] Could not queue beneficiary follow-up:', error?.message || error);
+    throw new Error(`Queue beneficiary follow-up: ${error.message || error}`);
   }
 }
