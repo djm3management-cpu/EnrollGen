@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { OpportunityEditor } from './OpportunityEditor';
 import OpportunityDialog from './OpportunityDialog';
+import DeleteOpportunityDialog from './DeleteOpportunityDialog';
+import { canDeleteOpportunity, historyStage, readOpportunityHistory } from '../../lib/opportunities';
 import CallDetailPanel from '../callDetail/CallDetailPanel';
 
 export function StageBadge({ stage, name }) {
@@ -16,12 +18,13 @@ export default function OpportunityDrawer({ row, data, onClose, onOpenContact, i
   const [callDetail, setCallDetail] = useState(null);
   const [callLoading, setCallLoading] = useState(false);
   const [notice, setNotice] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const stage = data.stages.find((item) => item.id === row.stage_id);
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
       const results = await Promise.all([
-        data.supabaseClient.from('opportunity_stage_history').select('*').eq('tenant_id', data.tenantId).eq('opportunity_id', row.id).order('changed_at', { ascending: false }),
+        readOpportunityHistory(data.supabaseClient, data.tenantId, row.id),
         data.supabaseClient.from('call_records').select('id, call_start, call_outcome, product_type, call_duration_seconds').eq('tenant_id', data.tenantId).eq('contact_id', row.contact_id).order('call_start', { ascending: false }).limit(100),
       ]);
       for (const result of results) if (result.error) throw result.error;
@@ -47,16 +50,20 @@ export default function OpportunityDrawer({ row, data, onClose, onOpenContact, i
   return <OpportunityDialog title={row.title || 'Opportunity'} drawer busy={busy} onClose={onClose}>
     <div className="opps-drawer-summary"><strong>{row.contact_name}</strong><StageBadge stage={stage} />
       <button className="contacts-mini-btn" type="button" disabled={busy} onClick={() => onOpenContact(row.contact_id)}>OPEN CONTACT</button>
+      {canDeleteOpportunity(row, data.agentUuid, data.isAdmin) && <button className="contacts-mini-btn opps-danger" type="button" disabled={busy || data.pendingIds.has(row.id)} onClick={() => setDeleting(true)}>DELETE</button>}
     </div>
     <OpportunityEditor key={row.id} data={data} existing={row} focusNotes={initialSection === 'notes'} onBusyChange={setBusy} onSaved={() => setNotice('Opportunity saved.')} />
     {notice && <p className="contacts-muted" role="status">{notice}</p>}
     {error && <div className="ops-error" role="alert">{error}<button className="contacts-mini-btn" type="button" onClick={load}>RETRY</button></div>}
     <section className="contacts-section opps-timeline"><h3 className="contacts-section-head">STAGE HISTORY</h3>
       {loading ? <p className="contacts-muted">Loading history…</p> : !history.length ? <p className="contacts-muted">No stage changes yet.</p> : <ol>
-        {history.map((item) => <li key={item.id}><strong>{item.from_stage_name ? `${item.from_stage_name} → ` : 'Created → '}{item.to_stage_name}</strong>
+        {history.map((item) => <li key={item.id} style={{ '--stage-color': historyStage(item, 'to', data.stages).color }}><div className="opps-history-stages">
+          {item.from_stage_name ? <StageBadge stage={historyStage(item, 'from', data.stages)} /> : <span className="contacts-muted">Created</span>}
+          <span aria-hidden="true">→</span><StageBadge stage={historyStage(item, 'to', data.stages)} /></div>
           <span className="contacts-muted">{new Date(item.changed_at).toLocaleString()} · {data.agents.find((agent) => agent.id === item.changed_by)?.name || 'Agent'}</span></li>)}
       </ol>}
     </section>
+    {deleting && <DeleteOpportunityDialog row={row} data={data} onClose={() => setDeleting(false)} onDeleted={onClose} />}
     <section className="contacts-section"><h3 className="contacts-section-head">LINKED CALLS</h3>
       {!loading && !calls.length && <p className="contacts-muted">No calls for this contact.</p>}
       {calls.map((call) => <div className="opps-call" key={call.id}><span>{call.call_start ? new Date(call.call_start).toLocaleString() : 'Call'} · {call.call_outcome || call.product_type || 'Unknown outcome'}{call.id === row.call_id ? ' · Linked' : ''}</span>

@@ -18266,8 +18266,11 @@ body[data-bg-mode="classic"] .viewport-bg {
 
 /* Opportunities: reuse the CRM's fonts, surfaces, controls and theme tokens. */
 .contacts-views { min-width: 0; width: 100%; }
+.app-workspace:has(.contacts-views--opportunities) { padding-inline: clamp(12px, 1.6vw, 24px) !important; }
+.app-center:has(.contacts-views--opportunities) { width: 100% !important; max-width: none !important; min-width: 0; }
 .contacts-subviews { margin-bottom: 12px; }
-.opps-view { display: flex; flex-direction: column; gap: 16px; min-width: 0; color: var(--text-primary); font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; }
+.opps-view { display: flex; flex-direction: column; gap: 16px; min-width: 0; width: 100%; max-width: none; color: var(--text-primary); font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; }
+.opps-header, .opps-filters, .opps-board { width: 100%; min-width: 0; box-sizing: border-box; }
 .opps-header, .opps-actions, .opps-section-head, .opps-drawer-summary { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .opps-header, .opps-section-head { justify-content: space-between; }
 .opps-pipeline-picker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -18283,8 +18286,17 @@ body[data-bg-mode="classic"] .viewport-bg {
 .opps-filters { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; }
 .opps-filters > label { flex: 1 1 140px; }
 .opps-filters .opps-search { flex: 2 1 190px; }
-.opps-board { display: flex; align-items: stretch; gap: 14px; overflow-x: auto; overflow-y: hidden; padding: 0 2px 14px; height: clamp(420px, calc(100dvh - 270px), 800px); overscroll-behavior-x: contain; }
-.opps-column { flex: 1 0 260px; min-width: 260px; display: flex; flex-direction: column; border: 0; border-radius: 8px; background: var(--bg-surface); overflow: hidden; }
+.opps-board-wrap { width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.opps-board { display: flex; align-items: stretch; gap: 12px; overflow-x: auto; overflow-y: hidden; padding: 0 0 6px; height: clamp(420px, calc(100dvh - 270px), 800px); overscroll-behavior-x: contain; scrollbar-width: none; }
+.opps-board::-webkit-scrollbar { height: 0; }
+/* OS overlay scrollbars can auto-hide. This synced range stays visible only
+   when columns overflow, with a thumb proportional to the visible area. */
+.opps-board-scrollbar { appearance: none; display: block; width: 100%; height: 12px; padding: 0; margin: 0; border: 0; border-radius: 6px; box-shadow: none; background: var(--bg-elevated); cursor: pointer; }
+html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
+.opps-board-scrollbar::-webkit-slider-thumb { appearance: none; width: var(--opps-scroll-thumb-width); height: 12px; border: 2px solid var(--bg-elevated); border-radius: 6px; background: var(--text-secondary); cursor: grab; }
+.opps-board-scrollbar::-moz-range-thumb { width: var(--opps-scroll-thumb-width); height: 8px; border: 2px solid var(--bg-elevated); border-radius: 6px; background: var(--text-secondary); cursor: grab; }
+.opps-board-scrollbar:focus-visible, .opps-board:focus-visible { outline: 2px solid var(--eg-accent) !important; outline-offset: 2px; }
+.opps-column { flex: 1 1 0; min-width: 220px; display: flex; flex-direction: column; border: 0; border-radius: 8px; background: var(--bg-surface); overflow: hidden; }
 .opps-column.is-over { outline: 2px solid var(--stage-color); outline-offset: -2px; }
 .opps-column-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-shrink: 0; padding: 15px 14px; min-height: 74px; box-sizing: border-box; color: var(--text-primary); background: color-mix(in srgb, var(--stage-color) 24%, #10121b); }
 .opps-column-head > div { min-width: 0; }
@@ -18333,7 +18345,16 @@ body[data-bg-mode="classic"] .viewport-bg {
 .opps-delete-stage { padding: 12px; border: 1px solid var(--border-default); display: flex; flex-direction: column; gap: 12px; }
 .opps-delete-stage p { margin: 0; line-height: 1.5; }
 .opps-timeline ol { list-style: none; padding: 0; margin: 0; }
-.opps-timeline li { border-left: 2px solid var(--border-default); margin-left: 4px; padding: 0 0 16px 14px; display: flex; flex-direction: column; gap: 6px; }
+.opps-timeline li { border-left: 2px solid var(--stage-color, var(--border-default)); margin-left: 4px; padding: 0 0 16px 14px; display: flex; flex-direction: column; gap: 6px; }
+.opps-history-stages { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.opps-danger { color: var(--status-error, #f87171) !important; }
+.opps-delete-details { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.opps-delete-details > div { display: grid; grid-template-columns: 65px minmax(0,1fr); gap: 12px; }
+.opps-delete-details dt { color: var(--text-muted); }
+.opps-delete-details dd { margin: 0; overflow-wrap: anywhere; }
+.opps-row-menu { position: fixed; z-index: 11000; width: 180px; box-sizing: border-box; padding: 6px; border: 1px solid var(--border-default); border-radius: 6px; background: var(--bg-surface); box-shadow: 0 8px 28px rgba(0,0,0,.45); }
+.opps-row-menu button { display: block; width: 100%; padding: 10px 8px; font: 12px var(--font-mono, ui-monospace, monospace); color: var(--text-primary); text-align: left; border: 0; border-radius: 4px; background: transparent; cursor: pointer; }
+.opps-row-menu button:hover, .opps-row-menu button:focus-visible { background: var(--bg-elevated); outline: 1px solid var(--border-focus); }
 .opps-call { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-default); }
 .opps-contact-section { border-top: 1px solid var(--border-default); padding: 12px; }
 .opps-section-head h3 { font-size: 10px; letter-spacing: 1px; margin: 0; }
@@ -18350,7 +18371,6 @@ body[data-bg-mode="classic"] .viewport-bg {
 .opps-tag-list button:hover { color: var(--text-primary); }
 @media (max-width: 640px) {
   .opps-board { height: clamp(420px, 65dvh, 720px); }
-  .opps-column { flex: 0 0 280px; }
   .opps-overlay { padding: 8px; }
   .opps-overlay--drawer { padding: 0; }
   .opps-dialog { max-height: calc(100dvh - 16px); }

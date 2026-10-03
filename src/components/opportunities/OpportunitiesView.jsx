@@ -1,18 +1,20 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DndContext, DragOverlay, KeyboardSensor, MouseSensor, TouchSensor, closestCorners, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { ChevronDown, ChevronRight, LayoutGrid, List, MessageCircle, Phone, Settings, Plus, Search, Tag, FileText } from 'lucide-react';
+import { ChevronDown, ChevronRight, LayoutGrid, List, MessageCircle, Phone, Settings, Plus, Search, Tag, FileText, MoreHorizontal } from 'lucide-react';
 import { useOpportunities } from '../../hooks/useOpportunities';
 import { useContactsList } from '../../hooks/useContacts';
 import { useUnreadMessages } from '../../hooks/useMessages';
 import { useContactTags } from '../../hooks/useContactTags';
 import { useInboundCall } from '../../context/InboundCallContext';
 import { openContactDialer } from '../../lib/dialerUi';
-import { LINES_OF_BUSINESS, daysInStage, filterOpportunities, money, sortOpportunities, opportunityKeyboardCoordinates, opportunityStatus } from '../../lib/opportunities';
+import { LINES_OF_BUSINESS, daysInStage, filterOpportunities, money, sortOpportunities, opportunityKeyboardCoordinates, opportunityStatus, canDeleteOpportunity } from '../../lib/opportunities';
 import NewOpportunityModal from './OpportunityEditor';
 import OpportunityDrawer, { StageBadge } from './OpportunityDrawer';
 import PipelineSettings from './PipelineSettings';
 import ContactTagsPopover from './ContactTagsPopover';
+import DeleteOpportunityDialog from './DeleteOpportunityDialog';
+import OpportunityRowMenu from './OpportunityRowMenu';
 
 function CardAction({ label, count = 0, children, onClick, disabled, expanded }) {
   return <button type="button" className="opps-card-action" aria-label={label} title={label} disabled={disabled} aria-expanded={expanded}
@@ -60,6 +62,28 @@ function StageColumn({ stage, rows, data, onOpen, actions }) {
   </section>;
 }
 
+function ScrollBoard({ children }) {
+  const board = useRef(null);
+  const [scroll, setScroll] = useState({ max: 0, left: 0, thumb: 32 });
+  useEffect(() => {
+    const element = board.current;
+    const update = () => {
+      const next = { max: Math.max(0, element.scrollWidth - element.clientWidth), left: element.scrollLeft,
+        thumb: Math.max(32, Math.round(element.clientWidth ** 2 / Math.max(1, element.scrollWidth))) };
+      setScroll((current) => current.max === next.max && current.left === next.left && current.thumb === next.thumb ? current : next);
+    };
+    const resize = new ResizeObserver(update);
+    resize.observe(element); update(); element.addEventListener('scroll', update);
+    return () => { resize.disconnect(); element.removeEventListener('scroll', update); };
+  }, [children]);
+  return <div className="opps-board-wrap">
+    <div ref={board} id="opps-pipeline-board" className="opps-board" role="region" tabIndex={0} aria-label="Opportunities board">{children}</div>
+    {scroll.max > 1 && <input className="opps-board-scrollbar" type="range" min={0} max={scroll.max} value={scroll.left}
+      aria-label="Scroll pipeline stages" aria-controls="opps-pipeline-board" aria-valuetext={`${Math.round(scroll.left / scroll.max * 100)}%`}
+      style={{ '--opps-scroll-thumb-width': `${scroll.thumb}px` }} onChange={(event) => { board.current.scrollLeft = Number(event.target.value); }} />}
+  </div>;
+}
+
 const COLUMNS = [
   ['contact_name', 'Contact'], ['title', 'Title'], ['stage_id', 'Stage'], ['status', 'Status'],
   ['line_of_business', 'Business'], ['carrier', 'Carrier'], ['plan_name', 'Plan'],
@@ -78,10 +102,14 @@ export default function OpportunitiesView({ onOpenContact }) {
   const [tagPopover, setTagPopover] = useState(null);
   const [settings, setSettings] = useState(false);
   const [draggingId, setDraggingId] = useState(null);
+  const [rowMenu, setRowMenu] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
   const pipelineId = data.pipelines.some((row) => row.id === filters.pipeline) ? filters.pipeline : data.pipelines.find((row) => row.is_default)?.id || data.pipelines[0]?.id || '';
   const stageRows = data.stages.filter((row) => row.pipeline_id === pipelineId);
   const visible = useMemo(() => filterOpportunities(data.rows, { ...filters, pipeline: pipelineId }), [data.rows, filters, pipelineId]);
   const selected = data.rows.find((row) => row.id === selectedId);
+  const deleting = data.rows.find((row) => row.id === deleteId);
+  const menuRow = data.rows.find((row) => row.id === rowMenu?.id);
   const dragging = data.rows.find((row) => row.id === draggingId);
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
@@ -103,6 +131,7 @@ export default function OpportunitiesView({ onOpenContact }) {
   const tags = useContactTags(data.rows.map((row) => row.contact_id));
   const inbound = useInboundCall();
   const closeTags = useCallback(() => setTagPopover(null), []);
+  const closeRowMenu = useCallback(() => setRowMenu(null), []);
   const openDrawer = (id, section = null) => { closeTags(); setDrawerSection(section); setSelectedId(id); };
   const actions = {
     canCall: (contactId) => Boolean(inbound?.enabled && !inbound.activeCall && !inbound.dialingCall && contacts.find((contact) => contact.id === contactId)?.phone),
@@ -137,15 +166,22 @@ export default function OpportunitiesView({ onOpenContact }) {
         const destination = over?.data.current?.stageId;
         if (destination) void data.moveStage(active.id, destination).catch(() => {});
       }}>
-      <div className="opps-board" aria-label="Opportunities board">{stageRows.map((stage) => <StageColumn key={stage.id} stage={stage} rows={visible.filter((row) => row.stage_id === stage.id)} data={data} onOpen={openDrawer} actions={actions} />)}</div>
+      <ScrollBoard>{stageRows.map((stage) => <StageColumn key={stage.id} stage={stage} rows={visible.filter((row) => row.stage_id === stage.id)} data={data} onOpen={openDrawer} actions={actions} />)}</ScrollBoard>
       <DragOverlay>{dragging && <div className="opps-card opps-card-overlay" style={{ '--stage-color': data.stages.find((row) => row.id === dragging.stage_id)?.color }}><CardSummary row={dragging} source={data.sources.find((row) => row.id === dragging.lead_source_id)} /></div>}</DragOverlay>
-    </DndContext> : <div className="contacts-table-wrap"><table className="contacts-table opps-table"><thead><tr>{COLUMNS.map(([key, label]) => <th key={key} aria-sort={sort.key === key ? sort.direction === 'asc' ? 'ascending' : 'descending' : 'none'}><button type="button" onClick={() => setSort({ key, direction: sort.key === key && sort.direction === 'asc' ? 'desc' : 'asc' })}>{label}{sort.key === key ? sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}</button></th>)}</tr></thead>
-      <tbody>{sorted.map((row) => <tr key={row.id}>{COLUMNS.map(([key]) => <td key={key}>{key === 'contact_name' ? <button type="button" className="opps-contact-link" onClick={() => openDrawer(row.id)}>{row.contact_name}</button> : key === 'stage_id' ? <StageBadge stage={data.stages.find((stage) => stage.id === row.stage_id)} /> : key === 'est_value' ? money(row.est_value) : valueFor(row, key) === '' ? '—' : String(valueFor(row, key))}</td>)}</tr>)}
-        {!sorted.length && <tr><td colSpan={COLUMNS.length} className="contacts-muted">No opportunities match these filters.</td></tr>}
+    </DndContext> : <div className="contacts-table-wrap"><table className="contacts-table opps-table"><thead><tr>{COLUMNS.map(([key, label]) => <th key={key} aria-sort={sort.key === key ? sort.direction === 'asc' ? 'ascending' : 'descending' : 'none'}><button type="button" onClick={() => setSort({ key, direction: sort.key === key && sort.direction === 'asc' ? 'desc' : 'asc' })}>{label}{sort.key === key ? sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}</button></th>)}<th scope="col">Actions</th></tr></thead>
+      <tbody>{sorted.map((row) => <tr key={row.id}>{COLUMNS.map(([key]) => <td key={key}>{key === 'contact_name' ? <button type="button" className="opps-contact-link" onClick={() => openDrawer(row.id)}>{row.contact_name}</button> : key === 'stage_id' ? <StageBadge stage={data.stages.find((stage) => stage.id === row.stage_id)} /> : key === 'est_value' ? money(row.est_value) : valueFor(row, key) === '' ? '—' : String(valueFor(row, key))}</td>)}
+        <td><button type="button" className="contacts-mini-btn" aria-label={`Actions for ${row.contact_name}`} aria-haspopup="menu" aria-expanded={rowMenu?.id === row.id} disabled={data.pendingIds.has(row.id)} onClick={(event) => {
+          const anchor = event.currentTarget;
+          setRowMenu((current) => current?.id === row.id ? null : { id: row.id, anchor });
+        }}><MoreHorizontal size={16} /></button></td>
+      </tr>)}
+        {!sorted.length && <tr><td colSpan={COLUMNS.length + 1} className="contacts-muted">No opportunities match these filters.</td></tr>}
       </tbody></table></div>}
     {creating && <NewOpportunityModal data={data} prefill={{ pipeline_id: pipelineId }} onClose={() => setCreating(false)} />}
     {selected && <OpportunityDrawer row={selected} data={data} initialSection={drawerSection} onClose={() => setSelectedId(null)} onOpenContact={onOpenContact} />}
     {tagPopover && <ContactTagsPopover {...tagPopover} tags={tags} onClose={closeTags} />}
     {settings && <PipelineSettings data={data} pipelineId={pipelineId} onClose={() => setSettings(false)} />}
+    {menuRow && <OpportunityRowMenu row={menuRow} anchor={rowMenu.anchor} canDelete={canDeleteOpportunity(menuRow, data.agentUuid, data.isAdmin)} onClose={closeRowMenu} onOpen={() => { closeRowMenu(); openDrawer(menuRow.id); }} onDelete={() => { closeRowMenu(); setDeleteId(menuRow.id); }} />}
+    {deleting && <DeleteOpportunityDialog row={deleting} data={data} onClose={() => setDeleteId(null)} onDeleted={() => setDeleteId(null)} />}
   </div>;
 }

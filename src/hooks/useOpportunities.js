@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTenantConfig } from './useTenantConfig';
 import { useCurrentAgent } from './useCurrentAgent';
-import { persistStageMove, stageStatus, opportunityFields, readOpportunityMetadata } from '../lib/opportunities';
+import { persistStageMove, persistOpportunityDelete, stageStatus, opportunityFields, readOpportunityMetadata } from '../lib/opportunities';
 
 const UPDATED = 'enrollgen:opportunities-updated';
 export function notifyOpportunitiesUpdated() {
@@ -102,6 +102,22 @@ export function useOpportunities(contactId = null) {
     return data;
   }, [supabaseClient, tenantId, agentUuid]);
 
-  return { rows, pipelines, stages, sources, activeSources, agents, loading, error, setError, pendingIds, moveStage, save, refresh,
+  const remove = useCallback(async (row) => {
+    if (pending.current.has(row.id)) throw new Error('This opportunity is being updated. Try again when it finishes.');
+    generation.current += 1;
+    pending.current.add(row.id); setPendingIds(new Set(pending.current));
+    try {
+      await persistOpportunityDelete(supabaseClient, row, agentUuid);
+      // Invalidate reads started before deletion so they cannot restore a card.
+      generation.current += 1;
+      setRows((current) => current.filter((item) => item.id !== row.id));
+      notifyOpportunitiesUpdated();
+    } finally {
+      generation.current += 1;
+      pending.current.delete(row.id); setPendingIds(new Set(pending.current));
+    }
+  }, [supabaseClient, agentUuid]);
+
+  return { rows, pipelines, stages, sources, activeSources, agents, loading, error, setError, pendingIds, moveStage, save, remove, refresh,
     supabaseClient, tenantId, agentUuid, isAdmin };
 }

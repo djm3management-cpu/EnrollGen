@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { before, after, beforeEach, afterEach, test } from 'node:test';
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
-import { AUTO_CREATE_OPPS_FROM_CALLS, filterOpportunities, sortOpportunities, persistStageMove, opportunityKeyboardCoordinates, money, daysInStage, opportunityStatus, readOpportunityMetadata } from '../src/lib/opportunities.js';
+import { AUTO_CREATE_OPPS_FROM_CALLS, filterOpportunities, sortOpportunities, persistStageMove, opportunityKeyboardCoordinates, money, daysInStage, opportunityStatus, readOpportunityMetadata, persistOpportunityDelete, canDeleteOpportunity, readOpportunityHistory, historyStage } from '../src/lib/opportunities.js';
 
 // Real PostgreSQL (including RLS, FKs, PL/pgSQL and pgcrypto), no live credentials.
 // Only Supabase's Vault key source and JWT provider are represented by fixtures.
@@ -46,7 +46,7 @@ const authenticatedClient = {
     const chain = {
       select(columns) { projection = columns === '*' ? '*' : columns.split(',').map((column) => quoteIdentifier(column.trim())).join(','); return chain; },
       eq(column, value) { values.push(value); filters.push(`${quoteIdentifier(column)}=$${values.length}`); return chain; },
-      order(column) { order.push(quoteIdentifier(column)); return chain; },
+      order(column, options = {}) { order.push(`${quoteIdentifier(column)} ${options.ascending === false ? 'DESC' : 'ASC'}`); return chain; },
       then(resolve, reject) {
         const sql = `SELECT ${projection} FROM public.${quoteIdentifier(table)}${filters.length ? ` WHERE ${filters.join(' AND ')}` : ''}${order.length ? ` ORDER BY ${order.join(',')}` : ''}`;
         return query(sql, values).then((data) => ({ data, error: null }), (error) => ({ data: null, error })).then(resolve, reject);
@@ -57,7 +57,11 @@ const authenticatedClient = {
   rpc(name, args) {
     const entries = Object.entries(args);
     const sql = `SELECT * FROM public.${quoteIdentifier(name)}(${entries.map(([key], index) => `${quoteIdentifier(key)}=>$${index + 1}`).join(',')})`;
-    return query(sql, entries.map(([, value]) => value)).then((data) => ({ data, error: null }), (error) => ({ data: null, error }));
+    return query(sql, entries.map(([, value]) => value)).then((rows) => {
+      const scalar = rows.length > 0 && Object.keys(rows[0]).length === 1 && Object.hasOwn(rows[0], name);
+      const data = scalar ? name === 'read_opportunities' ? rows.map((row) => row[name]) : rows[0][name] : rows;
+      return { data, error: null };
+    }, (error) => ({ data: null, error }));
   },
 };
 
@@ -120,6 +124,8 @@ before(async () => {
   await move(opportunityB,stagesB[1].id,stagesB[0].id,agentB);
   await move(opportunityB,stagesB[0].id,stagesB[1].id,agentB);
   await db.exec('RESET ROLE');
+  // Apply 062 over existing opportunities/history to exercise upgrade backfill.
+  await db.exec(readFileSync(new URL('../supabase/migrations/062_opportunity_soft_delete.sql', import.meta.url), 'utf8'));
 });
 beforeEach(async () => { await db.exec('BEGIN'); await asUser(); });
 afterEach(async () => { await db.exec('ROLLBACK; RESET ROLE'); });
@@ -223,11 +229,13 @@ test('contact tags persist encrypted, deduplicate, and block cross-tenant reads 
 
 test('stage move writes history, one event, status and stage_entered_at atomically', async () => {
   const original = (await query('SELECT stage_entered_at FROM opportunities WHERE id=$1',[opportunityA]))[0];
-  const moved = await move(opportunityA,stagesA[3].id,stagesA[0].id);
+  const moved = await persistStageMove(authenticatedClient, { id: opportunityA, stage_id: stagesA[0].id }, stagesA[3].id, agentA);
   assert.equal(moved.status,'won'); assert.equal(moved.stage_id,stagesA[3].id);
   assert.ok(new Date(moved.stage_entered_at) > new Date(original.stage_entered_at));
   const history = await query('SELECT * FROM opportunity_stage_history WHERE opportunity_id=$1 ORDER BY changed_at',[opportunityA]);
   assert.equal(history.length,2); assert.equal(history[1].from_stage_id,stagesA[0].id); assert.equal(history[1].to_stage_id,stagesA[3].id); assert.equal(history[1].changed_by,agentA);
+  assert.equal(history[1].changed_at.toISOString(),new Date(moved.stage_entered_at).toISOString());
+  assert.equal(history[1].from_stage_color,stagesA[0].color); assert.equal(history[1].to_stage_color,stagesA[3].color);
   const events = await query('SELECT * FROM opportunity_events WHERE opportunity_id=$1',[opportunityA]);
   assert.equal(events.length,1); assert.equal(events[0].event_type,'opportunity.stage_changed'); assert.equal(events[0].history_id,history[1].id);
   await move(opportunityA,stagesA[3].id,stagesA[3].id);
@@ -256,6 +264,9 @@ test('deleting a non-empty stage is blocked; moving first preserves the timeline
   assert.equal((await query('SELECT stage_id FROM opportunities WHERE id=$1',[opportunityA]))[0].stage_id,stagesA[1].id);
   const history = await query('SELECT * FROM opportunity_stage_history WHERE opportunity_id=$1 ORDER BY changed_at',[opportunityA]);
   assert.equal(history[1].from_stage_id,null); assert.equal(history[1].from_stage_name,'New Lead');
+  assert.equal(history.length,2); assert.equal(history[1].to_stage_id,stagesA[1].id); assert.equal(history[1].changed_by,agentA);
+  assert.equal(history[1].from_stage_color,stagesA[0].color); assert.equal(history[1].to_stage_color,stagesA[1].color);
+  assert.ok(history[1].changed_at instanceof Date);
   assert.equal((await query('SELECT * FROM opportunity_events WHERE opportunity_id=$1',[opportunityA])).length,1);
 });
 
@@ -293,8 +304,149 @@ test('title and notes use actual contact encryption; audited reads hydrate names
 test('editing fields and stage in the drawer uses the same history/event transaction and rejects stale saves', async () => {
   const original = (await query('SELECT updated_at FROM opportunities WHERE id=$1',[opportunityA]))[0];
   await query('SELECT save_opportunity($1,$2,$3,$4,$5)',[tenantA,agentA,fields(tenantA,{stage_id:stagesA[2].id,title:'Updated title'}),opportunityA,original.updated_at]);
+  const history = await query('SELECT * FROM opportunity_stage_history WHERE opportunity_id=$1 ORDER BY changed_at,id',[opportunityA]);
+  assert.equal(history.length,2); assert.equal(history[1].from_stage_id,stagesA[0].id); assert.equal(history[1].to_stage_id,stagesA[2].id);
+  assert.equal(history[1].changed_by,agentA); assert.ok(history[1].changed_at instanceof Date);
+  assert.equal(history[1].from_stage_color,stagesA[0].color); assert.equal(history[1].to_stage_color,stagesA[2].color);
   assert.equal((await query('SELECT * FROM opportunity_events WHERE opportunity_id=$1',[opportunityA])).length,1);
   await expectFailure(() => query('SELECT save_opportunity($1,$2,$3,$4,$5)',[tenantA,agentA,fields(tenantA),opportunityA,original.updated_at]),/changed in another session/);
+  const current = (await query('SELECT updated_at FROM opportunities WHERE id=$1',[opportunityA]))[0];
+  await query('SELECT save_opportunity($1,$2,$3,$4,$5)',[tenantA,agentA,fields(tenantA,{stage_id:stagesA[2].id,title:'Fields only'}),opportunityA,current.updated_at]);
+  assert.equal((await query('SELECT * FROM opportunity_stage_history WHERE opportunity_id=$1',[opportunityA])).length,2);
+  assert.equal((await query('SELECT * FROM opportunity_events WHERE opportunity_id=$1',[opportunityA])).length,1);
+});
+
+test('soft delete as the assigned agent hides board/list/contact reads and totals, retaining history with no event', async () => {
+  await db.exec('RESET ROLE');
+  await query("UPDATE tenant_agents SET role='agent' WHERE id=$1",[agentA]);
+  await asUser();
+  const survivor = await save(tenantA,agentA,fields(tenantA,{title:'Keep this one',est_value:10}));
+  await move(opportunityA,stagesA[1].id,stagesA[0].id);
+  const row = (await authenticatedClient.rpc('read_opportunities',{p_tenant_id:tenantA,p_requesting_agent_id:agentA})).data.find((item) => item.id === opportunityA);
+  const beforeHistory = await query('SELECT * FROM opportunity_stage_history WHERE opportunity_id=$1 ORDER BY changed_at,id',[opportunityA]);
+  const beforeEvents = await query('SELECT * FROM opportunity_events WHERE opportunity_id=$1',[opportunityA]);
+  await persistOpportunityDelete(authenticatedClient,row,agentA);
+  const board = (await authenticatedClient.rpc('read_opportunities',{p_tenant_id:tenantA,p_requesting_agent_id:agentA})).data;
+  assert.deepEqual(board.map((item) => item.id),[survivor]);
+  assert.deepEqual(filterOpportunities([...board,{...row,deleted_at:new Date().toISOString()}],{}),board);
+  assert.equal(board.length,1); assert.equal(board.reduce((sum,item) => sum + Number(item.est_value),0),10);
+  const contactRows = await query('SELECT read_opportunities($1,$2,$3) AS row',[tenantA,agentA,contactA]);
+  assert.deepEqual(contactRows.map((item) => item.row.id),[survivor]);
+  assert.deepEqual(await query('SELECT count(*)::int AS count,coalesce(sum(est_value),0)::float AS total FROM opportunities'),[{count:1,total:10}]);
+  assert.equal((await query('SELECT id FROM opportunities WHERE id=$1',[opportunityA])).length,0);
+  assert.deepEqual(await query('SELECT * FROM opportunity_stage_history WHERE opportunity_id=$1 ORDER BY changed_at,id',[opportunityA]),beforeHistory);
+  assert.deepEqual(await query('SELECT * FROM opportunity_events WHERE opportunity_id=$1',[opportunityA]),beforeEvents);
+  await db.exec('RESET ROLE');
+  const tombstone = (await query('SELECT deleted_at,deleted_by,stage_entered_at,updated_at,stage_id FROM opportunities WHERE id=$1',[opportunityA]))[0];
+  assert.equal(tombstone.deleted_by,agentA); assert.ok(tombstone.deleted_at instanceof Date);
+  assert.equal(tombstone.updated_at.toISOString(),tombstone.deleted_at.toISOString());
+  assert.equal(tombstone.stage_entered_at.toISOString(),new Date(row.stage_entered_at).toISOString()); assert.equal(tombstone.stage_id,row.stage_id);
+  await asUser();
+  await persistOpportunityDelete(authenticatedClient,row,agentA); // Idempotent retry.
+  await db.exec('RESET ROLE');
+  assert.deepEqual((await query('SELECT deleted_at,deleted_by,stage_entered_at,updated_at,stage_id FROM opportunities WHERE id=$1',[opportunityA]))[0],tombstone);
+});
+
+test('delete binds identity: agents own only, admins any in their tenant, no spoofing, inactive or anonymous access', async () => {
+  const peer = '10000000-0000-4000-8000-000000000009';
+  await db.exec('RESET ROLE');
+  await query("INSERT INTO tenant_agents(id,tenant_id,name,role,clerk_user_id) VALUES($1,$2,'Peer','agent','user-peer')",[peer,tenantA]);
+  await asUser();
+  const unassigned = await save(tenantA,agentA,fields(tenantA,{assigned_agent_id:null}));
+  const peerOwned = await save(tenantA,agentA,fields(tenantA,{assigned_agent_id:peer}));
+  const adminOther = await save(tenantA,agentA,fields(tenantA,{assigned_agent_id:peer}));
+  const version = async (id) => (await query('SELECT updated_at FROM opportunities WHERE id=$1',[id]))[0].updated_at;
+  const originalVersion = await version(opportunityA);
+  await asUser('user-peer');
+  await expectFailure(() => query('SELECT delete_opportunity($1,$2,$3)',[opportunityA,peer,originalVersion]),/assigned agent or an administrator/);
+  await expectFailure(() => query('SELECT delete_opportunity($1,$2,$3)',[unassigned,peer,originalVersion]),/assigned agent or an administrator/);
+  await expectFailure(() => query('SELECT delete_opportunity($1,$2,$3)',[opportunityA,agentA,originalVersion]),/Access denied/);
+  await query('SELECT delete_opportunity($1,$2,$3)',[peerOwned,peer,await version(peerOwned)]);
+  await asUser('user-b');
+  await expectFailure(() => query('SELECT delete_opportunity($1,$2,$3)',[opportunityA,agentB,originalVersion]),/Access denied/);
+  await asUser();
+  await query('SELECT delete_opportunity($1,$2,$3)',[adminOther,agentA,await version(adminOther)]);
+  await query('SELECT delete_opportunity($1,$2,$3)',[unassigned,agentA,await version(unassigned)]);
+  await query('SELECT delete_opportunity($1,$2,$3)',[opportunityA,agentA,originalVersion]);
+  await db.exec('RESET ROLE');
+  await query('UPDATE tenant_agents SET is_active=false WHERE id=$1',[peer]);
+  await asUser('user-peer');
+  await expectFailure(() => query('SELECT delete_opportunity($1,$2,$3)',[peerOwned,peer,originalVersion]),/Access denied/);
+  await db.exec('RESET ROLE; SET ROLE anon');
+  await expectFailure(() => query('SELECT delete_opportunity($1,$2,$3)',[peerOwned,peer,originalVersion]),/permission denied/);
+});
+
+test('delete rejects stale confirmation; direct deletion/writes and edits/moves of deleted opportunities stay denied', async () => {
+  const original = (await query('SELECT updated_at FROM opportunities WHERE id=$1',[opportunityA]))[0];
+  await move(opportunityA,stagesA[1].id,stagesA[0].id);
+  await expectFailure(() => query('SELECT delete_opportunity($1,$2,$3)',[opportunityA,agentA,original.updated_at]),/changed in another session/);
+  for (const sql of ['DELETE FROM opportunities','UPDATE opportunities SET deleted_at=now()','INSERT INTO opportunities(id) VALUES(gen_random_uuid())']) {
+    await expectFailure(() => query(sql),/permission denied/);
+  }
+  const current = (await query('SELECT updated_at FROM opportunities WHERE id=$1',[opportunityA]))[0];
+  await query('SELECT delete_opportunity($1,$2,$3)',[opportunityA,agentA,current.updated_at]);
+  await expectFailure(() => move(opportunityA,stagesA[2].id,stagesA[1].id),/not found or deleted/);
+  await expectFailure(() => query('SELECT save_opportunity($1,$2,$3,$4,$5)',[tenantA,agentA,fields(tenantA),opportunityA,current.updated_at]),/not found or deleted/);
+  assert.equal((await query('SELECT * FROM opportunity_stage_history WHERE opportunity_id=$1',[opportunityA])).length,2);
+  assert.equal((await query('SELECT * FROM opportunity_events WHERE opportunity_id=$1',[opportunityA])).length,1);
+});
+
+test('drawer history stays ordered, named and colored through stage rename/recolor and later deletion', async () => {
+  assert.equal((await query('SELECT current_user AS role'))[0].role,'authenticated');
+  await move(opportunityA,stagesA[1].id,stagesA[0].id);
+  const renamed = stagesA.map((stage) => stage.id === stagesA[1].id ? {...stage,name:'Reached',color:'#60a5fa'} : stage);
+  await query('SELECT save_opportunity_pipeline($1,$2,$3,$4,$5,$6)',[tenantA,agentA,pipelineA,'Default Pipeline',null,renamed]);
+  await move(opportunityA,stagesA[2].id,stagesA[1].id);
+  const result = await readOpportunityHistory(authenticatedClient,tenantA,opportunityA);
+  assert.equal(result.error,null); assert.equal(result.data.length,3);
+  assert.deepEqual(result.data.map((item) => item.to_stage_name),['Pending','Contacted','New Lead']);
+  assert.equal(result.data[0].from_stage_name,'Reached');
+  assert.deepEqual(historyStage(result.data[0],'from',renamed),{id:stagesA[1].id,name:'Reached',color:'#60a5fa'});
+  assert.deepEqual(historyStage(result.data[1],'to',renamed),{id:stagesA[1].id,name:'Contacted',color:stagesA[1].color});
+  assert.ok(result.data.every((item,index) => index === 0 || result.data[index-1].changed_at >= item.changed_at));
+  await query('SELECT delete_opportunity_stage($1,$2)',[stagesA[1].id,agentA]);
+  const after = await readOpportunityHistory(authenticatedClient,tenantA,opportunityA);
+  assert.equal(after.data.length,3);
+  assert.equal(historyStage(after.data[1],'to',[]).name,'Contacted');
+  assert.equal(historyStage(after.data[1],'to',[]).color,stagesA[1].color);
+  assert.equal(after.data[0].from_stage_name,'Reached'); assert.equal(after.data[0].from_stage_color,'#60a5fa');
+});
+
+test('move-before-stage-delete moves each live opportunity once and leaves deleted history/events unchanged', async () => {
+  const live = await save(tenantA,agentA,fields(tenantA));
+  const deleted = await save(tenantA,agentA,fields(tenantA));
+  const version = (await query('SELECT updated_at FROM opportunities WHERE id=$1',[deleted]))[0].updated_at;
+  await query('SELECT delete_opportunity($1,$2,$3)',[deleted,agentA,version]);
+  await query('SELECT delete_opportunity_stage($1,$2,$3)',[stagesA[0].id,agentA,stagesA[1].id]);
+  for (const id of [opportunityA,live]) {
+    const history = await query('SELECT * FROM opportunity_stage_history WHERE opportunity_id=$1 ORDER BY changed_at,id',[id]);
+    assert.equal(history.length,2); assert.equal(history[1].from_stage_name,'New Lead'); assert.equal(history[1].to_stage_name,'Contacted');
+    assert.equal(history[1].changed_by,agentA); assert.ok(history[1].changed_at instanceof Date);
+    assert.equal((await query('SELECT * FROM opportunity_events WHERE opportunity_id=$1',[id])).length,1);
+  }
+  const retained = await query('SELECT * FROM opportunity_stage_history WHERE opportunity_id=$1',[deleted]);
+  assert.equal(retained.length,1); assert.equal(retained[0].to_stage_name,'New Lead'); assert.equal(retained[0].to_stage_color,stagesA[0].color);
+  assert.equal((await query('SELECT * FROM opportunity_events WHERE opportunity_id=$1',[deleted])).length,0);
+});
+
+test('stage with only deleted opportunities can be removed without a move or new history/event', async () => {
+  const original = (await query('SELECT updated_at FROM opportunities WHERE id=$1',[opportunityA]))[0];
+  await query('SELECT delete_opportunity($1,$2,$3)',[opportunityA,agentA,original.updated_at]);
+  await query('SELECT delete_opportunity_stage($1,$2)',[stagesA[0].id,agentA]);
+  assert.equal((await query('SELECT id FROM pipeline_stages WHERE id=$1',[stagesA[0].id])).length,0);
+  assert.equal((await query('SELECT * FROM opportunity_stage_history WHERE opportunity_id=$1',[opportunityA])).length,1);
+  assert.equal((await query('SELECT * FROM opportunity_events WHERE opportunity_id=$1',[opportunityA])).length,0);
+  await db.exec('RESET ROLE');
+  assert.equal((await query('SELECT deleted_by FROM opportunities WHERE id=$1',[opportunityA]))[0].deleted_by,agentA);
+});
+
+test('delete control eligibility matches own/admin rules and history fallback handles preexisting removed stages', () => {
+  assert.equal(canDeleteOpportunity({assigned_agent_id:agentA},agentA,false),true);
+  assert.equal(canDeleteOpportunity({assigned_agent_id:agentB},agentA,false),false);
+  assert.equal(canDeleteOpportunity({assigned_agent_id:null},agentA,false),false);
+  assert.equal(canDeleteOpportunity({assigned_agent_id:agentB},agentA,true),true);
+  assert.equal(canDeleteOpportunity({assigned_agent_id:agentA,deleted_at:'2026-10-02'},agentA,true),false);
+  assert.deepEqual(historyStage({to_stage_id:null,to_stage_name:'Removed'},'to',[]),{id:null,name:'Removed',color:'#a78bfa'});
 });
 
 test('pipeline settings reorder and recolor stages, derive statuses, and block omitted-stage deletion', async () => {

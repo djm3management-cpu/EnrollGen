@@ -39,7 +39,7 @@ export function agentInitials(agent) {
 
 export function filterOpportunities(rows, filters) {
   const term = (filters.search || '').trim().toLocaleLowerCase();
-  return rows.filter((row) => (!filters.pipeline || row.pipeline_id === filters.pipeline)
+  return rows.filter((row) => !row.deleted_at && (!filters.pipeline || row.pipeline_id === filters.pipeline)
     && (!filters.agent || row.assigned_agent_id === filters.agent)
     && (!filters.lob || row.line_of_business === filters.lob)
     && (!filters.carrier || row.carrier === filters.carrier)
@@ -67,6 +67,31 @@ export async function persistStageMove(client, row, stageId, agentId) {
   });
   if (error) throw error;
   return data;
+}
+
+export function canDeleteOpportunity(row, agentId, isAdmin) {
+  return Boolean(agentId && !row.deleted_at && (isAdmin || row.assigned_agent_id === agentId));
+}
+
+export async function persistOpportunityDelete(client, row, agentId) {
+  const { error } = await client.rpc('delete_opportunity', {
+    p_opportunity_id: row.id, p_requesting_agent_id: agentId, p_expected_updated_at: row.updated_at,
+  });
+  if (error) throw error;
+}
+
+export function readOpportunityHistory(client, tenantId, opportunityId) {
+  return client.from('opportunity_stage_history').select('*').eq('tenant_id', tenantId)
+    .eq('opportunity_id', opportunityId).order('changed_at', { ascending: false }).order('id', { ascending: false });
+}
+
+// Names and colors describe the move when it happened, even after a rename,
+// recolor or deletion. Older rows fall back to the surviving stage's color.
+export function historyStage(item, direction, stages) {
+  const id = item[`${direction}_stage_id`];
+  const current = stages.find((stage) => stage.id === id);
+  return { id, name: item[`${direction}_stage_name`] || current?.name || 'Unknown stage',
+    color: item[`${direction}_stage_color`] || current?.color || '#a78bfa' };
 }
 
 export const money = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Number(value) || 0);
