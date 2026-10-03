@@ -16,7 +16,7 @@ deploys to Railway or Fly.io, NOT Netlify or Supabase Edge Functions.
 | POST | `/twilio/voice` | Twilio signature | Inbound call webhook: match/create contact, pick an available agent, dial their browser client, start the media stream. Falls back to voicemail when no agent is available. |
 | POST | `/twilio/dial-result` | Twilio signature | Dial outcome: reroute to the next available agent or voicemail. |
 | POST | `/twilio/status` | Twilio signature | Call lifecycle events into `telephony_events`. |
-| POST | `/twilio/recording` | Twilio signature | Stores the recording URL and copies dual-channel audio to Supabase storage (`call-recordings/{tenant_id}/{call_sid}.wav`). |
+| POST | `/twilio/recording` | Twilio signature | Persists the recording ledger before ACK; a leased worker copies audio into `call-recordings/{tenant_id}/{parent_call_sid}/{RecordingSid}.wav` with bounded download/retry. |
 | POST | `/api/leads/incoming` | `x-api-key` (INBOUND_VENDOR_API_KEY) | FMO lead intake. Upserts contact and inserts `contact_lead_intel` before the transfer arrives. |
 | POST | `/api/voice/token` | Clerk bearer token | Twilio Voice SDK access token + signed `/agent` WebSocket token for the browser softphone. |
 | WS | `/media` | Twilio (private URL in TwiML) | Twilio Media Streams: both tracks forked to Deepgram (inbound=CUSTOMER, outbound=AGENT). |
@@ -354,3 +354,16 @@ and still work before 046. Tests cover both modes and migration into an already
 paused database. PGlite tests submit concurrent claims and verify exclusive
 outcomes, but serialize SQL execution; real multi-connection lock contention
 still requires a separate PostgreSQL integration environment.
+
+
+## Recording rollout and downloads
+
+See [the recording rollout guide](../docs/recordings-rollout.md). Apply additive
+064 before code deployment; deploy Netlify **and this Railway service**; verify
+playback/download; apply 065 afterward. Existing script wording is preserved.
+
+Inbound and outbound Dial recording uses `record-from-answer-dual` and the same
+signed callback. Voicemail remains mono. `/api/recordings/media/:token` streams
+retained Twilio audio using short-lived server-issued capabilities, with provider
+CallSid verification and native Range requests. Credentials remain server-side.
+The service never deletes Twilio recordings.

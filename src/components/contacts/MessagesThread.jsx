@@ -1,3 +1,5 @@
+import { useAuth } from "@clerk/clerk-react";
+import { recordingMedia } from "../../lib/recordingsApi";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMessageThread } from "../../hooks/useMessages";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
@@ -78,7 +80,9 @@ function MediaAttachment({ item, supabaseClient }) {
   );
 }
 
-function CallTimelineRecording({ call, supabaseClient }) {
+function CallTimelineRecording({ call }) {
+  const { getToken } = useAuth();
+  const [error, setError] = useState("");
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const hasRecording = Boolean(call.recording_storage_path || call.recording_url);
@@ -90,20 +94,14 @@ function CallTimelineRecording({ call, supabaseClient }) {
     }
     setLoading(true);
     try {
-      if (call.recording_storage_path && supabaseClient) {
-        const { data } = await supabaseClient.storage
-          .from("call-recordings")
-          .createSignedUrl(call.recording_storage_path, 3600);
-        if (data?.signedUrl) {
-          setAudioUrl(data.signedUrl);
-          return;
-        }
-      }
-      if (call.recording_url) setAudioUrl(call.recording_url);
+      setError("");
+      const grant = await recordingMedia(getToken, { call_record_id: call.id });
+      setAudioUrl(grant.url);
+    } catch (err) { setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [audioUrl, call.recording_storage_path, call.recording_url, supabaseClient]);
+  }, [audioUrl, call.id, getToken]);
 
   return (
     <div className="msg-call-recording">
@@ -118,6 +116,7 @@ function CallTimelineRecording({ call, supabaseClient }) {
           {loading ? "..." : audioUrl ? "HIDE" : "PLAY"}
         </button>
       ) : null}
+      {error ? <span className="ops-error" role="alert">{error}</span> : null}
       {audioUrl ? <audio controls preload="none" src={audioUrl} /> : null}
     </div>
   );
@@ -236,7 +235,7 @@ export default function MessagesThread({ contactId, agentId = null, activityItem
               );
             }
             if (entry.type === "call") {
-              return <CallTimelineRecording key={entry.key} call={entry.call} supabaseClient={supabaseClient} />;
+              return <CallTimelineRecording key={entry.key} call={entry.call} />;
             }
             return (
               <div

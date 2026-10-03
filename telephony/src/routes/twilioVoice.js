@@ -27,7 +27,7 @@ function voicemailTwiml() {
     maxLength: 120,
     playBeep: true,
     recordingStatusCallback: publicUrl("/twilio/recording"),
-    recordingStatusCallbackEvent: "completed",
+    recordingStatusCallbackEvent: "completed absent",
   });
   response.hangup();
   return response;
@@ -80,8 +80,8 @@ async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentId
       `/twilio/dial-result?inboundCallId=${inboundCall.id}&tried=${encodeURIComponent(tried)}&${attributionQuery}`
     ),
     record: "record-from-answer-dual",
-    recordingStatusCallback: publicUrl("/twilio/recording"),
-    recordingStatusCallbackEvent: "completed",
+    recordingStatusCallback: publicUrl(`/twilio/recording?attemptId=${attemptId}`),
+    recordingStatusCallbackEvent: "completed absent",
   });
 
   const client = dial.client({

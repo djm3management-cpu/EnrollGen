@@ -1,3 +1,7 @@
+import { useAuth } from "@clerk/clerk-react";
+import { recordingMedia, recordingTarget } from "../../lib/recordingsApi";
+import RecordingPanel from "../callDetail/RecordingPanel";
+import MissingRecordings from "./MissingRecordings";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { redactSensitiveText } from "../../lib/redaction";
@@ -47,7 +51,9 @@ function ComplianceChip({ score }) {
   );
 }
 
-function RecordingCell({ row, supabaseClient }) {
+function RecordingCell({ row }) {
+  const { getToken } = useAuth();
+  const [error, setError] = useState("");
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const hasRecording = Boolean(row.recording_storage_path || row.recording_url);
@@ -59,20 +65,14 @@ function RecordingCell({ row, supabaseClient }) {
     }
     setLoading(true);
     try {
-      if (row.recording_storage_path && supabaseClient) {
-        const { data } = await supabaseClient.storage
-          .from("call-recordings")
-          .createSignedUrl(row.recording_storage_path, 3600);
-        if (data?.signedUrl) {
-          setAudioUrl(data.signedUrl);
-          return;
-        }
-      }
-      if (row.recording_url) setAudioUrl(row.recording_url);
+      setError("");
+      const grant = await recordingMedia(getToken, recordingTarget(row));
+      setAudioUrl(grant.url);
+    } catch (err) { setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [audioUrl, row.recording_storage_path, row.recording_url, supabaseClient]);
+  }, [audioUrl, row, getToken]);
 
   if (!hasRecording) return <span className="contacts-muted">--</span>;
 
@@ -81,6 +81,7 @@ function RecordingCell({ row, supabaseClient }) {
       <button type="button" className="contacts-mini-btn" onClick={handlePlay} disabled={loading}>
         {loading ? "..." : audioUrl ? "HIDE" : "▶ PLAY"}
       </button>
+      {error ? <span className="ops-error" role="alert">{error}</span> : null}
       {audioUrl ? <audio controls autoPlay preload="none" src={audioUrl} /> : null}
     </span>
   );
@@ -258,6 +259,7 @@ function ExpandedRow({ row, supabaseClient }) {
         />
       ) : null}
 
+      {!row.call_record_id && row.inbound_call_id ? <RecordingPanel inboundCallId={row.inbound_call_id} /> : null}
       {showFullDetail ? <CallDetailPanel detail={detail} loading={loading} /> : null}
     </div>
   );
@@ -265,6 +267,7 @@ function ExpandedRow({ row, supabaseClient }) {
 
 export default function CallLogTab({ onOpenContact = null }) {
   const { supabaseClient, loading: tenantLoading, error: tenantError } = useTenantConfig();
+  const [showMissingRecordings, setShowMissingRecordings] = useState(false);
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -382,9 +385,11 @@ export default function CallLogTab({ onOpenContact = null }) {
             <option key={value} value={value}>{value}</option>
           ))}
         </select>
+        <button type="button" className="contacts-mini-btn" onClick={() => setShowMissingRecordings(value => !value)} aria-expanded={showMissingRecordings}>MISSING RECORDINGS</button>
         <button type="button" className="contacts-mini-btn" onClick={load}>REFRESH</button>
       </div>
 
+      {showMissingRecordings ? <MissingRecordings /> : null}
       {error ? <div className="ops-error">⚠ {error}</div> : null}
 
       <div className="contacts-table-wrap">
@@ -483,7 +488,7 @@ function FragmentRow({ row, isExpanded, isAlert, onToggle, onOpenContact, supaba
         <td className="mono">{fmtDuration(row.duration_seconds)}</td>
         <td>{row.agent || "--"}</td>
         <td><DispositionChip disposition={row.disposition} /></td>
-        <td><RecordingCell row={row} supabaseClient={supabaseClient} /></td>
+        <td><RecordingCell row={row} /></td>
         <td><ComplianceChip score={row.compliance_score} /></td>
         <td className="call-log-caret">{isExpanded ? "▼" : "▶"}</td>
       </tr>

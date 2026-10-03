@@ -1,3 +1,5 @@
+import { useAuth } from "@clerk/clerk-react";
+import { recordingMedia } from "../../lib/recordingsApi";
 import { useCallback, useEffect, useState } from "react";
 import {
   Delete,
@@ -230,6 +232,8 @@ function KeypadTab({ onCall, disabled, initialContact }) {
 }
 
 function VoicemailTab() {
+  const { getToken } = useAuth();
+  const [playError, setPlayError] = useState("");
   const { supabaseClient } = useTenantConfig();
   const [voicemails, setVoicemails] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -269,21 +273,15 @@ function VoicemailTab() {
       setAudioUrl(null);
       setAudioLoading(true);
       try {
-        if (voicemail.recording_storage_path && supabaseClient) {
-          const { data } = await supabaseClient.storage
-            .from("call-recordings")
-            .createSignedUrl(voicemail.recording_storage_path, 3600);
-          if (data?.signedUrl) {
-            setAudioUrl(data.signedUrl);
-            return;
-          }
-        }
-        if (voicemail.recording_url) setAudioUrl(voicemail.recording_url);
+        setPlayError("");
+        const grant = await recordingMedia(getToken, { inbound_call_id: voicemail.id });
+        setAudioUrl(grant.url);
+      } catch (err) { setPlayError(err.message);
       } finally {
         setAudioLoading(false);
       }
     },
-    [playingId, supabaseClient]
+    [playingId, getToken]
   );
 
   if (loading) return <div className="phone-dialer__empty">Loading voicemails...</div>;
@@ -291,6 +289,7 @@ function VoicemailTab() {
 
   return (
     <div className="phone-dialer__list">
+      {playError ? <div className="ops-error" role="alert">{playError}</div> : null}
       {voicemails.map((vm) => (
         <div key={vm.id} className="phone-dialer__row phone-dialer__row--contact">
           <button

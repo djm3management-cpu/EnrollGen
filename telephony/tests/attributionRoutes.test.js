@@ -102,6 +102,9 @@ test('inbound TwiML persists attempt and requests answer/completion; replay neve
   const replay = await request(twilioVoiceRouter, '/twilio/voice', incoming);
   assert.equal(replay.body, first.body); assert.equal(db.claims.length, 1);
   assert.equal(db.tables.telephony_call_attempts.length, 1);
+  assert.match(first.body, /record="record-from-answer-dual"/);
+  assert.match(first.body, /recordingStatusCallbackEvent="completed absent"/);
+  assert.match(first.body, /recordingStatusCallback="https:\/\/example.test\/twilio\/recording\?attemptId=telephony_call_attempts-1"/);
 });
 
 test('no-answer still excludes first agent and reroutes; exhausted capacity still records voicemail TwiML', async () => {
@@ -270,4 +273,18 @@ test('flag-off ignores existing history and preserves legacy claim; outbound ign
     CallSid: 'OUT', From: 'client:a', PhoneNumber: incoming.From,
   });
   assert.deepEqual(outbound.claims[0], { p_call_sid: 'OUT', p_exclude: [], p_agent_id: 'a' });
+});
+
+
+test('outbound requests dual-channel recording through the same callback without changing attribution or admission', async () => {
+  const db = database(['a']);
+  const result = await request(voiceOutboundRouter, '/api/voice/outbound', { CallSid: 'OUT', From: 'client:a', PhoneNumber: '+16097787669' });
+  assert.match(result.body, /record="record-from-answer-dual"/);
+  assert.match(result.body, /recordingStatusCallbackEvent="completed absent"/);
+  assert.match(result.body, /recordingStatusCallback="https:\/\/example.test\/twilio\/recording\?attemptId=telephony_call_attempts-1"/);
+  assert.match(result.body, /answerOnBridge="true"/);
+  assert.equal(db.tables.telephony_call_attempts[0].direction, 'outbound');
+  assert.equal(db.claims.length, 1);
+  assert.equal((await request(voiceOutboundRouter, '/api/voice/outbound', { CallSid: 'OUT', From: 'client:a', PhoneNumber: '+16097787669' })).body, result.body);
+  assert.equal(db.claims.length, 1);
 });

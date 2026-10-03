@@ -12,7 +12,7 @@ export function evidenceDb(pg, onError = () => {}) {
       } catch (error) { return { data: null, error }; }
     },
     from(table) {
-      let operation = "select", projection = "*", rows, single = false, head = false, count = false, limit;
+      let operation = "select", projection = "*", rows, single = false, head = false, count = false, limit, offset;
       const filters = [], order = [], args = [];
       const value = item => { args.push(item); return "$" + args.length; };
       const chain = {
@@ -20,6 +20,8 @@ export function evidenceDb(pg, onError = () => {}) {
         insert(input) { operation = "insert"; rows = Array.isArray(input) ? input : [input]; return chain; },
         update(input) { operation = "update"; rows = [input]; return chain; },
         eq(column, item) { filters.push(q(column) + "=" + value(item)); return chain; },
+        is(column, item) { if (item !== null) throw new Error('Fixture IS only supports NULL'); filters.push(q(column) + ' IS NULL'); return chain; },
+        range(from, to) { offset = Number(from); limit = Number(to) - offset + 1; return chain; },
         in(column, items) { filters.push(q(column) + " IN (" + items.map(value).join(",") + ")"); return chain; },
         order(column, options = {}) { order.push(q(column) + (options.ascending === false ? " DESC" : " ASC")); return chain; },
         limit(size) { limit = Number(size); return chain; },
@@ -31,7 +33,7 @@ export function evidenceDb(pg, onError = () => {}) {
             if (rows?.length === 0) return { data: [], error: null };
             const where = filters.length ? " WHERE " + filters.join(" AND ") : "";
             const sort = order.length ? " ORDER BY " + order.join(",") : "";
-            const bounded = limit == null ? "" : " LIMIT " + limit;
+            const bounded = (limit == null ? "" : " LIMIT " + limit) + (offset == null ? "" : " OFFSET " + offset);
             // Only these production relationship projections are used by handlers.
             const cols = projection.replace(/compliance_flags\(count\)/g,
               "(SELECT jsonb_build_array(jsonb_build_object('count',count(*))) FROM compliance_flags WHERE session_id=sessions.id) AS compliance_flags")

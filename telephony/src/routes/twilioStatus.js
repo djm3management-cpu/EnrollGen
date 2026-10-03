@@ -1,3 +1,4 @@
+import { createRecordingCallback } from "../recordings.js";
 import { Router } from "express";
 import { config } from "../config.js";
 import { supabase } from "../supabase.js";
@@ -61,76 +62,6 @@ twilioStatusRouter.post("/twilio/agent-status", requireTwilioSignature, async (r
   }
 });
 
-// Recording completed: store the Twilio URL immediately, then copy the
-// dual-channel audio into Supabase storage (bucket call-recordings,
-// path {tenant_id}/{call_sid}.wav).
-twilioStatusRouter.post("/twilio/recording", requireTwilioSignature, async (req, res) => {
-  const callSid = req.body.CallSid;
-  const recordingUrl = req.body.RecordingUrl;
-  const recordingStatus = req.body.RecordingStatus;
-
-  res.status(204).end();
-  if (recordingStatus !== "completed" || !recordingUrl) return;
-
-  try {
-    const inboundCall = await findInboundCall(callSid);
-    const tenantId = inboundCall?.tenant_id || config.defaultTenantId;
-
-    await supabase.from("telephony_events").insert({
-      tenant_id: tenantId,
-      inbound_call_id: inboundCall?.id || null,
-      twilio_call_sid: callSid,
-      event: "recording_completed",
-      payload: req.body,
-    });
-
-    if (inboundCall) {
-      // RecordingDuration is the voicemail message's own length, which
-      // reads better in a voicemail list than CallDuration from
-      // /twilio/status (that includes the greeting/prompt time too).
-      const recordingSeconds = Number(req.body.RecordingDuration);
-      const updatePayload = { recording_url: recordingUrl };
-      if (Number.isFinite(recordingSeconds)) {
-        updatePayload.duration_seconds = recordingSeconds;
-      }
-      await supabase
-        .from("inbound_calls")
-        .update(updatePayload)
-        .eq("id", inboundCall.id);
-    }
-
-    const audioResponse = await fetch(`${recordingUrl}.wav`, {
-      headers: {
-        Authorization:
-          "Basic " +
-          Buffer.from(`${config.twilioAccountSid}:${config.twilioAuthToken}`).toString("base64"),
-      },
-    });
-    if (!audioResponse.ok) {
-      throw new Error(`Twilio recording download failed: ${audioResponse.status}`);
-    }
-    const audio = Buffer.from(await audioResponse.arrayBuffer());
-
-    const storagePath = `${tenantId}/${callSid}.wav`;
-    const { error: uploadError } = await supabase.storage
-      .from("call-recordings")
-      .upload(storagePath, audio, { contentType: "audio/wav", upsert: true });
-    if (uploadError) throw new Error(`storage upload failed: ${uploadError.message}`);
-
-    if (inboundCall) {
-      await supabase
-        .from("inbound_calls")
-        .update({ recording_storage_path: storagePath })
-        .eq("id", inboundCall.id);
-
-      if (inboundCall.call_record_id) {
-        await supabase
-          .from("call_records")
-          .update({ recording_url: recordingUrl })
-          .eq("id", inboundCall.call_record_id);
-      }
-    }
-  } catch (err) {
-    console.error("/twilio/recording processing failed:", err);
-  }
-});
+// Persist the signed callback before ACK. The leased worker performs copying.
+twilioStatusRouter.post("/twilio/recording", requireTwilioSignature,
+  createRecordingCallback({ db: supabase, config }));

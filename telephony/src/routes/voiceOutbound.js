@@ -65,6 +65,9 @@ voiceOutboundRouter.post("/api/voice/outbound", requireTwilioSignature, routingR
     action: publicUrl(`/api/voice/outbound-result?agentId=${encodeURIComponent(agentId)}&attemptId=${attemptId}`),
     callerId: config.twilioPhoneNumber || "+16098065996",
     answerOnBridge: true,
+    record: "record-from-answer-dual",
+    recordingStatusCallback: publicUrl(`/twilio/recording?attemptId=${attemptId}`),
+    recordingStatusCallbackEvent: "completed absent",
   });
   dial.number({
     statusCallback: publicUrl(`/twilio/agent-status?agentId=${encodeURIComponent(agentId)}&attemptId=${attemptId}`),

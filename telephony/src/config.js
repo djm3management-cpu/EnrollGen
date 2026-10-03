@@ -29,7 +29,15 @@ if (!Number.isInteger(minConnectedSeconds) || minConnectedSeconds < 1) {
   throw new Error("MIN_CONNECTED_SECONDS must be a positive integer");
 }
 
+const recordingMaxBytes = Number(process.env.RECORDING_MAX_BYTES || 256 * 1024 * 1024);
+const recordingTimeoutMs = Number(process.env.RECORDING_TIMEOUT_MS || 60_000);
+if (!Number.isSafeInteger(recordingMaxBytes) || recordingMaxBytes < 1024 ||
+    !Number.isSafeInteger(recordingTimeoutMs) || recordingTimeoutMs < 1000 || recordingTimeoutMs > 120_000) {
+  throw new Error("Invalid recording size/timeout bounds");
+}
+
 export const config = {
+  recordingMaxBytes, recordingTimeoutMs,
   port: Number(process.env.PORT || 8080),
   publicBaseUrl: stripTrailingSlash(process.env.PUBLIC_BASE_URL),
   supabaseUrl: process.env.SUPABASE_URL,

@@ -1,3 +1,4 @@
+import RecordingPanel from "./RecordingPanel";
 import { useState } from "react";
 import { redactSensitiveText } from "../../lib/redaction";
 
@@ -7,7 +8,7 @@ import { redactSensitiveText } from "../../lib/redaction";
 // { transcript_diarized, dg_summary, dg_sentiment, call_analytics,
 //   agent_assessment, beneficiary_risk, scorecard, ... }
 
-const DETAIL_TABS = ["Transcript", "Analytics", "Assessment", "Compliance"];
+const DETAIL_TABS = ["Transcript", "Analytics", "Assessment", "Compliance", "Recording"];
 
 function asNumber(value, fallback = 0) {
   const numeric = Number(value);
@@ -351,6 +352,7 @@ export default function CallDetailPanel({ detail, loading }) {
   return (
     <div className="ops-detail-panel">
       <DetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      {activeTab === "Recording" ? <RecordingPanel callRecordId={detail.id} /> : null}
       {activeTab === "Transcript" ? <TranscriptDetail detail={detail} /> : null}
       {activeTab === "Analytics" ? <AnalyticsDetail detail={detail} /> : null}
       {activeTab === "Assessment" ? <AssessmentDetail detail={detail} /> : null}

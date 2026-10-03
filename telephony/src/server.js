@@ -1,3 +1,6 @@
+import { startRecordingWorker } from "./recordings.js";
+import { recordingMediaRouter } from "./routes/recordingMedia.js";
+import { createRecordingServiceClient } from "./supabase.js";
 import http from "node:http";
 import express from "express";
 import { config } from "./config.js";
@@ -50,6 +53,8 @@ app.use(vendorPingRouter);
 app.use(voiceTokenRouter);
 app.use(voiceOutboundRouter);
 app.use(smsRouter);
+app.use(recordingMediaRouter);
+startRecordingWorker({ db: createRecordingServiceClient(), config });
 
 const server = http.createServer(app);
 
