@@ -1,89 +1,12 @@
 // U65Data.js - U65 Off-Exchange script flow data
 
-export const FPL_2026 = {
-  1: 15650,
-  2: 21150,
-  3: 26650,
-  4: 32150,
-  5: 37650,
-  6: 43150,
-  perAdditional: 5500,
-};
-
-export const AGE_BAND_ACA_ESTIMATES = [
-  { min: 21, max: 29, low: 350, high: 450 },
-  { min: 30, max: 39, low: 400, high: 550 },
-  { min: 40, max: 49, low: 500, high: 700 },
-  { min: 50, max: 59, low: 700, high: 1000 },
-  { min: 60, max: 64, low: 900, high: 1400 },
-];
-
-export function getFplThreshold(householdSize) {
-  if (householdSize <= 6) return FPL_2026[householdSize] || FPL_2026[1];
-  return FPL_2026[6] + (householdSize - 6) * FPL_2026.perAdditional;
-}
-
-export function calcFplPercent(householdSize, annualIncome) {
-  const threshold = getFplThreshold(householdSize);
-  return Math.round((annualIncome / threshold) * 100);
-}
-
-export function getAcaEstimate(age) {
-  const band = AGE_BAND_ACA_ESTIMATES.find((b) => age >= b.min && age <= b.max);
-  if (!band) return { low: 500, high: 900 };
-  return { low: band.low, high: band.high };
-}
-
-export function getProductRecommendation(uwRisk) {
-  if (uwRisk === "low") {
-    return [
-      {
-        id: "palic",
-        priority: 1,
-        reason:
-          "Healthy and budget-conscious clients often fit best in a lower-cost fixed-benefit option.",
-      },
-      {
-        id: "enrollprime",
-        priority: 2,
-        reason:
-          "Clients who want broader PPO access may still prefer the EnrollPrime path.",
-      },
-    ];
-  }
-
-  if (uwRisk === "moderate") {
-    return [
-      {
-        id: "enrollprime",
-        priority: 1,
-        reason:
-          "Moderate-risk clients may fit better in the PPO-style option depending on underwriting.",
-      },
-      {
-        id: "palic",
-        priority: 2,
-        reason:
-          "A lower-cost fixed-benefit option may still be worth reviewing if expectations are set clearly.",
-      },
-    ];
-  }
-
-  return [
-    {
-      id: "aca_pivot",
-      priority: 1,
-      reason:
-        "Higher-risk clients may need to pivot back to ACA-compliant coverage if off-exchange underwriting is not realistic.",
-    },
-    {
-      id: "enrollprime",
-      priority: 2,
-      reason:
-        "If anything off-exchange remains workable, the PPO-style path is the cleaner fallback to review.",
-    },
-  ];
-}
+// The supplied plan sources do not establish subsidy thresholds or age-based ACA quotes.
+export const FPL_2026 = {};
+export const AGE_BAND_ACA_ESTIMATES = [];
+export function getFplThreshold() { return null; }
+export function calcFplPercent() { return null; }
+export function getAcaEstimate() { return null; }
+export function getProductRecommendation() { return []; } // eligibility: verify with carrier
 
 export const U65_OPENER_VARIANTS = [
   {
@@ -128,12 +51,12 @@ export const U65_SMALL_BUSINESS_OBJECTIONS = [
   {
     step: 1,
     label: "I already have a guy",
-    text: '"Most owners I talk to do. I\'m not asking you to fire anybody, I\'m asking if he\'s shown you what the other 99 carriers look like this year. If I can\'t beat what you\'ve got, I\'ll tell you that on the first call and you\'ve lost nothing."',
+    text: '"We can review the available options and their limits. Carrier availability and current quotes: verify with carrier."',
   },
   {
     step: 2,
     label: "Can't afford benefits",
-    text: '"That\'s exactly the setup I mentioned. You pick the number, even a couple hundred a month per guy, and it\'s fixed. It never jumps on you at renewal because it\'s your budget, not the carrier\'s."',
+    text: '"We can discuss your budget. Contribution arrangements, renewal prices and fees: verify with carrier."',
   },
   {
     step: 3,
@@ -244,7 +167,7 @@ const U65_SCREENS = [
                     tone: "end",
                     items: [
                       SPOKEN(
-                        '"Your group plan is probably your best bet right now. Call us if that changes."'
+                        '"Review your current coverage and contact us if your needs change. Coverage terms: verify with carrier."'
                       ),
                     ],
                   },
@@ -265,20 +188,20 @@ const U65_SCREENS = [
             type: "branch-set",
             branches: [
               {
-                label: "Over 63",
+                label: "Age / eligibility review",
                 badge: "FLOW SWITCH",
                 tone: "switch",
                 action: "medsup",
                 items: [
                   SPOKEN(
-                    '"For your age bracket we\'d want to look at Medicare Supplement instead — I can help you with that right now."'
+                    '"Age alone does not establish coverage eligibility. Verify the applicable coverage requirements before choosing a flow."'
                   ),
                 ],
               },
               {
                 label: "Family enrollment",
                 badge: "AGENT NOTE",
-                items: [HINT("Use the youngest applicant.")],
+                items: [HINT("Household eligibility and rating basis: verify with carrier.")],
               },
             ],
           },
@@ -366,7 +289,7 @@ const U65_SCREENS = [
             '"Anyone on the plan been diagnosed with cancer, diabetes, or heart disease?"'
           ),
           SPOKEN(
-            '"Any hospitalizations or surgeries in the last 5 years? Who, what for, how long ago, still under a doctor\'s care?"'
+            '"Underwriting lookbacks: verify with carrier. We will use the current application questions for the selected plan."'
           ),
           CALLOUT("If yes", [
             SPOKEN('"And how has that been affecting you with what you have now?"'),
@@ -414,9 +337,9 @@ const U65_SCREENS = [
         title: "Then Be Straight",
         blocks: [
           SPOKEN(
-            '"I want to be upfront about what this is. These are limited benefit plans — not major medical, not ACA-compliant, and depending on the plan there can be pre-existing condition limitations. What they do is [tie to {PROBLEM}]."'
+            '"I want to explain the exact selected plan, its coverage group, network, deductible, OOP scope, hard limits, prescriptions, maternity and waiting periods. ACA/MEC status and underwriting lookbacks: verify with carrier."'
           ),
-          HINT("Present MedMax / EnrollPrime tiers."),
+          HINT("Select an exact workbook variant below. Give all required agent statements for that product. Enroll Prime is the current agent portal. Never compare premiums across coverage groups."),
         ],
       },
       {
@@ -459,7 +382,7 @@ const U65_SCREENS = [
             "Collect: DOB, SSN if required, address verification, payment info, beneficiary."
           ),
           SPOKEN(
-            '"Confirmation number is [number], effective date [date], monthly premium [amount], first payment due [date]."'
+            '"The application reference is [number]. Approval, effective date, premium and first payment: verify with carrier."'
           ),
           HINT("Before the recap:"),
           SPOKEN('"Just so I\'m clear — what made you decide to move on this today?"'),
@@ -475,7 +398,7 @@ const U65_SCREENS = [
         title: "Recap",
         blocks: [
           SPOKEN(
-            '"So you\'re in [product] at [amount] a month, coverage starts [date]. I\'ll check in [timeframe] to make sure your cards showed up. Best time to reach you — mornings, afternoons, or evenings? Anything else I can help with? Thanks for trusting New Gen Health Solutions."'
+            '"Your application is for [product]. Approval, premium, fees and effective date: verify with carrier. I will follow up after carrier confirmation. Thanks for trusting New Gen Health Solutions."'
           ),
         ],
       },
@@ -497,7 +420,7 @@ const U65_SMALL_BUSINESS_SCREENS = [
         title: "Connect + Situation",
         blocks: [
           SPOKEN(
-            '"Hey [Owner Name], this is [Agent First Name] with New Gen Health Solutions, local health insurance agency out of Mt. Laurel. Quick question for you. Are you guys currently offering any kind of health benefits to your crew, or is that something your employees are handling on their own right now?"'
+            '"Hey [Owner Name], this is [Agent First Name] with New Gen Health Solutions, health insurance agency supporting DE, MD and FL agents. Quick question for you. Are you guys currently offering any kind of health benefits to your crew, or is that something your employees are handling on their own right now?"'
           ),
           {
             type: "branch-set",
@@ -574,7 +497,7 @@ const U65_SMALL_BUSINESS_SCREENS = [
         title: "Direction + Close",
         blocks: [
           SPOKEN(
-            '"Makes sense. So we work with over 100 carriers, and for a shop your size this usually goes one of two directions. Either a true group plan, or a setup where you put in a set amount per employee and each guy picks his own coverage. Depending on your ages, one of those usually makes a lot more sense than the other. I can pull real numbers for you today. Want me to run it while I\'ve got you, or is it easier to grab fifteen minutes when you\'ve got your roster in front of you?"'
+            '"We can review options for your household or business. Employer arrangements, tax treatment, eligibility, premiums and fees: verify with carrier. We compare benefits within each coverage group. Would you like to gather the information now or schedule a review?"'
           ),
           {
             type: "branch-set",
@@ -659,7 +582,7 @@ const U65_SMALL_BUSINESS_SCREENS = [
             ],
           },
           HINT(
-            "Family enrollments on EnrollPrime products: quote off the youngest person on the application."
+            "Enroll Prime is the current agent portal. Household rating and eligibility: verify with carrier."
           ),
         ],
       },

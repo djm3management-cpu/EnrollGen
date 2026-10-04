@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { DUAL_LIS_SEP_QUIZ } from "../data/dualLisSepQuiz.js";
+import PrivatePlanPanel from "./PrivatePlanPanel";
 import SEPGuide2026 from "./SEPGuide2026";
 import CarrierQuickRef from "./CarrierQuickRef";
 import ScriptEditor from "./ScriptEditor";
@@ -155,6 +156,7 @@ const TOOL_GROUPS = [
     label: "Training & Quizzes",
     color: "var(--chart-4)",
     tools: [
+      { id: "u65-product-guidance", title: "U65 Product Guidance", description: "All 59 workbook variants, required statements and exact-plan Co-Pilot selection.", icon: <BookOpen size={16} /> },
       {
         id: "dual-lis-sep-quiz",
         title: "Dual / LIS SEP Quiz",
@@ -164,13 +166,13 @@ const TOOL_GROUPS = [
       {
         id: "off-market-product-quiz",
         title: "Off-Market Product Quiz",
-        description: "30-question Enroll Prime product knowledge quiz with pass/fail scoring.",
+        description: "59-variant source guidance quiz for DE, MD and FL agents.",
         icon: <ClipboardCheck size={16} />,
       },
       {
         id: "medmax-scenario-quiz",
         title: "MedMax Scenario Quiz",
-        description: "20-question scenario quiz focused on MedMax sales, underwriting, and member education.",
+        description: "5-variant MedMax limits, Rx, maternity and elective-surgery guidance quiz.",
         icon: <ClipboardCheck size={16} />,
       },
     ],
@@ -765,6 +767,8 @@ export default function AgentTools() {
         return <ScriptEditor />;
       case "dual-lis-sep-quiz":
         return <AgentToolsProductQuiz questions={DUAL_LIS_SEP_QUIZ} passingScore={7} perfectText="Perfect - SEP knowledge check" passText="Passed - SEP knowledge check" />;
+      case "u65-product-guidance":
+        return <PrivatePlanPanel />;
       case "off-market-product-quiz":
         return <AgentToolsProductQuiz />;
       case "medmax-scenario-quiz":

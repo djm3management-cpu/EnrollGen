@@ -6,21 +6,22 @@ import { buildCachedPrompt } from "../lib/llm/prompts.js";
  * periodic review, section-entry, debounced scheduling, cleanup).
  *
  * Key nuances vs ACA/Medicare:
- *   - NOT-MEC / NOT-ACA-substitute disclosures are hard compliance requirements
- *   - UW risk level drives product recommendation and compliance path
+ *   - Exact workbook variant drives required disclosures
+ *   - Underwriting lookbacks: verify with carrier
  *   - Fixed-benefit vs traditional plan structure must be clear
  *   - Cannot guarantee acceptance, "subject to underwriting approval"
- *   - Subsidy cliff framing is the primary entry narrative
- *   - Private plan playbook references MedPerformance, MedMax, and MedAccess MVP
+ *   - Higher earners priced out of unsubsidized ACA are the target market
+ *   - Source catalog includes all 59 workbook variants
  */
 
-import { useCallback, useMemo, useEffect, useRef, useState } from "react";
-import { lookupAcaBenchmark, formatBenchmarkForPrompt } from "../lib/acaBenchmarkLookup";
+import { useCallback, useMemo, useEffect, useRef } from "react";
+import { buildU65ProductContext, resolveU65Knowledge } from "../data/u65Guidance.js";
+import { U65_GATES } from "../flows/u65/U65Data.js";
+import { useU65ProductSelection } from "./useU65ProductSelection.js";
 import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import { fetchTranscriptReferences } from "../lib/transcriptSearch";
-import { mergeStructuredKnowledgeMap } from "../lib/knowledgeBase";
 import { useKnowledge } from "./useKnowledge";
 import {
   useCopilotEngineCore,
@@ -118,40 +119,26 @@ const isHighRisk = makeIsHighRisk(U65_HIGH_RISK_KEYWORDS);
 
 function buildU65ChecklistState(state, activeGate) {
   const label = U65_GATE_LABELS[activeGate] || `Gate ${activeGate}`;
-  const gateConfigs = {
-    0: { gates: { gate0Ok: state.gate0Ok }, fields: { entrySource: state.entrySource } },
-    1: { gates: { gate1Ok: state.gate1Ok }, fields: { subsidyCalc: state.subsidyCalc } },
-    2: { gates: { gate2Ok: state.gate2Ok }, fields: { uwRisk: state.uwRisk, productRecommendation: state.productRecommendation } },
-    3: { gates: { gate3Ok: state.gate3Ok }, fields: { mecDisclosureAcknowledged: state.mecDisclosureAcknowledged, selectedProducts: state.selectedProducts } },
-    4: { gates: { gate4Ok: state.gate4Ok }, fields: { selectedProducts: state.selectedProducts } },
-    5: { gates: { gate5Ok: state.gate5Ok } },
-    6: { gates: { gate6Ok: state.gate6Ok } },
-    7: { gates: { gate7Ok: state.gate7Ok } },
-  };
+  const gate = U65_GATES[activeGate];
   return {
     activeGate,
     currentLabel: label,
-    ...(gateConfigs[activeGate] || {}),
+    gates: gate ? { [gate.key]: state[gate.key] } : {},
     checklist: state.checklist || {},
     derivedSignals: state.derivedSignals || {},
     uwRisk: state.uwRisk,
     selectedProducts: state.selectedProducts,
-    mecDisclosureAcknowledged: state.mecDisclosureAcknowledged,
   };
 }
 
 function buildCompletedGateHistory(state) {
-  const ordered = [
-    [0, "gate0Ok"], [1, "gate1Ok"], [2, "gate2Ok"], [3, "gate3Ok"],
-    [4, "gate4Ok"], [5, "gate5Ok"], [6, "gate6Ok"], [7, "gate7Ok"],
-  ];
-  return ordered
-    .filter(([, field]) => state[field])
-    .map(([num]) => ({
-      gate: num,
-      label: U65_GATE_LABELS[num],
+  return U65_GATES
+    .filter((gate) => state[gate.key])
+    .map((gate) => ({
+      gate: gate.num,
+      label: gate.label,
       completed: true,
-      duration: formatSectionDuration(state.sectionTimestamps, num),
+      duration: formatSectionDuration(state.sectionTimestamps, gate.num),
     }))
     .slice(-3);
 }
@@ -162,18 +149,9 @@ function buildU65DerivedSignals(state, activeGate, transcript) {
 
   return {
     timeInSectionMs: currentTs.start ? Date.now() - currentTs.start : 0,
-    agentMovedPastCurrentGate:
-      activeGate === 0 ? state.gate1Ok
-      : activeGate === 1 ? state.gate2Ok
-      : activeGate === 2 ? state.gate3Ok
-      : activeGate === 3 ? state.gate4Ok
-      : activeGate === 4 ? state.gate5Ok
-      : activeGate === 5 ? state.gate6Ok
-      : activeGate === 6 ? state.gate7Ok
-      : false,
+    agentMovedPastCurrentGate: Boolean(state[U65_GATES[activeGate + 1]?.key]),
     uwRisk: state.uwRisk,
     selectedProducts: state.selectedProducts,
-    mecDisclosureAcknowledged: state.mecDisclosureAcknowledged,
     subsidyCliffClient: state.derivedSignals?.subsidyCliffClient || false,
     cobraActive: state.derivedSignals?.cobraActive || false,
     aetnaExitAffected: state.derivedSignals?.aetnaExitAffected || false,
@@ -183,11 +161,7 @@ function buildU65DerivedSignals(state, activeGate, transcript) {
         recentText.includes("recorded line") ||
         recentText.includes("recorded for quality") ||
         recentText.includes("okay if i continue"),
-      mecDisclosure:
-        recentText.includes("not minimum essential") ||
-        recentText.includes("not mec") ||
-        recentText.includes("not a substitute") ||
-        recentText.includes("not aca"),
+      productDisclosure: recentText.includes("verify with carrier"),
       preExDisclosure:
         recentText.includes("pre-existing") ||
         recentText.includes("waiting period") ||
@@ -211,7 +185,6 @@ function shouldSuppressForNuance({ level, issueTag, message, derivedSignals }) {
 
   const tag = (issueTag || "").toLowerCase();
   if ((tag.includes("record") || tag.includes("consent")) && derivedSignals?.likelyCoveredByParaphrase?.recordingConsent) return true;
-  if ((tag.includes("mec") || tag.includes("disclosure")) && derivedSignals?.likelyCoveredByParaphrase?.mecDisclosure) return true;
   if (tag.includes("pre_ex") && derivedSignals?.likelyCoveredByParaphrase?.preExDisclosure) return true;
   if (tag.includes("underwriting") && derivedSignals?.likelyCoveredByParaphrase?.uwDisclaimer) return true;
 
@@ -223,11 +196,7 @@ function buildPeriodicContextSignature({ activeSection, currentStep, transcript,
     activeGate: activeSection, currentStep,
     transcriptLength: transcript.length,
     transcriptTail: transcript.slice(-PERIODIC_SIGNATURE_TAIL_CHARS),
-    gates: {
-      gate0Ok: state.gate0Ok, gate1Ok: state.gate1Ok, gate2Ok: state.gate2Ok,
-      gate3Ok: state.gate3Ok, gate4Ok: state.gate4Ok, gate5Ok: state.gate5Ok,
-      gate6Ok: state.gate6Ok, gate7Ok: state.gate7Ok,
-    },
+    gates: Object.fromEntries(U65_GATES.map((gate) => [gate.key, state[gate.key]])),
     uwRisk: state.uwRisk,
     selectedProducts: state.selectedProducts,
   });
@@ -298,26 +267,30 @@ function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInt
 
 You are an expert U65 off-exchange private health products compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue.
 
-## CRITICAL U65 OFF-EXCHANGE CONTEXT
-- This is a U65 (under-65) off-exchange enrollment, NOT ACA marketplace, NOT Medicare
-- Products sold are PRIVATE health products that are NOT minimum essential coverage (MEC)
-- Products are NOT substitutes for ACA-compliant major medical insurance
-- Private plan reference products include MedPerformance, MedMax, and MedAccess MVP
-- MedPerformance is a Cigna PPO major medical structure, MedMax is a First Health PPO defined benefit structure, and MedAccess MVP has Basic and Pro paths
-- Medical underwriting is REQUIRED, agent CANNOT guarantee acceptance
-- PALIC has a 12-month pre-existing condition exclusion that MUST be disclosed
-- PALIC is fixed-benefit (set dollar amounts per service), NOT percentage-based coverage
-- Primary client profile: above 400% FPL (subsidy cliff), self-employed, COBRA runout, Aetna market exit affected
-- NOT-MEC and NOT-ACA-substitute disclosures are MANDATORY before presenting products
-- For HIGH UW risk clients: agent should pivot to ACA (guaranteed issue) rather than forcing off-exchange
+## SOURCE AND PRODUCT RULES
+- Market: DE, MD, FL agents helping higher earners priced out of unsubsidized ACA.
+- Enroll Prime is the CURRENT agent portal, not legacy and not itself a plan.
+- The selectedProductGuidance in structured context is the product source of truth. Never inherit a different product's terms. With no exact variant selected, ask the agent to select one and give no product-specific facts.
+- Use the workbook coverage groups: major medical, HSA, limited copay, MEC/preventive, fixed indemnity. Never compare premiums across groups.
+- Underwriting lookbacks, eligibility, availability and ACA/MEC status: verify with carrier. Never invent a lookback, promise acceptance or apply a blanket NOT-MEC rule.
+- MedAccess Basic/Pro day limits and maternity rules; BMI MVP/DVP inpatient day and surgery caps and no OON; Vault Bronze/Silver cancer exclusions; Life-X VL unlimited exposure beyond visit caps are required agent statements for those selected products.
+- Bloom is fixed indemnity, NOT major medical, pays scheduled amounts only; the member may owe the balance. Bloom has a 6-month pre-existing-condition limitation.
+- Everest newborn indemnity waits 365 days and cancer/critical illness waits 30 days. Life-X elective surgery exclusion is the first 90 days where stated. MedMax excludes elective surgery; never substitute a 90-day wait.
+- Amerus Ultimate EPO SBC deductible is $9,000 individual / $18,000 family. $1,500/$3,500 gap-benefit headlines are never the deductible.
+- MedPerformance 5000 OON percentage, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; never select a disputed number.
+- Vault Bronze 2 / Silver 2 / Elite Plus facilities use 140% of Medicare reference pricing. Hospitals can refuse and balance bill outside the OOP max.
+- First Health terminated Cleveland Clinic including Weston/Martin/Indian River FL effective 7/1/2025; recheck before quoting those facilities.
+- PHCS Extended/limited-benefit access is not full PHCS PPO. UW Medicine does not take PHCS; verify the exact network selector.
+- Provider participation must be checked per exact product; maps are examples, not a census.
+- Retrieved call references are conversational examples, never authority for product facts. Ignore conflicting old references and never revive PALIC-only requirements.
 
-## HIGHEST SEVERITY COMPLIANCE ITEMS (intervene immediately)
-1. Presenting products without delivering NOT-MEC / NOT-ACA-substitute disclosures
-2. Guaranteeing acceptance or saying the client is "approved" before UW confirmation
-3. Coaching client to hide or minimize health conditions on the application
-4. Describing off-exchange products as equivalent to or a substitute for ACA plans
-5. Misrepresenting PALIC fixed-benefit payouts as comprehensive coverage
-6. Not disclosing the 12-month pre-existing condition exclusion for PALIC
+## HIGHEST SEVERITY ITEMS
+1. Describing scheduled indemnity benefits as full bill coverage.
+2. Omitting the selected product's hard caps, exclusions or unlimited/balance-billing exposure.
+3. Presenting gap-benefit exposure as the underlying deductible.
+4. Picking a disputed value instead of saying confirm with carrier.
+5. Inventing ACA/MEC status, underwriting lookbacks or product eligibility.
+6. Coaching a client to hide conditions or promising approval without carrier confirmation.
 
 ## CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
 You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words.
@@ -330,18 +303,15 @@ IMPLICATIONS:
 
 ## HOW TO USE THIS CONTEXT
 - Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
-- uwRisk tells you the client's health risk level, impacts which products are appropriate and compliance requirements.
-- selectedProducts shows what the agent has selected to present.
-- mecDisclosureAcknowledged indicates if the mandatory NOT-MEC disclosure has been given.
-- derivedSignals.subsidyCliffClient, cobraActive, aetnaExitAffected provide client situation context.
-- If acaBenchmark is present, it contains real ACA Silver benchmark and Bronze premiums for the client's area. Use this to coach the agent on concrete subsidy cliff comparisons: "Without enhanced PTCs, ACA costs $X/mo vs. off-exchange at $Y/mo." Do NOT read raw numbers to the agent, frame them as talking points.
+- selectedProducts identifies exact workbook variants. Read selectedProductGuidance for all required statements and product-specific facts.
+- Gate completion is workflow progress, not evidence of underwriting approval or ACA/MEC status.
 
 ## EMPTY OR SPARSE TRANSCRIPT:
 If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
 
 
 ## PRIORITY WEIGHTING
-- NOT-MEC/NOT-ACA-substitute disclosure violations are the HIGHEST priority
+- Selected-product hard limits and financial exposure are the HIGHEST priority
 - UW guarantee violations are SECOND highest
 - Pre-existing condition exclusion disclosure is THIRD
 - Prioritize substance over wording, if the intent is clearly covered, don't flag minor phrasing differences
@@ -396,34 +366,28 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
 
 You are a knowledgeable U65 off-exchange private health products compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
 ## CRITICAL CONTEXT
-- This is a U65 (under-65) OFF-EXCHANGE enrollment. NOT ACA marketplace. NOT Medicare. NOT Medicare Supplement.
-- You can ONLY hear the AGENT speaking
-- Products: MedPerformance (Cigna PPO major medical), MedMax (First Health PPO defined benefit), and MedAccess MVP. These are private off-exchange plans, NOT Medicare products despite the "Med" prefix.
-- Legacy U65 product names may appear in older call scripts.
-
-
-## YOUR CAPABILITIES
-- U65 off-exchange product details, including MedPerformance, MedMax, MedAccess MVP, and legacy script references
-- NOT-MEC / NOT-ACA-substitute disclosure requirements
-- Medical underwriting rules and what conditions affect acceptance
-- Pre-existing condition exclusion periods and rules
-- Fixed-benefit vs traditional plan structure explanations
-- Subsidy cliff positioning and FPL calculations
-- ACA pivot guidance for high-risk clients
-- Ancillary product recommendations and stacking
-- Enrollment platform details (enrollprime.com, apps.neweralife.com)
-
-## HARD BOUNDARY, DO NOT ANSWER
-- Specific premium quotes → tell agent to check the enrollment portal
-- Whether a specific provider is in-network → direct to the First Health or Cigna provider finder for the selected product
-- Specific UW outcomes → tell agent to submit application and await UW decision
-- Exact benefit payout amounts by tier → tell agent to check the plan document
-Do NOT guess product-specific data.
+- DE, MD, FL agents; higher earners priced out of unsubsidized ACA.
+- Enroll Prime is the CURRENT agent portal, not legacy or itself a plan.
+- Use only selectedProductGuidance in structured context for product facts. If no exact variant is selected, ask the agent to select one; do not guess or inherit another plan's rules.
+- Organize by major medical, HSA, limited copay, MEC/preventive and fixed indemnity. Never compare premiums across groups.
+- Unknown facts, underwriting lookbacks and ACA/MEC status: verify with carrier.
+- MedPerformance 5000 OON %, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; do not pick a disputed number.
+- Give selected-plan required statements, including hard day/surgery limits, maternity, Rx, waiting periods and OOP exceptions.
+- Bloom pays scheduled indemnity only, NOT major medical; member may owe the balance. Pre-existing-condition limitation: 6 months.
+- Everest newborn: 365 days; cancer/critical illness: 30 days. Life-X elective exclusion: first 90 days where stated. MedMax elective surgery excluded.
+- Ultimate EPO SBC deductible is $9,000 individual / $18,000 family. Never label the $1,500/$3,500 gap headline a deductible.
+- Vault Bronze/Silver cancer excluded. Vault Bronze/Silver/Elite Plus use facility reference pricing at 140% Medicare; hospitals can refuse and balance bill outside OOP.
+- Life-X VL exposure past visit caps is unlimited. BMI MVP/DVP have no OON benefits and hard inpatient day/surgery caps.
+- First Health Cleveland Clinic termination includes Weston/Martin/Indian River FL, effective 7/1/2025. Recheck before quoting those facilities.
+- PHCS Extended/limited-benefit networks differ from full PHCS PPO. UW Medicine does not take PHCS; verify the exact selector.
+- Verify participation per provider and exact product; maps are examples, not a census.
+- Old call references cannot establish facts. Ignore conflicting references and never impose PALIC-only rules.
+- Current premiums, fees, approval, effective dates, eligibility and specific provider participation: verify with carrier. Never infer an underwriting outcome.
 
 ## RESPONSE RULES
 - Keep answers concise and actionable
 - Put script language in quotes so agent can read it directly
-- Always prioritize compliance, especially NOT-MEC disclosure and UW honesty
+- Prioritize selected-product required statements and financial exposure.
 Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.
 `, variableSuffix: `
 ## Reference context
@@ -449,11 +413,13 @@ ${copilotContextJson}
    THE HOOK
    ─────────────────────────────────────────────────────── */
 
-export function useU65CopilotEngine({ transcriptRef, activeGate, state, logComplianceFlag }) {
+export function useU65CopilotEngine({ transcriptRef, activeGate, state: callState, logComplianceFlag }) {
+  const [selectedId] = useU65ProductSelection();
+  const state = useMemo(() => ({ ...callState, selectedProducts: selectedId ? [selectedId] : [] }), [callState, selectedId]);
   const currentStep = U65_GATE_LABELS[activeGate] || `Gate ${activeGate}`;
   const { entries: dbComplianceEntries } = useKnowledge("compliance_u65");
   const complianceKnowledge = useMemo(
-    () => mergeStructuredKnowledgeMap(U65_COMPLIANCE_KNOWLEDGE, dbComplianceEntries),
+    () => resolveU65Knowledge(U65_COMPLIANCE_KNOWLEDGE, dbComplianceEntries),
     [dbComplianceEntries]
   );
   const knowledge = complianceKnowledge[currentStep] || null;
@@ -498,6 +464,13 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
     // Config
     silentHeartbeatMs,
   } = core;
+
+  useEffect(() => {
+    coachingAbortRef.current?.abort();
+    askAbortRef.current?.abort();
+    setCoachingLoading(false);
+    setAskLoading(false);
+  }, [selectedId, coachingAbortRef, askAbortRef, setCoachingLoading, setAskLoading]);
 
   const immigrationReferenceSuggestedRef = useRef(false);
   const privatePlanReferenceSuggestedRef = useRef(false);
@@ -561,8 +534,8 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
   useEffect(() => {
     if (activeGate === 3 && !mecFiredRef.current) {
       mecFiredRef.current = true;
-      const msg = "MANDATORY: Deliver NOT-MEC and NOT-ACA-substitute disclosures BEFORE presenting any product details. This is a compliance requirement.";
-      pushFeedEntry("critical", msg, { section: U65_GATE_LABELS[3] || "MEC Disclosure", issueTag: "MEC_DISCLOSURE_ENTRY" });
+      const msg = "Select the exact product and give all its required statements before presentation. ACA/MEC status and underwriting lookbacks: verify with carrier.";
+      pushFeedEntry("remind", msg, { section: U65_GATE_LABELS[3] || "MEC Disclosure", issueTag: "PRODUCT_DISCLOSURE_ENTRY" });
     }
     if (activeGate !== 3) mecFiredRef.current = false;
   }, [activeGate, pushFeedEntry]);
@@ -570,45 +543,15 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
   // UW honesty at gate 6
   const uwFiredRef = useRef(false);
   useEffect(() => {
-    if (activeGate === 6 && !uwFiredRef.current) {
+    if (activeGate === 4 && !uwFiredRef.current) {
       uwFiredRef.current = true;
       pushFeedEntry("remind", "Read UW questions verbatim. Do NOT coach the client to minimize conditions. Say \"subject to underwriting approval\", never \"approved.\"", {
-        section: U65_GATE_LABELS[6] || "Underwriting",
+        section: U65_GATE_LABELS[4] || "Enrollment",
         issueTag: "UW_HONESTY_ENTRY",
       });
     }
-    if (activeGate !== 6) uwFiredRef.current = false;
+    if (activeGate !== 4) uwFiredRef.current = false;
   }, [activeGate, pushFeedEntry]);
-
-  // High risk pivot at gate 3
-  const highRiskFiredRef = useRef(false);
-  useEffect(() => {
-    if (activeGate === 3 && state.uwRisk === "high" && !highRiskFiredRef.current) {
-      highRiskFiredRef.current = true;
-      const timer = setTimeout(() => {
-        pushFeedEntry("warn", "Client is HIGH UW risk. Off-exchange products may decline. Consider pivoting to ACA (guaranteed issue) if client is in OEP/SEP window.", {
-          section: U65_GATE_LABELS[3] || "MEC Disclosure",
-          issueTag: "HIGH_UW_RISK",
-        });
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-    if (activeGate !== 3) highRiskFiredRef.current = false;
-  }, [activeGate, state.uwRisk, pushFeedEntry]);
-
-  /* ─── ACA benchmark lookup (fires once when location is captured) ─── */
-  const [acaBenchmark, setAcaBenchmark] = useState(null);
-  const benchmarkFetchedRef = useRef(false);
-  const clientState = state.clientProfile?.state;
-  const clientCounty = state.clientProfile?.county;
-  useEffect(() => {
-    if (clientState && !benchmarkFetchedRef.current) {
-      benchmarkFetchedRef.current = true;
-      lookupAcaBenchmark(clientState, clientCounty).then((b) => {
-        if (b) setAcaBenchmark(b);
-      });
-    }
-  }, [clientState, clientCounty]);
 
   /* ═══════ COACHING ═══════ */
   const requestCoaching = useCallback(async ({
@@ -681,10 +624,10 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state, logCompl
 
     const derivedSignals = buildU65DerivedSignals(state, activeGate, fullTranscript);
     const copilotContext = {
+      selectedProductGuidance: buildU65ProductContext(state.selectedProducts),
       checklistState: buildU65ChecklistState(state, activeGate),
       priorCompletedGates: buildCompletedGateHistory(state),
       derivedSignals,
-      ...(acaBenchmark ? { acaBenchmark: formatBenchmarkForPrompt(acaBenchmark) } : {}),
     };
     const copilotContextJson = JSON.stringify(copilotContext, null, 2);
 
@@ -725,6 +668,7 @@ SECTION CONTEXT (rolling window):
       }
       clearServiceIssue();
       const data = await response.json();
+      if (controller.signal.aborted) return;
       const raw = parseAnthropicResponse(data);
       let { level, message, issueTag, confidence } = parseCoachingJson(raw);
 
@@ -823,13 +767,23 @@ SECTION CONTEXT (rolling window):
       if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep });
       surfaceServiceIssue(errorMessage, { force: manual || periodic });
     } finally {
-      if (coachingAbortRef.current === controller) coachingAbortRef.current = null;
-      setCoachingLoading(false);
+      if (coachingAbortRef.current === controller) {
+        coachingAbortRef.current = null;
+        setCoachingLoading(false);
+      }
     }
-  }, [captureCoachingTranscript, markCoachingDispatched, activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, silentHeartbeatMs, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, acaBenchmark, logComplianceFlag]);
+  }, [captureCoachingTranscript, markCoachingDispatched, activeGate, currentStep, coachingLoading, knowledge, pushFeedEntry, getToken, state, transcriptRef, clearServiceIssue, surfaceServiceIssue, silentHeartbeatMs, messagesRef, lastCoachingTime, lastAnalyzedLength, lastInterventionLevel, sectionTranscriptStartRef, sectionCopilotFiredRef, lastSilentHeartbeatRef, lastPeriodicContextSignatureRef, coachingAbortRef, setCoachingLoading, logComplianceFlag]);
 
   // Store latest requestCoaching for core's periodic timer and section-entry
   useEffect(() => { requestCoachingRef.current = requestCoaching; }, [requestCoaching, requestCoachingRef]);
+  const priorProductRef = useRef(selectedId);
+  useEffect(() => {
+    if (priorProductRef.current === selectedId || coachingLoading) return;
+    priorProductRef.current = selectedId;
+    if (state.callStarted && transcriptRef.current.trim()) {
+      requestCoachingRef.current({ sectionEntry: true });
+    }
+  }, [selectedId, coachingLoading, state.callStarted, transcriptRef, requestCoachingRef]);
 
   /* ═══════ ASK ═══════ */
   const askCopilot = useCallback(async (spokenQuestion) => {
@@ -846,6 +800,7 @@ SECTION CONTEXT (rolling window):
     const sectionKey = currentStep;
     const recentTranscript = transcriptRef.current.trim().slice(-1500);
     const copilotContext = {
+      selectedProductGuidance: buildU65ProductContext(state.selectedProducts),
       checklistState: buildU65ChecklistState(state, activeGate),
       priorCompletedGates: buildCompletedGateHistory(state),
     };
@@ -883,6 +838,7 @@ SECTION CONTEXT (rolling window):
       }
       clearServiceIssue();
       const data = await response.json();
+      if (controller.signal.aborted) return;
       const raw = parseAnthropicResponse(data);
       if (raw) {
         const prefix = isSpoken ? `"${question}"` : `? ${question}`;
@@ -902,18 +858,17 @@ SECTION CONTEXT (rolling window):
       pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace });
       surfaceServiceIssue(errorMessage, { force: true });
     } finally {
-      if (askAbortRef.current === controller) askAbortRef.current = null;
-      setAskLoading(false);
+      if (askAbortRef.current === controller) {
+        askAbortRef.current = null;
+        setAskLoading(false);
+      }
     }
   }, [askQuestion, askLoading, currentStep, knowledge, logEntry, getToken, state, activeGate, transcriptRef, pushFeedEntry, clearServiceIssue, surfaceServiceIssue, setMessages, setAskQuestion, setAskLoading, askAbortRef]);
 
   /* ═══════ Compliance score ═══════ */
   const complianceScore = useMemo(() => {
-    const totalGates = 8;
-    const completed = [
-      state.gate0Ok, state.gate1Ok, state.gate2Ok, state.gate3Ok,
-      state.gate4Ok, state.gate5Ok, state.gate6Ok, state.gate7Ok,
-    ].filter(Boolean).length;
+    const totalGates = U65_GATES.length;
+    const completed = U65_GATES.filter((gate) => state[gate.key]).length;
 
     const warns = entries.filter((e) => e.level === "warn").length;
     const criticals = entries.filter((e) => e.level === "critical").length;

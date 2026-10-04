@@ -2,9 +2,12 @@
  * U65Flow.jsx - five-screen U65 Off-Exchange NEPQ script flow.
  *
  * Capture and navigation state intentionally stays local to this component.
- * The U65 Co-Pilot remains isolated from this workflow data.
+ * Selected product and current screen are shared with U65 Co-Pilot.
  */
 
+import { selectU65Product } from "../../lib/u65ProductSelection.js";
+import U65ProductGuidance from "../../components/U65ProductGuidance";
+import { useU65 } from "./U65Context";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -118,7 +121,7 @@ function useU65TemplateScreens() {
   const { sections, template } = useScriptTemplate("u65");
 
   return useMemo(() => {
-    if (!template || !sections.length) return U65_GATES;
+    if (!template || !sections.length || !sections.every((section) => section.source_version === "f57-source-v1")) return U65_GATES;
 
     const matchingSections = U65_GATES.map((screen) =>
       sections.find(
@@ -636,6 +639,7 @@ export default function U65Flow({
   flowTitle = "U65",
   objections = U65_OBJECTIONS,
 }) {
+  const { dispatch } = useU65();
   const templateScreens = useU65TemplateScreens();
   const screens = providedScreens || templateScreens;
   const lastScreenIndex = screens.length - 1;
@@ -686,6 +690,9 @@ export default function U65Flow({
 
   const problem = captures.problem.trim();
   const currentScreen = screens[currentScreenIndex] || U65_GATES[currentScreenIndex];
+  useEffect(() => {
+    dispatch({ type: "SET_ACTIVE_GATE", gate: currentScreen.num });
+  }, [dispatch, currentScreen.num]);
   const openSectionIndex = Object.prototype.hasOwnProperty.call(
     openSectionByScreen,
     currentScreen.id
@@ -702,6 +709,7 @@ export default function U65Flow({
   };
 
   const goNext = () => {
+    dispatch({ type: "COMPLETE_SECTION", key: currentScreen.key, sectionNum: currentScreen.num });
     const nextIndex = currentScreenIndex + 1;
     if (currentScreenIndex === lastScreenIndex) {
       setComplete(true);
@@ -711,6 +719,8 @@ export default function U65Flow({
   };
 
   const resetFlow = () => {
+    dispatch({ type: "RESET" });
+    selectU65Product(null);
     setCurrentScreenIndex(0);
     setCaptures({ problem: "", consequence: "", why_bought: "" });
     setOpenerVariant(suggestedOpener);
@@ -761,6 +771,7 @@ export default function U65Flow({
           </div>
 
           <div className="u65-nepq-screen__body">
+            {(currentScreen.code === "S04" || currentScreen.code === "G03") ? <U65ProductGuidance /> : null}
             {currentScreen.groups.map((group, index) => (
               <ScreenSection
                 key={group.title}
