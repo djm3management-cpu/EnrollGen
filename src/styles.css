@@ -18392,3 +18392,13 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
   .opps-call { flex-wrap: wrap; }
 }
 .paragon-inert-container { display: contents; }
+
+/* County intelligence follows existing dark cards, tabs and color variables. */
+.sep-penetration { margin-top: 20px; }
+.sep-penetration .sep-cg-header { justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.sep-penetration-map { display: block; width: 100%; max-height: 420px; }
+.sep-penetration-map path { cursor: pointer; transition: fill 0.15s; }
+.sep-penetration-map path:hover, .sep-penetration-map path:focus { stroke: var(--text-primary); stroke-width: 2; outline: none; }
+.sep-penetration-detail { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 16px 0; border-top: 1px solid var(--border-default); font-size: 13px; }
+.sep-penetration-detail strong { width: 100%; }
+.sep-penetration-legend, .sep-penetration-note { font-size: 12px; line-height: 1.6; }
