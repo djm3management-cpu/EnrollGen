@@ -40,7 +40,8 @@ export const U65_SOURCE_RULES = [
   "MedPerformance 5000 OON %, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; never select a disputed number.",
   "First Health terminated Cleveland Clinic including Weston/Martin/Indian River FL effective 7/1/2025; recheck before quoting those facilities.",
   "PHCS Extended/limited-benefit networks are not full PHCS PPO; UW Medicine does not take PHCS; verify exact network selector.",
-  "Verify participation per provider and exact product; maps are examples, not a census."
+  "Verify participation per provider and exact product; maps are examples, not a census.",
+  "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
 ];
 export const U65_COMPLIANCE_KNOWLEDGE = Object.fromEntries(
   Object.entries(U65_GATE_GUIDANCE).map(([key, lines]) => [key, {

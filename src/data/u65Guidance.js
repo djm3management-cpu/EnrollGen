@@ -46,7 +46,7 @@ export function buildU65Quiz(plans = U65_PLANS) {
         ][choiceIndex < index % 4 ? choiceIndex : choiceIndex - 1],
     ]),
     answer: ['A', 'B', 'C', 'D'][index % 4],
-    explanation: `${plan.requiredStatements.join(' ')} Source: ${plan.source}.`,
+    explanation: `${plan.requiredStatements.join(' ')} Source: ${plan.source}; U65 Plan Map.pdf pp. ${plan.mapPages.join(", ")}.`,
   }));
 }
 export const U65_QUIZ = buildU65Quiz();

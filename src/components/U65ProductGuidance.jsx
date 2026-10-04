@@ -35,7 +35,7 @@ export default function U65ProductGuidance({ selector = true }) {
         <div className="private-plan-mini-block"><span className="private-plan-mini-block__label">Required agent statements</span>
           <ul>{plan.requiredStatements.map((statement, index) => <li key={index}>{statement}</li>)}</ul>
         </div>
-        <p>Workbook source: {plan.source}. Verify the current effective-date documents before enrollment.</p>
+        <p>Workbook source: {plan.source}. U65 Plan Map.pdf pages: {plan.mapPages.join(", ")}. Verify the current effective-date documents before enrollment.</p>
       </>}
     </section>
   );

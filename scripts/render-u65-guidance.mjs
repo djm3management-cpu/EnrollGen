@@ -26,7 +26,7 @@ for (const plan of catalog.plans) {
   for (const [label, key] of fields) pages.push(`<tr><th>${label}</th><td>${escape(plan[key])}</td></tr>`);
   pages.push('</tbody></table><h3 class="subhead">Required agent statements</h3><ul>');
   pages.push(...plan.requiredStatements.map((line) => `<li class="body-text">${escape(line)}</li>`));
-  pages.push(`</ul><p class="body-text">Workbook source: ${escape(plan.source)}. Effective-date documents: verify with carrier.</p></div></section>`);
+  pages.push(`</ul><p class="body-text">Workbook source: ${escape(plan.source)}. U65 Plan Map.pdf pages: ${plan.mapPages.join(", ")}. Effective-date documents: verify with carrier.</p></div></section>`);
 }
 pages.push(`</div><script>
 const slides = [...document.querySelectorAll('.slide')];
@@ -46,12 +46,12 @@ openHash();
 </script></body></html>`);
 fs.writeFileSync(file, head.trimEnd() + '\n' + pages.join('\n') + '\n');
 
-const table = ['# F57 Step 2 — per-product guidance', '', 'All 59 variants in the primary workbook. Coverage groups describe benefit structure, not ACA/MEC certification. Enroll Prime is the current agent portal. DE, MD, FL agents; higher earners priced out of unsubsidized ACA. No cross-group premium comparison or personalized premium quote is presented.', '', 'The source folder contains the workbook and Word document. `U65_Plan_Map.pdf` is missing. Explicit map warnings from the user are retained; the Word document independently supports the First Health/PHCS and Bronze/Silver reference-pricing cautions. The Elite Plus reference-pricing warning also follows the explicit instruction.', '', 'Unknown facts: **verify with carrier**. Conflicting/provisional facts: **confirm with carrier**. ACA/MEC status and underwriting lookbacks are verification fields for every variant. HSA labels do not determine personal contribution eligibility.', '', 'Source file SHA-256:', ''];
+const table = ['# F57 Step 2 — per-product guidance', '', 'All 59 variants in the primary workbook. Coverage groups describe benefit structure, not ACA/MEC certification. Enroll Prime is the current agent portal. DE, MD, FL agents; higher earners priced out of unsubsidized ACA. No cross-group premium comparison or personalized premium quote is presented.', '', 'All three source files were reviewed read only, including all eight pages of `U65 Plan Map.pdf`. Per-product map page references distinguish network evidence from exact-product participation. No external insurance facts were added.', '', 'Unknown facts: **verify with carrier**. Conflicting/provisional facts: **confirm with carrier**. ACA/MEC status and underwriting lookbacks are verification fields for every variant. HSA labels do not determine personal contribution eligibility.', '', 'Source file SHA-256:', ''];
 for (const source of catalog.sourceFiles) table.push(`- ${source.name}: \`${source.sha256}\``);
 for (const group of catalog.coverageGroups) {
   table.push('', `## ${group}`, '', '| Plan | Type / network | Deductible | Stated OOP | Hospital / office / other limits | Rx | Maternity | Waiting periods | Required agent statements | Source |', '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |');
   for (const plan of catalog.plans.filter((item) => item.group === group)) {
-    const values = [plan.name, `${plan.planType}<br>${plan.network}`, plan.deductible, plan.oop, `${plan.hospital}<br>${plan.office}<br>${plan.limits}<br>Maximum: ${plan.benefitMaximum}`, plan.rx, plan.maternity, plan.waitingPeriods, plan.requiredStatements.join('<br>'), `${plan.source}<br>${plan.sourceCells['Source and pages']}`];
+    const values = [plan.name, `${plan.planType}<br>${plan.network}`, plan.deductible, plan.oop, `${plan.hospital}<br>${plan.office}<br>${plan.limits}<br>Maximum: ${plan.benefitMaximum}`, plan.rx, plan.maternity, plan.waitingPeriods, plan.requiredStatements.join('<br>'), `${plan.source}<br>${plan.sourceCells['Source and pages']}<br>U65 Plan Map.pdf pp. ${plan.mapPages.join(", ")}`];
     table.push('| ' + values.map(cell).join(' | ') + ' |');
   }
 }

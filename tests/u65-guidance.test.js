@@ -205,3 +205,25 @@ test('telephony routing actions, script capture topology and existing style bloc
   const changed = execFileSync('git', ['diff', '--name-only', '51fccc3'], { encoding: 'utf8' }).trim().split('\n');
   assert.ok(changed.every((file) => !/\.css$|^netlify\/|twilio|recording|billing|routing/i.test(file)), changed.join('\n'));
 });
+
+test('corrected map source is reviewed and network evidence is not treated as exact-product access', () => {
+  assert.equal(U65_CATALOG.version, 'f57-source-v2');
+  assert.equal(U65_CATALOG.sourceFiles.length, 3);
+  assert.ok(U65_CATALOG.sourceFiles.some((source) => source.name === 'U65 Plan Map.pdf'));
+  assert.equal(U65_CATALOG.missingSource, undefined);
+  assert.match(U65_CATALOG.sourceReview, /8 pages/);
+  for (const plan of U65_PLANS) {
+    assert.ok(plan.mapPages.includes(8));
+    assert.match(disclosures(plan), /Hospital participation lists do not confirm the exact third-party plan/);
+    if (plan.network.includes('Cigna')) assert.match(disclosures(plan), /Cigna Behavioral Health\/Evernorth/);
+    if (plan.network.includes('PHCS')) assert.match(disclosures(plan), /UT Southwestern excludes/);
+    assert.ok(U65_QUIZ.find((question) => question.id === plan.id).explanation.includes('U65 Plan Map.pdf'));
+  }
+  const elite = find('Vault Elite Health Plus USA');
+  assert.ok(elite.mapPages.includes(6));
+  assert.match(disclosures(elite), /OON benefits are listed as not covered/);
+  const migration = fs.readFileSync('supabase/migrations/082_u65_source_guidance.sql', 'utf8');
+  assert.match(migration, /'map_reviewed', true/);
+  assert.match(migration, /'U65 Plan Map.pdf'/);
+  assert.doesNotMatch(migration, /map absent|source_gap|f57-source-v1/);
+});

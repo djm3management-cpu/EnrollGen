@@ -121,7 +121,7 @@ function useU65TemplateScreens() {
   const { sections, template } = useScriptTemplate("u65");
 
   return useMemo(() => {
-    if (!template || !sections.length || !sections.every((section) => section.source_version === "f57-source-v1")) return U65_GATES;
+    if (!template || !sections.length || !sections.every((section) => section.source_version === "f57-source-v2")) return U65_GATES;
 
     const matchingSections = U65_GATES.map((screen) =>
       sections.find(

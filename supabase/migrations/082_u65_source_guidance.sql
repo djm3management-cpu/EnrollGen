@@ -55,7 +55,8 @@ WITH gate_lines AS (
   "MedPerformance 5000 OON %, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; never select a disputed number.",
   "First Health terminated Cleveland Clinic including Weston/Martin/Indian River FL effective 7/1/2025; recheck before quoting those facilities.",
   "PHCS Extended/limited-benefit networks are not full PHCS PPO; UW Medicine does not take PHCS; verify exact network selector.",
-  "Verify participation per provider and exact product; maps are examples, not a census."
+  "Verify participation per provider and exact product; maps are examples, not a census.",
+  "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
 ]$rules$::jsonb AS rules
 ), structured AS (
   SELECT gate_lines.key AS label, jsonb_build_object(
@@ -72,10 +73,10 @@ SELECT NULL, 'compliance_u65',
   trim(both '_' from regexp_replace(lower(label), '[^a-z0-9]+', '_', 'g')),
   label, body::text,
   jsonb_build_object('static_key', label, 'structured', body,
-    'source_version', 'f57-source-v1',
+    'source_version', 'f57-source-v2',
     'source_files', jsonb_build_array('Plan_comparison_with_Amerus.xlsx',
-      'Plan_differences_with_Amerus.docx'),
-    'source_gap', 'U65_Plan_Map.pdf absent; user-supplied map warnings retained'),
+      'Plan_differences_with_Amerus.docx', 'U65 Plan Map.pdf'),
+    'map_reviewed', true, 'map_page_count', 8),
   57, true, ARRAY[]::text[]
 FROM structured
 ON CONFLICT (category, key, version) WHERE tenant_id IS NULL

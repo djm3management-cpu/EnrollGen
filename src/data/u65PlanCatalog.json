@@ -1,5 +1,5 @@
 {
-  "version": "f57-source-v1",
+  "version": "f57-source-v2",
   "market": "DE, MD, FL agents; higher earners priced out of unsubsidized ACA",
   "portal": "Enroll Prime is the CURRENT agent portal, not a legacy product.",
   "sourceFiles": [
@@ -10,9 +10,12 @@
     {
       "name": "Plan_differences_with_Amerus.docx",
       "sha256": "c1dc1e9161260784743f33e74e145d060799a39dd5029a6dff9d1fad0eb1e7b4"
+    },
+    {
+      "name": "U65 Plan Map.pdf",
+      "sha256": "9e035f4eb87bc78239695d2cc36be057dd25dfd2c7467921999d0a751d2bb449"
     }
   ],
-  "missingSource": "U65_Plan_Map.pdf absent; explicitly supplied map warnings are retained and corroborated by the Word document where available.",
   "coverageGroups": [
     "Major medical",
     "HSA",
@@ -23,12 +26,15 @@
   "universalStatements": [
     "ACA/MEC status and underwriting lookbacks: verify with carrier.",
     "Network participation must be verified per provider and exact product. Maps are examples, not a census.",
-    "Premiums, noncovered services, amounts above benefit limits and balance bills may sit outside the stated OOP limit. Never compare premiums across coverage groups."
+    "Premiums, noncovered services, amounts above benefit limits and balance bills may sit outside the stated OOP limit. Never compare premiums across coverage groups.",
+    "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
   ],
   "networkWarnings": [
     "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
     "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-    "Vault Bronze 2 / Silver 2 / Elite Plus facilities use reference-based pricing at 140% of Medicare. Hospitals can refuse payment and balance bill outside the OOP max."
+    "Vault Bronze 2 / Silver 2 / Elite Plus facilities use reference-based pricing at 140% of Medicare. Hospitals can refuse payment and balance bill outside the OOP max.",
+    "UW Medicine excludes Cigna Behavioral Health/Evernorth Behavioral Health; its medical Cigna participation does not confirm behavioral coverage. Verify the exact product and service.",
+    "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
   ],
   "sourceRegister": [
     {
@@ -716,7 +722,13 @@
         "Prescription drugs: $0 generic / $35 preferred / $75 nonpreferred / $200 specialty; advocacy conditions apply.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "SBC benefits table and coverage examples conflict: confirm with carrier. OON balance billing excluded from OOP maximum. Outlook limitations sheet lists 25 chiropractic, 35 therapy, 60 home-health visits/year and requires precertification for many services; penalty may be denial. See Outlook O3.",
-        "Ultimate PPO coinsurance and gap scope conflict: confirm with carrier. Do not select a coinsurance percentage or promise zero total exposure."
+        "Ultimate PPO coinsurance and gap scope conflict: confirm with carrier. Do not select a coinsurance percentage or promise zero total exposure.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UW Medicine excludes Cigna Behavioral Health/Evernorth Behavioral Health; its medical Cigna participation does not confirm behavioral coverage. Verify the exact product and service."
+      ],
+      "mapPages": [
+        1,
+        8
       ]
     },
     {
@@ -776,7 +788,13 @@
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "Elective surgery excluded first 90 days. Preauthorization required. Transplant/dialysis terms conflict: confirm with carrier. Substance abuse listed as excluded.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier."
+        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -836,7 +854,13 @@
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "Elective surgery excluded first 90 days. Preauthorization required. Transplant/dialysis terms conflict: confirm with carrier. Substance abuse listed as excluded.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier."
+        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -892,7 +916,13 @@
         "Hospital limits: 20% after deductible. Office limits: PCP: $45 copay; specialist: $90 copay.",
         "Prescription drugs: $15 generic / $65 preferred / $100 nonpreferred; specialty 50%.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
-        "ERISA-sponsored per brochure; eligibility must be confirmed. Nonemergency foreign care and gene therapy excluded. Allowable-charge limits apply."
+        "ERISA-sponsored per brochure; eligibility must be confirmed. Nonemergency foreign care and gene therapy excluded. Allowable-charge limits apply.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UW Medicine excludes Cigna Behavioral Health/Evernorth Behavioral Health; its medical Cigna participation does not confirm behavioral coverage. Verify the exact product and service."
+      ],
+      "mapPages": [
+        1,
+        8
       ]
     },
     {
@@ -952,7 +982,13 @@
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "Elective surgery excluded first 90 days. Preauthorization required. Transplant/dialysis terms conflict: confirm with carrier. Substance abuse listed as excluded.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier."
+        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -1012,7 +1048,13 @@
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "Elective surgery excluded first 90 days. Preauthorization required. Transplant/dialysis terms conflict: confirm with carrier. Substance abuse listed as excluded.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier."
+        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -1071,7 +1113,13 @@
         "Prescription drugs: $15 generic / $65 preferred / $100 nonpreferred; specialty 50%.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "ERISA-sponsored per brochure; eligibility must be confirmed. Nonemergency foreign care and gene therapy excluded. Allowable-charge limits apply. OON preventive/PCP/specialist vs general member-share discrepancy: confirm with carrier.",
-        "MedPerformance 5000 OON coinsurance discrepancy: confirm with carrier. Do not select an OON percentage."
+        "MedPerformance 5000 OON coinsurance discrepancy: confirm with carrier. Do not select an OON percentage.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UW Medicine excludes Cigna Behavioral Health/Evernorth Behavioral Health; its medical Cigna participation does not confirm behavioral coverage. Verify the exact product and service."
+      ],
+      "mapPages": [
+        1,
+        8
       ]
     },
     {
@@ -1131,7 +1179,13 @@
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "Elective surgery excluded first 90 days. Preauthorization required. Transplant/dialysis terms conflict: confirm with carrier. Substance abuse listed as excluded.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier."
+        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -1187,7 +1241,13 @@
         "Hospital limits: 0% after deductible. Office limits: PCP: $50 copay; specialist: $100 copay.",
         "Prescription drugs: Generic/brand/specialty: 0% after deductible.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
-        "ERISA-sponsored per brochure; eligibility must be confirmed. Nonemergency foreign care and gene therapy excluded. Allowable-charge limits apply."
+        "ERISA-sponsored per brochure; eligibility must be confirmed. Nonemergency foreign care and gene therapy excluded. Allowable-charge limits apply.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UW Medicine excludes Cigna Behavioral Health/Evernorth Behavioral Health; its medical Cigna participation does not confirm behavioral coverage. Verify the exact product and service."
+      ],
+      "mapPages": [
+        1,
+        8
       ]
     },
     {
@@ -1244,7 +1304,13 @@
         "Prescription drugs: $0 generic / $35 preferred / $75 nonpreferred / $200 specialty; advocacy conditions apply.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Routine OON care excluded. SBC deductible and OOP are $9,000/$18,000; brochure headline reflects gap-adjusted amounts. Obtain gap contract and claim coordination terms. Outlook limitations sheet lists service visit caps and extensive precertification; failure may result in no coverage. See Outlook O3.",
-        "Underlying SBC deductible is $9,000 individual / $18,000 family. The $1,500/$3,500 headline is gap-adjusted exposure, never the deductible. Confirm the gap certificate and claim coordination. Routine OON care excluded."
+        "Underlying SBC deductible is $9,000 individual / $18,000 family. The $1,500/$3,500 headline is gap-adjusted exposure, never the deductible. Confirm the gap certificate and claim coordination. Routine OON care excluded.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UW Medicine excludes Cigna Behavioral Health/Evernorth Behavioral Health; its medical Cigna participation does not confirm behavioral coverage. Verify the exact product and service."
+      ],
+      "mapPages": [
+        1,
+        8
       ]
     },
     {
@@ -1301,7 +1367,13 @@
         "Prescription drugs: $0 generic / $35 preferred / $75 nonpreferred / $200 specialty; advocacy conditions apply.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Routine OON care excluded. SBC deductible and OOP are $9,000/$18,000; brochure headline reflects gap-adjusted amounts. Obtain gap contract and claim coordination terms. Outlook limitations sheet lists service visit caps and extensive precertification; failure may result in no coverage. See Outlook O3.",
-        "Underlying SBC deductible is $9,000 individual / $18,000 family. The $1,500/$3,500 headline is gap-adjusted exposure, never the deductible. Confirm the gap certificate and claim coordination. Routine OON care excluded."
+        "Underlying SBC deductible is $9,000 individual / $18,000 family. The $1,500/$3,500 headline is gap-adjusted exposure, never the deductible. Confirm the gap certificate and claim coordination. Routine OON care excluded.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UW Medicine excludes Cigna Behavioral Health/Evernorth Behavioral Health; its medical Cigna participation does not confirm behavioral coverage. Verify the exact product and service."
+      ],
+      "mapPages": [
+        1,
+        8
       ]
     },
     {
@@ -1358,7 +1430,14 @@
         "Prescription drugs: $0 preventive generic / $20 generic / $65 preferred brand / $95 non-preferred / $200 specialty.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Chiro $75, 30 visits; SNF/rehab $75/day 28 days; home health $50, 10 visits; hospice $0, 30 days lifetime; DME $50/item; 1 prosthetic/yr; detox 5 days; chemical use 30 days/visits combined; Chemo infusion $250/visit; oral chemo via specialty Rx; dialysis $250;  Schedule typo: 'N/A - not an HSA plan 50%'.",
-        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector."
+        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -1415,7 +1494,14 @@
         "Prescription drugs: $0 / $20 / $65 / $95 / $200 specialty (no $200 cap).",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Chiro $75, 30 visits; SNF/rehab $75/day 28 days; home health $50, 10 visits; hospice $0, 30 days lifetime; DME $50/item; 1 prosthetic/yr; detox 5 days; chemical use 30 days/visits combined; Chemo infusion $250/visit; oral chemo via specialty Rx; dialysis $250;  Schedule typo: 'N/A - not an HSA plan 50%'.  Chemo infusion $250/visit; dialysis $250;",
-        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector."
+        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -1476,7 +1562,13 @@
         "Elective surgery excluded first 90 days. Preauthorization required. Transplant/dialysis terms conflict: confirm with carrier. Substance abuse listed as excluded.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
         "HSA is a product label. Personal HSA contribution eligibility: verify with carrier.",
-        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier."
+        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -1533,7 +1625,13 @@
         "Prescription drugs: $15 generic / $65 preferred / $100 nonpreferred; specialty 50%; after deductible.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Updated SBC S65 governs the supplied comparison; eligibility, nonemergency foreign care and gene-therapy exclusions and allowable-charge limits require review. Exact effective-date version: verify with carrier.",
-        "HSA is a product label. Personal HSA contribution eligibility: verify with carrier."
+        "HSA is a product label. Personal HSA contribution eligibility: verify with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UW Medicine excludes Cigna Behavioral Health/Evernorth Behavioral Health; its medical Cigna participation does not confirm behavioral coverage. Verify the exact product and service."
+      ],
+      "mapPages": [
+        1,
+        8
       ]
     },
     {
@@ -1594,7 +1692,13 @@
         "Elective surgery excluded first 90 days. Preauthorization required. Transplant/dialysis terms conflict: confirm with carrier. In-person mental health excluded (except telemedicine).",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
         "HSA is a product label. Personal HSA contribution eligibility: verify with carrier.",
-        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier."
+        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -1651,7 +1755,13 @@
         "Prescription drugs: After deductible: generic 0%; preferred 25%; nonpreferred 45%; specialty 30% with advocacy conditions.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "No premium sheet supplied. SBC period January 1-December 31, 2026. Cigna named; exact directory selection requires administrator confirmation. Outlook limitations sheet lists service visit caps and extensive precertification; failure may result in no coverage. See Outlook O3.",
-        "HSA is a product label. Personal HSA contribution eligibility: verify with carrier."
+        "HSA is a product label. Personal HSA contribution eligibility: verify with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UW Medicine excludes Cigna Behavioral Health/Evernorth Behavioral Health; its medical Cigna participation does not confirm behavioral coverage. Verify the exact product and service."
+      ],
+      "mapPages": [
+        1,
+        8
       ]
     },
     {
@@ -1712,7 +1822,13 @@
         "Elective surgery excluded first 90 days. Preauthorization required. Transplant/dialysis terms conflict: confirm with carrier. In-person mental health excluded (except telemedicine).",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
         "HSA is a product label. Personal HSA contribution eligibility: verify with carrier.",
-        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier."
+        "Transplant/dialysis exclusion and service-table conflict: confirm with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -1770,7 +1886,14 @@
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Chiro 30; SNF/inpatient rehab 14 days; home health 30; hospice 60 days lifetime; PHP/IOP 30 days; detox 5 days; 1 prosthetic/yr; nutrition 1 visit; Covered; chemo infusion only, oral chemo via Rx (subject to $200 cap);  Missed prior auth = 50% reduction or denial. App requires written confirmation of $200 Rx cap.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "HSA is a product label. Personal HSA contribution eligibility: verify with carrier."
+        "HSA is a product label. Personal HSA contribution eligibility: verify with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -1828,7 +1951,14 @@
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Chiro 30; SNF/inpatient rehab 14 days; home health 30; hospice 60 days lifetime; PHP/IOP 30 days; detox 5 days; 1 prosthetic/yr; nutrition 1 visit; Covered; chemo infusion only, oral chemo via Rx (subject to $200 cap);  Missed prior auth = 50% reduction or denial. App requires written confirmation of $200 Rx cap.  Covered; infusion only;",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "HSA is a product label. Personal HSA contribution eligibility: verify with carrier."
+        "HSA is a product label. Personal HSA contribution eligibility: verify with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -1885,7 +2015,12 @@
         "Prescription drugs: Basic: nonpreventive generic $10; brands and specialty not covered.",
         "Maternity: Not covered. Waiting periods: verify with carrier.",
         "Maternity not covered; 1 ER visit; 1 outpatient surgery/visit per year. Hospice and specialty drugs excluded. Nonhospital setting restrictions for office/lab/imaging. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities."
+        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -1945,7 +2080,12 @@
         "Maternity: 12-month waiting period. Waiting periods: Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "Maternity 12-month wait; 2 ER visits; 2 outpatient surgeries/visits per year. Hospice and specialty drugs excluded. Nonhospital setting restrictions for office/lab/imaging. OON terms unverified.",
         "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
-        "MedAccess Pro Rx footnote conflict: confirm with carrier."
+        "MedAccess Pro Rx footnote conflict: confirm with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -2002,7 +2142,12 @@
         "Prescription drugs: Preventive generics before deductible; standard generics $0 after deductible. Assistance program is not a guaranteed drug benefit..",
         "Maternity: 12-month waiting period. Waiting periods: Elective surgery excluded; do not treat as a 90-day wait. Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; elective surgery excluded. 10 combined infusion/chemo/radiation visits. Maternity 12-month waiting period. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities."
+        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -2059,7 +2204,12 @@
         "Prescription drugs: Preventive generics before deductible; standard generics $0 after deductible. Assistance program is not a guaranteed drug benefit..",
         "Maternity: 12-month waiting period. Waiting periods: Elective surgery excluded; do not treat as a 90-day wait. Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; elective surgery excluded. 10 combined infusion/chemo/radiation visits. Maternity 12-month waiting period. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities."
+        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -2116,7 +2266,13 @@
         "Prescription drugs: Generic $0; brands/specialty list assistance programs; OON brands/specialty not covered.",
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "12 chiropractic visits; 16 combined therapy visits; 10 home health visits; 5 DME items. Elective surgery excluded first 90 days. OON generally copay plus 10% after deductible; source emergency exception applies.",
-        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector."
+        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -2174,7 +2330,13 @@
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; 10 combined infusion/chemo/radiation visits. Beyond visit limits, member exposure is unlimited. OON terms unverified. Elective surgery excluded first 90 days; emergency exception described in source.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Life-X VL: member exposure is unlimited beyond visit caps despite the displayed OOP figure."
+        "Life-X VL: member exposure is unlimited beyond visit caps despite the displayed OOP figure.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -2231,7 +2393,12 @@
         "Prescription drugs: Preventive generics before deductible; standard generics $0 after deductible. Assistance program is not a guaranteed drug benefit..",
         "Maternity: 12-month waiting period. Waiting periods: Elective surgery excluded; do not treat as a 90-day wait. Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; elective surgery excluded. 10 combined infusion/chemo/radiation visits. Maternity 12-month waiting period. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities."
+        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -2288,7 +2455,13 @@
         "Prescription drugs: Generic $0; brands/specialty list assistance programs; OON brands/specialty not covered.",
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "12 chiropractic visits; 16 combined therapy visits; 10 home health visits; 5 DME items. Elective surgery excluded first 90 days. OON generally copay plus 10% after deductible; source emergency exception applies.",
-        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector."
+        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -2346,7 +2519,13 @@
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; 10 combined infusion/chemo/radiation visits. Beyond visit limits, member exposure is unlimited. OON terms unverified. Elective surgery excluded first 90 days; emergency exception described in source.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Life-X VL: member exposure is unlimited beyond visit caps despite the displayed OOP figure."
+        "Life-X VL: member exposure is unlimited beyond visit caps despite the displayed OOP figure.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -2403,7 +2582,12 @@
         "Prescription drugs: Preventive generics before deductible; standard generics $0 after deductible. Assistance program is not a guaranteed drug benefit..",
         "Maternity: 12-month waiting period. Waiting periods: Elective surgery excluded; do not treat as a 90-day wait. Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; elective surgery excluded. 10 combined infusion/chemo/radiation visits. Maternity 12-month waiting period. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities."
+        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -2460,7 +2644,13 @@
         "Prescription drugs: Generic $0; brands/specialty list assistance programs; OON brands/specialty not covered.",
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "12 chiropractic visits; 16 combined therapy visits; 10 home health visits; 5 DME items. Elective surgery excluded first 90 days. OON generally copay plus 10% after deductible; source emergency exception applies.",
-        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector."
+        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -2518,7 +2708,13 @@
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; 10 combined infusion/chemo/radiation visits. Beyond visit limits, member exposure is unlimited. OON terms unverified. Elective surgery excluded first 90 days; emergency exception described in source.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Life-X VL: member exposure is unlimited beyond visit caps despite the displayed OOP figure."
+        "Life-X VL: member exposure is unlimited beyond visit caps despite the displayed OOP figure.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -2575,7 +2771,12 @@
         "Prescription drugs: Preventive generics before deductible; standard generics $0 after deductible. Assistance program is not a guaranteed drug benefit..",
         "Maternity: 12-month waiting period. Waiting periods: Elective surgery excluded; do not treat as a 90-day wait. Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; elective surgery excluded. 10 combined infusion/chemo/radiation visits. Maternity 12-month waiting period. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities."
+        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -2632,7 +2833,13 @@
         "Prescription drugs: Generic $0; brands/specialty list assistance programs; OON brands/specialty not covered.",
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "12 chiropractic visits; 16 combined therapy visits; 10 home health visits; 5 DME items. Elective surgery excluded first 90 days. OON generally copay plus 10% after deductible; source emergency exception applies.",
-        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector."
+        "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -2690,7 +2897,13 @@
         "Maternity: verify with carrier. Waiting periods: Elective surgery excluded first 90 days; emergency exceptions only where stated in the source. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; 10 combined infusion/chemo/radiation visits. Beyond visit limits, member exposure is unlimited. OON terms unverified. Elective surgery excluded first 90 days; emergency exception described in source.",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Life-X VL: member exposure is unlimited beyond visit caps despite the displayed OOP figure."
+        "Life-X VL: member exposure is unlimited beyond visit caps despite the displayed OOP figure.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        8
       ]
     },
     {
@@ -2748,7 +2961,14 @@
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Chiro $50, 10 visits; home health $25, 10; chem dep IP $250/day 5 days, OP $25 8 visits; precert over $1,000 (else 50% reduction); hospital-based labs/imaging/preventive not covered; Diagnosis/surgery within limits; chemo/radiation excluded (#46); Days/visits beyond limits are 100% member and don't count to OOP. Newborn coverage excluded (#55).",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. $350/admission incl. physician + surgery; 5 days, 2 surgeries/yr"
+        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. $350/admission incl. physician + surgery; 5 days, 2 surgeries/yr",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -2806,7 +3026,14 @@
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Chiro $25, 10; home health $25, 15; chem dep IP 7 days, OP 10 visits (brochure said 7 days); Chemo/radiation excluded;",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. $350/admission; 7 days, 3 surgeries/yr"
+        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. $350/admission; 7 days, 3 surgeries/yr",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -2864,7 +3091,14 @@
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Chiro $25, 10; home health $25, 20; chem dep IP 10 days, OP 12 visits; Chemo/radiation excluded;",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. $350/admission; 10 days, 4 surgeries/yr"
+        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. $350/admission; 10 days, 4 surgeries/yr",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -2922,7 +3156,14 @@
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Chiro ded + $50, 10; home health ded + $25, 10; chem dep IP 5 days, OP 8 visits ded + 50%; Chemo/radiation excluded;",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. Ded + 50%; 5 days, 1 surgery/yr"
+        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. Ded + 50%; 5 days, 1 surgery/yr",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -2980,7 +3221,14 @@
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Chiro ded + $50, 10; home health ded + $25, 10; chem dep IP 5 days, OP 8 visits ded + 50%; Chemo/radiation excluded;  Chemo/radiation excluded",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. Ded + 50%; 5 days, 1 surgery"
+        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. Ded + 50%; 5 days, 1 surgery",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -3038,7 +3286,14 @@
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Chiro ded + $50, 10; home health ded + $25, 10; chem dep IP 5 days, OP 8 visits ded + 50%; Chemo/radiation excluded;  Chemo/radiation excluded;",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. Ded + 50%; 5 days, 1 surgery"
+        "No OON coverage. Inpatient day and surgery limits are hard caps; charges above limits can remain outside OOP. Ded + 50%; 5 days, 1 surgery",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -3097,7 +3352,11 @@
         "Prescription drugs: Conflicting/provisional Vault schedules: confirm with carrier.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Vault schedules have unresolved contradictions: confirm with carrier. Proposal only; final schedule not supplied: verify with carrier. Inpatient room-and-board only; no inpatient physician or surgery benefit. ",
-        "Vault proposal/schedule or internal benefit contradictions: confirm with carrier. Do not select a disputed benefit amount, day/surgery count, Rx amount or maternity wait."
+        "Vault proposal/schedule or internal benefit contradictions: confirm with carrier. Do not select a disputed benefit amount, day/surgery count, Rx amount or maternity wait.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        8
       ]
     },
     {
@@ -3111,7 +3370,7 @@
       "hospital": "Conflicting/provisional Vault schedules: confirm with carrier",
       "office": "Conflicting/provisional Vault schedules: confirm with carrier",
       "rx": "Conflicting/provisional Vault schedules: confirm with carrier",
-      "limits": "Vault schedules have unresolved contradictions: confirm with carrier. Cancer excluded; no chemotherapy/radiation. Inpatient room-and-board only; no inpatient physician or surgery benefit. ",
+      "limits": "Vault schedules have unresolved contradictions: confirm with carrier. Cancer excluded; no chemotherapy/radiation. Inpatient room-and-board only; no inpatient physician or surgery benefit.  Vault Elite Plus OON benefits are listed as not covered. A First Health logo does not establish facility payment acceptance; secondary MultiPlan configuration: verify with carrier.",
       "benefitMaximum": "Conflicting/provisional Vault schedules: confirm with carrier",
       "gap": "Not applicable",
       "maternity": "verify with carrier",
@@ -3158,7 +3417,14 @@
         "Vault schedules have unresolved contradictions: confirm with carrier. Cancer excluded; no chemotherapy/radiation. Inpatient room-and-board only; no inpatient physician or surgery benefit. ",
         "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
         "Facilities use reference-based pricing at 140% of Medicare. Hospitals can refuse payment and balance bill outside the OOP max.",
-        "Vault proposal/schedule or internal benefit contradictions: confirm with carrier. Do not select a disputed benefit amount, day/surgery count, Rx amount or maternity wait."
+        "Vault proposal/schedule or internal benefit contradictions: confirm with carrier. Do not select a disputed benefit amount, day/surgery count, Rx amount or maternity wait.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "Vault Elite Plus OON benefits are listed as not covered. A First Health logo does not establish facility payment acceptance; secondary MultiPlan configuration: verify with carrier."
+      ],
+      "mapPages": [
+        2,
+        6,
+        8
       ]
     },
     {
@@ -3219,7 +3485,14 @@
         "Vault schedules have unresolved contradictions: confirm with carrier. Cancer excluded; no chemotherapy/radiation. ",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
         "Facilities use reference-based pricing at 140% of Medicare. Hospitals can refuse payment and balance bill outside the OOP max.",
-        "Vault proposal/schedule or internal benefit contradictions: confirm with carrier. Do not select a disputed benefit amount, day/surgery count, Rx amount or maternity wait."
+        "Vault proposal/schedule or internal benefit contradictions: confirm with carrier. Do not select a disputed benefit amount, day/surgery count, Rx amount or maternity wait.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        5,
+        8
       ]
     },
     {
@@ -3280,7 +3553,14 @@
         "Vault schedules have unresolved contradictions: confirm with carrier. Cancer excluded; no chemotherapy/radiation. ",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
         "Facilities use reference-based pricing at 140% of Medicare. Hospitals can refuse payment and balance bill outside the OOP max.",
-        "Vault proposal/schedule or internal benefit contradictions: confirm with carrier. Do not select a disputed benefit amount, day/surgery count, Rx amount or maternity wait."
+        "Vault proposal/schedule or internal benefit contradictions: confirm with carrier. Do not select a disputed benefit amount, day/surgery count, Rx amount or maternity wait.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        5,
+        8
       ]
     },
     {
@@ -3338,7 +3618,14 @@
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Preventive workbook group: Preventive + telemed only; Not covered",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Preventive/limited benefits do not provide major-medical hospital protection. ACA/MEC status: verify with carrier."
+        "Preventive/limited benefits do not provide major-medical hospital protection. ACA/MEC status: verify with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -3396,7 +3683,14 @@
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Preventive workbook group: No hospital, surgery, or ER coverage; Not covered",
         "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
-        "Preventive/limited benefits do not provide major-medical hospital protection. ACA/MEC status: verify with carrier."
+        "Preventive/limited benefits do not provide major-medical hospital protection. ACA/MEC status: verify with carrier.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "UT Southwestern excludes several restricted PHCS arrangements, including limited-benefit networks. Verify the exact network selector; broad PHCS acceptance is not proof of this product\u2019s access."
+      ],
+      "mapPages": [
+        3,
+        4,
+        8
       ]
     },
     {
@@ -3453,7 +3747,13 @@
         "Prescription drugs: Pays $40/day, 12 days.",
         "Maternity: verify with carrier. Waiting periods: 6-month pre-existing-condition limitation. Other waiting periods: verify with carrier..",
         "Supplemental fixed indemnity; remaining bills are member responsibility. Six-month pre-existing condition limitation. Separate accident benefit has $1,000 corridor deductible. Lyric virtual services do not establish a medical PPO network. User identifies this as a straight fixed indemnity plan; use any provider but the fixed benefit may be far below the provider charge.",
-        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap."
+        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "No contracted medical network is identified or required for Bloom\u2019s fixed-benefit design. Certificate terms and actual provider billing/acceptance apply; verify discount arrangements and assignment terms with carrier."
+      ],
+      "mapPages": [
+        7,
+        8
       ]
     },
     {
@@ -3510,7 +3810,13 @@
         "Prescription drugs: Pays $40/day, 12 days.",
         "Maternity: verify with carrier. Waiting periods: 6-month pre-existing-condition limitation. Other waiting periods: verify with carrier..",
         "Supplemental fixed indemnity; remaining bills are member responsibility. Six-month pre-existing condition limitation. Separate accident benefit has $1,000 corridor deductible. Lyric virtual services do not establish a medical PPO network. User identifies this as a straight fixed indemnity plan; use any provider but the fixed benefit may be far below the provider charge.",
-        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap."
+        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "No contracted medical network is identified or required for Bloom\u2019s fixed-benefit design. Certificate terms and actual provider billing/acceptance apply; verify discount arrangements and assignment terms with carrier."
+      ],
+      "mapPages": [
+        7,
+        8
       ]
     },
     {
@@ -3567,7 +3873,13 @@
         "Prescription drugs: Pays $60/day, 12 days.",
         "Maternity: verify with carrier. Waiting periods: 6-month pre-existing-condition limitation. Other waiting periods: verify with carrier..",
         "Supplemental fixed indemnity; remaining bills are member responsibility. Six-month pre-existing condition limitation. Separate accident benefit has $1,000 corridor deductible. Lyric virtual services do not establish a medical PPO network. User identifies this as a straight fixed indemnity plan; use any provider but the fixed benefit may be far below the provider charge.",
-        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap."
+        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "No contracted medical network is identified or required for Bloom\u2019s fixed-benefit design. Certificate terms and actual provider billing/acceptance apply; verify discount arrangements and assignment terms with carrier."
+      ],
+      "mapPages": [
+        7,
+        8
       ]
     },
     {
@@ -3624,7 +3936,13 @@
         "Prescription drugs: Pays $60/day, 15 days.",
         "Maternity: verify with carrier. Waiting periods: 6-month pre-existing-condition limitation. Other waiting periods: verify with carrier..",
         "Supplemental fixed indemnity; remaining bills are member responsibility. Six-month pre-existing condition limitation. Separate accident benefit has $1,000 corridor deductible. Lyric virtual services do not establish a medical PPO network. User identifies this as a straight fixed indemnity plan; use any provider but the fixed benefit may be far below the provider charge.",
-        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap."
+        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "No contracted medical network is identified or required for Bloom\u2019s fixed-benefit design. Certificate terms and actual provider billing/acceptance apply; verify discount arrangements and assignment terms with carrier."
+      ],
+      "mapPages": [
+        7,
+        8
       ]
     },
     {
@@ -3681,7 +3999,13 @@
         "Prescription drugs: Pays $60/day, 15 days.",
         "Maternity: verify with carrier. Waiting periods: 6-month pre-existing-condition limitation. Other waiting periods: verify with carrier..",
         "Supplemental fixed indemnity; remaining bills are member responsibility. Six-month pre-existing condition limitation. Separate accident benefit has $1,000 corridor deductible. Lyric virtual services do not establish a medical PPO network. User identifies this as a straight fixed indemnity plan; use any provider but the fixed benefit may be far below the provider charge.",
-        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap."
+        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "No contracted medical network is identified or required for Bloom\u2019s fixed-benefit design. Certificate terms and actual provider billing/acceptance apply; verify discount arrangements and assignment terms with carrier."
+      ],
+      "mapPages": [
+        7,
+        8
       ]
     },
     {
@@ -3738,7 +4062,13 @@
         "Prescription drugs: Pays $60/day, 15 days.",
         "Maternity: verify with carrier. Waiting periods: 6-month pre-existing-condition limitation. Other waiting periods: verify with carrier..",
         "Supplemental fixed indemnity; remaining bills are member responsibility. Six-month pre-existing condition limitation. Separate accident benefit has $1,000 corridor deductible. Lyric virtual services do not establish a medical PPO network. User identifies this as a straight fixed indemnity plan; use any provider but the fixed benefit may be far below the provider charge.",
-        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap."
+        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "No contracted medical network is identified or required for Bloom\u2019s fixed-benefit design. Certificate terms and actual provider billing/acceptance apply; verify discount arrangements and assignment terms with carrier."
+      ],
+      "mapPages": [
+        7,
+        8
       ]
     },
     {
@@ -3795,7 +4125,13 @@
         "Prescription drugs: Pays $60/day, 15 days.",
         "Maternity: verify with carrier. Waiting periods: 6-month pre-existing-condition limitation. Other waiting periods: verify with carrier..",
         "Supplemental fixed indemnity; remaining bills are member responsibility. Six-month pre-existing condition limitation. Separate accident benefit has $1,000 corridor deductible. Lyric virtual services do not establish a medical PPO network. User identifies this as a straight fixed indemnity plan; use any provider but the fixed benefit may be far below the provider charge.",
-        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap."
+        "Bloom is fixed indemnity, NOT major medical. It pays scheduled amounts only; the member may owe the balance. No comprehensive OOP cap.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
+        "No contracted medical network is identified or required for Bloom\u2019s fixed-benefit design. Certificate terms and actual provider billing/acceptance apply; verify discount arrangements and assignment terms with carrier."
+      ],
+      "mapPages": [
+        7,
+        8
       ]
     },
     {
@@ -3853,7 +4189,12 @@
         "Maternity: verify with carrier. Waiting periods: Newborn indemnity: 365 days; cancer/critical illness: 30 days. Other waiting periods: verify with carrier..",
         "Supplemental coverage; $50,000 certificate-year maximum excludes riders. Newborn indemnity 365-day wait; cancer/critical illness 30-day waits. Provider discount access does not pay remaining bills.",
         "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
-        "Hospital confinement limit: 10 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills."
+        "Hospital confinement limit: 10 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -3911,7 +4252,12 @@
         "Maternity: verify with carrier. Waiting periods: Newborn indemnity: 365 days; cancer/critical illness: 30 days. Other waiting periods: verify with carrier..",
         "Supplemental coverage; $50,000 certificate-year maximum excludes riders. Newborn indemnity 365-day wait; cancer/critical illness 30-day waits. Provider discount access does not pay remaining bills.",
         "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
-        "Hospital confinement limit: 10 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills."
+        "Hospital confinement limit: 10 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -3969,7 +4315,12 @@
         "Maternity: verify with carrier. Waiting periods: Newborn indemnity: 365 days; cancer/critical illness: 30 days. Other waiting periods: verify with carrier..",
         "Supplemental coverage; $50,000 certificate-year maximum excludes riders. Newborn indemnity 365-day wait; cancer/critical illness 30-day waits. Provider discount access does not pay remaining bills.",
         "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
-        "Hospital confinement limit: 10 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills."
+        "Hospital confinement limit: 10 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -4027,7 +4378,12 @@
         "Maternity: verify with carrier. Waiting periods: Newborn indemnity: 365 days; cancer/critical illness: 30 days. Other waiting periods: verify with carrier..",
         "Supplemental coverage; $50,000 certificate-year maximum excludes riders. Newborn indemnity 365-day wait; cancer/critical illness 30-day waits. Provider discount access does not pay remaining bills.",
         "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
-        "Hospital confinement limit: 8 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills."
+        "Hospital confinement limit: 8 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     },
     {
@@ -4085,8 +4441,14 @@
         "Maternity: verify with carrier. Waiting periods: Newborn indemnity: 365 days; cancer/critical illness: 30 days. Other waiting periods: verify with carrier..",
         "Supplemental coverage; $50,000 certificate-year maximum excludes riders. Newborn indemnity 365-day wait; cancer/critical illness 30-day waits. Provider discount access does not pay remaining bills.",
         "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
-        "Hospital confinement limit: 6 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills."
+        "Hospital confinement limit: 6 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "mapPages": [
+        2,
+        8
       ]
     }
-  ]
+  ],
+  "sourceReview": "All three supplied sources reviewed. U65 Plan Map.pdf: 8 pages; network cautions linked to the workbook Sources register."
 }
