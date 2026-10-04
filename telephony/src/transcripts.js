@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { redactSensitiveText } from '../../src/lib/redaction.js';
+import { redactSensitiveText } from './lib/redaction.js';
 
 // Each final gets a stable ID across retries; never log transcript contents.
 export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = () => {} }) {

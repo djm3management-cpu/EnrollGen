@@ -11,7 +11,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test tests/*.test.js"
+    "test": "npm run check:imports && node --test tests/*.test.js",
+    "check:imports": "node scripts/check-import-boundaries.js"
   },
   "dependencies": {
     "@clerk/backend": "^2.33.0",
@@ -21,6 +22,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.8"
+    "@electric-sql/pglite": "^0.5.8",
+    "acorn": "^8.18.0"
   }
 }
