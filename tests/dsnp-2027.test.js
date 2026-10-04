@@ -1,13 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, existsSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { build } from 'esbuild';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import XLSX from 'xlsx';
 import { PGlite } from '@electric-sql/pglite';
-import { parseDsnpWorkbook, loadDsnpPlans } from '../scripts/parse_cms_dsnp.js';
+import { parseDsnpWorkbook, loadDsnpPlans, renderDsnpSql } from '../scripts/parse_cms_dsnp.js';
 import { INTEGRATED_LANE, PDP_LANE } from '../src/lib/dualLisSep.js';
 const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const migration = read('supabase/migrations/081_dsnp_alignment_2027.sql');
@@ -42,6 +45,47 @@ async function db() {
   await pg.exec(read('supabase/migrations/005_dsnp_eae_allow_null_county.sql'));
   return pg;
 }
+test('SQL export executes the same replacement and values as the parameterized loader', async () => {
+  const pg = await db();
+  try {
+    await pg.exec(migration);
+    const rows = [
+      { ...row, 'Legal Entity Name': "O'Brien \\ $1; -- café", 'Plan Name': "A\nB", 'EAE Status': 'Yes' },
+      { ...row, 'Plan ID': '2', County: 'Mercer', 'EAE Status': 'No', 'Affiliated Medicaid Managed Care Organization': "MCO's \\ name" },
+      { ...row, 'Plan ID': '3' },
+    ];
+    const { plans } = parseDsnpWorkbook(workbook(rows), options);
+    const select = 'SELECT plan_year,state,county,carrier,plan_name,contract_id,plan_id,integration_level,eae_status,affiliated_medicaid_mco FROM dsnp_eae_lookup ORDER BY plan_id';
+    await loadDsnpPlans(pg, plans);
+    const expected = (await pg.query(select)).rows;
+    await loadDsnpPlans(pg, parseDsnpWorkbook(workbook([{ ...row, 'Plan ID': '99' }]), options).plans);
+    const sql = await renderDsnpSql(plans);
+    assert.ok(sql.startsWith('BEGIN;\nSELECT plan_year FROM public.dsnp_eae_lookup LIMIT 0;\nDELETE FROM public.dsnp_eae_lookup WHERE plan_year = 2027;\n'));
+    assert.ok(sql.endsWith('COMMIT;\n'));
+    await pg.exec(sql);
+    assert.deepEqual((await pg.query(select)).rows, expected);
+  } finally { await pg.close(); }
+});
+test('SQL CLI needs no database credentials and enforces live validation before writing', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'dsnp-sql-test-'));
+  try {
+    const file = join(dir, 'cy2027-fixture.xlsx');
+    const output = join(dir, 'load.sql');
+    const run = (...args) => spawnSync(process.execPath, ['scripts/parse_cms_dsnp.js', '--file', file, ...args], {
+      encoding: 'utf8', env: { ...process.env, SUPABASE_DB_URL: '', SUPABASE_DB_PASSWORD: '' },
+    });
+    XLSX.writeFile(workbook([row]), file);
+    const result = run('--sql-out', output);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(readFileSync(output, 'utf8'), /VALUES \(2027,'NJ',NULL,'Fixture'/);
+    rmSync(output);
+    XLSX.writeFile(workbook([row], 'Data'), file);
+    assert.notEqual(run('--sql-out', output).status, 0);
+    assert.equal(existsSync(output), false);
+    assert.match(run('--sql-out').stderr, /requires an output path/);
+    assert.match(run('--sql-out', output, '--dry-run').stderr, /mutually exclusive/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
 test('081 executes and reapplies on empty table; unknown EAE accepted and non-2027 rejected', async () => {
   const pg = await db();
   try {

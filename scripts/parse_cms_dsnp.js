@@ -1,5 +1,6 @@
 /** Validate and load the CMS CY2027 Integrated D-SNPs List. Never infer EAE/MCO. */
 import path from "node:path";
+import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import XLSX from "xlsx";
 import pg from "pg";
@@ -78,15 +79,40 @@ export async function loadDsnpPlans(client, plans) {
   }
 }
 
+/** Render the loader's actual transaction without opening a database connection. */
+export async function renderDsnpSql(plans) {
+  const statements = [];
+  await loadDsnpPlans({
+    async query(sql, values = []) {
+      statements.push(sql.replace(/\$(\d+)/g, (_, index) => {
+        const value = values[Number(index) - 1];
+        if (value === null) return "NULL";
+        if (typeof value === "boolean") return value ? "TRUE" : "FALSE";
+        return pg.escapeLiteral(value);
+      }) + ";");
+    },
+  }, plans);
+  return statements.join("\n") + "\n";
+}
+
 async function main() {
   const args = parseArgs();
-  if (!args.file) throw new Error("Usage: node scripts/parse_cms_dsnp.js --file PATH [--dry-run]");
+  if (!args.file) throw new Error("Usage: node scripts/parse_cms_dsnp.js --file PATH [--dry-run | --sql-out PATH]");
+  if (args["sql-out"] !== undefined && (typeof args["sql-out"] !== "string" || !args["sql-out"].trim())) {
+    throw new Error("--sql-out requires an output path.");
+  }
+  if (args["sql-out"] && args["dry-run"]) throw new Error("--sql-out and --dry-run are mutually exclusive.");
   const fileName = path.basename(args.file);
   const { plans, sheetName } = parseDsnpWorkbook(XLSX.readFile(args.file), {
     year: args.year || 2027, sheet: args.sheet, live: !args["dry-run"], fileName,
   });
   console.log(`Parsed ${plans.length} plans from ${fileName} / ${sheetName}. EAE explicitly reported for ${plans.filter((plan) => plan.eaeStatus !== null).length}; affiliated MCO reported for ${plans.filter((plan) => plan.affiliatedMco).length}.`);
   if (args["dry-run"]) return;
+  if (args["sql-out"]) {
+    await writeFile(args["sql-out"], await renderDsnpSql(plans), "utf8");
+    console.log(`Wrote ${plans.length} PY2027 D-SNP integration rows to ${args["sql-out"]}.`);
+    return;
+  }
   await loadLocalEnv();
   const connectionString = process.env.SUPABASE_DB_URL;
   const password = process.env.SUPABASE_DB_PASSWORD;
