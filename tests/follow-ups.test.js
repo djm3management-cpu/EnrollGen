@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { before, after, test } from 'node:test';
+import { execFileSync } from 'node:child_process';
+import { runInNewContext } from 'node:vm';
 import { PGlite } from '@electric-sql/pglite';
 import { followUpBucket, updateFollowUp, createFollowUp } from '../src/lib/followUps.js';
 import { callsCsv, csvCell } from '../src/lib/csv.js';
@@ -16,6 +18,7 @@ const inactive = '10000000-0000-4000-8000-000000000005';
 const contact = '20000000-0000-4000-8000-000000000001';
 const peerContact = '20000000-0000-4000-8000-000000000002';
 const foreignContact = '20000000-0000-4000-8000-000000000004';
+const legacyTask = '30000000-0000-4000-8000-000000000001';
 const query = async (sql, args = []) => (await db.query(sql, args)).rows;
 const asUser = async sub => {
   await db.exec('SET ROLE authenticated');
@@ -65,11 +68,13 @@ before(async () => {
     CREATE POLICY legacy ON follow_ups FOR ALL TO authenticated USING(true) WITH CHECK(true);
     GRANT SELECT ON tenant_agents,contacts TO authenticated;
     GRANT SELECT,INSERT,UPDATE,DELETE ON follow_ups TO authenticated;
+    GRANT INSERT ON contact_activities TO authenticated;
   `);
   for (const [id, slug, role, active, tenantId] of [[me, 'mike', 'agent', true, tenant], [peer, 'mark', 'agent', true, tenant], [admin, 'admin', 'admin', true, tenant], [foreign, 'foreign', 'admin', true, otherTenant], [inactive, 'inactive', 'agent', false, tenant]]) {
     await query('INSERT INTO tenant_agents VALUES($1,$2,$3,$3,$4,$5)', [id, tenantId, slug, role, active]);
   }
   for (const [id, slug, tenantId] of [[contact, 'mike', tenant], [peerContact, 'mark', tenant], [foreignContact, 'foreign', otherTenant]]) await query('INSERT INTO contacts VALUES($1,$2,$3)', [id, tenantId, slug]);
+  await query('INSERT INTO follow_ups(id,tenant_id,contact_id,reason) VALUES($1,$2,$3,$4)', [legacyTask,tenant,peerContact,'Legacy fixture']);
   await db.exec(readFileSync(new URL('../supabase/migrations/086_follow_ups_workspace.sql', import.meta.url), 'utf8'));
 });
 after(() => db.close());
@@ -129,4 +134,54 @@ test('CSV neutralizes formulas/whitespace, escapes separators, only exports visi
   assert.ok(csv.includes("'=CMD()")); assert.ok(csv.includes("'+15555555555"));
   for (const privateField of ['secret transcript', 'secret recording', 'billing_amount', '111']) assert.ok(!csv.includes(privateField));
   assert.equal(csv.split('\r\n').length, 2);
+});
+
+test('086 is standalone, repeatable and permits new tasks for shared agency contacts', async () => {
+  await db.exec('RESET ROLE');
+  assert.equal((await query("SELECT to_regprocedure('public.is_current_tenant(uuid)') AS helper"))[0].helper,null);
+  await db.exec(readFileSync(new URL('../supabase/migrations/086_follow_ups_workspace.sql',import.meta.url),'utf8'));
+  await asUser('mike');
+  assert.ok(await create(me,peerContact,'mike'));
+  await assert.rejects(()=>query('SELECT * FROM oct_slim_086_rollback.backfills'), /permission denied/);
+});
+
+test('actual b47e80d frontend callbacks still create and complete tasks after SQL-before-deploy',async()=>{
+  const source=execFileSync('git',['show','b47e80d:src/hooks/useContacts.js'],{encoding:'utf8'});
+  const oldClient={from(table){return {
+    async insert(fields){try {
+      if(table==='follow_ups') await query('INSERT INTO follow_ups(tenant_id,contact_id,agent_id,due_at,reason) VALUES($1,$2,$3,$4,$5)',[fields.tenant_id,fields.contact_id,fields.agent_id,fields.due_at,fields.reason]);
+      else {assert.equal(table,'contact_activities');await query('INSERT INTO contact_activities VALUES($1,$2,$3,$4)',[fields.tenant_id,fields.contact_id,fields.type,fields.summary]);}
+      return {error:null};
+    }catch(error){return {error};}},
+    update(fields){return {async eq(key,id){assert.equal(key,'id');try{await query('UPDATE follow_ups SET status=$1 WHERE id=$2',[fields.status,id]);return {error:null};}catch(error){return {error};}}};},
+  };}};
+  const callback=name=>{
+    const match=source.match(new RegExp(`const ${name} = useCallback\\(\\s*(async[\\s\\S]*?),\\s*\\[supabaseClient(?:, tenant)?\\]`));
+    assert.ok(match,name);
+    return runInNewContext(`(${match[1]})`,{supabaseClient:oldClient,tenant:{id:tenant}});
+  };
+  await asUser('mike');
+  for(const agentId of ['mike',null]) {
+    const reason='Predeploy fixture '+String(agentId);
+    await callback('addFollowUp')({contactId:peerContact,agentId,dueAt:'2026-10-05T12:00:00Z',reason});
+    const [row]=await query('SELECT id,agent_id FROM follow_ups WHERE reason=$1',[reason]);
+    assert.equal(row.agent_id,'mike');
+    await callback('setFollowUpStatus')(row.id,'done');
+    assert.equal((await query('SELECT status FROM follow_ups WHERE id=$1',[row.id]))[0].status,'done');
+  }
+});
+
+test('rollback restores replaced policies and owner backfills while retaining task changes',async()=>{
+  await db.exec('RESET ROLE');
+  await query("UPDATE follow_ups SET status='done',reason='Preserve edits' WHERE id=$1",[legacyTask]);
+  const count=(await query('SELECT count(*) AS n FROM follow_ups'))[0].n;
+  const rollback=readFileSync(new URL('../release/rollback-slim.sql',import.meta.url),'utf8');
+  await db.exec(rollback.slice(rollback.indexOf('-- SECTION 2:')));
+  const [row]=await query('SELECT * FROM follow_ups WHERE id=$1',[legacyTask]);
+  assert.equal(row.agent_id,null);assert.equal(row.status,'done');assert.equal(row.reason,'Preserve edits');
+  assert.equal((await query('SELECT count(*) AS n FROM follow_ups'))[0].n,count);
+  assert.equal((await query("SELECT permissive FROM pg_policies WHERE tablename='follow_ups' AND policyname='legacy'"))[0].permissive,'PERMISSIVE');
+  assert.equal((await query("SELECT to_regprocedure('public.save_follow_up(uuid,uuid,uuid,timestamptz,text,text)') AS rpc"))[0].rpc,null);
+  await asUser('mike');
+  await query('SELECT * FROM follow_ups');
 });

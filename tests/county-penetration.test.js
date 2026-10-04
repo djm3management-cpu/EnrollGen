@@ -12,6 +12,26 @@ const csv = header + 'Alabama,Autauga,1,1,1001,"12,460","7,739",62.11%\nHawaii,K
 const parse = text => parsePenetrationCsv(text, { month: '2026-09' });
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
 
+test('088 and complete released load work without Clerk or tenant helpers and roll back',async()=>{
+  const db=new PGlite();
+  try {
+    await db.exec('CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;');
+    await db.exec(read('supabase/migrations/088_county_penetration.sql'));
+    await db.exec(read('release/penetration-load.sql'));
+    const [counts]=(await db.query("SELECT count(*)::int AS total,count(*) FILTER(WHERE ma_enrollees IS NULL)::int AS suppressed,min(file_month)::text AS month FROM cms_county_penetration")).rows;
+    assert.deepEqual(counts,{total:3186,suppressed:22,month:'2026-09-01'});
+    await db.exec('SET ROLE anon');
+    assert.equal((await db.query('SELECT count(*)::int AS n FROM cms_county_penetration')).rows[0].n,3186);
+    await assert.rejects(db.query("INSERT INTO cms_county_penetration(state,county,fips,eligibles,file_month) VALUES('AL','Denied','01000',1,'2026-09-01')"),/permission denied/);
+    await db.exec('RESET ROLE');
+    await db.exec(read('release/rollback-slim.sql').split('-- SECTION 2:')[0]);
+    assert.equal((await db.query("SELECT to_regclass('public.cms_county_penetration') AS relation")).rows[0].relation,null);
+    await db.exec(read('supabase/migrations/088_county_penetration.sql'));
+    await db.exec(read('release/penetration-load.sql'));
+    assert.equal((await db.query('SELECT count(*)::int AS n FROM cms_county_penetration')).rows[0].n,3186);
+  } finally {await db.close();}
+});
+
 test('parser preserves leading FIPS zeros, reported rates and suppressed unknowns', () => {
   const { rows } = parse(csv);
   assert.deepEqual(rows[0], { state: 'AL', county: 'Autauga', fips: '01001', eligibles: 12460, ma_enrollees: 7739, penetration_pct: 62.11, file_month: '2026-09-01' });

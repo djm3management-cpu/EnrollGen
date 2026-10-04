@@ -76,7 +76,9 @@ test('official HTML listing fixtures parse dates, links and titles; changed mark
   }
 });
 test('empty/error database fallbacks have historical labels with original dates; UI displays status',async()=>{
-  const source=readFileSync(new URL('../src/lib/sepBulletins.js',import.meta.url),'utf8').replace('import { supabase } from "./supabase.js";','const supabase = {};');
+  const source=readFileSync(new URL('../src/lib/sepBulletins.js',import.meta.url),'utf8')
+    .replace('import { supabase } from "./supabase.js";','const supabase = {};')
+    .replace('import { debugLog } from "./debugLog.js";', `import { debugLog } from "${new URL('../src/lib/debugLog.js',import.meta.url).href}";`);
   const mod=await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
   for (const error of [null,Error('offline')]) {
     const db={from:()=>({select:()=>({order:()=>({limit:async()=>({data:[],error})})})})};
