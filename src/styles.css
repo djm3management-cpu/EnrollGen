@@ -3663,8 +3663,12 @@ p {
 .operations-tab .ops-table tbody tr.is-selected td.num {
   color: var(--ops-cyan-bright);
 }
-.operations-tab .ops-table tbody tr:hover { background: var(--ops-surface-hover); }
-.operations-tab .ops-table tbody tr:hover td { color: var(--ops-white); }
+.operations-tab .ops-table tbody tr:not(.ops-detail-row):hover {
+  background: rgba(255, 153, 0, 0.09);
+}
+.operations-tab .ops-table tbody tr:not(.ops-detail-row):hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--eg-accent);
+}
 .operations-tab .ops-table tbody td {
   padding: 1px 8px;
   border-bottom: 1px solid var(--eg-surface-1);
@@ -3788,19 +3792,14 @@ p {
 .operations-tab .ops-ghl-na { color: var(--ops-muted); }
 
 .operations-tab .ops-table tbody tr.is-selected .ops-out-enrolled,
-.operations-tab .ops-table tbody tr:hover .ops-out-enrolled,
-.operations-tab .ops-table tbody tr.is-selected .ops-ghl-ok,
-.operations-tab .ops-table tbody tr:hover .ops-ghl-ok {
+.operations-tab .ops-table tbody tr.is-selected .ops-ghl-ok {
   color: #8ff0a6;
 }
-.operations-tab .ops-table tbody tr.is-selected .ops-out-callback,
-.operations-tab .ops-table tbody tr:hover .ops-out-callback {
+.operations-tab .ops-table tbody tr.is-selected .ops-out-callback {
   color: var(--ops-yellow);
 }
 .operations-tab .ops-table tbody tr.is-selected .ops-out-incomplete,
-.operations-tab .ops-table tbody tr:hover .ops-out-incomplete,
-.operations-tab .ops-table tbody tr.is-selected .ops-ghl-fail,
-.operations-tab .ops-table tbody tr:hover .ops-ghl-fail {
+.operations-tab .ops-table tbody tr.is-selected .ops-ghl-fail {
   color: #ff7474;
 }
 

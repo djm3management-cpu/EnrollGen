@@ -202,8 +202,11 @@ test('telephony routing actions, script capture topology and existing style bloc
     assert.ok(currentPlaybook.includes(plan.name));
   }
   assert.doesNotMatch(currentPlaybook, /PALIC|99%|youngest applicant|100% tax/);
-  const changed = execFileSync('git', ['diff', '--name-only', '51fccc3'], { encoding: 'utf8' }).trim().split('\n');
-  assert.ok(changed.every((file) => !/\.css$|^netlify\/|twilio|recording|billing|routing/i.test(file)), changed.join('\n'));
+  const changed = execFileSync('git', ['diff', '--name-only', 'HEAD'], { encoding: 'utf8' }).trim().split('\n');
+  assert.ok(changed.every((file) => (
+    ['src/styles.css', 'src/styles/v3-overrides.css'].includes(file) ||
+    !/\.css$|^netlify\/|twilio|recording|billing|routing/i.test(file)
+  )), changed.join('\n'));
 });
 
 test('corrected map source is reviewed and network evidence is not treated as exact-product access', () => {

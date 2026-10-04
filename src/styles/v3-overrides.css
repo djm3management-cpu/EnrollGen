@@ -3241,17 +3241,22 @@ html.dark .ops-table tbody tr:nth-child(even) {
   background: var(--bg-elevated) !important;
 }
 
-html.dark tbody tr:hover,
-html.dark .sep-plan-table tbody tr:hover,
-html.dark .ops-table tbody tr:hover {
-  background: var(--selection-bg) !important;
-  color: var(--selection-text) !important;
+/* Keep hover feedback on table summary rows. Expanded detail rows contain
+   their own dark panels and must retain their normal text and surfaces. */
+html.dark .contacts-table tbody tr:not(.call-log-expand-row):hover td {
+  background: rgba(255, 153, 0, 0.09) !important;
 }
 
-html.dark tbody tr:hover *,
-html.dark .sep-plan-table tbody tr:hover *,
-html.dark .ops-table tbody tr:hover * {
-  color: var(--selection-text) !important;
+html.dark .contacts-table tbody tr:not(.call-log-expand-row):hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--eg-accent);
+}
+
+html.dark .ops-table tbody tr:not(.ops-detail-row):hover {
+  background: rgba(255, 153, 0, 0.09) !important;
+}
+
+html.dark .ops-table tbody tr:not(.ops-detail-row):hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--eg-accent);
 }
 
 html.dark .ops-sentiment-chart line,
@@ -3445,8 +3450,12 @@ html.dark .flow-script-callout {
   cursor: pointer;
 }
 
-.contacts-table tbody tr:hover td {
-  background: var(--surface-raised, rgba(255, 153, 0, 0.06));
+.contacts-table tbody tr:not(.call-log-expand-row):hover td {
+  background: rgba(255, 153, 0, 0.09);
+}
+
+.contacts-table tbody tr:not(.call-log-expand-row):hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--eg-accent);
 }
 
 .contacts-dnc {
