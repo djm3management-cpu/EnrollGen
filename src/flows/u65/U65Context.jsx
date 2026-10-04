@@ -25,7 +25,7 @@ const initialState = {
   entrySource: null, // 'direct' | 'aca_transition'
 
   // selected products to present in Gate 3
-  selectedProducts: [], // ['enrollprime', 'palic']
+  selectedProducts: [], // exact workbook variant IDs
 
   // UW risk level, set during Gate 2
   uwRisk: null, // null | 'low' | 'moderate' | 'high'
@@ -33,7 +33,7 @@ const initialState = {
   // product recommendation, derived after UW risk set
   productRecommendation: null,
 
-  // NOT-MEC disclosure acknowledged, lockgate for G3
+  // Product disclosure acknowledgement
   mecDisclosureAcknowledged: false,
 
   // subsidy cliff calculator
@@ -121,6 +121,9 @@ const initialState = {
 
 function reducer(state, action) {
   switch (action.type) {
+    case "SET_ACTIVE_GATE":
+      return { ...state, currentGate: action.gate };
+
     case "START_CALL":
       return { ...state, callStarted: true, callStart: Date.now() };
 
@@ -133,8 +136,7 @@ function reducer(state, action) {
         ...state,
         uwRisk: action.risk,
         productRecommendation: rec,
-        // Auto-select top recommended products (skip aca_pivot)
-        selectedProducts: rec.filter((r) => r.id !== "aca_pivot").map((r) => r.id),
+        // Product selection remains explicit; eligibility: verify with carrier.
       };
     }
 
@@ -168,7 +170,7 @@ function reducer(state, action) {
 
       const fplThreshold = getFplThreshold(hs);
       const fplPercent = calcFplPercent(hs, ai);
-      const aboveCliff = fplPercent > 400;
+      const aboveCliff = null;
       const acaEstimate = age ? getAcaEstimate(age) : null;
 
       return {
@@ -276,7 +278,7 @@ function getActiveGate(state) {
 export function U65Provider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const activeGate = useMemo(() => getActiveGate(state), [state]);
+  const activeGate = useMemo(() => state.currentGate ?? getActiveGate(state), [state]);
 
   const value = useMemo(
     () => ({ state, dispatch, activeGate }),

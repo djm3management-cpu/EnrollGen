@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BookOpen } from "lucide-react";
+import { selectU65Product } from "../../lib/u65ProductSelection.js";
 import { U65Provider } from "./U65Context";
 import { useU65 } from "./U65Context";
 import U65Flow from "./U65Flow";
@@ -229,6 +230,7 @@ function U65ScriptBody({ variant, onVariantChange }) {
 
 export default function U65Script() {
   const [variant, setVariant] = useState("individual");
+  useEffect(() => () => selectU65Product(null), []);
 
   return (
     <U65Provider key={variant}>
