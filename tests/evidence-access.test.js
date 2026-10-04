@@ -1,3 +1,4 @@
+import { debugLog } from "../src/lib/debugLog.js";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
@@ -216,7 +217,7 @@ test("both search RPCs enforce RLS and deny anonymous EXECUTE; Co-Pilot includes
   }
   const source = readFileSync(new URL("../src/lib/transcriptSearch.js",import.meta.url),"utf8")
     .replace(/^import .*;\n/gm,"").replace("export async function","async function");
-  const context = vm.createContext({ getEvidenceSupabase:()=>db, getQueryEmbedding:async()=>[0,0], console });
+  const context = vm.createContext({ debugLog, getEvidenceSupabase:()=>db, getQueryEmbedding:async()=>[0,0], console });
   vm.runInContext(source+";globalThis.run=fetchTranscriptReferences",context);
   const references = await context.run({getToken:async()=>"fixture-jwt",query:"recording",matchCount:100});
   assert.equal(references.error,null); assert.ok(references.contextBlock.includes("[R"));
@@ -447,7 +448,7 @@ test("session hook waits for server ownership before flags/checkpoints and retai
   const source = readFileSync(new URL("../src/hooks/useSessionTracker.js",import.meta.url),"utf8")
     .replace(/^import .*;\n/gm,"").replaceAll('import.meta.env.VITE_DISABLE_CLERK_AUTH === "true"',"false")
     .replaceAll("import.meta.env.DEV","false").replace(/^export /gm,"");
-  const context = vm.createContext({
+  const context = vm.createContext({ debugLog,
     useRef:value=>({current:value}),useCallback:fn=>fn,useEffect:()=>{},
     useAppAuth:()=>({getToken:async()=>"fixture-clerk-session"}),runSessionTrackingDiagnostic:()=>{},
     evidenceRequest:async (_token,endpoint,body)=>{

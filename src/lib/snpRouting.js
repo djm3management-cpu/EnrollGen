@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 import { PDP_LANE, INTEGRATED_LANE, isIntegratedDsnp } from "./dualLisSep.js";
 import { supabase } from "./supabase";
 import { getStateFromZip } from "./sepGeo";
@@ -152,8 +153,8 @@ async function fetchCarrierVerificationRows() {
     if (data?.length) {
       return data;
     }
-  } catch (error) {
-    console.warn("[SNP Routing] Carrier verification lookup failed, using seed data.", error);
+  } catch {
+    debugLog("[SNP Routing] Carrier verification lookup failed, using seed data.");
   }
 
   return DEFAULT_CSNP_CARRIER_VERIFICATION;
@@ -164,8 +165,8 @@ async function fetchDsnpAlignmentRows(state) {
     const { data, error } = await supabase.from("dsnp_eae_lookup").select("*").eq("plan_year", 2027).eq("state", state);
     if (error) throw error;
     return data || [];
-  } catch (error) {
-    console.warn("[SNP Routing] 2027 D-SNP integration list unavailable.", error);
+  } catch {
+    debugLog("[SNP Routing] 2027 D-SNP integration list unavailable.");
     return [];
   }
 }
@@ -183,8 +184,8 @@ async function fetchRoutingRules() {
     if (data?.length) {
       return data;
     }
-  } catch (error) {
-    console.warn("[SNP Routing] Routing rules lookup failed, using seed data.", error);
+  } catch {
+    debugLog("[SNP Routing] Routing rules lookup failed, using seed data.");
   }
 
   return SNP_ROUTING_RULE_SUMMARIES;
@@ -225,8 +226,8 @@ export async function loadSnpRoutingContext(zip) {
     try {
       const rows = await fetchPlansFromSupabase(state, county);
       cmsPlans = rows.map(transformCmsPlan);
-    } catch (error) {
-      console.warn("[SNP Routing] PY2027 CMS plan lookup failed.", error);
+    } catch {
+      debugLog("[SNP Routing] PY2027 CMS plan lookup failed.");
     }
   }
 

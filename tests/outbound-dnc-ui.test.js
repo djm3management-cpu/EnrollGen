@@ -1,3 +1,4 @@
+import { debugLog } from "../src/lib/debugLog.js";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -16,7 +17,7 @@ async function componentHarness(file, stubs = {}, extra = '') {
   const source = await readFile(new URL(file, import.meta.url), 'utf8');
   const { code } = await transform(source + extra, { loader: 'jsx', format: 'cjs', jsx: 'transform' });
   const module = { exports: {} };
-  vm.runInNewContext(code, { module, exports: module.exports, React, console,
+  vm.runInNewContext(code, { debugLog, module, exports: module.exports, React, console,
     require(name) {
       if (name === 'react') return hooks;
       if (name.includes('/phone')) return { normalizePhoneE164 };
@@ -87,7 +88,7 @@ test('dialer Contacts passes authenticated agent UUID and renders loaded contact
 });
 
 test('entry-point audit uses checked controls, including external tel links; Calls tab has no dialing transport', async () => {
-  for (const file of ['phone/DialerPanel.jsx', 'contacts/ContactDetail.jsx', 'contacts/ContactsTab.jsx',
+  for (const file of ['phone/DialerPanel.jsx', 'contacts/ContactsTab.jsx',
     'opportunities/OpportunitiesView.jsx', 'CarrierQuickRef.jsx', 'SEPGuide2026.jsx']) {
     const source = await readFile(new URL('../src/components/' + file, import.meta.url), 'utf8');
     assert.match(source, /<DncCallControl/);

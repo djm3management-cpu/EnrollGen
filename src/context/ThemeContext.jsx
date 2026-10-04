@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import {
   createContext,
   useCallback,
@@ -161,10 +162,8 @@ export function ThemeProvider({ children }) {
         if (!cancelled && remoteTheme && !userInteractedRef.current) {
           setTheme(remoteTheme);
         }
-      } catch (error) {
-        console.warn("[ThemeProvider] Supabase theme preference unavailable:", JSON.stringify({
-          code: error?.code, message: error?.message, details: error?.details, hint: error?.hint,
-        }));
+      } catch {
+        debugLog("[ThemeProvider] Supabase theme preference unavailable");
       }
     }
 
@@ -178,10 +177,8 @@ export function ThemeProvider({ children }) {
     if (!remoteSession?.clerkUserId || !remoteSession?.client) return;
 
     saveRemoteTheme(remoteSession.client, remoteSession.clerkUserId, theme)
-      .catch((error) => {
-        console.warn("[ThemeProvider] Failed to save theme preference:", JSON.stringify({
-          code: error?.code, message: error?.message, details: error?.details, hint: error?.hint,
-        }));
+      .catch(() => {
+        debugLog("[ThemeProvider] Failed to save theme preference");
       });
   }, [remoteSession, theme]);
 

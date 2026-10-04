@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { useCallback, useEffect, useState } from "react";
 import { useTenantConfig } from "./useTenantConfig";
 import { useAppAuth } from "../context/AuthContext";
@@ -47,7 +48,7 @@ export function useMessageThread(contactId) {
         setMedia({});
       }
     } catch (err) {
-      console.error("[useMessageThread] load failed:", err);
+      debugLog("[useMessageThread] load failed");
       setError(err.message || "Messages unavailable.");
     } finally {
       setLoading(false);
@@ -78,7 +79,7 @@ export function useMessageThread(contactId) {
       .eq("contact_id", contactId)
       .eq("direction", "inbound")
       .is("read_at", null);
-    if (updateError) console.error("[useMessageThread] markRead failed:", updateError.message);
+    if (updateError) debugLog("[useMessageThread] markRead failed");
     else publishSms({ type: "read", contactId });
   }, [supabaseClient, contactId]);
 
@@ -146,7 +147,7 @@ export function useUnreadMessages() {
         .order("id", { ascending: false })
         .range(offset, offset + 499);
       if (error) {
-        console.error("[useUnreadMessages] load failed:", error.message);
+        debugLog("[useUnreadMessages] load failed");
         return;
       }
       rows.push(...(data || []));

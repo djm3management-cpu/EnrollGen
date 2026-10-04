@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 import { fetchWithClerk } from "./clerkFetch.js";
 import { redactSensitiveText, redactTranscriptEntries } from "./redaction.js";
 
@@ -478,8 +479,8 @@ export async function sendEnrollmentWebhookAfterSave(
       webhook_sent_at: webhookSentAt,
       webhook_error: webhookError,
     });
-  } catch (error) {
-    console.error("[PostCall] failed to record webhook result:", error);
+  } catch {
+    debugLog("[PostCall] failed to record webhook result");
   }
 
   return {

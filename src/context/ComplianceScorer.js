@@ -1228,54 +1228,6 @@ function toLiveResult(result) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-     CONVERSELY-STYLE REPORT, For supervisors
-     ═══════════════════════════════════════════════════════════════ */
-
-export function getConverselyReport(
-  scriptState,
-  copilotEntries = [],
-  transcript = "",
-  options = {}
-) {
-  const r = scoreCompliance(scriptState, copilotEntries, transcript, options);
-  const a = transcript ? analyzeTranscript(transcript) : null;
-  return {
-    overallScore: r.score,
-    grade: r.grade,
-    scoringMode: r.scoringMode,
-    categories: r.categories.map((cat) => ({
-      name: cat.name,
-      icon: cat.icon,
-      score: cat.score,
-      passed: cat.passed,
-      questions: cat.questions.map((q) => ({
-        question: q.question,
-        score: q.score,
-        evidence: q.evidence,
-        source: q.source,
-        transcriptConfidence: q.transcriptConfidence,
-      })),
-    })),
-    transcriptAnalysis: a
-      ? {
-          intentsDetected: a.intentsDetected,
-          intentsTotal: a.intentsTotal,
-          coverage: a.coverage,
-          violations: a.violations.map((v) => ({
-            section: v.section,
-            description: v.description,
-            evidence: v.evidence,
-            critical: v.critical,
-          })),
-          sectionConfidence: getIntentConfidence(a),
-        }
-      : null,
-    flags: r.flags,
-    summary: r.summary,
-  };
-}
-
-/* ═══════════════════════════════════════════════════════════════
      GRADE + SUMMARY HELPERS
      ═══════════════════════════════════════════════════════════════ */
 

@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { useMemo } from "react";
 import { useTenantConfig } from "./useTenantConfig";
 import { useAvailability } from "../context/AvailabilityContext";
@@ -21,10 +22,7 @@ export function useCurrentAgent() {
     const match = (agents || []).find((agent) => agent.agent_slug === agentSlug) || null;
 
     if (!agentUuid && agentSlug) {
-      console.warn(
-        `[useCurrentAgent] resolved Clerk agent_id "${agentSlug}" but no tenant_agents row has that agent_slug. ` +
-          `Available agent_slug values: ${(agents || []).map((a) => `"${a.agent_slug}"`).join(", ") || "(none — tenant_agents.agent_slug is empty, or the tenant_agents fetch itself returned zero rows)"}`
-      );
+      debugLog("hooks/useCurrentAgent.js warn");
     }
 
     return {

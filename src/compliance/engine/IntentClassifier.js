@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import { evaluateTpmo2027, hasMedicareResource, hasTpmoOrgCount, hasTpmoPlanCount } from '../shared/tpmo2027.js';
 import { classificationFormat } from "../../lib/llm/schemas/compliance.js";
 /**
@@ -246,7 +247,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress 
         aggregatedSentiment = parsed.sentiment;
       }
     } catch (err) {
-      console.error(`Classification error for segment ${segment.start_ms}:`, err);
+      debugLog("compliance/engine/IntentClassifier.js error");
       // A failed classification is unavailable evidence, never a set of missing intents.
       // Let the background scorer mark the call failed instead of persisting a false score.
       throw err;

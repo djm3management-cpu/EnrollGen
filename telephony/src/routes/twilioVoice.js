@@ -121,7 +121,6 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next
   const to = req.body.To;
   const phoneLast4 = routingPhoneLast4(from);
   let claimedAgent = null;
-  let paragonCall = false;
 
   try {
     let contact = null;
@@ -159,7 +158,6 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next
     }
     const ping = Array.isArray(pingLookup?.data) ? pingLookup.data[0] : pingLookup?.data;
     const paragon = Boolean(ping?.matched);
-    paragonCall = paragon;
     if (paragon) await enqueueBillingCallback(supabase,config,req.body);
     const publisherCall = isParagon(metadata) || Boolean(metadata.publisher);
     const paragonSource = paragon

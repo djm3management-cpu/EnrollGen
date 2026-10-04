@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeftRight,
@@ -85,8 +86,8 @@ function NotesPad({ contact }) {
       setBody("");
       setSaved(true);
       window.setTimeout(() => setSaved(false), 1800);
-    } catch (err) {
-      console.error("[ActiveCallExpanded] add note failed:", err);
+    } catch {
+      debugLog("[ActiveCallExpanded] add note failed");
     } finally {
       setSaving(false);
     }

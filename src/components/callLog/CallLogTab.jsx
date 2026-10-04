@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import { useAuth } from "@clerk/clerk-react";
 import { loadCallLog } from "../../lib/callLogApi";
 import { recordingMedia, recordingTarget, downloadRecordingUrl } from "../../lib/recordingsApi";
@@ -104,8 +105,8 @@ function CallOutcomeEditor({ callRecordId, outcome, supabaseClient, onChanged })
           .eq("id", callRecordId);
         if (error) throw error;
         onChanged(value);
-      } catch (err) {
-        console.error("[CallLog] call_outcome update failed:", err);
+      } catch {
+        debugLog("[CallLog] call_outcome update failed");
       } finally {
         setSaving(false);
       }
@@ -158,8 +159,8 @@ function ExpandedRow({ row, supabaseClient }) {
         .order("created_at", { ascending: false })
         .limit(1);
       setDetail({ ...callRecord, scorecard: scorecards?.[0] || null });
-    } catch (err) {
-      console.error("[CallLog] detail load failed:", err);
+    } catch {
+      debugLog("[CallLog] detail load failed");
     } finally {
       setLoading(false);
     }
@@ -320,7 +321,7 @@ export default function CallLogTab({ onOpenContact = null }) {
         return ["ALL", ...Array.from(agents).sort()];
       });
     } catch (err) {
-      console.error("[CallLog] load failed:", err);
+      debugLog("[CallLog] load failed");
       setError(err.message || "Call log unavailable. Please try again.");
     } finally {
       setLoading(false);

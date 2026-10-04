@@ -23,7 +23,7 @@ function degraded(request: CompletionRequest, model: string, error: any): Comple
 }
 
 function background(task: Promise<unknown>, runtime: Runtime) {
-  const safe = task.catch(error => console.error('[llm] background telemetry failed', errorCode(error)));
+  const safe = task.catch(() => { if (process.env.ENROLLGEN_DEBUG_LOGS === 'true' && process.env.NODE_ENV !== 'production') console.debug('[llm] background telemetry failed'); });
   if (runtime.waitUntil) runtime.waitUntil(safe);
   else void safe; // CLI/tests are long-lived; serverless callers must supply waitUntil.
 }

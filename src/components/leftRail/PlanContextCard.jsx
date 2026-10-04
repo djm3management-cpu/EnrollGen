@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import { memo, useRef, useState } from "react";
 import { Loader2, Send, X } from "lucide-react";
 import { useScript } from "../../context/ScriptContext";
@@ -56,9 +57,9 @@ const PlanContextCard = memo(function PlanContextCard() {
       if (lookupRunRef.current !== runId) return;
       setLookupResults(plans);
       setLookupMessage(plans.length ? "" : "No matching PY2027 plans.");
-    } catch (error) {
+    } catch {
       if (lookupRunRef.current !== runId) return;
-      console.error("Manual plan lookup error:", error);
+      debugLog("Manual plan lookup error");
       setLookupResults([]);
       setLookupMessage("Plan lookup unavailable.");
     } finally {

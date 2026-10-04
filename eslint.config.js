@@ -37,7 +37,7 @@ export default [
     },
   },
   {
-    files: ['netlify/functions/**/*.{js,cjs,mjs}', 'scripts/**/*.{js,cjs,mjs}'],
+    files: ['netlify/functions/**/*.{js,cjs,mjs}', 'scripts/**/*.{js,cjs,mjs}', 'telephony/**/*.{js,cjs,mjs}', 'integrations/**/*.{js,cjs,mjs}', 'tests/**/*.{js,cjs,mjs}'],
     languageOptions: {
       globals: {
         ...globals.node,

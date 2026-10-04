@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 import { supabase } from "./supabase";
 
 /**
@@ -89,8 +90,8 @@ export async function lookupAcaBenchmark(stateCode, county) {
       bronzeCount: bronzePremiums.length,
       source: county ? `QHP ${st}, ${county}` : `QHP ${st}`,
     };
-  } catch (err) {
-    console.error("[acaBenchmarkLookup] Error:", err);
+  } catch {
+    debugLog("[acaBenchmarkLookup] Error");
     return null;
   }
 }
