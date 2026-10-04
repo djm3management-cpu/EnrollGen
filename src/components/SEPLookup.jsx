@@ -5,6 +5,7 @@ import { StatsBar } from "./sep/StatsBar";
 import { SEPCard, ProductBadge } from "./sep/SEPCard";
 import { PlanTable } from "./sep/PlanTable";
 import { StateMap } from "./sep/StateMap";
+import { CountyPenetration } from "./sep/CountyPenetration";
 import { CountyGrid } from "./sep/CountyGrid";
 import { FemaFeed } from "./sep/FemaFeed";
 import SEPResultsPanel, { SEP_FINDER_FULL_DISCLAIMER } from "./SEPResultsPanel";
@@ -130,6 +131,13 @@ export default function SEPLookupTool() {
                 loading={s.countyLoading}
               />
             )}
+
+            {s.selectedState && <CountyPenetration
+              state={s.selectedState}
+              selectedCounty={s.selectedCounty}
+              counties={s.countyList}
+              onCountySelect={handleCountySelect}
+            />}
 
             {/* Stats bar (zip search only) */}
             {s.searchedZip && s.results && (

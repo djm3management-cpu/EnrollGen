@@ -70,7 +70,7 @@ async function outboundGate(req, res, next) {
     res.locals.outboundTenantId = agent.tenant_id;
     if (!(await outboundDncStatus(to, agent.tenant_id))) return next();
     response.say("Do Not Call. This number is on your tenant's Do Not Call list.");
-  } catch (error) {
+  } catch {
     response.say("Do Not Call check unavailable. Calling is temporarily unavailable. Please try again.");
   }
   response.hangup();

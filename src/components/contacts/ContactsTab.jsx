@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import DncCallControl from "../phone/DncCallControl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Archive, Mail, Phone, Search, Star } from "lucide-react";
@@ -14,6 +15,9 @@ import { useCurrentAgent } from "../../hooks/useCurrentAgent";
 import { normalizePhoneE164 } from "../../lib/phone";
 import ContactToast from "../ContactToast";
 import MessagesThread from "./MessagesThread";
+import FollowUpsView from './FollowUpsView';
+import { useFollowUps } from '../../hooks/useFollowUps';
+import { followUpBucket } from '../../lib/followUps';
 import OpportunitiesView from "../opportunities/OpportunitiesView";
 import ContactOpportunities, { CreateOpportunityButton } from "../opportunities/ContactOpportunities";
 
@@ -989,7 +993,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         setNotice("Contact details saved.");
       } catch (err) {
         if (err.duplicateId) setMerge({ contactId: selectedContact.id, duplicateId: err.duplicateId, phone: err.phone });
-        console.error("[ContactsTab] contact save failed:", err);
+        debugLog("[ContactsTab] contact save failed");
         setInlineError(err.message || "Could not save contact.");
       } finally {
         setSaving(false);
@@ -1009,7 +1013,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         await updatePiiField("mbi_full", next);
         await refreshSelected();
       } catch (err) {
-        console.error("[ContactsTab] mbi_full save failed:", err);
+        debugLog("[ContactsTab] mbi_full save failed");
         setInlineError(err.message || "Could not save full MBI.");
       } finally {
         setSaving(false);
@@ -1058,7 +1062,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         await updateLeadIntel(intel.id, { [field]: next });
         await refreshSelected();
       } catch (err) {
-        console.error("[ContactsTab] lead intel save failed:", err);
+        debugLog("[ContactsTab] lead intel save failed");
         setInlineError(err.message || "Could not save lead intel.");
       } finally {
         setSaving(false);
@@ -1078,7 +1082,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         await updatePolicy(policy.id, { [field]: next });
         await refreshSelected();
       } catch (err) {
-        console.error("[ContactsTab] policy save failed:", err);
+        debugLog("[ContactsTab] policy save failed");
         setInlineError(err.message || "Could not save policy.");
       } finally {
         setSaving(false);
@@ -1105,7 +1109,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
       setPolicyDraft(DEFAULT_POLICY_DRAFT);
       await refreshSelected();
     } catch (err) {
-      console.error("[ContactsTab] add policy failed:", err);
+      debugLog("[ContactsTab] add policy failed");
       setInlineError(err.message || "Could not save changes.");
     } finally {
       setSaving(false);
@@ -1122,7 +1126,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
       setNoteDraft("");
       await refreshSelected();
     } catch (err) {
-      console.error("[ContactsTab] add note failed:", err);
+      debugLog("[ContactsTab] add note failed");
       setInlineError(err.message || "Could not add note.");
     } finally {
       setSaving(false);
@@ -1137,7 +1141,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         await toggleNotePin(noteId, pinned);
         await refreshSelected();
       } catch (err) {
-        console.error("[ContactsTab] note pin failed:", err);
+        debugLog("[ContactsTab] note pin failed");
         setInlineError(err.message || "Could not update note.");
       } finally {
         setSaving(false);
@@ -1160,7 +1164,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
       setFollowUpDraft({ dueAt: "", reason: "" });
       await refreshSelected();
     } catch (err) {
-      console.error("[ContactsTab] add follow-up failed:", err);
+      debugLog("[ContactsTab] add follow-up failed");
       setInlineError(err.message || "Could not add follow-up.");
     } finally {
       setSaving(false);
@@ -1304,15 +1308,17 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
 
 function contactsLocation() {
   const params = new URLSearchParams(window.location.search);
-  return { view: params.get('view') === 'opportunities' ? 'opportunities' : 'contacts', contactId: params.get('contact') || null };
+  return { view: ['opportunities', 'followups'].includes(params.get('view')) ? params.get('view') : 'contacts', contactId: params.get('contact') || null };
 }
 
 // Both views remain inside the existing Contacts route and navigation item.
 export default function ContactsTab({ variant = "home", onStartCall = null, focusContact = null }) {
   const [location, setLocation] = useState(contactsLocation);
+  const followUps = useFollowUps();
+  const dueToday = followUps.rows.filter(row => row.agent_id === followUps.agentSlug && followUpBucket(row, followUps.now) === 'today').length;
   const updateLocation = useCallback((view, contactId = null, replace = false) => {
     const url = new URL(window.location.href);
-    if (view === 'opportunities') url.searchParams.set('view', view); else url.searchParams.delete('view');
+    if (view === 'opportunities' || view === 'followups') url.searchParams.set('view', view); else url.searchParams.delete('view');
     if (contactId) url.searchParams.set('contact', contactId); else url.searchParams.delete('contact');
     window.history[replace ? 'replaceState' : 'pushState'](null, '', url.pathname + url.search + url.hash);
     setLocation({ view, contactId });
@@ -1329,10 +1335,12 @@ export default function ContactsTab({ variant = "home", onStartCall = null, focu
     <div className="contacts-workspace-tabs contacts-subviews" role="group" aria-label="Contacts view">
       <button type="button" className={location.view === 'contacts' ? 'is-active' : ''} aria-pressed={location.view === 'contacts'} onClick={() => updateLocation('contacts', location.contactId)}>Contacts</button>
       <button type="button" className={location.view === 'opportunities' ? 'is-active' : ''} aria-pressed={location.view === 'opportunities'} onClick={() => updateLocation('opportunities')}>Opportunities</button>
+      <button type="button" className={location.view === 'followups' ? 'is-active' : ''} aria-pressed={location.view === 'followups'} onClick={() => updateLocation('followups')}>Follow-ups{dueToday > 0 && <span className="call-log-chip" aria-label={`${dueToday} follow-ups due today`}> {dueToday}</span>}</button>
     </div>
     <div hidden={location.view !== 'contacts'}>
       <ContactsWorkspace variant={variant} onStartCall={onStartCall} focusContact={location.contactId ? { id: location.contactId, ts: focusContact?.ts || 0 } : focusContact} />
     </div>
+    {location.view === 'followups' && <FollowUpsView key={followUps.agentSlug} data={followUps} onOpenContact={(id) => updateLocation('contacts', id)} />}
     {location.view === 'opportunities' && <OpportunitiesView onOpenContact={(id) => updateLocation('contacts', id)} />}
   </div>;
 }

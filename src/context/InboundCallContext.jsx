@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { checkOutbound, canonicalOutbound } from "../lib/outboundApi";
 import {
   createContext,
@@ -196,7 +197,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       }, delay);
     };
 
-    const refreshTokens = ({ reason = "unknown", device = null } = {}) => {
+    const refreshTokens = ({ device = null } = {}) => {
       if (tokenRefreshInFlight) return tokenRefreshInFlight;
       tokenRefreshInFlight = (async () => {
         try {
@@ -207,9 +208,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           // helper keeps the old socket alive until presence-ready arrives.
           connectAgentSocket(fresh);
           scheduleWebSocketRefresh();
-        } catch (err) {
+        } catch {
           if (!cancelled) {
-            console.error(`[InboundCall] ${reason} token refresh failed:`, err);
+            debugLog("context/InboundCallContext.jsx error");
             scheduleWebSocketRefresh(WS_TOKEN_REFRESH_RETRY_MS);
           }
         } finally {
@@ -243,7 +244,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           setDeviceStatus("offline");
         });
         device.on("error", (deviceError) => {
-          console.error("[InboundCall] device error:", deviceError);
+          debugLog("[InboundCall] device error");
           setError(deviceError?.message || "Softphone error");
           setPhoneReady(false);
           setDeviceStatus("error");
@@ -276,9 +277,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
             const grabStream = () => {
               const stream = call.getRemoteStream?.();
               if (stream && stream.getAudioTracks().length) {
-                console.info(
-                  `[InboundCall] remote stream ready after ${attempts * 250}ms`
-                );
+                debugLog("context/InboundCallContext.jsx info");
                 setRemoteStream(stream);
                 return;
               }
@@ -288,7 +287,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
               } else {
                 const message =
                   "Remote customer audio was not exposed by Twilio after 5 seconds; customer transcription cannot start.";
-                console.warn("[InboundCall]", message);
+                debugLog("[InboundCall]");
                 setError(message);
               }
             };
@@ -313,7 +312,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         scheduleWebSocketRefresh();
       } catch (err) {
         if (cancelled) return;
-        console.error("[InboundCall] registration failed:", err);
+        debugLog("[InboundCall] registration failed");
         setError(err?.message || "Softphone registration failed");
         setDeviceStatus("error");
       }
@@ -468,7 +467,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           else {
             const message =
               "Remote customer audio was not exposed by Twilio after 5 seconds; customer transcription cannot start.";
-            console.warn("[OutboundCall]", message);
+            debugLog("[OutboundCall]");
             setError(message);
           }
         };
@@ -489,7 +488,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       call.on("cancel", () => { callInProgressRef.current = false; setDialingCall(null); });
       call.on("reject", () => { callInProgressRef.current = false; setDialingCall(null); });
       call.on("error", (callError) => {
-        console.error("[OutboundCall] call error:", callError);
+        debugLog("[OutboundCall] call error");
         callInProgressRef.current = false;
         setError(callError?.message || "Call failed");
         setDialingCall(null);

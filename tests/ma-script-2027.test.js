@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { MA_SCRIPT_SECTIONS, MA_SCRIPT_REVISION, resolveMASections } from "../src/data/maScript2027.js";
 import { getMAScriptView } from "../src/lib/maScriptFlow.js";
-import { initialState, scriptReducer, getActiveSection, getSectionUnlocked } from "../src/context/scriptReducer.js";
+import { initialState, scriptReducer, getActiveSection } from "../src/context/scriptReducer.js";
 
 const fresh = (direction = "inbound") => ({ ...structuredClone(initialState), callDirection: direction });
 const section = (key) => MA_SCRIPT_SECTIONS.find((item) => item.key === key);

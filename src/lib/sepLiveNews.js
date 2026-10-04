@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 const CACHE_TTL = 15 * 60 * 1000;
 
 let liveNewsCache = { data: null, fetchedAt: 0, promise: null };
@@ -47,8 +48,8 @@ export async function fetchLiveNews() {
       liveNewsCache.data = normalized;
       liveNewsCache.fetchedAt = Date.now();
       return normalized;
-    } catch (err) {
-      console.warn("Live news fetch failed:", err.message);
+    } catch {
+      debugLog("Live news fetch failed");
       return liveNewsCache.data || [];
     } finally {
       liveNewsCache.promise = null;

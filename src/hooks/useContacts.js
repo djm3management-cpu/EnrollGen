@@ -1,6 +1,8 @@
+import { debugLog } from "../lib/debugLog.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { normalizeContactPhone, normalizePhoneE164 } from "../lib/phone";
 import { subscribeSms } from "../lib/smsEvents";
+import { createFollowUp, notifyFollowUpsUpdated } from "../lib/followUps";
 import { useTenantConfig } from "./useTenantConfig";
 
 // CRM data access. All queries run through the tenant-scoped
@@ -153,7 +155,7 @@ export function useContactsList(searchTerm, requestingAgentId, tenantScoped = fa
         }))
       );
     } catch (err) {
-      console.error("[useContactsList] load failed:", err);
+      debugLog("[useContactsList] load failed");
       setError(err.message || "Contacts unavailable.");
     } finally {
       if (!background) setLoading(false);
@@ -246,7 +248,7 @@ export function useContactDetail(contactId) {
         calls: callsRes.data || [],
       });
     } catch (err) {
-      console.error("[useContactDetail] load failed:", err);
+      debugLog("[useContactDetail] load failed");
       setError(err.message || "Contact unavailable.");
     } finally {
       setLoading(false);
@@ -399,22 +401,17 @@ export function useContactMutations(requestingAgentId) {
 
   const addFollowUp = useCallback(
     async ({ contactId, agentId, dueAt, reason }) => {
-      const { error } = await supabaseClient.from("follow_ups").insert({
-        tenant_id: tenant?.id,
-        contact_id: contactId,
-        agent_id: agentId || null,
-        due_at: dueAt,
-        reason,
+      await createFollowUp(supabaseClient, {
+        p_tenant_id: tenant?.id,
+        p_requesting_agent_id: requestingAgentId,
+        p_contact_id: contactId,
+        p_agent_slug: agentId || null,
+        p_due_at: dueAt,
+        p_reason: reason || null,
       });
-      if (error) throw error;
-      await supabaseClient.from("contact_activities").insert({
-        tenant_id: tenant?.id,
-        contact_id: contactId,
-        type: "follow_up",
-        summary: reason ? `Follow-up scheduled: ${reason.slice(0, 100)}` : "Follow-up scheduled",
-      });
+      notifyFollowUpsUpdated();
     },
-    [supabaseClient, tenant]
+    [supabaseClient, tenant, requestingAgentId]
   );
 
   const setFollowUpStatus = useCallback(
@@ -464,9 +461,7 @@ export function useContactPii(contactId, requestingAgentId) {
   const load = useCallback(async () => {
     if (!supabaseClient || !contactId) return null;
     if (!requestingAgentId) {
-      console.warn(
-        "[useContactPii] no tenant_agents match for the signed-in user — check that your tenant_agents row has agent_slug (or clerk_user_id) set correctly."
-      );
+      debugLog("[useContactPii] no tenant_agents match for the signed-in user — check that your tenant_agents row has agent_slug (or clerk_user_id) set correctly.");
       setError("Your agent account isn't linked to a tenant_agents record, so contact details cannot load. Contact an admin.");
       return null;
     }
@@ -486,7 +481,7 @@ export function useContactPii(contactId, requestingAgentId) {
       setPiiFields(fields);
       return fields;
     } catch (err) {
-      console.error("[useContactPii] load failed:", err);
+      debugLog("[useContactPii] load failed");
       setError(err.message || "Could not load contact details.");
       return null;
     } finally {
@@ -499,7 +494,7 @@ export function useContactPii(contactId, requestingAgentId) {
     supabaseClient
       .rpc("log_pii_access", { p_contact_id: contactId, p_requesting_agent_id: requestingAgentId, p_action: "export" })
       .then(({ error: logError }) => {
-        if (logError) console.error("[useContactPii] copy log failed:", logError.message);
+        if (logError) debugLog("[useContactPii] copy log failed");
       });
   }, [supabaseClient, contactId, requestingAgentId]);
 

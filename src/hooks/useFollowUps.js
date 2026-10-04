@@ -1,89 +1,48 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTenantConfig } from "./useTenantConfig";
-
-const VALID_STATUSES = new Set(["pending", "contacted", "cleared", "at_risk", "disenrolled"]);
-
-function isOverdue(row) {
-  if (row.followup_status !== "pending" || !row.recommended_followup_date) return false;
-  const due = new Date(row.recommended_followup_date);
-  if (Number.isNaN(due.getTime())) return false;
-  const today = new Date();
-  due.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  return due < today;
-}
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTenantConfig } from './useTenantConfig';
+import { useCurrentAgent } from './useCurrentAgent';
+import { FOLLOW_UPS_UPDATED, notifyFollowUpsUpdated, updateFollowUp } from '../lib/followUps';
 
 export function useFollowUps() {
-  const { tenantId, supabaseClient, loading: tenantLoading, error: tenantError } = useTenantConfig();
-  const [followups, setFollowups] = useState([]);
+  const { tenantId, supabaseClient, agents, loading: tenantLoading, error: tenantError } = useTenantConfig();
+  const { agentUuid, agentSlug, isAdmin } = useCurrentAgent();
+  const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    if (tenantLoading) return undefined;
-    if (!tenantId) {
-      setFollowups([]);
-      setLoading(false);
-      setError(tenantError || "Tenant unavailable.");
-      return undefined;
+  const [error, setError] = useState('');
+  const [now, setNow] = useState(() => new Date());
+  const generation = useRef(0);
+  const refresh = useCallback(async () => {
+    const request = ++generation.current;
+    if (!tenantId || !supabaseClient || !agentUuid) {
+      setRows([]); setLoading(tenantLoading); setError(tenantLoading ? '' : tenantError || 'Your agent account must be linked to this workspace.');
+      return;
     }
-
-    async function load() {
-      setLoading(true);
-      setError("");
-      try {
-        const { data, error } = await supabaseClient
-          .from("followup_queue")
-          .select("*")
-          .eq("tenant_id", tenantId)
-          .order("recommended_followup_date", { ascending: true, nullsFirst: false })
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        if (!cancelled) setFollowups(data || []);
-      } catch (error) {
-        if (!cancelled) {
-          setFollowups([]);
-          setError(error.message || "Follow-ups unavailable.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+    setLoading(true); setError('');
+    try {
+      const all = [];
+      for (let offset = 0; ; offset += 500) {
+        const { data, error: readError } = await supabaseClient.from('follow_ups')
+          .select('id, contact_id, agent_id, due_at, reason, status').eq('tenant_id', tenantId).eq('status', 'open')
+          .order('due_at', { ascending: true }).order('id', { ascending: true }).range(offset, offset + 499);
+        if (readError) throw readError;
+        all.push(...(data || []));
+        if (!data || data.length < 500) break;
       }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [supabaseClient, tenantError, tenantId, tenantLoading]);
-
-  const updateStatus = useCallback(async (id, newStatus) => {
-    if (!id || !VALID_STATUSES.has(newStatus)) return { error: "Invalid status" };
-    const previous = followups;
-    setFollowups((rows) => rows.map((row) => (
-      row.id === id ? { ...row, followup_status: newStatus, updated_at: new Date().toISOString() } : row
-    )));
-
-    const { data, error } = await supabaseClient
-      .from("followup_queue")
-      .update({ followup_status: newStatus, updated_at: new Date().toISOString() })
-      .eq("id", id)
-      .select("*")
-      .single();
-
-    if (error) {
-      setFollowups(previous);
-      setError(error.message || "Follow-up update failed.");
-      return { error };
-    }
-
-    setFollowups((rows) => rows.map((row) => (row.id === id ? data : row)));
-    return { data };
-  }, [followups, supabaseClient]);
-
-  const overdue = useMemo(() => followups.filter(isOverdue), [followups]);
-  const highRisk = useMemo(() => followups.filter((row) => row.risk_level === "high"), [followups]);
-
-  return { followups, overdue, highRisk, loading, error, updateStatus };
+      if (request === generation.current) { setRows(all); setNow(new Date()); }
+    } catch (err) {
+      if (request === generation.current) { setRows([]); setError(err.message || 'Follow-ups unavailable.'); }
+    } finally { if (request === generation.current) setLoading(false); }
+  }, [tenantId, supabaseClient, agentUuid, tenantLoading, tenantError]);
+  useEffect(() => {
+    setRows([]); void refresh();
+    const update = () => { void refresh(); };
+    window.addEventListener(FOLLOW_UPS_UPDATED, update);
+    const timer = setInterval(update, 60000);
+    return () => { generation.current += 1; clearInterval(timer); window.removeEventListener(FOLLOW_UPS_UPDATED, update); };
+  }, [refresh]);
+  const update = async (id, action, dueAt) => {
+    await updateFollowUp(supabaseClient, tenantId, id, action, dueAt);
+    notifyFollowUpsUpdated();
+  };
+  return { rows, loading, error, refresh, update, agents, agentSlug, isAdmin, now };
 }

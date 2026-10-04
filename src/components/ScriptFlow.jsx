@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import {
   lazy,
   Suspense,
@@ -841,7 +842,7 @@ export default function ScriptFlow() {
     void persistBeforeReset({
       persist: persistFinalTranscript,
       onError: (error) => {
-        console.error("[PostCall] disconnect persistence failed:", error);
+        debugLog("[PostCall] disconnect persistence failed");
         setPostCallPersistenceError(
           error?.message || "Transcript could not be saved. The transcript remains available."
         );
@@ -878,8 +879,8 @@ export default function ScriptFlow() {
           callRecordId: result.call_record_id || null,
           transcriptId: result.transcript_id || null,
         });
-      } catch (error) {
-        console.error("[PostCall] init failed:", error);
+      } catch {
+        debugLog("[PostCall] init failed");
       }
     })();
 
@@ -913,7 +914,7 @@ export default function ScriptFlow() {
         if (!snapshot?.state || !metadata.sessionId || !metadata.agentId) return null;
         return buildPostCallPayload({ state: snapshot.state, liveCall: snapshot.liveCall,
           sessionMetadata: metadata, flow: 'ma' });
-      }, onError: () => console.error('[PostCall] exit checkpoint failed'),
+      }, onError: () => debugLog("[PostCall] exit checkpoint failed"),
     });
   }, [callStarted, getToken]);
 
@@ -940,8 +941,8 @@ export default function ScriptFlow() {
       void persistBeforeReset({
         persist: persistFinalTranscriptRef.current,
         reset: resetLiveCall,
-        onError: (error) => {
-          console.error("[PostCall] unmount persistence failed:", error);
+        onError: () => {
+          debugLog("[PostCall] unmount persistence failed");
         },
       });
     };

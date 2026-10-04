@@ -48,7 +48,7 @@ function clean(value) {
   return String(value ?? "").trim();
 }
 
-function buildRows(records, agents) {
+function buildRows(records) {
   return records.flatMap((record, index) => {
     const channel = clean(record.Channel);
     const carrier = clean(record.Carrier);

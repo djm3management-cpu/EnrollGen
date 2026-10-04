@@ -1,3 +1,4 @@
+import { debugLog } from "../src/lib/debugLog.js";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -9,7 +10,7 @@ function harness(blocked = false, identityError = false) {
   const ref = { current: false }; let disconnected = false;
   const call = { parameters: { CallSid: 'canonical-sid' }, on: (event, fn) => { handlers[event] = fn; },
     disconnect: () => { disconnected = true; handlers.disconnect?.(); }, getRemoteStream: () => ({ getAudioTracks: () => [{}] }) };
-  const context = {
+  const context = { debugLog,
     useCallback: fn => fn, deviceRef: { current: { connect: async options => { calls.push(options); return call; } } },
     callInProgressRef: ref, outboundCallRef: { current: null }, getToken: async () => 'clerk',
     checkOutbound: async () => ({ blocked }),

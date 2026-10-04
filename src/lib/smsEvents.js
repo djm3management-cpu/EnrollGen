@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 import { normalizePhoneE164 } from "./phone";
 // Tiny pub/sub bridging the telephony /agent WebSocket (which lives in
 // InboundCallContext) to whichever message UI is mounted.
@@ -15,8 +16,8 @@ export function publishSms(event) {
   for (const callback of subscribers) {
     try {
       callback(event);
-    } catch (err) {
-      console.error("[smsEvents] subscriber failed:", err);
+    } catch {
+      debugLog("[smsEvents] subscriber failed");
     }
   }
 }

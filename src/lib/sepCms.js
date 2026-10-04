@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 /*
   CMS / Supabase integration for SEP Lookup.
   Fetches county lists and plan data from the PY2027-only CMS view.
@@ -254,7 +255,7 @@ export async function fetchCountiesForState(state) {
     }
 
     if (error && !markCmsUnavailable(error)) {
-      console.warn("Counties RPC failed, falling back to direct query:", error);
+      debugLog("Counties RPC failed, falling back to direct query");
     }
   }
 
@@ -263,7 +264,7 @@ export async function fetchCountiesForState(state) {
     return counties.length ? counties : await getFallbackCountiesForState(state);
   } catch (fallbackError) {
     if (!markCmsUnavailable(fallbackError)) {
-      console.error("Counties fetch error:", fallbackError);
+      debugLog("Counties fetch error");
     }
     return await getFallbackCountiesForState(state);
   }
@@ -280,7 +281,7 @@ export async function fetchPlansFromSupabase(state, county) {
     }
 
     if (error && !markCmsUnavailable(error)) {
-      console.warn("Plans RPC failed, falling back to direct query:", error);
+      debugLog("Plans RPC failed, falling back to direct query");
     }
   }
 
@@ -288,7 +289,7 @@ export async function fetchPlansFromSupabase(state, county) {
     return await fetchPlansDirect(state, county);
   } catch (fallbackError) {
     if (!markCmsUnavailable(fallbackError)) {
-      console.error("Plans fetch error:", fallbackError);
+      debugLog("Plans fetch error");
     }
     return [];
   }
@@ -302,7 +303,7 @@ export async function searchCmsPlans({ term, mode = "name", state = "", county =
     return await searchPlansDirect({ term, mode, state, county, limit });
   } catch (error) {
     if (!markCmsUnavailable(error)) {
-      console.error("Plan lookup search error:", error);
+      debugLog("Plan lookup search error");
     }
     return [];
   }
@@ -323,7 +324,7 @@ export async function fetchCountyPlanCounts(state) {
     }
 
     if (error && !markCmsUnavailable(error)) {
-      console.warn("County counts RPC failed, falling back to direct query:", error);
+      debugLog("County counts RPC failed, falling back to direct query");
     }
   }
 
@@ -331,7 +332,7 @@ export async function fetchCountyPlanCounts(state) {
     return await fetchCountyPlanCountsDirect(state);
   } catch (fallbackError) {
     if (!markCmsUnavailable(fallbackError)) {
-      console.error("County plan counts error:", fallbackError);
+      debugLog("County plan counts error");
     }
     return {};
   }

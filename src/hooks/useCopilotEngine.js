@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { getMASelectedKnowledge, getMASelectedScriptText } from "../lib/maScriptFlow.js";
 import { coachingFormat } from "../lib/llm/schemas/coaching.js";
 import { buildCachedPrompt } from "../lib/llm/prompts.js";
@@ -979,7 +980,7 @@ SECTION CONTEXT (rolling window for current section):
       if (!response.ok) {
         const detail = await readErrorDetail(response);
         const errorMessage = getCopilotHttpErrorMessage(response.status, detail);
-        console.error("Coaching API HTTP error:", response.status, detail);
+        debugLog("Coaching API HTTP error");
         const alreadyWarned = liveMessages.some((m) => m.text === errorMessage);
         if (manual || periodic || !alreadyWarned) {
           pushFeedEntry("info", errorMessage, { section: currentStep });
@@ -1136,7 +1137,7 @@ SECTION CONTEXT (rolling window for current section):
       }
     } catch (err) {
       if (err.name === "AbortError") { return; }
-      console.error("Coaching API error:", err);
+      debugLog("Coaching API error");
       const errorMessage = "Co-Pilot could not reach the coaching service. If running locally, use 'netlify dev' instead of 'npm run dev'.";
       const alreadyWarned = liveMessages.some((m) => m.text === errorMessage);
       if (manual || periodic || !alreadyWarned) {
@@ -1288,7 +1289,7 @@ SECTION CONTEXT (rolling window for current section):
 
       if (!response.ok) {
         const detail = await readErrorDetail(response);
-        console.error("Ask Co-Pilot HTTP error:", response.status, detail);
+        debugLog("Ask Co-Pilot HTTP error");
         const errorMessage = getCopilotHttpErrorMessage(response.status, detail);
         pushFeedEntry("info", errorMessage, { section: currentStep });
         surfaceServiceIssue(errorMessage, { force: true });
@@ -1318,7 +1319,7 @@ SECTION CONTEXT (rolling window for current section):
       setAskQuestion("");
     } catch (err) {
       if (err.name === "AbortError") { return; }
-      console.error("Ask Co-Pilot error:", err);
+      debugLog("Ask Co-Pilot error");
       const errorMessage = "Co-Pilot could not reach the coaching service. If running locally, use 'netlify dev' instead of 'npm run dev'.";
       pushFeedEntry("info", errorMessage, { section: currentStep });
       surfaceServiceIssue(errorMessage, { force: true });

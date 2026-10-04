@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { supabase } from "../lib/supabase";
@@ -122,8 +123,8 @@ export default function ACAIntelligence() {
 
       if (pendingError) throw pendingError;
       setPendingUpdates(rows || []);
-    } catch (err) {
-      console.warn("[ACAIntelligence] pending knowledge updates unavailable:", err);
+    } catch {
+      debugLog("[ACAIntelligence] pending knowledge updates unavailable");
       setPendingUpdates([]);
     }
   }, [supabaseClient]);
@@ -186,7 +187,7 @@ export default function ACAIntelligence() {
       }
       await refreshPendingUpdates();
     } catch (err) {
-      console.error("[ACAIntelligence] review failed:", err);
+      debugLog("[ACAIntelligence] review failed");
       setError(err.message || "Knowledge review failed");
     } finally {
       setReviewBusyId(null);
@@ -246,7 +247,7 @@ export default function ACAIntelligence() {
       }
       setData(rows);
     } catch (err) {
-      console.error("[ACAIntelligence]", err);
+      debugLog("[ACAIntelligence]");
       setError(err.message || "Lookup failed");
     } finally {
       setLoading(false);

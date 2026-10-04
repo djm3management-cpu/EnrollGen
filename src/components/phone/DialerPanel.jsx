@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import DncCallControl from "./DncCallControl";
 import { loadCallLog } from "../../lib/callLogApi";
 import { useAuth } from "@clerk/clerk-react";
@@ -385,7 +386,7 @@ export default function DialerPanel({ initialContact = null }) {
       try {
         await inbound?.makeCall({ phoneNumber: number, contactId, contactName });
       } catch (err) {
-        console.error("[DialerPanel] call failed:", err);
+        debugLog("[DialerPanel] call failed");
         setCallError(err?.message || "Could not place call.");
       } finally {
         setCalling(false);

@@ -1,3 +1,4 @@
+import { debugLog } from "../src/lib/debugLog.js";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -19,7 +20,7 @@ function harness(requester, fail = false, search = '') {
       return { data: [{ contact_id: 'contact', fields: { phone: '+16097787669', first_name: 'Verified' } }] };
     },
   };
-  const ctx = { useState(value) { const index = states.length; states.push(value); return [value, value => { states[index] = value; }]; },
+  const ctx = { debugLog, useState(value) { const index = states.length; states.push(value); return [value, value => { states[index] = value; }]; },
     useRef: current => ({ current }), useCallback: fn => fn, useEffect() {}, normalizePhoneE164,
     useTenantConfig: () => ({ supabaseClient, tenant: { id: 'tenant' }, loading: false }),
     console: { error() {} }, requester, search };

@@ -1,3 +1,4 @@
+import { debugLog } from "../src/lib/debugLog.js";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -17,7 +18,7 @@ function harness() {
     close(){this.readyState=3;this.onclose?.({code:1000});}
   }
   const clone={getAudioTracks:()=>[{readyState:'live'}],getTracks:()=>[{stop:()=>stops++}]};
-  const context=vm.createContext({
+  const context=vm.createContext({ debugLog,
     useState:initial=>{const index=states.length;states.push(initial);return [initial,value=>{states[index]=typeof value==='function'?value(states[index]):value;}];},
     useRef:current=>({current}),useCallback:fn=>fn,useEffect:()=>{},
     useAppAuth:()=>({getToken:async()=> 'clerk-test'}),

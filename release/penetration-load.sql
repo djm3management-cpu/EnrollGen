@@ -1,0 +1,6376 @@
+BEGIN;
+SELECT file_month FROM public.cms_county_penetration LIMIT 0;
+DELETE FROM public.cms_county_penetration WHERE file_month = '2026-09-01';
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Autauga','01001',12460,7739,62.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Baldwin','01003',67493,39105,57.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Barbour','01005',6591,4344,65.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Bibb','01007',4818,3387,70.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Blount','01009',13171,8967,68.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Bullock','01011',2066,1676,81.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Butler','01013',5035,3364,66.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Calhoun','01015',27991,15958,57.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Chambers','01017',9143,6131,67.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Cherokee','01019',8034,4953,61.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Chilton','01021',10190,7428,72.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Choctaw','01023',3807,2269,59.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Clarke','01025',6350,4403,69.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Clay','01027',3854,2427,62.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Cleburne','01029',3751,2016,53.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Coffee','01031',11946,6492,54.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Colbert','01033',14817,8529,57.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Conecuh','01035',3567,2334,65.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Coosa','01037',2761,2063,74.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Covington','01039',10449,6171,59.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Crenshaw','01041',3795,2476,65.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Cullman','01043',21609,12994,60.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Dale','01045',11792,6792,57.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Dallas','01047',10132,7227,71.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','DeKalb','01049',16728,9693,57.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Elmore','01051',20389,12381,60.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Escambia','01053',9107,5769,63.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Etowah','01055',26530,17606,66.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Fayette','01057',3961,2465,62.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Franklin','01059',6583,3587,54.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Geneva','01061',7268,4457,61.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Greene','01063',2312,1706,73.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Hale','01065',4255,2905,68.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Henry','01067',5239,3473,66.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Houston','01069',26584,16198,60.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Jackson','01071',13807,7888,57.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Jefferson','01073',135398,92926,68.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Lamar','01075',3768,1703,45.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Lauderdale','01077',23882,13085,54.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Lawrence','01079',8255,4787,57.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Lee','01081',29816,17282,57.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Limestone','01083',22327,11713,52.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Lowndes','01085',3126,2335,74.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Macon','01087',4838,3123,64.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Madison','01089',81674,37879,46.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Marengo','01091',5448,3497,64.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Marion','01093',8015,3867,48.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Marshall','01095',22014,12633,57.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Mobile','01097',91130,64593,70.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Monroe','01099',5372,3659,68.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Montgomery','01101',46410,29370,63.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Morgan','01103',27780,15310,55.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Perry','01105',2482,1797,72.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Pickens','01107',4991,3083,61.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Pike','01109',6842,4674,68.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Randolph','01111',6435,3798,59.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Russell','01113',12925,7538,58.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','St. Clair','01115',24392,14731,60.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Shelby','01117',46123,28143,61.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Sumter','01119',3240,2164,66.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Talladega','01121',20693,14117,68.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Tallapoosa','01123',12211,7441,60.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Tuscaloosa','01125',39356,23244,59.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Walker','01127',16996,11553,67.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Washington','01129',4549,2878,63.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Wilcox','01131',3330,2342,70.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AL','Winston','01133',6239,3749,60.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Apache','04001',15271,4410,28.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Cochise','04003',38171,18404,48.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Coconino','04005',24994,8081,32.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Gila','04007',18504,7622,41.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Graham','04009',6392,3643,56.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Greenlee','04011',1323,709,53.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','La Paz','04012',6554,2995,45.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Maricopa','04013',821286,423063,51.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Mohave','04015',78479,41703,53.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Navajo','04017',28978,10806,37.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Pima','04019',260526,152786,58.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Pinal','04021',109413,60712,55.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Santa Cruz','04023',12340,8097,65.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Yavapai','04025',96964,40475,41.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AZ','Yuma','04027',46808,24879,53.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Arkansas','05001',4095,1647,40.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Ashley','05003',5119,2219,43.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Baxter','05005',15788,7167,45.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Benton','05007',53640,27066,50.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Boone','05009',10786,5024,46.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Bradley','05011',2460,1123,45.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Calhoun','05013',1247,512,41.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Carroll','05015',8027,4049,50.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Chicot','05017',2631,1437,54.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Clark','05019',4864,2402,49.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Clay','05021',3824,1444,37.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Cleburne','05023',8801,3597,40.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Cleveland','05025',2057,796,38.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Columbia','05027',5258,2332,44.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Conway','05029',5513,2582,46.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Craighead','05031',20505,8538,41.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Crawford','05033',15099,8449,55.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Crittenden','05035',9887,5176,52.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Cross','05037',3941,1893,48.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Dallas','05039',1882,999,53.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Desha','05041',2742,1481,54.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Drew','05043',3999,1805,45.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Faulkner','05045',24478,9730,39.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Franklin','05047',4642,2539,54.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Fulton','05049',3817,1694,44.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Garland','05051',30306,15249,50.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Grant','05053',4411,1857,42.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Greene','05055',10101,4343,43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Hempstead','05057',4746,2416,50.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Hot Spring','05059',8151,4235,51.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Howard','05061',3182,1304,40.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Independence','05063',9075,3439,37.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Izard','05065',4343,2027,46.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Jackson','05067',3764,1723,45.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Jefferson','05069',15659,8359,53.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Johnson','05071',6133,3345,54.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Lafayette','05073',1914,927,48.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Lawrence','05075',4256,2202,51.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Lee','05077',1881,1135,60.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Lincoln','05079',2403,1123,46.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Little River','05081',3212,1403,43.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Logan','05083',6013,3150,52.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Lonoke','05085',15586,6999,44.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Madison','05087',4452,2600,58.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Marion','05089',6022,2956,49.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Miller','05091',9475,4366,46.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Mississippi','05093',8177,4600,56.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Monroe','05095',1946,1034,53.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Montgomery','05097',2774,1257,45.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Nevada','05099',2156,1124,52.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Newton','05101',2541,1230,48.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Ouachita','05103',6105,3215,52.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Perry','05105',2831,1329,46.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Phillips','05107',4065,2473,60.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Pike','05109',2808,1185,42.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Poinsett','05111',5499,3095,56.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Polk','05113',5580,2464,44.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Pope','05115',14196,6426,45.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Prairie','05117',2198,952,43.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Pulaski','05119',85574,39301,45.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Randolph','05121',4674,2334,49.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','St. Francis','05123',4950,2832,57.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Saline','05125',30004,13243,44.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Scott','05127',2769,1431,51.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Searcy','05129',2659,1291,48.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Sebastian','05131',28885,14512,50.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Sevier','05133',3023,1228,40.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Sharp','05135',6054,2919,48.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Stone','05137',4495,1947,43.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Union','05139',9676,3999,41.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Van Buren','05141',5557,2711,48.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Washington','05143',40965,18690,45.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','White','05145',18440,7913,42.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Woodruff','05147',1753,854,48.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('AR','Yell','05149',4896,2219,45.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Alameda','06001',280398,147840,52.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Alpine','06003',281,36,12.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Amador','06005',12569,3598,28.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Butte','06007',49036,5553,11.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Calaveras','06009',14557,2028,13.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Colusa','06011',4284,233,5.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Contra Costa','06013',230629,120283,52.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Del Norte','06015',6760,294,4.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','El Dorado','06017',52815,21954,41.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Fresno','06019',163221,79690,48.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Glenn','06021',6149,402,6.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Humboldt','06023',31384,2686,8.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Imperial','06025',38315,14173,36.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Inyo','06027',4964,541,10.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Kern','06029',136751,64844,47.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Kings','06031',20026,7541,37.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Lake','06033',17997,1856,10.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Lassen','06035',5753,523,9.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Los Angeles','06037',1724845,985568,57.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Madera','06039',27784,13815,49.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Marin','06041',65177,29502,45.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Mariposa','06043',5298,706,13.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Mendocino','06045',24365,2634,10.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Merced','06047',42886,12077,28.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Modoc','06049',2649,116,4.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Mono','06051',1972,169,8.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Monterey','06053',75902,12255,16.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Napa','06055',32477,14899,45.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Nevada','06057',32087,5842,18.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Orange','06059',609336,340972,55.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Placer','06061',102678,58635,57.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Plumas','06063',6294,634,10.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Riverside','06065',456174,289090,63.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Sacramento','06067',297349,186962,62.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','San Benito','06069',11427,1706,14.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','San Bernardino','06071',354972,238413,67.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','San Diego','06073',629510,337738,53.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','San Francisco','06075',160461,82914,51.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','San Joaquin','06077',129990,71991,55.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','San Luis Obispo','06079',74649,17813,23.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','San Mateo','06081',145424,73635,50.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Santa Barbara','06083',87028,17542,20.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Santa Clara','06085',314684,159972,50.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Santa Cruz','06087',59860,15275,25.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Shasta','06089',49131,3646,7.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Sierra','06091',932,113,12.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Siskiyou','06093',13902,586,4.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Solano','06095',93613,52100,55.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Sonoma','06097',123166,66059,53.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Stanislaus','06099',97033,57055,58.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Sutter','06101',18796,1490,7.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Tehama','06103',15344,1459,9.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Trinity','06105',3689,111,3.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Tulare','06107',71968,26646,37.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Tuolumne','06109',16735,1683,10.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Ventura','06111',177655,73121,41.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Yolo','06113',37280,19279,51.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CA','Yuba','06115',14475,2901,20.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Adams','08001',73393,47177,64.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Alamosa','08003',3444,1551,45.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Arapahoe','08005',108704,62651,57.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Archuleta','08007',4844,1412,29.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Baca','08009',957,78,8.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Bent','08011',1163,565,48.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Boulder','08013',65321,31058,47.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Broomfield','08014',13180,8107,61.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Chaffee','08015',6305,2214,35.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Cheyenne','08017',406,48,11.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Clear Creek','08019',2265,1178,52.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Conejos','08021',2060,1082,52.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Costilla','08023',1412,775,54.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Crowley','08025',915,478,52.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Custer','08027',2166,902,41.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Delta','08029',10650,4986,46.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Denver','08031',100664,59452,59.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Dolores','08033',626,180,28.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Douglas','08035',67884,34124,50.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Eagle','08037',8334,1342,16.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Elbert','08039',6579,3191,48.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','El Paso','08041',132076,67225,50.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Fremont','08043',13669,8143,59.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Garfield','08045',10744,1324,12.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Gilpin','08047',1360,679,49.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Grand','08049',3251,1076,33.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Gunnison','08051',2997,589,19.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Hinsdale','08053',244,69,28.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Huerfano','08055',2740,1404,51.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Jackson','08057',347,87,25.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Jefferson','08059',122557,76713,62.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Kiowa','08061',382,73,19.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Kit Carson','08063',1632,206,12.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Lake','08065',1144,389,34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','La Plata','08067',13762,4159,30.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Larimer','08069',78955,37535,47.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Las Animas','08071',4606,2242,48.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Lincoln','08073',1106,346,31.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Logan','08075',4696,1781,37.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Mesa','08077',41875,19209,45.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Mineral','08079',316,108,34.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Moffat','08081',2749,320,11.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Montezuma','08083',7920,2559,32.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Montrose','08085',13187,5405,40.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Morgan','08087',5732,2267,39.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Otero','08089',4851,2939,60.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Ouray','08091',1845,435,23.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Park','08093',4615,1989,43.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Phillips','08095',1006,175,17.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Pitkin','08097',3607,277,7.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Prowers','08099',2637,451,17.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Pueblo','08101',41148,25584,62.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Rio Blanco','08103',1528,480,31.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Rio Grande','08105',3619,1402,38.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Routt','08107',5238,786,15.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Saguache','08109',1621,791,48.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','San Juan','08111',171,32,18.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','San Miguel','08113',1347,280,20.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Sedgwick','08115',767,69,9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Summit','08117',4560,992,21.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Teller','08119',7687,4091,53.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Washington','08121',1168,342,29.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Weld','08123',56878,32305,56.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('CO','Yuma','08125',2088,267,12.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('DE','Kent','10001',44084,15452,35.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('DE','New Castle','10003',118276,39936,33.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('DE','Sussex','10005',97609,29493,30.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('DC','District of Columbia','11001',98904,34067,34.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Alachua','12001',53317,22202,41.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Baker','12003',5824,2601,44.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Bay','12005',44902,19373,43.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Bradford','12007',6394,3309,51.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Brevard','12009',184580,94619,51.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Broward','12011',382284,247340,64.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Calhoun','12013',3088,1988,64.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Charlotte','12015',81731,43287,52.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Citrus','12017',67627,40128,59.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Clay','12019',53063,22765,42.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Collier','12021',123836,46385,37.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Columbia','12023',18427,9766,53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','DeSoto','12027',7882,4609,58.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Dixie','12029',4799,3010,62.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Duval','12031',197686,105766,53.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Escambia','12033',78033,38965,49.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Flagler','12035',48375,26768,55.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Franklin','12037',3636,1931,53.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Gadsden','12039',11342,8101,71.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Gilchrist','12041',4852,2457,50.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Glades','12043',2850,1646,57.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Gulf','12045',4587,2171,47.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Hamilton','12047',3322,1972,59.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Hardee','12049',4696,2958,62.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Hendry','12051',7547,4422,58.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Hernando','12053',64496,44281,68.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Highlands','12055',37662,22662,60.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Hillsborough','12057',274266,172181,62.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Holmes','12059',5269,2649,50.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Indian River','12061',63559,27222,42.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Jackson','12063',12046,6356,52.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Jefferson','12065',4281,2754,64.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Lafayette','12067',1684,770,45.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Lake','12069',125741,73933,58.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Lee','12071',227945,115206,50.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Leon','12073',53967,32536,60.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Levy','12075',14504,8170,56.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Liberty','12077',1600,1123,70.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Madison','12079',4989,2883,57.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Manatee','12081',124641,61170,49.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Marion','12083',140605,85749,60.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Martin','12085',52856,21645,40.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Miami-Dade','12086',527506,396635,75.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Monroe','12087',19269,3659,18.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Nassau','12089',30394,12959,42.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Okaloosa','12091',47311,16409,34.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Okeechobee','12093',9289,5758,61.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Orange','12095',227235,140874,61.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Osceola','12097',78362,56610,72.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Palm Beach','12099',370910,179293,48.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Pasco','12101',156083,105283,67.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Pinellas','12103',264981,160325,60.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Polk','12105',183665,127412,69.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Putnam','12107',22312,12979,58.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','St. Johns','12109',80727,30992,38.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','St. Lucie','12111',101951,57868,56.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Santa Rosa','12113',45269,20935,46.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Sarasota','12115',167730,71732,42.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Seminole','12117',94249,50383,53.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Sumter','12119',89600,51146,57.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Suwannee','12121',12664,6788,53.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Taylor','12123',5387,2952,54.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Union','12125',2582,1321,51.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Volusia','12127',174907,106724,61.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Wakulla','12129',8186,5397,65.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Walton','12131',20911,8871,42.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('FL','Washington','12133',6320,3100,49.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Appling','13001',4240,2621,61.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Atkinson','13003',1421,1016,71.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Bacon','13005',2256,1179,52.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Baker','13007',779,532,68.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Baldwin','13009',9866,6511,65.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Banks','13011',4385,2703,61.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Barrow','13013',16353,9795,59.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Bartow','13015',22407,12794,57.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Ben Hill','13017',3910,2713,69.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Berrien','13019',4143,2460,59.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Bibb','13021',33244,20851,62.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Bleckley','13023',2851,1450,50.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Brantley','13025',3912,2161,55.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Brooks','13027',3911,2349,60.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Bryan','13029',7948,4107,51.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Bulloch','13031',12741,7141,56.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Burke','13033',5606,3829,68.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Butts','13035',5502,3705,67.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Calhoun','13037',1201,815,67.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Camden','13039',11941,5141,43.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Candler','13043',2503,1584,63.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Carroll','13045',24446,14386,58.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Catoosa','13047',15471,7818,50.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Charlton','13049',2421,1361,56.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Chatham','13051',57612,31677,54.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Chattahoochee','13053',712,447,62.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Chattooga','13055',6152,4209,68.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Cherokee','13057',56571,26635,47.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Clarke','13059',18811,10383,55.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Clay','13061',816,533,65.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Clayton','13063',42952,28927,67.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Clinch','13065',1489,954,64.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Cobb','13067',124737,60782,48.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Coffee','13069',7640,4792,62.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Colquitt','13071',9328,5912,63.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Columbia','13073',30271,13978,46.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Cook','13075',3823,2225,58.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Coweta','13077',30610,16667,54.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Crawford','13079',2950,1582,53.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Crisp','13081',4795,3015,62.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Dade','13083',4011,2233,55.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Dawson','13085',7043,3749,53.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Decatur','13087',6049,3747,61.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','DeKalb','13089',119894,72079,60.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Dodge','13091',4397,2602,59.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Dooly','13093',2490,1552,62.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Dougherty','13095',18114,11984,66.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Douglas','13097',24310,15197,62.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Early','13099',2399,1480,61.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Echols','13101',592,283,47.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Effingham','13103',12082,6454,53.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Elbert','13105',5447,3418,62.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Emanuel','13107',5199,3481,66.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Evans','13109',2353,1521,64.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Fannin','13111',9212,4313,46.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Fayette','13113',29017,13932,48.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Floyd','13115',22248,12472,56.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Forsyth','13117',38487,17353,45.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Franklin','13119',6024,3615,60.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Fulton','13121',160302,88386,55.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Gilmer','13123',10278,4615,44.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Glascock','13125',675,410,60.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Glynn','13127',21906,9917,45.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Gordon','13129',12065,6492,53.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Grady','13131',5678,3452,60.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Greene','13133',7636,3385,44.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Gwinnett','13135',138695,79475,57.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Habersham','13137',11332,6441,56.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Hall','13139',43538,21741,49.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Hancock','13141',2602,1789,68.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Haralson','13143',6681,4179,62.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Harris','13145',8554,3982,46.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Hart','13147',7718,4167,53.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Heard','13149',2529,1583,62.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Henry','13151',42954,27090,63.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Houston','13153',31778,14258,44.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Irwin','13155',2152,1236,57.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Jackson','13157',17699,10204,57.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Jasper','13159',3726,2386,64.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Jeff Davis','13161',2972,1683,56.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Jefferson','13163',4049,2761,68.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Jenkins','13165',1839,1304,70.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Johnson','13167',1998,1314,65.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Jones','13169',6446,3387,52.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Lamar','13171',4627,2923,63.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Lanier','13173',1754,1016,57.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Laurens','13175',11601,6862,59.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Lee','13177',6172,3400,55.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Liberty','13179',9829,5807,59.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Lincoln','13181',2604,1480,56.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Long','13183',2457,1313,53.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Lowndes','13185',21937,11422,52.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Lumpkin','13187',8196,3987,48.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','McDuffie','13189',5387,3575,66.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','McIntosh','13191',3763,2239,59.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Macon','13193',2515,1799,71.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Madison','13195',7283,4296,58.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Marion','13197',1776,1121,63.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Meriwether','13199',5905,3933,66.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Miller','13201',1354,823,60.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Mitchell','13205',4793,3199,66.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Monroe','13207',7248,3943,54.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Montgomery','13209',1916,1271,66.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Morgan','13211',5480,3095,56.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Murray','13213',8517,4364,51.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Muscogee','13215',39077,22434,57.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Newton','13217',22443,14686,65.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Oconee','13219',9096,3716,40.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Oglethorpe','13221',3843,2004,52.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Paulding','13223',29329,15253,52.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Peach','13225',6210,3876,62.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Pickens','13227',11373,5309,46.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Pierce','13229',4526,2443,53.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Pike','13231',4266,2460,57.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Polk','13233',9383,5740,61.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Pulaski','13235',2231,1270,56.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Putnam','13237',6895,3761,54.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Quitman','13239',786,518,65.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Rabun','13241',5916,2751,46.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Randolph','13243',1716,1184,69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Richmond','13245',40580,24892,61.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Rockdale','13247',18407,11997,65.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Schley','13249',929,612,65.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Screven','13251',3734,2454,65.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Seminole','13253',2475,1448,58.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Spalding','13255',16971,10680,62.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Stephens','13257',7387,4337,58.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Stewart','13259',1084,816,75.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Sumter','13261',6558,4345,66.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Talbot','13263',1824,1239,67.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Taliaferro','13265',489,333,68.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Tattnall','13267',4330,2764,63.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Taylor','13269',1983,1339,67.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Telfair','13271',2487,1705,68.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Terrell','13273',2363,1598,67.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Thomas','13275',11191,6800,60.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Tift','13277',8383,5225,62.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Toombs','13279',5952,3905,65.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Towns','13281',5785,2958,51.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Treutlen','13283',1412,995,70.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Troup','13285',14699,8997,61.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Turner','13287',2007,1419,70.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Twiggs','13289',2494,1547,62.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Union','13291',11127,5306,47.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Upson','13293',6875,4486,65.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Walker','13295',16035,9678,60.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Walton','13297',21815,13224,60.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Ware','13299',8304,4972,59.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Warren','13301',1584,1141,72.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Washington','13303',4909,3157,64.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Wayne','13305',6560,3800,57.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Webster','13307',630,397,63.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Wheeler','13309',1187,775,65.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','White','13311',8533,4997,58.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Whitfield','13313',19072,8191,42.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Wilcox','13315',1804,1153,63.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Wilkes','13317',2864,1816,63.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Wilkinson','13319',2493,1568,62.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('GA','Worth','13321',4514,2851,63.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('HI','Hawaii','15001',53982,26127,48.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('HI','Honolulu','15003',209454,114234,54.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('HI','Kalawao','15005',13,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('HI','Kauai','15007',17931,8694,48.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('HI','Maui','15009',36269,20326,56.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Ada','16001',107457,59620,55.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Adams','16003',1645,579,35.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Bannock','16005',17901,8432,47.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Bear Lake','16007',1681,182,10.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Benewah','16009',3269,549,16.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Bingham','16011',9678,3961,40.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Blaine','16013',6377,1305,20.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Boise','16015',2734,1344,49.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Bonner','16017',16162,6239,38.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Bonneville','16019',22849,8785,38.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Boundary','16021',4167,1336,32.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Butte','16023',737,39,5.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Camas','16025',320,110,34.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Canyon','16027',49562,31212,62.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Caribou','16029',1537,279,18.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Cassia','16031',4843,1815,37.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Clark','16033',133,33,24.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Clearwater','16035',3032,464,15.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Custer','16037',1541,227,14.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Elmore','16039',5646,2562,45.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Franklin','16041',2842,924,32.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Fremont','16043',3011,889,29.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Gem','16045',5954,3619,60.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Gooding','16047',3462,1716,49.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Idaho','16049',5791,1010,17.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Jefferson','16051',5427,1982,36.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Jerome','16053',4290,2313,53.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Kootenai','16055',48855,20158,41.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Latah','16057',7631,1914,25.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Lemhi','16059',3011,256,8.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Lewis','16061',1665,174,10.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Lincoln','16063',1005,460,45.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Madison','16065',3960,1321,33.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Minidoka','16067',4359,1951,44.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Nez Perce','16069',11257,2451,21.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Oneida','16071',1169,252,21.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Owyhee','16073',2813,1501,53.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Payette','16075',6833,3694,54.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Power','16077',1592,510,32.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Shoshone','16079',4027,1345,33.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Teton','16081',2154,285,13.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Twin Falls','16083',19628,11012,56.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Valley','16085',3622,1494,41.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ID','Washington','16087',3477,1690,48.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Adams','17001',15922,6024,37.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Alexander','17003',1406,722,51.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Bond','17005',3825,1836,48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Boone','17007',11291,5821,51.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Brown','17009',1144,417,36.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Bureau','17011',8649,2824,32.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Calhoun','17013',1269,498,39.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Carroll','17015',4491,1811,40.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Cass','17017',2700,1114,41.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Champaign','17019',33582,19768,58.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Christian','17021',8217,3987,48.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Clark','17023',3944,1727,43.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Clay','17025',3322,838,25.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Clinton','17027',8788,3475,39.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Coles','17029',10615,5074,47.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Cook','17031',896718,402008,44.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Crawford','17033',4586,1187,25.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Cumberland','17035',2696,1125,41.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','DeKalb','17037',18815,7991,42.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','De Witt','17039',3880,1618,41.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Douglas','17041',4268,2176,50.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','DuPage','17043',187850,70975,37.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Edgar','17045',4529,1594,35.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Edwards','17047',1636,342,20.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Effingham','17049',8545,2367,27.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Fayette','17051',4728,1728,36.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Ford','17053',3351,1178,35.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Franklin','17055',9789,4071,41.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Fulton','17057',8444,3994,47.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Gallatin','17059',1348,445,33.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Greene','17061',2948,1188,40.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Grundy','17063',10324,3665,35.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Hamilton','17065',1938,611,31.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Hancock','17067',5029,1308,26.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Hardin','17069',1013,329,32.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Henderson','17071',1797,618,34.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Henry','17073',12404,5998,48.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Iroquois','17075',7252,2409,33.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Jackson','17077',11099,5698,51.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Jasper','17079',2496,694,27.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Jefferson','17081',8756,2838,32.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Jersey','17083',5809,2687,46.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Jo Daviess','17085',7027,4038,57.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Johnson','17087',3216,1388,43.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Kane','17089',95314,38299,40.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Kankakee','17091',23673,9398,39.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Kendall','17093',20719,8084,39.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Knox','17095',12790,5900,46.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Lake','17097',134820,46848,34.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','La Salle','17099',26915,9595,35.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Lawrence','17101',3319,885,26.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Lee','17103',8770,3501,39.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Livingston','17105',8499,3493,41.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Logan','17107',6370,2988,46.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','McDonough','17109',6076,2853,46.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','McHenry','17111',66868,24738,37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','McLean','17113',31016,13716,44.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Macon','17115',24573,9296,37.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Macoupin','17117',11977,5258,43.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Madison','17119',60275,33557,55.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Marion','17121',9811,3212,32.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Marshall','17123',3259,1247,38.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Mason','17125',3540,1470,41.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Massac','17127',3801,1155,30.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Menard','17129',3036,1663,54.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Mercer','17131',4274,1954,45.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Monroe','17133',8811,4723,53.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Montgomery','17135',7244,2913,40.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Morgan','17137',8303,3594,43.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Moultrie','17139',3342,1135,33.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Ogle','17141',12332,5903,47.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Peoria','17143',38251,19605,51.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Perry','17145',4869,2174,44.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Piatt','17147',4160,2333,56.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Pike','17149',3771,1214,32.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Pope','17151',1188,421,35.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Pulaski','17153',1401,583,41.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Putnam','17155',1629,511,31.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Randolph','17157',7319,3842,52.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Richland','17159',3891,1110,28.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Rock Island','17161',32963,19510,59.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','St. Clair','17163',54901,30558,55.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Saline','17165',6144,2287,37.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Sangamon','17167',45635,27038,59.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Schuyler','17169',1728,652,37.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Scott','17171',1110,449,40.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Shelby','17173',5371,1671,31.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Stark','17175',1391,556,39.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Stephenson','17177',12146,7517,61.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Tazewell','17179',31244,14205,45.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Union','17181',4625,2040,44.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Vermilion','17183',17832,10050,56.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Wabash','17185',2857,625,21.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Warren','17187',3816,1493,39.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Washington','17189',3546,1095,30.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Wayne','17191',3901,962,24.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','White','17193',3708,1062,28.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Whiteside','17195',14640,5965,40.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Will','17197',126148,52635,41.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Williamson','17199',16292,6213,38.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Winnebago','17201',64045,37586,58.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IL','Woodford','17203',8889,3214,36.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Adams','18001',6852,3064,44.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Allen','18003',77360,49928,64.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Bartholomew','18005',17475,8029,45.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Benton','18007',1910,900,47.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Blackford','18009',3168,1705,53.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Boone','18011',14749,6643,45.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Brown','18013',4983,2331,46.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Carroll','18015',4956,2148,43.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Cass','18017',8476,4185,49.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Clark','18019',27059,12847,47.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Clay','18021',6789,3152,46.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Clinton','18023',6926,3948,57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Crawford','18025',2923,1572,53.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Daviess','18027',5936,1826,30.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Dearborn','18029',12527,6153,49.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Decatur','18031',6352,3041,47.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','De Kalb','18033',10107,6787,67.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Delaware','18035',24912,13441,53.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Dubois','18037',10655,2665,25.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Elkhart','18039',38101,20299,53.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Fayette','18041',6464,3179,49.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Floyd','18043',18504,7769,41.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Fountain','18045',4249,2047,48.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Franklin','18047',6622,2622,39.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Fulton','18049',5193,2824,54.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Gibson','18051',7804,3367,43.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Grant','18053',16534,8594,51.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Greene','18055',8080,3511,43.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Hamilton','18057',65237,27866,42.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Hancock','18059',19488,9979,51.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Harrison','18061',9996,4441,44.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Hendricks','18063',34435,17745,51.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Henry','18065',11913,6542,54.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Howard','18067',21187,10868,51.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Huntington','18069',9233,5933,64.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Jackson','18071',9625,5875,61.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Jasper','18073',8189,3196,39.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Jay','18075',4703,2360,50.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Jefferson','18077',8215,3568,43.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Jennings','18079',6535,3665,56.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Johnson','18081',33296,17337,52.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Knox','18083',8514,2896,34.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Kosciusko','18085',18064,11137,61.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Lagrange','18087',6388,3583,56.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Lake','18089',106263,49344,46.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','La Porte','18091',25766,11587,44.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Lawrence','18093',11638,5919,50.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Madison','18095',31387,19280,61.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Marion','18097',159914,93283,58.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Marshall','18099',10637,6137,57.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Martin','18101',2561,909,35.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Miami','18103',7517,3978,52.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Monroe','18105',23932,9956,41.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Montgomery','18107',9090,4701,51.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Morgan','18109',17822,10112,56.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Newton','18111',3238,1346,41.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Noble','18113',10519,6720,63.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Ohio','18115',1739,938,53.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Orange','18117',5009,2431,48.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Owen','18119',5626,3074,54.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Parke','18121',3978,2052,51.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Perry','18123',4725,2141,45.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Pike','18125',3145,1434,45.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Porter','18127',40126,16019,39.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Posey','18129',6406,2596,40.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Pulaski','18131',3296,1442,43.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Putnam','18133',8462,4626,54.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Randolph','18135',6133,2667,43.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Ripley','18137',6589,3551,53.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Rush','18139',4032,1888,46.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','St. Joseph','18141',54464,30205,55.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Scott','18143',5779,3382,58.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Shelby','18145',10874,6175,56.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Spencer','18147',5183,2277,43.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Starke','18149',6298,3125,49.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Steuben','18151',9201,5958,64.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Sullivan','18153',4788,2104,43.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Switzerland','18155',2132,1191,55.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Tippecanoe','18157',28554,12863,45.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Tipton','18159',3922,1783,45.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Union','18161',1737,832,47.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Vanderburgh','18163',40633,19371,47.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Vermillion','18165',4031,1949,48.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Vigo','18167',23452,11232,47.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Wabash','18169',8571,4786,55.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Warren','18171',2159,802,37.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Warrick','18173',15366,6899,44.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Washington','18175',6813,3412,50.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Wayne','18177',16641,6929,41.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Wells','18179',6811,3835,56.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','White','18181',6484,2810,43.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IN','Whitley','18183',8581,6005,69.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Adair','19001',1890,497,26.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Adams','19003',1098,175,15.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Allamakee','19005',3911,909,23.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Appanoose','19007',3464,1451,41.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Audubon','19009',1611,309,19.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Benton','19011',6245,2442,39.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Black Hawk','19013',28873,14301,49.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Boone','19015',6622,2234,33.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Bremer','19017',5910,1984,33.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Buchanan','19019',5000,2020,40.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Buena Vista','19021',4102,831,20.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Butler','19023',3936,1294,32.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Calhoun','19025',2774,706,25.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Carroll','19027',5459,1127,20.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Cass','19029',3760,930,24.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Cedar','19031',4625,1683,36.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Cerro Gordo','19033',12281,3395,27.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Cherokee','19035',3135,676,21.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Chickasaw','19037',3050,737,24.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Clarke','19039',2178,889,40.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Clay','19041',4379,837,19.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Clayton','19043',5216,1828,35.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Clinton','19045',11799,5089,43.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Crawford','19047',3618,845,23.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Dallas','19049',17156,6422,37.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Davis','19051',1892,572,30.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Decatur','19053',1877,651,34.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Delaware','19055',4442,1641,36.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Des Moines','19057',10173,3175,31.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Dickinson','19059',5936,1130,19.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Dubuque','19061',23436,14275,60.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Emmet','19063',2465,430,17.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Fayette','19065',5370,1745,32.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Floyd','19067',4101,1170,28.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Franklin','19069',2507,480,19.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Fremont','19071',1954,527,26.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Greene','19073',2518,905,35.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Grundy','19075',3132,1166,37.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Guthrie','19077',3229,1085,33.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Hamilton','19079',3631,918,25.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Hancock','19081',2742,499,18.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Hardin','19083',4446,1345,30.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Harrison','19085',3715,1128,30.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Henry','19087',4739,1338,28.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Howard','19089',2405,450,18.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Humboldt','19091',2400,520,21.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Ida','19093',1766,375,21.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Iowa','19095',4255,1466,34.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Jackson','19097',5414,2582,47.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Jasper','19099',9104,3840,42.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Jefferson','19101',4876,2223,45.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Johnson','19103',26045,8528,32.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Jones','19105',5149,2364,45.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Keokuk','19107',2532,912,36.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Kossuth','19109',4366,737,16.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Lee','19111',8879,2142,24.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Linn','19113',48589,23522,48.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Louisa','19115',2570,890,34.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Lucas','19117',2251,791,35.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Lyon','19119',2504,509,20.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Madison','19121',3740,1579,42.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Mahaska','19123',5094,1894,37.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Marion','19125',8036,2722,33.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Marshall','19127',9037,3785,41.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Mills','19129',3547,1228,34.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Mitchell','19131',2727,489,17.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Monona','19133',2478,930,37.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Monroe','19135',1952,652,33.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Montgomery','19137',2824,890,31.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Muscatine','19139',9570,3609,37.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','O''Brien','19141',3532,614,17.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Osceola','19143',1548,295,19.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Page','19145',4111,1091,26.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Palo Alto','19147',2336,343,14.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Plymouth','19149',6025,1699,28.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Pocahontas','19151',1966,489,24.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Polk','19153',91529,40567,44.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Pottawattamie','19155',22045,10089,45.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Poweshiek','19157',4528,1412,31.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Ringgold','19159',1419,291,20.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Sac','19161',2672,444,16.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Scott','19163',38000,18281,48.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Shelby','19165',3412,807,23.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Sioux','19167',6884,808,11.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Story','19169',16183,4411,27.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Tama','19171',4140,1627,39.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Taylor','19173',1625,274,16.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Union','19175',3105,876,28.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Van Buren','19177',1945,633,32.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Wapello','19179',7860,3440,43.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Warren','19181',11594,4927,42.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Washington','19183',5599,1867,33.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Wayne','19185',1707,566,33.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Webster','19187',8510,2895,34.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Winnebago','19189',2776,640,23.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Winneshiek','19191',5499,805,14.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Woodbury','19193',20408,9235,45.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Worth','19195',1967,490,24.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('IA','Wright','19197',3111,733,23.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Allen','20001',3159,926,29.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Anderson','20003',1902,580,30.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Atchison','20005',3399,1133,33.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Barber','20007',1265,172,13.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Barton','20009',6132,869,14.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Bourbon','20011',3529,1580,44.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Brown','20013',2560,530,20.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Butler','20015',14392,5938,41.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Chase','20017',625,142,22.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Chautauqua','20019',1023,194,18.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Cherokee','20021',4717,2099,44.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Cheyenne','20023',808,64,7.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Clark','20025',474,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Clay','20027',2191,229,10.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Cloud','20029',2254,328,14.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Coffey','20031',2376,519,21.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Comanche','20033',489,18,3.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Cowley','20035',7969,2462,30.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Crawford','20037',7957,3082,38.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Decatur','20039',885,62,7.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Dickinson','20041',4720,917,19.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Doniphan','20043',1819,423,23.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Douglas','20045',21573,6400,29.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Edwards','20047',744,67,9.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Elk','20049',810,200,24.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Ellis','20051',6146,266,4.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Ellsworth','20053',1559,244,15.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Finney','20055',5436,135,2.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Ford','20057',4634,39,0.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Franklin','20059',6187,2056,33.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Geary','20061',4605,1340,29.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Gove','20063',716,12,1.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Graham','20065',761,11,1.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Grant','20067',1213,84,6.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Gray','20069',1160,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Greeley','20071',302,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Greenwood','20073',1750,515,29.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Hamilton','20075',416,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Harper','20077',1487,376,25.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Harvey','20079',8473,2836,33.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Haskell','20081',646,27,4.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Hodgeman','20083',441,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Jackson','20085',3244,967,29.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Jefferson','20087',4741,1563,32.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Jewell','20089',931,118,12.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Johnson','20091',121167,48899,40.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Kearny','20093',693,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Kingman','20095',2103,460,21.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Kiowa','20097',606,69,11.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Labette','20099',5037,1790,35.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Lane','20101',429,24,5.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Leavenworth','20103',16572,6344,38.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Lincoln','20105',919,121,13.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Linn','20107',2713,1313,48.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Logan','20109',695,40,5.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Lyon','20111',6858,1746,25.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','McPherson','20113',7313,1424,19.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Marion','20115',3325,652,19.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Marshall','20117',2802,474,16.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Meade','20119',898,15,1.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Miami','20121',7717,3430,44.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Mitchell','20123',1611,121,7.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Montgomery','20125',7714,3054,39.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Morris','20127',1545,300,19.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Morton','20129',606,21,3.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Nemaha','20131',2484,215,8.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Neosho','20133',3807,1103,28.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Ness','20135',825,16,1.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Norton','20137',1222,83,6.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Osage','20139',4284,1400,32.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Osborne','20141',1038,106,10.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Ottawa','20143',1511,218,14.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Pawnee','20145',1493,204,13.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Phillips','20147',1460,136,9.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Pottawatomie','20149',5096,1051,20.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Pratt','20151',2258,343,15.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Rawlins','20153',717,37,5.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Reno','20155',15251,4351,28.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Republic','20157',1476,150,10.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Rice','20159',2267,386,17.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Riley','20161',9323,1746,18.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Rooks','20163',1357,129,9.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Rush','20165',933,108,11.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Russell','20167',1864,270,14.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Saline','20169',12742,2738,21.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Scott','20171',1039,58,5.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Sedgwick','20173',103438,46172,44.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Seward','20175',2624,45,1.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Shawnee','20177',42350,13774,32.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Sheridan','20179',685,15,2.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Sherman','20181',1432,125,8.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Smith','20183',1190,127,10.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Stafford','20185',1064,180,16.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Stanton','20187',352,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Stevens','20189',922,24,2.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Sumner','20191',5621,2167,38.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Thomas','20193',1715,109,6.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Trego','20195',880,11,1.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Wabaunsee','20197',1882,404,21.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Wallace','20199',393,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Washington','20201',1495,142,9.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Wichita','20203',452,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Wilson','20205',2407,686,28.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Woodson','20207',872,247,28.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KS','Wyandotte','20209',26139,15681,59.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Adair','21001',4820,2487,51.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Allen','21003',5028,2706,53.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Anderson','21005',5455,3388,62.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Ballard','21007',2004,941,46.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Barren','21009',11021,5830,52.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Bath','21011',3026,2007,66.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Bell','21013',6295,3746,59.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Boone','21015',26236,14846,56.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Bourbon','21017',4850,2811,57.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Boyd','21019',11644,6916,59.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Boyle','21021',7532,4174,55.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Bracken','21023',2131,1355,63.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Breathitt','21025',3287,2339,71.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Breckinridge','21027',5558,2818,50.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Bullitt','21029',18535,9466,51.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Butler','21031',3110,1906,61.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Caldwell','21033',3317,1672,50.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Calloway','21035',8706,4276,49.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Campbell','21037',19740,11090,56.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Carlisle','21039',1267,703,55.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Carroll','21041',2456,1527,62.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Carter','21043',6906,4499,65.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Casey','21045',4107,2135,51.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Christian','21047',12249,6230,50.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Clark','21049',8734,5387,61.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Clay','21051',4813,3434,71.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Clinton','21053',2589,1353,52.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Crittenden','21055',2271,1095,48.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Cumberland','21057',1935,1006,51.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Daviess','21059',23937,12357,51.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Edmonson','21061',3177,1680,52.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Elliott','21063',1659,1037,62.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Estill','21065',3704,2393,64.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Fayette','21067',56230,30645,54.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Fleming','21069',3786,2406,63.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Floyd','21071',9833,6693,68.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Franklin','21073',15156,8589,56.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Fulton','21075',1655,983,59.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Gallatin','21077',1264,1053,83.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Garrard','21079',4444,2574,57.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Grant','21081',5775,3770,65.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Graves','21083',8853,4999,56.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Grayson','21085',6943,3840,55.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Green','21087',3079,1662,53.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Greenup','21089',9632,5461,56.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Hancock','21091',2171,1052,48.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Hardin','21093',23688,10812,45.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Harlan','21095',6957,4491,64.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Harrison','21097',4806,2570,53.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Hart','21099',4619,2533,54.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Henderson','21101',10826,6057,55.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Henry','21103',4052,2465,60.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Hickman','21105',1274,630,49.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Hopkins','21107',11120,5973,53.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Jackson','21109',3288,2286,69.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Jefferson','21111',161418,82349,51.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Jessamine','21113',11658,6494,55.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Johnson','21115',5949,3909,65.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Kenton','21117',33343,18783,56.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Knott','21119',3715,2387,64.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Knox','21121',7798,4806,61.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Larue','21123',3718,2019,54.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Laurel','21125',15023,8904,59.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Lawrence','21127',4019,2531,62.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Lee','21129',1766,1244,70.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Leslie','21131',2800,2005,71.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Letcher','21133',5994,4012,66.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Lewis','21135',3215,2251,70.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Lincoln','21137',6250,3860,61.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Livingston','21139',2740,1302,47.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Logan','21141',6682,3510,52.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Lyon','21143',2542,1236,48.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','McCracken','21145',17413,8363,48.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','McCreary','21147',3889,2457,63.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','McLean','21149',2408,1363,56.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Madison','21151',19460,11580,59.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Magoffin','21153',3230,2266,70.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Marion','21155',4568,2237,48.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Marshall','21157',9214,4284,46.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Martin','21159',2626,1797,68.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Mason','21161',4405,2615,59.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Meade','21163',6374,3091,48.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Menifee','21165',1836,1263,68.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Mercer','21167',5914,3497,59.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Metcalfe','21169',2694,1594,59.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Monroe','21171',2694,1375,51.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Montgomery','21173',6470,4030,62.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Morgan','21175',3232,2273,70.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Muhlenberg','21177',7849,4589,58.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Nelson','21179',11520,5244,45.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Nicholas','21181',1782,1117,62.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Ohio','21183',5827,3445,59.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Oldham','21185',12914,5160,39.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Owen','21187',2855,1548,54.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Owsley','21189',1118,754,67.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Pendleton','21191',3615,2323,64.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Perry','21193',6669,4207,63.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Pike','21195',15424,10271,66.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Powell','21197',3205,2179,67.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Pulaski','21199',18119,10636,58.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Robertson','21201',562,339,60.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Rockcastle','21203',4289,2568,59.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Rowan','21205',5073,3457,68.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Russell','21207',4833,2719,56.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Scott','21209',10615,5974,56.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Shelby','21211',10499,5169,49.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Simpson','21213',4604,2365,51.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Spencer','21215',4485,2212,49.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Taylor','21217',6460,3276,50.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Todd','21219',2619,1258,48.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Trigg','21221',4208,2052,48.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Trimble','21223',2117,1232,58.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Union','21225',3254,1818,55.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Warren','21227',24253,12822,52.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Washington','21229',3108,1446,46.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Wayne','21231',5431,3339,61.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Webster','21233',3169,1767,55.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Whitley','21235',8631,5731,66.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Wolfe','21237',1816,1329,73.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('KY','Woodford','21239',6894,3775,54.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Acadia','22001',12645,6159,48.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Allen','22003',4945,2151,43.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Ascension','22005',22237,15235,68.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Assumption','22007',5240,3287,62.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Avoyelles','22009',9462,4531,47.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Beauregard','22011',7810,3092,39.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Bienville','22013',3545,1899,53.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Bossier','22015',24034,10450,43.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Caddo','22017',53821,29363,54.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Calcasieu','22019',41048,18534,45.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Caldwell','22021',2317,1181,50.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Cameron','22023',1223,365,29.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Catahoula','22025',2431,1135,46.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Claiborne','22027',3562,1586,44.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Concordia','22029',4458,2011,45.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','De Soto','22031',6854,3719,54.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','East Baton Rouge','22033',84670,55290,65.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','East Carroll','22035',1443,764,52.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','East Feliciana','22037',5122,3052,59.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Evangeline','22039',7235,3220,44.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Franklin','22041',4847,2177,44.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Grant','22043',4755,2048,43.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Iberia','22045',16182,8657,53.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Iberville','22047',7075,4984,70.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Jackson','22049',3770,1695,44.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Jefferson','22051',95206,67793,71.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Jefferson Davis','22053',6586,2642,40.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Lafayette','22055',48418,20162,41.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Lafourche','22057',20783,12449,59.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','LaSalle','22059',3098,1094,35.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Lincoln','22061',8162,3758,46.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Livingston','22063',25725,18000,69.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Madison','22065',2187,1024,46.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Morehouse','22067',6779,3668,54.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Natchitoches','22069',8236,3774,45.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Orleans','22071',70814,48124,67.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Ouachita','22073',31759,15714,49.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Plaquemines','22075',4199,2898,69.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Pointe Coupee','22077',5371,3525,65.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Rapides','22079',29469,12531,42.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Red River','22081',1801,940,52.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Richland','22083',4876,2544,52.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Sabine','22085',5735,2570,44.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','St. Bernard','22087',7681,5518,71.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','St. Charles','22089',10777,8028,74.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','St. Helena','22091',3411,1789,52.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','St. James','22093',4994,3511,70.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','St. John the Baptist','22095',9209,6888,74.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','St. Landry','22097',20770,10093,48.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','St. Martin','22099',12374,6485,52.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','St. Mary','22101',11746,7204,61.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','St. Tammany','22103',63387,39176,61.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Tangipahoa','22105',27453,17962,65.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Tensas','22107',1255,639,50.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Terrebonne','22109',22916,13636,59.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Union','22111',5828,2576,44.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Vermilion','22113',12794,6275,49.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Vernon','22115',8128,2975,36.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Washington','22117',11138,6808,61.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Webster','22119',9876,4857,49.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','West Baton Rouge','22121',5519,3792,68.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','West Carroll','22123',2830,1284,45.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','West Feliciana','22125',2545,1319,51.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('LA','Winn','22127',2975,1293,43.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Androscoggin','23001',27151,18145,66.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Aroostook','23003',21311,11387,53.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Cumberland','23005',77793,47308,60.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Franklin','23007',9117,6198,67.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Hancock','23009',17620,9218,52.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Kennebec','23011',35360,22725,64.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Knox','23013',13632,7615,55.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Lincoln','23015',12815,7544,58.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Oxford','23017',18381,11337,61.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Penobscot','23019',41289,24135,58.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Piscataquis','23021',5948,3497,58.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Sagadahoc','23023',11469,6751,58.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Somerset','23025',15688,9519,60.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Waldo','23027',12867,7552,58.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','Washington','23029',10549,4925,46.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ME','York','23031',61465,32935,53.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Allegany','24001',17352,3267,18.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Anne Arundel','24003',111780,22147,19.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Baltimore','24005',177228,45668,25.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Calvert','24009',19514,3569,18.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Caroline','24011',7695,1825,23.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Carroll','24013',38751,7937,20.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Cecil','24015',22282,4854,21.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Charles','24017',30102,7511,24.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Dorchester','24019',9138,2397,26.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Frederick','24021',53809,10900,20.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Garrett','24023',8060,1778,22.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Harford','24025',57629,14320,24.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Howard','24027',59539,11496,19.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Kent','24029',6192,1134,18.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Montgomery','24031',199446,44963,22.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Prince George''s','24033',158262,48909,30.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Queen Anne''s','24035',13726,2353,17.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','St. Mary''s','24037',20602,3490,16.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Somerset','24039',5521,1678,30.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Talbot','24041',12489,1973,15.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Washington','24043',34436,8306,24.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Wicomico','24045',22164,6059,27.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Worcester','24047',17513,4394,25.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MD','Baltimore City','24510',102992,37935,36.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Barnstable','25001',88427,21350,24.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Berkshire','25003',38446,6452,16.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Bristol','25005',135844,53194,39.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Dukes','25007',5773,500,8.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Essex','25009',183338,64904,35.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Franklin','25011',21417,6923,32.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Hampden','25013',110860,50130,45.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Hampshire','25015',40150,11918,29.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Middlesex','25017',310149,105735,34.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Nantucket','25019',2421,155,6.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Norfolk','25021',154277,49405,32.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Plymouth','25023',133308,42345,31.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Suffolk','25025',116361,48706,41.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MA','Worcester','25027',183656,80880,44.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Alcona','26001',4685,2760,58.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Alger','26003',2882,1580,54.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Allegan','26005',28421,20371,71.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Alpena','26007',9662,5562,57.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Antrim','26009',8514,5057,59.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Arenac','26011',5306,3492,65.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Baraga','26013',2183,1296,59.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Barry','26015',15335,10367,67.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Bay','26017',29295,18669,63.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Benzie','26019',6232,3768,60.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Berrien','26021',39812,22711,57.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Branch','26023',10867,6469,59.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Calhoun','26025',32676,18268,55.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Cass','26027',13961,7492,53.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Charlevoix','26029',8583,4854,56.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Cheboygan','26031',9011,5157,57.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Chippewa','26033',8923,5009,56.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Clare','26035',10506,7078,67.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Clinton','26037',17536,12499,71.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Crawford','26039',4454,2728,61.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Delta','26041',11880,6724,56.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Dickinson','26043',7739,3963,51.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Eaton','26045',26699,19248,72.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Emmet','26047',10679,5771,54.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Genesee','26049',96824,67501,69.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Gladwin','26051',8998,6022,66.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Gogebic','26053',4712,2160,45.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Grand Traverse','26055',27016,17475,64.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Gratiot','26057',9380,6337,67.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Hillsdale','26059',11429,7705,67.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Houghton','26061',8175,4359,53.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Huron','26063',10293,5683,55.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Ingham','26065',54172,36347,67.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Ionia','26067',13683,10183,74.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Iosco','26069',9689,5742,59.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Iron','26071',4392,2463,56.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Isabella','26073',12748,7550,59.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Jackson','26075',38893,23845,61.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Kalamazoo','26077',55417,36443,65.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Kalkaska','26079',5337,3404,63.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Kent','26081',125344,93409,74.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Keweenaw','26083',831,400,48.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Lake','26085',4466,3049,68.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Lapeer','26087',23102,14497,62.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Leelanau','26089',8794,5041,57.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Lenawee','26091',25294,15512,61.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Livingston','26093',48894,26935,55.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Luce','26095',1710,1118,65.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Mackinac','26097',3939,2256,57.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Macomb','26099',199907,120593,60.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Manistee','26101',8652,5453,63.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Marquette','26103',17231,10189,59.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Mason','26105',9587,6393,66.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Mecosta','26107',10981,7395,67.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Menominee','26109',7177,4001,55.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Midland','26111',21051,13662,64.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Missaukee','26113',4334,2783,64.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Monroe','26115',38050,23692,62.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Montcalm','26117',16176,11604,71.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Montmorency','26119',4213,2616,62.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Muskegon','26121',43720,32976,75.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Newaygo','26123',13813,10448,75.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Oakland','26125',279882,155334,55.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Oceana','26127',7833,5551,70.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Ogemaw','26129',7594,4513,59.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Ontonagon','26131',2514,1173,46.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Osceola','26133',6894,4608,66.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Oscoda','26135',3246,1960,60.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Otsego','26137',7438,4126,55.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Ottawa','26139',63691,49241,77.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Presque Isle','26141',5320,3135,58.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Roscommon','26143',10455,6786,64.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Saginaw','26145',48626,33221,68.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','St. Clair','26147',42891,27208,63.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','St. Joseph','26149',14455,8307,57.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Sanilac','26151',11762,6929,58.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Schoolcraft','26153',2808,1631,58.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Shiawassee','26155',17562,11933,67.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Tuscola','26157',14719,10030,68.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Van Buren','26159',19822,12851,64.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Washtenaw','26161',69927,41529,59.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Wayne','26163',353844,229739,64.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MI','Wexford','26165',9369,6133,65.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Aitkin','27001',5125,4180,81.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Anoka','27003',71160,45404,63.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Becker','27005',9988,5254,52.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Beltrami','27007',10291,4951,48.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Benton','27009',8681,4769,54.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Big Stone','27011',1569,721,45.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Blue Earth','27013',13249,5420,40.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Brown','27015',7013,3141,44.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Carlton','27017',8752,5573,63.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Carver','27019',20843,12420,59.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Cass','27021',10867,5455,50.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Chippewa','27023',2796,1317,47.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Chisago','27025',13233,8668,65.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Clay','27027',11678,5379,46.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Clearwater','27029',2249,1187,52.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Cook','27031',1903,1201,63.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Cottonwood','27033',3234,1324,40.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Crow Wing','27035',20884,12108,57.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Dakota','27037',88364,52154,59.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Dodge','27039',4102,1777,43.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Douglas','27041',12156,6936,57.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Faribault','27043',3884,1684,43.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Fillmore','27045',5661,2766,48.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Freeborn','27047',8362,4172,49.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Goodhue','27049',12528,8257,65.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Grant','27051',1756,810,46.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Hennepin','27053',231420,133283,57.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Houston','27055',5494,2848,51.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Hubbard','27057',6892,3259,47.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Isanti','27059',9732,6090,62.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Itasca','27061',14259,8967,62.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Jackson','27063',2494,955,38.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Kanabec','27065',4614,2763,59.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Kandiyohi','27067',11004,6146,55.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Kittson','27069',1220,466,38.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Koochiching','27071',3914,2498,63.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Lac qui Parle','27073',1977,942,47.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Lake','27075',3405,2230,65.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Lake of the Woods','27077',1219,709,58.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Le Sueur','27079',6221,4541,72.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Lincoln','27081',1549,568,36.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Lyon','27083',5566,1964,35.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','McLeod','27085',8880,6367,71.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Mahnomen','27087',1053,453,43.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Marshall','27089',2386,1279,53.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Martin','27091',5761,2195,38.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Meeker','27093',5919,4150,70.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Mille Lacs','27095',7055,4517,64.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Morrison','27097',8850,5466,61.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Mower','27099',8837,4220,47.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Murray','27101',2335,782,33.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Nicollet','27103',7040,3051,43.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Nobles','27105',4134,1505,36.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Norman','27107',1707,712,41.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Olmsted','27109',33689,11781,34.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Otter Tail','27111',18399,9824,53.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Pennington','27113',3228,1712,53.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Pine','27115',8212,5174,63.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Pipestone','27117',2188,1291,59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Polk','27119',7187,2835,39.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Pope','27121',3310,1504,45.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Ramsey','27123',101267,61161,60.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Red Lake','27125',1022,597,58.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Redwood','27127',3871,1846,47.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Renville','27129',3753,1864,49.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Rice','27131',13698,8856,64.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Rock','27133',2412,1460,60.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Roseau','27135',3839,1970,51.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','St. Louis','27137',52270,33870,64.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Scott','27139',25607,15184,59.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Sherburne','27141',17672,10512,59.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Sibley','27143',3585,2374,66.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Stearns','27145',33207,18462,55.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Steele','27147',8773,4395,50.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Stevens','27149',1848,860,46.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Swift','27151',2467,1139,46.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Todd','27153',6522,3845,58.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Traverse','27155',969,576,59.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Wabasha','27157',5993,3054,50.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Wadena','27159',3963,2211,55.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Waseca','27161',4802,2390,49.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Washington','27163',58556,36093,61.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Watonwan','27165',2303,841,36.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Wilkin','27167',1619,836,51.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Winona','27169',11160,5075,45.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Wright','27171',26592,16864,63.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MN','Yellow Medicine','27173',2760,1425,51.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Adams','28001',7700,3372,43.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Alcorn','28003',9196,2147,23.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Amite','28005',3585,1468,40.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Attala','28007',4472,2161,48.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Benton','28009',2098,964,45.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Bolivar','28011',7391,3790,51.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Calhoun','28013',3665,1390,37.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Carroll','28015',2832,901,31.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Chickasaw','28017',4264,2222,52.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Choctaw','28019',1757,733,41.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Claiborne','28021',2046,1242,60.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Clarke','28023',4165,1968,47.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Clay','28025',4889,2356,48.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Coahoma','28027',5104,2694,52.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Copiah','28029',6552,3629,55.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Covington','28031',4570,2606,57.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','DeSoto','28033',33510,12814,38.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Forrest','28035',15336,7933,51.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Franklin','28037',2084,766,36.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','George','28039',5178,2947,56.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Greene','28041',2696,1295,48.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Grenada','28043',5585,2164,38.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Hancock','28045',11590,6783,58.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Harrison','28047',47170,23690,50.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Hinds','28049',46088,25203,54.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Holmes','28051',4208,2662,63.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Humphreys','28053',1951,1153,59.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Issaquena','28055',152,80,52.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Itawamba','28057',5634,1785,31.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Jackson','28059',32672,16437,50.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Jasper','28061',4296,2393,55.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Jefferson','28063',1825,1047,57.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Jefferson Davis','28065',2857,1674,58.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Jones','28067',15047,7079,47.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Kemper','28069',2227,1135,50.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Lafayette','28071',9522,2105,22.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Lamar','28073',11084,4605,41.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Lauderdale','28075',16014,6830,42.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Lawrence','28077',3434,1523,44.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Leake','28079',4635,2229,48.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Lee','28081',18997,6896,36.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Leflore','28083',6051,3180,52.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Lincoln','28085',8151,3045,37.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Lowndes','28087',12779,4936,38.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Madison','28089',23518,7796,33.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Marion','28091',6185,3206,51.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Marshall','28093',8751,4554,52.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Monroe','28095',8932,3641,40.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Montgomery','28097',2765,1156,41.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Neshoba','28099',6043,2339,38.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Newton','28101',4907,1903,38.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Noxubee','28103',2664,1409,52.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Oktibbeha','28105',7903,2596,32.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Panola','28107',8043,3970,49.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Pearl River','28109',15180,7986,52.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Perry','28111',3050,1560,51.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Pike','28113',9291,5185,55.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Pontotoc','28115',6823,2423,35.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Prentiss','28117',5590,1829,32.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Quitman','28119',1645,946,57.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Rankin','28121',31794,11040,34.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Scott','28123',5653,3001,53.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Sharkey','28125',1141,570,49.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Simpson','28127',6163,2702,43.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Smith','28129',3899,1343,34.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Stone','28131',4400,2432,55.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Sunflower','28133',5141,2933,57.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Tallahatchie','28135',2860,1475,51.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Tate','28137',6513,2848,43.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Tippah','28139',5238,1817,34.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Tishomingo','28141',5245,1407,26.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Tunica','28143',1998,1226,61.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Union','28145',6861,2226,32.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Walthall','28147',3580,1729,48.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Warren','28149',10496,4618,44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Washington','28151',10856,5877,54.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Wayne','28153',4773,2381,49.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Webster','28155',2888,1070,37.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Wilkinson','28157',2041,1138,55.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Winston','28159',4821,1924,39.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Yalobusha','28161',4215,1707,40.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MS','Yazoo','28163',5241,2649,50.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Adair','29001',5097,1371,26.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Andrew','29003',3914,1160,29.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Atchison','29005',1454,305,20.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Audrain','29007',5866,2463,41.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Barry','29009',9261,5689,61.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Barton','29011',3241,1481,45.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Bates','29013',4036,2117,52.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Benton','29015',7520,3966,52.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Bollinger','29017',3023,1293,42.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Boone','29019',32384,15688,48.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Buchanan','29021',18999,7113,37.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Butler','29023',10426,4037,38.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Caldwell','29025',2165,941,43.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Callaway','29027',10460,5561,53.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Camden','29029',14068,6933,49.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Cape Girardeau','29031',18025,6237,34.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Carroll','29033',2388,974,40.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Carter','29035',1765,723,40.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Cass','29037',24359,13163,54.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Cedar','29039',4175,2480,59.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Chariton','29041',2075,571,27.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Christian','29043',20606,12470,60.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Clark','29045',1606,399,24.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Clay','29047',49187,23621,48.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Clinton','29049',5336,2197,41.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Cole','29051',17249,9682,56.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Cooper','29053',4188,2015,48.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Crawford','29055',6280,4074,64.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Dade','29057',2170,1420,65.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Dallas','29059',4625,3311,71.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Daviess','29061',2076,663,31.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','DeKalb','29063',2359,804,34.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Dent','29065',4190,1902,45.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Douglas','29067',3792,2176,57.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Dunklin','29069',6851,3150,45.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Franklin','29071',27378,20347,74.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Gasconade','29073',4458,2672,59.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Gentry','29075',1629,393,24.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Greene','29077',65418,40508,61.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Grundy','29079',2500,765,30.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Harrison','29081',2212,601,27.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Henry','29083',6629,3360,50.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Hickory','29085',3423,2017,58.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Holt','29087',1225,327,26.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Howard','29089',2514,1110,44.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Howell','29091',11145,6107,54.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Iron','29093',2775,1439,51.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Jackson','29095',137564,77612,56.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Jasper','29097',26025,13612,52.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Jefferson','29099',51999,34181,65.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Johnson','29101',9784,4351,44.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Knox','29103',1012,230,22.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Laclede','29105',9194,6326,68.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Lafayette','29107',8128,4207,51.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Lawrence','29109',9560,5939,62.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Lewis','29111',2400,744,31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Lincoln','29113',13149,8253,62.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Linn','29115',3270,1002,30.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Livingston','29117',3669,1191,32.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','McDonald','29119',4469,2726,61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Macon','29121',4324,1375,31.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Madison','29123',3520,1777,50.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Maries','29125',2340,1098,46.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Marion','29127',7058,2450,34.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Mercer','29129',953,279,29.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Miller','29131',6282,3301,52.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Mississippi','29133',2809,1171,41.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Moniteau','29135',3214,1716,53.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Monroe','29137',2465,874,35.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Montgomery','29139',3212,1709,53.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Morgan','29141',6462,3199,49.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','New Madrid','29143',3570,1634,45.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Newton','29145',13793,6323,45.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Nodaway','29147',4380,924,21.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Oregon','29149',2921,1456,49.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Osage','29151',2988,1607,53.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Ozark','29153',3234,1757,54.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Pemiscot','29155',3563,1738,48.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Perry','29157',4740,1565,33.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Pettis','29159',9471,4413,46.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Phelps','29161',9876,4947,50.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Pike','29163',4262,1744,40.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Platte','29165',20756,9209,44.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Polk','29167',7193,5084,70.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Pulaski','29169',7470,3469,46.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Putnam','29171',1269,351,27.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Ralls','29173',2931,948,32.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Randolph','29175',5484,2344,42.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Ray','29177',5507,2756,50.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Reynolds','29179',1931,829,42.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Ripley','29181',3427,1363,39.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','St. Charles','29183',87774,53204,60.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','St. Clair','29185',2917,1501,51.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Ste. Genevieve','29186',4751,2922,61.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','St. Francois','29187',16790,9586,57.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','St. Louis','29189',227300,131310,57.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Saline','29195',5014,2259,45.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Schuyler','29197',962,302,31.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Scotland','29199',984,198,20.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Scott','29201',9951,4082,41.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Shannon','29203',2245,1161,51.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Shelby','29205',1628,455,27.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Stoddard','29207',7685,3216,41.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Stone','29209',10877,6673,61.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Sullivan','29211',1502,448,29.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Taney','29213',15781,9932,62.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Texas','29215',6260,3178,50.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Vernon','29217',4683,2388,50.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Warren','29219',9094,6353,69.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Washington','29221',5732,3910,68.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Wayne','29223',3628,1927,53.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Webster','29225',9149,6112,66.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Worth','29227',584,165,28.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','Wright','29229',5398,3551,65.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MO','St. Louis City','29510',49508,31858,64.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Beaverhead','30001',2717,617,22.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Big Horn','30003',2117,641,30.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Blaine','30005',1310,19,1.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Broadwater','30007',1844,574,31.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Carbon','30009',3546,1104,31.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Carter','30011',382,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Cascade','30013',19867,7608,38.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Chouteau','30015',1448,399,27.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Custer','30017',2873,406,14.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Daniels','30019',475,19,4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Dawson','30021',2226,26,1.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Deer Lodge','30023',2961,755,25.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Fallon','30025',664,36,5.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Fergus','30027',3498,1203,34.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Flathead','30029',29342,10147,34.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Gallatin','30031',20574,5469,26.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Garfield','30033',308,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Glacier','30035',2322,491,21.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Golden Valley','30037',367,135,36.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Granite','30039',1133,242,21.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Hill','30041',3497,257,7.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Jefferson','30043',3859,1098,28.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Judith Basin','30045',720,259,35.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Lake','30047',8962,2512,28.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Lewis and Clark','30049',18687,5520,29.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Liberty','30051',524,100,19.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Lincoln','30053',8395,3486,41.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','McCone','30055',382,32,8.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Madison','30057',3013,628,20.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Meagher','30059',643,103,16.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Mineral','30061',1769,591,33.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Missoula','30063',26463,6823,25.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Musselshell','30065',1705,623,36.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Park','30067',4866,934,19.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Petroleum','30069',126,16,12.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Phillips','30071',1139,84,7.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Pondera','30073',1553,439,28.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Powder River','30075',508,35,6.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Powell','30077',1841,391,21.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Prairie','30079',451,30,6.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Ravalli','30081',15598,4986,31.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Richland','30083',2321,18,0.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Roosevelt','30085',1795,87,4.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Rosebud','30087',1974,458,23.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Sanders','30089',5115,1715,33.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Sheridan','30091',990,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Silver Bow','30093',8898,2628,29.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Stillwater','30095',2902,985,33.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Sweet Grass','30097',1140,306,26.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Teton','30099',1754,664,37.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Toole','30101',1094,194,17.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Treasure','30103',242,82,33.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Valley','30105',1995,118,5.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Wheatland','30107',639,228,35.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Wibaux','30109',257,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('MT','Yellowstone','30111',38078,14638,38.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Adams','31001',7246,2293,31.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Antelope','31003',1746,404,23.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Arthur','31005',104,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Banner','31007',296,33,11.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Blaine','31009',131,21,16.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Boone','31011',1479,514,34.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Box Butte','31013',2730,300,10.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Boyd','31015',663,102,15.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Brown','31017',776,51,6.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Buffalo','31019',9930,3195,32.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Burt','31021',1979,622,31.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Butler','31023',2012,509,25.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Cass','31025',6287,2282,36.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Cedar','31027',2213,683,30.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Chase','31029',922,51,5.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Cherry','31031',1334,28,2.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Cheyenne','31033',2567,527,20.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Clay','31035',1600,408,25.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Colfax','31037',1796,446,24.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Cuming','31039',2337,454,19.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Custer','31041',2807,603,21.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Dakota','31043',3761,1618,43.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Dawes','31045',1941,332,17.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Dawson','31047',4676,971,20.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Deuel','31049',606,65,10.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Dixon','31051',1277,482,37.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Dodge','31053',8658,3180,36.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Douglas','31055',102550,46138,44.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Dundy','31057',524,65,12.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Fillmore','31059',1630,398,24.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Franklin','31061',858,241,28.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Frontier','31063',662,111,16.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Furnas','31065',1383,270,19.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Gage','31067',5966,1983,33.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Garden','31069',662,75,11.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Garfield','31071',482,128,26.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Gosper','31073',578,99,17.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Grant','31075',190,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Greeley','31077',613,157,25.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Hall','31079',11660,4548,39.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Hamilton','31081',2461,675,27.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Harlan','31083',945,209,22.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Hayes','31085',207,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Hitchcock','31087',820,112,13.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Holt','31089',2775,492,17.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Hooker','31091',255,11,4.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Howard','31093',1647,505,30.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Jefferson','31095',2044,655,32.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Johnson','31097',910,268,29.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Kearney','31099',1382,444,32.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Keith','31101',2391,342,14.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Keya Paha','31103',292,17,5.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Kimball','31105',1067,239,22.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Knox','31107',2411,821,34.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Lancaster','31109',60545,21189,35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Lincoln','31111',8472,750,8.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Logan','31113',179,15,8.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Loup','31115',199,32,16.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','McPherson','31117',109,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Madison','31119',7951,3024,38.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Merrick','31121',2024,562,27.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Morrill','31123',1014,269,26.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Nance','31125',703,220,31.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Nemaha','31127',1693,387,22.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Nuckolls','31129',1347,216,16.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Otoe','31131',4145,1277,30.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Pawnee','31133',659,182,27.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Perkins','31135',747,57,7.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Phelps','31137',2263,450,19.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Pierce','31139',1677,501,29.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Platte','31141',7399,2099,28.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Polk','31143',1403,291,20.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Red Willow','31145',2707,218,8.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Richardson','31147',2313,281,12.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Rock','31149',428,81,18.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Saline','31151',2872,976,33.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Sarpy','31153',33833,12957,38.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Saunders','31155',5125,1772,34.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Scotts Bluff','31157',8823,3139,35.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Seward','31159',4020,1131,28.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Sheridan','31161',1414,159,11.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Sherman','31163',899,273,30.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Sioux','31165',289,55,19.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Stanton','31167',1213,392,32.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Thayer','31169',1429,285,19.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Thomas','31171',203,28,13.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Thurston','31173',1051,296,28.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Valley','31175',1114,338,30.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Washington','31177',5052,2001,39.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Wayne','31179',1697,467,27.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Webster','31181',926,288,31.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','Wheeler','31183',189,35,18.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NE','York','31185',3422,785,22.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Churchill','32001',6332,2274,35.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Clark','32003',430246,244438,56.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Douglas','32005',19222,5716,29.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Elko','32007',8368,272,3.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Esmeralda','32009',277,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Eureka','32011',377,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Humboldt','32013',3439,98,2.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Lander','32015',1067,23,2.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Lincoln','32017',1172,39,3.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Lyon','32019',16505,7251,43.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Mineral','32021',1378,471,34.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Nye','32023',18401,11689,63.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Pershing','32027',1196,21,1.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Storey','32029',1445,493,34.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Washoe','32031',106112,50443,47.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','White Pine','32033',1993,48,2.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NV','Carson City','32510',15714,6298,40.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NH','Belknap','33001',21427,7189,33.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NH','Carroll','33003',19385,2361,12.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NH','Cheshire','33005',22096,5572,25.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NH','Coos','33007',11053,3562,32.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NH','Grafton','33009',25539,5564,21.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NH','Hillsborough','33011',95002,33087,34.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NH','Merrimack','33013',41183,15171,36.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NH','Rockingham','33015',84142,26040,30.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NH','Strafford','33017',30697,11007,35.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NH','Sullivan','33019',12490,2194,17.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Atlantic','34001',67267,29493,43.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Bergen','34003',196039,71690,36.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Burlington','34005',104294,44231,42.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Camden','34007',106652,48936,45.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Cape May','34009',31591,10517,33.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Cumberland','34011',30361,16805,55.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Essex','34013',130843,65110,49.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Gloucester','34015',66330,28526,43.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Hudson','34017',89743,49410,55.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Hunterdon','34019',32346,11328,35.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Mercer','34021',73378,33369,45.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Middlesex','34023',159468,65786,41.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Monmouth','34025',148918,46154,30.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Morris','34027',107018,35466,33.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Ocean','34029',169957,65636,38.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Passaic','34031',95615,46208,48.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Salem','34033',15424,6505,42.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Somerset','34035',68792,24175,35.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Sussex','34037',35257,12065,34.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Union','34039',97082,45517,46.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NJ','Warren','34041',26958,10218,37.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Bernalillo','35001',143787,84783,58.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Catron','35003',1668,705,42.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Chaves','35005',12460,5769,46.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Cibola','35006',5268,2657,50.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Colfax','35007',3891,1802,46.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Curry','35009',7981,2904,36.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','DeBaca','35011',557,201,36.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Dona Ana','35013',49215,26899,54.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Eddy','35015',10184,3566,35.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Grant','35017',9252,4349,47.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Guadalupe','35019',1074,653,60.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Harding','35021',203,58,28.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Hidalgo','35023',1127,614,54.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Lea','35025',9879,3382,34.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Lincoln','35027',6550,2692,41.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Los Alamos','35028',3833,556,14.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Luna','35029',6824,4307,63.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','McKinley','35031',12606,4193,33.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Mora','35033',1578,736,46.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Otero','35035',14986,6265,41.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Quay','35037',2587,1044,40.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Rio Arriba','35039',10108,5070,50.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Roosevelt','35041',3271,1310,40.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Sandoval','35043',37758,21384,56.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','San Juan','35045',25175,9300,36.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','San Miguel','35047',7445,4191,56.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Santa Fe','35049',46725,19384,41.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Sierra','35051',4643,2491,53.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Socorro','35053',4087,2279,55.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Taos','35055',10746,4846,45.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Torrance','35057',4040,2581,63.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Union','35059',992,228,22.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NM','Valencia','35061',18277,11489,62.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Albany','36001',67776,38187,56.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Allegany','36003',11505,6892,59.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Bronx','36005',237312,168837,71.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Broome','36007',47613,29825,62.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Cattaraugus','36009',19719,13166,66.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Cayuga','36011',18629,10859,58.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Chautauqua','36013',32911,21923,66.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Chemung','36015',21071,13100,62.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Chenango','36017',12972,8370,64.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Clinton','36019',20925,8514,40.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Columbia','36021',17706,7621,43.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Cortland','36023',10412,5489,52.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Delaware','36025',12198,6014,49.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Dutchess','36027',69397,28921,41.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Erie','36029',219009,157105,71.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Essex','36031',10523,4223,40.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Franklin','36033',12618,5570,44.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Fulton','36035',14146,9551,67.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Genesee','36037',14888,10593,71.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Greene','36039',13162,6612,50.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Hamilton','36041',1697,853,50.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Herkimer','36043',15372,9113,59.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Jefferson','36045',23100,11696,50.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Kings','36047',416676,240343,57.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Lewis','36049',6195,3945,63.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Livingston','36051',15668,11640,74.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Madison','36053',16634,10020,60.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Monroe','36055',176295,135892,77.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Montgomery','36057',13412,8434,62.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Nassau','36059',305619,102220,33.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','New York','36061',301650,141404,46.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Niagara','36063',55405,40636,73.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Oneida','36065',56831,31358,55.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Onondaga','36067',105454,66336,62.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Ontario','36069',30570,22117,72.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Orange','36071',73100,27921,38.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Orleans','36073',10179,7312,71.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Oswego','36075',28435,18187,63.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Otsego','36077',15920,7103,44.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Putnam','36079',22642,8379,37.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Queens','36081',426105,260226,61.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Rensselaer','36083',36181,20865,57.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Richmond','36085',100385,47508,47.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Rockland','36087',60807,19873,32.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','St. Lawrence','36089',25710,12339,47.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Saratoga','36091',59048,34485,58.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Schenectady','36093',35022,22989,65.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Schoharie','36095',8430,4292,50.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Schuyler','36097',5232,2978,56.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Seneca','36099',8490,5237,61.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Steuben','36101',24204,15172,62.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Suffolk','36103',338907,101300,29.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Sullivan','36105',18679,7055,37.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Tioga','36107',12816,8369,65.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Tompkins','36109',19112,8637,45.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Ulster','36111',46064,19174,41.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Warren','36113',20066,11960,59.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Washington','36115',15675,10109,64.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Wayne','36117',24813,17860,71.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Westchester','36119',200295,78128,39.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Wyoming','36121',9960,6771,67.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NY','Yates','36123',6463,4489,69.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Alamance','37001',38767,27688,71.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Alexander','37003',9522,6112,64.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Alleghany','37005',3773,2171,57.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Anson','37007',5738,3840,66.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Ashe','37009',8721,4373,50.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Avery','37011',4588,2537,55.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Beaufort','37013',15014,8155,54.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Bertie','37015',5697,3198,56.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Bladen','37017',8611,5616,65.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Brunswick','37019',69077,30718,44.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Buncombe','37021',68073,32910,48.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Burke','37023',22603,14738,65.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Cabarrus','37025',40202,25355,63.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Caldwell','37027',20722,14256,68.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Camden','37029',2516,842,33.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Carteret','37031',22745,9411,41.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Caswell','37033',6541,4258,65.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Catawba','37035',41671,24809,59.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Chatham','37037',24308,12056,49.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Cherokee','37039',11118,5826,52.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Chowan','37041',4532,2010,44.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Clay','37043',4865,2181,44.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Cleveland','37045',25576,16035,62.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Columbus','37047',13866,8364,60.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Craven','37049',28363,11927,42.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Cumberland','37051',61759,35896,58.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Currituck','37053',7328,2420,33.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Dare','37055',11449,2935,25.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Davidson','37057',42101,30042,71.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Davie','37059',12224,8211,67.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Duplin','37061',11795,6646,56.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Durham','37063',56463,29392,52.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Edgecombe','37065',12787,8614,67.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Forsyth','37067',83483,57850,69.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Franklin','37069',16300,9710,59.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Gaston','37071',50182,31874,63.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Gates','37073',2875,1253,43.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Graham','37075',2282,1329,58.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Granville','37077',13922,7991,57.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Greene','37079',4065,2516,61.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Guilford','37081',109904,79162,72.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Halifax','37083',14742,9083,61.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Harnett','37085',25568,14427,56.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Haywood','37087',19653,10600,53.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Henderson','37089',37153,17588,47.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Hertford','37091',5727,3350,58.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Hoke','37093',9240,5430,58.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Hyde','37095',1280,685,53.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Iredell','37097',42158,25358,60.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Jackson','37099',9544,4740,49.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Johnston','37101',44015,25066,56.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Jones','37103',2695,1654,61.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Lee','37105',14607,8246,56.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Lenoir','37107',15207,8788,57.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Lincoln','37109',21992,13440,61.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','McDowell','37111',12469,7974,63.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Macon','37113',12933,5891,45.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Madison','37115',6378,3656,57.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Martin','37117',6759,4064,60.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Mecklenburg','37119',169575,93974,55.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Mitchell','37121',4624,2604,56.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Montgomery','37123',6387,4386,68.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Moore','37125',30454,15404,50.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Nash','37127',24315,14594,60.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','New Hanover','37129',55481,25135,45.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Northampton','37131',5714,3401,59.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Onslow','37133',33497,15080,45.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Orange','37135',28077,14598,51.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Pamlico','37137',4788,2054,42.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Pasquotank','37139',9919,4514,45.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Pender','37141',15934,8359,52.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Perquimans','37143',4475,1970,44.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Person','37145',10536,6601,62.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Pitt','37147',34692,19706,56.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Polk','37149',7363,3097,42.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Randolph','37151',34771,25198,72.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Richmond','37153',11253,7089,63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Robeson','37155',26275,19708,75.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Rockingham','37157',25517,19600,76.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Rowan','37159',35149,23038,65.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Rutherford','37161',18005,10632,59.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Sampson','37163',13788,8812,63.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Scotland','37165',8712,5748,65.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Stanly','37167',15862,10196,64.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Stokes','37169',13222,9366,70.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Surry','37171',18190,13490,74.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Swain','37173',4272,1867,43.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Transylvania','37175',10863,5570,51.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Tyrrell','37177',891,432,48.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Union','37179',43569,23229,53.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Vance','37181',11051,7556,68.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Wake','37183',189332,99991,52.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Warren','37185',4905,3261,66.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Washington','37187',3597,2006,55.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Watauga','37189',10799,5070,46.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Wayne','37191',26315,15311,58.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Wilkes','37193',19520,13262,67.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Wilson','37195',21258,11527,54.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Yadkin','37197',9717,7280,74.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('NC','Yancey','37199',5928,3186,53.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Adams','38001',713,215,30.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Barnes','38003',2945,1143,38.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Benson','38005',1184,301,25.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Billings','38007',212,79,37.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Bottineau','38009',1853,259,13.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Bowman','38011',844,213,25.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Burke','38013',510,68,13.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Burleigh','38015',21443,8732,40.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Cass','38017',31398,12052,38.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Cavalier','38019',1092,233,21.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Dickey','38021',1184,602,50.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Divide','38023',564,61,10.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Dunn','38025',892,190,21.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Eddy','38027',665,190,28.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Emmons','38029',1029,431,41.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Foster','38031',857,251,29.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Golden Valley','38033',454,82,18.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Grand Forks','38035',12618,3748,29.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Grant','38037',728,317,43.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Griggs','38039',710,248,34.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Hettinger','38041',678,180,26.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Kidder','38043',706,386,54.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','LaMoure','38045',1190,532,44.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Logan','38047',563,251,44.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','McHenry','38049',1429,510,35.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','McIntosh','38051',889,394,44.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','McKenzie','38053',1492,168,11.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','McLean','38055',2826,1053,37.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Mercer','38057',2247,875,38.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Morton','38059',7097,3504,49.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Mountrail','38061',1587,279,17.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Nelson','38063',1025,255,24.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Oliver','38065',507,179,35.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Pembina','38067',1934,486,25.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Pierce','38069',1093,326,29.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Ramsey','38071',2863,766,26.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Ransom','38073',1417,728,51.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Renville','38075',598,144,24.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Richland','38077',3941,1669,42.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Rolette','38079',2362,187,7.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Sargent','38081',1037,530,51.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Sheridan','38083',421,172,40.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Sioux','38085',498,109,21.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Slope','38087',180,58,32.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Stark','38089',5752,1965,34.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Steele','38091',509,168,33.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Stutsman','38093',5309,2726,51.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Towner','38095',672,145,21.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Traill','38097',1909,569,29.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Walsh','38099',2671,647,24.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Ward','38101',11710,3835,32.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Wells','38103',1248,269,21.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('ND','Williams','38105',4817,1224,25.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Adams','39001',6926,4213,60.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Allen','39003',23963,12176,50.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Ashland','39005',12948,7401,57.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Ashtabula','39007',25557,13927,54.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Athens','39009',11467,6038,52.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Auglaize','39011',10967,4331,39.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Belmont','39013',17350,10005,57.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Brown','39015',10858,6721,61.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Butler','39017',78207,43380,55.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Carroll','39019',7399,4641,62.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Champaign','39021',9093,5180,56.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Clark','39023',32401,19645,60.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Clermont','39025',48666,28731,59.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Clinton','39027',10170,5752,56.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Columbiana','39029',26992,16701,61.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Coshocton','39031',9051,4774,52.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Crawford','39033',11316,5743,50.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Cuyahoga','39035',282647,163334,57.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Darke','39037',12847,5485,42.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Defiance','39039',9703,5005,51.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Delaware','39041',43543,20747,47.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Erie','39043',20881,10720,51.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Fairfield','39045',33879,19625,57.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Fayette','39047',6845,3679,53.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Franklin','39049',211395,118880,56.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Fulton','39051',10325,5323,51.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Gallia','39053',7436,4006,53.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Geauga','39055',24697,12016,48.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Greene','39057',37485,18666,49.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Guernsey','39059',9786,5388,55.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Hamilton','39061',164883,93599,56.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Hancock','39063',17061,7946,46.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Hardin','39065',6477,3314,51.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Harrison','39067',3974,2309,58.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Henry','39069',6821,3110,45.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Highland','39071',10292,5882,57.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Hocking','39073',7042,3793,53.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Holmes','39075',5708,2939,51.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Huron','39077',13968,7208,51.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Jackson','39079',7931,4286,54.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Jefferson','39081',17120,9117,53.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Knox','39083',15014,8283,55.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Lake','39085',61628,34096,55.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Lawrence','39087',14684,7388,50.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Licking','39089',40687,22627,55.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Logan','39091',11457,5431,47.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Lorain','39093',79340,46021,58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Lucas','39095',95166,55256,58.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Madison','39097',9527,5679,59.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Mahoning','39099',61154,39482,64.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Marion','39101',15208,8990,59.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Medina','39103',45181,25295,55.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Meigs','39105',5972,3419,57.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Mercer','39107',9973,3208,32.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Miami','39109',26411,14473,54.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Monroe','39111',4036,2225,55.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Montgomery','39113',120491,73847,61.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Morgan','39115',3520,2159,61.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Morrow','39117',8334,4433,53.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Muskingum','39119',21922,12688,57.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Noble','39121',2986,1499,50.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Ottawa','39123',13161,6866,52.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Paulding','39125',4535,2242,49.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Perry','39127',8580,4984,58.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Pickaway','39129',12552,7357,58.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Pike','39131',6938,3554,51.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Portage','39133',37565,24100,64.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Preble','39135',10309,5775,56.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Putnam','39137',8136,3073,37.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Richland','39139',30792,16633,54.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Ross','39141',17732,10037,56.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Sandusky','39143',15350,7320,47.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Scioto','39145',17149,8913,51.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Seneca','39147',13531,5737,42.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Shelby','39149',10668,4078,38.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Stark','39151',94421,65093,68.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Summit','39153',129151,81516,63.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Trumbull','39155',54382,34208,62.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Tuscarawas','39157',22513,14416,64.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Union','39159',11690,5919,50.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Van Wert','39161',7037,3304,46.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Vinton','39163',2808,1641,58.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Warren','39165',49062,25807,52.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Washington','39167',16067,7461,46.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Wayne','39169',26282,14832,56.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Williams','39171',9419,4335,46.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Wood','39173',28165,14661,52.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OH','Wyandot','39175',5662,2565,45.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Adair','40001',4759,2157,45.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Alfalfa','40003',1195,245,20.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Atoka','40005',3266,1022,31.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Beaver','40007',1023,160,15.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Beckham','40009',4471,982,21.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Blaine','40011',2106,605,28.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Bryan','40013',10454,3827,36.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Caddo','40015',6336,2213,34.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Canadian','40017',29450,12412,42.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Carter','40019',11619,4206,36.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Cherokee','40021',10560,4043,38.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Choctaw','40023',3856,1441,37.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Cimarron','40025',555,103,18.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Cleveland','40027',54514,22250,40.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Coal','40029',1223,458,37.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Comanche','40031',22049,7754,35.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Cotton','40033',1405,380,27.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Craig','40035',4001,1650,41.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Creek','40037',17336,9890,57.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Custer','40039',5295,1384,26.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Delaware','40041',11735,5532,47.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Dewey','40043',1081,210,19.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Ellis','40045',944,142,15.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Garfield','40047',12972,3760,28.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Garvin','40049',6466,2692,41.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Grady','40051',12117,4550,37.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Grant','40053',1042,230,22.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Greer','40055',1242,337,27.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Harmon','40057',586,169,28.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Harper','40059',878,87,9.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Haskell','40061',3266,1189,36.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Hughes','40063',3243,1222,37.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Jackson','40065',4758,1226,25.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Jefferson','40067',1448,442,30.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Johnston','40069',2603,993,38.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Kay','40071',10646,3866,36.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Kingfisher','40073',3525,973,27.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Kiowa','40075',2271,783,34.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Latimer','40077',2534,917,36.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Le Flore','40079',11851,5170,43.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Lincoln','40081',8584,3722,43.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Logan','40083',10564,4364,41.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Love','40085',2463,827,33.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','McClain','40087',9835,4031,40.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','McCurtain','40089',7347,2186,29.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','McIntosh','40091',6222,2599,41.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Major','40093',1815,318,17.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Marshall','40095',4401,1669,37.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Mayes','40097',9661,4768,49.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Murray','40099',3441,892,25.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Muskogee','40101',16214,6718,41.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Noble','40103',2746,653,23.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Nowata','40105',2598,1088,41.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Okfuskee','40107',2736,1227,44.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Oklahoma','40109',147063,67462,45.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Okmulgee','40111',9718,4823,49.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Osage','40113',11113,4901,44.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Ottawa','40115',8227,3869,47.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Pawnee','40117',4356,1781,40.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Payne','40119',13914,2951,21.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Pittsburg','40121',10502,3989,37.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Pontotoc','40123',8619,2705,31.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Pottawatomie','40125',16766,7690,45.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Pushmataha','40127',3306,1153,34.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Roger Mills','40129',799,131,16.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Rogers','40131',22149,10404,46.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Seminole','40133',5564,2688,48.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Sequoyah','40135',10498,4893,46.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Stephens','40137',11455,3050,26.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Texas','40139',2770,503,18.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Tillman','40141',1683,601,35.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Tulsa','40143',126376,67355,53.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Wagoner','40145',18132,9385,51.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Washington','40147',12894,4989,38.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Washita','40149',2519,687,27.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Woods','40151',1783,321,18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OK','Woodward','40153',4011,882,21.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Baker','41001',5443,859,15.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Benton','41003',20334,10025,49.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Clackamas','41005',99960,66155,66.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Clatsop','41007',11951,688,5.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Columbia','41009',13750,8391,61.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Coos','41011',22000,5304,24.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Crook','41013',8265,3339,40.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Curry','41015',9989,503,5.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Deschutes','41017',53725,20765,38.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Douglas','41019',36493,18575,50.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Gilliam','41021',629,104,16.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Grant','41023',2403,74,3.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Harney','41025',2218,61,2.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Hood River','41027',5325,1820,34.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Jackson','41029',62426,30714,49.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Jefferson','41031',6208,2606,41.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Josephine','41033',28581,16794,58.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Klamath','41035',19201,7599,39.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Lake','41037',2441,51,2.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Lane','41039',97890,62044,63.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Lincoln','41041',18336,5676,30.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Linn','41043',32724,19999,61.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Malheur','41045',6709,2305,34.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Marion','41047',72209,46776,64.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Morrow','41049',2332,380,16.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Multnomah','41051',139534,91875,65.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Polk','41053',20734,13447,64.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Sherman','41055',572,149,26.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Tillamook','41057',8945,1206,13.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Umatilla','41059',16257,581,3.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Union','41061',6951,330,4.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Wallowa','41063',2708,403,14.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Wasco','41065',6728,2117,31.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Washington','41067',106485,68639,64.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Wheeler','41069',533,17,3.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('OR','Yamhill','41071',25061,14862,59.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Adams','42001',29400,12624,42.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Allegheny','42003',283956,195368,68.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Armstrong','42005',18690,14141,75.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Beaver','42007',46427,32840,70.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Bedford','42009',14456,9318,64.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Berks','42011',94854,44668,47.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Blair','42013',32963,21727,65.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Bradford','42015',16225,8194,50.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Bucks','42017',161475,65720,40.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Butler','42019',51509,35864,69.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Cambria','42021',38539,29464,76.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Cameron','42023',1556,889,57.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Carbon','42025',17874,7748,43.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Centre','42027',28316,17523,61.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Chester','42029',115687,37340,32.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Clarion','42031',10016,6211,62.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Clearfield','42033',21298,12896,60.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Clinton','42035',9450,6132,64.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Columbia','42037',16537,8504,51.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Crawford','42039',23028,13171,57.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Cumberland','42041',62306,33649,54.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Dauphin','42043',64041,39103,61.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Delaware','42045',121447,49863,41.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Elk','42047',8981,4164,46.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Erie','42049',66178,43274,65.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Fayette','42051',35962,24297,67.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Forest','42053',1855,1236,66.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Franklin','42055',39546,17239,43.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Fulton','42057',4015,1881,46.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Greene','42059',8707,6272,72.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Huntingdon','42061',11519,7182,62.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Indiana','42063',21003,16146,76.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Jefferson','42065',12049,7331,60.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Juniata','42067',5860,3597,61.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Lackawanna','42069',56246,24434,43.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Lancaster','42071',127550,65960,51.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Lawrence','42073',23834,17344,72.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Lebanon','42075',35747,19443,54.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Lehigh','42077',84013,39742,47.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Luzerne','42079',78478,35957,45.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Lycoming','42081',29654,17059,57.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','McKean','42083',10722,5670,52.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Mercer','42085',30600,21236,69.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Mifflin','42087',12080,7237,59.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Monroe','42089',40439,18235,45.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Montgomery','42091',193843,71241,36.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Montour','42093',4867,2994,61.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Northampton','42095',78542,35517,45.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Northumberland','42097',24437,14450,59.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Perry','42099',11823,7154,60.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Philadelphia','42101',270349,162302,60.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Pike','42103',17173,6022,35.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Potter','42105',4969,2684,54.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Schuylkill','42107',37823,18027,47.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Snyder','42109',9311,5534,59.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Somerset','42111',21060,14969,71.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Sullivan','42113',2186,1128,51.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Susquehanna','42115',11568,5362,46.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Tioga','42117',11303,6064,53.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Union','42119',9168,5034,54.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Venango','42121',15332,10612,69.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Warren','42123',11165,6091,54.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Washington','42125',58032,39181,67.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Wayne','42127',15347,5694,37.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Westmoreland','42129',103207,73891,71.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','Wyoming','42131',7325,4116,56.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PA','York','42133',107489,56718,52.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('RI','Bristol','44001',13363,7316,54.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('RI','Kent','44003',45286,27472,60.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('RI','Newport','44005',23103,10474,45.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('RI','Providence','44007',134361,86567,64.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('RI','Washington','44009',37949,19654,51.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Abbeville','45001',6948,3490,50.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Aiken','45003',46274,20174,43.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Allendale','45005',2136,1279,59.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Anderson','45007',50965,27366,53.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Bamberg','45009',3561,2106,59.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Barnwell','45011',4955,2878,58.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Beaufort','45013',62550,20371,32.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Berkeley','45015',49159,21757,44.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Calhoun','45017',4200,2080,49.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Charleston','45019',87614,31445,35.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Cherokee','45021',13535,7577,55.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Chester','45023',8302,4569,55.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Chesterfield','45025',10728,5492,51.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Clarendon','45027',9831,5233,53.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Colleton','45029',10747,5431,50.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Darlington','45031',16650,8326,50.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Dillon','45033',6973,4147,59.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Dorchester','45035',34414,14872,43.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Edgefield','45037',7031,3524,50.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Fairfield','45039',6419,3513,54.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Florence','45041',32387,15208,46.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Georgetown','45043',23493,9894,42.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Greenville','45045',119428,58967,49.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Greenwood','45047',17681,8491,48.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Hampton','45049',4678,2697,57.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Horry','45051',138361,63297,45.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Jasper','45053',12272,4753,38.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Kershaw','45055',17166,8311,48.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Lancaster','45057',27710,12517,45.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Laurens','45059',17845,9407,52.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Lee','45061',4493,2540,56.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Lexington','45063',66670,28170,42.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','McCormick','45065',4836,2342,48.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Marion','45067',8192,4711,57.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Marlboro','45069',6552,3974,60.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Newberry','45071',10384,4637,44.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Oconee','45073',25284,11956,47.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Orangeburg','45075',22023,12972,58.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Pickens','45077',29988,16557,55.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Richland','45079',80443,34637,43.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Saluda','45081',4946,1996,40.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Spartanburg','45083',77228,41937,54.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Sumter','45085',24666,12335,50.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Union','45087',7736,4686,60.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','Williamsburg','45089',8660,5283,61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SC','York','45091',58089,27005,46.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Aurora','46003',680,219,32.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Beadle','46005',4093,1729,42.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Bennett','46007',514,54,10.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Bon Homme','46009',1668,598,35.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Brookings','46011',6014,2696,44.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Brown','46013',8689,2523,29.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Brule','46015',1118,373,33.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Buffalo','46017',239,23,9.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Butte','46019',2645,1137,42.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Campbell','46021',423,125,29.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Charles Mix','46023',2001,492,24.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Clark','46025',931,463,49.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Clay','46027',2324,775,33.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Codington','46029',6800,3241,47.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Corson','46031',604,128,21.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Custer','46033',3333,1077,32.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Davison','46035',4874,1869,38.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Day','46037',1661,576,34.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Deuel','46039',1188,490,41.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Dewey','46041',886,95,10.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Douglas','46043',817,231,28.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Edmunds','46045',989,257,25.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Fall River','46047',2908,763,26.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Faulk','46049',604,146,24.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Grant','46051',2099,1128,53.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Gregory','46053',1202,246,20.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Haakon','46055',537,89,16.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Hamlin','46057',1271,586,46.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Hand','46059',893,137,15.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Hanson','46061',1081,347,32.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Harding','46063',326,54,16.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Hughes','46065',3760,803,21.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Hutchinson','46067',1973,740,37.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Hyde','46069',349,111,31.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Jackson','46071',522,119,22.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Jerauld','46073',684,167,24.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Jones','46075',257,39,15.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Kingsbury','46077',1536,495,32.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Lake','46079',2915,1003,34.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Lawrence','46081',8508,3013,35.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Lincoln','46083',12092,5604,46.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Lyman','46085',754,142,18.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','McCook','46087',1378,629,45.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','McPherson','46089',712,176,24.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Marshall','46091',1192,398,33.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Meade','46093',7300,2108,28.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Mellette','46095',373,55,14.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Miner','46097',663,220,33.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Minnehaha','46099',42112,17643,41.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Moody','46101',1598,486,30.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Oglala Lakota','46102',1477,63,4.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Pennington','46103',30661,9302,30.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Perkins','46105',861,206,23.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Potter','46107',722,107,14.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Roberts','46109',2360,775,32.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Sanborn','46111',606,206,33.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Spink','46115',1706,444,26.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Stanley','46117',841,159,18.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Sully','46119',445,61,13.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Todd','46121',1108,60,5.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Tripp','46123',1414,220,15.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Turner','46125',2075,1064,51.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Union','46127',3917,1291,32.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Walworth','46129',1523,331,21.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Yankton','46135',6034,2143,35.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('SD','Ziebach','46137',208,36,17.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Anderson','47001',19962,10702,53.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Bedford','47003',10368,5417,52.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Benton','47005',4931,2437,49.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Bledsoe','47007',3678,2151,58.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Blount','47009',35808,20148,56.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Bradley','47011',25931,15166,58.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Campbell','47013',10410,7064,67.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Cannon','47015',3648,1890,51.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Carroll','47017',7724,3379,43.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Carter','47019',15718,10444,66.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Cheatham','47021',9668,5421,56.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Chester','47023',4099,1850,45.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Claiborne','47025',9217,6285,68.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Clay','47027',2254,1035,45.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Cocke','47029',11226,7542,67.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Coffee','47031',14342,7113,49.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Crockett','47033',3389,1466,43.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Cumberland','47035',25434,13517,53.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Davidson','47037',105465,59126,56.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Decatur','47039',3747,1769,47.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','DeKalb','47041',5029,3113,61.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Dickson','47043',12721,6956,54.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Dyer','47045',8505,4062,47.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Fayette','47047',12611,4679,37.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Fentress','47049',6381,3069,48.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Franklin','47051',11757,5506,46.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Gibson','47053',12109,5590,46.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Giles','47055',7914,3598,45.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Grainger','47057',6886,4738,68.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Greene','47059',21352,13020,60.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Grundy','47061',4095,2597,63.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Hamblen','47063',15470,9679,62.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Hamilton','47065',83035,47010,56.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Hancock','47067',1469,1254,85.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Hardeman','47069',6138,3446,56.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Hardin','47071',7916,3201,40.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Hawkins','47073',17261,12540,72.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Haywood','47075',4465,2476,55.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Henderson','47077',6549,3823,58.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Henry','47079',9725,4393,45.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Hickman','47081',5667,3311,58.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Houston','47083',2062,1053,51.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Humphreys','47085',4885,2146,43.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Jackson','47087',3436,1641,47.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Jefferson','47089',15416,9360,60.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Johnson','47091',5512,3589,65.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Knox','47093',99708,53475,53.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Lake','47095',1300,701,53.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Lauderdale','47097',5427,3052,56.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Lawrence','47099',10965,4829,44.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Lewis','47101',3140,1671,53.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Lincoln','47103',9494,5043,53.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Loudon','47105',20515,10673,52.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','McMinn','47107',14684,8235,56.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','McNairy','47109',7056,3149,44.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Macon','47111',5571,2836,50.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Madison','47113',22919,10678,46.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Marion','47115',8259,4603,55.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Marshall','47117',7922,4235,53.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Maury','47119',24866,12040,48.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Meigs','47121',3640,2426,66.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Monroe','47123',14276,8452,59.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Montgomery','47125',33837,14798,43.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Moore','47127',1600,650,40.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Morgan','47129',5429,3278,60.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Obion','47131',7892,3739,47.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Overton','47133',6331,3013,47.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Perry','47135',2224,1260,56.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Pickett','47137',1724,721,41.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Polk','47139',4605,2978,64.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Putnam','47141',18752,8981,47.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Rhea','47143',8677,5065,58.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Roane','47145',15830,8957,56.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Robertson','47147',15919,9221,57.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Rutherford','47149',54083,27782,51.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Scott','47151',5439,3538,65.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Sequatchie','47153',5245,3119,59.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Sevier','47155',25124,14742,58.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Shelby','47157',168020,81447,48.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Smith','47159',4761,2239,47.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Stewart','47161',3774,1540,40.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Sullivan','47163',45365,31047,68.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Sumner','47165',43027,23128,53.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Tipton','47167',12940,5585,43.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Trousdale','47169',2081,1068,51.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Unicoi','47171',5447,3685,67.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Union','47173',5362,3442,64.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Van Buren','47175',1916,919,47.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Warren','47177',10414,5321,51.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Washington','47179',34295,21115,61.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Wayne','47181',4087,1982,48.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Weakley','47183',7567,3186,42.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','White','47185',7950,4111,51.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Williamson','47187',47938,19283,40.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TN','Wilson','47189',33172,16875,50.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Anderson','48001',11606,6307,54.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Andrews','48003',2507,1266,50.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Angelina','48005',19063,9635,50.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Aransas','48007',8856,5088,57.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Archer','48009',2287,630,27.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Armstrong','48011',512,199,38.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Atascosa','48013',10502,6738,64.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Austin','48015',7928,3536,44.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Bailey','48017',1117,407,36.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Bandera','48019',8304,4051,48.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Bastrop','48021',19245,10467,54.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Baylor','48023',924,298,32.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Bee','48025',5180,3500,67.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Bell','48027',65213,34075,52.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Bexar','48029',344644,203348,59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Blanco','48031',4379,1740,39.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Borden','48033',125,31,24.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Bosque','48035',5672,2968,52.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Bowie','48037',20544,9021,43.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Brazoria','48039',66486,38060,57.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Brazos','48041',30475,15371,50.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Brewster','48043',2369,930,39.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Briscoe','48045',425,151,35.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Brooks','48047',1565,1113,71.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Brown','48049',10036,3984,39.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Burleson','48051',5414,2730,50.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Burnet','48053',15701,7029,44.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Caldwell','48055',8884,4946,55.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Calhoun','48057',4731,2431,51.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Callahan','48059',3876,1608,41.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Cameron','48061',73926,55429,74.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Camp','48063',3176,1492,46.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Carson','48065',1306,520,39.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Cass','48067',8415,4340,51.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Castro','48069',1295,509,39.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Chambers','48071',8391,4386,52.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Cherokee','48073',11687,6208,53.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Childress','48075',1325,572,43.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Clay','48077',2898,902,31.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Cochran','48079',520,262,50.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Coke','48081',1030,426,41.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Coleman','48083',2682,825,30.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Collin','48085',164944,70484,42.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Collingsworth','48087',672,170,25.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Colorado','48089',6332,2341,36.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Comal','48091',47825,21486,44.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Comanche','48093',3768,1437,38.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Concho','48095',779,347,44.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Cooke','48097',9965,4172,41.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Coryell','48099',12599,6315,50.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Cottle','48101',417,179,42.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Crane','48103',724,289,39.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Crockett','48105',762,273,35.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Crosby','48107',1300,747,57.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Culberson','48109',486,149,30.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Dallam','48111',924,281,30.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Dallas','48113',365531,200946,54.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Dawson','48115',2245,1076,47.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Deaf Smith','48117',2823,1393,49.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Delta','48119',1363,648,47.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Denton','48121',137815,62078,45.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','DeWitt','48123',4945,2290,46.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Dickens','48125',569,221,38.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Dimmit','48127',1921,1335,69.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Donley','48129',961,323,33.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Duval','48131',2448,1690,69.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Eastland','48133',5101,2406,47.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Ector','48135',21841,11901,54.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Edwards','48137',646,291,45.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Ellis','48139',38425,20514,53.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','El Paso','48141',155388,116425,74.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Erath','48143',7896,3518,44.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Falls','48145',3755,2329,62.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Fannin','48147',8435,3873,45.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Fayette','48149',8032,2784,34.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Fisher','48151',978,334,34.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Floyd','48153',1230,554,45.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Foard','48155',310,113,36.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Fort Bend','48157',138205,76876,55.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Franklin','48159',2794,1254,44.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Freestone','48161',4888,2438,49.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Frio','48163',2884,2034,70.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Gaines','48165',2333,874,37.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Galveston','48167',70861,39768,56.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Garza','48169',875,467,53.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Gillespie','48171',9976,2975,29.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Glasscock','48173',246,46,18.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Goliad','48175',1967,977,49.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Gonzales','48177',4643,2201,47.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Gray','48179',4143,1644,39.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Grayson','48181',32947,15769,47.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Gregg','48183',27291,15043,55.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Grimes','48185',7591,3859,50.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Guadalupe','48187',35785,16771,46.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hale','48189',5831,2969,50.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hall','48191',753,325,43.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hamilton','48193',2569,1307,50.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hansford','48195',900,217,24.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hardeman','48197',939,318,33.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hardin','48199',13215,7260,54.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Harris','48201',666617,409562,61.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Harrison','48203',14861,7762,52.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hartley','48205',665,206,30.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Haskell','48207',1478,489,33.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hays','48209',43139,21320,49.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hemphill','48211',691,169,24.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Henderson','48213',23629,12602,53.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hidalgo','48215',126589,98718,77.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hill','48217',9931,5526,55.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hockley','48219',4397,2329,52.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hood','48221',21063,10262,48.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hopkins','48223',8731,3977,45.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Houston','48225',5827,2990,51.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Howard','48227',5322,2395,45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hudspeth','48229',966,514,53.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hunt','48231',21899,10396,47.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Hutchinson','48233',4355,1851,42.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Irion','48235',397,133,33.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Jack','48237',2027,689,33.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Jackson','48239',3515,1588,45.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Jasper','48241',9130,4727,51.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Jeff Davis','48243',712,258,36.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Jefferson','48245',46338,27779,59.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Jim Hogg','48247',1015,718,70.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Jim Wells','48249',8776,6226,70.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Johnson','48251',37797,22861,60.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Jones','48253',3769,1631,43.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Karnes','48255',2973,1482,49.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Kaufman','48257',27334,14814,54.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Kendall','48259',14368,5691,39.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Kenedy','48261',53,26,49.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Kent','48263',227,95,41.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Kerr','48265',17889,6360,35.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Kimble','48267',1470,395,26.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','King','48269',31,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Kinney','48271',933,389,41.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Kleberg','48273',5459,3820,69.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Knox','48275',928,303,32.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Lamar','48277',12025,4518,37.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Lamb','48279',2701,1294,47.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Lampasas','48281',6574,2847,43.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','La Salle','48283',1176,752,63.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Lavaca','48285',5776,2102,36.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Lee','48287',4397,1996,45.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Leon','48289',5683,2700,47.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Liberty','48291',16619,10760,64.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Limestone','48293',5540,2930,52.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Lipscomb','48295',694,186,26.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Live Oak','48297',2457,1345,54.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Llano','48299',8591,4017,46.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Loving','48301',16,NULL,NULL,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Lubbock','48303',54911,28831,52.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Lynn','48305',1144,562,49.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','McCulloch','48307',2298,906,39.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','McLennan','48309',50667,27342,53.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','McMullen','48311',194,78,40.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Madison','48313',2723,1451,53.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Marion','48315',3249,1696,52.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Martin','48317',776,294,37.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Mason','48319',1428,489,34.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Matagorda','48321',8229,4450,54.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Maverick','48323',11681,8988,76.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Medina','48325',11972,6852,57.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Menard','48327',697,287,41.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Midland','48329',22557,9197,40.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Milam','48331',6597,3906,59.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Mills','48333',1529,617,40.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Mitchell','48335',1567,624,39.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Montague','48337',5847,2158,36.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Montgomery','48339',124457,65017,52.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Moore','48341',2778,1093,39.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Morris','48343',3887,1889,48.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Motley','48345',349,116,33.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Nacogdoches','48347',12778,6601,51.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Navarro','48349',11480,6008,52.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Newton','48351',2640,1509,57.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Nolan','48353',3260,1571,48.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Nueces','48355',67828,44188,65.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Ochiltree','48357',1455,323,22.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Oldham','48359',432,130,30.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Orange','48361',17593,9645,54.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Palo Pinto','48363',7123,3226,45.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Panola','48365',5716,2794,48.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Parker','48367',34934,15591,44.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Parmer','48369',1550,389,25.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Pecos','48371',2484,1205,48.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Polk','48373',19065,8961,47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Potter','48375',20648,10513,50.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Presidio','48377',1811,826,45.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Rains','48379',3703,1759,47.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Randall','48381',27406,11121,40.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Reagan','48383',514,182,35.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Real','48385',1340,522,38.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Red River','48387',3639,1615,44.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Reeves','48389',2137,741,34.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Refugio','48391',1873,1080,57.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Roberts','48393',207,60,28.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Robertson','48395',4481,2314,51.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Rockwall','48397',21514,9348,43.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Runnels','48399',2633,816,30.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Rusk','48401',11522,6074,52.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Sabine','48403',3686,1409,38.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','San Augustine','48405',2564,1241,48.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','San Jacinto','48407',7443,4314,57.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','San Patricio','48409',14693,9944,67.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','San Saba','48411',1634,688,42.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Schleicher','48413',678,224,33.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Scurry','48415',3124,1277,40.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Shackelford','48417',854,327,38.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Shelby','48419',5408,2873,53.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Sherman','48421',398,118,29.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Smith','48423',53026,26534,50.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Somervell','48425',2576,1225,47.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Starr','48427',10642,8965,84.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Stephens','48429',2263,918,40.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Sterling','48431',258,71,27.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Stonewall','48433',411,101,24.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Sutton','48435',872,217,24.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Swisher','48437',1460,603,41.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Tarrant','48439',330499,183650,55.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Taylor','48441',28122,12123,43.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Terrell','48443',233,96,41.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Terry','48445',2063,1229,59.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Throckmorton','48447',393,126,32.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Titus','48449',5912,2932,49.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Tom Green','48451',24774,12067,48.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Travis','48453',164746,77285,46.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Trinity','48455',4851,2771,57.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Tyler','48457',5353,2866,53.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Upshur','48459',10236,5514,53.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Upton','48461',667,273,40.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Uvalde','48463',5865,3363,57.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Val Verde','48465',9139,5521,60.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Van Zandt','48467',14871,8004,53.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Victoria','48469',20001,10833,54.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Walker','48471',12661,7410,58.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Waller','48473',9238,4742,51.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Ward','48475',1925,767,39.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Washington','48477',10579,4318,40.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Webb','48479',39646,25735,64.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Wharton','48481',9338,4480,47.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Wheeler','48483',1154,306,26.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Wichita','48485',26831,9879,36.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Wilbarger','48487',2869,1106,38.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Willacy','48489',3767,2992,79.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Williamson','48491',105589,50010,47.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Wilson','48493',11816,6022,50.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Winkler','48495',1109,445,40.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Wise','48497',15902,7928,49.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Wood','48499',16645,8302,49.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Yoakum','48501',1325,541,40.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Young','48503',4668,1262,27.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Zapata','48505',2187,1638,74.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('TX','Zavala','48507',2127,1606,75.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Beaver','49001',1497,542,36.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Box Elder','49003',10308,6137,59.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Cache','49005',17820,11272,63.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Carbon','49007',4967,2147,43.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Daggett','49009',291,15,5.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Davis','49011',50540,27828,55.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Duchesne','49013',3942,1998,50.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Emery','49015',2282,860,37.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Garfield','49017',1389,385,27.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Grand','49019',2376,536,22.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Iron','49021',11345,5557,48.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Juab','49023',2007,930,46.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Kane','49025',2298,590,25.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Millard','49027',2816,1039,36.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Morgan','49029',2039,1090,53.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Piute','49031',463,167,36.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Rich','49033',538,222,41.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Salt Lake','49035',167559,97739,58.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','San Juan','49037',2585,435,16.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Sanpete','49039',5717,3009,52.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Sevier','49041',4812,2403,49.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Summit','49043',8392,3451,41.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Tooele','49045',10353,5582,53.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Uintah','49047',5404,2649,49.02,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Utah','49049',72910,42294,58.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Wasatch','49051',6502,3121,48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Washington','49053',48341,25488,52.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Wayne','49055',744,194,26.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('UT','Weber','49057',42767,24262,56.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Addison','50001',10023,717,7.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Bennington','50003',11088,2514,22.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Caledonia','50005',8424,1746,20.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Chittenden','50007',36653,3983,10.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Essex','50009',2119,555,26.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Franklin','50011',11861,1050,8.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Grand Isle','50013',2536,263,10.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Lamoille','50015',6218,480,7.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Orange','50017',8314,1361,16.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Orleans','50019',8273,486,5.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Rutland','50021',18821,1261,6.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Washington','50023',15873,1091,6.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Windham','50025',13385,2791,20.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VT','Windsor','50027',17662,2501,14.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Accomack','51001',10356,4074,39.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Albemarle','51003',26372,5913,22.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Alleghany','51005',4650,1607,34.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Amelia','51007',3721,1653,44.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Amherst','51009',8705,3781,43.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Appomattox','51011',4451,1878,42.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Arlington','51013',28677,8489,29.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Augusta','51015',20936,6349,30.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Bath','51017',1399,389,27.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Bedford','51019',23923,8933,37.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Bland','51021',1847,849,45.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Botetourt','51023',9737,3718,38.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Brunswick','51025',4393,2184,49.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Buchanan','51027',6427,4187,65.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Buckingham','51029',4019,1815,45.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Campbell','51031',14065,5979,42.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Caroline','51033',7246,3082,42.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Carroll','51035',8815,3506,39.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Charles City','51036',2199,1000,45.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Charlotte','51037',3535,1550,43.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Chesterfield','51041',76620,29440,38.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Clarke','51043',4193,1254,29.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Craig','51045',1430,594,41.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Culpeper','51047',11911,3907,32.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Cumberland','51049',2551,1079,42.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Dickenson','51051',4612,3349,72.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Dinwiddie','51053',6761,2737,40.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Essex','51057',3400,1434,42.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Fairfax','51059',187994,59664,31.74,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Fauquier','51061',15554,4253,27.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Floyd','51063',4690,1816,38.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Fluvanna','51065',7411,2346,31.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Franklin','51067',16335,7397,45.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Frederick','51069',22522,7186,31.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Giles','51071',4672,1994,42.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Gloucester','51073',10792,3734,34.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Goochland','51075',9777,2643,27.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Grayson','51077',4971,1994,40.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Greene','51079',5076,1631,32.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Greensville','51081',2667,1426,53.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Halifax','51083',10199,4439,43.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Hanover','51085',26963,9797,36.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Henrico','51087',67323,28053,41.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Henry','51089',15307,7760,50.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Highland','51091',950,274,28.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Isle of Wight','51093',10681,4050,37.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','James City','51095',24800,7532,30.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','King and Queen','51097',1993,830,41.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','King George','51099',5178,1560,30.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','King William','51101',4382,1657,37.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Lancaster','51103',4896,1583,32.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Lee','51105',6393,4468,69.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Loudoun','51107',55411,18125,32.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Louisa','51109',10744,4067,37.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Lunenburg','51111',3210,1443,44.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Madison','51113',3625,1283,35.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Mathews','51115',3167,978,30.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Mecklenburg','51117',10035,4596,45.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Middlesex','51119',4142,1532,36.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Montgomery','51121',15575,5518,35.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Nelson','51125',5344,1829,34.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','New Kent','51127',7009,2368,33.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Northampton','51131',4454,1959,43.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Northumberland','51133',5183,1701,32.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Nottoway','51135',3827,1721,44.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Orange','51137',10398,3846,36.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Page','51139',6753,2518,37.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Patrick','51141',5445,2709,49.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Pittsylvania','51143',17558,8328,47.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Powhatan','51145',7784,2449,31.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Prince Edward','51147',5285,2529,47.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Prince George','51149',7345,2254,30.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Prince William','51153',66119,24601,37.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Pulaski','51155',9404,4284,45.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Rappahannock','51157',2434,614,25.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Richmond','51159',2308,872,37.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Roanoke','51161',26047,9757,37.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Rockbridge','51163',6820,2186,32.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Rockingham','51165',20633,6222,30.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Russell','51167',7812,5181,66.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Scott','51169',6568,4791,72.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Shenandoah','51171',12014,4335,36.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Smyth','51173',8634,4551,52.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Southampton','51175',4735,1711,36.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Spotsylvania','51177',28424,10131,35.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Stafford','51179',23886,7431,31.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Surry','51181',2001,913,45.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Sussex','51183',2643,1339,50.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Tazewell','51185',11994,6810,56.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Warren','51187',8985,3627,40.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Washington','51191',16087,8689,54.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Westmoreland','51193',5982,2122,35.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Wise','51195',10475,7362,70.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Wythe','51197',8272,4449,53.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','York','51199',15736,4114,26.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Alexandria City','51510',21426,6410,29.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Bristol City','51520',4475,2800,62.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Buena Vista City','51530',1437,697,48.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Charlottesville City','51540',6726,2187,32.52,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Chesapeake City','51550',48333,19290,39.91,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Colonial Heights City','51570',4231,1763,41.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Covington City','51580',1637,940,57.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Danville City','51590',11313,7102,62.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Emporia City','51595',1284,770,59.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Fairfax City','51600',4950,1985,40.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Falls Church City','51610',2616,829,31.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Franklin City','51620',2190,1295,59.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Fredericksburg City','51630',4913,1784,36.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Galax City','51640',1840,972,52.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Hampton City','51650',28711,14099,49.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Harrisonburg City','51660',5990,2415,40.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Hopewell City','51670',4822,2633,54.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Lexington City','51678',1686,691,40.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Lynchburg City','51680',16077,8016,49.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Manassas City','51683',5721,2264,39.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Manassas Park City','51685',1770,718,40.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Martinsville City','51690',3969,2940,74.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Newport News City','51700',33037,16492,49.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Norfolk City','51710',38387,19232,50.1,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Norton City','51720',1203,771,64.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Petersburg City','51730',7513,5474,72.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Poquoson City','51735',2989,762,25.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Portsmouth City','51740',19333,10061,52.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Radford City','51750',2292,1087,47.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Richmond City','51760',36114,19170,53.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Roanoke City','51770',21721,11506,52.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Salem City','51775',6583,2770,42.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Staunton City','51790',7074,2691,38.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Suffolk City','51800',21025,8781,41.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Virginia Beach City','51810',88576,31628,35.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Waynesboro City','51820',5405,2356,43.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Williamsburg City','51830',3066,762,24.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VA','Winchester City','51840',5779,2046,35.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Adams','53001',2824,988,34.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Asotin','53003',7023,1825,25.99,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Benton','53005',41928,13653,32.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Chelan','53007',20383,8111,39.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Clallam','53009',29766,6966,23.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Clark','53011',108546,73611,67.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Columbia','53013',1367,311,22.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Cowlitz','53015',29434,19682,66.87,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Douglas','53017',9611,3901,40.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Ferry','53019',2598,695,26.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Franklin','53021',12875,4784,37.16,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Garfield','53023',689,93,13.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Grant','53025',18455,6774,36.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Grays Harbor','53027',22580,5342,23.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Island','53029',27326,11357,41.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Jefferson','53031',15427,2636,17.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','King','53033',369217,198464,53.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Kitsap','53035',67354,27033,40.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Kittitas','53037',10902,2925,26.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Klickitat','53039',7209,738,10.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Lewis','53041',23352,13175,56.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Lincoln','53043',3790,669,17.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Mason','53045',20268,9037,44.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Okanogan','53047',12222,3549,29.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Pacific','53049',9389,1789,19.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Pend Oreille','53051',4788,1363,28.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Pierce','53053',176949,91961,51.97,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','San Juan','53055',6803,1136,16.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Skagit','53057',36031,16228,45.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Skamania','53059',3231,750,23.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Snohomish','53061',153764,91732,59.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Spokane','53063',123058,71079,57.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Stevens','53065',15145,5171,34.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Thurston','53067',70627,37205,52.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Wahkiakum','53069',1710,779,45.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Walla Walla','53071',15033,4963,33.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Whatcom','53073',54441,25376,46.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Whitman','53075',7085,1987,28.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WA','Yakima','53077',47089,21854,46.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Barbour','54001',4188,2404,57.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Berkeley','54003',27046,11937,44.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Boone','54005',5709,4066,71.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Braxton','54007',3804,2466,64.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Brooke','54009',6105,3327,54.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Cabell','54011',21059,11945,56.72,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Calhoun','54013',2112,1218,57.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Clay','54015',2512,1792,71.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Doddridge','54017',1808,941,52.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Fayette','54019',10952,6723,61.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Gilmer','54021',1464,958,65.44,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Grant','54023',3425,1519,44.35,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Greenbrier','54025',10043,5281,52.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Hampshire','54027',6783,3166,46.68,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Hancock','54029',8233,3967,48.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Hardy','54031',3932,1761,44.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Harrison','54033',16583,9542,57.54,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Jackson','54035',7548,4668,61.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Jefferson','54037',13196,5436,41.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Kanawha','54039',46861,28925,61.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Lewis','54041',4484,2711,60.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Lincoln','54043',5252,3782,72.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Logan','54045',8600,5613,65.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','McDowell','54047',5194,3492,67.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Marion','54049',14117,8315,58.9,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Marshall','54051',7440,4956,66.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Mason','54053',6822,4219,61.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Mercer','54055',16140,9608,59.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Mineral','54057',7279,2989,41.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Mingo','54059',6486,4510,69.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Monongalia','54061',16423,9380,57.12,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Monroe','54063',3937,1902,48.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Morgan','54065',5337,2389,44.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Nicholas','54067',7384,4747,64.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Ohio','54069',11663,6459,55.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Pendleton','54071',2340,1173,50.13,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Pleasants','54073',1891,1066,56.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Pocahontas','54075',2566,1329,51.79,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Preston','54077',8569,4815,56.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Putnam','54079',14048,8261,58.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Raleigh','54081',19743,10391,52.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Randolph','54083',7548,4106,54.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Ritchie','54085',2834,1526,53.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Roane','54087',4180,2435,58.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Summers','54089',3615,2020,55.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Taylor','54091',4207,2281,54.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Tucker','54093',2024,1147,56.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Tyler','54095',2419,1288,53.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Upshur','54097',6315,3788,59.98,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Wayne','54099',9917,6211,62.63,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Webster','54101',2481,1749,70.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Wetzel','54103',3889,2460,63.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Wirt','54105',1775,1066,60.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Wood','54107',22776,11747,51.58,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WV','Wyoming','54109',5433,3721,68.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Adams','55001',8468,3838,45.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Ashland','55003',4550,2004,44.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Barron','55005',13933,7214,51.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Bayfield','55007',5946,2521,42.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Brown','55009',57164,41088,71.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Buffalo','55011',3736,1450,38.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Burnett','55013',6504,3053,46.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Calumet','55015',10392,7509,72.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Chippewa','55017',16428,8311,50.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Clark','55019',7642,4683,61.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Columbia','55021',14814,6430,43.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Crawford','55023',4720,1522,32.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Dane','55025',106761,40996,38.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Dodge','55027',21384,11834,55.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Door','55029',11484,5419,47.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Douglas','55031',11663,7393,63.39,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Dunn','55033',10464,4847,46.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Eau Claire','55035',23483,11154,47.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Florence','55037',1833,888,48.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Fond du Lac','55039',25306,17389,68.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Forest','55041',2984,1573,52.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Grant','55043',12216,6144,50.29,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Green','55045',9637,3378,35.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Green Lake','55047',5763,3864,67.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Iowa','55049',6393,2267,35.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Iron','55051',2337,1273,54.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Jackson','55053',5257,2292,43.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Jefferson','55055',19892,8852,44.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Juneau','55057',7487,3012,40.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Kenosha','55059',35105,18780,53.5,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Kewaunee','55061',5424,3810,70.24,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','La Crosse','55063',27080,13706,50.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Lafayette','55065',4080,1717,42.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Langlade','55067',6319,4151,65.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Lincoln','55069',8630,5391,62.47,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Manitowoc','55071',22680,14608,64.41,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Marathon','55073',32513,21120,64.96,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Marinette','55075',13960,9379,67.18,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Marquette','55077',5255,2907,55.32,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Menominee','55078',995,601,60.4,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Milwaukee','55079',166549,113572,68.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Monroe','55081',10695,4223,39.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Oconto','55083',11467,8440,73.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Oneida','55085',13670,6905,50.51,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Outagamie','55087',42141,31045,73.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Ozaukee','55089',24722,13806,55.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Pepin','55091',2266,924,40.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Pierce','55093',9500,4945,52.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Polk','55095',13107,6759,51.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Portage','55097',16750,9153,54.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Price','55099',5084,2677,52.66,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Racine','55101',46320,29279,63.21,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Richland','55103',4600,1474,32.04,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Rock','55105',37978,18872,49.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Rusk','55107',4638,2610,56.27,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','St. Croix','55109',20261,9697,47.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Sauk','55111',16393,6198,37.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Sawyer','55113',6514,3132,48.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Shawano','55115',11157,7958,71.33,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Sheboygan','55117',29578,17779,60.11,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Taylor','55119',5219,3282,62.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Trempealeau','55121',7212,3581,49.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Vernon','55123',8255,3505,42.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Vilas','55125',9664,4253,44.01,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Walworth','55127',26218,12199,46.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Washburn','55129',6427,3267,50.83,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Washington','55131',34994,22450,64.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Waukesha','55133',106839,63631,59.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Waupaca','55135',14862,10961,73.75,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Waushara','55137',7889,5393,68.36,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Winnebago','55139',38984,27607,70.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WI','Wood','55141',20577,13799,67.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Albany','56001',6295,842,13.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Big Horn','56003',3038,262,8.62,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Campbell','56005',8182,754,9.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Carbon','56007',3317,486,14.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Converse','56009',3168,229,7.23,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Crook','56011',2207,258,11.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Fremont','56013',9692,920,9.49,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Goshen','56015',3542,688,19.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Hot Springs','56017',1562,173,11.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Johnson','56019',2795,414,14.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Laramie','56021',22548,5381,23.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Lincoln','56023',4871,777,15.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Natrona','56025',17440,3323,19.05,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Niobrara','56027',664,81,12.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Park','56029',9443,892,9.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Platte','56031',2705,476,17.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Sheridan','56033',9015,790,8.76,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Sublette','56035',2165,187,8.64,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Sweetwater','56037',7877,957,12.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Teton','56039',4563,274,6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Uinta','56041',4454,1139,25.57,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Washakie','56043',2221,304,13.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('WY','Weston','56045',2004,246,12.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Adjuntas','72001',4115,3289,79.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Aguada','72003',10053,8966,89.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Aguadilla','72005',14028,11901,84.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Aguas Buenas','72007',5847,4958,84.8,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Aibonito','72009',6837,5856,85.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Anasco','72011',7192,6047,84.08,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Arecibo','72013',24338,20995,86.26,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Arroyo','72015',4409,3868,87.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Barceloneta','72017',5777,4922,85.2,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Barranquitas','72019',6052,4988,82.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Bayamon','72021',45427,38652,85.09,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Cabo Rojo','72023',11102,9609,86.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Caguas','72025',31894,26928,84.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Camuy','72027',8992,7209,80.17,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Canovanas','72029',9951,8688,87.31,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Carolina','72031',33596,30513,90.82,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Catano','72033',4664,3940,84.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Cayey','72035',12559,10510,83.69,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Ceiba','72037',2829,2374,83.92,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Ciales','72039',5136,4242,82.59,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Cidra','72041',9191,8140,88.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Coamo','72043',8447,7176,84.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Comerio','72045',4021,3397,84.48,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Corozal','72047',7536,6654,88.3,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Culebra','72049',352,268,76.14,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Dorado','72051',7549,6596,87.38,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Fajardo','72053',7408,6447,87.03,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Florida','72054',4057,3200,78.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Guanica','72055',3941,3347,84.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Guayama','72057',7692,7897,100,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Guayanilla','72059',6734,4425,65.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Guaynabo','72061',20438,16254,79.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Gurabo','72063',8456,7478,88.43,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Hatillo','72065',8397,7444,88.65,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Hormigueros','72067',4647,4053,87.22,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Humacao','72069',15325,12695,82.84,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Isabela','72071',10586,9401,88.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Jayuya','72073',3621,2955,81.61,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Juana Diaz','72075',9349,8607,92.06,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Juncos','72077',8606,7437,86.42,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Lajas','72079',5809,4992,85.94,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Lares','72081',7754,6089,78.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Las Marias','72083',1120,1790,100,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Las Piedras','72085',8470,7873,92.95,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Loiza','72087',3762,3228,85.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Luquillo','72089',4184,3487,83.34,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Manati','72091',10132,9197,90.77,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Maricao','72093',1239,961,77.56,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Maunabo','72095',3274,2732,83.45,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Mayaguez','72097',19618,17172,87.53,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Moca','72099',8836,8112,91.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Morovis','72101',6797,6090,89.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Naguabo','72103',5518,4629,83.89,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Naranjito','72105',6941,5664,81.6,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Orocovis','72107',5427,4547,83.78,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Patillas','72109',5190,4363,84.07,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Penuelas','72111',5082,4480,88.15,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Ponce','72113',37099,31062,83.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Quebradillas','72115',6607,5652,85.55,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Rincon','72117',3943,3378,85.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Rio Grande','72119',9505,9301,97.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Sabana Grande','72121',6093,5329,87.46,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Salinas','72123',6615,5904,89.25,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','San German','72125',7680,6813,88.71,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','San Juan','72127',82757,60298,72.86,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','San Lorenzo','72129',9203,8071,87.7,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','San Sebastian','72131',11210,10018,89.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Santa Isabel','72133',4625,3902,84.37,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Toa Alta','72135',13170,11615,88.19,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Toa Baja','72137',17272,15178,87.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Trujillo Alto','72139',11401,10572,92.73,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Utuado','72141',7116,6109,85.85,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Vega Alta','72143',9992,7622,76.28,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Vega Baja','72145',10797,11575,100,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Vieques','72147',1692,1234,72.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Villalba','72149',5834,4823,82.67,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Yabucoa','72151',9444,8104,85.81,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('PR','Yauco','72153',9479,8335,87.93,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VI','St. Croix','78010',10432,2596,24.88,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VI','St. John','78020',976,3137,100,'2026-09-01');
+INSERT INTO public.cms_county_penetration
+      (state,county,fips,eligibles,ma_enrollees,penetration_pct,file_month) VALUES ('VI','St. Thomas','78030',10153,3137,30.9,'2026-09-01');
+COMMIT;

@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { BarChart3, Plus } from "lucide-react";
@@ -121,8 +122,8 @@ export default function RateComparisonPanel({
       .then((rows) => {
         if (!cancelled) setProfiles(rows);
       })
-      .catch((error) => {
-        console.error("[RateComparisonPanel] carrier profiles:", error);
+      .catch(() => {
+        debugLog("[RateComparisonPanel] carrier profiles");
       });
     return () => {
       cancelled = true;

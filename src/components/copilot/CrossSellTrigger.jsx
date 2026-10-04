@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import { useCallback, useMemo, useState } from "react";
 import { CheckCircle2, ShieldPlus } from "lucide-react";
 import { useAppAuth } from "../../context/AuthContext";
@@ -208,7 +209,7 @@ export default function CrossSellTrigger({
         onAcknowledged?.(payload);
         setStatusMessage("Cross-sell prompt acknowledged.");
       } catch (error) {
-        console.error("[CrossSellTrigger] log failed:", error);
+        debugLog("[CrossSellTrigger] log failed");
         onAcknowledged?.({ ...payload, logError: error.message });
         setStatusMessage("Acknowledged locally. Remote logging needs the latest migration.");
       } finally {

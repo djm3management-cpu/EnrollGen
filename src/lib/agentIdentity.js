@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 // Shared agent identity resolution for the availability system and the
 // inbound softphone. Maps Clerk user attributes to the snake_case
 // agent_id convention used by agent_availability.
@@ -139,8 +140,8 @@ export async function setAvailabilityStatus(agentId, status) {
   try {
     await availabilityRequest(getAuthToken, { agent_id: agentId, status });
     return true;
-  } catch (err) {
-    console.error("[agentIdentity] set-availability failed:", err);
+  } catch {
+    debugLog("[agentIdentity] set-availability failed");
     return false;
   }
 }

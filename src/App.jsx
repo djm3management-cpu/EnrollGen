@@ -1,3 +1,4 @@
+import { debugLog } from "./lib/debugLog.js";
 import {
   Component,
   lazy,
@@ -366,8 +367,8 @@ class PanelErrorBoundary extends Component {
     return { error };
   }
 
-  componentDidCatch(error, info) {
-    console.error("[EnrollGen] Panel render failed", error, info);
+  componentDidCatch() {
+    debugLog("[EnrollGen] Panel render failed");
   }
 
   render() {

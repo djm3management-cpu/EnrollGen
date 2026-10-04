@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 /*
   Fetch MA carrier news and CMS bulletins from Supabase.
   Falls back to seed data if the table is empty or unreachable.
@@ -237,8 +238,8 @@ export async function fetchBulletins(client = supabase) {
       bulletinCache = { data: mapped, fetchedAt: now };
       return mapped;
     }
-  } catch (err) {
-    console.warn("Bulletin fetch failed, using seed data:", err.message);
+  } catch {
+    debugLog("Bulletin fetch failed, using seed data");
   }
 
   const fallback = historicalBulletins();
