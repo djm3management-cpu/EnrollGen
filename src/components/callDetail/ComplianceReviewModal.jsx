@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redactSensitiveText } from "../../lib/redaction";
 import { callOutcomeLabel } from "../../lib/postCallPipeline";
@@ -174,7 +175,7 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
       .eq("id", callRecordId)
       .single();
     if (error) {
-      console.error("[ComplianceReviewModal] call_records load failed:", error.message);
+      debugLog("[ComplianceReviewModal] call_records load failed");
       return;
     }
     setCallRecord(record);
@@ -246,8 +247,8 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ callId: callRecordId }),
       });
-    } catch (err) {
-      console.error("[ComplianceReviewModal] retry trigger failed:", err);
+    } catch {
+      debugLog("[ComplianceReviewModal] retry trigger failed");
     } finally {
       setRetrying(false);
     }

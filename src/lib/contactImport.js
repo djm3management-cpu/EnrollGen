@@ -1,3 +1,4 @@
+import { csvCell } from "./csv.js";
 import { normalizePhoneE164 } from "./phone";
 
 // Pure logic for the CSV contact import: header auto-detection,
@@ -141,15 +142,10 @@ export function isImportable(entry) {
   return Boolean(entry.fields.phone) && !entry.flags.includes("duplicate phone in file");
 }
 
-function csvEscape(value) {
-  const text = String(value ?? "");
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-}
-
 export function buildSkippedCsv(skippedEntries, headers) {
-  const headerRow = [...headers, "skip_reason"].map(csvEscape).join(",");
+  const headerRow = [...headers, "skip_reason"].map(csvCell).join(",");
   const rows = skippedEntries.map((entry) =>
-    [...headers.map((header) => csvEscape(entry.raw?.[header])), csvEscape(entry.flags.join("; "))].join(",")
+    [...headers.map((header) => csvCell(entry.raw?.[header])), csvCell(entry.flags.join("; "))].join(",")
   );
   return [headerRow, ...rows].join("\n");
 }

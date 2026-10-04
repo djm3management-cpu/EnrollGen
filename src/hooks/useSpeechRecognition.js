@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MAX_TRANSCRIPT_LENGTH } from "../data/complianceKnowledge";
 import { computeRmsLevel, computeWaveformPeaks } from "../audio/audioPeaks";
@@ -214,7 +215,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
     recognition.onerror = (e) => {
       // no-speech and aborted are normal, don't log as errors
       if (e.error !== "no-speech" && e.error !== "aborted") {
-        console.error("SpeechRecognition error:", e.error);
+        debugLog("SpeechRecognition error");
       }
       // Only truly stop for permission denial, everything else will auto-restart via onend
       if (e.error === "not-allowed") {

@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { coachingFormat } from "../lib/llm/schemas/coaching.js";
 import { buildCachedPrompt } from "../lib/llm/prompts.js";
 /**
@@ -660,7 +661,7 @@ SECTION CONTEXT (rolling window):
       if (!response.ok) {
         const detail = await readErrorDetail(response);
         const errorMessage = getCopilotHttpErrorMessage(response.status, detail);
-        console.error("[U65Copilot] coaching API error:", response.status, detail);
+        debugLog("[U65Copilot] coaching API error");
         const alreadyWarned = liveMessages.some((m) => m.text === errorMessage);
         if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep });
         surfaceServiceIssue(errorMessage, { force: manual || periodic });
@@ -761,7 +762,7 @@ SECTION CONTEXT (rolling window):
       }
     } catch (err) {
       if (err.name === "AbortError") return;
-      console.error("[U65Copilot] coaching error:", err);
+      debugLog("[U65Copilot] coaching error");
       const errorMessage = "Co-Pilot could not reach the coaching service. If running locally, use 'netlify dev' instead of 'npm run dev'.";
       const alreadyWarned = liveMessages.some((m) => m.text === errorMessage);
       if (manual || periodic || !alreadyWarned) pushFeedEntry("info", errorMessage, { section: currentStep });
@@ -853,7 +854,7 @@ SECTION CONTEXT (rolling window):
       setAskQuestion("");
     } catch (err) {
       if (err.name === "AbortError") return;
-      console.error("[U65Copilot] ask error:", err);
+      debugLog("[U65Copilot] ask error");
       const errorMessage = "Co-Pilot could not reach the coaching service.";
       pushFeedEntry("info", errorMessage, { section: currentStep, retrievalTrace });
       surfaceServiceIssue(errorMessage, { force: true });

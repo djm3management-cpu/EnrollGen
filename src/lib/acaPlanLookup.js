@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 import { supabase } from "./supabase";
 
 /**
@@ -107,8 +108,8 @@ export async function lookupPlanSummary(stateCode, county) {
       hasPremiums: true,
       tiers,
     };
-  } catch (err) {
-    console.error("[acaPlanLookup] Error:", err);
+  } catch {
+    debugLog("[acaPlanLookup] Error");
     return null;
   }
 }

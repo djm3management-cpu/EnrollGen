@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useCallStore } from "../stores/callStore";
 import { useAppAuth } from "../context/AuthContext";
@@ -208,10 +209,7 @@ export function useCustomerAudio() {
       keepAlive.play().catch(() => {});
       // Attach only after the candidate stream has been validated below.
       stream.captureKeepAlive = keepAlive;
-      console.info(
-        "[customerAudio] remote audio track ready (transcription not connected yet):",
-        stream.getAudioTracks().map((track) => track.readyState).join(",")
-      );
+      debugLog("[customerAudio] remote audio track ready (transcription not connected yet)");
     } else {
       try {
         stream = await requestCustomerAudioStream();

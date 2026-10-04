@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import DncCallControl from "../phone/DncCallControl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Archive, Mail, Phone, Search, Star } from "lucide-react";
@@ -992,7 +993,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         setNotice("Contact details saved.");
       } catch (err) {
         if (err.duplicateId) setMerge({ contactId: selectedContact.id, duplicateId: err.duplicateId, phone: err.phone });
-        console.error("[ContactsTab] contact save failed:", err);
+        debugLog("[ContactsTab] contact save failed");
         setInlineError(err.message || "Could not save contact.");
       } finally {
         setSaving(false);
@@ -1012,7 +1013,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         await updatePiiField("mbi_full", next);
         await refreshSelected();
       } catch (err) {
-        console.error("[ContactsTab] mbi_full save failed:", err);
+        debugLog("[ContactsTab] mbi_full save failed");
         setInlineError(err.message || "Could not save full MBI.");
       } finally {
         setSaving(false);
@@ -1061,7 +1062,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         await updateLeadIntel(intel.id, { [field]: next });
         await refreshSelected();
       } catch (err) {
-        console.error("[ContactsTab] lead intel save failed:", err);
+        debugLog("[ContactsTab] lead intel save failed");
         setInlineError(err.message || "Could not save lead intel.");
       } finally {
         setSaving(false);
@@ -1081,7 +1082,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         await updatePolicy(policy.id, { [field]: next });
         await refreshSelected();
       } catch (err) {
-        console.error("[ContactsTab] policy save failed:", err);
+        debugLog("[ContactsTab] policy save failed");
         setInlineError(err.message || "Could not save policy.");
       } finally {
         setSaving(false);
@@ -1108,7 +1109,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
       setPolicyDraft(DEFAULT_POLICY_DRAFT);
       await refreshSelected();
     } catch (err) {
-      console.error("[ContactsTab] add policy failed:", err);
+      debugLog("[ContactsTab] add policy failed");
       setInlineError(err.message || "Could not save changes.");
     } finally {
       setSaving(false);
@@ -1125,7 +1126,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
       setNoteDraft("");
       await refreshSelected();
     } catch (err) {
-      console.error("[ContactsTab] add note failed:", err);
+      debugLog("[ContactsTab] add note failed");
       setInlineError(err.message || "Could not add note.");
     } finally {
       setSaving(false);
@@ -1140,7 +1141,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         await toggleNotePin(noteId, pinned);
         await refreshSelected();
       } catch (err) {
-        console.error("[ContactsTab] note pin failed:", err);
+        debugLog("[ContactsTab] note pin failed");
         setInlineError(err.message || "Could not update note.");
       } finally {
         setSaving(false);
@@ -1163,7 +1164,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
       setFollowUpDraft({ dueAt: "", reason: "" });
       await refreshSelected();
     } catch (err) {
-      console.error("[ContactsTab] add follow-up failed:", err);
+      debugLog("[ContactsTab] add follow-up failed");
       setInlineError(err.message || "Could not add follow-up.");
     } finally {
       setSaving(false);

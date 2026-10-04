@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { useState, useMemo, useEffect } from "react";
 import {
   STATES,
@@ -26,9 +27,6 @@ const COLOR = {
 };
 
 const tint = (color, amount) => `color-mix(in srgb, ${color} ${amount}%, transparent)`;
-const mix = (color, amount, fallback = COLOR.elevated) =>
-  `color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
-
 /* ── Helpers ──────────────────────────────────────────────────────── */
 function carriers(data, segId) {
   if (segId === "ACA") return data.aca;
@@ -513,8 +511,8 @@ export default function CarrierRef() {
         }
 
         setAcaIssuers((prev) => ({ ...prev, [selected]: [...issuers].sort() }));
-      } catch (err) {
-        console.error("[CarrierRef] ACA issuer fetch error:", err);
+      } catch {
+        debugLog("[CarrierRef] ACA issuer fetch error");
         setAcaIssuers((prev) => ({ ...prev, [selected]: [] }));
       }
     })();

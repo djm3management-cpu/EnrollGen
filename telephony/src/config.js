@@ -1,4 +1,3 @@
-/* global process */
 const REQUIRED_VARS = [
   "PUBLIC_BASE_URL",
   "SUPABASE_URL",

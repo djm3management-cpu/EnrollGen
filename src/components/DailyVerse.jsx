@@ -1,3 +1,5 @@
+import { useAppAuth } from "../context/AuthContext";
+import { debugLog } from "../lib/debugLog.js";
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
   RefreshCw,
@@ -153,6 +155,7 @@ function blbSearchUrl(word, version) {
 }
 
 export default function DailyVerse() {
+  const { getToken } = useAppAuth();
   const [verse, setVerse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -201,16 +204,16 @@ export default function DailyVerse() {
 
   const fetchVerseByReference = useCallback(async (reference, trans) => {
     if (getTranslationSource(trans) === "biblia") {
-      return fetchBibliaContent(reference, trans);
+      return fetchBibliaContent(reference, trans, { getToken });
     }
     const url = `https://bible-api.com/${encodeURIComponent(reference)}?translation=${trans}`;
     const res = await fetch(url);
     if (!res.ok) {
-      console.error(`[DailyVerse] ${trans} fetch failed: ${res.status} ${url}`);
+      debugLog("components/DailyVerse.jsx error");
       throw new Error(`bible-api ${trans} ${res.status}`);
     }
     return res.json();
-  }, []);
+  }, [getToken]);
 
   const loadReference = useCallback(
     async (reference, trans) => {
@@ -227,8 +230,8 @@ export default function DailyVerse() {
         setVerse(data);
         setBookData(getBookData(data.reference));
         setFadeKey((k) => k + 1);
-      } catch (err) {
-        console.error("Verse fetch failed", err);
+      } catch {
+        debugLog("Verse fetch failed");
         setError(true);
         setVerse(FALLBACK_VERSE);
         setBookData(getBookData(FALLBACK_VERSE.reference));
@@ -262,8 +265,8 @@ export default function DailyVerse() {
         setVerse(data);
         setBookData(getBookData(data.reference));
         setFadeKey((k) => k + 1);
-      } catch (err) {
-        console.error("Verse fetch failed", err);
+      } catch {
+        debugLog("Verse fetch failed");
         setError(true);
         setVerse(FALLBACK_VERSE);
         setBookData(getBookData(FALLBACK_VERSE.reference));
@@ -305,7 +308,7 @@ export default function DailyVerse() {
         setOriginalVerse(data?.words?.length ? data : null);
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Original verse fetch failed", err);
+          debugLog("Original verse fetch failed");
           setOriginalVerse(null);
         }
       } finally {
@@ -526,8 +529,8 @@ export default function DailyVerse() {
       URL.revokeObjectURL(url);
       setImageStatus("downloaded");
       setTimeout(() => setImageStatus(""), 2200);
-    } catch (err) {
-      console.error("Share image failed", err);
+    } catch {
+      debugLog("Share image failed");
       setImageStatus("error");
       setTimeout(() => setImageStatus(""), 2200);
     } finally {
@@ -957,7 +960,7 @@ export default function DailyVerse() {
               <span className="dv-trans-tag">
                 {currentTrans?.label || translation.toUpperCase()}
               </span>
-              {error && <span className="dv-offline-badge">offline</span>}
+              {error && <span className="dv-offline-badge">provider unavailable · showing saved verse</span>}
             </div>
           </div>
 

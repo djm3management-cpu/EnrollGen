@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 /*
   Custom hook encapsulating all state management for the SEP Lookup Tool.
   Supports two entry flows: zip search and state map click.
@@ -96,8 +97,8 @@ export function useSEPLookup() {
         setBulletins(next.bulletins);
         setBulletinStatus(next.bulletinStatus);
         setLiveNews(next.liveNews);
-      } catch (err) {
-        console.error("Top feed refresh error:", err);
+      } catch {
+        debugLog("Top feed refresh error");
       } finally {
         if (!cancelled) {
           setFeedLoading(false);
@@ -148,8 +149,8 @@ export function useSEPLookup() {
         return a.name.localeCompare(b.name);
       });
       setPlans(transformed);
-    } catch (err) {
-      console.error("Supabase plan fetch error:", err);
+    } catch {
+      debugLog("Supabase plan fetch error");
       setPlans([]);
     } finally {
       setCountyLoading(false);
@@ -180,7 +181,7 @@ export function useSEPLookup() {
       setSepFinderResult(parsed);
       return parsed;
     } catch (err) {
-      console.error("SEP Finder RPC error:", err);
+      debugLog("SEP Finder RPC error");
       setSepFinderError(err?.message || "SEP lookup failed. Please try again.");
       return null;
     } finally {
@@ -249,8 +250,8 @@ export function useSEPLookup() {
       }
       setCountyList(counties);
       setCountyPlanCounts(counts);
-    } catch (err) {
-      console.error("State click error:", err);
+    } catch {
+      debugLog("State click error");
       setCountyList([]);
       setCountyPlanCounts({});
     } finally {
@@ -327,8 +328,8 @@ export function useSEPLookup() {
         setPlans([]);
       }
       await sepFinderPromise;
-    } catch (err) {
-      console.error("Search error:", err);
+    } catch {
+      debugLog("Search error");
     } finally {
       setLoading(false);
     }

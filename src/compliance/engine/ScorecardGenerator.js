@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import { randomUUID } from "node:crypto";
 import { assessmentFormat } from "../../lib/llm/schemas/compliance.js";
 /**
@@ -228,8 +229,8 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
       const assessmentPrompt = buildAssessmentPrompt(callRecord, diarized, scoreResult);
       const assessmentRaw = await callLLM(ASSESSMENT_SYSTEM_PROMPT, assessmentPrompt, { response_format: assessmentFormat });
       assessment = parseAssessmentResponse(assessmentRaw);
-    } catch (err) {
-      console.warn('[ScorecardGenerator] Assessment generation failed:', err.message);
+    } catch {
+      debugLog("[ScorecardGenerator] Assessment generation failed");
     }
     if (assessment) {
 
@@ -348,8 +349,8 @@ async function updateAgentProfile(supabase, callRecord, scorecard) {
           ? 'elevated'
           : 'standard',
       }), 'Insert agent profile');
-  } catch (error) {
-    console.warn('[ScorecardGenerator] Could not update agent compliance profile:', error?.message || error);
+  } catch {
+    debugLog("[ScorecardGenerator] Could not update agent compliance profile");
   }
 }
 

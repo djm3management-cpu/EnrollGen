@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { useState, useEffect } from "react";
 import { useAppAuth } from "../context/AuthContext";
 import { evidenceRequest } from "../lib/evidenceApi";
@@ -49,7 +50,7 @@ export default function CallHistory() {
         const { sessions: data } = await evidenceRequest(getToken, "evidence-session");
         if (!cancelled) setSessions(data || []);
       } catch (err) {
-        console.error("CallHistory load error:", err);
+        debugLog("CallHistory load error");
         if (!cancelled) setError(err.message);
       } finally {
         if (!cancelled) setLoading(false);

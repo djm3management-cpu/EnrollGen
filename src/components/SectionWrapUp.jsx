@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useScript } from "../context/ScriptContext";
 import { useAppAuth } from "../context/AuthContext";
@@ -201,7 +202,7 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
         });
       }
     } catch (error) {
-      console.error("[WrapUp] save failed:", error);
+      debugLog("[WrapUp] save failed");
       setSaveState({
         status: "error",
         message: error?.message || "Call record save failed.",

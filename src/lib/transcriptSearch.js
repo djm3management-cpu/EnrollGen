@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 import { getEvidenceSupabase } from "./evidenceSupabase";
 import { getQueryEmbedding } from "./embeddings";
 
@@ -150,7 +151,7 @@ export async function fetchTranscriptReferences({
       error: null,
     };
   } catch (error) {
-    console.warn("Transcript references unavailable.");
+    debugLog("Transcript references unavailable.");
     return {
       results: [],
       contextBlock: "",

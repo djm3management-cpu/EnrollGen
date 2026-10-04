@@ -1,3 +1,4 @@
+import { debugLog } from "./debugLog.js";
 import { createClient } from "@supabase/supabase-js";
 
 function requiredEnv(name) {
@@ -85,10 +86,7 @@ async function resolveClerkAccessToken() {
         if (header?.alg && header.alg !== "HS256") {
           if (!warnedWrongAlg) {
             warnedWrongAlg = true;
-            console.warn(
-              "[supabase] Clerk returned a non-HS256 token (likely the default session token; " +
-                "is the 'supabase' JWT template configured?). Falling back to anonymous access."
-            );
+            debugLog("lib/supabase.js warn");
           }
           return supabaseAnonKey;
         }

@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 import { useRef, useCallback, useEffect } from "react";
 import { useAppAuth } from "../context/AuthContext";
 import { evidenceRequest } from "../lib/evidenceApi";
@@ -77,7 +78,7 @@ export function useSessionTracker() {
           sessionId: result.session_id, callRecordId: null, transcriptId: null,
         });
       } catch {
-        console.error("[SessionTracker] Unable to start session. Check sign-in and retry.");
+        debugLog("[SessionTracker] Unable to start session. Check sign-in and retry.");
       } finally {
         startingRef.current = null;
         if (pendingSessionStart === start) pendingSessionStart = null;
@@ -96,7 +97,7 @@ export function useSessionTracker() {
       await evidenceRequest(getToken, "evidence-session", { action, session_id: sessionIdRef.current, ...fields });
       return true;
     } catch {
-      console.error(`[SessionTracker] Unable to save ${action}. Check sign-in and retry.`);
+      debugLog("hooks/useSessionTracker.js error");
       return false;
     }
   }, [getToken]);

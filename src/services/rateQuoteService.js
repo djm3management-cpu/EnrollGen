@@ -1,3 +1,4 @@
+import { debugLog } from "../lib/debugLog.js";
 // Rate quote service - CSG Actuarial integration
 // API credentials pending from SMS partnership.
 // Set VITE_CSG_API_KEY and VITE_CSG_API_URL in .env to activate.
@@ -58,7 +59,7 @@ export async function fetchMedSupRates({
       }),
     };
   } catch (error) {
-    console.error("CSG rate fetch failed:", error);
+    debugLog("CSG rate fetch failed");
     return { source: "error", rates: [], message: error.message };
   }
 }

@@ -1,3 +1,4 @@
+import { debugLog } from "../../lib/debugLog.js";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, CircleAlert, LoaderCircle, UserRoundPlus } from "lucide-react";
 import { useScript } from "../../context/ScriptContext";
@@ -203,8 +204,8 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
         savedContactIdRef.current = created.id;
       }
       setSaveState("saved");
-    } catch (err) {
-      console.error("[ClientInfoCard] save to contact failed:", err);
+    } catch {
+      debugLog("[ClientInfoCard] save to contact failed");
       setSaveState("error");
     } finally {
       window.clearTimeout(saveResetTimerRef.current);
