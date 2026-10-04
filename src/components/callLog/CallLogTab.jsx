@@ -1,15 +1,17 @@
 import { useAuth } from "@clerk/clerk-react";
-import { loadCallLog } from "../../lib/callLogApi";
+import { loadCallLog, loadCallLogPages } from "../../lib/callLogApi";
 import { recordingMedia, recordingTarget, downloadRecordingUrl } from "../../lib/recordingsApi";
 import RecordingPanel from "../callDetail/RecordingPanel";
 import MissingRecordings from "./MissingRecordings";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { redactSensitiveText } from "../../lib/redaction";
 import { CALL_OUTCOME_OPTIONS } from "../../lib/postCallPipeline";
 import CallDetailPanel from "../callDetail/CallDetailPanel";
 import ComplianceReviewModal, { COMPLIANCE_WARNING_THRESHOLD } from "../callDetail/ComplianceReviewModal";
 import { CreateOpportunityButton } from "../opportunities/ContactOpportunities";
+
+import { callsCsv, downloadCsv } from "../../lib/csv";
 
 const ENROLLED_OUTCOMES = new Set(["enrolled", "enrolled_pending_verification"]);
 const PAGE_SIZE = 50;
@@ -272,6 +274,8 @@ function ExpandedRow({ row, supabaseClient }) {
 export default function CallLogTab({ onOpenContact = null }) {
   const { supabaseClient, loading: tenantLoading, error: tenantError } = useTenantConfig();
   const { getToken } = useAuth();
+  const [exporting, setExporting] = useState(false);
+  const exportGeneration = useRef(0);
   const [showMissingRecordings, setShowMissingRecordings] = useState(false);
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -331,6 +335,32 @@ export default function CallLogTab({ onOpenContact = null }) {
     load();
   }, [load]);
 
+  useEffect(() => {
+    exportGeneration.current += 1;
+    setExporting(false);
+    return () => { exportGeneration.current += 1; };
+  }, [getToken, search, dateFrom, dateTo, agentFilter, dispositionFilter, directionFilter]);
+
+  const exportCalls = async () => {
+    const request = ++exportGeneration.current;
+    setExporting(true); setError(null);
+    try {
+      const to = dateTo ? new Date(`${dateTo}T00:00:00`) : null;
+      if (to) to.setDate(to.getDate() + 1);
+      const exportRows = await loadCallLogPages(getToken, {
+        from: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : null,
+        to: to?.toISOString(),
+        direction: directionFilter === "ALL" ? null : directionFilter.toLowerCase(),
+        disposition: dispositionFilter === "ALL" ? null : dispositionFilter.toLowerCase(),
+        agent: agentFilter === "ALL" ? null : agentFilter,
+        search: search.trim(),
+      }, () => request !== exportGeneration.current);
+      if (request === exportGeneration.current) downloadCsv(callsCsv(exportRows), `enrollgen-calls-${new Date().toISOString().slice(0, 10)}.csv`);
+    } catch (err) {
+      if (request === exportGeneration.current) setError(err.message || "Calls export failed.");
+    } finally { if (request === exportGeneration.current) setExporting(false); }
+  };
+
   // Filters reset pagination.
   useEffect(() => {
     setPage(0);
@@ -384,6 +414,7 @@ export default function CallLogTab({ onOpenContact = null }) {
         </select>
         <button type="button" className="contacts-mini-btn" onClick={() => setShowMissingRecordings(value => !value)} aria-expanded={showMissingRecordings}>MISSING RECORDINGS</button>
         <button type="button" className="contacts-mini-btn" onClick={load}>REFRESH</button>
+        <button type="button" className="contacts-mini-btn" disabled={loading || exporting} onClick={() => void exportCalls()}>{exporting ? "EXPORTING..." : "Export calls (CSV)"}</button>
       </div>
 
       {showMissingRecordings ? <MissingRecordings /> : null}

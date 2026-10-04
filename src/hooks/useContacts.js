@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { normalizeContactPhone, normalizePhoneE164 } from "../lib/phone";
 import { subscribeSms } from "../lib/smsEvents";
+import { createFollowUp, notifyFollowUpsUpdated } from "../lib/followUps";
 import { useTenantConfig } from "./useTenantConfig";
 
 // CRM data access. All queries run through the tenant-scoped
@@ -399,22 +400,17 @@ export function useContactMutations(requestingAgentId) {
 
   const addFollowUp = useCallback(
     async ({ contactId, agentId, dueAt, reason }) => {
-      const { error } = await supabaseClient.from("follow_ups").insert({
-        tenant_id: tenant?.id,
-        contact_id: contactId,
-        agent_id: agentId || null,
-        due_at: dueAt,
-        reason,
+      await createFollowUp(supabaseClient, {
+        p_tenant_id: tenant?.id,
+        p_requesting_agent_id: requestingAgentId,
+        p_contact_id: contactId,
+        p_agent_slug: agentId || null,
+        p_due_at: dueAt,
+        p_reason: reason || null,
       });
-      if (error) throw error;
-      await supabaseClient.from("contact_activities").insert({
-        tenant_id: tenant?.id,
-        contact_id: contactId,
-        type: "follow_up",
-        summary: reason ? `Follow-up scheduled: ${reason.slice(0, 100)}` : "Follow-up scheduled",
-      });
+      notifyFollowUpsUpdated();
     },
-    [supabaseClient, tenant]
+    [supabaseClient, tenant, requestingAgentId]
   );
 
   const setFollowUpStatus = useCallback(
