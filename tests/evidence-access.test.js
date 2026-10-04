@@ -472,3 +472,20 @@ test("session hook waits for server ownership before flags/checkpoints and retai
   failEnd = false;
   await tracker.endSession(2,true); assert.equal(context.metadata().sessionId,null);
 });
+
+
+test("browser finalization preserves server-owned transcript while wrap-up remains editable", async () => {
+  await role("service_role");
+  const h = handlers(auth);
+  const created = await call(h.session,{action:"start",flow:"ma"});
+  const saved = await call(h.postCall,{action:"checkpoint",session_id:created.session_id,transcript_text:"Server complete transcript"});
+  await query("UPDATE call_records SET metadata=metadata || '{\"transcript_source\":\"deepgram_server\"}'::jsonb WHERE id=$1",[saved.call_record_id]);
+  const final = await call(h.postCall,{action:"finalize",session_id:created.session_id,transcript_text:"Browser partial"});
+  assert.equal(final.transcript_id,saved.transcript_id);
+  assert.equal((await query("SELECT transcript_text FROM call_transcripts WHERE id=$1",[saved.transcript_id]))[0].transcript_text,"Server complete transcript");
+  const wrap = await call(h.postCall,{action:"wrap_up",session_id:created.session_id,transcript_text:"Browser partial",
+    call_outcome:"callback_scheduled",agent_notes:"Follow up tomorrow"});
+  const row=(await query("SELECT * FROM call_records WHERE id=$1",[wrap.call_record_id]))[0];
+  assert.equal(row.transcript_raw,"Server complete transcript");assert.equal(row.agent_notes,"Follow up tomorrow");
+  assert.equal(row.call_outcome,"callback_scheduled");
+});

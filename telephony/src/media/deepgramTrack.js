@@ -104,7 +104,9 @@ export function openDeepgramTrack({ speaker, notify, Socket = WebSocket,
       if (closed && !data.is_final) return;
       const text = data.channel?.alternatives?.[0]?.transcript || '';
       if (typeof text !== 'string' || !text.trim()) return;
-      notify({ type: 'transcript', speaker, text, isFinal: Boolean(data.is_final), timestamp: now() });
+      notify({ type: 'transcript', speaker, text, isFinal: Boolean(data.is_final), timestamp: now(),
+        startMs: Math.round((data.start || 0) * 1000),
+        endMs: Math.round(((data.start || 0) + (data.duration || 0)) * 1000) });
     });
     ws.on('error', () => fail(connection));
     ws.on('close', () => {
@@ -127,7 +129,8 @@ export function openDeepgramTrack({ speaker, notify, Socket = WebSocket,
         cancel(connection.timeout); cancelEvery(connection.keepAlive);
         if (connection.ws.readyState === WebSocket.OPEN) {
           try { connection.ws.send(JSON.stringify({ type: 'CloseStream' })); } catch { /* closing */ }
-          connection.ws.close();
+          // CloseStream asks Deepgram to flush final results before closing.
+          // Leave the socket readable until provider close or the bounded timeout.
           if (connection.ws.readyState !== WebSocket.CLOSED) {
             flushTimer = schedule(() => { current = null; connection.ws.terminate(); }, 1000);
             flushTimer?.unref?.();

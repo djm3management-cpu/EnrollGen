@@ -1,3 +1,5 @@
+import { supabase } from '../supabase.js';
+import { createTranscriptWriter } from '../transcripts.js';
 import { randomUUID } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { WebSocketServer } from 'ws';
@@ -13,7 +15,7 @@ const SPEAKERS = { inbound: 'customer', outbound: 'agent' };
 
 export function createMediaServer({ leases = createMediaLeaseClient(), notify = sendToAgent,
   openTrack = openDeepgramTrack, verify = verifyMediaStreamToken, now = Date.now,
-  limits = MEDIA_LIMITS } = {}) {
+  limits = MEDIA_LIMITS, transcriptWriter = claims => createTranscriptWriter({ db: supabase, claims }) } = {}) {
   const wss = new WebSocketServer({ noServer: true, maxPayload: limits.frameBytes, perMessageDeflate: false });
   const active = new Map();
   wss.on('wsClientError', (_error, socket) => {
@@ -42,7 +44,11 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     let pending = [], pendingBytes = 0, renewal = null, renewing = false;
     let customerChunks = [], customerBytes = 0, lastLevel = now();
     const tracks = {};
-    const emit = message => notify(claims.agentId, { inboundCallId: claims.inboundCallId, ...message });
+    const persist = transcriptWriter(claims);
+    const emit = message => {
+      if (binding) void persist(message);
+      notify(claims.agentId, { inboundCallId: claims.inboundCallId, ...message });
+    };
     const reportUnavailable = () => {
       for (const speaker of Object.values(SPEAKERS)) emit({ type: 'transcription_error', speaker,
         status: 'unavailable', message: `${speaker === 'agent' ? 'Agent' : 'Customer'} transcription stopped: call binding could not be verified.` });

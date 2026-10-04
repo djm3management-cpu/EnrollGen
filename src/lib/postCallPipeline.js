@@ -1,9 +1,9 @@
-import { fetchWithClerk } from "./clerkFetch";
-import { redactSensitiveText, redactTranscriptEntries } from "./redaction";
+import { fetchWithClerk } from "./clerkFetch.js";
+import { redactSensitiveText, redactTranscriptEntries } from "./redaction.js";
 
 const POST_CALL_ENDPOINT = "/api/post-call";
 
-export const CHECKPOINT_INTERVAL_MS = 120000;
+export const CHECKPOINT_INTERVAL_MS = 15000;
 
 // Grouped call-outcome taxonomy. Single source of truth for the
 // live wrap-up dropdown (SectionWrapUp.jsx) and the Calls-tab
@@ -336,6 +336,30 @@ export function buildPostCallPayload({
     hra_date: normalizeDateInput(notes.hraDate),
     enrollment_confirmation_number: notes.confirmation || null,
     final,
+  };
+}
+
+export function installTranscriptExitFlush({ windowTarget, documentTarget, getSnapshot, getToken,
+  send = fetch, onError = () => {} }) {
+  let token = null;
+  const refresh = () => { void getToken().then(value => { token = value; }).catch(onError); };
+  refresh();
+  const flush = () => {
+    const payload = getSnapshot();
+    if (!token || !payload?.transcript_text) return;
+    void send(POST_CALL_ENDPOINT, { method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ ...payload, action: 'checkpoint' }),
+    }).catch(onError);
+  };
+  const visibility = () => { if (documentTarget.visibilityState === 'hidden') flush(); else refresh(); };
+  windowTarget.addEventListener('beforeunload', flush);
+  documentTarget.addEventListener('visibilitychange', visibility);
+  const timer = windowTarget.setInterval(refresh, 30000);
+  return () => {
+    windowTarget.removeEventListener('beforeunload', flush);
+    documentTarget.removeEventListener('visibilitychange', visibility);
+    windowTarget.clearInterval(timer);
   };
 }
 

@@ -202,6 +202,19 @@ async function ensureCallRecord(supabase, payload, auth, tenant) {
 }
 
 async function ensureCallRecordRow(supabase, payload, auth, tenant) {
+  if (payload.telephony_call && payload.call_direction === 'inbound' && payload.twilio_call_sid) {
+    const roster = checked(await supabase.from('tenant_agents').select('agent_slug')
+      .eq('tenant_id', tenant.id).eq('clerk_user_id', auth.userId).eq('is_active', true).single());
+    const attempt = checked(await supabase.from('telephony_call_attempts').select('id')
+      .eq('tenant_id', tenant.id).eq('parent_call_sid', payload.twilio_call_sid)
+      .eq('agent_id', roster.agent_slug).eq('direction', 'inbound').maybeSingle());
+    if (!attempt) throw new EvidenceError(403, 'Inbound call attempt is unavailable.');
+    const id = checked(await supabase.rpc('ensure_inbound_transcript_record', {
+      p_attempt_id: attempt.id, p_session_id: payload.session_id,
+    }));
+    return checked(await supabase.from('call_records').select('*').eq('id', id).eq('tenant_id', tenant.id).single());
+  }
+
   if (payload.call_record_id) {
     let query = supabase
       .from("call_records")
@@ -396,6 +409,9 @@ async function updateCallTranscriptFields(supabase, transcriptId, payload, tenan
 
 async function saveCheckpoint(supabase, payload, auth, tenant, { final = false } = {}) {
   const callRecord = await ensureCallRecord(supabase, payload, auth, tenant);
+  if (callRecord.metadata?.transcript_source === 'deepgram_server') {
+    return { callRecord, transcript: callRecord.transcript_id ? { id: callRecord.transcript_id } : null };
+  }
   const diarized = redactDiarizedTranscript(normalizeDiarized(payload.transcript_diarized));
   const transcriptText = scrubPhi(payload.transcript_text);
   const now = new Date().toISOString();

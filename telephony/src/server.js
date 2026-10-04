@@ -3,6 +3,8 @@ import { startCallStatusRecoveryWorker } from "./callStatusRecovery.js";
 import { startRecordingWorker } from "./recordings.js";
 import { recordingMediaRouter } from "./routes/recordingMedia.js";
 import { createRecordingServiceClient } from "./supabase.js";
+import { startTranscriptWorker } from "./transcripts.js";
+import process from "node:process";
 import http from "node:http";
 import express from "express";
 import { config } from "./config.js";
@@ -59,6 +61,9 @@ app.use(recordingMediaRouter);
 startRecordingWorker({ db: createRecordingServiceClient(), config });
 startParagonBillingWorker({ db: createRecordingServiceClient(), config });
 startCallStatusRecoveryWorker({ db: createRecordingServiceClient(), config });
+
+startTranscriptWorker({ db: createRecordingServiceClient(),
+  scoringUrl: process.env.TRANSCRIPT_SCORING_URL, secret: process.env.SCORE_CALL_JOB_SECRET });
 
 const server = http.createServer(app);
 

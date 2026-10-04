@@ -64,7 +64,7 @@ async function until(check) {
 }
 async function harness(t, options = {}) {
   const events = [], tracks = [], clients = [];
-  const media = createMediaServer({ leases: createMediaLeaseClient(db),notify: (agentId,message) => events.push({ agentId,...message }),
+  const media = createMediaServer({ transcriptWriter: () => () => {}, leases: createMediaLeaseClient(db),notify: (agentId,message) => events.push({ agentId,...message }),
     openTrack: ({ speaker,notify }) => {
       const track = { speaker,notify,audio: [],closed: false,send(chunk) { this.audio.push(chunk); },close() { this.closed = true; } };
       tracks.push(track); return track;
@@ -371,4 +371,13 @@ test('media upgrade and failed lease logging never contains credentials or calle
     assert.equal(await createMediaLeaseClient(badDb).claim({callSid:'secret-call',agentId:'secret-agent'},'MZsecret','secret-owner'),false);
   }finally{console.warn=warn;}
   assert.deepEqual(lines,['[media] rejected: invalid_upgrade_token_or_path','[media] rejected: lease_claim_denied']);
+});
+
+test('Deepgram flushes the last short-call final after media stop', () => {
+  const h = deepgramHarness('customer'); h.sockets[0].open(); h.track.close();
+  assert.ok(h.sockets[0].sent.some(value => value === JSON.stringify({type:'CloseStream'})));
+  h.sockets[0].emit('message',Buffer.from(JSON.stringify({type:'Results',is_final:true,start:1,duration:0.5,
+    channel:{alternatives:[{transcript:'Last words'}]}})));
+  assert.equal(h.messages.at(-1).text,'Last words'); assert.equal(h.messages.at(-1).startMs,1000);
+  h.sockets[0].terminate();assert.equal(h.timers.size,0);
 });

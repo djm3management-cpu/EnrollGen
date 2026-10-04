@@ -42,6 +42,8 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, async (req, re
 
     if (inboundCall && terminalStatuses.has(callStatus)) {
       await finishInboundCall(callSid, callStatus, req.body);
+      const finalized = await supabase.rpc("finalize_telephony_transcript", { p_call_sid: callSid });
+      if (finalized.error) throw finalized.error;
     }
   } catch (err) {
     console.error("/twilio/status failed:", err);

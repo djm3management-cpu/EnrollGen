@@ -28,6 +28,7 @@ import { useComplianceScoringWorker } from "../hooks/useComplianceScoringWorker"
 import {
   buildPostCallPayload,
   CHECKPOINT_INTERVAL_MS,
+  installTranscriptExitFlush,
   checkpointPostCall,
   finalizePostCallTranscript,
   initPostCallRecord,
@@ -902,6 +903,19 @@ export default function ScriptFlow() {
 
     return () => window.clearInterval(intervalId);
   }, [callStarted, persistPostCallTranscript]);
+
+  useEffect(() => {
+    if (!callStarted) return undefined;
+    return installTranscriptExitFlush({ windowTarget: window, documentTarget: document, getToken,
+      getSnapshot: () => {
+        const snapshot = latestPostCallRef.current;
+        const metadata = getActiveSessionMetadata();
+        if (!snapshot?.state || !metadata.sessionId || !metadata.agentId) return null;
+        return buildPostCallPayload({ state: snapshot.state, liveCall: snapshot.liveCall,
+          sessionMetadata: metadata, flow: 'ma' });
+      }, onError: () => console.error('[PostCall] exit checkpoint failed'),
+    });
+  }, [callStarted, getToken]);
 
   useEffect(() => {
     if (!callStarted || !state.enrollOk || finalTranscriptSavedRef.current) return;
