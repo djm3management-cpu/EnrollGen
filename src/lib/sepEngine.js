@@ -245,7 +245,7 @@ export function getSEPsForZip(zip, femaDisasters = [], beneficiaryOptions = {}) 
       source: "CMS Star Ratings",
       urgency: "low",
       daysLeft: daysRemaining(`${yr}-11-30`),
-      matchingPlans: maPlans((p) => p.stars >= 5),
+      matchingPlans: maPlans((p) => Number(p.stars) === 5),
     });
   }
 

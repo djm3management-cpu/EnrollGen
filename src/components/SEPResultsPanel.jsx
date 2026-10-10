@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, Loader2, RefreshCcw } from "lucide-react";
 import { normalizeDualLisRpcResult } from "../lib/dualLisSep.js";
+import { normalizeFiveStarSepResult } from "../lib/starRatings.js";
 import { DSNP_INTEGRATION_PENDING, hasCurrentDsnpList } from "../lib/dsnpIntegration";
 
 export const SEP_FINDER_COMPACT_DISCLAIMER =
@@ -14,9 +15,9 @@ export function normalizeSepZip(zip) {
 }
 
 export function parseSepRpcResult(data) {
-  if (typeof data !== "string") return normalizeDualLisRpcResult(data);
+  if (typeof data !== "string") return normalizeFiveStarSepResult(normalizeDualLisRpcResult(data));
   try {
-    return normalizeDualLisRpcResult(JSON.parse(data));
+    return normalizeFiveStarSepResult(normalizeDualLisRpcResult(JSON.parse(data)));
   } catch {
     return null;
   }
@@ -126,12 +127,11 @@ export default function SEPResultsPanel({
     return () => { active = false; };
   }, [result]);
   const normalizedZip = normalizeSepZip(zip);
-  const seps = asArray(normalizeDualLisRpcResult(result)?.seps).filter((sep) =>
+  const seps = asArray(parseSepRpcResult(result)?.seps).filter((sep) =>
     !/Involuntary Disenrollment \/ Plan Termination SEP/i.test(sep?.sep_type || "") ||
     asArray(sep?.terminated_plans).length > 0
   );
   const hasAvailableSep = seps.some((sep) => sep?.available);
-  const starsPending = seps.some((sep) => /5.star/i.test(sep?.sep_type || "") && !asArray(sep?.plans).length);
 
   const toggleRow = (index) => {
     setExpanded((current) => ({ ...current, [index]: !current[index] }));
@@ -154,7 +154,6 @@ export default function SEPResultsPanel({
               {formatCountyList(result.counties)}
             </div>
           ) : null}
-          {starsPending ? <div className="sep-finder-panel-counties">2027 Stars pending</div> : null}
           {!dsnpListLoaded && seps.some((sep) => /D-SNP/.test(sep?.sep_type || "")) ? (
             <div className="sep-finder-panel-counties">{DSNP_INTEGRATION_PENDING}</div>
           ) : null}

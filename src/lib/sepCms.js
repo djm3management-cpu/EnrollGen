@@ -8,6 +8,7 @@ import { debugLog } from "./debugLog.js";
 */
 
 import { supabaseCms } from "./supabase";
+import { applyCountyStarRatings } from "./starRatings.js";
 
 const CMS_TABLE = "cms_plans_PY2027";
 const PAGE_SIZE = 5000;
@@ -110,7 +111,7 @@ async function fetchCountiesDirect(state) {
 }
 
 async function fetchPlansDirect(state, county) {
-  return fetchPagedRows((from, to) =>
+  const rows = await fetchPagedRows((from, to) =>
     supabaseCms
       .from(CMS_TABLE)
       .select("*")
@@ -119,6 +120,29 @@ async function fetchPlansDirect(state, county) {
       .neq("Sanctioned Plan", "Yes")
       .range(from, to)
   );
+  return attachCountyStarRatings(rows);
+}
+
+async function attachCountyStarRatings(rows) {
+  const contracts = [...new Set(rows.map(row => row['Contract ID']).filter(Boolean))];
+  const counties = [...new Set(rows.map(row => row['County FIPS']).filter(Boolean))];
+  if (!contracts.length || !counties.length) return rows;
+  const ratings = [];
+  try {
+    for (let offset = 0;; offset += 1000) {
+      const { data, error } = await supabaseCms.from('star_ratings_by_county')
+        .select('contract_id,county_fips,overall_star_rating')
+        .eq('plan_year', 2027).in('contract_id', contracts).in('county_fips', counties)
+        .order('id').range(offset, offset + 999);
+      if (error) throw error;
+      ratings.push(...data);
+      if (data.length < 1000) break;
+    }
+    return applyCountyStarRatings(rows, ratings);
+  } catch {
+    debugLog('County star rating fetch unavailable');
+    return rows;
+  }
 }
 
 function applyPlanSearchArea(query, state, county) {
@@ -300,7 +324,7 @@ export async function searchCmsPlans({ term, mode = "name", state = "", county =
   if (!shouldUseCmsSupabase()) return [];
 
   try {
-    return await searchPlansDirect({ term, mode, state, county, limit });
+    return await attachCountyStarRatings(await searchPlansDirect({ term, mode, state, county, limit }));
   } catch (error) {
     if (!markCmsUnavailable(error)) {
       debugLog("Plan lookup search error");
@@ -384,8 +408,7 @@ export function transformCmsPlan(row) {
   const orgMarketing = row["Organization Marketing Name"] || "";
 
   let stars = null;
-  const rawStars =
-    row["Overall Star Rating"] || row["Part C Summary Star Rating"] || "";
+  const rawStars = row["Overall Star Rating"] || "";
   if (
     rawStars &&
     rawStars !== "Not enough data available" &&

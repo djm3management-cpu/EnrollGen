@@ -67,21 +67,40 @@ The 2027 SNP support table has 53,952 rows. The archive has 34,122 D-SNP county 
 
 The 888 PY2026 star rows and 37,526 PY2026 termination/crosswalk rows were hard deleted. The 51,297 PY2026 SNP rows were hard deleted after the 2027 SNP load.
 
-The supplied September CSV includes `Overall Star Rating`, `Part C Summary Star Rating`, and `Part D Summary Star Rating` columns, but all 130,307 source rows leave them blank. PY2027 ratings are therefore `NULL`; the PY2027 star rating support table has zero rows. No 2026 rating is carried forward.
+The supplied September CSV includes `Overall Star Rating`, `Part C Summary Star Rating`, and `Part D Summary Star Rating` columns, but all 130,307 source rows leave them blank. Those landscape fields remain `NULL`. On October 10, 2026, the separate PY2027 star rating support table was loaded from the October 8 Summary Ratings CSV as described below. No 2026 rating is carried forward.
+
+### October 10, 2026 star ratings load
+
+Source: `2027 Star Ratings Data Table - Summary Ratings (Oct 8 2026).csv`, using only `2027 Overall`. The parser locates the header below the title row and requires the 2027 column. County mappings came from the live `cms_plans_py2027` table filtered to 2027, with stable pagination.
+
+The initial dry run prepared **38,805 numerically rated county-contract rows**. An independent comparison against `data/landscape/2027/prepared.jsonl` returned the same count. The comparable five-star count is **983**, versus last year's **888 five-star rows** (**+95**). Of 508 numerically rated contracts, 480 have coverage in the loaded landscape. The other 28 were explicitly skipped using `--skip-unmapped`; no counties were inferred. The default invocation still rejects unmapped contracts.
+
+Unmapped contracts: H0107, H0908, H1304, H1537, H1666, H2450, H2461, H2816, H3335, H3536, H3557, H4537, H4544, H4937, H5042, H5386, H6078, H6202, H7323, H7389, H7787, H8133, H8554, H8634, H9460, H9485, H9706, R3444. All are also absent from the prepared CY2027 inventory.
+
+After loading the separate Low Performing Contracts CSV, the live PY2027 count is **38,820**. CMS flags H3814, H4982, H7389, and H9066; three covered contracts produce 25 flagged county rows. H7389 has no current county coverage. H9066 contributes 15 rows with a NULL Overall rating. Every NJ and PA row was checked against the CSV rating, Low Performing designation, and loaded landscape mapping:
+
+| State | County-contract rows | Counties |
+|---|---:|---:|
+| NJ | 352 | 21 |
+| PA | 1,786 | 67 |
+
+Spot checks: Burlington, NJ has 20 rated contracts (2.5–5 stars); Camden, NJ has 21 (2.5–5); Northampton, PA has 32 (3–5).
+
+Reproduce with `node scripts/sep-data/ingest-star-ratings.js --file PATH --skip-unmapped --dry-run`, then omit `--dry-run` to upsert and run the count/NJ/PA verification.
 
 The source exposes an annual **Part D** deductible. It does not contain an MA medical deductible column, so that value is unavailable from this archive.
 
-The archive also has no old-to-new plan crosswalk or termination event file. The PY2027 plan termination support table remains empty pending that separate CMS source.
+The separate October crosswalk has now been loaded: **192,500 transition/county rows** representing all **9,144 source associations**. Successor counties do not prove displaced-member eligibility; affected historical county evidence remains unavailable. See [the supplemental load report](cms-py2027-supplemental-load.md).
 
 ## Supplemental CMS files
 
 | File | Ingest command | Current state |
 |---|---|---|
-| 2027 Star Ratings | `node scripts/sep-data/ingest-star-ratings.js --file PATH` | Pending CMS publication |
-| 2027 Part C&D Plan Crosswalk | `node scripts/sep-data/ingest-plan-crosswalk.js --file PATH` | Pending CMS publication |
-| CY2027 Integrated D-SNPs List | `node scripts/parse_cms_dsnp.js --file PATH` | Published; parser validated against the official CY2027 workbook (945 plans) |
+| 2027 Star Ratings | `node scripts/sep-data/ingest-star-ratings.js --file PATH --skip-unmapped` | Loaded and verified: 38,820 rows, including 983 five-star rows |
+| 2027 Part C&D Plan Crosswalk | `node scripts/sep-data/ingest-plan-crosswalk.js --file PATH` | Loaded and verified: 192,500 rows |
+| CY2027 Integrated D-SNPs List | `node scripts/sep-data/ingest-snp-plans.js --integration-file PATH --status-file PATH` | Loaded and verified: 949 plan/state records and 53,952 SNP county rows |
 
-Each command accepts `--dry-run` for validation. Star and crosswalk ingests use the loaded 2027 county inventory for service areas. The crosswalk ingest refuses a partial load if a terminated plan cannot be mapped to a county; in that case supply the CMS service-area file with `--service-area-file PATH` in the same command. The D-SNP command recognizes the CY2027 `D-SNP Integration Status` column and the earlier `Integration Status` column, but rejects non-2027 files for a live load. Apply migration `081_dsnp_alignment_2027.sql` first; the parser does not change the schema. Its source may omit county, affiliated Medicaid MCO, and EAE status; those remain unknown rather than inferred.
+Each command accepts `--dry-run` for validation. Star and crosswalk ingests use the loaded 2027 county inventory for service areas. Crosswalk records retain exact CMS status and distinguish current successor coverage from unknown historical coverage; the SEP RPC requires affected-service-area evidence. Apply migrations 081 and 089/092–095 before the corresponding loads. The D-SNP parser recognizes the CY2027 data sheet after its Overview sheet and keeps missing EAE and affiliated Medicaid MCO values unknown.
 
 The MA Copilot uses the new county-scoped PY2027 vector search only after a county and state are selected. A live retrieval against Burlington, NJ returned PY2027 plan rows from that county. Its RAG block cites matched plan rows and warns that rating and MA medical deductible fields are unavailable in this source.
 

@@ -193,7 +193,7 @@ BEGIN
   FROM public.zip_county_crosswalk zc
   LEFT JOIN public.star_ratings_by_county sr
     ON sr.county_fips = zc.county_fips
-    AND sr.overall_star_rating >= 5.0
+    AND sr.overall_star_rating = 5.0
     AND sr.plan_year = 2027
   WHERE zc.zip = input_zip;
 

@@ -4,7 +4,8 @@ Dry runs were reported before database writes. Dataset writes ran in order: Star
 
 | Dataset | Dry-run / loaded rows | Previous PY2026 rows | Difference |
 |---|---:|---:|---:|
-| Stars, county-contract | 38,820 | 888 | +37,932 |
+| Stars, all ratings and Low Performing designations | 38,820 | 888 (five-star only) | Different scopes |
+| Stars, five-star county-contract | 983 | 888 | +95 |
 | Crosswalk, transition-county plus unmapped transitions | 192,500 | 37,526 | +154,974 |
 | SNP county support | 53,952 | 51,297 | +2,655 |
 | D-SNP alignment, plan/state | 949 | 264 purged historical rows | +685 |
@@ -16,6 +17,10 @@ Source: `~/Downloads/2027-star-ratings-data-tables-oct-8-2026/2027 Star Ratings 
 The Summary has 508 numerically rated contracts, 480 of which are in the CY2027 landscape. The same 28 contracts documented in `cms-landscape-2027-counts.md` lack current county coverage and were explicitly skipped with `--skip-unmapped`.
 
 The Low Performing Contracts CSV reports four contracts: H3814, H4982, H7389, and H9066. Three have current landscape coverage, producing 25 county rows flagged with CMS's reason. H7389 has no current landscape county coverage. H9066 has no numeric Overall rating but its 15 county rows retain the low-performing designation with a NULL Overall; this explains the increase from the earlier 38,805-row load to 38,820. Flags are never inferred from a single year's rating.
+
+All consumers were audited. The deployed SEP RPC uses `overall_star_rating = 5.0` and counts distinct contracts across ZIP county overlaps. The Finder and Intelligence panel independently filter each returned plan to exactly five overall stars; ratings below five cannot establish availability. The manual Qualifier asks the agent to verify the target plan's five-star status. Plan lists join ratings by contract and county for PY2027 and use only Overall ratings, with no Part C summary fallback. Carrier/type/SNP filters do not confer five-star eligibility.
+
+Anonymous-role RPC checks matched source-backed five-star sets for 08016, 08102, 18042, and 19103. ZIP 99501 returned no five-star availability. Every NJ row (352 across 21 counties) and PA row (1,786 across 67 counties) matched the source ratings and flags; all NJ/PA SNP integration and crosswalk identity/status fields also matched source preparation.
 
 ## Crosswalk
 
@@ -71,7 +76,7 @@ CO and CO-P both mean coordination-only; CMS's more detailed code is retained. A
 
 ## Reproduction
 
-Apply migrations 092, 093, and 094 after the existing PY2027 migrations, including 081. `--landscape-file` accepts a PY2027 prepared JSONL; omit it to read the live landscape. Add `--dry-run` before every load and `--output PATH` to save the prepared JSON for verification.
+Apply migrations 089, 092, 093, 094, and 095 after the existing PY2027 migrations, including 081. `--landscape-file` accepts a PY2027 prepared JSONL; omit it to read the live landscape. Add `--dry-run` before every load and `--output PATH` to save the prepared JSON for verification.
 
 ```sh
 node scripts/sep-data/ingest-star-ratings.js --file SUMMARY_CSV --skip-unmapped --dry-run --output stars.json
@@ -97,7 +102,7 @@ The audit returned zero PY2026, zero non-PY2027, and zero NULL plan-year rows in
 
 All county fields, ratings, flags, transition statuses, successor identities, and D-SNP integration values were compared against the dry-run records. The SEP RPC returned no county termination events in these checks because the input sources lack affected historical county evidence.
 
-Validation on the isolated release checkout: `npm run lint` passed; `npm run build` passed; 34 relevant crosswalk, migration, D-SNP, dual/LIS, and FEMA tests passed. Site styling was preserved.
+Final consumer audit validation: `npm run lint` passed; `npm run build` passed; 40 relevant star, crosswalk, migration, D-SNP, dual/LIS, and FEMA tests passed. Site styling was preserved. `verify-cms-sources-2027.js` also supports an independent audit directly from the raw CMS files and a live CY2027 landscape snapshot, including anonymous browser access and zero non-2027 rows in all four tables.
 
 Production smoke testing found that the public browser client could not see `dsnp_eae_lookup`: the table had RLS enabled with no SELECT policies. Migration 095 adds a SELECT-only policy for published PY2027 CMS plan reference rows. An anonymous-role count now returns all 949 records. A database test confirms that the policy excludes PY2026 rows and does not permit writes. The verification command also checks browser visibility of all alignment rows. Apply migration 095 with the other supplemental migrations.
 

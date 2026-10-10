@@ -99,6 +99,9 @@ async function main() {
   const lowFile = args["low-performing-file"] || (args.file && path.join(path.dirname(args.file), path.basename(args.file).replace("Summary Ratings", "Low Performing Contracts")));
   if (!lowFile || lowFile === args.file) throw new Error("Provide --low-performing-file PATH");
   const lowRows = await readTabularFile({ file: lowFile, headerIncludes: ["Contract Number", "Reason for LPI"] });
+  if (!lowRows.length || !Object.hasOwn(lowRows[0], "Reason for LPI")) {
+    throw new Error("Expected the CMS Low Performing Contracts header with Reason for LPI.");
+  }
   const lowByContract = new Map(lowRows.filter(row => contractIdFrom(row)).map(row => [contractIdFrom(row), cleanText(row["Reason for LPI"])]));
   const supabase = await createSupabaseAdminClient();
   let serviceRows;

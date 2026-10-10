@@ -14,7 +14,7 @@ export function parseDsnpWorkbook(workbook, { year = 2027, sheet, live = false, 
   if (!Number.isInteger(year) || (live && (year !== 2027 || !/2027/.test(fileName)))) {
     throw new Error("Live D-SNP alignment ingest requires PY2027 and a filename containing 2027.");
   }
-  const sheetName = sheet || workbook.SheetNames[0];
+  const sheetName = sheet || workbook.SheetNames.find((name) => new RegExp(`^CY\\s*${year}\\s+Data$`, "i").test(name)) || workbook.SheetNames[0];
   if (!workbook.Sheets[sheetName]) throw new Error(`Sheet not found: ${sheetName}`);
   const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "", raw: false });
   const headers = rows.length ? Object.keys(rows[0]) : [];
