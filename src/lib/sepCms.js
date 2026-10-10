@@ -9,9 +9,9 @@ import { debugLog } from "./debugLog.js";
 
 import { supabaseCms } from "./supabase";
 import { applyCountyStarRatings } from "./starRatings.js";
+import { fetchPagedRows } from "./cmsPaging.js";
 
 const CMS_TABLE = "cms_plans_PY2027";
-const PAGE_SIZE = 5000;
 const CMS_SUPABASE_ENABLED = import.meta.env.VITE_ENABLE_CMS_SUPABASE !== "false";
 // Legacy RPC functions are not guaranteed to filter by plan year.
 const CMS_RPC_ENABLED = false;
@@ -80,23 +80,6 @@ function shouldUseCmsSupabase() {
   return CMS_SUPABASE_ENABLED && !cmsUnavailable;
 }
 
-async function fetchPagedRows(makeQuery) {
-  const rows = [];
-  let from = 0;
-
-  while (true) {
-    const { data, error } = await makeQuery(from, from + PAGE_SIZE - 1);
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-
-    rows.push(...data);
-    if (data.length < PAGE_SIZE) break;
-    from += PAGE_SIZE;
-  }
-
-  return rows;
-}
-
 async function fetchCountiesDirect(state) {
   const rows = await fetchPagedRows((from, to) =>
     supabaseCms
@@ -104,6 +87,7 @@ async function fetchCountiesDirect(state) {
       .select('"County Name"')
       .eq("State Territory Abbreviation", state)
       .neq("County Name", "All Counties")
+      .order("County FIPS").order("ContractPlanSegmentID")
       .range(from, to)
   );
 
@@ -118,6 +102,7 @@ async function fetchPlansDirect(state, county) {
       .eq("State Territory Abbreviation", state)
       .in("County Name", [county, "All Counties"])
       .neq("Sanctioned Plan", "Yes")
+      .order("County FIPS").order("ContractPlanSegmentID")
       .range(from, to)
   );
   return attachCountyStarRatings(rows);
@@ -247,6 +232,7 @@ async function fetchCountyPlanCountsDirect(state) {
       .eq("State Territory Abbreviation", state)
       .neq("County Name", "All Counties")
       .neq("Sanctioned Plan", "Yes")
+      .order("County FIPS").order("ContractPlanSegmentID")
       .range(from, to)
   );
 

@@ -102,7 +102,9 @@ The audit returned zero PY2026, zero non-PY2027, and zero NULL plan-year rows in
 
 All county fields, ratings, flags, transition statuses, successor identities, and D-SNP integration values were compared against the dry-run records. The SEP RPC returned no county termination events in these checks because the input sources lack affected historical county evidence.
 
-Final consumer audit validation: `npm run lint` passed; `npm run build` passed; 40 relevant star, crosswalk, migration, D-SNP, dual/LIS, and FEMA tests passed. Site styling was preserved. `verify-cms-sources-2027.js` also supports an independent audit directly from the raw CMS files and a live CY2027 landscape snapshot, including anonymous browser access and zero non-2027 rows in all four tables.
+Final consumer audit validation: `npm run lint` passed; `npm run build` passed; 42 relevant pagination, star, crosswalk, migration, D-SNP, dual/LIS, and FEMA tests passed. Site styling was preserved. `verify-cms-sources-2027.js` also supports an independent audit directly from the raw CMS files and a live CY2027 landscape snapshot, including anonymous browser access and zero non-2027 rows in all four tables.
+
+Production smoke testing verified Burlington's three five-star contracts and Anchorage's unavailable five-star SEP. The Intelligence plan list displayed the new Overall ratings. The county grid exposed an API pagination mismatch: a 5,000-row request was capped at 1,000 and stopped early. CMS inventory reads now request 1,000 rows per page and order by county FIPS and contract/plan/segment, preserving the full NJ/PA county inventories.
 
 Production smoke testing found that the public browser client could not see `dsnp_eae_lookup`: the table had RLS enabled with no SELECT policies. Migration 095 adds a SELECT-only policy for published PY2027 CMS plan reference rows. An anonymous-role count now returns all 949 records. A database test confirms that the policy excludes PY2026 rows and does not permit writes. The verification command also checks browser visibility of all alignment rows. Apply migration 095 with the other supplemental migrations.
 
