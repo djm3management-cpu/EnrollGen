@@ -17,3 +17,13 @@ test('crosswalk migration preserves FEMA wrapper and excludes renewal/current SA
   await assert.rejects(()=>db.exec("INSERT INTO plan_terminations(source_key,plan_year) VALUES ('renew',2027)"),/duplicate key/);
  } finally { await db.close(); }
 });
+test('public CMS alignment policy reads only 2027 and grants no writes', async () => {
+ const db=new PGlite();
+ try {
+  await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE TABLE dsnp_eae_lookup(plan_year integer); INSERT INTO dsnp_eae_lookup VALUES(2026),(2027); GRANT SELECT,INSERT ON dsnp_eae_lookup TO anon;`);
+  const sql=await fs.readFile(new URL('../supabase/migrations/095_dsnp_public_cms_read.sql',import.meta.url),'utf8');
+  await db.exec(sql); await db.exec(sql); await db.exec('SET ROLE anon');
+  assert.deepEqual((await db.query('SELECT plan_year FROM dsnp_eae_lookup')).rows,[{plan_year:2027}]);
+  await assert.rejects(()=>db.exec('INSERT INTO dsnp_eae_lookup VALUES(2027)'),/row-level security/);
+ } finally { await db.close(); }
+});

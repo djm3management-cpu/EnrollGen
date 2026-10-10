@@ -98,3 +98,16 @@ The audit returned zero PY2026, zero non-PY2027, and zero NULL plan-year rows in
 All county fields, ratings, flags, transition statuses, successor identities, and D-SNP integration values were compared against the dry-run records. The SEP RPC returned no county termination events in these checks because the input sources lack affected historical county evidence.
 
 Validation on the isolated release checkout: `npm run lint` passed; `npm run build` passed; 34 relevant crosswalk, migration, D-SNP, dual/LIS, and FEMA tests passed. Site styling was preserved.
+
+Production smoke testing found that the public browser client could not see `dsnp_eae_lookup`: the table had RLS enabled with no SELECT policies. Migration 095 adds a SELECT-only policy for published PY2027 CMS plan reference rows. An anonymous-role count now returns all 949 records. A database test confirms that the policy excludes PY2026 rows and does not permit writes. The verification command also checks browser visibility of all alignment rows. Apply migration 095 with the other supplemental migrations.
+
+## Production smoke tests
+
+Netlify published commit `131de11014be1ca05346894d099365c69339f0e6` on October 10, 2026 at 18:30:49 UTC. After refreshing the authenticated production browser:
+
+- Intelligence ZIP 08102 returned three five-star contracts. Selecting Camden loaded 65 current county plans.
+- Intelligence ZIP 19103 returned two five-star contracts. Clicking Philadelphia directly on the county map loaded 106 current county plans.
+- Script workspace SEP Finder ZIP 08016 returned three five-star contracts and five integrated D-SNP plans. The D-SNP pending message disappeared after migration 095.
+- The final repeat of the data audit passed with `publicAlignmentCount: 949`; all four tables still had zero PY2026 and non-PY2027 rows.
+
+The follow-up commit contains only the public CMS SELECT policy, its test, the visibility check, and these notes. The deployed frontend and site styling are unchanged by that follow-up.
