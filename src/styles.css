@@ -1369,6 +1369,38 @@ p {
   line-height: 1.35;
 }
 
+.carrier-popup-status {
+  align-self: flex-start;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid #69a7c8;
+  color: #69a7c8;
+  font-size: 9px;
+  letter-spacing: 0.3px;
+}
+
+.carrier-popup-status--pending {
+  border-color: #f2a35b;
+  color: #f2a35b;
+}
+
+.carrier-popup-tag {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--eg-surface-3);
+  color: #ffffff;
+  font-size: 8px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.carrier-popup-footer {
+  font-size: 9px;
+  font-style: italic;
+}
+
 @media (max-width: 1320px) {
   .ancillary-popup-dock--inline {
     width: 100%;
