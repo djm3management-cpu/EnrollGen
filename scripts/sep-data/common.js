@@ -413,10 +413,17 @@ export async function upsertRows({
 }) {
   let written = 0;
   for (const batch of chunkArray(rows, batchSize)) {
-    const { error } = await supabase
-      .from(table)
-      .upsert(batch, { onConflict, ignoreDuplicates: false });
-    if (error) throw error;
+    for (let attempt = 0;; attempt += 1) {
+      const { error, status } = await supabase
+        .from(table)
+        .upsert(batch, { onConflict, ignoreDuplicates: false });
+      if (!error) break;
+      const transient = status === 429 || status >= 500 ||
+        /fetch failed|ECONNRESET|ETIMEDOUT|socket|network/i.test(`${error.message} ${error.details}`);
+      if (!transient || attempt >= 4) throw error;
+      console.warn(`${table}: transient write failure; retry ${attempt + 1}/4`);
+      await new Promise(resolve => setTimeout(resolve, 500 * 2 ** attempt));
+    }
     written += batch.length;
     console.log(`${table}: ${written}/${rows.length}`);
   }

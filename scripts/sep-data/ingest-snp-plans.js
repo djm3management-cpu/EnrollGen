@@ -1,3 +1,6 @@
+import fs from "node:fs/promises";
+import { readLandscape2027 } from "./landscape-2027.js";
+import { prepareDsnp2027 } from "./prepare-dsnp-2027.js";
 import {
   cleanText,
   createSupabaseAdminClient,
@@ -84,6 +87,23 @@ async function main() {
   const args = parseArgs();
   const planYear = Number(args.year || 2027);
   if (planYear !== 2027) throw new Error("Only PY2027 Medicare data may be ingested");
+  if (args["integration-file"] || args["status-file"]) {
+    if (!args["integration-file"] || !args["status-file"]) throw new Error("Provide both --integration-file and --status-file");
+    const result = prepareDsnp2027(args["integration-file"], args["status-file"], await readLandscape2027(args));
+    console.log(JSON.stringify(result.report, null, 2));
+    if (args.output) await fs.writeFile(args.output, JSON.stringify(result));
+    if (args["dry-run"]) return;
+    const supabase = await createSupabaseAdminClient();
+    await upsertRows({ supabase, table: "snp_plans_by_county", rows: result.countyRows, onConflict: "contract_id,plan_id,snp_type,county_fips,plan_year" });
+    await upsertRows({ supabase, table: "dsnp_eae_lookup", rows: result.alignment, onConflict: "state,contract_id,plan_id,plan_year" });
+    for (const [table, expected] of [["snp_plans_by_county", result.countyRows.length], ["dsnp_eae_lookup", result.alignment.length]]) {
+      const { count, error } = await supabase.from(table).select("id", { count: "exact", head: true }).eq("plan_year", 2027);
+      if (error) throw error;
+      if (count !== expected) throw new Error(`${table}: post-load count ${count}, expected ${expected}`);
+      console.log(`Verified ${table}: ${count} PY2027 rows`);
+    }
+    return;
+  }
   const rows = await readTabularFile({
     file: args.file,
     url: args.url,

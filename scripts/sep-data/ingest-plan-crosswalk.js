@@ -1,229 +1,81 @@
-import {
-  cleanText,
-  createSupabaseAdminClient,
-  getField,
-  loadCountyLookup,
-  normalizeCountyFips,
-  parseArgs,
-  readTabularFile,
-  resolveCountyEntries,
-  stateFromCountyFips,
-  toIsoDate,
-  uniqueRows,
-  upsertRows,
-} from "./common.js";
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { cleanText, createSupabaseAdminClient, parseArgs, readTabularFile, upsertRows } from './common.js';
+import { readLandscape2027 } from './landscape-2027.js';
 
-function contractFrom(row, prefix) {
-  return cleanText(
-    getField(row, [
-      `${prefix} Contract ID`,
-      `${prefix} Contract Number`,
-      `${prefix}_contract_id`,
-      prefix === "Old" ? "Previous Contract ID" : "Current Contract ID",
-      prefix === "Old" ? "Previous Contract Number" : "Current Contract Number",
-      prefix === "Old" ? "PREVIOUS_CONTRACT_ID" : "CURRENT_CONTRACT_ID",
-      `${prefix} Contract`,
-      prefix === "Old" ? "Contract ID" : "New Contract ID",
-    ])
-  );
-}
+export const CROSSWALK_TYPES = {
+  'Renewal Plan': 'renewal',
+  'Renewal Plan with SAE': 'renewal',
+  'Renewal Plan with SAR': 'service_area_reduction',
+  'Consolidated Renewal Plan': 'consolidated_renewal',
+  'Terminated/Non-renewed Contract': 'terminated',
+  'New Plan': 'new_plan',
+  'Initial Contract': 'new_plan',
+};
+const id = value => /^\d{1,3}$/.test(String(value).trim()) ? String(value).trim().padStart(3, '0') : null;
 
-function planIdFrom(row, prefix) {
-  const value = getField(row, [
-    `${prefix} Plan ID`,
-    `${prefix} Plan Number`,
-    `${prefix}_plan_id`,
-    prefix === "Old" ? "Previous Plan ID" : "Current Plan ID",
-    prefix === "Old" ? "Previous Plan Number" : "Current Plan Number",
-    prefix === "Old" ? "PREVIOUS_PLAN_ID" : "CURRENT_PLAN_ID",
-    prefix === "Old" ? "Plan ID" : "New Plan ID",
-  ]);
-  const raw = String(value ?? "").replace(/\.0$/, "").trim();
-  return raw ? raw.padStart(3, "0") : null;
-}
-
-function extractCountyEntries(row, countyLookup) {
-  const direct = normalizeCountyFips(
-    getField(row, ["County FIPS", "county_fips", "FIPS", "FIPS County Code", "County Code"])
-  );
-  if (direct) {
-    return [
-      {
-        county_fips: direct,
-        county_name: cleanText(getField(row, ["County", "County Name", "county_name"])),
-        state_code:
-          cleanText(getField(row, ["State", "state_code"])) ||
-          stateFromCountyFips(direct).state_code,
-      },
-    ];
+export function prepareCrosswalk(rows, landscape) {
+  const serviceMap = new Map();
+  for (const row of landscape) {
+    const key = `${row.contract_id}:${row.plan_id}`;
+    if (!serviceMap.has(key)) serviceMap.set(key, new Map());
+    serviceMap.get(key).set(row.county_fips, row);
   }
-
-  const stateCode = cleanText(
-    getField(row, ["State Territory Abbreviation", "State", "state_code", "State Abbreviation"])
-  );
-  const countyName = cleanText(
-    getField(row, ["County Name", "County", "county_name", "Service Area County"])
-  );
-  return resolveCountyEntries(countyLookup, { stateCode, countyName });
-}
-
-function serviceContractFrom(row) {
-  return (
-    contractFrom(row, "Old") ||
-    contractFrom(row, "Current") ||
-    cleanText(getField(row, ["Contract ID", "Contract Number", "contract_id", "Contract"]))
-  );
-}
-
-function servicePlanIdFrom(row) {
-  return planIdFrom(row, "Old") || planIdFrom(row, "Current") || planIdFrom(row, "");
-}
-
-function buildServiceAreaMap(rows, countyLookup) {
-  const map = new Map();
-  for (const row of rows || []) {
-    const contractId = serviceContractFrom(row);
-    const planId = servicePlanIdFrom(row);
-    const countyEntries = extractCountyEntries(row, countyLookup);
-    if (!contractId || !countyEntries.length) continue;
-    const key = `${contractId}:${planId || ""}`;
-    const list = map.get(key) || [];
-    list.push(...countyEntries);
-    map.set(key, list);
+  const records = new Map();
+  const sourceCounts = {};
+  let unmapped = 0;
+  for (const row of rows) {
+    const status = cleanText(row.STATUS);
+    const type = CROSSWALK_TYPES[status];
+    if (!type) throw new Error(`Unknown crosswalk status: ${status}`);
+    const oldContract = cleanText(row.PREVIOUS_CONTRACT_ID);
+    const oldPlan = id(row.PREVIOUS_PLAN_ID);
+    const newContract = cleanText(row.CURRENT_CONTRACT_ID) === 'TERMINATED' ? null : cleanText(row.CURRENT_CONTRACT_ID);
+    const newPlan = id(row.CURRENT_PLAN_ID);
+    if (!/^[A-Z]\d{4}$/.test(oldContract) || (type !== 'new_plan' && !oldPlan) || (type !== 'terminated' && (!/^[A-Z]\d{4}$/.test(newContract) || !newPlan))) throw new Error('Invalid crosswalk identifiers');
+    sourceCounts[status] = (sourceCounts[status] || 0) + 1;
+    // Current coverage never establishes former counties or the counties removed by SAR.
+    const areas = [...(serviceMap.get(`${newContract}:${newPlan}`)?.values() || [])];
+    if (!areas.length) unmapped++;
+    const sourceKey = [oldContract, oldPlan || 'NEW', newContract || 'TERMINATED', newPlan || 'TERMINATED', status].join(':');
+    for (const area of areas.length ? areas : [null]) {
+      const record = {
+        source_key: sourceKey, source_status: status,
+        old_contract_id: oldContract, old_plan_id: oldPlan,
+        old_plan_name: type === 'new_plan' ? null : cleanText(row.PREVIOUS_PLAN_NAME),
+        old_organization_name: null, termination_type: type,
+        new_contract_id: newContract, new_plan_id: newPlan,
+        new_plan_name: type === 'terminated' ? null : cleanText(row.CURRENT_PLAN_NAME),
+        county_fips: area?.county_fips || null, county_name: area?.county_name || null,
+        state_code: area?.state_code || null,
+        county_mapping_status: area ? 'current_service_area' : 'unavailable',
+        effective_date: '2027-01-01', plan_year: 2027,
+      };
+      const key = `${sourceKey}:${record.county_fips}`;
+      if (records.has(key)) throw new Error(`Duplicate source mapping: ${key}`);
+      records.set(key, record);
+    }
   }
-  return map;
-}
-
-function terminationType(row, newContractId, newPlanId) {
-  const status = String(
-    getField(row, ["Status", "Crosswalk Type", "Reason", "termination_type"])
-  ).toLowerCase();
-  if (status.includes("terminat") || status.includes("non-renew")) return "terminated";
-  if (/\bsar\b/.test(status) || status.includes("service area reduction")) {
-    return "service_area_reduction";
-  }
-  if (status.includes("consolidat")) return "consolidated";
-  if (!newContractId && !newPlanId) return "terminated";
-  return null;
+  if (!records.size) throw new Error('Empty crosswalk');
+  return { records: [...records.values()], sourceCounts, unmapped };
 }
 
 async function main() {
   const args = parseArgs();
-  if (!args.file && !args.url) throw new Error("Provide --file PATH (or --url URL) for the CMS 2027 Part C&D Plan Crosswalk.");
-
-  const planYear = Number(args.year || 2027);
-  if (planYear !== 2027) throw new Error("Only PY2027 Medicare data may be ingested");
-  const defaultEffectiveDate = args.effective || `${planYear}-01-01`;
-  const rows = await readTabularFile({
-    file: args.file,
-    url: args.url,
-    sheet: args.sheet,
-    headerIncludes: "PREVIOUS_CONTRACT_ID",
-  });
-  const countyLookup = await loadCountyLookup({
-    file: args["county-reference-file"],
-    url: args["county-reference-url"],
-  });
+  if (Number(args.year || 2027) !== 2027) throw new Error('Only PY2027 is supported');
+  const rows = await readTabularFile({ file: args.file, url: args.url, sheet: args.sheet, headerIncludes: ['PREVIOUS_CONTRACT_ID', 'CURRENT_CONTRACT_ID', 'STATUS'] });
+  const result = prepareCrosswalk(rows, await readLandscape2027(args));
+  const counts = {};
+  for (const row of result.records) counts[row.termination_type] = (counts[row.termination_type] || 0) + 1;
+  console.log(JSON.stringify({ sourceRows: rows.length, sourceCounts: result.sourceCounts, prepared: result.records.length, countyMapped: result.records.filter(row => row.county_fips).length, unmappedSourceRows: result.unmapped, statusCounts: counts, priorYear: 37526, difference: result.records.length - 37526 }, null, 2));
+  if (args.output) await fs.writeFile(args.output, JSON.stringify(result.records));
+  if (args['dry-run']) return;
   const supabase = await createSupabaseAdminClient();
-  let serviceRows = [];
-  if (args["service-area-file"] || args["service-area-url"]) {
-    serviceRows = await readTabularFile({
-      file: args["service-area-file"],
-      url: args["service-area-url"],
-      sheet: args["service-area-sheet"],
-    });
-  } else {
-    for (let offset = 0;; offset += 1000) {
-      const { data, error } = await supabase.from("cms_plans_py2027")
-        .select("contract_id,plan_id,county_fips,county_name,state_code")
-        .eq("plan_year", 2027).range(offset, offset + 999);
-      if (error) throw error;
-      serviceRows.push(...data.map((plan) => ({
-        "Contract ID": plan.contract_id,
-        "Plan ID": plan.plan_id,
-        "County FIPS": plan.county_fips,
-        "County Name": plan.county_name,
-        State: plan.state_code,
-      })));
-      if (data.length < 1000) break;
-    }
-  }
-  const serviceMap = buildServiceAreaMap(serviceRows, countyLookup);
-
-  let skippedNoCounty = 0;
-  const records = [];
-
-  for (const row of rows) {
-    const oldContractId = contractFrom(row, "Old");
-    const oldPlanId = planIdFrom(row, "Old");
-    const newContractId = contractFrom(row, "New");
-    const newPlanId = planIdFrom(row, "New");
-    const type = terminationType(row, newContractId, newPlanId);
-    if (!oldContractId || !type) continue;
-
-    const directServiceAreas = extractCountyEntries(row, countyLookup);
-    const serviceAreas =
-      directServiceAreas.length > 0
-        ? directServiceAreas
-        : serviceMap.get(`${newContractId}:${newPlanId || ""}`) ||
-          serviceMap.get(`${newContractId}:`) ||
-          serviceMap.get(`${oldContractId}:${oldPlanId || ""}`) ||
-          serviceMap.get(`${oldContractId}:`) ||
-          [];
-
-    if (!serviceAreas.length) {
-      skippedNoCounty += 1;
-      continue;
-    }
-
-    for (const area of serviceAreas) {
-      records.push({
-        old_contract_id: oldContractId,
-        old_plan_id: oldPlanId,
-        old_plan_name: cleanText(
-          getField(row, ["Old Plan Name", "Previous Plan Name", "Plan Name", "old_plan_name"])
-        ),
-        old_organization_name: cleanText(
-          getField(row, ["Old Organization Name", "Organization Name", "old_org"])
-        ),
-        termination_type: type,
-        new_contract_id: newContractId,
-        new_plan_id: newPlanId,
-        new_plan_name: cleanText(
-          getField(row, ["New Plan Name", "Current Plan Name", "new_plan_name"])
-        ),
-        county_fips: area.county_fips,
-        county_name: area.county_name,
-        state_code: area.state_code,
-        effective_date:
-          toIsoDate(getField(row, ["Effective Date", "effective_date"])) || defaultEffectiveDate,
-        plan_year: planYear,
-        updated_at: new Date().toISOString(),
-      });
-    }
-  }
-
-  const deduped = uniqueRows(
-    records,
-    (row) =>
-      `${row.old_contract_id}:${row.old_plan_id || ""}:${row.county_fips || ""}:${row.plan_year}`
-  );
-  console.log(`Prepared ${deduped.length} plan_terminations rows`);
-  if (skippedNoCounty) throw new Error(`${skippedNoCounty} crosswalk rows lack county FIPS coverage. Provide the matching CMS service-area file with --service-area-file; no partial ingest was written.`);
-  if (args["dry-run"]) return;
-  await upsertRows({
-    supabase,
-    table: "plan_terminations",
-    rows: deduped,
-    onConflict: "old_contract_id,old_plan_id,county_fips,plan_year",
-  });
-  console.log(`plan_terminations complete: ${deduped.length} rows`);
-  if (skippedNoCounty) {
-    console.warn(`Skipped ${skippedNoCounty} crosswalk rows without county FIPS mapping.`);
-  }
+  await upsertRows({ supabase, table: 'plan_terminations', rows: result.records, onConflict: 'source_key,county_fips,plan_year' });
+  const { count, error } = await supabase.from('plan_terminations').select('id', { count: 'exact', head: true }).eq('plan_year', 2027);
+  if (error) throw error;
+  if (count !== result.records.length) throw new Error(`Post-load count mismatch: ${count} versus ${result.records.length}`);
+  console.log(`Verified plan_terminations: ${count} PY2027 rows`);
 }
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch(error => { console.error(error); process.exitCode = 1; });
