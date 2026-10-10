@@ -7,7 +7,10 @@ import {
 import { Building2, ChevronDown, Heart } from "lucide-react";
 import AncillaryPopup from "./AncillaryPopup";
 import {
+  CARRIER_POPUP_CHECKED_ON,
+  CARRIER_POPUP_FOOTER,
   CARRIER_REFERENCE_POPUPS_BY_ID,
+  POPUP_STATUS,
 } from "./carrierReferencePopupData";
 import useCarrierReferencePopup from "./useCarrierReferencePopup";
 import { useLeftRailManager } from "../leftRail/LeftRailManager";
@@ -18,6 +21,23 @@ const LEGACY_CARRIER_RAIL_IDS = Object.keys(CARRIER_REFERENCE_POPUPS_BY_ID).map(
 
 function buildExpandedSections(sections = []) {
   return Object.fromEntries(sections.map((section) => [section.id, false]));
+}
+
+// Renders **bold** markers from the plain-text popup data.
+function renderNoteText(text) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={index}>{part.slice(2, -2)}</strong>
+    ) : (
+      part
+    )
+  );
+}
+
+function getStatusLabel(status) {
+  return status === POPUP_STATUS.PENDING
+    ? `2027 pending · checked ${CARRIER_POPUP_CHECKED_ON}`
+    : `PY2027 · checked ${CARRIER_POPUP_CHECKED_ON}`;
 }
 
 function getPopupIcon(carrierId) {
@@ -130,6 +150,15 @@ const CarrierReferencePopupManager = memo(function CarrierReferencePopupManager(
               onInteract={() => {}}
               inline
             >
+              <div
+                className={`carrier-popup-status${
+                  carrier.status === POPUP_STATUS.PENDING
+                    ? " carrier-popup-status--pending"
+                    : ""
+                }`}
+              >
+                {getStatusLabel(carrier.status)}
+              </div>
               <div className="ancillary-popup-accordion-list">
                 {carrier.sections.map((section) => (
                   <CarrierAccordionSection
@@ -144,13 +173,19 @@ const CarrierReferencePopupManager = memo(function CarrierReferencePopupManager(
                           key={`${section.id}-${index}`}
                           className="ancillary-popup-note"
                         >
-                          {note}
+                          {note.planSpecific ? (
+                            <span className="carrier-popup-tag">Plan-specific</span>
+                          ) : null}
+                          {renderNoteText(note.text)}
                         </div>
                       ))}
                     </div>
                   </CarrierAccordionSection>
                 ))}
               </div>
+              <p className="ancillary-popup-footnote carrier-popup-footer">
+                {CARRIER_POPUP_FOOTER}
+              </p>
             </AncillaryPopup>
           );
         })
