@@ -1,12 +1,19 @@
 import { randomBytes, createHash } from 'node:crypto';
-import { EvidenceError, checked, resolveEvidenceIdentity, canImportForOthers, requireOwnedSession } from './_evidenceAccess.js';
+import { EvidenceError, checked, resolveEvidenceIdentity, requireOwnedSession } from './_evidenceAccess.js';
 
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function hasTenantRecordingAdminRole(auth) {
+  const payload=auth?.tokenPayload || {};
+  const roles=[payload.org_role,payload.o?.rol,payload.role,payload.public_metadata?.role,payload.metadata?.role]
+    .filter(Boolean).map(value=>String(value).toLowerCase());
+  return Boolean(auth?.orgId && roles.some(role=>['admin','org:admin','owner','org:owner'].includes(role)));
+}
 export async function recordingIdentity(db, auth) {
   if (!auth.userId || auth.userId === 'dev-bypass') throw new EvidenceError(401, 'Sign in to access recordings.');
-  if (auth.orgId && ['org:admin', 'admin'].includes(auth.tokenPayload?.org_role)) {
+  auth={...auth,orgId:auth.orgId || auth.tokenPayload?.o?.id || null};
+  if (hasTenantRecordingAdminRole(auth)) {
     const tenant = checked(await db.from('tenants').select('*').eq('clerk_org_id', auth.orgId).maybeSingle());
-    if (!tenant || !canImportForOthers(auth, tenant)) throw new EvidenceError(403, 'Organization is unavailable.');
+    if (!tenant || tenant.clerk_org_id!==auth.orgId) throw new EvidenceError(403, 'Organization is unavailable.');
     return { tenant, admin: true, auth };
   }
   const identity = await resolveEvidenceIdentity(db, auth);

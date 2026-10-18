@@ -199,6 +199,25 @@ test('an owned session cannot borrow a peer recording through the older mutable-
   await call(auth,`call_record_id=${C}`,403);await call(admin,`call_record_id=${C}`);
   await sql('UPDATE telephony_call_attempts SET call_record_id=$1 WHERE id=$2',[D,peerAttempt]);
 });
+test('recording playback allows the call agent or same-tenant admin/owner only',async()=>{
+  const ownAttempt='50000000-0000-4000-8000-000000000005',peerAttempt='50000000-0000-4000-8000-000000000006';
+  const ownSid='CA'+'5'.repeat(32),peerSid='CA'+'6'.repeat(32);
+  await sql("INSERT INTO call_records(id,tenant_id,agent_id,call_direction) VALUES('30000000-0000-4000-8000-000000000003',$1,$2,'outbound')",[U,B]);
+  await sql("INSERT INTO telephony_call_attempts(id,tenant_id,parent_call_sid,call_record_id,agent_id,direction,answered_at) VALUES($1,$2,$3,$4,'agent_a','outbound',now()),($5,$2,$6,$7,'agent_b','outbound',now())",[ownAttempt,T,ownSid,C,peerAttempt,peerSid,D]);
+  const ownId=await enqueue(50,{CallSid:ownSid},ownAttempt),peerId=await enqueue(51,{CallSid:peerSid},peerAttempt);
+  const claimed=await sql('SELECT * FROM claim_recording_ingestion(10)');
+  for(const id of [ownId,peerId]){
+    const job=claimed.find(row=>row.id===id);assert.ok(job);
+    assert.equal(await processRecording({db,job,config,fetchImpl:audioFetch}),'stored');
+    const saved=(await sql('SELECT storage_path FROM recording_ingestion WHERE id=$1',[id]))[0];
+    await sql("INSERT INTO storage.objects(bucket_id,name) VALUES('call-recordings',$1)",[saved.storage_path]);
+  }
+  const own=await call(auth,{action:'media',call_record_id:C,recording_id:ownId});assert.equal(own.source,'storage');
+  await call(auth,{action:'media',call_record_id:D,recording_id:peerId},403);
+  const owner={userId:'user-owner',tokenPayload:{o:{id:'org-a',rol:'owner'}}};
+  const peer=await call(owner,{action:'media',call_record_id:D,recording_id:peerId});assert.equal(peer.source,'storage');
+  await call(owner,{action:'media',call_record_id:'30000000-0000-4000-8000-000000000003',recording_id:peerId},403);
+});
 test('absent callbacks are durable without a RecordingSid and never enter the copy queue',async()=>{
   const row=(await sql('SELECT enqueue_recording($1::jsonb,$2::uuid) AS id',[JSON.stringify(payload(0,{RecordingSid:null,RecordingStatus:'absent',RecordingChannels:null})),ATT]))[0];
   const stored=(await sql('SELECT * FROM recording_ingestion WHERE id=$1',[row.id]))[0];assert.equal(stored.copy_status,'absent');assert.equal(stored.recording_sid,null);
