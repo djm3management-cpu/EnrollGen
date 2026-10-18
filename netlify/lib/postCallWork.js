@@ -1,0 +1,833 @@
+import { linkTelephonyRecord } from "../functions/_telephonyLink.js";
+import process from 'node:process';
+import { ancillarySaleError, buildCallOutcomePatch } from "../../src/lib/ancillarySale.js";
+import {
+  EvidenceError, bindPostCallPayload, checked, evidenceFailure,
+  getEvidenceServiceClient, requireOwnedTranscript, resolveEvidenceIdentity, writeOwnedTranscript,
+} from "../functions/_evidenceAccess.js";
+import { requireClerkAuth } from "../functions/_clerkAuth.js";
+import { redactDiarizedTranscript, redactSensitiveText } from "../functions/_redaction.js";
+import {
+  checkSeatLimit,
+  logUsageRecord,
+  requireActiveSubscription,
+  requirePlan,
+} from "../functions/_subscriptionGate.js";
+
+const JSON_HEADERS = { "Content-Type": "application/json", "Cache-Control": "no-store" };
+const LIVE_SOURCE_SYSTEM = "enrollgen_live";
+
+function json(status, payload) {
+  return new Response(JSON.stringify(payload), { status, headers: JSON_HEADERS });
+}
+
+function safeText(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function safeUuid(value) {
+  const raw = safeText(value);
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)
+    ? raw
+    : null;
+}
+
+function normalizeLookup(value) {
+  return safeText(value).toLowerCase().replace(/\s+/g, " ");
+}
+
+function looksLikeIdentifier(value) {
+  const raw = safeText(value);
+  if (!raw) return false;
+  if (/^\d+$/.test(raw)) return true;
+  if (/^[0-9a-f]{8}-[0-9a-f-]+$/i.test(raw)) return true;
+  return false;
+}
+
+function humanAgentText(value) {
+  const raw = safeText(value);
+  return raw && !looksLikeIdentifier(raw) ? raw : "";
+}
+
+function normalizeTenant(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name || "",
+    ghl_webhook_url: row.ghl_webhook_url || "",
+    ghl_location_id: row.ghl_location_id || "",
+    coop_rates: row.coop_rates && typeof row.coop_rates === "object" ? row.coop_rates : {},
+    carrier_options: Array.isArray(row.carrier_options) ? row.carrier_options : [],
+    agency_display_name: row.agency_display_name || row.name || "",
+  };
+}
+
+async function fetchTenantAgents(supabase, tenantId) {
+  const { data, error } = await supabase
+    .from("tenant_agents")
+    .select("id, name, npn, clerk_user_id, ghl_user_id")
+    .eq("tenant_id", tenantId)
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+function getAgentGhlUserId(agents, agentName) {
+  const raw = normalizeLookup(agentName);
+  if (!raw) return "";
+  const exact = agents.find((agent) => normalizeLookup(agent.name) === raw);
+  if (exact?.ghl_user_id) return exact.ghl_user_id;
+  const loose = agents.find((agent) => {
+    const name = normalizeLookup(agent.name);
+    return name && (name.includes(raw) || raw.includes(name));
+  });
+  return loose?.ghl_user_id || "";
+}
+
+function normalizeProductType(value) {
+  const raw = safeText(value);
+  if (raw === "MedSup" || raw === "ACA" || raw === "U65" || raw === "Ancillary") return raw;
+  return "MA";
+}
+
+function normalizeDirection(value) {
+  return safeText(value).toLowerCase() === "outbound" ? "outbound" : "inbound";
+}
+
+// Keep in sync with CALL_OUTCOME_OPTIONS in src/lib/postCallPipeline.js
+// and the latest call_records_call_outcome_check migration.
+function normalizeOutcome(value) {
+  const raw = safeText(value);
+  const allowed = new Set([
+    // Legacy
+    "not_enrolled",
+    "incomplete",
+    // Enrollment Outcomes
+    "enrolled",
+    "enrolled_pending_verification",
+    "partial_enrollment",
+    "sale_ancillary",
+    // Positive Pipeline
+    "callback_scheduled",
+    "interested_needs_info",
+    "spouse_poa_callback",
+    "transferred",
+    "application_in_progress",
+    // Negative / Closed
+    "not_interested",
+    "not_qualified",
+    "already_enrolled_elsewhere",
+    "customer_hung_up",
+    "do_not_call",
+    "requested_removal",
+    // Unable to Reach
+    "no_answer",
+    "voicemail_left",
+    "wrong_number",
+    "bad_lead_data",
+    "language_barrier",
+    // Compliance / Concern Flags
+    "mentally_unfit",
+    "possible_cognitive_impairment",
+    "third_party_needed",
+    "hostile_caller",
+    "suspected_fraud",
+    // System / Technical
+    "dropped_call",
+    "test_call",
+    "duplicate_lead",
+  ]);
+  return allowed.has(raw) ? raw : "incomplete";
+}
+
+function dispositionFromOutcome(outcome) {
+  if (outcome === "callback_scheduled") return "callback";
+  return outcome || "pending";
+}
+
+function normalizeEnrollmentPeriod(value) {
+  const raw = safeText(value).toUpperCase();
+  if (["AEP", "OEP", "SEP", "IEP", "OE"].includes(raw)) return raw;
+  return "AEP";
+}
+
+function scrubPhi(rawText) {
+  return redactSensitiveText(safeText(rawText));
+}
+
+function normalizeDiarized(entries) {
+  if (!Array.isArray(entries)) return [];
+  return entries
+    .map((entry) => ({
+      speaker: entry?.speaker === "customer" || entry?.speaker === "beneficiary" ? "customer" : "agent",
+      text: safeText(entry?.text),
+      start_ms: Number.isFinite(Number(entry?.start_ms)) ? Number(entry.start_ms) : 0,
+      end_ms: Number.isFinite(Number(entry?.end_ms)) ? Number(entry.end_ms) : 0,
+      confidence: Number.isFinite(Number(entry?.confidence)) ? Number(entry.confidence) : undefined,
+    }))
+    .filter((entry) => entry.text);
+}
+
+function mergeMetadata(current, patch) {
+  const base = current && typeof current === "object" && !Array.isArray(current) ? current : {};
+  return {
+    ...base,
+    ...patch,
+  };
+}
+
+async function fetchAgent(_supabase, _payload, auth, tenant) {
+  const agent = auth.evidenceIdentity?.agent;
+  if (!agent || agent.tenant_id !== tenant.id) throw new EvidenceError(403, "Agent identity is unavailable.");
+  return agent;
+}
+
+function resolveHumanAgentNameFromLoaded(_payload, _auth, _tenantAgents, agent) {
+  return humanAgentText(agent?.name) || "Agent";
+}
+
+async function resolveTranscriptAgentId(supabase, agent, tenant) {
+  const agency = tenant?.agency_display_name || tenant?.name || "Unknown";
+  const existing = checked(await supabase.from("agents").select("id, name")
+    .eq("name", agent.name || "Agent").eq("agency", agency).limit(1).maybeSingle());
+  if (existing) return existing.id;
+  return checked(await supabase.from("agents").insert({
+    name: agent.name || "Agent", agency, is_active: true,
+  }).select("id").single()).id;
+}
+
+async function ensureCallRecord(supabase, payload, auth, tenant) {
+  const record = await ensureCallRecordRow(supabase, payload, auth, tenant);
+  await linkTelephonyRecord(supabase, record, payload, auth, tenant);
+  return record;
+}
+
+async function ensureCallRecordRow(supabase, payload, auth, tenant) {
+  if (payload.telephony_call && payload.call_direction === 'inbound' && payload.twilio_call_sid) {
+    const roster = checked(await supabase.from('tenant_agents').select('agent_slug')
+      .eq('tenant_id', tenant.id).eq('clerk_user_id', auth.userId).eq('is_active', true).single());
+    const attempt = checked(await supabase.from('telephony_call_attempts').select('id')
+      .eq('tenant_id', tenant.id).eq('parent_call_sid', payload.twilio_call_sid)
+      .eq('agent_id', roster.agent_slug).eq('direction', 'inbound').maybeSingle());
+    if (!attempt) throw new EvidenceError(403, 'Inbound call attempt is unavailable.');
+    const id = checked(await supabase.rpc('ensure_inbound_transcript_record', {
+      p_attempt_id: attempt.id, p_session_id: payload.session_id,
+    }));
+    return checked(await supabase.from('call_records').select('*').eq('id', id).eq('tenant_id', tenant.id).single());
+  }
+
+  if (payload.call_record_id) {
+    let query = supabase
+      .from("call_records")
+      .select("*")
+      .eq("id", payload.call_record_id);
+    if (tenant?.id) query = query.eq("tenant_id", tenant.id);
+    const data = checked(await query.maybeSingle());
+    if (data) return data;
+  }
+
+  if (payload.session_id) {
+    let query = supabase
+      .from("call_records")
+      .select("*")
+      .eq("session_id", payload.session_id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (tenant?.id) query = query.eq("tenant_id", tenant.id);
+    query = query.eq("agent_id", auth.evidenceIdentity.agent.id);
+    const data = checked(await query.maybeSingle());
+    if (data) return data;
+  }
+
+  const agent = await fetchAgent(supabase, payload, auth, tenant);
+  if (!agent.id) {
+    throw new Error("Unable to resolve enrolled agent for call record");
+  }
+
+  const insertPayload = {
+    tenant_id: tenant.id,
+    external_call_id: payload.session_id || null,
+    session_id: payload.session_id || null,
+    agent_id: agent.id,
+    agent_name: agent.name,
+    agent_npn: agent.npn || null,
+    call_direction: normalizeDirection(payload.call_direction),
+    call_type: safeText(payload.call_type) || "enrollment",
+    product_type: normalizeProductType(payload.product_type),
+    carrier_name: safeText(payload.carrier_name) || null,
+    plan_name: safeText(payload.plan_name) || null,
+    plan_id: safeText(payload.plan_id) || null,
+    call_start: payload.call_start || new Date().toISOString(),
+    call_duration_seconds: Number.isFinite(Number(payload.call_duration_seconds))
+      ? Number(payload.call_duration_seconds)
+      : null,
+    election_period: normalizeEnrollmentPeriod(payload.election_period || payload.enrollment_period),
+    // Only set once migration 017 adds the column; keeps wrap-up safe pre-migration.
+    ...(safeUuid(payload.contact_id) ? { contact_id: safeUuid(payload.contact_id) } : {}),
+    metadata: {
+      created_from: LIVE_SOURCE_SYSTEM,
+      source_session_id: payload.session_id || null,
+      telephony_call: payload.telephony_call === true,
+      twilio_call_sid: /^CA[0-9a-f]{32}$/i.test(payload.twilio_call_sid || '') ? payload.twilio_call_sid : null,
+      telephony_user_id: auth.userId || null,
+    },
+  };
+
+  const { data: callRecord, error } = await supabase
+    .from("call_records")
+    .insert(insertPayload)
+    .select("*")
+    .single();
+
+  if (error) throw error;
+
+  if (payload.session_id) {
+    checked(await supabase
+      .from("sessions")
+      .update({
+        call_record_id: callRecord.id,
+        ...(safeUuid(payload.contact_id) ? { contact_id: safeUuid(payload.contact_id) } : {}),
+      })
+      .eq("id", payload.session_id)
+      .eq("agent_id", auth.evidenceIdentity.agent.id)
+      .eq("tenant_id", tenant.id));
+  }
+
+  return callRecord;
+}
+
+async function findTranscript(supabase, callRecord, payload, tenant) {
+  if (payload.transcript_id || callRecord.transcript_id) {
+    let query = supabase
+      .from("call_transcripts")
+      .select("*")
+      .eq("id", payload.transcript_id || callRecord.transcript_id);
+    if (tenant?.id) query = query.eq("tenant_id", tenant.id);
+    const data = checked(await query.maybeSingle());
+    if (data) return data;
+  }
+
+  if (callRecord.id) {
+    let query = supabase
+      .from("call_transcripts")
+      .select("*")
+      .eq("call_record_id", callRecord.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (tenant?.id) query = query.eq("tenant_id", tenant.id);
+    const data = checked(await query.maybeSingle());
+    if (data) return data;
+  }
+
+  if (payload.session_id) {
+    let query = supabase
+      .from("call_transcripts")
+      .select("*")
+      .eq("source_system", LIVE_SOURCE_SYSTEM)
+      .eq("source_id", payload.session_id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (tenant?.id) query = query.eq("tenant_id", tenant.id);
+    const data = checked(await query.maybeSingle());
+    if (data) return data;
+  }
+
+  return null;
+}
+
+async function saveTranscript(supabase, callRecord, payload, auth, tenant, { final = false } = {}) {
+  const transcriptText = scrubPhi(payload.transcript_text);
+  if (!transcriptText) {
+    return { transcript: null, callRecord };
+  }
+
+  const agent = await fetchAgent(supabase, payload, auth, tenant);
+  const transcriptAgentId = await resolveTranscriptAgentId(supabase, agent, tenant);
+  const now = new Date().toISOString();
+  const existing = await findTranscript(supabase, callRecord, payload, tenant);
+
+  const basePayload = {
+    tenant_id: tenant.id,
+    agent_id: transcriptAgentId,
+    call_date: callRecord.call_start || payload.call_start || now,
+    duration_seconds: Number.isFinite(Number(payload.call_duration_seconds))
+      ? Number(payload.call_duration_seconds)
+      : callRecord.call_duration_seconds,
+    direction: normalizeDirection(payload.call_direction || callRecord.call_direction),
+    product_line: normalizeProductType(payload.product_type || callRecord.product_type),
+    carrier: safeText(payload.carrier_name) || callRecord.carrier_name || null,
+    plan_name: safeText(payload.plan_name) || callRecord.plan_name || null,
+    enrollment_period: normalizeEnrollmentPeriod(payload.enrollment_period || payload.election_period || callRecord.election_period),
+    disposition: safeText(payload.disposition) || (final ? dispositionFromOutcome(payload.call_outcome) : "pending"),
+    compliance_passed: null,
+    transcript_text: transcriptText,
+    source_system: LIVE_SOURCE_SYSTEM,
+    source_id: payload.session_id || callRecord.session_id || callRecord.id,
+    recording_url: callRecord.recording_url || null,
+    phi_scrubbed: true,
+    call_record_id: callRecord.id,
+    session_id: payload.session_id || callRecord.session_id || null,
+    last_checkpoint_at: now,
+    updated_at: now,
+  };
+
+  if (existing) {
+    const owned = await requireOwnedTranscript(supabase, existing.id, auth.evidenceIdentity);
+    if (owned.session_id !== payload.session_id) throw new EvidenceError(403, "Transcript does not belong to this session.");
+  }
+  const transcript = await writeOwnedTranscript(supabase, basePayload, agent.id, existing?.id);
+
+  const updatedCallRecord = checked(await supabase
+    .from("call_records")
+    .update({
+      transcript_id: transcript.id,
+      updated_at: now,
+    })
+    .eq("id", callRecord.id)
+    .eq("tenant_id", tenant.id)
+    .select("*")
+    .single());
+
+  return { transcript, callRecord: updatedCallRecord || callRecord };
+}
+
+async function updateCallTranscriptFields(supabase, transcriptId, payload, tenant) {
+  if (!transcriptId) return;
+
+  const updatePayload = {
+    disposition: dispositionFromOutcome(payload.call_outcome),
+    carrier: safeText(payload.carrier_name) || null,
+    plan_name: safeText(payload.plan_name) || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  checked(await supabase
+    .from("call_transcripts")
+    .update(updatePayload)
+    .eq("id", transcriptId)
+    .eq("tenant_id", tenant.id));
+}
+
+async function saveCheckpoint(supabase, payload, auth, tenant, { final = false } = {}) {
+  const callRecord = await ensureCallRecord(supabase, payload, auth, tenant);
+  if (callRecord.metadata?.transcript_source === 'deepgram_server') {
+    return { callRecord, transcript: callRecord.transcript_id ? { id: callRecord.transcript_id } : null };
+  }
+  const diarized = redactDiarizedTranscript(normalizeDiarized(payload.transcript_diarized));
+  const transcriptText = scrubPhi(payload.transcript_text);
+  const now = new Date().toISOString();
+
+  const metadata = mergeMetadata(callRecord.metadata, {
+    last_transcript_checkpoint_at: now,
+    ...(payload.telephony_call ? { telephony_call: true, telephony_user_id: auth.userId || null,
+      twilio_call_sid: /^CA[0-9a-f]{32}$/i.test(payload.twilio_call_sid || '') ? payload.twilio_call_sid : callRecord.metadata?.twilio_call_sid || null } : {}),
+    transcript_source: LIVE_SOURCE_SYSTEM,
+    transcript_finalized_at: final ? now : callRecord.metadata?.transcript_finalized_at || null,
+  });
+
+  const callUpdate = {
+    carrier_name: safeText(payload.carrier_name) || callRecord.carrier_name || null,
+    plan_name: safeText(payload.plan_name) || callRecord.plan_name || null,
+    plan_id: safeText(payload.plan_id) || callRecord.plan_id || null,
+    call_duration_seconds: Number.isFinite(Number(payload.call_duration_seconds))
+      ? Number(payload.call_duration_seconds)
+      : callRecord.call_duration_seconds,
+    transcript_raw: transcriptText || callRecord.transcript_raw || null,
+    transcript_diarized: diarized.length ? diarized : callRecord.transcript_diarized || [],
+    election_period: normalizeEnrollmentPeriod(payload.election_period || payload.enrollment_period || callRecord.election_period),
+    call_outcome: final && !callRecord.call_outcome ? "incomplete" : callRecord.call_outcome,
+    call_end: final && !callRecord.call_end ? now : callRecord.call_end,
+    metadata,
+    updated_at: now,
+  };
+
+  const { data: updatedCallRecord, error } = await supabase
+    .from("call_records")
+    .update(callUpdate)
+    .eq("id", callRecord.id)
+    .eq("tenant_id", tenant.id)
+    .select("*")
+    .single();
+
+  if (error) throw error;
+
+  const saved = await saveTranscript(supabase, updatedCallRecord, payload, auth, tenant, { final });
+
+  return {
+    callRecord: saved.callRecord || updatedCallRecord,
+    transcript: saved.transcript,
+  };
+}
+
+async function triggerScoring(request, callRecordId, tenantId) {
+  const scoringUrl = new URL("/.netlify/functions/score-call-background", request.url);
+  const response = await fetch(scoringUrl.toString(), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-enrollgen-job-secret": process.env.SCORE_CALL_JOB_SECRET || "",
+    },
+    body: JSON.stringify({ callId: callRecordId, tenantId }),
+  });
+
+  if (!response.ok && response.status !== 202) {
+    console.warn("[post-call] scoring trigger returned", response.status);
+  }
+}
+
+function queueBackground(context, promise) {
+  const wrapped = Promise.resolve(promise).catch((error) => {
+    console.error("[post-call] background task failed:", error);
+  });
+
+  if (typeof context?.waitUntil === "function") {
+    context.waitUntil(wrapped);
+  }
+}
+
+function buildGhlWebhookPayload(payload, tenant, tenantAgents) {
+  const writingAgent = safeText(payload.writing_agent) || tenantAgents.find((agent) => agent.name)?.name || "";
+  return {
+    firstName: safeText(payload.customer_first_name),
+    lastName: safeText(payload.customer_last_name),
+    dob: payload.customer_dob || "",
+    phone: safeText(payload.customer_phone),
+    email: safeText(payload.customer_email),
+    state: safeText(payload.customer_state),
+    mbi: safeText(payload.customer_mbi),
+    medicaid: safeText(payload.medicaid) || "No",
+    medicaidNum: safeText(payload.medicaid_number),
+    prevCarrier: safeText(payload.previous_carrier),
+    newCarrier: safeText(payload.carrier_name),
+    enrollCode: safeText(payload.enrollment_code || payload.application_id),
+    premium: safeText(payload.premium),
+    sunfireCode: safeText(payload.sunfire_code),
+    effectiveDate: payload.effective_date || "",
+    sixtyDayDate: payload.sixty_day_date || "",
+    sep: safeText(payload.sep) || "No",
+    agency: safeText(payload.agency) || tenant.agency_display_name || tenant.name || "",
+    aor: writingAgent,
+    assignedUserId:
+      getAgentGhlUserId(tenantAgents, writingAgent) ||
+      tenantAgents.find((agent) => agent.ghl_user_id)?.ghl_user_id ||
+      "",
+    hra: safeText(payload.hra) || "No",
+    hraDate: payload.hra_date || "",
+    submittedAt: new Date().toISOString(),
+  };
+}
+
+async function sendEnrollmentWebhook(tenant, tenantAgents, payload) {
+  if (!tenant?.ghl_webhook_url) {
+    return {
+      sent: false,
+      sentAt: null,
+      error: "Tenant GHL webhook URL is not configured.",
+    };
+  }
+
+  try {
+    const response = await fetch(tenant.ghl_webhook_url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildGhlWebhookPayload(payload, tenant, tenantAgents)),
+    });
+
+    if (response.ok) {
+      return { sent: true, sentAt: new Date().toISOString(), error: "" };
+    }
+
+    return {
+      sent: false,
+      sentAt: null,
+      error: `HTTP ${response.status}: ${response.statusText}`,
+    };
+  } catch (error) {
+    return {
+      sent: false,
+      sentAt: null,
+      error: error?.message || "Webhook request failed",
+    };
+  }
+}
+
+async function handleWrapUp(supabase, payload, auth, request, context, tenant, tenantAgents, subscription) {
+  const outcome = normalizeOutcome(payload.call_outcome);
+  const productError = ancillarySaleError(outcome, payload.ancillary_product_type);
+  if (productError) throw new EvidenceError(400, productError);
+  const saved = await saveCheckpoint(supabase, payload, auth, tenant, { final: true });
+  const callRecord = saved.callRecord;
+  const now = new Date().toISOString();
+  const agent = await fetchAgent(supabase, payload, auth, tenant);
+  const writingAgent = resolveHumanAgentNameFromLoaded(payload, auth, tenantAgents, agent);
+
+  const metadata = mergeMetadata(callRecord.metadata, {
+    wrap_up_saved_at: now,
+    scoring_status: "queued",
+  });
+
+  const updatePayload = {
+    carrier_name: safeText(payload.carrier_name) || callRecord.carrier_name || null,
+    plan_name: safeText(payload.plan_name) || callRecord.plan_name || null,
+    plan_id: safeText(payload.plan_id) || callRecord.plan_id || null,
+    effective_date: payload.effective_date || null,
+    application_id: safeText(payload.application_id) || null,
+    customer_first_name: safeText(payload.customer_first_name) || null,
+    customer_last_name: safeText(payload.customer_last_name) || null,
+    customer_phone: safeText(payload.customer_phone) || null,
+    customer_email: safeText(payload.customer_email) || null,
+    customer_dob: payload.customer_dob || null,
+    customer_state: safeText(payload.customer_state) || null,
+    customer_mbi: safeText(payload.customer_mbi) || null,
+    medicaid: safeText(payload.medicaid) || "No",
+    medicaid_number: safeText(payload.medicaid_number) || null,
+    previous_carrier: safeText(payload.previous_carrier) || null,
+    enrollment_code: safeText(payload.enrollment_code || payload.application_id) || null,
+    premium: safeText(payload.premium) || null,
+    sunfire_code: safeText(payload.sunfire_code) || null,
+    sixty_day_date: payload.sixty_day_date || null,
+    sep: safeText(payload.sep) || "No",
+    agency: safeText(payload.agency) || tenant.agency_display_name || tenant.name || null,
+    writing_agent: writingAgent,
+    agent_name: writingAgent,
+    hra: safeText(payload.hra) || "No",
+    hra_date: payload.hra_date || null,
+    enrollment_confirmation_number: safeText(payload.enrollment_confirmation_number) || null,
+    enrollment_completed: outcome === "enrolled",
+    ...buildCallOutcomePatch(outcome, payload.ancillary_product_type),
+    ...(safeUuid(payload.contact_id) || callRecord.contact_id
+      ? { contact_id: safeUuid(payload.contact_id) || callRecord.contact_id }
+      : {}),
+    agent_notes: safeText(payload.agent_notes) || null,
+    call_end: now,
+    call_duration_seconds: Number.isFinite(Number(payload.call_duration_seconds))
+      ? Number(payload.call_duration_seconds)
+      : callRecord.call_duration_seconds,
+    webhook_sent: outcome === "enrolled" ? Boolean(callRecord.webhook_sent) : false,
+    webhook_sent_at: outcome === "enrolled" ? callRecord.webhook_sent_at || null : null,
+    webhook_error: outcome === "enrolled" ? callRecord.webhook_error || null : null,
+    metadata,
+    updated_at: now,
+  };
+
+  let { data: updatedCallRecord, error } = await supabase
+    .from("call_records")
+    .update(updatePayload)
+    .eq("id", callRecord.id)
+    .eq("tenant_id", tenant.id)
+    .select("*")
+    .single();
+
+  if (error) throw error;
+
+  if (updatedCallRecord.session_id) {
+    checked(await supabase
+      .from("sessions")
+      .update({
+        ended_at: now,
+        completed: outcome === "enrolled",
+        duration_seconds: updatePayload.call_duration_seconds,
+      })
+      .eq("id", updatedCallRecord.session_id)
+      .eq("agent_id", auth.evidenceIdentity.agent.id)
+      .eq("tenant_id", tenant.id));
+  }
+
+  await updateCallTranscriptFields(
+    supabase,
+    saved.transcript?.id || updatedCallRecord.transcript_id,
+    {
+      ...payload,
+      call_outcome: outcome,
+      carrier_name: updatePayload.carrier_name,
+      plan_name: updatePayload.plan_name,
+    },
+    tenant
+  );
+
+  if (updatedCallRecord.contact_id) {
+    const { error: activityError } = await supabase.from("contact_activities").insert({
+      tenant_id: tenant.id,
+      contact_id: updatedCallRecord.contact_id,
+      type: outcome === "enrolled" ? "enrollment" : "call",
+      ref_id: updatedCallRecord.id,
+      summary:
+        outcome === "enrolled"
+          ? `Enrolled: ${updatePayload.carrier_name || ""} ${updatePayload.plan_name || ""}`.trim()
+          : `Call wrap-up: ${outcome}`,
+    });
+    if (activityError) {
+      console.error("contact_activities insert failed:", activityError.message);
+    }
+  }
+
+  queueBackground(
+    context,
+    triggerScoring(request, updatedCallRecord.id, updatedCallRecord.tenant_id)
+  );
+
+  let webhookStatus = "skipped";
+  if (outcome === "enrolled") {
+    const webhookAllowed = requirePlan(subscription, "pro");
+    if (webhookAllowed.response) {
+      webhookStatus = "skipped_plan";
+    } else {
+      const webhookResult = await sendEnrollmentWebhook(tenant, tenantAgents, {
+        ...payload,
+        agency: updatePayload.agency,
+        writing_agent: updatePayload.writing_agent,
+        enrollment_code: updatePayload.enrollment_code,
+        application_id: updatePayload.application_id,
+      });
+
+      const webhookPatch = {
+        webhook_sent: webhookResult.sent,
+        webhook_sent_at: webhookResult.sent ? webhookResult.sentAt : null,
+        webhook_error: webhookResult.sent ? null : webhookResult.error,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: webhookUpdated, error: webhookUpdateError } = await supabase
+        .from("call_records")
+        .update(webhookPatch)
+        .eq("id", updatedCallRecord.id)
+        .eq("tenant_id", tenant.id)
+        .select("*")
+        .single();
+
+      if (webhookUpdateError) throw webhookUpdateError;
+      updatedCallRecord = webhookUpdated || updatedCallRecord;
+      webhookStatus = webhookResult.sent ? "sent" : "failed";
+    }
+  }
+
+  return {
+    call_record_id: updatedCallRecord.id,
+    transcript_id: saved.transcript?.id || updatedCallRecord.transcript_id || null,
+    scoring_status: "queued",
+    webhook_status: webhookStatus,
+  };
+}
+
+async function handleWebhookResult(supabase, payload, tenant) {
+  const callRecordId = safeText(payload.call_record_id);
+  if (!callRecordId) {
+    throw new Error("Missing call_record_id for webhook result");
+  }
+
+  const sent = payload.webhook_sent === true;
+  const now = new Date().toISOString();
+  const updatePayload = {
+    webhook_sent: sent,
+    webhook_sent_at: sent ? safeText(payload.webhook_sent_at) || now : null,
+    webhook_error: sent ? null : safeText(payload.webhook_error) || "Webhook failed",
+    updated_at: now,
+  };
+
+  const { data, error } = await supabase
+    .from("call_records")
+    .update(updatePayload)
+    .eq("id", callRecordId)
+    .eq("tenant_id", tenant.id)
+    .select("id, webhook_sent, webhook_sent_at, webhook_error")
+    .single();
+
+  if (error) throw error;
+
+  return {
+    call_record_id: data.id,
+    webhook_sent: data.webhook_sent,
+    webhook_sent_at: data.webhook_sent_at,
+    webhook_error: data.webhook_error,
+  };
+}
+
+export function createPostCallHandler({ authenticate = requireClerkAuth, getDb = getEvidenceServiceClient } = {}) {
+return async (request, context) => {
+  if (request.method !== "POST") {
+    return json(405, { error: "Method not allowed" });
+  }
+
+  let auth = await authenticate(request);
+  if (auth.response) return auth.response;
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json(400, { error: "Invalid JSON body" });
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return json(400, { error: "Invalid request" });
+  }
+
+  const action = safeText(body.action);
+  if (!["init", "checkpoint", "finalize", "wrap_up", "webhook_result"].includes(action)) {
+    return json(400, { error: "Invalid action" });
+  }
+
+  try {
+    const supabase = getDb();
+    const identity = await resolveEvidenceIdentity(supabase, auth);
+    body = await bindPostCallPayload(supabase, body, identity);
+    auth = { ...auth, evidenceIdentity: identity };
+    const tenant = normalizeTenant(identity.tenant);
+    const subscription = await requireActiveSubscription(supabase, tenant.id);
+    if (subscription.response) return subscription.response;
+    const seatLimit = await checkSeatLimit(supabase, tenant.id, subscription);
+    if (seatLimit.response) return seatLimit.response;
+
+    const tenantAgents = await fetchTenantAgents(supabase, tenant.id);
+
+    if (action === "init") {
+      const callRecord = await ensureCallRecord(supabase, body, auth, tenant);
+      return json(200, {
+        call_record_id: callRecord.id,
+        transcript_id: callRecord.transcript_id || null,
+      });
+    }
+
+    if (action === "checkpoint" || action === "finalize") {
+      const saved = await saveCheckpoint(supabase, body, auth, tenant, { final: action === "finalize" });
+      return json(200, {
+        call_record_id: saved.callRecord.id,
+        transcript_id: saved.transcript?.id || saved.callRecord.transcript_id || null,
+        checkpointed_at: new Date().toISOString(),
+      });
+    }
+
+    if (action === "wrap_up") {
+      const result = await handleWrapUp(
+        supabase,
+        body,
+        auth,
+        request,
+        context,
+        tenant,
+        tenantAgents,
+        subscription
+      );
+      await logUsageRecord(supabase, tenant.id, "call_completed", 1, {
+        call_record_id: result.call_record_id,
+        outcome: normalizeOutcome(body.call_outcome),
+        product_type: normalizeProductType(body.product_type),
+        user_id: auth.userId,
+      });
+      return json(200, result);
+    }
+
+    if (action === "webhook_result") {
+      const result = await handleWebhookResult(supabase, body, tenant);
+      return json(200, result);
+    }
+
+    return json(400, { error: `Unknown action: ${action}` });
+  } catch (error) {
+    return evidenceFailure(error);
+  }
+};
+}
+
+export default createPostCallHandler();

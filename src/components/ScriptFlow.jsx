@@ -561,6 +561,8 @@ export default function ScriptFlow() {
   const finalPersistencePromiseRef = useRef(null);
   const persistFinalTranscriptRef = useRef(null);
   const previousSoftphoneActiveRef = useRef(false);
+  const initializedPostCallSessionsRef = useRef(new Set());
+  const checkpointPendingRef = useRef(false);
   const [postCallPersistenceError, setPostCallPersistenceError] = useState("");
 
   // Start session only after agent clicks Start Call
@@ -766,6 +768,7 @@ export default function ScriptFlow() {
 
   const persistPostCallTranscript = useCallback(
     async ({ final = false, force = false } = {}) => {
+      if (!final && checkpointPendingRef.current) return null;
       const snapshot = latestPostCallRef.current;
       if (!snapshot?.state) return null;
 
@@ -800,14 +803,18 @@ export default function ScriptFlow() {
 
       checkpointKeyRef.current = checkpointKey;
 
-      const result = final
-        ? await finalizePostCallTranscript(getToken, payload)
-        : await checkpointPostCall(getToken, payload);
+      if (!final) checkpointPendingRef.current = true;
+      let result;
+      try {
+        result = final ? await finalizePostCallTranscript(getToken, payload) : await checkpointPostCall(getToken, payload);
+      } finally { if (!final) checkpointPendingRef.current = false; }
 
-      setActivePostCallMetadata({
-        callRecordId: result.call_record_id || metadata.callRecordId || null,
-        transcriptId: result.transcript_id || metadata.transcriptId || null,
-      });
+      if (getActiveSessionMetadata().sessionId === metadata.sessionId) {
+        setActivePostCallMetadata({
+          callRecordId: result.call_record_id || metadata.callRecordId || null,
+          transcriptId: result.transcript_id || metadata.transcriptId || null,
+        });
+      }
 
       return result;
     },
@@ -855,26 +862,24 @@ export default function ScriptFlow() {
 
     let cancelled = false;
     void (async () => {
-      let metadata = await waitForActiveSessionMetadata(2500);
+      const metadata = await waitForActiveSessionMetadata(2500);
       if (cancelled || !metadata.sessionId || !metadata.agentId || metadata.callRecordId) {
         return;
       }
+      if (initializedPostCallSessionsRef.current.has(metadata.sessionId)) return;
+      initializedPostCallSessionsRef.current.add(metadata.sessionId);
 
       const snapshot = latestPostCallRef.current;
       const payload = buildPostCallPayload({
-        state: snapshot?.state || state,
-        liveCall: snapshot?.liveCall || {
-          callStarted,
-          callDirection: state.callDirection,
-          transcript,
-          mergedTranscript: mergedTranscriptEntries,
-        },
+        state: snapshot?.state,
+        liveCall: snapshot?.liveCall,
         sessionMetadata: metadata,
         flow: "ma",
       });
 
       try {
         const result = await initPostCallRecord(getToken, payload);
+        if (getActiveSessionMetadata().sessionId !== metadata.sessionId) return;
         setActivePostCallMetadata({
           callRecordId: result.call_record_id || null,
           transcriptId: result.transcript_id || null,
@@ -887,19 +892,15 @@ export default function ScriptFlow() {
     return () => {
       cancelled = true;
     };
-  }, [
-    callStarted,
-    getToken,
-    state,
-    transcript,
-    mergedTranscriptEntries,
-  ]);
+  }, [callStarted, getToken]);
 
   useEffect(() => {
     if (!callStarted) return undefined;
 
     const intervalId = window.setInterval(() => {
-      void persistPostCallTranscript({ final: false });
+      void persistPostCallTranscript({ final: false }).catch(error => {
+        setPostCallPersistenceError(error?.message || 'Transcript checkpoint failed.');
+      });
     }, CHECKPOINT_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);

@@ -1,5 +1,6 @@
 const OPENAI_EMBEDDING_MODEL = "text-embedding-3-small";
 import { fetchWithClerk } from "./clerkFetch";
+import {getActiveSessionMetadata} from '../hooks/useSessionTracker';
 
 export async function getQueryEmbedding(text, getToken) {
   const input = (text || "").trim();
@@ -13,6 +14,7 @@ export async function getQueryEmbedding(text, getToken) {
     body: JSON.stringify({
       model: OPENAI_EMBEDDING_MODEL,
       input,
+      session_id:getActiveSessionMetadata().sessionId || undefined,
     }),
   });
 
@@ -20,9 +22,9 @@ export async function getQueryEmbedding(text, getToken) {
   if (!response.ok) {
     const detail =
       data?.detail ||
-      data?.error?.message ||
+      (typeof data?.error==='string'?data.error:data?.error?.message) ||
       `OpenAI embeddings request failed (${response.status})`;
-    throw new Error(detail);
+    throw Object.assign(new Error(`${detail}${data.code?` (${data.code})`:''}`),{code:data.code || `embedding_http_${response.status}`});
   }
 
   const embedding = data?.embedding;

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { createClerkFetch } from './clerkFetch.js';
 
 // A client belongs to one token getter. There is no shared subject/token cache
 // and no fallback to anonymous access when Clerk cannot mint a template JWT.
@@ -10,7 +11,7 @@ export function createEvidenceSupabase(getToken, url, anonKey) {
       if (!token || token === anonKey) throw new Error("Sign in to access transcript references.");
       return token;
     },
-    global: { headers: { apikey: anonKey } },
+    global: { headers: { apikey: anonKey }, fetch: createClerkFetch(getToken, {tokenOptions:{template:'supabase'}}) },
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 }

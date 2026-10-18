@@ -3,7 +3,7 @@
    Caches the app shell for offline capability.
    ===================================================== */
 
-const CACHE_NAME = "enrollgen-v2";
+const CACHE_NAME = "enrollgen-v3";
 const isLocalhost =
   self.location.hostname === "localhost" ||
   self.location.hostname === "127.0.0.1";
@@ -71,6 +71,15 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   if (event.request.url.startsWith("chrome-extension")) return;
   if (isLocalhost) return;
+  const url = new URL(event.request.url);
+  // API/auth/data requests belong entirely to the browser network stack.
+  if (url.pathname.startsWith('/.netlify/functions/') || url.pathname.startsWith('/api/') ||
+      url.hostname === 'supabase.co' || url.hostname.endsWith('.supabase.co')) return;
+  const isStatic = url.origin === self.location.origin && (
+    url.pathname.startsWith('/assets/') || url.pathname.startsWith('/videos/') ||
+    url.pathname.startsWith('/wallpapers/') || /\.(?:css|js|png|jpg|jpeg|svg|ico|webp|woff2?|mp4|webm)$/.test(url.pathname)
+  );
+  if (event.request.mode !== 'navigate' && !isStatic) return;
 
   event.respondWith(
     fetch(event.request)

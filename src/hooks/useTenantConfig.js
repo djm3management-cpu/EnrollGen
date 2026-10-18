@@ -28,16 +28,16 @@ function decodeJwtPayload(token) {
   }
 }
 
-async function getSupabaseToken(getToken) {
+async function getSupabaseToken(getToken, options = {}) {
   try {
-    const token = await getToken({ template: "supabase" });
+    const token = await getToken({ ...options, template: "supabase" });
     if (token) return token;
   } catch {
     // Fall back to the default Clerk token for local/dev JWT setups.
   }
 
   try {
-    return (await getToken()) || null;
+    return (await getToken(options)) || null;
   } catch {
     return null;
   }
@@ -58,7 +58,7 @@ async function getTenantBundle(getToken) {
     const { fetchTenantAgents, fetchTenantConfig } = pipelineModule;
     // Fresh-token client: re-resolves the Clerk token per request so it
     // never goes stale (Clerk tokens expire in about 60 seconds).
-    registerClerkTokenGetter(() => getSupabaseToken(getToken));
+    registerClerkTokenGetter(options => getSupabaseToken(getToken, options));
     const client = getClerkSupabase() || supabase;
     const tenant = await fetchTenantConfig(client);
     const agents = tenant?.id ? await fetchTenantAgents(client, tenant.id) : [];

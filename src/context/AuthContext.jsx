@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
+import { installTokenRefresh } from "../lib/clerkFetch.js";
 
 const AuthContext = createContext({ getToken: async () => null });
 let authTokenGetter = async () => null;
 
 export const useAppAuth = () => useContext(AuthContext);
-export const getAuthToken = async () => authTokenGetter();
+export const getAuthToken = async (options) => authTokenGetter(options);
 
 const DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
@@ -18,6 +19,13 @@ function ClerkAuthBridge({ children }) {
       authTokenGetter = async () => null;
     };
   }, [getToken]);
+
+  useEffect(() => installTokenRefresh({ getToken, windowTarget: window, documentTarget: document,
+    onRefresh: async () => {
+      const { refreshClerkSupabaseToken } = await import('../lib/supabase');
+      await refreshClerkSupabaseToken();
+    },
+  }), [getToken]);
 
   return (
     <AuthContext.Provider value={{ getToken }}>{children}</AuthContext.Provider>

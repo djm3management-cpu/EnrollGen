@@ -229,8 +229,9 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
       const assessmentPrompt = buildAssessmentPrompt(callRecord, diarized, scoreResult);
       const assessmentRaw = await callLLM(ASSESSMENT_SYSTEM_PROMPT, assessmentPrompt, { response_format: assessmentFormat });
       assessment = parseAssessmentResponse(assessmentRaw);
-    } catch {
+    } catch (error) {
       debugLog("[ScorecardGenerator] Assessment generation failed");
+      throw error;
     }
     if (assessment) {
 

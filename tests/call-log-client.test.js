@@ -7,7 +7,7 @@ test('browser call-log requests use bearer auth, encode filters, and surface ser
   let requests=0;
   globalThis.fetch=async(url,options)=>{
    requests++;const params=new URL(url,'https://test').searchParams;
-   assert.equal(options.headers.Authorization,'Bearer signed-clerk-token');assert.equal(options.method,'GET');
+   assert.equal(new Headers(options.headers).get('Authorization'),'Bearer signed-clerk-token');assert.equal(options.method,'GET');
    assert.equal(params.get('search'),'Mike, (cell) +16093201600');assert.equal(params.get('direction'),'outbound');
    return new Response(JSON.stringify({rows:[{direction:'outbound'}],count:1}));
   };

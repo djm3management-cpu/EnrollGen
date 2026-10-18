@@ -22,14 +22,36 @@ async function makeCall(n,{seconds=null,arrived=new Date(Date.now()-200000).toIS
 }
 before(async()=>{
  await pg.exec(readFileSync(new URL('./fixtures/paragon-billing-schema.sql',import.meta.url),'utf8'));
+ await pg.exec('CREATE TABLE call_transcripts(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),disposition text)');
  await sql('INSERT INTO tenants VALUES($1)',[T]);
  await sql("INSERT INTO lead_sources VALUES($1,$2,'Paragon Media','publisher',true,$3)",[SRC,T,hash]);
  await sql("INSERT INTO vendor_controls VALUES($1,false,$2,now(),'fixture')",[T,JSON.stringify(standard)]);
  await sql("INSERT INTO tenant_agents(tenant_id,name,npn,agent_slug,is_active) VALUES($1,'Mark','20856361','mark',true)",[T]);
  await pg.exec("INSERT INTO agent_availability(agent_id,agent_name,status,available) VALUES('mark','Mark','available',true)");
- for(const name of ['051_paragon_vendor_matrix.sql','052_paragon_ping_and_claim.sql','053_paragon_zip_and_reports.sql','055_paragon_vendor_report.sql','056_resolve_recent_paragon_ping.sql','057_paragon_vendor_report_proof.sql','067_paragon_billing_hours.sql']) await pg.exec(migration(name));
+ for(const name of ['051_paragon_vendor_matrix.sql','052_paragon_ping_and_claim.sql','053_paragon_zip_and_reports.sql','055_paragon_vendor_report.sql','056_resolve_recent_paragon_ping.sql','057_paragon_vendor_report_proof.sql','067_paragon_billing_hours.sql','096_availability_before_staffed_hours.sql','097_availability_status_labels.sql','098_ancillary_sale_disposition.sql']) await pg.exec(migration(name));
 });
 after(()=>pg.close());
+test('status feed works outside staffed hours while Paragon admission still rejects new calls',async()=>{
+ await pg.exec('BEGIN');
+ try {
+  await pg.exec("UPDATE vendor_controls SET staffed_hours='{}',vendor_pause=false; UPDATE agent_availability SET status='available',available=true,active_call_sid=NULL");
+  const snapshot=async()=>(await sql("SELECT availability_snapshot('mark') data"))[0].data;
+  assert.equal((await snapshot()).available_count,1);
+  assert.equal((await snapshot()).agents[0].status,'available');
+  assert.equal((await sql('SELECT paragon_new_ping_gate($1,now()) gate',[T]))[0].gate,'outside_staffed_hours');
+  const decision=(await sql("SELECT paragon_ping($1,'KS','+15550000999','before-open',true) decision",[hash]))[0].decision;
+  assert.equal(decision.available,false);
+  assert.equal(decision.reason,'outside_staffed_hours');
+  await pg.exec('UPDATE vendor_controls SET vendor_pause=true');
+  assert.equal((await snapshot()).available_count,0);
+  await pg.exec('UPDATE vendor_controls SET vendor_pause=false');
+  for(const [change,expected] of [["status='offline',available=false,active_call_sid=NULL",'offline'],["status='busy',available=false,active_call_sid=NULL",'busy'],["status='available',available=true,active_call_sid='CA-active'",'busy']]) {
+   await pg.exec('UPDATE agent_availability SET '+change);
+   assert.equal((await snapshot()).available_count,0,change);
+   assert.equal((await snapshot()).agents[0].status,expected,change);
+  }
+ } finally { await pg.exec('ROLLBACK'); }
+});
 test('hours: exact opening/closing, weekends, winter/summer and DST-transition Sunday',async()=>{
  for(const [time,want] of [
  ['2026-10-02T14:14:59Z',false],['2026-10-02T14:15:00Z',true],['2026-10-02T21:14:59Z',true],['2026-10-02T21:15:00Z',false],
@@ -184,4 +206,31 @@ test('parent completion before late child visibility fills talk without changing
  job=(await sql('UPDATE paragon_call_billing SET lease_token=gen_random_uuid() WHERE parent_call_sid=$1 RETURNING *',[call.parent]))[0];
  await processBillingJob({db,config,job,fetchParent:async()=>parent,fetchChildren:async()=>[{sid:sid(704),accountSid:AC,parentCallSid:call.parent,status:'completed',duration:'80',endTime:parent.endTime}]});
  const late=(await sql('SELECT * FROM paragon_call_billing WHERE parent_call_sid=$1',[call.parent]))[0];assert.equal(late.billable_seconds,90);assert.equal(late.talk_seconds,80);assert.equal(late.ring_seconds,10);assert.equal(late.finalized_at.getTime(),original.finalized_at.getTime());
+});
+
+test('ancillary products require a valid type and map to sale in Paragon reports and payloads without changing billing',async()=>{
+ await assert.rejects(sql("INSERT INTO call_records(tenant_id,call_outcome) VALUES($1,'sale_ancillary')",[T]),/ancillary_product_check/);
+ await assert.rejects(sql("INSERT INTO call_records(tenant_id,call_outcome,ancillary_product_type) VALUES($1,'sale_ancillary','unknown')",[T]),/ancillary_product_check/);
+ const products=['hospital_indemnity','dental_vision','final_expense','cancer','accident'];
+ for(const [index,product] of products.entries()) {
+  const seconds=index===0?89:90;
+  const call=await makeCall(800+index,{seconds,arrived:'2026-10-02T16:00:00Z'});
+  const record=(await sql("INSERT INTO call_records(tenant_id,call_outcome,vendor_disposition) VALUES($1,'not_interested','not_interested') RETURNING id",[T]))[0].id;
+  await sql('UPDATE inbound_calls SET call_record_id=$1 WHERE id=$2',[record,call.inbound]);
+  const reportArgs=[SRC,'vendor-'+(800+index)];
+  const reportSql="SELECT * FROM paragon_vendor_report($1,'2026-10-02','2026-10-03') WHERE call_id=$2";
+  assert.equal((await sql(reportSql,reportArgs))[0].disposition_category,'not_interested');
+  // Editing a historical call uses the same atomic write as the Calls tab.
+  await sql("UPDATE call_records SET call_outcome='sale_ancillary',ancillary_product_type=$1 WHERE id=$2",[product,record]);
+  const row=(await sql(reportSql,reportArgs))[0];
+  assert.equal(row.disposition_category,'sale');
+  assert.equal(row.billable,seconds>=90?'yes':'no');
+  assert.equal(Object.keys(row).length,8);
+  const payload=(await sql('SELECT vendor_call_payload($1) payload',[call.inbound]))[0].payload;
+  assert.equal(payload.sale,true);assert.equal(payload.disposition_code,'sale');
+  assert.equal(payload.duration,seconds);
+ }
+ await pg.exec("INSERT INTO call_transcripts(disposition) VALUES('sale_ancillary')");
+ const existing=(await sql("INSERT INTO call_records(tenant_id,call_outcome) VALUES($1,'enrolled') RETURNING id",[T]))[0].id;
+ assert.ok(existing);
 });

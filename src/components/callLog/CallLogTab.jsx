@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { redactSensitiveText } from "../../lib/redaction";
 import { CALL_OUTCOME_OPTIONS } from "../../lib/postCallPipeline";
+import { ANCILLARY_PRODUCT_OPTIONS, buildCallOutcomePatch } from "../../lib/ancillarySale.js";
 import CallDetailPanel from "../callDetail/CallDetailPanel";
 import ComplianceReviewModal, { COMPLIANCE_WARNING_THRESHOLD } from "../callDetail/ComplianceReviewModal";
 import { CreateOpportunityButton } from "../opportunities/ContactOpportunities";
@@ -93,35 +94,57 @@ function RecordingCell({ row }) {
   );
 }
 
-function CallOutcomeEditor({ callRecordId, outcome, supabaseClient, onChanged }) {
+function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient, onChanged }) {
   const [saving, setSaving] = useState(false);
+  const [selectedOutcome, setSelectedOutcome] = useState(outcome || "");
+  const [selectedProduct, setSelectedProduct] = useState(productType || "");
+  const [error, setError] = useState("");
 
-  const handleChange = useCallback(
-    async (event) => {
-      const value = event.target.value;
+  useEffect(() => {
+    setSelectedOutcome(outcome || "");
+    setSelectedProduct(productType || "");
+  }, [outcome, productType]);
+
+  const saveOutcome = useCallback(
+    async (value, product) => {
+      setError("");
       setSaving(true);
       try {
+        const patch = buildCallOutcomePatch(value, product);
         const { error } = await supabaseClient
           .from("call_records")
-          .update({ call_outcome: value })
-          .eq("id", callRecordId);
+          .update(patch)
+          .eq("id", callRecordId)
+          .select("id")
+          .single();
         if (error) throw error;
-        onChanged(value);
-      } catch {
+        onChanged(value, patch.ancillary_product_type);
+      } catch (error) {
+        if (value !== "sale_ancillary") {
+          setSelectedOutcome(outcome || "");
+          setSelectedProduct(productType || "");
+        }
+        setError(error?.message || "Unable to save call outcome.");
         debugLog("[CallLog] call_outcome update failed");
       } finally {
         setSaving(false);
       }
     },
-    [callRecordId, supabaseClient, onChanged]
+    [callRecordId, supabaseClient, onChanged, outcome, productType]
   );
 
   return (
+    <>
     <select
       className="contacts-status-select"
-      value={outcome || ""}
+      value={selectedOutcome}
       disabled={saving}
-      onChange={handleChange}
+      onChange={(event) => {
+        const value = event.target.value;
+        setSelectedOutcome(value);
+        setError("");
+        if (value !== "sale_ancillary") void saveOutcome(value, null);
+      }}
       aria-label="Call outcome"
     >
       <option value="" disabled>Select outcome...</option>
@@ -133,6 +156,33 @@ function CallOutcomeEditor({ callRecordId, outcome, supabaseClient, onChanged })
         </optgroup>
       ))}
     </select>
+    {selectedOutcome === "sale_ancillary" && (
+      <div className="grid post-call-wrap-grid">
+        <label>
+          Ancillary Product Type
+          <select
+            className="contacts-status-select"
+            value={selectedProduct}
+            disabled={saving}
+            required
+            onChange={(event) => setSelectedProduct(event.target.value)}
+          >
+            <option value="">Select product type</option>
+            {ANCILLARY_PRODUCT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          className="contacts-mini-btn"
+          disabled={saving || !selectedProduct}
+          onClick={() => void saveOutcome(selectedOutcome, selectedProduct)}
+        >{saving ? "SAVING..." : "SAVE OUTCOME"}</button>
+      </div>
+    )}
+    {error && <div className="ops-error" role="alert">{error}</div>}
+    </>
   );
 }
 
@@ -150,7 +200,7 @@ function ExpandedRow({ row, supabaseClient }) {
     try {
       const { data: callRecord, error } = await supabaseClient
         .from("call_records")
-        .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, plan_name, effective_date, call_start, agent_notes, compliance_scorecard_id, call_outcome")
+        .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, plan_name, effective_date, call_start, agent_notes, compliance_scorecard_id, call_outcome, ancillary_product_type")
         .eq("id", row.call_record_id)
         .single();
       if (error) throw error;
@@ -184,8 +234,8 @@ function ExpandedRow({ row, supabaseClient }) {
   const scorecard = detail?.scorecard;
 
   const handleOutcomeChanged = useCallback(
-    (value) => {
-      setDetail((current) => (current ? { ...current, call_outcome: value } : current));
+    (value, productType) => {
+      setDetail((current) => (current ? { ...current, call_outcome: value, ancillary_product_type: productType } : current));
       if (ENROLLED_OUTCOMES.has(value)) setShowComplianceReview(true);
     },
     []
@@ -225,6 +275,7 @@ function ExpandedRow({ row, supabaseClient }) {
             <CallOutcomeEditor
               callRecordId={row.call_record_id}
               outcome={detail?.call_outcome}
+              productType={detail?.ancillary_product_type}
               supabaseClient={supabaseClient}
               onChanged={handleOutcomeChanged}
             />

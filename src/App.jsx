@@ -11,6 +11,7 @@ import {
 } from "react";
 import { preloadWorkspace } from "./lib/preloadWorkspace";
 import ShellTextures from "./components/ShellTextures";
+import PostCallStatusAlert from './components/PostCallStatusAlert';
 import ClientQuickScripts from "./components/ClientQuickScripts";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
@@ -1156,6 +1157,7 @@ function AppShell({ currentUser = null }) {
         </header>
 
         <SmsToastHost onOpenContactMessages={handleOpenContactMessages} />
+        <PostCallStatusAlert />
 
         {appMode !== "call" && sessionActive ? (
           <div className="return-to-call-strip" role="status">

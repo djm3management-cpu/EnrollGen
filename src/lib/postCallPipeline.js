@@ -1,6 +1,8 @@
 import { debugLog } from "./debugLog.js";
 import { fetchWithClerk } from "./clerkFetch.js";
 import { redactSensitiveText, redactTranscriptEntries } from "./redaction.js";
+import { normalizeDateInput as dateInputValue } from './dateInput.js';
+import {postCallFailureMessage} from './postCallStatus.js';
 
 const POST_CALL_ENDPOINT = "/api/post-call";
 
@@ -9,7 +11,7 @@ export const CHECKPOINT_INTERVAL_MS = 15000;
 // Grouped call-outcome taxonomy. Single source of truth for the
 // live wrap-up dropdown (SectionWrapUp.jsx) and the Calls-tab
 // outcome editor (CallLogTab.jsx). Values must stay in sync with
-// supabase/migrations/027_call_outcome_taxonomy.sql's CHECK
+// the latest call_records_call_outcome_check migration's CHECK
 // constraint.
 export const CALL_OUTCOME_OPTIONS = [
   {
@@ -18,6 +20,7 @@ export const CALL_OUTCOME_OPTIONS = [
       { value: "enrolled", label: "Enrolled" },
       { value: "enrolled_pending_verification", label: "Enrolled - Pending Verification" },
       { value: "partial_enrollment", label: "Partial Enrollment (App Started, Not Completed)" },
+      { value: "sale_ancillary", label: "Sale - Ancillary" },
     ],
   },
   {
@@ -264,18 +267,7 @@ export function buildDiarizedTranscript(mergedTranscript = [], fallbackTranscrip
 }
 
 function normalizeDateInput(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return null;
-
-  const date = new Date(raw);
-  if (!Number.isNaN(date.getTime())) {
-    return date.toISOString().slice(0, 10);
-  }
-
-  const match = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!match) return null;
-  const [, month, day, year] = match;
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  return dateInputValue(value) || null;
 }
 
 export function buildPostCallPayload({
@@ -303,6 +295,7 @@ export function buildPostCallPayload({
     contact_id: sessionMetadata?.contactId || null,
     flow,
     product_type: productTypeFromFlow(flow),
+    ancillary_product_type: notes.callOutcome === "sale_ancillary" ? notes.ancillaryProductType || null : null,
     call_direction: state?.callDirection || liveCall?.callDirection || "inbound",
     call_type: "enrollment",
     call_start: startedAt,
@@ -364,11 +357,30 @@ export function installTranscriptExitFlush({ windowTarget, documentTarget, getSn
   };
 }
 
+export async function watchPostCallRequest(getToken, sessionId, requestKey, {
+  send = fetchWithClerk, wait = ms => new Promise(resolve => setTimeout(resolve, ms)),
+  maxPolls = 185, onProgress = () => {},
+} = {}) {
+  for (let poll = 0; poll < maxPolls; poll++) {
+    const params = new URLSearchParams({session_id:sessionId,request_key:requestKey});
+    const response = await send(getToken, `${POST_CALL_ENDPOINT}?${params}`, {signal:AbortSignal.timeout(15000)});
+    const row = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(row.error || `Post-call status failed (${response.status}).`);
+    onProgress({status:row.status,progress:row.job?.progress});
+    if (row.job?.provider_errors && Object.keys(row.job.provider_errors).length) throw new Error(postCallFailureMessage(row.job));
+    if (row.status === 'completed') return row.result || {};
+    if (row.status === 'failed') throw new Error(`Post-call save failed (${row.error_code || 'processing_failed'}). The request is retained.`);
+    await wait(Math.min(5000, 500 + poll * 500));
+  }
+  throw new Error('Post-call processing is taking longer than expected. Check Calls; the request remains saved.');
+}
+
 async function postCallAction(getToken, action, payload = {}) {
   const response = await fetchWithClerk(getToken, POST_CALL_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action, ...payload }),
+    signal: AbortSignal.timeout(20000),
   });
 
   const raw = await response.text();
@@ -383,6 +395,10 @@ async function postCallAction(getToken, action, payload = {}) {
     throw new Error(data?.error || data?.detail || raw || `Post-call action failed (${response.status})`);
   }
 
+  if (response.status === 202 && data?.request_key) {
+    if (data.status === 'completed') return data.result || {};
+    return watchPostCallRequest(getToken, data.session_id, data.request_key);
+  }
   return data || {};
 }
 

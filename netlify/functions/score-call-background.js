@@ -1,6 +1,7 @@
 import { complete } from "../../src/lib/llm/client.ts";
 import { resolveEngine } from "../../src/lib/llm/config.js";
 import { llmRuntime } from "./_llmTelemetry.js";
+import {providerErrorCode,recordProviderStatus} from '../lib/postCallProvider.js';
 /**
  * Background function for scoring a call via the compliance engine.
  * Uses the -background suffix so Netlify returns 202 immediately
@@ -23,7 +24,7 @@ function hasInternalJobAuthorization(request) {
   return Boolean(secret) && request.headers.get("x-enrollgen-job-secret") === secret;
 }
 
-export function createScoreCallHandler({ getDb = getEvidenceServiceClient, classify } = {}) {
+export function createScoreCallHandler({ getDb = getEvidenceServiceClient, classify, recordStatus=recordProviderStatus } = {}) {
 return async (request, context) => {
   if (request.method !== "POST") return;
   if (!hasInternalJobAuthorization(request)) {
@@ -41,6 +42,7 @@ return async (request, context) => {
 
   console.log(`[score-bg] Starting scoring for call ${callId}`);
   const sb = getDb();
+  const startedAt=new Date().toISOString();
 
   const { data: callRecord, error } = await sb
     .from("call_records")
@@ -80,7 +82,9 @@ return async (request, context) => {
       }),
     });
     // The scoring transaction owns completion and linkage; busy/replayed jobs don't rerun side effects.
-    if (result.pending || result.reused) return new Response(null, { status: 202 });
+    if (result.pending) return new Response(null, { status: 202 });
+    await recordStatus(sb,callRecord.session_id,'scoring',null,startedAt);
+    if (result.reused) return Response.json({scorecard_id:result.scorecard?.id,reused:true});
 
     await logUsageRecord(sb, callRecord.tenant_id, "compliance_score", 1, {
       call_record_id: callId,
@@ -90,11 +94,18 @@ return async (request, context) => {
     });
 
     console.log(`[score-bg] Scoring complete for ${callId}: ${result.scorecard?.overall_grade} (${result.scorecard?.overall_score?.toFixed(1)}%)`);
+    return Response.json({scorecard_id:result.scorecard?.id});
   } catch (err) {
-    console.error(`[score-bg] Scoring failed for ${callId}:`, err);
+    const code=providerErrorCode(err,'scoring_failed');
+    console.error(JSON.stringify({event:'scoring_failed',call_record_id:callId,session_id:callRecord.session_id,code,status:err.status || null}));
+    try {
+      await recordStatus(sb,callRecord.session_id,'scoring',code,startedAt);
+    } catch {
+      console.error(JSON.stringify({event:'provider_failure_status_write_failed',call_record_id:callId,code}));
+    }
     // generateScorecard records a checked failed status using the claimed worker token.
     // If even that write fails, return a retryable error instead of claiming completion.
-    return new Response("Scoring failed", { status: 503 });
+    return Response.json({error:'Scoring failed. Your transcript is retained.',code},{status:503});
   }
 };
 }

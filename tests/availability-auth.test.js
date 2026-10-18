@@ -170,11 +170,11 @@ test('browser requests carry Clerk tokens only, refuse missing sessions and surf
     await availabilityRequest(async () => 'session-token', { status: 'offline' });
     await availabilityRequest(async () => 'refreshed-token');
     assert.equal(calls[0].url, '/.netlify/functions/set-availability');
-    assert.equal(calls[0].headers.Authorization, 'Bearer session-token');
-    assert.equal(calls[0].headers['x-api-key'], undefined);
+    assert.equal(new Headers(calls[0].headers).get('Authorization'), 'Bearer session-token');
+    assert.equal(new Headers(calls[0].headers).get('x-api-key'), null);
     assert.deepEqual(JSON.parse(calls[0].body), { status: 'offline' });
     assert.equal(calls[1].method, 'GET');
-    assert.equal(calls[1].headers.Authorization, 'Bearer refreshed-token');
+    assert.equal(new Headers(calls[1].headers).get('Authorization'), 'Bearer refreshed-token');
     await assert.rejects(availabilityRequest(async () => null, { status: 'offline' }), /Sign in/);
     assert.equal(calls.length, 2);
     globalThis.fetch = async () => new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });

@@ -1,5 +1,6 @@
 import { debugLog } from "./debugLog.js";
 import { createClient } from "@supabase/supabase-js";
+import { createClerkFetch } from './clerkFetch.js';
 
 function requiredEnv(name) {
   const value = import.meta.env[name];
@@ -46,6 +47,7 @@ let clerkClient = null;
 let cachedClerkToken = null;
 let cachedClerkTokenExp = 0;
 let inFlightMint = null;
+let mintGeneration = 0;
 let warnedWrongAlg = false;
 
 export function registerClerkTokenGetter(getter) {
@@ -70,16 +72,22 @@ function decodeJwtPart(token, index) {
 // - Tokens not signed with HS256 (the default Clerk session token is
 //   RS256) can never verify against the Supabase JWT secret and produce
 //   "No suitable key or wrong key type"; degrade to the anon key instead.
-async function resolveClerkAccessToken() {
+async function resolveClerkAccessToken(options = {}) {
+  if (options.skipCache) {
+    cachedClerkToken = null;
+    cachedClerkTokenExp = 0;
+    inFlightMint = null;
+  }
   const now = Date.now() / 1000;
   if (cachedClerkToken && cachedClerkTokenExp - now > 15) {
     return cachedClerkToken;
   }
 
   if (!inFlightMint) {
+    const generation = ++mintGeneration;
     inFlightMint = (async () => {
       try {
-        const token = await clerkTokenGetter?.();
+        const token = await clerkTokenGetter?.(options);
         if (!token) return supabaseAnonKey;
 
         const header = decodeJwtPart(token, 0);
@@ -92,20 +100,26 @@ async function resolveClerkAccessToken() {
         }
 
         const payload = decodeJwtPart(token, 1);
-        cachedClerkToken = token;
-        cachedClerkTokenExp = payload?.exp || Date.now() / 1000 + 50;
+        if (generation === mintGeneration) {
+          cachedClerkToken = token;
+          cachedClerkTokenExp = payload?.exp || Date.now() / 1000 + 50;
+        }
         return token;
       } catch {
         const now = Date.now() / 1000;
         const cachedStillValid = cachedClerkToken && cachedClerkTokenExp - now > 0;
         return cachedStillValid ? cachedClerkToken : supabaseAnonKey;
       } finally {
-        inFlightMint = null;
+        if (generation === mintGeneration) inFlightMint = null;
       }
     })();
   }
 
   return inFlightMint;
+}
+
+export async function refreshClerkSupabaseToken() {
+  if (clerkTokenGetter) return resolveClerkAccessToken({skipCache:true});
 }
 
 export function getClerkSupabase() {
@@ -116,7 +130,7 @@ export function getClerkSupabase() {
       // The accessToken option only manages the Authorization bearer;
       // Supabase's gateway still requires the anon key in the apikey
       // header on every request ("No API key found in request").
-      global: { headers: { apikey: supabaseAnonKey } },
+      global: { headers: { apikey: supabaseAnonKey }, fetch:createClerkFetch(resolveClerkAccessToken) },
     });
   }
   return clerkClient;
@@ -130,8 +144,13 @@ export function getAuthSupabase(token) {
   const cacheKey = token.slice(-24);
   if (authClients.has(cacheKey)) return authClients.get(cacheKey);
 
+  let currentToken = token;
   const client = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
+    global: { headers: { Authorization: `Bearer ${token}` },
+      fetch:createClerkFetch(async options => {
+        if (options.skipCache && clerkTokenGetter) currentToken = await resolveClerkAccessToken(options);
+        return currentToken;
+      }) },
     auth: {
       persistSession: false,
       autoRefreshToken: false,

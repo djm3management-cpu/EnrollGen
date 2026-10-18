@@ -22,6 +22,8 @@ import {
 import { ScriptBox, LockText, SectionToast } from "./SharedUI";
 import ComplianceReviewModal from "./callDetail/ComplianceReviewModal";
 import { MA_CLOSING } from "../data/maScript2027.js";
+import { normalizeDateInput } from '../lib/dateInput.js';
+import { ANCILLARY_PRODUCT_OPTIONS, ancillarySaleError } from "../lib/ancillarySale.js";
 
 function digitsOnly(value) {
   return String(value || "").replace(/\D/g, "");
@@ -107,6 +109,8 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
     if (!notes.customerLastName?.trim()) return "Customer last name is required.";
     if (digitsOnly(notes.customerPhone).length !== 10) return "Enter a 10-digit customer phone number.";
     if (!callOutcome) return "Call outcome is required.";
+    const productError = ancillarySaleError(callOutcome, notes.ancillaryProductType);
+    if (productError) return productError;
 
     if (!isEnrolled) return "";
     if (!state.crossSellAcknowledged) {
@@ -288,6 +292,27 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
         </div>
       </div>
 
+      {callOutcome === "sale_ancillary" && (
+        <div className="post-call-core-panel">
+          <div className="grid post-call-wrap-grid">
+            <label>
+              Ancillary Product Type
+              <select
+                disabled={!wrapUpReady || isSaving}
+                value={notes.ancillaryProductType || ""}
+                onChange={(event) => updateNote("ancillaryProductType", event.target.value)}
+                required
+              >
+                <option value="">Select product type</option>
+                {ANCILLARY_PRODUCT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+      )}
+
       <div className={`post-call-enrollment-panel ${isEnrolled ? "is-open" : ""}`}>
         <div className="post-call-section-heading">
           <span>Enrollment Intake</span>
@@ -311,7 +336,7 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
             <input
               type="date"
               disabled={!wrapUpReady || isSaving}
-              value={notes.customerDob}
+              value={normalizeDateInput(notes.customerDob)}
               onChange={(e) => updateNote("customerDob", e.target.value)}
               required={isEnrolled}
             />
@@ -449,7 +474,7 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
             <input
               type="date"
               disabled={!wrapUpReady || isSaving}
-              value={notes.effectiveDate}
+              value={normalizeDateInput(notes.effectiveDate)}
               onChange={(e) => handleEffectiveDateChange(e.target.value)}
               required={isEnrolled}
             />
@@ -460,7 +485,7 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
             <input
               type="date"
               disabled={!wrapUpReady || isSaving}
-              value={notes.sixtyDayDate}
+              value={normalizeDateInput(notes.sixtyDayDate)}
               onChange={(e) => updateNote("sixtyDayDate", e.target.value)}
               required={isEnrolled}
             />
@@ -532,7 +557,7 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
               <input
                 type="date"
                 disabled={!wrapUpReady || isSaving}
-                value={notes.hraDate}
+                value={normalizeDateInput(notes.hraDate)}
                 onChange={(e) => updateNote("hraDate", e.target.value)}
               />
             </label>

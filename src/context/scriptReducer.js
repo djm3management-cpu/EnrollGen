@@ -1,5 +1,6 @@
 import { changeMAAnswer, getMAScriptView } from "../lib/maScriptFlow.js";
 import { MA_SCRIPT_SECTIONS } from "../data/maScript2027.js";
+import { normalizeDateInput } from '../lib/dateInput.js';
 
 /* =====================================================
    SCRIPT FLOW REDUCER
@@ -97,6 +98,7 @@ export const initialState = {
     enrollmentCode: "",
     confirmation: "",
     callOutcome: "enrolled",
+    ancillaryProductType: "",
     agentNotes: "",
     customerFirstName: "",
     customerLastName: "",
@@ -245,6 +247,10 @@ export function scriptReducer(state, action) {
 
     /* ---- Notes (nested object) ---- */
     case "SET_NOTE": {
+      if (['effectiveDate', 'sixtyDayDate', 'hraDate'].includes(action.field)) {
+        action = { ...action, value: normalizeDateInput(action.value) };
+      }
+      if (!PLAN_CONTEXT_NOTE_FIELDS.has(action.field) && state.notes[action.field] === action.value) return state;
       if (
         PLAN_CONTEXT_NOTE_FIELDS.has(action.field) &&
         action.source === "copilot" &&

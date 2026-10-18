@@ -76,6 +76,8 @@ before(async () => {
     GRANT USAGE ON SCHEMA auth,public TO anon,authenticated,service_role,outsider;
   `);
   await pg.exec(readFileSync(new URL("./fixtures/evidence-live-schema.sql",import.meta.url),"utf8"));
+  const ancillaryMigration = readFileSync(new URL("../supabase/migrations/098_ancillary_sale_disposition.sql", import.meta.url), "utf8");
+  await pg.exec(ancillaryMigration.slice(0, ancillaryMigration.indexOf('CREATE OR REPLACE FUNCTION public.paragon_vendor_report')) + 'COMMIT;');
   const routing = readFileSync(new URL("../supabase/migrations/047_availability_feed.sql",import.meta.url),"utf8");
   await pg.exec(`CREATE TABLE telephony_presence_policy(singleton boolean PRIMARY KEY,enforced boolean);
     INSERT INTO telephony_presence_policy VALUES(true,true);`);
@@ -352,7 +354,7 @@ async function scoreFixtureCall() {
   const firstError = sqlErrors.length;
   const priorScores = (await query("SELECT count(*)::int AS n FROM scoring_jobs WHERE call_id=$1 AND status='complete'",[windowCall.call_record_id]))[0].n;
   let llmCalls = 0;
-  const scoring = createScoreCallHandler({getDb:()=>db,classify:async()=> {
+  const scoring = createScoreCallHandler({getDb:()=>db,recordStatus:async()=>{},classify:async()=> {
     llmCalls++;
     return { detections:[{intent_code:"CALL_OPEN_001_RECORDING_ANNOUNCE",detected:true,confidence:0.99,speaker:"agent",
       evidence_text:"This call is recorded.",sequence_position:1}],risk_indicators:[],sentiment:{agent:"neutral",beneficiary:"neutral"} };
@@ -489,4 +491,39 @@ test("browser finalization preserves server-owned transcript while wrap-up remai
   const row=(await query("SELECT * FROM call_records WHERE id=$1",[wrap.call_record_id]))[0];
   assert.equal(row.transcript_raw,"Server complete transcript");assert.equal(row.agent_notes,"Follow up tomorrow");
   assert.equal(row.call_outcome,"callback_scheduled");
+});
+
+test("ancillary wrap-up rejects missing or invalid products before writing, then persists the product and transcript outcome", async () => {
+  await role("service_role");
+  const h = handlers(auth);
+  const created = await call(h.session, { action: "start", flow: "ma" });
+  const saved = await call(h.postCall, { action: "checkpoint", session_id: created.session_id, transcript_text: "Agent: Ancillary follow-up." });
+  const payload = { action: "wrap_up", session_id: created.session_id, call_outcome: "sale_ancillary" };
+  for (const type of [null, '', 'unsupported']) {
+    const response = await call(h.postCall, { ...payload, ancillary_product_type: type }, 400);
+    assert.match(response.error, /Select a product type/);
+  }
+  assert.equal((await query('SELECT call_outcome FROM call_records WHERE id=$1', [saved.call_record_id]))[0].call_outcome, null);
+  const originalFetch = globalThis.fetch;
+  const pending = [];
+  globalThis.fetch = async url => {
+    assert.match(String(url), /score-call-background/);
+    return new Response(null, { status: 202 });
+  };
+  try {
+    for (const type of ['hospital_indemnity', 'dental_vision', 'final_expense', 'cancer', 'accident']) {
+      const response = await h.postCall(bodyRequest({ ...payload, ancillary_product_type: type }), { waitUntil: promise => pending.push(promise) });
+      assert.equal(response.status, 200, JSON.stringify(await response.json()));
+      const row = (await query('SELECT call_outcome,ancillary_product_type,product_type,enrollment_completed FROM call_records WHERE id=$1', [saved.call_record_id]))[0];
+      assert.equal(row.call_outcome, 'sale_ancillary');
+      assert.equal(row.ancillary_product_type, type);
+      assert.equal(row.product_type, 'MA');
+      assert.equal(row.enrollment_completed, false);
+      assert.equal((await query('SELECT disposition FROM call_transcripts WHERE id=$1', [saved.transcript_id]))[0].disposition, 'sale_ancillary');
+    }
+    const response = await h.postCall(bodyRequest({ ...payload, call_outcome: 'callback_scheduled' }), { waitUntil: promise => pending.push(promise) });
+    assert.equal(response.status, 200);
+    assert.equal((await query('SELECT ancillary_product_type FROM call_records WHERE id=$1', [saved.call_record_id]))[0].ancillary_product_type, null);
+    await Promise.all(pending);
+  } finally { globalThis.fetch = originalFetch; }
 });

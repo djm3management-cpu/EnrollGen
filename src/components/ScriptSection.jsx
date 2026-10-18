@@ -1,6 +1,7 @@
 import React from "react";
 import MAScriptBranches from "./MAScriptBranches";
 import { getMAScriptView } from "../lib/maScriptFlow.js";
+import { normalizeDateInput } from '../lib/dateInput.js';
 import { ShieldCheck } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import {
@@ -58,8 +59,9 @@ function EnrollmentExtras({ state, dispatch, disabled }) {
           <label key={field}>
             {label}
             <input
+              type={field === 'effectiveDate' ? 'date' : 'text'}
               disabled={disabled}
-              value={notes[field]}
+              value={field === 'effectiveDate' ? normalizeDateInput(notes[field]) : notes[field]}
               onChange={(event) =>
                 dispatch({ type: "SET_NOTE", field, value: event.target.value })
               }
