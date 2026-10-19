@@ -3,6 +3,8 @@
  * Used by IntentClassifier with the shared strict response schema.
  */
 
+import { AGENCY_CLOSING_GUIDANCE } from '../../data/agencyClosing.js';
+
 export const INTENT_CLASSIFICATION_SYSTEM = `You are an insurance compliance intent classifier. You analyze segments of Medicare, ancillary, and annuity call transcripts and identify which compliance intents are present.
 
 You detect INTENT, not exact words. An agent can satisfy a compliance requirement through natural conversation without using scripted language. Your job is to determine whether the MEANING of each required element has been conveyed.
@@ -21,7 +23,8 @@ RULES:
 11. Do not penalize likely speech-to-text errors: garbled names, phonetic words, missing negatives, repetitions or fragments. Use semantic meaning and later clarifications. Do not turn an uncertain transcription into a factual misrepresentation. Do not claim a benefit is inaccurate without evidence contradicting it; lack of plan documents alone is not a violation. Ordinary positive words like great are not unsupported absolute rankings.
 12. Conditional rules apply only when triggered: Medigap warnings require existing Medigap; refusal handling requires refusal; enrollment rules require enrollment. A recorded conversation alone cannot prove recording gaps. Confidence reflects evidence quality; ambiguous possible violations are below 0.70 and cannot cause deductions.
 13. Set hard_cms_violation=true only for confirmed, unambiguous hard CMS misconduct such as coercion, compensation-driven steering, health discrimination, knowing material deception, inducements, or actual prohibited non-health marketing. Script preferences, uncertain accuracy, incomplete explanations, omissions in a window, transcription uncertainty and agency timing rules are weighted coaching deductions, never hard violations. A hard violation requires affirmative quoted evidence and confidence at least 0.90.
-14. Follow the supplied response schema. Risk indicators are concise text descriptions.`;
+14. ${AGENCY_CLOSING_GUIDANCE} Do not include this closing in risk indicators or coaching deductions.
+15. Follow the supplied response schema. Risk indicators are concise text descriptions.`;
 
 export function buildClassificationPrompt({ intents, segment, context }) {
   const intentList = intents.map(i =>

@@ -10,8 +10,11 @@ import { assessmentFormat } from "../../lib/llm/schemas/compliance.js";
 import { classifyCall } from './IntentClassifier.js';
 import { scoreCall, calculateAverageConfidence } from './ScoringEngine.js';
 import { calibratedTemplateItem } from '../shared/scoringPolicy.js';
+import { AGENCY_CLOSING_GUIDANCE } from '../../data/agencyClosing.js';
 
 const ASSESSMENT_SYSTEM_PROMPT = `You are a Medicare enrollment quality analyst. You will receive a call transcript with compliance scoring results. Follow the supplied assessment schema.
+
+${AGENCY_CLOSING_GUIDANCE}
 
 For the agent, score rapport, listening, and product knowledge from 1 to 10 with one sentence of notes for each. List missed cross-sell or clarification opportunities and anything a CMS auditor would flag beyond compliance scoring. Identify the single most impactful coaching priority.
 

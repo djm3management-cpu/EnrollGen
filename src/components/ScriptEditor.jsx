@@ -6,6 +6,7 @@ import { applyFlowSectionNumbers } from "../hooks/useScriptTemplate";
 import { getDefaultScriptSections } from "../data/defaultScriptTemplates";
 import "./ScriptEditor.css";
 import { resolveMASections } from "../data/maScript2027.js";
+import { resolveMedSupClosing } from "../context/MedSupScript.js";
 
 const FLOWS = [
   ["ma", "MA"],
@@ -42,7 +43,7 @@ function normalizeSections(sections, flow) {
     }))
     .sort((a, b) => a.sort_order - b.sort_order || a.section_number - b.section_number);
 
-  return applyFlowSectionNumbers(normalized, flow);
+  return applyFlowSectionNumbers(flow === "medsup" ? resolveMedSupClosing(normalized) : normalized, flow);
 }
 
 function createSection(flow, order) {

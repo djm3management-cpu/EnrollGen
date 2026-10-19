@@ -3,6 +3,7 @@ import { useTenantConfig } from "./useTenantConfig";
 import { getDefaultScriptSections } from "../data/defaultScriptTemplates";
 
 import { resolveMASections } from "../data/maScript2027.js";
+import { resolveMedSupClosing } from "../context/MedSupScript.js";
 
 const templateCache = new Map();
 const MA_GATE_SECTION_NUMBERS = {
@@ -90,7 +91,7 @@ function normalizeSections(sections, flowType) {
     }))
     .sort((a, b) => a.sort_order - b.sort_order || a.section_number - b.section_number);
 
-  return applyFlowSectionNumbers(normalized, flowType);
+  return applyFlowSectionNumbers(flowType === "medsup" ? resolveMedSupClosing(normalized) : normalized, flowType);
 }
 
 export function useScriptTemplate(flowType = "ma") {

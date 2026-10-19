@@ -6,6 +6,7 @@
 
 import { calculateServerGrade } from '../shared/serverGradeScale.js';
 import { calibratedTemplateItem, isHardViolation, isUnscoredDetection, preferDetection } from '../shared/scoringPolicy.js';
+import { normalizeApprovedClosingDetection } from '../shared/approvedClosing.js';
 
 export function calculateGrade(score, autoFail) {
   return calculateServerGrade(score, autoFail);
@@ -198,8 +199,10 @@ function findBestDetection(detections, intentId, intentCode) {
     (intentId && d.intent_id === intentId) || (intentCode && d.intent_code === intentCode)
   );
   if (matches.length === 0) return null;
-  // Return the detection with highest confidence
-  return matches.reduce(preferDetection, null);
+  // Clear a false flag on the approved closing before choosing evidence, so a
+  // separate supported violation still outranks compliant closing language.
+  return matches.map(d => normalizeApprovedClosingDetection({ ...d, intent_code: d.intent_code || intentCode }))
+    .reduce(preferDetection, null);
 }
 
 /**

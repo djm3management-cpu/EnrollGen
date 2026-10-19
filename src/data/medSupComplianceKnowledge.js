@@ -3,6 +3,8 @@
  * Medicare Supplement section knowledge for the Med Sup copilot.
  */
 
+import { AGENCY_CLOSING } from "./agencyClosing.js";
+
 export const MEDSUP_COMPLIANCE_KNOWLEDGE = {
   "Recording Disclosure": {
     verbatimScript: [
@@ -202,7 +204,7 @@ export const MEDSUP_COMPLIANCE_KNOWLEDGE = {
     verbatimScript: [
       "To recap, we reviewed your current coverage, discussed your options, and the next step is [NEXT STEP]. Does that sound right?",
       "We do not offer every plan available in your area. Any information we provide is limited to those plans we do offer. Please contact Medicare.gov or 1-800-MEDICARE to get information on all of your options.",
-      "Thank you for calling New Gen Health Solutions.",
+      AGENCY_CLOSING,
     ],
     keyPhrasesToListenFor: [
       "to recap",

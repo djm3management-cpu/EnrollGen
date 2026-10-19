@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { parse } from '@babel/parser';
+import { AGENCY_CLOSING_GUIDANCE } from '../../src/data/agencyClosing.js';
 
 export const engineFiles = {
   MA: 'useCopilotEngine', MEDSUP: 'useMedSupCopilotEngine',
@@ -16,7 +17,7 @@ export function loadPromptBuilders(source) {
   const nodes = parse(source, { sourceType: 'module' }).program.body.filter(node =>
     names.has(node.id?.name || node.declarations?.[0]?.id?.name));
   return vm.runInNewContext(nodes.map(node => source.slice(node.start, node.end)).join('\n')
-    + '\n({ buildCoachingSystemPrompt, buildAskSystemPrompt })');
+    + '\n({ buildCoachingSystemPrompt, buildAskSystemPrompt })', { AGENCY_CLOSING_GUIDANCE });
 }
 
 export function engineBuilders(engine) {

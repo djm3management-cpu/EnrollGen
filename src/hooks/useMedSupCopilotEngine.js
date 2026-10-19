@@ -1,4 +1,5 @@
 import { debugLog } from "../lib/debugLog.js";
+import { AGENCY_CLOSING_GUIDANCE } from "../data/agencyClosing.js";
 import { coachingFormat } from "../lib/llm/schemas/coaching.js";
 import { buildCachedPrompt } from "../lib/llm/prompts.js";
 /**
@@ -183,6 +184,8 @@ function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInt
 
   return { staticPrefix: `# Medicare Supplement live coaching
 
+${AGENCY_CLOSING_GUIDANCE}
+
 You are an expert Medicare Supplement (Medigap) enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required element, or something the agent needs to correct RIGHT NOW.
 
 ## IMPORTANT MED SUP CONTEXT
@@ -287,6 +290,8 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
   }
 
   return { staticPrefix: `# Medicare Supplement agent questions
+
+${AGENCY_CLOSING_GUIDANCE}
 
 You are a knowledgeable Medicare Supplement compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
 ## CRITICAL CONTEXT

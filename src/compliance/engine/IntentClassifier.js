@@ -11,6 +11,7 @@ import { ALL_INTENTS } from '../intents/index.js';
 import { INTENT_CLASSIFICATION_SYSTEM, buildClassificationPrompt } from '../prompts/intent-classification.js';
 import { redactTranscriptSegments, redactPHI } from './PHIRedactor.js';
 import { preferDetection } from '../shared/scoringPolicy.js';
+import { normalizeApprovedClosingDetection } from '../shared/approvedClosing.js';
 
 const SEGMENT_WINDOW_MS = 600000; // 10-minute windows reduce repeated catalog tokens on long calls
 const SEGMENT_OVERLAP_MS = 30000; // 30-second overlap preserves boundary evidence
@@ -214,27 +215,10 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
           const intent = applicableIntents.find(i => i.intent_code === det.intent_code);
           if (!intent) continue;
 
-          // Keep the highest-confidence detection per intent
+          // Normalize approved closing evidence before merging, so an actual
+          // pitch elsewhere retains precedence over a false closing flag.
           const existing = allDetections.find(d => d.intent_code === det.intent_code);
-          if (existing) {
-            const next = {
-                detected: det.detected,
-                confidence: det.confidence,
-                speaker: det.speaker,
-                transcript_segment: det.evidence_text || segment.text.slice(0, 500),
-                segment_start_ms: segment.start_ms,
-                segment_end_ms: segment.end_ms,
-                sequence_position_actual: det.sequence_position,
-                anti_pattern_match: det.anti_pattern || false,
-                anti_pattern_detail: det.anti_pattern_detail || null,
-                llm_reasoning: det.reasoning,
-                detection_method: det.hard_cms_violation ? 'cms_hard_violation' : 'intent_classifier',
-              };
-            if (preferDetection(existing, next) === next) {
-              Object.assign(existing, next);
-            }
-          } else {
-            allDetections.push({
+          const next = normalizeApprovedClosingDetection({
               intent_id: null,
               intent_code: det.intent_code,
               detected: det.detected,
@@ -250,10 +234,10 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
               anti_pattern_match: det.anti_pattern || false,
               anti_pattern_detail: det.anti_pattern_detail || null,
               llm_reasoning: det.reasoning,
-            });
-
-          }
-          if (det.detected) detectedIntentCodes.add(det.intent_code);
+            }, wholeText);
+          if (!existing) allDetections.push(next);
+          else if (preferDetection(existing, next) === next) Object.assign(existing, next);
+          if (next.detected) detectedIntentCodes.add(det.intent_code);
         }
       }
 

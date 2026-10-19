@@ -1,3 +1,5 @@
+import { AGENCY_CLOSING } from "../data/agencyClosing.js";
+
 export const MEDSUP_SECTIONS = [
   {
     id: "ms-1",
@@ -83,8 +85,26 @@ export const MEDSUP_SECTIONS = [
     script: [
       "To recap, we reviewed your current coverage, discussed your options, and the next step is [NEXT STEP]. Does that sound right?",
       "We do not offer every plan available in your area. Any information we provide is limited to those plans we do offer. Please contact Medicare.gov or 1-800-MEDICARE to get information on all of your options.",
-      "Thank you for calling New Gen Health Solutions.",
+      AGENCY_CLOSING,
     ],
     gate: "Wrap up completed",
   },
 ];
+
+// Saved tenant templates also receive the closing, preserving their other text.
+export function resolveMedSupClosing(sections) {
+  let found = false;
+  const resolved = sections.map(section => {
+    if (section.gate_field !== "wrapOk" && section.key !== "wrapOk" && section.key !== "ms-7") return section;
+    found = true;
+    const body = (section.body || "").trimEnd();
+    return { ...section, body: body.endsWith(AGENCY_CLOSING) ? body : `${body}\n\n${AGENCY_CLOSING}`.trim() };
+  });
+  if (!found) {
+    const wrap = MEDSUP_SECTIONS.at(-1);
+    resolved.push({ key: wrap.id, title: wrap.label, gate_field: wrap.key,
+      section_number: sections.length + 1, sort_order: Math.max(0, ...sections.map(s => Number(s.sort_order) || 0)) + 1,
+      compliance_locked: true, verbatim: true, lock_message: wrap.gate, body: wrap.script.join("\n") });
+  }
+  return resolved;
+}
