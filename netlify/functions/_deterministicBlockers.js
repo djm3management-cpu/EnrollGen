@@ -1,4 +1,4 @@
-function getDeterministicBlockers(state = {}) {
+export function getDeterministicBlockers(state = {}) {
   const blockers = [];
   const notes = state.notes || {};
   const enrollChecks = state.enrollChecks || {};
@@ -122,7 +122,3 @@ function getDeterministicBlockers(state = {}) {
 
   return blockers;
 }
-
-module.exports = {
-  getDeterministicBlockers,
-};
