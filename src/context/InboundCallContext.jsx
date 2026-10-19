@@ -525,6 +525,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     setIsHeld(next);
   }, [activeCall, isHeld, isMuted]);
 
+  const hasCallInProgress = useCallback(() => callInProgressRef.current, []);
+
   const value = useMemo(
     () => ({
       enabled: true,
@@ -536,6 +538,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       incomingCall,
       activeCall,
       dialingCall,
+      hasCallInProgress,
       remoteStream,
       contact,
       agentRows,
@@ -561,6 +564,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       incomingCall,
       activeCall,
       dialingCall,
+      hasCallInProgress,
       remoteStream,
       contact,
       agentRows,

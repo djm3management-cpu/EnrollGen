@@ -12,6 +12,9 @@ import {
 import { preloadWorkspace } from "./lib/preloadWorkspace";
 import ShellTextures from "./components/ShellTextures";
 import PostCallStatusAlert from './components/PostCallStatusAlert';
+import PreloadRecoveryNotice from './components/PreloadRecoveryNotice';
+import { isAppCallActive, preloadRecovery } from './lib/preloadRecovery.js';
+import { useCallStore } from './stores/callStore.js';
 import ClientQuickScripts from "./components/ClientQuickScripts";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
@@ -592,6 +595,8 @@ function AppShell({ currentUser = null }) {
   const { liveCall } = useLiveCall();
   const inbound = useInboundCall();
   const sessionActive = Boolean(liveCall?.callStarted);
+  const callActive = useCallStore(state => state.callActive);
+  const reloadBlocked = isAppCallActive({ liveCall, phone: inbound, callActive });
   const { total: unreadMessageTotal } = useUnreadMessages();
   const { supabaseClient } = useTenantConfig();
   const [rtsNeedsAttentionCount, setRtsNeedsAttentionCount] = useState(0);
@@ -903,7 +908,9 @@ function AppShell({ currentUser = null }) {
   };
 
   const handleLogoClick = () => {
-    window.location.reload();
+    return preloadRecovery.reloadIfIdle(() => isAppCallActive({
+      liveCall, phone: inbound, callActive: useCallStore.getState().callActive,
+    }));
   };
 
   const openSepQualifier = () => {
@@ -1158,6 +1165,7 @@ function AppShell({ currentUser = null }) {
 
         <SmsToastHost onOpenContactMessages={handleOpenContactMessages} />
         <PostCallStatusAlert />
+        <PreloadRecoveryNotice callInProgress={reloadBlocked} onReload={handleLogoClick} />
 
         {appMode !== "call" && sessionActive ? (
           <div className="return-to-call-strip" role="status">
