@@ -6,6 +6,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { evidenceDb } from './helpers/evidenceDb.js';
 import { generateScorecard } from '../src/compliance/engine/ScorecardGenerator.js';
 import { createScoreCallHandler } from '../netlify/functions/score-call-background.js';
+import { classifyCall } from '../src/compliance/engine/IntentClassifier.js';
 import { ALL_INTENTS } from '../src/compliance/intents/index.js';
 const pg = new PGlite();
 const db = evidenceDb(pg);
@@ -48,6 +49,7 @@ before(async () => {
   const probe = await newCall();
   await assert.rejects(pg.query('INSERT INTO intent_detections(call_id,intent_code,detected,confidence,detection_method) VALUES($1,$2,false,0,\'intent_classifier\')',[probe.id,longCode]), /value too long/);
   await pg.exec(await readFile(new URL('../supabase/migrations/072_scoring_integrity.sql',import.meta.url),'utf8'));
+  await pg.exec(await readFile(new URL('../supabase/migrations/103_resumable_scoring_jobs.sql',import.meta.url),'utf8'));
 });
 after(async () => { await pg.close(); });
 
@@ -103,6 +105,35 @@ test('concurrent jobs stay pending; expired lease fences old worker; transcript 
   const third = await run(revised); assert.equal(third.scorecard.template_id,nextTemplate);
   assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE call_id='${record.id}'`)).n,3);
   await pg.query('UPDATE scoring_templates SET is_active=false WHERE id=$1',[nextTemplate]);
+});
+test('scoring retries stop at three attempts for one transcript revision', async () => {
+  const record = await newCall();
+  const input = {p_call_id:record.id,p_template_id:template,p_transcript:{raw:record.transcript_raw,diarized:record.transcript_diarized,duration:record.call_duration_seconds}};
+  let job = (await db.rpc('begin_scoring_job',input)).data;
+  assert.equal(job.attemptCount,1);
+  for (let attempt=1; attempt<=3; attempt++) {
+    await db.rpc('fail_scoring_job',{p_job_id:job.jobId,p_attempt_token:job.attemptToken,p_error:`attempt_${attempt}`});
+    if (attempt < 3) {
+      await pg.query("UPDATE scoring_jobs SET lease_until=now()-interval '1 second' WHERE id=$1",[job.jobId]);
+      job=(await db.rpc('begin_scoring_job',input)).data;
+      assert.equal(job.attemptCount,attempt+1);
+    }
+  }
+  await pg.query("UPDATE scoring_jobs SET lease_until=now()-interval '1 second' WHERE id=$1",[job.jobId]);
+  const exhausted=(await db.rpc('begin_scoring_job',input)).data;
+  assert.deepEqual(exhausted,{status:'failed',error:'scoring_attempts_exhausted'});
+  assert.equal((await value(`SELECT status,error,attempt_count FROM scoring_jobs WHERE call_id='${record.id}'`)).status,'failed');
+  assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.scoring_error_code,'scoring_attempts_exhausted');
+});
+test('classification resumes from persisted segment output without another LLM request', async () => {
+  const persisted = new Map(); let llmCalls=0, writes=0;
+  const params={diarized:[{speaker:'agent',text:'This call is recorded.',start_ms:0,end_ms:180000}],callContext:{product_type:'MA'},
+    callLLM:async()=>{llmCalls++;return {detections:[],risk_indicators:[],sentiment:{agent:'neutral',beneficiary:'neutral'}};},
+    loadSegmentResult:index=>persisted.get(index),saveSegmentResult:async(index,result)=>{writes++;persisted.set(index,result);}};
+  const first=await classifyCall(params);
+  assert.equal(llmCalls,1); assert.equal(writes,1); assert.ok(first.detections.length);
+  const resumed=await classifyCall(params);
+  assert.equal(llmCalls,1); assert.equal(writes,1); assert.deepEqual(resumed,first);
 });
 test('short calls are transactionally persisted and replayed without duplicate cards', async () => {
   const record = await newCall(60); const first = await run(record); const second = await run(record);

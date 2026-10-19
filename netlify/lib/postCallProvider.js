@@ -23,6 +23,14 @@ export function isProviderQuotaError(code) {
 }
 
 async function sendProviderQuotaAlert(db, sessionId, stage, code) {
+  return sendProviderAlert(db, sessionId, stage, code, 'EnrollGen OpenAI quota or billing failure');
+}
+
+export async function sendProviderFailureAlert(db, sessionId, stage, code) {
+  return sendProviderAlert(db, sessionId, stage, code, 'EnrollGen scoring stopped after safety limit');
+}
+
+async function sendProviderAlert(db, sessionId, stage, code, subject) {
   const claimed=checked(await db.rpc('claim_provider_quota_alert'));
   if (!claimed) return;
   const env=globalThis.process?.env || {};
@@ -32,8 +40,8 @@ async function sendProviderQuotaAlert(db, sessionId, stage, code) {
     method:'POST', signal:AbortSignal.timeout(15000),
     headers:{Authorization:`Bearer ${env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':`post-call-quota-${new Date().toISOString().slice(0,13)}`},
     body:JSON.stringify({from:'reports@newgenhealthsolutions.com',to:[recipient],
-      subject:'EnrollGen OpenAI quota or billing failure',
-      text:`EnrollGen post-call processing encountered provider quota/billing error ${code} during ${stage}. Session: ${sessionId}. The failure is visible in the app and the transcript remains retained.`}),
+      subject,
+      text:`EnrollGen post-call processing stopped with ${code} during ${stage}. Session: ${sessionId}. The failure is visible in the app and the transcript remains retained.`}),
   });
   if (!response.ok) throw Object.assign(new Error('alert_email_send_failed'),{status:response.status});
   console.log(JSON.stringify({event:'provider_quota_alert_sent',session_id:sessionId,stage,code}));

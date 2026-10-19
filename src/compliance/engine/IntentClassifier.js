@@ -11,8 +11,8 @@ import { ALL_INTENTS } from '../intents/index.js';
 import { INTENT_CLASSIFICATION_SYSTEM, buildClassificationPrompt } from '../prompts/intent-classification.js';
 import { redactTranscriptSegments } from './PHIRedactor.js';
 
-const SEGMENT_WINDOW_MS = 45000; // 45-second windows
-const SEGMENT_OVERLAP_MS = 15000; // 15-second overlap
+const SEGMENT_WINDOW_MS = 600000; // 10-minute windows reduce repeated catalog tokens on long calls
+const SEGMENT_OVERLAP_MS = 30000; // 30-second overlap preserves boundary evidence
 const SHORT_CALL_THRESHOLD_S = 120; // calls under 2 min are "insufficient"
 
 /**
@@ -128,7 +128,7 @@ function getMajoritySpeaker(utterances) {
  * @param {Function} [params.onProgress] - (pct, message) => void
  * @returns {Object} { detections, riskIndicators, sentiment }
  */
-export async function classifyCall({ diarized, callContext, callLLM, onProgress }) {
+export async function classifyCall({ diarized, callContext, callLLM, onProgress, loadSegmentResult, saveSegmentResult, reserveInputTokens }) {
   const segments = segmentTranscript(diarized);
   const redactedSegments = redactTranscriptSegments(segments);
 
@@ -175,22 +175,26 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress 
   const totalWork = redactedSegments.length;
   let completed = 0;
 
-  // Process applicable intents per segment (batched)
-  for (const segment of redactedSegments) {
-    try {
-      const prompt = buildClassificationPrompt({
-        intents: applicableIntents,
-        segment,
-        context: {
-          ...callContext,
-          detected_intents: [...detectedIntentCodes],
-          sequence_position: allDetections.filter(d => d.detected).length,
-        },
-      });
-
+  // Process six windows concurrently. Prompts share the prior batch context, while
+  // results are merged in transcript order and sequence checks run after all batches.
+  for (let offset = 0; offset < redactedSegments.length; offset += 6) {
+    const batch = redactedSegments.slice(offset, offset + 6);
+    const batchContext = { ...callContext, detected_intents: [...detectedIntentCodes],
+      sequence_position: allDetections.filter(d => d.detected).length };
+    const parsedBatch = await Promise.all(batch.map(async (segment, batchIndex) => {
+      const segmentIndex = offset + batchIndex;
+      let parsed = await loadSegmentResult?.(segmentIndex);
+      if (parsed) return parsed;
+      const prompt = buildClassificationPrompt({ intents: applicableIntents, segment, context: batchContext });
+      await reserveInputTokens?.(Math.ceil((INTENT_CLASSIFICATION_SYSTEM.length + prompt.length) / 3.5));
       const raw = await callLLM(INTENT_CLASSIFICATION_SYSTEM, prompt, { response_format: classificationFormat });
-      const parsed = parseClassificationResponse(raw);
-
+      parsed = parseClassificationResponse(raw);
+      await saveSegmentResult?.(segmentIndex, parsed);
+      return parsed;
+    }));
+    for (const [batchIndex, segment] of batch.entries()) {
+    const parsed = parsedBatch[batchIndex];
+    try {
       if (parsed?.detections) {
         for (const det of parsed.detections) {
           const intent = applicableIntents.find(i => i.intent_code === det.intent_code);
@@ -256,6 +260,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress 
     completed++;
     if (onProgress) {
       onProgress(Math.round((completed / totalWork) * 100), `Classifying segment ${completed}/${totalWork}...`);
+    }
     }
   }
 

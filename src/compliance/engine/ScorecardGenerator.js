@@ -45,7 +45,7 @@ export async function generateScorecard(params) {
       } else {
         await checked(params.supabase.from('call_records').update({
           metadata: { ...(params.callRecord.metadata || {}), scoring_status: 'failed', scoring_error: error.message,
-            scoring_failed_at: new Date().toISOString() },
+            scoring_error_code: error.code || null, scoring_failed_at: new Date().toISOString() },
         }).eq('id', params.callRecord.id).eq('tenant_id', params.callRecord.tenant_id), 'Record scoring failure');
       }
     } catch (statusError) {
@@ -87,6 +87,11 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
       duration: callRecord.call_duration_seconds ?? null },
   }), 'Begin scoring job');
   if (job?.status === 'pending') return { pending: true };
+  if (job?.status === 'failed') {
+    const failure = new Error(job.error || 'Scoring job failed permanently');
+    failure.code = job.error || 'scoring_failed';
+    throw failure;
+  }
   if (job?.status === 'complete') return { ...job.result, reused: true,
     avgConfidence: calculateAverageConfidence(job.result.scorecardItems) };
   if (job?.status !== 'claimed' || !job.jobId || !job.attemptToken) throw new Error('Scoring job was not claimed');
@@ -152,6 +157,10 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
 
   // 4. Classify intents
   progress(15, 'Classifying intents...');
+  const { data: cachedSegments, error: cachedSegmentsError } = await supabase
+    .from('scoring_segment_progress').select('segment_index,result').eq('job_id', job.jobId);
+  if (cachedSegmentsError) throw new Error(`Load segment progress: ${cachedSegmentsError.message}`);
+  const segmentCache = new Map((cachedSegments || []).map(row => [row.segment_index, row.result]));
   const classificationResult = await classifyCall({
     diarized,
     callContext: {
@@ -160,6 +169,25 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
       call_direction: callRecord.call_direction,
     },
     callLLM,
+    loadSegmentResult: index => segmentCache.get(index),
+    saveSegmentResult: async (index, result) => {
+      const { error } = await supabase.from('scoring_segment_progress').upsert({
+        job_id: job.jobId, segment_index: index, result,
+      }, { onConflict: 'job_id,segment_index' });
+      if (error) throw new Error(`Save segment progress: ${error.message}`);
+      segmentCache.set(index, result);
+    },
+    reserveInputTokens: async tokens => {
+      const reserved = await checked(supabase.rpc('reserve_scoring_input_tokens', {
+        p_job_id: job.jobId, p_attempt_token: job.attemptToken, p_tokens: tokens,
+      }), 'Reserve scoring input token budget');
+      if (reserved?.status === 'exceeded') {
+        const failure = new Error(`Call input token budget exceeded (${reserved.estimatedInputTokens})`);
+        failure.code = 'call_token_budget_exceeded';
+        throw failure;
+      }
+      if (reserved?.status !== 'reserved') throw new Error('Scoring attempt lease superseded');
+    },
     onProgress: (innerPct, msg) => progress(15 + Math.round(innerPct * 0.6), msg),
   });
 

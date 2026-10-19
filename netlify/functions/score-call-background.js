@@ -1,7 +1,7 @@
 import { complete } from "../../src/lib/llm/client.ts";
 import { resolveEngine } from "../../src/lib/llm/config.js";
 import { llmRuntime } from "./_llmTelemetry.js";
-import {providerErrorCode,recordProviderStatus} from '../lib/postCallProvider.js';
+import {providerErrorCode,recordProviderStatus,sendProviderFailureAlert} from '../lib/postCallProvider.js';
 /**
  * Background function for scoring a call via the compliance engine.
  * Uses the -background suffix so Netlify returns 202 immediately
@@ -102,6 +102,18 @@ return async (request, context) => {
       await recordStatus(sb,callRecord.session_id,'scoring',code,startedAt);
     } catch {
       console.error(JSON.stringify({event:'provider_failure_status_write_failed',call_record_id:callId,code}));
+    }
+    if (code === 'scoring_attempts_exhausted' || code === 'call_token_budget_exceeded') {
+      try { await sendProviderFailureAlert(sb,callRecord.session_id,'scoring',code); }
+      catch (alertError) { console.error(JSON.stringify({event:'scoring_safety_alert_failed',call_record_id:callId,code:providerErrorCode(alertError,'alert_send_failed')})); }
+      const { data: dispatch, error: dispatchReadError } = await sb.from('transcript_score_dispatch')
+        .select('revision').eq('call_id',callId).maybeSingle();
+      if (!dispatchReadError && dispatch) {
+        const { error: dispatchError } = await sb.from('transcript_score_dispatch').update({
+          delivered_revision: dispatch.revision, available_at: 'infinity', last_error: code,
+        }).eq('call_id',callId).eq('revision',dispatch.revision);
+        if (dispatchError) console.error(JSON.stringify({event:'scoring_dispatch_stop_failed',call_record_id:callId}));
+      } else if (dispatchReadError) console.error(JSON.stringify({event:'scoring_dispatch_stop_failed',call_record_id:callId}));
     }
     // generateScorecard records a checked failed status using the claimed worker token.
     // If even that write fails, return a retryable error instead of claiming completion.

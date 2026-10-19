@@ -11,17 +11,18 @@ export function evidenceDb(pg, onError = () => {}) {
         const jsonArgs = new Set(['p_transcript', 'p_result']);
         const rows = (await pg.query(sql, entries.map(([key,item]) => key === "query_embedding" ? "{" + item.join(",") + "}"
           : jsonArgs.has(key) ? JSON.stringify(item) : item))).rows;
-        const scalarScoring = ['begin_scoring_job','persist_scoring_result','fail_scoring_job'].includes(name);
+        const scalarScoring = ['begin_scoring_job','persist_scoring_result','fail_scoring_job','reserve_scoring_input_tokens'].includes(name);
         return { data: scalarScoring ? rows[0]?.[name] : rows, error: null };
       } catch (error) { return { data: null, error }; }
     },
     from(table) {
-      let operation = "select", projection = "*", rows, single = false, head = false, count = false, limit, offset;
+      let operation = "select", projection = "*", rows, single = false, head = false, count = false, limit, offset, conflict;
       const filters = [], order = [], args = [];
       const value = item => { args.push(item); return "$" + args.length; };
       const chain = {
         select(columns = "*", options = {}) { projection = columns; head = options.head; count = options.count; return chain; },
         insert(input) { operation = "insert"; rows = Array.isArray(input) ? input : [input]; return chain; },
+        upsert(input, options = {}) { operation = "upsert"; rows = Array.isArray(input) ? input : [input]; conflict = options.onConflict; return chain; },
         update(input) { operation = "update"; rows = [input]; return chain; },
         gte(column, item) { filters.push(q(column) + ">=" + value(item)); return chain; },
         lt(column, item) { filters.push(q(column) + "<" + value(item)); return chain; },
@@ -54,10 +55,15 @@ export function evidenceDb(pg, onError = () => {}) {
                 .map(([key,item]) => q(key) + "=" + value(item));
               sql = "UPDATE public." + q(table) + " SET " + assignment.join(",") + where + " RETURNING " + cols;
             }
-            if (operation === "insert") {
+            if (operation === "insert" || operation === "upsert") {
               const keys = [...new Set(rows.flatMap(row => Object.keys(row).filter(key => row[key] !== undefined)))];
               const tuples = rows.map(row => "(" + keys.map(key => row[key] === undefined ? "DEFAULT" : value(row[key])).join(",") + ")");
-              sql = "INSERT INTO public." + q(table) + "(" + keys.map(q).join(",") + ") VALUES " + tuples.join(",") + " RETURNING " + cols;
+              sql = "INSERT INTO public." + q(table) + "(" + keys.map(q).join(",") + ") VALUES " + tuples.join(",");
+              if (operation === "upsert") {
+                const conflictKeys = (conflict || "id").split(",");
+                sql += " ON CONFLICT (" + conflictKeys.map(q).join(",") + ") DO UPDATE SET " + keys.filter(key=>!conflictKeys.includes(key)).map(key=>q(key)+"=EXCLUDED."+q(key)).join(",");
+              }
+              sql += " RETURNING " + cols;
             }
             try {
               // pg drivers require JSON strings for jsonb and arrays for SQL arrays.

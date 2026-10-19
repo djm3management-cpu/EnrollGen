@@ -153,6 +153,7 @@ test("compatible handlers work before 063, including imported ownership and chec
 test("072 scoring before 063 saves the long intent and complete evidence", async () => {
   await role("postgres");
   await pg.exec(readFileSync(new URL("../supabase/migrations/072_scoring_integrity.sql",import.meta.url),"utf8"));
+  await pg.exec(readFileSync(new URL("../supabase/migrations/103_resumable_scoring_jobs.sql",import.meta.url),"utf8"));
   preMigrationScoring = await scoreFixtureCall();
 });
 
