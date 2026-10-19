@@ -9,6 +9,7 @@ import { assessmentFormat } from "../../lib/llm/schemas/compliance.js";
 
 import { classifyCall } from './IntentClassifier.js';
 import { scoreCall, calculateAverageConfidence } from './ScoringEngine.js';
+import { calibratedTemplateItem } from '../shared/scoringPolicy.js';
 
 const ASSESSMENT_SYSTEM_PROMPT = `You are a Medicare enrollment quality analyst. You will receive a call transcript with compliance scoring results. Follow the supplied assessment schema.
 
@@ -107,10 +108,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
   };
 
   // Flatten intent_code onto each template item
-  const enrichedItems = (templateItems || []).map(item => ({
-    ...item,
-    intent_code: item.compliance_intents?.intent_code || null,
-  }));
+  const enrichedItems = (templateItems || []).map(calibratedTemplateItem);
 
   // 3. Parse transcript
   progress(10, 'Preparing transcript...');

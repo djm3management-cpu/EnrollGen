@@ -14,7 +14,7 @@ export const classificationFormat = format('compliance_intents', object({
     detected: boolean,
     confidence: { type: 'number', minimum: 0, maximum: 1 },
     speaker: { type: 'string', enum: ['agent', 'beneficiary', 'unknown'] },
-    evidence_text: string, reasoning: string, anti_pattern: boolean,
+    evidence_text: string, reasoning: string, anti_pattern: boolean, hard_cms_violation: boolean,
     anti_pattern_detail: { type: ['string', 'null'] },
     sequence_position: { type: ['integer', 'null'], minimum: 0 },
   }) },

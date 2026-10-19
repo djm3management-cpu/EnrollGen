@@ -5,7 +5,7 @@ export const salesConduct = [
     category: 'SALES_CONDUCT',
     subcategory: null,
     description:
-      'Agent does not cross-sell non-health-related insurance products such as annuities, life insurance, or financial products during a Medicare Advantage enrollment call.',
+      'Flag an actual pitch or description of non-health product features, benefits or pricing before or during the MA presentation. A brief post-enrollment mention of other products is allowed, with or without offering a separate appointment. Hospital indemnity is health-related; a generic services list is not a pitch.',
     cms_reference: '42 CFR 422.2274(c)',
     mcmg_section: 'Ch. 2, Sec. 60.1',
     product_type: 'MA',
@@ -20,14 +20,14 @@ export const salesConduct = [
     failure_severity: 'critical',
     auto_fail: false,
     sample_phrases: [
-      'Today we are going to focus exclusively on your Medicare Advantage options.',
-      'My role today is to help you with your Medicare coverage and nothing else.',
+      'Your enrollment is submitted. We also offer life insurance and annuities if you ever need them.',
+      'Your enrollment is complete. If you want to explore life insurance, we can schedule another appointment.',
       'We are here to discuss Medicare Advantage plans that fit your healthcare needs.',
       'I am only authorized to discuss Medicare-related products on this call.',
     ],
     anti_patterns: [
-      'While we are at it, have you thought about a life insurance policy?',
-      'I also sell annuities that pair well with your Medicare plan.',
+      'Before we review your Medicare plan, this life insurance policy costs $40 per month and pays a $10,000 death benefit.',
+      'During this Medicare presentation, let me sell you an annuity with a guaranteed income rider and these investment returns.',
       'Let me tell you about our final expense insurance since we are already talking.',
     ],
   },

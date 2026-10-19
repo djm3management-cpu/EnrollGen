@@ -28,6 +28,23 @@ import {
   requireActiveSubscription,
 } from "./_subscriptionGate.js";
 
+import { scoreCall } from '../../src/compliance/engine/ScoringEngine.js';
+import { isHardViolation } from '../../src/compliance/shared/scoringPolicy.js';
+
+// Historical revisions remain available by ID; aggregates count each current
+// scored call once and exclude N/A instead of treating it as a zero.
+export function currentScoredCards(cards, scoredOnly = true) {
+  const byCall = new Map();
+  for (const card of cards || []) {
+    const currentId = card.call_records?.compliance_scorecard_id;
+    if (currentId && card.id !== currentId) continue;
+    const key = card.call_id || card.id;
+    const existing = byCall.get(key);
+    if (!existing || String(card.created_at || '') > String(existing.created_at || '')) byCall.set(key, card);
+  }
+  return [...byCall.values()].filter(card => !scoredOnly || (card.overall_grade !== 'N/A' && card.pass_fail !== 'N/A' && card.pass_fail !== 'INSUFFICIENT'));
+}
+
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const NOT_APPLICABLE_RESULT = "na";
 const LEGACY_NOT_APPLICABLE_RESULT = "not_applicable";
@@ -298,7 +315,7 @@ function evaluateRecalculatedItem({
   const pointsPossibleBase = Number(
     templateItem?.points_possible ?? item.points_possible ?? 0
   );
-  const isAutoFail = Boolean(templateItem?.is_auto_fail ?? item.is_auto_fail);
+  const isAutoFail = isHardViolation(intentMeta?.intent_code || detection?.intent_code, detection);
   const baseEvidenceText = detection?.transcript_segment ?? item.evidence_text ?? null;
   const baseEvidenceTimestamp = detection?.segment_start_ms ?? item.evidence_timestamp_ms ?? null;
 
@@ -407,75 +424,22 @@ function evaluateRecalculatedItem({
     };
   }
 
-  let result = "fail";
-  let pointsEarned = 0;
-  let notes = detection?.llm_reasoning || item.notes || null;
-  let coachingNote = null;
-  let riskFlag = null;
-  let sequenceViolation = false;
-  const confidence = Number(detection?.confidence || 0);
-
-  if (!detection || !detection.detected) {
-    if (isAutoFail) {
-      riskFlag = `Auto-fail: ${questionText}`;
-    }
-    coachingNote = `Missing: ${questionText}`;
-  } else if (detection.anti_pattern_match) {
-    notes = detection.llm_reasoning || detection.anti_pattern_detail || notes;
-    coachingNote = `Anti-pattern flagged for: ${questionText} - ${detection.anti_pattern_detail || "Review transcript"}`;
-    riskFlag = `Anti-pattern detected: ${questionText}`;
-  } else if (confidence >= 0.9) {
-    if (detection.sequence_violation) {
-      result = "partial";
-      pointsEarned = Math.floor(pointsPossibleBase * 0.5);
-      notes = detection.llm_reasoning || detection.sequence_violation_detail || notes;
-      coachingNote = `Sequence violation: ${questionText} - ${detection.sequence_violation_detail}`;
-      sequenceViolation = true;
-    } else {
-      result = "pass";
-      pointsEarned = pointsPossibleBase;
-    }
-  } else if (confidence >= 0.7) {
-    result = "pass";
-    pointsEarned = pointsPossibleBase;
-  } else if (confidence >= 0.5) {
-    result = "partial";
-    pointsEarned = Math.floor(pointsPossibleBase * 0.5);
-    coachingNote = `Low confidence (${(confidence * 100).toFixed(0)}%): ${questionText} - needs manual review`;
-  } else if (isAutoFail) {
-    riskFlag = `Auto-fail: ${questionText}`;
-  }
-
-  const autoFailTriggered = Boolean(isAutoFail && result === "fail");
-  if (autoFailTriggered && !riskFlag) {
-    riskFlag = `Auto-fail: ${questionText}`;
-  }
-
+  const calculated = scoreCall({
+    detections: detection ? [detection] : [],
+    templateItems: [{ ...templateItem, ...item, id: item.template_item_id,
+      intent_code: intentMeta?.intent_code || detection?.intent_code,
+      points_possible: pointsPossibleBase, question_text: questionText, category }],
+    template: {}, preserveRuleText: true,
+  });
+  const scored = calculated.scorecard_items[0];
   return {
-    row: {
-      ...item,
-      intent_id: item.intent_id ?? templateItem?.intent_id ?? null,
-      detection_id: detection?.id ?? item.detection_id ?? null,
-      result,
-      points_earned: pointsEarned,
-      points_possible: pointsPossibleBase,
-      confidence,
-      auto_fail_triggered: autoFailTriggered,
-      notes,
-      evidence_text: baseEvidenceText,
-      evidence_timestamp_ms: baseEvidenceTimestamp,
-    },
-    aggregate: {
-      questionText,
-      category,
-      result,
-      pointsEarned,
-      pointsPossible: pointsPossibleBase,
-      autoFailTriggered,
-      riskFlag,
-      coachingNote,
-      sequenceViolation,
-    },
+    row: { ...item, ...scored, id: item.id, notes: scored.notes },
+    aggregate: { questionText, category, result: scored.result,
+      pointsEarned: scored.points_earned, pointsPossible: scored.points_possible,
+      autoFailTriggered: scored.auto_fail_triggered,
+      riskFlag: calculated.risk_flags[0] || null,
+      coachingNote: calculated.coaching_notes[0] || null,
+      sequenceViolation: calculated.sequence_violations > 0 },
   };
 }
 
@@ -574,25 +538,27 @@ export default async (request) => {
       const offset = parseInt(searchParams.get("offset") || "0");
       const agentId = searchParams.get("agent_id");
 
-      let query = sb
-        .from("compliance_scorecards")
-        .select("*, call_records(agent_name, call_start, carrier_name, product_type, call_direction, metadata)")
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1);
-
-      if (agentId) {
-        query = query.eq("call_records.agent_id", agentId);
+      const rows = [];
+      for (let from = 0; ; from += 250) {
+        let query = sb.from("compliance_scorecards")
+          .select("*, call_records!compliance_scorecards_call_id_fkey!inner(agent_name, agent_id, call_start, carrier_name, product_type, call_direction, metadata, compliance_scorecard_id)")
+          .order("created_at", { ascending: false }).range(from, from + 249);
+        if (agentId) query = query.eq("call_records.agent_id", agentId);
+        const { data, error } = await query;
+        if (error) throw error;
+        rows.push(...(data || []));
+        const current = currentScoredCards(rows, false);
+        if (!data || data.length < 250 || current.length >= offset + limit) {
+          return json(200, current.slice(offset, offset + limit));
+        }
       }
-
-      const { data } = await query;
-      return json(200, data || []);
     }
 
     // GET /scorecards/:id — scorecard detail with call record data
     if (parts[0] === "scorecards" && parts[1] && method === "GET") {
       const { data: scorecard } = await sb
         .from("compliance_scorecards")
-        .select("*, call_records(recording_url, transcript_diarized, agent_name, call_direction, call_duration_seconds, metadata)")
+        .select("*, call_records!compliance_scorecards_call_id_fkey(recording_url, transcript_diarized, agent_name, call_direction, call_duration_seconds, metadata)")
         .eq("id", parts[1]).single();
       if (!scorecard) return json(404, { error: "Not found" });
 
@@ -615,11 +581,11 @@ export default async (request) => {
 
       const { data: scorecards } = await sb
         .from("compliance_scorecards")
-        .select("overall_score, overall_grade, pass_fail, auto_fail_triggered, risk_level, category_scores, created_at, call_records(agent_name, agent_id)")
-        .gte("created_at", since)
+        .select("id, call_id, overall_score, overall_grade, pass_fail, auto_fail_triggered, risk_level, category_scores, created_at, call_records!compliance_scorecards_call_id_fkey!inner(agent_name, agent_id, call_start, compliance_scorecard_id)")
+        .gte("call_records.call_start", since)
         .order("created_at", { ascending: false });
 
-      const cards = scorecards || [];
+      const cards = currentScoredCards(scorecards);
       const totalCalls = cards.length;
       const avgScore = totalCalls > 0 ? cards.reduce((s, c) => s + Number(c.overall_score), 0) / totalCalls : 0;
       const passCount = cards.filter(c => c.pass_fail === "PASS").length;
@@ -740,10 +706,10 @@ export default async (request) => {
       // Get scorecards for these calls
       const { data: scorecards } = await sb
         .from("compliance_scorecards")
-        .select("id, call_id, overall_score, overall_grade, pass_fail, auto_fail_triggered, category_scores, risk_level")
+        .select("id, call_id, created_at, overall_score, overall_grade, pass_fail, auto_fail_triggered, category_scores, risk_level, call_records!compliance_scorecards_call_id_fkey(compliance_scorecard_id)")
         .in("call_id", callIds);
 
-      const cards = scorecards || [];
+      const cards = currentScoredCards(scorecards);
       const scorecardIds = cards.map(s => s.id);
 
       // Get scorecard items for confidence data
@@ -1218,10 +1184,10 @@ export default async (request) => {
         const categoryScoresWithPct = buildCategoryScoresWithPct(categoryScores);
         const overallScore = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
         const roundedScore = Math.round(overallScore * 100) / 100;
-        const grade = recalcGrade(roundedScore, autoFailTriggered);
+        const grade = totalPossible > 0 ? recalcGrade(roundedScore, autoFailTriggered) : "N/A";
         const passingThreshold = Number(templateById[scorecard.template_id]?.passing_threshold ?? 85);
-        const passFail = autoFailTriggered ? "FAIL" : (roundedScore >= passingThreshold ? "PASS" : "FAIL");
-        const riskLevel = recalcRiskLevel(roundedScore, autoFailTriggered, sequenceViolations);
+        const passFail = totalPossible > 0 ? (autoFailTriggered ? "FAIL" : (roundedScore >= passingThreshold ? "PASS" : "FAIL")) : "N/A";
+        const riskLevel = totalPossible > 0 ? recalcRiskLevel(roundedScore, autoFailTriggered, sequenceViolations) : "low";
         const correctiveBucket = determineCorrectiveBucket(
           roundedScore,
           autoFailTriggered,
@@ -1242,7 +1208,7 @@ export default async (request) => {
           risk_flags: [...new Set(riskFlags)].sort(),
           sequence_violations: sequenceViolations,
           coaching_notes: [...new Set(coachingNotes)].sort(),
-          corrective_actions_needed: correctiveBucket !== null,
+          corrective_actions_needed: totalPossible > 0 && correctiveBucket !== null,
           updated_at: now,
         };
 
@@ -1341,22 +1307,23 @@ export default async (request) => {
     if (parts[0] === "agents" && !parts[1] && method === "GET") {
       const { data: scorecards } = await sb
         .from("compliance_scorecards")
-        .select("id, overall_score, pass_fail, auto_fail_triggered, category_scores, call_records(agent_name, agent_id, call_direction, metadata)");
+        .select("id, call_id, created_at, overall_score, overall_grade, pass_fail, auto_fail_triggered, category_scores, call_records!compliance_scorecards_call_id_fkey(agent_name, agent_id, call_direction, metadata, compliance_scorecard_id)");
 
-      const cards = scorecards || [];
+      const cards = currentScoredCards(scorecards);
 
       // Group by agent_name
       const agentMap = {};
       for (const card of cards) {
         const agentName = card.call_records?.agent_name || "Unknown";
-        if (!agentMap[agentName]) {
-          agentMap[agentName] = {
+        const agentKey = card.call_records?.agent_id || agentName;
+        if (!agentMap[agentKey]) {
+          agentMap[agentKey] = {
             agent_name: agentName,
             agent_id: card.call_records?.agent_id || null,
             calls: [],
           };
         }
-        agentMap[agentName].calls.push(card);
+        agentMap[agentKey].calls.push(card);
       }
 
       // Build agent profiles

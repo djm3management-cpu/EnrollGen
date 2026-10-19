@@ -195,7 +195,7 @@ test('stream schema failure yields a complete degraded envelope', async () => {
 });
 
 test('shadow never delays primary and compares resolved intent IDs, ignoring prose/order', async () => {
-  const detection = (code, reasoning) => ({ intent_code: code, detected: true, confidence: 0.9, speaker: 'agent', evidence_text: 'text', reasoning, anti_pattern: false, anti_pattern_detail: null, sequence_position: 1 });
+  const detection = (code, reasoning) => ({ intent_code: code, detected: true, confidence: 0.9, speaker: 'agent', evidence_text: 'text', reasoning, anti_pattern: false, hard_cms_violation: false, anti_pattern_detail: null, sequence_position: 1 });
   const result = { detections: [detection(ALL_INTENTS[0].intent_code, 'primary')], risk_indicators: [], sentiment: { agent: 'professional', beneficiary: 'engaged' } };
   const h = harness(() => json(response(JSON.stringify(result))), { LLM_SHADOW_MA: 'claude-sonnet-4-6' });
   let release;

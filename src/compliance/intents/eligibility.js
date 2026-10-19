@@ -328,7 +328,7 @@ export const eligibilityVerification = [
     category: 'ELIGIBILITY_VERIFICATION',
     subcategory: 'PII_PROTECTION',
     description:
-      'Agent must not ask for the Medicare Beneficiary Identifier or Social Security Number just to present plan options. PII is only needed at enrollment.',
+      'MBI/SSN collection is allowed to look up eligibility, Medicare records or current coverage, or for enrollment. Flag only a request with no lookup or enrollment purpose; use surrounding call context.',
     cms_reference: '42 CFR 422.2274',
     mcmg_section: 'Ch. 2, Sec. 50.8',
     product_type: 'MA',
@@ -343,14 +343,14 @@ export const eligibilityVerification = [
     failure_severity: 'critical',
     auto_fail: false,
     sample_phrases: [
-      'I do not need your Medicare number or Social Security number right now. We are just going to look at plan options. I will only need that information if you decide to enroll.',
-      'To look up plans, all I need is your zip code. I will not ask for any personal identification numbers unless you choose to move forward with enrollment.',
+      'May I use your Medicare number to look up your eligibility and current coverage?',
+      'If your Medicare card is unavailable, we can use your Social Security number to retrieve your Medicare eligibility record.',
       'I want you to know that I am not going to ask for your Medicare ID or Social Security number just to show you plans. That is only needed if you decide to enroll.',
     ],
     anti_patterns: [
       'I am going to need your Medicare number before we can look at any plans.',
-      'Can you read me your Social Security number so I can pull up your options?',
-      'Let me get your MBI real quick so I can see what you are eligible for.',
+      'I require your Social Security number even though I am not looking up eligibility or current coverage and we are not enrolling.',
+      'Give me your Medicare number; there is no lookup or enrollment purpose for collecting it.',
     ],
   },
   {

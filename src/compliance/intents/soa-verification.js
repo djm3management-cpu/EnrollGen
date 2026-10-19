@@ -5,7 +5,7 @@ export const soaVerification = [
     category: 'SOA_VERIFICATION',
     subcategory: null,
     description:
-      'Agent must reference the Scope of Appointment form that is on file and confirm the beneficiary completed it.',
+      'Agent obtains or references Scope of Appointment authorization before the Medicare presentation. On inbound calls, recorded verbal agreement to discuss authorized health products satisfies SOA; no prior written form is required.',
     cms_reference: '42 CFR 422.2274(d)',
     mcmg_section: 'Ch. 3, Sec. 60.1',
     product_type: 'MA',
@@ -20,8 +20,8 @@ export const soaVerification = [
     failure_severity: 'critical',
     auto_fail: true,
     sample_phrases: [
-      'I have your Scope of Appointment on file. This is the form you signed that gives me permission to discuss specific types of Medicare plans with you.',
-      'Before we get into the plans, I want to confirm that I have your signed Scope of Appointment form here.',
+      'On this inbound call, may we discuss Medicare Advantage and prescription drug options? Yes.',
+      'Before we discuss plans, do I have your verbal permission to review those Medicare options with you? Yes.',
       'I see that you completed your Scope of Appointment, which authorizes our conversation about Medicare Advantage plans today.',
       'I do have your SOA on file, and I want to go over what it covers with you.',
     ],
@@ -69,7 +69,7 @@ export const soaVerification = [
     category: 'SOA_VERIFICATION',
     subcategory: null,
     description:
-      'The Scope of Appointment must have been signed at least 48 hours before the scheduled appointment. This is a pre-call validation.',
+      'For scheduled outbound marketing appointments only, verify SOA at least 48 hours in advance unless an applicable exception applies. Inbound calls and warm transfers are not subject to this advance requirement; verbal SOA on the call satisfies inbound.',
     cms_reference: '42 CFR 422.2274(d)',
     mcmg_section: 'Ch. 3, Sec. 60.2',
     product_type: 'MA',

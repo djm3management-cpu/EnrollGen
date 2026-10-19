@@ -9,7 +9,8 @@ import { classificationFormat } from "../../lib/llm/schemas/compliance.js";
 
 import { ALL_INTENTS } from '../intents/index.js';
 import { INTENT_CLASSIFICATION_SYSTEM, buildClassificationPrompt } from '../prompts/intent-classification.js';
-import { redactTranscriptSegments } from './PHIRedactor.js';
+import { redactTranscriptSegments, redactPHI } from './PHIRedactor.js';
+import { preferDetection } from '../shared/scoringPolicy.js';
 
 const SEGMENT_WINDOW_MS = 600000; // 10-minute windows reduce repeated catalog tokens on long calls
 const SEGMENT_OVERLAP_MS = 30000; // 30-second overlap preserves boundary evidence
@@ -133,7 +134,16 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
   const redactedSegments = redactTranscriptSegments(segments);
 
   // Detect call direction from transcript (defaults to inbound)
-  const detectedDirection = detectCallDirection(diarized);
+  const detectedDirection = ['inbound', 'outbound'].includes(callContext?.call_direction)
+    ? callContext.call_direction : detectCallDirection(diarized);
+  const wholeText = diarized.map(u => `[${u.speaker || 'unknown'}]: ${u.text || ''}`).join('\n');
+  // Opening/closing context and lookup-purpose passages prevent a window from
+  // treating eligibility collection or a post-enrollment sign-off as misconduct.
+  const purposePassages = diarized.flatMap((u, i) => /look\s*up|eligibil|current coverage|medicare card|submitted|confirmation number/i.test(u.text || '')
+    ? [diarized.slice(Math.max(0, i - 2), i + 4).map(v => v.text || '').join(' ')] : []).join('\n').slice(0, 6000);
+  const wholeCallContext = redactPHI(`${wholeText.slice(0, 6000)}\n...\n${purposePassages}\n...\n${wholeText.slice(-6000)}`).redacted;
+  const scheduledAppointment = detectedDirection === 'outbound' && (callContext?.scheduled_appointment === true
+    || /(?:scheduled|booked|set up|our) (?:marketing )?appointment|appointment (?:today|we scheduled)/i.test(wholeText.slice(0, 6000)));
 
   // Check for short calls
   const callDurationS = diarized.length > 0
@@ -142,8 +152,10 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
   const isShortCall = callDurationS > 0 && callDurationS < SHORT_CALL_THRESHOLD_S;
 
   // Split intents by direction applicability
-  const applicableIntents = ALL_INTENTS.filter(i => intentAppliesToDirection(i, detectedDirection));
-  const excludedIntents = ALL_INTENTS.filter(i => !intentAppliesToDirection(i, detectedDirection));
+  const applies = i => intentAppliesToDirection(i, detectedDirection)
+    && (i.intent_code !== 'SOA_003_SOA_48HR_RULE' || scheduledAppointment);
+  const applicableIntents = ALL_INTENTS.filter(applies);
+  const excludedIntents = ALL_INTENTS.filter(i => !applies(i));
 
   const allDetections = [];
   const allRiskIndicators = [];
@@ -179,7 +191,9 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
   // results are merged in transcript order and sequence checks run after all batches.
   for (let offset = 0; offset < redactedSegments.length; offset += 6) {
     const batch = redactedSegments.slice(offset, offset + 6);
-    const batchContext = { ...callContext, detected_intents: [...detectedIntentCodes],
+    const batchContext = { ...callContext, call_direction: detectedDirection,
+      scheduled_appointment: scheduledAppointment, whole_call_context: wholeCallContext,
+      detected_intents: [...detectedIntentCodes],
       sequence_position: allDetections.filter(d => d.detected).length };
     const parsedBatch = await Promise.all(batch.map(async (segment, batchIndex) => {
       const segmentIndex = offset + batchIndex;
@@ -203,8 +217,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
           // Keep the highest-confidence detection per intent
           const existing = allDetections.find(d => d.intent_code === det.intent_code);
           if (existing) {
-            if (det.detected && det.confidence > (existing.confidence || 0)) {
-              Object.assign(existing, {
+            const next = {
                 detected: det.detected,
                 confidence: det.confidence,
                 speaker: det.speaker,
@@ -215,8 +228,10 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
                 anti_pattern_match: det.anti_pattern || false,
                 anti_pattern_detail: det.anti_pattern_detail || null,
                 llm_reasoning: det.reasoning,
-                detection_method: 'intent_classifier',
-              });
+                detection_method: det.hard_cms_violation ? 'cms_hard_violation' : 'intent_classifier',
+              };
+            if (preferDetection(existing, next) === next) {
+              Object.assign(existing, next);
             }
           } else {
             allDetections.push({
@@ -224,7 +239,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
               intent_code: det.intent_code,
               detected: det.detected,
               confidence: det.confidence || 0,
-              detection_method: 'intent_classifier',
+              detection_method: det.hard_cms_violation ? 'cms_hard_violation' : 'intent_classifier',
               speaker: det.speaker || 'unknown',
               transcript_segment: det.evidence_text || segment.text.slice(0, 500),
               segment_start_ms: segment.start_ms,
@@ -237,10 +252,8 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
               llm_reasoning: det.reasoning,
             });
 
-            if (det.detected) {
-              detectedIntentCodes.add(det.intent_code);
-            }
           }
+          if (det.detected) detectedIntentCodes.add(det.intent_code);
         }
       }
 
@@ -272,7 +285,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
         intent_code: intent.intent_code,
         detected: false,
         confidence: 0,
-        detection_method: 'intent_classifier',
+        detection_method: 'unscored',
         speaker: null,
         transcript_segment: null,
         segment_start_ms: null,
@@ -282,7 +295,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
         sequence_violation_detail: null,
         anti_pattern_match: false,
         anti_pattern_detail: null,
-        llm_reasoning: 'Intent not detected in any segment',
+        llm_reasoning: 'Unscored: rule not evaluated with reliable evidence in any segment',
       });
     }
   }
@@ -298,7 +311,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
   ]) {
     const det = allDetections.find(d => d.intent_code === code);
     Object.assign(det, {
-      detected: found, confidence: found ? 1 : 0, detection_method: 'tpmo_2027_policy',
+      detected: found, confidence: wholeText.trim() ? 1 : 0, detection_method: 'tpmo_2027_policy',
       speaker: tpmo.disclaimer?.speaker || null, transcript_segment: tpmo.disclaimer?.text || null,
       segment_start_ms: tpmo.disclaimer?.start_ms ?? null, segment_end_ms: tpmo.disclaimer?.completion_ms ?? null,
       anti_pattern_match: false, anti_pattern_detail: null,
@@ -339,10 +352,7 @@ function validateSequences(detections) {
     // Check must_follow: these intents must have been detected BEFORE this one
     for (const prereqCode of (intent.must_follow || [])) {
       const prereq = detectedByCode[prereqCode];
-      if (!prereq) {
-        det.sequence_violation = true;
-        det.sequence_violation_detail = `${intent.intent_code} detected but prerequisite ${prereqCode} was not found`;
-      } else if (prereq.segment_start_ms != null && det.segment_start_ms != null && prereq.segment_start_ms > det.segment_start_ms) {
+      if (prereq && !prereq.direction_excluded && prereq.segment_start_ms != null && det.segment_start_ms != null && prereq.segment_start_ms > det.segment_start_ms) {
         det.sequence_violation = true;
         det.sequence_violation_detail = `${intent.intent_code} occurred at ${det.segment_start_ms}ms but ${prereqCode} occurred later at ${prereq.segment_start_ms}ms`;
       }

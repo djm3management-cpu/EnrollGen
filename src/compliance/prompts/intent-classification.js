@@ -14,7 +14,14 @@ RULES:
 4. Flag anti-patterns: statements that SOUND compliant but violate the spirit of the requirement
 5. Identify the SPEAKER (agent or beneficiary) for each detection
 6. Note the specific text that triggered each detection
-7. Follow the supplied response schema. Risk indicators are concise text descriptions.`;
+7. Return detections only for observed, applicable behavior. An omitted rule or one absent from this window is UNSCORED, not a failure. Never invent evidence of an omission. For prohibitions (no cross-selling, no steering, etc.), absence of misconduct is not a missing requirement. Set anti_pattern=true only for a specific supported violation, including a clearly established required omission on a complete call; not for ordinary non-detection in a segment.
+8. Context matters: the 48-hour SOA rule applies only to scheduled outbound appointments with no applicable exception. Inbound and warm-transfer calls may obtain verbal SOA on the call; do not require a prior written form or its signature date. Asking which health products the beneficiary authorizes is obtaining scope, not scope creep.
+9. Cross-selling means actually pitching or describing non-health product features, prices or benefits BEFORE or DURING the Medicare Advantage presentation. A brief post-enrollment mention that the agency offers life insurance, annuities or other products is allowed, with or without proposing a separate appointment. Hospital indemnity is health-related. A generic list of services is not a pitch.
+10. MBI/SSN may be collected to look up eligibility, current coverage, Medicare records or to enroll. Use surrounding and whole-call context to identify the purpose, even if the agent does not use the word lookup at the request. Flag only a request with no supported lookup/enrollment purpose; uncertain purpose is unscored.
+11. Do not penalize likely speech-to-text errors: garbled names, phonetic words, missing negatives, repetitions or fragments. Use semantic meaning and later clarifications. Do not turn an uncertain transcription into a factual misrepresentation. Do not claim a benefit is inaccurate without evidence contradicting it; lack of plan documents alone is not a violation. Ordinary positive words like great are not unsupported absolute rankings.
+12. Conditional rules apply only when triggered: Medigap warnings require existing Medigap; refusal handling requires refusal; enrollment rules require enrollment. A recorded conversation alone cannot prove recording gaps. Confidence reflects evidence quality; ambiguous possible violations are below 0.70 and cannot cause deductions.
+13. Set hard_cms_violation=true only for confirmed, unambiguous hard CMS misconduct such as coercion, compensation-driven steering, health discrimination, knowing material deception, inducements, or actual prohibited non-health marketing. Script preferences, uncertain accuracy, incomplete explanations, omissions in a window, transcription uncertainty and agency timing rules are weighted coaching deductions, never hard violations. A hard violation requires affirmative quoted evidence and confidence at least 0.90.
+14. Follow the supplied response schema. Risk indicators are concise text descriptions.`;
 
 export function buildClassificationPrompt({ intents, segment, context }) {
   const intentList = intents.map(i =>
@@ -36,6 +43,7 @@ Respond with JSON:
       "evidence_text": "the specific words from transcript",
       "reasoning": "why this was classified this way",
       "anti_pattern": false,
+      "hard_cms_violation": false,
       "anti_pattern_detail": null,
       "sequence_position": 3
     }
@@ -57,6 +65,8 @@ CONTEXT:
 - Product type: ${context.product_type || 'MA'}
 - Call direction: ${context.call_direction || 'inbound'}
 - Intents already detected earlier in call: ${(context.detected_intents || []).join(', ') || 'none'}
+- Whole-call context (for purpose and timing; quote evidence from this segment): ${context.whole_call_context || 'unavailable'}
+- Scheduled outbound appointment: ${context.scheduled_appointment === true ? 'yes' : 'not established; do not apply 48-hour rule'}
 - Current sequence position: ${context.sequence_position || 0}
 
 `;

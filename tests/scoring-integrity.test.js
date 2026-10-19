@@ -14,7 +14,10 @@ const tenant = randomUUID(), agent = randomUUID(), template = randomUUID(), inte
 const longCode = ALL_INTENTS.find(value => value.intent_code.length === 53).intent_code;
 const read = async sql => (await pg.query(sql)).rows;
 const value = async sql => (await read(sql))[0];
-const callLLM = async () => ({ detections: [], risk_indicators: [], sentiment: {} });
+// A real evaluated deficiency keeps the persistence/action fixtures meaningful;
+// an empty model response is now unscored, rather than a synthetic failure.
+const callLLM = async () => ({ detections: [{intent_code:'CALL_OPEN_001_RECORDING_ANNOUNCE',
+  detected:true,confidence:0.6,speaker:'agent',evidence_text:'This call is recorded.',reasoning:'Announcement is only partially established',anti_pattern:false}], risk_indicators: [], sentiment: {} });
 let seq = 0;
 async function newCall(duration = 180) {
   const id = randomUUID();

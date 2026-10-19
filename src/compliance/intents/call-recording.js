@@ -193,7 +193,7 @@ export const callRecording = [
     category: 'CALL_RECORDING_COMPLIANCE',
     subcategory: null,
     description:
-      'Agent does not request the beneficiary Medicare Beneficiary Identifier (MBI), Social Security number, or other sensitive identifiers until the enrollment portion of the call. These should only be collected when actually needed for the enrollment form.',
+      'MBI/SSN may be requested for eligibility or current-coverage lookup, Medicare records retrieval or enrollment. Flag only collection with no supported lookup or enrollment purpose, not merely collection before enrollment.',
     cms_reference: '42 CFR 422.2274',
     mcmg_section: 'Ch. 2, Sec. 50.9',
     product_type: 'MA',
@@ -208,15 +208,15 @@ export const callRecording = [
     failure_severity: 'critical',
     auto_fail: true,
     sample_phrases: [
-      'Now that we are ready to fill out the enrollment form, I will need your Medicare number. Can you read that off your red, white, and blue Medicare card?',
-      'Since you have decided to proceed with enrollment, I need to collect your MBI number to complete the application.',
+      'May I have your Medicare number to look up your eligibility and current coverage?',
+      'We can use your Social Security number to retrieve your Medicare record if you cannot find your Medicare card.',
       'We are at the enrollment step now, so this is where I will need your Medicare Beneficiary Identifier. Do you have your Medicare card handy?',
       'For the enrollment form, I will need the number on your Medicare card. It should be a combination of letters and numbers.',
     ],
     anti_patterns: [
       'Before I tell you about any plans, let me grab your Medicare number real quick.',
-      'Can you give me your Social Security number first so I can look you up?',
-      'What is your MBI? I need it to verify your eligibility before we start.',
+      'Give me your Social Security number even though no lookup or enrollment is needed.',
+      'I need to collect your MBI for no stated lookup or enrollment purpose.',
     ],
   },
 ];
