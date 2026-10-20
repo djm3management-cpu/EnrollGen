@@ -1,15 +1,12 @@
 import { memo } from "react";
+import { AVAILABILITY_OPTIONS, availabilityLabel, requiresPhoneReady } from "../lib/availabilityStatus";
 import { useAvailability } from "../context/AvailabilityContext";
 import { isAuthDisabled } from "../lib/agentIdentity";
 
 // Availability toggle rendered in the cockpit right rail. State lives in
 // AvailabilityContext so the top-bar status strip stays in sync.
 
-const STATUS_OPTIONS = [
-  { value: "available", label: "AVAILABLE", color: "var(--status-live)" },
-  { value: "busy", label: "BUSY", color: "var(--status-pending)" },
-  { value: "offline", label: "OFFLINE", color: "var(--status-offline)" },
-];
+const STATUS_OPTIONS = AVAILABILITY_OPTIONS;
 
 const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
   const availability = useAvailability();
@@ -39,8 +36,8 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
 
   const isInteractive = !disabledReason && isHydrated;
   const selectedStatus = status === "wrap_up" ? "busy" : pendingStatus || status;
-  const waiting = pendingStatus === "available" && !isSaving;
-  const panelTitle = (waiting ? "Available — connecting phone" : error) || disabledReason || (agentId ? `Agent ID: ${agentId}` : "");
+  const waiting = requiresPhoneReady(pendingStatus) && !isSaving;
+  const panelTitle = (waiting ? `${availabilityLabel(selectedStatus)} — connecting phone` : error) || disabledReason || (agentId ? `Agent ID: ${agentId}` : "");
 
   return (
     <div
@@ -59,10 +56,10 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
             }`}
             style={{ "--availability-color": option.color }}
             onClick={() => changeStatus(option.value)}
-            disabled={!isInteractive || (status === "wrap_up" && option.value === "available")}
+            disabled={!isInteractive || (status === "wrap_up" && requiresPhoneReady(option.value))}
             aria-pressed={option.value === selectedStatus}
           >
-            {status === "wrap_up" && option.value === "busy" ? "WRAP-UP" : option.value === "available" && waiting ? "CONNECTING…" : option.label}
+            {status === "wrap_up" && option.value === "busy" ? "WRAP-UP" : option.value === selectedStatus && waiting ? "CONNECTING…" : option.label}
           </button>
         ))}
       </div>

@@ -29,7 +29,7 @@ export function isBillable(duration) { return Number(duration) >= BILLABLE_SECON
 
 export function availabilitySnapshot({ agents = [], paused = false, staffed = true } = {}) {
   const availableAgents = paused || !staffed ? [] : agents.filter(a =>
-    a.status !== 'offline' && a.status !== 'busy' && a.available === true &&
+    a.status === 'available' && a.available === true &&
     !a.active_call_sid && !a.outbound_reservation_sid
   );
   return { any_available: availableAgents.length > 0, available_count: availableAgents.length };

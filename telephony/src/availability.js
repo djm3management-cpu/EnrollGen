@@ -21,9 +21,14 @@ export async function activeTenantAgent(agentId, clerkSubject) {
 
 // PostgreSQL owns the reservation, across browsers and service instances.
 // A specific agent is used for outbound calls; inbound calls use fair rotation.
-export async function claimNextAvailableAgent({ callSid, exclude = [], agentId = null, preferredAgentId = null } = {}) {
+export async function claimNextAvailableAgent({ callSid, exclude = [], agentId = null, preferredAgentId = null,
+  customerCall = false, directAgentId = null } = {}) {
   if (!callSid) throw new Error("Call SID required to reserve an agent");
-  const { data, error } = await supabase.rpc("claim_call_agent", {
+  const customer = !agentId && (directAgentId || (customerCall && preferredAgentId));
+  const { data, error } = await supabase.rpc(customer ? "claim_customer_call_agent" : "claim_call_agent", customer ? {
+    p_call_sid: callSid, p_exclude: exclude,
+    p_preferred_agent_id: directAgentId || preferredAgentId, p_direct: Boolean(directAgentId),
+  } : {
     p_call_sid: callSid, p_exclude: exclude, p_agent_id: agentId,
     // Omit entirely for legacy/flag-off/reroute/outbound calls.
     ...(preferredAgentId && !agentId ? { p_preferred_agent_id: preferredAgentId } : {}),

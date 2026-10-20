@@ -57,7 +57,7 @@ test('preferred claim uses one RPC and reports preferred versus ineligible fallb
     const result = await claimInitialInboundAgent({ callSid: 'CA1', callerId: '+16097787669', contact: recent }, {
       enabled: true, now, claim: async args => { calls.push(args); return { agent_id: 'agent', claim_path: path }; },
     });
-    assert.deepEqual(calls, [{ callSid: 'CA1', preferredAgentId: 'recent' }]);
+    assert.deepEqual(calls, [{ callSid: 'CA1', preferredAgentId: 'recent', customerCall: true }]);
     assert.equal(result.method, method);
     assert.equal(result.preferredAgentId, 'recent');
   }
@@ -71,7 +71,7 @@ test('sticky RPC errors and preference calculation errors fail open to a plain c
       return { agent_id: 'fallback' };
     },
   });
-  assert.deepEqual(calls, [{ callSid: 'CA1', preferredAgentId: 'recent' }, { callSid: 'CA1' }]);
+  assert.deepEqual(calls, [{ callSid: 'CA1', preferredAgentId: 'recent', customerCall: true }, { callSid: 'CA1' }]);
   assert.equal(result.agent.agent_id, 'fallback'); assert.equal(result.method, 'round_robin_sticky_error');
   assert.equal(result.preferredAgentId, 'recent');
   const bad = await claimInitialInboundAgent({ callSid: 'CA2', callerId: '+16097787669', contact: recent }, {
@@ -102,5 +102,16 @@ test('RPC wrapper omits preferred parameter on reroutes, flag-off and outbound c
     { p_call_sid: 'REROUTE', p_exclude: ['a'], p_agent_id: null },
     { p_call_sid: 'OUT', p_exclude: [], p_agent_id: 'a' },
     { p_call_sid: 'STICKY', p_exclude: [], p_agent_id: null, p_preferred_agent_id: 'b' },
+  ]);
+});
+
+test('customer callbacks and direct destinations use the separate service RPC', async () => {
+  const calls=[];
+  supabase.rpc=async(name,args)=>{ calls.push({name,args}); return {data:[{agent_id:'b'}]}; };
+  await claimNextAvailableAgent({callSid:'CALLBACK',preferredAgentId:'b',customerCall:true});
+  await claimNextAvailableAgent({callSid:'DIRECT',directAgentId:'b'});
+  assert.deepEqual(calls,[
+    {name:'claim_customer_call_agent',args:{p_call_sid:'CALLBACK',p_exclude:[],p_preferred_agent_id:'b',p_direct:false}},
+    {name:'claim_customer_call_agent',args:{p_call_sid:'DIRECT',p_exclude:[],p_preferred_agent_id:'b',p_direct:true}},
   ]);
 });

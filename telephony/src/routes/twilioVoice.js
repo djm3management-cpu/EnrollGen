@@ -9,6 +9,7 @@ import { findOrCreateContactByPhone, latestLeadIntel, logContactActivity } from 
 import { claimNextAvailableAgent, releaseAgent } from "../availability.js";
 import { createCallAttempt, dialAttribution, finishInboundCall } from "../answerAttribution.js";
 import { claimInitialInboundAgent, chooseInboundPreference, routingPhoneLast4 } from "../stickyRouting.js";
+import { directAgentForNumber } from "../directRouting.js";
 
 import { vendorMetadata } from "../vendorMetadata.js";
 import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
@@ -159,7 +160,8 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next
     const ping = Array.isArray(pingLookup?.data) ? pingLookup.data[0] : pingLookup?.data;
     const paragon = Boolean(ping?.matched);
     if (paragon) await enqueueBillingCallback(supabase,config,req.body);
-    const publisherCall = isParagon(metadata) || Boolean(metadata.publisher);
+    const publisherCall = isParagon(metadata) || Boolean(metadata.publisher || metadata.aggregator_call_id);
+    const directAgentId = directAgentForNumber(to, config.directAgentNumbers, paragon || publisherCall);
     const paragonSource = paragon
       ? await supabase.from('lead_sources').select('id').eq('tenant_id',config.defaultTenantId)
         .eq('name','Paragon Media').eq('type','publisher').eq('active',true).maybeSingle()
@@ -184,7 +186,8 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next
       ? { agent:claimed?.data?.[0]?.agent_id ? claimed.data[0] : null,method:claimed?.data?.[0]?.claim_path || 'state_no_agent',
           preferredAgentId:preferred?.preferredAgentId || null,callerState:claimed?.data?.[0]?.caller_state || ping?.caller_state || null,
           vendorCallId:claimed?.data?.[0]?.vendor_call_id || ping?.vendor_call_id || null }
-      : { ...(await claimInitialInboundAgent({ callSid,callerId:from,contact,lookupError })),callerState:null,vendorCallId:null };
+      : { ...(await claimInitialInboundAgent({ callSid,callerId:from,contact,lookupError,
+          vendorCall:publisherCall,directAgentId })),callerState:null,vendorCallId:null };
     claimedAgent = agent;
     const finalParagonDecision = decideMatchedParagon({ routingEnabled: config.paragonStateRoutingEnabled, ping, agent });
 

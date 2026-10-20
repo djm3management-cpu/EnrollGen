@@ -1,11 +1,8 @@
 import { memo, useEffect, useRef, useState } from "react";
+import { AVAILABILITY_OPTIONS, availabilityLabel, requiresPhoneReady } from "../lib/availabilityStatus";
 import { useAvailability } from "../context/AvailabilityContext";
 
-const STATUS_OPTIONS = [
-  { value: "available", label: "AVAILABLE", color: "var(--status-live)" },
-  { value: "busy", label: "BUSY", color: "var(--status-pending)" },
-  { value: "offline", label: "OFFLINE", color: "var(--status-offline)" },
-];
+const STATUS_OPTIONS = AVAILABILITY_OPTIONS;
 
 const STATUS_COLORS = Object.fromEntries(
   STATUS_OPTIONS.map((option) => [option.value, option.color])
@@ -49,8 +46,8 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
 
   const status = availability.status || "offline";
   const selectedStatus = availability.pendingStatus || status;
-  const waiting = availability.pendingStatus === "available" && !availability.isSaving;
-  const label = status === "wrap_up" ? "WRAP-UP" : waiting ? "AVAILABLE — CONNECTING" : availability.pendingStatus ? `${selectedStatus.toUpperCase()} — SAVING` : status.toUpperCase();
+  const waiting = requiresPhoneReady(availability.pendingStatus) && !availability.isSaving;
+  const label = status === "wrap_up" ? "WRAP-UP" : waiting ? `${availabilityLabel(selectedStatus)} — CONNECTING` : availability.pendingStatus ? `${availabilityLabel(selectedStatus)} — SAVING` : availabilityLabel(status);
   const since = availability.statusSince
     ? TIME_FORMATTER.format(availability.statusSince)
     : null;

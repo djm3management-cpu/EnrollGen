@@ -1,3 +1,5 @@
+import { parseDirectAgentNumbers } from "./directRouting.js";
+
 const REQUIRED_VARS = [
   "PUBLIC_BASE_URL",
   "SUPABASE_URL",
@@ -47,6 +49,7 @@ export const config = {
   twilioApiKeySecret: process.env.TWILIO_API_KEY_SECRET,
   twilioTwimlAppSid: process.env.TWILIO_TWIML_APP_SID,
   twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER || null,
+  directAgentNumbers: parseDirectAgentNumbers(process.env.DIRECT_AGENT_NUMBERS, process.env.TWILIO_PHONE_NUMBER),
   deepgramApiKey: process.env.DEEPGRAM_API_KEY,
   inboundVendorApiKey: process.env.INBOUND_VENDOR_API_KEY,
   clerkSecretKey: process.env.CLERK_SECRET_KEY,

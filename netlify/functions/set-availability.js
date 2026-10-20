@@ -1,7 +1,7 @@
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceJson, evidenceFailure, getEvidenceServiceClient } from './_evidenceAccess.js';
 
-const STATUSES = ['available', 'busy', 'offline'];
+const STATUSES = ['available', 'callbacks_only', 'busy', 'offline'];
 const COLUMNS = 'agent_id, agent_name, status, available, toggled_at, active_call_sid, wrap_up_call_sid';
 
 // Only verified Clerk claims grant admin access. Browser metadata and CRM
@@ -56,7 +56,7 @@ export function createAvailabilityHandler({
       if (request.method === 'POST') {
         try { input = await request.json(); } catch { throw new EvidenceError(400, 'Invalid JSON.'); }
         if (!input || typeof input !== 'object' || Array.isArray(input) || !STATUSES.includes(input.status)) {
-          throw new EvidenceError(400, 'Choose available, busy, or offline.');
+          throw new EvidenceError(400, 'Choose available, callbacks_only, busy, or offline.');
         }
       }
       const requestedId = request.method === 'GET' ? new URL(request.url).searchParams.get('agent_id') : input.agent_id;

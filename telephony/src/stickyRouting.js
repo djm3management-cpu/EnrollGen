@@ -29,15 +29,19 @@ export function chooseInboundPreference({ callerId, contact, lookupError, enable
 }
 
 // First inbound attempt only. Do not use this helper for Dial result reroutes.
-export async function claimInitialInboundAgent({ callSid, callerId, contact, lookupError }, {
+export async function claimInitialInboundAgent({ callSid, callerId, contact, lookupError, vendorCall = false, directAgentId = null }, {
   claim = claimNextAvailableAgent, enabled = config.stickyRoutingEnabled,
   lookbackDays = config.stickyLookbackDays, now = Date.now(),
 } = {}) {
+  if (directAgentId && !vendorCall) {
+    const agent = await claim({ callSid, directAgentId });
+    return { agent, preferredAgentId: directAgentId, method: "direct_agent" };
+  }
   let preference;
   try {
     preference = chooseInboundPreference({ callerId, contact, lookupError, enabled, lookbackDays, now });
     if (preference.preferredAgentId) {
-      const agent = await claim({ callSid, preferredAgentId: preference.preferredAgentId });
+      const agent = await claim({ callSid, preferredAgentId: preference.preferredAgentId, customerCall: !vendorCall });
       return { agent, preferredAgentId: preference.preferredAgentId,
         method: agent?.claim_path === "preferred" ? preference.method : "round_robin_preferred_ineligible" };
     }

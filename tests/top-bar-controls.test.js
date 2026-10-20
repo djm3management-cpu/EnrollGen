@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {transformSync} from 'esbuild';
 import {hookHarness} from './helpers/hookHarness.js';
+import {AVAILABILITY_OPTIONS, availabilityLabel, requiresPhoneReady} from '../src/lib/availabilityStatus.js';
 
 const find=(tree,predicate)=>!tree||typeof tree!=='object'?null:predicate(tree)?tree:tree.children?.flat(Infinity).map(child=>find(child,predicate)).find(Boolean)||null;
 function fixture(file,component,extra){
@@ -11,6 +12,7 @@ function fixture(file,component,extra){
  let source=readFileSync(new URL('../src/components/'+file,import.meta.url),'utf8').replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?\n/gm,'').replace('export default function','function').replace(/^export default .*;$/gm,'');
  source=transformSync(source,{loader:'jsx',jsxFactory:'h',format:'cjs'}).code;
  const context=vm.createContext({...harness.hooks,document,window:new EventTarget(),memo:fn=>fn,
+  AVAILABILITY_OPTIONS,availabilityLabel,requiresPhoneReady,
   h:(type,props,...children)=>({type,props:props||{},children}),...extra});
  vm.runInContext(source+`;globalThis.component=${component};`,context);
  harness.mount(()=>context.component({}));
@@ -87,5 +89,38 @@ test('Available and Offline remain selectable with a legacy wrap-up status',asyn
    assert.equal(option.props.disabled,false);option.props.onClick();await harness.flush();
   }
   assert.deepEqual(selected,['available','offline']);
+ }finally{harness.unmount();}
+});
+
+test('Callbacks Only is selectable in the dropdown and displays its confirmed status and connection wait',async()=>{
+ const selected=[];
+ const availability={agentId:'test',canAuthenticate:true,identityLoaded:true,isHydrated:true,status:'offline',changeStatus:value=>selected.push(value)};
+ const {harness}=fixture('AvailabilityStrip.jsx','AvailabilityStrip',{useAvailability:()=>availability});
+ try{
+  find(harness.value,node=>node.props['aria-haspopup']==='menu').props.onClick();await harness.flush();
+  const option=find(harness.value,node=>node.props.role==='menuitemradio'&&find(node,child=>child.type==='span'&&child.children.includes('CALLBACKS ONLY')));
+  assert.equal(option.props.disabled,false);
+  option.props.onClick();await harness.flush();
+  assert.deepEqual(selected,['callbacks_only']);
+  assert.equal(find(harness.value,node=>node.props.role==='menu'),null);
+  availability.pendingStatus='callbacks_only';harness.render();
+  assert.match(find(harness.value,node=>node.props['aria-haspopup']==='menu').props['aria-label'],/CALLBACKS ONLY — CONNECTING/);
+  availability.pendingStatus=null;availability.status='callbacks_only';harness.render();
+  assert.match(find(harness.value,node=>node.props['aria-haspopup']==='menu').props['aria-label'],/CALLBACKS ONLY\. Change status/);
+  assert.equal(find(harness.value,node=>node.props.className==='availability-strip__dot').props.style.background,'var(--status-pending)');
+ }finally{harness.unmount();}
+});
+
+test('cockpit availability buttons include Callbacks Only and keep the selection in sync',()=>{
+ const selected=[];
+ const {harness}=fixture('AgentAvailabilityToggle.jsx','AgentAvailabilityToggle',{
+  useAvailability:()=>({agentId:'test',canAuthenticate:true,identityLoaded:true,isHydrated:true,status:'callbacks_only',changeStatus:value=>selected.push(value)}),
+  isAuthDisabled:()=>false,
+ });
+ try{
+  const option=find(harness.value,node=>node.type==='button'&&node.children.includes('CALLBACKS ONLY'));
+  assert.equal(option.props['aria-pressed'],true);
+  assert.equal(option.props.disabled,false);
+  option.props.onClick();assert.deepEqual(selected,['callbacks_only']);
  }finally{harness.unmount();}
 });

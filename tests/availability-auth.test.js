@@ -47,6 +47,9 @@ before(async () => {
     GRANT SELECT(agent_id) ON agent_availability TO PUBLIC;`);
   await pg.exec(sql('../supabase/migrations/063_evidence_access.sql'));
   await pg.exec(sql('../supabase/migrations/073_availability_auth.sql'));
+  await pg.exec(sql('../supabase/migrations/047_availability_feed.sql'));
+  await pg.exec('UPDATE telephony_presence_policy SET enforced=true');
+  await pg.exec(sql('../supabase/migrations/109_callbacks_only_availability.sql'));
   await pg.exec('ALTER TABLE agent_availability ADD COLUMN wrap_up_call_sid text');
   await pg.exec('GRANT ALL ON agent_phone_sessions TO service_role; SET ROLE service_role');
 });
@@ -70,6 +73,15 @@ test('an agent cannot read or change another agent, even with body admin claims'
   await call(auth, { agent_id: 'bob', status: 'offline', role: 'admin', isAdmin: true }, 403);
   await call(auth, null, 403, 'GET', '?agent_id=bob');
   assert.deepEqual(await query("SELECT * FROM agent_availability WHERE agent_id='bob'"), before);
+});
+
+test('Callbacks Only round-trips through the authenticated API without advertising vendor availability', async () => {
+  const row = await call(auth, { status: 'callbacks_only' });
+  assert.equal(row.status, 'callbacks_only');
+  assert.equal(row.available, false);
+  assert.equal((await call(auth, null, 200, 'GET')).status, 'callbacks_only');
+  await call(auth, { status: 'callback' }, 400);
+  assert.equal((await call(auth, { status: 'available' })).status, 'available');
 });
 
 test('verified organization admin override works and cannot cross organizations', async () => {
@@ -106,6 +118,7 @@ test('browser roster spoofing cannot grant another subject availability access',
 test('presence and active call guards still own effective status and resume intent', async () => {
   await pg.exec("DELETE FROM agent_phone_sessions WHERE agent_id='alice'");
   assert.equal((await call(auth, { status: 'available' })).status, 'offline');
+  assert.equal((await call(auth, { status: 'callbacks_only' })).status, 'offline');
   await pg.exec("INSERT INTO agent_phone_sessions VALUES(gen_random_uuid(),'alice',now()+interval '1 hour'); UPDATE agent_availability SET active_call_sid='CA-active',status='busy',available=false WHERE agent_id='alice'");
   const row = await call(auth, { status: 'offline' });
   assert.equal(row.status, 'busy');
@@ -115,6 +128,10 @@ test('presence and active call guards still own effective status and resume inte
   assert.equal(stored.resume_status, 'offline');
   assert.equal((await call(auth, { status: 'available' })).status, 'busy');
   assert.equal((await query("SELECT resume_status FROM agent_availability WHERE agent_id='alice'"))[0].resume_status, 'available');
+  assert.equal((await call(auth, { status: 'callbacks_only' })).status, 'busy');
+  assert.equal((await query("SELECT resume_status FROM agent_availability WHERE agent_id='alice'"))[0].resume_status, 'callbacks_only');
+  await query("SELECT release_call_agent('CA-active','alice')");
+  assert.equal((await call(auth, null, 200, 'GET')).status, 'callbacks_only');
 });
 
 test('073 denies direct availability CRUD and identity-map access, including column grants', async () => {

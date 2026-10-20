@@ -1,5 +1,7 @@
 // Manual intent is independent of connectivity. Only an explicit selection can
 // create a pending write; registration/reconnection can only release that write.
+import { requiresPhoneReady } from "./availabilityStatus.js";
+
 export function createAvailabilityIntent({ write, onChange }) {
   let state = { status: "offline", statusSince: null, pendingStatus: null, isSaving: false, error: "" };
   let ready = false;
@@ -13,7 +15,7 @@ export function createAvailabilityIntent({ write, onChange }) {
   };
 
   async function drain() {
-    if (disposed || running || !pending || (pending.status === "available" && !ready)) return;
+    if (disposed || running || !pending || (requiresPhoneReady(pending.status) && !ready)) return;
     running = true;
     const request = pending;
     emit({ isSaving: true });
@@ -21,7 +23,7 @@ export function createAvailabilityIntent({ write, onChange }) {
       const result = await write(request.status);
       if (disposed) return;
       if (pending === request) {
-        if (request.status === "available" && result.status === "offline") {
+        if (requiresPhoneReady(request.status) && result.status === "offline") {
           // The lease may have disappeared between acknowledgment and write.
           // Keep this explicit request, but wait for another server acknowledgment.
           ready = false;
@@ -53,7 +55,7 @@ export function createAvailabilityIntent({ write, onChange }) {
       if (!disposed && !pending && !running) emit(result);
     },
     select(status) {
-      if (disposed || !["available", "busy", "offline"].includes(status)) return;
+      if (disposed || !["available", "callbacks_only", "busy", "offline"].includes(status)) return;
       pending = { status, revision: ++revision };
       emit({ pendingStatus: status, error: "" });
       void drain();

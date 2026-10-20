@@ -14,16 +14,17 @@ function harness() {
   return { intent, writes, get state() { return state; } };
 }
 
-test('Available waits for server readiness and is consumed once, regardless of startup speed', async () => {
+for (const status of ['available','callbacks_only']) {
+test(`${status} waits for server readiness and is consumed once, regardless of startup speed`, async () => {
   for (const initiallyReady of [false, true]) {
     const h = harness();
     if (initiallyReady) h.intent.setPhoneReady(true);
-    h.intent.select('available');
+    h.intent.select(status);
     assert.equal(h.writes.length, initiallyReady ? 1 : 0);
     assert.equal(h.state.status, 'offline');
     h.intent.setPhoneReady(true);
     assert.equal(h.writes.length, 1);
-    h.writes[0].resolve({ status: 'available' });
+    h.writes[0].resolve({ status });
     await tick();
     assert.equal(h.state.pendingStatus, null);
     h.intent.setPhoneReady(false);
@@ -31,6 +32,7 @@ test('Available waits for server readiness and is consumed once, regardless of s
     assert.equal(h.writes.length, 1);
   }
 });
+}
 
 test('registration, hydration and reconnect never create intent', () => {
   const h = harness();
@@ -72,20 +74,22 @@ test('Offline follows an in-flight Available write and stale success cannot chan
   assert.equal(h.writes.length, 2);
 });
 
-test('lease loss retains only explicit intent until next acknowledgment', async () => {
+for (const status of ['available','callbacks_only']) {
+test(`${status} lease loss retains only explicit intent until next acknowledgment`, async () => {
   const h = harness();
   h.intent.setPhoneReady(true);
-  h.intent.select('available');
+  h.intent.select(status);
   h.writes[0].resolve({ status: 'offline' });
   await tick();
-  assert.equal(h.state.pendingStatus, 'available');
+  assert.equal(h.state.pendingStatus, status);
   assert.equal(h.writes.length, 1);
   h.intent.setPhoneReady(true);
   assert.equal(h.writes.length, 2);
-  h.writes[1].resolve({ status: 'available' });
+  h.writes[1].resolve({ status });
   await tick();
   assert.equal(h.state.pendingStatus, null);
 });
+}
 
 test('late hydration and disposed requests cannot overwrite user intent or another identity', async () => {
   const h = harness();

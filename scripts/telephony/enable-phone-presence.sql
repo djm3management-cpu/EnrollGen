@@ -28,7 +28,7 @@ BEGIN
     DELETE FROM agent_phone_sessions WHERE agent_id = agent.agent_id AND expires_at <= clock_timestamp();
     IF NOT EXISTS (SELECT 1 FROM agent_phone_sessions WHERE agent_id = agent.agent_id AND expires_at > clock_timestamp()) THEN
       UPDATE agent_availability SET status = 'offline', available = false, toggled_at = clock_timestamp()
-        WHERE agent_id = agent.agent_id AND (status = 'available' OR
+        WHERE agent_id = agent.agent_id AND (status IN ('available','callbacks_only') OR
           (status = 'busy' AND (active_call_sid IS NULL OR resume_status IS DISTINCT FROM 'offline')));
     END IF;
   END LOOP;
@@ -41,7 +41,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.protect_agent_call_reservation()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
 BEGIN
-  IF NEW.status = 'available' AND NOT EXISTS (
+  IF NEW.status IN ('available','callbacks_only') AND NOT EXISTS (
     SELECT 1 FROM agent_phone_sessions WHERE agent_id = NEW.agent_id AND expires_at > clock_timestamp()
   ) THEN NEW.status := 'offline'; NEW.available := false; END IF;
   IF OLD.active_call_sid IS NOT NULL AND NEW.active_call_sid IS NOT DISTINCT FROM OLD.active_call_sid THEN

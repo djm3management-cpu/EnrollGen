@@ -18,7 +18,7 @@ function database(agents = ['a', 'b']) {
   const claims = []; const evidence = []; const releases = []; const finishes = [];
   const reservations = new Map();
   const state = { tables, claims, evidence, releases, finishes, failEvidence: false, failAttempts: false,
-    failPreferred: false, failContact: false, contactReads: 0 };
+    failPreferred: false, failContact: false, contactReads: 0, statuses: new Map(agents.map(a => [a, 'available'])) };
   supabase.from = table => {
     let action = 'select'; let value; let single = false; const filters = [];
     const q = {
@@ -57,12 +57,14 @@ function database(agents = ['a', 'b']) {
         String(c.phone).replace(/[^0-9]/g, '').replace(/^1(?=.{10}$)/, '') === args.p_phone.slice(-10)) };
     }
     if(name==='enqueue_paragon_billing_event') return {data:null,error:{code:'PGRST202'}};
-    if (name === 'claim_call_agent') {
+    if (name === 'claim_call_agent' || name === 'claim_customer_call_agent') {
       claims.push(args);
       if (args.p_preferred_agent_id && state.failPreferred) return { error: { message: 'Preferred claim failed' } };
       const eligible = agents.filter(a => (!args.p_agent_id || a === args.p_agent_id) &&
+        (args.p_agent_id || state.statuses.get(a) === 'available' ||
+          (name === 'claim_customer_call_agent' && a === args.p_preferred_agent_id && state.statuses.get(a) === 'callbacks_only')) &&
         !args.p_exclude.includes(a) && !reservations.has(a));
-      const agent = eligible.includes(args.p_preferred_agent_id) ? args.p_preferred_agent_id : eligible[0];
+      const agent = eligible.includes(args.p_preferred_agent_id) ? args.p_preferred_agent_id : args.p_direct ? null : eligible[0];
       if (agent) reservations.set(agent, args.p_call_sid);
       return { data: agent ? [{ agent_id: agent, agent_name: agent,
         ...(args.p_preferred_agent_id ? { claim_path: agent === args.p_preferred_agent_id ? 'preferred' : 'round_robin' } : {}),
@@ -249,6 +251,55 @@ test('initial event distinguishes owner, ineligible preference and no history', 
     const payload = db.tables.telephony_events[0].payload;
     assert.equal(payload.routing_method, method); assert.equal(payload.preferred_agent_id, preferred);
   }
+});
+
+test('Callbacks Only sticky rings with the normal timeout, then overflows to Available and voicemail', async t => {
+  enableSticky(t);
+  const db = database(['a','b','c']); seedHistory(db);
+  db.statuses.set('c','callbacks_only'); db.statuses.set('b','callbacks_only');
+  const first = await request(twilioVoiceRouter,'/twilio/voice',incoming);
+  assert.match(first.body,/<Identity>c<\/Identity>/);
+  assert.match(first.body,/timeout="20"/);
+  assert.equal(db.claims[0].p_direct,false);
+  const next = await request(twilioVoiceRouter,'/twilio/dial-result',
+    {CallSid:'PARENT',DialCallStatus:'no-answer'}, {inboundCallId:db.tables.inbound_calls[0].id,tried:'c'});
+  assert.match(next.body,/<Identity>a<\/Identity>/);
+  assert.deepEqual(db.claims[1],{p_call_sid:'PARENT',p_exclude:['c'],p_agent_id:null});
+  const overflow = await request(twilioVoiceRouter,'/twilio/dial-result',
+    {CallSid:'PARENT',DialCallStatus:'no-answer'}, {inboundCallId:db.tables.inbound_calls[0].id,tried:'c,a'});
+  assert.match(overflow.body,/<Record /);
+});
+
+test('publisher and aggregator leads cannot use the customer-only reservation path', async t => {
+  enableSticky(t);
+  for (const metadata of [{PublisherId:'vendor'}, {AggregatorCallId:'vendor-call'}]) {
+    const db=database(['a','c']); seedHistory(db); db.statuses.set('c','callbacks_only');
+    const result=await request(twilioVoiceRouter,'/twilio/voice',{...incoming,...metadata});
+    assert.match(result.body,/<Identity>a<\/Identity>/);
+    assert.equal(db.claims[0].p_agent_id,null); // Original vendor RPC signature.
+    assert.equal(db.claims[0].p_direct,undefined);
+  }
+});
+
+test('dedicated number targets Callbacks Only without sticky history; Offline remains unreachable', async t => {
+  const previous=config.directAgentNumbers;
+  config.directAgentNumbers={ [incoming.To]:'c' };
+  t.after(()=>{ config.directAgentNumbers=previous; });
+  for (const status of ['callbacks_only','available','offline','busy']) {
+    const db=database(['a','c']); db.statuses.set('c',status);
+    const result=await request(twilioVoiceRouter,'/twilio/voice',incoming);
+    if (['available','callbacks_only'].includes(status)) {
+      assert.match(result.body,/<Identity>c<\/Identity>/);
+      assert.equal(db.claims[0].p_direct,true);
+    } else {
+      assert.match(result.body,/<Record /);
+      assert.equal(db.tables.telephony_call_attempts.length,0);
+    }
+  }
+  const vendor=database(['a','c']); vendor.statuses.set('c','callbacks_only');
+  const result=await request(twilioVoiceRouter,'/twilio/voice',{...incoming,PublisherId:'vendor'});
+  assert.match(result.body,/<Identity>a<\/Identity>/);
+  assert.equal(vendor.claims[0].p_direct,undefined);
 });
 
 test('anonymous and malformed inbound calls route normally without preference or full-number logs', async t => {

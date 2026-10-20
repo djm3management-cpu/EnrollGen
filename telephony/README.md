@@ -304,6 +304,13 @@ An older/invalid/future pointer falls back to the owner. No history uses normal
 rotation. Anonymous/blocked/restricted or unnormalizable caller IDs and failed
 contact lookups never supply a preferred agent. There is no extra contact query.
 
+After migration 109, customer sticky calls use `claim_customer_call_agent`, which
+also accepts **Callbacks Only** agents. Vendor-tagged calls keep the original
+Available-only preference RPC described below. Dedicated customer numbers can be
+mapped with `DIRECT_AGENT_NUMBERS`; they use the customer RPC independently of
+sticky history. See [Callbacks Only routing](../docs/callbacks-only-routing.md)
+for status semantics, direct-number configuration and rollout order.
+
 The new four-argument `claim_call_agent` overload requires an explicit
 `p_preferred_agent_id` argument and returns `claim_path` (`preferred`,
 `round_robin`, `existing`, or `outbound`). It uses the same per-call transaction

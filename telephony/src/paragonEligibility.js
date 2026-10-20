@@ -35,7 +35,8 @@ export function decideParagonPing({ state, config = PARAGON_DEFAULTS, paused = f
   if (!staffed) return { available: false, reason: 'outside_staffed_hours' };
   if (!state || !config.allowed_states.includes(state)) return { available: false, reason: 'state_not_allowed' };
   const eligible = agents.filter(agent => agent.tier === 'full' || agent.tier === 'partial');
-  const free = eligible.filter(agent => agent.available);
+  const free = eligible.filter(agent => agent.available &&
+    (agent.status == null || agent.status === 'available') && !agent.active_call_sid && !agent.outbound_reservation_sid);
   const selected = free.find(agent => agent.tier === 'full') || free.find(agent => agent.tier === 'partial');
   if (selected) return { available: true, reason: selected.tier === 'full' ? 'accepted_full' : 'accepted_partial', agent_id: selected.agent_id };
   return { available: false, reason: eligible.length ? 'all_eligible_busy' : 'no_eligible_agent' };

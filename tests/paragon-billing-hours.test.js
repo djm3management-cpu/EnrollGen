@@ -31,6 +31,25 @@ before(async()=>{
  for(const name of ['051_paragon_vendor_matrix.sql','052_paragon_ping_and_claim.sql','053_paragon_zip_and_reports.sql','055_paragon_vendor_report.sql','056_resolve_recent_paragon_ping.sql','057_paragon_vendor_report_proof.sql','067_paragon_billing_hours.sql','096_availability_before_staffed_hours.sql','097_availability_status_labels.sql','098_ancillary_sale_disposition.sql']) await pg.exec(migration(name));
 });
 after(()=>pg.close());
+test('Callbacks Only cannot be advertised, ping-reserved, preferred or consumed from an earlier vendor reservation',async()=>{
+ await pg.exec('BEGIN');
+ try {
+  await sql("UPDATE vendor_controls SET staffed_hours=$1,vendor_pause=false,paragon_daily_cap=NULL",[JSON.stringify(allOpen)]);
+  await pg.exec("UPDATE agent_availability SET status='available',available=true,active_call_sid=NULL; DELETE FROM paragon_agent_reservations");
+  const accepted=(await sql("SELECT paragon_ping($1,'KS','+15550000888','callback-mode-before',true) decision",[hash]))[0].decision;
+  assert.equal(accepted.available,true);
+  await pg.exec("UPDATE agent_availability SET status='callbacks_only',available=false");
+  const feed=(await sql("SELECT availability_snapshot('mark') data"))[0].data;
+  assert.equal(feed.available_count,0);
+  const claim=await sql("SELECT * FROM claim_paragon_call_at($1,'+15550000888','callback-mode-before','{}','mark',true,now())",[sid(888)]);
+  assert.equal(claim[0]?.agent_id??null,null);
+  const denied=(await sql("SELECT paragon_ping($1,'KS','+15550000889','callback-mode-after',true) decision",[hash]))[0].decision;
+  assert.equal(denied.available,false);
+  // Status is authoritative even if an old integration sends a stale boolean.
+  await pg.exec('UPDATE agent_availability SET available=true');
+  assert.equal((await sql("SELECT availability_snapshot('mark') data"))[0].data.available_count,0);
+ } finally { await pg.exec('ROLLBACK'); }
+});
 test('status feed works outside staffed hours while Paragon admission still rejects new calls',async()=>{
  await pg.exec('BEGIN');
  try {

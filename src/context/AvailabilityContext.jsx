@@ -20,7 +20,7 @@ import {
 // Shared agent availability state, lifted out of AgentAvailabilityToggle
 // so the cockpit toggle and the top-bar status strip stay in sync.
 
-const VALID_STATUSES = ["available", "busy", "offline", "wrap_up"];
+const VALID_STATUSES = ["available", "callbacks_only", "busy", "offline", "wrap_up"];
 
 const AvailabilityContext = createContext(null);
 
