@@ -19,7 +19,7 @@ class Call extends EventEmitter {
  disconnect(){this.phase='closed';this.emit('disconnect');}
 }
 function phoneFixture(){
- const harness=hookHarness(),devices=[];let token=async()=>'',availability={isHydrated:true,setPhoneReady:()=>{}};
+ const harness=hookHarness(),devices=[];let agentId='agent',token=async()=>'',availability={isHydrated:true,setPhoneReady:()=>{}};
  class Device extends EventEmitter{
   constructor(){super();this.destroyed=0;devices.push(this);}
   register(){this.emit('registered');}
@@ -39,8 +39,8 @@ function phoneFixture(){
   window:{addEventListener(){},removeEventListener(){},setTimeout:()=>1,clearTimeout(){}},
  });
  vm.runInContext(source+';globalThis.component=InboundCallProviderCore;',context);
- harness.mount(()=>context.component({agentId:'agent',identityReady:true}));
- return {harness,devices,rotate(){token=async()=>'rotated';availability={...availability,isHydrated:false,status:'wrap_up',wrapUpCallSid:SID};harness.render();}};
+ harness.mount(()=>context.component({agentId,identityReady:true}));
+ return {harness,devices,switchAgent(id){agentId=id;harness.render();},rotate(){token=async()=>'rotated';availability={...availability,isHydrated:false,status:'wrap_up',wrapUpCallSid:SID};harness.render();}};
 }
 
 test('real phone provider preserves a live inbound call through auth refresh, availability wrap-up, media errors and stale prior-leg callbacks',async()=>{
@@ -52,6 +52,27 @@ test('real phone provider preserves a live inbound call through auth refresh, av
  first.disconnect();await harness.flush();const second=new Call(NEXT);device.emit('incoming',second);await harness.flush();harness.value.acceptCall();await harness.flush();
  first.emit('cancel');first.emit('error',new Error('Late old call error'));first.emit('disconnect');await harness.flush();
  assert.equal(harness.value.activeCall.call,second);assert.equal(harness.value.remoteStream,second.stream);assert.equal(harness.value.hasCallInProgress(),true);
+ }finally{harness.unmount();}
+});
+
+test('rebuilding the device never destroys a ringing or live call; the retired device is destroyed when that call ends',async()=>{
+ const {harness,devices,switchAgent}=phoneFixture();try{
+ await harness.flush();const old=devices[0],ringing=new Call();old.emit('incoming',ringing);await harness.flush();
+ switchAgent('agent-2');await harness.flush();assert.equal(devices.length,2);assert.equal(old.destroyed,0);assert.equal(ringing.phase,'open');
+ harness.value.acceptCall();await harness.flush();assert.equal(harness.value.activeCall.call,ringing);
+ const busy=new Call(NEXT);devices[1].emit('incoming',busy);assert.equal(busy.phase,'closed','a second call is declined while one is live');assert.equal(harness.value.activeCall.call,ringing);
+ switchAgent('agent-3');await harness.flush();assert.equal(devices[1].destroyed,1,'a second rebuild destroys the call-free device');assert.equal(old.destroyed,0);
+ ringing.disconnect();await harness.flush();assert.equal(old.destroyed,1);assert.equal(devices[2].destroyed,0);assert.equal(harness.value.hasCallInProgress(),false);
+ }finally{harness.unmount();}
+});
+
+test('idle rebuild destroys the old device at once and a stuck in-progress flag from a lost terminal event cannot reject the next call',async()=>{
+ const {harness,devices,switchAgent}=phoneFixture();try{
+ await harness.flush();switchAgent('agent-2');await harness.flush();assert.equal(devices[0].destroyed,1);
+ const lost=new Call();devices[1].emit('incoming',lost);await harness.flush();assert.equal(harness.value.hasCallInProgress(),true);
+ lost.phase='closed';switchAgent('agent-3');await harness.flush();
+ assert.equal(devices[1].destroyed,1);assert.equal(devices.length,3);assert.equal(harness.value.hasCallInProgress(),false);
+ const next=new Call(NEXT);devices[2].emit('incoming',next);await harness.flush();assert.equal(next.phase,'open');assert.equal(harness.value.incomingCall.call,next);
  }finally{harness.unmount();}
 });
 

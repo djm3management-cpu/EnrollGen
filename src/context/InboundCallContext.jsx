@@ -95,6 +95,24 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const callInProgressRef = useRef(false);
   const outboundCallRef = useRef(null);
   const ownedCallRef = useRef(null);
+  // A device replaced while a call is ringing or live; destroyed once that call ends.
+  const retiredDeviceRef = useRef(null);
+  // True while a call is ringing, dialing or live. A call the SDK already closed
+  // whose terminal event never arrived is finished, not live.
+  const callIsLive = useCallback(() => {
+    const owned = ownedCallRef.current;
+    if (owned?.status?.() === "closed") {
+      ownedCallRef.current = null;
+      callContinuity.end(owned);
+      callInProgressRef.current = false;
+    }
+    return callInProgressRef.current;
+  }, []);
+  const destroyRetiredDevice = useCallback(() => {
+    if (!retiredDeviceRef.current || callIsLive()) return;
+    retiredDeviceRef.current.destroy();
+    retiredDeviceRef.current = null;
+  }, [callIsLive]);
 
   const fetchTokenBundle = useCallback(async () => {
     const clerkToken = await getTokenRef.current().catch(() => null);
@@ -227,6 +245,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     };
 
     async function register() {
+      // A rebuilt device starts clean unless a call is still on the retired one.
+      callIsLive();
       setDeviceStatus("registering");
       setError("");
       try {
@@ -270,6 +290,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
             ownedCallRef.current = null;
             callContinuity.end(call);
             callInProgressRef.current = false;
+            destroyRetiredDevice();
             setIncomingCall(null);
             setActiveCall(null);
             setRemoteStream(null);
@@ -341,13 +362,21 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       phoneReadyRef.current = false;
       phoneConnectionRef.current?.stop();
       phoneConnectionRef.current = null;
-      if (deviceRef.current) {
-        deviceRef.current.destroy();
-        deviceRef.current = null;
+      const device = deviceRef.current;
+      deviceRef.current = null;
+      if (device) {
+        // destroy() rejects ringing calls and hangs up live ones. A call already
+        // on a retired device cannot be on this one.
+        if (callIsLive() && !retiredDeviceRef.current) retiredDeviceRef.current = device;
+        else device.destroy();
+      }
+      if (!retiredDeviceRef.current) {
+        ownedCallRef.current = null;
+        callInProgressRef.current = false;
       }
       setDeviceStatus("offline");
     };
-  }, [registrationReady, agentId, fetchTokenBundle, connectAgentSocket]);
+  }, [registrationReady, agentId, fetchTokenBundle, connectAgentSocket, destroyRetiredDevice, callIsLive]);
 
   // Hydrate the contact record for the ringing/active call. Full PII
   // (name/phone/email/etc) is read via decrypt_pii — the agent needs
@@ -407,8 +436,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     callContinuity.end(incomingCall.call);
     incomingCall.call.reject();
     callInProgressRef.current = false;
+    destroyRetiredDevice();
     setIncomingCall(null);
-  }, [incomingCall]);
+  }, [incomingCall, destroyRetiredDevice]);
 
   const hangUp = useCallback(() => {
     activeCall?.call?.disconnect();
@@ -450,6 +480,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       } catch (err) {
         callContinuity.end(dialingClaim);
         callInProgressRef.current = false;
+        destroyRetiredDevice();
         throw err;
       }
       outboundCallRef.current = call;
@@ -519,6 +550,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         setIsMuted(false);
         setIsHeld(false);
         callInProgressRef.current = false;
+        destroyRetiredDevice();
         publishAudioLevel("customer", 0, { immediate: true });
       };
       call.on("disconnect", finishCall);
@@ -533,7 +565,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
       return call;
     },
-    [getToken]
+    [getToken, destroyRetiredDevice]
   );
 
   const sendDigits = useCallback(
