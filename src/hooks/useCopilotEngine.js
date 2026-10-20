@@ -1,3 +1,4 @@
+import { LIVE_ASSISTANT_PROMPT, shortLiveMessage } from "../lib/liveAssistantPolicy.js";
 import { debugLog } from "../lib/debugLog.js";
 import { AGENCY_CLOSING_GUIDANCE } from "../data/agencyClosing.js";
 import { getMASelectedKnowledge, getMASelectedScriptText } from "../lib/maScriptFlow.js";
@@ -25,8 +26,7 @@ import {
 } from "./useCopilotEngineCore";
 import {
   COMPLIANCE_KNOWLEDGE, COACHING_DEBOUNCE_MS, MIN_NEW_CHARS,
-  COOLDOWN_BY_LEVEL, WARN_CONFIDENCE_FLOOR, REMIND_CONFIDENCE_FLOOR,
-  SECTION_CONFIDENCE_OVERRIDES, SECTION_SETTLE_MS, HIGH_RISK_KEYWORDS,
+  COOLDOWN_BY_LEVEL, SECTION_SETTLE_MS, HIGH_RISK_KEYWORDS,
 } from "../data/complianceKnowledge";
 import { useScriptTemplate } from "./useScriptTemplate";
 
@@ -325,21 +325,6 @@ function buildPeriodicContextSignature({
   });
 }
 
-function buildPeriodicFallbackMessage({ sectionKey, transcriptWindow }) {
-  const normalized = (transcriptWindow || "").replace(/\s+/g, " ").trim();
-  const lastSentence = normalized
-    .split(/[.!?]/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .at(-1);
-
-  if (lastSentence) {
-    return `I heard you say "${lastSentence.slice(-140)}." You're on track in ${sectionKey}; keep the compliance pacing steady before you transition.`;
-  }
-
-  return `You're on track in ${sectionKey}. Keep the current disclosure tight and finish the required points before you move on.`;
-}
-
 const isHighRiskIntervention = makeIsHighRisk(HIGH_RISK_KEYWORDS);
 
 function shouldSuppressForNuance({ level, issueTag, message, derivedSignals }) {
@@ -378,79 +363,25 @@ ${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
 KEY PHRASES TO LISTEN FOR (if you hear these or close synonyms/paraphrases in the transcript, the agent IS covering the requirement, give them credit):
 ${knowledge.keyPhrasesToListenFor.map((p) => `  • "${p}"`).join("\n")}
 
-REQUIRED COMPLIANCE ELEMENTS, every one of these MUST be covered in this section:
+REQUIRED COMPLIANCE ELEMENTS, reference for the checkpoint checklist:
 ${knowledge.requiredElements.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
 
-COMMON AGENT MISTAKES IN THIS SECTION (watch for these):
+COMMON AGENT MISTAKES IN THIS SECTION (reference only):
 ${knowledge.commonMistakes.map((m) => `  ⚠ ${m}`).join("\n")}
 
-RED FLAGS, IF YOU DETECT ANY OF THESE, INTERVENE IMMEDIATELY (warn or critical):
+RED FLAGS, reference only; apply the live assistant interruption policy:
 ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 `;
 }
 
 function buildCoachingModeGuidance(reviewMode) {
-  if (reviewMode === "periodic") {
-    return `
-## YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
-This is a scheduled 90-second review. You MUST respond with either encouragement or correction.
-
-Return rules for this mode:
-- IGNORE any other silence-first instruction in this prompt
-- NEVER return "silent" or "info"
-- If the agent is compliant and on pace, return level "tip" with a short encouraging message
-- If the agent needs course correction, return "remind", "warn", or "critical" based on severity
-- If the recent speech is off-topic per the OFF-TOPIC SPEECH rules, return level "tip" with issue_tag "off_topic", a short rapport acknowledgment and a soft transition, e.g. "Good rapport. Ease back to [section] when ready." Do not return a compliance correction for off-topic speech.
-- Keep the message to 1 sentence (max 2). The agent only glances at the popup for a second mid-call.
-- Anchor the message to specific words the agent recently said whenever possible`;
-  }
-
-  return `
-## YOUR ROLE: SILENT COMPLIANCE SAFETY NET
-
-DEFAULT STATE: SILENT. You are monitoring, not commentating. You do NOT need to respond to every transcript update. Silence means everything is fine.
-
-ONLY break silence for:
-
-1. **COMPLIANCE VIOLATION (critical)**: Agent said something non-compliant, made an illegal claim, or violated CMS rules. Quote what they said and provide the exact correction.
-
-2. **MISSED REQUIRED DISCLOSURE (warn)**: Use this ONLY with high confidence. Agent must be clearly moving forward, the element must be materially missing, and the transcript must not contain a close paraphrase. Name the specific element missed and give the exact script language to say now.
-
-3. **IMPORTANT REMINDER (remind)**: Use sparingly. Agent is clearly near transition and a key element is still likely uncovered. If uncertain, choose silent.
-
-4. **POSITIVE REINFORCEMENT (tip)**: Agent nailed a critical compliance element exceptionally well. ONLY use this occasionally (once every few minutes at most). MUST reference the SPECIFIC words or disclosure the agent said well and WHY it matters for compliance.
-
-5. **SILENCE (silent)**: Agent is doing fine, covering requirements correctly, or there's nothing actionable to say. THIS IS YOUR DEFAULT. Use this 70-80% of the time. When in doubt, choose silent.`;
+  return `${reviewMode === "periodic" ? "Scheduled review" : "Live assistance"}: Offer a useful next action or stay silent. Apply the assistant policy; do not repeat checkpoint reminders.`;
 }
 
 function buildAudioConstraintBlock(hasCustomerAudio) {
-  if (hasCustomerAudio) {
-    return `## DUAL AUDIO MODE, AGENT + CUSTOMER
-You can hear BOTH the agent and the customer. The transcript below includes lines labeled AGENT: and CUSTOMER:. Use the customer's responses to provide more accurate, contextual coaching.
-
-DUAL AUDIO IMPLICATIONS:
-- When the customer expresses confusion, objections, or asks questions, coach the agent on how to respond effectively and compliantly.
-- When the customer confirms understanding or agreement, note compliance checkpoints that have been satisfied by the customer's own words.
-- Track whether required disclosures were BOTH delivered by the agent AND acknowledged by the customer, this is the gold standard for CMS compliance.
-- If the customer says something that contradicts what the agent said ("you told me it was free", "but you said there's no network"), flag this as a potential compliance violation immediately.
-- When the customer verbally confirms enrollment, verify that ALL required disclosures were made BEFORE that point.
-- If the customer mentions pre-existing conditions, medications, or other coverage, flag for plan suitability review.
-- Speech recognition is imperfect for BOTH speakers. Words may be garbled or truncated. If something SOUNDS CLOSE ENOUGH, give credit. Use semantic matching, not exact text matching.
-- The call may have started before capture began. Absence in the transcript is not proof of omission.`;
-  }
-
-  return `## CRITICAL AUDIO CONSTRAINT, THIS IS NON-NEGOTIABLE
-You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words captured through their microphone. You have ZERO access to what the client/beneficiary says, asks, confirms, or agrees to.
-
-IMPLICATIONS, read carefully:
-- Evaluate compliance ONLY based on what the AGENT said or failed to say
-- When the agent repeats/confirms information ("So your Part B started March 2010..."), that tells you what the client likely said, grade the AGENT's handling, not the client's responses
-- NEVER say "the client didn't give consent" or "the client didn't confirm", YOU CANNOT HEAR THE CLIENT
-- DO say "I didn't hear you ask for their verbal consent" or "Make sure you read the disclosure"
-- When the agent reads back information, confirms details, or paraphrases, that's GOOD compliance behavior. Acknowledge it by referencing their specific words.
-- Speech recognition is imperfect. Words may be garbled, truncated, or slightly wrong. If something SOUNDS CLOSE ENOUGH to a required phrase, GIVE THE AGENT CREDIT. Don't flag something as missing just because a word or two was garbled. Use semantic matching, not exact text matching.
-- The agent may have started speaking with the beneficiary BEFORE pressing record or before this transcript segment began. That means earlier required lines may have happened off-transcript. Absence in the visible transcript is NOT proof they were skipped.
-- Because the transcript may begin mid-call or mid-section, do NOT assume the first visible line is the true start of the section. Only warn when the agent is clearly moving forward without covering something, not merely because you did not hear the opening.`;
+  return hasCustomerAudio
+    ? "Dual audio: AGENT and CUSTOMER labels identify speakers. Use customer questions to help the agent; they are not prohibited agent claims."
+    : "Agent audio only: do not infer the customer's consent or responses. Missing transcript text is not proof of a skipped disclosure.";
 }
 
 const OBSERVATION_STAY_TALKING_POINT = `
@@ -483,93 +414,10 @@ function buildCoachingSystemPrompt({
 
   return { staticPrefix: `# Medicare Advantage live coaching
 
+${LIVE_ASSISTANT_PROMPT}
+
 ${AGENCY_CLOSING_GUIDANCE}
-
-You are an expert CMS Medicare enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required disclosure, or something the agent needs to correct RIGHT NOW.
-
-## HOW TO USE THIS CONTEXT
-- Inspect sectionChecklistState to see exactly which checklist items are complete vs. pending for the current section. If an item is marked complete, do NOT warn that it is missing. If an item is still pending and the agent appears to be moving on, flag it.
-- Use derivedSignals to detect broader patterns: pacing issues, repeated missed items, sections completed out of order, or unusual call progression.
-- Use priorCompletedSections to understand what the agent has already finished, do not accuse them of missing something from a completed section.
-- If callMetadata.agentName is null, the agent has not entered their name. Mention this once as a tip if a natural opportunity arises, do not force it.
-
 ${OBSERVATION_STAY_TALKING_POINT}
-
-## EMPTY OR SPARSE TRANSCRIPT:
-If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
-
-## OFF-TOPIC SPEECH
-Rapport is not a compliance event. If NEW SPEECH SINCE LAST ANALYSIS is
-small talk (weather, sports, family, pets, holidays), call logistics
-("can you hear me", "call you back"), or an interruption (third party in
-the room, dead air, background noise), return level "silent" with
-issue_tag "off_topic". Do not warn about pending checklist items during
-off-topic speech. The agent is building rapport and will return to the
-script.
-
-Off-topic speech is still evaluated. Never return "off_topic" if the
-segment contains any of the following, no matter how casual the framing:
-- CUSTOMER: do-not-call request, recording objection, intent to complain,
-  asking whether you work for Medicare or the government, asking for an
-  interpreter, saying they are not the beneficiary, asking to end the
-  call. These are critical.
-- AGENT: superlatives, guarantees, "free", implied Medicare affiliation,
-  disparaging other carriers, urgency or fear, pivoting to life or
-  annuity without a new scope, asking about health conditions during
-  MA enrollment, offering gifts, unqualified benefit amounts.
-- CUSTOMER: repeating back a claim like "so you said it's free".
-- CUSTOMER: moving, snowbird, nursing home, retirement or lost
-  coverage, Medicaid change, plan termination letter, storm or
-  disaster, released from incarceration, chronic condition, "the last
-  agent told me", fixed income, SNAP or Extra Help, dual status,
-  confusion, dementia, hearing trouble, a family member handling their
-  paperwork, POA, VA or TRICARE, employer or union coverage, another
-  agent involved, address change, a specific drug or doctor. These are
-  eligibility signals. Return "remind" with the specific signal.
-Speaker matters: a customer volunteering a condition is a signal, an
-agent asking about conditions is a violation.
-If the speaker label is missing, do not return "off_topic".
-Never return "off_topic" when sectionChecklistState shows a pending gate
-in sections 1, 2, 3, or 7, or when derivedSignals.agentMovedPastCurrentSection
-is true.
-derivedSignals.newSpeechLooksOffTopic is a vocabulary hint, not a decision;
-always apply the speaker, risk, eligibility, and pending-gate rules above.
-
-## PRIORITY WEIGHTING
-- Prioritize risky language and compliance-danger behaviors over missing-word disclosure checks.
-- Do not escalate on technical wording misses if the semantic intent appears covered.
-
-## RESPONSE FORMAT: TELEPROMPTER MODE
-
-You are a teleprompter. The agent glances at you for ONE SECOND while talking to a real person.
-
-## HARD LIMITS
-- silent/tip: 8 words max
-- remind: 12 words max
-- warn: 15 words max. Format: "[What's wrong]. Say: '[exact fix]'"
-- critical: 18 words max. Format: "[Violation]. Say now: '[exact script]'"
-
-## STYLE RULES
-- No explanations. No context. No reasoning. Just the fix.
-- Never start with "I noticed" or "It appears" or "You may want to"
-- Never use "consider" or "make sure" or "don't forget"
-- Use imperative voice: "Say:" not "You should say"
-- One thought per message. Never two ideas.
-
-## GOOD examples
-- tip: "Nice TPMO read, clean delivery"
-- remind: "Still need recording consent before moving on"
-- warn: "Skipped SOA disclosure. Say: 'This call covers Medicare Advantage plans only'"
-- critical: "Illegal benefit guarantee. Say now: 'Benefits vary by plan and may change'"
-
-## BAD examples (too long, would be ignored)
-- "I noticed the agent hasn't mentioned the recording consent yet. They should make sure to cover this before proceeding to the next section."
-- "The agent did a great job covering the TPMO disclaimer. They clearly stated that they don't represent every plan available in the area, which satisfies the CMS requirement."
-
-## RESPONSE FORMAT
-Do NOT include markdown, bold, bullets, dashes, asterisks, emojis, or special characters in the message field.
-
-Use a short snake_case issue_tag, or an empty string.
 `, variableSuffix: `
 ## Reference context
 ${audioBlock}
@@ -614,11 +462,8 @@ function buildAskSystemPrompt({ sectionKey, knowledge, cmsBlock, transcriptRefBl
 
 ${AGENCY_CLOSING_GUIDANCE}
 
-You are a knowledgeable Medicare compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer to their question.
-## CRITICAL CONTEXT
-- They need a fast, practical answer they can use RIGHT NOW on this call
-
-
+You are a knowledgeable Medicare sales assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer to their question.
+Answer the agent's question first. Help with scripts, benefits, objections and lookups. Use verified facts; never invent coverage. For drugs verify dose/form and pharmacy; for providers verify exact location and plan/network using Sunfire or the carrier tool. Keep answers to one or two short plain-text lines, at most 40 words. No grades, scores, counts or unsolicited disclosure reminders.
 ## YOUR CAPABILITIES, you can answer questions about
 - CMS compliance rules and requirements
 - MA plan types, general benefits structure, eligibility
@@ -637,7 +482,6 @@ You are a knowledgeable Medicare compliance assistant for agents at New Gen Heal
 - Pharmacy-specific coverage (preferred vs standard, mail order) -> direct to Sunfire or carrier formulary
 Do NOT guess or approximate any plan-specific data. Always redirect to the authoritative tool.
 
-
 ## STRUCTURED CONTEXT USAGE
 - Check sectionChecklistState for exactly what is complete and pending in the current section.
 - Use derivedSignals to understand call progression and any flagged patterns.
@@ -645,23 +489,6 @@ Do NOT guess or approximate any plan-specific data. Always redirect to the autho
 
 EMPTY TRANSCRIPT: If no transcript is available, answer based on the agent's question and current section context only. Do not speculate about what was or wasn't said on the call.
 
-## RESPONSE RULES
-- Keep answers concise and actionable, the agent is on a live call
-- If providing script language, put it in quotes so the agent can read it directly
-- Always prioritize CMS compliance in your answers
-- For any plan-specific data question, follow the HARD BOUNDARY rules above
-- If transcript references are provided, cite them inline as [R1], [R2], etc.
-
-## RESPONSE FORMAT RULES
-- Respond ONLY in plain, conversational English
-- NEVER include JSON, code, or structured data in your response
-- NEVER include confidence scores, percentages, or numeric ratings
-- NEVER include topic tags, intent labels, or classification metadata
-- NEVER reference internal analysis functions or scoring systems
-- Write as if you are a senior agent whispering advice during a live call
-- Keep responses very short: 1-3 sentences max. The agent is mid-call and can only glance at the answer.
-- No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters
-- Write natural conversational sentences. Separate multiple items with numbered lines or semicolons, never with dashes or symbols.
 `, variableSuffix: `
 ## Reference context
 ${audioContext}
@@ -681,8 +508,6 @@ ${recentTranscript ? `\nRecent agent transcript for context:\n"${recentTranscrip
 
 Structured app context:
 ${copilotContextJson}
-SCOPE RULE: If the question is not directly relevant to the current section or enrollment flow, answer it briefly and then redirect the agent back to completing the current section. Example: "Quick answer: [answer]. You're currently in ${sectionKey}, make sure to cover [key remaining item] before moving on."
-
 ` };
 }
 
@@ -802,7 +627,7 @@ export function useCopilotEngine({
     };
   }, [activeSection, currentStep, state, unlocked, transcriptRef]);
 
-  /* ═══════ COACHING, real-time compliance monitor ═══════ */
+  /* ═══════ COACHING, live sales assistance ═══════ */
   const requestCoaching = useCallback(async ({
     manual = false,
     sectionEntry = false,
@@ -954,10 +779,10 @@ export function useCopilotEngine({
 
     const userContent = `${transcriptLabel}
 ${sectionEntry ? `
-SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" section. Provide one short info message with the next one or two priorities. Use level "info" unless you spot an actual compliance issue. Do NOT return silent for a section entry analysis.
+SECTION ENTRY: Offer a useful next step or stay silent.
 ` : ""}
 ${periodic ? `
-PERIODIC 90-SECOND REVIEW: You MUST return a popup-ready encouragement or correction. If the agent is on track, return level "tip". If correction is needed, return "remind", "warn", or "critical". Use the current section context even if recent speech is limited.
+PERIODIC REVIEW: Help with the next step if useful; otherwise return silent.
 ` : ""}
 NEW SPEECH SINCE LAST ANALYSIS:
 "${newSpeechWindow}"
@@ -972,7 +797,7 @@ SECTION CONTEXT (rolling window for current section):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           engine: "MA",
-          max_completion_tokens: 2048,
+          max_completion_tokens: 768,
           system: systemPrompt.system,
           response_format: coachingFormat,
           messages: [...systemPrompt.contextMessages, { role: "user", content: userContent }],
@@ -1022,21 +847,8 @@ SECTION CONTEXT (rolling window for current section):
       }
       offTopicRef.current = { active: false, periodicTipShown: false };
 
-      if (periodic) {
-        if (level === "info") level = "tip";
-        if (level === "silent" || !message || !message.trim()) {
-          level = "tip";
-          message = buildPeriodicFallbackMessage({
-            sectionKey,
-            transcriptWindow: newSpeechWindow || analysisWindow,
-          });
-          issueTag = "";
-          confidence = confidence ?? 100;
-        }
-      }
-
       // Silent or empty
-      if (!periodic && (level === "silent" || !message || !message.trim())) {
+      if ((level === "silent" || !message || !message.trim())) {
         const firstSilentPassThisSection = !sectionCopilotFiredRef.current.has(activeSection);
         const now = Date.now();
         const shouldEmitHeartbeat =
@@ -1090,42 +902,6 @@ SECTION CONTEXT (rolling window for current section):
         return;
       }
 
-      const sectionOverrides = SECTION_CONFIDENCE_OVERRIDES[currentKnowledgeStep] || {};
-      const effectiveWarnFloor = sectionOverrides.warn ?? WARN_CONFIDENCE_FLOOR;
-      const effectiveRemindFloor = sectionOverrides.remind ?? REMIND_CONFIDENCE_FLOOR;
-
-      if (level === "warn" && confidence !== null && confidence < effectiveWarnFloor) {
-        if (periodic) {
-          level = "tip";
-          issueTag = "";
-          message = buildPeriodicFallbackMessage({
-            sectionKey,
-            transcriptWindow: newSpeechWindow || analysisWindow,
-          });
-        } else {
-          lastAnalyzedLength.current = targetAnalyzedLength;
-          lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. A possible warning was below the confidence threshold, so Co-Pilot stayed quiet.", { section: currentStep, issueTag, retrievalTrace });
-          return;
-        }
-      }
-
-      if (level === "remind" && confidence !== null && confidence < effectiveRemindFloor) {
-        if (periodic) {
-          level = "tip";
-          issueTag = "";
-          message = buildPeriodicFallbackMessage({
-            sectionKey,
-            transcriptWindow: newSpeechWindow || analysisWindow,
-          });
-        } else {
-          lastAnalyzedLength.current = targetAnalyzedLength;
-          lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. A reminder candidate was below the confidence threshold, so Co-Pilot stayed quiet.", { section: currentStep, issueTag, retrievalTrace });
-          return;
-        }
-      }
-
       // Deliver intervention
       lastAnalyzedLength.current = targetAnalyzedLength;
       lastCoachingTime.current = Date.now();
@@ -1134,10 +910,10 @@ SECTION CONTEXT (rolling window for current section):
       if (periodic && periodicSignature) {
         lastPeriodicContextSignatureRef.current = periodicSignature;
       }
-      pushFeedEntry(level, message, { issueTag, section: currentStep, contextSnapshot: copilotContext, retrievalTrace });
+      const delivered = pushFeedEntry(level, message, { confidence, issueTag, section: currentStep, contextSnapshot: copilotContext, retrievalTrace });
 
-      // Persist to session tracking (warn/critical/remind only)
-      if ((level === "warn" || level === "critical" || level === "remind") && logComplianceFlag) {
+      // Persist delivered hard stops to session tracking
+      if (delivered?.level === "critical" && logComplianceFlag) {
         logComplianceFlag(currentStep, level, issueTag, confidence, message);
       }
     } catch (err) {
@@ -1283,7 +1059,7 @@ SECTION CONTEXT (rolling window for current section):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           engine: "MA",
-          max_completion_tokens: 2048,
+          max_completion_tokens: 768,
           system: systemPrompt.system,
           messages: [...systemPrompt.contextMessages, { role: "user", content: question }],
         }),
@@ -1303,7 +1079,7 @@ SECTION CONTEXT (rolling window for current section):
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = parseAnthropicResponse(data);
+      const raw = shortLiveMessage(parseAnthropicResponse(data));
 
       if (raw) {
         const prefix = isSpoken ? `🎙 "${question}"` : `❓ ${question}`;
@@ -1359,18 +1135,6 @@ SECTION CONTEXT (rolling window for current section):
   ]);
 
   /* ═══════ SOA section-entry alert ═══════ */
-  const soaFiredRef = useRef(false);
-  useEffect(() => {
-    if (activeSection === 3 && !soaFiredRef.current) {
-      soaFiredRef.current = true;
-      const soaMsg = "SCOPE OF APPOINTMENT, You MUST inform the beneficiary that this is the Scope of Appointment and confirm they understand what plan types will be discussed.";
-      pushFeedEntry("critical", soaMsg, { section: "POA & Scope of Appointment", issueTag: "SOA_DISCLOSURE" });
-    }
-    if (activeSection !== 3) soaFiredRef.current = false;
-  }, [
-    activeSection,
-    pushFeedEntry,
-  ]);
 
   return {
     messages, coachingLoading, askLoading,

@@ -38,7 +38,6 @@ import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
 import { BookOpen, SquareTerminal, Sun, TableProperties, ShieldCheck } from "lucide-react";
 import CollapsibleWidget from "./components/CollapsibleWidget";
-import ComplianceMini from "./components/ComplianceMini";
 import { useTheme } from "./context/ThemeContext";
 import {
   LeftRail,
@@ -88,7 +87,6 @@ const CarrierRef = lazy(loadCarrierRef);
 const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
-const ComplianceDashboard = lazy(loadComplianceDashboard);
 const ComplianceIntentAccordion = lazy(loadComplianceIntentAccordion);
 const CallLogTab = lazy(loadCallLogTab);
 const ContactsTab = lazy(loadContactsTab);
@@ -402,15 +400,9 @@ class PanelErrorBoundary extends Component {
 }
 
 function LeftRailCompliance() {
-  const { liveCall } = useLiveCall();
-
   return (
-    <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />}>
-      <ComplianceMini
-        transcript={liveCall.transcript}
-        activeSection={liveCall.activeSection}
-        result={liveCall.complianceResult}
-      />
+    <CollapsibleWidget title="Co-Pilot" icon={<ShieldCheck size={11} />}>
+      <p>Ask Co-Pilot for next-step help, benefits, objections, or drug and provider lookup guidance.</p>
     </CollapsibleWidget>
   );
 }
@@ -430,23 +422,10 @@ function SessionSummarySlot() {
 }
 
 function MainFlowComplianceHubPanel() {
-  const { liveCall } = useLiveCall();
-
   return (
     <LazyPanel>
       <div className="compliance-hub-stack">
         <ComplianceIntentAccordion />
-        <div className="compliance-hub-shell">
-          <ComplianceDashboard
-            transcript={liveCall.transcript}
-            customerTranscript={liveCall.customerTranscript}
-            mergedTranscript={liveCall.mergedTranscript}
-            result={liveCall.complianceResult}
-            forceExpanded
-            forceShowDetail
-            forceExpandAllCategories
-          />
-        </div>
       </div>
     </LazyPanel>
   );

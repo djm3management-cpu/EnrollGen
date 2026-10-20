@@ -1,3 +1,4 @@
+import { LIVE_ASSISTANT_PROMPT } from "../../src/lib/liveAssistantPolicy.js";
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { parse } from '@babel/parser';
@@ -17,7 +18,7 @@ export function loadPromptBuilders(source) {
   const nodes = parse(source, { sourceType: 'module' }).program.body.filter(node =>
     names.has(node.id?.name || node.declarations?.[0]?.id?.name));
   return vm.runInNewContext(nodes.map(node => source.slice(node.start, node.end)).join('\n')
-    + '\n({ buildCoachingSystemPrompt, buildAskSystemPrompt })', { AGENCY_CLOSING_GUIDANCE });
+    + '\n({ buildCoachingSystemPrompt, buildAskSystemPrompt })', { AGENCY_CLOSING_GUIDANCE, LIVE_ASSISTANT_PROMPT });
 }
 
 export function engineBuilders(engine) {

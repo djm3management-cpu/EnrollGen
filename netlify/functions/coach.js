@@ -71,7 +71,7 @@ export default async (request, context) => {
     const input = {
       engine, path: 'live', system: body.system || '',
       messages: body.messages, static_messages: body.static_messages,
-      max_completion_tokens: 2048,
+      max_completion_tokens: 768,
       tools: body.tools, tool_choice: body.tool_choice,
       ...(body.response_format ? { response_format: coachingFormat } : {}),
     };

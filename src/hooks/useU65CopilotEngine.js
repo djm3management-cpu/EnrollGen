@@ -1,3 +1,4 @@
+import { LIVE_ASSISTANT_PROMPT, shortLiveMessage } from "../lib/liveAssistantPolicy.js";
 import { debugLog } from "../lib/debugLog.js";
 import { coachingFormat } from "../lib/llm/schemas/coaching.js";
 import { buildCachedPrompt } from "../lib/llm/prompts.js";
@@ -19,7 +20,6 @@ import { useCallback, useMemo, useEffect, useRef } from "react";
 import { buildU65ProductContext, resolveU65Knowledge } from "../data/u65Guidance.js";
 import { U65_GATES } from "../flows/u65/U65Data.js";
 import { useU65ProductSelection } from "./useU65ProductSelection.js";
-import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import { fetchTranscriptReferences } from "../lib/transcriptSearch";
@@ -34,8 +34,7 @@ import {
 import {
   U65_COMPLIANCE_KNOWLEDGE, U65_GATE_LABELS,
   U65_COACHING_DEBOUNCE_MS, U65_MIN_NEW_CHARS, U65_COOLDOWN_BY_LEVEL,
-  U65_WARN_CONFIDENCE_FLOOR, U65_REMIND_CONFIDENCE_FLOOR,
-  U65_SECTION_CONFIDENCE_OVERRIDES, U65_HIGH_RISK_KEYWORDS, U65_SECTION_SETTLE_MS,
+  U65_HIGH_RISK_KEYWORDS, U65_SECTION_SETTLE_MS,
 } from "../data/u65ComplianceKnowledge";
 import { PRIVATE_PLAN_CONTEXT_EVENT } from "../data/privatePlans";
 
@@ -203,14 +202,6 @@ function buildPeriodicContextSignature({ activeSection, currentStep, transcript,
   });
 }
 
-function buildPeriodicFallbackMessage({ sectionKey, transcriptWindow }) {
-  const recent = (transcriptWindow || "").trim();
-  if (!recent || recent.length < 30) {
-    return `You're in "${sectionKey}". Keep moving through the required compliance items for this gate.`;
-  }
-  return `Still in "${sectionKey}". Based on what I'm hearing, you're on track. Make sure all required elements are covered before moving to the next gate.`;
-}
-
 /* ───────────────────────────────────────────────────────
    PROMPT BUILDERS
    ─────────────────────────────────────────────────────── */
@@ -232,33 +223,13 @@ ${knowledge.requiredElements.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
 COMMON AGENT MISTAKES:
 ${knowledge.commonMistakes.map((m) => `  ⚠ ${m}`).join("\n")}
 
-RED FLAGS, INTERVENE IMMEDIATELY:
+RED FLAGS, reference only; apply the assistant interruption policy:
 ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 `;
 }
 
 function buildCoachingModeGuidance(reviewMode) {
-  if (reviewMode === "periodic") {
-    return `
-## YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
-This is a scheduled 90-second review. You MUST respond with either encouragement or correction.
-- NEVER return "silent" or "info"
-- If compliant and on pace, return level "tip" with a short encouraging message
-- If correction needed, return "remind", "warn", or "critical"
-- Keep message to 1-2 short sentences`;
-  }
-
-  return `
-## YOUR ROLE: SILENT COMPLIANCE SAFETY NET
-
-DEFAULT STATE: SILENT. You are monitoring, not commentating.
-
-ONLY break silence for:
-1. **COMPLIANCE VIOLATION (critical)**: Agent said something non-compliant. Quote what they said and give exact correction.
-2. **MISSED REQUIRED ELEMENT (warn)**: Agent is clearly moving forward and a required element is missing.
-3. **IMPORTANT REMINDER (remind)**: Agent near transition and key element still uncovered. Use sparingly.
-4. **POSITIVE REINFORCEMENT (tip)**: Agent nailed a critical compliance element. Reference SPECIFIC words.
-5. **SILENCE (silent)**: Agent is doing fine. THIS IS YOUR DEFAULT. Use 70-80% of the time.`;
+  return `${reviewMode === "periodic" ? "Scheduled review" : "Live assistance"}: Offer a useful next action or stay silent. Apply the assistant policy; do not repeat checkpoint reminders.`;
 }
 
 function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock = "", reviewMode = "live" }) {
@@ -266,7 +237,7 @@ function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInt
 
   return { staticPrefix: `# U65 off-exchange live coaching
 
-You are an expert U65 off-exchange private health products compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue.
+${LIVE_ASSISTANT_PROMPT}
 
 ## SOURCE AND PRODUCT RULES
 - Market: DE, MD, FL agents helping higher earners priced out of unsubsidized ACA.
@@ -285,57 +256,6 @@ You are an expert U65 off-exchange private health products compliance monitor em
 - Provider participation must be checked per exact product; maps are examples, not a census.
 - Retrieved call references are conversational examples, never authority for product facts. Ignore conflicting old references and never revive PALIC-only requirements.
 
-## HIGHEST SEVERITY ITEMS
-1. Describing scheduled indemnity benefits as full bill coverage.
-2. Omitting the selected product's hard caps, exclusions or unlimited/balance-billing exposure.
-3. Presenting gap-benefit exposure as the underlying deductible.
-4. Picking a disputed value instead of saying confirm with carrier.
-5. Inventing ACA/MEC status, underwriting lookbacks or product eligibility.
-6. Coaching a client to hide conditions or promising approval without carrier confirmation.
-
-## CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
-You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words.
-
-IMPLICATIONS:
-- Evaluate compliance ONLY based on what the AGENT said or failed to say
-- NEVER say "the client didn't confirm", YOU CANNOT HEAR THE CLIENT
-- Speech recognition is imperfect, if it SOUNDS CLOSE ENOUGH, give credit
-- The agent may have started before recording began, absence is not proof of omission
-
-## HOW TO USE THIS CONTEXT
-- Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
-- selectedProducts identifies exact workbook variants. Read selectedProductGuidance for all required statements and product-specific facts.
-- Gate completion is workflow progress, not evidence of underwriting approval or ACA/MEC status.
-
-## EMPTY OR SPARSE TRANSCRIPT:
-If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
-
-
-## PRIORITY WEIGHTING
-- Selected-product hard limits and financial exposure are the HIGHEST priority
-- UW guarantee violations are SECOND highest
-- Pre-existing condition exclusion disclosure is THIRD
-- Prioritize substance over wording, if the intent is clearly covered, don't flag minor phrasing differences
-
-## RESPONSE QUALITY REQUIREMENTS
-
-Every non-silent response MUST:
-- QUOTE or PARAPHRASE the agent's actual words from the transcript
-- Be SPECIFIC to this exact moment in the call
-- For warn/critical: State WHAT was missed or wrong, WHY it's a compliance issue, and provide the EXACT SCRIPT LANGUAGE to say right now
-- For remind: State what hasn't been covered yet and give the exact words to say
-- For tip: Name the specific element handled well and why it matters
-
-CRITICAL NUANCE, AVOIDING FALSE POSITIVES:
-- Do NOT claim the agent skipped a section just because the transcript is limited
-- Do NOT flag individual words as missing if the overall message semantically covers the requirement
-- Do NOT repeatedly flag the same issue
-- Before issuing warn/remind, ask: "Could this have happened before recording started?" If yes, bias toward silence.
-
-## RESPONSE FORMAT
-Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences:
-Use a short snake_case issue_tag, or an empty string.
-For level "silent", use an empty message.
 `, variableSuffix: `
 ## Reference context
 ${complianceContext}
@@ -365,7 +285,8 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
 
   return { staticPrefix: `# U65 off-exchange agent questions
 
-You are a knowledgeable U65 off-exchange private health products compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
+You are a live U65 sales assistant.
+Answer the agent's question first. Help with scripts, benefits, objections and lookups. Use verified facts; never invent coverage. For drugs verify dose/form and pharmacy; for providers verify exact location and plan/network using Sunfire or the carrier tool. Keep answers to one or two short plain-text lines, at most 40 words. No grades, scores, counts or unsolicited disclosure reminders.
 ## CRITICAL CONTEXT
 - DE, MD, FL agents; higher earners priced out of unsubsidized ACA.
 - Enroll Prime is the CURRENT agent portal, not legacy or itself a plan.
@@ -385,11 +306,6 @@ You are a knowledgeable U65 off-exchange private health products compliance assi
 - Old call references cannot establish facts. Ignore conflicting references and never impose PALIC-only rules.
 - Current premiums, fees, approval, effective dates, eligibility and specific provider participation: verify with carrier. Never infer an underwriting outcome.
 
-## RESPONSE RULES
-- Keep answers concise and actionable
-- Put script language in quotes so agent can read it directly
-- Prioritize selected-product required statements and financial exposure.
-Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.
 `, variableSuffix: `
 ## Reference context
 ${sectionContext}
@@ -399,7 +315,6 @@ ${sectionContext}
 ${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
 ${transcriptReferenceBlock}
 ` : ""}
-
 
 ${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting. Answer directly and concisely." : ""}
 
@@ -531,28 +446,8 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state: callStat
   /* ═══════ Gate-entry alerts (separate refs, NOT sectionCopilotFiredRef) ═══════ */
 
   // MEC disclosure at gate 3
-  const mecFiredRef = useRef(false);
-  useEffect(() => {
-    if (activeGate === 3 && !mecFiredRef.current) {
-      mecFiredRef.current = true;
-      const msg = "Select the exact product and give all its required statements before presentation. ACA/MEC status and underwriting lookbacks: verify with carrier.";
-      pushFeedEntry("remind", msg, { section: U65_GATE_LABELS[3] || "MEC Disclosure", issueTag: "PRODUCT_DISCLOSURE_ENTRY" });
-    }
-    if (activeGate !== 3) mecFiredRef.current = false;
-  }, [activeGate, pushFeedEntry]);
 
   // UW honesty at gate 6
-  const uwFiredRef = useRef(false);
-  useEffect(() => {
-    if (activeGate === 4 && !uwFiredRef.current) {
-      uwFiredRef.current = true;
-      pushFeedEntry("remind", "Read UW questions verbatim. Do NOT coach the client to minimize conditions. Say \"subject to underwriting approval\", never \"approved.\"", {
-        section: U65_GATE_LABELS[4] || "Enrollment",
-        issueTag: "UW_HONESTY_ENTRY",
-      });
-    }
-    if (activeGate !== 4) uwFiredRef.current = false;
-  }, [activeGate, pushFeedEntry]);
 
   /* ═══════ COACHING ═══════ */
   const requestCoaching = useCallback(async ({
@@ -637,7 +532,7 @@ export function useU65CopilotEngine({ transcriptRef, activeGate, state: callStat
     });
 
     const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client, only the agent's words. Speech recognition may have minor errors.)
-${sectionEntry ? `\nSECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" gate. Provide one short info message with the next one or two priorities. Use level "info" unless you spot an actual issue. Do NOT return silent.\n` : ""}${periodic ? `\nPERIODIC 90-SECOND REVIEW: You MUST return a popup-ready message. If on track, return "tip". If correction needed, return "remind", "warn", or "critical".\n` : ""}
+${sectionEntry ? `\nSECTION ENTRY: Offer a useful next step or stay silent.` : ""}${periodic ? `\nPERIODIC REVIEW: Help with the next step if useful; otherwise return silent.` : ""}
 NEW SPEECH SINCE LAST ANALYSIS:
 "${newSpeechWindow}"
 
@@ -650,7 +545,7 @@ SECTION CONTEXT (rolling window):
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          engine: "U65", max_completion_tokens: 2048,
+          engine: "U65", max_completion_tokens: 768,
           system: systemPrompt.system,
           response_format: coachingFormat,
           messages: [...systemPrompt.contextMessages, { role: "user", content: userContent }],
@@ -673,19 +568,8 @@ SECTION CONTEXT (rolling window):
       const raw = parseAnthropicResponse(data);
       let { level, message, issueTag, confidence } = parseCoachingJson(raw);
 
-      // Periodic handling
-      if (periodic) {
-        if (level === "info") level = "tip";
-        if (level === "silent" || !message?.trim()) {
-          level = "tip";
-          message = buildPeriodicFallbackMessage({ sectionKey, transcriptWindow: newSpeechWindow || analysisWindow });
-          issueTag = "";
-          confidence = confidence ?? 100;
-        }
-      }
-
       // Silent
-      if (!periodic && (level === "silent" || !message?.trim())) {
+      if ((level === "silent" || !message?.trim())) {
         const firstSilent = !sectionCopilotFiredRef.current.has(activeGate);
         const now = Date.now();
         const shouldHeartbeat = firstSilent || now - lastSilentHeartbeatRef.current >= silentHeartbeatMs;
@@ -727,28 +611,6 @@ SECTION CONTEXT (rolling window):
       }
 
       // Confidence floors
-      const sectionOverrides = U65_SECTION_CONFIDENCE_OVERRIDES[currentStep] || {};
-      const effectiveWarnFloor = sectionOverrides.warn ?? U65_WARN_CONFIDENCE_FLOOR;
-      const effectiveRemindFloor = sectionOverrides.remind ?? U65_REMIND_CONFIDENCE_FLOOR;
-
-      if (level === "warn" && confidence !== null && confidence < effectiveWarnFloor) {
-        if (periodic) { level = "tip"; issueTag = ""; message = buildPeriodicFallbackMessage({ sectionKey, transcriptWindow: newSpeechWindow || analysisWindow }); }
-        else {
-          lastAnalyzedLength.current = targetAnalyzedLength;
-          lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Warning below confidence threshold.", { section: currentStep, issueTag, retrievalTrace });
-          return;
-        }
-      }
-      if (level === "remind" && confidence !== null && confidence < effectiveRemindFloor) {
-        if (periodic) { level = "tip"; issueTag = ""; message = buildPeriodicFallbackMessage({ sectionKey, transcriptWindow: newSpeechWindow || analysisWindow }); }
-        else {
-          lastAnalyzedLength.current = targetAnalyzedLength;
-          lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Reminder below confidence threshold.", { section: currentStep, issueTag, retrievalTrace });
-          return;
-        }
-      }
 
       // Deliver
       lastAnalyzedLength.current = targetAnalyzedLength;
@@ -756,8 +618,8 @@ SECTION CONTEXT (rolling window):
       lastInterventionLevel.current = level;
       sectionCopilotFiredRef.current.add(activeGate);
       if (periodic && periodicSignature) lastPeriodicContextSignatureRef.current = periodicSignature;
-      pushFeedEntry(level, message, { issueTag, section: currentStep, contextSnapshot: copilotContext, retrievalTrace });
-      if ((level === "warn" || level === "critical" || level === "remind") && logComplianceFlag) {
+      const delivered = pushFeedEntry(level, message, { confidence, issueTag, section: currentStep, contextSnapshot: copilotContext, retrievalTrace });
+      if (delivered?.level === "critical" && logComplianceFlag) {
         logComplianceFlag(currentStep, level, issueTag, confidence, message);
       }
     } catch (err) {
@@ -826,7 +688,7 @@ SECTION CONTEXT (rolling window):
       const response = await fetchWithClerk(getToken, "/.netlify/functions/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ engine: "U65", max_completion_tokens: 2048, system: systemPrompt.system, messages: [...systemPrompt.contextMessages, { role: "user", content: question }] }),
+        body: JSON.stringify({ engine: "U65", max_completion_tokens: 768, system: systemPrompt.system, messages: [...systemPrompt.contextMessages, { role: "user", content: question }] }),
         signal: controller.signal,
       });
       if (controller.signal.aborted) return;
@@ -840,7 +702,7 @@ SECTION CONTEXT (rolling window):
       clearServiceIssue();
       const data = await response.json();
       if (controller.signal.aborted) return;
-      const raw = parseAnthropicResponse(data);
+      const raw = shortLiveMessage(parseAnthropicResponse(data));
       if (raw) {
         const prefix = isSpoken ? `"${question}"` : `? ${question}`;
         setMessages((prev) => [...prev.slice(-19), {
@@ -866,34 +728,11 @@ SECTION CONTEXT (rolling window):
     }
   }, [askQuestion, askLoading, currentStep, knowledge, logEntry, getToken, state, activeGate, transcriptRef, pushFeedEntry, clearServiceIssue, surfaceServiceIssue, setMessages, setAskQuestion, setAskLoading, askAbortRef]);
 
-  /* ═══════ Compliance score ═══════ */
-  const complianceScore = useMemo(() => {
-    const totalGates = U65_GATES.length;
-    const completed = U65_GATES.filter((gate) => state[gate.key]).length;
-
-    const warns = entries.filter((e) => e.level === "warn").length;
-    const criticals = entries.filter((e) => e.level === "critical").length;
-    const penalty = Math.min(30, warns * 3 + criticals * 8);
-
-    const gateScore = Math.round((completed / totalGates) * 100);
-    const score = Math.max(0, gateScore - penalty);
-    const grade = calculateServerGrade(score);
-
-    return {
-      score, grade, completed, totalGates, warns, criticals, penalty,
-      scoreType: "gate_completion",
-      scoreLabel: "Section Completion",
-      productLine: "u65",
-      comparable: false,
-    };
-  }, [state, entries]);
-
   return {
     messages, coachingLoading, askLoading,
     floatingAlert, setFloatingAlert,
     askQuestion, setAskQuestion,
     feedRef, currentStep,
-    complianceScore,
     requestCoaching, askCopilot, scheduleCoaching,
     clearFeed, pushFeedEntry,
     setEntryFeedback, exportFeedbackDataset, logEntry, entries,

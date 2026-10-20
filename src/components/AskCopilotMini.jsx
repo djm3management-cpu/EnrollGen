@@ -1,3 +1,4 @@
+import { shortLiveMessage } from "../lib/liveAssistantPolicy.js";
 import { useState, useRef, useCallback, memo } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { useCopilotLog, LOG_TYPES } from "../context/CopilotTranscriptLog";
@@ -27,8 +28,8 @@ const AskCopilotMini = memo(function AskCopilotMini() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           engine: "MA",
-          max_completion_tokens: 2048,
-          system: "You are a helpful Medicare enrollment copilot assistant. Give concise, actionable answers to agent questions. Keep responses under 3 sentences. CRITICAL FORMATTING: Use PLAIN TEXT ONLY. No dashes, no bullet points, no asterisks, no bold, no markdown, no emojis, no special characters. Write in natural conversational sentences the agent can read at a glance. Separate thoughts with periods, never with dashes or symbols.",
+          max_completion_tokens: 768,
+          system: "You are a helpful live sales assistant. Answer script, benefit and objection questions in one or two short plain-text lines, at most 40 words. For drug lookups verify exact drug, dose/form and pharmacy; for providers verify location and exact plan/network in Sunfire or the carrier tool. Never invent coverage, costs or network participation. No unsolicited disclosure reminders, scores or violation counts.",
           messages: [{ role: "user", content: q }],
         }),
         signal: controller.signal,
@@ -51,7 +52,7 @@ const AskCopilotMini = memo(function AskCopilotMini() {
         "";
 
       if (raw) {
-        logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${q} → ${raw}`, {
+        logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${q} → ${shortLiveMessage(raw)}`, {
           source: "mini-float",
         });
       } else {

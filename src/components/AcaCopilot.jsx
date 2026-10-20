@@ -52,7 +52,7 @@ const AcaCopilot = memo(function AcaCopilot({ onTranscriptChange }) {
     copilot.clearFeed();
   }, [speech, copilot]);
 
-  const { currentStep, coachingLoading, complianceScore } = copilot;
+  const { currentStep, coachingLoading } = copilot;
   const { listening, transcript, transcriptRows, supportsRecognition } = speech;
   const mergedEntries = useMemo(
     () =>
@@ -72,7 +72,6 @@ const AcaCopilot = memo(function AcaCopilot({ onTranscriptChange }) {
       listening={listening}
       supportsRecognition={supportsRecognition}
       analyzing={coachingLoading}
-      score={complianceScore.score}
       toggleLabel={`Gate ${activeGate}. ${currentStep}`}
       startTime={state.callStart}
       sessionActive={state.callStarted}

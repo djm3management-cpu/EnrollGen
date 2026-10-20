@@ -1,3 +1,4 @@
+import { liveAssistantEntry, disclosureChecklist } from "../../src/lib/liveAssistantPolicy.js";
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { parse } from '@babel/parser';
@@ -6,6 +7,7 @@ import { createTranscriptGuard, createSkipCounterReporter } from '../../src/lib/
 // Run the actual core with controlled hook storage, effects, and timers. This
 // exercises scheduling without mounting the unrelated auth/log provider trees.
 export function coreHarness(engine) {
+  const logs = [];
   const slots = [], effects = [], intervals = new Map(), timeouts = new Map(), sent = [];
   let cursor = 0, nextId = 0;
   const memo = (factory, deps) => {
@@ -17,7 +19,7 @@ export function coreHarness(engine) {
   const nodes = parse(source, { sourceType: 'module' }).program.body.filter(n => n.type !== 'ImportDeclaration');
   const code = nodes.map(n => source.slice((n.declaration || n).start, n.end)).join('\n');
   const hook = vm.runInNewContext(code + '\nuseCopilotEngineCore', {
-    createTranscriptGuard, createSkipCounterReporter,
+    createTranscriptGuard, createSkipCounterReporter, liveAssistantEntry, disclosureChecklist,
     useRef: initial => memo(() => ({ current: initial }), []),
     useState: initial => { const ref = memo(() => ({ value: initial }), []); return [ref.value, next => { ref.value = typeof next === 'function' ? next(ref.value) : next; }]; },
     useCallback: (fn, deps) => memo(() => fn, deps),
@@ -26,7 +28,7 @@ export function coreHarness(engine) {
       effects.push(() => { old?.cleanup?.(); effect.cleanup = fn(); });
       return effect;
     }, deps),
-    useCopilotLog: () => ({ logEntry() {}, clearLog() {}, entries: [] }),
+    useCopilotLog: () => ({ logEntry(...args) { logs.push(args); }, clearLog() {}, entries: [] }),
     useAppAuth: () => ({ getToken: async () => 'mock-token' }),
     LOG_TYPES: {},
     fetchWithClerk: async (_token, url, init) => { sent.push({ url, body: JSON.parse(init.body) }); return { ok: true }; },
@@ -51,7 +53,7 @@ export function coreHarness(engine) {
     return core;
   };
   render();
-  return { render, transcriptRef, calls, sent, get core() { return core; },
+  return { render, transcriptRef, calls, sent, logs, get core() { return core; },
     tick: ms => { for (const timer of [...intervals.values()]) if (timer.ms === ms) timer.fn(); },
     debounce: () => { for (const [id, timer] of [...timeouts]) { timeouts.delete(id); timer.fn(); } },
   };

@@ -1,7 +1,5 @@
 import { debugLog } from "../lib/debugLog.js";
 import {
-  lazy,
-  Suspense,
   useEffect,
   useMemo,
   useRef,
@@ -27,7 +25,6 @@ import { useAvailability } from "../context/AvailabilityContext";
 import { evidenceRequest } from "../lib/evidenceApi.js";
 import { useInboundCall } from "../context/InboundCallContext";
 import { consumePendingCallContact, hydrateNotesFromContact } from "../lib/callLaunch";
-import { useComplianceScoringWorker } from "../hooks/useComplianceScoringWorker";
 import {
   buildPostCallPayload,
   CHECKPOINT_INTERVAL_MS,
@@ -59,7 +56,6 @@ import DevotedPopupManager from "./ancillary/DevotedPopupManager";
 import { motion } from "framer-motion";
 import { useScriptTemplate } from "../hooks/useScriptTemplate";
 
-const ComplianceDashboard = lazy(() => import("./ComplianceDashboard"));
 const FULL_RAIL_WIDTH = 296;
 const COMPACT_RAIL_OVERLAY_WIDTH = "min(340px, calc(100vw - 24px))";
 
@@ -112,14 +108,13 @@ const COMPACT_RAIL_OVERLAY_STYLE = {
   gap: 8,
 };
 
-const SHOW_MAIN_FLOW_COMPLIANCE_HUD = false;
 const MA_FIRST_CARD_WINDOW_SECONDS = 90;
 
 /**
- * ScriptFlow v2, Now with transcript pass-through for dual-layer scoring.
+ * ScriptFlow with transcript pass-through for live assistance.
  *
  * The ScriptPrompter exposes its transcript via onTranscriptChange callback.
- * This transcript is passed down to ComplianceMini and ComplianceDashboard
+ * This transcript is passed down to live Co-Pilot widgets
  * so the compliance scoring engine can do live intent detection against
  * the actual words the agent speaks, not just checkbox state.
  *
@@ -198,20 +193,6 @@ function CollapsibleSection({
   }
 
   return <div data-section={sectionNum}>{children}</div>;
-}
-
-function useDebouncedValue(value, delayMs) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setDebouncedValue(value);
-    }, delayMs);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [value, delayMs]);
-
-  return debouncedValue;
 }
 
 /* ---- Shared widget stack, used by both full rail and overlay ---- */
@@ -405,10 +386,10 @@ function RightRail({
           className="right-rail-toggle right-rail-toggle--restore"
           style={COMPACT_RAIL_TOGGLE_STYLE}
           onClick={() => setFullRailMinimized(false)}
-          title="Expand compliance rail"
-          aria-label="Expand compliance rail"
+          title="Expand Co-Pilot rail"
+          aria-label="Expand Co-Pilot rail"
         >
-          <span className="right-rail-toggle-score">{result.score}%</span>
+          <span className="right-rail-toggle-score">Co-Pilot</span>
           <span className="right-rail-toggle-section">{currentStep}. {sectionLabel}</span>
           <ChevronLeft size={12} />
         </button>
@@ -427,8 +408,8 @@ function RightRail({
           type="button"
           className="rail-minimize-btn right-rail-minimize"
           onClick={() => setFullRailMinimized(true)}
-          title="Minimize compliance rail"
-          aria-label="Minimize compliance rail"
+          title="Minimize Co-Pilot rail"
+          aria-label="Minimize Co-Pilot rail"
         >
           <ChevronRight size={12} />
         </button>
@@ -445,9 +426,9 @@ function RightRail({
         className="right-rail-toggle"
         style={COMPACT_RAIL_TOGGLE_STYLE}
         onClick={() => setOpen((p) => !p)}
-        title="Toggle compliance rail"
+        title="Toggle Co-Pilot rail"
       >
-        <span className="right-rail-toggle-score">{result.score}%</span>
+        <span className="right-rail-toggle-score">Co-Pilot</span>
         <span className="right-rail-toggle-section">{currentStep}. {sectionLabel}</span>
         {open ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
@@ -467,8 +448,8 @@ function RightRail({
               type="button"
               className="rail-minimize-btn right-rail-overlay-minimize"
               onClick={() => setOpen(false)}
-              title="Minimize compliance rail"
-              aria-label="Minimize compliance rail"
+              title="Minimize Co-Pilot rail"
+              aria-label="Minimize Co-Pilot rail"
             >
               <ChevronRight size={12} />
             </button>
@@ -480,76 +461,10 @@ function RightRail({
   );
 }
 
-function DeferredComplianceDashboard({
-  transcript,
-  customerTranscript = "",
-  mergedTranscript = [],
-  result = null,
-}) {
-  const anchorRef = useRef(null);
-  const [shouldRender, setShouldRender] = useState(false);
-
-  useEffect(() => {
-    if (shouldRender) {
-      return undefined;
-    }
-
-    const anchor = anchorRef.current;
-    if (!anchor) {
-      return undefined;
-    }
-
-    if (!("IntersectionObserver" in window)) {
-      setShouldRender(true);
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShouldRender(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "320px 0px" }
-    );
-
-    observer.observe(anchor);
-    return () => observer.disconnect();
-  }, [shouldRender]);
-
-  return (
-    <div
-      id="compliance-hub"
-      ref={anchorRef}
-      className="deferred-compliance-panel"
-    >
-      {shouldRender ? (
-        <Suspense
-          fallback={
-            <div className="card" style={{ marginTop: 14 }}>
-              <div style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                Loadingâ€¦
-              </div>
-            </div>
-          }
-        >
-          <ComplianceDashboard
-            transcript={transcript}
-            customerTranscript={customerTranscript}
-            mergedTranscript={mergedTranscript}
-            result={result}
-          />
-        </Suspense>
-      ) : null}
-    </div>
-  );
-}
-
 export default function ScriptFlow() {
   const { promptTarget } = useLeftRailManager();
   const { state, dispatch, activeSection } = useScript();
-  const { clearLog, entries } = useCopilotLog();
+  const { clearLog } = useCopilotLog();
   const { updateLiveCall, resetLiveCall } = useLiveCall();
   const { getToken } = useAppAuth();
   const { sections: scriptSections } = useScriptTemplate("ma");
@@ -706,34 +621,7 @@ export default function ScriptFlow() {
         .join(" "),
     [mergedTranscriptEntries]
   );
-  const debouncedTranscript = useDebouncedValue(transcript, 5000);
-  const debouncedCustomerTranscript = useDebouncedValue(customerTranscript, 5000);
-  const debouncedMergedTranscriptEntries = useDebouncedValue(
-    mergedTranscriptEntries,
-    5000
-  );
-  const scoringOptions = useMemo(
-    () => ({
-      callStarted,
-      callDirection: state.callDirection,
-      mergedTranscript: debouncedMergedTranscriptEntries,
-      customerText: debouncedCustomerTranscript,
-    }),
-    [
-      callStarted,
-      debouncedCustomerTranscript,
-      debouncedMergedTranscriptEntries,
-      state.callDirection,
-    ]
-  );
-  const liveComplianceResult = useComplianceScoringWorker({
-    scriptState: state,
-    copilotEntries: entries,
-    transcript: callStarted ? debouncedTranscript : "",
-    customerTranscript: callStarted ? debouncedCustomerTranscript : "",
-    mergedTranscript: callStarted ? debouncedMergedTranscriptEntries : [],
-    options: scoringOptions,
-  });
+  const liveComplianceResult = null;
 
   useEffect(() => {
     updateLiveCall({
@@ -1217,15 +1105,6 @@ export default function ScriptFlow() {
           })}
       />
 
-      {/* ── Full Compliance Dashboard, transcript-aware, at the bottom ── */}
-      {SHOW_MAIN_FLOW_COMPLIANCE_HUD ? (
-        <DeferredComplianceDashboard
-          transcript={debouncedTranscript}
-          customerTranscript={customerTranscript}
-          mergedTranscript={mergedTranscriptEntries}
-          result={liveComplianceResult}
-        />
-      ) : null}
       </>
       )}
         </div>

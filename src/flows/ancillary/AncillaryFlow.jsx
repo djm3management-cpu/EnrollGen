@@ -1,3 +1,4 @@
+import { shortLiveMessage } from "../../lib/liveAssistantPolicy.js";
 import {callContinuity} from "../../lib/callContinuity.js";
 import {
   createContext,
@@ -1787,14 +1788,13 @@ function AncillaryScriptRenderer({ product, productMeta, steps }) {
 }
 
 function AncillaryCopilot({ onTranscriptChange }) {
-  const { state, activeProductMeta, activeStep, activeStepIndex, currentProductState, complianceScore } =
+  const { state, activeProductMeta, activeStep, activeStepIndex, currentProductState } =
     useScriptFlow();
   const transcriptRef = useRef("");
   const { logEntry, clearLog } = useCopilotLog();
   const annuityCopilot = useAnnuityCopilotEngine({
     activeStep,
     productState: currentProductState,
-    complianceScore,
   });
   const speech = useSpeechRecognition({
     externalTranscriptRef: transcriptRef,
@@ -1814,7 +1814,7 @@ function AncillaryCopilot({ onTranscriptChange }) {
     let message =
       state.activeSubProduct === SUB_PRODUCT.ANNUITY
         ? annuityCopilot.sectionMessage
-        : `${activeProductMeta.shortLabel}: ${activeStep.title}. Keep recording disclosure, needs assessment, and client consent covered before close.`;
+        : `${activeProductMeta.shortLabel}: Next: ${activeStep.title}.`;
 
     if (state.activeSubProduct === SUB_PRODUCT.HIP) {
       const metadata = currentProductState.callMetadata || {};
@@ -1831,7 +1831,7 @@ function AncillaryCopilot({ onTranscriptChange }) {
     logEntry(
       LOG_TYPES.COPILOT_MSG,
       "info",
-      message,
+      shortLiveMessage(message),
       { flowType: FLOW_TYPE, subProduct: state.activeSubProduct, section: activeStep.title }
     );
   }, [
@@ -1866,7 +1866,7 @@ function AncillaryCopilot({ onTranscriptChange }) {
     let message = state.activeSubProduct
       ? state.activeSubProduct === SUB_PRODUCT.ANNUITY
         ? annuityCopilot.analyzeMessage
-        : `${activeProductMeta.label}: score is ${complianceScore.score}%. Required checks are recording disclosure, needs assessment, and client consent.`
+        : `${activeProductMeta.label}: Next, ${activeStep?.title || "review the client’s needs"}.`
       : "Select an ancillary product to start the script flow.";
     if (state.activeSubProduct === SUB_PRODUCT.HIP) {
       const metadata = currentProductState.callMetadata || {};
@@ -1877,14 +1877,14 @@ function AncillaryCopilot({ onTranscriptChange }) {
         message = `${message} Use the observation stay script when presenting Hospital Protection to this MA client.`;
       }
     }
-    logEntry(LOG_TYPES.COPILOT_MSG, "info", message, {
+    logEntry(LOG_TYPES.COPILOT_MSG, "info", shortLiveMessage(message), {
       flowType: FLOW_TYPE,
       subProduct: state.activeSubProduct,
     });
   }, [
     activeProductMeta?.label,
     annuityCopilot.analyzeMessage,
-    complianceScore.score,
+    activeStep?.title,
     currentProductState.callMetadata,
     logEntry,
     state.activeSubProduct,
@@ -1905,7 +1905,6 @@ function AncillaryCopilot({ onTranscriptChange }) {
       listening={speech.listening}
       supportsRecognition={speech.supportsRecognition}
       analyzing={false}
-      score={complianceScore.score}
       toggleLabel={toggleLabel}
       startTime={currentProductState.callStart}
       sessionActive={currentProductState.callStarted}

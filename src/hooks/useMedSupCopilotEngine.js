@@ -1,3 +1,4 @@
+import { LIVE_ASSISTANT_PROMPT, shortLiveMessage } from "../lib/liveAssistantPolicy.js";
 import { debugLog } from "../lib/debugLog.js";
 import { AGENCY_CLOSING_GUIDANCE } from "../data/agencyClosing.js";
 import { coachingFormat } from "../lib/llm/schemas/coaching.js";
@@ -10,11 +11,10 @@ import { buildCachedPrompt } from "../lib/llm/prompts.js";
  * entry alert, and compliance score calculation.
  */
 
-import { useCallback, useMemo, useEffect, useRef } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import { LOG_TYPES } from "../context/CopilotTranscriptLog";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import { fetchTranscriptReferences } from "../lib/transcriptSearch";
-import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import {
   findKnowledgeEntry,
   getKnowledgeStructuredValue,
@@ -32,7 +32,6 @@ import { medicare2026, resolveMedSupStateGIRules } from "../data/medicareReferen
 import {
   MEDSUP_COMPLIANCE_KNOWLEDGE, MEDSUP_SECTION_LABELS,
   MEDSUP_COACHING_DEBOUNCE_MS, MEDSUP_MIN_NEW_CHARS, MEDSUP_COOLDOWN_BY_LEVEL,
-  MEDSUP_WARN_CONFIDENCE_FLOOR, MEDSUP_REMIND_CONFIDENCE_FLOOR,
   MEDSUP_HIGH_RISK_KEYWORDS, MEDSUP_SECTION_SETTLE_MS,
 } from "../data/medSupComplianceKnowledge";
 
@@ -120,14 +119,6 @@ function buildPeriodicContextSignature({ activeSection, currentStep, transcript,
   });
 }
 
-function buildPeriodicFallbackMessage({ sectionKey, transcriptWindow }) {
-  const recent = (transcriptWindow || "").trim();
-  if (!recent || recent.length < 30) {
-    return `You're in "${sectionKey}". Keep moving through the required compliance items for this section.`;
-  }
-  return `Still in "${sectionKey}". Based on what I'm hearing, you're on track. Make sure all required elements are covered before moving to the next section.`;
-}
-
 /* ───────────────────────────────────────────────────────
    PROMPT BUILDERS
    ─────────────────────────────────────────────────────── */
@@ -143,40 +134,19 @@ ${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
 KEY PHRASES TO LISTEN FOR (if you hear these or synonyms/paraphrases, the agent IS covering the requirement):
 ${knowledge.keyPhrasesToListenFor.map((p) => `  • "${p}"`).join("\n")}
 
-REQUIRED COMPLIANCE ELEMENTS, every one MUST be covered in this section:
+REQUIRED COMPLIANCE ELEMENTS, checkpoint reference only:
 ${knowledge.requiredElements.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
 
 COMMON AGENT MISTAKES IN THIS SECTION:
 ${knowledge.commonMistakes.map((m) => `  ⚠ ${m}`).join("\n")}
 
-RED FLAGS, INTERVENE IMMEDIATELY IF DETECTED:
+RED FLAGS, reference only; apply the assistant interruption policy:
 ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 `;
 }
 
 function buildCoachingModeGuidance(reviewMode) {
-  if (reviewMode === "periodic") {
-    return `
-## YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
-This is a scheduled 90-second review. You MUST respond with either encouragement or correction.
-- NEVER return "silent" or "info"
-- If compliant and on pace, return level "tip" with a short encouraging message
-- If correction needed, return "remind", "warn", or "critical"
-- Keep message to 1-2 short sentences (popup display)
-- Anchor to specific words the agent recently said`;
-  }
-
-  return `
-## YOUR ROLE: SILENT COMPLIANCE SAFETY NET
-
-DEFAULT STATE: SILENT. You are monitoring, not commentating.
-
-ONLY break silence for:
-1. **COMPLIANCE VIOLATION (critical)**: Agent said something non-compliant or made an illegal/misleading claim. Quote what they said and provide exact correction.
-2. **MISSED REQUIRED ELEMENT (warn)**: Agent is clearly moving forward and a required element is materially missing. Name the specific element and give exact script language.
-3. **IMPORTANT REMINDER (remind)**: Agent near transition and key element still uncovered. Use sparingly.
-4. **POSITIVE REINFORCEMENT (tip)**: Agent nailed a critical compliance element. Use occasionally. Reference SPECIFIC words and WHY it matters.
-5. **SILENCE (silent)**: Agent is doing fine. THIS IS YOUR DEFAULT. Use 70-80% of the time.`;
+  return `${reviewMode === "periodic" ? "Scheduled review" : "Live assistance"}: Offer a useful next action or stay silent. Apply the assistant policy; do not repeat checkpoint reminders.`;
 }
 
 function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock = "", reviewMode = "live" }) {
@@ -184,10 +154,9 @@ function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInt
 
   return { staticPrefix: `# Medicare Supplement live coaching
 
+${LIVE_ASSISTANT_PROMPT}
+
 ${AGENCY_CLOSING_GUIDANCE}
-
-You are an expert Medicare Supplement (Medigap) enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required element, or something the agent needs to correct RIGHT NOW.
-
 ## IMPORTANT MED SUP CONTEXT
 - This is a Medicare Supplement (Medigap) enrollment, NOT Medicare Advantage or ACA
 - Medigap plans are standardized by letter (A, B, C, D, F, G, K, L, M, N)
@@ -216,52 +185,6 @@ You are an expert Medicare Supplement (Medigap) enrollment compliance monitor em
 - Federal OEP only: all other states except NJ, 6 months from Part B effective date at 65
 - NJ is NOT continuous open enrollment. Use stateGIRules.NJ: age 65+ follows federal OEP/GI rules; disabled ages 50-64 have state-mandated access and age-65 premium caps; under 50 access is limited to Horizon BCBSNJ, Plan D (Plan C for pre-2020 Medicare eligibility). Check the branch's Part B window and underwriting rules before asserting GI. If age, eligibility basis, or dates are unknown, ask the agent to verify them.
 
-## CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
-You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words. You have ZERO access to what the client says.
-
-IMPLICATIONS:
-- Evaluate compliance ONLY based on what the AGENT said or failed to say
-- NEVER say "the client didn't confirm", YOU CANNOT HEAR THE CLIENT
-- DO say "I didn't hear you ask for..." or "Make sure you cover..."
-- Speech recognition is imperfect, if it SOUNDS CLOSE ENOUGH, give credit
-- The agent may have started before recording began, absence is not proof of omission
-
-## HOW TO USE THIS CONTEXT
-- Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
-- Use derivedSignals for broader patterns: timeInSectionMs and likelyCoveredByParaphrase.
-- Use priorCompletedSections to understand what the agent has already finished.
-- medicareReference contains verified 2026 CMS cost-sharing amounts. Use these to coach the agent with accurate dollar figures when explaining what Medigap covers.
-- stateGIRules contains state-specific GI rules. If the agent mentions a state, check its protections and eligibility conditions. For NJ, select the age/eligibility branch and applicable enrollment or federal GI window; NJ residence alone does not establish GI.
-- salesForumContext contains sidebar values for Plan G vs N rates, HDG + Hospital Protection analysis, carrier selection, and cross-sell acknowledgement. During quoting, use it to remind agents about state excess-charge risk, HDG combo savings, CSG/manual rate workflow, and required ancillary cross-sell acknowledgement.
-
-## EMPTY OR SPARSE TRANSCRIPT:
-If the transcript is empty, very short, or contains only filler words, do NOT speculate about what was or wasn't said. Return silent and wait for meaningful speech. Do not warn about missing disclosures when there is nothing to analyze.
-
-
-## PRIORITY WEIGHTING
-- Prioritize risky language and compliance-danger behaviors over missing-word checks.
-- Do not escalate on technical wording misses if the semantic intent appears covered.
-- For Med Sup: underwriting misrepresentation, GI rights violations, and TPMO omissions are the highest severity items.
-
-## RESPONSE QUALITY REQUIREMENTS
-
-Every non-silent response MUST:
-- QUOTE or PARAPHRASE the agent's actual words from the transcript
-- Be SPECIFIC to this exact moment in the call
-- For warn/critical: State WHAT was missed or wrong, WHY it's a compliance issue, and provide the EXACT SCRIPT LANGUAGE to say right now
-- For remind: State what hasn't been covered yet and give the exact words to say
-- For tip: Name the specific element handled well and why it matters
-
-CRITICAL NUANCE, AVOIDING FALSE POSITIVES:
-- Do NOT claim the agent skipped a section just because the transcript is limited
-- Do NOT flag individual words as missing if the overall message semantically covers the requirement
-- Do NOT repeatedly flag the same issue
-- Before issuing warn/remind, ask: "Could this have happened before recording started?" If yes, bias toward silence.
-
-## RESPONSE FORMAT
-Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences:
-Use a short snake_case issue_tag, or an empty string.
-For level "silent", use an empty message.
 `, variableSuffix: `
 ## Reference context
 ${complianceContext}
@@ -293,12 +216,8 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
 
 ${AGENCY_CLOSING_GUIDANCE}
 
-You are a knowledgeable Medicare Supplement compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
-## CRITICAL CONTEXT
-- You can ONLY hear the AGENT speaking
-- They need a fast, practical answer for this live call
-
-
+You are a knowledgeable Medicare Supplement sales assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
+Answer the agent's question first. Help with scripts, benefits, objections and lookups. Use verified facts; never invent coverage. For drugs verify dose/form and pharmacy; for providers verify exact location and plan/network using Sunfire or the carrier tool. Keep answers to one or two short plain-text lines, at most 40 words. No grades, scores, counts or unsolicited disclosure reminders.
 ## YOUR CAPABILITIES
 - Medicare Supplement (Medigap) plan details and standardized benefits
 - Guaranteed Issue rights and qualifying events
@@ -315,11 +234,6 @@ You are a knowledgeable Medicare Supplement compliance assistant for agents at N
 - Specific carrier underwriting criteria → direct to carrier guidelines
 You CAN answer Medicare cost-sharing questions using the medicareReference data in context (Part A/B deductibles, coinsurance, MOOP limits). These are verified 2026 CMS numbers.
 
-## RESPONSE RULES
-- Keep answers concise and actionable
-- Put script language in quotes so agent can read it directly
-- Always prioritize compliance
-Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.
 `, variableSuffix: `
 ## Reference context
 ${sectionContext}
@@ -329,7 +243,6 @@ ${sectionContext}
 ${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
 ${transcriptReferenceBlock}
 ` : ""}
-
 
 ${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting (customer cannot hear). Answer directly and concisely." : ""}
 
@@ -412,15 +325,6 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, lo
   }, [activeSection, currentStep, state, transcriptRef, medicareReference]);
 
   /* ═══════ TPMO ALERT ═══════ */
-  const tpmoFiredRef = useRef(false);
-  useEffect(() => {
-    if (activeSection === 2 && !tpmoFiredRef.current) {
-      tpmoFiredRef.current = true;
-      const msg = "TPMO disclaimer must be read verbatim. Do not paraphrase or summarize.";
-      pushFeedEntry("remind", msg, { section: MEDSUP_SECTION_LABELS[2] || "TPMO", issueTag: "TPMO_ENTRY" });
-    }
-    if (activeSection !== 2) tpmoFiredRef.current = false;
-  }, [activeSection, pushFeedEntry]);
 
   /* ═══════ COACHING ═══════ */
   const requestCoaching = useCallback(async ({
@@ -511,10 +415,10 @@ export function useMedSupCopilotEngine({ transcriptRef, activeSection, state, lo
 
     const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client, only the agent's words. Speech recognition may have minor errors.)
 ${sectionEntry ? `
-SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" section. Provide one short info message with the next one or two priorities. Use level "info" unless you spot an actual issue. Do NOT return silent.
+SECTION ENTRY: Offer a useful next step or stay silent.
 ` : ""}
 ${periodic ? `
-PERIODIC 90-SECOND REVIEW: You MUST return a popup-ready message. If on track, return "tip". If correction needed, return "remind", "warn", or "critical".
+PERIODIC REVIEW: Help with the next step if useful; otherwise return silent.
 ` : ""}
 NEW SPEECH SINCE LAST ANALYSIS:
 "${newSpeechWindow}"
@@ -529,7 +433,7 @@ SECTION CONTEXT (rolling window):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           engine: "MEDSUP",
-          max_completion_tokens: 2048,
+          max_completion_tokens: 768,
           system: systemPrompt.system,
           response_format: coachingFormat,
           messages: [...systemPrompt.contextMessages, { role: "user", content: userContent }],
@@ -555,19 +459,8 @@ SECTION CONTEXT (rolling window):
 
       let { level, message, issueTag, confidence } = parseCoachingJson(raw);
 
-      // Periodic handling
-      if (periodic) {
-        if (level === "info") level = "tip";
-        if (level === "silent" || !message?.trim()) {
-          level = "tip";
-          message = buildPeriodicFallbackMessage({ sectionKey, transcriptWindow: newSpeechWindow || analysisWindow });
-          issueTag = "";
-          confidence = confidence ?? 100;
-        }
-      }
-
       // Silent handling
-      if (!periodic && (level === "silent" || !message?.trim())) {
+      if ((level === "silent" || !message?.trim())) {
         const firstSilent = !sectionCopilotFiredRef.current.has(activeSection);
         const now = Date.now();
         const shouldHeartbeat = firstSilent || now - lastSilentHeartbeatRef.current >= silentHeartbeatMs;
@@ -610,44 +503,19 @@ SECTION CONTEXT (rolling window):
         return;
       }
 
-      // Confidence floor checks (MedSup has no section overrides, use base floors)
-      if (level === "warn" && confidence !== null && confidence < MEDSUP_WARN_CONFIDENCE_FLOOR) {
-        if (periodic) {
-          level = "tip"; issueTag = "";
-          message = buildPeriodicFallbackMessage({ sectionKey, transcriptWindow: newSpeechWindow || analysisWindow });
-        } else {
-          lastAnalyzedLength.current = targetAnalyzedLength;
-          lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Warning below confidence threshold.", { section: currentStep, issueTag });
-          return;
-        }
-      }
-
-      if (level === "remind" && confidence !== null && confidence < MEDSUP_REMIND_CONFIDENCE_FLOOR) {
-        if (periodic) {
-          level = "tip"; issueTag = "";
-          message = buildPeriodicFallbackMessage({ sectionKey, transcriptWindow: newSpeechWindow || analysisWindow });
-        } else {
-          lastAnalyzedLength.current = targetAnalyzedLength;
-          lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Reminder below confidence threshold.", { section: currentStep, issueTag });
-          return;
-        }
-      }
-
       // Deliver
       lastAnalyzedLength.current = targetAnalyzedLength;
       lastCoachingTime.current = Date.now();
       lastInterventionLevel.current = level;
       sectionCopilotFiredRef.current.add(activeSection);
       if (periodic && periodicSignature) lastPeriodicContextSignatureRef.current = periodicSignature;
-      pushFeedEntry(level, message, {
-        issueTag,
+      const delivered = pushFeedEntry(level, message, {
+        confidence, issueTag,
         section: currentStep,
         contextSnapshot: copilotContextJson,
         retrievalTrace,
       });
-      if ((level === "warn" || level === "critical" || level === "remind") && logComplianceFlag) {
+      if (delivered?.level === "critical" && logComplianceFlag) {
         logComplianceFlag(currentStep, level, issueTag, confidence, message);
       }
     } catch (err) {
@@ -720,7 +588,7 @@ SECTION CONTEXT (rolling window):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           engine: "MEDSUP",
-          max_completion_tokens: 2048,
+          max_completion_tokens: 768,
           system: systemPrompt.system,
           messages: [...systemPrompt.contextMessages, { role: "user", content: question }],
         }),
@@ -739,7 +607,7 @@ SECTION CONTEXT (rolling window):
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = parseAnthropicResponse(data);
+      const raw = shortLiveMessage(parseAnthropicResponse(data));
 
       if (raw) {
         const prefix = isSpoken ? `"${question}"` : `? ${question}`;
@@ -769,40 +637,11 @@ SECTION CONTEXT (rolling window):
     askAbortRef, messagesRef,
   ]);
 
-  /* ═══════ Compliance score ═══════ */
-  const complianceScore = useMemo(() => {
-    const totalSections = 7; // recording, tpmo, qual, discovery, quote, enroll, wrap
-    const completed = [
-      state.recordingOk, state.tpmoOk, state.qualOk,
-      state.discoveryOk, state.quoteOk, state.enrollOk, state.wrapOk,
-    ].filter(Boolean).length;
-
-    const warns = entries.filter((e) => e.level === "warn").length;
-    const criticals = entries.filter((e) => e.level === "critical").length;
-    const penalty = Math.min(30, warns * 3 + criticals * 8);
-
-    const sectionScore = Math.round((completed / totalSections) * 100);
-    const score = Math.max(0, sectionScore - penalty);
-    const grade = calculateServerGrade(score);
-
-    return {
-      score, grade, completed,
-      totalGates: totalSections,
-      totalSections,
-      warns, criticals, penalty,
-      scoreType: "gate_completion",
-      scoreLabel: "Section Completion",
-      productLine: "medsup",
-      comparable: false,
-    };
-  }, [state, entries]);
-
   return {
     messages, coachingLoading, askLoading,
     floatingAlert, setFloatingAlert,
     askQuestion, setAskQuestion,
     feedRef, currentStep,
-    complianceScore,
     requestCoaching, askCopilot, scheduleCoaching,
     clearFeed, pushFeedEntry,
     setEntryFeedback, exportFeedbackDataset, logEntry, entries,

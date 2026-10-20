@@ -1,3 +1,4 @@
+import { LIVE_ASSISTANT_PROMPT, shortLiveMessage } from "../lib/liveAssistantPolicy.js";
 import { debugLog } from "../lib/debugLog.js";
 import { coachingFormat } from "../lib/llm/schemas/coaching.js";
 import { buildCachedPrompt } from "../lib/llm/prompts.js";
@@ -29,7 +30,6 @@ import {
   buildTranscriptRetrievalTrace,
 } from "./useCopilotEngineCore";
 import { lookupPlanSummary, formatPlanSummaryForPrompt } from "../lib/acaPlanLookup";
-import { calculateServerGrade } from "../compliance/shared/serverGradeScale";
 import { mergeStructuredKnowledgeMap } from "../lib/knowledgeBase";
 import { useKnowledge } from "./useKnowledge";
 import {
@@ -38,9 +38,6 @@ import {
   ACA_COACHING_DEBOUNCE_MS,
   ACA_MIN_NEW_CHARS,
   ACA_COOLDOWN_BY_LEVEL,
-  ACA_WARN_CONFIDENCE_FLOOR,
-  ACA_REMIND_CONFIDENCE_FLOOR,
-  ACA_SECTION_CONFIDENCE_OVERRIDES,
   ACA_HIGH_RISK_KEYWORDS,
   ACA_SECTION_SETTLE_MS,
 } from "../data/acaComplianceKnowledge";
@@ -183,14 +180,6 @@ function buildPeriodicContextSignature({ activeSection, currentStep, transcript,
   });
 }
 
-function buildPeriodicFallbackMessage({ sectionKey, transcriptWindow }) {
-  const recent = (transcriptWindow || "").trim();
-  if (!recent || recent.length < 30) {
-    return `You're in "${sectionKey}". Keep moving through the required compliance items for this section.`;
-  }
-  return `Still in "${sectionKey}". Based on what I'm hearing, you're on track. Make sure all required elements are covered before moving to the next gate.`;
-}
-
 /* ───────────────────────────────────────────────────────
    PROMPT BUILDERS
    ─────────────────────────────────────────────────────── */
@@ -206,40 +195,19 @@ ${knowledge.verbatimScript.map((line, i) => `  ${i + 1}. "${line}"`).join("\n")}
 KEY PHRASES TO LISTEN FOR (if you hear these or synonyms/paraphrases, the agent IS covering the requirement):
 ${knowledge.keyPhrasesToListenFor.map((p) => `  • "${p}"`).join("\n")}
 
-REQUIRED COMPLIANCE ELEMENTS, every one MUST be covered in this section:
+REQUIRED COMPLIANCE ELEMENTS, checkpoint reference only:
 ${knowledge.requiredElements.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
 
 COMMON AGENT MISTAKES IN THIS SECTION:
 ${knowledge.commonMistakes.map((m) => `  ⚠ ${m}`).join("\n")}
 
-RED FLAGS, INTERVENE IMMEDIATELY IF DETECTED:
+RED FLAGS, reference only; apply the assistant interruption policy:
 ${knowledge.redFlags.map((f) => `  🚨 ${f}`).join("\n")}
 `;
 }
 
 function buildCoachingModeGuidance(reviewMode) {
-  if (reviewMode === "periodic") {
-    return `
-## YOUR ROLE: 90-SECOND PERFORMANCE REVIEW
-This is a scheduled 90-second review. You MUST respond with either encouragement or correction.
-- NEVER return "silent" or "info"
-- If compliant and on pace, return level "tip" with a short encouraging message
-- If correction needed, return "remind", "warn", or "critical"
-- Keep message to 1-2 short sentences (popup display)
-- Anchor to specific words the agent recently said`;
-  }
-
-  return `
-## YOUR ROLE: SILENT COMPLIANCE SAFETY NET
-
-DEFAULT STATE: SILENT. You are monitoring, not commentating.
-
-ONLY break silence for:
-1. **COMPLIANCE VIOLATION (critical)**: Agent said something non-compliant or made an illegal/misleading claim. Quote what they said and provide exact correction.
-2. **MISSED REQUIRED ELEMENT (warn)**: Agent is clearly moving forward and a required element is materially missing. Name the specific element and give exact script language.
-3. **IMPORTANT REMINDER (remind)**: Agent near transition and key element still uncovered. Use sparingly.
-4. **POSITIVE REINFORCEMENT (tip)**: Agent nailed a critical compliance element. Use occasionally. Reference SPECIFIC words and WHY it matters.
-5. **SILENCE (silent)**: Agent is doing fine. THIS IS YOUR DEFAULT. Use 70-80% of the time.`;
+  return `${reviewMode === "periodic" ? "Scheduled review" : "Live assistance"}: Offer a useful next action or stay silent. Apply the assistant policy; do not repeat checkpoint reminders.`;
 }
 
 function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInterventionText, copilotContextJson, transcriptReferenceBlock = "", reviewMode = "live" }) {
@@ -247,7 +215,7 @@ function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInt
 
   return { staticPrefix: `# ACA Marketplace live coaching
 
-You are an expert ACA Marketplace enrollment compliance monitor embedded in a live call at New Gen Health Solutions. You analyze the agent's speech in real time and ONLY intervene when there is a genuine compliance issue, a missed required element, or something the agent needs to correct RIGHT NOW.
+${LIVE_ASSISTANT_PROMPT}
 
 ## IMPORTANT ACA CONTEXT
 - This is an ACA On-Exchange (Marketplace) enrollment, NOT Medicare
@@ -256,50 +224,6 @@ You are an expert ACA Marketplace enrollment compliance monitor embedded in a li
 - 2026 subsidy cliff: Enhanced PTCs from ARP/IRA expired 12/31/2025, clients above 400% FPL have NO subsidy
 - CSR (Cost Sharing Reductions) only apply to Silver plans for clients 100-250% FPL
 
-## CRITICAL AUDIO CONSTRAINT, NON-NEGOTIABLE
-You can ONLY hear the AGENT speaking. The transcript contains ONLY the agent's words. You have ZERO access to what the client says.
-
-IMPLICATIONS:
-- Evaluate compliance ONLY based on what the AGENT said or failed to say
-- NEVER say "the client didn't confirm", YOU CANNOT HEAR THE CLIENT
-- DO say "I didn't hear you ask for..." or "Make sure you cover..."
-- Speech recognition is imperfect, if it SOUNDS CLOSE ENOUGH, give credit
-- The agent may have started before recording began, absence is not proof of omission
-
-## HOW TO USE THIS CONTEXT
-- Check gate states to see what is complete vs pending. If a gate is complete, do NOT warn that its items are missing.
-- Use derivedSignals for broader patterns: subsidyCliffRisk, medicaidLikely, csrEligible, sepValid, sepExpiringSoon.
-- Use priorCompletedGates to understand what the agent has already finished.
-- If planData is present, use it to ground your coaching with real market data (plan counts, premium/deductible ranges by metal tier). Do NOT quote exact dollar amounts to the agent, use ranges and tier comparisons.
-
-## EMPTY OR SPARSE TRANSCRIPT:
-If the transcript is empty or very short, return silent and wait for meaningful speech.
-
-
-## PRIORITY WEIGHTING
-- Prioritize risky language and compliance-danger behaviors over missing-word checks.
-- Do not escalate on technical wording misses if the semantic intent appears covered.
-- For ACA: subsidy misrepresentation, income falsification coaching, and SSN mishandling are the highest severity items.
-
-## RESPONSE QUALITY REQUIREMENTS
-
-Every non-silent response MUST:
-- QUOTE or PARAPHRASE the agent's actual words from the transcript
-- Be SPECIFIC to this exact moment in the call
-- For warn/critical: State WHAT, WHY (reference ACA regulation if relevant), and EXACT SCRIPT to fix it
-- For remind: State what hasn't been covered and give exact words to say
-- For tip: Name the specific element handled well and why it matters
-
-CRITICAL NUANCE, AVOIDING FALSE POSITIVES:
-- Do NOT claim the agent skipped a section just because the transcript is limited
-- Do NOT flag individual words as missing if the overall message semantically covers the requirement
-- Do NOT repeatedly flag the same issue
-- Before issuing warn/remind, ask: "Could this have happened before recording started?" If yes, bias toward silence.
-
-## RESPONSE FORMAT
-Your message field MUST use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences:
-Use a short snake_case issue_tag, or an empty string.
-For level "silent", use an empty message.
 `, variableSuffix: `
 ## Reference context
 ${complianceContext}
@@ -329,12 +253,8 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
 
   return { staticPrefix: `# ACA Marketplace agent questions
 
-You are a knowledgeable ACA Marketplace compliance assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
-## CRITICAL CONTEXT
-- You can ONLY hear the AGENT speaking
-- They need a fast, practical answer for this live call
-
-
+You are a knowledgeable ACA Marketplace sales assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
+Answer the agent's question first. Help with scripts, benefits, objections and lookups. Use verified facts; never invent coverage. For drugs verify dose/form and pharmacy; for providers verify exact location and plan/network using Sunfire or the carrier tool. Keep answers to one or two short plain-text lines, at most 40 words. No grades, scores, counts or unsolicited disclosure reminders.
 ## YOUR CAPABILITIES
 - ACA Marketplace compliance rules and regulations (45 CFR 155)
 - APTC/subsidy eligibility and calculation (FPL thresholds, 2026 cliff)
@@ -351,11 +271,6 @@ You are a knowledgeable ACA Marketplace compliance assistant for agents at New G
 - Exact subsidy amounts → tell agent to run calculation on exchange platform
 If planData is present in the context, you CAN reference plan counts and premium/deductible ranges by metal tier. Do NOT invent specific plan names or exact costs beyond what the data shows.
 
-## RESPONSE RULES
-- Keep answers concise and actionable
-- Put script language in quotes so agent can read it directly
-- Always prioritize compliance
-Use plain text only. No bold, no bullet points, no markdown, no dashes, no asterisks, no emojis, no special characters. Write natural conversational sentences.
 `, variableSuffix: `
 ## Reference context
 ${sectionContext}
@@ -365,7 +280,6 @@ ${sectionContext}
 ${transcriptReferenceBlock ? `ENROLLMENT CALL REFERENCES
 ${transcriptReferenceBlock}
 ` : ""}
-
 
 ${isSpoken ? "\nCRITICAL: This question was SPOKEN ALOUD by the agent while muting (customer cannot hear). Answer directly and concisely." : ""}
 
@@ -567,10 +481,10 @@ export function useAcaCopilotEngine({ transcriptRef, activeGate, state, logCompl
 
     const userContent = `AGENT-ONLY TRANSCRIPT (you CANNOT hear the client, only the agent's words. Speech recognition may have minor errors.)
 ${sectionEntry ? `
-SECTION ENTRY ANALYSIS: The agent just entered the "${sectionKey}" gate. Provide one short info message with the next one or two priorities. Use level "info" unless you spot an actual issue. Do NOT return silent.
+SECTION ENTRY: Offer a useful next step or stay silent.
 ` : ""}
 ${periodic ? `
-PERIODIC 90-SECOND REVIEW: You MUST return a popup-ready message. If on track, return "tip". If correction needed, return "remind", "warn", or "critical".
+PERIODIC REVIEW: Help with the next step if useful; otherwise return silent.
 ` : ""}
 NEW SPEECH SINCE LAST ANALYSIS:
 "${newSpeechWindow}"
@@ -611,18 +525,8 @@ SECTION CONTEXT (rolling window):
 
       let { level, message, issueTag, confidence } = parseCoachingJson(raw);
 
-      if (periodic) {
-        if (level === "info") level = "tip";
-        if (level === "silent" || !message?.trim()) {
-          level = "tip";
-          message = buildPeriodicFallbackMessage({ sectionKey, transcriptWindow: newSpeechWindow || analysisWindow });
-          issueTag = "";
-          confidence = confidence ?? 100;
-        }
-      }
-
       // Silent
-      if (!periodic && (level === "silent" || !message?.trim())) {
+      if ((level === "silent" || !message?.trim())) {
         const firstSilent = !sectionCopilotFiredRef.current.has(activeGate);
         const now = Date.now();
         const shouldHeartbeat = firstSilent || now - lastSilentHeartbeatRef.current >= silentHeartbeatMs;
@@ -666,33 +570,6 @@ SECTION CONTEXT (rolling window):
       }
 
       // Confidence thresholds
-      const sectionOverrides = ACA_SECTION_CONFIDENCE_OVERRIDES[currentStep] || {};
-      const effectiveWarnFloor = sectionOverrides.warn ?? ACA_WARN_CONFIDENCE_FLOOR;
-      const effectiveRemindFloor = sectionOverrides.remind ?? ACA_REMIND_CONFIDENCE_FLOOR;
-
-      if (level === "warn" && confidence !== null && confidence < effectiveWarnFloor) {
-        if (periodic) {
-          level = "tip"; issueTag = "";
-          message = buildPeriodicFallbackMessage({ sectionKey, transcriptWindow: newSpeechWindow || analysisWindow });
-        } else {
-          lastAnalyzedLength.current = targetAnalyzedLength;
-          lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Warning below confidence threshold.", { section: currentStep, issueTag, retrievalTrace });
-          return;
-        }
-      }
-
-      if (level === "remind" && confidence !== null && confidence < effectiveRemindFloor) {
-        if (periodic) {
-          level = "tip"; issueTag = "";
-          message = buildPeriodicFallbackMessage({ sectionKey, transcriptWindow: newSpeechWindow || analysisWindow });
-        } else {
-          lastAnalyzedLength.current = targetAnalyzedLength;
-          lastCoachingTime.current = Date.now();
-          if (manual) pushFeedEntry("info", "Analyze complete. Reminder below confidence threshold.", { section: currentStep, issueTag, retrievalTrace });
-          return;
-        }
-      }
 
       // Deliver
       lastAnalyzedLength.current = targetAnalyzedLength;
@@ -700,8 +577,8 @@ SECTION CONTEXT (rolling window):
       lastInterventionLevel.current = level;
       sectionCopilotFiredRef.current.add(activeGate);
       if (periodic && periodicSignature) lastPeriodicContextSignatureRef.current = periodicSignature;
-      pushFeedEntry(level, message, { issueTag, section: currentStep, retrievalTrace });
-      if ((level === "warn" || level === "critical" || level === "remind") && logComplianceFlag) {
+      const delivered = pushFeedEntry(level, message, { confidence, issueTag, section: currentStep, retrievalTrace });
+      if (delivered?.level === "critical" && logComplianceFlag) {
         logComplianceFlag(currentStep, level, issueTag, confidence, message);
       }
     } catch (err) {
@@ -786,7 +663,7 @@ SECTION CONTEXT (rolling window):
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = parseAnthropicResponse(data);
+      const raw = shortLiveMessage(parseAnthropicResponse(data));
 
       if (raw) {
         const prefix = isSpoken ? `"${question}"` : `? ${question}`;
@@ -812,49 +689,12 @@ SECTION CONTEXT (rolling window):
   }, [askQuestion, askLoading, currentStep, knowledge, logEntry, getToken, buildCopilotContext, transcriptRef, pushFeedEntry, clearServiceIssue, surfaceServiceIssue, messagesRef, askAbortRef, setAskLoading, setAskQuestion, setMessages]);
 
   /* ═══════ Subsidy gate entry alert ═══════ */
-  const subsidyFiredRef = useRef(false);
-  useEffect(() => {
-    if (activeGate === 2 && !subsidyFiredRef.current) {
-      subsidyFiredRef.current = true;
-      const msg = "INCOME ASSESSMENT, You MUST accurately determine household size and income. 2026 subsidy cliff: clients above 400% FPL have NO APTC. Never coach clients to misrepresent income.";
-      pushFeedEntry("warn", msg, { section: "Household & Income Assessment", issueTag: "SUBSIDY_GATE_ENTRY", retrievalTrace: EMPTY_RETRIEVAL_TRACE });
-    }
-    if (activeGate !== 2) subsidyFiredRef.current = false;
-  }, [activeGate, pushFeedEntry]);
-
-  /* ═══════ Compliance score ═══════ */
-  const complianceScore = useMemo(() => {
-    const totalGates = state.enrollmentPeriod === "SEP" ? 7 : 6;
-    const completed = [
-      state.gate0Ok,
-      state.enrollmentPeriod === "SEP" ? state.gate1Ok : null,
-      state.gate2Ok, state.gate3Ok, state.gate4Ok, state.gate5Ok, state.gate6Ok,
-    ].filter((v) => v === true).length;
-
-    // Penalty for warnings/criticals
-    const warns = entries.filter((e) => e.level === "warn").length;
-    const criticals = entries.filter((e) => e.level === "critical").length;
-    const penalty = Math.min(30, warns * 3 + criticals * 8);
-
-    const gateScore = Math.round((completed / totalGates) * 100);
-    const score = Math.max(0, gateScore - penalty);
-    const grade = calculateServerGrade(score);
-
-    return {
-      score, grade, completed, totalGates, warns, criticals, penalty,
-      scoreType: "gate_completion",
-      scoreLabel: "Section Completion",
-      productLine: "aca",
-      comparable: false,
-    };
-  }, [state, entries]);
 
   return {
     messages, coachingLoading, askLoading,
     floatingAlert, setFloatingAlert,
     askQuestion, setAskQuestion,
     feedRef, currentStep,
-    complianceScore,
     requestCoaching, askCopilot, scheduleCoaching,
     clearFeed, pushFeedEntry,
     setEntryFeedback, exportFeedbackDataset, logEntry, entries,

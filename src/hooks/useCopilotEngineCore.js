@@ -1,3 +1,4 @@
+import { liveAssistantEntry, disclosureChecklist } from "../lib/liveAssistantPolicy.js";
 /**
  * useCopilotEngineCore.js, shared infrastructure for all copilot engines
  * (MA, ACA, U65, Med Sup).
@@ -8,7 +9,7 @@
  *
  * Product engines supply their own prompt builders, context builders,
  * requestCoaching / askCopilot implementations, section-entry alerts,
- * and compliance score calculations.
+ * and product reference context.
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -381,7 +382,11 @@ export function useCopilotEngineCore({
 
   /* ─── Feed entry ─── */
   const pushFeedEntry = useCallback((level, text, extra = {}) => {
-    const displayText = formatCopilotDisplayMessage(text);
+    // Suppress routine monitoring chatter as well as soft compliance alerts.
+    if (/^(Analyze complete\.|Entered "|Live speech analyzed\.|Still listening\.)/.test(text)) return null;
+    const allowed = liveAssistantEntry(level, formatCopilotDisplayMessage(text), extra);
+    if (!allowed) return null;
+    const displayText = allowed.message;
     const entry = {
       id: Date.now() + Math.floor(Math.random() * 1000),
       level,
@@ -400,6 +405,18 @@ export function useCopilotEngineCore({
     }
     return entry;
   }, [currentStep, logEntry]);
+
+  const checkpointHistoryRef = useRef(new Set());
+  useEffect(() => {
+    checkpointHistoryRef.current.clear();
+  }, [state.callStart, callStarted]);
+  useEffect(() => {
+    if (!callStarted || checkpointHistoryRef.current.has(activeSection)) return;
+    const checklist = disclosureChecklist(engine, activeSection, state);
+    if (!checklist) return;
+    checkpointHistoryRef.current.add(activeSection);
+    pushFeedEntry("info", checklist, { issueTag: "disclosure_checkpoint", section: currentStep });
+  }, [engine, activeSection, state, callStarted, currentStep, pushFeedEntry]);
 
   /* ─── Section tracking + entry analysis ─── */
   useEffect(() => {

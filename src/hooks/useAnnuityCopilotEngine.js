@@ -60,21 +60,20 @@ function buildDefaultSectionWhisper({ activeStep, productState }) {
     : "Keep the flow direct and complete each gate before moving on.";
 }
 
-function buildAnalyzeWhisper({ complianceScore, productState }) {
+function buildAnalyzeWhisper({ activeStep, productState }) {
   const riskWhisper = buildRiskWhisper(productState);
   if (riskWhisper) return riskWhisper;
 
-  const score = complianceScore?.score ?? 0;
-  return `Annuity score is ${score}%. Hard gates are recording consent and suitability completion.`;
+  return buildDefaultSectionWhisper({ activeStep, productState });
 }
 
-export function useAnnuityCopilotEngine({ activeStep, productState, complianceScore }) {
+export function useAnnuityCopilotEngine({ activeStep, productState }) {
   return useMemo(
     () => ({
       sectionMessage: buildDefaultSectionWhisper({ activeStep, productState }),
-      analyzeMessage: buildAnalyzeWhisper({ complianceScore, productState }),
+      analyzeMessage: buildAnalyzeWhisper({ activeStep, productState }),
       mode: normalizeMode(productState?.annuityMode),
     }),
-    [activeStep, complianceScore, productState]
+    [activeStep, productState]
   );
 }

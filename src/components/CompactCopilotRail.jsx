@@ -150,7 +150,6 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
   listening = false,
   supportsRecognition = false,
   analyzing = false,
-  score,
   toggleLabel,
   startTime,
   sessionActive = false,
@@ -245,7 +244,6 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
     onAnalyze,
     extraWidgets,
   };
-  const scoreDisplay = Number.isFinite(score) ? `${score}%` : "--";
 
   return (
     <>
@@ -258,7 +256,7 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
             title="Expand co-pilot rail"
             aria-label="Expand co-pilot rail"
           >
-            <span className="right-rail-toggle-score">{scoreDisplay}</span>
+            <span className="right-rail-toggle-score">Co-Pilot</span>
             <span className="right-rail-toggle-section">{toggleLabel}</span>
             <ChevronLeft size={12} />
           </button>
@@ -292,7 +290,7 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
             onClick={() => setOpen((previous) => !previous)}
             title="Toggle co-pilot rail"
           >
-            <span className="right-rail-toggle-score">{scoreDisplay}</span>
+            <span className="right-rail-toggle-score">Co-Pilot</span>
             <span className="right-rail-toggle-section">{toggleLabel}</span>
             {open ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
           </button>
