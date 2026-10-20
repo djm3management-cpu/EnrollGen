@@ -86,6 +86,8 @@ export function extractSince(payload) {
 function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
   const { getToken } = useAppAuth();
   const canAuthenticate = !isAuthDisabled();
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
   const [snapshot, setSnapshot] = useState({
     status: "offline", statusSince: null, pendingStatus: null, isSaving: false, error: "",
   });
@@ -97,10 +99,11 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
     setIsHydrated(false);
     setSnapshot({ status: "offline", statusSince: null, pendingStatus: null, isSaving: false, error: "" });
     const controller = new AbortController();
+    const token = (...args) => getTokenRef.current(...args);
     const intent = createAvailabilityIntent({
       onChange: setSnapshot,
       async write(nextStatus) {
-        const payload = await availabilityRequest(getToken, { status: nextStatus });
+        const payload = await availabilityRequest(token, { status: nextStatus });
         return { status: extractStatus(payload) || nextStatus, statusSince: extractSince(payload) || new Date(), wrapUpCallSid: payload.wrap_up_call_sid || null };
       },
     });
@@ -111,7 +114,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       if (!identityLoaded) return;
       try {
         if (!canAuthenticate || !agentId) return;
-        const payload = await availabilityRequest(getToken, null, { signal: controller.signal });
+        const payload = await availabilityRequest(token, null, { signal: controller.signal });
         intent.hydrate({ status: extractStatus(payload) || "offline", statusSince: extractSince(payload) || new Date(), wrapUpCallSid: payload.wrap_up_call_sid || null });
       } catch (err) {
         if (!controller.signal.aborted) intent.hydrate({ error: err?.message || "Availability lookup failed" });
@@ -123,7 +126,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
     const timer = setInterval(async () => {
       if (!identityLoaded || !canAuthenticate || !agentId) return;
       try {
-        const payload = await availabilityRequest(getToken, null, { signal: controller.signal });
+        const payload = await availabilityRequest(token, null, { signal: controller.signal });
         intent.refresh({ status:extractStatus(payload) || 'offline', statusSince:extractSince(payload), wrapUpCallSid:payload.wrap_up_call_sid || null });
       } catch { /* Keep the last confirmed status until the next refresh. */ }
     }, 5000);
@@ -133,7 +136,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       intent.dispose();
       if (intentRef.current === binding) intentRef.current = null;
     };
-  }, [agentId, identityLoaded, getToken, canAuthenticate]);
+  }, [agentId, identityLoaded, canAuthenticate]);
 
   const changeStatus = useCallback((nextStatus) => {
     const binding = intentRef.current;

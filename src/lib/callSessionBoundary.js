@@ -9,7 +9,6 @@ export function createCallSessionBoundary() {
   return activeCall => {
     if (!activeCall) return key;
     const sid = telephonyCallIdentity(activeCall).twilioCallSid;
-    if (sid) { key = sid; return key; }
     const call = activeCall.call || activeCall;
     if (!calls.has(call)) calls.set(call, sid || `call-${++sequence}`);
     key = calls.get(call);

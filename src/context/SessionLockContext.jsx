@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { isAuthDisabled } from "../lib/agentIdentity";
 import { useInboundCall } from "./InboundCallContext";
+import { phoneHasInProgressCall } from "../lib/callDisposition.js";
 
 // Idle screen lock: after IDLE_LOCK_MS with no mouse/keyboard/touch
 // activity, block the app behind a full-screen overlay requiring
@@ -24,9 +25,8 @@ function AuthedSessionLockProvider({ children }) {
   const [locked, setLocked] = useState(false);
   const lastActivityRef = useRef(Date.now());
 
-  const onCall = Boolean(inboundCall?.activeCall || inboundCall?.dialingCall || inboundCall?.incomingCall);
-  const onCallRef = useRef(onCall);
-  onCallRef.current = onCall;
+  const phoneRef = useRef(inboundCall);
+  phoneRef.current = inboundCall;
 
   useEffect(() => {
     const markActive = () => {
@@ -44,7 +44,7 @@ function AuthedSessionLockProvider({ children }) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (onCallRef.current) {
+      if (phoneHasInProgressCall(phoneRef.current)) {
         // Never accrue idle time during a call.
         lastActivityRef.current = Date.now();
         return;
@@ -62,7 +62,7 @@ function AuthedSessionLockProvider({ children }) {
   }, []);
 
   return (
-    <SessionLockContext.Provider value={{ locked, unlock }}>{children}</SessionLockContext.Provider>
+    <SessionLockContext.Provider value={{ locked: locked && !phoneHasInProgressCall(inboundCall), unlock }}>{children}</SessionLockContext.Provider>
   );
 }
 

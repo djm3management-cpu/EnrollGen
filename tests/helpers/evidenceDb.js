@@ -11,7 +11,7 @@ export function evidenceDb(pg, onError = () => {}) {
         const jsonArgs = new Set(['p_transcript', 'p_result']);
         const rows = (await pg.query(sql, entries.map(([key,item]) => key === "query_embedding" ? "{" + item.join(",") + "}"
           : jsonArgs.has(key) ? JSON.stringify(item) : item))).rows;
-        const scalarScoring = ['begin_scoring_job','persist_scoring_result','fail_scoring_job','reserve_scoring_input_tokens'].includes(name);
+        const scalarScoring = ['begin_scoring_job','persist_scoring_result','fail_scoring_job','reserve_scoring_input_tokens','start_telephony_session','save_agent_call_disposition'].includes(name);
         return { data: scalarScoring ? rows[0]?.[name] : rows, error: null };
       } catch (error) { return { data: null, error }; }
     },
@@ -28,6 +28,7 @@ export function evidenceDb(pg, onError = () => {}) {
         lt(column, item) { filters.push(q(column) + "<" + value(item)); return chain; },
         eq(column, item) { filters.push(q(column) + "=" + value(item)); return chain; },
         is(column, item) { if (item !== null) throw new Error('Fixture IS only supports NULL'); filters.push(q(column) + ' IS NULL'); return chain; },
+        not(column, operator, item) { if (operator !== 'is' || item !== null) throw new Error('Fixture NOT only supports IS NULL'); filters.push(q(column) + ' IS NOT NULL'); return chain; },
         range(from, to) { offset = Number(from); limit = Number(to) - offset + 1; return chain; },
         in(column, items) { filters.push(q(column) + " IN (" + items.map(value).join(",") + ")"); return chain; },
         order(column, options = {}) { order.push(q(column) + (options.ascending === false ? " DESC" : " ASC")); return chain; },

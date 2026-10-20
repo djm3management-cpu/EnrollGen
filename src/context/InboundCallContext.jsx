@@ -66,6 +66,12 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const requestingAgentId = resolveRequestingAgentUuid(agents, agentId);
   const availability = useAvailability();
   const reportPhoneReady = availability?.setPhoneReady;
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
+  // Token getter rotation or availability refresh must not destroy a live SDK device.
+  const hydratedIdentityRef = useRef(null);
+  if (identityReady && availability?.isHydrated) hydratedIdentityRef.current = agentId;
+  const registrationReady = identityReady && hydratedIdentityRef.current === agentId;
 
   const [deviceStatus, setDeviceStatus] = useState("offline"); // offline | registering | registered | error
   const [incomingCall, setIncomingCall] = useState(null); // { call, params }
@@ -88,9 +94,10 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const tokenBundleRef = useRef(null);
   const callInProgressRef = useRef(false);
   const outboundCallRef = useRef(null);
+  const ownedCallRef = useRef(null);
 
   const fetchTokenBundle = useCallback(async () => {
-    const clerkToken = await getToken().catch(() => null);
+    const clerkToken = await getTokenRef.current().catch(() => null);
     const response = await fetch(`${TELEPHONY_BASE_URL}/api/voice/token`, {
       method: "POST",
       headers: {
@@ -105,7 +112,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     const bundle = await response.json();
     tokenBundleRef.current = bundle;
     return bundle;
-  }, [getToken, agentId]);
+  }, [agentId]);
 
   const handleTranscriptMessage = useCallback((message) => {
     if (message.type === "sms") {
@@ -169,10 +176,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     // device registers. Registration is connectivity only; it must not
     // promote an offline agent into the routing pool.
     if (
-      !identityReady ||
+      !registrationReady ||
       !agentId ||
-      !TELEPHONY_BASE_URL ||
-      !availability?.isHydrated
+      !TELEPHONY_BASE_URL
     ) return undefined;
     let cancelled = false;
     let wsRefreshTimer = null;
@@ -255,26 +261,40 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         device.on("incoming", (call) => {
           if (callInProgressRef.current) { call.reject(); return; }
           callInProgressRef.current = true;
+          ownedCallRef.current = call;
           const params = paramsFromCall(call);
           setIncomingCall({ call, params });
-          call.on("cancel", () => { callInProgressRef.current = false; setIncomingCall(null); });
-          call.on("error", (callError) => {
+          const finishCall = () => {
+            if (ownedCallRef.current !== call) return;
+            ownedCallRef.current = null;
             callInProgressRef.current = false;
             setIncomingCall(null);
             setActiveCall(null);
             setRemoteStream(null);
+            setContact(null);
             setConnectedAt(null);
+            setIsMuted(false);
+            setIsHeld(false);
+            publishAudioLevel("customer", 0, { immediate: true });
+          };
+          call.on("cancel", finishCall);
+          call.on("error", (callError) => {
+            if (ownedCallRef.current !== call) return;
             setError(callError?.message || "Call failed");
+            // Recoverable media/network errors are not a hang-up.
+            if (call.status?.() === "closed") finishCall();
           });
           // Customer audio: the caller's voice is the call's remote
           // MediaStream. It can lag the accept event by a beat, so
           // retry briefly until Twilio exposes it.
           call.on("accept", () => {
+            if (ownedCallRef.current !== call) return;
             setConnectedAt(Date.now());
             setIsMuted(false);
             setIsHeld(false);
             let attempts = 0;
             const grabStream = () => {
+              if (ownedCallRef.current !== call) return;
               const stream = call.getRemoteStream?.();
               if (stream && stream.getAudioTracks().length) {
                 debugLog("context/InboundCallContext.jsx info");
@@ -293,16 +313,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
             };
             grabStream();
           });
-          call.on("disconnect", () => {
-            setActiveCall(null);
-            setRemoteStream(null);
-            setContact(null);
-            setConnectedAt(null);
-            setIsMuted(false);
-            setIsHeld(false);
-            callInProgressRef.current = false;
-            publishAudioLevel("customer", 0, { immediate: true });
-          });
+          call.on("disconnect", finishCall);
         });
 
         deviceRef.current = device;
@@ -334,7 +345,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       }
       setDeviceStatus("offline");
     };
-  }, [identityReady, agentId, fetchTokenBundle, connectAgentSocket, availability?.isHydrated]);
+  }, [registrationReady, agentId, fetchTokenBundle, connectAgentSocket]);
 
   // Hydrate the contact record for the ringing/active call. Full PII
   // (name/phone/email/etc) is read via decrypt_pii — the agent needs
@@ -377,7 +388,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   }, [contactId, supabaseClient, requestingAgentId]);
 
   const acceptCall = useCallback(() => {
-    if (!incomingCall) return;
+    if (!incomingCall || ownedCallRef.current !== incomingCall.call) return;
     setAgentRows([]);
     setCustomerTranscript([]);
     // Streams start while the agent is ringing. Preserve a failure already
@@ -389,7 +400,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   }, [incomingCall]);
 
   const declineCall = useCallback(() => {
-    if (!incomingCall) return;
+    if (!incomingCall || ownedCallRef.current !== incomingCall.call) return;
+    ownedCallRef.current = null;
     incomingCall.call.reject();
     callInProgressRef.current = false;
     setIncomingCall(null);
@@ -435,9 +447,11 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         throw err;
       }
       outboundCallRef.current = call;
+      ownedCallRef.current = call;
       setDialingCall({ call, params });
 
       call.on("accept", async () => {
+        if (ownedCallRef.current !== call) return;
         try {
           const canonical = await canonicalOutbound(getToken, call.parameters.CallSid);
           if (!callInProgressRef.current || outboundCallRef.current !== call) return;
@@ -446,6 +460,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           params.callerPhone = canonical.phoneNumber;
           params.callerName = "";
         } catch (error) {
+          if (ownedCallRef.current !== call) return;
           setError(error.message);
           call.disconnect();
           return;
@@ -457,6 +472,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         setIsHeld(false);
         let attempts = 0;
         const grabStream = () => {
+          if (ownedCallRef.current !== call) return;
           const stream = call.getRemoteStream?.();
           if (stream && stream.getAudioTracks().length) {
             setRemoteStream(stream);
@@ -473,8 +489,10 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         };
         grabStream();
       });
-      call.on("disconnect", () => {
-        if (outboundCallRef.current === call) outboundCallRef.current = null;
+      const finishCall = () => {
+        if (ownedCallRef.current !== call) return;
+        ownedCallRef.current = null;
+        outboundCallRef.current = null;
         setActiveCall(null);
         setDialingCall(null);
         setRemoteStream(null);
@@ -484,14 +502,15 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         setIsHeld(false);
         callInProgressRef.current = false;
         publishAudioLevel("customer", 0, { immediate: true });
-      });
-      call.on("cancel", () => { callInProgressRef.current = false; setDialingCall(null); });
-      call.on("reject", () => { callInProgressRef.current = false; setDialingCall(null); });
+      };
+      call.on("disconnect", finishCall);
+      call.on("cancel", finishCall);
+      call.on("reject", finishCall);
       call.on("error", (callError) => {
+        if (ownedCallRef.current !== call) return;
         debugLog("[OutboundCall] call error");
-        callInProgressRef.current = false;
         setError(callError?.message || "Call failed");
-        setDialingCall(null);
+        if (call.status?.() === "closed") finishCall();
       });
 
       return call;

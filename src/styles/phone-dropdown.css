@@ -780,3 +780,20 @@
 .phone-dialer__header-label {
   text-transform: uppercase;
 }
+
+/* Pending outcome stays attached to the dialer; collapsing never clears it. */
+.phone-dd__panel[hidden] { display: none; }
+.phone-disposition {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-bottom: 10px;
+  color: var(--phone-body-text);
+  font-size: 11px;
+}
+.phone-disposition:has(+ .phone-dialer) {
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--phone-border);
+}
+.phone-disposition .ma-script-direction-select { width: 100%; }

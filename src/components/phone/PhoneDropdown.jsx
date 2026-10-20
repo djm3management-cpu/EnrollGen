@@ -5,6 +5,7 @@ import IncomingCallToast from "./IncomingCallToast";
 import ActiveCallBar from "./ActiveCallBar";
 import ActiveCallExpanded from "./ActiveCallExpanded";
 import DialerPanel from "./DialerPanel";
+import CallDispositionBox from "./CallDispositionBox";
 import { OPEN_DIALER_EVENT } from "../../lib/dialerUi";
 
 // GHL-style dropdown phone system: a single nav icon that owns three
@@ -16,6 +17,7 @@ import { OPEN_DIALER_EVENT } from "../../lib/dialerUi";
 export default function PhoneDropdown({ onOpenMessages }) {
   const inbound = useInboundCall();
   const [isOpen, setIsOpen] = useState(false);
+  const [dispositionPending, setDispositionPending] = useState(false);
   const [prefillContact, setPrefillContact] = useState(null);
   const [prefillVersion, setPrefillVersion] = useState(0);
   const rootRef = useRef(null);
@@ -82,15 +84,14 @@ export default function PhoneDropdown({ onOpenMessages }) {
 
       {hasCall && !isOpen ? <ActiveCallBar onExpand={() => setIsOpen(true)} /> : null}
 
-      {isOpen ? (
-        <div className="phone-dd__panel" role="dialog" aria-label="Phone">
-          {hasCall ? (
+      <div className="phone-dd__panel" hidden={!isOpen && !dispositionPending} role="dialog" aria-label="Phone">
+        <CallDispositionBox phone={inbound} onVisibleChange={setDispositionPending} />
+        {isOpen ? (hasCall ? (
             <ActiveCallExpanded onOpenMessages={onOpenMessages} />
           ) : (
             <DialerPanel key={prefillContact ? `${prefillContact.id}:${prefillVersion}` : 'manual'} initialContact={prefillContact} />
-          )}
+          )) : null}
         </div>
-      ) : null}
     </div>
   );
 }

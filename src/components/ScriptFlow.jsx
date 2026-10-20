@@ -580,12 +580,12 @@ export default function ScriptFlow() {
     sessionStartedRef.current = true;
     clearLog();
     const identity = inbound?.activeCall ? telephonyCallIdentity(inbound.activeCall)
-      : availability?.wrapUpCallSid ? {telephonyCall:true,twilioCallSid:availability.wrapUpCallSid} : {telephonyCall:false,twilioCallSid:null};
+      : {telephonyCall:false,twilioCallSid:null};
     void session.startSession("ma", {...identity, callDirection:inbound?.activeCall?.params?.direction || state.callDirection,
       contactId:inbound?.activeCall?.params?.contactId || (getActiveSessionMetadata().closed ? null : getActiveSessionMetadata().contactId) || null});
     dispatch({ type: "MARK_SECTION_START", section: 1 });
     dispatch({ type: "START_TIMER" });
-  }, [callStarted, callGeneration, clearLog, session, dispatch, inbound?.activeCall, availability?.wrapUpCallSid, state.callDirection]);
+  }, [callStarted, callGeneration, clearLog, session, dispatch, inbound?.activeCall, state.callDirection]);
 
   // Cleanup on unmount, mark completed if enrollment gate was reached
   useEffect(() => {
@@ -662,10 +662,10 @@ export default function ScriptFlow() {
   const inboundStartedRef = useRef(false);
   const inboundContactHydratedRef = useRef("");
   useEffect(() => {
-    if ((!inbound?.activeCall && !availability?.wrapUpCallSid) || inboundStartedRef.current) return;
+    if (!inbound?.activeCall || inboundStartedRef.current) return;
     inboundStartedRef.current = true;
     setCallStarted(true);
-  }, [inbound?.activeCall, availability?.wrapUpCallSid]);
+  }, [inbound?.activeCall]);
 
   useEffect(() => {
     const contact = inbound?.contact;
@@ -863,7 +863,6 @@ export default function ScriptFlow() {
     const wasActive = previousSoftphoneActiveRef.current;
     previousSoftphoneActiveRef.current = softphoneActive;
     if (!wasActive || softphoneActive || !callStarted) return;
-    dispatch({type:"CALL_DISCONNECTED"});
 
     void persistBeforeReset({
       persist: persistFinalTranscript,
@@ -978,9 +977,7 @@ export default function ScriptFlow() {
       try {
         const result=await evidenceRequest(getToken,`evidence-session?call_sid=${encodeURIComponent(metadata.twilioCallSid)}`);
         if (stopped || getActiveSessionMetadata().sessionId!==metadata.sessionId) return;
-        if (result.wrap_up?.status==='pending') dispatch({type:'CALL_DISCONNECTED'});
         if (result.wrap_up?.status==='saved' && result.wrap_up.outcome==='short_call_hangup') {
-          dispatch({type:'CALL_DISCONNECTED',outcome:'short_call_hangup'});
           setAutoSavedOutcome('short_call_hangup');
           completeSession(metadata.sessionId);
           setWrapUpSaved(true);
@@ -991,6 +988,17 @@ export default function ScriptFlow() {
     const timer=setInterval(()=>void sync(),3000);
     return ()=>{stopped=true;clearInterval(timer);};
   },[callStarted,inbound?.activeCall,wrapUpSaved,getToken,dispatch,completeSession]);
+
+  useEffect(() => {
+    const saved = event => {
+      if (getActiveSessionMetadata().sessionId !== event.detail?.session_id) return;
+      completeSession(event.detail.session_id);
+      dispatch({type:'SET_NOTE',field:'callOutcome',value:event.detail.call_outcome});
+      setWrapUpSaved(true);
+    };
+    window.addEventListener('call-disposition-saved',saved);
+    return ()=>window.removeEventListener('call-disposition-saved',saved);
+  },[completeSession,dispatch]);
 
   // ── Quick notes, persists into wrap-up ──
   // Auto-scroll to active section when it changes

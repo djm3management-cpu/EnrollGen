@@ -4,7 +4,6 @@ import { useScript } from "../context/ScriptContext";
 import { useAppAuth } from "../context/AuthContext";
 import { useLiveCall } from "../context/LiveCallContext";
 import {
-  CALL_OUTCOME_OPTIONS,
   US_STATE_OPTIONS,
   buildPostCallPayload,
   calculateSixtyDayDate,
@@ -276,26 +275,7 @@ export default React.memo(function SectionWrapUp({ scriptBody, onSaved, autoSave
             />
           </label>
 
-          <label>
-            Call Outcome
-            <select
-              disabled={!wrapUpReady || isSaving}
-              value={callOutcome}
-              onChange={(e) => updateNote("callOutcome", e.target.value)}
-              required
-            >
-              <option value="">Select Call Outcome</option>
-              {CALL_OUTCOME_OPTIONS.map((group) => (
-                <optgroup key={group.group} label={group.group}>
-                  {group.options.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
+
         </div>
       </div>
 

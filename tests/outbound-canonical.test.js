@@ -12,7 +12,7 @@ function harness(blocked = false, identityError = false) {
     disconnect: () => { disconnected = true; handlers.disconnect?.(); }, getRemoteStream: () => ({ getAudioTracks: () => [{}] }) };
   const context = { debugLog,
     useCallback: fn => fn, deviceRef: { current: { connect: async options => { calls.push(options); return call; } } },
-    callInProgressRef: ref, outboundCallRef: { current: null }, getToken: async () => 'clerk',
+    callInProgressRef: ref, outboundCallRef: { current: null }, ownedCallRef: { current: null }, getToken: async () => 'clerk',
     checkOutbound: async () => ({ blocked }),
     canonicalOutbound: async (_, sid) => { assert.equal(sid, 'canonical-sid'); if (identityError) throw new Error('Identity unavailable');
       return { contactId: 'canonical-contact', attemptId: 'canonical-attempt', phoneNumber: '+16097787669' }; },

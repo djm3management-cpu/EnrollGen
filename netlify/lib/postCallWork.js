@@ -98,7 +98,7 @@ function normalizeDirection(value) {
 
 // Keep in sync with CALL_OUTCOME_OPTIONS in src/lib/postCallPipeline.js
 // and the latest call_records_call_outcome_check migration.
-function normalizeOutcome(value) {
+export function normalizeOutcome(value) {
   const raw = safeText(value);
   const allowed = new Set([
     // Legacy
