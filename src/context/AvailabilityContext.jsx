@@ -10,7 +10,6 @@ import {
 import { availabilityRequest } from "../lib/availabilityApi";
 import { useAppAuth } from "./AuthContext";
 import { createAvailabilityIntent } from "../lib/availabilityIntent";
-import { useUser } from "@clerk/clerk-react";
 import { useTenantConfig } from "../hooks/useTenantConfig";
 import {
   isAuthDisabled,
@@ -174,10 +173,12 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
 }
 
 function AuthedAvailabilityProvider({ children }) {
-  const { user, isLoaded } = useUser();
+  const { user, identityLoaded: isLoaded, callProtected } = useAppAuth();
   const { agents } = useTenantConfig();
+  const callAgentId = useRef(null);
+  if (!callProtected || !callAgentId.current) callAgentId.current = resolveAgentId(user, agents);
   return (
-    <AvailabilityProviderCore agentId={resolveAgentId(user, agents)} identityLoaded={isLoaded}>
+    <AvailabilityProviderCore agentId={callAgentId.current} identityLoaded={isLoaded}>
       {children}
     </AvailabilityProviderCore>
   );

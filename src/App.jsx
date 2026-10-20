@@ -1,3 +1,4 @@
+import { callContinuity } from "./lib/callContinuity.js";
 import { debugLog } from "./lib/debugLog.js";
 import { createCallSessionBoundary } from "./lib/callSessionBoundary.js";
 import {
@@ -20,7 +21,7 @@ import ClientQuickScripts from "./components/ClientQuickScripts";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
-import { SignedIn, SignedOut, SignIn, useClerk, useOrganization, useUser } from "@clerk/clerk-react";
+import { SignIn, useClerk } from "@clerk/clerk-react";
 import { SubscriptionProvider, useSubscription } from "./hooks/useSubscription";
 import { TenantConfigProvider, useTenantConfig } from "./hooks/useTenantConfig";
 import { InboundCallProvider, INBOUND_CALLS_ENABLED, useInboundCall } from "./context/InboundCallContext";
@@ -383,6 +384,7 @@ class PanelErrorBoundary extends Component {
           <div style={{ color: "var(--eg-red-text)", fontSize: "0.9rem", marginBottom: 10 }}>
             Panel failed to load.
           </div>
+          {this.props.fallbackControls}
           <button
             type="button"
             className="primary"
@@ -515,6 +517,7 @@ function getAppModeFromLocation() {
 }
 
 function syncModePath(mode) {
+  if (callContinuity.getSnapshot()) return;
   if (typeof window === "undefined") {
     return;
   }
@@ -532,7 +535,7 @@ function syncModePath(mode) {
 }
 
 function ProfileChip() {
-  const { user, isLoaded } = useUser();
+  const { user, identityLoaded: isLoaded, callProtected } = useAppAuth();
   const { signOut } = useClerk();
 
   if (!isLoaded || !user) {
@@ -546,7 +549,7 @@ function ProfileChip() {
     <div className="top-bar-profile">
       <img src={user.imageUrl} alt="" className="top-bar-profile-avatar" />
       <span className="top-bar-profile-name">{displayName}</span>
-      <button type="button" className="top-bar-profile-signout" onClick={() => signOut()}>
+      <button type="button" className="top-bar-profile-signout" disabled={callProtected} onClick={() => { if (!callContinuity.getSnapshot()) void signOut(); }}>
         Sign Out
       </button>
     </div>
@@ -848,6 +851,7 @@ function AppShell({ currentUser = null }) {
   // Flow pills act as "start a call in this flow": they always enter
   // the cockpit, from either mode.
   const handleModeChange = (newMode) => {
+    if (callContinuity.getSnapshot()) return;
     if (newMode === mode && appMode === "call") {
       setOpenPanel(null);
       return;
@@ -861,6 +865,7 @@ function AppShell({ currentUser = null }) {
   };
 
   const handleTabToggle = (tabId) => {
+    if (callContinuity.getSnapshot() && ["dashboard", "script", "contacts"].includes(tabId)) return;
     if (tabId === "dashboard") {
       window.history.pushState(null, "", "/dashboard");
       setAppMode("dashboard");
@@ -888,6 +893,7 @@ function AppShell({ currentUser = null }) {
   };
 
   const handleStartCallFromContact = (contact, flow = "ma") => {
+    if (callContinuity.getSnapshot()) return;
     setPendingCallContact(contact);
     preloadScriptForMode(flow);
     syncModePath(flow);
@@ -900,12 +906,14 @@ function AppShell({ currentUser = null }) {
   // that contact's detail view selected.
   const [crmFocusContact, setCrmFocusContact] = useState(null);
   const handleOpenContactFromLog = (contactId) => {
+    if (callContinuity.getSnapshot()) return;
     setCrmFocusContact({ id: contactId, ts: Date.now() });
     setAppMode("crm");
     setOpenPanel(null);
   };
 
   const handleOpenContactMessages = (contactId) => {
+    if (callContinuity.getSnapshot()) return;
     setCrmFocusContact({ id: contactId, ts: Date.now(), tab: "messages" });
     setAppMode("crm");
     setOpenPanel(null);
@@ -1329,7 +1337,10 @@ function AppContent({ currentUser = null }) {
         <AvailabilityProvider>
           <InboundCallProvider>
             <SessionLockProvider>
-              <AppShell currentUser={currentUser} />
+              <CallAuthBanner />
+              <PanelErrorBoundary fallbackControls={<PhoneDropdown />}>
+                <AppShell currentUser={currentUser} />
+              </PanelErrorBoundary>
               <SessionLockOverlay />
             </SessionLockProvider>
           </InboundCallProvider>
@@ -1435,11 +1446,13 @@ function TenantAutoBootstrap({ currentUser = null, organization, onComplete, onT
 }
 
 function AuthenticatedAppContent() {
-  const { user } = useUser();
+  const { user, organization, organizationLoaded, callProtected } = useAppAuth();
   const { tenant, loading, error, refetch, hydrateTenant } = useTenantConfig();
-  const { organization, isLoaded: organizationLoaded } = useOrganization();
+  const workspaceReady = useRef(false);
+  if (tenant && !loading && organizationLoaded) workspaceReady.current = true;
+  if (callProtected && workspaceReady.current) return <AppContent currentUser={user} />;
 
-  if (loading || !organizationLoaded) {
+  if ((loading || !organizationLoaded) && !callProtected) {
     return (
       <div className="subscription-paywall">
         <div className="subscription-paywall-card">
@@ -1495,15 +1508,45 @@ function AuthenticatedProviders({ children }) {
   );
 }
 
+function AuthedCallAuthBanner() {
+  const {sessionExpired, callProtected, isSignedIn} = useAppAuth();
+  const {openSignIn} = useClerk();
+  if (!sessionExpired && isSignedIn) return null;
+  return <div className="billing-alert is-error call-auth-banner" role="status">
+    <span>Session expired, sign in after this call</span>
+    {!callProtected && <button type="button" className="contacts-mini-btn" onClick={() => {
+      if (!callContinuity.getSnapshot()) openSignIn();
+    }}>Sign in</button>}
+  </div>;
+}
+
+function CallAuthBanner() {
+  return LOGIN_DISABLED ? null : <AuthedCallAuthBanner />;
+}
+
 export default function App() {
+  const {isSignedIn, identityLoaded, callProtected, user} = useAppAuth();
+  const hadWorkspace = useRef(false);
+  if (isSignedIn && user) hadWorkspace.current = true;
   const [pathname, setPathname] = useState(() =>
     typeof window === "undefined" ? "/" : window.location.pathname
   );
 
   useEffect(() => {
-    const updatePathname = () => setPathname(window.location.pathname);
+    let protectedPath = window.location.pathname;
+    const updatePathname = () => {
+      if (callContinuity.getSnapshot()) {
+        window.history.replaceState(null, "", protectedPath);
+        return;
+      }
+      protectedPath = window.location.pathname;
+      setPathname(protectedPath);
+    };
+    const stop = callContinuity.subscribe(() => {
+      if (callContinuity.getSnapshot()) protectedPath = window.location.pathname;
+    });
     window.addEventListener("popstate", updatePathname);
-    return () => window.removeEventListener("popstate", updatePathname);
+    return () => { stop(); window.removeEventListener("popstate", updatePathname); };
   }, []);
 
   if (LOGIN_DISABLED) {
@@ -1514,24 +1557,16 @@ export default function App() {
     );
   }
 
-  return (
-    <>
-      <SignedOut>
-        {pathname === "/login" ? (
-          <div className="auth-shell">
-            <SignIn appearance={clerkTerminalAppearance} fallbackRedirectUrl="/dashboard" />
-          </div>
-        ) : (
-          <Suspense fallback={<div className="auth-shell" />}>
-            <LandingPage />
-          </Suspense>
-        )}
-      </SignedOut>
-      <SignedIn>
-        <AuthenticatedProviders>
-          <AuthenticatedAppContent />
-        </AuthenticatedProviders>
-      </SignedIn>
-    </>
-  );
+  // Clerk may report signed-out while an already-authorized Twilio call is
+  // alive. Preserve the same provider tree and frozen UI identity until it ends.
+  if (isSignedIn || (callProtected && hadWorkspace.current)) {
+    return <AuthenticatedProviders key={user?.id || 'workspace'}>
+      <AuthenticatedAppContent />
+    </AuthenticatedProviders>;
+  }
+  if (!identityLoaded) return <div className="auth-shell">Restoring session…</div>;
+  if (pathname === "/login" || hadWorkspace.current) {
+    return <div className="auth-shell"><SignIn appearance={clerkTerminalAppearance} fallbackRedirectUrl="/dashboard" /></div>;
+  }
+  return <Suspense fallback={<div className="auth-shell" />}><LandingPage /></Suspense>;
 }

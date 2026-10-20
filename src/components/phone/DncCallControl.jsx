@@ -1,3 +1,4 @@
+import {callContinuity} from "../../lib/callContinuity.js";
 import { useEffect, useState } from 'react';
 import { useAppAuth } from '../../context/AuthContext';
 import { checkOutbound } from '../../lib/outboundApi';
@@ -32,7 +33,7 @@ export default function DncCallControl({ phone, doNotCall = false, as: Tag = 'bu
           const result = await checkOutbound(getToken, number);
           setPolicy({ number, ...result });
           if (!result.blocked) {
-            if (Tag === 'a') window.location.href = props.href;
+            if (Tag === 'a') { if (!callContinuity.getSnapshot()) window.location.href = props.href; }
             else onClick?.(event);
           }
         } catch (error) { setPolicy({ number, error: error.message }); }

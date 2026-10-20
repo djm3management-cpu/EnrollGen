@@ -1,3 +1,4 @@
+import {createCallRecordDetailsHandler} from '../netlify/functions/call-record-details.js';
 import { debugLog } from "../src/lib/debugLog.js";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -78,6 +79,8 @@ before(async () => {
   await pg.exec(readFileSync(new URL("./fixtures/evidence-live-schema.sql",import.meta.url),"utf8"));
   const ancillaryMigration = readFileSync(new URL("../supabase/migrations/098_ancillary_sale_disposition.sql", import.meta.url), "utf8");
   await pg.exec(ancillaryMigration.slice(0, ancillaryMigration.indexOf('CREATE OR REPLACE FUNCTION public.paragon_vendor_report')) + 'COMMIT;');
+  const dispositionOnly=readFileSync(new URL('../supabase/migrations/108_disposition_only_wrap_up.sql',import.meta.url),'utf8');
+  await pg.exec(dispositionOnly.slice(0,dispositionOnly.indexOf('CREATE OR REPLACE FUNCTION'))+'COMMIT;');
   const routing = readFileSync(new URL("../supabase/migrations/047_availability_feed.sql",import.meta.url),"utf8");
   await pg.exec(`CREATE TABLE telephony_presence_policy(singleton boolean PRIMARY KEY,enforced boolean);
     INSERT INTO telephony_presence_policy VALUES(true,true);`);
@@ -496,15 +499,15 @@ test("browser finalization preserves server-owned transcript while wrap-up remai
   assert.ok((await query("SELECT ended_at FROM sessions WHERE id=$1",[created.session_id]))[0].ended_at);
 });
 
-test("ancillary wrap-up rejects missing or invalid products before writing, then persists the product and transcript outcome", async () => {
+test("ancillary wrap-up allows omitted products, rejects invalid values, and persists provided products", async () => {
   await role("service_role");
   const h = handlers(auth);
   const created = await call(h.session, { action: "start", flow: "ma" });
   const saved = await call(h.postCall, { action: "checkpoint", session_id: created.session_id, transcript_text: "Agent: Ancillary follow-up." });
   const payload = { action: "wrap_up", session_id: created.session_id, call_outcome: "sale_ancillary" };
-  for (const type of [null, '', 'unsupported']) {
+  for (const type of ['unsupported']) {
     const response = await call(h.postCall, { ...payload, ancillary_product_type: type }, 400);
-    assert.match(response.error, /Select a product type/);
+    assert.match(response.error, /valid ancillary product/);
   }
   assert.equal((await query('SELECT call_outcome FROM call_records WHERE id=$1', [saved.call_record_id]))[0].call_outcome, null);
   const originalFetch = globalThis.fetch;
@@ -514,7 +517,7 @@ test("ancillary wrap-up rejects missing or invalid products before writing, then
     return new Response(null, { status: 202 });
   };
   try {
-    for (const type of ['hospital_indemnity', 'dental_vision', 'final_expense', 'cancer', 'accident']) {
+    for (const type of [null, 'hospital_indemnity', 'dental_vision', 'final_expense', 'cancer', 'accident']) {
       const response = await h.postCall(bodyRequest({ ...payload, ancillary_product_type: type }), { waitUntil: promise => pending.push(promise) });
       assert.equal(response.status, 200, JSON.stringify(await response.json()));
       const row = (await query('SELECT call_outcome,ancillary_product_type,product_type,enrollment_completed FROM call_records WHERE id=$1', [saved.call_record_id]))[0];
@@ -530,3 +533,36 @@ test("ancillary wrap-up rejects missing or invalid products before writing, then
     await Promise.all(pending);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+ test('optional Calls record edits accept empty details, enforce ownership, and cannot change disposition or queue scoring',async()=>{
+  await role('service_role');const h=handlers(auth);
+  const created=await call(h.session,{action:'start',flow:'ma'});
+  const saved=await call(h.postCall,{action:'checkpoint',session_id:created.session_id,transcript_text:'Agent: Retained transcript.'});
+  const handler=createCallRecordDetailsHandler({authenticate:async()=>auth,getDb:()=>db});
+  const url='https://test/api/call-record-details?call_record_id='+saved.call_record_id;
+  const before=await query('SELECT call_outcome FROM call_records WHERE id=$1',[saved.call_record_id]);
+  const jobs=await query('SELECT count(*)::int n FROM scoring_jobs');
+  let response=await handler(new Request(url,{method:'PATCH',body:JSON.stringify({agent_notes:'Optional follow-up',customer_first_name:'',call_outcome:'enrolled',agent_id:peer})}));
+  assert.equal(response.status,200,JSON.stringify(await response.clone().json()));const body=await response.json();assert.equal(body.record.agent_notes,'Optional follow-up');assert.equal(body.record.customer_first_name,null);
+  assert.deepEqual(await query('SELECT call_outcome FROM call_records WHERE id=$1',[saved.call_record_id]),before);
+  assert.deepEqual(await query('SELECT count(*)::int n FROM scoring_jobs'),jobs);
+  response=await handler(new Request(url,{method:'PATCH',body:'{}'}));assert.equal(response.status,200);
+  response=await handler(new Request(url,{method:'PATCH',body:JSON.stringify({effective_date:'bogus'})}));assert.equal(response.status,400);
+  const other=createCallRecordDetailsHandler({authenticate:async()=>({...auth,userId:'user-peer'}),getDb:()=>db});
+  response=await other(new Request(url));assert.equal(response.status,403);
+ });
+
+ test('enrolled post-call processing queues scoring with disposition and transcript alone, without required wrap-up fields',async()=>{
+  await role('service_role');const h=handlers(auth);
+  const created=await call(h.session,{action:'start',flow:'ma'});
+  await call(h.postCall,{action:'checkpoint',session_id:created.session_id,transcript_text:'Agent: This call is recorded. Customer: Thank you.'});
+  const oldFetch=globalThis.fetch,pending=[];
+  globalThis.fetch=async()=>new Response(null,{status:202});
+  try{
+   const response=await h.postCall(bodyRequest({action:'wrap_up',session_id:created.session_id,call_outcome:'enrolled'}),{waitUntil:promise=>pending.push(promise)});
+   assert.equal(response.status,200,JSON.stringify(await response.clone().json()));const result=await response.json();assert.equal(result.scoring_status,'queued');
+   const row=(await query('SELECT customer_first_name,customer_mbi,agent_notes,call_outcome FROM call_records WHERE id=$1',[result.call_record_id]))[0];
+   assert.equal(row.customer_first_name,null);assert.equal(row.customer_mbi,null);assert.equal(row.agent_notes,null);assert.equal(row.call_outcome,'enrolled');
+   await Promise.all(pending);
+  }finally{globalThis.fetch=oldFetch;}
+ });

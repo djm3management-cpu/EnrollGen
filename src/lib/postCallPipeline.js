@@ -9,7 +9,7 @@ const POST_CALL_ENDPOINT = "/api/post-call";
 export const CHECKPOINT_INTERVAL_MS = 15000;
 
 // Grouped call-outcome taxonomy. Single source of truth for the
-// live wrap-up dropdown (SectionWrapUp.jsx) and the Calls-tab
+// dialer disposition dropdown and the Calls-tab
 // outcome editor (CallLogTab.jsx). Values must stay in sync with
 // the latest call_records_call_outcome_check migration's CHECK
 // constraint.
@@ -330,6 +330,7 @@ export function buildPostCallPayload({
     hra: notes.hra || "No",
     hra_date: normalizeDateInput(notes.hraDate),
     enrollment_confirmation_number: notes.confirmation || null,
+    agent_notes: notes.agentNotes || null,
     final,
   };
 }

@@ -9,7 +9,9 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { preloadRecovery } from "./lib/preloadRecovery.js";
+import { createCallSafeClerkRouter } from "./lib/callContinuity.js";
 
+const clerkNavigation = createCallSafeClerkRouter();
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const CLERK_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const LEGACY_TRAINING_MODE_STORAGE_KEY = "enrollgen_training_mode_v1";
@@ -125,7 +127,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     {CLERK_DISABLED ? (
       <RootProviders />
     ) : PUBLISHABLE_KEY ? (
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY} {...clerkNavigation}>
         <RootProviders />
       </ClerkProvider>
     ) : (

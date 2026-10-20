@@ -9,6 +9,11 @@ export function hookHarness() {
   useMemo(fn,deps){const i=cursor++;if(!slots[i]||changed(slots[i].deps,deps))slots[i]={value:fn(),deps};return slots[i].value;},
   useEffect(fn,deps){const i=cursor++;if(!slots[i]||changed(slots[i].deps,deps)){pending.push(()=>{slots[i]?.cleanup?.();slots[i]={deps,cleanup:fn()};});}},
  };
+ hooks.useSyncExternalStore=(subscribe,getSnapshot)=>{
+  const [,setTick]=hooks.useState(0);
+  hooks.useEffect(()=>subscribe(()=>setTick(value=>value+1)),[subscribe,getSnapshot]);
+  return getSnapshot();
+ };
  hooks.useCallback=(fn,deps)=>hooks.useMemo(()=>fn,deps);
  const render=()=>{cursor=0;dirty=false;value=component();const run=pending;pending=[];run.forEach(fn=>fn());return value;};
  return {hooks,render, mount(fn){component=fn;return render();},get value(){return value;},

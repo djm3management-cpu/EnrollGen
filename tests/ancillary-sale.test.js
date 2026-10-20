@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import { ANCILLARY_PRODUCT_OPTIONS, ancillarySaleError, buildCallOutcomePatch } from '../src/lib/ancillarySale.js';
 import { CALL_OUTCOME_OPTIONS, callOutcomeLabel, buildPostCallPayload } from '../src/lib/postCallPipeline.js';
 
-test('ancillary sale is a selectable disposition and requires one of the five supported products', () => {
+test('ancillary sale is a selectable disposition and allows a missing product and validates a provided product', () => {
   assert.equal(CALL_OUTCOME_OPTIONS.flatMap(group => group.options).filter(option => option.value === 'sale_ancillary').length, 1);
   assert.equal(callOutcomeLabel('sale_ancillary'), 'Sale - Ancillary');
-  for (const type of [null, undefined, '', 'other', 'MA']) {
-    assert.match(ancillarySaleError('sale_ancillary', type), /Select a product type/);
-    assert.throws(() => buildCallOutcomePatch('sale_ancillary', type), /Select a product type/);
+  for (const type of [null, undefined, '']) assert.equal(ancillarySaleError('sale_ancillary', type), '');
+  for (const type of ['other', 'MA']) {
+    assert.match(ancillarySaleError('sale_ancillary', type), /valid ancillary product/);
+    assert.throws(() => buildCallOutcomePatch('sale_ancillary', type), /valid ancillary product/);
   }
   for (const { value } of ANCILLARY_PRODUCT_OPTIONS) {
     assert.deepEqual(buildCallOutcomePatch('sale_ancillary', value), { call_outcome: 'sale_ancillary', ancillary_product_type: value });

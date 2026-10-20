@@ -1,3 +1,4 @@
+import { callContinuity } from "../lib/callContinuity.js";
 import { debugLog } from "../lib/debugLog.js";
 import { checkOutbound, canonicalOutbound } from "../lib/outboundApi";
 import {
@@ -9,7 +10,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useUser } from "@clerk/clerk-react";
 import { useAppAuth } from "./AuthContext";
 import { useTenantConfig } from "../hooks/useTenantConfig";
 import { useAvailability } from "./AvailabilityContext";
@@ -262,11 +262,13 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           if (callInProgressRef.current) { call.reject(); return; }
           callInProgressRef.current = true;
           ownedCallRef.current = call;
+          callContinuity.begin(call);
           const params = paramsFromCall(call);
           setIncomingCall({ call, params });
           const finishCall = () => {
             if (ownedCallRef.current !== call) return;
             ownedCallRef.current = null;
+            callContinuity.end(call);
             callInProgressRef.current = false;
             setIncomingCall(null);
             setActiveCall(null);
@@ -402,6 +404,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const declineCall = useCallback(() => {
     if (!incomingCall || ownedCallRef.current !== incomingCall.call) return;
     ownedCallRef.current = null;
+    callContinuity.end(incomingCall.call);
     incomingCall.call.reject();
     callInProgressRef.current = false;
     setIncomingCall(null);
@@ -423,6 +426,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       if (!deviceRef.current) throw new Error("Softphone not registered yet");
       if (callInProgressRef.current) throw new Error("Finish the current call before dialing");
       callInProgressRef.current = true;
+      const dialingClaim = {};
+      callContinuity.begin(dialingClaim);
       setError("");
       setAgentRows([]);
       setCustomerTranscript([]);
@@ -443,28 +448,39 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           params: { PhoneNumber: phoneNumber, ContactId: contactId || "" },
         });
       } catch (err) {
+        callContinuity.end(dialingClaim);
         callInProgressRef.current = false;
         throw err;
       }
       outboundCallRef.current = call;
       ownedCallRef.current = call;
+      callContinuity.replace(dialingClaim, call);
       setDialingCall({ call, params });
 
-      call.on("accept", async () => {
+      let identityRetryTimer = null;
+      let identityRetryDelay = 1000;
+      const hydrateCallIdentity = async () => {
         if (ownedCallRef.current !== call) return;
         try {
-          const canonical = await canonicalOutbound(getToken, call.parameters.CallSid);
-          if (!callInProgressRef.current || outboundCallRef.current !== call) return;
+          const canonical = await canonicalOutbound(getTokenRef.current, call.parameters.CallSid);
+          if (ownedCallRef.current !== call) return;
           params.contactId = canonical.contactId;
           params.attemptId = canonical.attemptId;
           params.callerPhone = canonical.phoneNumber;
           params.callerName = "";
-        } catch (error) {
+          setActiveCall(current => current?.call === call ? {...current, params: {...params}} : current);
+        } catch {
           if (ownedCallRef.current !== call) return;
-          setError(error.message);
-          call.disconnect();
-          return;
+          setError("Call connected. Details will sync when your session recovers.");
+          identityRetryTimer = window.setTimeout(() => void hydrateCallIdentity(), identityRetryDelay);
+          identityRetryDelay = Math.min(60000, identityRetryDelay * 2);
         }
+      };
+      call.on("accept", () => {
+        if (ownedCallRef.current !== call) return;
+        // The audio call is already connected. Metadata/auth failures must never
+        // hang it up or hide its controls; attribution stays empty until verified.
+        void hydrateCallIdentity();
         setActiveCall({ call, params });
         setDialingCall(null);
         setConnectedAt(Date.now());
@@ -492,6 +508,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       const finishCall = () => {
         if (ownedCallRef.current !== call) return;
         ownedCallRef.current = null;
+        if (identityRetryTimer !== null) window.clearTimeout(identityRetryTimer);
+        callContinuity.end(call);
         outboundCallRef.current = null;
         setActiveCall(null);
         setDialingCall(null);
@@ -606,10 +624,12 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 }
 
 function AuthedInboundCallProvider({ children }) {
-  const { user, isLoaded } = useUser();
+  const { user, identityLoaded: isLoaded, callProtected } = useAppAuth();
   const { agents } = useTenantConfig();
+  const callAgentId = useRef(null);
+  if (!callProtected || !callAgentId.current) callAgentId.current = resolveAgentId(user, agents);
   return (
-    <InboundCallProviderCore agentId={resolveAgentId(user, agents)} identityReady={isLoaded}>
+    <InboundCallProviderCore agentId={callAgentId.current} identityReady={isLoaded}>
       {children}
     </InboundCallProviderCore>
   );

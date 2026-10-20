@@ -1,3 +1,4 @@
+import {callContinuity} from "../lib/callContinuity.js";
 import { useEffect, useMemo, useState } from "react";
 import { CreditCard, ExternalLink, RefreshCcw, Zap } from "lucide-react";
 import { useAppAuth } from "../context/AuthContext";
@@ -75,6 +76,7 @@ export default function BillingSettings() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail || data.error || "Unable to open billing portal.");
+      if (callContinuity.getSnapshot()) throw new Error("Finish the call before opening billing.");
       window.location.assign(data.url);
     } catch (err) {
       setActionState({ loading: "", error: err.message });
@@ -91,6 +93,7 @@ export default function BillingSettings() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail || data.error || "Unable to start checkout.");
+      if (callContinuity.getSnapshot()) throw new Error("Finish the call before opening billing.");
       window.location.assign(data.url);
     } catch (err) {
       setActionState({ loading: "", error: err.message });

@@ -1,3 +1,4 @@
+import CallRecordDetailsEditor from "./CallRecordDetailsEditor";
 import { debugLog } from "../../lib/debugLog.js";
 import { useAuth } from "@clerk/clerk-react";
 import { loadCallLog, loadCallLogPages } from "../../lib/callLogApi";
@@ -143,7 +144,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
         const value = event.target.value;
         setSelectedOutcome(value);
         setError("");
-        if (value !== "sale_ancillary") void saveOutcome(value, null);
+        void saveOutcome(value, value === "sale_ancillary" ? selectedProduct : null);
       }}
       aria-label="Call outcome"
     >
@@ -164,7 +165,6 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
             className="contacts-status-select"
             value={selectedProduct}
             disabled={saving}
-            required
             onChange={(event) => setSelectedProduct(event.target.value)}
           >
             <option value="">Select product type</option>
@@ -176,7 +176,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
         <button
           type="button"
           className="contacts-mini-btn"
-          disabled={saving || !selectedProduct}
+          disabled={saving}
           onClick={() => void saveOutcome(selectedOutcome, selectedProduct)}
         >{saving ? "SAVING..." : "SAVE OUTCOME"}</button>
       </div>
@@ -283,6 +283,7 @@ function ExpandedRow({ row, supabaseClient }) {
         ) : null}
       </div>
 
+      {row.call_record_id && <CallRecordDetailsEditor callRecordId={row.call_record_id} onSaved={loadDetail} />}
       {row.call_record_id ? (
         <div className="call-log-expand-actions">
           <CreateOpportunityButton contactId={row.contact_id} callId={row.call_record_id} contactName={row.contact_name} />

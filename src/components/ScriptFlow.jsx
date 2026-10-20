@@ -225,6 +225,7 @@ function RailWidgets({
   coachingLoading,
   onManualCopilotStart,
 }) {
+  const phone = useInboundCall();
   const supportsRecognition = typeof window !== "undefined" &&
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
   const hasTranscript = !!transcript.trim();
@@ -300,7 +301,7 @@ function RailWidgets({
         primaryCarrier={state.notes?.carrierName}
         clientAge=""
         clientState={state.notes?.customerState}
-        enrolled={Boolean(state.enrollOk && (state.notes?.callOutcome || "enrolled") === "enrolled")}
+        enrolled={Boolean(phone?.activeCall && state.enrollOk && (state.notes?.callOutcome || "enrolled") === "enrolled")}
         acknowledged={Boolean(state.crossSellAcknowledged)}
         onAcknowledged={(payload) =>
           dispatch?.({
@@ -562,7 +563,6 @@ export default function ScriptFlow() {
   const [callStarted, setCallStarted] = useState(false);
   const [wrapUpSaved, setWrapUpSaved] = useState(false);
   const [callGeneration, setCallGeneration] = useState(0);
-  const [autoSavedOutcome, setAutoSavedOutcome] = useState(null);
   const checkpointKeyRef = useRef("");
   const finalTranscriptSavedRef = useRef(false);
   const latestPostCallRef = useRef(null);
@@ -642,7 +642,6 @@ export default function ScriptFlow() {
     checkpointKeyRef.current = '';
     finalTranscriptSavedRef.current = false;
     setWrapUpSaved(false);
-    setAutoSavedOutcome(null);
     setPostCallPersistenceError('');
     setTranscript('');
     setMergedTranscriptEntries([]);
@@ -978,7 +977,6 @@ export default function ScriptFlow() {
         const result=await evidenceRequest(getToken,`evidence-session?call_sid=${encodeURIComponent(metadata.twilioCallSid)}`);
         if (stopped || getActiveSessionMetadata().sessionId!==metadata.sessionId) return;
         if (result.wrap_up?.status==='saved' && result.wrap_up.outcome==='short_call_hangup') {
-          setAutoSavedOutcome('short_call_hangup');
           completeSession(metadata.sessionId);
           setWrapUpSaved(true);
         }
@@ -1196,9 +1194,7 @@ export default function ScriptFlow() {
 
       {activeSection >= 8 && (
         <>
-          <SectionWrapUp scriptBody={wrapUpSection?.body} autoSavedOutcome={autoSavedOutcome} onSaved={(id)=>{
-            if (session.completeSession(id)) setWrapUpSaved(true);
-          }} />
+          <SectionWrapUp scriptBody={wrapUpSection?.body} />
         </>
       )}
 

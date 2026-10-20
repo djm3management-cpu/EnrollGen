@@ -1,9 +1,12 @@
+import {reportAuthFailure} from './authRecovery.js';
 export function createClerkFetch(getToken, { tokenOptions = {}, send = (...args) => fetch(...args) } = {}) {
   return async (input, init = {}) => {
     const retryInput = input instanceof Request ? input.clone() : input;
     const perform = async (target, options) => {
-      const token = await getToken(options);
-      if (!token) throw new Error('Sign in to continue.');
+      let token;
+      try { token = await getToken(options); }
+      catch (error) { reportAuthFailure(); throw error; }
+      if (!token) { reportAuthFailure(); throw new Error('Sign in to continue.'); }
       const headers = new Headers(input instanceof Request ? input.headers : undefined);
       new Headers(init.headers || {}).forEach((value, key) => headers.set(key, value));
       headers.set('Authorization', `Bearer ${token}`);
@@ -12,7 +15,9 @@ export function createClerkFetch(getToken, { tokenOptions = {}, send = (...args)
     const response = await perform(input, tokenOptions);
     if (response.status !== 401 || init.signal?.aborted) return response;
     await response.body?.cancel();
-    return perform(retryInput, { ...tokenOptions, skipCache: true });
+    const retried = await perform(retryInput, { ...tokenOptions, skipCache: true });
+    if (retried.status === 401) reportAuthFailure();
+    return retried;
   };
 }
 

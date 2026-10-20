@@ -1,3 +1,4 @@
+import {callContinuity} from "../lib/callContinuity.js";
 import { useMemo, useState } from "react";
 import { ArrowRight, Check, Plus, Trash2 } from "lucide-react";
 import EnrollGenLogo from "./EnrollGenLogo";
@@ -86,6 +87,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
       });
       const data = await checkout.json().catch(() => ({}));
       if (!checkout.ok) throw new Error(data.detail || data.error || "Unable to start checkout.");
+      if (callContinuity.getSnapshot()) throw new Error("Finish the call before opening billing.");
       window.location.assign(data.url);
     } catch (error) {
       setMessage(error?.message || "Onboarding failed.");

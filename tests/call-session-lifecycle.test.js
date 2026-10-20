@@ -191,7 +191,8 @@ test('late first-call session/end responses cannot replace or clear the second c
 
 async function stabilizedFixture(){
  const pg=await fixture();await pg.exec(sql('106_disable_wrap_up_routing_holds.sql'));
- await pg.exec(sql('107_dialer_disposition_save.sql'));return pg;
+ await pg.exec(sql('107_dialer_disposition_save.sql'));
+ await pg.exec(sql('108_disposition_only_wrap_up.sql'));return pg;
 }
 async function endedAgentCall(pg,sid,seconds=60,direction='inbound'){
  const id=await attempt(pg,sid,seconds,direction);const call=await start(pg,sid);
@@ -243,7 +244,7 @@ test('short calls auto-dispose once; missed/voicemail exempt; outbound child com
  await pg.query("INSERT INTO telephony_events VALUES($1,$2,'call_completed',$3)",[T,SID2,JSON.stringify({CallSid:SID2,CallStatus:'completed'})]);
  assert.equal((await handler(dispositionRequest()).then(r=>r.json())).disposition.call_sid,SID2);
  assert.equal((await handler(dispositionRequest({call_sid:SID2,call_outcome:'short_call_hangup',automatic:true}))).status,409);
- assert.equal((await handler(dispositionRequest({call_sid:SID2,call_outcome:'sale_ancillary'}))).status,400);
+ assert.equal((await handler(dispositionRequest({call_sid:SID2,call_outcome:'sale_ancillary',ancillary_product_type:'bad'}))).status,400);
  response=await handler(dispositionRequest({call_sid:SID2,call_outcome:'sale_ancillary',ancillary_product_type:'dental_vision'}));assert.equal(response.status,200);
  assert.equal((await pg.query('SELECT ancillary_product_type FROM call_records WHERE twilio_call_sid=$1',[SID2])).rows[0].ancillary_product_type,'dental_vision');
  assert.equal((await availability(pg)).wrap_up_call_sid,null);
@@ -260,3 +261,16 @@ test('a new call claiming the agent between GET/POST checks and the save is pres
  assert.equal((await pg.query('SELECT call_outcome FROM call_records WHERE id=$1',[one.call_record_id])).rows[0].call_outcome,null);
  }finally{await pg.close();}
 });
+
+ test('disposition alone closes an enrolled or ancillary call without notes, contact/enrollment data, cross-sell or an opportunity',async()=>{
+ const pg=await stabilizedFixture();try{
+  const handler=dispositionHandler(pg);
+  for(const [sid,outcome] of [[SID1,'enrolled'],[SID2,'sale_ancillary']]){
+   const call=await endedAgentCall(pg,sid);
+   const response=await handler(dispositionRequest({call_sid:sid,call_outcome:outcome}));assert.equal(response.status,200,JSON.stringify(await response.clone().json()));
+   const row=(await pg.query('SELECT call_outcome,ancillary_product_type,enrollment_completed FROM call_records WHERE id=$1',[call.call_record_id])).rows[0];
+   assert.equal(row.call_outcome,outcome);assert.equal(row.ancillary_product_type,null);
+   assert.ok((await pg.query('SELECT ended_at FROM sessions WHERE id=$1',[call.session_id])).rows[0].ended_at);
+  }
+ }finally{await pg.close();}
+ });

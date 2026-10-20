@@ -3,7 +3,6 @@ import {X,ChevronDown} from 'lucide-react';
 import {useAppAuth} from '../../context/AuthContext';
 import {fetchWithClerk} from '../../lib/clerkFetch.js';
 import {CALL_OUTCOME_OPTIONS} from '../../lib/postCallPipeline.js';
-import {ANCILLARY_PRODUCT_OPTIONS} from '../../lib/ancillarySale.js';
 import {mayShowCallDisposition,phoneHasInProgressCall} from '../../lib/callDisposition.js';
 import {setActivePostCallMetadata} from '../../hooks/useSessionTracker';
 
@@ -12,7 +11,7 @@ import {setActivePostCallMetadata} from '../../hooks/useSessionTracker';
 export default function CallDispositionBox({phone,onVisibleChange}) {
  const {getToken}=useAppAuth();
  const [task,setTask]=useState(null),[serverInProgress,setServerInProgress]=useState(false);
- const [collapsed,setCollapsed]=useState(false),[outcome,setOutcome]=useState(''),[product,setProduct]=useState('');
+ const [collapsed,setCollapsed]=useState(false),[outcome,setOutcome]=useState('');
  const [saving,setSaving]=useState(false),[error,setError]=useState('');
  const phoneRef=useRef(phone);phoneRef.current=phone;
  const automaticAttempts=useRef(new Set());
@@ -23,14 +22,14 @@ export default function CallDispositionBox({phone,onVisibleChange}) {
   try{
    const response=await fetchWithClerk(getToken,'/.netlify/functions/call-disposition',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({call_sid:current.call_sid,call_outcome:value,ancillary_product_type:product||null,automatic}),
+    body:JSON.stringify({call_sid:current.call_sid,call_outcome:value,automatic}),
    });
    const result=await response.json();if(!response.ok)throw new Error(result.error||'Disposition could not be saved.');
    setActivePostCallMetadata({closed:true},result.session_id);
    window.dispatchEvent(new CustomEvent('call-disposition-saved',{detail:result}));
    setTask(previous=>previous?.call_sid===current.call_sid?null:previous);
   }catch(err){setError(err.message);}finally{setSaving(false);}
- },[getToken,product]);
+ },[getToken]);
  useEffect(()=>{
   if(live)return;
   let stopped=false,pending=false;
@@ -49,7 +48,7 @@ export default function CallDispositionBox({phone,onVisibleChange}) {
   void poll();const timer=setInterval(()=>void poll(),5000);
   return()=>{stopped=true;clearInterval(timer);};
  },[getToken,live]);
- useEffect(()=>{setOutcome('');setProduct('');setCollapsed(false);setError('');},[task?.call_sid]);
+ useEffect(()=>{setOutcome('');setCollapsed(false);setError('');},[task?.call_sid]);
  const visible=mayShowCallDisposition(phone,serverInProgress,task);
  useEffect(()=>{onVisibleChange?.(visible);},[visible,onVisibleChange]);
  useEffect(()=>{
@@ -74,11 +73,8 @@ export default function CallDispositionBox({phone,onVisibleChange}) {
      {group.options.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
     </optgroup>)}
    </select>
-   {outcome==='sale_ancillary' && <select aria-label="Ancillary product sold" className="ma-script-direction-select" value={product} onChange={event=>setProduct(event.target.value)}>
-    <option value="">Choose product</option>{ANCILLARY_PRODUCT_OPTIONS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
-   </select>}
    {error && <div role="alert" className="call-persistence-error">{error}</div>}
-   <button type="button" className="phone-expanded__save-note" disabled={saving||!outcome||(outcome==='sale_ancillary'&&!product)} onClick={()=>void save(task,outcome)}>{saving?'Saving…':'Save disposition'}</button>
+   <button type="button" className="phone-expanded__save-note" disabled={saving||!outcome} onClick={()=>void save(task,outcome)}>{saving?'Saving…':'Save disposition'}</button>
   </>}
  </div>;
 }

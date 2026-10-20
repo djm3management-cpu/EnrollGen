@@ -45,6 +45,7 @@ async function getSupabaseToken(getToken, options = {}) {
 
 async function getTenantBundle(getToken) {
   const token = await getSupabaseToken(getToken);
+  if (!token) throw new Error("Session expired. Sign in after this call.");
   const payload = decodeJwtPayload(token);
   const cacheKey = payload.org_id || token?.slice(-24) || "default";
   if (tenantRequests.has(cacheKey)) return tenantRequests.get(cacheKey);

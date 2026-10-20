@@ -1,3 +1,4 @@
+import {callContinuity} from "../../lib/callContinuity.js";
 import {
   createContext,
   memo,
@@ -71,6 +72,7 @@ function productFromPath() {
 }
 
 function setAncillaryPath(product) {
+  if (callContinuity.getSnapshot()) return;
   if (typeof window === "undefined") return;
   const nextPath = product
     ? ANCILLARY_PRODUCT_META[product]?.route

@@ -18458,3 +18458,15 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
 .sep-penetration-detail { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 16px 0; border-top: 1px solid var(--border-default); font-size: 13px; }
 .sep-penetration-detail strong { width: 100%; }
 .sep-penetration-legend, .sep-penetration-note { font-size: 12px; line-height: 1.6; }
+
+.call-auth-banner {
+  position: fixed;
+  top: 66px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 240;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 24px);
+}
