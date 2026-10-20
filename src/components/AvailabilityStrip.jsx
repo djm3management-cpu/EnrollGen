@@ -103,7 +103,7 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
                 className={`availability-menu__option${active ? " is-active" : ""}`}
                 style={{ "--availability-color": option.color }}
                 onClick={() => selectStatus(option.value)}
-                disabled={!isInteractive || (status === "wrap_up" && option.value === "available")}
+                disabled={!isInteractive}
               >
                 <span className="availability-menu__dot" aria-hidden="true" />
                 <span>{option.label}</span>

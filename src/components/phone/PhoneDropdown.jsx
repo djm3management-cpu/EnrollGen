@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Phone } from "lucide-react";
 import { useInboundCall } from "../../context/InboundCallContext";
 import IncomingCallToast from "./IncomingCallToast";
@@ -18,11 +18,14 @@ export default function PhoneDropdown({ onOpenMessages }) {
   const inbound = useInboundCall();
   const [isOpen, setIsOpen] = useState(false);
   const [dispositionPending, setDispositionPending] = useState(false);
+  const [dispositionCollapsed, setDispositionCollapsed] = useState(false);
   const [prefillContact, setPrefillContact] = useState(null);
   const [prefillVersion, setPrefillVersion] = useState(0);
   const rootRef = useRef(null);
 
   const hasCall = Boolean(inbound?.activeCall || inbound?.dialingCall);
+  const pendingDisposition = dispositionPending && !hasCall && !inbound?.incomingCall;
+  const panelOpen = isOpen || (pendingDisposition && !dispositionCollapsed);
 
   useEffect(() => {
     const openPrefilledDialer = (event) => {
@@ -36,24 +39,25 @@ export default function PhoneDropdown({ onOpenMessages }) {
   }, [inbound?.enabled, hasCall]);
 
   useEffect(() => {
-    if (!isOpen) return undefined;
+    if (!isOpen && (!pendingDisposition || dispositionCollapsed)) return undefined;
 
     const handleMouseDown = (event) => {
       if (rootRef.current?.contains(event.target)) return;
       // With a live call, clicking away only minimizes back to the bar.
       setIsOpen(false);
+      setDispositionCollapsed(true);
     };
     const handleKeyDown = (event) => {
-      if (event.key === "Escape") setIsOpen(false);
+      if (event.key === "Escape") { setIsOpen(false); setDispositionCollapsed(true); }
     };
 
-    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("pointerdown", handleMouseDown);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("pointerdown", handleMouseDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, pendingDisposition, dispositionCollapsed]);
 
   // Auto-collapse to the minimized bar the moment there's any call to
   // show (ringing out or connected), so the agent always sees the
@@ -65,6 +69,11 @@ export default function PhoneDropdown({ onOpenMessages }) {
     if (hasCall) setIsOpen(inbound?.activeCall?.params?.paragon === 'true');
   }, [hasCall, inbound?.activeCall]);
 
+  const collapseDisposition = useCallback((value) => {
+    setDispositionCollapsed(value);
+    if (value) setIsOpen(false);
+  }, []);
+
   if (!inbound?.enabled) return null;
 
   return (
@@ -72,20 +81,24 @@ export default function PhoneDropdown({ onOpenMessages }) {
       <button
         type="button"
         className={`top-bar-settings-button phone-dd__trigger${isOpen ? " is-active" : ""}`}
-        onClick={() => { setPrefillContact(null); setIsOpen((current) => !current); }}
-        title="Phone"
-        aria-label="Phone dialer"
+        onClick={() => {
+          setPrefillContact(null);
+          if (panelOpen) collapseDisposition(true);
+          else { setDispositionCollapsed(false); setIsOpen(true); }
+        }}
+        title={pendingDisposition ? "Phone — disposition pending" : "Phone"}
+        aria-label={pendingDisposition ? "Phone dialer, disposition pending" : "Phone dialer"}
       >
         <Phone size={14} />
-        {hasCall ? <span className="phone-dd__badge" aria-hidden="true" /> : null}
+        {hasCall || pendingDisposition ? <span className={`phone-dd__badge${pendingDisposition ? " phone-dd__badge--pending" : ""}`} aria-hidden="true" /> : null}
       </button>
 
       <IncomingCallToast />
 
       {hasCall && !isOpen ? <ActiveCallBar onExpand={() => setIsOpen(true)} /> : null}
 
-      <div className="phone-dd__panel" hidden={!isOpen && !dispositionPending} role="dialog" aria-label="Phone">
-        <CallDispositionBox phone={inbound} onVisibleChange={setDispositionPending} />
+      <div className="phone-dd__panel" hidden={!panelOpen} role="dialog" aria-label="Phone">
+        <CallDispositionBox phone={inbound} onVisibleChange={setDispositionPending} collapsed={dispositionCollapsed} onCollapsedChange={collapseDisposition} />
         {isOpen ? (hasCall ? (
             <ActiveCallExpanded onOpenMessages={onOpenMessages} />
           ) : (

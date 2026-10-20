@@ -187,6 +187,67 @@ body,
   color: var(--eg-text-dim) !important;
 }
 
+.top-bar-profile {
+  position: relative;
+}
+
+.top-bar-profile.is-open {
+  z-index: 240;
+}
+
+.top-bar-profile-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.top-bar-profile-trigger:focus-visible,
+.top-bar-profile-menu .top-bar-profile-signout:focus-visible {
+  outline: 2px solid var(--eg-accent);
+  outline-offset: 3px;
+}
+
+.top-bar-profile-trigger .top-bar-profile-name {
+  display: block;
+  max-width: clamp(64px, 10vw, 140px);
+}
+
+.top-bar-profile-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 160px;
+  padding: 4px;
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-surface-1);
+}
+
+.top-bar-profile-menu .top-bar-profile-signout {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  border-radius: var(--eg-radius-md);
+}
+
+.top-bar-profile-menu .top-bar-profile-signout:hover:not(:disabled) {
+  background: var(--eg-surface-2);
+  color: var(--eg-text) !important;
+}
+
+.top-bar-profile-menu .top-bar-profile-signout:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .top-bar-profile-avatar {
   width: 20px;
   height: 20px;
@@ -4855,6 +4916,10 @@ html.dark .flow-script-callout {
 .availability-control {
   position: relative;
   z-index: 2;
+}
+
+.availability-control.is-open {
+  z-index: 230;
 }
 
 .availability-control.is-saving .availability-strip__dot {

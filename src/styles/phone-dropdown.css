@@ -797,3 +797,5 @@
   border-bottom: 1px solid var(--phone-border);
 }
 .phone-disposition .ma-script-direction-select { width: 100%; }
+
+.phone-dd__badge--pending { background: var(--status-pending); }

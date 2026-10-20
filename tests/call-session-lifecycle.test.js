@@ -203,6 +203,20 @@ async function endedAgentCall(pg,sid,seconds=60,direction='inbound'){
 const dispositionRequest=(body)=>new Request('https://test/api/call-disposition',body?{method:'POST',body:JSON.stringify(body)}:{});
 const dispositionHandler=(pg,extra={})=>createCallDispositionHandler({getDb:()=>evidenceDb(pg),authenticate:async()=>({userId:'user',orgId:'org'}),...extra});
 
+test('saving the latest disposition never uncovers an older unfinished call',async()=>{
+ const pg=await stabilizedFixture();try{
+  const older=await endedAgentCall(pg,SID1);
+  const latest=await endedAgentCall(pg,SID2);
+  await pg.query("UPDATE telephony_call_attempts SET ended_at=now()-interval '5 minutes' WHERE id=$1",[older.id]);
+  const handler=dispositionHandler(pg);
+  assert.equal((await handler(dispositionRequest()).then(r=>r.json())).disposition.call_sid,SID2);
+  const saved=await handler(dispositionRequest({call_sid:SID2,call_outcome:'callback_scheduled'}));assert.equal(saved.status,200);
+  assert.equal((await handler(dispositionRequest()).then(r=>r.json())).disposition,null);
+  assert.equal((await pg.query('SELECT call_outcome FROM call_records WHERE id=$1',[older.call_record_id])).rows[0].call_outcome,null);
+  assert.equal((await pg.query('SELECT call_outcome FROM call_records WHERE id=$1',[latest.call_record_id])).rows[0].call_outcome,'callback_scheduled');
+ }finally{await pg.close();}
+});
+
 test('dialer outcome closes only the owned completed session, never scores, and refuses any live reservation or call',async()=>{
  const pg=await stabilizedFixture();try{
  const one=await endedAgentCall(pg,SID1);const handler=dispositionHandler(pg);

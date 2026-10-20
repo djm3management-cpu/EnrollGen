@@ -4,7 +4,7 @@ export function hookHarness() {
  const slots=[];let cursor=0,dirty=false,pending=[],component,value;
  const changed=(a,b)=>!a||!b||a.length!==b.length||a.some((x,i)=>!Object.is(x,b[i]));
  const hooks={
-  useState(initial){const i=cursor++;slots[i]??={value:typeof initial==='function'?initial():initial};return[slots[i].value,next=>{const v=typeof next==='function'?next(slots[i].value):next;if(!Object.is(slots[i].value,v)){slots[i].value=v;dirty=true;}}];},
+  useState(initial){const i=cursor++;slots[i]??={value:typeof initial==='function'?initial():initial};slots[i].set??=next=>{const v=typeof next==='function'?next(slots[i].value):next;if(!Object.is(slots[i].value,v)){slots[i].value=v;dirty=true;}};return[slots[i].value,slots[i].set];},
   useRef(initial){const i=cursor++;return slots[i]??=( {current:initial} );},
   useMemo(fn,deps){const i=cursor++;if(!slots[i]||changed(slots[i].deps,deps))slots[i]={value:fn(),deps};return slots[i].value;},
   useEffect(fn,deps){const i=cursor++;if(!slots[i]||changed(slots[i].deps,deps)){pending.push(()=>{slots[i]?.cleanup?.();slots[i]={deps,cleanup:fn()};});}},

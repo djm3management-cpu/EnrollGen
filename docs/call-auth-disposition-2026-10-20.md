@@ -48,3 +48,13 @@ Finalization remains independent of the removed form. The existing terminal-call
 Tests exercise the actual auth bridge and App gate under signed-out state while a call is protected, token failure/401 exhaustion, backoff/deduplication/cleanup, new-user token rejection, navigation guards, real phone lifecycle regression coverage, the form-free closing section, optional ownership-protected Calls edits, disposition-only enrolled and ancillary calls, and post-call scoring dispatch without enrollment/notes fields.
 
 The current full suite reports 421/422 passing; the remaining pre-existing failure is the unchanged single-quoted static diagnostic in `src/lib/sepCms.js:128` checked by `tests/housekeeping.test.js:76`. Production build and targeted ESLint pass. Publishing stays locked and no `netlify deploy --prod` is used.
+
+## Follow-up: top-bar controls
+
+The pending disposition used to keep its floating panel visible even after X, and its automatic appearance did not register outside-click listeners. That panel could cover the availability menu. X, clicking outside, Escape and the phone icon now collapse the whole panel to an amber badge on the phone icon. Reopening the phone restores the unfinished disposition. A new ringing/live call hides it. The availability menu also renders above the phone panel, and a legacy `wrap_up` display status no longer disables Available.
+
+Disposition lookup now considers only the latest completed connected call. Saving it cannot expose a queue of older unfinished records. Older records remain editable from Calls; this change does not backfill outcomes or rescore anything.
+
+The user name/avatar opens an account dropdown containing Sign Out. Sign Out is absent until the dropdown opens, is disabled during calls, and rechecks the synchronous SDK call guard when selected. The name remains visible at narrower widths. Outside click and Escape close the dropdown without signing out.
+
+The focused auth/phone/lifecycle/top-bar suite passes 33/33. Tests cover collapse/reopen, both availability options under a legacy wrap-up status, the older-record regression, deliberate menu sign-out and the call-arriving-before-render guard. A localhost preview using the actual components and site styles verified Available/Offline selection with a pending disposition, the name dropdown and disabled Sign Out during a simulated call. No real calls, auth sessions or production availability were changed in that preview.

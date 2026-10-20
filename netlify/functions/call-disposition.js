@@ -32,13 +32,15 @@ export function createCallDispositionHandler({authenticate=r=>requireClerkAuth(r
    }
    let attempts=db.from('telephony_call_attempts').select('id,parent_call_sid,child_call_sid,agent_id,direction,status,answered_at,ended_at,talk_seconds,call_record_id')
     .eq('tenant_id',tenant.id).eq('agent_id',roster.agent_slug).eq('status','completed').not('ended_at','is',null).not('answered_at','is',null)
-    .order('ended_at',{ascending:false}).limit(20);
+    .order('ended_at',{ascending:false}).limit(1);
    if(input.call_sid)attempts=attempts.eq('parent_call_sid',input.call_sid);
    else {
     // Do not turn deployment into a historical disposition backlog.
     const policy=checked(await db.from('call_wrap_up_policy').select('updated_at').eq('singleton',true).single());
     attempts=attempts.gte('created_at',policy.updated_at);
    }
+   // Only the latest connected call can prompt. Saving it must not uncover
+   // older incomplete records as an endless historical disposition queue.
    let selected;
    for(const attempt of checked(await attempts)){
     // Inbound child SID is the persisted answering agent leg; outbound's

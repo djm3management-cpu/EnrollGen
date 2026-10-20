@@ -28,6 +28,7 @@ import { InboundCallProvider, INBOUND_CALLS_ENABLED, useInboundCall } from "./co
 import PhoneDropdown from "./components/phone/PhoneDropdown";
 import { AvailabilityProvider } from "./context/AvailabilityContext";
 import AvailabilityStrip from "./components/AvailabilityStrip";
+import ProfileMenu from "./components/ProfileMenu";
 import { SessionLockProvider } from "./context/SessionLockContext";
 import SessionLockOverlay from "./components/SessionLockOverlay";
 import { useUnreadMessages } from "./hooks/useMessages";
@@ -532,28 +533,6 @@ function syncModePath(mode) {
   if (currentPath !== nextPath) {
     window.history.pushState(null, "", nextPath);
   }
-}
-
-function ProfileChip() {
-  const { user, identityLoaded: isLoaded, callProtected } = useAppAuth();
-  const { signOut } = useClerk();
-
-  if (!isLoaded || !user) {
-    return null;
-  }
-
-  const displayName =
-    user.publicMetadata?.agentName || user.fullName || user.firstName || "Agent";
-
-  return (
-    <div className="top-bar-profile">
-      <img src={user.imageUrl} alt="" className="top-bar-profile-avatar" />
-      <span className="top-bar-profile-name">{displayName}</span>
-      <button type="button" className="top-bar-profile-signout" disabled={callProtected} onClick={() => { if (!callContinuity.getSnapshot()) void signOut(); }}>
-        Sign Out
-      </button>
-    </div>
-  );
 }
 
 function isAdminUser(user) {
@@ -1158,7 +1137,7 @@ function AppShell({ currentUser = null }) {
             >
               {isDark ? <Sun size={14} /> : <SquareTerminal size={14} />}
             </button>
-            {!LOGIN_DISABLED ? <ProfileChip /> : null}
+            {!LOGIN_DISABLED ? <ProfileMenu /> : null}
             {canAdmin ? (
               <button
                 type="button"

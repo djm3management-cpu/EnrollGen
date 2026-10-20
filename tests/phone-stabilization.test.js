@@ -75,7 +75,7 @@ test('disposition requires a terminal owned leg and no ringing, dialing, live or
 
 const task={call_sid:SID,session_id:'session',agent_leg_sid:NEXT,ended_at:'2026-10-20T15:00:00Z',connected_seconds:60};
 function boxFixture({seconds=60,deferLookup=false}={}){
- const harness=hookHarness(),requests=[],events=[];let phone={},lookupResolve;
+ const harness=hookHarness(),requests=[],events=[];let phone={},lookupResolve,reopen;
  let source=stripImports(readFileSync(new URL('../src/components/phone/CallDispositionBox.jsx',import.meta.url),'utf8')).replace('export default function','function');
  source=transformSync(source,{loader:'jsx',jsxFactory:'h',jsxFragment:'fragment',format:'cjs'}).code;
  const context=vm.createContext({...harness.hooks,h:(type,props,...children)=>({type,props:props||{},children}),X:'x',ChevronDown:'chevron',fragment:'fragment',
@@ -87,16 +87,20 @@ function boxFixture({seconds=60,deferLookup=false}={}){
  });
  function token(){return Promise.resolve('');}
  vm.runInContext(source+';globalThis.component=CallDispositionBox;',context);
- harness.mount(()=>context.component({phone}));
- return{harness,requests,events,beginCall(){phone={activeCall:{call:{}}};harness.render();},resolveLookup(){lookupResolve();}};
+ harness.mount(()=>{
+  const [collapsed,setCollapsed]=harness.hooks.useState(false);
+  reopen=()=>setCollapsed(false);
+  return context.component({phone,collapsed,onCollapsedChange:setCollapsed});
+ });
+ return{harness,requests,events,reopen:()=>reopen(),beginCall(){phone={activeCall:{call:{}}};harness.render();},resolveLookup(){lookupResolve();}};
 }
 const find=(tree,predicate)=>!tree||typeof tree!=='object'?null:predicate(tree)?tree:tree.children?.flat(Infinity).map(child=>find(child,predicate)).find(Boolean);
 
 test('X collapses the actual dialer box without saving or dismissing; reopen and save closes only its session',async()=>{
- const {harness,requests,events}=boxFixture();try{
+ const {harness,requests,events,reopen}=boxFixture();try{
  await harness.flush();find(harness.value,node=>node.props['aria-label']==='Collapse disposition').props.onClick();await harness.flush();
- assert.equal(requests.filter(x=>x==='POST').length,0);assert.ok(find(harness.value,node=>node.type==='button'&&node.children.includes('Disposition pending ')));
- find(harness.value,node=>node.type==='button').props.onClick();await harness.flush();
+ assert.equal(requests.filter(x=>x==='POST').length,0);assert.equal(harness.value,null,'collapsed disposition leaves no floating panel over other controls');
+ reopen();await harness.flush();
  find(harness.value,node=>node.type==='select').props.onChange({target:{value:'callback_scheduled'}});await harness.flush();
  find(harness.value,node=>node.type==='button'&&node.children.includes('Save disposition')).props.onClick();await harness.flush();
  assert.equal(requests.filter(x=>x==='POST').length,1);assert.equal(events[0].detail.session_id,'session');assert.equal(harness.value,null);

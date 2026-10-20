@@ -1,5 +1,5 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {X,ChevronDown} from 'lucide-react';
+import {X} from 'lucide-react';
 import {useAppAuth} from '../../context/AuthContext';
 import {fetchWithClerk} from '../../lib/clerkFetch.js';
 import {CALL_OUTCOME_OPTIONS} from '../../lib/postCallPipeline.js';
@@ -8,10 +8,10 @@ import {setActivePostCallMetadata} from '../../hooks/useSessionTracker';
 
 // This belongs to the phone, outside the script/session provider. It neither
 // navigates the app nor closes/replaces a live SDK call. X only collapses it.
-export default function CallDispositionBox({phone,onVisibleChange}) {
+export default function CallDispositionBox({phone,onVisibleChange,collapsed=false,onCollapsedChange}) {
  const {getToken}=useAppAuth();
  const [task,setTask]=useState(null),[serverInProgress,setServerInProgress]=useState(false);
- const [collapsed,setCollapsed]=useState(false),[outcome,setOutcome]=useState('');
+ const [outcome,setOutcome]=useState('');
  const [saving,setSaving]=useState(false),[error,setError]=useState('');
  const phoneRef=useRef(phone);phoneRef.current=phone;
  const automaticAttempts=useRef(new Set());
@@ -48,7 +48,7 @@ export default function CallDispositionBox({phone,onVisibleChange}) {
   void poll();const timer=setInterval(()=>void poll(),5000);
   return()=>{stopped=true;clearInterval(timer);};
  },[getToken,live]);
- useEffect(()=>{setOutcome('');setCollapsed(false);setError('');},[task?.call_sid]);
+ useEffect(()=>{setOutcome('');onCollapsedChange?.(false);setError('');},[task?.call_sid,onCollapsedChange]);
  const visible=mayShowCallDisposition(phone,serverInProgress,task);
  useEffect(()=>{onVisibleChange?.(visible);},[visible,onVisibleChange]);
  useEffect(()=>{
@@ -57,14 +57,11 @@ export default function CallDispositionBox({phone,onVisibleChange}) {
   setOutcome('short_call_hangup');
   void save(task,'short_call_hangup',true);
  },[visible,task,save]);
- if(!visible)return null;
+ if(!visible || collapsed)return null;
  return <div className="phone-disposition" role="region" aria-label="Call disposition">
-  {collapsed ? <button type="button" className="phone-expanded__save-note" onClick={()=>setCollapsed(false)}>
-   Disposition pending <ChevronDown size={14}/>
-  </button> : <>
    <div className="phone-expanded__header">
     <strong>Call disposition</strong>
-    <button type="button" className="top-bar-settings-button" aria-label="Collapse disposition" title="Collapse" onClick={()=>setCollapsed(true)}><X size={16}/></button>
+    <button type="button" className="top-bar-settings-button" aria-label="Collapse disposition" title="Collapse" onClick={()=>onCollapsedChange?.(true)}><X size={16}/></button>
    </div>
    <label htmlFor="dialer-disposition">What happened?</label>
    <select id="dialer-disposition" className="ma-script-direction-select" value={outcome} disabled={saving} onChange={event=>setOutcome(event.target.value)}>
@@ -75,6 +72,5 @@ export default function CallDispositionBox({phone,onVisibleChange}) {
    </select>
    {error && <div role="alert" className="call-persistence-error">{error}</div>}
    <button type="button" className="phone-expanded__save-note" disabled={saving||!outcome} onClick={()=>void save(task,outcome)}>{saving?'Saving…':'Save disposition'}</button>
-  </>}
  </div>;
 }
