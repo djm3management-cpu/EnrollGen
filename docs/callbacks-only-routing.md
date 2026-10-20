@@ -66,3 +66,23 @@ cockpit selection, connection readiness, presence loss, call completion, repeate
 claims, stale releases, vendor preferences, actual Paragon ping/arrival functions
 (including a reservation made before the agent changed mode), timeout overflow,
 voicemail, Available behavior, Offline exclusion and service-only RPC permissions.
+
+## October 20, 2026 rollout
+
+Migration 109 was applied to the EnrollGen production database before the Git push
+and recorded in `supabase_migrations.schema_migrations`. The reviewed migration's
+SHA256 is `8471a47338ac790f150fe294f2308be2f6731ca25fac14f5e330a801a0d62d39`.
+Preflight found no availability status constraint requiring an enum expansion,
+presence enforcement enabled, and Wrap-up holds disabled. No agent status rows or
+active reservations were changed by the migration. Live read-only assertions
+confirmed Offline exclusion, vendor exclusion, callback eligibility matching phone
+presence, and service-only customer reservation RPC permissions. Existing
+`STICKY_ROUTING_ENABLED` and direct-number assignments were not changed.
+
+Validation: `npm run build` and `npm run lint` passed. All 210 telephony tests
+passed (local test servers need permission to listen outside the sandbox). The
+final app suite passed 430 of 431 tests; its only failure is the existing
+`tests/housekeeping.test.js` diagnostic assertion in unchanged `src/lib/sepCms.js`
+(8 `debugLog` occurrences versus 7 recognized static labels). The updated focused
+API/routing/UI tests pass. No production test calls were placed and no
+`netlify deploy --prod` command was run.
