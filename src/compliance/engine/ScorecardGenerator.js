@@ -90,6 +90,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
     p_transcript: { raw: callRecord.transcript_raw ?? null, diarized: callRecord.transcript_diarized ?? null,
       duration: callRecord.call_duration_seconds ?? null },
   }), 'Begin scoring job');
+  if (job?.status === 'skipped') return { skipped: true, reason: job.reason };
   if (job?.status === 'pending') return { pending: true };
   if (job?.status === 'failed') {
     const failure = new Error(job.error || 'Scoring job failed permanently');
@@ -104,6 +105,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
     const saved = await checked(supabase.rpc('persist_scoring_result', {
       p_job_id: job.jobId, p_attempt_token: job.attemptToken, p_result: result,
     }), 'Persist scoring result');
+    if (saved?.skipped) return saved;
     if (!saved?.scorecard?.id) throw new Error('Scoring transaction returned no scorecard');
     if (!saved.reused) await updateAgentProfile(supabase, callRecord, saved.scorecard);
     progress(100, 'Scorecard complete');

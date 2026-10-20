@@ -1,5 +1,5 @@
+import { isComplianceSale } from "../../src/lib/saleCompliance.js";
 import { linkTelephonyRecord } from "../functions/_telephonyLink.js";
-import process from 'node:process';
 import { ancillarySaleError, buildCallOutcomePatch } from "../../src/lib/ancillarySale.js";
 import {
   EvidenceError, bindPostCallPayload, checked, evidenceFailure,
@@ -463,32 +463,6 @@ async function saveCheckpoint(supabase, payload, auth, tenant, { final = false }
   };
 }
 
-async function triggerScoring(request, callRecordId, tenantId) {
-  const scoringUrl = new URL("/.netlify/functions/score-call-background", request.url);
-  const response = await fetch(scoringUrl.toString(), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-enrollgen-job-secret": process.env.SCORE_CALL_JOB_SECRET || "",
-    },
-    body: JSON.stringify({ callId: callRecordId, tenantId }),
-  });
-
-  if (!response.ok && response.status !== 202) {
-    console.warn("[post-call] scoring trigger returned", response.status);
-  }
-}
-
-function queueBackground(context, promise) {
-  const wrapped = Promise.resolve(promise).catch((error) => {
-    console.error("[post-call] background task failed:", error);
-  });
-
-  if (typeof context?.waitUntil === "function") {
-    context.waitUntil(wrapped);
-  }
-}
-
 function buildGhlWebhookPayload(payload, tenant, tenantAgents) {
   const writingAgent = safeText(payload.writing_agent) || tenantAgents.find((agent) => agent.name)?.name || "";
   return {
@@ -555,7 +529,7 @@ async function sendEnrollmentWebhook(tenant, tenantAgents, payload) {
   }
 }
 
-async function handleWrapUp(supabase, payload, auth, request, context, tenant, tenantAgents, subscription) {
+async function handleWrapUp(supabase, payload, auth, tenant, tenantAgents, subscription) {
   const outcome = normalizeOutcome(payload.call_outcome);
   if (!payload.call_outcome || outcome === "incomplete") throw new EvidenceError(400, "Select a Call Outcome before saving wrap-up.");
   const productError = ancillarySaleError(outcome, payload.ancillary_product_type);
@@ -568,7 +542,6 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
 
   const metadata = mergeMetadata(callRecord.metadata, {
     wrap_up_saved_at: now,
-    scoring_status: "queued",
   });
 
   const updatePayload = {
@@ -666,10 +639,8 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
     }
   }
 
-  queueBackground(
-    context,
-    triggerScoring(request, updatedCallRecord.id, updatedCallRecord.tenant_id)
-  );
+  // The disposition transaction owns compliance eligibility and its durable
+  // request. Transcript completion and wrap-up never dispatch scoring directly.
 
   let webhookStatus = "skipped";
   if (outcome === "enrolled") {
@@ -709,7 +680,7 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
   return {
     call_record_id: updatedCallRecord.id,
     transcript_id: saved.transcript?.id || updatedCallRecord.transcript_id || null,
-    scoring_status: "queued",
+    scoring_status: isComplianceSale(outcome) ? "queued" : "not_requested",
     webhook_status: webhookStatus,
   };
 }
@@ -748,7 +719,7 @@ async function handleWebhookResult(supabase, payload, tenant) {
 }
 
 export function createPostCallHandler({ authenticate = requireClerkAuth, getDb = getEvidenceServiceClient } = {}) {
-return async (request, context) => {
+return async request => {
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
   }
@@ -806,8 +777,6 @@ return async (request, context) => {
         supabase,
         body,
         auth,
-        request,
-        context,
         tenant,
         tenantAgents,
         subscription

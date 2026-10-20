@@ -1,3 +1,4 @@
+import { isComplianceSale } from "../../lib/saleCompliance.js";
 import { debugLog } from "../../lib/debugLog.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redactSensitiveText } from "../../lib/redaction";
@@ -29,6 +30,7 @@ const CATEGORY_LABELS = {
 const CATEGORY_ORDER = Object.keys(CATEGORY_WEIGHTS);
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 5 * 60 * 1000;
+const IN_FLIGHT_STATUSES = ["transcript_pending", "queued", "scoring"];
 export const COMPLIANCE_WARNING_THRESHOLD = 80;
 
 function fmtDateTime(value) {
@@ -159,7 +161,6 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
   const [scorecardItems, setScorecardItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scoringError, setScoringError] = useState(null);
-  const [retrying, setRetrying] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const [activeItemId, setActiveItemId] = useState(null);
   const transcriptRef = useRef(null);
@@ -170,7 +171,7 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
     const { data: record, error } = await supabaseClient
       .from("call_records")
       .select(
-        "id, call_start, call_duration_seconds, agent_name, beneficiary_name, contact_id, call_outcome, transcript_diarized, compliance_scorecard_id, metadata"
+        "id, call_start, call_duration_seconds, agent_name, beneficiary_name, contact_id, call_outcome, transcript_diarized, compliance_scorecard_id, metadata, compliance_status, compliance_dispo_changed_at"
       )
       .eq("id", callRecordId)
       .single();
@@ -222,7 +223,7 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
   // Poll while scoring is still in flight (fire-and-forget background
   // function — see netlify/functions/score-call-background.js).
   useEffect(() => {
-    if (callRecord?.compliance_scorecard_id || scoringError) return undefined;
+    if (!IN_FLIGHT_STATUSES.includes(callRecord?.compliance_status) || callRecord.compliance_scorecard_id || scoringError) return undefined;
     if (!pollStartRef.current) pollStartRef.current = Date.now();
 
     const interval = setInterval(async () => {
@@ -234,25 +235,7 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [callRecord?.compliance_scorecard_id, scoringError, load]);
-
-  const handleRetryScoring = useCallback(async () => {
-    if (!callRecordId) return;
-    setRetrying(true);
-    setScoringError(null);
-    pollStartRef.current = Date.now();
-    try {
-      await fetch("/.netlify/functions/score-call-background", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ callId: callRecordId }),
-      });
-    } catch {
-      debugLog("[ComplianceReviewModal] retry trigger failed");
-    } finally {
-      setRetrying(false);
-    }
-  }, [callRecordId]);
+  }, [callRecord, scoringError, load]);
 
   const utterances = useMemo(
     () => (Array.isArray(callRecord?.transcript_diarized) ? callRecord.transcript_diarized : []),
@@ -283,7 +266,7 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
     [utterances]
   );
 
-  const isScoring = !callRecord?.compliance_scorecard_id && !scoringError;
+  const isScoring = IN_FLIGHT_STATUSES.includes(callRecord?.compliance_status) && !callRecord?.compliance_scorecard_id && !scoringError;
 
   return (
     <div className="compliance-review-overlay" onClick={onClose}>
@@ -308,17 +291,23 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
               <div><dt>LEAD SOURCE</dt><dd>{contactSource || "--"}</dd></div>
             </dl>
 
-            {isScoring ? (
+            {callRecord.compliance_dispo_changed_at ? (
+              <div className="contacts-muted">DISPO CHANGED — existing compliance results retained.</div>
+            ) : null}
+            {!isComplianceSale(callRecord.call_outcome) && !callRecord.compliance_scorecard_id ? (
+              <div className="contacts-muted">Post-call compliance runs only for Enrolled or Enrolled - Pending Verification.</div>
+            ) : !callRecord.compliance_scorecard_id && !isScoring && !scoringError ? (
+              <div className="contacts-muted">No post-call compliance result for this call.</div>
+            ) : isScoring ? (
               <div className="compliance-review-scoring">
                 <span className="compliance-review-spinner" />
-                Scoring in progress — this can take a minute.
+                {callRecord.compliance_status === "transcript_pending"
+                  ? "Waiting for the full call transcript. Compliance is queued."
+                  : "Scoring in progress — this can take a minute."}
               </div>
             ) : scoringError ? (
               <div className="ops-error">
                 Scoring failed: {scoringError}
-                <button type="button" className="contacts-mini-btn" onClick={handleRetryScoring} disabled={retrying}>
-                  {retrying ? "RETRYING..." : "RETRY SCORING"}
-                </button>
               </div>
             ) : (
               <>

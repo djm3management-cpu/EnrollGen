@@ -3,7 +3,7 @@
 export function evidenceDb(pg, onError = () => {}) {
   const q = name => '"' + name.replaceAll('"', '""') + '"';
   return {
-    async rpc(name, input) {
+    async rpc(name, input = {}) {
       const entries = Object.entries(input);
       try {
         const sql = "SELECT * FROM public." + q(name) + "(" + entries.map(([key], index) =>

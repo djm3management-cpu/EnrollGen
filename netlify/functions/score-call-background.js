@@ -13,6 +13,7 @@ import {providerErrorCode,recordProviderStatus,sendProviderFailureAlert} from '.
 
 import { getEvidenceServiceClient } from "./_evidenceAccess.js";
 import { generateScorecard } from "../../src/compliance/engine/ScorecardGenerator.js";
+import { isComplianceSale } from "../../src/lib/saleCompliance.js";
 import {
   checkSeatLimit,
   logUsageRecord,
@@ -56,6 +57,12 @@ return async (request, context) => {
     return;
   }
 
+  // Check the saved disposition, never a client/job-supplied outcome. The
+  // database repeats this check under lock before claiming and saving a job.
+  if (!isComplianceSale(callRecord.call_outcome)) {
+    return Response.json({ skipped: true, reason: 'non_sale_disposition' });
+  }
+
   const subscription = await requireActiveSubscription(sb, callRecord.tenant_id);
   if (subscription.response) {
     console.warn(`[score-bg] Subscription gate blocked scoring for call ${callId}`);
@@ -82,6 +89,7 @@ return async (request, context) => {
       }),
     });
     // The scoring transaction owns completion and linkage; busy/replayed jobs don't rerun side effects.
+    if (result.skipped) return Response.json({ skipped: true, reason: result.reason });
     if (result.pending) return new Response(null, { status: 202 });
     await recordStatus(sb,callRecord.session_id,'scoring',null,startedAt);
     if (result.reused) return Response.json({scorecard_id:result.scorecard?.id,reused:true});

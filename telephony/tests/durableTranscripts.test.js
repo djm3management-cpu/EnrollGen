@@ -9,11 +9,18 @@ test('finals save without browser delivery, retry stable segment ID and redact P
  assert.equal(calls.length,2);assert.equal(calls[0].args.p_segment_id,calls[1].args.p_segment_id);
  assert.equal(calls[0].args.p_attempt_id,'attempt');assert.match(calls[0].args.p_text,/SSN_REDACTED/);
 });
-test('scoring dispatch without wrap-up reconciles first and retains 202 jobs until actual scoring confirmation',async()=>{
+test('dispatch consumes only disposition-created sale requests and retains 202 jobs until confirmed',async()=>{
  const sequence=[];let patch;
  const chain={select:()=>chain,lte:()=>chain,limit:async()=>({data:[{call_id:'call',tenant_id:'tenant',revision:1,delivered_revision:0}]}),
  update:value=>{patch=value;return chain;},eq:()=>chain,then:resolve=>resolve({error:null})};
- await runTranscriptDispatch({db:{rpc:async()=>{sequence.push('reconcile');return {};},from:()=>chain},scoringUrl:'https://example.test/score',secret:'secret',
+ await runTranscriptDispatch({db:{rpc:async name=>{if(name==='reconcile_telephony_transcripts'){sequence.push('reconcile');return {};}assert.equal(name,'get_sale_compliance_dispatch');return {data:[{call_id:'call',tenant_id:'tenant',revision:1,delivered_revision:0}]};},from:()=>chain},scoringUrl:'https://example.test/score',secret:'secret',
  transport:async(url,req)=>{sequence.push('score');assert.deepEqual(JSON.parse(req.body),{callId:'call',tenantId:'tenant'});return {ok:true,status:202};}});
  assert.deepEqual(sequence,['reconcile','score']);assert.equal(patch.delivered_revision,undefined);assert.equal(patch.last_error,null);
+});
+
+test('a transcript finalization with no eligible sale requests never calls the scoring endpoint',async()=>{
+ const rpc=[];
+ await runTranscriptDispatch({db:{rpc:async name=>{rpc.push(name);return {data:[]};}},scoringUrl:'https://example.test/score',secret:'secret',
+ transport:()=>{assert.fail('non-sale cannot dispatch');}});
+ assert.deepEqual(rpc,['reconcile_telephony_transcripts','get_sale_compliance_dispatch']);
 });

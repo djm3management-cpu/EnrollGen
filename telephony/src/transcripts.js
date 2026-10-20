@@ -27,11 +27,11 @@ export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = ()
 }
 
 export async function runTranscriptDispatch({ db, scoringUrl, secret, transport = fetch }) {
-  // Reconcile terminal calls too: missed/reordered callbacks and late finals recover here.
+  // Store/reconcile terminal transcripts independently. Only disposition-created
+  // sale requests can be returned for dispatch; call end cannot create eligibility.
   const reconciled = await db.rpc('reconcile_telephony_transcripts');
   if (reconciled.error) throw reconciled.error;
-  const { data, error } = await db.from('transcript_score_dispatch').select('*')
-    .lte('available_at', new Date().toISOString()).limit(20);
+  const { data, error } = await db.rpc('get_sale_compliance_dispatch');
   if (error) throw error;
   for (const job of data || []) {
     if (job.delivered_revision >= job.revision) continue;
@@ -47,7 +47,7 @@ export async function runTranscriptDispatch({ db, scoringUrl, secret, transport 
     // 202 is only acceptance. Reconciliation confirms the current snapshot was actually scored.
     const updated = await db.from('transcript_score_dispatch').update({ last_error: lastError,
       available_at: new Date(Date.now() + 60_000).toISOString() })
-      .eq('call_id', job.call_id).eq('revision', job.revision);
+      .eq('call_id', job.call_id).eq('revision', job.revision).eq('delivered_revision', job.delivered_revision);
     if (updated.error) throw updated.error;
   }
 }

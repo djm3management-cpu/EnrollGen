@@ -1,12 +1,11 @@
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { createPostCallHandler } from '../lib/postCallWork.js';
 import { checked, getEvidenceServiceClient } from './_evidenceAccess.js';
-import { createScoreCallHandler } from './score-call-background.js';
 import {providerErrorCode,recordProviderStatus} from '../lib/postCallProvider.js';
 
 export const config = {background:true};
 const equal=(a,b)=>typeof a==='string' && typeof b==='string' && Buffer.byteLength(a)===Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a),Buffer.from(b));
-export function createPostCallWorker({getDb=getEvidenceServiceClient, work=createPostCallHandler, scoreWork=createScoreCallHandler, send=(...args)=>fetch(...args), wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)), now=()=>Date.now()}={}) {
+export function createPostCallWorker({getDb=getEvidenceServiceClient, work=createPostCallHandler, send=(...args)=>fetch(...args), now=()=>Date.now()}={}) {
   return async request => {
     if (request.method !== 'POST') return;
     let input;
@@ -47,24 +46,9 @@ export function createPostCallWorker({getDb=getEvidenceServiceClient, work=creat
             if (!embedding.ok) throw Object.assign(new Error('Embedding verification failed'),{code:embedded.code || `embedding_http_${embedding.status}`});
             if (!Array.isArray(embedded.embedding) || embedded.embedding.length!==1536) throw Object.assign(new Error('Invalid embedding'),{code:'invalid_embedding_response'});
             result.embeddings={dimensions:1536,chunks:embedded.chunks,model:embedded.model,verified_at:new Date().toISOString()};
-            providerStage='scoring';
-            const score=await scoreWork({getDb:()=>db})(new Request(new URL('/api/score-call-background',request.url),{
-              method:'POST',headers:{'Content-Type':'application/json','x-enrollgen-job-secret':process.env.SCORE_CALL_JOB_SECRET || ''},
-              body:JSON.stringify({callId:body.call_record_id,tenantId:job.tenant_id}),
-            }),{waitUntil:promise=>pending.push(promise)});
-            if (score && !score.ok) {
-              const failed=await score.json().catch(()=>({}));
-              throw Object.assign(new Error('Recovery scoring failed'),{code:failed.code || 'recovery_scoring_failed'});
-            }
-            let record;
-            for (let poll=0;poll<120;poll++) {
-              record=checked(await db.from('call_records').select('compliance_scorecard_id,metadata').eq('id',body.call_record_id).eq('tenant_id',job.tenant_id).single());
-              if (record.compliance_scorecard_id) break;
-              if (record.metadata?.scoring_status==='failed') throw Object.assign(new Error('Recovery scoring failed'),{code:record.metadata.scoring_error_code || 'scoring_failed'});
-              await wait(1000);
-            }
-            if (!record.compliance_scorecard_id) throw Object.assign(new Error('Recovery pending'),{code:'recovery_output_pending'});
-            result={...result,scorecard_id:record.compliance_scorecard_id};
+            // Recovery stores evidence only. A saved sale disposition owns
+            // compliance scheduling, including when this transcript arrives late.
+            result.compliance_scheduling='disposition_controlled';
           }
         }
         await Promise.all(pending);

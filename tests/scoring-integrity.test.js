@@ -22,7 +22,7 @@ let seq = 0;
 async function newCall(duration = 180) {
   const id = randomUUID();
   await pg.query(`INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_direction,call_type,product_type,call_start,
-    call_duration_seconds,transcript_raw,transcript_diarized,metadata) VALUES($1,$2,$3,'Fixture Agent','inbound','sales','MA',now(),$4,$5,'[]','{"other_metadata":"keep"}')`,
+    call_duration_seconds,transcript_raw,transcript_diarized,metadata,call_outcome) VALUES($1,$2,$3,'Fixture Agent','inbound','sales','MA',now(),$4,$5,'[]','{"other_metadata":"keep"}','enrolled')`,
   [id,tenant,agent,duration,`This call is recorded. Fixture ${seq++}`]);
   return (await pg.query('SELECT * FROM call_records WHERE id=$1',[id])).rows[0];
 }
@@ -39,7 +39,7 @@ before(async () => {
     const start=source.indexOf('CREATE TABLE IF NOT EXISTS '+table+' (');
     await pg.exec(source.slice(start,source.indexOf('\n);',start)+4));
   }
-  await pg.exec(`ALTER TABLE call_records ADD tenant_id uuid, ADD compliance_scorecard_id uuid;
+  await pg.exec(`ALTER TABLE call_records ADD tenant_id uuid, ADD compliance_scorecard_id uuid, ADD call_outcome text;
     ALTER TABLE compliance_scorecards ADD tenant_id uuid;
     INSERT INTO compliance_intents(id,intent_code,intent_name,category,description) VALUES('${intent}','CALL_OPEN_001_RECORDING_ANNOUNCE','Recording','opening','Fixture');
     INSERT INTO scoring_templates(id,template_name,product_type,total_possible_points,passing_threshold,categories)

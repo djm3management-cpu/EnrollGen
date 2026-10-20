@@ -353,7 +353,7 @@ test("unrelated SQL errors do not trigger anonymous/ownership fallbacks or discl
 
 async function scoreFixtureCall() {
   await role("service_role");
-  await query("UPDATE call_records SET call_duration_seconds=180,transcript_raw='This call is recorded.',transcript_diarized='[]' WHERE id=$1",[windowCall.call_record_id]);
+  await query("UPDATE call_records SET call_outcome='enrolled',call_duration_seconds=180,transcript_raw='This call is recorded.',transcript_diarized='[]' WHERE id=$1",[windowCall.call_record_id]);
   process.env.SCORE_CALL_JOB_SECRET = "fixture-only-job-secret";
   const firstError = sqlErrors.length;
   const priorScores = (await query("SELECT count(*)::int AS n FROM scoring_jobs WHERE call_id=$1 AND status='complete'",[windowCall.call_record_id]))[0].n;
