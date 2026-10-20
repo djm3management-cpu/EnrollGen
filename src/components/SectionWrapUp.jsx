@@ -49,7 +49,7 @@ function yesNoControl({ name, value, disabled, onChange }) {
   );
 }
 
-export default React.memo(function SectionWrapUp({ scriptBody }) {
+export default React.memo(function SectionWrapUp({ scriptBody, onSaved, autoSavedOutcome }) {
   const { state, dispatch, activeSection, unlocked } = useScript();
   const { liveCall } = useLiveCall();
   const { getToken } = useAppAuth();
@@ -70,7 +70,7 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
   const { notes } = state;
   const wrapUpReady = Boolean(state.enrollOk || state.maClosed);
   const isActive = activeSection === 8;
-  const callOutcome = notes.callOutcome || "enrolled";
+  const callOutcome = notes.callOutcome || "";
   const isEnrolled = callOutcome === "enrolled" || callOutcome === "enrolled_pending_verification";
   const isSaving = saveState.status === "saving";
   const writingAgentOptions = useMemo(
@@ -105,14 +105,14 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
   }, [agencyDisplayName, notes.agency, updateNote]);
 
   const validationError = useMemo(() => {
-    if (!notes.customerFirstName?.trim()) return "Customer first name is required.";
-    if (!notes.customerLastName?.trim()) return "Customer last name is required.";
-    if (digitsOnly(notes.customerPhone).length !== 10) return "Enter a 10-digit customer phone number.";
     if (!callOutcome) return "Call outcome is required.";
     const productError = ancillarySaleError(callOutcome, notes.ancillaryProductType);
     if (productError) return productError;
 
     if (!isEnrolled) return "";
+    if (!notes.customerFirstName?.trim()) return "Customer first name is required.";
+    if (!notes.customerLastName?.trim()) return "Customer last name is required.";
+    if (digitsOnly(notes.customerPhone).length !== 10) return "Enter a 10-digit customer phone number.";
     if (!state.crossSellAcknowledged) {
       return "Complete or decline the Co-Pilot cross-sell prompt before saving wrap-up.";
     }
@@ -173,11 +173,13 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
 
       const result = await savePostCallWrapUp(getToken, payload);
       const callRecordId = result.call_record_id || sessionMetadata.callRecordId || null;
+      if (getActiveSessionMetadata().sessionId !== sessionMetadata.sessionId) return;
 
       setActivePostCallMetadata({
         callRecordId,
         transcriptId: result.transcript_id || sessionMetadata.transcriptId || null,
-      });
+      }, sessionMetadata.sessionId);
+      onSaved?.(result.session_id || sessionMetadata.sessionId);
 
       setSaveState({
         status: "saved",
@@ -214,7 +216,11 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
         webhookStatus: "idle",
       });
     }
-  }, [agents, callOutcome, getToken, isEnrolled, liveCall, notes.agentNotes, state, tenantConfig, validationError]);
+  }, [agents, callOutcome, getToken, isEnrolled, liveCall, notes.agentNotes, state, tenantConfig, validationError, onSaved]);
+
+  useEffect(() => {
+    if (autoSavedOutcome) setSaveState(current=>({...current,status:'saved',message:'Short call/hang-up saved automatically.'}));
+  },[autoSavedOutcome]);
 
   const statusClass = `post-call-save-status is-${saveState.status}`;
 
@@ -278,6 +284,7 @@ export default React.memo(function SectionWrapUp({ scriptBody }) {
               onChange={(e) => updateNote("callOutcome", e.target.value)}
               required
             >
+              <option value="">Select Call Outcome</option>
               {CALL_OUTCOME_OPTIONS.map((group) => (
                 <optgroup key={group.group} label={group.group}>
                   {group.options.map((option) => (

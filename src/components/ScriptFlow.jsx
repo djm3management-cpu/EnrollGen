@@ -23,6 +23,8 @@ import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { useLiveCall } from "../context/LiveCallContext";
 import { telephonyCallIdentity } from "../lib/telephonyCallIdentity.js";
 import { agentTrackActive } from "../lib/transcriptionHealth.js";
+import { useAvailability } from "../context/AvailabilityContext";
+import { evidenceRequest } from "../lib/evidenceApi.js";
 import { useInboundCall } from "../context/InboundCallContext";
 import { consumePendingCallContact, hydrateNotesFromContact } from "../lib/callLaunch";
 import { useComplianceScoringWorker } from "../hooks/useComplianceScoringWorker";
@@ -552,9 +554,15 @@ export default function ScriptFlow() {
   const { sections: scriptSections } = useScriptTemplate("ma");
   const wrapUpSection = scriptSections.find((section) => section.key === "wrapup");
   const prevSectionRef = useRef(activeSection);
+  const inbound = useInboundCall();
+  const availability = useAvailability();
   const session = useSessionTracker();
+  const completeSession = session.completeSession;
   const scoredSectionsRef = useRef(new Set());
   const [callStarted, setCallStarted] = useState(false);
+  const [wrapUpSaved, setWrapUpSaved] = useState(false);
+  const [callGeneration, setCallGeneration] = useState(0);
+  const [autoSavedOutcome, setAutoSavedOutcome] = useState(null);
   const checkpointKeyRef = useRef("");
   const finalTranscriptSavedRef = useRef(false);
   const latestPostCallRef = useRef(null);
@@ -571,15 +579,18 @@ export default function ScriptFlow() {
     if (!callStarted || sessionStartedRef.current) return;
     sessionStartedRef.current = true;
     clearLog();
-    session.startSession("ma");
+    const identity = inbound?.activeCall ? telephonyCallIdentity(inbound.activeCall)
+      : availability?.wrapUpCallSid ? {telephonyCall:true,twilioCallSid:availability.wrapUpCallSid} : {telephonyCall:false,twilioCallSid:null};
+    void session.startSession("ma", {...identity, callDirection:inbound?.activeCall?.params?.direction || state.callDirection,
+      contactId:inbound?.activeCall?.params?.contactId || (getActiveSessionMetadata().closed ? null : getActiveSessionMetadata().contactId) || null});
     dispatch({ type: "MARK_SECTION_START", section: 1 });
     dispatch({ type: "START_TIMER" });
-  }, [callStarted, clearLog, session, dispatch]);
+  }, [callStarted, callGeneration, clearLog, session, dispatch, inbound?.activeCall, availability?.wrapUpCallSid, state.callDirection]);
 
   // Cleanup on unmount, mark completed if enrollment gate was reached
   useEffect(() => {
     return () => {
-      if (sessionStartedRef.current) {
+      if (sessionStartedRef.current && !getActiveSessionMetadata().telephonyCall) {
         session.endSession(prevSectionRef.current, !!state.enrollOk);
       }
     };
@@ -624,32 +635,37 @@ export default function ScriptFlow() {
   );
   const canStartCopilot = supportsRecognition;
   const handleManualCopilotStart = useCallback(() => {
+    if (availability?.status === 'wrap_up') return;
+    sessionStartedRef.current = false;
+    scoredSectionsRef.current.clear();
+    prevScoreSection.current = 1;
+    checkpointKeyRef.current = '';
+    finalTranscriptSavedRef.current = false;
+    setWrapUpSaved(false);
+    setAutoSavedOutcome(null);
+    setPostCallPersistenceError('');
+    setTranscript('');
+    setMergedTranscriptEntries([]);
+    dispatch({type:'NEW_CALL',direction:state.callDirection});
+    setCallGeneration(value=>value+1);
     setCallStarted(true);
+    copilotHandlersRef.current?.clearAll?.();
     const handleStart = copilotHandlersRef.current?.handleStart;
     if (handleStart) {
       void handleStart();
     }
-  }, []);
+  }, [availability?.status, dispatch, state.callDirection]);
 
   // Inbound Twilio call accepted: auto-start the session (transcript and
   // Co-Pilot come from the telephony service) and hydrate the left rail
   // client panel from the matched contact record.
-  const inbound = useInboundCall();
-  const identityCallStartedRef = useRef(false);
-  useEffect(() => {
-    if (inbound?.activeCall) setActivePostCallMetadata(telephonyCallIdentity(inbound.activeCall));
-    else if (callStarted && !identityCallStartedRef.current) {
-      setActivePostCallMetadata({ telephonyCall: false, twilioCallSid: null });
-    }
-    identityCallStartedRef.current = callStarted;
-  }, [inbound?.activeCall, callStarted]);
   const inboundStartedRef = useRef(false);
   const inboundContactHydratedRef = useRef("");
   useEffect(() => {
-    if (!inbound?.activeCall || inboundStartedRef.current) return;
+    if ((!inbound?.activeCall && !availability?.wrapUpCallSid) || inboundStartedRef.current) return;
     inboundStartedRef.current = true;
     setCallStarted(true);
-  }, [inbound?.activeCall]);
+  }, [inbound?.activeCall, availability?.wrapUpCallSid]);
 
   useEffect(() => {
     const contact = inbound?.contact;
@@ -773,11 +789,12 @@ export default function ScriptFlow() {
       if (!snapshot?.state) return null;
 
       let metadata = getActiveSessionMetadata();
+      if (metadata.closed) return null;
       if (!metadata.sessionId || !metadata.agentId) {
         metadata = await waitForActiveSessionMetadata(2000);
       }
 
-      if (!metadata.sessionId || !metadata.agentId) {
+      if (!metadata.sessionId || !metadata.agentId || metadata.closed) {
         return null;
       }
 
@@ -811,6 +828,7 @@ export default function ScriptFlow() {
 
       if (getActiveSessionMetadata().sessionId === metadata.sessionId) {
         setActivePostCallMetadata({
+          sessionId: result.session_id || metadata.sessionId,
           callRecordId: result.call_record_id || metadata.callRecordId || null,
           transcriptId: result.transcript_id || metadata.transcriptId || null,
         });
@@ -845,6 +863,7 @@ export default function ScriptFlow() {
     const wasActive = previousSoftphoneActiveRef.current;
     previousSoftphoneActiveRef.current = softphoneActive;
     if (!wasActive || softphoneActive || !callStarted) return;
+    dispatch({type:"CALL_DISCONNECTED"});
 
     void persistBeforeReset({
       persist: persistFinalTranscript,
@@ -855,7 +874,7 @@ export default function ScriptFlow() {
         );
       },
     });
-  }, [callStarted, inbound?.activeCall, persistFinalTranscript]);
+  }, [callStarted, inbound?.activeCall, persistFinalTranscript, dispatch]);
 
   useEffect(() => {
     if (!callStarted) return undefined;
@@ -892,7 +911,7 @@ export default function ScriptFlow() {
     return () => {
       cancelled = true;
     };
-  }, [callStarted, getToken]);
+  }, [callStarted, callGeneration, getToken]);
 
   useEffect(() => {
     if (!callStarted) return undefined;
@@ -912,6 +931,7 @@ export default function ScriptFlow() {
       getSnapshot: () => {
         const snapshot = latestPostCallRef.current;
         const metadata = getActiveSessionMetadata();
+        if (metadata.closed) return null;
         if (!snapshot?.state || !metadata.sessionId || !metadata.agentId) return null;
         return buildPostCallPayload({ state: snapshot.state, liveCall: snapshot.liveCall,
           sessionMetadata: metadata, flow: 'ma' });
@@ -948,6 +968,29 @@ export default function ScriptFlow() {
       });
     };
   }, [resetLiveCall]);
+
+  useEffect(() => {
+    if (!callStarted || inbound?.activeCall || wrapUpSaved) return;
+    let stopped=false;
+    const sync = async () => {
+      const metadata=getActiveSessionMetadata();
+      if (!metadata.twilioCallSid || !metadata.sessionId) return;
+      try {
+        const result=await evidenceRequest(getToken,`evidence-session?call_sid=${encodeURIComponent(metadata.twilioCallSid)}`);
+        if (stopped || getActiveSessionMetadata().sessionId!==metadata.sessionId) return;
+        if (result.wrap_up?.status==='pending') dispatch({type:'CALL_DISCONNECTED'});
+        if (result.wrap_up?.status==='saved' && result.wrap_up.outcome==='short_call_hangup') {
+          dispatch({type:'CALL_DISCONNECTED',outcome:'short_call_hangup'});
+          setAutoSavedOutcome('short_call_hangup');
+          completeSession(metadata.sessionId);
+          setWrapUpSaved(true);
+        }
+      } catch { /* Durable state remains available for the next refresh. */ }
+    };
+    void sync();
+    const timer=setInterval(()=>void sync(),3000);
+    return ()=>{stopped=true;clearInterval(timer);};
+  },[callStarted,inbound?.activeCall,wrapUpSaved,getToken,dispatch,completeSession]);
 
   // ── Quick notes, persists into wrap-up ──
   // Auto-scroll to active section when it changes
@@ -1060,7 +1103,7 @@ export default function ScriptFlow() {
 
       {/* ── AI Co-Pilot, passes transcript up via callback ── */}
       <ScriptPrompter
-        callStarted={callStarted}
+        callStarted={callStarted && !wrapUpSaved}
         onTranscriptChange={setTranscript}
         onMergedTranscriptChange={setMergedTranscriptEntries}
         onListeningChange={setIsListening}
@@ -1077,7 +1120,7 @@ export default function ScriptFlow() {
       ) : null}
 
       {/* Manual idle state: sections stay hidden until the agent starts Copilot. */}
-      {!callStarted && (
+      {(!callStarted || wrapUpSaved) && (
         <section
           className="script-start-call-gate script-start-call-gate--manual"
         >
@@ -1097,7 +1140,7 @@ export default function ScriptFlow() {
             type="button"
             className="script-start-call-button"
             onClick={handleManualCopilotStart}
-            disabled={!canStartCopilot}
+            disabled={!canStartCopilot || availability?.status === "wrap_up"}
           >
             {canStartCopilot ? "START" : "NO MIC"}
           </button>
@@ -1145,7 +1188,9 @@ export default function ScriptFlow() {
 
       {activeSection >= 8 && (
         <>
-          <SectionWrapUp scriptBody={wrapUpSection?.body} />
+          <SectionWrapUp scriptBody={wrapUpSection?.body} autoSavedOutcome={autoSavedOutcome} onSaved={(id)=>{
+            if (session.completeSession(id)) setWrapUpSaved(true);
+          }} />
         </>
       )}
 

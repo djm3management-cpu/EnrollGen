@@ -21,7 +21,7 @@ import {
 // Shared agent availability state, lifted out of AgentAvailabilityToggle
 // so the cockpit toggle and the top-bar status strip stay in sync.
 
-const VALID_STATUSES = ["available", "busy", "offline"];
+const VALID_STATUSES = ["available", "busy", "offline", "wrap_up"];
 
 const AvailabilityContext = createContext(null);
 
@@ -89,7 +89,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
   const [snapshot, setSnapshot] = useState({
     status: "offline", statusSince: null, pendingStatus: null, isSaving: false, error: "",
   });
-  const { status, statusSince, pendingStatus, isSaving, error } = snapshot;
+  const { status, statusSince, pendingStatus, isSaving, error, wrapUpCallSid } = snapshot;
   const [isHydrated, setIsHydrated] = useState(false);
   const intentRef = useRef(null);
 
@@ -101,7 +101,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       onChange: setSnapshot,
       async write(nextStatus) {
         const payload = await availabilityRequest(getToken, { status: nextStatus });
-        return { status: extractStatus(payload) || nextStatus, statusSince: extractSince(payload) || new Date() };
+        return { status: extractStatus(payload) || nextStatus, statusSince: extractSince(payload) || new Date(), wrapUpCallSid: payload.wrap_up_call_sid || null };
       },
     });
     const binding = { agentId, intent };
@@ -112,7 +112,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       try {
         if (!canAuthenticate || !agentId) return;
         const payload = await availabilityRequest(getToken, null, { signal: controller.signal });
-        intent.hydrate({ status: extractStatus(payload) || "offline", statusSince: extractSince(payload) || new Date() });
+        intent.hydrate({ status: extractStatus(payload) || "offline", statusSince: extractSince(payload) || new Date(), wrapUpCallSid: payload.wrap_up_call_sid || null });
       } catch (err) {
         if (!controller.signal.aborted) intent.hydrate({ error: err?.message || "Availability lookup failed" });
       } finally {
@@ -120,7 +120,15 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       }
     }
     void loadAvailability();
+    const timer = setInterval(async () => {
+      if (!identityLoaded || !canAuthenticate || !agentId) return;
+      try {
+        const payload = await availabilityRequest(getToken, null, { signal: controller.signal });
+        intent.refresh({ status:extractStatus(payload) || 'offline', statusSince:extractSince(payload), wrapUpCallSid:payload.wrap_up_call_sid || null });
+      } catch { /* Keep the last confirmed status until the next refresh. */ }
+    }, 5000);
     return () => {
+      clearInterval(timer);
       controller.abort();
       intent.dispose();
       if (intentRef.current === binding) intentRef.current = null;
@@ -148,6 +156,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       canAuthenticate,
       status,
       statusSince,
+      wrapUpCallSid,
       isHydrated,
       isSaving,
       pendingStatus,
@@ -155,7 +164,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       error,
       changeStatus,
     }),
-    [agentId, identityLoaded, canAuthenticate, status, statusSince, isHydrated, isSaving, pendingStatus, error, changeStatus, setPhoneReady]
+    [agentId, identityLoaded, canAuthenticate, status, statusSince, wrapUpCallSid, isHydrated, isSaving, pendingStatus, error, changeStatus, setPhoneReady]
   );
 
   return <AvailabilityContext.Provider value={value}>{children}</AvailabilityContext.Provider>;

@@ -29,6 +29,13 @@ export function createSessionHandler({ authenticate = requireClerkAuth, getDb = 
       const identity = await resolveEvidenceIdentity(db, auth, { provision: body?.action === "start" });
       const { agent, tenant } = identity;
       if (request.method === "GET") {
+        const callSid=new URL(request.url).searchParams.get('call_sid');
+        if (callSid) {
+          if (!/^CA[0-9a-f]{32}$/i.test(callSid)) throw new EvidenceError(400,'Invalid call SID.');
+          const wrap=checked(await db.from('call_wrap_ups').select('status,outcome,session_id,connected_seconds')
+            .eq('tenant_id',tenant.id).eq('agent_id',agent.id).eq('call_sid',callSid).maybeSingle());
+          return evidenceJson(200,{wrap_up:wrap});
+        }
         // Diagnostic checks run with a service key, never anonymously.
         if (new URL(request.url).searchParams.get("diagnostic") === "1") {
           for (const table of ["sessions", "compliance_flags", "section_scores"]) {
@@ -46,6 +53,12 @@ export function createSessionHandler({ authenticate = requireClerkAuth, getDb = 
       if (body.action === "start") {
         const flow = text(body.flow, 20);
         if (!Object.hasOwn(FLOWS, flow)) throw new EvidenceError(400, "Invalid session flow.");
+        if (body.twilio_call_sid) {
+          if (!/^CA[0-9a-f]{32}$/i.test(body.twilio_call_sid)) throw new EvidenceError(400, "Invalid call SID.");
+          return evidenceJson(200, checked(await db.rpc('start_telephony_session', {
+            p_tenant_id: tenant.id, p_agent_id: agent.id, p_call_sid: body.twilio_call_sid, p_flow: flow,
+          })));
+        }
         const session = checked(await db.from("sessions").insert({
           agent_id: agent.id, tenant_id: tenant.id, flow, product_line: FLOWS[flow],
         }).select("id").single());

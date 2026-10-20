@@ -49,6 +49,9 @@ export function createAvailabilityIntent({ write, onChange }) {
     hydrate(result) {
       if (!revision && !disposed) emit(result);
     },
+    refresh(result) {
+      if (!disposed && !pending && !running) emit(result);
+    },
     select(status) {
       if (disposed || !["available", "busy", "offline"].includes(status)) return;
       pending = { status, revision: ++revision };

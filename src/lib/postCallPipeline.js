@@ -40,6 +40,7 @@ export const CALL_OUTCOME_OPTIONS = [
       { value: "not_qualified", label: "Not Qualified (Age/State/Coverage)" },
       { value: "already_enrolled_elsewhere", label: "Already Enrolled Elsewhere" },
       { value: "customer_hung_up", label: "Customer Hung Up" },
+      { value: "short_call_hangup", label: "Short call/hang-up" },
       { value: "do_not_call", label: "Do Not Call (DNC)" },
       { value: "requested_removal", label: "Requested Removal from List" },
     ],
@@ -296,7 +297,7 @@ export function buildPostCallPayload({
     flow,
     product_type: productTypeFromFlow(flow),
     ancillary_product_type: notes.callOutcome === "sale_ancillary" ? notes.ancillaryProductType || null : null,
-    call_direction: state?.callDirection || liveCall?.callDirection || "inbound",
+    call_direction: sessionMetadata?.callDirection || state?.callDirection || liveCall?.callDirection || "inbound",
     call_type: "enrollment",
     call_start: startedAt,
     call_duration_seconds: durationSeconds,
@@ -396,8 +397,8 @@ async function postCallAction(getToken, action, payload = {}) {
   }
 
   if (response.status === 202 && data?.request_key) {
-    if (data.status === 'completed') return data.result || {};
-    return watchPostCallRequest(getToken, data.session_id, data.request_key);
+    if (data.status === 'completed') return {...data.result, session_id:data.session_id};
+    return {...await watchPostCallRequest(getToken, data.session_id, data.request_key), session_id:data.session_id};
   }
   return data || {};
 }

@@ -120,6 +120,7 @@ function normalizeOutcome(value) {
     "not_qualified",
     "already_enrolled_elsewhere",
     "customer_hung_up",
+    "short_call_hangup",
     "do_not_call",
     "requested_removal",
     // Unable to Reach
@@ -360,7 +361,8 @@ async function saveTranscript(supabase, callRecord, payload, auth, tenant, { fin
     carrier: safeText(payload.carrier_name) || callRecord.carrier_name || null,
     plan_name: safeText(payload.plan_name) || callRecord.plan_name || null,
     enrollment_period: normalizeEnrollmentPeriod(payload.enrollment_period || payload.election_period || callRecord.election_period),
-    disposition: safeText(payload.disposition) || (final ? dispositionFromOutcome(payload.call_outcome) : "pending"),
+    disposition: safeText(payload.disposition) || (final || callRecord.metadata?.wrap_up_saved_at
+      ? dispositionFromOutcome(payload.call_outcome || callRecord.call_outcome) : "pending"),
     compliance_passed: null,
     transcript_text: transcriptText,
     source_system: LIVE_SOURCE_SYSTEM,
@@ -555,6 +557,7 @@ async function sendEnrollmentWebhook(tenant, tenantAgents, payload) {
 
 async function handleWrapUp(supabase, payload, auth, request, context, tenant, tenantAgents, subscription) {
   const outcome = normalizeOutcome(payload.call_outcome);
+  if (!payload.call_outcome || outcome === "incomplete") throw new EvidenceError(400, "Select a Call Outcome before saving wrap-up.");
   const productError = ancillarySaleError(outcome, payload.ancillary_product_type);
   if (productError) throw new EvidenceError(400, productError);
   const saved = await saveCheckpoint(supabase, payload, auth, tenant, { final: true });
@@ -574,9 +577,9 @@ async function handleWrapUp(supabase, payload, auth, request, context, tenant, t
     plan_id: safeText(payload.plan_id) || callRecord.plan_id || null,
     effective_date: payload.effective_date || null,
     application_id: safeText(payload.application_id) || null,
-    customer_first_name: safeText(payload.customer_first_name) || null,
-    customer_last_name: safeText(payload.customer_last_name) || null,
-    customer_phone: safeText(payload.customer_phone) || null,
+    customer_first_name: safeText(payload.customer_first_name) || callRecord.customer_first_name || null,
+    customer_last_name: safeText(payload.customer_last_name) || callRecord.customer_last_name || null,
+    customer_phone: safeText(payload.customer_phone) || callRecord.customer_phone || null,
     customer_email: safeText(payload.customer_email) || null,
     customer_dob: payload.customer_dob || null,
     customer_state: safeText(payload.customer_state) || null,

@@ -47,6 +47,7 @@ before(async () => {
     GRANT SELECT(agent_id) ON agent_availability TO PUBLIC;`);
   await pg.exec(sql('../supabase/migrations/063_evidence_access.sql'));
   await pg.exec(sql('../supabase/migrations/073_availability_auth.sql'));
+  await pg.exec('ALTER TABLE agent_availability ADD COLUMN wrap_up_call_sid text');
   await pg.exec('GRANT ALL ON agent_phone_sessions TO service_role; SET ROLE service_role');
 });
 after(async () => pg.close());
@@ -59,7 +60,7 @@ test('own status is resolved from the verified subject; writes retain deployed f
   assert.equal(row.status, 'available');
   assert.equal(row.available, true);
   assert.ok(row.toggled_at);
-  assert.deepEqual(Object.keys(row).sort(), ['agent_id','agent_name','available','status','success','toggled_at']);
+  assert.deepEqual(Object.keys(row).sort(), ['active_call_sid','agent_id','agent_name','available','status','success','toggled_at','wrap_up_call_sid']);
   assert.equal((await call(auth, null, 200, 'GET')).status, 'available');
   assert.ok((await query("SELECT * FROM agent_availability_log WHERE agent_id='alice'")).length);
 });

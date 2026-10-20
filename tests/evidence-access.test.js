@@ -487,11 +487,13 @@ test("browser finalization preserves server-owned transcript while wrap-up remai
   const final = await call(h.postCall,{action:"finalize",session_id:created.session_id,transcript_text:"Browser partial"});
   assert.equal(final.transcript_id,saved.transcript_id);
   assert.equal((await query("SELECT transcript_text FROM call_transcripts WHERE id=$1",[saved.transcript_id]))[0].transcript_text,"Server complete transcript");
+  await call(h.postCall,{action:"wrap_up",session_id:created.session_id},400);
   const wrap = await call(h.postCall,{action:"wrap_up",session_id:created.session_id,transcript_text:"Browser partial",
     call_outcome:"callback_scheduled",agent_notes:"Follow up tomorrow"});
   const row=(await query("SELECT * FROM call_records WHERE id=$1",[wrap.call_record_id]))[0];
   assert.equal(row.transcript_raw,"Server complete transcript");assert.equal(row.agent_notes,"Follow up tomorrow");
   assert.equal(row.call_outcome,"callback_scheduled");
+  assert.ok((await query("SELECT ended_at FROM sessions WHERE id=$1",[created.session_id]))[0].ended_at);
 });
 
 test("ancillary wrap-up rejects missing or invalid products before writing, then persists the product and transcript outcome", async () => {

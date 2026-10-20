@@ -47,6 +47,21 @@ export function createPostCallQueueHandler({authenticate = request=>requireClerk
       try {body=await request.json();} catch {throw new EvidenceError(400,'Invalid JSON body.');}
       if (!body || Array.isArray(body) || !ACTIONS.has(body.action)) throw new EvidenceError(400,'Invalid action.');
       body=await bindPostCallPayload(db,body,identity);
+      // Older tabs may submit a new call with the previous session's links.
+      // Validate those links first, then select a fresh session from the verified SID.
+      if (body.telephony_call && /^CA[0-9a-f]{32}$/i.test(body.twilio_call_sid || '')) {
+        const session = await requireOwnedSession(db,body.session_id,identity);
+        const record = body.call_record_id ? checked(await db.from('call_records')
+          .select('twilio_call_sid').eq('id',body.call_record_id).eq('tenant_id',identity.tenant.id).single()) : null;
+        const boundSid = session.twilio_call_sid || record?.twilio_call_sid;
+        if (boundSid && boundSid !== body.twilio_call_sid) {
+          const fresh = checked(await db.rpc('start_telephony_session', {
+            p_tenant_id:identity.tenant.id,p_agent_id:identity.agent.id,p_call_sid:body.twilio_call_sid,p_flow:session.flow || 'ma',
+          }));
+          body = await bindPostCallPayload(db,{...body,session_id:fresh.session_id,
+            call_record_id:fresh.call_record_id,transcript_id:fresh.transcript_id},identity);
+        }
+      }
       const key=postCallRequestKey(body);
       const queued=checked(await db.rpc('enqueue_post_call_request',{
         p_session_id:body.session_id,p_tenant_id:identity.tenant.id,p_agent_id:identity.agent.id,

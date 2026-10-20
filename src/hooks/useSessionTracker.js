@@ -13,6 +13,8 @@ const EMPTY_SESSION_METADATA = {
   transcriptId: null,
   twilioCallSid: null,
   telephonyCall: false,
+  closed: false,
+  contactId: null,
 };
 
 const noop = () => {};
@@ -20,11 +22,13 @@ const STUB = {
   sessionId: null,
   startSession: noop,
   endSession: noop,
+  completeSession: noop,
   logComplianceFlag: noop,
   logSectionScore: noop,
 };
 let activeSessionMetadata = { ...EMPTY_SESSION_METADATA };
 let pendingSessionStart = null;
+let activeStartOwner = null;
 
 function setActiveSessionMetadata(patch) {
   activeSessionMetadata = {
@@ -33,7 +37,8 @@ function setActiveSessionMetadata(patch) {
   };
 }
 
-export function setActivePostCallMetadata(patch) {
+export function setActivePostCallMetadata(patch, expectedSessionId) {
+  if (expectedSessionId && activeSessionMetadata.sessionId !== expectedSessionId) return;
   setActiveSessionMetadata(patch);
 }
 
@@ -60,27 +65,41 @@ export function useSessionTracker() {
   const sessionIdRef = useRef(null);
   const startedAtRef = useRef(null);
   const startingRef = useRef(null);
+  const identityRef = useRef(null);
+  const closedRef = useRef(false);
 
   useEffect(() => {
     if (import.meta.env.DEV && !DISABLED) void runSessionTrackingDiagnostic(getToken);
   }, [getToken]);
 
-  const startSession = useCallback((flow = "ma") => {
+  const startSession = useCallback((flow = "ma", identity = {}) => {
     if (DISABLED) return Promise.resolve();
-    if (startingRef.current) return startingRef.current;
+    if (startingRef.current && identityRef.current === (identity.twilioCallSid || null)) return startingRef.current;
+    if (sessionIdRef.current && !closedRef.current && identityRef.current === (identity.twilioCallSid || null)) return Promise.resolve(activeSessionMetadata);
+    identityRef.current = identity.twilioCallSid || null;
+    closedRef.current = false;
+    sessionIdRef.current = null;
+    const owner = {};
+    activeStartOwner = owner;
+    activeSessionMetadata = { ...EMPTY_SESSION_METADATA, ...identity };
     const start = (async () => {
       try {
-        const result = await evidenceRequest(getToken, "evidence-session", { action: "start", flow });
+        const result = await evidenceRequest(getToken, "evidence-session", { action: "start", flow,
+          ...(identity.twilioCallSid ? { twilio_call_sid: identity.twilioCallSid, call_direction: identity.callDirection || "inbound" } : {}),
+        });
+        if (activeStartOwner !== owner) return null;
         sessionIdRef.current = result.session_id;
         startedAtRef.current = Date.now();
         setActiveSessionMetadata({
           agentId: result.agent_id, agentName: result.agent_name,
-          sessionId: result.session_id, callRecordId: null, transcriptId: null,
+          callDirection: result.call_direction || identity.callDirection,
+          sessionId: result.session_id, callRecordId: result.call_record_id || null, transcriptId: result.transcript_id || null,
         });
+        return activeSessionMetadata;
       } catch {
         debugLog("[SessionTracker] Unable to start session. Check sign-in and retry.");
       } finally {
-        startingRef.current = null;
+        if (startingRef.current === start) startingRef.current = null;
         if (pendingSessionStart === start) pendingSessionStart = null;
       }
     })();
@@ -92,9 +111,10 @@ export function useSessionTracker() {
   const send = useCallback(async (action, fields) => {
     if (DISABLED) return false;
     await startingRef.current;
-    if (!sessionIdRef.current) return false;
+    const sessionId = sessionIdRef.current;
+    if (!sessionId || closedRef.current) return false;
     try {
-      await evidenceRequest(getToken, "evidence-session", { action, session_id: sessionIdRef.current, ...fields });
+      await evidenceRequest(getToken, "evidence-session", { action, session_id: sessionId, ...fields });
       return true;
     } catch {
       debugLog("hooks/useSessionTracker.js error");
@@ -103,15 +123,25 @@ export function useSessionTracker() {
   }, [getToken]);
 
   const endSession = useCallback(async (finalSection, completed = false) => {
+    await startingRef.current;
+    const endingId = sessionIdRef.current;
+    if (closedRef.current) return;
     const saved = await send("end", {
       final_section: finalSection ?? null, completed,
       duration_seconds: startedAtRef.current ? Math.round((Date.now() - startedAtRef.current) / 1000) : null,
     });
-    if (saved) {
+    if (saved && sessionIdRef.current === endingId) {
       sessionIdRef.current = null;
-      setActiveSessionMetadata({ sessionId: null });
+      if (activeSessionMetadata.sessionId === endingId) setActiveSessionMetadata({ sessionId: null });
     }
   }, [send]);
+
+  const completeSession = useCallback((sessionId) => {
+    if (sessionIdRef.current !== sessionId) return false;
+    closedRef.current = true;
+    setActivePostCallMetadata({ closed: true }, sessionId);
+    return true;
+  }, []);
 
   const logComplianceFlag = useCallback((sectionLabel, level, issueTag, confidence, message, addressed = false) =>
     send("flag", { section_label: sectionLabel, level, issue_tag: issueTag, confidence, message, addressed }), [send]);
@@ -124,5 +154,5 @@ export function useSessionTracker() {
     activeSessionMetadata = { ...EMPTY_SESSION_METADATA };
     return STUB;
   }
-  return { sessionId: sessionIdRef.current, startSession, endSession, logComplianceFlag, logSectionScore };
+  return { sessionId: sessionIdRef.current, startSession, endSession, completeSession, logComplianceFlag, logSectionScore };
 }

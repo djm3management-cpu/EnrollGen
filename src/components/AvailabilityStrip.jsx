@@ -50,7 +50,7 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
   const status = availability.status || "offline";
   const selectedStatus = availability.pendingStatus || status;
   const waiting = availability.pendingStatus === "available" && !availability.isSaving;
-  const label = waiting ? "AVAILABLE — CONNECTING" : availability.pendingStatus ? `${selectedStatus.toUpperCase()} — SAVING` : status.toUpperCase();
+  const label = status === "wrap_up" ? "WRAP-UP" : waiting ? "AVAILABLE — CONNECTING" : availability.pendingStatus ? `${selectedStatus.toUpperCase()} — SAVING` : status.toUpperCase();
   const since = availability.statusSince
     ? TIME_FORMATTER.format(availability.statusSince)
     : null;
@@ -83,7 +83,7 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
       >
         <span
           className="availability-strip__dot"
-          style={{ background: STATUS_COLORS[status] || STATUS_COLORS.offline }}
+          style={{ background: STATUS_COLORS[status === "wrap_up" ? "busy" : status] || STATUS_COLORS.offline }}
           aria-hidden="true"
         />
         <span className="availability-strip__label">{label}</span>
@@ -103,7 +103,7 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
                 className={`availability-menu__option${active ? " is-active" : ""}`}
                 style={{ "--availability-color": option.color }}
                 onClick={() => selectStatus(option.value)}
-                disabled={!isInteractive}
+                disabled={!isInteractive || (status === "wrap_up" && option.value === "available")}
               >
                 <span className="availability-menu__dot" aria-hidden="true" />
                 <span>{option.label}</span>

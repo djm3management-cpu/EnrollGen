@@ -38,7 +38,7 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
         : "";
 
   const isInteractive = !disabledReason && isHydrated;
-  const selectedStatus = pendingStatus || status;
+  const selectedStatus = status === "wrap_up" ? "busy" : pendingStatus || status;
   const waiting = pendingStatus === "available" && !isSaving;
   const panelTitle = (waiting ? "Available — connecting phone" : error) || disabledReason || (agentId ? `Agent ID: ${agentId}` : "");
 
@@ -59,10 +59,10 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
             }`}
             style={{ "--availability-color": option.color }}
             onClick={() => changeStatus(option.value)}
-            disabled={!isInteractive}
+            disabled={!isInteractive || (status === "wrap_up" && option.value === "available")}
             aria-pressed={option.value === selectedStatus}
           >
-            {option.value === "available" && waiting ? "CONNECTING…" : option.label}
+            {status === "wrap_up" && option.value === "busy" ? "WRAP-UP" : option.value === "available" && waiting ? "CONNECTING…" : option.label}
           </button>
         ))}
       </div>

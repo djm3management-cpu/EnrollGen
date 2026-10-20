@@ -2,7 +2,7 @@ import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceJson, evidenceFailure, getEvidenceServiceClient } from './_evidenceAccess.js';
 
 const STATUSES = ['available', 'busy', 'offline'];
-const COLUMNS = 'agent_id, agent_name, status, available, toggled_at';
+const COLUMNS = 'agent_id, agent_name, status, available, toggled_at, active_call_sid, wrap_up_call_sid';
 
 // Only verified Clerk claims grant admin access. Browser metadata and CRM
 // roster roles are never authority. Organization admins stay in their org.
@@ -73,7 +73,7 @@ export function createAvailabilityHandler({
         : table;
       const row = checked(await query.select(COLUMNS).eq('agent_id', slug).maybeSingle());
       if (!row) throw new EvidenceError(404, 'Agent availability is not configured.');
-      return evidenceJson(200, { ...row, success: true });
+      return evidenceJson(200, { ...row, status: row.wrap_up_call_sid && !row.active_call_sid ? 'wrap_up' : row.status, success: true });
     } catch (error) {
       return evidenceFailure(error);
     }

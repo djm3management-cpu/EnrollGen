@@ -1,4 +1,5 @@
 import { debugLog } from "./lib/debugLog.js";
+import { createCallSessionBoundary } from "./lib/callSessionBoundary.js";
 import {
   Component,
   lazy,
@@ -24,7 +25,7 @@ import { SubscriptionProvider, useSubscription } from "./hooks/useSubscription";
 import { TenantConfigProvider, useTenantConfig } from "./hooks/useTenantConfig";
 import { InboundCallProvider, INBOUND_CALLS_ENABLED, useInboundCall } from "./context/InboundCallContext";
 import PhoneDropdown from "./components/phone/PhoneDropdown";
-import { AvailabilityProvider } from "./context/AvailabilityContext";
+import { AvailabilityProvider, useAvailability } from "./context/AvailabilityContext";
 import AvailabilityStrip from "./components/AvailabilityStrip";
 import { SessionLockProvider } from "./context/SessionLockContext";
 import SessionLockOverlay from "./components/SessionLockOverlay";
@@ -647,7 +648,11 @@ function AppShell({ currentUser = null }) {
   }, []);
 
   // Inbound call accepted: always surface the MA cockpit.
+  const availability = useAvailability();
   const inboundActiveCall = inbound?.activeCall || null;
+  const maCallBoundary = useRef(null);
+  if (!maCallBoundary.current) maCallBoundary.current = createCallSessionBoundary();
+  const maCallKey = maCallBoundary.current(inboundActiveCall || (availability?.wrapUpCallSid ? {params:{twilioCallSid:availability.wrapUpCallSid}} : null));
   const [confirmedParagonCallSid,setConfirmedParagonCallSid] = useState(null);
   const paragonCallSid = inboundActiveCall?.params?.paragon === 'true'
     ? inboundActiveCall.params.twilioCallSid : null;
@@ -661,12 +666,12 @@ function AppShell({ currentUser = null }) {
     return () => window.removeEventListener('paragon-zip-status',onZipStatus);
   },[paragonCallSid]);
   useEffect(() => {
-    if (!inboundActiveCall) return;
+    if (!inboundActiveCall && availability?.status !== "wrap_up") return;
     syncModePath("ma");
     setMode("ma");
     setAppMode("call");
     setOpenPanel(null);
-  }, [inboundActiveCall]);
+  }, [inboundActiveCall, availability?.status]);
 
   useEffect(() => {
     if (!supabaseClient || !currentUser?.id) {
@@ -1213,7 +1218,7 @@ function AppShell({ currentUser = null }) {
             </div>
           </>
         ) : mode === "ma" ? (
-          <ScriptProvider>
+          <ScriptProvider key={maCallKey}>
             <div className="paragon-inert-container" inert={paragonLocked ? '' : undefined}><LeftRail launcher={sepLauncher} visibleItemIds={visibleLeftRailIds} footer={<LeftRailCompliance />} /></div>
 
             {overlayNode}

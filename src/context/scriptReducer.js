@@ -97,7 +97,7 @@ export const initialState = {
     effectiveDate: "",
     enrollmentCode: "",
     confirmation: "",
-    callOutcome: "enrolled",
+    callOutcome: "",
     ancillaryProductType: "",
     agentNotes: "",
     customerFirstName: "",
@@ -187,6 +187,10 @@ function persistFields(state) {
 export function scriptReducer(state, action) {
   let next;
   switch (action.type) {
+    case "NEW_CALL":
+      return { ...initialState, notes: { ...initialState.notes }, callDirection: action.direction || state.callDirection };
+    case "CALL_DISCONNECTED":
+      return { ...state, maClosed: true, notes: { ...state.notes, callOutcome: action.outcome || state.notes.callOutcome || "" } };
     case "SET_MA_ANSWER":
       return changeMAAnswer(state, action.section, action.key, action.value);
 
