@@ -10,7 +10,7 @@ function harness(blocked = false, identityError = false) {
   const ref = { current: false }; let disconnected = false;
   const call = { parameters: { CallSid: 'canonical-sid' }, on: (event, fn) => { handlers[event] = fn; },
     disconnect: () => { disconnected = true; handlers.disconnect?.(); }, getRemoteStream: () => ({ getAudioTracks: () => [{}] }) };
-  const context = { debugLog, callContinuity: {begin(){},end(){},replace(){}},
+  const context = { debugLog, reportCallEvent(){}, deviceIdsRef:{current:new WeakMap()}, callDeviceIdsRef:{current:new WeakMap()}, callContinuity: {begin(){},end(){},replace(){}},
     useCallback: fn => fn, deviceRef: { current: { connect: async options => { calls.push(options); return call; } } },
     callInProgressRef: ref, destroyRetiredDevice() {}, outboundCallRef: { current: null }, ownedCallRef: { current: null }, getTokenRef: {current:async()=>'clerk'}, getToken: async () => 'clerk',
     checkOutbound: async () => ({ blocked }),

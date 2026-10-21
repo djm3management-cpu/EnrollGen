@@ -35,7 +35,11 @@ export function callbackPayload(body, account) {
   if (start && !Number.isFinite(Date.parse(start))) throw new RecordingError('invalid_callback');
   return { AccountSid: account, CallSid: body.CallSid, RecordingSid: body.RecordingSid || null,
     RecordingStatus: body.RecordingStatus, RecordingSource: typeof body.RecordingSource === 'string' ? body.RecordingSource.slice(0, 64) : null, RecordingChannels: number(body.RecordingChannels, [1, 2]),
-    RecordingDuration: number(body.RecordingDuration), RecordingStartTime: start || null };
+    // Twilio uses -1 for an absent recording: no audio duration exists. The
+    // same parser handles signed callbacks and REST reconciliation metadata.
+    // Preserve strict nonnegative validation for every completed recording.
+    RecordingDuration: body.RecordingStatus === 'absent' && String(body.RecordingDuration) === '-1'
+      ? null : number(body.RecordingDuration), RecordingStartTime: start || null };
 }
 export function createRecordingCallback({ db, config, log = console.error }) {
   return async (req, res) => {
@@ -49,7 +53,9 @@ export function createRecordingCallback({ db, config, log = console.error }) {
       return res.status(204).end();
     } catch (error) {
       const invalid = error.code === 'invalid_callback';
-      log(JSON.stringify({ event: 'recording_callback_failed', code: invalid ? 'invalid_callback' : 'database_error' }));
+      log(JSON.stringify({ event: 'recording_callback_failed', code: invalid ? 'invalid_callback' : 'database_error',
+        call_sid: SID.call.test(req.body?.CallSid || '') ? req.body.CallSid : null,
+        recording_sid: SID.recording.test(req.body?.RecordingSid || '') ? req.body.RecordingSid : null }));
       return res.status(invalid ? 400 : 503).end();
     }
   };

@@ -32,7 +32,7 @@ function phoneFixture(){
  const context=vm.createContext({...harness.hooks,callContinuity:createCallContinuity(),Device,console,Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
   useAppAuth:()=>({getToken:token}),useTenantConfig:()=>({agents:[],supabaseClient:null}),useAvailability:()=>availability,
   resolveRequestingAgentUuid:()=>null,transcriptionHealthError:()=>'',transcriptionHealthForCall:()=>({}),
-  updateTranscriptionHealth:()=>({}),publishSms:()=>{},publishAudioLevel:()=>{},debugLog:()=>{},
+  updateTranscriptionHealth:()=>({}),publishSms:()=>{},publishAudioLevel:()=>{},debugLog:()=>{},createVoiceTelemetry:()=>()=>{},
   checkOutbound:async()=>({blocked:false}),canonicalOutbound:async()=>({contactId:null,attemptId:'attempt',phoneNumber:'+15555555555'}),
   createAgentPhoneConnection:()=>({setReady(){},start(){},stop(){}}),
   fetch:async()=>({ok:true,json:async()=>({token:'token'})}),

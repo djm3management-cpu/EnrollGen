@@ -1,5 +1,6 @@
 import { callContinuity } from "../lib/callContinuity.js";
 import { debugLog } from "../lib/debugLog.js";
+import { createVoiceTelemetry } from "../lib/voiceTelemetry.js";
 import { checkOutbound, canonicalOutbound } from "../lib/outboundApi";
 import {
   createContext,
@@ -68,6 +69,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const reportPhoneReady = availability?.setPhoneReady;
   const getTokenRef = useRef(getToken);
   getTokenRef.current = getToken;
+  const reportVoiceEvent = useMemo(() => createVoiceTelemetry({ baseUrl: TELEPHONY_BASE_URL,
+    agentId, getToken: () => getTokenRef.current() }), [agentId]);
   // Token getter rotation or availability refresh must not destroy a live SDK device.
   const hydratedIdentityRef = useRef(null);
   if (identityReady && availability?.isHydrated) hydratedIdentityRef.current = agentId;
@@ -97,6 +100,26 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const ownedCallRef = useRef(null);
   // A device replaced while a call is ringing or live; destroyed once that call ends.
   const retiredDeviceRef = useRef(null);
+  const destroyedDevicesRef = useRef(new WeakSet());
+  const deviceIdsRef = useRef(new WeakMap());
+  const callDeviceIdsRef = useRef(new WeakMap());
+  const deviceSequenceRef = useRef(0);
+  const reportCallEvent = useCallback((event, call, details = {}) => {
+    // Diagnostic reads can never throw through an SDK event handler.
+    try {
+      const params = paramsFromCall(call);
+      reportVoiceEvent(event, { callSid: params.twilioCallSid || call?.parameters?.CallSid,
+        sdkCallSid: call?.parameters?.CallSid, phase: call?.status?.(),
+        deviceSequence: callDeviceIdsRef.current.get(call), ...details });
+    } catch { /* Preserve the voice connection even if SDK inspection fails. */ }
+  }, [reportVoiceEvent]);
+  const destroyDevice = useCallback((device, reason) => {
+    if (retiredDeviceRef.current === device) retiredDeviceRef.current = null;
+    if (destroyedDevicesRef.current.has(device)) return;
+    destroyedDevicesRef.current.add(device);
+    reportCallEvent('device_destroyed', ownedCallRef.current, { reason, deviceSequence: deviceIdsRef.current.get(device) });
+    device.destroy();
+  }, [reportCallEvent]);
   // True while a call is ringing, dialing or live. A call the SDK already closed
   // whose terminal event never arrived is finished, not live.
   const callIsLive = useCallback(() => {
@@ -120,9 +143,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   }, []);
   const destroyRetiredDevice = useCallback(() => {
     if (!retiredDeviceRef.current || callIsLive()) return;
-    retiredDeviceRef.current.destroy();
+    destroyDevice(retiredDeviceRef.current, 'retired_call_ended');
     retiredDeviceRef.current = null;
-  }, [callIsLive]);
+  }, [callIsLive, destroyDevice]);
 
   const fetchTokenBundle = useCallback(async () => {
     const clerkToken = await getTokenRef.current().catch(() => null);
@@ -209,6 +232,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       !TELEPHONY_BASE_URL
     ) return undefined;
     let cancelled = false;
+    const deviceIds = deviceIdsRef.current;
     let wsRefreshTimer = null;
     let tokenRefreshInFlight = null;
     const setPhoneReady = (ready) => {
@@ -244,6 +268,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           scheduleWebSocketRefresh();
         } catch {
           if (!cancelled) {
+            reportCallEvent('token_refresh_failed', ownedCallRef.current);
             debugLog("context/InboundCallContext.jsx error");
             scheduleWebSocketRefresh(WS_TOKEN_REFRESH_RETRY_MS);
           }
@@ -269,17 +294,23 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         const device = new Device(bundle.token, {
           codecPreferences: ["opus", "pcmu"],
         });
+        const deviceSequence = ++deviceSequenceRef.current;
+        deviceIds.set(device, deviceSequence);
+        reportVoiceEvent('device_created', { deviceSequence });
 
         device.on("registered", () => {
+          reportCallEvent('registered', ownedCallRef.current, { deviceSequence });
           if (cancelled) return;
           setPhoneReady(true);
           setDeviceStatus("registered");
         });
         device.on("unregistered", () => {
+          reportCallEvent('unregistered', ownedCallRef.current, { deviceSequence });
           setPhoneReady(false);
           setDeviceStatus("offline");
         });
         device.on("error", (deviceError) => {
+          reportCallEvent('device_error', ownedCallRef.current, { errorCode: deviceError?.code, deviceSequence });
           debugLog("[InboundCall] device error");
           setError(deviceError?.message || "Softphone error");
           setPhoneReady(false);
@@ -289,14 +320,16 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           await refreshTokens({ reason: "Twilio", device });
         });
         device.on("incoming", (call) => {
+          callDeviceIdsRef.current.set(call, deviceSequence);
           if (ownedCallRef.current === call) return;
           // Only an actual ringing/dialing/live call (including an outbound
           // connect in flight) can be busy. Disposition and availability never
           // gate delivery. Reconcile missed terminal events before deciding.
-          if (callIsLive()) { call.reject(); return; }
+          if (callIsLive()) { reportCallEvent('incoming_rejected_busy', call); call.reject(); return; }
           callInProgressRef.current = true;
           ownedCallRef.current = call;
           callContinuity.begin(call);
+          reportCallEvent('incoming', call);
           const params = paramsFromCall(call);
           setIncomingCall({ call, params });
           const finishCall = () => {
@@ -314,9 +347,10 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
             setIsHeld(false);
             publishAudioLevel("customer", 0, { immediate: true });
           };
-          call.on("cancel", finishCall);
-          call.on("reject", finishCall);
+          call.on("cancel", () => { reportCallEvent('canceled', call); finishCall(); });
+          call.on("reject", () => { reportCallEvent('rejected', call); finishCall(); });
           call.on("error", (callError) => {
+            reportCallEvent('call_error', call, { errorCode: callError?.code });
             if (ownedCallRef.current !== call) return;
             setError(callError?.message || "Call failed");
             // Recoverable media/network errors are not a hang-up.
@@ -326,6 +360,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           // MediaStream. It can lag the accept event by a beat, so
           // retry briefly until Twilio exposes it.
           call.on("accept", () => {
+            reportCallEvent('accepted', call);
             if (ownedCallRef.current !== call) return;
             setConnectedAt(Date.now());
             setIsMuted(false);
@@ -346,21 +381,32 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
                 const message =
                   "Remote customer audio was not exposed by Twilio after 5 seconds; customer transcription cannot start.";
                 debugLog("[InboundCall]");
+                reportCallEvent('remote_audio_unavailable', call);
                 setError(message);
               }
             };
             grabStream();
           });
-          call.on("disconnect", finishCall);
+          call.on("disconnect", () => { reportCallEvent('disconnected', call); finishCall(); });
         });
 
         deviceRef.current = device;
         await device.register();
-        if (cancelled) { device.destroy(); return; }
+        if (cancelled) {
+          // Cleanup may already have retired this device to preserve a call
+          // while register() was still resolving. Do not destroy it here.
+          if (retiredDeviceRef.current === device && callIsLive()) {
+            reportCallEvent('registration_canceled', ownedCallRef.current, { reason: 'live_device_preserved', deviceSequence });
+            return;
+          }
+          destroyDevice(device, 'registration_canceled_idle');
+          return;
+        }
         connectAgentSocket(bundle);
         scheduleWebSocketRefresh();
       } catch (err) {
         if (cancelled) return;
+        reportCallEvent('registration_failed', ownedCallRef.current, { errorCode: err?.code });
         debugLog("[InboundCall] registration failed");
         setError(err?.message || "Softphone registration failed");
         setDeviceStatus("error");
@@ -382,8 +428,10 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       if (device) {
         // destroy() rejects ringing calls and hangs up live ones. A call already
         // on a retired device cannot be on this one.
-        if (callIsLive() && !retiredDeviceRef.current) retiredDeviceRef.current = device;
-        else device.destroy();
+        if (callIsLive() && !retiredDeviceRef.current) {
+          retiredDeviceRef.current = device;
+          reportCallEvent('device_retired', ownedCallRef.current, { reason: 'effect_cleanup_live', deviceSequence: deviceIds.get(device) });
+        } else destroyDevice(device, retiredDeviceRef.current ? 'effect_cleanup_unused_device' : 'effect_cleanup_idle');
       }
       if (!retiredDeviceRef.current) {
         ownedCallRef.current = null;
@@ -391,7 +439,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       }
       setDeviceStatus("offline");
     };
-  }, [registrationReady, agentId, fetchTokenBundle, connectAgentSocket, destroyRetiredDevice, callIsLive]);
+  }, [registrationReady, agentId, fetchTokenBundle, connectAgentSocket, destroyRetiredDevice, callIsLive, destroyDevice, reportCallEvent, reportVoiceEvent]);
 
   // Hydrate the contact record for the ringing/active call. Full PII
   // (name/phone/email/etc) is read via decrypt_pii — the agent needs
@@ -440,25 +488,28 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     // Streams start while the agent is ringing. Preserve a failure already
     // reported for this call; discard health left over from another call.
     setTranscriptionHealth(previous => transcriptionHealthForCall(previous, incomingCall.params?.inboundCallId));
+    reportCallEvent('accept_requested', incomingCall.call, { reason: 'agent_action' });
     incomingCall.call.accept();
     setActiveCall(incomingCall);
     setIncomingCall(null);
-  }, [incomingCall]);
+  }, [incomingCall, reportCallEvent]);
 
   const declineCall = useCallback(() => {
     if (!incomingCall || ownedCallRef.current !== incomingCall.call) return;
     ownedCallRef.current = null;
     callContinuity.end(incomingCall.call);
+    reportCallEvent('declined', incomingCall.call, { reason: 'agent_action' });
     incomingCall.call.reject();
     callInProgressRef.current = false;
     destroyRetiredDevice();
     setIncomingCall(null);
-  }, [incomingCall, destroyRetiredDevice]);
+  }, [incomingCall, destroyRetiredDevice, reportCallEvent]);
 
   const hangUp = useCallback(() => {
+    reportCallEvent('end_requested', activeCall?.call || dialingCall?.call, { reason: 'agent_action' });
     activeCall?.call?.disconnect();
     dialingCall?.call?.disconnect();
-  }, [activeCall, dialingCall]);
+  }, [activeCall, dialingCall, reportCallEvent]);
 
   // Outbound dial: global dial pad and contact click-to-call both land
   // here. The Voice SDK Device.connect() request is signed and routed
@@ -486,10 +537,12 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       };
 
       let call;
+      let dialingDevice;
       try {
         const policy = await checkOutbound(getToken, phoneNumber);
         if (policy.blocked) throw new Error("Do Not Call");
-        call = await deviceRef.current.connect({
+        dialingDevice = deviceRef.current;
+        call = await dialingDevice.connect({
           params: { PhoneNumber: phoneNumber, ContactId: contactId || "" },
         });
       } catch (err) {
@@ -499,6 +552,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         throw err;
       }
       outboundCallRef.current = call;
+      callDeviceIdsRef.current.set(call, deviceIdsRef.current.get(dialingDevice));
       ownedCallRef.current = call;
       callContinuity.replace(dialingClaim, call);
       setDialingCall({ call, params });
@@ -523,6 +577,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         }
       };
       call.on("accept", () => {
+        reportCallEvent('accepted', call);
         if (ownedCallRef.current !== call) return;
         // The audio call is already connected. Metadata/auth failures must never
         // hang it up or hide its controls; attribution stays empty until verified.
@@ -568,10 +623,11 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         destroyRetiredDevice();
         publishAudioLevel("customer", 0, { immediate: true });
       };
-      call.on("disconnect", finishCall);
-      call.on("cancel", finishCall);
-      call.on("reject", finishCall);
+      call.on("disconnect", () => { reportCallEvent('disconnected', call); finishCall(); });
+      call.on("cancel", () => { reportCallEvent('canceled', call); finishCall(); });
+      call.on("reject", () => { reportCallEvent('rejected', call); finishCall(); });
       call.on("error", (callError) => {
+        reportCallEvent('call_error', call, { errorCode: callError?.code });
         if (ownedCallRef.current !== call) return;
         debugLog("[OutboundCall] call error");
         setError(callError?.message || "Call failed");
@@ -580,7 +636,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
       return call;
     },
-    [getToken, destroyRetiredDevice]
+    [getToken, destroyRetiredDevice, reportCallEvent]
   );
 
   const sendDigits = useCallback(
