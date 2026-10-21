@@ -10,7 +10,7 @@ In **Agency Settings → Paragon state and carrier routing → Paragon vendor re
 
 The report URL is `/vendor/paragon?token=...`. The function authenticates and logs every GET, including failed attempts, and limits each IP to 30 requests per five minutes. Invalid, missing, revoked, and rate-limited tokens return 404. Browser and CSV responses are not cached and have a no-referrer policy. The page has no write controls.
 
-The database report requires both the exact active `Paragon Media` publisher source and an accepted Paragon ping matched to the Twilio call. Source tagging alone is insufficient on the shared DID. The report returns only the eight approved fields. Times and date boundaries use `America/New_York`. Billable means duration of at least 90 seconds. Daily totals use $28 per billable call. Historical source-tagged calls without a matched ping are excluded because their vendor identity cannot be proven.
+The database report requires both the exact active `Paragon Media` publisher source and an accepted Paragon ping matched to the Twilio call. Source tagging alone is insufficient on the shared DID. The report returns only the nine approved fields. Times and date boundaries use `America/New_York`. Billable means duration of at least 90 seconds. Daily totals use $28 per billable call. Historical source-tagged calls without a matched ping are excluded because their vendor identity cannot be proven.
 
 ## Daily disposition email
 
@@ -23,3 +23,7 @@ The `newgenhealthsolutions.com` domain was added to Resend with GoDaddy auto-con
 `RESEND_API_KEY` is stored in Netlify for **enrollgen → Production → Functions** and is never committed or placed in a `VITE_` variable. The production deploy must be refreshed after changing the key. Send one controlled test to `mike@newgenhealthsolutions.com` once the domain is verified.
 
 On 2026-10-01, a one-time dummy email from the production function to `mike@newgenhealthsolutions.com` was accepted by Resend (provider message ID `01a0f8b2-3b96-7ba3-86e6-6a9592c57a9a`). The temporary test endpoint was removed after the send. This confirms API acceptance; inbox delivery can be checked in Resend's email activity and Mike's inbox.
+
+## Vendor disposition fields
+
+The report page, CSV download, and daily CSV attachment normalize `enrolled` and ancillary sales to `disposition_category: sale`. `completed` is reported as `connected_no_sale`. Other categories, including pending verification and partial enrollment, keep their existing labels. The `app_written` column is `TRUE` exactly when the reported category is `sale`, and `FALSE` otherwise; it is derived from that category rather than a potentially stale stored flag. These mappings apply when a report is generated, including historical calls. Already-sent attachments are unchanged. No database migration is required.

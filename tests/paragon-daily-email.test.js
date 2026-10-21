@@ -47,7 +47,7 @@ test('daily attachment uses the report columns and logs the send', async () => {
   assert.equal(body.reply_to,'mike@newgenhealthsolutions.com');
   assert.deepEqual(body.to,['dispo@paragonmedia.io']);
   const csv = Buffer.from(body.attachments[0].content,'base64').toString();
-  assert.equal(csv.split('\r\n')[0],'call_id,received_at,caller_phone,caller_state,duration_seconds,billable,non_billable_reason,disposition_category');
+  assert.equal(csv.split('\r\n')[0],'call_id,received_at,caller_phone,caller_state,duration_seconds,billable,non_billable_reason,disposition_category,app_written');
   assert.ok(!csv.includes('SECRET'));
   assert.equal(events.find(([name]) => name === 'finish_paragon_report_email')[1].p_status,'sent');
 });
@@ -55,4 +55,29 @@ test('daily attachment uses the report columns and logs the send', async () => {
 test('only the 6 PM Eastern hour processes a day', async () => {
   const handler = createDailyHandler({now:() => new Date('2026-10-01T23:00:00Z'),makeDb:() => { throw Error('Unexpected database read'); }});
   assert.equal((await handler()).status,200);
+});
+
+test('daily CSV labels sales consistently and app_written is TRUE exactly for sales', async () => {
+  const cases = [
+    ['enrolled','sale','TRUE'],
+    ['sale','sale','TRUE'],
+    ['sale_ancillary','sale','TRUE'],
+    ['completed','connected_no_sale','FALSE'],
+    ['connected_no_sale','connected_no_sale','FALSE'],
+    ['enrolled_pending_verification','enrolled_pending_verification','FALSE'],
+    ['partial_enrollment','partial_enrollment','FALSE'],
+    ['not_interested','not_interested','FALSE'],
+    ['other','other','FALSE'],
+    [null,'','FALSE'],
+  ];
+  // Supply contradictory stored flags to verify they cannot leak into the CSV.
+  const {events} = await run(cases.map(([disposition,,flag]) => ({
+    ...fixture,disposition_category:disposition,app_written:flag !== 'TRUE',
+  })));
+  const body = events.find(([name]) => name === 'send')[1];
+  const rows = Buffer.from(body.attachments[0].content,'base64').toString().split('\r\n').slice(1);
+  assert.equal(rows.length,cases.length);
+  cases.forEach(([,category,flag],index) => {
+    assert.ok(rows[index].endsWith(`,"${category}","${flag}"`),rows[index]);
+  });
 });

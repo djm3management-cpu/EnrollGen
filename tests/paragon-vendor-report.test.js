@@ -34,12 +34,12 @@ test('CSV and page expose only approved columns', async () => {
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'test';
   process.env.SUPABASE_URL = 'https://example.supabase.co';
   try {
-    const row = {call_id:'vendor-1',received_at:'2026-10-01T14:00:00Z',caller_phone:'+15551234567',caller_state:'FL',duration_seconds:100,billable:'yes',non_billable_reason:null,disposition_category:'completed',name:'PRIVATE_NAME',notes:'PRIVATE_NOTES',transcript:'PRIVATE_TRANSCRIPT',recording_url:'PRIVATE_RECORDING'};
+    const row = {call_id:'vendor-1',received_at:'2026-10-01T14:00:00Z',caller_phone:'+15551234567',caller_state:'FL',duration_seconds:100,billable:'yes',non_billable_reason:null,disposition_category:'completed',app_written:true,name:'PRIVATE_NAME',notes:'PRIVATE_NOTES',transcript:'PRIVATE_TRANSCRIPT',recording_url:'PRIVATE_RECORDING'};
     const handler = createHandler(() => ({rpc(name) {
       if (name === 'authorize_paragon_report') return Promise.resolve({data:'source-id',error:null});
       if (name==='paragon_report_totals') return Promise.resolve({data:[{day:'2026-10-01',calls:1,billable:1,amount_due:28}],error:null});
       assert.equal(name,'paragon_vendor_report');
-      return {range() { return Promise.resolve({data:[row],error:null}); }};
+      return {range() { return Promise.resolve({data:[row,{...row,call_id:'vendor-2',disposition_category:'enrolled',app_written:false}],error:null}); }};
     }}));
     for (const format of ['', '&format=csv']) {
       const response = await handler(request(`?token=${token}&start=2026-10-01&end=2026-10-01${format}`));
@@ -47,7 +47,13 @@ test('CSV and page expose only approved columns', async () => {
       const body = await response.text();
       for (const secret of ['PRIVATE_NAME','PRIVATE_NOTES','PRIVATE_TRANSCRIPT','PRIVATE_RECORDING']) assert.ok(!body.includes(secret));
       if (format) {
-        assert.equal(body.split('\r\n')[0],'call_id,received_at,caller_phone,caller_state,duration_seconds,billable,non_billable_reason,disposition_category');
+        assert.equal(body.split('\r\n')[0],'call_id,received_at,caller_phone,caller_state,duration_seconds,billable,non_billable_reason,disposition_category,app_written');
+        assert.ok(body.includes(',"connected_no_sale","FALSE"'));
+        assert.ok(body.includes(',"sale","TRUE"'));
+      } else {
+        assert.ok(body.includes('<th>app_written</th>'));
+        assert.ok(body.includes('<td>connected_no_sale</td><td>FALSE</td>'));
+        assert.ok(body.includes('<td>sale</td><td>TRUE</td>'));
       }
     }
   } finally { if (previous === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previous; if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl; }
