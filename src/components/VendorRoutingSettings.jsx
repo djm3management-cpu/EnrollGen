@@ -70,10 +70,9 @@ export default function VendorRoutingSettings({ getToken }) {
     <div className="tenant-settings-card vendor-routing__report">
       <div className="tenant-settings-section-title">Hours and billing</div>
       <p className="tenant-settings-muted">Eastern Time. Accepted pings remain valid for calls arriving within 30 seconds. Existing calls continue after closing.</p>
-      {!billing_ready && <p className="billing-alert">Hours, cap and rate become editable after migration 067.</p>}
-      {counter && <p className={controls?.paragon_daily_cap != null && counter.billable_count>=controls.paragon_daily_cap ? 'billing-alert' : 'tenant-settings-muted'}>
-        {counter.billable_count} / {controls?.paragon_daily_cap ?? 'no cap'} billable today · ${Number(counter.amount_due).toFixed(2)}
-        {controls?.paragon_daily_cap != null && counter.billable_count>=controls.paragon_daily_cap ? (controls.paragon_cap_mode==='soft' ? ' · Soft cap reached; accepting calls' : ' · Hard cap reached; new pings blocked') : ''}
+      {!billing_ready && <p className="billing-alert">Hours and rate become editable after migration 067.</p>}
+      {counter && <p className="tenant-settings-muted">
+        {counter.billable_count} billable today · No daily call limit · ${Number(counter.amount_due).toFixed(2)}
       </p>}
       {['mon','tue','wed','thu','fri','sat','sun'].map(day => {
         const cfg=controls?.staffed_hours?.days?.[day] || {enabled:false,start:'10:15',end:'17:15'};
@@ -85,10 +84,8 @@ export default function VendorRoutingSettings({ getToken }) {
         </div>;
       })}
       <div className="tenant-settings-inline">
-        <label>Daily billable cap (blank = unlimited) <input type="number" min="1" value={controls?.paragon_daily_cap ?? ''} disabled={!billing_ready || saving} onChange={event=>setData(current=>({...current,controls:{...current.controls,paragon_daily_cap:event.target.value===''?null:Number(event.target.value)}}))} /></label>
-        <label>Cap mode <select value={controls?.paragon_cap_mode || 'soft'} disabled={!billing_ready || saving} onChange={event=>setData(current=>({...current,controls:{...current.controls,paragon_cap_mode:event.target.value}}))}><option value="soft">Soft — counter and alert</option><option value="hard">Hard — stop new pings</option></select></label>
         <label>Rate per billable call ($) <input type="number" min="0.01" step="0.01" value={controls?.paragon_rate ?? 28} disabled={!billing_ready || saving} onChange={event=>setData(current=>({...current,controls:{...current.controls,paragon_rate:Number(event.target.value)}}))} /></label>
-        <button className="billing-button is-primary" type="button" disabled={!billing_ready || saving} onClick={()=>save({action:'controls',staffed_hours:controls.staffed_hours,daily_cap:controls.paragon_daily_cap,cap_mode:controls.paragon_cap_mode,rate:Number(controls.paragon_rate)})}>Save hours and billing</button>
+        <button className="billing-button is-primary" type="button" disabled={!billing_ready || saving} onClick={()=>save({action:'controls',staffed_hours:controls.staffed_hours,rate:Number(controls.paragon_rate)})}>Save hours and billing</button>
       </div>
     </div>
     <div className="vendor-routing__config">

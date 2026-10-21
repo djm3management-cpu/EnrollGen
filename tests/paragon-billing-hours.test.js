@@ -174,7 +174,9 @@ test('lease fencing, provider conflicts, missing evidence and retry preserve fin
 });
 test('settings validate, are audited, and cannot alter eligibility; private ledger/RPCs deny browser roles',async()=>{
  const valid={staffed_hours:standard,daily_cap:'',cap_mode:'soft',rate:28};assert.equal(validateParagonControls(valid).cap,null);
- for(const bad of [{...valid,rate:0},{...valid,cap_mode:'wall'},{...valid,daily_cap:-1},{...valid,staffed_hours:{}}])assert.throws(()=>validateParagonControls(bad));
+ for(const bad of [{...valid,rate:0},{...valid,staffed_hours:{}}])assert.throws(()=>validateParagonControls(bad));
+ assert.deepEqual(validateParagonControls({...valid,daily_cap:20,cap_mode:'hard'}),{hours:standard,cap:null,mode:'soft',rate:28});
+ assert.deepEqual(validateParagonControls({staffed_hours:standard,rate:28}),{hours:standard,cap:null,mode:'soft',rate:28});
  const before=await sql('SELECT count(*) n FROM vendor_agent_state_eligibility');
  await sql('SELECT set_paragon_controls($1,$2,$3,$4,$5,$6)',[T,JSON.stringify(standard),20,'soft',28,'test-admin']);
  assert.equal((await sql('SELECT count(*) n FROM vendor_agent_state_eligibility'))[0].n,before[0].n);
@@ -252,4 +254,17 @@ test('ancillary products require a valid type and map to sale in Paragon reports
  await pg.exec("INSERT INTO call_transcripts(disposition) VALUES('sale_ancillary')");
  const existing=(await sql("INSERT INTO call_records(tenant_id,call_outcome) VALUES($1,'enrolled') RETURNING id",[T]))[0].id;
  assert.ok(existing);
+});
+
+test('removing the daily cap preserves every other control and is idempotent',async()=>{
+ await sql('UPDATE vendor_controls SET paragon_daily_cap=20 WHERE tenant_id=$1',[T]);
+ const before=(await sql('SELECT * FROM vendor_controls WHERE tenant_id=$1',[T]))[0];
+ await pg.exec(migration('111_remove_paragon_daily_cap.sql'));
+ await pg.exec(migration('111_remove_paragon_daily_cap.sql'));
+ const after=(await sql('SELECT * FROM vendor_controls WHERE tenant_id=$1',[T]))[0];
+ assert.equal(after.paragon_daily_cap,null);
+ for(const key of Object.keys(before).filter(key=>!['paragon_daily_cap','updated_at','updated_by'].includes(key)))
+  assert.deepEqual(after[key],before[key],key);
+ const column=(await sql("SELECT column_default FROM information_schema.columns WHERE table_schema='public' AND table_name='vendor_controls' AND column_name='paragon_daily_cap'"))[0];
+ assert.equal(column.column_default,null);
 });

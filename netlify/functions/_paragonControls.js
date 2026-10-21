@@ -9,10 +9,10 @@ export function validateParagonControls(body) {
   if (item.enabled && (!/^([01]\d|2[0-3]):[0-5]\d$/.test(item.start || '') ||
     !/^([01]\d|2[0-3]):[0-5]\d$/.test(item.end || '') || item.start>=item.end)) throw new EvidenceError(400,'Opening time must precede closing time.');
  }
- const cap=body.daily_cap==='' || body.daily_cap===null ? null : body.daily_cap;
- if ((cap!==null && (!Number.isInteger(cap) || cap<=0)) || !['soft','hard'].includes(body.cap_mode) ||
-   !Number.isFinite(body.rate) || body.rate<=0 || body.rate>99999999.99 || Number(body.rate.toFixed(2))!==body.rate) throw new EvidenceError(400,'Invalid cap, mode or rate.');
- return {hours,cap,mode:body.cap_mode,rate:body.rate};
+ if (!Number.isFinite(body.rate) || body.rate<=0 || body.rate>99999999.99 || Number(body.rate.toFixed(2))!==body.rate) throw new EvidenceError(400,'Invalid rate.');
+ // Keep the legacy RPC signature compatible, but ignore cap settings from
+ // older browser tabs. Paragon has no daily call limit.
+ return {hours,cap:null,mode:'soft',rate:body.rate};
 }
 export async function paragonReportTotals(db, sourceId, start, end, calls) {
  const {data,error}=await db.rpc('paragon_report_totals',{p_source:sourceId,p_start:start,p_end:end});
