@@ -799,3 +799,14 @@
 .phone-disposition .ma-script-direction-select { width: 100%; }
 
 .phone-dd__badge--pending { background: var(--status-pending); }
+.phone-dd__disposition-pill {
+  margin-left: 6px;
+  border: 1px solid var(--phone-border);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--status-pending);
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.phone-dd__disposition-pill:disabled { opacity: 1; cursor: default; }

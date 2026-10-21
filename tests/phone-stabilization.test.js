@@ -87,6 +87,37 @@ test('real phone provider retains outbound dialing/live state on recoverable err
  }finally{harness.unmount();}
 });
 
+test('incoming reconciles a closed inbound or outbound leg without a rebuild, even during wrap-up',async()=>{
+ for(const outbound of [false,true]){
+  const {harness,devices,rotate}=phoneFixture();try{
+   await harness.flush();
+   const old=outbound?await harness.value.makeCall({phoneNumber:'+15555555555'}):new Call();
+   if(!outbound)devices[0].emit('incoming',old);
+   await harness.flush();
+   if(outbound)old.emit('accept');else harness.value.acceptCall();
+   await harness.flush();old.phase='closed'; // SDK closed without a terminal callback.
+   rotate();await harness.flush();
+   const next=new Call(NEXT);devices[0].emit('incoming',next);await harness.flush();
+   assert.equal(next.phase,'open');assert.equal(harness.value.incomingCall.call,next);
+   assert.equal(harness.value.activeCall,null);assert.equal(harness.value.dialingCall,null);
+   old.emit('disconnect');await harness.flush();assert.equal(harness.value.incomingCall.call,next);
+   harness.value.acceptCall();await harness.flush();assert.equal(harness.value.activeCall.call,next);
+  }finally{harness.unmount();}
+ }
+});
+
+test('only a concurrent call or explicit decline rejects; wrap-up alone rings and repeated incoming is harmless',async()=>{
+ const {harness,devices,rotate}=phoneFixture();try{
+  await harness.flush();rotate();await harness.flush();
+  const first=new Call();devices[0].emit('incoming',first);devices[0].emit('incoming',first);await harness.flush();
+  assert.equal(first.phase,'open');assert.equal(harness.value.incomingCall.call,first);
+  const busy=new Call(NEXT);devices[0].emit('incoming',busy);assert.equal(busy.phase,'closed');
+  harness.value.declineCall();await harness.flush();assert.equal(first.phase,'closed');assert.equal(harness.value.hasCallInProgress(),false);
+  const next=new Call(NEXT);devices[0].emit('incoming',next);await harness.flush();assert.equal(next.phase,'open');
+  next.reject();await harness.flush();assert.equal(harness.value.hasCallInProgress(),false);
+ }finally{harness.unmount();}
+});
+
 test('disposition requires a terminal owned leg and no ringing, dialing, live or SDK-reserved call; late SID metadata cannot remount cockpit',()=>{
  const task={ended_at:new Date().toISOString(),agent_leg_sid:SID};assert.equal(mayShowCallDisposition({},false,task),true);
  for(const phone of [{activeCall:{}},{incomingCall:{}},{dialingCall:{}},{hasCallInProgress:()=>true}]){assert.equal(phoneHasInProgressCall(phone),true);assert.equal(mayShowCallDisposition(phone,false,task),false);}
@@ -96,14 +127,15 @@ test('disposition requires a terminal owned leg and no ringing, dialing, live or
 
 const task={call_sid:SID,session_id:'session',agent_leg_sid:NEXT,ended_at:'2026-10-20T15:00:00Z',connected_seconds:60};
 function boxFixture({seconds=60,deferLookup=false}={}){
- const harness=hookHarness(),requests=[],events=[];let phone={},lookupResolve,reopen;
+ const harness=hookHarness(),requests=[],events=[],visibility=[],savedCallSids=[];let phone={},lookupResolve,reopen,latestTask=task;
+ const onVisibleChange=value=>visibility.push(value);
  let source=stripImports(readFileSync(new URL('../src/components/phone/CallDispositionBox.jsx',import.meta.url),'utf8')).replace('export default function','function');
  source=transformSync(source,{loader:'jsx',jsxFactory:'h',jsxFragment:'fragment',format:'cjs'}).code;
  const context=vm.createContext({...harness.hooks,h:(type,props,...children)=>({type,props:props||{},children}),X:'x',ChevronDown:'chevron',fragment:'fragment',
   CALL_OUTCOME_OPTIONS:[],ANCILLARY_PRODUCT_OPTIONS:[],phoneHasInProgressCall,mayShowCallDisposition,
   useAppAuth:()=>({getToken:token}),setActivePostCallMetadata:()=>{},
-  fetchWithClerk:async(_token,_url,options)=>{requests.push(options?.method||'GET');if(options?.method==='POST')return{ok:true,json:async()=>({saved:true,session_id:'session',call_outcome:JSON.parse(options.body).call_outcome})};
-   if(deferLookup)await new Promise(resolve=>{lookupResolve=resolve;});return{ok:true,json:async()=>({in_progress:false,disposition:{...task,connected_seconds:seconds}})};},
+  fetchWithClerk:async(_token,_url,options)=>{requests.push(options?.method||'GET');if(options?.method==='POST'){savedCallSids.push(JSON.parse(options.body).call_sid);return{ok:true,json:async()=>({saved:true,session_id:'session',call_outcome:JSON.parse(options.body).call_outcome})};}
+   if(deferLookup)await new Promise(resolve=>{lookupResolve=resolve;});return{ok:true,json:async()=>({in_progress:false,disposition:{...latestTask,connected_seconds:seconds}})};},
   setInterval:()=>1,clearInterval(){},window:{dispatchEvent:event=>events.push(event)},CustomEvent:class{constructor(name,{detail}){this.type=name;this.detail=detail;}},
  });
  function token(){return Promise.resolve('');}
@@ -111,9 +143,9 @@ function boxFixture({seconds=60,deferLookup=false}={}){
  harness.mount(()=>{
   const [collapsed,setCollapsed]=harness.hooks.useState(false);
   reopen=()=>setCollapsed(false);
-  return context.component({phone,collapsed,onCollapsedChange:setCollapsed});
+  return context.component({phone,collapsed,onCollapsedChange:setCollapsed,onVisibleChange});
  });
- return{harness,requests,events,reopen:()=>reopen(),beginCall(){phone={activeCall:{call:{}}};harness.render();},resolveLookup(){lookupResolve();}};
+ return{harness,requests,events,visibility,savedCallSids,reopen:()=>reopen(),beginCall(){phone={incomingCall:{call:{}}};harness.render();},endCall(){latestTask={...task,call_sid:NEXT,session_id:'next-session'};phone={};harness.render();},resolveLookup(){lookupResolve();}};
 }
 const find=(tree,predicate)=>!tree||typeof tree!=='object'?null:predicate(tree)?tree:tree.children?.flat(Infinity).map(child=>find(child,predicate)).find(Boolean);
 
@@ -131,6 +163,18 @@ test('X collapses the actual dialer box without saving or dismissing; reopen and
 test('late disposition lookup during a new live call cannot show a box or auto-dispose that call',async()=>{
  const {harness,requests,beginCall,resolveLookup}=boxFixture({seconds:14,deferLookup:true});try{
  beginCall();resolveLookup();await harness.flush();assert.equal(harness.value,null);assert.equal(requests.filter(x=>x==='POST').length,0);
+ }finally{harness.unmount();}
+});
+
+test('pending disposition and selected outcome survive a new ringing call without saving',async()=>{
+ const {harness,requests,visibility,savedCallSids,beginCall,endCall}=boxFixture();try{
+  await harness.flush();find(harness.value,node=>node.type==='select').props.onChange({target:{value:'callback_scheduled'}});await harness.flush();
+  const save=find(harness.value,node=>node.type==='button'&&node.children.includes('Save disposition')).props.onClick;
+  beginCall();await harness.flush();assert.equal(harness.value,null);assert.equal(visibility.at(-1),true,'pending pill remains available to the parent');
+  save();await harness.flush();assert.equal(requests.filter(x=>x==='POST').length,0);
+  endCall();await harness.flush();assert.equal(find(harness.value,node=>node.type==='select').props.value,'callback_scheduled');
+  find(harness.value,node=>node.type==='button'&&node.children.includes('Save disposition')).props.onClick();await harness.flush();
+  assert.equal(requests.filter(x=>x==='POST').length,1);assert.deepEqual(savedCallSids,[SID],'the original pending task is saved after the newer call');
  }finally{harness.unmount();}
 });
 
@@ -153,5 +197,42 @@ test('idle lock consults the immediate SDK call guard, never accrues call time, 
  live=false;now+=15000;check();await harness.flush();assert.equal(harness.value.props.value.locked,false);
  now+=61*60*1000;check();await harness.flush();assert.equal(harness.value.props.value.locked,true);
  live=true;harness.render();assert.equal(harness.value.props.value.locked,false);
+ }finally{harness.unmount();}
+});
+
+test('phone dropdown collapses pending disposition to a pill through ringing and live calls, then reopens it',async()=>{
+ const harness=hookHarness();let phone={enabled:true};
+ let source=stripImports(readFileSync(new URL('../src/components/phone/PhoneDropdown.jsx',import.meta.url),'utf8')).replace('export default function','function');
+ source=transformSync(source,{loader:'jsx',jsxFactory:'h',format:'cjs'}).code;
+ const context=vm.createContext({...harness.hooks,h:(type,props,...children)=>({type,props:props||{},children}),
+  useInboundCall:()=>phone,Phone:'phone',IncomingCallToast:'toast',ActiveCallBar:'bar',ActiveCallExpanded:'expanded',DialerPanel:'dialer',CallDispositionBox:'disposition',OPEN_DIALER_EVENT:'open',
+  window:{addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},
+ });
+ vm.runInContext(source+';globalThis.component=PhoneDropdown;',context);
+ harness.mount(()=>context.component({}));try{
+  const box=()=>find(harness.value,node=>node.type==='disposition');
+  const pill=()=>find(harness.value,node=>node.props.className?.includes('phone-dd__disposition-pill'));
+  box().props.onVisibleChange(true);await harness.flush();assert.equal(box().props.collapsed,false);
+  phone={enabled:true,incomingCall:{call:{}}};harness.render();await harness.flush();
+  assert.equal(box().props.collapsed,true);assert.equal(pill().props.disabled,true);
+  assert.equal(find(harness.value,node=>node.props.role==='dialog').props.hidden,true);
+  assert.ok(find(harness.value,node=>node.type==='toast'),'incoming toast remains mounted');
+  phone={enabled:true,activeCall:{call:{},params:{paragon:'true'}}};harness.render();await harness.flush();
+  assert.equal(pill().props.disabled,true);assert.equal(box().props.collapsed,true);
+  phone={enabled:true};harness.render();await harness.flush();assert.equal(pill().props.disabled,false);
+  pill().props.onClick();await harness.flush();assert.equal(box().props.collapsed,false);
+  assert.equal(find(harness.value,node=>node.props.role==='dialog').props.hidden,false);
+ }finally{harness.unmount();}
+});
+
+test('an outbound connect reservation still protects against a simultaneous inbound call',async()=>{
+ const {harness,devices}=phoneFixture();try{
+  await harness.flush();
+  const connecting=harness.value.makeCall({phoneNumber:'+15555555555'});
+  const incoming=new Call();devices[0].emit('incoming',incoming);
+  assert.equal(incoming.phase,'closed','an actual outbound connection in flight is busy');
+  const outgoing=await connecting;await harness.flush();assert.equal(harness.value.dialingCall.call,outgoing);
+  outgoing.disconnect();await harness.flush();
+  const next=new Call();devices[0].emit('incoming',next);await harness.flush();assert.equal(next.phase,'open');
  }finally{harness.unmount();}
 });

@@ -24,8 +24,14 @@ export default function PhoneDropdown({ onOpenMessages }) {
   const rootRef = useRef(null);
 
   const hasCall = Boolean(inbound?.activeCall || inbound?.dialingCall);
-  const pendingDisposition = dispositionPending && !hasCall && !inbound?.incomingCall;
-  const panelOpen = isOpen || (pendingDisposition && !dispositionCollapsed);
+  const callInProgress = hasCall || Boolean(inbound?.incomingCall);
+  const pendingDisposition = dispositionPending;
+  const panelOpen = isOpen || (pendingDisposition && !dispositionCollapsed && !callInProgress);
+
+  useEffect(() => {
+    if (callInProgress) setDispositionCollapsed(true);
+    if (inbound?.incomingCall) setIsOpen(false);
+  }, [callInProgress, inbound?.incomingCall]);
 
   useEffect(() => {
     const openPrefilledDialer = (event) => {
@@ -94,6 +100,15 @@ export default function PhoneDropdown({ onOpenMessages }) {
       </button>
 
       <IncomingCallToast />
+
+      {pendingDisposition && (dispositionCollapsed || callInProgress) ? (
+        <button type="button" className="top-bar-settings-button phone-dd__disposition-pill"
+          disabled={callInProgress}
+          onClick={() => { setDispositionCollapsed(false); setIsOpen(false); }}
+          title={callInProgress ? "Finish disposition after this call" : "Finish disposition"}>
+          Disposition pending
+        </button>
+      ) : null}
 
       {hasCall && !isOpen ? <ActiveCallBar onExpand={() => setIsOpen(true)} /> : null}
 

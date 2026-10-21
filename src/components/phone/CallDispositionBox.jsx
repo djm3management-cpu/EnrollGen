@@ -41,7 +41,9 @@ export default function CallDispositionBox({phone,onVisibleChange,collapsed=fals
     const result=await response.json();if(!response.ok)throw new Error(result.error||'Disposition lookup failed.');
     if(stopped || phoneHasInProgressCall(phoneRef.current))return;
     setServerInProgress(Boolean(result.in_progress));
-    setTask(previous=>previous?.call_sid===result.disposition?.call_sid?previous:result.disposition);
+    // Finish the displayed task first, even if the next call has completed
+    // and GET now offers a newer task. POST saves by this task's explicit SID.
+    if(!result.in_progress)setTask(previous=>previous||result.disposition);
    }catch{ /* A lookup failure must not interrupt or navigate a call. */ }
    finally{pending=false;}
   };
@@ -50,7 +52,10 @@ export default function CallDispositionBox({phone,onVisibleChange,collapsed=fals
  },[getToken,live]);
  useEffect(()=>{setOutcome('');onCollapsedChange?.(false);setError('');},[task?.call_sid,onCollapsedChange]);
  const visible=mayShowCallDisposition(phone,serverInProgress,task);
- useEffect(()=>{onVisibleChange?.(visible);},[visible,onVisibleChange]);
+ // Keep the pending indicator and selected outcome while a new call takes
+ // priority. The full form and saving still require an idle phone.
+ const pending=Boolean(task?.ended_at && task?.agent_leg_sid);
+ useEffect(()=>{onVisibleChange?.(pending);},[pending,onVisibleChange]);
  useEffect(()=>{
   if(!visible || task.connected_seconds>=15 || automaticAttempts.current.has(task.call_sid))return;
   automaticAttempts.current.add(task.call_sid);

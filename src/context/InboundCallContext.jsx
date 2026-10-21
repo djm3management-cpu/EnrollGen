@@ -105,6 +105,16 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       ownedCallRef.current = null;
       callContinuity.end(owned);
       callInProgressRef.current = false;
+      outboundCallRef.current = null;
+      setIncomingCall(null);
+      setActiveCall(null);
+      setDialingCall(null);
+      setRemoteStream(null);
+      setContact(null);
+      setConnectedAt(null);
+      setIsMuted(false);
+      setIsHeld(false);
+      publishAudioLevel("customer", 0, { immediate: true });
     }
     return callInProgressRef.current;
   }, []);
@@ -279,7 +289,11 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           await refreshTokens({ reason: "Twilio", device });
         });
         device.on("incoming", (call) => {
-          if (callInProgressRef.current) { call.reject(); return; }
+          if (ownedCallRef.current === call) return;
+          // Only an actual ringing/dialing/live call (including an outbound
+          // connect in flight) can be busy. Disposition and availability never
+          // gate delivery. Reconcile missed terminal events before deciding.
+          if (callIsLive()) { call.reject(); return; }
           callInProgressRef.current = true;
           ownedCallRef.current = call;
           callContinuity.begin(call);
@@ -301,6 +315,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
             publishAudioLevel("customer", 0, { immediate: true });
           };
           call.on("cancel", finishCall);
+          call.on("reject", finishCall);
           call.on("error", (callError) => {
             if (ownedCallRef.current !== call) return;
             setError(callError?.message || "Call failed");

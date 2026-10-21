@@ -125,7 +125,7 @@ async function attachCountyStarRatings(rows) {
     }
     return applyCountyStarRatings(rows, ratings);
   } catch {
-    debugLog('County star rating fetch unavailable');
+    debugLog("County star rating fetch unavailable");
     return rows;
   }
 }
