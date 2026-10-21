@@ -104,7 +104,7 @@ test('live endpoint has a smaller output cap and live surfaces do not mount a sc
   assert.match(read('netlify/functions/coach.js'), /max_completion_tokens: 768/);
   const flow = read('src/components/ScriptFlow.jsx');
   assert.doesNotMatch(flow, /useComplianceScoringWorker|<ComplianceDashboard|result\.score/);
-  assert.doesNotMatch(read('src/App.jsx'), /<ComplianceMini|<ComplianceDashboard/);
+  assert.doesNotMatch(read('src/App.jsx'), /<ComplianceDashboard/);
   for (const filename of Object.values(engineFiles)) assert.doesNotMatch(read(`src/hooks/${filename}.js`), /complianceScore|calculateServerGrade|buildPeriodicFallbackMessage/);
 });
 
@@ -132,4 +132,24 @@ test('ancillary live analysis uses helpful next steps instead of numeric scores'
   const ancillary = read('src/flows/ancillary/AncillaryFlow.jsx');
   const live = ancillary.slice(ancillary.indexOf('function AncillaryCopilot('), ancillary.indexOf('function AncillaryCopilot(') + 7000);
   assert.doesNotMatch(live.slice(0, live.indexOf('function ', 10)), /complianceScore|score is/);
+});
+
+test('bottom-left footer remains Compliance Mini; Ask stays in the right-hand rail', () => {
+  const app = read('src/App.jsx');
+  const footer = app.slice(app.indexOf('function LeftRailCompliance()'), app.indexOf('function SessionSummarySlot()'));
+  const code = transformSync(footer, { loader: 'jsx', jsxFactory: 'element', format: 'cjs' }).code;
+  const liveCall = { transcript: 'Agent transcript', activeSection: 6, complianceResult: null };
+  const render = vm.runInNewContext(code + ';LeftRailCompliance', {
+    useLiveCall: () => ({ liveCall }), ComplianceMini: 'ComplianceMini',
+    CollapsibleWidget: 'CollapsibleWidget', ShieldCheck: 'ShieldCheck',
+    element: (type, props, ...children) => ({ type, props, children }),
+  });
+  const tree = render();
+  assert.equal(tree.props.title, 'Compliance');
+  assert.equal(tree.children[0].type, 'ComplianceMini');
+  assert.equal(tree.children[0].props.transcript, liveCall.transcript);
+  assert.equal(tree.children[0].props.activeSection, 6);
+  assert.doesNotMatch(footer, /AskCopilotMini|title="Co-Pilot"/);
+  assert.match(read('src/components/CompactCopilotRail.jsx'), /<AskCopilotMini/);
+  assert.match(read('src/components/ScriptFlow.jsx'), /<AskCopilotMini/);
 });

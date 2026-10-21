@@ -26,7 +26,7 @@ The shared core emits one local, batched disclosure checklist at presentation/en
 
 Ancillary rule-based Analyze messages also give next-step help instead of numeric scores; their repeated per-step disclosure nag is removed. No LLM requests were added for ancillary products.
 
-Live score calculations in the four LLM hooks, the MA scoring worker mount and live score dashboards are removed. The static compliance reference remains accessible. Existing post-sale scoring is untouched.
+Live score calculations in the four LLM hooks, the MA scoring worker mount and the full live score dashboard are removed. The separate Compliance Mini widget is restored in the bottom-left footer; Ask Co-Pilot remains in the right-hand rail. The static compliance reference remains accessible. Existing post-sale scoring is untouched.
 
 Drug/provider help uses verified existing context and directs exact drug/dose/form/pharmacy or provider/location/plan-network verification to Sunfire or the carrier. This change does not add an external live formulary/network integration.
 
@@ -58,3 +58,5 @@ Before/after prompt tokens below use the same synthetic context and both common 
 - Full app suite: 459/460 pass. The existing `tests/housekeeping.test.js` static-diagnostics assertion fails in unchanged `src/lib/sepCms.js` (8 diagnostic occurrences versus 7 matches). The final ancillary-message change is covered by the later targeted run.
 - `npm run lint`, `npm run build` and `git diff --check` pass.
 - No database changes, rescoring, model evaluation requests or manual production deployment.
+
+Layout correction (2026-10-21): the retune mistakenly replaced the separate bottom-left Compliance Mini with Co-Pilot placeholder text. Restored the original Compliance Mini component and live-call props, while keeping Ask in its existing right-hand rail. Nineteen assistant/layout tests and targeted lint pass.

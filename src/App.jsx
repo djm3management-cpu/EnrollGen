@@ -38,6 +38,7 @@ import { useAppAuth } from "./context/AuthContext";
 import { fetchWithClerk } from "./lib/clerkFetch";
 import { BookOpen, SquareTerminal, Sun, TableProperties, ShieldCheck } from "lucide-react";
 import CollapsibleWidget from "./components/CollapsibleWidget";
+import ComplianceMini from "./components/ComplianceMini";
 import { useTheme } from "./context/ThemeContext";
 import {
   LeftRail,
@@ -400,9 +401,15 @@ class PanelErrorBoundary extends Component {
 }
 
 function LeftRailCompliance() {
+  const { liveCall } = useLiveCall();
+
   return (
-    <CollapsibleWidget title="Co-Pilot" icon={<ShieldCheck size={11} />}>
-      <p>Ask Co-Pilot for next-step help, benefits, objections, or drug and provider lookup guidance.</p>
+    <CollapsibleWidget title="Compliance" icon={<ShieldCheck size={11} />}>
+      <ComplianceMini
+        transcript={liveCall.transcript}
+        activeSection={liveCall.activeSection}
+        result={liveCall.complianceResult}
+      />
     </CollapsibleWidget>
   );
 }
