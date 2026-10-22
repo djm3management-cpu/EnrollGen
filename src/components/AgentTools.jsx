@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { DUAL_LIS_SEP_QUIZ } from "../data/dualLisSepQuiz.js";
 import PrivatePlanPanel from "./PrivatePlanPanel";
-import SEPGuide2026 from "./SEPGuide2026";
 import CarrierQuickRef from "./CarrierQuickRef";
 import ScriptEditor from "./ScriptEditor";
 import AgentToolsProductQuiz, {
@@ -141,13 +140,6 @@ const TOOL_GROUPS = [
         title: "MA SEPs",
         description: "Internal SEP script, qualifying events, and enrollment window guidance.",
         icon: <RotateCw size={16} />,
-      },
-      {
-        id: "sep-guide-2026",
-        title: "2026 SEP Guide",
-        description: "State-by-state INT, PAP, CSNP, and DST guide with mandatory disclosures and bonus tracking.",
-        icon: <BookOpen size={16} />,
-        color: "var(--info)",
       },
     ],
   },
@@ -761,8 +753,6 @@ export default function AgentTools() {
         return <CarrierQuickRef />;
       case "ma-seps":
         return <SEPReference script={NGHS_SEP_SCRIPT} />;
-      case "sep-guide-2026":
-        return <SEPGuide2026 />;
       case "script-editor":
         return <ScriptEditor />;
       case "dual-lis-sep-quiz":
