@@ -18346,6 +18346,19 @@ body[data-bg-mode="classic"] .viewport-bg {
 .app-workspace:has(.contacts-views--opportunities) { padding-inline: clamp(12px, 1.6vw, 24px) !important; }
 .app-center:has(.contacts-views--opportunities) { width: 100% !important; max-width: none !important; min-width: 0; }
 .contacts-subviews { margin-bottom: 12px; }
+.app-center:has(.contacts-views--calls) { width: 100%; max-width: none; min-width: 0; }
+.crm-call-card.msg-call-recording { grid-template-columns: minmax(0, 1fr); }
+.crm-call-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.crm-call-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; font-size: 11px; }
+.crm-call-meta > div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.crm-call-meta dt { color: var(--text-muted); }
+.crm-call-meta dd { margin: 0; }
+.crm-call-card .call-log-recording { display: flex; flex-wrap: wrap; gap: 6px; }
+.crm-call-card .call-log-recording audio { flex-basis: 100%; width: 100%; min-width: 0; }
+.crm-call-summary { padding: 12px; border-bottom: 1px solid var(--border-default); font-family: var(--font-mono); }
+.crm-call-summary .contacts-meta-list { margin: 8px 0 0; }
+.crm-call-summary dd { overflow-wrap: anywhere; }
+.call-log-contact-link { text-decoration: none; }
 .opps-view { display: flex; flex-direction: column; gap: 16px; min-width: 0; width: 100%; max-width: none; color: var(--text-primary); font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; }
 .opps-header, .opps-filters, .opps-board { width: 100%; min-width: 0; box-sizing: border-box; }
 .opps-header, .opps-actions, .opps-section-head, .opps-drawer-summary { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

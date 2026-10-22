@@ -1,8 +1,7 @@
 import CallRecordDetailsEditor from "./CallRecordDetailsEditor";
 import { debugLog } from "../../lib/debugLog.js";
-import { useAuth } from "@clerk/clerk-react";
-import { loadCallLog, loadCallLogPages } from "../../lib/callLogApi";
-import { recordingMedia, recordingTarget, downloadRecordingUrl } from "../../lib/recordingsApi";
+import { useAppAuth } from "../../context/AuthContext";
+import { loadCallLogPages } from "../../lib/callLogApi";
 import RecordingPanel from "../callDetail/RecordingPanel";
 import MissingRecordings from "./MissingRecordings";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -11,89 +10,19 @@ import { redactSensitiveText } from "../../lib/redaction";
 import { CALL_OUTCOME_OPTIONS } from "../../lib/postCallPipeline";
 import { ANCILLARY_PRODUCT_OPTIONS, buildCallOutcomePatch } from "../../lib/ancillarySale.js";
 import CallDetailPanel from "../callDetail/CallDetailPanel";
-import ComplianceReviewModal, { COMPLIANCE_WARNING_THRESHOLD } from "../callDetail/ComplianceReviewModal";
+import ComplianceReviewModal from "../callDetail/ComplianceReviewModal";
 import { CreateOpportunityButton } from "../opportunities/ContactOpportunities";
 
+import { useCallLogRows } from "../../hooks/useCallLogRows";
+import { formatCallDateTime as fmtDateTime, formatTalk as fmtDuration } from "../../lib/callPresentation";
+import { crmPath } from "../../lib/crmRoutes";
+import { CallDirection, ComplianceChip, DispositionChip, RecordingCell } from "./CallRowParts";
 import { callsCsv, downloadCsv } from "../../lib/csv";
 
 const ENROLLED_OUTCOMES = new Set(["enrolled", "enrolled_pending_verification"]);
 const PAGE_SIZE = 50;
 const DISPOSITION_FILTERS = ["ALL", "CONNECTED", "VOICEMAIL", "MISSED", "DECLINED"];
 const DIRECTION_FILTERS = ["ALL", "INBOUND", "OUTBOUND"];
-
-function fmtDateTime(value) {
-  if (!value) return "--";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "--";
-  return d.toLocaleString([], {
-    month: "2-digit",
-    day: "2-digit",
-    year: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function fmtDuration(seconds) {
-  if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return "--";
-  const total = Math.max(0, Math.round(Number(seconds)));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
-}
-
-function DispositionChip({ disposition }) {
-  const value = (disposition || "unknown").toLowerCase();
-  return <span className={`call-log-chip disposition-${value}`}>{value.toUpperCase()}</span>;
-}
-
-function ComplianceChip({ score }) {
-  if (score === null || score === undefined) return <span className="contacts-muted">--</span>;
-  const value = Math.round(Number(score));
-  const band = value >= 90 ? "high" : value >= 70 ? "mid" : "low";
-  return (
-    <span className={`call-log-chip compliance-${band}`}>
-      {value < COMPLIANCE_WARNING_THRESHOLD ? <span className="call-log-compliance-warning">⚠</span> : null}
-      {value}%
-    </span>
-  );
-}
-
-function RecordingCell({ row }) {
-  const { getToken } = useAuth();
-  const [error, setError] = useState("");
-  const [audioUrl, setAudioUrl] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const hasRecording = Boolean(row.recording_storage_path || row.recording_url);
-
-  const handlePlay = useCallback(async (download = false, provider = false) => {
-    if (audioUrl && !download && !provider) {
-      setAudioUrl(null);
-      return;
-    }
-    setLoading(true);
-    try {
-      setError("");
-      const grant = await recordingMedia(getToken, recordingTarget(row), { download, provider });
-      if (download) downloadRecordingUrl(grant.url, grant.filename);
-      else setAudioUrl({ url: grant.url, source: grant.source });
-    } catch (err) { setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [audioUrl, row, getToken]);
-
-  if (!hasRecording) return <span className="contacts-muted">--</span>;
-
-  return (
-    <span className="call-log-recording" onClick={(event) => event.stopPropagation()}>
-      <button type="button" className="contacts-mini-btn" onClick={() => handlePlay()} disabled={loading}>
-        {loading ? "..." : audioUrl ? "HIDE" : "▶ PLAY"}
-      </button>
-      <button type="button" className="contacts-mini-btn" onClick={() => handlePlay(true)} disabled={loading}>DOWNLOAD WAV</button>
-      {error ? <span className="ops-error" role="alert">{error}</span> : null}
-      {audioUrl ? <audio controls autoPlay preload="none" src={audioUrl.url} onError={() => { if (audioUrl.source === "storage") void handlePlay(false, true); else setError("Playback failed. Expand the call to download the retained Twilio copy."); }} /> : null}
-    </span>
-  );
-}
 
 function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient, onChanged }) {
   const [saving, setSaving] = useState(false);
@@ -120,6 +49,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
           .single();
         if (error) throw error;
         onChanged(value, patch.ancillary_product_type);
+        window.dispatchEvent(new Event('crm-calls-updated'));
       } catch (error) {
         if (value !== "sale_ancillary") {
           setSelectedOutcome(outcome || "");
@@ -325,14 +255,11 @@ function ExpandedRow({ row, supabaseClient }) {
 }
 
 export default function CallLogTab({ onOpenContact = null }) {
-  const { supabaseClient, loading: tenantLoading, error: tenantError } = useTenantConfig();
-  const { getToken } = useAuth();
+  const { supabaseClient } = useTenantConfig();
+  const { getToken } = useAppAuth();
   const [exporting, setExporting] = useState(false);
   const exportGeneration = useRef(0);
   const [showMissingRecordings, setShowMissingRecordings] = useState(false);
-  const [rows, setRows] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState(null);
@@ -345,48 +272,20 @@ export default function CallLogTab({ onOpenContact = null }) {
   const [directionFilter, setDirectionFilter] = useState("ALL");
   const [agentOptions, setAgentOptions] = useState(["ALL"]);
 
-  const load = useCallback(async () => {
-    if (!supabaseClient) {
-      if (!tenantLoading) {
-        setLoading(false);
-        setError(tenantError || "Workspace connection not ready. Reload the page.");
-      }
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const to = dateTo ? new Date(`${dateTo}T00:00:00`) : null;
-      if (to) to.setDate(to.getDate() + 1);
-      const { rows: data, count } = await loadCallLog(getToken, {
-        offset: page * PAGE_SIZE, limit: PAGE_SIZE,
-        from: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : null,
-        to: to?.toISOString(),
-        direction: directionFilter === "ALL" ? null : directionFilter.toLowerCase(),
-        disposition: dispositionFilter === "ALL" ? null : dispositionFilter.toLowerCase(),
-        agent: agentFilter === "ALL" ? null : agentFilter,
-        search: search.trim(),
-      });
-      setRows(data || []);
-      setTotalCount(count || 0);
-      setAgentOptions((prev) => {
-        const agents = new Set(prev.filter((value) => value !== "ALL"));
-        for (const row of data || []) {
-          if (row.agent) agents.add(row.agent);
-        }
-        return ["ALL", ...Array.from(agents).sort()];
-      });
-    } catch (err) {
-      debugLog("[CallLog] load failed");
-      setError(err.message || "Call log unavailable. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [getToken, supabaseClient, tenantLoading, tenantError, page, dateFrom, dateTo, directionFilter, dispositionFilter, agentFilter, search]);
-
+  const to = dateTo ? new Date(`${dateTo}T00:00:00`) : null;
+  if (to) to.setDate(to.getDate() + 1);
+  const { rows, count: totalCount, loading, error: loadError, refresh: load } = useCallLogRows({
+    offset: page * PAGE_SIZE, limit: PAGE_SIZE,
+    from: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : null,
+    to: to?.toISOString(),
+    direction: directionFilter === "ALL" ? null : directionFilter.toLowerCase(),
+    disposition: dispositionFilter === "ALL" ? null : dispositionFilter.toLowerCase(),
+    agent: agentFilter === "ALL" ? null : agentFilter,
+    search: search.trim(),
+  });
   useEffect(() => {
-    load();
-  }, [load]);
+    setAgentOptions(previous => [...new Set([...previous, ...rows.map(row => row.agent).filter(Boolean)])].sort((a, b) => a === "ALL" ? -1 : b === "ALL" ? 1 : a.localeCompare(b)));
+  }, [rows]);
 
   useEffect(() => {
     exportGeneration.current += 1;
@@ -471,7 +370,7 @@ export default function CallLogTab({ onOpenContact = null }) {
       </div>
 
       {showMissingRecordings ? <MissingRecordings /> : null}
-      {error ? <div className="ops-error">⚠ {error}</div> : null}
+      {error || loadError ? <div className="ops-error" role="alert">⚠ {error || loadError}</div> : null}
 
       <div className="contacts-table-wrap">
         <table className="contacts-table call-log-table">
@@ -480,7 +379,7 @@ export default function CallLogTab({ onOpenContact = null }) {
               <th>DATE/TIME</th>
               <th>DIR</th>
               <th>CONTACT</th>
-              <th>DURATION</th>
+              <th>TALK</th>
               <th>AGENT</th>
               <th>DISPOSITION</th>
               <th>RECORDING</th>
@@ -543,34 +442,38 @@ function FragmentRow({ row, isExpanded, isAlert, onToggle, onOpenContact, supaba
       <tr className={`call-log-row${isAlert ? " is-alert" : ""}${isExpanded ? " is-expanded" : ""}`} onClick={onToggle}>
         <td className="mono">{fmtDateTime(row.occurred_at)}</td>
         <td>
-          <span className={`call-log-direction is-${row.direction}`}>
-            {row.direction === "inbound" ? "↓ IN" : "↑ OUT"}
-          </span>
+          <CallDirection direction={row.direction} />
         </td>
         <td>
           {row.contact_id && onOpenContact ? (
-            <button
-              type="button"
+            <a
+              href={crmPath('contacts', row.contact_id)}
               className="call-log-contact-link"
               onClick={(event) => {
                 event.stopPropagation();
+                if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
                 onOpenContact(row.contact_id);
               }}
             >
               {row.contact_name || row.contact_phone || "Unknown"}
-            </button>
+            </a>
           ) : (
             <span>{row.contact_name || row.contact_phone || "Unknown"}</span>
           )}
           {row.contact_name && row.contact_phone ? (
-            <span className="contacts-muted mono call-log-subphone"> {row.contact_phone}</span>
+            row.contact_id && onOpenContact ? <a href={crmPath('contacts', row.contact_id)} className="call-log-contact-link mono call-log-subphone" onClick={event => {
+              event.stopPropagation();
+              if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+              event.preventDefault(); onOpenContact(row.contact_id);
+            }}>{row.contact_phone}</a> : <span className="contacts-muted mono call-log-subphone"> {row.contact_phone}</span>
           ) : null}
         </td>
         <td className="mono">{fmtDuration(row.duration_seconds)}</td>
         <td>{row.agent || "--"}</td>
         <td><DispositionChip disposition={row.disposition} /></td>
         <td><RecordingCell row={row} /></td>
-        <td><ComplianceChip score={row.compliance_score} /></td>
+        <td><ComplianceChip score={row.compliance_score} status={row.compliance_status} /></td>
         <td className="call-log-caret">{isExpanded ? "▼" : "▶"}</td>
       </tr>
       {isExpanded ? (

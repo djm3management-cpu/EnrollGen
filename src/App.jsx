@@ -1,3 +1,4 @@
+import { navigateCrm } from "./lib/crmRoutes";
 import { callContinuity } from "./lib/callContinuity.js";
 import { debugLog } from "./lib/debugLog.js";
 import { createCallSessionBoundary } from "./lib/callSessionBoundary.js";
@@ -89,7 +90,6 @@ const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
 const ComplianceIntentAccordion = lazy(loadComplianceIntentAccordion);
-const CallLogTab = lazy(loadCallLogTab);
 const ContactsTab = lazy(loadContactsTab);
 const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
@@ -545,9 +545,8 @@ function getTabsForMode(mode) {
     tabs.push({ id: "acaIntel", label: "ACA Intelligence" });
   }
 
-  tabs.push({ id: "operations", label: "CALLS" });
   tabs.push({ id: "complianceHub", label: "COMPLIANCE" });
-  tabs.push({ id: "contacts", label: "CONTACTS" });
+  tabs.push({ id: "contacts", label: "CRM" });
   tabs.push({ id: "rts", label: "RTS" });
   tabs.push({ id: "verse", label: "Daily Verse" });
 
@@ -758,10 +757,6 @@ function AppShell({ currentUser = null }) {
       }
       return;
     }
-    if (panelId === "operations") {
-      void loadCallLogTab().catch(() => {});
-      return;
-    }
     if (panelId === "rts") {
       void loadRTSTab().catch(() => {});
       return;
@@ -811,7 +806,7 @@ function AppShell({ currentUser = null }) {
     }
 
     if (tabId === "contacts") {
-      window.history.pushState(null, "", "/contacts");
+      navigateCrm("contacts");
       setAppMode("crm");
       setOpenPanel(null);
       return;
@@ -833,19 +828,9 @@ function AppShell({ currentUser = null }) {
     setOpenPanel(null);
   };
 
-  // Deep-open a contact from the call log: land on the CRM home with
-  // that contact's detail view selected.
-  const [crmFocusContact, setCrmFocusContact] = useState(null);
-  const handleOpenContactFromLog = (contactId) => {
-    if (callContinuity.getSnapshot()) return;
-    setCrmFocusContact({ id: contactId, ts: Date.now() });
-    setAppMode("crm");
-    setOpenPanel(null);
-  };
-
   const handleOpenContactMessages = (contactId) => {
     if (callContinuity.getSnapshot()) return;
-    setCrmFocusContact({ id: contactId, ts: Date.now(), tab: "messages" });
+    navigateCrm("contacts", contactId);
     setAppMode("crm");
     setOpenPanel(null);
   };
@@ -931,14 +916,6 @@ function AppShell({ currentUser = null }) {
             ) : null}
           </div>
         );
-      case "operations":
-        return (
-          <LazyPanel>
-            <CallLogTab
-              onOpenContact={handleOpenContactFromLog}
-            />
-          </LazyPanel>
-        );
       case "rts":
         return (
           <LazyPanel>
@@ -972,8 +949,6 @@ function AppShell({ currentUser = null }) {
       aria-labelledby="workspace-panel-title"
       className={`top-panel-overlay${
         openPanel === "tools" ? " top-panel-overlay--tools" : ""
-      }${
-        openPanel === "operations" ? " top-panel-overlay--operations" : ""
       }${
         openPanel === "complianceHub" ? " top-panel-overlay--compliance" : ""
       }${
@@ -1141,7 +1116,6 @@ function AppShell({ currentUser = null }) {
                   <ContactsTab
                     variant="home"
                     onStartCall={handleStartCallFromContact}
-                    focusContact={crmFocusContact}
                   />
                 </LazyPanel>
               </main>

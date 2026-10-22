@@ -1,8 +1,9 @@
-import { useAuth } from "@clerk/clerk-react";
-import { recordingMedia } from "../../lib/recordingsApi";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMessageThread } from "../../hooks/useMessages";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
+
+import ContactCallCard from "./ContactCallCard";
+import { formatCallTime as fmtTime } from "../../lib/callPresentation";
 
 import ComposePickers from "./ComposePickers";
 import ContactToast from "../ContactToast";
@@ -23,17 +24,6 @@ function fmtDayLabel(value) {
   const sameDay = d.toDateString() === today.toDateString();
   if (sameDay) return "TODAY";
   return d.toLocaleDateString([], { month: "2-digit", day: "2-digit", year: "2-digit" });
-}
-
-function fmtTime(value) {
-  const d = new Date(value);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-function fmtDuration(seconds) {
-  if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return "--";
-  const total = Math.max(0, Math.round(Number(seconds)));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
 const ACTIVITY_LABELS = {
@@ -80,48 +70,6 @@ function MediaAttachment({ item, supabaseClient }) {
   );
 }
 
-function CallTimelineRecording({ call }) {
-  const { getToken } = useAuth();
-  const [error, setError] = useState("");
-  const [audioUrl, setAudioUrl] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const hasRecording = Boolean(call.recording_storage_path || call.recording_url);
-
-  const handlePlay = useCallback(async () => {
-    if (audioUrl) {
-      setAudioUrl(null);
-      return;
-    }
-    setLoading(true);
-    try {
-      setError("");
-      const grant = await recordingMedia(getToken, { call_record_id: call.id });
-      setAudioUrl(grant.url);
-    } catch (err) { setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [audioUrl, call.id, getToken]);
-
-  return (
-    <div className="msg-call-recording">
-      <div>
-        <span className="contacts-activity-tag tag-call">CALL</span>
-        <span className="mono">{fmtTime(call.call_start)}</span>
-        <strong>{[call.product_type, call.carrier_name, call.plan_name].filter(Boolean).join(" ") || "Call"}</strong>
-        <small>{fmtDuration(call.call_duration_seconds)}</small>
-      </div>
-      {hasRecording ? (
-        <button type="button" className="contacts-mini-btn" onClick={handlePlay} disabled={loading}>
-          {loading ? "..." : audioUrl ? "HIDE" : "PLAY"}
-        </button>
-      ) : null}
-      {error ? <span className="ops-error" role="alert">{error}</span> : null}
-      {audioUrl ? <audio controls preload="none" src={audioUrl} /> : null}
-    </div>
-  );
-}
-
 export default function MessagesThread({ contactId, agentId = null, activityItems = [], callItems = [] }) {
   const { supabaseClient } = useTenantConfig();
   const { messages, media, loading, error, sending, markRead, send } = useMessageThread(contactId);
@@ -165,8 +113,8 @@ export default function MessagesThread({ contactId, agentId = null, activityItem
       })),
       ...callItems.map((call) => ({
         type: "call",
-        key: `call-${call.id}`,
-        at: call.call_start,
+        key: `call-${call.log_id}`,
+        at: call.occurred_at,
         call,
       })),
     ].filter((item) => item.at);
@@ -235,7 +183,7 @@ export default function MessagesThread({ contactId, agentId = null, activityItem
               );
             }
             if (entry.type === "call") {
-              return <CallTimelineRecording key={entry.key} call={entry.call} />;
+              return <ContactCallCard key={entry.key} call={entry.call} />;
             }
             return (
               <div

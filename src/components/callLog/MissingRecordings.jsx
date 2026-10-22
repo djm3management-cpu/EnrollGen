@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { evidenceRequest } from '../../lib/evidenceApi';
 import RecordingPanel from '../callDetail/RecordingPanel';
+import { formatCallDateTime } from '../../lib/callPresentation';
 export default function MissingRecordings() {
   const { getToken } = useAuth();
   const [data, setData] = useState({ calls: [], unmatched: [], next_offset: null });
@@ -21,7 +22,7 @@ export default function MissingRecordings() {
     {loading ? <div className="contacts-muted">Loading...</div> : <>
       <div className="contacts-table-wrap"><table className="contacts-table"><thead><tr><th>DATE/TIME</th><th>DIRECTION</th><th>ISSUE</th><th>CALL</th></tr></thead><tbody>
         {!data.calls.length ? <tr><td colSpan={4}>No missing recordings on this page.</td></tr> : data.calls.map(row => <tr key={row.attempt_id || row.inbound_call_id || row.call_record_id}>
-          <td>{new Date(row.occurred_at).toLocaleString()}</td><td>{row.direction}</td><td>{row.reason.replaceAll('_', ' ')}</td>
+          <td>{formatCallDateTime(row.occurred_at)}</td><td>{row.direction}</td><td>{row.reason.replaceAll('_', ' ')}</td>
           <td>{row.call_record_id || row.inbound_call_id ? <button type="button" className="contacts-mini-btn" onClick={() => setSelected(row)}>VIEW RECORDINGS</button> : 'Awaiting call record link'}</td>
         </tr>)}
       </tbody></table></div>

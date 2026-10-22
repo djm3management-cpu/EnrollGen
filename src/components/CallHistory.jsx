@@ -1,7 +1,9 @@
 import { debugLog } from "../lib/debugLog.js";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAppAuth } from "../context/AuthContext";
 import { evidenceRequest } from "../lib/evidenceApi";
+import { useCallLogRows } from "../hooks/useCallLogRows";
+import { formatTalk, formatCallTime } from "../lib/callPresentation";
 
 const FLOW_COLORS = {
   ma: "var(--eg-flow-ma)",
@@ -17,13 +19,6 @@ const FLOW_LABELS = {
   u65: "U65",
 };
 
-function formatDuration(seconds) {
-  if (!seconds) return "-";
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
-}
-
 function formatDate(iso) {
   if (!iso) return "-";
   const d = new Date(iso);
@@ -31,10 +26,7 @@ function formatDate(iso) {
     month: "short",
     day: "numeric",
     year: "numeric",
-  }) + " " + d.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  }) + " " + formatCallTime(iso);
 }
 
 export default function CallHistory() {
@@ -42,6 +34,16 @@ export default function CallHistory() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const recordIds = useMemo(() => [...new Set(sessions.map(session => session.call_record_id).filter(Boolean))].join(','), [sessions]);
+  const { rows: callRows, error: talkError } = useCallLogRows({ record_ids: recordIds }, { allPages: true, enabled: Boolean(recordIds) });
+  const talkByRecord = useMemo(() => {
+    const measured = new Map();
+    for (const row of callRows) {
+      if (!row.call_record_id) continue;
+      if (row.duration_seconds != null) measured.set(row.call_record_id, (measured.get(row.call_record_id) || 0) + row.duration_seconds);
+    }
+    return measured;
+  }, [callRows]);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,12 +143,13 @@ export default function CallHistory() {
         </span>
       </div>
       <div style={{ overflowX: "auto" }}>
+        {talkError ? <p className="ops-error" role="alert">Talk unavailable: {talkError}</p> : null}
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
               <th style={thStyle}>Flow</th>
               <th style={thStyle}>Date</th>
-              <th style={thStyle}>Duration</th>
+              <th style={thStyle}>Talk</th>
               <th style={thStyle}>Sections</th>
               <th style={thStyle}>Flags</th>
               <th style={thStyle}>Status</th>
@@ -176,7 +179,7 @@ export default function CallHistory() {
                     </span>
                   </td>
                   <td style={tdStyle}>{formatDate(s.started_at)}</td>
-                  <td style={tdStyle}>{formatDuration(s.duration_seconds)}</td>
+                  <td style={tdStyle}>{formatTalk(talkByRecord.get(s.call_record_id))}</td>
                   <td style={tdStyle}>{sectionCount > 0 ? `${sectionCount}/8` : "-"}</td>
                   <td style={{
                     ...tdStyle,

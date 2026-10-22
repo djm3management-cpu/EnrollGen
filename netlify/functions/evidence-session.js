@@ -44,7 +44,7 @@ export function createSessionHandler({ authenticate = requireClerkAuth, getDb = 
           return evidenceJson(200, { ready: true });
         }
         const sessions = checked(await db.from("sessions").select(`
-          id, flow, started_at, ended_at, final_section, completed,
+          id, call_record_id, flow, started_at, ended_at, final_section, completed,
           duration_seconds, compliance_flags(count), section_scores(count)
         `).eq("agent_id", agent.id).eq("tenant_id", tenant.id)
           .order("started_at", { ascending: false }).limit(50));

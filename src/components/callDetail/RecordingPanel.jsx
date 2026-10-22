@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { evidenceRequest } from '../../lib/evidenceApi';
 import { listRecordings, recordingMedia, downloadRecordingUrl } from '../../lib/recordingsApi';
+import { formatCallDateTime } from '../../lib/callPresentation';
 
 export default function RecordingPanel({ callRecordId, inboundCallId, attemptId }) {
   const { getToken } = useAuth();
@@ -44,7 +45,7 @@ export default function RecordingPanel({ callRecordId, inboundCallId, attemptId 
     {loading ? <div className="contacts-muted">Loading recordings...</div> : !rows.length ? <div className="contacts-muted">No recording received yet. Check missing recordings for copy or linkage issues.</div> : null}
     {rows.map((row, index) => <div className="ops-summary-box" key={row.id}>
       <span className="ops-mini-label">PART {index + 1} · {row.channels} CHANNEL{row.channels === 1 ? '' : 'S'} · {row.status.toUpperCase()}</span>
-      {row.created_at ? <p>{new Date(row.created_at).toLocaleString()}{row.duration_seconds != null ? ` · ${row.duration_seconds}s` : ''}</p> : null}
+      {row.created_at ? <p>{formatCallDateTime(row.created_at)}</p> : null}
       {row.error ? <p className="contacts-muted">Copy issue: {row.error}. The retained Twilio copy can still be downloaded when available.</p> : null}
       <button type="button" className="contacts-mini-btn" disabled={!row.available || busy === row.id} onClick={() => media(row, false)}>PLAY</button>{' '}
       <button type="button" className="contacts-mini-btn" disabled={!row.available || busy === row.id} onClick={() => media(row, true)}>DOWNLOAD WAV</button>{' '}

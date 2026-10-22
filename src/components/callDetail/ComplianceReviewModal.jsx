@@ -1,3 +1,4 @@
+import { formatCallDateTime as fmtDateTime } from "../../lib/callPresentation";
 import { isComplianceSale } from "../../lib/saleCompliance.js";
 import { debugLog } from "../../lib/debugLog.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -32,13 +33,6 @@ const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 5 * 60 * 1000;
 const IN_FLIGHT_STATUSES = ["transcript_pending", "queued", "scoring"];
 export const COMPLIANCE_WARNING_THRESHOLD = 80;
-
-function fmtDateTime(value) {
-  if (!value) return "--";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "--";
-  return d.toLocaleString([], { month: "2-digit", day: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
-}
 
 function fmtDuration(seconds) {
   if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return "--";
@@ -284,7 +278,7 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
           <>
             <dl className="compliance-review-meta">
               <div><dt>CALL DATE</dt><dd className="mono">{fmtDateTime(callRecord.call_start)}</dd></div>
-              <div><dt>DURATION</dt><dd className="mono">{fmtDuration(displayDurationSeconds === undefined ? callRecord.call_duration_seconds : displayDurationSeconds)}</dd></div>
+              <div><dt>TALK</dt><dd className="mono">{fmtDuration(displayDurationSeconds === undefined ? callRecord.call_duration_seconds : displayDurationSeconds)}</dd></div>
               <div><dt>AGENT</dt><dd>{callRecord.agent_name || "--"}</dd></div>
               <div><dt>CONSUMER</dt><dd>{callRecord.beneficiary_name || "--"}</dd></div>
               <div><dt>OUTCOME</dt><dd>{callOutcomeLabel(callRecord.call_outcome)}</dd></div>

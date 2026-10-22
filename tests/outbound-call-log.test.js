@@ -29,7 +29,7 @@ before(async()=>{
  CREATE TABLE compliance_scorecards(id uuid PRIMARY KEY,tenant_id uuid,overall_score integer);
  ALTER TABLE call_records ADD COLUMN contact_id uuid, ADD COLUMN writing_agent text, ADD COLUMN agent_name text,
  ADD COLUMN enrollment_completed boolean, ADD COLUMN call_outcome text, ADD COLUMN compliance_scorecard_id uuid,
- ADD COLUMN transcript_raw text, ADD COLUMN agent_notes text;
+ ADD COLUMN transcript_raw text, ADD COLUMN agent_notes text, ADD COLUMN compliance_status text;
  ALTER TABLE inbound_calls ADD COLUMN contact_id uuid, ADD COLUMN from_number text;
  ALTER TABLE telephony_call_attempts ADD COLUMN contact_id uuid, ADD COLUMN to_number text, ADD COLUMN status text;
  GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
@@ -118,4 +118,24 @@ test('backfill reruns skip ambiguous records and preserve existing links',async(
  }
  await pg.exec(migration);assert.equal((await sql('SELECT call_record_id FROM telephony_call_attempts WHERE id=$1',[ATT]))[0].call_record_id,null);
  assert.equal((await sql('SELECT call_record_id FROM telephony_call_attempts WHERE id=$1',[BACK]))[0].call_record_id,BACKC);
+});
+test('CRM contact history returns the exact call-log rows, Talk and compliance state without tenant leakage', async () => {
+ await sql("UPDATE call_records SET compliance_status='queued' WHERE id=$1",[INC]);
+ const all = await log();
+ const contact = await log(auth,'contact_id='+CONTACT);
+ assert.deepEqual(contact.rows,all.rows.filter(row=>row.contact_id===CONTACT));
+ const inbound = contact.rows.find(row=>row.inbound_call_id===IN);
+ assert.equal(inbound.duration_seconds,31);
+ assert.equal(inbound.compliance_status,'queued');
+ assert.equal((await sql('SELECT call_duration_seconds FROM call_records WHERE id=$1',[INC]))[0].call_duration_seconds,120);
+ assert.equal((await log(auth,'contact_id='+id(999))).count,0);
+ await sql("INSERT INTO contacts VALUES($1,$2,'Other','Tenant','+15555555555')",[id(998),U]);
+ await sql("INSERT INTO telephony_call_attempts(id,tenant_id,parent_call_sid,contact_id,agent_id,direction,status,talk_seconds) VALUES($1,$2,$3,$4,'foreign','outbound','completed',80)",[id(997),U,sid(997),id(998)]);
+ assert.deepEqual((await log(auth,'contact_id='+id(998))).rows,[]);
+ await log(auth,'contact_id=not-a-contact',400);
+ await log(auth,'contact_id='+encodeURIComponent(CONTACT+',tenant_id.eq.'+U),400);
+ const linkedHistory = await log(auth,'record_ids='+INC+','+BACKC);
+ assert.ok(linkedHistory.rows.every(row=>[INC,BACKC].includes(row.call_record_id)));
+ assert.equal(linkedHistory.rows.find(row=>row.call_record_id===INC).duration_seconds,31);
+ await log(auth,'record_ids='+encodeURIComponent(INC+',invalid'),400);
 });

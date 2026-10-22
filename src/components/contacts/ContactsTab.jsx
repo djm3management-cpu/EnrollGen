@@ -1,6 +1,6 @@
 import { debugLog } from "../../lib/debugLog.js";
 import DncCallControl from "../phone/DncCallControl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Archive, Mail, Phone, Search, Star } from "lucide-react";
 import {
   useContactsList,
@@ -20,6 +20,12 @@ import { useFollowUps } from '../../hooks/useFollowUps';
 import { followUpBucket } from '../../lib/followUps';
 import OpportunitiesView from "../opportunities/OpportunitiesView";
 import ContactOpportunities, { CreateOpportunityButton } from "../opportunities/ContactOpportunities";
+
+import { useCallLogRows } from "../../hooks/useCallLogRows";
+import { formatCallDateTime as fmtDateTime, formatTalk as fmtDuration } from "../../lib/callPresentation";
+import { CRM_NAVIGATION_EVENT, navigateCrm, readCrmLocation } from "../../lib/crmRoutes";
+import { ContactCallSummary } from "./ContactCallCard";
+const CallLogTab = lazy(() => import('../callLog/CallLogTab'));
 
 const PII_FIELD_SET = new Set(["first_name", "last_name", "dob", "phone", "email", "address", "mbi_full"]);
 
@@ -99,30 +105,11 @@ function fmtPhone(value) {
   return `(${match[1]}) ${match[2]}-${match[3]}`;
 }
 
-function fmtDateTime(value) {
-  if (!value) return "--";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "--";
-  return d.toLocaleString([], {
-    month: "2-digit",
-    day: "2-digit",
-    year: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function fmtShortDate(value) {
   if (!value) return "--";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "--";
   return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function fmtDuration(seconds) {
-  if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return "--";
-  const total = Math.max(0, Math.round(Number(seconds)));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
 function formatDateInput(value) {
@@ -444,15 +431,15 @@ function ActivityPanel({ bundle }) {
       summary: item.summary || "Activity",
     }));
     const callRows = (bundle?.calls || []).map((call) => ({
-      id: `call-${call.id}`,
-      callId: call.id,
-      at: call.call_start,
+      id: `call-${call.log_id}`,
+      callId: call.call_record_id,
+      at: call.occurred_at,
       type: "CALL",
       summary:
         [call.product_type, call.carrier_name, call.plan_name].filter(Boolean).join(" ") ||
-        call.call_outcome ||
+        call.disposition ||
         "Call",
-      meta: fmtDuration(call.call_duration_seconds),
+      meta: `Talk ${fmtDuration(call.duration_seconds)}`,
     }));
     return [...activityRows, ...callRows]
       .filter((item) => item.at)
@@ -688,6 +675,7 @@ function PoliciesFields({ policies, policyDraft, setPolicyDraft, onSavePolicy, o
 function RightPanel({
   contact,
   bundle,
+  callData,
   rightOpen,
   setRightOpen,
   rightTab,
@@ -734,6 +722,7 @@ function RightPanel({
         <div className="contacts-muted">Select a contact</div>
       ) : (
         <>
+          <ContactCallSummary calls={bundle?.calls || []} loading={callData.loading} error={callData.error} />
           <div className="contacts-right-card">
             <span className="contacts-avatar contacts-avatar-large">{initialsFor(contact)}</span>
             <div>
@@ -882,7 +871,7 @@ function RightPanel({
   );
 }
 
-function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact = null }) {
+function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact = null, onSelectContact = null, active = true }) {
   const [search, setSearch] = useState("");
   const [newContact, setNewContact] = useState(null);
   const [merge, setMerge] = useState(null);
@@ -903,7 +892,10 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
   const { agentUuid } = useCurrentAgent();
   const { contacts, loading, error, refresh } = useContactsList(search, agentUuid);
   const { unreadByContact } = useUnreadMessages();
-  const { bundle, loading: detailLoading, error: detailError, refresh: refreshDetail } = useContactDetail(selectedContactId);
+  const { bundle: contactBundle, loading: detailLoading, error: detailError, refresh: refreshDetail } = useContactDetail(selectedContactId);
+  const callData = useCallLogRows({ contact_id: selectedContactId }, { allPages: true, enabled: active && Boolean(selectedContactId) });
+  const refreshCalls = callData.refresh;
+  const bundle = useMemo(() => contactBundle ? { ...contactBundle, calls: callData.rows } : null, [contactBundle, callData.rows]);
   const { piiFields, reload: reloadPii, logCopy, patchField, updatePiiField, error: piiError } = useContactPii(selectedContactId, agentUuid);
   const {
     addNote,
@@ -922,8 +914,9 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
     if (focusContact?.id) {
       setSelectedContactId(focusContact.id);
       setCenterTab("CONVERSATIONS");
+      setRightOpen(true);
     }
-  }, [focusContact?.id, focusContact?.ts]);
+  }, [focusContact?.id, focusContact?.ts, setRightOpen]);
 
   const filteredContacts = useMemo(() => {
     const sorted = [...contacts].sort((a, b) => {
@@ -975,8 +968,8 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
   }, [setOpenSections]);
 
   const refreshSelected = useCallback(async () => {
-    await Promise.all([refresh(), selectedContactId ? refreshDetail() : Promise.resolve()]);
-  }, [refresh, refreshDetail, selectedContactId]);
+    await Promise.all([refresh(), selectedContactId ? refreshDetail() : Promise.resolve(), refreshCalls()]);
+  }, [refresh, refreshDetail, selectedContactId, refreshCalls]);
 
   const saveContactField = useCallback(
     async (field, value) => {
@@ -1191,7 +1184,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         event.preventDefault(); setSaving(true); setInlineError(""); setExistingContactId(null);
         try {
           const created = await createContact({ ...newContact, assigned_agent_id: availability?.agentId || null });
-          setNewContact(null); setSearch(""); setListFilter("ALL"); setSelectedContactId(created.id);
+          setNewContact(null); setSearch(""); setListFilter("ALL"); setSelectedContactId(created.id); onSelectContact?.(created.id);
           await refresh(); setNotice("Contact created.");
         } catch (err) { setExistingContactId(err.duplicateId || null); setInlineError(err.message || "Could not create contact."); }
         finally { setSaving(false); }
@@ -1202,7 +1195,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
             required={field === "phone"} value={newContact[field]} onChange={(event) => setNewContact({ ...newContact, [field]: event.target.value })} />
         </label>)}
         <button className="contacts-mini-btn" disabled={saving || !agentUuid}>SAVE CONTACT</button>
-        {existingContactId && <button className="contacts-mini-btn" type="button" onClick={() => { setSelectedContactId(existingContactId); setNewContact(null); setExistingContactId(null); setInlineError(""); }}>OPEN EXISTING CONTACT</button>}
+        {existingContactId && <button className="contacts-mini-btn" type="button" onClick={() => { setSelectedContactId(existingContactId); onSelectContact?.(existingContactId); setNewContact(null); setExistingContactId(null); setInlineError(""); }}>OPEN EXISTING CONTACT</button>}
         <button className="contacts-mini-btn" type="button" onClick={() => setNewContact(null)}>CANCEL</button>
       </form>}
       {merge && <div className="contacts-merge-prompt" role="alert">
@@ -1227,6 +1220,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
           setFilter={setListFilter}
           onSelectContact={(id) => {
             setSelectedContactId(id);
+            onSelectContact?.(id);
             setCenterTab("CONVERSATIONS");
           }}
         />
@@ -1247,6 +1241,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
           </div>
           {error ? <div className="ops-error">{error}</div> : null}
           {detailError ? <div className="ops-error">{detailError}</div> : null}
+          {callData.error ? <div className="ops-error" role="alert">{callData.error} <button type="button" className="contacts-mini-btn" onClick={callData.refresh}>RETRY CALLS</button></div> : null}
 
           {piiError ? <div className="ops-error">{piiError}</div> : null}
           <div className="contacts-conv-center-body">
@@ -1278,6 +1273,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         <RightPanel
           contact={selectedContact}
           bundle={bundle}
+          callData={callData}
           rightOpen={rightOpen}
           setRightOpen={setRightOpen}
           rightTab={rightTab}
@@ -1306,41 +1302,38 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
   );
 }
 
-function contactsLocation() {
-  const params = new URLSearchParams(window.location.search);
-  return { view: ['opportunities', 'followups'].includes(params.get('view')) ? params.get('view') : 'contacts', contactId: params.get('contact') || null };
-}
-
-// Both views remain inside the existing Contacts route and navigation item.
-export default function ContactsTab({ variant = "home", onStartCall = null, focusContact = null }) {
-  const [location, setLocation] = useState(contactsLocation);
+// CRM routes share one workspace; the existing call log retains its controls.
+export default function ContactsTab({ variant = "home", onStartCall = null }) {
+  const [location, setLocation] = useState(() => readCrmLocation(window.location));
   const followUps = useFollowUps();
   const dueToday = followUps.rows.filter(row => row.agent_id === followUps.agentSlug && followUpBucket(row, followUps.now) === 'today').length;
   const updateLocation = useCallback((view, contactId = null, replace = false) => {
-    const url = new URL(window.location.href);
-    if (view === 'opportunities' || view === 'followups') url.searchParams.set('view', view); else url.searchParams.delete('view');
-    if (contactId) url.searchParams.set('contact', contactId); else url.searchParams.delete('contact');
-    window.history[replace ? 'replaceState' : 'pushState'](null, '', url.pathname + url.search + url.hash);
-    setLocation({ view, contactId });
+    navigateCrm(view, contactId, { replace });
   }, []);
   useEffect(() => {
-    const onPopState = () => setLocation(contactsLocation());
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
+    const onLocation = () => setLocation({ ...readCrmLocation(window.location), ts: Date.now() });
+    window.addEventListener('popstate', onLocation);
+    window.addEventListener(CRM_NAVIGATION_EVENT, onLocation);
+    const initial = readCrmLocation(window.location);
+    navigateCrm(initial.view, initial.contactId, { replace: true });
+    return () => {
+      window.removeEventListener('popstate', onLocation);
+      window.removeEventListener(CRM_NAVIGATION_EVENT, onLocation);
+    };
   }, []);
-  useEffect(() => {
-    if (focusContact?.id) updateLocation('contacts', focusContact.id, true);
-  }, [focusContact?.id, focusContact?.ts, updateLocation]);
-  return <div className={`contacts-views${location.view === 'opportunities' ? ' contacts-views--opportunities' : ''}`}>
-    <div className="contacts-workspace-tabs contacts-subviews" role="group" aria-label="Contacts view">
+  return <div className={`contacts-views${location.view === 'opportunities' ? ' contacts-views--opportunities' : location.view === 'calls' ? ' contacts-views--calls' : ''}`}>
+    <div className="contacts-workspace-tabs contacts-subviews" role="group" aria-label="CRM workspace">
       <button type="button" className={location.view === 'contacts' ? 'is-active' : ''} aria-pressed={location.view === 'contacts'} onClick={() => updateLocation('contacts', location.contactId)}>Contacts</button>
+      <button type="button" className={location.view === 'calls' ? 'is-active' : ''} aria-pressed={location.view === 'calls'} onClick={() => updateLocation('calls')}>Calls</button>
       <button type="button" className={location.view === 'opportunities' ? 'is-active' : ''} aria-pressed={location.view === 'opportunities'} onClick={() => updateLocation('opportunities')}>Opportunities</button>
       <button type="button" className={location.view === 'followups' ? 'is-active' : ''} aria-pressed={location.view === 'followups'} onClick={() => updateLocation('followups')}>Follow-ups{dueToday > 0 && <span className="call-log-chip" aria-label={`${dueToday} follow-ups due today`}> {dueToday}</span>}</button>
     </div>
     <div hidden={location.view !== 'contacts'}>
-      <ContactsWorkspace variant={variant} onStartCall={onStartCall} focusContact={location.contactId ? { id: location.contactId, ts: focusContact?.ts || 0 } : focusContact} />
+      <ContactsWorkspace variant={variant} onStartCall={onStartCall} active={location.view === 'contacts'}
+        focusContact={location.contactId ? { id: location.contactId, ts: location.ts || 0 } : null} onSelectContact={id => updateLocation('contacts', id)} />
     </div>
-    {location.view === 'followups' && <FollowUpsView key={followUps.agentSlug} data={followUps} onOpenContact={(id) => updateLocation('contacts', id)} />}
-    {location.view === 'opportunities' && <OpportunitiesView onOpenContact={(id) => updateLocation('contacts', id)} />}
+    {location.view === 'calls' && <Suspense fallback={<div className="contacts-muted">Loading calls...</div>}><CallLogTab onOpenContact={id => updateLocation('contacts', id)} /></Suspense>}
+    {location.view === 'followups' && <FollowUpsView key={followUps.agentSlug} data={followUps} onOpenContact={id => updateLocation('contacts', id)} />}
+    {location.view === 'opportunities' && <OpportunitiesView onOpenContact={id => updateLocation('contacts', id)} />}
   </div>;
 }

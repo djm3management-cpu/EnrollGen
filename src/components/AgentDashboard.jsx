@@ -4,8 +4,8 @@ import { buildDashboard, DASHBOARD_RANGES, formatMetric, metricDelta } from '../
 import { callOutcomeLabel } from '../lib/postCallPipeline';
 import ParagonCallbackTasks from './ParagonCallbackTasks';
 
-const METRICS = [['calls', 'Calls Today'], ['sales', 'Sales Today'], ['conversion', 'Conversion Rate'], ['duration', 'Avg Call Duration'], ['compliance', 'Compliance Score']];
-const TICKER_LABELS = { calls: 'CALLS', sales: 'SALES', conversion: 'CVR', duration: 'AVG DUR', compliance: 'COMPLIANCE' };
+const METRICS = [['calls', 'Calls Today'], ['sales', 'Sales Today'], ['conversion', 'Conversion Rate'], ['duration', 'Avg Talk'], ['compliance', 'Compliance Score']];
+const TICKER_LABELS = { calls: 'CALLS', sales: 'SALES', conversion: 'CVR', duration: 'AVG TALK', compliance: 'COMPLIANCE' };
 const THRESHOLD = 85;
 const W = 640, H = 220, LEFT = 54, RIGHT = 18, TOP = 28, BOTTOM = 38;
 

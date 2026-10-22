@@ -3,7 +3,8 @@ import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServi
 import { recordingIdentity } from './_recordingAccess.js';
 
 const terminal = new Set(['completed', 'canceled', 'failed', 'busy', 'no-answer']);
-const allowed = new Set(['offset', 'limit', 'from', 'to', 'direction', 'disposition', 'agent', 'search', 'ascending']);
+const allowed = new Set(['offset', 'limit', 'from', 'to', 'direction', 'disposition', 'agent', 'search', 'ascending', 'contact_id', 'record_ids']);
+const validUuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 const integer = (value, fallback, max) => {
   if (value == null) return fallback;
   if (!/^\d+$/.test(value) || Number(value) > max) throw new EvidenceError(400, 'Invalid page.');
@@ -56,6 +57,16 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
         .eq('tenant_id', identity.tenant.id)
         .order('occurred_at', { ascending: ascending === '1' }).order('log_id', { ascending: ascending === '1' })
         .range(offset, offset + limit - 1);
+      const contactId = params.get('contact_id');
+      if (contactId) {
+        if (!validUuid(contactId)) throw new EvidenceError(400, 'Invalid contact.');
+        query = query.eq('contact_id', contactId);
+      }
+      if (params.has('record_ids')) {
+        const ids = params.get('record_ids').split(',');
+        if (ids.length > 100 || !ids.every(validUuid)) throw new EvidenceError(400, 'Invalid call records.');
+        query = query.in('call_record_id', ids);
+      }
       for (const [parameter, method] of [['from', 'gte'], ['to', 'lt']]) {
         const date = params.get(parameter);
         if (date) {
@@ -82,7 +93,14 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
       }
       const result = await query;
       const rows = await measuredCallLogRows(db, identity.tenant.id, checked(result) || []);
-      return evidenceJson(200, { rows, count: result.count || 0 });
+      const recordIds = [...new Set(rows.map(row => row.call_record_id).filter(Boolean))];
+      const statuses = [];
+      for (let offset = 0; offset < recordIds.length; offset += 100) {
+        statuses.push(...(checked(await db.from('call_records')
+          .select('id, compliance_status').eq('tenant_id', identity.tenant.id).in('id', recordIds.slice(offset, offset + 100))) || []));
+      }
+      const statusByRecord = new Map(statuses.map(record => [record.id, record.compliance_status]));
+      return evidenceJson(200, { rows: rows.map(row => ({ ...row, compliance_status: statusByRecord.get(row.call_record_id) || null })), count: result.count || 0 });
     } catch (error) { return evidenceFailure(error); }
   };
 }

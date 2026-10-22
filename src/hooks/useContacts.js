@@ -182,10 +182,13 @@ export function useContactsList(searchTerm, requestingAgentId, tenantScoped = fa
 export function useContactDetail(contactId) {
   const { supabaseClient, loading: tenantLoading, error: tenantError } = useTenantConfig();
   const [bundle, setBundle] = useState(null);
+  const detailRequest = useRef(null);
   const [loading, setLoading] = useState(Boolean(contactId));
   const [error, setError] = useState(null);
 
   const refresh = useCallback(async () => {
+    const request = Symbol();
+    detailRequest.current = request;
     if (!contactId) return;
     if (!supabaseClient) {
       if (!tenantLoading) {
@@ -197,7 +200,7 @@ export function useContactDetail(contactId) {
     setLoading(true);
     setError(null);
     try {
-      const [contactRes, intelRes, activityRes, notesRes, followUpsRes, policiesRes, callsRes] =
+      const [contactRes, intelRes, activityRes, notesRes, followUpsRes, policiesRes] =
         await Promise.all([
           supabaseClient.from("contacts").select(CONTACT_SAFE_COLUMNS).eq("id", contactId).single(),
           supabaseClient
@@ -228,15 +231,10 @@ export function useContactDetail(contactId) {
             .select("*")
             .eq("contact_id", contactId)
             .order("effective_date", { ascending: false }),
-          supabaseClient
-            .from("call_records")
-            .select("id, call_start, call_duration_seconds, call_outcome, product_type, carrier_name, plan_name, enrollment_completed, agent_name, recording_url, recording_storage_path")
-            .eq("contact_id", contactId)
-            .order("call_start", { ascending: false })
-            .limit(50),
         ]);
 
       if (contactRes.error) throw contactRes.error;
+      if (detailRequest.current !== request) return;
 
       setBundle({
         contact: contactRes.data,
@@ -245,22 +243,22 @@ export function useContactDetail(contactId) {
         notes: notesRes.data || [],
         followUps: followUpsRes.data || [],
         policies: policiesRes.data || [],
-        calls: callsRes.data || [],
       });
     } catch (err) {
       debugLog("[useContactDetail] load failed");
-      setError(err.message || "Contact unavailable.");
+      if (detailRequest.current === request) setError(err.message || "Contact unavailable.");
     } finally {
-      setLoading(false);
+      if (detailRequest.current === request) setLoading(false);
     }
   }, [supabaseClient, contactId, tenantLoading, tenantError]);
 
   useEffect(() => {
     setBundle(null);
     refresh();
+    return () => { detailRequest.current = null; };
   }, [refresh]);
 
-  return { bundle, loading, error, refresh };
+  return { bundle: bundle?.contact?.id === contactId ? bundle : null, loading, error, refresh };
 }
 
 export function useContactMutations(requestingAgentId) {
