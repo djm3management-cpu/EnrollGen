@@ -531,7 +531,7 @@ function isAdminUser(user) {
 }
 
 function getTabsForMode(mode) {
-  const tabs = [{ id: "dashboard", label: "DASHBOARD" }, { id: "script", label: "Script" }];
+  const tabs = [{ id: "dashboard", label: "DASHBOARD" }];
 
   if (modeSupportsAgentTools(mode)) {
     tabs.push({ id: "tools", label: "Agent Tools" });
