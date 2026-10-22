@@ -147,21 +147,9 @@ const TOOL_GROUPS = [
     tools: [
       { id: "u65-product-guidance", title: "U65 Product Guidance", description: "All 59 workbook variants, required statements and exact-plan Co-Pilot selection.", icon: <BookOpen size={16} /> },
       {
-        id: "dual-lis-sep-quiz",
-        title: "Dual / LIS SEP Quiz",
-        description: "8 scenarios: monthly PDP rights, full/partial duals, Extra Help, and integrated-plan alignment.",
-        icon: <ClipboardCheck size={16} />,
-      },
-      {
-        id: "off-market-product-quiz",
-        title: "Off-Market Product Quiz",
-        description: "59-variant source guidance quiz for DE, MD and FL agents.",
-        icon: <ClipboardCheck size={16} />,
-      },
-      {
-        id: "medmax-scenario-quiz",
-        title: "MedMax Scenario Quiz",
-        description: "5-variant MedMax limits, Rx, maternity and elective-surgery guidance quiz.",
+        id: "quizzes",
+        title: "Quizzes",
+        description: "Practice off-market product knowledge, MedMax scenarios, and Dual / LIS SEP eligibility in one place.",
         icon: <ClipboardCheck size={16} />,
       },
     ],
@@ -627,26 +615,20 @@ function CarrierPortalPanel() {
   );
 }
 
-function MAReferenceGuide() {
-  const [activeSection, setActiveSection] = useState("carrier-quick-ref");
-  const sections = [
-    { id: "carrier-quick-ref", label: "Carrier Quick Reference", content: <CarrierQuickRef /> },
-    { id: "eligibility-enrollment", label: "Eligibility & Enrollment", content: <LinkGrid items={ENROLLMENT_TOOLS} /> },
-    { id: "official-references", label: "Official References", content: <LinkGrid items={OFFICIAL_REFS} /> },
-    { id: "carrier-portals", label: "Carrier Portals", content: <CarrierPortalPanel /> },
-  ];
+function ToolSections({ id, label, sections }) {
+  const [activeSection, setActiveSection] = useState(sections[0].id);
 
   return (
-    <div className="at-ma-reference">
-      <nav className="at-tab-row" aria-label="MA reference sections">
+    <div className="at-sectioned-tool">
+      <nav className="at-tab-row" aria-label={label}>
         {sections.map((section) => (
           <button
             key={section.id}
-            id={`ma-reference-${section.id}-button`}
+            id={`${id}-${section.id}-button`}
             type="button"
             className={`at-filter-tab${activeSection === section.id ? " is-active" : ""}`}
             aria-pressed={activeSection === section.id}
-            aria-controls={`ma-reference-${section.id}`}
+            aria-controls={`${id}-${section.id}`}
             onClick={() => setActiveSection(section.id)}
           >
             {section.label}
@@ -656,8 +638,8 @@ function MAReferenceGuide() {
       {sections.map((section) => (
         <section
           key={section.id}
-          id={`ma-reference-${section.id}`}
-          aria-labelledby={`ma-reference-${section.id}-button`}
+          id={`${id}-${section.id}`}
+          aria-labelledby={`${id}-${section.id}-button`}
           hidden={activeSection !== section.id}
         >
           {section.content}
@@ -665,6 +647,23 @@ function MAReferenceGuide() {
       ))}
     </div>
   );
+}
+
+function MAReferenceGuide() {
+  return <ToolSections id="ma-reference" label="MA reference sections" sections={[
+    { id: "carrier-quick-ref", label: "Carrier Quick Reference", content: <CarrierQuickRef /> },
+    { id: "eligibility-enrollment", label: "Eligibility & Enrollment", content: <LinkGrid items={ENROLLMENT_TOOLS} /> },
+    { id: "official-references", label: "Official References", content: <LinkGrid items={OFFICIAL_REFS} /> },
+    { id: "carrier-portals", label: "Carrier Portals", content: <CarrierPortalPanel /> },
+  ]} />;
+}
+
+function Quizzes() {
+  return <ToolSections id="quizzes" label="Quiz selection" sections={[
+    { id: "off-market-product", label: "Off-Market Product Quiz", content: <AgentToolsProductQuiz /> },
+    { id: "medmax-scenario", label: "MedMax Scenario Quiz", content: <AgentToolsMedMaxScenarioQuiz /> },
+    { id: "dual-lis-sep", label: "Dual / LIS SEP Quiz", content: <AgentToolsProductQuiz questions={DUAL_LIS_SEP_QUIZ} passingScore={7} perfectText="Perfect - SEP knowledge check" passText="Passed - SEP knowledge check" /> },
+  ]} />;
 }
 
 export default function AgentTools() {
@@ -754,14 +753,10 @@ export default function AgentTools() {
         return <SEPReference script={NGHS_SEP_SCRIPT} />;
       case "script-editor":
         return <ScriptEditor />;
-      case "dual-lis-sep-quiz":
-        return <AgentToolsProductQuiz questions={DUAL_LIS_SEP_QUIZ} passingScore={7} perfectText="Perfect - SEP knowledge check" passText="Passed - SEP knowledge check" />;
+      case "quizzes":
+        return <Quizzes />;
       case "u65-product-guidance":
         return <PrivatePlanPanel />;
-      case "off-market-product-quiz":
-        return <AgentToolsProductQuiz />;
-      case "medmax-scenario-quiz":
-        return <AgentToolsMedMaxScenarioQuiz />;
       default:
         return null;
     }
