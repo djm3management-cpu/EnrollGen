@@ -1,27 +1,35 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAppAuth } from '../../context/AuthContext';
 import { evidenceRequest } from '../../lib/evidenceApi';
-import { listRecordings, recordingMedia, downloadRecordingUrl } from '../../lib/recordingsApi';
+import { listRecordings, recordingMedia, recordingTarget, downloadRecordingUrl } from '../../lib/recordingsApi';
 import { formatCallDateTime } from '../../lib/callPresentation';
+import { RecordingCell } from '../callLog/CallRowParts';
 
-export default function RecordingPanel({ callRecordId, inboundCallId, attemptId }) {
-  const { getToken } = useAuth();
+export default function RecordingPanel({ row, callRecordId, inboundCallId, attemptId }) {
+  const { getToken } = useAppAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(null);
   const [audio, setAudio] = useState(null);
   const version = useRef(null);
-  const target = attemptId ? { attempt_id: attemptId } : callRecordId ? { call_record_id: callRecordId } : { inbound_call_id: inboundCallId };
+  // Use the exact identity used by the call row's Play/Download controls.
+  const target = useMemo(() => recordingTarget(row || {
+    attempt_id: attemptId, call_record_id: callRecordId, inbound_call_id: inboundCallId,
+  }), [row, attemptId, callRecordId, inboundCallId]);
+  const hasLinkedRecording = Boolean(row?.recording_storage_path || row?.recording_url);
   const load = useCallback(async () => {
     const current = Symbol(); version.current = current;
     setLoading(true); setError('');
+    if (!Object.values(target).some(Boolean)) {
+      setLoading(false); setError('No call is linked to this recording view.'); return;
+    }
     try {
-      const data = await listRecordings(getToken, attemptId ? { attempt_id: attemptId } : callRecordId ? { call_record_id: callRecordId } : { inbound_call_id: inboundCallId });
+      const data = await listRecordings(getToken, target);
       if (current === version.current) setRows(data.recordings || []);
     } catch (err) { if (current === version.current) setError(err.message); }
     finally { if (current === version.current) setLoading(false); }
-  }, [getToken, callRecordId, inboundCallId, attemptId]);
+  }, [getToken, target]);
   useEffect(() => { setAudio(null); setRows([]); void load(); return () => { version.current = Symbol(); }; }, [load]);
   const media = async (row, download, provider = false) => {
     const current = version.current;
@@ -42,7 +50,11 @@ export default function RecordingPanel({ callRecordId, inboundCallId, attemptId 
   return <div className="contacts-section">
     <div className="contacts-section-head">RECORDINGS <button type="button" className="contacts-mini-btn" onClick={load} disabled={loading}>REFRESH</button></div>
     {error ? <div className="ops-error" role="alert">{error}</div> : null}
-    {loading ? <div className="contacts-muted">Loading recordings...</div> : !rows.length ? <div className="contacts-muted">No recording received yet. Check missing recordings for copy or linkage issues.</div> : null}
+    {loading ? <div className="contacts-muted">Loading recordings...</div> : !error && !rows.length && !hasLinkedRecording ? <div className="contacts-muted">No recording received yet. Check missing recordings for copy or linkage issues.</div> : null}
+    {!loading && !rows.length && hasLinkedRecording ? <div className="ops-summary-box">
+      <span className="ops-mini-label">CALL RECORDING</span>
+      <RecordingCell row={row} />
+    </div> : null}
     {rows.map((row, index) => <div className="ops-summary-box" key={row.id}>
       <span className="ops-mini-label">PART {index + 1} · {row.channels} CHANNEL{row.channels === 1 ? '' : 'S'} · {row.status.toUpperCase()}</span>
       {row.created_at ? <p>{formatCallDateTime(row.created_at)}</p> : null}

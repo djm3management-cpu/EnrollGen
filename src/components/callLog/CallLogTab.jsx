@@ -248,8 +248,8 @@ function ExpandedRow({ row, supabaseClient }) {
         />
       ) : null}
 
-      {!row.call_record_id && (row.inbound_call_id || row.attempt_id) ? <RecordingPanel inboundCallId={row.inbound_call_id} attemptId={row.attempt_id} /> : null}
-      {showFullDetail ? <CallDetailPanel detail={detail ? { ...detail, call_duration_seconds: row.duration_seconds } : detail} loading={loading} attemptId={row.attempt_id} /> : null}
+      {!row.call_record_id && (row.inbound_call_id || row.attempt_id) ? <RecordingPanel row={row} inboundCallId={row.inbound_call_id} attemptId={row.attempt_id} /> : null}
+      {showFullDetail ? <CallDetailPanel detail={detail ? { ...detail, call_duration_seconds: row.duration_seconds } : detail} recordingRow={row} loading={loading} attemptId={row.attempt_id} /> : null}
     </div>
   );
 }

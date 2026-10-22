@@ -1,4 +1,4 @@
-import { evidenceRequest } from './evidenceApi';
+import { evidenceRequest } from './evidenceApi.js';
 export function recordingTarget(row) {
   return row.attempt_id ? { attempt_id: row.attempt_id } : row.call_record_id ? { call_record_id: row.call_record_id }
     : row.inbound_call_id ? { inbound_call_id: row.inbound_call_id } : { call_record_id: row.id };
