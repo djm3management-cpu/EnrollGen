@@ -7538,6 +7538,31 @@ input::placeholder {
 /* ===============================
    AGENT TOOLS
 ================================ */
+.at-ma-reference {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.at-ma-reference .at-filter-tab {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  padding: 8px 10px;
+  text-transform: none;
+}
+
+.at-ma-reference .at-filter-tab:focus-visible {
+  outline: 1px solid var(--eg-accent);
+  outline-offset: -2px;
+}
+
+.at-ma-reference .at-filter-tab.is-active::after {
+  border-radius: 0;
+  background: var(--eg-accent);
+}
+
 .agent-tools {
   display: flex;
   flex-direction: column;

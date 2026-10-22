@@ -10,10 +10,7 @@ import {
   Heart,
   Landmark,
   RotateCw,
-  Scale,
-  Search,
   Shield,
-  UserCheck,
   X,
 } from "lucide-react";
 import { DUAL_LIS_SEP_QUIZ } from "../data/dualLisSepQuiz.js";
@@ -175,10 +172,10 @@ const TOOL_GROUPS = [
     color: "var(--warning)",
     tools: [
       {
-        id: "official-references",
-        title: "Official References",
-        description: "Federal, CMS, and regulatory links for policy-level verification.",
-        icon: <Scale size={16} />,
+        id: "ma-reference-guide",
+        title: "MA Reference Guide",
+        description: "Search carriers and plans, check eligibility and enrollment resources, and access official references and carrier portals.",
+        icon: <BookOpen size={16} />,
       },
       {
         id: "citizenship-immigration-docs",
@@ -191,38 +188,6 @@ const TOOL_GROUPS = [
         title: "Script Editor",
         description: "Admin script template editor for MA, Med Sup, ACA, U65, and ancillary flows.",
         icon: <FileText size={16} />,
-      },
-    ],
-  },
-  {
-    id: "enrollment",
-    label: "Eligibility & Enrollment",
-    color: "var(--status-live)",
-    tools: [
-      {
-        id: "eligibility-enrollment",
-        title: "Eligibility & Enrollment",
-        description: "Official enrollment, disenrollment, Medicaid, and Extra Help links.",
-        icon: <UserCheck size={16} />,
-      },
-    ],
-  },
-  {
-    id: "carrier",
-    label: "Carrier Portals",
-    color: "var(--info)",
-    tools: [
-      {
-        id: "carrier-portals",
-        title: "Carrier Portals",
-        description: "Portal launchpad for MBI lookups, enrollment platforms, and carrier access.",
-        icon: <Building2 size={16} />,
-      },
-      {
-        id: "carrier-quick-ref",
-        title: "Carrier Quick Reference",
-        description: "Search NGHS carriers, plans, states, and key details mid-call.",
-        icon: <Search size={16} />,
       },
     ],
   },
@@ -662,6 +627,46 @@ function CarrierPortalPanel() {
   );
 }
 
+function MAReferenceGuide() {
+  const [activeSection, setActiveSection] = useState("carrier-quick-ref");
+  const sections = [
+    { id: "carrier-quick-ref", label: "Carrier Quick Reference", content: <CarrierQuickRef /> },
+    { id: "eligibility-enrollment", label: "Eligibility & Enrollment", content: <LinkGrid items={ENROLLMENT_TOOLS} /> },
+    { id: "official-references", label: "Official References", content: <LinkGrid items={OFFICIAL_REFS} /> },
+    { id: "carrier-portals", label: "Carrier Portals", content: <CarrierPortalPanel /> },
+  ];
+
+  return (
+    <div className="at-ma-reference">
+      <nav className="at-tab-row" aria-label="MA reference sections">
+        {sections.map((section) => (
+          <button
+            key={section.id}
+            id={`ma-reference-${section.id}-button`}
+            type="button"
+            className={`at-filter-tab${activeSection === section.id ? " is-active" : ""}`}
+            aria-pressed={activeSection === section.id}
+            aria-controls={`ma-reference-${section.id}`}
+            onClick={() => setActiveSection(section.id)}
+          >
+            {section.label}
+          </button>
+        ))}
+      </nav>
+      {sections.map((section) => (
+        <section
+          key={section.id}
+          id={`ma-reference-${section.id}`}
+          aria-labelledby={`ma-reference-${section.id}-button`}
+          hidden={activeSection !== section.id}
+        >
+          {section.content}
+        </section>
+      ))}
+    </div>
+  );
+}
+
 export default function AgentTools() {
   const [selectedToolId, setSelectedToolId] = useState(null);
   const [citizenshipReference, setCitizenshipReference] = useState(null);
@@ -727,8 +732,8 @@ export default function AgentTools() {
 
   const modalContent = useMemo(() => {
     switch (selectedToolId) {
-      case "official-references":
-        return <LinkGrid items={OFFICIAL_REFS} />;
+      case "ma-reference-guide":
+        return <MAReferenceGuide />;
       case "citizenship-immigration-docs":
         return (
           <CitizenshipDocsReference
@@ -745,12 +750,6 @@ export default function AgentTools() {
             onBack={() => setCitizenshipDocType("")}
           />
         );
-      case "eligibility-enrollment":
-        return <LinkGrid items={ENROLLMENT_TOOLS} />;
-      case "carrier-portals":
-        return <CarrierPortalPanel />;
-      case "carrier-quick-ref":
-        return <CarrierQuickRef />;
       case "ma-seps":
         return <SEPReference script={NGHS_SEP_SCRIPT} />;
       case "script-editor":
