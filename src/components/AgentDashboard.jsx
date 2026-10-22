@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { buildDashboard, DASHBOARD_RANGES, formatMetric, metricDelta } from '../lib/dashboardMetrics';
 import { callOutcomeLabel } from '../lib/postCallPipeline';
@@ -48,7 +48,6 @@ function TimelineChart({ buckets, compliance = false, hourly = false }) {
 // with the selected date range. Each outcome has its own shade within its family.
 const DISPOSITION_COLORS = {
   enrolled: '#22c55e',
-  enrolled_pending_verification: '#4ade80',
   partial_enrollment: '#16a34a',
   callback_scheduled: '#38bdf8',
   interested_needs_info: '#60a5fa',
@@ -76,9 +75,8 @@ const DISPOSITION_COLORS = {
   duplicate_lead: '#a3a3a3',
   not_enrolled: '#fb923c',
   incomplete: '#d97706',
-  undispositioned: '#737373',
   // Call-log disposition values can also flow into this chart.
-  connected: '#22c55e',
+  connected: '#e879f9',
   voicemail: '#3b82f6',
   missed: '#ef4444',
   declined: '#f87171',
@@ -87,6 +85,7 @@ const DISPOSITION_COLORS = {
 
 function DispositionChart({ rows }) {
   const [activeCode, setActiveCode] = useState(null);
+  const tooltipId = useId();
   const total = rows.reduce((sum, [, count]) => sum + count, 0);
   let angle = -Math.PI / 2;
   const slices = rows.map(([code, count]) => {
@@ -95,29 +94,40 @@ function DispositionChart({ rows }) {
     const point = value => `${110 + 96 * Math.cos(value)} ${110 + 96 * Math.sin(value)}`;
     return {
       code, count,
-      label: code === 'undispositioned' ? 'Not dispositioned' : callOutcomeLabel(code),
+      label: callOutcomeLabel(code),
       percent: (count / total * 100).toFixed(1),
       color: DISPOSITION_COLORS[String(code).toLowerCase().replace(/[\s-]+/g, '_')] || DISPOSITION_COLORS.unknown,
       path: `M 110 110 L ${point(start)} A 96 96 0 ${angle - start > Math.PI ? 1 : 0} 1 ${point(angle)} Z`,
     };
   });
+  const activeSlice = slices.find(slice => slice.code === activeCode);
   return <div className="agent-dash-dispositions">
+    <div className="agent-dash-pie-wrap">
     <svg className="agent-dash-pie" viewBox="0 0 220 220" role="img" aria-label={total ? `Call disposition pie chart: ${total} calls. Counts and percentages are listed in the legend.` : 'No dispositions in this range'}>
       {!total && <circle cx="110" cy="110" r="96" className="agent-dash-pie-empty" />}
       {slices.map(slice => {
+        const title = `${slice.label}: ${slice.count} ${slice.count === 1 ? 'call' : 'calls'} (${slice.percent}%)`;
         const props = {
           fill: slice.color, className: 'agent-dash-pie-slice',
           opacity: activeCode && activeCode !== slice.code ? 0.35 : 1,
+          tabIndex: 0, 'aria-label': title,
+          'aria-describedby': activeSlice?.code === slice.code ? tooltipId : undefined,
           onMouseEnter: () => setActiveCode(slice.code), onMouseLeave: () => setActiveCode(null),
+          onFocus: () => setActiveCode(slice.code), onBlur: () => setActiveCode(null),
         };
-        const title = `${slice.label}: ${slice.count} calls (${slice.percent}%)`;
         return slices.length === 1
           ? <circle key={slice.code} cx="110" cy="110" r="96" {...props}><title>{title}</title></circle>
           : <path key={slice.code} d={slice.path} {...props}><title>{title}</title></path>;
       })}
     </svg>
+    {activeSlice && <div id={tooltipId} role="tooltip" className="agent-dash-pie-tooltip">
+      <strong>{activeSlice.label}</strong>
+      <span>{activeSlice.count} {activeSlice.count === 1 ? 'call' : 'calls'} ({activeSlice.percent}%)</span>
+    </div>}
+    </div>
     {total ? <ul className="agent-dash-pie-legend" aria-label="Disposition counts and percentages">
       {slices.map(slice => <li key={slice.code} tabIndex={0}
+        aria-describedby={activeSlice?.code === slice.code ? tooltipId : undefined}
         onMouseEnter={() => setActiveCode(slice.code)} onMouseLeave={() => setActiveCode(null)}
         onFocus={() => setActiveCode(slice.code)} onBlur={() => setActiveCode(null)}>
         <i style={{ background: slice.color }} aria-hidden="true" />
@@ -135,6 +145,16 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
   const [range, setRange] = useState('today');
   const rangeLabel = DASHBOARD_RANGES.find(([value]) => value === range)[1];
   const summary = useMemo(() => buildDashboard(data.calls, range, data.updatedAt || new Date()), [data.calls, data.updatedAt, range]);
+  // Presentation-only grouping: keep saved outcomes and all other metrics intact.
+  const dispositionRows = useMemo(() => {
+    const counts = new Map();
+    for (const [code, count] of summary.dispositions) {
+      if (code === 'undispositioned') continue;
+      const chartCode = code === 'enrolled_pending_verification' ? 'enrolled' : code;
+      counts.set(chartCode, (counts.get(chartCode) || 0) + count);
+    }
+    return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [summary.dispositions]);
   return <div className="agent-dashboard" aria-busy={data.loading}>
     <ParagonCallbackTasks />
     <header className="agent-dash-heading">
@@ -160,7 +180,7 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
     <div className="agent-dash-panel-grid">
     <section className="agent-dash-panel"><header><h2>Calls vs Sales</h2><span className="agent-dash-legend"><i /> Calls <b /> Sales</span></header><TimelineChart buckets={summary.buckets} hourly={range === 'today'} /></section>
     <section className="agent-dash-panel"><header><h2>Compliance Score Trend</h2><span>Daily average · Reference {THRESHOLD}%</span></header><TimelineChart buckets={summary.daily} compliance /></section>
-    <section className="agent-dash-panel"><header><h2>Call Disposition Breakdown</h2><span>{rangeLabel} · {summary.dispositions.reduce((sum, [, count]) => sum + count, 0)} calls</span></header><DispositionChart rows={summary.dispositions} /></section>
+    <section className="agent-dash-panel"><header><h2>Call Disposition Breakdown</h2><span>{rangeLabel} · {dispositionRows.reduce((sum, [, count]) => sum + count, 0)} calls</span></header><DispositionChart rows={dispositionRows} /></section>
     <section className="agent-dash-panel"><header><h2>Today vs {averageLabel} Average</h2><span>Previous 30 complete days</span></header><div className="agent-dash-table-wrap"><table><thead><tr><th>Metric</th><th>Today</th><th>30-day average</th></tr></thead><tbody>{METRICS.map(([key, label]) => <tr key={key}><th scope="row">{label.replace(' Today', '')}</th><td>{data.loading || (data.error && !data.updatedAt) ? '--' : formatMetric(key, summary.today[key])}</td><td>{data.loading || (data.error && !data.updatedAt) ? '--' : formatMetric(key, summary.baseline[key])}</td></tr>)}</tbody></table></div></section>
     </div>
   </div>;
