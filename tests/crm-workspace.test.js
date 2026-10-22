@@ -141,14 +141,18 @@ test('background refresh retains mounted call rows while updating compliance and
   } finally { fixture.h.unmount(); globalThis.fetch = original; }
 });
 
-test('all workflow navs expose CRM without a separate Calls entry', () => {
+test('all workflow navs expose CRM and Agent Tools without separate Calls or Compliance entries', () => {
   const source = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
   const context = vm.createContext({ modeSupportsAgentTools: mode => ['ma', 'aca'].includes(mode) });
   vm.runInContext(source.slice(source.indexOf('function getTabsForMode('), source.indexOf('function AppShell(')) + ';globalThis.tabs=getTabsForMode;', context);
   for (const mode of ['ma', 'aca', 'medsup', 'u65', 'ancillary']) {
     const tabs = context.tabs(mode);
     assert.equal(tabs.find(tab => tab.id === 'contacts').label, 'CRM');
-    assert.ok(!tabs.some(tab => tab.label === 'CALLS' || tab.id === 'operations'));
+    assert.equal(tabs.find(tab => tab.id === 'tools').label, 'AGENT TOOLS');
+    assert.deepEqual(Array.from(tabs, tab => tab.id), ['dashboard', 'contacts', 'tools',
+      ...(mode === 'ma' ? ['sepTool'] : mode === 'aca' ? ['acaIntel'] : []), 'rts', 'verse']);
+    assert.ok(tabs.every(tab => tab.label === tab.label.toUpperCase()));
+    assert.ok(!tabs.some(tab => tab.label === 'CALLS' || tab.id === 'operations' || tab.id === 'complianceHub'));
   }
 });
 

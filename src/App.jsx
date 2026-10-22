@@ -57,15 +57,11 @@ const loadAncillaryFlow = () => import("./flows/ancillary/AncillaryFlow");
 const loadAgentTools = () => import("./components/AgentTools");
 const loadSEPLookup = () => import("./components/SEPLookup");
 const loadSessionSummary = () => import("./components/SessionSummary");
-const loadTranscriptUpload = () => import("./components/TranscriptUpload");
 const loadCarrierRef = () => import("./components/CarrierRef");
-const loadCallHistory = () => import("./components/CallHistory");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadAgentDashboard = () => import("./components/AgentDashboard");
 const AgentDashboard = lazy(loadAgentDashboard);
-const loadComplianceDashboard = () => import("./components/ComplianceDashboard");
-const loadComplianceIntentAccordion = () => import("./components/ComplianceIntentAccordion");
 const loadCallLogTab = () => import("./components/callLog/CallLogTab");
 const loadContactsTab = () => import("./components/contacts/ContactsTab");
 const loadTenantSettings = () => import("./components/TenantSettings");
@@ -84,12 +80,9 @@ const AncillaryFlow = lazy(loadAncillaryFlow);
 const AgentTools = lazy(loadAgentTools);
 const SEPLookup = lazy(loadSEPLookup);
 const SessionSummary = lazy(loadSessionSummary);
-const TranscriptUpload = lazy(loadTranscriptUpload);
 const CarrierRef = lazy(loadCarrierRef);
-const CallHistory = lazy(loadCallHistory);
 const DailyVerse = lazy(loadDailyVerse);
 const ACAIntelligence = lazy(loadACAIntelligence);
-const ComplianceIntentAccordion = lazy(loadComplianceIntentAccordion);
 const ContactsTab = lazy(loadContactsTab);
 const TenantSettings = lazy(loadTenantSettings);
 const Onboarding = lazy(loadOnboarding);
@@ -219,7 +212,7 @@ const clerkTerminalAppearance = {
   },
 };
 
-function modeSupportsAgentTools(mode) {
+function modeSupportsQuickScripts(mode) {
   return mode === "ma" || mode === "aca";
 }
 
@@ -298,9 +291,9 @@ function FlowSelector({ mode, onChange, onPreload }) {
               >
                 <span className="flow-beacon" />
                 <span className="flow-label">{flow.label}</span>
-                {modeSupportsAgentTools(flow.id) ? <span className="flow-select-submenu-caret" aria-hidden="true">›</span> : null}
+                {modeSupportsQuickScripts(flow.id) ? <span className="flow-select-submenu-caret" aria-hidden="true">›</span> : null}
               </button>
-              {modeSupportsAgentTools(flow.id) ? (
+              {modeSupportsQuickScripts(flow.id) ? (
                 <div className="flow-select-submenu" role="menu" aria-label={`${flow.label} client scripts`}>
                   {[{ id: "disenrolled", label: "Disenrolled" }, { id: "check-in", label: "Follow Up" }].map((script) => (
                     <button
@@ -428,16 +421,6 @@ function SessionSummarySlot() {
   );
 }
 
-function MainFlowComplianceHubPanel() {
-  return (
-    <LazyPanel>
-      <div className="compliance-hub-stack">
-        <ComplianceIntentAccordion />
-      </div>
-    </LazyPanel>
-  );
-}
-
 function MedSupScriptWorkspace() {
   return (
     <>
@@ -531,24 +514,22 @@ function isAdminUser(user) {
 }
 
 function getTabsForMode(mode) {
-  const tabs = [{ id: "dashboard", label: "DASHBOARD" }];
-
-  if (modeSupportsAgentTools(mode)) {
-    tabs.push({ id: "tools", label: "Agent Tools" });
-  }
+  const tabs = [
+    { id: "dashboard", label: "DASHBOARD" },
+    { id: "contacts", label: "CRM" },
+    { id: "tools", label: "AGENT TOOLS" },
+  ];
 
   if (mode === "ma") {
-    tabs.push({ id: "sepTool", label: "Intelligence" });
+    tabs.push({ id: "sepTool", label: "INTELLIGENCE" });
   }
 
   if (mode === "aca") {
-    tabs.push({ id: "acaIntel", label: "ACA Intelligence" });
+    tabs.push({ id: "acaIntel", label: "ACA INTELLIGENCE" });
   }
 
-  tabs.push({ id: "complianceHub", label: "COMPLIANCE" });
-  tabs.push({ id: "contacts", label: "CRM" });
   tabs.push({ id: "rts", label: "RTS" });
-  tabs.push({ id: "verse", label: "Daily Verse" });
+  tabs.push({ id: "verse", label: "DAILY VERSE" });
 
   return tabs;
 }
@@ -579,16 +560,16 @@ function AppShell({ currentUser = null }) {
   } = useLeftRailManager();
 
   useEffect(() => {
-    const common = [loadCallLogTab, loadContactsTab, loadAgentDashboard];
+    const common = [loadCallLogTab, loadContactsTab, loadAgentDashboard, loadAgentTools];
     const flow = mode === "ma"
-      ? [loadComplianceIntentAccordion, loadComplianceDashboard, loadScriptFlow, loadAgentTools, loadSEPLookup]
+      ? [loadScriptFlow, loadSEPLookup]
       : mode === "medsup"
-        ? [loadCallHistory, loadMedSupFlow, loadMedSupAiCopilot]
+        ? [loadMedSupFlow, loadMedSupAiCopilot]
         : mode === "aca"
-          ? [loadCallHistory, loadACAScript, loadACAIntelligence]
+          ? [loadACAScript, loadACAIntelligence]
           : mode === "u65"
-            ? [loadCallHistory, loadU65Script]
-            : [loadCallHistory, loadAncillaryFlow];
+            ? [loadU65Script]
+            : [loadAncillaryFlow];
     return preloadWorkspace([...common, ...flow, loadRTSTab]);
   }, [mode]);
 
@@ -732,7 +713,7 @@ function AppShell({ currentUser = null }) {
       preloadScriptForMode(targetMode);
       return;
     }
-    if (panelId === "tools" && modeSupportsAgentTools(targetMode)) {
+    if (panelId === "tools") {
       void loadAgentTools().catch(() => {});
       return;
     }
@@ -743,18 +724,6 @@ function AppShell({ currentUser = null }) {
     }
     if (panelId === "acaIntel") {
       void loadACAIntelligence().catch(() => {});
-      return;
-    }
-    if (panelId === "complianceHub") {
-      if (targetMode === "ma") {
-        void loadComplianceIntentAccordion().catch(() => {});
-        void loadComplianceDashboard().catch(() => {});
-      } else {
-        void loadCallHistory().catch(() => {});
-        if (targetMode === "medsup") {
-          void loadTranscriptUpload().catch(() => {});
-        }
-      }
       return;
     }
     if (panelId === "rts") {
@@ -879,7 +848,7 @@ function AppShell({ currentUser = null }) {
       case "tools":
         return (
           <LazyPanel>
-            <AgentTools />
+            <AgentTools mode={mode} />
           </LazyPanel>
         );
       case "sepTool":
@@ -898,23 +867,6 @@ function AppShell({ currentUser = null }) {
           <LazyPanel>
             <ACAIntelligence />
           </LazyPanel>
-        );
-      case "complianceHub":
-        if (mode === "ma") {
-          return <MainFlowComplianceHubPanel />;
-        }
-
-        return (
-          <div className="top-panel-stack">
-            <LazyPanel>
-              <CallHistory />
-            </LazyPanel>
-            {mode === "medsup" ? (
-              <LazyPanel>
-                <TranscriptUpload />
-              </LazyPanel>
-            ) : null}
-          </div>
         );
       case "rts":
         return (
@@ -949,8 +901,6 @@ function AppShell({ currentUser = null }) {
       aria-labelledby="workspace-panel-title"
       className={`top-panel-overlay${
         openPanel === "tools" ? " top-panel-overlay--tools" : ""
-      }${
-        openPanel === "complianceHub" ? " top-panel-overlay--compliance" : ""
       }${
         openPanel === "verse" ? " top-panel-overlay--verse" : ""
       }${
@@ -1106,7 +1056,7 @@ function AppShell({ currentUser = null }) {
           </>
         ) : appMode === "crm" ? (
           <>
-            {/* Overlay panels like the Compliance Hub read ScriptContext;
+            {/* Overlay panels read ScriptContext;
                 in CRM mode there is no cockpit provider, so give them a
                 default-state one. */}
             <ScriptProvider>{overlayNode}</ScriptProvider>

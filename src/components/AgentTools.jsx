@@ -16,6 +16,7 @@ import {
 import { DUAL_LIS_SEP_QUIZ } from "../data/dualLisSepQuiz.js";
 import PrivatePlanPanel from "./PrivatePlanPanel";
 import CarrierQuickRef from "./CarrierQuickRef";
+import ComplianceToolsPanel from "./ComplianceToolsPanel";
 import ScriptEditor from "./ScriptEditor";
 import AgentToolsProductQuiz, {
   AgentToolsMedMaxScenarioQuiz,
@@ -159,6 +160,12 @@ const TOOL_GROUPS = [
     label: "Reference & Compliance",
     color: "var(--warning)",
     tools: [
+      {
+        id: "compliance",
+        title: "Compliance",
+        description: "Access compliance references, call history, and transcript uploads for your selected workflow.",
+        icon: <Shield size={16} />,
+      },
       {
         id: "ma-reference-guide",
         title: "MA Reference Guide",
@@ -666,7 +673,7 @@ function Quizzes() {
   ]} />;
 }
 
-export default function AgentTools() {
+export default function AgentTools({ mode = "ma" }) {
   const [selectedToolId, setSelectedToolId] = useState(null);
   const [citizenshipReference, setCitizenshipReference] = useState(null);
   const [citizenshipLoading, setCitizenshipLoading] = useState(true);
@@ -731,6 +738,8 @@ export default function AgentTools() {
 
   const modalContent = useMemo(() => {
     switch (selectedToolId) {
+      case "compliance":
+        return <ComplianceToolsPanel mode={mode} />;
       case "ma-reference-guide":
         return <MAReferenceGuide />;
       case "citizenship-immigration-docs":
@@ -762,6 +771,7 @@ export default function AgentTools() {
     }
   }, [
     selectedToolId,
+    mode,
     citizenshipReference,
     citizenshipLoading,
     citizenshipLoadError,
