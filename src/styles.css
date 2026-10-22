@@ -17977,21 +17977,6 @@ body[data-bg-mode="classic"] .viewport-bg {
   gap: 5px;
 }
 
-.top-bar-rts-dot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: var(--status-pending);
-  color: #000;
-  font-size: 8px;
-  font-weight: 800;
-}
-
 /* RTS needs the full viewport so all agent columns remain usable at once. */
 .top-panel-overlay--rts {
   inset: 0;

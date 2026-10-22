@@ -567,8 +567,6 @@ function AppShell({ currentUser = null }) {
   const callActive = useCallStore(state => state.callActive);
   const reloadBlocked = isAppCallActive({ liveCall, phone: inbound, callActive });
   const { total: unreadMessageTotal } = useUnreadMessages();
-  const { supabaseClient } = useTenantConfig();
-  const [rtsNeedsAttentionCount, setRtsNeedsAttentionCount] = useState(0);
 
   const {
     railWidth,
@@ -639,38 +637,6 @@ function AppShell({ currentUser = null }) {
     setAppMode("call");
     setOpenPanel(null);
   }, [inboundActiveCall]);
-
-  useEffect(() => {
-    if (!supabaseClient || !currentUser?.id) {
-      setRtsNeedsAttentionCount(0);
-      return undefined;
-    }
-
-    let active = true;
-    const refreshAttention = async () => {
-      const { count, error } = await supabaseClient
-        .from("carrier_rts")
-        .select("id", { count: "exact", head: true })
-        .eq("clerk_user_id", currentUser.id)
-        .in("status", ["Pending", "Needs Action", "Blackout", "Terminated"]);
-      if (active && !error) setRtsNeedsAttentionCount(count || 0);
-    };
-
-    refreshAttention();
-    const channel = supabaseClient
-      .channel(`carrier-rts-attention-${currentUser.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "carrier_rts" },
-        refreshAttention
-      )
-      .subscribe();
-
-    return () => {
-      active = false;
-      supabaseClient.removeChannel(channel);
-    };
-  }, [currentUser?.id, supabaseClient]);
 
   useEffect(() => {
     document.body.dataset.bgMode = "wallpaper";
@@ -1096,14 +1062,6 @@ function AppShell({ currentUser = null }) {
                 )}
                 {tab.id === "contacts" && unreadMessageTotal > 0 && activeTabId !== "contacts" ? (
                   <span className="top-bar-tab-badge">{unreadMessageTotal}</span>
-                ) : null}
-                {tab.id === "rts" && rtsNeedsAttentionCount > 0 ? (
-                  <span
-                    className="top-bar-rts-dot"
-                    title={`${rtsNeedsAttentionCount} RTS items need attention`}
-                  >
-                    {rtsNeedsAttentionCount > 99 ? "99+" : rtsNeedsAttentionCount}
-                  </span>
                 ) : null}
               </button>
             ))}
