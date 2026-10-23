@@ -1,21 +1,24 @@
 # Scoring dispatch rollout and manual recovery
 
-This change is prepared locally. Migrations and live recovery commands have not
-been executed. Pushing main deploys the Netlify code automatically; it does not
-apply database migrations or deploy the separate telephony worker.
+Pushing main automatically deploys the Railway telephony and integrations-worker
+services and starts a Netlify build. Netlify automatic publishing is locked: the
+user publishes the ready build. Git pushes do not apply database migrations.
 
 ## Rollout order
 
-1. Verify the production OpenAI credential and successful Responses requests for
-   both `gpt-5.6-luna` and `gpt-5.6-terra`, using a trimmed key and no organization
-   or project headers. A model catalog listing does not establish account access.
+1. The user verified the real production key with successful HTTP 200 responses
+   from both `gpt-5.6-luna` and `gpt-5.6-terra`. Netlify CLI returns a masked
+   secret, so its `env:get` value cannot be used to test OpenAI authentication.
 2. Apply `113_scoring_dispatch_retry_bounds.sql`, then
    `114_manual_scoring_retry.sql`. Verify PostgREST exposes `dispatch_attempts`,
    `transcript_ready_at` and `retry_failed_scoring` before releasing the worker.
-3. Deploy the Netlify scoring code, then the telephony worker. Migration 113 works
-   with the old worker during this transition. The new worker must not precede
-   113: its acknowledgement update filters on the new `dispatch_attempts` column.
-4. Observe scoring progress/completion and the call's persisted compliance state.
+3. Only after schema verification, push main once. Railway auto-deploys telephony
+   and integrations-worker on that push. The Netlify build remains unpublished
+   until the user publishes it. Migration 113 supports the old scoring handler
+   during the transition. The new Railway worker must not precede 113: its
+   acknowledgement update filters on the new `dispatch_attempts` column.
+4. Report the ready Netlify build to the user, then verify scoring completion and
+   persisted scorecards for both stuck calls. Do not unlock or publish Netlify.
 
 113 separates the five-second transcript settling window from the 60-second
 dispatch retry schedule. It gives each content revision at most three deliveries,
@@ -71,19 +74,32 @@ The review modal displays an alert for `compliance_status=failed`, even if only
 `scoring_error_code` is stored. It explains that the transcript is retained and
 directs the user to an administrator for recovery. Existing styles are reused.
 
-## Follow-up model access check
+## Corrected model access verification
 
-The production/functions value fetched from Netlify matched the user-confirmed
-`eFcA` suffix. `.trim()` made no change to that value. Each probe sent only
-`Authorization` and `Content-Type` headers to `https://api.openai.com/v1/responses`,
-with no organization or project headers. The payload used synthetic text,
-`store:false`, medium reasoning and a small strict JSON schema; no call data was
-sent. Both probes still returned HTTP 401 `invalid_api_key`:
+The user verified both models with the actual production key: `gpt-5.6-luna`
+returned HTTP 200 and `gpt-5.6-terra` returned HTTP 200. These are the accepted
+account-access results for this rollout.
 
-- `gpt-5.6-luna`: `req_fd104acf8cad46928f1b0251c166d86a`
-- `gpt-5.6-terra`: `req_24bf0ff5061f41088253f7f7b259434b`
+The earlier agent probes were invalid: Netlify CLI masks secret values with
+asterisks plus the last four characters. A matching suffix does not establish
+that the CLI returned a usable key, and trimming does not unmask it. The HTTP 401
+results came from sending that masked string, not from testing the actual key.
+No credentials were printed or saved in this document.
 
-This does not establish why authentication failed or verify model access. Resolve
-the authentication discrepancy and repeat both successful model probes before
-deploying or manually requeueing calls. Credentials were never printed or saved
-in this document.
+## Production migration execution, October 23
+
+Applied only migrations 113 and 114, in that order, through the production SQL
+editor for project `qzjtagnpklaxefwurorc`. Both succeeded before the main push;
+the migration ledger contains the exact reviewed SQL source (7,273 and 6,030
+characters). Verified `dispatch_attempts`, `transcript_ready_at`, the recovery
+RPC and audit table. The service role can execute recovery; `authenticated`
+cannot. PostgREST successfully returned both new dispatch columns.
+
+At 20:46 UTC, both target calls had completed scorecards and completed jobs on
+attempt one. Dispatches had `delivered_revision=revision`, `available_at=infinity`
+and no error. No manual retry was needed:
+
+- `7374a205-def1-4ab4-8fd0-877eaaff88a5`: scorecard
+  `4f0d1ce2-92dd-4ef4-93d0-d1529c5468c2`, 73.02%, grade C.
+- `24e11660-0c5d-4f33-8c5f-da68ef876632`: scorecard
+  `3e340fa1-00ce-48ab-a93b-33416274ea64`, grade N/A.
