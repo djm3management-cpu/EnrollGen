@@ -166,6 +166,18 @@ test('provider errors keep their code in the response and notify durable post-ca
   assert.equal((await value(`SELECT count(*)::int n FROM compliance_scorecards WHERE call_id='${record.id}'`)).n,0);
  }finally{if(prior===undefined)delete process.env.SCORE_CALL_JOB_SECRET;else process.env.SCORE_CALL_JOB_SECRET=prior;}
 });
+test('database initialization failures log their stage and sanitized diagnostic instead of escaping the handler',async()=>{
+ const prior=process.env.SCORE_CALL_JOB_SECRET;process.env.SCORE_CALL_JOB_SECRET='logging-test';
+ const original=console.error,logs=[];console.error=message=>logs.push(JSON.parse(message));
+ try{
+  const handler=createScoreCallHandler({getDb:()=>{throw Error('Database unavailable: sk-proj-fixturesecret');}});
+  const response=await handler(new Request('https://test',{method:'POST',headers:{'x-enrollgen-job-secret':'logging-test'},
+   body:JSON.stringify({callId:randomUUID(),tenantId:tenant})}),{});
+  assert.equal(response.status,503);assert.equal(logs[0].event,'scoring_failed');assert.equal(logs[0].stage,'load_call');
+  assert.match(logs[0].message,/Database unavailable/);assert.ok(logs[0].stack.length);
+  assert.ok(!JSON.stringify(logs).includes('sk-proj-fixturesecret'));
+ }finally{console.error=original;if(prior===undefined)delete process.env.SCORE_CALL_JOB_SECRET;else process.env.SCORE_CALL_JOB_SECRET=prior;}
+});
 test('non-service roles cannot call job RPCs or mutate/read the ledger', async () => {
   await pg.exec('SET ROLE authenticated');
   await assert.rejects(pg.query('SELECT begin_scoring_job($1,$2,$3)',[randomUUID(),template,'{}']),/permission denied/);

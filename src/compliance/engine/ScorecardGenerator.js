@@ -91,7 +91,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
       duration: callRecord.call_duration_seconds ?? null },
   }), 'Begin scoring job');
   if (job?.status === 'skipped') return { skipped: true, reason: job.reason };
-  if (job?.status === 'pending') return { pending: true };
+  if (job?.status === 'pending') return { pending: true, reason: job.reason || 'scoring_in_progress' };
   if (job?.status === 'failed') {
     const failure = new Error(job.error || 'Scoring job failed permanently');
     failure.code = job.error || 'scoring_failed';

@@ -43,7 +43,8 @@ function comparisonKey(result: Completion, request: CompletionRequest) {
 async function run(request: CompletionRequest, runtime: Runtime, stream: boolean, shadowModel?: string): Promise<{ result: Completion; events: Json[] }> {
   const env = runtime.env || process.env;
   const engine = resolveEngine(request.engine);
-  const provider: Provider = shadowModel ? 'anthropic' : resolveProvider(engine, env);
+  // Compliance scoring must stay on OpenAI, including legacy product engines.
+  const provider: Provider = request.path === 'scoring' ? 'openai' : shadowModel ? 'anthropic' : resolveProvider(engine, env);
   const adapters = runtime.adapters || { openai: createOpenAIAdapter(env), anthropic: createAnthropicAdapter(env) };
   let model = shadowModel || (provider === 'openai' ? PRIMARY_MODEL : ANTHROPIC_MODEL);
   const fallback = env.LLM_FALLBACK_MODEL === undefined ? 'gpt-5.6-terra' : env.LLM_FALLBACK_MODEL.trim();
@@ -64,7 +65,7 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
       fallbackUsed = true;
     }
     const attemptStarted = Date.now();
-    const timeout = AbortSignal.timeout(request.path === 'summary' ? 120000 : 9000);
+    const timeout = AbortSignal.timeout(request.path === 'summary' || request.path === 'scoring' ? 120000 : 9000);
     const signal = runtime.signal ? AbortSignal.any([runtime.signal, timeout]) : timeout;
     let result: Completion | undefined;
     try {
@@ -96,13 +97,13 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
       if (attempt < 3) await sleep(250 * 2 ** (attempt - 1) * (0.5 + random()));
     }
   }
-  if (request.path === 'summary' || shadowModel || runtime.signal?.aborted) throw lastError;
+  if (request.path === 'summary' || request.path === 'scoring' || shadowModel || runtime.signal?.aborted) throw lastError;
   return { result: degraded(request, model, lastError), events: [] };
 }
 
 function start(request: CompletionRequest, runtime: Runtime, stream: boolean) {
   const primary = run(request, runtime, stream);
-  const shadowModel = (runtime.env || process.env)[`LLM_SHADOW_${resolveEngine(request.engine)}`];
+  const shadowModel = request.path === 'scoring' ? undefined : (runtime.env || process.env)[`LLM_SHADOW_${resolveEngine(request.engine)}`];
   if (shadowModel) {
     const shadow = run(request, { ...runtime, signal: undefined }, false, shadowModel);
     background(Promise.allSettled([primary, shadow]).then(async ([p, s]) => {

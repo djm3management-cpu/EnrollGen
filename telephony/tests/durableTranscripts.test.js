@@ -13,9 +13,10 @@ test('dispatch consumes only disposition-created sale requests and retains 202 j
  const sequence=[];let patch;
  const chain={select:()=>chain,lte:()=>chain,limit:async()=>({data:[{call_id:'call',tenant_id:'tenant',revision:1,delivered_revision:0}]}),
  update:value=>{patch=value;return chain;},eq:()=>chain,then:resolve=>resolve({error:null})};
- await runTranscriptDispatch({db:{rpc:async name=>{if(name==='reconcile_telephony_transcripts'){sequence.push('reconcile');return {};}assert.equal(name,'get_sale_compliance_dispatch');return {data:[{call_id:'call',tenant_id:'tenant',revision:1,delivered_revision:0}]};},from:()=>chain},scoringUrl:'https://example.test/score',secret:'secret',
+ await runTranscriptDispatch({db:{rpc:async name=>{if(name==='reconcile_telephony_transcripts'){sequence.push('reconcile');return {};}assert.equal(name,'get_sale_compliance_dispatch');return {data:[{call_id:'call',tenant_id:'tenant',revision:1,delivered_revision:0,dispatch_attempts:1}]};},from:()=>chain},scoringUrl:'https://example.test/score',secret:'secret',
  transport:async(url,req)=>{sequence.push('score');assert.deepEqual(JSON.parse(req.body),{callId:'call',tenantId:'tenant'});return {ok:true,status:202};}});
  assert.deepEqual(sequence,['reconcile','score']);assert.equal(patch.delivered_revision,undefined);assert.equal(patch.last_error,null);
+ assert.equal(patch.available_at,undefined);
 });
 
 test('a transcript finalization with no eligible sale requests never calls the scoring endpoint',async()=>{

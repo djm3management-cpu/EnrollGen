@@ -4,7 +4,7 @@ export type Engine = 'MA' | 'MEDSUP' | 'ACA' | 'U65' | 'ANCILLARY' | 'ANNUITY';
 export type Json = Record<string, any>;
 export interface CompletionRequest {
   engine: Engine;
-  path?: 'live' | 'summary';
+  path?: 'live' | 'summary' | 'scoring';
   system: string | Json[];
   static_messages?: Json[];
   messages: Json[];

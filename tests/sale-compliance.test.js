@@ -39,7 +39,7 @@ async function newCall({finished=true,diarized=segments}={}) {
  return id;
 }
 const setOutcome=(id,outcome)=>query('UPDATE call_records SET call_outcome=$2 WHERE id=$1',[id,outcome]);
-const due=id=>query("UPDATE transcript_score_dispatch SET available_at=now()-interval '1 second' WHERE call_id=$1",[id]);
+const due=id=>query("UPDATE transcript_score_dispatch SET available_at=now()-interval '1 second',transcript_ready_at=now()-interval '1 second' WHERE call_id=$1",[id]);
 const cardCount=async id=>Number((await query('SELECT count(*) n FROM compliance_scorecards WHERE call_id=$1',[id]))[0].n);
 const oldSecret=process.env.SCORE_CALL_JOB_SECRET;
 const preExisting=[];
@@ -88,8 +88,85 @@ before(async()=>{
  preExisting.push(await newCall(),await newCall());
  await setOutcome(preExisting[0],'enrolled');
  await pg.exec(migration('110_sale_disposition_compliance.sql'));
+ // Reproduce the deployed race before applying the fix: an accepted background
+ // delivery advances the retry timer before the scorer starts.
+ const stalled=await newCall();await setOutcome(stalled,'enrolled');
+ await query("UPDATE transcript_score_dispatch SET available_at=now()+interval '60 seconds' WHERE call_id=$1",[stalled]);
+ const before=modelCalls.length;
+ assert.equal((await score(stalled)).status,202);
+ assert.equal((await record(stalled)).compliance_status,'queued');assert.equal(modelCalls.length,before);
+ await setOutcome(stalled,'test_call');
+ await pg.exec(migration('113_scoring_dispatch_retry_bounds.sql'));
 });
 after(async()=>{ if(oldSecret===undefined)delete process.env.SCORE_CALL_JOB_SECRET;else process.env.SCORE_CALL_JOB_SECRET=oldSecret;await pg.close(); });
+
+test('Netlify 202 returns before scoring starts; retry scheduling cannot block the job claim',async()=>{
+ const id=await newCall();await setOutcome(id,'enrolled');await due(id);
+ let accepted;
+ await runTranscriptDispatch({db,scoringUrl:'https://example.test/score',secret:'sale-test',transport:async(url,init)=>{
+  accepted=new Request(url,init);
+  // Netlify returns acceptance without executing the handler yet.
+  return new Response(null,{status:202});
+ }});
+ const dispatch=(await query('SELECT * FROM transcript_score_dispatch WHERE call_id=$1',[id]))[0];
+ assert.equal(dispatch.dispatch_attempts,1);assert.ok(new Date(dispatch.available_at)>new Date());
+ assert.equal((await worker(accepted,{})).status,200);
+ assert.equal((await record(id)).compliance_status,'complete');assert.equal(await cardCount(id),1);
+});
+
+for(const transportFails of [false,true])test(`dispatch stops after three ${transportFails?'transport failures':'accepted jobs that never claim'}; content changes reset the budget`,async()=>{
+ const id=await newCall();await setOutcome(id,'enrolled');await due(id);let deliveries=0;
+ const options={db,scoringUrl:'https://example.test/score',secret:'sale-test',transport:async()=>{
+  deliveries++;if(transportFails)throw Error('offline');return new Response(null,{status:202});
+ }};
+ for(let i=0;i<3;i++){
+  await runTranscriptDispatch(options);
+  await runTranscriptDispatch(options); // A second worker cannot claim the same delivery.
+  assert.equal(deliveries,i+1);await due(id);
+ }
+ await runTranscriptDispatch(options);assert.equal(deliveries,3);
+ let d=(await query('SELECT * FROM transcript_score_dispatch WHERE call_id=$1',[id]))[0];
+ assert.equal(d.delivered_revision,d.revision);assert.equal(d.last_error,'scoring_attempts_exhausted');
+ assert.equal((await record(id)).compliance_status,'failed');
+ // Reconciliation and unrelated metadata writes must not revive exhausted work.
+ await query("UPDATE call_records SET metadata=metadata||'{\"unrelated\":true}' WHERE id=$1",[id]);
+ await runTranscriptDispatch(options);assert.equal(deliveries,3);
+ await query("UPDATE call_records SET transcript_raw=transcript_raw||' new final' WHERE id=$1",[id]);
+ d=(await query('SELECT * FROM transcript_score_dispatch WHERE call_id=$1',[id]))[0];
+ assert.equal(d.dispatch_attempts,0);assert.equal(d.last_error,null);
+ await due(id);await score(id);assert.equal((await record(id)).compliance_status,'complete');
+});
+
+test('active scoring lease suppresses redelivery without consuming the dispatch budget',async()=>{
+ const id=await newCall();await setOutcome(id,'enrolled');await due(id);
+ const c=await record(id);
+ const claimed=(await db.rpc('begin_scoring_job',{p_call_id:id,p_template_id:template,
+  p_transcript:{raw:c.transcript_raw,diarized:c.transcript_diarized,duration:c.call_duration_seconds}})).data;
+ assert.equal(claimed.status,'claimed');
+ await runTranscriptDispatch({db,scoringUrl:'https://example.test/score',secret:'sale-test',transport:()=>assert.fail('active job cannot redeliver')});
+ const d=(await query('SELECT * FROM transcript_score_dispatch WHERE call_id=$1',[id]))[0];
+ assert.equal(d.dispatch_attempts,0);assert.ok(new Date(d.available_at)>new Date());
+ await setOutcome(id,'test_call');
+});
+
+test('subscription failures before job creation are logged and cannot dispatch forever',async()=>{
+ const id=await newCall();await setOutcome(id,'enrolled');await due(id);
+ const before=modelCalls.length;let deliveries=0;
+ await query("UPDATE subscriptions SET plan='pro',status='canceled' WHERE tenant_id=$1",[tenant]);
+ try{
+  const options={db,scoringUrl:'https://example.test/score',secret:'sale-test',transport:async(url,init)=>{
+   deliveries++;
+   const response=await worker(new Request(url,init),{});
+   assert.equal(response.status,503);assert.equal((await response.json()).code,'scoring_subscription_blocked');
+   return new Response(null,{status:202});
+  }};
+  for(let i=0;i<3;i++){await runTranscriptDispatch(options);await due(id);}
+  await runTranscriptDispatch(options);await runTranscriptDispatch(options);
+  assert.equal(deliveries,3);assert.equal(modelCalls.length,before);
+  assert.equal((await record(id)).compliance_status,'failed');
+  assert.equal((await query('SELECT * FROM scoring_jobs WHERE call_id=$1',[id])).length,0);
+ }finally{await query("UPDATE subscriptions SET plan='internal',status='active' WHERE tenant_id=$1",[tenant]);}
+});
 
 for(const outcome of ['enrolled','enrolled_pending_verification']) {
  test(`${outcome} queues and scores the full stored transcript exactly once`,async()=>{

@@ -23,8 +23,8 @@ export function resolveEngine(value = 'MA') {
 }
 
 export function resolveProvider(engine, env) {
-  // The shared post-call scorer also accepts legacy product records. Preserve their
-  // existing provider; this migration only routes the four requested Co-Pilot engines.
+  // Legacy Co-Pilot engines retain their provider. The scoring path bypasses
+  // this configuration and always uses OpenAI.
   if (engine === 'ANCILLARY' || engine === 'ANNUITY') return 'anthropic';
   const provider = env[`LLM_PROVIDER_${engine}`] || env.LLM_PROVIDER || 'openai';
   if (!['openai', 'anthropic'].includes(provider)) throw new Error(`Invalid LLM provider for ${engine}`);

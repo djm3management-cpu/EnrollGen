@@ -96,6 +96,22 @@ test('summary schema failures throw and never fabricate a scorecard', async () =
   assert.equal(h.requests.length, 1);
 });
 
+test('scoring always uses OpenAI for every engine despite Anthropic overrides and shadows',async()=>{
+ for(const engine of ['MA','MEDSUP','ACA','U65','ANCILLARY','ANNUITY']){
+  const h=harness(body=>json(response('scored',body.model)),{
+   LLM_PROVIDER:'anthropic',[`LLM_PROVIDER_${engine}`]:'anthropic',[`LLM_SHADOW_${engine}`]:'claude-sonnet-4-6',
+  });
+  h.runtime.adapters.anthropic.complete=()=>assert.fail('scoring must never call Anthropic');
+  const result=await complete({...request,engine,path:'scoring'},h.runtime);await h.flush();
+  assert.equal(result.model,'gpt-5.6-luna');assert.equal(h.requests.length,1);
+  assert.equal(h.requests[0].reasoning.effort,'medium');assert.equal(h.requests[0].max_output_tokens,16384);
+  assert.ok(!h.rows.some(row=>row.metadata.shadow));
+ }
+ const failed=harness(()=>errorResponse(401),{LLM_PROVIDER:'anthropic'});
+ await assert.rejects(complete({...request,path:'scoring'},failed.runtime));
+ assert.equal(failed.requests.length,1);
+});
+
 test('global provider and each engine override select Anthropic with normalized usage', async () => {
   assert.equal(resolveProvider('MA', {}), 'openai');
   assert.equal(resolveProvider('ANCILLARY', { LLM_PROVIDER: 'openai' }), 'anthropic');

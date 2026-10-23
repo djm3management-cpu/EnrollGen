@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { complete } from "../src/lib/llm/client.ts";
+import { resolveEngine } from "../src/lib/llm/config.js";
 import { scoreCall, calculateAverageConfidence } from "../src/compliance/engine/ScoringEngine.js";
 import { classifyCall, detectCallDirection } from "../src/compliance/engine/IntentClassifier.js";
 import { ALL_INTENTS, CATEGORY_WEIGHTS } from "../src/compliance/intents/index.js";
@@ -71,51 +73,24 @@ async function createSupabaseAdminClient() {
   });
 }
 
-async function callClaude(system, user) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY is required when using --classify-missing.");
+async function callScoringLLM(system, user, options = {}, productType = DEFAULT_PRODUCT_TYPE) {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is required when using --classify-missing.");
   }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 8192,
-        system,
-        messages: [{ role: "user", content: user }],
-      }),
-      signal: controller.signal,
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error?.message || `Anthropic API error ${response.status}`);
-    }
-
-    return data.content
-      ?.map((block) => (block.type === "text" ? block.text : ""))
-      .join("") || "";
-  } finally {
-    clearTimeout(timeout);
-  }
+  const response = await complete({
+    engine: resolveEngine(productType), path: 'scoring', system,
+    messages: [{ role: 'user', content: user }], max_completion_tokens: 16384,
+    response_format: options.response_format,
+  }, { signal: AbortSignal.timeout(AI_TIMEOUT_MS) });
+  return response.content.filter(block => block.type === 'text').map(block => block.text).join('');
 }
 
-async function checkClaudeAvailable() {
+async function checkScoringAvailable() {
   try {
-    const response = await callClaude("Return only OK.", "OK");
+    const response = await callScoringLLM("Return only OK.", "OK");
     return /ok/i.test(response);
   } catch (error) {
-    console.warn(`Claude classification unavailable: ${error.message}`);
+    console.warn(`OpenAI classification unavailable: ${error.message}`);
     return false;
   }
 }
@@ -820,7 +795,7 @@ async function main() {
   let classifiedMissing = 0;
   let writtenDetections = 0;
   let reconstructedFromItems = 0;
-  let claudeAvailable = null;
+  let scoringAvailable = null;
 
   for (let index = 0; index < sourceScorecards.length; index += 1) {
     const sourceScorecard = sourceScorecards[index];
@@ -862,12 +837,12 @@ async function main() {
         continue;
       }
 
-      if (claudeAvailable == null) {
-        process.stdout.write("\nChecking Claude classifier connectivity...\n");
-        claudeAvailable = await checkClaudeAvailable();
+      if (scoringAvailable == null) {
+        process.stdout.write("\nChecking OpenAI classifier connectivity...\n");
+        scoringAvailable = await checkScoringAvailable();
       }
 
-      if (!claudeAvailable) {
+      if (!scoringAvailable) {
         results.push({
           filename,
           oldScore: sourceScorecard.overall_score,
@@ -880,12 +855,12 @@ async function main() {
       process.stdout.write(`\rClassifying ${index + 1}/${sourceScorecards.length}: ${filename.slice(0, 66).padEnd(66)}`);
       let llmSuccessCount = 0;
       let llmFailed = false;
-      const guardedCallLLM = async (system, user) => {
+      const guardedCallLLM = async (system, user, options) => {
         if (llmFailed) {
           throw new Error("Skipping remaining transcript segments after classifier failure.");
         }
         try {
-          const response = await callClaude(system, user);
+          const response = await callScoringLLM(system, user, options, productType);
           llmSuccessCount += 1;
           return response;
         } catch (error) {
