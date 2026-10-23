@@ -17,6 +17,7 @@ const COMPLIANCE_LABELS = {
   scoring: 'Scoring', complete: 'Complete', failed: 'Scoring failed', dispo_changed: 'Disposition changed',
 };
 export function ComplianceChip({ score, status }) {
+  if (status === 'failed') return <span className="ops-error">Scoring failed</span>;
   if (score == null) return <span className="contacts-muted">{COMPLIANCE_LABELS[status] || '--'}</span>;
   const value = Math.round(Number(score));
   const band = value >= 90 ? 'high' : value >= 70 ? 'mid' : 'low';

@@ -8,6 +8,7 @@ import { createScoreCallHandler } from '../netlify/functions/score-call-backgrou
 import { generateScorecard } from '../src/compliance/engine/ScorecardGenerator.js';
 import { isComplianceSale } from '../src/lib/saleCompliance.js';
 import { runTranscriptDispatch } from '../telephony/src/transcripts.js';
+import { retryFailedScoring } from '../scripts/post-call/retry-failed-scoring.mjs';
 
 const pg=new PGlite(), db=evidenceDb(pg);
 const tenant=randomUUID(),agent=randomUUID(),template=randomUUID(),intent=randomUUID();
@@ -97,8 +98,89 @@ before(async()=>{
  assert.equal((await record(stalled)).compliance_status,'queued');assert.equal(modelCalls.length,before);
  await setOutcome(stalled,'test_call');
  await pg.exec(migration('113_scoring_dispatch_retry_bounds.sql'));
+ await pg.exec(migration('114_manual_scoring_retry.sql'));
 });
 after(async()=>{ if(oldSecret===undefined)delete process.env.SCORE_CALL_JOB_SECRET;else process.env.SCORE_CALL_JOB_SECRET=oldSecret;await pg.close(); });
+
+const retryArgs=(id,requestId)=>['--call-id',id,'--tenant-id',tenant,...(requestId?
+ ['--execute','--request-id',requestId,'--operator','Fixture operator','--reason','Provider issue corrected']:[])];
+const retry=(id,requestId)=>retryFailedScoring(retryArgs(id,requestId),{getDb:async()=>db,log:()=>{}});
+
+test('operator recovery dry-run changes nothing; execution rearms exhausted dispatch once and preserves evidence',async()=>{
+ const id=await newCall();await setOutcome(id,'enrolled');await due(id);
+ for(let i=0;i<4;i++){
+  await runTranscriptDispatch({db,scoringUrl:'https://test/score',secret:'sale-test',transport:async()=>new Response(null,{status:202})});
+  if(i<3)await due(id);
+ }
+ const original=await record(id),dispatch=(await query('SELECT * FROM transcript_score_dispatch WHERE call_id=$1',[id]))[0];
+ assert.equal(original.compliance_status,'failed');
+ assert.equal((await retry(id)).dry_run,true);
+ assert.deepEqual(await record(id),original);
+ assert.deepEqual((await query('SELECT * FROM transcript_score_dispatch WHERE call_id=$1',[id]))[0],dispatch);
+ assert.equal((await query('SELECT * FROM scoring_manual_retries WHERE call_id=$1',[id])).length,0);
+ const requestId=randomUUID();assert.equal((await retry(id,requestId)).status,'queued');
+ const reset=(await query('SELECT * FROM transcript_score_dispatch WHERE call_id=$1',[id]))[0];
+ assert.equal(Number(reset.revision),Number(dispatch.revision)+1);assert.equal(reset.dispatch_attempts,0);
+ assert.equal(reset.last_error,null);assert.equal((await record(id)).compliance_status,'queued');
+ assert.equal((await record(id)).transcript_raw,original.transcript_raw);
+ assert.deepEqual((await record(id)).transcript_diarized,original.transcript_diarized);
+ assert.equal((await record(id)).call_outcome,original.call_outcome);
+ assert.equal((await retry(id,requestId)).status,'already_requested');
+ assert.deepEqual((await query('SELECT * FROM transcript_score_dispatch WHERE call_id=$1',[id]))[0],reset);
+ const audit=(await query('SELECT * FROM scoring_manual_retries WHERE request_id=$1',[requestId]))[0];
+ assert.equal(audit.previous_dispatch.dispatch_attempts,3);assert.equal(audit.requested_by,'Fixture operator');
+ await due(id);await score(id);assert.equal((await record(id)).compliance_status,'complete');
+ assert.equal((await retry(id,randomUUID())).status,'already_complete');assert.equal(await cardCount(id),1);
+});
+
+test('operator recovery resets failed job attempts, fences stale tokens and retains cached segments and cumulative token usage',async()=>{
+ const id=await newCall();await setOutcome(id,'enrolled');await due(id);
+ const c=await record(id);
+ const job=(await db.rpc('begin_scoring_job',{p_call_id:id,p_template_id:template,
+  p_transcript:{raw:c.transcript_raw,diarized:c.transcript_diarized,duration:c.call_duration_seconds}})).data;
+ await query("INSERT INTO scoring_segment_progress(job_id,segment_index,result) VALUES($1,0,'{\"kept\":true}')",[job.jobId]);
+ await query('UPDATE scoring_jobs SET estimated_input_tokens=1234,attempt_count=3 WHERE id=$1',[job.jobId]);
+ await db.rpc('fail_scoring_job',{p_job_id:job.jobId,p_attempt_token:job.attemptToken,p_error:'Provider unavailable'});
+ const before=await record(id);
+ assert.equal((await retry(id,randomUUID())).status,'queued');
+ const reset=(await query('SELECT * FROM scoring_jobs WHERE id=$1',[job.jobId]))[0];
+ assert.equal(reset.attempt_count,0);assert.equal(reset.estimated_input_tokens,1234);
+ assert.notEqual(reset.attempt_token,job.attemptToken);assert.equal(reset.error,null);
+ assert.deepEqual((await query('SELECT result FROM scoring_segment_progress WHERE job_id=$1',[job.jobId]))[0].result,{kept:true});
+ const audit=(await query('SELECT * FROM scoring_manual_retries WHERE call_id=$1',[id]))[0];
+ assert.equal(audit.previous_jobs[0].attempt_count,3);assert.equal(audit.previous_jobs[0].error,'Provider unavailable');
+ assert.equal((await record(id)).transcript_raw,before.transcript_raw);
+ assert.equal((await record(id)).metadata.scoring_error,undefined);
+ assert.equal((await db.rpc('fail_scoring_job',{p_job_id:job.jobId,p_attempt_token:job.attemptToken,p_error:'stale worker'})).data,false);
+ await due(id);
+ const resumed=(await db.rpc('begin_scoring_job',{p_call_id:id,p_template_id:template,
+  p_transcript:{raw:c.transcript_raw,diarized:c.transcript_diarized,duration:c.call_duration_seconds}})).data;
+ assert.equal(resumed.status,'claimed');assert.equal(resumed.attemptCount,1);
+ assert.equal(resumed.jobId,job.jobId);assert.notEqual(resumed.attemptToken,job.attemptToken);
+ assert.equal((await db.rpc('fail_scoring_job',{p_job_id:job.jobId,p_attempt_token:job.attemptToken,p_error:'late old worker'})).data,false);
+ await setOutcome(id,'test_call');
+});
+
+test('operator recovery refuses active workers, non-sales, queued calls, wrong tenants and token budget resets',async()=>{
+ const id=await newCall();await setOutcome(id,'enrolled');await due(id);
+ await assert.rejects(retry(id,randomUUID()),/not failed/);
+ const c=await record(id);
+ const job=(await db.rpc('begin_scoring_job',{p_call_id:id,p_template_id:template,
+  p_transcript:{raw:c.transcript_raw,diarized:c.transcript_diarized,duration:c.call_duration_seconds}})).data;
+ await assert.rejects(retry(id,randomUUID()),/still active/);
+ await query("UPDATE scoring_jobs SET lease_until=now()-interval '1 second',status='failed',estimated_input_tokens=500001 WHERE id=$1",[job.jobId]);
+ await assert.rejects(retry(id,randomUUID()),/token budget exhausted/);
+ const wrongTenant=retryArgs(id,randomUUID());wrongTenant[3]=randomUUID();
+ await assert.rejects(retryFailedScoring(wrongTenant,{getDb:async()=>db,log:()=>{}}),/unavailable for this tenant/);
+ await setOutcome(id,'test_call');await assert.rejects(retry(id,randomUUID()),/not eligible/);
+ assert.equal((await query('SELECT * FROM scoring_manual_retries WHERE call_id=$1',[id])).length,0);
+});
+
+test('recovery CLI refuses execution without audit arguments before connecting to a database',async()=>{
+ await assert.rejects(retryFailedScoring(['--call-id',randomUUID(),'--tenant-id',tenant,'--execute'],{
+  getDb:()=>assert.fail('must not connect'),log:()=>{},
+ }),/requires --request-id/);
+});
 
 test('Netlify 202 returns before scoring starts; retry scheduling cannot block the job claim',async()=>{
  const id=await newCall();await setOutcome(id,'enrolled');await due(id);
@@ -300,6 +382,8 @@ test('only service roles can inspect the compliance dispatch queue or call scori
   await pg.exec('SET ROLE '+role);
   await assert.rejects(pg.query('SELECT * FROM get_sale_compliance_dispatch()'),/permission denied/);
   await assert.rejects(pg.query('SELECT * FROM transcript_score_dispatch'),/permission denied/);
+  await assert.rejects(pg.query('SELECT * FROM scoring_manual_retries'),/permission denied/);
+  await assert.rejects(pg.query('SELECT retry_failed_scoring($1,$2,$3,$4,$5,false)',[randomUUID(),tenant,randomUUID(),'reason','operator']),/permission denied/);
   await pg.exec('RESET ROLE');
  }
 });

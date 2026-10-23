@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redactSensitiveText } from "../../lib/redaction";
 import { callOutcomeLabel } from "../../lib/postCallPipeline";
 import { CATEGORY_WEIGHTS } from "../../compliance/intents/index.js";
+import { scoringFailureMessage } from "../../lib/scoringStatus.js";
 
 // Full compliance breakdown: metadata header, overall score, a
 // section-by-section flag breakdown (from scorecard_items, which
@@ -184,7 +185,7 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
       setContactSource(contact?.source || null);
     }
 
-    setScoringError(record.metadata?.scoring_error || null);
+    setScoringError(scoringFailureMessage(record));
 
     if (!record.compliance_scorecard_id) {
       setScorecard(null);
@@ -300,7 +301,7 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
                   : "Scoring in progress — this can take a minute."}
               </div>
             ) : scoringError ? (
-              <div className="ops-error">
+              <div className="ops-error" role="alert">
                 Scoring failed: {scoringError}
               </div>
             ) : (

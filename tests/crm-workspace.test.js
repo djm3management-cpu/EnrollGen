@@ -7,6 +7,8 @@ import { readCrmLocation, crmPath, navigateCrm, CRM_NAVIGATION_EVENT } from '../
 import { formatCallTime, formatCallDateTime, formatTalk, summarizeContactCalls } from '../src/lib/callPresentation.js';
 import { loadCallLog, loadCallLogPages } from '../src/lib/callLogApi.js';
 import { transformSync } from 'esbuild';
+import { scoringFailureMessage } from '../src/lib/scoringStatus.js';
+import { isComplianceSale } from '../src/lib/saleCompliance.js';
 
 test('CRM routes support direct contact links and legacy Calls/Contacts URLs', () => {
   assert.deepEqual(readCrmLocation('/calls'), { view: 'calls', contactId: null });
@@ -95,6 +97,25 @@ function componentSource(path, name, bindings) {
   vm.runInContext(transformSync(source, { loader: 'jsx', jsxFactory: 'h', jsxFragment: 'Fragment', format: 'cjs' }).code + `;globalThis.component=${name};`, context);
   return context.component;
 }
+test('the review modal shows an alert for code-only and generic failed states; call chips flag failure over old scores',async()=>{
+ for(const metadata of [{scoring_error_code:'scoring_attempts_exhausted'},{}]){
+  const hooks=hookHarness();
+  const record={id:'failed-call',compliance_status:'failed',call_outcome:'enrolled',transcript_diarized:[],metadata};
+  const chain={select:()=>chain,eq:()=>chain,single:async()=>({data:record,error:null})};
+  const client={from:()=>chain};
+  const Modal=componentSource('../src/components/callDetail/ComplianceReviewModal.jsx','ComplianceReviewModal',{
+   ...hooks.hooks,CATEGORY_WEIGHTS:{},scoringFailureMessage,isComplianceSale,debugLog:()=>{},fmtDateTime:()=>'',callOutcomeLabel:value=>value,
+  });
+  hooks.mount(()=>Modal({callRecordId:record.id,supabaseClient:client,onClose:()=>{}}));
+  await hooks.flush();
+  const alert=nodes(hooks.value).find(node=>node.props.role==='alert');assert.ok(alert);
+  assert.match(alert.children.join(''),/Scoring failed:/);assert.match(alert.children.join(''),/transcript is retained/);
+  hooks.unmount();
+ }
+ const Chip=componentSource('../src/components/callLog/CallRowParts.jsx','ComplianceChip',{COMPLIANCE_WARNING_THRESHOLD:80});
+ assert.ok(Chip({score:92,status:'failed'}).children.includes('Scoring failed'));
+ assert.equal(scoringFailureMessage({compliance_status:'queued',metadata:{scoring_status:'failed',scoring_error:'old failure'}}),null);
+});
 test('the actual call row and contact card display the same Talk, recording target, disposition and compliance state', () => {
   const row = { log_id: 'call-1', call_record_id: 'record-1', contact_id: 'contact-1', contact_name: 'Sample Contact',
     contact_phone: '+15555555555', occurred_at: new Date(2026, 9, 22, 15, 4).toISOString(), direction: 'inbound', duration_seconds: 31,

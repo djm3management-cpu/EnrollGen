@@ -108,4 +108,5 @@ $$;
 REVOKE ALL ON FUNCTION public.set_scoring_dispatch_readiness() FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.get_sale_compliance_dispatch() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.get_sale_compliance_dispatch() TO service_role;
+NOTIFY pgrst,'reload schema';
 COMMIT;
