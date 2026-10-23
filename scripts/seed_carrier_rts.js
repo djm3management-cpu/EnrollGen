@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../integrations/supabase.js";
 import Papa from "papaparse";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -97,7 +97,7 @@ async function main() {
 
   const supabase = createClient(
     requiredEnv("SUPABASE_URL", "VITE_SUPABASE_URL"),
-    requiredEnv("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_KEY"),
+    supabaseSecretKey() || requiredEnv("SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY"),
     { auth: { persistSession: false, autoRefreshToken: false } }
   );
 

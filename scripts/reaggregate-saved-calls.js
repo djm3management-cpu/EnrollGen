@@ -6,14 +6,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
-import {createClient} from '@supabase/supabase-js';
+import {createSupabaseClient as createClient,supabaseSecretKey} from '../integrations/supabase.js';
 import {scoreCall} from '../src/compliance/engine/ScoringEngine.js';
 import {aggregateSavedDetections, detectionsFromSavedItems} from '../src/compliance/engine/SavedResultAggregator.js';
 const args=Object.fromEntries(process.argv.slice(2).map(a=>{const [k,...v]=a.replace(/^--/,'').split('=');return[k,v.length?v.join('='):true];}));
 const until=args.until||new Date().toISOString(),since=args.since||new Date(new Date(until)-30*86400000).toISOString();
 const output=path.resolve(args.output||'/tmp/enrollgen-merge-weighting');
 const policy='merge-weighting-2026-10-19';
-const db=createClient(process.env.SUPABASE_URL||process.env.VITE_SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY);
+const db=createClient(process.env.SUPABASE_URL||process.env.VITE_SUPABASE_URL,supabaseSecretKey());
 const checked=async q=>{const {data,error}=await q;if(error)throw error;return data;};
 async function all(make){const rows=[];for(let from=0;;from+=500){const page=await checked(make().range(from,from+499));rows.push(...page);if(page.length<500)return rows;}}
 await fs.mkdir(output,{recursive:true,mode:0o700});

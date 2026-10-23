@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../integrations/supabase.js";
 import { complete } from "../src/lib/llm/client.ts";
 import { resolveEngine } from "../src/lib/llm/config.js";
 import { scoreCall, calculateAverageConfidence } from "../src/compliance/engine/ScoringEngine.js";
@@ -62,10 +62,10 @@ async function loadLocalEnv() {
 async function createSupabaseAdminClient() {
   await loadLocalEnv();
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+  const key = supabaseSecretKey();
 
   if (!url || !key) {
-    throw new Error("Missing Supabase env. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
+    throw new Error("Missing Supabase env. Set SUPABASE_URL and SUPABASE_SECRET_KEY (or legacy SUPABASE_SERVICE_ROLE_KEY).");
   }
 
   return createClient(url, key, {

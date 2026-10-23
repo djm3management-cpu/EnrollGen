@@ -2,10 +2,10 @@
  * Usage: node --env-file=.env.local scripts/embed_cms_landscape_2027.mjs
  */
 import OpenAI from "openai";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../integrations/supabase.js";
 
 const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const key = supabaseSecretKey();
 if (!url || !key || !process.env.OPENAI_API_KEY) throw new Error("Supabase service role and OpenAI keys required");
 const db = createClient(url, key, { auth: { persistSession: false } });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

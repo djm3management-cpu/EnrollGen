@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -16,7 +16,7 @@ function json(status, payload) {
 
 export function getSupabase() {
   const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = supabaseSecretKey();
   if (!url || !serviceRoleKey) throw new Error("Supabase service-role env vars not configured");
   return createClient(url, serviceRoleKey);
 }

@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 export class EvidenceError extends Error {
   constructor(status, message) {
@@ -8,10 +8,10 @@ export class EvidenceError extends Error {
 }
 
 export function getEvidenceServiceClient(env = process.env) {
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!env.SUPABASE_URL || !supabaseSecretKey(env)) {
     throw new EvidenceError(503, "Evidence service is not configured.");
   }
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+  return createClient(env.SUPABASE_URL, supabaseSecretKey(env), {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

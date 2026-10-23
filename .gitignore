@@ -33,5 +33,9 @@ dist-ssr
 
 # Checked-in placeholders only
 !/.env.example
+!/telephony/.env.example
+!/integrations/.env.example
+!/supabase/functions/.env.example
+!/infra/office-nextcloud/.env.example
 data/
 supabase/.temp/

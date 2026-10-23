@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseClient as createClient } from '../../integrations/supabase.js';
+import { supabasePublishableKey } from '../../src/lib/supabaseKeys.js';
 import { createSupabaseAdminClient, parseArgs, readTabularFile } from './common.js';
 import { prepareCrosswalk } from './ingest-plan-crosswalk.js';
 import { prepareDsnp2027 } from './prepare-dsnp-2027.js';
@@ -110,7 +111,7 @@ for (const state of ['NJ', 'PA']) {
   report.counties[state] = { stars: stars.length, counties: new Set(stars.map(row => row.county_fips)).size, snp: snp.length, crosswalk: transitions.length };
 }
 // Use the browser's anonymous role for the production SEP Finder contract.
-const publicClient = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+const publicClient = createClient(process.env.VITE_SUPABASE_URL, supabasePublishableKey(process.env), { auth: { persistSession: false } });
 const { count: publicAlignmentCount, error: publicAlignmentError } = await publicClient.from('dsnp_eae_lookup')
   .select('id', { count: 'exact', head: true }).eq('plan_year', 2027);
 if (publicAlignmentError) throw publicAlignmentError;

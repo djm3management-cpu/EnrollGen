@@ -4,7 +4,7 @@
   Medicare Advantage news stories into the Supabase `bulletins` table.
 */
 
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 const LOOKBACK_DAYS = 45;
 const MAX_ITEMS_PER_FEED = 18;
@@ -519,11 +519,11 @@ export async function syncBulletins(supabase, { feeds = ALL_FEEDS, fetchImpl = f
 }
 
 export default async () => {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.error("[sync-bulletins] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+  if (!process.env.SUPABASE_URL || !supabaseSecretKey()) {
+    console.error("[sync-bulletins] Missing SUPABASE_URL or SUPABASE_SECRET_KEY (legacy SUPABASE_SERVICE_ROLE_KEY is also accepted)");
     return new Response(
       JSON.stringify({
-        error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY",
+        error: "Missing SUPABASE_URL or SUPABASE_SECRET_KEY (legacy SUPABASE_SERVICE_ROLE_KEY is also accepted)",
       }),
       {
         status: 500,
@@ -534,7 +534,7 @@ export default async () => {
 
   const supabase = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    supabaseSecretKey()
   );
 
   const result = await syncBulletins(supabase);

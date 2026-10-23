@@ -1,6 +1,6 @@
 import { paragonReportTotals } from './_paragonControls.js';
 import { createHash } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 const HEADERS = {
   'Cache-Control':'private, no-store, max-age=0',
@@ -49,7 +49,7 @@ export const createHandler = (makeDb = (url,key) => createClient(url,key,{auth:{
   const token = url.searchParams.get('token');
   const hash = token && /^[A-Za-z0-9_-]{43}$/.test(token) ? createHash('sha256').update(token).digest('hex') : null;
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = supabaseSecretKey();
   if (!supabaseUrl || !key) return respond('Service unavailable',503,'text/plain; charset=utf-8');
   const db = makeDb(supabaseUrl,key);
   const ip = request.headers.get('x-nf-client-connection-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';

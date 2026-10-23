@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { fetchLiveFemaDisasters } from '../../src/lib/sepFema.js';
 
 export async function refreshFemaSnapshot(client, fetchFeed = fetchLiveFemaDisasters) {
@@ -16,7 +16,7 @@ export async function refreshFemaSnapshot(client, fetchFeed = fetchLiveFemaDisas
 
 export default async () => {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = supabaseSecretKey();
   if (!url || !key) return new Response('FEMA refresh configuration unavailable', { status: 503 });
   try {
     const result = await refreshFemaSnapshot(createClient(url, key));

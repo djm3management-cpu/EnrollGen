@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import {
   applyDeepgramRedactionParams,
   redactDiarizedTranscript,
@@ -14,7 +14,7 @@ function json(status, payload) {
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = supabaseSecretKey();
   if (!url || !serviceRoleKey) throw new Error("Supabase service-role env vars not configured");
   return createClient(url, serviceRoleKey);
 }

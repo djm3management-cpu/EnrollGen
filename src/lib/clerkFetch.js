@@ -6,7 +6,7 @@ export function createClerkFetch(getToken, { tokenOptions = {}, send = (...args)
       let token;
       try { token = await getToken(options); }
       catch (error) { reportAuthFailure(); throw error; }
-      if (!token) { reportAuthFailure(); throw new Error('Sign in to continue.'); }
+      if (!token || /^sb_(secret|publishable)_/.test(token)) { reportAuthFailure(); throw new Error('Sign in to continue.'); }
       const headers = new Headers(input instanceof Request ? input.headers : undefined);
       new Headers(init.headers || {}).forEach((value, key) => headers.set(key, value));
       headers.set('Authorization', `Bearer ${token}`);

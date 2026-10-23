@@ -1,3 +1,5 @@
 [functions.get-availability]
 # This endpoint authenticates its own hashed, revocable x-api-key credentials.
+# Supabase API keys are not user JWTs. Keep the existing x-api-key consumer
+# authorization in handler.js; do not replace it with a browser-visible secret.
 verify_jwt = false

@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import XLSX from "xlsx";
 
 export const DEFAULT_COUNTY_REFERENCE_URL =
@@ -107,11 +107,11 @@ export async function loadLocalEnv() {
 export async function createSupabaseAdminClient() {
   await loadLocalEnv();
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+  const key = supabaseSecretKey();
 
   if (!url || !key) {
     throw new Error(
-      "Missing Supabase env. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY."
+      "Missing Supabase env. Set SUPABASE_URL and SUPABASE_SECRET_KEY (or legacy SUPABASE_SERVICE_ROLE_KEY)."
     );
   }
 

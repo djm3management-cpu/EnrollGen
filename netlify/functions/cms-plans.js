@@ -1,7 +1,7 @@
 // Netlify Function: /api/cms-plans?zip=33601
 // Queries your plan database (Supabase example below)
 
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabasePublishableKey } from "../../integrations/supabase.js";
 import { requireClerkAuth } from "./_clerkAuth.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -14,12 +14,13 @@ function json(status, payload) {
 }
 
 function getSupabase() {
-  const { SUPABASE_URL, SUPABASE_ANON_KEY } = process.env;
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY");
+  const { SUPABASE_URL } = process.env;
+  const publicKey = supabasePublishableKey();
+  if (!SUPABASE_URL || !publicKey) {
+    throw new Error("Missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY (or legacy SUPABASE_ANON_KEY)");
   }
 
-  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return createClient(SUPABASE_URL, publicKey);
 }
 
 export default async (req) => {
@@ -42,7 +43,7 @@ export default async (req) => {
     console.error("cms-plans configuration error:", error);
     return json(500, {
       error: "Server configuration error",
-      detail: "Set SUPABASE_URL and SUPABASE_ANON_KEY in Netlify environment variables.",
+      detail: "Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in Netlify environment variables.",
     });
   }
 

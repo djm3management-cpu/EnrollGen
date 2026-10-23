@@ -3,7 +3,7 @@ import { resolveEngine } from "../../src/lib/llm/config.js";
 import { coachingFormat } from "../../src/lib/llm/schemas/coaching.js";
 import { llmRuntime } from "./_llmTelemetry.js";
 import { requireClerkAuth } from "./_clerkAuth.js";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import {
   requireActiveSubscription,
   requirePlan,
@@ -22,7 +22,7 @@ function jsonResponse(status, payload) {
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const key = supabaseSecretKey();
   if (!url || !key) throw new Error("Supabase env vars not configured");
   return createClient(url, key);
 }

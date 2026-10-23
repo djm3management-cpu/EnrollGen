@@ -1,13 +1,13 @@
 /** Upload prepared county rows after applying migration 052. Requires service role. */
 import fs from "node:fs";
 import readline from "node:readline";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../integrations/supabase.js";
 
 const file = process.argv[2];
 if (!file) throw new Error("Usage: node --env-file=.env.local scripts/upload_cms_landscape_2027.mjs <prepared.jsonl>");
 const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !key) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+const key = supabaseSecretKey();
+if (!url || !key) throw new Error("SUPABASE_URL and SUPABASE_SECRET_KEY (or legacy SUPABASE_SERVICE_ROLE_KEY) are required");
 const db = createClient(url, key, { auth: { persistSession: false } });
 let batch = [];
 let total = 0;

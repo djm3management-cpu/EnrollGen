@@ -1,6 +1,7 @@
 import { debugLog } from "./debugLog.js";
 import { createClient } from "@supabase/supabase-js";
 import { createClerkFetch } from './clerkFetch.js';
+import { supabasePublishableKey, supabaseCmsPublishableKey, supabaseApiKeyFetch } from './supabaseKeys.js';
 
 function requiredEnv(name) {
   const value = import.meta.env[name];
@@ -11,12 +12,15 @@ function requiredEnv(name) {
 }
 
 const supabaseUrl = requiredEnv("VITE_SUPABASE_URL");
-const supabaseAnonKey = requiredEnv("VITE_SUPABASE_ANON_KEY");
+const supabasePublicKey = supabasePublishableKey(import.meta.env);
 const supabaseCmsUrl = import.meta.env.VITE_SUPABASE_CMS_URL || supabaseUrl;
-const supabaseCmsAnonKey = import.meta.env.VITE_SUPABASE_CMS_ANON_KEY || supabaseAnonKey;
+const supabaseCmsPublicKey = supabaseCmsPublishableKey(import.meta.env, supabasePublicKey);
 const authClients = new Map();
 
 const publicClientOptions = {
+  global: { fetch: supabaseApiKeyFetch(supabasePublicKey) },
+  // Public Realtime uses its apikey connection parameter, not an opaque user JWT.
+  realtime: /^sb_publishable_/.test(supabasePublicKey) ? { accessToken: async () => null } : {},
   auth: {
     persistSession: false,
     autoRefreshToken: false,
@@ -26,6 +30,8 @@ const publicClientOptions = {
 };
 
 const cmsClientOptions = {
+  global: { fetch: supabaseApiKeyFetch(supabaseCmsPublicKey) },
+  realtime: /^sb_publishable_/.test(supabaseCmsPublicKey) ? { accessToken: async () => null } : {},
   auth: {
     persistSession: false,
     autoRefreshToken: false,
@@ -35,8 +41,8 @@ const cmsClientOptions = {
 };
 
 // Base client for unauthenticated/embedding queries (existing usage)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, publicClientOptions);
-export const supabaseCms = createClient(supabaseCmsUrl, supabaseCmsAnonKey, cmsClientOptions);
+export const supabase = createClient(supabaseUrl, supabasePublicKey, publicClientOptions);
+export const supabaseCms = createClient(supabaseCmsUrl, supabaseCmsPublicKey, cmsClientOptions);
 
 // Fresh-token client: instead of pinning one Clerk JWT at creation (they
 // expire in about 60 seconds, after which every request 401s), this
@@ -71,7 +77,9 @@ function decodeJwtPart(token, index) {
 //   to the default Clerk token and every request 401ed).
 // - Tokens not signed with HS256 (the default Clerk session token is
 //   RS256) can never verify against the Supabase JWT secret and produce
-//   "No suitable key or wrong key type"; degrade to the anon key instead.
+//   "No suitable key or wrong key type". Keep this legacy Clerk-template
+//   requirement until the separate native Clerk integration is configured.
+//   An API key must never stand in for a missing user JWT.
 async function resolveClerkAccessToken(options = {}) {
   if (options.skipCache) {
     cachedClerkToken = null;
@@ -88,7 +96,7 @@ async function resolveClerkAccessToken(options = {}) {
     inFlightMint = (async () => {
       try {
         const token = await clerkTokenGetter?.(options);
-        if (!token) return supabaseAnonKey;
+        if (!token) return null;
 
         const header = decodeJwtPart(token, 0);
         if (header?.alg && header.alg !== "HS256") {
@@ -96,7 +104,7 @@ async function resolveClerkAccessToken(options = {}) {
             warnedWrongAlg = true;
             debugLog("lib/supabase.js warn");
           }
-          return supabaseAnonKey;
+          return null;
         }
 
         const payload = decodeJwtPart(token, 1);
@@ -108,7 +116,7 @@ async function resolveClerkAccessToken(options = {}) {
       } catch {
         const now = Date.now() / 1000;
         const cachedStillValid = cachedClerkToken && cachedClerkTokenExp - now > 0;
-        return cachedStillValid ? cachedClerkToken : supabaseAnonKey;
+        return cachedStillValid ? cachedClerkToken : null;
       } finally {
         if (generation === mintGeneration) inFlightMint = null;
       }
@@ -125,12 +133,12 @@ export async function refreshClerkSupabaseToken() {
 export function getClerkSupabase() {
   if (!clerkTokenGetter) return null;
   if (!clerkClient) {
-    clerkClient = createClient(supabaseUrl, supabaseAnonKey, {
+    clerkClient = createClient(supabaseUrl, supabasePublicKey, {
       accessToken: resolveClerkAccessToken,
       // The accessToken option only manages the Authorization bearer;
-      // Supabase's gateway still requires the anon key in the apikey
+      // Supabase's gateway still requires the public API key in the apikey
       // header on every request ("No API key found in request").
-      global: { headers: { apikey: supabaseAnonKey }, fetch:createClerkFetch(resolveClerkAccessToken) },
+      global: { headers: { apikey: supabasePublicKey }, fetch:supabaseApiKeyFetch(supabasePublicKey, createClerkFetch(resolveClerkAccessToken)) },
     });
   }
   return clerkClient;
@@ -141,16 +149,20 @@ export function getClerkSupabase() {
 // the given token, which Clerk expires in about 60 seconds.
 export function getAuthSupabase(token) {
   if (!token) return supabase;
+  if (/^sb_(secret|publishable)_/.test(token)) throw new Error("A Supabase API key is not a user JWT");
   const cacheKey = token.slice(-24);
   if (authClients.has(cacheKey)) return authClients.get(cacheKey);
 
   let currentToken = token;
-  const client = createClient(supabaseUrl, supabaseAnonKey, {
+  const resolveToken = async (options = {}) => {
+    if (clerkTokenGetter) currentToken = await resolveClerkAccessToken(options);
+    return currentToken;
+  };
+  const client = createClient(supabaseUrl, supabasePublicKey, {
+    // Realtime must receive the same user JWT as REST/Storage, not the API key.
+    accessToken: () => resolveToken(),
     global: { headers: { Authorization: `Bearer ${token}` },
-      fetch:createClerkFetch(async options => {
-        if (options.skipCache && clerkTokenGetter) currentToken = await resolveClerkAccessToken(options);
-        return currentToken;
-      }) },
+      fetch:supabaseApiKeyFetch(supabasePublicKey, createClerkFetch(resolveToken)) },
     auth: {
       persistSession: false,
       autoRefreshToken: false,

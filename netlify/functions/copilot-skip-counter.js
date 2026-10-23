@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { requireClerkAuth } from './_clerkAuth.js';
 import { resolveTenantIdForOrg, requireActiveSubscription, requirePlan } from './_subscriptionGate.js';
 import { validSkipCounter, recordSkipCounter } from './_copilotSkipCounter.js';
@@ -12,7 +12,7 @@ export default async (request) => {
   try { body = await request.json(); } catch { return new Response('Invalid JSON', { status: 400 }); }
   if (!validSkipCounter(body)) return new Response('Invalid skip counter', { status: 400 });
   try {
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(process.env.SUPABASE_URL, supabaseSecretKey());
     const tenantId = await resolveTenantIdForOrg(supabase, auth.orgId);
     const subscription = await requireActiveSubscription(supabase, tenantId);
     if (subscription.response) return subscription.response;

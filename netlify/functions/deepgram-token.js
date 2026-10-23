@@ -1,5 +1,5 @@
 import { requireClerkAuth } from "./_clerkAuth.js";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import {
   logUsageRecord,
   requireActiveSubscription,
@@ -20,7 +20,7 @@ function json(status, payload) {
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const key = supabaseSecretKey();
   if (!url || !key) throw new Error("Supabase env vars not configured");
   return createClient(url, key);
 }

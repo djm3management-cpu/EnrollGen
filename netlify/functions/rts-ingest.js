@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { findTenantByOrg, isAdminAuth } from "./_tenantSettings.js";
 import {
@@ -25,7 +25,7 @@ function json(status, payload) {
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = supabaseSecretKey();
   if (!url || !key) throw new Error("Supabase service-role environment variables are not configured.");
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }

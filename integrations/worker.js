@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseClient as createClient, supabaseSecretKey } from "./supabase.js";
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { availabilityPayload, mappedDisposition, csvReport, assertPrivateFieldsAbsent } from './payloads.js';
@@ -103,7 +103,7 @@ if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href){
       process.exitCode = 1;
     }
   } else {
-  const db=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false},
+  const db=createClient(process.env.SUPABASE_URL,supabaseSecretKey(),{auth:{persistSession:false},
     global:{fetch:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(15000)})}});
   const tick=createWorker(db);
   let stopped=false; process.on('SIGTERM',()=>{stopped=true;});process.on('SIGINT',()=>{stopped=true;});

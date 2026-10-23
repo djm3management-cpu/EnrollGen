@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 export const NGHS_TENANT_ID = "00000000-0000-4000-8000-000000000001";
 export const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -310,7 +310,7 @@ export function json(status, payload) {
 
 export function getSupabase() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = supabaseSecretKey();
   if (!url || !key) throw new Error("Supabase env vars not configured");
   return createClient(url, key);
 }

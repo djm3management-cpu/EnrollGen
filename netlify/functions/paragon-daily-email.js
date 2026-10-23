@@ -1,5 +1,5 @@
 import { paragonReportTotals } from './_paragonControls.js';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { addDays, etDate, etMidnight, reportCsv } from './paragon-vendor-report.js';
 
 export const createDailyHandler = ({now = () => new Date(),fetchImpl = fetch,makeDb = (url,key) => createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}})} = {}) => async () => {
@@ -8,7 +8,7 @@ export const createDailyHandler = ({now = () => new Date(),fetchImpl = fetch,mak
   if (localHour !== 18) return new Response('Outside 6 PM ET window');
   const day = etDate(current);
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = supabaseSecretKey();
   if (!url || !key) return new Response('Database unavailable',{status:503});
   const db = makeDb(url,key);
   const {data:source,error:sourceError} = await db.from('lead_sources').select('id')

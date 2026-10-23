@@ -15,7 +15,6 @@ from datetime import datetime, timezone
 
 REQUIRED_ENV = [
     "SUPABASE_URL",
-    "SUPABASE_SERVICE_KEY",
     "NEXTCLOUD_URL",
     "NEXTCLOUD_USER",
     "NEXTCLOUD_APP_TOKEN",
@@ -32,7 +31,7 @@ def split_env_list(name, default=""):
 
 
 SUPABASE_URL = env("SUPABASE_URL").rstrip("/")
-SUPABASE_SERVICE_KEY = env("SUPABASE_SERVICE_KEY")
+SUPABASE_SECRET_KEY = env("SUPABASE_SECRET_KEY") or env("SUPABASE_SERVICE_ROLE_KEY") or env("SUPABASE_SERVICE_KEY")
 NEXTCLOUD_URL = env("NEXTCLOUD_URL").rstrip("/") + "/"
 NEXTCLOUD_USER = env("NEXTCLOUD_USER")
 NEXTCLOUD_APP_TOKEN = env("NEXTCLOUD_APP_TOKEN")
@@ -82,6 +81,8 @@ def setup_logging():
 
 def validate_env():
     missing = [name for name in REQUIRED_ENV if not env(name)]
+    if not SUPABASE_SECRET_KEY:
+        missing.append("SUPABASE_SECRET_KEY (or legacy SUPABASE_SERVICE_ROLE_KEY/SUPABASE_SERVICE_KEY)")
     if missing:
         raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
 
@@ -120,11 +121,10 @@ def http_request(method, url, data=None, headers=None, basic_auth=None, timeout=
 
 
 def supabase_headers():
-    return {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Accept": "application/json",
-    }
+    headers = {"apikey": SUPABASE_SECRET_KEY, "Accept": "application/json"}
+    if not SUPABASE_SECRET_KEY.startswith("sb_secret_"):
+        headers["Authorization"] = f"Bearer {SUPABASE_SECRET_KEY}"
+    return headers
 
 
 def query_calls(since):

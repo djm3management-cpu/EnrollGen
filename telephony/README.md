@@ -282,7 +282,7 @@ Historical pointer backfill (not run automatically or against production):
 
 ```sh
 cd telephony
-# Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and explicit DEFAULT_TENANT_ID.
+# Set SUPABASE_URL, SUPABASE_SECRET_KEY (legacy SUPABASE_SERVICE_ROLE_KEY fallback) and explicit DEFAULT_TENANT_ID.
 node scripts/backfillLastConnected.js --dry-run
 # Only after reviewing counts and the target database:
 node scripts/backfillLastConnected.js --apply

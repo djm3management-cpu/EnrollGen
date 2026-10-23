@@ -31,7 +31,7 @@ The service creates missing WebDAV folders with `MKCOL`.
 3. Edit `.env`:
 
    - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_KEY`
+   - `SUPABASE_SECRET_KEY` (`sb_secret_...`); legacy `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_SERVICE_KEY` are transition fallbacks
    - `NEXTCLOUD_USER`
    - `NEXTCLOUD_APP_TOKEN`
    - `DB_PASSWORD`

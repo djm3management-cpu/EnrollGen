@@ -1,9 +1,9 @@
+import { supabaseSecretKey } from "./lib/supabaseKeys.js";
 import { parseDirectAgentNumbers } from "./directRouting.js";
 
 const REQUIRED_VARS = [
   "PUBLIC_BASE_URL",
   "SUPABASE_URL",
-  "SUPABASE_SERVICE_ROLE_KEY",
   "TWILIO_ACCOUNT_SID",
   "TWILIO_AUTH_TOKEN",
   "TWILIO_API_KEY_SID",
@@ -16,6 +16,7 @@ const REQUIRED_VARS = [
 ];
 
 const missing = REQUIRED_VARS.filter((name) => !process.env[name]);
+if (!supabaseSecretKey()) missing.push("SUPABASE_SECRET_KEY (or legacy SUPABASE_SERVICE_ROLE_KEY)");
 if (missing.length) {
   console.error(`Missing required environment variables: ${missing.join(", ")}`);
   process.exit(1);
@@ -42,7 +43,7 @@ export const config = {
   port: Number(process.env.PORT || 8080),
   publicBaseUrl: stripTrailingSlash(process.env.PUBLIC_BASE_URL),
   supabaseUrl: process.env.SUPABASE_URL,
-  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  supabaseSecretKey: supabaseSecretKey(),
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
   twilioApiKeySid: process.env.TWILIO_API_KEY_SID,

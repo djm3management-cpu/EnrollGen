@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseClient as createClient } from '../../integrations/supabase.js';
+import { supabasePublishableKey } from '../../src/lib/supabaseKeys.js';
 import { createSupabaseAdminClient, parseArgs } from './common.js';
 
 const args = parseArgs();
@@ -61,8 +62,8 @@ const low = await read('star_ratings_by_county', q => q.eq('low_performing', tru
 compareRows(low, stars.filter(row => row.low_performing), row => `${row.contract_id}:${row.county_fips}`);
 report.lowPerforming = { contracts: [...new Set(low.map(row => row.contract_id))], countyRows: low.length };
 compareRows(await read('dsnp_eae_lookup'), dsnp.alignment, row => `${row.state}:${row.contract_id}:${row.plan_id}`);
-if (!process.env.VITE_SUPABASE_ANON_KEY) throw new Error('Set VITE_SUPABASE_ANON_KEY to verify browser visibility');
-const publicClient = createClient(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+if (!supabasePublishableKey(process.env)) throw new Error('Set VITE_SUPABASE_PUBLISHABLE_KEY (or legacy VITE_SUPABASE_ANON_KEY) to verify browser visibility');
+const publicClient = createClient(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL, supabasePublishableKey(process.env), { auth: { persistSession: false } });
 const publicAlignment = await publicClient.from('dsnp_eae_lookup').select('id', { count: 'exact', head: true }).eq('plan_year', 2027);
 if (publicAlignment.error) throw publicAlignment.error;
 assert.equal(publicAlignment.count, dsnp.alignment.length, 'Browser visibility of CMS D-SNP alignment');
