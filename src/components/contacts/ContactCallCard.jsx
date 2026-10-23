@@ -11,7 +11,7 @@ export default function ContactCallCard({ call }) {
     <dl className="crm-call-meta">
       <div><dt>Agent</dt><dd>{call.agent || '--'}</dd></div>
       <div><dt>Talk</dt><dd className="mono">{formatTalk(call.duration_seconds)}</dd></div>
-      <div><dt>Compliance</dt><dd><ComplianceChip score={call.compliance_score} status={call.compliance_status} /></dd></div>
+      <div><dt>Compliance</dt><dd><ComplianceChip score={call.compliance_score} status={call.compliance_status} grade={call.compliance_grade} passFail={call.compliance_pass_fail} /></dd></div>
     </dl>
     <RecordingCell row={call} />
   </article>;

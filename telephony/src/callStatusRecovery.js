@@ -7,6 +7,30 @@ export const verifiedTerminalCallStatuses = new Set([
 const RECOVERY_AGE_MS = 2 * 60 * 1000;
 const RECOVERY_INTERVAL_MS = 60 * 1000;
 
+// A blocked outbound dial can recover immediately, even before the watchdog's
+// age window. Never infer completion from a browser disconnect or a 404.
+export async function recoverTerminalAgentReservation({ db, config, agentId, fetchCall, log = console.error }) {
+  try {
+    const { data: reservation, error } = await db.from('agent_availability')
+      .select('active_call_sid').eq('agent_id', agentId).maybeSingle();
+    if (error) throw error;
+    const sid = reservation?.active_call_sid;
+    if (!sid) return false;
+    const client = fetchCall ? null : twilio(config.twilioAccountSid, config.twilioAuthToken,
+      { timeout: 8000, autoRetry: false });
+    const call = await (fetchCall ? fetchCall(sid) : client.calls(sid).fetch());
+    if (call?.sid !== sid || call?.accountSid !== config.twilioAccountSid ||
+        !verifiedTerminalCallStatuses.has(call?.status)) return false;
+    // Exact SID + agent matching prevents this response freeing a newer call.
+    const result = await db.rpc('release_call_agent', { p_agent_id: agentId, p_call_sid: sid });
+    if (result.error) throw result.error;
+    return result.data === true;
+  } catch {
+    log('Outbound reservation recovery could not verify and release the previous call');
+    return false;
+  }
+}
+
 // Only clear an old reservation after reading the exact call from Twilio.
 // The database RPC repeats the age check and matches both agent and SID, so a
 // callback or worker result for an older call cannot free a newer reservation.

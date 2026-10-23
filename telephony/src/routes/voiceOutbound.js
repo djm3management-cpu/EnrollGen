@@ -10,6 +10,7 @@ import { findOrCreateContactByPhone } from "../contacts.js";
 import { createCallAttempt, dialAttribution } from "../answerAttribution.js";
 
 import { claimNextAvailableAgent, releaseAgent } from "../availability.js";
+import { recoverTerminalAgentReservation } from "../callStatusRecovery.js";
 
 import { routingReplay, sendRoutingTwiml } from "../routingReplay.js";
 
@@ -43,7 +44,11 @@ voiceOutboundRouter.post("/api/voice/outbound-status", async (req, res) => {
     .eq("agent_id", agent.agent_slug).eq("direction", "outbound")
     .eq("parent_call_sid", req.body.callSid).maybeSingle();
   if (error) return res.status(503).json({ error: "Outbound identity unavailable" });
-  if (!data) return res.status(404).json({ error: "Outbound attempt not available yet" });
+  // Older open tabs expect a 404 here; advertise pending only to clients that
+  // understand it so a Railway-first deploy cannot misattribute their calls.
+  if (!data) return req.body.waitForAttempt === true
+    ? res.status(202).json({ pending: true })
+    : res.status(404).json({ error: "Outbound attempt not available yet" });
   return res.json({ attemptId: data.id, contactId: data.contact_id, phoneNumber: data.to_number });
 });
 
@@ -91,8 +96,12 @@ voiceOutboundRouter.post("/api/voice/outbound", requireTwilioSignature, outbound
   let attemptId;
   let reserved = false;
   try {
-    if (!String(req.body.From || "").startsWith("client:") ||
-        !(await claimNextAvailableAgent({ callSid: req.body.CallSid, agentId }))) {
+    const isClient = String(req.body.From || "").startsWith("client:");
+    let agent = isClient && await claimNextAvailableAgent({ callSid: req.body.CallSid, agentId });
+    if (isClient && !agent && await recoverTerminalAgentReservation({ db: supabase, config, agentId })) {
+      agent = await claimNextAvailableAgent({ callSid: req.body.CallSid, agentId });
+    }
+    if (!agent) {
       response.say("You already have a call in progress. Please finish it before dialing.");
       response.hangup();
       return sendRoutingTwiml(res, response);

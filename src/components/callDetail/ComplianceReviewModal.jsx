@@ -6,6 +6,7 @@ import { redactSensitiveText } from "../../lib/redaction";
 import { callOutcomeLabel } from "../../lib/postCallPipeline";
 import { CATEGORY_WEIGHTS } from "../../compliance/intents/index.js";
 import { scoringFailureMessage } from "../../lib/scoringStatus.js";
+import { isUnscoredCompliance } from "../../lib/complianceScore.js";
 
 // Full compliance breakdown: metadata header, overall score, a
 // section-by-section flag breakdown (from scorecard_items, which
@@ -61,14 +62,15 @@ function nearestUtteranceIndex(utterances, timestampMs) {
 }
 
 function ScoreBanner({ scorecard }) {
+  const unscored = isUnscoredCompliance(scorecard);
   const score = scorecard?.overall_score;
-  const value = score !== null && score !== undefined ? Math.round(Number(score)) : null;
+  const value = !unscored && score !== null && score !== undefined ? Math.round(Number(score)) : null;
   const isWarning = value !== null && value < COMPLIANCE_WARNING_THRESHOLD;
 
   return (
     <div className={`compliance-review-banner${isWarning ? " is-warning" : ""}`}>
       <div className="compliance-review-score">
-        <strong>{value !== null ? `${value}%` : "--"}</strong>
+        <strong>{unscored ? "N/A" : value !== null ? `${value}%` : "--"}</strong>
         <span>{scorecard?.overall_grade || "--"}</span>
       </div>
       <div className="compliance-review-banner-meta">

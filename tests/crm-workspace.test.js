@@ -9,6 +9,7 @@ import { loadCallLog, loadCallLogPages } from '../src/lib/callLogApi.js';
 import { transformSync } from 'esbuild';
 import { scoringFailureMessage } from '../src/lib/scoringStatus.js';
 import { isComplianceSale } from '../src/lib/saleCompliance.js';
+import { isUnscoredCompliance } from '../src/lib/complianceScore.js';
 
 test('CRM routes support direct contact links and legacy Calls/Contacts URLs', () => {
   assert.deepEqual(readCrmLocation('/calls'), { view: 'calls', contactId: null });
@@ -145,6 +146,19 @@ test('the actual call row and contact card display the same Talk, recording targ
     assert.equal(prevented, 1);
   }
   assert.deepEqual(opened, ['contact-1', 'contact-1']);
+});
+
+test('short call chips and review banners show neutral N/A while a real zero remains a warning', () => {
+ const Chip=componentSource('../src/components/callLog/CallRowParts.jsx','ComplianceChip',{COMPLIANCE_WARNING_THRESHOLD:80,isUnscoredCompliance});
+ const Banner=componentSource('../src/components/callDetail/ComplianceReviewModal.jsx','ScoreBanner',{CATEGORY_WEIGHTS:{},isUnscoredCompliance});
+ for(const fields of [{overall_grade:'N/A',pass_fail:'N/A'},{pass_fail:'INSUFFICIENT'}]) {
+  const chip=Chip({score:0,status:'complete',grade:fields.overall_grade,passFail:fields.pass_fail});
+  assert.equal(chip.props.className,'contacts-muted');assert.deepEqual(chip.children,['N/A']);
+  const banner=Banner({scorecard:{overall_score:0,...fields}});
+  assert.ok(nodes(banner).some(node=>node.type==='strong'&&node.children.includes('N/A')));
+  assert.ok(!nodes(banner).some(node=>String(node.props.className).includes('is-warning')));
+ }
+ assert.match(Chip({score:0,status:'complete',grade:'F',passFail:'FAIL'}).props.className,/compliance-low/);
 });
 
 test('background refresh retains mounted call rows while updating compliance and errors stay visible', async () => {

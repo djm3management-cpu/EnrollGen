@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useAppAuth } from '../../context/AuthContext';
 import { recordingMedia, recordingTarget, downloadRecordingUrl } from '../../lib/recordingsApi';
 import { COMPLIANCE_WARNING_THRESHOLD } from '../callDetail/ComplianceReviewModal';
+import { isUnscoredCompliance } from '../../lib/complianceScore.js';
 
 export function CallDirection({ direction }) {
   return <span className={`call-log-direction is-${direction}`}>{direction === 'inbound' ? '↓ IN' : direction === 'outbound' ? '↑ OUT' : '--'}</span>;
@@ -16,8 +17,9 @@ const COMPLIANCE_LABELS = {
   not_requested: 'Not requested', transcript_pending: 'Transcript pending', queued: 'Queued',
   scoring: 'Scoring', complete: 'Complete', failed: 'Scoring failed', dispo_changed: 'Disposition changed',
 };
-export function ComplianceChip({ score, status }) {
+export function ComplianceChip({ score, status, grade, passFail }) {
   if (status === 'failed') return <span className="ops-error">Scoring failed</span>;
+  if (isUnscoredCompliance({ overall_grade: grade, pass_fail: passFail })) return <span className="contacts-muted" title="Insufficient for compliance scoring">N/A</span>;
   if (score == null) return <span className="contacts-muted">{COMPLIANCE_LABELS[status] || '--'}</span>;
   const value = Math.round(Number(score));
   const band = value >= 90 ? 'high' : value >= 70 ? 'mid' : 'low';

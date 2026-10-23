@@ -97,10 +97,22 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
       const statuses = [];
       for (let offset = 0; offset < recordIds.length; offset += 100) {
         statuses.push(...(checked(await db.from('call_records')
-          .select('id, compliance_status').eq('tenant_id', identity.tenant.id).in('id', recordIds.slice(offset, offset + 100))) || []));
+          .select('id, compliance_status, compliance_scorecard_id').eq('tenant_id', identity.tenant.id).in('id', recordIds.slice(offset, offset + 100))) || []));
       }
-      const statusByRecord = new Map(statuses.map(record => [record.id, record.compliance_status]));
-      return evidenceJson(200, { rows: rows.map(row => ({ ...row, compliance_status: statusByRecord.get(row.call_record_id) || null })), count: result.count || 0 });
+      const cardIds = [...new Set(statuses.map(record => record.compliance_scorecard_id).filter(Boolean))];
+      const cards = [];
+      for (let offset = 0; offset < cardIds.length; offset += 100) {
+        cards.push(...(checked(await db.from('compliance_scorecards')
+          .select('id, overall_grade, pass_fail').eq('tenant_id', identity.tenant.id).in('id', cardIds.slice(offset, offset + 100))) || []));
+      }
+      const cardById = new Map(cards.map(card => [card.id, card]));
+      const recordById = new Map(statuses.map(record => [record.id, record]));
+      return evidenceJson(200, { rows: rows.map(row => {
+        const record = recordById.get(row.call_record_id);
+        const card = cardById.get(record?.compliance_scorecard_id);
+        return { ...row, compliance_status: record?.compliance_status || null,
+          compliance_grade: card?.overall_grade || null, compliance_pass_fail: card?.pass_fail || null };
+      }), count: result.count || 0 });
     } catch (error) { return evidenceFailure(error); }
   };
 }

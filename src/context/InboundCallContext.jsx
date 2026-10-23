@@ -562,7 +562,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       const hydrateCallIdentity = async () => {
         if (ownedCallRef.current !== call) return;
         try {
-          const canonical = await canonicalOutbound(getTokenRef.current, call.parameters.CallSid);
+          const canonical = await canonicalOutbound(getTokenRef.current, call.parameters.CallSid, {
+            isCurrent: () => ownedCallRef.current === call,
+          });
           if (ownedCallRef.current !== call) return;
           params.contactId = canonical.contactId;
           params.attemptId = canonical.attemptId;

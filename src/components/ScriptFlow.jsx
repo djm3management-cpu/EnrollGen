@@ -492,6 +492,7 @@ export default function ScriptFlow() {
   const sessionStartedRef = useRef(false);
   useEffect(() => {
     if (!callStarted || sessionStartedRef.current) return;
+    if (inbound?.activeCall?.params?.direction === 'outbound' && !inbound.activeCall.params.attemptId) return;
     sessionStartedRef.current = true;
     clearLog();
     const identity = inbound?.activeCall ? telephonyCallIdentity(inbound.activeCall)
@@ -577,6 +578,9 @@ export default function ScriptFlow() {
   const inboundContactHydratedRef = useRef("");
   useEffect(() => {
     if (!inbound?.activeCall || inboundStartedRef.current) return;
+    // Twilio also accepts the browser leg to play a rejection message. Start
+    // transcript persistence only after the server confirms a real attempt.
+    if (inbound.activeCall.params?.direction === 'outbound' && !inbound.activeCall.params.attemptId) return;
     inboundStartedRef.current = true;
     setCallStarted(true);
   }, [inbound?.activeCall]);

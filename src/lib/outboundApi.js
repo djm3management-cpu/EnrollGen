@@ -15,12 +15,20 @@ export async function checkOutbound(getToken, phone) {
   if (!normalized) throw new Error('Enter a valid phone number.');
   return outboundRequest(getToken, 'outbound-check', { phone: normalized });
 }
-export async function canonicalOutbound(getToken, callSid) {
+export async function canonicalOutbound(getToken, callSid, { isCurrent = () => true,
+  wait = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
   for (let retry = 0; retry < 20; retry++) {
-    try { return await outboundRequest(getToken, 'outbound-status', { callSid }); }
-    catch (error) {
-      if (error.status !== 404 || retry === 19) throw error;
-      await new Promise(resolve => setTimeout(resolve, 250));
+    if (!isCurrent()) return null;
+    try {
+      const result = await outboundRequest(getToken, 'outbound-status', { callSid, waitForAttempt: true });
+      if (!isCurrent()) return null;
+      if (!result.pending) return result;
     }
+    catch (error) {
+      // Compatibility with an older Railway deployment during rollout.
+      if (error.status !== 404 || retry === 19) throw error;
+    }
+    if (retry < 19) await wait(250);
   }
+  throw new Error('Outbound identity is still pending');
 }

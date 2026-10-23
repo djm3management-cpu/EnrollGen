@@ -184,7 +184,7 @@ function ExpandedRow({ row, supabaseClient }) {
           <div className="contacts-section-head">COMPLIANCE</div>
           {scorecard ? (
             <dl className="contacts-profile">
-              <div><dt>SCORE</dt><dd><ComplianceChip score={scorecard.overall_score} /></dd></div>
+              <div><dt>SCORE</dt><dd><ComplianceChip score={scorecard.overall_score} grade={scorecard.overall_grade} passFail={scorecard.pass_fail} /></dd></div>
               <div><dt>GRADE</dt><dd className="mono">{scorecard.overall_grade || "--"}</dd></div>
               <div><dt>PASS/FAIL</dt><dd className="mono">{String(scorecard.pass_fail || "--").toUpperCase()}</dd></div>
               {scorecard.auto_fail_triggered ? (
@@ -473,7 +473,7 @@ function FragmentRow({ row, isExpanded, isAlert, onToggle, onOpenContact, supaba
         <td>{row.agent || "--"}</td>
         <td><DispositionChip disposition={row.disposition} /></td>
         <td><RecordingCell row={row} /></td>
-        <td><ComplianceChip score={row.compliance_score} status={row.compliance_status} /></td>
+        <td><ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} /></td>
         <td className="call-log-caret">{isExpanded ? "▼" : "▶"}</td>
       </tr>
       {isExpanded ? (

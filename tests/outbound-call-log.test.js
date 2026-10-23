@@ -26,7 +26,7 @@ before(async()=>{
  await pg.exec(readFileSync(new URL('./fixtures/recordings-schema.sql',import.meta.url),'utf8'));
  await pg.exec(`
  CREATE TABLE contacts(id uuid PRIMARY KEY,tenant_id uuid,first_name text,last_name text,phone text);
- CREATE TABLE compliance_scorecards(id uuid PRIMARY KEY,tenant_id uuid,overall_score integer);
+ CREATE TABLE compliance_scorecards(id uuid PRIMARY KEY,tenant_id uuid,overall_score integer,overall_grade text,pass_fail text);
  ALTER TABLE call_records ADD COLUMN contact_id uuid, ADD COLUMN writing_agent text, ADD COLUMN agent_name text,
  ADD COLUMN enrollment_completed boolean, ADD COLUMN call_outcome text, ADD COLUMN compliance_scorecard_id uuid,
  ADD COLUMN transcript_raw text, ADD COLUMN agent_notes text, ADD COLUMN compliance_status text;
@@ -138,4 +138,15 @@ test('CRM contact history returns the exact call-log rows, Talk and compliance s
  assert.ok(linkedHistory.rows.every(row=>[INC,BACKC].includes(row.call_record_id)));
  assert.equal(linkedHistory.rows.find(row=>row.call_record_id===INC).duration_seconds,31);
  await log(auth,'record_ids='+encodeURIComponent(INC+',invalid'),400);
+});
+
+test('call log includes the linked N/A grade instead of interpreting its stored zero as a failure', async () => {
+ const card = id(995);
+ await sql("INSERT INTO compliance_scorecards VALUES($1,$2,0,'N/A','N/A')",[card,T]);
+ await sql("UPDATE call_records SET compliance_scorecard_id=$1,compliance_status='complete' WHERE id=$2",[card,INC]);
+ const row = (await log()).rows.find(row=>row.call_record_id===INC);
+ assert.equal(row.compliance_score,0);
+ assert.equal(row.compliance_grade,'N/A');
+ assert.equal(row.compliance_pass_fail,'N/A');
+ assert.equal(row.compliance_status,'complete');
 });

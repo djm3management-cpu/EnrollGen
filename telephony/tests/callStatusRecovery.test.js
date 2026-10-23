@@ -2,10 +2,35 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
-import { startCallStatusRecoveryWorker, verifiedTerminalCallStatuses } from '../src/callStatusRecovery.js';
+import { startCallStatusRecoveryWorker, verifiedTerminalCallStatuses, recoverTerminalAgentReservation } from '../src/callStatusRecovery.js';
 
 const migrationUrl = new URL('../../supabase/migrations/069_call_status_recovery.sql', import.meta.url);
 const terminal = [...verifiedTerminalCallStatuses];
+
+test('blocked outbound recovery releases only a verified terminal call and cannot free a newer reservation', async () => {
+  const config = { twilioAccountSid: 'AC_expected', twilioAuthToken: 'unused' };
+  for (const status of [...terminal, 'in-progress', 'ringing', 'queued', 'not-found', 'wrong-account', 'wrong-sid', 'newer-call']) {
+    let active = 'CA_old', releases = 0;
+    const db = {
+      from: () => { const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { active_call_sid: active } }) }; return q; },
+      rpc: async (name, args) => {
+        assert.equal(name, 'release_call_agent'); assert.equal(args.p_agent_id, 'agent'); assert.equal(args.p_call_sid, 'CA_old');
+        releases++; const released = active === args.p_call_sid; if (released) active = null;
+        return { data: released };
+      },
+    };
+    const recovered = await recoverTerminalAgentReservation({ db, config, agentId: 'agent', log() {}, fetchCall: async sid => {
+      if (status === 'not-found') throw new Error('404');
+      if (status === 'newer-call') active = 'CA_new';
+      return { sid: status === 'wrong-sid' ? 'CA_other' : sid,
+        accountSid: status === 'wrong-account' ? 'AC_other' : config.twilioAccountSid,
+        status: ['wrong-account', 'wrong-sid', 'newer-call'].includes(status) ? 'completed' : status };
+    } });
+    assert.equal(recovered, terminal.includes(status), status);
+    assert.equal(releases, terminal.includes(status) || status === 'newer-call' ? 1 : 0, status);
+    if (status === 'newer-call') assert.equal(active, 'CA_new');
+  }
+});
 
 async function database() {
   const db = new PGlite();
