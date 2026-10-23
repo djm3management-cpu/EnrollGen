@@ -2,7 +2,8 @@ import { startParagonBillingWorker } from "./paragonBilling.js";
 import { startCallStatusRecoveryWorker } from "./callStatusRecovery.js";
 import { startRecordingWorker } from "./recordings.js";
 import { recordingMediaRouter } from "./routes/recordingMedia.js";
-import { createRecordingServiceClient } from "./supabase.js";
+import { createRecordingServiceClient, supabase } from "./supabase.js";
+import { reportSupabaseKeySelection } from "./lib/supabaseKeys.js";
 import { startTranscriptWorker } from "./transcripts.js";
 import process from "node:process";
 import http from "node:http";
@@ -34,6 +35,7 @@ setInterval(sweepPresence, 15_000).unref();
 void sweepPresence();
 
 const app = express();
+void reportSupabaseKeySelection(supabase);
 app.set("trust proxy", true);
 
 // CORS for the browser softphone (token endpoint). Twilio webhooks and

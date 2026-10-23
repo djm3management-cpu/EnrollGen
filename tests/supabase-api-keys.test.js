@@ -5,8 +5,8 @@ import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import { build } from 'esbuild';
-import { createSupabaseClient, supabaseSecretKey, supabasePublishableKey as serverPublicKey } from '../integrations/supabase.js';
-import { createSupabaseClient as telephonyClient, supabaseSecretKey as phoneSecret } from '../telephony/src/lib/supabaseKeys.js';
+import { createSupabaseClient, supabaseSecretKey, supabasePublishableKey as serverPublicKey, reportSupabaseKeySelection } from '../integrations/supabase.js';
+import { createSupabaseClient as telephonyClient, supabaseSecretKey as phoneSecret, reportSupabaseKeySelection as reportPhoneKeySelection } from '../telephony/src/lib/supabaseKeys.js';
 import { supabasePublishableKey, supabaseCmsPublishableKey } from '../src/lib/supabaseKeys.js';
 import { edgeSupabaseSecretKey, edgeSupabaseFetch } from '../supabase/functions/_shared/supabaseKeys.js';
 import { assertNoPublicApiKeys } from '../src/lib/llm/config.js';
@@ -16,6 +16,27 @@ import { createClerkFetch } from '../src/lib/clerkFetch.js';
 
 const url = 'https://example.supabase.co';
 const jwt = (role = 'authenticated', alg = 'HS256') => [btoa(JSON.stringify({ alg, typ:'JWT' })),btoa(JSON.stringify({ role, sub:'fixture',exp:Math.floor(Date.now()/1000)+60 })), 'fixture-signature'].join('.');
+
+test('Railway startup verification checks private database access and logs only key source/type and safe status',async()=>{
+  for(const [service,client,report] of [['integrations-worker',createSupabaseClient,reportSupabaseKeySelection],['telephony',telephonyClient,reportPhoneKeySelection]]){
+    const env={SUPABASE_SECRET_KEY:'sb_secret_private_fixture',SUPABASE_SERVICE_ROLE_KEY:'old-private-value'};
+    for(const failed of [false,true]){
+      const logs=[];
+      const db=client(url,env.SUPABASE_SECRET_KEY,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:async(target,init)=>{
+        assert.match(String(target),/\/rest\/v1\/availability_consumers/);
+        assert.equal(init.method,'HEAD');assert.ok(init.signal);
+        assert.equal(init.headers.get('apikey'),env.SUPABASE_SECRET_KEY);
+        assert.equal(init.headers.get('Authorization'),null);
+        return new Response(failed?JSON.stringify({code:'PGRST301',message:env.SUPABASE_SECRET_KEY}):null,{status:failed?401:200,headers:{'Content-Type':'application/json'}});
+      }}});
+      const result=await report(db,{service,env,log:line=>logs.push(line)});
+      assert.equal(result.service,service);assert.equal(result.source,'SUPABASE_SECRET_KEY');
+      assert.equal(result.key_type,'secret_api_key');assert.equal(result.database_access,failed?'failed':'ok');
+      assert.equal(logs.length,1);assert.ok(!logs[0].includes(env.SUPABASE_SECRET_KEY));assert.ok(!logs[0].includes(env.SUPABASE_SERVICE_ROLE_KEY));
+      if(failed)assert.equal(result.code,'PGRST301');
+    }
+  }
+});
 
 test('server secret-key preference, whitespace and legacy fallback work without an anon escalation fallback',()=>{
   for(const resolve of [supabaseSecretKey,phoneSecret]){

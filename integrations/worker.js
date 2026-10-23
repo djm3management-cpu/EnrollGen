@@ -1,4 +1,4 @@
-import { createSupabaseClient as createClient, supabaseSecretKey } from "./supabase.js";
+import { createSupabaseClient as createClient, supabaseSecretKey, reportSupabaseKeySelection } from "./supabase.js";
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { availabilityPayload, mappedDisposition, csvReport, assertPrivateFieldsAbsent } from './payloads.js';
@@ -105,6 +105,7 @@ if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href){
   } else {
   const db=createClient(process.env.SUPABASE_URL,supabaseSecretKey(),{auth:{persistSession:false},
     global:{fetch:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(15000)})}});
+  await reportSupabaseKeySelection(db, { service: 'integrations-worker' });
   const tick=createWorker(db);
   let stopped=false; process.on('SIGTERM',()=>{stopped=true;});process.on('SIGINT',()=>{stopped=true;});
   // Vendor response time cannot stall debounce/heartbeat/report scheduling.
