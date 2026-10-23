@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppAuth } from '../../context/AuthContext';
 import { evidenceRequest } from '../../lib/evidenceApi';
-import { listRecordings, recordingMedia, recordingTarget, downloadRecordingUrl } from '../../lib/recordingsApi';
+import { listRecordings, recordingMedia, recordingTarget, downloadRecordingUrl, recordingConverslyLink } from '../../lib/recordingsApi';
 import { formatCallDateTime } from '../../lib/callPresentation';
 import { RecordingCell } from '../callLog/CallRowParts';
 
@@ -12,6 +12,9 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(null);
   const [audio, setAudio] = useState(null);
+  const [canMintConversly, setCanMintConversly] = useState(false);
+  const [copied, setCopied] = useState(null);
+  const [copyFallback, setCopyFallback] = useState(null);
   const version = useRef(null);
   // Use the exact identity used by the call row's Play/Download controls.
   const target = useMemo(() => recordingTarget(row || {
@@ -20,13 +23,13 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
   const hasLinkedRecording = Boolean(row?.recording_storage_path || row?.recording_url);
   const load = useCallback(async () => {
     const current = Symbol(); version.current = current;
-    setLoading(true); setError('');
+    setLoading(true); setError(''); setCanMintConversly(false); setCopied(null); setCopyFallback(null);
     if (!Object.values(target).some(Boolean)) {
       setLoading(false); setError('No call is linked to this recording view.'); return;
     }
     try {
       const data = await listRecordings(getToken, target);
-      if (current === version.current) setRows(data.recordings || []);
+      if (current === version.current) { setRows(data.recordings || []); setCanMintConversly(data.can_mint_conversly === true); }
     } catch (err) { if (current === version.current) setError(err.message); }
     finally { if (current === version.current) setLoading(false); }
   }, [getToken, target]);
@@ -47,6 +50,21 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
     try { await evidenceRequest(getToken, 'recordings', { ...target, recording_id: row.id, action: 'retry' }); await load(); }
     catch (err) { setError(err.message); } finally { setBusy(null); }
   };
+  const copyConversly = async (row, format) => {
+    const current = version.current;
+    setBusy(row.id); setError(''); setCopied(null); setCopyFallback(null);
+    try {
+      const grant = await recordingConverslyLink(getToken, target, { id: row.id, format });
+      if (current !== version.current) return;
+      try {
+        await navigator.clipboard.writeText(grant.url);
+        if (current === version.current) setCopied({ id: row.id, format });
+      } catch {
+        if (current === version.current) setCopyFallback({ id: row.id, url: grant.url });
+      }
+    } catch (err) { if (current === version.current) setError(err.message); }
+    finally { if (current === version.current) setBusy(null); }
+  };
   return <div className="contacts-section">
     <div className="contacts-section-head">RECORDINGS <button type="button" className="contacts-mini-btn" onClick={load} disabled={loading}>REFRESH</button></div>
     {error ? <div className="ops-error" role="alert">{error}</div> : null}
@@ -62,6 +80,12 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
       <button type="button" className="contacts-mini-btn" disabled={!row.available || busy === row.id} onClick={() => media(row, false)}>PLAY</button>{' '}
       <button type="button" className="contacts-mini-btn" disabled={!row.available || busy === row.id} onClick={() => media(row, true)}>DOWNLOAD WAV</button>{' '}
       {row.provider_available ? <button type="button" className="contacts-mini-btn" disabled={busy === row.id} onClick={() => media(row, true, true)}>DOWNLOAD TWILIO COPY</button> : null}{' '}
+      {canMintConversly ? <>
+        <button type="button" className="contacts-mini-btn" disabled={!row.available || busy === row.id} onClick={() => copyConversly(row, 'wav')}>COPY CONVERSLY LINK (WAV)</button>{' '}
+        {row.provider_available ? <button type="button" className="contacts-mini-btn" disabled={busy === row.id} onClick={() => copyConversly(row, 'mp3')}>COPY CONVERSLY LINK (MP3)</button> : null}{' '}
+      </> : null}
+      {copied?.id === row.id ? <p className="contacts-muted" role="status">Conversly {copied.format.toUpperCase()} link copied. Valid for 24 hours.</p> : null}
+      {copyFallback?.id === row.id ? <label className="contacts-muted">Clipboard unavailable. Copy this link (valid for 24 hours): <input className="input-dark" aria-label="Conversly link" readOnly value={copyFallback.url} onFocus={event => event.target.select()} /></label> : null}
       {['retry', 'failed'].includes(row.status) ? <button type="button" className="contacts-mini-btn" disabled={busy === row.id} onClick={() => retry(row)}>RETRY COPY</button> : null}
       {audio?.id === row.id ? <audio controls autoPlay preload="none" src={audio.url} onError={() => { if (audio.source === 'storage' && row.provider_available) void media(row, false, true); else setError('Playback failed. Refresh and try again, or download the recording.'); }} /> : null}
     </div>)}

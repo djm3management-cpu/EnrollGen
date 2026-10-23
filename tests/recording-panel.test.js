@@ -17,12 +17,13 @@ function component(path, name, bindings) {
   vm.runInContext(transformSync(source, { loader: 'jsx', jsxFactory: 'h', jsxFragment: 'Fragment', format: 'cjs' }).code + `;globalThis.component=${name};`, context);
   return context.component;
 }
-function panelFixture(row, load = async () => ({ recordings: [] })) {
+function panelFixture(row, load = async () => ({ recordings: [] }), bindings = {}) {
   const harness = hookHarness(), requests = [], getToken = async () => 'token';
   const Panel = component('../src/components/callDetail/RecordingPanel.jsx', 'RecordingPanel', {
     ...harness.hooks, useAppAuth: () => ({ getToken }), recordingTarget, formatCallDateTime,
     RecordingCell: 'shared-recording-controls',
     listRecordings: async (token, target) => { requests.push(target); return load(token, target); },
+    ...bindings,
   });
   harness.mount(() => Panel({ row, callRecordId: 'detail-id' }));
   return { harness, requests };
@@ -43,6 +44,43 @@ test('Recording tab uses the same target as row Play for outbound, linked inboun
       assert.ok(!text(fixture.harness.value).includes('No recording received'));
     } finally { fixture.harness.unmount(); }
   }
+});
+
+test('Conversly copy controls are admin-only and copy a grant for the selected recording and format', async () => {
+  const calls=[],copied=[];
+  const part={id:'part-1',channels:2,status:'stored',available:true,provider_available:true};
+  for(const admin of [false,true]) {
+    const fixture=panelFixture({call_record_id:'record'},async()=>({recordings:[part],can_mint_conversly:admin}),{
+      recordingConverslyLink:async(_token,target,options)=>{calls.push({target,options});return {url:'https://telephony.test/conversly/capability'};},
+      navigator:{clipboard:{writeText:async url=>copied.push(url)}},
+    });
+    try {
+      await fixture.harness.flush();
+      const buttons=nodes(fixture.harness.value).filter(node=>node.type==='button' && node.children.some(child=>typeof child==='string'&&child.includes('COPY CONVERSLY')));
+      assert.equal(buttons.length,admin?2:0);
+      if(admin) {
+        await buttons[1].props.onClick();await fixture.harness.flush();
+        assert.deepEqual(JSON.parse(JSON.stringify(calls)),[{target:{call_record_id:'record'},options:{id:'part-1',format:'mp3'}}]);
+        assert.deepEqual(copied,['https://telephony.test/conversly/capability']);
+        assert.match(text(fixture.harness.value),/MP3\s+link copied.*24 hours/);
+      }
+    } finally {fixture.harness.unmount();}
+  }
+});
+
+test('clipboard denial preserves the minted link for manual copying and stored-only recordings offer WAV', async () => {
+  const fixture=panelFixture({call_record_id:'record'},async()=>({recordings:[{id:'part',channels:2,status:'stored',available:true}],can_mint_conversly:true}),{
+    recordingConverslyLink:async()=>({url:'https://telephony.test/conversly/capability'}),
+    navigator:{clipboard:{writeText:async()=>{throw new Error('denied');}}},
+  });
+  try {
+    await fixture.harness.flush();
+    assert.ok(!text(fixture.harness.value).includes('COPY CONVERSLY LINK (MP3)'));
+    await nodes(fixture.harness.value).find(node=>node.type==='button'&&node.children.includes('COPY CONVERSLY LINK (WAV)')).props.onClick();
+    await fixture.harness.flush();
+    assert.equal(nodes(fixture.harness.value).find(node=>node.type==='input').props.value,'https://telephony.test/conversly/capability');
+    assert.ok(!text(fixture.harness.value).includes('link copied'));
+  } finally {fixture.harness.unmount();}
 });
 
 test('metadata lookup failures show the error without falsely claiming no recording or hiding linked Play/Download', async () => {

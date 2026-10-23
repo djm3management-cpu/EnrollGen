@@ -14,3 +14,6 @@ export function downloadRecordingUrl(url, filename) {
   link.href = url; link.download = filename; link.rel = 'noreferrer';
   document.body.appendChild(link); link.click(); link.remove();
 }
+export function recordingConverslyLink(getToken, target, { id, format = 'wav' } = {}) {
+  return evidenceRequest(getToken, 'recordings', { ...target, action: 'conversly', recording_id: id, format });
+}

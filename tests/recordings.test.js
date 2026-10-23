@@ -7,6 +7,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { evidenceDb } from './helpers/evidenceDb.js';
 import { createRecordingsHandler } from '../netlify/functions/recordings.js';
 import { recordingMediaGrant, recordingIdentity } from '../netlify/functions/_recordingAccess.js';
+import { recordingComplianceGrant } from '../netlify/functions/_recordingCompliance.js';
 import { createRecordingCallback, processRecording, reconcileCall, retryDelay, downloadRecording } from '../telephony/src/recordings.js';
 const pg = new PGlite();
 const db = evidenceDb(pg);
@@ -53,6 +54,7 @@ before(async()=>{
   await sql("INSERT INTO telephony_call_attempts(id,tenant_id,parent_call_sid,child_call_sid,inbound_call_id,agent_id,direction,answered_at,ended_at,talk_seconds) VALUES($1,$2,$3,$4,$5,'agent_a','inbound',now(),now(),120),($6,$2,$7,NULL,NULL,'agent_a','outbound',now(),now(),120)",[ATT,T,CA,CHILD,I,OUT,OC]);
   await sql("INSERT INTO telephony_events(tenant_id,inbound_call_id,twilio_call_sid,event) VALUES($1,$2,$3,'routing_agent_selected')",[T,I,CA]);
   await pg.exec(readFileSync(new URL('../supabase/migrations/064_recording_ingestion.sql',import.meta.url),'utf8'));
+  await pg.exec(readFileSync(new URL('../supabase/migrations/112_recording_compliance_tickets.sql',import.meta.url),'utf8'));
 });
 after(()=>pg.close());
 
@@ -270,4 +272,40 @@ test('signed RecordVerb callback keeps fallback voicemail shared after failed ag
   const id=await enqueue(40,{CallSid:sid,RecordingSource:'RecordVerb',RecordingChannels:'1'},null);
   const row=(await sql('SELECT * FROM recording_ingestion WHERE id=$1',[id]))[0];assert.equal(row.direction,'voicemail');assert.equal(row.attempt_id,null);
   const result=await call(auth,`inbound_call_id=${inbound}`);assert.equal(result.recordings[0].channels,1);assert.equal(result.recordings[0].available,true);
+});
+
+test('Conversly minting is admin-only, tenant-scoped, recording-scoped and separate from playback',async()=>{
+  const row=(await sql("SELECT * FROM recording_ingestion WHERE call_record_id=$1 AND storage_path IS NOT NULL LIMIT 1",[C]))[0];
+  const body={action:'conversly',call_record_id:C,recording_id:row.id};
+  const before=(await sql('SELECT count(*)::int AS n FROM recording_download_tickets'))[0].n;
+  await call(auth,body,403);
+  await call({...admin,orgId:'org-b'},body,403);
+  await call(admin,{...body,recording_id:'another-recording'},404);
+  await call(admin,{action:'conversly',call_record_id:C},400);
+  await call(admin,{...body,format:'ogg'},400);
+  assert.equal((await call(admin,`call_record_id=${C}`)).can_mint_conversly,true);
+  assert.equal((await call(auth,`call_record_id=${C}`)).can_mint_conversly,false);
+  for(const format of ['wav','mp3']) {
+    const start=Date.now();const grant=await call(admin,{...body,format});
+    assert.equal(grant.expires_in,86400);assert.equal(grant.format,format);
+    assert.equal(grant.content_type,format==='mp3'?'audio/mpeg':'audio/wav');
+    assert.match(grant.url,/^https:\/\/telephony\.test\/api\/recordings\/conversly\/[A-Za-z0-9_-]{43}$/);
+    assert.ok(Date.parse(grant.expires_at)>=start+86_400_000 && Date.parse(grant.expires_at)<=Date.now()+86_400_000);
+    const ticket=(await sql('SELECT * FROM recording_compliance_tickets WHERE format=$1',[format]))[0];
+    assert.equal(ticket.recording_id,row.id);assert.equal(ticket.tenant_id,T);assert.equal(ticket.minted_by,admin.userId);
+    assert.equal(ticket.token_hash.length,64);assert.equal(ticket.token_hash.includes(grant.url.split('/').at(-1)),false);
+    assert.equal(ticket.storage_path,format==='wav'?row.storage_path:null);
+  }
+  assert.equal((await sql('SELECT count(*)::int AS n FROM recording_download_tickets'))[0].n,before);
+  const identity=await recordingIdentity(db,admin);
+  const storedOnly={...row,account_sid:null,recording_sid:null};
+  const storageGrant=await recordingComplianceGrant(db,identity,storedOnly,{env:{TELEPHONY_BASE_URL:'https://telephony.test'}});
+  assert.equal(storageGrant.format,'wav');
+  await assert.rejects(recordingComplianceGrant(db,identity,storedOnly,{format:'mp3'}),/retained Twilio/);
+  await assert.rejects(recordingComplianceGrant(db,identity,{...row,storage_path:`${U}/secret.wav`}),/unavailable/);
+  const playback=await call(admin,{...body,action:'media',source:'twilio'});
+  assert.equal(playback.expires_in,300);assert.match(playback.url,/\/media\//);
+  await pg.exec('SET ROLE authenticated');
+  await assert.rejects(sql('SELECT * FROM recording_compliance_tickets'),/permission denied/);
+  await pg.exec('RESET ROLE');
 });

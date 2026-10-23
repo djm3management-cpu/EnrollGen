@@ -1,6 +1,7 @@
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient } from './_evidenceAccess.js';
 import { recordingIdentity, authorizeRecordingTarget, listTargetRecordings, publicRecording, recordingMediaGrant } from './_recordingAccess.js';
+import { recordingComplianceGrant } from './_recordingCompliance.js';
 
 export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb = getEvidenceServiceClient, env = process.env } = {}) {
   return async request => {
@@ -38,19 +39,26 @@ export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb
       if (request.method === 'POST') {
         try { input = await request.json(); } catch { throw new EvidenceError(400, 'Invalid JSON body.'); }
         if (!input || Array.isArray(input) || Object.keys(input).some(key =>
-          !['call_record_id', 'inbound_call_id', 'attempt_id', 'recording_id', 'download', 'action', 'source'].includes(key))) {
+          !['call_record_id', 'inbound_call_id', 'attempt_id', 'recording_id', 'download', 'action', 'source', 'format'].includes(key))) {
           throw new EvidenceError(400, 'Invalid recording request.');
         }
-        if (!['media', 'retry'].includes(input.action)) throw new EvidenceError(400, 'Invalid recording action.');
+        if (!['media', 'retry', 'conversly'].includes(input.action)) throw new EvidenceError(400, 'Invalid recording action.');
+        if (input.action === 'conversly') {
+          if (!identity.admin) throw new EvidenceError(403, 'Only organization admins can create Conversly links.');
+          if (typeof input.recording_id !== 'string' || !input.recording_id) throw new EvidenceError(400, 'Choose one recording.');
+          if (input.format != null && !['wav', 'mp3'].includes(input.format)) throw new EvidenceError(400, 'Choose WAV or MP3.');
+        } else if (input.format != null) throw new EvidenceError(400, 'Format is only supported for Conversly links.');
         if (input.source != null && input.source !== 'twilio') throw new EvidenceError(400, 'Invalid recording source.');
         if (input.download != null && typeof input.download !== 'boolean') throw new EvidenceError(400, 'Invalid download option.');
       } else input = { call_record_id: params.get('call_record_id'), inbound_call_id: params.get('inbound_call_id'), attempt_id: params.get('attempt_id') };
       const target = await authorizeRecordingTarget(db, identity, input);
       const rows = await listTargetRecordings(db, identity, target);
-      if (request.method === 'GET') return evidenceJson(200, { recordings: rows.map(publicRecording) });
+      if (request.method === 'GET') return evidenceJson(200, { recordings: rows.map(publicRecording), can_mint_conversly: identity.admin });
       const row = input.recording_id ? rows.find(r => r.id === input.recording_id)
         : rows.find(r => r.copy_status === 'stored') || rows.find(r => publicRecording(r).available);
       if (!row) throw new EvidenceError(404, 'Recording is unavailable.');
+      if (input.action === 'conversly') return evidenceJson(200,
+        await recordingComplianceGrant(db, identity, row, { format: input.format, env }));
       if (input.action === 'retry') {
         if (row.id.startsWith('legacy:') || row.provider_status !== 'completed') throw new EvidenceError(400, 'This recording cannot be retried.');
         checked(await db.from('recording_ingestion').update({ copy_status: 'pending', next_attempt_at: new Date().toISOString(),
