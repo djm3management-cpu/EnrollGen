@@ -283,7 +283,7 @@ test('the transcript player seeks before audio loads, tracks the active utteranc
 test('call filters reset pagination and follow exports while toolbar icons retain labels and recording access', async () => {
   const harness = hookHarness(), requests = [], exports = [], downloads = [], rows = [], getToken = async () => 'token';
   const Calls = componentSource('../src/components/callLog/CallLogTab.jsx', 'CallLogTab', {
-    ...harness.hooks, CallDateRangePicker: 'date-picker', MissingRecordings: 'missing-recordings', FileAudio: 'file-audio', RefreshCw: 'refresh', Download: 'download', useAppAuth: () => ({ getToken }), useTenantConfig: () => ({ supabaseClient: {} }),
+    ...harness.hooks, CallLogIconSelect: 'icon-select', UsersRound: 'agents', PhoneCall: 'phone', ArrowLeftRight: 'direction', CallDateRangePicker: 'date-picker', CallRecordings: 'call-recordings', FileAudio: 'file-audio', RefreshCw: 'refresh', Download: 'download', useAppAuth: () => ({ getToken }), useTenantConfig: () => ({ supabaseClient: {} }),
     useCallLogRows: filters => { requests.push(filters); return { rows, count: 51, loading: false, refresh() {} }; },
     CALL_OUTCOME_OPTIONS: [{ group: 'Enrollment Outcomes', options: [{ value: 'enrolled', label: 'Enrolled' }, { value: 'enrolled_pending_verification', label: 'Enrolled - Pending Verification' }] }],
     loadCallLogPages: async (_token, filters) => { exports.push(filters); return [{ call_outcome: filters.outcome }]; },
@@ -291,26 +291,35 @@ test('call filters reset pagination and follow exports while toolbar icons retai
   });
   try {
     harness.mount(() => Calls({})); await harness.flush();
-    for (const label of ['Missing recordings', 'Refresh calls', 'Export calls (CSV)']) {
+    for (const label of ['Recordings', 'Refresh calls', 'Export calls (CSV)']) {
       const button = nodes(harness.value).find(node => node.type === 'button' && node.props['aria-label'] === label);
       assert.equal(button.props.title, label);
       assert.ok(!button.children.some(child => typeof child === 'string'));
     }
-    nodes(harness.value).find(node => node.props['aria-label'] === 'Missing recordings').props.onClick();
-    await harness.flush(); assert.ok(nodes(harness.value).some(node => node.type === 'missing-recordings'));
-    nodes(harness.value).find(node => node.props['aria-label'] === 'Missing recordings').props.onClick();
-    await harness.flush(); assert.ok(!nodes(harness.value).some(node => node.type === 'missing-recordings'));
+    nodes(harness.value).find(node => node.props['aria-label'] === 'Recordings').props.onClick();
+    await harness.flush(); assert.ok(nodes(harness.value).some(node => node.type === 'call-recordings'));
+    nodes(harness.value).find(node => node.props['aria-label'] === 'Recordings').props.onClick();
+    await harness.flush(); assert.ok(!nodes(harness.value).some(node => node.type === 'call-recordings'));
     nodes(harness.value).find(node => node.type === 'button' && node.children.includes('NEXT →')).props.onClick();
     await harness.flush(); assert.equal(requests.at(-1).offset, 50);
     nodes(harness.value).find(node => node.props['aria-label'] === 'Outcome filter').props.onChange({ target: { value: 'enrolled' } });
     await harness.flush(); assert.equal(requests.at(-1).outcome, 'enrolled'); assert.equal(requests.at(-1).offset, 0);
     assert.ok(!nodes(harness.value).some(node => node.type === 'input' && node.props.type === 'date'));
+    const search = nodes(harness.value).find(node => node.props['aria-label'] === 'Search calls by contact name or phone');
+    assert.equal(search.props.placeholder, 'Search'); assert.match(search.props.className, /call-log-search/);
+    for (const [label, value] of [['Agent filter', 'Sample Agent'], ['Disposition filter', 'CONNECTED'], ['Direction filter', 'OUTBOUND']]) {
+      const filter = nodes(harness.value).find(node => node.type === 'icon-select' && node.props.label === label);
+      assert.ok(filter.props.title);
+      filter.props.onChange({ target: { value } }); await harness.flush();
+    }
+    assert.equal(requests.at(-1).agent, 'Sample Agent'); assert.equal(requests.at(-1).disposition, 'connected'); assert.equal(requests.at(-1).direction, 'outbound');
     nodes(harness.value).find(node => node.type === 'date-picker').props.onChange('2026-03-08', '2026-03-08');
     await harness.flush();
     const dayStart = new Date('2026-03-08T00:00:00').toISOString(), dayEnd = new Date('2026-03-09T00:00:00').toISOString();
     assert.equal(requests.at(-1).from, dayStart); assert.equal(requests.at(-1).to, dayEnd);
     await nodes(harness.value).find(node => node.type === 'button' && node.props['aria-label'] === 'Export calls (CSV)').props.onClick();
     await harness.flush(); assert.equal(exports[0].outcome, 'enrolled'); assert.equal(JSON.parse(downloads[0])[0].call_outcome, 'enrolled');
+    assert.equal(exports[0].agent, 'Sample Agent'); assert.equal(exports[0].disposition, 'connected'); assert.equal(exports[0].direction, 'outbound');
     assert.equal(exports[0].from, dayStart); assert.equal(exports[0].to, dayEnd);
     nodes(harness.value).find(node => node.type === 'date-picker').props.onChange('2026-10-24', '2026-10-26');
     await harness.flush();
@@ -403,4 +412,15 @@ test('calendar keyboard navigation crosses year boundaries and clamps month chan
     await key('2027-01-31', 'PageDown');
     assert.equal(f.day('2027-02-28').props.tabIndex, 0);
   } finally { f.harness.unmount(); }
+});
+
+test('icon dropdowns keep native selection, hover labels and a visible active state', () => {
+ const Select = componentSource('../src/components/callLog/CallLogIconSelect.jsx', 'CallLogIconSelect', { ChevronDown: 'chevron' });
+ const changes=[];
+ const tree=Select({icon:'agent-icon',label:'Agent filter',title:'Agent: Sample Agent',value:'sample',onChange:event=>changes.push(event.target.value),children:'options'});
+ assert.match(tree.props.className,/is-active/); assert.equal(tree.props.title,'Agent: Sample Agent');
+ const select=nodes(tree).find(node=>node.type==='select');
+ assert.equal(select.props['aria-label'],'Agent filter');assert.equal(select.props.title,'Agent: Sample Agent');
+ assert.equal(select.props.value,'sample');select.props.onChange({target:{value:'ALL'}});assert.deepEqual(changes,['ALL']);
+ assert.ok(!nodes(Select({icon:'direction-icon',label:'Direction filter',title:'Call direction: Inbound and outbound',value:'ALL'}))[0].props.className.includes('is-active'));
 });

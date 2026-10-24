@@ -3,6 +3,37 @@ import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServi
 import { recordingIdentity, authorizeRecordingTarget, listTargetRecordings, publicRecording, recordingMediaGrant } from './_recordingAccess.js';
 import { recordingComplianceGrant } from './_recordingCompliance.js';
 
+async function availableRecordingCalls(db, identity, offset) {
+  const candidates = checked(await db.from('v_call_log').select('*')
+    .eq('tenant_id', identity.tenant.id).order('occurred_at', { ascending: false })
+    .order('log_id', { ascending: false }).range(offset, offset + 99)) || [];
+  const calls = [];
+  // Use the same protected targets and legacy/provider fallbacks as playback.
+  // An agent's writable CRM fields alone never grant recording access.
+  for (let start = 0; start < candidates.length; start += 8) {
+    const batch = await Promise.all(candidates.slice(start, start + 8).map(async row => {
+      const inputs = row.attempt_id ? [{ attempt_id: row.attempt_id }] : [
+        row.call_record_id && { call_record_id: row.call_record_id },
+        row.inbound_call_id && { inbound_call_id: row.inbound_call_id },
+      ].filter(Boolean);
+      for (const input of inputs) {
+        let target;
+        try { target = await authorizeRecordingTarget(db, identity, input); }
+        catch (error) { if (error instanceof EvidenceError && error.status === 403) continue; throw error; }
+        const recordings = (await listTargetRecordings(db, identity, target)).map(publicRecording).filter(recording => recording.available);
+        if (!recordings.length) continue;
+        return { log_id: row.log_id, ...input, contact_name: row.contact_name, contact_phone: row.contact_phone,
+          occurred_at: row.occurred_at, direction: row.direction, duration_seconds: row.duration_seconds, agent: row.agent,
+          recording_available: true, recording_count: recordings.length,
+          provider_available: recordings.some(recording => recording.provider_available) };
+      }
+      return null;
+    }));
+    calls.push(...batch.filter(Boolean));
+  }
+  return { calls, next_offset: candidates.length === 100 ? offset + 100 : null };
+}
+
 export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb = getEvidenceServiceClient, env = process.env } = {}) {
   return async request => {
     if (!['GET', 'POST'].includes(request.method)) return evidenceJson(405, { error: 'Method not allowed' });
@@ -11,6 +42,12 @@ export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb
     try {
       const db = getDb(); const identity = await recordingIdentity(db, auth);
       const params = new URL(request.url).searchParams;
+      if (request.method === 'GET' && params.get('catalog') === '1') {
+        if ([...params.keys()].some(key => !['catalog', 'offset'].includes(key))) throw new EvidenceError(400, 'Invalid recordings filter.');
+        const rawOffset = params.get('offset') || '0';
+        if (!/^\d+$/.test(rawOffset) || Number(rawOffset) > 1_000_000) throw new EvidenceError(400, 'Invalid offset.');
+        return evidenceJson(200, await availableRecordingCalls(db, identity, Number(rawOffset)));
+      }
       if (request.method === 'GET' && params.get('missing') === '1') {
         const offset = Math.max(0, Math.min(100_000, Number(params.get('offset')) || 0));
         if (!Number.isInteger(offset)) throw new EvidenceError(400, 'Invalid offset.');

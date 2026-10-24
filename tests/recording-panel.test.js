@@ -135,3 +135,56 @@ test('fallback controls play and download through the same authenticated recordi
     assert.deepEqual(downloads, [['signed-media', 'recording.wav']]);
   } finally { harness.unmount(); }
 });
+
+test('Recordings opens with available recordings and keeps the missing list in the same panel', async () => {
+ const harness=hookHarness();
+ const Hub=component('../src/components/callLog/CallRecordings.jsx','CallRecordings',{
+  ...harness.hooks, RefreshCw:'refresh', AvailableRecordings:'available', MissingRecordings:'missing',
+ });
+ try {
+  harness.mount(()=>Hub());
+  assert.equal(nodes(harness.value).find(node=>node.type==='button'&&node.children.includes('AVAILABLE')).props['aria-pressed'],true);
+  nodes(harness.value).find(node=>node.type==='button'&&node.children.includes('MISSING')).props.onClick();await harness.flush();
+  assert.ok(nodes(harness.value).some(node=>node.type==='missing'&&node.props.embedded));
+  nodes(harness.value).find(node=>node.props['aria-label']==='Refresh recordings').props.onClick();await harness.flush();
+  assert.equal(nodes(harness.value).find(node=>node.type==='missing').props.refreshKey,1);
+  nodes(harness.value).find(node=>node.type==='button'&&node.children.includes('AVAILABLE')).props.onClick();await harness.flush();
+  assert.ok(!nodes(harness.value).some(node=>node.type==='missing'));
+ } finally {harness.unmount();}
+});
+
+test('available recordings use authenticated pagination and preserve the exact call target for playback and details', async () => {
+ const harness=hookHarness(),requests=[],getToken=async()=>'token';
+ const row={log_id:'outbound',attempt_id:'attempt',recording_available:true,recording_count:2,provider_available:true,contact_name:'Sample'};
+ const Available=component('../src/components/callLog/CallRecordings.jsx','AvailableRecordings',{
+  ...harness.hooks,useAppAuth:()=>({getToken}),formatCallDateTime,formatTalk:()=>'',CallDirection:'direction',RecordingCell:'controls',RecordingPanel:'details',ChevronRight:'details-icon',X:'close',
+  listAvailableRecordings:async(token,offset)=>{assert.equal(token,getToken);requests.push(offset);return {calls:offset?[]:[row],next_offset:offset?null:100};},
+ });
+ try {
+  harness.mount(()=>Available({refreshKey:0}));await harness.flush();
+  assert.deepEqual(requests,[0]);assert.equal(nodes(harness.value).find(node=>node.type==='controls').props.row,row);
+  nodes(harness.value).find(node=>node.props['aria-label']==='Recording details for Sample').props.onClick();await harness.flush();
+  assert.equal(nodes(harness.value).find(node=>node.type==='details').props.row,row);
+  nodes(harness.value).find(node=>node.type==='button'&&node.children.includes('NEXT →')).props.onClick();await harness.flush();
+  assert.deepEqual(requests,[0,100]);assert.ok(!nodes(harness.value).some(node=>node.type==='details'));
+  assert.equal(nodes(harness.value).find(node=>node.type==='button'&&node.children.includes('NEXT →')).props.disabled,true);
+ } finally {harness.unmount();}
+});
+
+test('the embedded missing list opens inbound scope and orphan outbound attempts using their protected recording targets', async () => {
+ const harness=hookHarness(), getToken=async()=>'token';
+ const calls=[{attempt_id:'inbound-attempt',inbound_call_id:'inbound',call_record_id:'record',direction:'inbound',reason:'copy_pending'},
+  {attempt_id:'outbound-attempt',direction:'outbound',reason:'no_callback'}];
+ const Missing=component('../src/components/callLog/MissingRecordings.jsx','MissingRecordings',{
+  ...harness.hooks,useAppAuth:()=>({getToken}),formatCallDateTime,RecordingPanel:'details',RefreshCw:'refresh',
+  evidenceRequest:async(token,endpoint)=>{assert.equal(token,getToken);assert.equal(endpoint,'recordings?missing=1&offset=0');return {calls,unmatched:[],next_offset:null};},
+ });
+ try {
+  harness.mount(()=>Missing({embedded:true}));await harness.flush();
+  const viewButtons=()=>nodes(harness.value).filter(node=>node.type==='button'&&node.children.includes('VIEW RECORDINGS'));
+  viewButtons()[0].props.onClick();await harness.flush();
+  assert.deepEqual(recordingTarget(nodes(harness.value).find(node=>node.type==='details').props.row),{inbound_call_id:'inbound'});
+  viewButtons()[1].props.onClick();await harness.flush();
+  assert.deepEqual(recordingTarget(nodes(harness.value).find(node=>node.type==='details').props.row),{attempt_id:'outbound-attempt'});
+ } finally {harness.unmount();}
+});

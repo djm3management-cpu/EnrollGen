@@ -6,6 +6,9 @@ export function recordingTarget(row) {
 export function listRecordings(getToken, target) {
   return evidenceRequest(getToken, `recordings?${new URLSearchParams(target)}`);
 }
+export function listAvailableRecordings(getToken, offset = 0) {
+  return evidenceRequest(getToken, `recordings?catalog=1&offset=${offset}`);
+}
 export function recordingMedia(getToken, target, { id, download = false, provider = false } = {}) {
   return evidenceRequest(getToken, 'recordings', { ...target, action: 'media', recording_id: id, download, ...(provider ? { source: 'twilio' } : {}) });
 }

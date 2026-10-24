@@ -1,12 +1,13 @@
 import CallTranscriptPlayer from "./CallTranscriptPlayer";
 import CallNotesEditor from "./CallNotesEditor";
 import CallDateRangePicker from "./CallDateRangePicker";
+import CallLogIconSelect from "./CallLogIconSelect";
 import { debugLog } from "../../lib/debugLog.js";
 import { useAppAuth } from "../../context/AuthContext";
 import { loadCallLogPages } from "../../lib/callLogApi";
 import RecordingPanel from "../callDetail/RecordingPanel";
-import MissingRecordings from "./MissingRecordings";
-import { Download, FileAudio, RefreshCw } from "lucide-react";
+import CallRecordings from "./CallRecordings";
+import { ArrowLeftRight, Download, FileAudio, PhoneCall, RefreshCw, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { CALL_OUTCOME_OPTIONS } from "../../lib/postCallPipeline";
@@ -236,7 +237,7 @@ export default function CallLogTab({ onOpenContact = null }) {
   const { getToken } = useAppAuth();
   const [exporting, setExporting] = useState(false);
   const exportGeneration = useRef(0);
-  const [showMissingRecordings, setShowMissingRecordings] = useState(false);
+  const [showRecordings, setShowRecordings] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState(null);
@@ -317,41 +318,36 @@ export default function CallLogTab({ onOpenContact = null }) {
       <div className="call-log-filters">
         <input
           type="search"
-          className="contacts-search"
-          placeholder="Search contact name or phone"
+          className="contacts-search call-log-search"
+          placeholder="Search"
+          aria-label="Search calls by contact name or phone"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <select value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)} aria-label="Agent filter">
-          {agentOptions.map((agent) => (
-            <option key={agent} value={agent}>{agent === "ALL" ? "ALL AGENTS" : agent}</option>
-          ))}
-        </select>
-        <select value={dispositionFilter} onChange={(event) => setDispositionFilter(event.target.value)} aria-label="Disposition filter">
-          {DISPOSITION_FILTERS.map((value) => (
-            <option key={value} value={value}>{value}</option>
-          ))}
-        </select>
-        <select value={directionFilter} onChange={(event) => setDirectionFilter(event.target.value)} aria-label="Direction filter">
-          {DIRECTION_FILTERS.map((value) => (
-            <option key={value} value={value}>{value}</option>
-          ))}
-        </select>
         <select className="call-log-outcome-filter" value={outcomeFilter} onChange={event => setOutcomeFilter(event.target.value)} aria-label="Outcome filter">
           <option value="ALL">ALL OUTCOMES</option>
           {CALL_OUTCOME_OPTIONS.map(group => <optgroup key={group.group} label={group.group}>
             {group.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </optgroup>)}
         </select>
-        <div className="call-log-toolbar-actions" role="group" aria-label="Call log actions">
+        <div className="call-log-toolbar-actions" role="group" aria-label="Call log filters and actions">
+          <CallLogIconSelect icon={UsersRound} label="Agent filter" title={`Agent: ${agentFilter === 'ALL' ? 'All agents' : agentFilter}`} value={agentFilter} onChange={event => setAgentFilter(event.target.value)}>
+            {agentOptions.map(agent => <option key={agent} value={agent}>{agent === 'ALL' ? 'ALL AGENTS' : agent}</option>)}
+          </CallLogIconSelect>
+          <CallLogIconSelect icon={PhoneCall} label="Disposition filter" title={`Call status: ${dispositionFilter === 'ALL' ? 'All statuses' : dispositionFilter.charAt(0) + dispositionFilter.slice(1).toLowerCase()}`} value={dispositionFilter} onChange={event => setDispositionFilter(event.target.value)}>
+            {DISPOSITION_FILTERS.map(value => <option key={value} value={value}>{value === 'ALL' ? 'ALL STATUSES' : value}</option>)}
+          </CallLogIconSelect>
+          <CallLogIconSelect icon={ArrowLeftRight} label="Direction filter" title={`Call direction: ${directionFilter === 'ALL' ? 'Inbound and outbound' : directionFilter.charAt(0) + directionFilter.slice(1).toLowerCase()}`} value={directionFilter} onChange={event => setDirectionFilter(event.target.value)}>
+            {DIRECTION_FILTERS.map(value => <option key={value} value={value}>{value === 'ALL' ? 'INBOUND + OUTBOUND' : value}</option>)}
+          </CallLogIconSelect>
           <CallDateRangePicker from={dateFrom} to={dateTo} onChange={(from, to) => { setDateFrom(from); setDateTo(to); }} />
-          <button type="button" className={`contacts-mini-btn call-log-toolbar-icon${showMissingRecordings ? ' is-active' : ''}`} aria-label="Missing recordings" title="Missing recordings" aria-expanded={showMissingRecordings} onClick={() => setShowMissingRecordings(value => !value)}><FileAudio size={16} aria-hidden="true" /></button>
+          <button type="button" className={`contacts-mini-btn call-log-toolbar-icon${showRecordings ? ' is-active' : ''}`} aria-label="Recordings" title="Recordings" aria-expanded={showRecordings} onClick={() => setShowRecordings(value => !value)}><FileAudio size={16} aria-hidden="true" /></button>
           <button type="button" className="contacts-mini-btn call-log-toolbar-icon" aria-label="Refresh calls" title="Refresh calls" onClick={load}><RefreshCw size={16} aria-hidden="true" /></button>
           <button type="button" className="contacts-mini-btn call-log-toolbar-icon" aria-label={exporting ? "Exporting calls" : "Export calls (CSV)"} title={exporting ? "Exporting calls…" : "Export calls (CSV)"} aria-busy={exporting} disabled={loading || exporting} onClick={() => void exportCalls()}><Download size={16} aria-hidden="true" /></button>
         </div>
       </div>
 
-      {showMissingRecordings && <MissingRecordings />}
+      {showRecordings && <CallRecordings />}
       {error || loadError ? <div className="ops-error" role="alert">⚠ {error || loadError}</div> : null}
 
       <div className="contacts-table-wrap">

@@ -20,7 +20,7 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
   const target = useMemo(() => recordingTarget(row || {
     attempt_id: attemptId, call_record_id: callRecordId, inbound_call_id: inboundCallId,
   }), [row, attemptId, callRecordId, inboundCallId]);
-  const hasLinkedRecording = Boolean(row?.recording_storage_path || row?.recording_url);
+  const hasLinkedRecording = Boolean(row?.recording_available || row?.recording_storage_path || row?.recording_url);
   const load = useCallback(async () => {
     const current = Symbol(); version.current = current;
     setLoading(true); setError(''); setCanMintConversly(false); setCopied(null); setCopyFallback(null);

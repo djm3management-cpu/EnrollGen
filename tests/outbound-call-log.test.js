@@ -182,3 +182,35 @@ test('outcome filtering uses saved records across batches before counts, sorting
  const beyond = await log(auth,'outcome=enrolled&agent=Outcome%20Agent&offset=205'); assert.deepEqual(beyond.rows,[]); assert.equal(beyond.count,205);
  await log(auth,'outcome='+encodeURIComponent('enrolled,tenant_id.eq.'+U),400);
 });
+
+test('recording catalog includes all playable parts, scopes calls before display and keeps missing separate', async () => {
+ const get = async (identity, params = 'catalog=1', expected = 200) => {
+  const response = await createRecordingsHandler({authenticate:async()=>identity,getDb:()=>db})(new Request('https://test/recordings?'+params));
+  const result = await response.json(); assert.equal(response.status,expected,JSON.stringify(result)); return result;
+ };
+ // The existing outbound recording is protected by agent_a's attempt and is playable.
+ const own = await get(auth);
+ const outbound = own.calls.find(row=>row.attempt_id===OUT);
+ assert.ok(outbound); assert.ok(outbound.recording_count>=1); assert.equal(outbound.recording_available,true);
+ assert.equal(outbound.provider_available,true);
+ assert.ok(!JSON.stringify(own).includes('account_sid')); assert.ok(!JSON.stringify(own).includes('storage_path'));
+ assert.ok(!JSON.stringify(own).includes('recording_url'));
+ const peer = await get(other); assert.ok(!peer.calls.some(row=>row.attempt_id===OUT));
+ const agency = await get(admin); assert.ok(agency.calls.some(row=>row.attempt_id===OUT));
+ // A retained provider copy remains listed even if its storage copy failed.
+ const saved = (await sql('SELECT id,copy_status,storage_path FROM recording_ingestion WHERE attempt_id=$1',[OUT]))[0];
+ await sql("UPDATE recording_ingestion SET copy_status='failed',storage_path=NULL WHERE id=$1",[saved.id]);
+ assert.ok((await get(auth)).calls.some(row=>row.attempt_id===OUT));
+ await sql('UPDATE recording_ingestion SET copy_status=$1,storage_path=$2 WHERE id=$3',[saved.copy_status,saved.storage_path,saved.id]);
+ assert.equal(own.next_offset,100);
+ assert.deepEqual((await get(auth,'catalog=1&offset=1000000')).calls,[]);
+ for(const params of ['catalog=1&offset=-1','catalog=1&offset=1.5','catalog=1&offset=1000001','catalog=1&tenant_id='+U]) await get(auth,params,400);
+ await get({...auth,orgId:'org-b'},'catalog=1',403);
+ const missing=await get(auth,'missing=1'); assert.ok(Array.isArray(missing.calls));
+ // Legacy audio attached only to a linked call record must also be discoverable.
+ const original=(await sql('SELECT recording_storage_path FROM call_records WHERE id=$1',[INC]))[0].recording_storage_path;
+ await sql('UPDATE call_records SET recording_storage_path=$1 WHERE id=$2',[`${T}/${sid(1)}.wav`,INC]);
+ const legacy=(await get(auth)).calls.find(row=>row.call_record_id===INC);
+ assert.ok(legacy);assert.equal(legacy.recording_count,1);assert.equal(legacy.recording_available,true);
+ await sql('UPDATE call_records SET recording_storage_path=$1 WHERE id=$2',[original,INC]);
+});

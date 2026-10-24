@@ -46,7 +46,7 @@ export function RecordingCell({ row, onPlay }) {
   const [error, setError] = useState('');
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(false);
-  const hasRecording = Boolean(row.recording_storage_path || row.recording_url);
+  const hasRecording = Boolean(row.recording_available || row.recording_storage_path || row.recording_url);
   const handlePlay = useCallback(async (download = false, provider = false) => {
     if (audioUrl && !download && !provider) { setAudioUrl(null); return; }
     setLoading(true);
