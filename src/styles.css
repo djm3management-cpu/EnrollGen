@@ -18579,3 +18579,28 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
 }
 
 .call-log-filters .call-log-outcome-filter { width: 190px; max-width: 100%; }
+
+/* One calendar for a single call day or an inclusive date range. */
+.call-date-picker { position: static; flex: 0 1 auto; max-width: 100%; }
+.call-log-toolbar-actions { position: relative; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.call-log-tab .call-log-toolbar-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border-radius: 6px; }
+.call-log-tab .call-log-toolbar-icon.is-active { color: var(--eg-accent); border-color: var(--eg-accent); background: rgba(245, 165, 36, .06); }
+.call-date-popover { position: absolute; top: calc(100% + 8px); right: 0; z-index: 60; box-sizing: border-box; width: 304px; max-width: calc(100vw - 48px); padding: 14px; border: 1px solid var(--border-default); border-radius: var(--eg-radius-card); background: var(--eg-surface-2); box-shadow: var(--eg-shadow-card); color: var(--text-primary); }
+.call-date-month { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.call-date-month > button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; }
+.call-date-help { margin: 12px 0; color: var(--text-secondary); font-family: var(--font-primary); font-size: 12px; line-height: 1.5; }
+.call-date-weekdays, .call-date-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.call-date-weekdays { margin-bottom: 6px; color: var(--text-tertiary); font-size: 10px; text-align: center; }
+.call-date-days .call-date-day { box-sizing: border-box; aspect-ratio: 1; width: 100%; padding: 0; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text-primary); font-family: inherit; font-size: 11px; cursor: pointer; }
+.call-date-days .call-date-day.is-today { border-color: var(--border-default); }
+.call-date-days .call-date-day.is-in-range { background: rgba(245, 165, 36, .1); color: var(--eg-accent); }
+.call-date-days .call-date-day.is-endpoint { background: var(--eg-accent); color: var(--eg-surface-1); font-weight: 700; }
+.call-date-days .call-date-day:hover, .call-date-days .call-date-day:focus-visible { border-color: var(--eg-accent); outline: 1px solid var(--eg-accent); outline-offset: 1px; }
+.call-date-selection { margin-top: 12px; min-height: 30px; color: var(--text-secondary); font-size: 10px; line-height: 1.5; }
+.call-date-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border-default); }
+.call-date-footer > button { font-size: 10px; }
+
+@media (max-width: 760px) {
+  .call-log-toolbar-actions { flex-basis: 100%; }
+  .call-date-popover { left: 0; right: auto; }
+}

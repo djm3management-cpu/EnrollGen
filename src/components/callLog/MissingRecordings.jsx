@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { RefreshCw } from 'lucide-react';
+import { useAppAuth } from '../../context/AuthContext';
 import { evidenceRequest } from '../../lib/evidenceApi';
 import RecordingPanel from '../callDetail/RecordingPanel';
 import { formatCallDateTime } from '../../lib/callPresentation';
 export default function MissingRecordings() {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [data, setData] = useState({ calls: [], unmatched: [], next_offset: null });
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -17,7 +18,7 @@ export default function MissingRecordings() {
   }, [getToken, offset]);
   useEffect(() => { void load(); }, [load]);
   return <div className="contacts-section">
-    <div className="contacts-section-head">MISSING RECORDINGS <button type="button" className="contacts-mini-btn" onClick={load} disabled={loading}>REFRESH</button></div>
+    <div className="contacts-section-head">MISSING RECORDINGS <button type="button" className="contacts-mini-btn call-log-toolbar-icon" aria-label="Refresh missing recordings" title="Refresh missing recordings" onClick={load} disabled={loading}><RefreshCw size={16} aria-hidden="true" /></button></div>
     {error ? <div className="ops-error" role="alert">{error}</div> : null}
     {loading ? <div className="contacts-muted">Loading...</div> : <>
       <div className="contacts-table-wrap"><table className="contacts-table"><thead><tr><th>DATE/TIME</th><th>DIRECTION</th><th>ISSUE</th><th>CALL</th></tr></thead><tbody>

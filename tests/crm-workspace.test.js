@@ -280,10 +280,10 @@ test('the transcript player seeks before audio loads, tracks the active utteranc
   } finally { harness.unmount(); }
 });
 
-test('the calls outcome filter replaces Missing Recordings, resets pagination and follows the CSV export', async () => {
+test('call filters reset pagination and follow exports while toolbar icons retain labels and recording access', async () => {
   const harness = hookHarness(), requests = [], exports = [], downloads = [], rows = [], getToken = async () => 'token';
   const Calls = componentSource('../src/components/callLog/CallLogTab.jsx', 'CallLogTab', {
-    ...harness.hooks, useAppAuth: () => ({ getToken }), useTenantConfig: () => ({ supabaseClient: {} }),
+    ...harness.hooks, CallDateRangePicker: 'date-picker', MissingRecordings: 'missing-recordings', FileAudio: 'file-audio', RefreshCw: 'refresh', Download: 'download', useAppAuth: () => ({ getToken }), useTenantConfig: () => ({ supabaseClient: {} }),
     useCallLogRows: filters => { requests.push(filters); return { rows, count: 51, loading: false, refresh() {} }; },
     CALL_OUTCOME_OPTIONS: [{ group: 'Enrollment Outcomes', options: [{ value: 'enrolled', label: 'Enrolled' }, { value: 'enrolled_pending_verification', label: 'Enrolled - Pending Verification' }] }],
     loadCallLogPages: async (_token, filters) => { exports.push(filters); return [{ call_outcome: filters.outcome }]; },
@@ -291,14 +291,116 @@ test('the calls outcome filter replaces Missing Recordings, resets pagination an
   });
   try {
     harness.mount(() => Calls({})); await harness.flush();
-    assert.ok(!nodes(harness.value).some(node => node.children.includes('MISSING RECORDINGS')));
+    for (const label of ['Missing recordings', 'Refresh calls', 'Export calls (CSV)']) {
+      const button = nodes(harness.value).find(node => node.type === 'button' && node.props['aria-label'] === label);
+      assert.equal(button.props.title, label);
+      assert.ok(!button.children.some(child => typeof child === 'string'));
+    }
+    nodes(harness.value).find(node => node.props['aria-label'] === 'Missing recordings').props.onClick();
+    await harness.flush(); assert.ok(nodes(harness.value).some(node => node.type === 'missing-recordings'));
+    nodes(harness.value).find(node => node.props['aria-label'] === 'Missing recordings').props.onClick();
+    await harness.flush(); assert.ok(!nodes(harness.value).some(node => node.type === 'missing-recordings'));
     nodes(harness.value).find(node => node.type === 'button' && node.children.includes('NEXT →')).props.onClick();
     await harness.flush(); assert.equal(requests.at(-1).offset, 50);
     nodes(harness.value).find(node => node.props['aria-label'] === 'Outcome filter').props.onChange({ target: { value: 'enrolled' } });
     await harness.flush(); assert.equal(requests.at(-1).outcome, 'enrolled'); assert.equal(requests.at(-1).offset, 0);
-    await nodes(harness.value).find(node => node.type === 'button' && node.children.includes('Export calls (CSV)')).props.onClick();
+    assert.ok(!nodes(harness.value).some(node => node.type === 'input' && node.props.type === 'date'));
+    nodes(harness.value).find(node => node.type === 'date-picker').props.onChange('2026-03-08', '2026-03-08');
+    await harness.flush();
+    const dayStart = new Date('2026-03-08T00:00:00').toISOString(), dayEnd = new Date('2026-03-09T00:00:00').toISOString();
+    assert.equal(requests.at(-1).from, dayStart); assert.equal(requests.at(-1).to, dayEnd);
+    await nodes(harness.value).find(node => node.type === 'button' && node.props['aria-label'] === 'Export calls (CSV)').props.onClick();
     await harness.flush(); assert.equal(exports[0].outcome, 'enrolled'); assert.equal(JSON.parse(downloads[0])[0].call_outcome, 'enrolled');
+    assert.equal(exports[0].from, dayStart); assert.equal(exports[0].to, dayEnd);
+    nodes(harness.value).find(node => node.type === 'date-picker').props.onChange('2026-10-24', '2026-10-26');
+    await harness.flush();
+    assert.equal(requests.at(-1).from, new Date('2026-10-24T00:00:00').toISOString());
+    assert.equal(requests.at(-1).to, new Date('2026-10-27T00:00:00').toISOString());
+    nodes(harness.value).find(node => node.type === 'date-picker').props.onChange('', '');
+    await harness.flush(); assert.equal(requests.at(-1).from, null); assert.equal(requests.at(-1).to, undefined);
     nodes(harness.value).find(node => node.props['aria-label'] === 'Outcome filter').props.onChange({ target: { value: 'ALL' } });
     await harness.flush(); assert.equal(requests.at(-1).outcome, null);
   } finally { harness.unmount(); }
+});
+
+function datePickerFixture(from = '2026-10-24', to = from) {
+  const harness = hookHarness(), changes = [], listeners = new Map();
+  const Picker = componentSource('../src/components/callLog/CallDateRangePicker.jsx', 'CallDateRangePicker', {
+    ...harness.hooks, useId: () => 'date-picker', CalendarDays: 'calendar', ChevronLeft: 'left', ChevronRight: 'right',
+    document: { addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) },
+  });
+  harness.mount(() => Picker({ from, to, onChange: (start, end) => { from = start; to = end; changes.push([start, end]); } }));
+  const find = predicate => nodes(harness.value).find(predicate);
+  return { harness, changes, listeners, find,
+    async click(predicate) { const node = find(predicate); assert.ok(node); node.props.onClick(); harness.render(); await harness.flush(); },
+    day(key) { return find(node => node.props['data-date'] === key); },
+  };
+}
+
+test('one calendar selects one day immediately, completes reversed ranges and clears back to all dates', async () => {
+  const f = datePickerFixture();
+  try {
+    await f.click(node => node.props['aria-haspopup'] === 'dialog');
+    assert.equal(f.listeners.size, 1);
+    const trigger = f.find(node => node.props['aria-haspopup'] === 'dialog');
+    assert.equal(trigger.props.title, trigger.props['aria-label']);
+    assert.ok(!trigger.children.some(child => typeof child === 'string'));
+    await f.click(node => node.props['data-date'] === '2026-10-24');
+    assert.deepEqual(f.changes.at(-1), ['2026-10-24', '2026-10-24']);
+    assert.equal(f.day('2026-10-24').props['aria-pressed'], true);
+    await f.click(node => node.props['data-date'] === '2026-10-20');
+    assert.deepEqual(f.changes.at(-1), ['2026-10-20', '2026-10-24']);
+    for (const day of ['20', '21', '22', '23', '24']) assert.equal(f.day('2026-10-' + day).props['aria-pressed'], true);
+    assert.equal(f.day('2026-10-25').props['aria-pressed'], false);
+    await f.click(node => node.props['data-date'] === '2026-10-30');
+    assert.deepEqual(f.changes.at(-1), ['2026-10-30', '2026-10-30']);
+    await f.click(node => node.type === 'button' && node.children.includes('CLEAR'));
+    assert.deepEqual(f.changes.at(-1), ['', '']);
+    await f.click(node => node.type === 'button' && node.children.includes('DONE'));
+    assert.equal(f.find(node => node.props.role === 'dialog'), undefined);
+    assert.equal(f.listeners.size, 0);
+  } finally { f.harness.unmount(); }
+});
+
+test('calendar ranges cross months, support leap days and dismiss without losing the selected day', async () => {
+  const f = datePickerFixture('2024-02-29');
+  try {
+    await f.click(node => node.props['aria-haspopup'] === 'dialog');
+    assert.ok(f.day('2024-02-29')); assert.equal(f.day('2024-02-30'), undefined);
+    await f.click(node => node.props['data-date'] === '2024-02-29');
+    await f.click(node => node.props['aria-label'] === 'Next month');
+    await f.click(node => node.props['data-date'] === '2024-03-02');
+    assert.deepEqual(f.changes.at(-1), ['2024-02-29', '2024-03-02']);
+    assert.equal(f.day('2024-03-01').props['aria-pressed'], true);
+    // Clicking outside applies no further changes and dismisses the calendar.
+    const count = f.changes.length;
+    f.listeners.get('pointerdown')({ target: {} }); f.harness.render(); await f.harness.flush();
+    assert.equal(f.changes.length, count); assert.equal(f.find(node => node.props.role === 'dialog'), undefined);
+    await f.click(node => node.props['aria-haspopup'] === 'dialog');
+    await f.click(node => node.props['data-date'] === '2024-02-28');
+    assert.deepEqual(f.changes.at(-1), ['2024-02-28', '2024-02-28']);
+    let prevented = false;
+    f.find(node => node.props.className === 'call-date-picker').props.onKeyDown({ key: 'Escape', preventDefault() { prevented = true; }, stopPropagation() {} });
+    await f.harness.flush(); assert.ok(prevented); assert.equal(f.find(node => node.props.role === 'dialog'), undefined);
+  } finally { f.harness.unmount(); }
+});
+
+test('calendar keyboard navigation crosses year boundaries and clamps month changes', async () => {
+  const f = datePickerFixture('2026-12-31');
+  const key = async (date, key) => {
+    let prevented = false;
+    f.day(date).props.onKeyDown({ key, preventDefault() { prevented = true; } });
+    await f.harness.flush(); assert.ok(prevented);
+  };
+  try {
+    await f.click(node => node.props['aria-haspopup'] === 'dialog');
+    await key('2026-12-31', 'ArrowRight');
+    assert.equal(f.day('2027-01-01').props.tabIndex, 0);
+    await key('2027-01-01', 'ArrowLeft');
+    assert.equal(f.day('2026-12-31').props.tabIndex, 0);
+    await key('2026-12-31', 'PageDown');
+    assert.equal(f.day('2027-01-31').props.tabIndex, 0);
+    await key('2027-01-31', 'PageDown');
+    assert.equal(f.day('2027-02-28').props.tabIndex, 0);
+  } finally { f.harness.unmount(); }
 });

@@ -1,9 +1,12 @@
 import CallTranscriptPlayer from "./CallTranscriptPlayer";
 import CallNotesEditor from "./CallNotesEditor";
+import CallDateRangePicker from "./CallDateRangePicker";
 import { debugLog } from "../../lib/debugLog.js";
 import { useAppAuth } from "../../context/AuthContext";
 import { loadCallLogPages } from "../../lib/callLogApi";
 import RecordingPanel from "../callDetail/RecordingPanel";
+import MissingRecordings from "./MissingRecordings";
+import { Download, FileAudio, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { CALL_OUTCOME_OPTIONS } from "../../lib/postCallPipeline";
@@ -233,6 +236,7 @@ export default function CallLogTab({ onOpenContact = null }) {
   const { getToken } = useAppAuth();
   const [exporting, setExporting] = useState(false);
   const exportGeneration = useRef(0);
+  const [showMissingRecordings, setShowMissingRecordings] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState(null);
@@ -318,14 +322,6 @@ export default function CallLogTab({ onOpenContact = null }) {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <label className="call-log-date">
-          FROM
-          <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
-        </label>
-        <label className="call-log-date">
-          TO
-          <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
-        </label>
         <select value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)} aria-label="Agent filter">
           {agentOptions.map((agent) => (
             <option key={agent} value={agent}>{agent === "ALL" ? "ALL AGENTS" : agent}</option>
@@ -347,10 +343,15 @@ export default function CallLogTab({ onOpenContact = null }) {
             {group.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </optgroup>)}
         </select>
-        <button type="button" className="contacts-mini-btn" onClick={load}>REFRESH</button>
-        <button type="button" className="contacts-mini-btn" disabled={loading || exporting} onClick={() => void exportCalls()}>{exporting ? "EXPORTING..." : "Export calls (CSV)"}</button>
+        <div className="call-log-toolbar-actions" role="group" aria-label="Call log actions">
+          <CallDateRangePicker from={dateFrom} to={dateTo} onChange={(from, to) => { setDateFrom(from); setDateTo(to); }} />
+          <button type="button" className={`contacts-mini-btn call-log-toolbar-icon${showMissingRecordings ? ' is-active' : ''}`} aria-label="Missing recordings" title="Missing recordings" aria-expanded={showMissingRecordings} onClick={() => setShowMissingRecordings(value => !value)}><FileAudio size={16} aria-hidden="true" /></button>
+          <button type="button" className="contacts-mini-btn call-log-toolbar-icon" aria-label="Refresh calls" title="Refresh calls" onClick={load}><RefreshCw size={16} aria-hidden="true" /></button>
+          <button type="button" className="contacts-mini-btn call-log-toolbar-icon" aria-label={exporting ? "Exporting calls" : "Export calls (CSV)"} title={exporting ? "Exporting calls…" : "Export calls (CSV)"} aria-busy={exporting} disabled={loading || exporting} onClick={() => void exportCalls()}><Download size={16} aria-hidden="true" /></button>
+        </div>
       </div>
 
+      {showMissingRecordings && <MissingRecordings />}
       {error || loadError ? <div className="ops-error" role="alert">⚠ {error || loadError}</div> : null}
 
       <div className="contacts-table-wrap">
