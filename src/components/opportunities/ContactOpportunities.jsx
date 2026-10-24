@@ -9,10 +9,10 @@ function CreateFromRecordModal({ contactId, callId, contactName, onClose }) {
   return <NewOpportunityModal data={data} prefill={{ contact_id: contactId || '', call_id: callId || '', contact_name: contactName }} onClose={onClose} />;
 }
 
-export function CreateOpportunityButton({ contactId, callId = null, contactName }) {
+export function CreateOpportunityButton({ contactId, callId = null, contactName, label = 'CREATE OPPORTUNITY' }) {
   const [open, setOpen] = useState(false);
   const needsContact = Boolean(callId && !contactId);
-  return <><button type="button" className="contacts-mini-btn" disabled={needsContact} title={needsContact ? 'Link a contact to this call first.' : undefined} onClick={() => setOpen(true)}>CREATE OPPORTUNITY</button>
+  return <><button type="button" className="contacts-mini-btn" disabled={needsContact} title={needsContact ? 'Link a contact to this call first.' : undefined} onClick={() => setOpen(true)}>{label}</button>
     {needsContact && <span className="contacts-muted">Link a contact to this call first.</span>}
     {open && <CreateFromRecordModal contactId={contactId} callId={callId} contactName={contactName} onClose={() => setOpen(false)} />}
   </>;

@@ -120,16 +120,16 @@ test('fallback controls play and download through the same authenticated recordi
   const harness = hookHarness(), getToken = async () => 'token', requests = [], downloads = [];
   const row = { attempt_id: 'attempt', call_record_id: 'record', recording_url: 'protected-recording' };
   const Cell = component('../src/components/callLog/CallRowParts.jsx', 'RecordingCell', {
-    ...harness.hooks, useAppAuth: () => ({ getToken }), recordingTarget,
+    ...harness.hooks, Play: 'play-icon', Pause: 'pause-icon', Download: 'download-icon', useAppAuth: () => ({ getToken }), recordingTarget,
     recordingMedia: async (token, target, options) => { assert.equal(token, getToken); requests.push({ target, options }); return { url: 'signed-media', filename: 'recording.wav', source: 'storage' }; },
     downloadRecordingUrl: (...args) => downloads.push(args),
   });
   try {
     harness.mount(() => Cell({ row }));
-    await nodes(harness.value).find(node => node.type === 'button' && node.children.includes('▶ PLAY')).props.onClick();
+    await nodes(harness.value).find(node => node.type === 'button' && node.props['aria-label'] === 'Play recording').props.onClick();
     await harness.flush();
     assert.equal(nodes(harness.value).find(node => node.type === 'audio').props.src, 'signed-media');
-    await nodes(harness.value).find(node => node.type === 'button' && node.children.includes('DOWNLOAD WAV')).props.onClick();
+    await nodes(harness.value).find(node => node.type === 'button' && node.props['aria-label'] === 'Download recording').props.onClick();
     assert.ok(requests.every(request => JSON.stringify(request.target) === JSON.stringify(recordingTarget(row))));
     assert.equal(requests[1].options.download, true);
     assert.deepEqual(downloads, [['signed-media', 'recording.wav']]);

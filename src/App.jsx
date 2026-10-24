@@ -775,7 +775,7 @@ function AppShell({ currentUser = null }) {
     }
 
     if (tabId === "contacts") {
-      navigateCrm("contacts");
+      navigateCrm("calls");
       setAppMode("crm");
       setOpenPanel(null);
       return;

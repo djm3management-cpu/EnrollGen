@@ -3,6 +3,8 @@ import { useAppAuth } from '../../context/AuthContext';
 import { recordingMedia, recordingTarget, downloadRecordingUrl } from '../../lib/recordingsApi';
 import { COMPLIANCE_WARNING_THRESHOLD } from '../callDetail/ComplianceReviewModal';
 import { isUnscoredCompliance } from '../../lib/complianceScore.js';
+import { callOutcomeLabel } from '../../lib/postCallPipeline';
+import { Download, Pause, Play } from 'lucide-react';
 
 export function CallDirection({ direction }) {
   return <span className={`call-log-direction is-${direction}`}>{direction === 'inbound' ? '↓ IN' : direction === 'outbound' ? '↑ OUT' : '--'}</span>;
@@ -17,18 +19,29 @@ const COMPLIANCE_LABELS = {
   not_requested: 'Not requested', transcript_pending: 'Transcript pending', queued: 'Queued',
   scoring: 'Scoring', complete: 'Complete', failed: 'Scoring failed', dispo_changed: 'Disposition changed',
 };
-export function ComplianceChip({ score, status, grade, passFail }) {
-  if (status === 'failed') return <span className="ops-error">Scoring failed</span>;
-  if (isUnscoredCompliance({ overall_grade: grade, pass_fail: passFail })) return <span className="contacts-muted" title="Insufficient for compliance scoring">N/A</span>;
-  if (score == null) return <span className="contacts-muted">{COMPLIANCE_LABELS[status] || '--'}</span>;
-  const value = Math.round(Number(score));
-  const band = value >= 90 ? 'high' : value >= 70 ? 'mid' : 'low';
-  return <span className={`call-log-chip compliance-${band}`} title={COMPLIANCE_LABELS[status]}>
-    {value < COMPLIANCE_WARNING_THRESHOLD ? <span className="call-log-compliance-warning">⚠</span> : null}{value}%
+export function CallStatusOutcome({ disposition, outcome }) {
+  const value = (disposition || 'unknown').toLowerCase();
+  const status = outcome && value === outcome ? 'connected' : value;
+  if (status === 'missed') return <span className="call-status-missed">Missed</span>;
+  const tone = outcome?.startsWith('enrolled') ? 'enrolled' : outcome?.includes('callback') ? 'callback' : 'other';
+  return <span className="call-status-outcome">
+    <span className="call-status">{status.charAt(0).toUpperCase() + status.slice(1).replaceAll('_', ' ')}</span>
+    {outcome && <><span className="call-status-separator"> · </span><span className={`call-outcome is-${tone}`}>{callOutcomeLabel(outcome)}</span></>}
   </span>;
 }
 
-export function RecordingCell({ row }) {
+export function ComplianceChip({ score, status, grade, passFail, duration }) {
+  if ((duration != null && Number.isFinite(Number(duration)) && Number(duration) < 120) || isUnscoredCompliance({ overall_grade: grade, pass_fail: passFail })) return <span className="call-compliance-pill is-neutral" title="Insufficient for compliance scoring">N/A</span>;
+  if (status === 'failed') return <span className="contacts-muted" title="Scoring failed">Not scored</span>;
+  if (score == null || !Number.isFinite(Number(score))) return <span className="contacts-muted" title={COMPLIANCE_LABELS[status]}>Not scored</span>;
+  const value = Math.round(Number(score));
+  const failing = String(passFail).toUpperCase() === 'FAIL' || value < COMPLIANCE_WARNING_THRESHOLD;
+  return <span className={`call-compliance-pill ${failing ? 'compliance-low' : 'compliance-high'}`} title={COMPLIANCE_LABELS[status]}>
+    {value}%{grade ? ` · ${grade}` : ''}
+  </span>;
+}
+
+export function RecordingCell({ row, onPlay }) {
   const { getToken } = useAppAuth();
   const [error, setError] = useState('');
   const [audioUrl, setAudioUrl] = useState(null);
@@ -47,8 +60,8 @@ export function RecordingCell({ row }) {
   }, [audioUrl, row, getToken]);
   if (!hasRecording) return <span className="contacts-muted">--</span>;
   return <span className="call-log-recording" onClick={event => event.stopPropagation()}>
-    <button type="button" className="contacts-mini-btn" onClick={() => handlePlay()} disabled={loading}>{loading ? '...' : audioUrl ? 'HIDE' : '▶ PLAY'}</button>
-    <button type="button" className="contacts-mini-btn" onClick={() => handlePlay(true)} disabled={loading}>DOWNLOAD WAV</button>
+    <button type="button" className="contacts-mini-btn call-recording-icon" aria-label={audioUrl ? 'Hide recording player' : 'Play recording'} title="Play recording" onClick={() => onPlay ? onPlay() : handlePlay()} disabled={loading}>{audioUrl ? <Pause size={16} /> : <Play size={16} />}</button>
+    <button type="button" className="contacts-mini-btn call-recording-icon" aria-label="Download recording" title="Download WAV" onClick={() => handlePlay(true)} disabled={loading}><Download size={16} /></button>
     {error ? <span className="ops-error" role="alert">{error}</span> : null}
     {audioUrl ? <audio controls autoPlay preload="none" src={audioUrl.url} onError={() => {
       if (audioUrl.source === 'storage') void handlePlay(false, true);

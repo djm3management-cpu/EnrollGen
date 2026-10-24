@@ -150,3 +150,13 @@ test('call log includes the linked N/A grade instead of interpreting its stored 
  assert.equal(row.compliance_pass_fail,'N/A');
  assert.equal(row.compliance_status,'complete');
 });
+
+test('call log returns the persisted outcome alongside status and refreshes after an outcome edit', async () => {
+ await sql("UPDATE call_records SET call_outcome='enrolled' WHERE id=$1",[INC]);
+ let data=await log();
+ assert.equal(data.rows.find(row=>row.call_record_id===INC).call_outcome,'enrolled');
+ await sql("UPDATE call_records SET call_outcome='callback_scheduled' WHERE id=$1",[INC]);
+ data=await log();
+ assert.equal(data.rows.find(row=>row.call_record_id===INC).call_outcome,'callback_scheduled');
+ assert.equal(data.rows.find(row=>row.attempt_id===OUT)?.call_outcome,null);
+});

@@ -12,6 +12,8 @@ import { isComplianceSale } from '../src/lib/saleCompliance.js';
 import { isUnscoredCompliance } from '../src/lib/complianceScore.js';
 
 test('CRM routes support direct contact links and legacy Calls/Contacts URLs', () => {
+  assert.deepEqual(readCrmLocation('/crm'), { view: 'calls', contactId: null });
+  assert.equal(crmPath(), '/crm/calls');
   assert.deepEqual(readCrmLocation('/calls'), { view: 'calls', contactId: null });
   assert.deepEqual(readCrmLocation('/crm/calls'), { view: 'calls', contactId: null });
   assert.deepEqual(readCrmLocation('/contacts?view=opportunities'), { view: 'opportunities', contactId: null });
@@ -113,15 +115,15 @@ test('the review modal shows an alert for code-only and generic failed states; c
   assert.match(alert.children.join(''),/Scoring failed:/);assert.match(alert.children.join(''),/transcript is retained/);
   hooks.unmount();
  }
- const Chip=componentSource('../src/components/callLog/CallRowParts.jsx','ComplianceChip',{COMPLIANCE_WARNING_THRESHOLD:80});
- assert.ok(Chip({score:92,status:'failed'}).children.includes('Scoring failed'));
+ const Chip=componentSource('../src/components/callLog/CallRowParts.jsx','ComplianceChip',{COMPLIANCE_WARNING_THRESHOLD:80,isUnscoredCompliance});
+ assert.ok(Chip({score:92,status:'failed'}).children.includes('Not scored'));
  assert.equal(scoringFailureMessage({compliance_status:'queued',metadata:{scoring_status:'failed',scoring_error:'old failure'}}),null);
 });
 test('the actual call row and contact card display the same Talk, recording target, disposition and compliance state', () => {
   const row = { log_id: 'call-1', call_record_id: 'record-1', contact_id: 'contact-1', contact_name: 'Sample Contact',
     contact_phone: '+15555555555', occurred_at: new Date(2026, 9, 22, 15, 4).toISOString(), direction: 'inbound', duration_seconds: 31,
     call_duration_seconds: 900, agent: 'Agent', disposition: 'connected', compliance_score: 91, compliance_status: 'complete' };
-  const parts = { CallDirection: 'direction', ComplianceChip: 'compliance', DispositionChip: 'disposition', RecordingCell: 'recording' };
+  const parts = { CallDirection: 'direction', ComplianceChip: 'compliance', DispositionChip: 'disposition', CallStatusOutcome: 'status-outcome', RecordingCell: 'recording' };
   const FragmentRow = componentSource('../src/components/callLog/CallLogTab.jsx', 'FragmentRow', {
     ...parts, fmtDateTime: formatCallDateTime, fmtDuration: formatTalk, crmPath,
   });
@@ -135,7 +137,7 @@ test('the actual call row and contact card display the same Talk, recording targ
     assert.ok(view.some(node => node.children.includes('0:31')));
     assert.ok(!view.some(node => node.children.includes('15:00')));
     assert.equal(view.find(node => node.type === 'recording').props.row, row);
-    assert.equal(view.find(node => node.type === 'disposition').props.disposition, 'connected');
+    assert.equal(view.find(node => ['disposition', 'status-outcome'].includes(node.type)).props.disposition, 'connected');
     assert.equal(view.find(node => node.type === 'compliance').props.status, 'complete');
   }
   const links = logNodes.filter(node => node.type === 'a');
@@ -153,7 +155,7 @@ test('short call chips and review banners show neutral N/A while a real zero rem
  const Banner=componentSource('../src/components/callDetail/ComplianceReviewModal.jsx','ScoreBanner',{CATEGORY_WEIGHTS:{},isUnscoredCompliance});
  for(const fields of [{overall_grade:'N/A',pass_fail:'N/A'},{pass_fail:'INSUFFICIENT'}]) {
   const chip=Chip({score:0,status:'complete',grade:fields.overall_grade,passFail:fields.pass_fail});
-  assert.equal(chip.props.className,'contacts-muted');assert.deepEqual(chip.children,['N/A']);
+  assert.match(chip.props.className,/is-neutral/);assert.deepEqual(chip.children,['N/A']);
   const banner=Banner({scorecard:{overall_score:0,...fields}});
   assert.ok(nodes(banner).some(node=>node.type==='strong'&&node.children.includes('N/A')));
   assert.ok(!nodes(banner).some(node=>String(node.props.className).includes('is-warning')));
@@ -203,5 +205,77 @@ test('the compliance history UI uses shared measured Talk rather than the stored
     const cells = nodes(harness.value).filter(node => node.type === 'td');
     assert.ok(cells.some(cell => cell.children.includes('0:31')));
     assert.ok(!cells.some(cell => cell.children.includes('15:00')));
+  } finally { harness.unmount(); }
+});
+
+test('call status combines the saved outcome without a disposition pill and missed calls omit outcomes', () => {
+  const Status = componentSource('../src/components/callLog/CallRowParts.jsx', 'CallStatusOutcome', { callOutcomeLabel: value => value });
+  const enrolled = nodes(Status({ disposition: 'connected', outcome: 'enrolled' }));
+  assert.ok(enrolled.some(node => node.props.className === 'call-status' && node.children.includes('Connected')));
+  assert.ok(enrolled.some(node => node.props.className === 'call-outcome is-enrolled'));
+  assert.ok(nodes(Status({ disposition: 'connected', outcome: 'callback_scheduled' })).some(node => node.props.className === 'call-outcome is-callback'));
+  assert.deepEqual(Status({ disposition: 'missed', outcome: 'enrolled' }).children, ['Missed']);
+  const Chip = componentSource('../src/components/callLog/CallRowParts.jsx', 'ComplianceChip', { COMPLIANCE_WARNING_THRESHOLD: 80, isUnscoredCompliance });
+  assert.deepEqual(Chip({ score: 73, grade: 'C', duration: 119 }).children, ['N/A']);
+  assert.deepEqual(Chip({ score: null, status: 'queued', duration: 180 }).children, ['Not scored']);
+  assert.match(Chip({ score: 73, grade: 'C', duration: 120 }).props.className, /compliance-low/);
+});
+
+test('notes retain existing data, save only on blur, keep failed drafts and retry through the protected endpoint', async () => {
+  const harness = hookHarness(), requests = [], saved = [], getToken = async () => 'token';
+  let fail = true, notes = 'Existing notes';
+  const Notes = componentSource('../src/components/callLog/CallNotesEditor.jsx', 'CallNotesEditor', {
+    ...harness.hooks, useAppAuth: () => ({ getToken }), window: new EventTarget(), Event,
+    fetchWithClerk: async (token, url, options) => {
+      assert.equal(token, getToken); requests.push({ url, body: JSON.parse(options.body) });
+      return new Response(JSON.stringify(fail ? { error: 'Save unavailable' } : { record: { agent_notes: 'Updated notes' } }), { status: fail ? 503 : 200 });
+    },
+  });
+  try {
+    harness.mount(() => Notes({ callRecordId: 'call-one', notes, onSaved: value => saved.push(value) }));
+    const input = () => nodes(harness.value).find(node => node.type === 'textarea');
+    assert.equal(input().props.value, 'Existing notes');
+    input().props.onChange({ target: { value: 'Updated notes' } }); await harness.flush();
+    notes = 'Stale refresh'; harness.render(); await harness.flush();
+    assert.equal(input().props.value, 'Updated notes'); assert.equal(requests.length, 0);
+    input().props.onBlur(); await harness.flush();
+    assert.equal(input().props.value, 'Updated notes');
+    assert.ok(nodes(harness.value).some(node => node.props.role === 'alert'));
+    assert.deepEqual(requests[0], { url: '/api/call-record-details?call_record_id=call-one', body: { agent_notes: 'Updated notes' } });
+    fail = false;
+    await nodes(harness.value).find(node => node.type === 'button').props.onClick(); await harness.flush();
+    assert.deepEqual(saved, ['Updated notes']);
+    assert.equal(input().props.value, 'Updated notes');
+    input().props.onBlur(); await harness.flush(); assert.equal(requests.length, 2);
+  } finally { harness.unmount(); }
+});
+
+test('the transcript player seeks before audio loads, tracks the active utterance and changes playback speed', async () => {
+  const harness = hookHarness(), requests = [], getToken = async () => 'token';
+  const Player = componentSource('../src/components/callLog/CallTranscriptPlayer.jsx', 'CallTranscriptPlayer', {
+    ...harness.hooks, Play: 'play', Pause: 'pause', useAppAuth: () => ({ getToken }),
+    redactSensitiveText: value => value, formatTalk, recordingTarget: row => ({ call_record_id: row.call_record_id }),
+    recordingMedia: async (_token, target) => { requests.push(target); return { url: 'signed-recording', source: 'storage' }; },
+  });
+  const row = { call_record_id: 'record-one', recording_url: 'protected', duration_seconds: 180 };
+  const detail = { transcript_diarized: [{ start_ms: 0, speaker: 'agent', text: 'Opening' }, { start_ms: 12000, speaker: 'customer', text: 'Response' }] };
+  const audio = { currentTime: 0, duration: 180, readyState: 1, play: async () => {}, pause() {} };
+  try {
+    harness.mount(() => Player({ row, detail }));
+    const audioNode = () => nodes(harness.value).find(node => node.type === 'audio');
+    audioNode().props.ref.current = audio;
+    nodes(harness.value).find(node => node.props['aria-label']?.startsWith('Seek to 0:12')).props.onClick(); await harness.flush();
+    assert.deepEqual(JSON.parse(JSON.stringify(requests)), [{ call_record_id: 'record-one' }]);
+    assert.equal(audioNode().props.src, 'signed-recording');
+    audioNode().props.onLoadedMetadata({ currentTarget: audio }); await harness.flush();
+    assert.equal(audio.currentTime, 12);
+    audio.currentTime = 13; audioNode().props.onTimeUpdate({ currentTarget: audio }); await harness.flush();
+    const active = nodes(harness.value).find(node => node.props['aria-current'] === 'true');
+    assert.ok(active.props['aria-label'].includes('customer, Response'));
+    nodes(harness.value).find(node => node.props['aria-label'] === 'Playback speed 1x').props.onClick(); await harness.flush();
+    assert.equal(audio.playbackRate, 1.25);
+    const Lines = componentSource('../src/components/callLog/CallTranscriptPlayer.jsx', 'transcriptLines', { redactSensitiveText: value => value });
+    const raw = Lines({ transcript_raw: '[00:12] Customer: Full raw transcript\nAgent: Untimed response' });
+    assert.equal(raw[0].time, 12); assert.equal(raw[0].speaker, 'customer'); assert.equal(raw[1].time, null);
   } finally { harness.unmount(); }
 });

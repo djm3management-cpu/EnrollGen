@@ -6,7 +6,7 @@ export function readCrmLocation(location) {
   const parts = url.pathname.split('/').filter(Boolean);
   const legacy = url.searchParams.get('view');
   const view = parts[0] === 'crm' && VIEWS.has(parts[1]) ? parts[1]
-    : parts[0] === 'calls' ? 'calls' : VIEWS.has(legacy) ? legacy : 'contacts';
+    : parts[0] === 'calls' ? 'calls' : VIEWS.has(legacy) ? legacy : parts[0] === 'contacts' ? 'contacts' : 'calls';
   let contactId = view === 'contacts' ? url.searchParams.get('contact') || null : null;
   if (parts[0] === 'crm' && parts[1] === 'contacts' && parts[2]) {
     try { contactId = decodeURIComponent(parts[2]); } catch { contactId = null; }
@@ -14,8 +14,8 @@ export function readCrmLocation(location) {
   return { view, contactId };
 }
 
-export function crmPath(view = 'contacts', contactId = null) {
-  const section = VIEWS.has(view) ? view : 'contacts';
+export function crmPath(view = 'calls', contactId = null) {
+  const section = VIEWS.has(view) ? view : 'calls';
   return `/crm/${section}${section === 'contacts' && contactId ? `/${encodeURIComponent(contactId)}` : ''}`;
 }
 

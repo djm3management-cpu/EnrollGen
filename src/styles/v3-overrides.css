@@ -5399,8 +5399,7 @@ html.dark .flow-script-callout {
   font-family: inherit;
   font-size: 12px;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
 }
 
 .call-log-subphone {

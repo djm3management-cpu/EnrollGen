@@ -18493,3 +18493,87 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
   gap: 12px;
   max-width: calc(100vw - 24px);
 }
+
+/* CRM call log: use the shared surfaces, typography and outline controls. */
+.call-status-outcome { white-space: normal; line-height: 1.6; }
+.call-status { color: #3ccf7a; }
+.call-status-separator, .call-outcome.is-other { color: var(--text-tertiary, var(--text-secondary)); }
+.call-outcome.is-enrolled { color: #f5a524; font-weight: 700; }
+.call-outcome.is-callback { color: #7fb8ff; }
+.call-status-missed { color: #ff9b8f; }
+.call-compliance-pill {
+  display: inline-flex; align-items: center; padding: 4px 9px; border: 1px solid transparent;
+  border-radius: 999px; font-size: 10px; line-height: 1.4; white-space: nowrap;
+}
+.call-compliance-pill.compliance-low { color: #ff9b8f; background: rgba(255, 155, 143, .1); border-color: rgba(255, 155, 143, .2); }
+.call-compliance-pill.compliance-high { color: #3ccf7a; background: rgba(60, 207, 122, .08); border-color: rgba(60, 207, 122, .2); }
+.call-compliance-pill.is-neutral { color: var(--text-secondary); background: var(--surface-raised); border-color: var(--border-default); }
+.call-log-recording .call-recording-icon, .call-audio-bar .call-recording-icon {
+  display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; flex-shrink: 0; border-radius: 6px;
+}
+.call-log-table .call-log-expand-row > td { white-space: normal; }
+.call-log-table .call-log-expand { padding: 16px; gap: 14px; background: var(--surface-base, var(--eg-surface-1)); border-radius: var(--eg-radius-card); }
+.call-log-expand .call-log-expand-actions { justify-content: flex-end; margin: 0; align-items: center; }
+.call-log-expand-actions > .contacts-mini-btn { font-size: 10px; }
+.call-actions-menu { position: relative; }
+.call-actions-menu summary { list-style: none; min-width: 36px; text-align: center; font-size: 16px; line-height: 1; }
+.call-actions-menu summary::-webkit-details-marker { display: none; }
+.call-actions-menu-items { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; min-width: 190px; padding: 6px; background: var(--eg-surface-2); border: 1px solid var(--border-default); border-radius: var(--eg-radius-card); box-shadow: var(--eg-shadow-card); }
+.call-actions-menu-items button { width: 100%; text-align: left; letter-spacing: 0; }
+.call-log-workspace { display: grid; grid-template-columns: minmax(0, 7fr) minmax(240px, 3fr); gap: 16px; align-items: start; }
+.call-transcript-panel { min-width: 0; border: 1px solid var(--border-default); border-radius: var(--eg-radius-card); overflow: hidden; }
+.call-audio-bar { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--surface-raised); border-bottom: 1px solid var(--border-default); }
+.call-audio-time { font-size: 10px; color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.call-audio-bar input[type="range"] { flex: 1; min-width: 30px; width: 100%; padding: 0; accent-color: #f5a524; cursor: pointer; }
+.call-audio-speed { min-width: 40px; padding: 6px; font-size: 10px; letter-spacing: 0; }
+.call-audio-bar audio { display: none; }
+.call-transcript-panel .call-transcript-heading { display: flex; justify-content: space-between; margin: 0; padding: 14px 14px 10px; font-size: 10px; }
+.call-transcript-heading > span { color: var(--text-tertiary); font-size: 9px; letter-spacing: .5px; font-weight: 400; }
+.call-transcript-scroll { height: 340px; overflow-y: auto; overscroll-behavior: contain; padding: 0 0 12px; }
+.call-transcript-scroll > p { padding: 0 14px; font-size: 12px; }
+.call-transcript-line {
+  display: grid; grid-template-columns: 42px 76px minmax(0, 1fr); align-items: baseline; gap: 10px;
+  width: 100%; padding: 10px 14px 10px 11px; border: 0; border-left: 3px solid transparent; background: transparent;
+  color: var(--text-secondary); text-align: left; font-family: inherit; font-size: 11px; line-height: 1.65; cursor: pointer;
+}
+.call-transcript-line:disabled { opacity: 1; cursor: default; }
+.call-transcript-line:hover:not(:disabled) { background: rgba(245, 165, 36, .04); }
+.call-transcript-line.is-current { background: rgba(245, 165, 36, .08); border-left-color: #f5a524; }
+.call-transcript-time { color: var(--text-tertiary); font-size: 10px; font-variant-numeric: tabular-nums; }
+.call-transcript-speaker { font-size: 9px; letter-spacing: .5px; }
+.call-transcript-speaker.is-agent { color: #f5a524; }
+.call-transcript-speaker.is-customer { color: #7fb8ff; }
+.call-transcript-text { white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--font-primary); font-size: 13px; line-height: 1.6; }
+.call-player-message { padding: 8px 14px; font-size: 11px; }
+.call-log-sidebar { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.call-log-sidebar .contacts-section { margin: 0; padding: 14px; min-width: 0; border-radius: var(--eg-radius-card); }
+.call-log-sidebar .contacts-section-head { margin-bottom: 12px; }
+.call-log-sidebar .contacts-status-select { width: 100%; max-width: 100%; font-size: 11px; }
+.call-sidebar-compliance { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.call-review-link { background: none; border: 0; padding: 4px 0; color: var(--eg-accent); font-family: inherit; font-size: 10px; letter-spacing: .5px; cursor: pointer; }
+.call-notes-input { display: block; box-sizing: border-box; width: 100%; min-height: 108px; resize: vertical; padding: 10px; border: 1px solid var(--border-default); border-radius: 4px; background: var(--surface-raised); color: var(--text-primary); font-family: var(--font-primary); font-size: 12px; line-height: 1.6; }
+.call-notes-input:focus { outline: 1px solid var(--eg-accent); }
+.call-notes-state { display: block; margin-top: 8px; font-size: 9px; line-height: 1.6; }
+.call-expand-toggle { border: 0; background: none; color: var(--text-secondary); cursor: pointer; font-size: 20px; width: 28px; height: 28px; }
+@media (max-width: 760px) {
+  .call-log-workspace { grid-template-columns: minmax(0, 1fr); }
+  .call-log-table .call-log-expand { padding: 10px; }
+  .call-transcript-scroll { height: 300px; }
+  .call-transcript-line { grid-template-columns: 36px 66px minmax(0, 1fr); gap: 6px; padding-right: 10px; }
+  .call-audio-bar { gap: 8px; padding: 10px; flex-wrap: wrap; }
+  .call-log-expand-actions { flex-wrap: wrap; }
+}
+@media (max-width: 760px) {
+  .call-log-table, .call-log-table tbody { display: block; width: 100%; }
+  .call-log-table thead { display: none; }
+  .call-log-table .call-log-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); position: relative; border-bottom: 1px solid var(--border-default); padding: 8px 4px; }
+  .call-log-table .call-log-row > td { display: block; border: 0; white-space: normal; padding: 6px 10px; }
+  .call-log-row > td:nth-child(2) { text-align: right; padding-right: 40px; }
+  .call-log-row > td:nth-child(3), .call-log-row > td:nth-child(6) { grid-column: 1 / -1; }
+  .call-log-row > td:nth-child(4)::before { content: 'TALK '; color: var(--text-tertiary); font-size: 9px; }
+  .call-log-row > td:nth-child(5)::before { content: 'AGENT '; color: var(--text-tertiary); font-size: 9px; }
+  .call-log-table .call-log-row > .call-log-caret { position: absolute; right: 0; top: 6px; padding: 0 8px; }
+  .call-log-table .call-log-expand-row, .call-log-table .call-log-expand-row > td { display: block; width: 100%; box-sizing: border-box; }
+  .call-log-table .call-log-expand-row > td { padding: 8px; }
+  .call-log-subphone { display: block; margin: 4px 0 0; }
+}

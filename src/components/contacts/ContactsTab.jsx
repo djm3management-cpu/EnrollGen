@@ -1323,8 +1323,8 @@ export default function ContactsTab({ variant = "home", onStartCall = null }) {
   }, []);
   return <div className={`contacts-views${location.view === 'opportunities' ? ' contacts-views--opportunities' : location.view === 'calls' ? ' contacts-views--calls' : ''}`}>
     <div className="contacts-workspace-tabs contacts-subviews" role="group" aria-label="CRM workspace">
-      <button type="button" className={location.view === 'contacts' ? 'is-active' : ''} aria-pressed={location.view === 'contacts'} onClick={() => updateLocation('contacts', location.contactId)}>Contacts</button>
       <button type="button" className={location.view === 'calls' ? 'is-active' : ''} aria-pressed={location.view === 'calls'} onClick={() => updateLocation('calls')}>Calls</button>
+      <button type="button" className={location.view === 'contacts' ? 'is-active' : ''} aria-pressed={location.view === 'contacts'} onClick={() => updateLocation('contacts', location.contactId)}>Contacts</button>
       <button type="button" className={location.view === 'opportunities' ? 'is-active' : ''} aria-pressed={location.view === 'opportunities'} onClick={() => updateLocation('opportunities')}>Opportunities</button>
       <button type="button" className={location.view === 'followups' ? 'is-active' : ''} aria-pressed={location.view === 'followups'} onClick={() => updateLocation('followups')}>Follow-ups{dueToday > 0 && <span className="call-log-chip" aria-label={`${dueToday} follow-ups due today`}> {dueToday}</span>}</button>
     </div>

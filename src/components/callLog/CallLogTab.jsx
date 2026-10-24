@@ -1,4 +1,5 @@
-import CallRecordDetailsEditor from "./CallRecordDetailsEditor";
+import CallTranscriptPlayer from "./CallTranscriptPlayer";
+import CallNotesEditor from "./CallNotesEditor";
 import { debugLog } from "../../lib/debugLog.js";
 import { useAppAuth } from "../../context/AuthContext";
 import { loadCallLogPages } from "../../lib/callLogApi";
@@ -6,7 +7,6 @@ import RecordingPanel from "../callDetail/RecordingPanel";
 import MissingRecordings from "./MissingRecordings";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
-import { redactSensitiveText } from "../../lib/redaction";
 import { CALL_OUTCOME_OPTIONS } from "../../lib/postCallPipeline";
 import { ANCILLARY_PRODUCT_OPTIONS, buildCallOutcomePatch } from "../../lib/ancillarySale.js";
 import CallDetailPanel from "../callDetail/CallDetailPanel";
@@ -16,7 +16,7 @@ import { CreateOpportunityButton } from "../opportunities/ContactOpportunities";
 import { useCallLogRows } from "../../hooks/useCallLogRows";
 import { formatCallDateTime as fmtDateTime, formatTalk as fmtDuration } from "../../lib/callPresentation";
 import { crmPath } from "../../lib/crmRoutes";
-import { CallDirection, ComplianceChip, DispositionChip, RecordingCell } from "./CallRowParts";
+import { CallDirection, ComplianceChip, CallStatusOutcome, RecordingCell } from "./CallRowParts";
 import { callsCsv, downloadCsv } from "../../lib/csv";
 
 const ENROLLED_OUTCOMES = new Set(["enrolled", "enrolled_pending_verification"]);
@@ -24,7 +24,7 @@ const PAGE_SIZE = 50;
 const DISPOSITION_FILTERS = ["ALL", "CONNECTED", "VOICEMAIL", "MISSED", "DECLINED"];
 const DIRECTION_FILTERS = ["ALL", "INBOUND", "OUTBOUND"];
 
-function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient, onChanged }) {
+function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient, onChanged, disabled = false }) {
   const [saving, setSaving] = useState(false);
   const [selectedOutcome, setSelectedOutcome] = useState(outcome || "");
   const [selectedProduct, setSelectedProduct] = useState(productType || "");
@@ -69,7 +69,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
     <select
       className="contacts-status-select"
       value={selectedOutcome}
-      disabled={saving}
+      disabled={saving || disabled}
       onChange={(event) => {
         const value = event.target.value;
         setSelectedOutcome(value);
@@ -94,7 +94,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
           <select
             className="contacts-status-select"
             value={selectedProduct}
-            disabled={saving}
+            disabled={saving || disabled}
             onChange={(event) => setSelectedProduct(event.target.value)}
           >
             <option value="">Select product type</option>
@@ -106,7 +106,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
         <button
           type="button"
           className="contacts-mini-btn"
-          disabled={saving}
+          disabled={saving || disabled}
           onClick={() => void saveOutcome(selectedOutcome, selectedProduct)}
         >{saving ? "SAVING..." : "SAVE OUTCOME"}</button>
       </div>
@@ -116,17 +116,22 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
   );
 }
 
-function ExpandedRow({ row, supabaseClient }) {
+function ExpandedRow({ row, supabaseClient, playRequest }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(Boolean(row.call_record_id));
   const [showFullDetail, setShowFullDetail] = useState(false);
   const [showComplianceReview, setShowComplianceReview] = useState(false);
+  const [detailError, setDetailError] = useState("");
+  const detailGeneration = useRef(0);
 
   const loadDetail = useCallback(async () => {
+    const generation = ++detailGeneration.current;
+    setDetailError("");
     if (!row.call_record_id || !supabaseClient) {
       setLoading(false);
       return;
     }
+    setLoading(true);
     try {
       const { data: callRecord, error } = await supabaseClient
         .from("call_records")
@@ -140,28 +145,19 @@ function ExpandedRow({ row, supabaseClient }) {
         .eq("call_id", row.call_record_id)
         .order("created_at", { ascending: false })
         .limit(1);
-      setDetail({ ...callRecord, scorecard: scorecards?.[0] || null });
+      if (generation === detailGeneration.current) setDetail({ ...callRecord, scorecard: scorecards?.[0] || null });
     } catch {
+      if (generation === detailGeneration.current) setDetailError("Unable to load call details.");
       debugLog("[CallLog] detail load failed");
     } finally {
-      setLoading(false);
+      if (generation === detailGeneration.current) setLoading(false);
     }
   }, [row.call_record_id, supabaseClient]);
 
   useEffect(() => {
-    let cancelled = false;
-    loadDetail().then(() => {
-      if (cancelled) return;
-    });
-    return () => {
-      cancelled = true;
-    };
+    void loadDetail();
+    return () => { detailGeneration.current += 1; };
   }, [loadDetail]);
-
-  const preview = redactSensitiveText(
-    (detail?.transcript_raw || row.transcript_preview || "").slice(0, 200)
-  );
-  const scorecard = detail?.scorecard;
 
   const handleOutcomeChanged = useCallback(
     (value, productType) => {
@@ -173,68 +169,47 @@ function ExpandedRow({ row, supabaseClient }) {
 
   return (
     <div className="call-log-expand">
-      <div className="call-log-expand-grid">
-        <div className="contacts-section">
-          <div className="contacts-section-head">TRANSCRIPT PREVIEW</div>
-          {preview ? <p className="call-log-preview">{preview}...</p> : (
-            <div className="contacts-muted">No transcript stored</div>
-          )}
-        </div>
-        <div className="contacts-section">
-          <div className="contacts-section-head">COMPLIANCE</div>
-          {scorecard ? (
-            <dl className="contacts-profile">
-              <div><dt>SCORE</dt><dd><ComplianceChip score={scorecard.overall_score} grade={scorecard.overall_grade} passFail={scorecard.pass_fail} /></dd></div>
-              <div><dt>GRADE</dt><dd className="mono">{scorecard.overall_grade || "--"}</dd></div>
-              <div><dt>PASS/FAIL</dt><dd className="mono">{String(scorecard.pass_fail || "--").toUpperCase()}</dd></div>
-              {scorecard.auto_fail_triggered ? (
-                <div><dt>AUTO-FAIL</dt><dd className="status-offline">{(scorecard.auto_fail_reasons || []).join("; ") || "YES"}</dd></div>
-              ) : null}
-            </dl>
-          ) : (
-            <div className="contacts-muted">No scorecard</div>
-          )}
-        </div>
-        <div className="contacts-section">
-          <div className="contacts-section-head">NOTES</div>
-          <p className="call-log-preview">{detail?.agent_notes || row.agent_notes || "No notes"}</p>
-        </div>
-        {row.call_record_id ? (
-          <div className="contacts-section">
-            <div className="contacts-section-head">CALL OUTCOME</div>
-            <CallOutcomeEditor
+      <div className="call-log-expand-actions">
+        <CreateOpportunityButton contactId={row.contact_id} callId={row.call_record_id} contactName={row.contact_name} label="+ OPPORTUNITY" />
+        <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} aria-expanded={showFullDetail} onClick={() => setShowFullDetail(current => !current)}>{showFullDetail ? "HIDE FULL DETAIL" : "FULL DETAIL"}</button>
+        <details className="call-actions-menu">
+          <summary className="contacts-mini-btn" aria-label="More call actions">⋯</summary>
+          <div className="call-actions-menu-items">
+            <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={event => {
+              event.currentTarget.closest('details').open = false;
+              setShowComplianceReview(true);
+            }}>Compliance Review</button>
+          </div>
+        </details>
+      </div>
+      {detailError && <div className="ops-error" role="alert">{detailError} <button type="button" className="contacts-mini-btn" onClick={() => void loadDetail()}>RETRY</button></div>}
+      <div className="call-log-workspace">
+        <CallTranscriptPlayer row={row} detail={detail} loading={loading} playRequest={playRequest} />
+        <aside className="call-log-sidebar" aria-label="Call information">
+          <section className="contacts-section">
+            <div className="contacts-section-head">OUTCOME</div>
+            {row.call_record_id ? <CallOutcomeEditor
+              disabled={loading || Boolean(detailError)}
               callRecordId={row.call_record_id}
-              outcome={detail?.call_outcome}
-              productType={detail?.ancillary_product_type}
+              outcome={detail?.call_outcome ?? row.call_outcome}
+              productType={detail?.ancillary_product_type ?? row.ancillary_product_type}
               supabaseClient={supabaseClient}
               onChanged={handleOutcomeChanged}
-            />
-          </div>
-        ) : null}
+            /> : <span className="contacts-muted">No call record linked</span>}
+          </section>
+          <section className="contacts-section">
+            <div className="contacts-section-head">COMPLIANCE</div>
+            <div className="call-sidebar-compliance">
+              <ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} duration={row.duration_seconds} />
+              {row.call_record_id && <button type="button" className="call-review-link" onClick={() => setShowComplianceReview(true)}>REVIEW →</button>}
+            </div>
+          </section>
+          <section className="contacts-section">
+            <div className="contacts-section-head">NOTES</div>
+            <CallNotesEditor callRecordId={row.call_record_id} notes={detail?.agent_notes ?? row.agent_notes} loading={loading || Boolean(detailError)} onSaved={value => setDetail(current => current ? { ...current, agent_notes: value } : current)} />
+          </section>
+        </aside>
       </div>
-
-      {row.call_record_id && <CallRecordDetailsEditor callRecordId={row.call_record_id} onSaved={loadDetail} />}
-      {row.call_record_id ? (
-        <div className="call-log-expand-actions">
-          <CreateOpportunityButton contactId={row.contact_id} callId={row.call_record_id} contactName={row.contact_name} />
-          <button
-            type="button"
-            className="contacts-mini-btn"
-            onClick={() => setShowFullDetail((current) => !current)}
-          >
-            {showFullDetail ? "HIDE FULL DETAIL" : "VIEW FULL DETAIL (TRANSCRIPT / ANALYTICS / ASSESSMENT)"}
-          </button>
-          <button
-            type="button"
-            className="contacts-mini-btn"
-            onClick={() => setShowComplianceReview(true)}
-          >
-            COMPLIANCE REVIEW
-          </button>
-        </div>
-      ) : (
-        <div className="contacts-muted">No call record linked</div>
-      )}
 
       {showComplianceReview ? (
         <ComplianceReviewModal
@@ -263,6 +238,7 @@ export default function CallLogTab({ onOpenContact = null }) {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState(null);
+  const [playRequest, setPlayRequest] = useState({ id: null, sequence: 0 });
 
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -381,7 +357,7 @@ export default function CallLogTab({ onOpenContact = null }) {
               <th>CONTACT</th>
               <th>TALK</th>
               <th>AGENT</th>
-              <th>DISPOSITION</th>
+              <th>STATUS · OUTCOME</th>
               <th>RECORDING</th>
               <th>COMPLIANCE</th>
               <th aria-label="Expand" />
@@ -402,7 +378,9 @@ export default function CallLogTab({ onOpenContact = null }) {
                     row={row}
                     isExpanded={isExpanded}
                     isAlert={isAlert}
-                    onToggle={() => setExpandedId(isExpanded ? null : row.log_id)}
+                    onToggle={() => { setExpandedId(isExpanded ? null : row.log_id); setPlayRequest(current => ({ ...current, id: null })); }}
+                    onPlay={() => { setExpandedId(row.log_id); setPlayRequest(current => ({ id: row.log_id, sequence: current.sequence + 1 })); }}
+                    playRequest={playRequest.id === row.log_id ? playRequest.sequence : 0}
                     onOpenContact={onOpenContact}
                     supabaseClient={supabaseClient}
                   />
@@ -436,7 +414,7 @@ export default function CallLogTab({ onOpenContact = null }) {
   );
 }
 
-function FragmentRow({ row, isExpanded, isAlert, onToggle, onOpenContact, supabaseClient }) {
+function FragmentRow({ row, isExpanded, isAlert, onToggle, onPlay, playRequest, onOpenContact, supabaseClient }) {
   return (
     <>
       <tr className={`call-log-row${isAlert ? " is-alert" : ""}${isExpanded ? " is-expanded" : ""}`} onClick={onToggle}>
@@ -471,15 +449,15 @@ function FragmentRow({ row, isExpanded, isAlert, onToggle, onOpenContact, supaba
         </td>
         <td className="mono">{fmtDuration(row.duration_seconds)}</td>
         <td>{row.agent || "--"}</td>
-        <td><DispositionChip disposition={row.disposition} /></td>
-        <td><RecordingCell row={row} /></td>
-        <td><ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} /></td>
-        <td className="call-log-caret">{isExpanded ? "▼" : "▶"}</td>
+        <td><CallStatusOutcome disposition={row.disposition} outcome={row.call_outcome} /></td>
+        <td><RecordingCell row={row} onPlay={onPlay} /></td>
+        <td><ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} duration={row.duration_seconds} /></td>
+        <td className="call-log-caret"><button type="button" className="call-expand-toggle" aria-label={isExpanded ? "Collapse call" : "Expand call"} aria-expanded={isExpanded} onClick={event => { event.stopPropagation(); onToggle(); }}>{isExpanded ? "⌄" : "›"}</button></td>
       </tr>
       {isExpanded ? (
         <tr className="call-log-expand-row">
           <td colSpan={9}>
-            <ExpandedRow row={row} supabaseClient={supabaseClient} />
+            <ExpandedRow row={row} supabaseClient={supabaseClient} playRequest={playRequest} />
           </td>
         </tr>
       ) : null}
