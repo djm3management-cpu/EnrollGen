@@ -202,12 +202,19 @@ const TOOL_MAP = Object.fromEntries(
   )
 );
 
-const TOOL_LIST = TOOL_GROUPS.flatMap((group) =>
-  group.tools.map((tool) => ({
-    color: group.color,
-    ...tool,
-  }))
-);
+const TOOL_ORDER = [
+  "compliance",
+  "ma-seps",
+  "ma-reference-guide",
+  "citizenship-immigration-docs",
+  "quizzes",
+  "script-editor",
+];
+
+const TOOL_LIST = [
+  ...TOOL_ORDER.map((id) => TOOL_MAP[id]),
+  ...Object.values(TOOL_MAP).filter((tool) => !TOOL_ORDER.includes(tool.id)),
+];
 
 function LinkGrid({ items }) {
   return (
