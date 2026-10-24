@@ -1,3 +1,4 @@
+import { isRetiredMaTimingGuidance } from '../data/maCompliance2027.js';
 let dbCmsKnowledgeEntries = [];
 
 function normalizeKnowledgeText(value) {
@@ -12,6 +13,12 @@ export function setDbCmsKnowledgeEntries(entries = []) {
 }
 
 const CMS_SOURCES = {
+  cms_2027_marketing: {
+    id: "cms_2027_marketing",
+    title: "CY2027 CMS marketing and communications changes",
+    organization: "Centers for Medicare & Medicaid Services",
+    url: "https://www.cms.gov/files/document/changes-medicare-advantage-organization-medicare-drug-plan-sponsors-marketing-guidelines.pdf",
+  },
   cms_dual_lis_sep: {
     id: "cms_dual_lis_sep",
     title: "Monthly Dual/LIS and Integrated-care SEP Job Aid",
@@ -189,27 +196,27 @@ const CMS_TOPIC_LIBRARY = [
       "offer every plan",
     ],
     summary:
-      "A TPMO must explain that it does not offer every plan in the area, disclose how many organizations and plans it represents, and direct the beneficiary to Medicare.gov, 1-800-MEDICARE, or SHIP for all options.",
+      "A TPMO must explain that it does not offer every plan in the area, disclose how many organizations and plans it represents, and direct the beneficiary to Medicare.gov or 1-800-MEDICARE for all options. SHIP is not required and does not replace that referral.",
     requirements: [
-      "The disclaimer should be read before or as plan-specific marketing begins, not after the enrollment conversation is already underway.",
+      "The disclaimer should be read before any benefits discussion begins, not after the enrollment conversation is already underway.",
       "The organization count and plan count should reflect the beneficiary's area, so ZIP or service-area context should exist before the count is quoted.",
-      "The referral to Medicare.gov, 1-800-MEDICARE, or SHIP is part of the required content and should not be omitted.",
+      "The referral to Medicare.gov or 1-800-MEDICARE is part of the required content and should not be omitted.",
       "The disclaimer should not be undermined by claims that the agency offers every plan or all plans in the area.",
     ],
     approvedParaphrases: [
       "Plain-language versions such as 'We don't represent every plan in your area' are acceptable if the meaning is intact.",
-      "The agent can say 'You can compare all options on Medicare.gov, by calling 1-800-MEDICARE, or through SHIP' without matching one exact script.",
+      "The agent can say 'You can compare all options on Medicare.gov or by calling 1-800-MEDICARE' without matching one exact script.",
     ],
     redFlags: [
       "The agent claims they have every plan, all plans, or the full market.",
       "The agent skips the plan and organization counts but continues into recommendations.",
-      "The agent omits the referral to Medicare.gov, 1-800-MEDICARE, or SHIP.",
+      "The agent omits the referral to Medicare.gov or 1-800-MEDICARE.",
     ],
     coachingFocus: [
       "This is one of the highest-priority live interventions. If the agent is moving into recommendations without the disclaimer, intervene.",
       "If app state already has ZIP and counts completed, focus the warning on the exact missing line rather than the whole disclaimer.",
     ],
-    citations: ["ecfr_422_2267", "cy2026_mmcm", "mmcm_ch2"],
+    citations: ["cms_2027_marketing", "ecfr_422_2267"],
   },
   {
     id: "plan_availability_limits",
@@ -227,7 +234,7 @@ const CMS_TOPIC_LIBRARY = [
       "Agents can discuss and recommend plans they are appointed to sell, but they should not imply they represent every available plan or that the beneficiary has seen every possible option unless that is true.",
     requirements: [
       "Recommendations should stay within the represented inventory and should not be framed as the total universe of Medicare options.",
-      "When comparing plans, the agent should avoid unsupported superlatives like 'best plan' unless they immediately narrow the statement to the beneficiary's stated priorities.",
+      "Accurate, supportable superlatives are allowed. Flag specific unsubstantiated or misleading claims, not positive wording alone.",
     ],
     approvedParaphrases: [
       "Accept language focused on fit, such as 'Based on the doctors, drugs, and costs we reviewed, this looks like a strong fit for you.'",
@@ -258,7 +265,7 @@ const CMS_TOPIC_LIBRARY = [
     summary:
       "The discussion should stay within the products the beneficiary agreed to discuss. The agent should explain that answering questions does not obligate enrollment and does not itself enroll the beneficiary.",
     requirements: [
-      "The agent should establish which categories of products are in scope before detailed marketing begins.",
+      "The agent must obtain and document beneficiary agreement to the health product scope before specific plan or benefit discussion. Same-call recorded verbal SOA is allowed on telephone appointments, including outbound calls.",
       "The agent should state that the conversation does not obligate the beneficiary to enroll and does not itself enroll them.",
       "If optional products will be discussed later, those product categories should be covered by the scope language before they are marketed.",
     ],
@@ -272,7 +279,7 @@ const CMS_TOPIC_LIBRARY = [
     coachingFocus: [
       "If optional products were not clearly in scope, advise the agent to get permission before cross-selling.",
     ],
-    citations: ["mmcm_ch2", "cy2026_mmcm"],
+    citations: ["cms_2027_marketing", "mmcm_ch2"],
   },
   {
     id: "product_scope_boundaries",
@@ -1038,6 +1045,7 @@ function selectDbKnowledgeEntries(sectionLabel, question = "", maxEntries = 4) {
   const terms = questionNeedle.split(/\s+/).filter((term) => term.length > 4);
 
   return dbCmsKnowledgeEntries
+    .filter(entry => !isRetiredMaTimingGuidance(entry))
     .map((entry) => {
       const title = normalizeKnowledgeText(entry.title || entry.metadata?.static_key || entry.key);
       const content = normalizeKnowledgeText(entry.content);

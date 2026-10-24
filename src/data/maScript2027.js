@@ -2,7 +2,7 @@
 // Spoken wording follows the supplied draft; notes retain only operational requirements.
 import { AGENCY_CLOSING } from "./agencyClosing.js";
 
-export const MA_SCRIPT_REVISION = "sms-2027-2026-10-19-closing";
+export const MA_SCRIPT_REVISION = "sms-2027-2026-10-23-cms";
 const say = (text) => ({ type: "text", text });
 const cue = (text) => ({ type: "cue", text });
 const note = (text) => ({ type: "note", text });
@@ -167,7 +167,7 @@ const definitions = [
       option("self", "Self", [say("Do you make your own healthcare decisions?"), yesNo("ownDecisions", "Makes own healthcare decisions?", [], inviteRepresentative)]),
       option("other", "Someone else", representative),
     ]),
-    note("Collect scope of appointment for both inbound and outbound calls. Mention all product types available in the area; discuss only the options agreed to."),
+    note("Obtain scope of appointment before plan or benefit discussion on both inbound and outbound calls. Same-call recorded verbal agreement is allowed. Mention all product types available in the area; discuss only the options agreed to."),
     say("I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as [Medicare Advantage plans, Medicare Advantage Prescription Drug plans, Stand-alone Prescription Drug plans, Medicare Supplements Insurance Plans, Optional Supplemental Benefits (OSBs), Stand-Alone Vision, Stand-Alone Dental]. Would you like to discuss all of these options or are you only interested in certain ones?"),
     choice("scope", "Options the beneficiary agrees to discuss", [option("all", "All available options"), option("selected", "Selected options", [note("Record the agreed product types in the call notes.")]), option("declined", "Declined", [close()])]),
     say("I can give you a brief overview of each of these plans, then you can decide which plan might be best for you based on your needs. Would that be ok?"),

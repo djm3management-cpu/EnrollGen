@@ -1,3 +1,4 @@
+import { MA_CY2027_GUIDANCE, isRetiredMaTimingGuidance } from '../data/maCompliance2027.js';
 import { LIVE_ASSISTANT_PROMPT, shortLiveMessage } from "../lib/liveAssistantPolicy.js";
 import { debugLog } from "../lib/debugLog.js";
 import { AGENCY_CLOSING_GUIDANCE } from "../data/agencyClosing.js";
@@ -417,6 +418,8 @@ function buildCoachingSystemPrompt({
 ${LIVE_ASSISTANT_PROMPT}
 
 ${AGENCY_CLOSING_GUIDANCE}
+
+${MA_CY2027_GUIDANCE}
 ${OBSERVATION_STAY_TALKING_POINT}
 `, variableSuffix: `
 ## Reference context
@@ -461,6 +464,8 @@ function buildAskSystemPrompt({ sectionKey, knowledge, cmsBlock, transcriptRefBl
   return { staticPrefix: `# Medicare Advantage agent questions
 
 ${AGENCY_CLOSING_GUIDANCE}
+
+${MA_CY2027_GUIDANCE}
 
 You are a knowledgeable Medicare sales assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer to their question.
 Answer the agent's question first. Help with scripts, benefits, objections and lookups. Use verified facts; never invent coverage. For drugs verify dose/form and pharmacy; for providers verify exact location and plan/network using Sunfire or the carrier tool. Keep answers to one or two short plain-text lines, at most 40 words. No grades, scores, counts or unsolicited disclosure reminders.
@@ -541,7 +546,7 @@ export function useCopilotEngine({
   );
   const { entries: dbComplianceEntries } = useKnowledge("compliance_ma");
   const complianceKnowledge = useMemo(
-    () => ({ ...mergeStructuredKnowledgeMap(COMPLIANCE_KNOWLEDGE, dbComplianceEntries), ...getMASelectedKnowledge(state) }),
+    () => ({ ...mergeStructuredKnowledgeMap(COMPLIANCE_KNOWLEDGE, dbComplianceEntries.filter(entry => !isRetiredMaTimingGuidance(entry))), ...getMASelectedKnowledge(state) }),
     [dbComplianceEntries, state]
   );
 

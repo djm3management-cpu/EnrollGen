@@ -9,7 +9,6 @@ import { evaluateTpmo2027 } from '../compliance/shared/tpmo2027.js';
  * 9 Categories, 33 Sub-Questions
  * Drop into: src/context/ComplianceScorer.js
  */
-
 import {
   analyzeTranscript,
   getTranscriptEvidence,
@@ -25,13 +24,6 @@ import { calculateServerGrade } from "../compliance/shared/serverGradeScale.js";
      HELPERS
      ═══════════════════════════════════════════════════════════════ */
 
-function sectionCompletedWithinMs(state, sectionNum, maxMs) {
-  const ts = state.sectionTimestamps || {};
-  const callStart = state.tpmoStart || ts[1]?.start;
-  const sectionEnd = ts[sectionNum]?.end;
-  if (!callStart || !sectionEnd) return null;
-  return sectionEnd - callStart <= maxMs;
-}
 
 function getCallDurationMin(state) {
   if (!state.tpmoStart) return 0;
@@ -185,8 +177,8 @@ function buildTpmoTimingEvidence(scriptState, options = {}) {
     hasTranscriptEvidence: true,
     confidence: policy.timingOk ? 96 : 0,
     violation: !policy.timingOk,
-    evidence: policy.timingOk ? 'TPMO completed within 60 seconds and before benefits.' :
-      !policy.disclaimer ? 'Complete TPMO disclaimer missing.' : 'TPMO timing failed: complete within 60 seconds and before benefits.',
+    evidence: policy.timingOk ? 'TPMO completed before benefits.' :
+      !policy.disclaimer ? 'Complete TPMO disclaimer missing.' : 'TPMO timing failed: disclaimer must precede benefits.',
     intents: [],
   };
 }
@@ -477,19 +469,11 @@ const CATEGORIES = [
       {
         id: "disclosures_tpmo_timing",
         question:
-          "Was the TPMO disclaimer read within the first minute and before benefits discussion?",
+          "Was the TPMO disclaimer completed before any benefits discussion?",
         points: 3,
         evaluate: (s) => {
-          const w = sectionCompletedWithinMs(s, 2, 60000);
-          if (w === null)
-            return { score: 35, evidence: "TPMO timing data unavailable yet." };
-          return w
-            ? { score: 65, evidence: "TPMO completed within the first 60 seconds." }
-            : {
-                score: 45,
-                evidence:
-                  "TPMO completed after the first 60 seconds.",
-              };
+          return { score: s.tpmoOk ? 65 : 0,
+            evidence: "TPMO completion gate; transcript evidence must verify disclosure before benefits." };
         },
       },
       {

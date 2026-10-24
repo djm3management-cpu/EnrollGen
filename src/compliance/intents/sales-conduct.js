@@ -353,7 +353,7 @@ export const salesConduct = [
     ],
   },
   {
-    intent_code: 'CONDUCT_012_CARRIER_NAMES_12PT',
+    intent_code: 'CONDUCT_012_CARRIER_NAMES',
     intent_name: 'Carrier name mentioned when referencing plan',
     category: 'SALES_CONDUCT',
     subcategory: null,

@@ -125,12 +125,12 @@ export const callRecording = [
   },
   {
     intent_code: 'RECORD_005_DATA_SHARING_CONSENT',
-    intent_name: 'Data sharing consent obtained',
+    intent_name: 'Prior written consent for TPMO sharing for later contact',
     category: 'CALL_RECORDING_COMPLIANCE',
     subcategory: null,
     description:
-      'Agent obtains the beneficiary consent before sharing any personal or health information with third parties beyond what is necessary for the enrollment process.',
-    cms_reference: '42 CFR 422.2274',
+      'Evaluate only when beneficiary personal data is shared with another TPMO for later contact. Require prior express written consent identifying the receiving TPMO. Live warm transfers during the current call, ordinary carrier enrollment submissions, and calls with no such sharing do not trigger this flag. Do not infer a missing written consent from silence; uncertain applicability is unscored.',
+    cms_reference: '42 CFR 422.2274(g)(4)',
     mcmg_section: 'Ch. 2, Sec. 50.7',
     product_type: 'MA',
     is_required: true,
@@ -144,10 +144,10 @@ export const callRecording = [
     failure_severity: 'critical',
     auto_fail: true,
     sample_phrases: [
-      'I need to let you know that in order to process your enrollment, we will need to share your information with the insurance carrier. Do I have your permission to do that?',
-      'Your personal information will be shared with the plan sponsor for enrollment purposes. Do you consent to that?',
-      'By proceeding with enrollment, your information including your name, Medicare number, and other personal details will be submitted to the carrier. Is that okay with you?',
-      'I want to confirm that you are comfortable with us sharing your personal information with the insurance company for the purpose of processing this enrollment.',
+      'Before sending your details to the other named TPMO for its later callback, we obtained your express written consent naming that TPMO.',
+      'Your written consent names the TPMO receiving your data for later contact.',
+      'The beneficiary signed the consent identifying the receiving TPMO before the data was shared for a later call.',
+      'Your express written consent authorizes this named TPMO to receive your data for its later contact.',
     ],
     anti_patterns: [
       'I am going to forward your information to a few different companies.',

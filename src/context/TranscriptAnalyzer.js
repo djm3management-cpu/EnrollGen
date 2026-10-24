@@ -178,6 +178,11 @@ function findComparativeClaimViolations(transcript) {
 
     for (let index = 0; index < words.length; index += 1) {
       if (!triggerWords.includes(words[index])) continue;
+      // Wording alone cannot establish that a comparative claim lacks support.
+      // Require affirmative evidence of no support; plan/data verification stays
+      // with the contextual classifier rather than a lexical superlative ban.
+      if (words[index] !== 'guaranteed' &&
+          !/\b(?:no|without|cannot|can't|don't have|do not have)\b.{0,45}\b(?:evidence|data|support|proof|basis|verify)\b/i.test(statement)) continue;
 
       const windowStart = Math.max(0, index - 5);
       const windowEnd = Math.min(words.length - 1, index + 5);
@@ -670,7 +675,7 @@ const INTENT_MAP = {
           detected: true,
           confidence: 90,
           evidence:
-            "No misleading claims, superlatives, or pressure tactics detected in transcript",
+            "No supported misleading claims or pressure tactics detected in transcript",
         };
       }
       return {

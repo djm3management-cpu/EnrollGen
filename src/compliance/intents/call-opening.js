@@ -262,11 +262,11 @@ export const callOpening = [
   },
   {
     intent_code: 'CALL_OPEN_009_TPMO_TIMING_2027',
-    intent_name: 'TPMO completed within 60 seconds and before benefits',
+    intent_name: 'TPMO disclaimer delivered before benefits',
     category: 'CALL_OPENING',
     subcategory: 'TPMO',
     description:
-      'Complete the TPMO disclaimer before any benefits discussion (CMS) and within the first 60 seconds (approved agency script policy).',
+      'Complete the TPMO disclaimer before any benefit discussion. Elapsed call time alone does not determine compliance.',
     cms_reference: '42 CFR 422.2267(e)(41)',
     mcmg_section: 'Ch. 2, Sec. 50.6',
     product_type: 'MA',
@@ -360,7 +360,7 @@ export const callOpening = [
     category: 'CALL_OPENING',
     subcategory: 'TPMO',
     description:
-      'The TPMO disclaimer must refer to Medicare.gov OR 1-800-MEDICARE for information on all options; either alone earns full credit. SHIP is optional.',
+      'The TPMO disclaimer must refer to Medicare.gov OR 1-800-MEDICARE for information on all options; either alone earns full credit. SHIP is not required and a SHIP-only referral does not satisfy this rule.',
     cms_reference: '42 CFR 422.2267(e)(41)',
     mcmg_section: 'Ch. 2, Sec. 50.6',
     product_type: 'MA',

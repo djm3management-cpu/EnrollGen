@@ -53,7 +53,7 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
   const riskFlags = [];
 
   for (const rawItem of templateItems) {
-    const calibrated = calibratedTemplateItem(rawItem);
+    const calibrated = calibratedTemplateItem(rawItem, template.policy_version);
     const item = preserveRuleText ? { ...calibrated, question_text: rawItem.question_text } : calibrated;
     const detection = findBestDetection(detections, item.intent_id, item.intent_code);
 
@@ -83,7 +83,7 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
     }
 
     if (!detection || !detection.detected) {
-      if (isHardViolation(item.intent_code, detection)) {
+      if (isHardViolation(item.intent_code, detection, template.policy_version)) {
         autoFailTriggered = true;
         autoFailReasons.push(item.question_text);
         riskFlags.push(`Auto-fail: ${item.question_text}`);
@@ -94,7 +94,7 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
     } else if (detection.anti_pattern_match) {
       result = 'fail';
       pointsEarned = 0;
-      if (isHardViolation(item.intent_code, detection)) {
+      if (isHardViolation(item.intent_code, detection, template.policy_version)) {
         autoFailTriggered = true;
         autoFailReasons.push(`Anti-pattern: ${item.question_text}`);
       }
@@ -120,7 +120,7 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
     } else {
       result = 'fail';
       pointsEarned = 0;
-      if (isHardViolation(item.intent_code, detection)) {
+      if (isHardViolation(item.intent_code, detection, template.policy_version)) {
         autoFailTriggered = true;
         autoFailReasons.push(item.question_text);
       }
@@ -147,7 +147,7 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
       points_possible: item.points_possible,
       confidence: detection?.confidence || 0,
       is_auto_fail: item.is_auto_fail,
-      auto_fail_triggered: result === 'fail' && isHardViolation(item.intent_code, detection),
+      auto_fail_triggered: result === 'fail' && isHardViolation(item.intent_code, detection, template.policy_version),
       notes: result === 'partial' && detection?.sequence_violation
         ? `${detection.llm_reasoning || ''} Sequence: ${detection.sequence_violation_detail}`.trim()
         : detection?.llm_reasoning || null,

@@ -34,6 +34,12 @@ before(async () => {
   assert.deepEqual((await pg.query("SELECT * FROM scoring_template_items WHERE template_id='00000000-0000-0000-0000-000000000001' ORDER BY id")).rows, legacy);
   const codes = catalog.map(c => c.intent_code);
   assert.deepEqual((await pg.query('SELECT * FROM compliance_intents ORDER BY id')).rows.filter(c => codes.includes(c.intent_code)), catalog);
+  const oldTemplateItems = (await pg.query('SELECT * FROM scoring_template_items ORDER BY id')).rows;
+  const currentSql = await read('../supabase/migrations/115_ma_cy2027_taxonomy.sql');
+  await pg.exec(currentSql); await pg.exec(currentSql);
+  assert.deepEqual((await pg.query('SELECT * FROM compliance_scorecards')).rows, historical);
+  const oldIds = new Set(oldTemplateItems.map(i => i.id));
+  assert.deepEqual((await pg.query('SELECT * FROM scoring_template_items ORDER BY id')).rows.filter(i => oldIds.has(i.id)), oldTemplateItems);
   template = (await pg.query("SELECT * FROM scoring_templates WHERE is_active=true")).rows[0];
   items = (await pg.query('SELECT i.*,c.intent_code FROM scoring_template_items i JOIN compliance_intents c ON c.id=i.intent_id WHERE template_id=$1', [template.id])).rows;
 });
@@ -70,6 +76,17 @@ test('benefits before disclaimer flag timing within the same LLM window', async 
   const timing = detections.find(d => d.intent_code === 'CALL_OPEN_009_TPMO_TIMING_2027');
   assert.equal(timing.detected, false); assert.equal(timing.sequence_violation, true);
   assert.equal(tpmoScore(detections).pass_fail, 'FAIL');
+  assert.equal(tpmoScore(detections).auto_fail_triggered, true);
+});
+test('a disclaimer after the first minute passes when it precedes all benefits', async () => {
+  const detections=await classify([utterance(approved,90000,110000),utterance('This plan includes dental coverage.',120000,130000)]);
+  const card=tpmoScore(detections);
+  assert.equal(card.overall_score,100);assert.equal(card.auto_fail_triggered,false);
+  const result=scoreCompliance({tpmoStart:100000,tpmoOk:true,tpmoOrgs:'5',tpmoPlans:'25'},[],approved,{
+    mergedTranscript:[{speaker:'agent',text:'Hello.',timestamp:100000},{speaker:'agent',text:approved,timestamp:210000}],
+  });
+  const question=result.categories.flatMap(c=>c.questions).find(q=>q.id==='disclosures_tpmo_timing');
+  assert.equal(question.passed,true);
 });
 test('same utterance order, split disclosure, completion boundary and later repeats', () => {
   assert.equal(evaluateTpmo2027([utterance('This plan includes dental coverage. ' + approved)]).timingOk, false);
@@ -79,12 +96,20 @@ test('same utterance order, split disclosure, completion boundary and later repe
   assert.equal(evaluateTpmo2027([utterance(parts[0],0,3000), utterance('Currently'+parts[1]+' This plan includes dental coverage.')]).timingOk, true);
   assert.equal(evaluateTpmo2027([utterance(approved), utterance('The premium is $0.',1000,4000)]).timingOk, false);
   assert.equal(evaluateTpmo2027([utterance(approved, 59000, 60000)]).timingOk, true);
-  assert.equal(evaluateTpmo2027([utterance(approved, 59000, 60001)]).timingOk, false);
+  assert.equal(evaluateTpmo2027([utterance(approved, 59000, 60001)]).timingOk, true);
   assert.equal(evaluateTpmo2027([utterance(approved), utterance('This plan includes dental coverage.',30000,40000), utterance(approved,70000,90000)]).timingOk, true);
 });
-test('075 versions the seeded template, excludes SHIP, and recomputes possible points', async () => {
-  assert.equal(template.version,2);
+test('115 versions the seeded template, excludes SHIP, and recomputes possible points without changing history', async () => {
+  assert.equal(template.version,3);
+  assert.equal(template.policy_version,'ma-cy2027-2026-10-01');
   assert.ok(!items.some(i => i.intent_code === 'CALL_OPEN_012_TPMO_SHIP_MENTION'));
+  for(const code of ['SOA_003_SOA_48HR_RULE','SOA_007_WALK_IN_EXCEPTION','SOA_008_LAST_4_DAYS_EXCEPTION','PLAN_026_NO_SUPERLATIVES','PECL_014_MULTI_LANGUAGE_INSERT','CONDUCT_012_CARRIER_NAMES_12PT']) {
+    assert.ok(!items.some(i=>i.intent_code===code),code);
+    assert.equal((await pg.query('SELECT count(*)::int n FROM compliance_intents WHERE intent_code=$1',[code])).rows[0].n,1);
+  }
+  const scope=items.find(i=>i.intent_code==='SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027');
+  assert.equal(scope.is_critical,true);assert.equal(scope.is_auto_fail,false);
+  assert.equal(items.find(i=>i.intent_code==='PLAN_028_NO_UNSUBSTANTIATED_CLAIMS').is_auto_fail,false);
   assert.equal(template.total_possible_points, items.reduce((sum,i) => sum+i.points_possible,0));
   assert.equal(template.categories.CALL_OPENING.max_points,items.filter(i=>i.category==='CALL_OPENING').reduce((sum,i)=>sum+i.points_possible,0));
   for (const intent of callOpening.filter(i => i.intent_code.endsWith('_2027'))) {
@@ -105,7 +130,6 @@ test('live checklist gives either resource full credit and flags late benefits e
   for (const entries of [
     [{speaker:'agent',text:'Hello. Let us review your options.',timestamp:100000}],
     [{speaker:'agent',text:'This plan includes dental coverage.',timestamp:101000},{speaker:'agent',text:approved,timestamp:120000}],
-    [{speaker:'agent',text:'Hello.',timestamp:100000},{speaker:'agent',text:approved,timestamp:160001}],
   ]) {
     const result = scoreCompliance(state,[],entries.map(e=>e.text).join(' '),{mergedTranscript:entries});
     const flag = result.flags.find(f=>f.id==='disclosures_tpmo_timing');

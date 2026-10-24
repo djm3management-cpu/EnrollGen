@@ -1,6 +1,5 @@
-// Approved MA script policy: completed within 60 seconds AND before benefits.
-// CY2027 CMS timing requires before benefits; the first-minute limit is agency policy.
-export const TPMO_RULE_VERSION = 'MA-2027-TPMO-v2';
+// CY2027: disclaimer completion must precede benefits, regardless of elapsed time.
+export const TPMO_RULE_VERSION = 'MA-CY2027-2026-10-01';
 const number = '(?:\\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty)';
 const org = new RegExp(`represent\\s+${number}\\s+(?:organizations?|carriers?)`, 'i');
 const plans = new RegExp(`${number}\\s+(?:products?|plans?)\\s+in your area`, 'i');
@@ -37,6 +36,5 @@ export function evaluateTpmo2027(utterances) {
   }
   const beforeBenefits = !!disclaimer && (!firstBenefit ||
     (disclaimer.completion_ms != null && firstBenefit.start_ms != null && disclaimer.completion_ms <= firstBenefit.start_ms));
-  const withinMinute = !!disclaimer && disclaimer.completion_ms != null && disclaimer.completion_ms <= 60000;
-  return { disclaimer, firstBenefit, beforeBenefits, withinMinute, timingOk: beforeBenefits && withinMinute };
+  return { disclaimer, firstBenefit, beforeBenefits, timingOk: beforeBenefits };
 }

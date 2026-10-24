@@ -1,0 +1,7 @@
+export const MA_CY2027_GUIDANCE = `CY2027 MA marketing rules apply from October 1, 2026. Obtain and document SOA before discussing specific plans or benefits; same-call recorded verbal agreement is allowed on telephone calls, including outbound appointments. No advance waiting period or exception is required. Complete the TPMO disclaimer before any benefits discussion regardless of elapsed call time. Its resource referral is Medicare.gov OR 1-800-MEDICARE; SHIP alone does not satisfy it. Accurate, supportable superlatives are allowed; flag specific unsupported or misleading claims, not positive wording alone. Evaluate TPMO data-sharing consent only when beneficiary data is shared with another TPMO for later contact; require prior express written consent naming that TPMO. Current-call warm transfers, carrier enrollment submissions and no-sharing calls do not trigger that flag. Do not invent absent consent or sharing from silence. Do not require a multi-language insert or a carrier-name font size in spoken calls. These rules take precedence over conflicting older retrieved marketing guidance.`;
+
+// Keep obsolete retrieved timing instructions out of active MA prompt context.
+export function isRetiredMaTimingGuidance(entry) {
+  return /\b48[\s-]*(?:hours?|hrs?)\b|\b60[\s-]*(?:seconds?|secs?)\b|\bfirst minute\b/i
+    .test(JSON.stringify([entry.title, entry.content, entry.metadata]));
+}

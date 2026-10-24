@@ -18,7 +18,7 @@ const SEGMENT_OVERLAP_MS = 30000; // 30-second overlap preserves boundary eviden
 const SHORT_CALL_THRESHOLD_S = 120; // calls under 2 min are "insufficient"
 
 /**
- * Detect whether a call is inbound or outbound from the first 60 seconds.
+ * Infer call direction from opening context (an audio sampling window, not a compliance deadline).
  * Defaults to 'inbound' when context is ambiguous per business rule,
  * outbound-only intents must never penalise an inbound/warm-transfer call.
  */
@@ -143,8 +143,6 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
   const purposePassages = diarized.flatMap((u, i) => /look\s*up|eligibil|current coverage|medicare card|submitted|confirmation number/i.test(u.text || '')
     ? [diarized.slice(Math.max(0, i - 2), i + 4).map(v => v.text || '').join(' ')] : []).join('\n').slice(0, 6000);
   const wholeCallContext = redactPHI(`${wholeText.slice(0, 6000)}\n...\n${purposePassages}\n...\n${wholeText.slice(-6000)}`).redacted;
-  const scheduledAppointment = detectedDirection === 'outbound' && (callContext?.scheduled_appointment === true
-    || /(?:scheduled|booked|set up|our) (?:marketing )?appointment|appointment (?:today|we scheduled)/i.test(wholeText.slice(0, 6000)));
 
   // Check for short calls
   const callDurationS = diarized.length > 0
@@ -153,8 +151,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
   const isShortCall = callDurationS > 0 && callDurationS < SHORT_CALL_THRESHOLD_S;
 
   // Split intents by direction applicability
-  const applies = i => intentAppliesToDirection(i, detectedDirection)
-    && (i.intent_code !== 'SOA_003_SOA_48HR_RULE' || scheduledAppointment);
+  const applies = i => intentAppliesToDirection(i, detectedDirection);
   const applicableIntents = ALL_INTENTS.filter(applies);
   const excludedIntents = ALL_INTENTS.filter(i => !applies(i));
 
@@ -193,7 +190,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
   for (let offset = 0; offset < redactedSegments.length; offset += 6) {
     const batch = redactedSegments.slice(offset, offset + 6);
     const batchContext = { ...callContext, call_direction: detectedDirection,
-      scheduled_appointment: scheduledAppointment, whole_call_context: wholeCallContext,
+      whole_call_context: wholeCallContext,
       detected_intents: [...detectedIntentCodes],
       sequence_position: allDetections.filter(d => d.detected).length };
     const parsedBatch = await Promise.all(batch.map(async (segment, batchIndex) => {
@@ -214,6 +211,10 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
         for (const det of parsed.detections) {
           const intent = applicableIntents.find(i => i.intent_code === det.intent_code);
           if (!intent) continue;
+          // The sharing rule requires affirmative applicability, not a generic
+          // consent omission or a warm-transfer mention. Older cached results
+          // without applicability evidence remain unscored for this rule.
+          if (det.intent_code === 'RECORD_005_DATA_SHARING_CONSENT' && det.applicable !== true) continue;
 
           // Normalize approved closing evidence before merging, so an actual
           // pitch elsewhere retains precedence over a false closing flag.
@@ -284,6 +285,12 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
     }
   }
 
+  const sharing = allDetections.find(d => d.intent_code === 'RECORD_005_DATA_SHARING_CONSENT');
+  if (sharing?.detection_method === 'unscored') {
+    sharing.direction_excluded = true;
+    sharing.llm_reasoning = 'Unscored: sharing beneficiary data with another TPMO for later contact was not established';
+  }
+
   // Use actual utterance order/completion rather than overlapping LLM windows.
   const tpmo = evaluateTpmo2027(diarized);
   for (const [code, found] of [
@@ -301,7 +308,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
       anti_pattern_match: false, anti_pattern_detail: null,
       sequence_violation: !!tpmo.disclaimer && !tpmo.beforeBenefits,
       sequence_violation_detail: tpmo.disclaimer && !tpmo.beforeBenefits ? 'TPMO disclaimer completed after benefits discussion began' : null,
-      llm_reasoning: found ? 'Approved 2027 TPMO policy satisfied' : !tpmo.disclaimer ? 'Complete TPMO disclaimer missing' : 'TPMO timing failed: complete within 60 seconds and before benefits',
+      llm_reasoning: found ? 'Approved 2027 TPMO policy satisfied' : !tpmo.disclaimer ? 'Complete TPMO disclaimer missing' : 'TPMO timing failed: disclaimer must precede benefits',
     });
   }
 

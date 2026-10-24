@@ -64,7 +64,7 @@ test('new-call rules respect inbound verbal SOA and no scheduled outbound eviden
   assert.ok(system.includes('brief post-enrollment mention'));assert.ok(user.includes('Call direction: inbound'));
   return {detections:[soaDet]};
  }});
- assert.equal(r.detections.find(d=>d.intent_code==='SOA_003_SOA_48HR_RULE').direction_excluded,true);
+ assert.ok(!r.detections.some(d=>d.intent_code==='SOA_003_SOA_48HR_RULE'));
  assert.equal(r.detections.find(d=>d.intent_code===code).detected,true);
  for(const phrase of ['lookup','speech-to-text','hard_cms_violation'])assert.ok(INTENT_CLASSIFICATION_SYSTEM.includes(phrase));
 });
