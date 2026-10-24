@@ -283,7 +283,7 @@ test('the transcript player seeks before audio loads, tracks the active utteranc
 test('call filters reset pagination and follow exports while toolbar icons retain labels and recording access', async () => {
   const harness = hookHarness(), requests = [], exports = [], downloads = [], rows = [], getToken = async () => 'token';
   const Calls = componentSource('../src/components/callLog/CallLogTab.jsx', 'CallLogTab', {
-    ...harness.hooks, CallLogIconSelect: 'icon-select', UsersRound: 'agents', PhoneCall: 'phone', ArrowLeftRight: 'direction', CallDateRangePicker: 'date-picker', CallRecordings: 'call-recordings', FileAudio: 'file-audio', RefreshCw: 'refresh', Download: 'download', useAppAuth: () => ({ getToken }), useTenantConfig: () => ({ supabaseClient: {} }),
+    ...harness.hooks, CallLogIconSelect: 'icon-select', ClipboardCheck: 'outcomes', callOutcomeLabel: value => value, UsersRound: 'agents', PhoneCall: 'phone', ArrowLeftRight: 'direction', CallDateRangePicker: 'date-picker', CallRecordings: 'call-recordings', FileAudio: 'file-audio', RefreshCw: 'refresh', Download: 'download', useAppAuth: () => ({ getToken }), useTenantConfig: () => ({ supabaseClient: {} }),
     useCallLogRows: filters => { requests.push(filters); return { rows, count: 51, loading: false, refresh() {} }; },
     CALL_OUTCOME_OPTIONS: [{ group: 'Enrollment Outcomes', options: [{ value: 'enrolled', label: 'Enrolled' }, { value: 'enrolled_pending_verification', label: 'Enrolled - Pending Verification' }] }],
     loadCallLogPages: async (_token, filters) => { exports.push(filters); return [{ call_outcome: filters.outcome }]; },
@@ -302,7 +302,7 @@ test('call filters reset pagination and follow exports while toolbar icons retai
     await harness.flush(); assert.ok(!nodes(harness.value).some(node => node.type === 'call-recordings'));
     nodes(harness.value).find(node => node.type === 'button' && node.children.includes('NEXT →')).props.onClick();
     await harness.flush(); assert.equal(requests.at(-1).offset, 50);
-    nodes(harness.value).find(node => node.props['aria-label'] === 'Outcome filter').props.onChange({ target: { value: 'enrolled' } });
+    nodes(harness.value).find(node => node.type === 'icon-select' && node.props.label === 'Outcome filter').props.onChange({ target: { value: 'enrolled' } });
     await harness.flush(); assert.equal(requests.at(-1).outcome, 'enrolled'); assert.equal(requests.at(-1).offset, 0);
     assert.ok(!nodes(harness.value).some(node => node.type === 'input' && node.props.type === 'date'));
     const search = nodes(harness.value).find(node => node.props['aria-label'] === 'Search calls by contact name or phone');
@@ -327,7 +327,7 @@ test('call filters reset pagination and follow exports while toolbar icons retai
     assert.equal(requests.at(-1).to, new Date('2026-10-27T00:00:00').toISOString());
     nodes(harness.value).find(node => node.type === 'date-picker').props.onChange('', '');
     await harness.flush(); assert.equal(requests.at(-1).from, null); assert.equal(requests.at(-1).to, undefined);
-    nodes(harness.value).find(node => node.props['aria-label'] === 'Outcome filter').props.onChange({ target: { value: 'ALL' } });
+    nodes(harness.value).find(node => node.type === 'icon-select' && node.props.label === 'Outcome filter').props.onChange({ target: { value: 'ALL' } });
     await harness.flush(); assert.equal(requests.at(-1).outcome, null);
   } finally { harness.unmount(); }
 });

@@ -11,7 +11,7 @@ export function postCallFailureMessage(job) {
 }
 
 export function observePostCallStatus({getToken,getSessionId,onStatus,onError,send=fetchWithClerk,
-  schedule=setInterval,cancel=clearInterval,intervalMs=5000}) {
+  schedule=setInterval,cancel=clearInterval,intervalMs=5000,allowMissingEndpoint=false}) {
   let stopped=false,pending=false;
   const poll=async()=>{
     const sessionId=getSessionId();
@@ -20,6 +20,16 @@ export function observePostCallStatus({getToken,getSessionId,onStatus,onError,se
     try {
       const params=new URLSearchParams(sessionId?{session_id:sessionId}:{failures:'1'});
       const response=await send(getToken,`/api/post-call?${params}`,{signal:AbortSignal.timeout(15000)});
+      if (response.headers.get('content-type')?.includes('text/html')) {
+        if (allowMissingEndpoint) {
+          // A plain Vite server returns the SPA shell for Netlify API routes.
+          // Stop this local-only poll instead of parsing HTML as job status.
+          stopped=true;cancel(timer);
+          if (getSessionId()===sessionId) onStatus(null);
+          return;
+        }
+        throw new Error('Post-call status service returned an invalid response.');
+      }
       const body=await response.json();
       if (!response.ok) throw new Error(body.error || `Status request failed (${response.status}).`);
       if (!stopped && getSessionId()===sessionId) onStatus(body.job || null);

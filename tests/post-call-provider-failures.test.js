@@ -92,3 +92,30 @@ test('service worker bypasses functions, Supabase and other data; navigation/sta
  let fallback;handlers.fetch({request:{method:'GET',url:'https://enrollgen.com/script/ma',mode:'navigate'},respondWith:p=>{fallback=p;}});assert.equal(await(await fallback).text(),'cached shell');
  handlers.fetch({request:{method:'GET',url:'https://enrollgen.com/assets/image.png',mode:'cors'},respondWith:p=>{fallback=p;}});assert.equal((await fallback).status,503);
 });
+
+test('plain Vite HTML disables local-only status polling and clears the parse-error banner',async()=>{
+ let tick,cancelled=0,requests=0;const seen=[],errors=[];
+ const stop=observePostCallStatus({allowMissingEndpoint:true,getToken:async()=>'',getSessionId:()=>null,
+  onStatus:job=>seen.push(job),onError:error=>errors.push(error),
+  schedule:fn=>{tick=fn;return 7;},cancel:id=>{assert.equal(id,7);cancelled++;},
+  send:async()=>{requests++;return new Response('<!doctype html><html>Vite shell</html>',{headers:{'content-type':'text/html'}});},
+ });
+ await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(seen,[null]);assert.deepEqual(errors,[]);assert.equal(cancelled,1);
+ tick();await new Promise(resolve=>setImmediate(resolve));assert.equal(requests,1);stop();
+});
+
+test('production HTML errors and genuine JSON failures remain visible; local APIs still report real failed jobs',async()=>{
+ const failed={status:'failed',error_code:'credit_balance_exhausted'};
+ for(const [local,response,expected] of [
+  [false,new Response('<html>Error</html>',{headers:{'content-type':'text/html'}}),'invalid response'],
+  [true,Response.json({error:'Status service failed'},{status:503}),'Status service failed'],
+  [true,Response.json({job:failed}),null],
+ ]){
+  const errors=[],seen=[];
+  const stop=observePostCallStatus({allowMissingEndpoint:local,getToken:async()=>'',getSessionId:()=>S,
+   onStatus:job=>seen.push(job),onError:error=>errors.push(error.message),schedule:()=>1,cancel:()=>{},send:async()=>response});
+  await new Promise(resolve=>setImmediate(resolve));
+  if(expected){assert.ok(errors[0].includes(expected));assert.deepEqual(seen,[]);}else{assert.deepEqual(errors,[]);assert.deepEqual(seen[0],failed);}
+  stop();
+ }
+});

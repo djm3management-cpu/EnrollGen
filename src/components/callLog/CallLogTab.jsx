@@ -7,10 +7,10 @@ import { useAppAuth } from "../../context/AuthContext";
 import { loadCallLogPages } from "../../lib/callLogApi";
 import RecordingPanel from "../callDetail/RecordingPanel";
 import CallRecordings from "./CallRecordings";
-import { ArrowLeftRight, Download, FileAudio, PhoneCall, RefreshCw, UsersRound } from "lucide-react";
+import { ArrowLeftRight, ClipboardCheck, Download, FileAudio, PhoneCall, RefreshCw, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
-import { CALL_OUTCOME_OPTIONS } from "../../lib/postCallPipeline";
+import { CALL_OUTCOME_OPTIONS, callOutcomeLabel } from "../../lib/postCallPipeline";
 import { ANCILLARY_PRODUCT_OPTIONS, buildCallOutcomePatch } from "../../lib/ancillarySale.js";
 import CallDetailPanel from "../callDetail/CallDetailPanel";
 import ComplianceReviewModal from "../callDetail/ComplianceReviewModal";
@@ -324,12 +324,6 @@ export default function CallLogTab({ onOpenContact = null }) {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <select className="call-log-outcome-filter" value={outcomeFilter} onChange={event => setOutcomeFilter(event.target.value)} aria-label="Outcome filter">
-          <option value="ALL">ALL OUTCOMES</option>
-          {CALL_OUTCOME_OPTIONS.map(group => <optgroup key={group.group} label={group.group}>
-            {group.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </optgroup>)}
-        </select>
         <div className="call-log-toolbar-actions" role="group" aria-label="Call log filters and actions">
           <CallLogIconSelect icon={UsersRound} label="Agent filter" title={`Agent: ${agentFilter === 'ALL' ? 'All agents' : agentFilter}`} value={agentFilter} onChange={event => setAgentFilter(event.target.value)}>
             {agentOptions.map(agent => <option key={agent} value={agent}>{agent === 'ALL' ? 'ALL AGENTS' : agent}</option>)}
@@ -339,6 +333,12 @@ export default function CallLogTab({ onOpenContact = null }) {
           </CallLogIconSelect>
           <CallLogIconSelect icon={ArrowLeftRight} label="Direction filter" title={`Call direction: ${directionFilter === 'ALL' ? 'Inbound and outbound' : directionFilter.charAt(0) + directionFilter.slice(1).toLowerCase()}`} value={directionFilter} onChange={event => setDirectionFilter(event.target.value)}>
             {DIRECTION_FILTERS.map(value => <option key={value} value={value}>{value === 'ALL' ? 'INBOUND + OUTBOUND' : value}</option>)}
+          </CallLogIconSelect>
+          <CallLogIconSelect icon={ClipboardCheck} label="Outcome filter" title={`Call outcome: ${outcomeFilter === 'ALL' ? 'All outcomes' : callOutcomeLabel(outcomeFilter)}`} value={outcomeFilter} onChange={event => setOutcomeFilter(event.target.value)}>
+            <option value="ALL">ALL OUTCOMES</option>
+            {CALL_OUTCOME_OPTIONS.map(group => <optgroup key={group.group} label={group.group}>
+              {group.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </optgroup>)}
           </CallLogIconSelect>
           <CallDateRangePicker from={dateFrom} to={dateTo} onChange={(from, to) => { setDateFrom(from); setDateTo(to); }} />
           <button type="button" className={`contacts-mini-btn call-log-toolbar-icon${showRecordings ? ' is-active' : ''}`} aria-label="Recordings" title="Recordings" aria-expanded={showRecordings} onClick={() => setShowRecordings(value => !value)}><FileAudio size={16} aria-hidden="true" /></button>
