@@ -18577,3 +18577,5 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
   .call-log-table .call-log-expand-row > td { padding: 8px; }
   .call-log-subphone { display: block; margin: 4px 0 0; }
 }
+
+.call-log-filters .call-log-outcome-filter { width: 190px; max-width: 100%; }

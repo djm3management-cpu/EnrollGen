@@ -160,3 +160,25 @@ test('call log returns the persisted outcome alongside status and refreshes afte
  assert.equal(data.rows.find(row=>row.call_record_id===INC).call_outcome,'callback_scheduled');
  assert.equal(data.rows.find(row=>row.attempt_id===OUT)?.call_outcome,null);
 });
+
+test('outcome filtering uses saved records across batches before counts, sorting and pagination, without tenant leakage', async () => {
+ const records = Array.from({ length: 240 }, (_, index) => ({
+  id: id(2000 + index), outcome: index < 205 ? 'enrolled' : index < 210 ? 'enrolled_pending_verification' : 'callback_scheduled',
+  start: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString(),
+ }));
+ for (const record of records) await sql("INSERT INTO call_records(id,tenant_id,contact_id,agent_name,call_direction,call_outcome,call_start) VALUES($1,$2,$3,'Outcome Agent','outbound',$4,$5)",[record.id,T,CONTACT,record.outcome,record.start]);
+ await sql("INSERT INTO call_records(id,tenant_id,contact_id,agent_name,call_direction,call_outcome) VALUES($1,$2,$3,'Outcome Agent','outbound','enrolled')",[id(2500),U,id(998)]);
+ const enrolled = await log(auth,'outcome=enrolled&agent=Outcome%20Agent&offset=99&limit=5');
+ assert.equal(enrolled.count,205); assert.equal(enrolled.rows.length,5);
+ assert.ok(enrolled.rows.every(row=>row.call_outcome==='enrolled' && row.tenant_id===T));
+ assert.deepEqual(enrolled.rows.map(row=>row.call_record_id),records.slice(101,106).reverse().map(record=>record.id));
+ const ascending = await log(auth,'outcome=enrolled&agent=Outcome%20Agent&ascending=1&offset=198&limit=10');
+ assert.equal(ascending.count,205); assert.deepEqual(ascending.rows.map(row=>row.call_record_id),records.slice(198,205).map(record=>record.id));
+ assert.equal((await log(auth,'outcome=enrolled_pending_verification&agent=Outcome%20Agent')).count,5);
+ assert.equal((await log(auth,'outcome=callback_scheduled&agent=Outcome%20Agent')).count,30);
+ assert.equal((await log(auth,'outcome=enrolled&contact_id='+id(998))).count,0);
+ assert.equal((await log(auth,'outcome=enrolled&record_ids='+records[10].id+','+records[220].id)).count,1);
+ const empty = await log(auth,'outcome=not_interested'); assert.deepEqual(empty.rows,[]); assert.equal(empty.count,0);
+ const beyond = await log(auth,'outcome=enrolled&agent=Outcome%20Agent&offset=205'); assert.deepEqual(beyond.rows,[]); assert.equal(beyond.count,205);
+ await log(auth,'outcome='+encodeURIComponent('enrolled,tenant_id.eq.'+U),400);
+});

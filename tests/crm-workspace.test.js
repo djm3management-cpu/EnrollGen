@@ -279,3 +279,26 @@ test('the transcript player seeks before audio loads, tracks the active utteranc
     assert.equal(raw[0].time, 12); assert.equal(raw[0].speaker, 'customer'); assert.equal(raw[1].time, null);
   } finally { harness.unmount(); }
 });
+
+test('the calls outcome filter replaces Missing Recordings, resets pagination and follows the CSV export', async () => {
+  const harness = hookHarness(), requests = [], exports = [], downloads = [], rows = [], getToken = async () => 'token';
+  const Calls = componentSource('../src/components/callLog/CallLogTab.jsx', 'CallLogTab', {
+    ...harness.hooks, useAppAuth: () => ({ getToken }), useTenantConfig: () => ({ supabaseClient: {} }),
+    useCallLogRows: filters => { requests.push(filters); return { rows, count: 51, loading: false, refresh() {} }; },
+    CALL_OUTCOME_OPTIONS: [{ group: 'Enrollment Outcomes', options: [{ value: 'enrolled', label: 'Enrolled' }, { value: 'enrolled_pending_verification', label: 'Enrolled - Pending Verification' }] }],
+    loadCallLogPages: async (_token, filters) => { exports.push(filters); return [{ call_outcome: filters.outcome }]; },
+    callsCsv: rows => JSON.stringify(rows), downloadCsv: csv => downloads.push(csv),
+  });
+  try {
+    harness.mount(() => Calls({})); await harness.flush();
+    assert.ok(!nodes(harness.value).some(node => node.children.includes('MISSING RECORDINGS')));
+    nodes(harness.value).find(node => node.type === 'button' && node.children.includes('NEXT →')).props.onClick();
+    await harness.flush(); assert.equal(requests.at(-1).offset, 50);
+    nodes(harness.value).find(node => node.props['aria-label'] === 'Outcome filter').props.onChange({ target: { value: 'enrolled' } });
+    await harness.flush(); assert.equal(requests.at(-1).outcome, 'enrolled'); assert.equal(requests.at(-1).offset, 0);
+    await nodes(harness.value).find(node => node.type === 'button' && node.children.includes('Export calls (CSV)')).props.onClick();
+    await harness.flush(); assert.equal(exports[0].outcome, 'enrolled'); assert.equal(JSON.parse(downloads[0])[0].call_outcome, 'enrolled');
+    nodes(harness.value).find(node => node.props['aria-label'] === 'Outcome filter').props.onChange({ target: { value: 'ALL' } });
+    await harness.flush(); assert.equal(requests.at(-1).outcome, null);
+  } finally { harness.unmount(); }
+});

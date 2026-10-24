@@ -3,7 +3,7 @@ import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServi
 import { recordingIdentity } from './_recordingAccess.js';
 
 const terminal = new Set(['completed', 'canceled', 'failed', 'busy', 'no-answer']);
-const allowed = new Set(['offset', 'limit', 'from', 'to', 'direction', 'disposition', 'agent', 'search', 'ascending', 'contact_id', 'record_ids']);
+const allowed = new Set(['offset', 'limit', 'from', 'to', 'direction', 'disposition', 'agent', 'search', 'ascending', 'contact_id', 'record_ids', 'outcome']);
 const validUuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 const integer = (value, fallback, max) => {
   if (value == null) return fallback;
@@ -38,6 +38,36 @@ export async function measuredCallLogRows(db, tenantId, rows) {
   });
 }
 
+// v_call_log supports older schemas without a call_outcome column. Resolve the
+// saved outcome from call_records first, in bounded batches to keep REST URLs
+// small, then merge the matching calls before applying the requested page.
+async function outcomeCallLogResult(db, tenantId, outcome, query, offset, limit, ascending) {
+  const needed = offset + limit;
+  const compare = (a, b) => {
+    const dateOrder = (Date.parse(a.occurred_at) || 0) - (Date.parse(b.occurred_at) || 0);
+    const idOrder = a.log_id < b.log_id ? -1 : a.log_id > b.log_id ? 1 : 0;
+    return (dateOrder || idOrder) * (ascending ? 1 : -1);
+  };
+  let candidates = [], count = 0;
+  for (let recordOffset = 0; ; recordOffset += 100) {
+    const records = checked(await db.from('call_records').select('id')
+      .eq('tenant_id', tenantId).eq('call_outcome', outcome).order('id')
+      .range(recordOffset, recordOffset + 99)) || [];
+    if (!records.length) break;
+    const ids = records.map(record => record.id);
+    for (let callOffset = 0; callOffset < needed; callOffset += 500) {
+      const size = Math.min(500, needed - callOffset);
+      const result = await query().in('call_record_id', ids).range(callOffset, callOffset + size - 1);
+      const rows = checked(result) || [];
+      if (!callOffset) count += result.count || 0;
+      candidates = [...candidates, ...rows].sort(compare).slice(0, needed);
+      if (rows.length < size) break;
+    }
+    if (records.length < 100) break;
+  }
+  return { data: candidates.slice(offset, needed), count, error: null };
+}
+
 export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = getEvidenceServiceClient } = {}) {
   return async request => {
     if (request.method !== 'GET') return evidenceJson(405, { error: 'Method not allowed' });
@@ -53,25 +83,25 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
       if (!limit) throw new EvidenceError(400, 'Invalid page.');
       const ascending = params.get('ascending');
       if (ascending != null && !['0', '1'].includes(ascending)) throw new EvidenceError(400, 'Invalid sort.');
-      let query = db.from('v_call_log').select('*', { count: 'exact' })
+      const filters = [];
+      const query = () => filters.reduce((current, apply) => apply(current), db.from('v_call_log').select('*', { count: 'exact' })
         .eq('tenant_id', identity.tenant.id)
-        .order('occurred_at', { ascending: ascending === '1' }).order('log_id', { ascending: ascending === '1' })
-        .range(offset, offset + limit - 1);
+        .order('occurred_at', { ascending: ascending === '1' }).order('log_id', { ascending: ascending === '1' }));
       const contactId = params.get('contact_id');
       if (contactId) {
         if (!validUuid(contactId)) throw new EvidenceError(400, 'Invalid contact.');
-        query = query.eq('contact_id', contactId);
+        filters.push(query => query.eq('contact_id', contactId));
       }
       if (params.has('record_ids')) {
         const ids = params.get('record_ids').split(',');
         if (ids.length > 100 || !ids.every(validUuid)) throw new EvidenceError(400, 'Invalid call records.');
-        query = query.in('call_record_id', ids);
+        filters.push(query => query.in('call_record_id', ids));
       }
       for (const [parameter, method] of [['from', 'gte'], ['to', 'lt']]) {
         const date = params.get(parameter);
         if (date) {
           if (!/^\d{4}-\d\d-\d\dT/.test(date) || !Number.isFinite(Date.parse(date))) throw new EvidenceError(400, 'Invalid date.');
-          query = query[method]('occurred_at', new Date(date).toISOString());
+          filters.push(query => query[method]('occurred_at', new Date(date).toISOString()));
         }
       }
       const direction = params.get('direction');
@@ -80,7 +110,7 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
         const value = params.get(field);
         if (value) {
           if (value.length > 100) throw new EvidenceError(400, 'Invalid filter.');
-          query = query.eq(field, value);
+          filters.push(query => query.eq(field, value));
         }
       }
       const search = params.get('search');
@@ -89,9 +119,13 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
         // Quoted PostgREST values cannot inject another filter expression.
         const like = `%${search.replace(/[\\%_]/g, char => '\\' + char)}%`;
         const quoted = '"' + like.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
-        query = query.or(`contact_name.ilike.${quoted},contact_phone.ilike.${quoted}`);
+        filters.push(query => query.or(`contact_name.ilike.${quoted},contact_phone.ilike.${quoted}`));
       }
-      const result = await query;
+      const outcome = params.get('outcome');
+      if (outcome && !/^[a-z][a-z0-9_]{0,79}$/.test(outcome)) throw new EvidenceError(400, 'Invalid outcome.');
+      const result = outcome
+        ? await outcomeCallLogResult(db, identity.tenant.id, outcome, query, offset, limit, ascending === '1')
+        : await query().range(offset, offset + limit - 1);
       const rows = await measuredCallLogRows(db, identity.tenant.id, checked(result) || []);
       const recordIds = [...new Set(rows.map(row => row.call_record_id).filter(Boolean))];
       const statuses = [];

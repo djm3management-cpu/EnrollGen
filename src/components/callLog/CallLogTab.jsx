@@ -4,7 +4,6 @@ import { debugLog } from "../../lib/debugLog.js";
 import { useAppAuth } from "../../context/AuthContext";
 import { loadCallLogPages } from "../../lib/callLogApi";
 import RecordingPanel from "../callDetail/RecordingPanel";
-import MissingRecordings from "./MissingRecordings";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { CALL_OUTCOME_OPTIONS } from "../../lib/postCallPipeline";
@@ -234,7 +233,6 @@ export default function CallLogTab({ onOpenContact = null }) {
   const { getToken } = useAppAuth();
   const [exporting, setExporting] = useState(false);
   const exportGeneration = useRef(0);
-  const [showMissingRecordings, setShowMissingRecordings] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState(null);
@@ -246,6 +244,7 @@ export default function CallLogTab({ onOpenContact = null }) {
   const [agentFilter, setAgentFilter] = useState("ALL");
   const [dispositionFilter, setDispositionFilter] = useState("ALL");
   const [directionFilter, setDirectionFilter] = useState("ALL");
+  const [outcomeFilter, setOutcomeFilter] = useState("ALL");
   const [agentOptions, setAgentOptions] = useState(["ALL"]);
 
   const to = dateTo ? new Date(`${dateTo}T00:00:00`) : null;
@@ -256,6 +255,7 @@ export default function CallLogTab({ onOpenContact = null }) {
     to: to?.toISOString(),
     direction: directionFilter === "ALL" ? null : directionFilter.toLowerCase(),
     disposition: dispositionFilter === "ALL" ? null : dispositionFilter.toLowerCase(),
+    outcome: outcomeFilter === "ALL" ? null : outcomeFilter,
     agent: agentFilter === "ALL" ? null : agentFilter,
     search: search.trim(),
   });
@@ -267,7 +267,7 @@ export default function CallLogTab({ onOpenContact = null }) {
     exportGeneration.current += 1;
     setExporting(false);
     return () => { exportGeneration.current += 1; };
-  }, [getToken, search, dateFrom, dateTo, agentFilter, dispositionFilter, directionFilter]);
+  }, [getToken, search, dateFrom, dateTo, agentFilter, dispositionFilter, directionFilter, outcomeFilter]);
 
   const exportCalls = async () => {
     const request = ++exportGeneration.current;
@@ -280,6 +280,7 @@ export default function CallLogTab({ onOpenContact = null }) {
         to: to?.toISOString(),
         direction: directionFilter === "ALL" ? null : directionFilter.toLowerCase(),
         disposition: dispositionFilter === "ALL" ? null : dispositionFilter.toLowerCase(),
+        outcome: outcomeFilter === "ALL" ? null : outcomeFilter,
         agent: agentFilter === "ALL" ? null : agentFilter,
         search: search.trim(),
       }, () => request !== exportGeneration.current);
@@ -292,7 +293,7 @@ export default function CallLogTab({ onOpenContact = null }) {
   // Filters reset pagination.
   useEffect(() => {
     setPage(0);
-  }, [search, dateFrom, dateTo, agentFilter, dispositionFilter, directionFilter]);
+  }, [search, dateFrom, dateTo, agentFilter, dispositionFilter, directionFilter, outcomeFilter]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const pageLabel = useMemo(
@@ -340,12 +341,16 @@ export default function CallLogTab({ onOpenContact = null }) {
             <option key={value} value={value}>{value}</option>
           ))}
         </select>
-        <button type="button" className="contacts-mini-btn" onClick={() => setShowMissingRecordings(value => !value)} aria-expanded={showMissingRecordings}>MISSING RECORDINGS</button>
+        <select className="call-log-outcome-filter" value={outcomeFilter} onChange={event => setOutcomeFilter(event.target.value)} aria-label="Outcome filter">
+          <option value="ALL">ALL OUTCOMES</option>
+          {CALL_OUTCOME_OPTIONS.map(group => <optgroup key={group.group} label={group.group}>
+            {group.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </optgroup>)}
+        </select>
         <button type="button" className="contacts-mini-btn" onClick={load}>REFRESH</button>
         <button type="button" className="contacts-mini-btn" disabled={loading || exporting} onClick={() => void exportCalls()}>{exporting ? "EXPORTING..." : "Export calls (CSV)"}</button>
       </div>
 
-      {showMissingRecordings ? <MissingRecordings /> : null}
       {error || loadError ? <div className="ops-error" role="alert">⚠ {error || loadError}</div> : null}
 
       <div className="contacts-table-wrap">
