@@ -51,6 +51,7 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
   const scorecardItems = [];
   const coachingNotes = [];
   const riskFlags = [];
+  let reviewRequired = false;
 
   for (const rawItem of templateItems) {
     const calibrated = calibratedTemplateItem(rawItem, template.policy_version);
@@ -61,6 +62,12 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
 
     // Direction-excluded intents are N/A, don't count against the score
     if (isUnscoredDetection(detection)) {
+      const needsReview = /manual review required/i.test(detection?.llm_reasoning || '');
+      if (needsReview) {
+        reviewRequired = true;
+        coachingNotes.push(detection.llm_reasoning);
+        riskFlags.push(detection.llm_reasoning);
+      }
       scorecardItems.push({
         template_item_id: item.id,
         intent_id: item.intent_id,
@@ -75,8 +82,8 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
         is_auto_fail: item.is_auto_fail,
         auto_fail_triggered: false,
         notes: detection?.llm_reasoning || 'Unscored: no reliable evaluation available; excluded from score',
-        evidence_text: null,
-        evidence_timestamp_ms: null,
+        evidence_text: needsReview ? detection.transcript_segment || null : null,
+        evidence_timestamp_ms: needsReview ? detection.segment_start_ms ?? null : null,
         display_order: item.display_order || 0,
       });
       continue;
@@ -169,9 +176,11 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
   const overallScore = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
   const grade = calculateGrade(overallScore, autoFailTriggered);
   const passFail = autoFailTriggered ? 'FAIL' : overallScore >= (template.passing_threshold || 85) ? 'PASS' : 'FAIL';
-  const riskLevel = calculateRiskLevel(overallScore, autoFailTriggered, sequenceViolations);
+  const calculatedRisk = calculateRiskLevel(overallScore, autoFailTriggered, sequenceViolations);
+  const riskLevel = reviewRequired && calculatedRisk === 'low' ? 'medium' : calculatedRisk;
 
-  const bucket = determineBucket(overallScore, autoFailTriggered, null, categoryScoresWithPct);
+  const bucket = determineBucket(overallScore, autoFailTriggered, null, categoryScoresWithPct)
+    || (reviewRequired ? 'COACHING_OPPORTUNITIES' : null);
   const correctiveActionsNeeded = bucket !== null;
 
   return {

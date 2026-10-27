@@ -6,7 +6,7 @@ import { redactSensitiveText } from "../../lib/redaction";
 import { callOutcomeLabel } from "../../lib/postCallPipeline";
 import { CATEGORY_WEIGHTS } from "../../compliance/intents/index.js";
 import { scoringFailureMessage } from "../../lib/scoringStatus.js";
-import { isUnscoredCompliance } from "../../lib/complianceScore.js";
+import { complianceItemStatus, isUnscoredCompliance } from "../../lib/complianceScore.js";
 
 // Full compliance breakdown: metadata header, overall score, a
 // section-by-section flag breakdown (from scorecard_items, which
@@ -66,6 +66,8 @@ function ScoreBanner({ scorecard }) {
   const score = scorecard?.overall_score;
   const value = !unscored && score !== null && score !== undefined ? Math.round(Number(score)) : null;
   const isWarning = value !== null && value < COMPLIANCE_WARNING_THRESHOLD;
+  const reviewRequired = [...(scorecard?.risk_flags || []), ...(scorecard?.coaching_notes || [])]
+    .some(note => /manual review required/i.test(note));
 
   return (
     <div className={`compliance-review-banner${isWarning ? " is-warning" : ""}`}>
@@ -76,6 +78,7 @@ function ScoreBanner({ scorecard }) {
       <div className="compliance-review-banner-meta">
         <span>{String(scorecard?.pass_fail || "--").toUpperCase()}</span>
         {scorecard?.auto_fail_triggered ? <span className="is-autofail">AUTO-FAIL</span> : null}
+        {reviewRequired ? <span className="is-warning-label">REVIEW REQUIRED</span> : null}
         {isWarning ? <span className="is-warning-label">⚠ BELOW {COMPLIANCE_WARNING_THRESHOLD}% THRESHOLD</span> : null}
       </div>
     </div>
@@ -85,14 +88,16 @@ function ScoreBanner({ scorecard }) {
 function CategorySection({ category, items, onJumpToEvidence, activeItemId }) {
   const [open, setOpen] = useState(false);
   const passCount = items.filter((item) => String(item.result || "").toLowerCase() === "pass").length;
-  const pct = items.length ? Math.round((passCount / items.length) * 100) : 0;
+  const scoredCount = items.filter(item => complianceItemStatus(item).scored).length;
+  const pct = scoredCount ? Math.round((passCount / scoredCount) * 100) : 0;
 
   return (
     <div className="compliance-review-category">
       <button type="button" className="compliance-review-category-head" onClick={() => setOpen((v) => !v)}>
         <span>{CATEGORY_LABELS[category] || category}</span>
         <span className="compliance-review-category-count">
-          {passCount}/{items.length} passed
+          {scoredCount ? `${passCount}/${scoredCount} passed` : "Not scored"}
+          {items.length > scoredCount ? ` · ${items.length - scoredCount} excluded` : ""}
         </span>
         <div className="compliance-review-category-track">
           <span style={{ width: `${pct}%` }} />
@@ -102,16 +107,17 @@ function CategorySection({ category, items, onJumpToEvidence, activeItemId }) {
       {open ? (
         <div className="compliance-review-category-body">
           {items.map((item) => {
-            const isPass = String(item.result || "").toLowerCase() === "pass";
+            const status = complianceItemStatus(item);
             return (
               <button
                 type="button"
                 key={item.id}
-                className={`compliance-review-flag${isPass ? " is-pass" : " is-fail"}${activeItemId === item.id ? " is-active" : ""}`}
+                className={`compliance-review-flag ${status.className}${activeItemId === item.id ? " is-active" : ""}`}
                 onClick={() => onJumpToEvidence(item)}
               >
-                <span className="compliance-review-flag-result">{isPass ? "PASS" : "FAIL"}</span>
+                <span className="compliance-review-flag-result">{status.label}</span>
                 <span className="compliance-review-flag-question">{item.question_text || item.intent_id}</span>
+                {!status.scored && item.notes ? <span className="compliance-review-flag-evidence">{item.notes}</span> : null}
                 {item.evidence_text ? (
                   <span className="compliance-review-flag-evidence">
                     "{redactSensitiveText(item.evidence_text).slice(0, 140)}"

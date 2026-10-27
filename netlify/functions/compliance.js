@@ -900,7 +900,8 @@ export default async (request) => {
           continue;
         }
 
-        const direction = detectCallDirection(call.transcript_diarized);
+        const direction = ['inbound', 'outbound'].includes(call.call_direction)
+          ? call.call_direction : detectCallDirection(call.transcript_diarized);
         const isShortCall = (call.call_duration_seconds || 0) < 120;
 
         if ((call.call_direction ?? null) !== direction) {

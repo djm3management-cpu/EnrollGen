@@ -292,25 +292,7 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
   }
 
   // Use actual utterance order/completion rather than overlapping LLM windows.
-  const tpmo = evaluateTpmo2027(diarized);
-  for (const [code, found] of [
-    ['CALL_OPEN_008_TPMO_DISCLAIMER_2027', !!tpmo.disclaimer],
-    ['CALL_OPEN_009_TPMO_TIMING_2027', tpmo.timingOk],
-    ['CALL_OPEN_010_TPMO_ORG_COUNT', !!tpmo.disclaimer && hasTpmoOrgCount(tpmo.disclaimer.text)],
-    ['CALL_OPEN_011_TPMO_PLAN_COUNT', !!tpmo.disclaimer && hasTpmoPlanCount(tpmo.disclaimer.text)],
-    ['CALL_OPEN_013_TPMO_RESOURCE_2027', !!tpmo.disclaimer && hasMedicareResource(tpmo.disclaimer.text)],
-  ]) {
-    const det = allDetections.find(d => d.intent_code === code);
-    Object.assign(det, {
-      detected: found, confidence: wholeText.trim() ? 1 : 0, detection_method: 'tpmo_2027_policy',
-      speaker: tpmo.disclaimer?.speaker || null, transcript_segment: tpmo.disclaimer?.text || null,
-      segment_start_ms: tpmo.disclaimer?.start_ms ?? null, segment_end_ms: tpmo.disclaimer?.completion_ms ?? null,
-      anti_pattern_match: false, anti_pattern_detail: null,
-      sequence_violation: !!tpmo.disclaimer && !tpmo.beforeBenefits,
-      sequence_violation_detail: tpmo.disclaimer && !tpmo.beforeBenefits ? 'TPMO disclaimer completed after benefits discussion began' : null,
-      llm_reasoning: found ? 'Approved 2027 TPMO policy satisfied' : !tpmo.disclaimer ? 'Complete TPMO disclaimer missing' : 'TPMO timing failed: disclaimer must precede benefits',
-    });
-  }
+  applyTpmo2027Policy(allDetections, diarized);
 
   // Validate sequence ordering (only for applicable intents)
   validateSequences(allDetections);
@@ -323,6 +305,43 @@ export async function classifyCall({ diarized, callContext, callLLM, onProgress,
     isShortCall,
     callDurationSeconds: Math.round(callDurationS),
   };
+}
+
+// Also used to preview deterministic repairs without repeating model requests.
+export function applyTpmo2027Policy(allDetections, diarized) {
+  const tpmo = evaluateTpmo2027(diarized);
+  const hasTranscript = diarized.some(u => String(u.text || '').trim());
+  for (const [code, found] of [
+    ['CALL_OPEN_008_TPMO_DISCLAIMER_2027', !!tpmo.disclaimer],
+    ['CALL_OPEN_009_TPMO_TIMING_2027', tpmo.timingOk],
+    ['CALL_OPEN_010_TPMO_ORG_COUNT', !!tpmo.disclaimer && hasTpmoOrgCount(tpmo.disclaimer.text)],
+    ['CALL_OPEN_011_TPMO_PLAN_COUNT', !!tpmo.disclaimer && hasTpmoPlanCount(tpmo.disclaimer.text)],
+    ['CALL_OPEN_013_TPMO_RESOURCE_2027', !!tpmo.disclaimer && hasMedicareResource(tpmo.disclaimer.text)],
+  ]) {
+    const det = allDetections.find(d => d.intent_code === code);
+    if (!det || det.manually_overridden) continue;
+    if (code === 'CALL_OPEN_009_TPMO_TIMING_2027' && tpmo.timingUncertain) {
+      Object.assign(det, {
+        detected: false, confidence: 0, detection_method: 'unscored',
+        speaker: tpmo.earlyDisclosure.speaker, transcript_segment: tpmo.earlyDisclosure.text,
+        segment_start_ms: tpmo.earlyDisclosure.start_ms, segment_end_ms: tpmo.earlyDisclosure.completion_ms,
+        anti_pattern_match: false, anti_pattern_detail: null, sequence_violation: false, sequence_violation_detail: null,
+        llm_reasoning: 'Manual review required: an earlier TPMO disclosure passage precedes benefits, but its exact wording is uncertain. A later repeat does not establish a timing violation.',
+      });
+      continue;
+    }
+    Object.assign(det, {
+      detected: found, confidence: hasTranscript ? 1 : 0, detection_method: 'tpmo_2027_policy',
+      speaker: tpmo.disclaimer?.speaker || null, transcript_segment: tpmo.disclaimer?.text || null,
+      segment_start_ms: tpmo.disclaimer?.start_ms ?? null, segment_end_ms: tpmo.disclaimer?.completion_ms ?? null,
+      anti_pattern_match: false, anti_pattern_detail: null,
+      sequence_violation: !!tpmo.disclaimer && !tpmo.beforeBenefits && !tpmo.timingUncertain,
+      sequence_violation_detail: tpmo.disclaimer && !tpmo.beforeBenefits && !tpmo.timingUncertain ? 'TPMO disclaimer completed after benefits discussion began' : null,
+      llm_reasoning: found ? 'Approved 2027 TPMO policy satisfied' : !tpmo.disclaimer ? 'Complete TPMO disclaimer missing' : 'TPMO timing failed: disclaimer must precede benefits',
+    });
+  }
+
+  return tpmo;
 }
 
 function parseClassificationResponse(raw) {

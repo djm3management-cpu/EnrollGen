@@ -18508,6 +18508,11 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
 .call-compliance-pill.compliance-low { color: #ff9b8f; background: rgba(255, 155, 143, .1); border-color: rgba(255, 155, 143, .2); }
 .call-compliance-pill.compliance-high { color: #3ccf7a; background: rgba(60, 207, 122, .08); border-color: rgba(60, 207, 122, .2); }
 .call-compliance-pill.is-neutral { color: var(--text-secondary); background: var(--surface-raised); border-color: var(--border-default); }
+
+.compliance-review-flag.is-neutral { border-left-color: var(--text-muted); }
+.compliance-review-flag.is-neutral .compliance-review-flag-result { color: var(--text-muted); }
+.compliance-review-flag.is-review { border-left-color: var(--status-pending); }
+.compliance-review-flag.is-review .compliance-review-flag-result { color: var(--status-pending); }
 .call-log-recording .call-recording-icon, .call-audio-bar .call-recording-icon {
   display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; flex-shrink: 0; border-radius: 6px;
 }

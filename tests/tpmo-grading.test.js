@@ -2,7 +2,7 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
-import { classifyCall } from '../src/compliance/engine/IntentClassifier.js';
+import { applyTpmo2027Policy, classifyCall } from '../src/compliance/engine/IntentClassifier.js';
 import { scoreCall } from '../src/compliance/engine/ScoringEngine.js';
 import { callOpening } from '../src/compliance/intents/call-opening.js';
 import { scoreCompliance } from '../src/context/ComplianceScorer.js';
@@ -98,6 +98,55 @@ test('same utterance order, split disclosure, completion boundary and later repe
   assert.equal(evaluateTpmo2027([utterance(approved, 59000, 60000)]).timingOk, true);
   assert.equal(evaluateTpmo2027([utterance(approved, 59000, 60001)]).timingOk, true);
   assert.equal(evaluateTpmo2027([utterance(approved), utterance('This plan includes dental coverage.',30000,40000), utterance(approved,70000,90000)]).timingOk, true);
+});
+
+const fragmentedOpening = (referral = 'to get information on all your products.') => [
+  utterance('We do not offer every plan available in your area.',186440,190930),
+  utterance('Currently, we represent,',190930,192650),
+  utterance('your',192650,193880),
+  utterance('about five, organizations which offer',193880,197490),
+  utterance('about 24, products in your area. Please contact medicare.gov',197840,202510),
+  utterance(referral,202510,205660),
+];
+
+test('punctuated, fragmented counts recognize an early complete disclosure before its later repeat', async () => {
+  const transcript=[...fragmentedOpening('to get information on all your options.'),
+    utterance('This plan includes dental coverage.',1000000,1004000),utterance(approved,2900000,2919000)];
+  const evaluated=evaluateTpmo2027(transcript);
+  assert.equal(evaluated.disclaimer.start_ms,186440);assert.equal(evaluated.timingOk,true);
+  const score=tpmoScore(await classify(transcript));
+  assert.equal(score.overall_score,100);assert.equal(score.auto_fail_triggered,false);
+});
+
+test('an earlier substantial disclosure with unclear wording requires review, rather than a late-repeat auto-fail', async () => {
+  const transcript=[...fragmentedOpening(),utterance('This plan includes dental coverage.',1000000,1004000),
+    utterance(approved,2900000,2919000)];
+  const evaluated=evaluateTpmo2027(transcript);
+  assert.equal(evaluated.timingOk,false);assert.equal(evaluated.timingUncertain,true);
+  assert.equal(evaluated.earlyDisclosure.start_ms,186440);
+  const score=tpmoScore(await classify(transcript));
+  const timing=score.scorecard_items.find(i=>i.intent_code==='CALL_OPEN_009_TPMO_TIMING_2027');
+  assert.equal(timing.result,'na');assert.equal(timing.points_possible,0);assert.match(timing.notes,/Manual review required/);
+  assert.equal(timing.evidence_timestamp_ms,186440);assert.equal(score.auto_fail_triggered,false);
+  assert.equal(score.corrective_actions_needed,true);assert.equal(score.risk_level,'medium');
+  assert.ok(score.risk_flags.some(note=>/Manual review required/.test(note)));
+});
+
+test('customer disclosures and unrelated references cannot excuse genuinely late agent disclosures', async () => {
+  for(const earlier of [fragmentedOpening().map(u=>({...u,speaker:'customer'})),
+    [utterance('We do not offer every plan. Currently we represent five organizations.',0,5000),
+      utterance('There are 24 products in your area. Medicare.gov has information.',180000,185000)]]) {
+    const transcript=[...earlier,utterance('This plan includes dental coverage.',1000000,1004000),utterance(approved,2900000,2919000)];
+    assert.equal(evaluateTpmo2027(transcript).timingUncertain,false);
+    assert.equal(tpmoScore(await classify(transcript)).auto_fail_triggered,true);
+  }
+});
+
+test('deterministic repair preserves human overrides and unrelated intent evidence', () => {
+  const ds=[{intent_code:'CALL_OPEN_009_TPMO_TIMING_2027',manually_overridden:true,detected:false,confidence:1,
+    detection_method:'manual_override',llm_reasoning:'Human reviewed the recording'},
+  {intent_code:'CONDUCT_004_NO_MISLEADING_LANGUAGE',detected:false,anti_pattern_match:true,confidence:1}];
+  const original=structuredClone(ds);applyTpmo2027Policy(ds,fragmentedOpening());assert.deepEqual(ds,original);
 });
 test('115 versions the seeded template, excludes SHIP, and recomputes possible points without changing history', async () => {
   assert.equal(template.version,3);
