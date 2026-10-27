@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, memo } from "react";
+import { useRef, useEffect, useLayoutEffect, useState, memo } from "react";
 import PanelIdleSpinner from "./PanelIdleSpinner";
 
 /**
@@ -62,34 +62,51 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
   highlightSpeakers = false,
 }) {
   const scrollRef = useRef(null);
+  const contentRef = useRef(null);
+  const followingRef = useRef(true);
+  const draggingRef = useRef(false);
+  const touchYRef = useRef(null);
   const [userScrolled, setUserScrolled] = useState(false);
-  const latestEntryTimestamp = mergedEntries.at(-1)?.timestamp;
 
-  // Detect manual scroll, pause auto-scroll when user scrolls up
-  useEffect(() => {
+  const pauseFollowing = (el) => {
+    if (el.scrollTop <= 0 || el.scrollHeight <= el.clientHeight) return;
+    followingRef.current = false;
+    setUserScrolled(true);
+  };
+
+  const followLatest = () => {
+    followingRef.current = true;
+    setUserScrolled(false);
     const el = scrollRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-      setUserScrolled(distFromBottom > AUTO_SCROLL_THRESHOLD);
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    if (el) el.scrollTop = el.scrollHeight;
+  };
+
+  // Scroll before paint on every transcript revision, including text/finality
+  // updates that keep the same timestamp. A cleared call starts following again.
+  useLayoutEffect(() => {
+    if (!mergedEntries.length) {
+      followingRef.current = true;
+      setUserScrolled(false);
+    }
+    const el = scrollRef.current;
+    if (followingRef.current && el) el.scrollTop = el.scrollHeight;
+  }, [mergedEntries, userScrolled]);
+
+  // Reopening the widget, resizing the rail, or reflowing text changes the
+  // visible tail without necessarily producing another transcript event.
+  useEffect(() => {
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      const el = scrollRef.current;
+      if (followingRef.current && el) el.scrollTop = el.scrollHeight;
+    });
+    observer.observe(scrollRef.current);
+    observer.observe(contentRef.current);
+    return () => observer.disconnect();
   }, []);
 
-  // Auto-scroll to bottom on new entries (unless user scrolled up)
-  useEffect(() => {
-    if (!userScrolled && scrollRef.current) {
-      window.requestAnimationFrame(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      });
-    }
-  }, [latestEntryTimestamp, userScrolled]);
-
-  const finals = mergedEntries
-    .filter((e) => e.isFinal && e.text?.trim())
+  const visibleEntries = mergedEntries
+    .filter((e) => e.text?.trim())
     .slice(-MAX_TRANSCRIPT_ENTRIES);
 
   return (
@@ -97,67 +114,102 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
       <div
         ref={scrollRef}
         className="right-rail-scroll mini-live-transcript__scroll"
+        role="region"
+        aria-label="Live transcript"
+        tabIndex={0}
+        onWheel={(event) => {
+          if (event.deltaY < 0) pauseFollowing(event.currentTarget);
+        }}
+        onKeyDown={(event) => {
+          if (["ArrowUp", "PageUp", "Home"].includes(event.key)) pauseFollowing(event.currentTarget);
+        }}
+        onPointerDown={(event) => { draggingRef.current = event.target === event.currentTarget; }}
+        onPointerUp={() => { draggingRef.current = false; }}
+        onPointerCancel={() => { draggingRef.current = false; }}
+        onTouchStart={(event) => { touchYRef.current = event.touches[0]?.clientY ?? null; }}
+        onTouchMove={(event) => {
+          const y = event.touches[0]?.clientY;
+          if (y > touchYRef.current && touchYRef.current !== null) pauseFollowing(event.currentTarget);
+          touchYRef.current = y ?? null;
+        }}
+        onScroll={(event) => {
+          const el = event.currentTarget;
+          const following = el.scrollHeight - el.scrollTop - el.clientHeight <= AUTO_SCROLL_THRESHOLD;
+          // Layout, scroll anchoring and collapse animations also emit scroll.
+          // Only deliberate reading gestures may switch off live following.
+          if (following || draggingRef.current || !followingRef.current) {
+            followingRef.current = following;
+            setUserScrolled(!following);
+          }
+        }}
         style={{
           height: TRANSCRIPT_PANEL_HEIGHT,
           overflowY: "auto",
           padding: "0 8px",
         }}
       >
-        {finals.length === 0 && (
-          <PanelIdleSpinner
-            variant="telemetry"
-            compact
-            active={listening}
-          />
-        )}
-        {finals.map((entry, idx) => {
-          const isCustomer = entry.speaker === "customer";
-          return (
-            <div
-              key={`${entry.speaker}-${entry.timestamp}-${idx}`}
-              className={`mini-live-transcript__row ${
-                isCustomer ? "is-customer" : "is-agent"
-              }${idx === finals.length - 1 ? " is-latest" : ""}`}
-              style={{
-                display: "flex",
-                gap: 5,
-                padding: "3px 0",
-                borderBottom: "1px solid var(--border-default)",
-                animation: idx === finals.length - 1 ? "miniTranscriptFadeIn 0.3s ease" : "none",
-                paddingLeft: 4,
-                backgroundColor: highlightSpeakers
-                  ? isCustomer
-                    ? "var(--info-bg)"
-                    : "var(--status-pending-bg)"
-                  : undefined,
-              }}
-            >
-              <span className="mini-live-transcript__text" style={{
-                fontSize: "0.7rem",
-                color: idx === finals.length - 1
-                  ? (isCustomer ? "var(--info)" : "var(--text-primary)")
-                  : (isCustomer ? "var(--eg-blue-text)" : "var(--text-muted)"),
-                fontFamily: "var(--font-primary)",
-                lineHeight: 1.5,
-                overflowWrap: "break-word",
-                minWidth: 0,
-              }}>
-                <span className="mini-live-transcript__speaker" style={{
-                  fontSize: "0.54rem",
-                  fontWeight: 800,
+        <div ref={contentRef}>
+          {visibleEntries.length === 0 && (
+            <PanelIdleSpinner
+              variant="telemetry"
+              compact
+              active={listening}
+            />
+          )}
+          {visibleEntries.map((entry, idx) => {
+            const isCustomer = entry.speaker === "customer";
+            return (
+              <div
+                key={`${entry.speaker}-${entry.timestamp}-${idx}`}
+                className={`mini-live-transcript__row ${
+                  isCustomer ? "is-customer" : "is-agent"
+                }${idx === visibleEntries.length - 1 ? " is-latest" : ""}${entry.isFinal ? "" : " is-interim"}`}
+                style={{
+                  display: "flex",
+                  gap: 5,
+                  padding: "3px 0",
+                  borderBottom: "1px solid var(--border-default)",
+                  animation: idx === visibleEntries.length - 1 ? "miniTranscriptFadeIn 0.3s ease" : "none",
+                  paddingLeft: 4,
+                  backgroundColor: highlightSpeakers
+                    ? isCustomer
+                      ? "var(--info-bg)"
+                      : "var(--status-pending-bg)"
+                    : undefined,
+                }}
+              >
+                <span className="mini-live-transcript__text" style={{
+                  fontSize: "0.7rem",
+                  color: idx === visibleEntries.length - 1
+                    ? (isCustomer ? "var(--info)" : "var(--text-primary)")
+                    : (isCustomer ? "var(--eg-blue-text)" : "var(--text-muted)"),
                   fontFamily: "var(--font-primary)",
-                  letterSpacing: "0.06em",
-                  color: isCustomer ? "var(--info)" : "var(--text-label)",
-                  marginRight: 5,
+                  lineHeight: 1.5,
+                  overflowWrap: "break-word",
+                  minWidth: 0,
                 }}>
-                  {isCustomer ? "CUSTOMER" : "AGENT"}
+                  <span className="mini-live-transcript__speaker" style={{
+                    fontSize: "0.54rem",
+                    fontWeight: 800,
+                    fontFamily: "var(--font-primary)",
+                    letterSpacing: "0.06em",
+                    color: isCustomer ? "var(--info)" : "var(--text-label)",
+                    marginRight: 5,
+                  }}>
+                    {isCustomer ? "CUSTOMER" : "AGENT"}
+                  </span>
+                  {entry.text}
                 </span>
-                {entry.text}
-              </span>
-            </div>
-          );
-        })}
+              </div>
+            );
+          })}
+        </div>
       </div>
+      {userScrolled && (
+        <button type="button" className="copilot-pill-button" onClick={followLatest}>
+          Jump to latest
+        </button>
+      )}
     </div>
   );
 });

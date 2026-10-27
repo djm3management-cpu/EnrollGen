@@ -29,6 +29,7 @@ function normalizeAgentRows(transcriptRows) {
 
 export function useMergedTranscript({
   agentTranscriptRows = [],
+  agentInterim = null,
   customerTranscript = [],
   isCustomerCapturing = false,
 }) {
@@ -42,6 +43,15 @@ export function useMergedTranscript({
     all.sort((a, b) => a.timestamp - b.timestamp);
     return all;
   }, [agentTranscriptRows, customerTranscript]);
+
+  // The live widget includes speech still being recognized. Saved evidence and
+  // copilot context continue to use the finalized mergedTranscript above.
+  const liveTranscript = useMemo(() => {
+    const interims = customerTranscript.filter(e => !e.isFinal && e.text?.trim());
+    if (agentInterim?.text?.trim()) interims.push(agentInterim);
+    if (!interims.length) return mergedTranscript;
+    return [...mergedTranscript, ...interims].sort((a, b) => a.timestamp - b.timestamp);
+  }, [mergedTranscript, customerTranscript, agentInterim]);
 
   const formattedTranscript = useMemo(() => {
     if (!hasCustomerAudio) return "";
@@ -73,6 +83,7 @@ export function useMergedTranscript({
 
   return {
     mergedTranscript,
+    liveTranscript,
     formattedTranscript,
     customerFlatTranscript,
     recentCustomerSpeech,

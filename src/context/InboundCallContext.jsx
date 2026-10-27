@@ -83,6 +83,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const [remoteStream, setRemoteStream] = useState(null); // customer audio from the Twilio call
   const [contact, setContact] = useState(null);
   const [agentRows, setAgentRows] = useState([]);
+  const [agentInterim, setAgentInterim] = useState(null);
   const [customerTranscript, setCustomerTranscript] = useState([]);
   const [error, setError] = useState("");
   const [transcriptionHealth, setTranscriptionHealth] = useState({});
@@ -183,7 +184,11 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     if (message.type !== "transcript" || !message.text) return;
     setTranscriptionHealth(previous => updateTranscriptionHealth(previous, message));
     if (message.speaker === "agent") {
-      if (!message.isFinal) return;
+      if (!message.isFinal) {
+        setAgentInterim({ speaker: "agent", text: message.text, timestamp: message.timestamp || Date.now(), isFinal: false });
+        return;
+      }
+      setAgentInterim(null);
       setAgentRows((prev) => [
         ...prev,
         {
@@ -484,6 +489,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const acceptCall = useCallback(() => {
     if (!incomingCall || ownedCallRef.current !== incomingCall.call) return;
     setAgentRows([]);
+    setAgentInterim(null);
     setCustomerTranscript([]);
     // Streams start while the agent is ringing. Preserve a failure already
     // reported for this call; discard health left over from another call.
@@ -526,6 +532,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       callContinuity.begin(dialingClaim);
       setError("");
       setAgentRows([]);
+      setAgentInterim(null);
       setCustomerTranscript([]);
       setTranscriptionHealth({});
 
@@ -684,6 +691,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       remoteStream,
       contact,
       agentRows,
+      agentInterim,
       customerTranscript,
       isMuted,
       isHeld,
@@ -710,6 +718,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       remoteStream,
       contact,
       agentRows,
+      agentInterim,
       customerTranscript,
       isMuted,
       isHeld,

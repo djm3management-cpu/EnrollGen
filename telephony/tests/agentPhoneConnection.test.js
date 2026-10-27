@@ -21,6 +21,25 @@ test('phone readiness follows Twilio registration, not just opening a websocket'
   assert.deepEqual(h.sockets[0].sent,[{type:'phone-ready',ready:false}]);
   h.connection.setReady(true); assert.equal(h.sockets[0].sent.at(-1).ready,true);
   h.connection.setReady(false); assert.equal(h.sockets[0].sent.at(-1).ready,false);
+  h.connection.stop();
+});
+
+test('server connected reannounces readiness lost during the async identity check; only acknowledgment releases availability',()=>{
+  const h=harness();h.connection.setReady(true);h.start();const socket=h.sockets[0];socket.open();
+  assert.equal(socket.sent.length,1);assert.equal(h.presence.includes(true),false);
+  socket.onmessage({data:JSON.stringify({type:'connected',agentId:'agent'})});
+  assert.equal(socket.sent.length,2);assert.deepEqual(socket.sent.at(-1),{type:'phone-ready',ready:true});
+  assert.equal(h.presence.includes(true),false);socket.ack();assert.equal(h.presence.at(-1),true);
+  assert.equal(h.timers.size,0);h.connection.stop();
+});
+
+test('missing presence acknowledgment closes the stuck socket and retries; stopping cancels its timeout',async()=>{
+  const h=harness();h.connection.setReady(true);h.start();h.sockets[0].open();
+  assert.equal(h.timers.size,1);const [id,timeout]=h.timers.entries().next().value;h.timers.delete(id);timeout();
+  assert.equal(h.sockets[0].readyState,3);assert.equal(h.timers.size,1);
+  const [retryId,retry]=h.timers.entries().next().value;h.timers.delete(retryId);await retry();
+  assert.equal(h.sockets.length,2);h.sockets[1].open();assert.equal(h.timers.size,1);
+  h.connection.stop();assert.equal(h.timers.size,0);
 });
 test('refresh keeps old socket until replacement lease is acknowledged',()=>{
   const h=harness(); h.connection.setReady(true); h.start(); h.sockets[0].open();

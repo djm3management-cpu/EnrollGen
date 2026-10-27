@@ -13,10 +13,23 @@ export function createAgentPhoneConnection({
   let failures = 0;
   const sockets = new Set();
   const acknowledged = new Set();
+  const handshakeTimers = new Map();
+  function clearHandshake(socket) {
+    if (!handshakeTimers.has(socket)) return;
+    cancel(handshakeTimers.get(socket));
+    handshakeTimers.delete(socket);
+  }
   const reportPresence = () => onPresenceReady(!stopped && ready && acknowledged.size > 0);
   function announce(socket) {
     if (socket.readyState === Socket.OPEN) {
       socket.send(JSON.stringify({ type: "phone-ready", ready }));
+      if (!ready) clearHandshake(socket);
+      else if (!acknowledged.has(socket) && !handshakeTimers.has(socket)) {
+        handshakeTimers.set(socket, schedule(() => {
+          handshakeTimers.delete(socket);
+          if (!stopped && ready && sockets.has(socket) && !acknowledged.has(socket)) socket.close();
+        }, 10000));
+      }
     }
   }
   function connect() {
@@ -30,8 +43,15 @@ export function createAgentPhoneConnection({
       let message;
       try { message = JSON.parse(event.data); } catch { return; }
       if (stopped || !sockets.has(socket) || socket.readyState !== Socket.OPEN) return;
+      if (message.type === "connected") {
+        // The server installs presence listeners after its async identity check.
+        // The onopen announcement may have arrived before those listeners existed.
+        announce(socket);
+        return;
+      }
       if (message.type === "presence-ready") {
         if (!ready) return;
+        clearHandshake(socket);
         failures = 0;
         acknowledged.add(socket);
         reportPresence();
@@ -44,6 +64,7 @@ export function createAgentPhoneConnection({
       if (socket === current) onMessage(message);
     };
     socket.onclose = () => {
+      clearHandshake(socket);
       sockets.delete(socket);
       acknowledged.delete(socket);
       reportPresence();
@@ -90,6 +111,7 @@ export function createAgentPhoneConnection({
       acknowledged.clear();
       reportPresence();
       cancel(retry);
+      for (const socket of sockets) clearHandshake(socket);
       for (const socket of sockets) socket.close();
       sockets.clear();
       current = null;

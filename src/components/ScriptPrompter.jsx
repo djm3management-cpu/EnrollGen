@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, memo } from "react";
+import { useRef, useEffect, useCallback, useMemo, memo } from "react";
 import { useScript } from "../context/ScriptContext";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useCopilotEngine } from "../hooks/useCopilotEngine";
@@ -15,6 +15,7 @@ import { useInboundCall } from "../context/InboundCallContext";
 const ScriptPrompter = memo(function ScriptPrompter({
   onTranscriptChange,
   onMergedTranscriptChange,
+  onLiveTranscriptChange,
   onListeningChange,
   logComplianceFlag,
   controlsRef,
@@ -63,15 +64,20 @@ const ScriptPrompter = memo(function ScriptPrompter({
   // Retain the call's source after disconnect so post-call persistence does
   // not replace track-labeled speech with browser microphone results.
   const useInboundTranscripts = transcriptSourceRef.current === "inbound";
+  const browserInterim = useMemo(() => speech.interimText?.trim()
+    ? { speaker: "agent", text: speech.interimText, timestamp: Date.now(), isFinal: false }
+    : null, [speech.interimText]);
 
   /* ─── Merged transcript (agent + customer) ─── */
   const {
     mergedTranscript,
+    liveTranscript,
     formattedTranscript,
     recentCustomerSpeech,
     hasCustomerAudio,
   } = useMergedTranscript({
     agentTranscriptRows: useInboundTranscripts ? inbound.agentRows : speech.transcriptRows,
+    agentInterim: useInboundTranscripts ? inbound.agentInterim : browserInterim,
     customerTranscript: useInboundTranscripts
       ? customerAudio.isCapturing
         ? [...inbound.customerTranscript, ...customerAudio.customerTranscript]
@@ -175,6 +181,10 @@ const ScriptPrompter = memo(function ScriptPrompter({
   useEffect(() => {
     if (onMergedTranscriptChange) onMergedTranscriptChange(mergedTranscript);
   }, [mergedTranscript, onMergedTranscriptChange]);
+
+  useEffect(() => {
+    onLiveTranscriptChange?.(liveTranscript);
+  }, [liveTranscript, onLiveTranscriptChange]);
 
   // Forward listening state
   useEffect(() => {

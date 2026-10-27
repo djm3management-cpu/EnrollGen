@@ -1848,13 +1848,14 @@ function AncillaryCopilot({ onTranscriptChange }) {
 
   const mergedEntries = useMemo(
     () =>
-      speech.transcriptRows.map((row) => ({
+      [...speech.transcriptRows.map((row) => ({
         speaker: "agent",
         isFinal: true,
         text: row.text,
         timestamp: row.timestamp || new Date().toISOString(),
-      })),
-    [speech.transcriptRows]
+      })), ...(speech.interimText?.trim() ? [{ speaker: "agent", isFinal: false,
+        text: speech.interimText, timestamp: new Date().toISOString() }] : [])],
+    [speech.transcriptRows, speech.interimText]
   );
 
   const clearAll = useCallback(() => {

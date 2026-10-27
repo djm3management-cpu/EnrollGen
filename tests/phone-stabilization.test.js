@@ -19,6 +19,7 @@ class Call extends EventEmitter {
  disconnect(){this.phase='closed';this.emit('disconnect');}
 }
 function phoneFixture(){
+ let deliverTranscript;
  const harness=hookHarness(),devices=[];let agentId='agent',token=async()=>'',availability={isHydrated:true,setPhoneReady:()=>{}};
  class Device extends EventEmitter{
   constructor(){super();this.destroyed=0;devices.push(this);}
@@ -34,14 +35,27 @@ function phoneFixture(){
   resolveRequestingAgentUuid:()=>null,transcriptionHealthError:()=>'',transcriptionHealthForCall:()=>({}),
   updateTranscriptionHealth:()=>({}),publishSms:()=>{},publishAudioLevel:()=>{},debugLog:()=>{},createVoiceTelemetry:()=>()=>{},
   checkOutbound:async()=>({blocked:false}),canonicalOutbound:async()=>({contactId:null,attemptId:'attempt',phoneNumber:'+15555555555'}),
-  createAgentPhoneConnection:()=>({setReady(){},start(){},stop(){}}),
+  createAgentPhoneConnection:({onMessage})=>{deliverTranscript=onMessage;return {setReady(){},start(){},stop(){}};},
   fetch:async()=>({ok:true,json:async()=>({token:'token'})}),
   window:{addEventListener(){},removeEventListener(){},setTimeout:()=>1,clearTimeout(){}},
  });
  vm.runInContext(source+';globalThis.component=InboundCallProviderCore;',context);
  harness.mount(()=>context.component({agentId,identityReady:true}));
- return {harness,devices,switchAgent(id){agentId=id;harness.render();},rotate(){token=async()=>'rotated';availability={...availability,isHydrated:false,status:'wrap_up',wrapUpCallSid:SID};harness.render();}};
+ return {harness,devices,transcript(message){deliverTranscript({type:'transcript',...message});},switchAgent(id){agentId=id;harness.render();},rotate(){token=async()=>'rotated';availability={...availability,isHydrated:false,status:'wrap_up',wrapUpCallSid:SID};harness.render();}};
 }
+
+test('agent speech in progress is visible without entering finalized evidence, and clears for the next call',async()=>{
+ const {harness,devices,transcript}=phoneFixture();try{
+  await harness.flush();
+  transcript({speaker:'agent',text:'Let me check',timestamp:1,isFinal:false});await harness.flush();
+  assert.equal(harness.value.agentInterim.text,'Let me check');assert.equal(harness.value.agentRows.length,0);
+  transcript({speaker:'agent',text:'Let me check that plan.',timestamp:1,isFinal:true});await harness.flush();
+  assert.equal(harness.value.agentInterim,null);assert.equal(harness.value.agentRows.length,1);
+  transcript({speaker:'agent',text:'Next phrase',timestamp:2,isFinal:false});await harness.flush();
+  devices[0].emit('incoming',new Call());await harness.flush();harness.value.acceptCall();await harness.flush();
+  assert.equal(harness.value.agentInterim,null);assert.equal(harness.value.agentRows.length,0);
+ }finally{harness.unmount();}
+});
 
 test('real phone provider preserves a live inbound call through auth refresh, availability wrap-up, media errors and stale prior-leg callbacks',async()=>{
  const {harness,devices,rotate}=phoneFixture();try{

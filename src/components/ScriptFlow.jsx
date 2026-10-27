@@ -539,6 +539,7 @@ export default function ScriptFlow() {
   // ScriptPrompter writes to this, ComplianceMini/Dashboard read it
   const [transcript, setTranscript] = useState("");
   const [mergedTranscriptEntries, setMergedTranscriptEntries] = useState([]);
+  const [liveTranscriptEntries, setLiveTranscriptEntries] = useState([]);
   const [isListening, setIsListening] = useState(false);
   const [customerAudioSharing, setCustomerAudioSharing] = useState(false);
   const [coachingLoading, setCoachingLoading] = useState(false);
@@ -561,6 +562,7 @@ export default function ScriptFlow() {
     setPostCallPersistenceError('');
     setTranscript('');
     setMergedTranscriptEntries([]);
+    setLiveTranscriptEntries([]);
     dispatch({type:'NEW_CALL',direction:state.callDirection});
     setCallGeneration(value=>value+1);
     setCallStarted(true);
@@ -975,7 +977,7 @@ export default function ScriptFlow() {
         activeSection={activeSection}
         state={state}
         dispatch={dispatch}
-        mergedEntries={mergedTranscriptEntries}
+        mergedEntries={liveTranscriptEntries}
         listening={isListening}
         result={liveComplianceResult}
         copilotHandlersRef={copilotHandlersRef}
@@ -1004,6 +1006,7 @@ export default function ScriptFlow() {
         callStarted={callStarted && !wrapUpSaved}
         onTranscriptChange={setTranscript}
         onMergedTranscriptChange={setMergedTranscriptEntries}
+        onLiveTranscriptChange={setLiveTranscriptEntries}
         onListeningChange={setIsListening}
         logComplianceFlag={session.logComplianceFlag}
         controlsRef={copilotHandlersRef}

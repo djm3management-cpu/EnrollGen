@@ -24,6 +24,7 @@ test("inbound speaker sources exclude mic bleed and survive disconnect; outbound
     useRef: (value) => refs[index++] ||= { current: value },
     useEffect: () => {},
     useCallback: (fn) => fn,
+    useMemo: (fn) => fn(),
     useScript: () => ({}),
     useCustomerAudio: () => customer,
     useSpeechRecognition: () => speech,
