@@ -1,4 +1,5 @@
 import {createCallContinuity} from '../src/lib/callContinuity.js';
+import {installAgentAudio} from '../src/lib/audio/AgentAudioProcessor.js';
 import {updateLiveTranscript} from '../src/lib/liveTranscript.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,15 +25,15 @@ function phoneFixture(){
  let deliverTranscript;
  const harness=hookHarness(),devices=[];let agentId='agent',token=async()=>'',availability={isHydrated:true,setPhoneReady:()=>{}};
  class Device extends EventEmitter{
-  constructor(){super();this.destroyed=0;devices.push(this);}
-  register(){this.emit('registered');}
+  constructor(){super();this.destroyed=0;this.audio={setAudioConstraints:async value=>{this.constraints=value;},addProcessor:async value=>{this.processor=value;},removeProcessor:async()=>{}};devices.push(this);}
+  register(){assert.ok(this.processor,'processor must be installed before registration');assert.equal(this.constraints.noiseSuppression,false);this.emit('registered');}
   destroy(){this.destroyed++;}
   connect(){return Promise.resolve(new Call(NEXT));}
  }
  let source=readFileSync(new URL('../src/context/InboundCallContext.jsx',import.meta.url),'utf8');
  source=source.slice(source.indexOf('function paramsFromCall'),source.indexOf('function AuthedInboundCallProvider'));
  source=source.replace('import("@twilio/voice-sdk")','Promise.resolve({Device:globalThis.Device})').replace('return <InboundCallContext.Provider value={value}>{children}</InboundCallContext.Provider>;','return value;');
- const context=vm.createContext({...harness.hooks,updateLiveTranscript,callContinuity:createCallContinuity(),Device,console,Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
+ const context=vm.createContext({...harness.hooks,installAgentAudio,requestAgentMicrophone:()=>{},readAudioPreferences:()=>({enabled:true}),updateLiveTranscript,callContinuity:createCallContinuity(),Device,console,Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
   useAppAuth:()=>({getToken:token}),useTenantConfig:()=>({agents:[],supabaseClient:null}),useAvailability:()=>availability,
   resolveRequestingAgentUuid:()=>null,transcriptionHealthError:()=>'',transcriptionHealthForCall:()=>({}),
   updateTranscriptionHealth:()=>({}),publishSms:()=>{},publishAudioLevel:()=>{},debugLog:()=>{},createVoiceTelemetry:()=>()=>{},

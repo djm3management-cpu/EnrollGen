@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Plus, RefreshCcw, Send, Trash2 } from "lucide-react";
 import BillingSettings from "./BillingSettings";
 import VendorRoutingSettings from "./VendorRoutingSettings";
+import AgentAudioSettings from "./AgentAudioSettings";
 import { useAppAuth } from "../context/AuthContext";
 import { fetchWithClerk } from "../lib/clerkFetch";
 import { useSubscription } from "../hooks/useSubscription";
@@ -465,9 +466,9 @@ export default function TenantSettings({ currentUser = null }) {
       <section className="tenant-settings-panel">
         <div className="tenant-settings-header">
           <span className="billing-eyebrow">SETTINGS</span>
-          <h2>Tenant Settings</h2>
-          <p>Admin access required.</p>
+          <h2>Agent Settings</h2>
         </div>
+        <AgentAudioSettings />
       </section>
     );
   }
@@ -499,6 +500,7 @@ export default function TenantSettings({ currentUser = null }) {
       </div>
 
       {message ? <div className="billing-alert">{message}</div> : null}
+      <AgentAudioSettings />
 
       <section className="tenant-settings-card tenant-settings-card-wide">
         <div className="tenant-settings-section-title">Vendor availability</div>

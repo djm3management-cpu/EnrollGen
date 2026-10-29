@@ -910,7 +910,7 @@ function AppShell({ currentUser = null }) {
       <div className="top-panel-header">
         <div id="workspace-panel-title" className="top-panel-title">
           {openPanel === "settings"
-            ? "Agency Settings"
+            ? (canAdmin ? "Agency Settings" : "Agent Settings")
             : navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
         </div>
         <button
@@ -1007,7 +1007,6 @@ function AppShell({ currentUser = null }) {
               {isDark ? <Sun size={14} /> : <SquareTerminal size={14} />}
             </button>
             {!LOGIN_DISABLED ? <ProfileMenu /> : null}
-            {canAdmin ? (
               <button
                 type="button"
                 className={`top-bar-settings-button${openPanel === "settings" ? " is-active" : ""}`}
@@ -1015,11 +1014,11 @@ function AppShell({ currentUser = null }) {
                   preloadPanel("settings");
                   setOpenPanel((current) => (current === "settings" ? null : "settings"));
                 }}
-                title="Agency settings"
+                title={canAdmin ? "Agency settings" : "Agent settings"}
+                aria-label={canAdmin ? "Agency settings" : "Agent settings"}
               >
                 <SettingsIcon />
               </button>
-            ) : null}
           </div>
         </header>
 

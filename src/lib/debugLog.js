@@ -5,3 +5,9 @@ export function debugLog(event) {
     console.debug(event);
   }
 }
+
+// Audio fallback must be visible in production. Call only with processing errors;
+// omit stacks, streams, user identity and call data from this diagnostic.
+export function logAudioProcessingError(label, error) {
+  console.error(label, error instanceof Error ? error.message : String(error));
+}

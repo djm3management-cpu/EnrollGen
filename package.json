@@ -22,6 +22,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@supabase/supabase-js": "^2.97.0",
     "@twilio/voice-sdk": "^2.18.3",
+    "@workadventure/noise-suppression": "^0.2.0",
     "ajv": "^8.20.0",
     "framer-motion": "^12.34.1",
     "jspdf": "^4.2.0",

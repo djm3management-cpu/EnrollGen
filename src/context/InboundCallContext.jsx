@@ -1,5 +1,5 @@
 import { callContinuity } from "../lib/callContinuity.js";
-import { debugLog } from "../lib/debugLog.js";
+import { debugLog, logAudioProcessingError } from "../lib/debugLog.js";
 import { createVoiceTelemetry } from "../lib/voiceTelemetry.js";
 import { checkOutbound, canonicalOutbound } from "../lib/outboundApi";
 import {
@@ -25,6 +25,8 @@ import { publishSms } from "../lib/smsEvents";
 import { publishAudioLevel } from "../stores/audioLevelStore";
 import { updateTranscriptionHealth, transcriptionHealthError, transcriptionHealthForCall } from "../lib/transcriptionHealth";
 import { updateLiveTranscript } from "../lib/liveTranscript.js";
+import { installAgentAudio, requestAgentMicrophone } from "../lib/audio/AgentAudioProcessor.js";
+import { readAudioPreferences } from "../lib/audioPreferences.js";
 
 // Inbound softphone state: Twilio Voice SDK device registration, the
 // incoming-call banner payload, and the server-transcribed AGENT/CUSTOMER
@@ -63,7 +65,10 @@ function formatClock(timestamp) {
 }
 
 function InboundCallProviderCore({ agentId, identityReady, children }) {
-  const { getToken } = useAppAuth();
+  const { getToken, user } = useAppAuth();
+  const audioUserRef = useRef(user);
+  audioUserRef.current = user;
+  const audioProcessorsRef = useRef(new WeakMap());
   const { supabaseClient, agents } = useTenantConfig();
   const requestingAgentId = resolveRequestingAgentUuid(agents, agentId);
   const availability = useAvailability();
@@ -123,7 +128,14 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     if (destroyedDevicesRef.current.has(device)) return;
     destroyedDevicesRef.current.add(device);
     reportCallEvent('device_destroyed', ownedCallRef.current, { reason, deviceSequence: deviceIdsRef.current.get(device) });
+    const audio = device.audio;
     device.destroy();
+    const processor = audioProcessorsRef.current.get(device);
+    if (processor) {
+      if (processor.registered) void audio.removeProcessor(processor).catch(error => logAudioProcessingError('[AgentAudio] Processor removal failed:', error));
+      void processor.dispose();
+      audioProcessorsRef.current.delete(device);
+    }
   }, [reportCallEvent]);
   // True while a call is ringing, dialing or live. A call the SDK already closed
   // whose terminal event never arrived is finished, not live.
@@ -282,7 +294,13 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
         const device = new Device(bundle.token, {
           codecPreferences: ["opus", "pcmu"],
+          getUserMedia: requestAgentMicrophone,
         });
+        const processor = await installAgentAudio(device, {
+          getPreferences: () => readAudioPreferences(audioUserRef.current, agentId),
+        });
+        audioProcessorsRef.current.set(device, processor);
+        if (cancelled) { destroyDevice(device, 'audio_setup_canceled'); return; }
         const deviceSequence = ++deviceSequenceRef.current;
         deviceIds.set(device, deviceSequence);
         reportVoiceEvent('device_created', { deviceSequence });
