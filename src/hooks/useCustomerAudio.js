@@ -6,6 +6,7 @@ import { fetchWithClerk } from "../lib/clerkFetch";
 import { waitForActiveSessionMetadata } from "./useSessionTracker";
 import { computeRmsLevel, computeWaveformPeaks } from "../audio/audioPeaks";
 import { publishAudioLevel } from "../stores/audioLevelStore";
+import { updateLiveTranscript } from "../lib/liveTranscript.js";
 
 /**
  * useCustomerAudio - captures customer audio from a shared browser tab
@@ -24,6 +25,7 @@ const DEEPGRAM_WS_URL =
 const TARGET_SAMPLE_RATE = 16000;
 const BUFFER_SIZE = 4096;
 const DEEPGRAM_TOKEN_ENDPOINT = "/api/deepgram-token";
+let captureSequence = 0;
 
 async function requestCustomerAudioStream() {
   if (!navigator.mediaDevices?.getDisplayMedia) {
@@ -108,7 +110,6 @@ export function useCustomerAudio() {
   const sourceRef = useRef(null);
   const wsRef = useRef(null);
   const cleaningUpRef = useRef(false);
-  const interimRef = useRef("");
 
   const cleanup = useCallback(() => {
     if (cleaningUpRef.current) return;
@@ -279,10 +280,13 @@ export function useCustomerAudio() {
 
     // /auth/grant returns a JWT, which requires Bearer authentication.
     const ws = new WebSocket(DEEPGRAM_WS_URL, ["bearer", deepgramToken]);
+    const streamId = `customer-${++captureSequence}`;
+    let audioStartedAt;
     wsRef.current = ws;
 
     ws.onopen = () => {
       if (wsRef.current !== ws) return;
+      audioStartedAt = Date.now();
       void (async () => {
         const { agentId, sessionId } = await waitForActiveSessionMetadata();
         if (ws.readyState === WebSocket.OPEN) {
@@ -356,29 +360,14 @@ export function useCustomerAudio() {
         if (data.type === "Results" && data.channel?.alternatives?.[0]) {
           const alt = data.channel.alternatives[0];
           const text = (alt.transcript || "").trim();
-          if (!text) return;
-
-          const timestamp = Date.now();
-
-          if (data.is_final) {
-            interimRef.current = "";
-            setCustomerTranscript((prev) => [
-              ...prev,
-              { text, timestamp, isFinal: true, speaker: "customer" },
-            ]);
-          } else {
-            interimRef.current = text;
-            setCustomerTranscript((prev) => {
-              const copy = [...prev];
-              const entry = { text, timestamp, isFinal: false, speaker: "customer" };
-              if (copy.length > 0 && !copy[copy.length - 1].isFinal) {
-                copy[copy.length - 1] = entry;
-              } else {
-                copy.push(entry);
-              }
-              return copy;
-            });
-          }
+          const startMs = Math.round((data.start || 0) * 1000);
+          const speechStartMs = Math.round((alt.words?.[0]?.start ?? data.start ?? 0) * 1000);
+          audioStartedAt ??= Date.now();
+          setCustomerTranscript(prev => updateLiveTranscript(prev, {
+            text, timestamp: audioStartedAt + speechStartMs, startMs,
+            streamId, segmentId: `${streamId}:${startMs}`,
+            isFinal: Boolean(data.is_final), speaker: "customer",
+          }));
         }
       } catch {
         /* ignore parse errors */
@@ -412,7 +401,6 @@ export function useCustomerAudio() {
 
   const clearTranscript = useCallback(() => {
     setCustomerTranscript([]);
-    interimRef.current = "";
   }, []);
 
   useEffect(() => () => cleanup(), [cleanup]);

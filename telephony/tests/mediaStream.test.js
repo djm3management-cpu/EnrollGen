@@ -264,7 +264,7 @@ test('a substituted stream SID on an active media packet is rejected', async t =
   assert.equal((await closed)[0],1008); assert.ok(h.tracks.every(track => track.audio.length === 0));
 });
 
-function deepgramHarness(speaker) {
+function deepgramHarness(speaker, options = {}) {
   const sockets = [], messages = [], timers = new Map(), intervals = new Map();
   class Socket extends EventEmitter {
     constructor() { super(); this.readyState=0; this.bufferedAmount=0; this.sent=[]; sockets.push(this); }
@@ -275,10 +275,57 @@ function deepgramHarness(speaker) {
   }
   const schedule = (fn,delay) => { const key={}; timers.set(key,{fn,delay}); return key; };
   const track = openDeepgramTrack({ speaker,Socket,notify: event => messages.push(event),schedule,cancel: key => timers.delete(key),
-    every: fn => { const key={}; intervals.set(key,fn); return key; },cancelEvery: key => intervals.delete(key) });
+    every: fn => { const key={}; intervals.set(key,fn); return key; },cancelEvery: key => intervals.delete(key), ...options });
   function retry() { const entry=[...timers.entries()].find(([,timer]) => timer.delay < 5000); assert.ok(entry); timers.delete(entry[0]); entry[1].fn(); }
   return { sockets,messages,timers,intervals,track,retry };
 }
+
+test('both Deepgram tracks emit interim and segment-final results immediately on a shared audio timeline', () => {
+  const origin = 10000;
+  let clock = 20000;
+  const customer = deepgramHarness('customer', { now: () => clock, timelineOrigin: origin });
+  const agent = deepgramHarness('agent', { now: () => clock, timelineOrigin: origin });
+  const result = (h, start, text, final) => h.sockets.at(-1).emit('message', Buffer.from(JSON.stringify({
+    type: 'Results', start, duration: 1, is_final: final, speech_final: false,
+    channel: { alternatives: [{ transcript: text }] },
+  })));
+  try {
+    for (const h of [customer, agent]) { h.sockets[0].open(); h.track.send(Buffer.alloc(160), 500); }
+    result(customer, 0, 'Caller speaking', false);
+    const partial = customer.messages.at(-1);
+    assert.equal(partial.isFinal, false); assert.equal(partial.timestamp, 10500);
+    result(agent, 1, 'Agent answer', true);
+    clock += 9000;
+    result(customer, 0, 'Caller finished.', true);
+    const final = customer.messages.at(-1);
+    assert.equal(final.isFinal, true); assert.equal(final.segmentId, partial.segmentId);
+    assert.ok(final.timestamp < agent.messages.at(-1).timestamp, 'arrival latency cannot reorder the speakers');
+    result(customer, 2, 'Latest continuous speech', false);
+    assert.equal(customer.messages.at(-1).text, 'Latest continuous speech');
+    customer.sockets[0].emit('close'); customer.retry(); customer.sockets[1].open();
+    customer.track.send(Buffer.alloc(160), 5000);
+    result(customer, 0, 'After reconnect', false);
+    assert.equal(customer.messages.at(-1).timestamp, 15000);
+    assert.equal(customer.messages.at(-1).startMs, 5000);
+    assert.notEqual(customer.messages.at(-1).segmentId, partial.segmentId);
+  } finally { customer.track.close(); agent.track.close(); }
+});
+
+test('media forwards Twilio timestamps and gives both channels the same timeline origin', async t => {
+  const opened = [], sent = [];
+  const h = await harness(t, { now: () => Date.now(), openTrack: options => {
+    opened.push(options);
+    return { send: (_audio, timestamp) => sent.push([options.speaker, timestamp]), close() {} };
+  } });
+  const claims = await seedCall(), ws = await h.connect(claims), message = start(claims);
+  ws.send(JSON.stringify(message)); await until(() => opened.length === 2);
+  for (const track of ['inbound', 'outbound']) {
+    const audio = frame(message.streamSid, track); audio.media.timestamp = '240'; ws.send(JSON.stringify(audio));
+  }
+  await until(() => sent.length === 2);
+  assert.equal(opened[0].timelineOrigin, opened[1].timelineOrigin);
+  assert.deepEqual(sent, [['customer', 240], ['agent', 240]]);
+});
 for (const speaker of ['customer','agent']) {
   test(`Deepgram ${speaker} errors/close notify browser, reconnect with gap markers and stop after three retries`, () => {
     const h = deepgramHarness(speaker); h.sockets[0].open();

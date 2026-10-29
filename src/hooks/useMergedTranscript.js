@@ -20,9 +20,10 @@ import { useMemo } from "react";
  */
 function normalizeAgentRows(transcriptRows) {
   return transcriptRows.map((row) => ({
+    segmentId: row.segmentId,
     speaker: "agent",
     text: row.text,
-    timestamp: row.id, // row.id is Date.now() at creation time
+    timestamp: typeof row.timestamp === "number" ? row.timestamp : row.id,
     isFinal: true,
   }));
 }

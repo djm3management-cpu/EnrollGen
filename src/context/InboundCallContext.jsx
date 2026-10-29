@@ -24,6 +24,7 @@ import { createAgentPhoneConnection } from "../lib/agentPhoneConnection";
 import { publishSms } from "../lib/smsEvents";
 import { publishAudioLevel } from "../stores/audioLevelStore";
 import { updateTranscriptionHealth, transcriptionHealthError, transcriptionHealthForCall } from "../lib/transcriptionHealth";
+import { updateLiveTranscript } from "../lib/liveTranscript.js";
 
 // Inbound softphone state: Twilio Voice SDK device registration, the
 // incoming-call banner payload, and the server-transcribed AGENT/CUSTOMER
@@ -82,8 +83,11 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const [dialingCall, setDialingCall] = useState(null); // { call, params } while an outbound call is ringing
   const [remoteStream, setRemoteStream] = useState(null); // customer audio from the Twilio call
   const [contact, setContact] = useState(null);
-  const [agentRows, setAgentRows] = useState([]);
-  const [agentInterim, setAgentInterim] = useState(null);
+  const [agentTranscript, setAgentTranscript] = useState([]);
+  const agentRows = useMemo(() => agentTranscript.filter(entry => entry.isFinal).map(entry => ({
+    ...entry, id: entry.segmentId || entry.timestamp, ts: formatClock(entry.timestamp),
+  })), [agentTranscript]);
+  const agentInterim = useMemo(() => agentTranscript.find(entry => !entry.isFinal) || null, [agentTranscript]);
   const [customerTranscript, setCustomerTranscript] = useState([]);
   const [error, setError] = useState("");
   const [transcriptionHealth, setTranscriptionHealth] = useState({});
@@ -181,38 +185,18 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       setTranscriptionHealth(previous => updateTranscriptionHealth(previous, message));
       return;
     }
-    if (message.type !== "transcript" || !message.text) return;
+    if (message.type !== "transcript" || typeof message.text !== "string") return;
     setTranscriptionHealth(previous => updateTranscriptionHealth(previous, message));
+    const entry = {
+      ...message,
+      timestamp: message.timestamp ?? Date.now(),
+      isFinal: Boolean(message.isFinal),
+    };
     if (message.speaker === "agent") {
-      if (!message.isFinal) {
-        setAgentInterim({ speaker: "agent", text: message.text, timestamp: message.timestamp || Date.now(), isFinal: false });
-        return;
-      }
-      setAgentInterim(null);
-      setAgentRows((prev) => [
-        ...prev,
-        {
-          id: message.timestamp || Date.now(),
-          ts: formatClock(message.timestamp || Date.now()),
-          timestamp: message.timestamp || Date.now(),
-          text: message.text,
-        },
-      ]);
+      setAgentTranscript(prev => updateLiveTranscript(prev, entry));
       return;
     }
-    setCustomerTranscript((prev) => {
-      const entry = {
-        speaker: "customer",
-        text: message.text,
-        timestamp: message.timestamp || Date.now(),
-        isFinal: Boolean(message.isFinal),
-      };
-      const last = prev[prev.length - 1];
-      if (last && !last.isFinal) {
-        return [...prev.slice(0, -1), entry];
-      }
-      return [...prev, entry];
-    });
+    if (message.speaker === "customer") setCustomerTranscript(prev => updateLiveTranscript(prev, entry));
   }, []);
 
   const connectAgentSocket = useCallback((bundle) => {
@@ -488,8 +472,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
   const acceptCall = useCallback(() => {
     if (!incomingCall || ownedCallRef.current !== incomingCall.call) return;
-    setAgentRows([]);
-    setAgentInterim(null);
+    setAgentTranscript([]);
     setCustomerTranscript([]);
     // Streams start while the agent is ringing. Preserve a failure already
     // reported for this call; discard health left over from another call.
@@ -531,8 +514,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       const dialingClaim = {};
       callContinuity.begin(dialingClaim);
       setError("");
-      setAgentRows([]);
-      setAgentInterim(null);
+      setAgentTranscript([]);
       setCustomerTranscript([]);
       setTranscriptionHealth({});
 

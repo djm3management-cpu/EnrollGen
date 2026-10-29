@@ -1,4 +1,5 @@
 import { debugLog } from "../src/lib/debugLog.js";
+import { updateLiveTranscript } from '../src/lib/liveTranscript.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -18,7 +19,7 @@ function harness() {
     close(){this.readyState=3;this.onclose?.({code:1000});}
   }
   const clone={getAudioTracks:()=>[{readyState:'live'}],getTracks:()=>[{stop:()=>stops++}]};
-  const context=vm.createContext({ debugLog,
+  const context=vm.createContext({ debugLog, updateLiveTranscript,
     useState:initial=>{const index=states.length;states.push(initial);return [initial,value=>{states[index]=typeof value==='function'?value(states[index]):value;}];},
     useRef:current=>({current}),useCallback:fn=>fn,useEffect:()=>{},
     useAppAuth:()=>({getToken:async()=> 'clerk-test'}),
@@ -59,4 +60,16 @@ test('final customer speech keeps its customer label for the right rail',async()
   h.sockets[0].onmessage({data:JSON.stringify({type:'Results',is_final:true,channel:{alternatives:[{transcript:'Yes, I can hear you.'}]}})});
   assert.equal(h.states[1][0].speaker,'customer');assert.equal(h.states[1][0].isFinal,true);
   assert.equal(h.states[1][0].text,'Yes, I can hear you.');
+});
+
+test('customer results replace their interim and never leave stale partial text behind',async()=>{
+  const h=harness();await h.hook.startCapture({mediaStream:h.stream});
+  const result=(start,text,is_final)=>h.sockets[0].onmessage({data:JSON.stringify({type:'Results',start,duration:1,is_final,
+    speech_final:false,channel:{alternatives:[{transcript:text}]}})});
+  result(0,'I would',false);result(0,'I would like',false);result(0,'I would like help.',true);
+  assert.equal(h.states[1].length,1);assert.equal(h.states[1][0].isFinal,true);
+  result(2,'The newest speech',false);result(0,'I would like help.',true);
+  assert.equal(h.states[1].length,2);assert.equal(h.states[1].at(-1).text,'The newest speech');
+  result(0,'Stale partial',false);
+  assert.equal(h.states[1].length,2);assert.equal(h.states[1].at(-1).text,'The newest speech');
 });

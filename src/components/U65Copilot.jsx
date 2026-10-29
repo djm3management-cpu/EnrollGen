@@ -1,7 +1,8 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { useU65 } from "../flows/u65/U65Context";
 import { useU65CopilotEngine } from "../hooks/useU65CopilotEngine";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
+import { useMergedTranscript } from "../hooks/useMergedTranscript";
 import { useSessionTracker } from "../hooks/useSessionTracker";
 import CompactCopilotRail from "./CompactCopilotRail";
 import CrossSellTrigger from "./copilot/CrossSellTrigger";
@@ -55,16 +56,12 @@ const U65Copilot = memo(function U65Copilot({ onTranscriptChange }) {
 
   const { currentStep, coachingLoading } = copilot;
   const { listening, transcript, transcriptRows, supportsRecognition } = speech;
-  const mergedEntries = useMemo(
-    () =>
-      transcriptRows.map((row) => ({
-        speaker: "agent",
-        isFinal: true,
-        text: row.text,
-        timestamp: row.timestamp || new Date().toISOString(),
-      })),
-    [transcriptRows]
-  );
+  const { liveTranscript: mergedEntries } = useMergedTranscript({
+    agentTranscriptRows: transcriptRows,
+    agentInterim: speech.interimText?.trim()
+      ? { speaker: "agent", text: speech.interimText, timestamp: Date.now(), isFinal: false }
+      : null,
+  });
 
   return (
     <CompactCopilotRail

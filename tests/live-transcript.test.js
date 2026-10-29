@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { transformSync } from 'esbuild';
 import { hookHarness } from './helpers/hookHarness.js';
+import { updateLiveTranscript } from '../src/lib/liveTranscript.js';
 
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const walk = node => !node || typeof node !== 'object' ? []
@@ -119,3 +120,71 @@ test('live merge includes both speakers in progress while saved evidence and cop
   assert.doesNotMatch(JSON.stringify(h.value.liveTranscript), /Still speaking|Agent speaking/);
   h.unmount();
 });
+
+test('dual-channel result stream renders the newest speech through revisions and out-of-order finals', () => {
+  const h = hookHarness();
+  const hook = vm.runInNewContext(read('src/hooks/useMergedTranscript.js')
+    .replace(/^import .*;\n/gm, '').replace('export function', 'function') + ';useMergedTranscript', h.hooks);
+  const f = fixture([]);
+  let agent = [], customer = [];
+  h.mount(() => hook({
+    agentTranscriptRows: agent.filter(e => e.isFinal).map(e => ({ ...e, id: e.segmentId })),
+    agentInterim: agent.find(e => !e.isFinal), customerTranscript: customer, isCustomerCapturing: true,
+  }));
+  const send = (speaker, startMs, text, isFinal) => {
+    const entry = { speaker, startMs, timestamp: 10000 + startMs,
+      streamId: speaker, segmentId: `${speaker}:${startMs}`, text, isFinal };
+    if (speaker === 'agent') agent = updateLiveTranscript(agent, entry);
+    else customer = updateLiveTranscript(customer, entry);
+    h.render(); f.update(h.value.liveTranscript);
+    return walk(f.h.value).filter(n => n.props.className?.includes('__row'));
+  };
+  try {
+    send('customer', 0, 'Earlier caller', false);
+    send('agent', 1000, 'I can', false);
+    send('agent', 1000, 'I can help.', true); // speech_final is unnecessary
+    let rows = send('customer', 2000, 'My newest question', false);
+    const partialKey = rows.at(-1).props.key;
+    rows = send('customer', 0, 'Earlier caller finalized late.', true);
+    assert.match(JSON.stringify(rows.at(-1)), /My newest question/);
+    assert.deepEqual(Array.from(h.value.liveTranscript, e => e.timestamp), [10000, 11000, 12000]);
+    assert.doesNotMatch(h.value.formattedTranscript, /My newest question/);
+    rows = send('customer', 2000, 'My newest question is about coverage', false);
+    assert.equal(rows.at(-1).props.key, partialKey);
+    rows = send('customer', 2000, 'My newest question is about coverage.', true);
+    assert.equal(rows.length, 3); assert.equal(rows.at(-1).props.key, partialKey);
+    assert.match(JSON.stringify(rows.at(-1)), /My newest question is about coverage\./);
+    assert.doesNotMatch(rows.at(-1).props.className, /is-interim/);
+    assert.equal(f.viewport.scrollTop, 400);
+  } finally { h.unmount(); f.h.unmount(); }
+});
+
+for (const name of ['AcaCopilot', 'MedSupAiCopilot', 'U65Copilot']) {
+  test(`${name} forwards interim recognition text to the actual live panel`, () => {
+    const h = hookHarness();
+    let interim = 'Latest speech still in progress';
+    const hook = vm.runInNewContext(read('src/hooks/useMergedTranscript.js')
+      .replace(/^import .*;\n/gm, '').replace('export function', 'function') + ';useMergedTranscript', h.hooks);
+    const state = {};
+    const flow = () => ({ state, activeGate: 1, activeSection: 1 });
+    const engine = () => ({});
+    const source = transformSync(read(`src/components/${name}.jsx`).replace(/^import .*;\n/gm, '')
+      .replace(`export default ${name};`, ''), { loader: 'jsx', jsxFactory: 'element', format: 'cjs' }).code;
+    const component = vm.runInNewContext(source + `;${name}`, {
+      ...h.hooks, memo: fn => fn, useMergedTranscript: hook,
+      useACA: flow, useMedSup: flow, useU65: flow,
+      useAcaCopilotEngine: engine, useMedSupCopilotEngine: engine, useU65CopilotEngine: engine,
+      useSpeechRecognition: () => ({ transcriptRows: [{ id: 1, text: 'Earlier final' }], interimText: interim }),
+      useSessionTracker: () => ({}), CompactCopilotRail: 'rail', CrossSellTrigger: 'cross-sell',
+      element: (type, props) => ({ type, props }),
+    });
+    h.mount(() => component({}));
+    const f = fixture(h.value.props.mergedEntries);
+    try {
+      assert.match(JSON.stringify(f.h.value), /Latest speech still in progress/);
+      interim = 'Newest words as speech continues'; h.render(); f.update(h.value.props.mergedEntries);
+      assert.match(JSON.stringify(f.h.value), /Newest words as speech continues/);
+      assert.doesNotMatch(JSON.stringify(f.h.value), /Latest speech still in progress/);
+    } finally { h.unmount(); f.h.unmount(); }
+  });
+}

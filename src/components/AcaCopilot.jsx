@@ -1,7 +1,8 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { useACA } from "../flows/aca/ACAContext";
 import { useAcaCopilotEngine } from "../hooks/useAcaCopilotEngine";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
+import { useMergedTranscript } from "../hooks/useMergedTranscript";
 import { useSessionTracker } from "../hooks/useSessionTracker";
 import CompactCopilotRail from "./CompactCopilotRail";
 
@@ -54,16 +55,12 @@ const AcaCopilot = memo(function AcaCopilot({ onTranscriptChange }) {
 
   const { currentStep, coachingLoading } = copilot;
   const { listening, transcript, transcriptRows, supportsRecognition } = speech;
-  const mergedEntries = useMemo(
-    () =>
-      transcriptRows.map((row) => ({
-        speaker: "agent",
-        isFinal: true,
-        text: row.text,
-        timestamp: row.timestamp || new Date().toISOString(),
-      })),
-    [transcriptRows]
-  );
+  const { liveTranscript: mergedEntries } = useMergedTranscript({
+    agentTranscriptRows: transcriptRows,
+    agentInterim: speech.interimText?.trim()
+      ? { speaker: "agent", text: speech.interimText, timestamp: Date.now(), isFinal: false }
+      : null,
+  });
 
   return (
     <CompactCopilotRail

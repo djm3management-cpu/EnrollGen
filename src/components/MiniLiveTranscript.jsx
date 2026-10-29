@@ -160,7 +160,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
             const isCustomer = entry.speaker === "customer";
             return (
               <div
-                key={`${entry.speaker}-${entry.timestamp}-${idx}`}
+                key={entry.segmentId || `${entry.speaker}-${entry.timestamp}-${idx}`}
                 className={`mini-live-transcript__row ${
                   isCustomer ? "is-customer" : "is-agent"
                 }${idx === visibleEntries.length - 1 ? " is-latest" : ""}${entry.isFinal ? "" : " is-interim"}`}

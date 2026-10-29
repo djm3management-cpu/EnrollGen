@@ -1,9 +1,11 @@
 import {createCallContinuity} from '../src/lib/callContinuity.js';
+import {updateLiveTranscript} from '../src/lib/liveTranscript.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {EventEmitter} from 'node:events';
+import {randomUUID} from 'node:crypto';
 import {transformSync} from 'esbuild';
 import {hookHarness} from './helpers/hookHarness.js';
 import {mayShowCallDisposition,phoneHasInProgressCall} from '../src/lib/callDisposition.js';
@@ -30,7 +32,7 @@ function phoneFixture(){
  let source=readFileSync(new URL('../src/context/InboundCallContext.jsx',import.meta.url),'utf8');
  source=source.slice(source.indexOf('function paramsFromCall'),source.indexOf('function AuthedInboundCallProvider'));
  source=source.replace('import("@twilio/voice-sdk")','Promise.resolve({Device:globalThis.Device})').replace('return <InboundCallContext.Provider value={value}>{children}</InboundCallContext.Provider>;','return value;');
- const context=vm.createContext({...harness.hooks,callContinuity:createCallContinuity(),Device,console,Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
+ const context=vm.createContext({...harness.hooks,updateLiveTranscript,callContinuity:createCallContinuity(),Device,console,Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
   useAppAuth:()=>({getToken:token}),useTenantConfig:()=>({agents:[],supabaseClient:null}),useAvailability:()=>availability,
   resolveRequestingAgentUuid:()=>null,transcriptionHealthError:()=>'',transcriptionHealthForCall:()=>({}),
   updateTranscriptionHealth:()=>({}),publishSms:()=>{},publishAudioLevel:()=>{},debugLog:()=>{},createVoiceTelemetry:()=>()=>{},
@@ -55,6 +57,75 @@ test('agent speech in progress is visible without entering finalized evidence, a
   devices[0].emit('incoming',new Call());await harness.flush();harness.value.acceptCall();await harness.flush();
   assert.equal(harness.value.agentInterim,null);assert.equal(harness.value.agentRows.length,0);
  }finally{harness.unmount();}
+});
+
+test('late finals and stale interims cannot erase either speaker’s newest speech',async()=>{
+ const {harness,transcript}=phoneFixture();try{
+  await harness.flush();
+  for(const speaker of ['agent','customer']){
+   const send=(startMs,text,isFinal)=>transcript({speaker,streamId:speaker,segmentId:`${speaker}:${startMs}`,startMs,
+    timestamp:1000+startMs,text,isFinal});
+   send(0,'Earlier partial',false);send(2000,'Newest live speech',false);send(0,'Earlier final.',true);
+   await harness.flush();
+   const partial=speaker==='agent'?harness.value.agentInterim:harness.value.customerTranscript.find(e=>!e.isFinal);
+   assert.equal(partial?.text,'Newest live speech',speaker);
+   send(0,'Stale earlier partial',false);send(2000,'Newest final.',true);send(2000,'Newest final.',true);
+   await harness.flush();
+   const finals=speaker==='agent'?harness.value.agentRows:harness.value.customerTranscript.filter(e=>e.isFinal);
+   assert.equal(finals.length,2,speaker);
+   assert.equal(speaker==='agent'?harness.value.agentInterim:harness.value.customerTranscript.find(e=>!e.isFinal),
+    speaker==='agent'?null:undefined);
+  }
+ }finally{harness.unmount();}
+});
+
+test('Deepgram dual-channel stream reaches the rendered panel with the latest interim and ordered finals',async()=>{
+ const phone=phoneFixture(),view=hookHarness(),sockets=[];
+ class Socket extends EventEmitter {
+  static OPEN=1; static CLOSED=3;
+  constructor(){super();this.readyState=1;this.bufferedAmount=0;sockets.push(this);}
+  send(_chunk,callback){callback?.();} terminate(){this.readyState=3;this.emit('close');}
+ }
+ const read=file=>readFileSync(new URL(`../${file}`,import.meta.url),'utf8');
+ const open=vm.runInNewContext(stripImports(read('telephony/src/media/deepgramTrack.js'))
+  .replace(/^export /gm,'')+';openDeepgramTrack',{
+   WebSocket:Socket,randomUUID,config:{deepgramApiKey:'fixture'},setTimeout,clearTimeout,setInterval,clearInterval,
+  });
+ const merge=vm.runInNewContext(stripImports(read('src/hooks/useMergedTranscript.js'))
+  .replace(/^export /gm,'')+';useMergedTranscript',view.hooks);
+ const widgetSource=transformSync(stripImports(read('src/components/MiniLiveTranscript.jsx'))
+  .replace('export const TranscriptTimer','const TranscriptTimer').replace('export default MiniLiveTranscript;',''),
+  {loader:'jsx',jsxFactory:'element',format:'cjs'}).code;
+ const widget=vm.runInNewContext(widgetSource+';MiniLiveTranscript',{
+  ...view.hooks,useLayoutEffect:view.hooks.useEffect,memo:fn=>fn,PanelIdleSpinner:'spinner',
+  element:(type,props,...children)=>({type,props,children}),
+ });
+ const tracks=['customer','agent'].map(speaker=>open({speaker,timelineOrigin:10000,now:()=>99000,notify:phone.transcript}));
+ const send=(index,start,text,is_final)=>sockets[index].emit('message',Buffer.from(JSON.stringify({
+  type:'Results',start,duration:1,is_final,speech_final:false,channel:{alternatives:[{transcript:text}]},
+ })));
+ const refresh=async()=>{await phone.harness.flush();view.render();return JSON.stringify(view.value);};
+ try{
+  await phone.harness.flush();
+  for(const track of tracks)track.send(Buffer.alloc(160),0);
+  view.mount(()=>widget({mergedEntries:merge({agentTranscriptRows:phone.harness.value.agentRows,
+   agentInterim:phone.harness.value.agentInterim,customerTranscript:phone.harness.value.customerTranscript}).liveTranscript}));
+  send(0,0,'Earlier caller partial',false);send(1,1,'Agent response.',true);
+  send(0,2,'The newest speech',false);send(0,0,'Caller final arriving late.',true);
+  let rendered=await refresh();
+  assert.match(rendered,/The newest speech/);
+  assert.ok(rendered.indexOf('Caller final arriving late.')<rendered.indexOf('Agent response.'));
+  assert.ok(rendered.indexOf('Agent response.')<rendered.indexOf('The newest speech'));
+  send(0,2,'The newest speech keeps growing',false);rendered=await refresh();
+  assert.match(rendered,/The newest speech keeps growing/);
+  send(0,2,'The newest speech is final.',true);rendered=await refresh();
+  assert.match(rendered,/The newest speech is final\./);assert.doesNotMatch(rendered,/keeps growing|is-interim/);
+  // A new recognition connection starts at zero; it must supersede its old
+  // pending text without accepting a delayed interim from that old connection.
+  phone.transcript({speaker:'customer',streamId:'next',segmentId:'next:0',startMs:0,timestamp:20000,text:'After reconnect',isFinal:false});
+  send(0,2,'Stale prior connection speech',false);rendered=await refresh();
+  assert.match(rendered,/After reconnect/);assert.doesNotMatch(rendered,/Stale prior connection speech/);
+ }finally{for(const track of tracks)track.close();phone.harness.unmount();view.unmount();}
 });
 
 test('real phone provider preserves a live inbound call through auth refresh, availability wrap-up, media errors and stale prior-leg callbacks',async()=>{

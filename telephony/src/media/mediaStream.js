@@ -82,7 +82,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         payload.length > Math.ceil(limits.audioBytes / 3) * 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(payload)) return denied();
       const audio = Buffer.from(payload, 'base64');
       if (!audio.length || audio.length > limits.audioBytes) return denied();
-      tracks[track].send(audio);
+      tracks[track].send(audio, message.media.timestamp == null ? undefined : Number(message.media.timestamp));
       if (track === 'inbound') {
         customerChunks.push(audio); customerBytes += audio.length;
         const timestamp = now();
@@ -118,7 +118,8 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         active.get(claims.callSid)?.end(1000, 'Call attempt replaced');
         active.set(claims.callSid, { owner, end });
         binding = true; state = 'active'; clearTimeout(timer);
-        for (const [track, speaker] of Object.entries(SPEAKERS)) tracks[track] = openTrack({ speaker, notify: emit });
+        const timelineOrigin = now();
+        for (const [track, speaker] of Object.entries(SPEAKERS)) tracks[track] = openTrack({ speaker, notify: emit, timelineOrigin });
         emit({ type: 'call_status', status: 'stream_started' });
         renewal = setInterval(async () => {
           if (stopped || renewing) return;

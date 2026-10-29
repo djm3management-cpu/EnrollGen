@@ -16,7 +16,7 @@ function harness(blocked = false, identityError = false) {
     checkOutbound: async () => ({ blocked }),
     canonicalOutbound: async (_, sid) => { assert.equal(sid, 'canonical-sid'); if (identityError) throw new Error('Identity unavailable');
       return { contactId: 'canonical-contact', attemptId: 'canonical-attempt', phoneNumber: '+16097787669' }; },
-    setError: value => errors.push(value), setAgentRows() {}, setAgentInterim() {}, setCustomerTranscript() {}, setTranscriptionError() {}, setTranscriptionHealth() {},
+    setError: value => errors.push(value), setAgentTranscript() {}, setCustomerTranscript() {}, setTranscriptionError() {}, setTranscriptionHealth() {},
     setDialingCall() {}, setActiveCall: value => active.push(typeof value === 'function'?value(active.at(-1)):value), setConnectedAt() {}, setIsMuted() {}, setIsHeld() {},
     setRemoteStream() {}, setContact() {}, publishAudioLevel() {}, console, Date, window:{setTimeout:(fn,delay)=>{retries.push({fn,delay});return retries.length;},clearTimeout(){}},
   };

@@ -5,7 +5,7 @@ import { redactSensitiveText } from './lib/redaction.js';
 export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = () => {} }) {
   let tail = Promise.resolve();
   return message => {
-    if (message.type !== 'transcript' || !message.isFinal) return;
+    if (message.type !== 'transcript' || !message.isFinal || !message.text?.trim()) return;
     const args = { p_attempt_id: claims.attemptId, p_segment_id: randomUUID(),
       p_speaker: message.speaker, p_text: redactSensitiveText(message.text),
       p_captured_at: new Date(message.timestamp).toISOString(),
