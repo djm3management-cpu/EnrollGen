@@ -282,6 +282,9 @@ test('the transcript player seeks before audio loads, tracks the active utteranc
     const Lines = componentSource('../src/components/callLog/CallTranscriptPlayer.jsx', 'transcriptLines', { redactSensitiveText: value => value });
     const raw = Lines({ transcript_raw: '[00:12] Customer: Full raw transcript\nAgent: Untimed response' });
     assert.equal(raw[0].time, 12); assert.equal(raw[0].speaker, 'customer'); assert.equal(raw[1].time, null);
+    const third = Lines({ transcript_raw: 'THIRD_PARTY: Third person\n[00:20] Third Party: Still a third person' });
+    assert.equal(third[0].speaker, 'third_party'); assert.equal(third[1].speaker, 'third_party');
+    assert.equal(Lines({ transcript_diarized: [{ speaker: 'third_party', text: 'Independent channel', start_ms: 100 }] })[0].speaker, 'third_party');
   } finally { harness.unmount(); }
 });
 

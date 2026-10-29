@@ -99,7 +99,7 @@ function TranscriptDetail({ detail }) {
           utterances.map((utterance, index) => {
             const safeText = redactSensitiveText(utterance.text || "");
             const sentiment = sentimentForUtterance(safeText, segments);
-            const speaker = utterance.speaker === "customer" ? "Customer" : "Agent";
+            const speaker = utterance.speaker === 'third_party' ? 'Third party' : utterance.speaker === "customer" ? "Customer" : "Agent";
             return (
               <div key={`${utterance.start_ms || 0}-${index}`} className={`ops-utterance sentiment-${sentiment}`}>
                 <span className="speaker">{speaker}</span>

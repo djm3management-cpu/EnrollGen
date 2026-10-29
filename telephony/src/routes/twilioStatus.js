@@ -7,6 +7,7 @@ import { requireTwilioSignature } from "../twilioSecurity.js";
 
 import { releaseAgent } from "../availability.js";
 import { recordCallbackEvidence, finishInboundCall, terminalStatuses } from "../answerAttribution.js";
+import { conferenceGuard } from '../conferenceGuard.js';
 
 export const twilioStatusRouter = Router();
 
@@ -21,7 +22,7 @@ async function findInboundCall(callSid) {
 }
 
 // Call lifecycle status callbacks (initiated, ringing, answered, completed).
-twilioStatusRouter.post("/twilio/status", requireTwilioSignature, async (req, res) => {
+twilioStatusRouter.post("/twilio/status", requireTwilioSignature, conferenceGuard('parent'), async (req, res) => {
   const callSid = req.body.CallSid;
   const callStatus = req.body.CallStatus;
 
@@ -53,7 +54,7 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, async (req, re
 });
 
 // Child-leg completion also fires when the caller hangs up before Dial's action.
-twilioStatusRouter.post("/twilio/agent-status", requireTwilioSignature, async (req, res) => {
+twilioStatusRouter.post("/twilio/agent-status", requireTwilioSignature, conferenceGuard('child'), async (req, res) => {
   try {
     await enqueueBillingCallback(supabase,config,req.body);
     await recordCallbackEvidence(req, "child");

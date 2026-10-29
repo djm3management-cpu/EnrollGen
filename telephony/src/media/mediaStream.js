@@ -15,6 +15,7 @@ const SPEAKERS = { inbound: 'customer', outbound: 'agent' };
 
 export function createMediaServer({ leases = createMediaLeaseClient(), notify = sendToAgent,
   openTrack = openDeepgramTrack, verify = verifyMediaStreamToken, now = Date.now,
+  pathPrefix = '/media', speakersFor = () => SPEAKERS,
   limits = MEDIA_LIMITS, transcriptWriter = claims => createTranscriptWriter({ db: supabase, claims }) } = {}) {
   const wss = new WebSocketServer({ noServer: true, maxPayload: limits.frameBytes, perMessageDeflate: false });
   const active = new Map();
@@ -29,7 +30,8 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       const url = new URL(request.url, 'http://localhost');
       // Path capability: Twilio Stream URLs don't accept query strings.
       // Neither Host nor forwarded headers establish identity. Never log URL.
-      if (!url.search && /^\/media\/[^/]+$/.test(url.pathname)) claims = verify(url.pathname.slice(7));
+      const token = url.pathname.slice(pathPrefix.length + 1);
+      if (!url.search && url.pathname.startsWith(pathPrefix + '/') && token && !token.includes('/')) claims = verify(token);
     } catch { /* deny */ }
     if (!claims) {
       console.warn('[media] rejected: invalid_upgrade_token_or_path');
@@ -39,6 +41,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
   }
 
   wss.on('connection', (ws, claims) => {
+    const speakers = speakersFor(claims);
     const owner = randomUUID();
     let state = 'waiting', streamSid = null, binding = false, owned = false, stopped = false;
     let pending = [], pendingBytes = 0, renewal = null, renewing = false;
@@ -47,11 +50,11 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     const persist = transcriptWriter(claims);
     const emit = message => {
       if (binding) void persist(message);
-      notify(claims.agentId, { inboundCallId: claims.inboundCallId, ...message });
+      notify(claims.agentId, { inboundCallId: claims.inboundCallId, ...message }, claims);
     };
     const reportUnavailable = () => {
-      for (const speaker of Object.values(SPEAKERS)) emit({ type: 'transcription_error', speaker,
-        status: 'unavailable', message: `${speaker === 'agent' ? 'Agent' : 'Customer'} transcription stopped: call binding could not be verified.` });
+      for (const speaker of Object.values(speakers)) emit({ type: 'transcription_error', speaker,
+        status: 'unavailable', message: `${speaker === 'agent' ? 'Agent' : speaker === 'third_party' ? 'Third party' : 'Customer'} transcription stopped: call binding could not be verified.` });
     };
     const timer = setTimeout(() => end(1008, 'Media start timeout'), limits.startMs); timer.unref();
     function end(code = 1000, reason = 'Stream stopped') {
@@ -61,7 +64,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       pending = []; pendingBytes = 0; customerChunks = []; customerBytes = 0;
       for (const track of Object.values(tracks)) track.close();
       if (active.get(claims.callSid)?.owner === owner) active.delete(claims.callSid);
-      if (owned) void leases.release(claims.callSid, owner).catch(() => {});
+      if (owned) void leases.release(claims.callSid, owner, claims).catch(() => {});
       if (binding) emit({ type: 'call_status', status: 'stream_stopped' });
       if (ws.readyState === ws.OPEN) ws.close(code, reason);
     }
@@ -78,7 +81,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       }
       if (message.event !== 'media') return denied();
       const { track, payload } = message.media || {};
-      if (!Object.hasOwn(SPEAKERS, track) || typeof payload !== 'string' || !payload ||
+      if (!Object.hasOwn(speakers, track) || typeof payload !== 'string' || !payload ||
         payload.length > Math.ceil(limits.audioBytes / 3) * 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(payload)) return denied();
       const audio = Buffer.from(payload, 'base64');
       if (!audio.length || audio.length > limits.audioBytes) return denied();
@@ -106,12 +109,12 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         (params.inboundCallId || null) !== claims.inboundCallId ||
         message.streamSid !== start.streamSid || format.encoding !== 'audio/x-mulaw' ||
         format.sampleRate !== 8000 || format.channels !== 1 ||
-        !Array.isArray(start.tracks) || start.tracks.length !== 2 ||
-        !start.tracks.includes('inbound') || !start.tracks.includes('outbound')) return denied();
+        !Array.isArray(start.tracks) || start.tracks.length !== Object.keys(speakers).length ||
+        !Object.keys(speakers).every(track => start.tracks.includes(track))) return denied();
       streamSid = start.streamSid;
       try {
         owned = await leases.claim(claims, streamSid, owner);
-        if (stopped) { if (owned) await leases.release(claims.callSid, owner); return; }
+        if (stopped) { if (owned) await leases.release(claims.callSid, owner, claims); return; }
         if (!owned) return denied('Lease claim denied');
         // Reroutes may replace a terminal attempt's lease. Close this process's
         // old stream before emitting any audio for the new attempt.
@@ -119,13 +122,13 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         active.set(claims.callSid, { owner, end });
         binding = true; state = 'active'; clearTimeout(timer);
         const timelineOrigin = now();
-        for (const [track, speaker] of Object.entries(SPEAKERS)) tracks[track] = openTrack({ speaker, notify: emit, timelineOrigin });
+        for (const [track, speaker] of Object.entries(speakers)) tracks[track] = openTrack({ speaker, notify: emit, timelineOrigin });
         emit({ type: 'call_status', status: 'stream_started' });
         renewal = setInterval(async () => {
           if (stopped || renewing) return;
           renewing = true;
           try {
-            if (!(await leases.renew(claims.callSid, owner))) end(1008, 'Media lease ended');
+            if (!(await leases.renew(claims.callSid, owner, claims))) end(1008, 'Media lease ended');
           } catch {
             reportUnavailable();
             end(1011, 'Media binding unavailable');

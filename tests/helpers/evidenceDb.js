@@ -24,9 +24,17 @@ export function evidenceDb(pg, onError = () => {}) {
         insert(input) { operation = "insert"; rows = Array.isArray(input) ? input : [input]; return chain; },
         upsert(input, options = {}) { operation = "upsert"; rows = Array.isArray(input) ? input : [input]; conflict = options.onConflict; return chain; },
         update(input) { operation = "update"; rows = [input]; return chain; },
+        delete() { operation = 'delete'; return chain; },
         gte(column, item) { filters.push(q(column) + ">=" + value(item)); return chain; },
         lt(column, item) { filters.push(q(column) + "<" + value(item)); return chain; },
         eq(column, item) { filters.push(q(column) + "=" + value(item)); return chain; },
+        or(expression) {
+          filters.push('(' + expression.split(',').map(clause => {
+            const match = /^([a-z_]+)\.eq\.([a-zA-Z0-9_-]+)$/.exec(clause);
+            if (!match) throw new Error('Unsupported fixture OR');
+            return q(match[1]) + '=' + value(match[2]);
+          }).join(' OR ') + ')'); return chain;
+        },
         is(column, item) { if (item !== null) throw new Error('Fixture IS only supports NULL'); filters.push(q(column) + ' IS NULL'); return chain; },
         not(column, operator, item) { if (operator !== 'is' || item !== null) throw new Error('Fixture NOT only supports IS NULL'); filters.push(q(column) + ' IS NOT NULL'); return chain; },
         range(from, to) { offset = Number(from); limit = Number(to) - offset + 1; return chain; },
@@ -51,6 +59,7 @@ export function evidenceDb(pg, onError = () => {}) {
                 "(SELECT jsonb_build_object('intent_code',intent_code) FROM compliance_intents WHERE id=scoring_template_items.intent_id) AS compliance_intents");
             let sql;
             if (operation === "select") sql = "SELECT " + cols + " FROM public." + q(table) + where + sort + bounded;
+            if (operation === 'delete') sql = 'DELETE FROM public.' + q(table) + where + ' RETURNING ' + cols;
             if (operation === "update") {
               const assignment = Object.entries(rows[0]).filter(([,item]) => item !== undefined)
                 .map(([key,item]) => q(key) + "=" + value(item));

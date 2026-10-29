@@ -27,6 +27,7 @@ import { updateTranscriptionHealth, transcriptionHealthError, transcriptionHealt
 import { updateLiveTranscript } from "../lib/liveTranscript.js";
 import { installAgentAudio, requestAgentMicrophone } from "../lib/audio/AgentAudioProcessor.js";
 import { readAudioPreferences } from "../lib/audioPreferences.js";
+import { useConferenceCall } from '../hooks/useConferenceCall';
 
 // Inbound softphone state: Twilio Voice SDK device registration, the
 // incoming-call banner payload, and the server-transcribed AGENT/CUSTOMER
@@ -94,6 +95,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   })), [agentTranscript]);
   const agentInterim = useMemo(() => agentTranscript.find(entry => !entry.isFinal) || null, [agentTranscript]);
   const [customerTranscript, setCustomerTranscript] = useState([]);
+  const [thirdPartyTranscript, setThirdPartyTranscript] = useState([]);
+  const conferencing = useConferenceCall({ getToken, activeCall });
   const [error, setError] = useState("");
   const [transcriptionHealth, setTranscriptionHealth] = useState({});
   const transcriptionError = transcriptionHealthError(transcriptionHealth);
@@ -187,6 +190,13 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       publishSms(message);
       return;
     }
+    if (message.callId && message.parentCallSid) {
+      const owned = ownedCallRef.current;
+      const parentSid = paramsFromCall(owned).twilioCallSid || owned?.parameters?.CallSid;
+      // A blind-transferred conversation may outlive this agent's next call.
+      // Its persistence continues on the server; never mix it into a new call.
+      if (!owned || parentSid !== message.parentCallSid) return;
+    }
     if (message.type === "audio_level") {
       if (message.speaker === "customer") {
         publishAudioLevel("customer", message.level);
@@ -209,6 +219,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       return;
     }
     if (message.speaker === "customer") setCustomerTranscript(prev => updateLiveTranscript(prev, entry));
+    if (message.speaker === 'third_party') setThirdPartyTranscript(prev => updateLiveTranscript(prev, entry));
   }, []);
 
   const connectAgentSocket = useCallback((bundle) => {
@@ -492,6 +503,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     if (!incomingCall || ownedCallRef.current !== incomingCall.call) return;
     setAgentTranscript([]);
     setCustomerTranscript([]);
+    setThirdPartyTranscript([]);
     // Streams start while the agent is ringing. Preserve a failure already
     // reported for this call; discard health left over from another call.
     setTranscriptionHealth(previous => transcriptionHealthForCall(previous, incomingCall.params?.inboundCallId));
@@ -513,10 +525,14 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   }, [incomingCall, destroyRetiredDevice, reportCallEvent]);
 
   const hangUp = useCallback(() => {
+    if (conferencing.conference) {
+      void conferencing.run({ action: conferencing.conference.ownerAgentId === agentId ? 'end' : 'leave' }).catch(() => {});
+      return;
+    }
     reportCallEvent('end_requested', activeCall?.call || dialingCall?.call, { reason: 'agent_action' });
     activeCall?.call?.disconnect();
     dialingCall?.call?.disconnect();
-  }, [activeCall, dialingCall, reportCallEvent]);
+  }, [activeCall, dialingCall, reportCallEvent, conferencing, agentId]);
 
   // Outbound dial: global dial pad and contact click-to-call both land
   // here. The Voice SDK Device.connect() request is signed and routed
@@ -534,6 +550,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       setError("");
       setAgentTranscript([]);
       setCustomerTranscript([]);
+      setThirdPartyTranscript([]);
       setTranscriptionHealth({});
 
       const params = {
@@ -669,10 +686,14 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
 
   const toggleHold = useCallback(() => {
     if (!activeCall?.call) return;
+    if (conferencing.enabled || conferencing.conference) {
+      void conferencing.run({ action: 'hold', held: !(conferencing.conference?.customerHeld || false) }).catch(() => {});
+      return;
+    }
     const next = !isHeld;
     activeCall.call.mute(next || isMuted);
     setIsHeld(next);
-  }, [activeCall, isHeld, isMuted]);
+  }, [activeCall, isHeld, isMuted, conferencing]);
 
   const hasCallInProgress = useCallback(() => callInProgressRef.current, []);
 
@@ -693,6 +714,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       agentRows,
       agentInterim,
       customerTranscript,
+      thirdPartyTranscript,
+      conferencing,
       isMuted,
       isHeld,
       connectedAt,
@@ -720,6 +743,8 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       agentRows,
       agentInterim,
       customerTranscript,
+      thirdPartyTranscript,
+      conferencing,
       isMuted,
       isHeld,
       connectedAt,

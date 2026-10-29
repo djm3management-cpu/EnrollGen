@@ -20,6 +20,7 @@ import {
 import { useCopilotLog } from "../context/CopilotTranscriptLog";
 import { useLiveCall } from "../context/LiveCallContext";
 import { telephonyCallIdentity } from "../lib/telephonyCallIdentity.js";
+import { registerConferenceCheckpoint } from '../lib/conferenceCheckpoint';
 import { agentTrackActive } from "../lib/transcriptionHealth.js";
 import { useAvailability } from "../context/AvailabilityContext";
 import { evidenceRequest } from "../lib/evidenceApi.js";
@@ -743,6 +744,22 @@ export default function ScriptFlow() {
     }
     return finalPersistencePromiseRef.current;
   }, [persistPostCallTranscript]);
+
+  useEffect(() => {
+    if (!callStarted || inbound?.activeCall?.params?.direction !== 'outbound') return;
+    const sid = telephonyCallIdentity(inbound.activeCall).twilioCallSid;
+    if (!sid) return;
+    return registerConferenceCheckpoint(sid, async () => {
+      // Let an already-running checkpoint commit before saving the latest
+      // snapshot; otherwise its delayed response could overwrite this one.
+      for (let retry = 0; checkpointPendingRef.current && retry < 50; retry++) {
+        await new Promise(resolve => window.setTimeout(resolve, 100));
+      }
+      if (checkpointPendingRef.current) throw new Error('Transcript is still syncing. Please retry the transfer.');
+      if (getActiveSessionMetadata().twilioCallSid !== sid) return;
+      await persistPostCallTranscript({ final: false, force: true });
+    });
+  }, [callStarted, inbound?.activeCall, persistPostCallTranscript]);
 
   useEffect(() => {
     persistFinalTranscriptRef.current = persistFinalTranscript;

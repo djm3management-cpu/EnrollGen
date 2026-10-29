@@ -57,7 +57,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
   const softphoneActive = Boolean(inbound?.activeCall);
   const outboundSoftphoneActive =
     softphoneActive && inbound.activeCall?.params?.direction === "outbound";
-  const inboundActive = softphoneActive && !outboundSoftphoneActive;
+  const inboundActive = softphoneActive && (!outboundSoftphoneActive || Boolean(inbound?.conferencing?.conference));
   if (softphoneActive) {
     transcriptSourceRef.current = inboundActive ? "inbound" : "browser";
   }
@@ -78,6 +78,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
   } = useMergedTranscript({
     agentTranscriptRows: useInboundTranscripts ? inbound.agentRows : speech.transcriptRows,
     agentInterim: useInboundTranscripts ? inbound.agentInterim : browserInterim,
+    thirdPartyTranscript: useInboundTranscripts ? inbound?.thirdPartyTranscript || [] : [],
     customerTranscript: useInboundTranscripts
       ? customerAudio.isCapturing
         ? [...inbound.customerTranscript, ...customerAudio.customerTranscript]

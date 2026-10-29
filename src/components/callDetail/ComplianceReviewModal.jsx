@@ -139,7 +139,7 @@ function TranscriptPanel({ utterances, highlightIndex, containerRef }) {
         <div className="contacts-muted">No diarized transcript stored</div>
       ) : (
         utterances.map((utterance, index) => {
-          const speaker = utterance.speaker === "customer" ? "Customer" : "Agent";
+          const speaker = utterance.speaker === 'third_party' ? 'Third party' : utterance.speaker === "customer" ? "Customer" : "Agent";
           return (
             <div
               key={`${utterance.start_ms || 0}-${index}`}

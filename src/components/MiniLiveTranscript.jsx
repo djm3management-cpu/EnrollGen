@@ -196,7 +196,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
                     color: isCustomer ? "var(--info)" : "var(--text-label)",
                     marginRight: 5,
                   }}>
-                    {isCustomer ? "CUSTOMER" : "AGENT"}
+                    {entry.speaker === 'third_party' ? 'THIRD PARTY' : isCustomer ? "CUSTOMER" : "AGENT"}
                   </span>
                   {entry.text}
                 </span>

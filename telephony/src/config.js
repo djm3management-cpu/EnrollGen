@@ -61,6 +61,7 @@ export const config = {
     process.env.DEFAULT_TENANT_ID || "00000000-0000-4000-8000-000000000001",
   dialTimeoutSeconds: Number(process.env.DIAL_TIMEOUT_SECONDS || 20),
   minConnectedSeconds,
+  conferenceCallingEnabled: process.env.CONFERENCE_CALLING_ENABLED?.trim().toLowerCase() === 'true',
   stickyRoutingEnabled: process.env.STICKY_ROUTING_ENABLED?.trim().toLowerCase() === "true",
   paragonStateRoutingEnabled: process.env.PARAGON_STATE_ROUTING_ENABLED?.trim().toLowerCase() === "true",
   paragonPingFieldMap: process.env.PARAGON_PING_FIELD_MAP || null,

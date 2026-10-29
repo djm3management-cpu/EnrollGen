@@ -10,6 +10,7 @@ import { claimNextAvailableAgent, releaseAgent } from "../availability.js";
 import { createCallAttempt, dialAttribution, finishInboundCall } from "../answerAttribution.js";
 import { claimInitialInboundAgent, chooseInboundPreference, routingPhoneLast4 } from "../stickyRouting.js";
 import { directAgentForNumber } from "../directRouting.js";
+import { conferenceGuard } from '../conferenceGuard.js';
 
 import { vendorMetadata } from "../vendorMetadata.js";
 import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
@@ -271,7 +272,7 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next
 
 // Dial outcome: agent answered, declined, or timed out. Reroute to the
 // next available agent, or voicemail when nobody is left.
-twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, dialAttribution, routingReplay, async (req, res) => {
+twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, conferenceGuard('dial'), dialAttribution, routingReplay, async (req, res) => {
   const inboundCallId = req.query.inboundCallId;
   const tried = String(req.query.tried || "").split(",").filter(Boolean);
   const dialStatus = req.body.DialCallStatus;

@@ -18,7 +18,7 @@ export function openDeepgramTrack({ speaker, notify, Socket = WebSocket,
     type: status === 'connected' ? 'transcription_health' : 'transcription_error',
     speaker, status, message, timestamp: now(), ...extra,
   });
-  const label = speaker === 'agent' ? 'Agent' : 'Customer';
+  const label = speaker === 'agent' ? 'Agent' : speaker === 'third_party' ? 'Third party' : 'Customer';
   function enqueue(chunk, startMs) {
     if (closed || exhausted) return;
     if (chunk.length > limits.queueBytes) return markOverflow();

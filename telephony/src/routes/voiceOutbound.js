@@ -11,6 +11,7 @@ import { createCallAttempt, dialAttribution } from "../answerAttribution.js";
 
 import { claimNextAvailableAgent, releaseAgent } from "../availability.js";
 import { recoverTerminalAgentReservation } from "../callStatusRecovery.js";
+import { conferenceGuard } from '../conferenceGuard.js';
 
 import { routingReplay, sendRoutingTwiml } from "../routingReplay.js";
 
@@ -139,7 +140,7 @@ voiceOutboundRouter.post("/api/voice/outbound", requireTwilioSignature, outbound
   return sendRoutingTwiml(res, response);
 });
 
-voiceOutboundRouter.post("/api/voice/outbound-result", requireTwilioSignature, dialAttribution, async (req, res) => {
+voiceOutboundRouter.post("/api/voice/outbound-result", requireTwilioSignature, conferenceGuard('dial'), dialAttribution, async (req, res) => {
   try {
     await releaseAgent(req.query.agentId, req.body.CallSid);
     const response = new VoiceResponse();

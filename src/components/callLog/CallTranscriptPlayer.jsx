@@ -9,14 +9,14 @@ export function transcriptLines(detail, preview = '') {
   const diarized = detail?.transcript_diarized;
   if (Array.isArray(diarized) && diarized.length) return diarized.map(line => ({
     text: redactSensitiveText(line.text || ''),
-    speaker: String(line.speaker).toLowerCase() === 'customer' ? 'customer' : 'agent',
+    speaker: String(line.speaker).toLowerCase() === 'third_party' ? 'third_party' : String(line.speaker).toLowerCase() === 'customer' ? 'customer' : 'agent',
     time: line.start_ms != null && Number.isFinite(Number(line.start_ms)) ? Math.max(0, Number(line.start_ms) / 1000) : null,
   })).sort((a, b) => (a.time ?? Infinity) - (b.time ?? Infinity));
   return (detail?.transcript_raw || preview).split('\n').filter(line => line.trim()).map(line => {
-    const match = line.match(/^\[?(\d+:\d{2}(?::\d{2})?)\]?\s*(?:[|–-]\s*)?(Agent|Customer)?:?\s*(.*)$/i);
-    if (match) return { time: match[1].split(':').reduce((total, part) => total * 60 + Number(part), 0), speaker: match[2]?.toLowerCase() || 'unknown', text: redactSensitiveText(match[3]) };
-    const speaker = line.match(/^(Agent|Customer):\s*(.*)$/i);
-    return { time: null, speaker: speaker?.[1].toLowerCase() || 'unknown', text: redactSensitiveText(speaker?.[2] || line) };
+    const match = line.match(/^\[?(\d+:\d{2}(?::\d{2})?)\]?\s*(?:[|–-]\s*)?(Agent|Customer|Third[ _]Party)?:?\s*(.*)$/i);
+    if (match) return { time: match[1].split(':').reduce((total, part) => total * 60 + Number(part), 0), speaker: match[2]?.toLowerCase().replace(' ', '_') || 'unknown', text: redactSensitiveText(match[3]) };
+    const speaker = line.match(/^(Agent|Customer|Third[ _]Party):\s*(.*)$/i);
+    return { time: null, speaker: speaker?.[1].toLowerCase().replace(' ', '_') || 'unknown', text: redactSensitiveText(speaker?.[2] || line) };
   });
 }
 
@@ -104,7 +104,7 @@ export default function CallTranscriptPlayer({ row, detail, loading, playRequest
         aria-label={line.time == null ? undefined : `Seek to ${formatTalk(line.time)}: ${line.speaker}, ${line.text}`}
       >
         <span className="call-transcript-time">{line.time == null ? '--:--' : formatTalk(line.time)}</span>
-        <span className={`call-transcript-speaker is-${line.speaker}`}>{line.speaker === 'unknown' ? 'SPEAKER' : line.speaker.toUpperCase()}</span>
+        <span className={`call-transcript-speaker is-${line.speaker}`}>{line.speaker === 'unknown' ? 'SPEAKER' : line.speaker.replaceAll('_', ' ').toUpperCase()}</span>
         <span className="call-transcript-text">{line.text}</span>
       </button>)}
     </div>

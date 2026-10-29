@@ -18035,6 +18035,22 @@ body[data-bg-mode="classic"] .viewport-bg {
 }
 
 /* Agent home dashboard uses the existing terminal palette. */
+.phone-conference { border-top: 1px solid var(--border-default); padding: 12px; font: 11px var(--font-mono); color: var(--text-primary); }
+.phone-expanded:has(.phone-conference) { overflow-y: auto; }
+.phone-expanded:has(.phone-conference) > * { flex-shrink: 0; }
+.phone-conference__form { display: flex; flex-direction: column; gap: 8px; }
+.phone-conference input, .phone-conference select { width: 100%; border: 1px solid var(--border-default); background: var(--bg-primary); color: var(--text-primary); padding: 8px; font: inherit; }
+.phone-conference button { border: 1px solid var(--border-default); background: var(--bg-primary); color: var(--text-primary); padding: 7px 10px; font: inherit; cursor: pointer; }
+.phone-conference button:disabled { opacity: .45; cursor: default; }
+.phone-conference button:focus-visible, .phone-conference input:focus-visible, .phone-conference select:focus-visible { outline: 1px solid var(--eg-amber); outline-offset: 2px; }
+.phone-conference p { margin: 4px 0; line-height: 1.6; }
+.phone-conference__buttons, .phone-conference__heading { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.phone-conference__heading { justify-content: space-between; }
+.phone-conference ul { padding: 0; margin: 8px 0; list-style: none; }
+.phone-conference li { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border-default); }
+.phone-conference li > span:first-child { flex: 1; overflow-wrap: anywhere; }
+.phone-conference__transcript { max-height: 160px; overflow-y: auto; margin-top: 12px; }
+.phone-conference__transcript p > span { color: var(--eg-amber); }
 .app-workspace.app-workspace--dashboard { padding-right: 24px; }
 .agent-dashboard {
   width: 100%; max-width: none; margin: 0; padding: 8px 24px 24px;

@@ -19,6 +19,10 @@ import { vendorPingRouter } from "./routes/vendorPing.js";
 import { smsRouter } from "./routes/sms.js";
 import { handleMediaUpgrade } from "./media/mediaStream.js";
 import { handleAgentUpgrade } from "./media/agentSocket.js";
+import { createConferenceRouter } from './routes/conferenceCalling.js';
+import { conferenceService } from './conferenceCalling.js';
+import { createConferenceMedia } from './media/conferenceMedia.js';
+import { conferenceRuntime } from './conferenceRuntime.js';
 
 import { expirePhoneSessions } from "./phonePresence.js";
 
@@ -60,6 +64,7 @@ app.use(vendorPingRouter);
 app.use(voiceTokenRouter);
 app.use(voiceEventsRouter);
 app.use(voiceOutboundRouter);
+app.use(createConferenceRouter());
 app.use(smsRouter);
 app.use(recordingMediaRouter);
 startRecordingWorker({ db: createRecordingServiceClient(), config });
@@ -70,9 +75,25 @@ startTranscriptWorker({ db: createRecordingServiceClient(),
   scoringUrl: process.env.TRANSCRIPT_SCORING_URL, secret: process.env.SCORE_CALL_JOB_SECRET });
 
 const server = http.createServer(app);
+const conferenceMedia = createConferenceMedia();
+let conferenceRecoveryRunning = false;
+const recoverConferences = async () => {
+  if (conferenceRecoveryRunning) return;
+  conferenceRecoveryRunning = true;
+  try { await conferenceService().tick(); }
+  catch (error) { if (!['42P01', 'PGRST205'].includes(error.code)) console.error('Conference recovery pending'); }
+  finally { conferenceRecoveryRunning = false; }
+};
+setInterval(() => void recoverConferences(), 15000).unref();
+// Discover drain state before accepting callbacks after a flag-off restart.
+// Otherwise an already-converted call could enter the legacy release path.
+try { conferenceRuntime.draining = (await conferenceService().store.active()).length > 0; }
+catch (error) { if (!['42P01', 'PGRST205'].includes(error.code)) throw error; }
+void recoverConferences();
 
 server.on("upgrade", (request, socket, head) => {
   const { pathname } = new URL(request.url, "http://localhost");
+  if (pathname.startsWith('/conference-media/')) return conferenceMedia.handleUpgrade(request, socket, head);
   if (pathname === "/media" || pathname.startsWith("/media/")) return handleMediaUpgrade(request, socket, head);
   if (pathname === "/agent") return handleAgentUpgrade(request, socket, head);
   socket.destroy();

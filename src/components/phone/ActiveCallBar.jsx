@@ -19,6 +19,7 @@ const ActiveCallBar = memo(function ActiveCallBar({ onExpand }) {
   const call = inbound?.activeCall || inbound?.dialingCall;
   const ringing = !inbound?.activeCall && Boolean(inbound?.dialingCall);
   const elapsedMs = useCallDuration(inbound?.connectedAt);
+  const held = inbound?.conferencing?.conference ? inbound.conferencing.conference.customerHeld : inbound?.isHeld;
   if (!call) return null;
 
   const { params } = call;
@@ -67,15 +68,16 @@ const ActiveCallBar = memo(function ActiveCallBar({ onExpand }) {
             </button>
             <button
               type="button"
-              className={`phone-active-bar__btn${inbound.isHeld ? " is-active" : ""}`}
+              className={`phone-active-bar__btn${held ? " is-active" : ""}`}
+              disabled={inbound.conferencing?.busy || inbound.conferencing?.conference?.phase === 'warm'}
               onClick={(event) => {
                 event.stopPropagation();
                 inbound.toggleHold();
               }}
-              title={inbound.isHeld ? "Resume" : "Hold"}
-              aria-label={inbound.isHeld ? "Resume" : "Hold"}
+              title={held ? "Resume" : "Hold"}
+              aria-label={held ? "Resume" : "Hold"}
             >
-              {inbound.isHeld ? <Play size={14} /> : <Pause size={14} />}
+              {held ? <Play size={14} /> : <Pause size={14} />}
             </button>
           </>
         ) : null}

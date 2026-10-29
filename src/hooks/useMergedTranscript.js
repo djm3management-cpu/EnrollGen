@@ -32,6 +32,7 @@ export function useMergedTranscript({
   agentTranscriptRows = [],
   agentInterim = null,
   customerTranscript = [],
+  thirdPartyTranscript = [],
   isCustomerCapturing = false,
 }) {
   const hasCustomerAudio = isCustomerCapturing || customerTranscript.length > 0;
@@ -40,25 +41,26 @@ export function useMergedTranscript({
     const agentEntries = normalizeAgentRows(agentTranscriptRows);
     // Only include final customer entries in the merged view (interims are noisy)
     const customerFinals = customerTranscript.filter((e) => e.isFinal);
-    const all = [...agentEntries, ...customerFinals];
+    const all = [...agentEntries, ...customerFinals, ...thirdPartyTranscript.filter(e => e.isFinal)];
     all.sort((a, b) => a.timestamp - b.timestamp);
     return all;
-  }, [agentTranscriptRows, customerTranscript]);
+  }, [agentTranscriptRows, customerTranscript, thirdPartyTranscript]);
 
   // The live widget includes speech still being recognized. Saved evidence and
   // copilot context continue to use the finalized mergedTranscript above.
   const liveTranscript = useMemo(() => {
     const interims = customerTranscript.filter(e => !e.isFinal && e.text?.trim());
+    interims.push(...thirdPartyTranscript.filter(e => !e.isFinal && e.text?.trim()));
     if (agentInterim?.text?.trim()) interims.push(agentInterim);
     if (!interims.length) return mergedTranscript;
     return [...mergedTranscript, ...interims].sort((a, b) => a.timestamp - b.timestamp);
-  }, [mergedTranscript, customerTranscript, agentInterim]);
+  }, [mergedTranscript, customerTranscript, thirdPartyTranscript, agentInterim]);
 
   const formattedTranscript = useMemo(() => {
     if (!hasCustomerAudio) return "";
     return mergedTranscript
       .filter((e) => e.isFinal && e.text.trim())
-      .map((e) => `${e.speaker === "agent" ? "AGENT" : "CUSTOMER"}: ${e.text}`)
+      .map((e) => `${e.speaker === 'third_party' ? 'THIRD PARTY' : e.speaker === "agent" ? "AGENT" : "CUSTOMER"}: ${e.text}`)
       .join("\n");
   }, [mergedTranscript, hasCustomerAudio]);
 

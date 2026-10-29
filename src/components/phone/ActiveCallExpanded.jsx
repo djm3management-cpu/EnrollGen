@@ -19,6 +19,7 @@ import { useContactMutations, contactDisplayName } from "../../hooks/useContacts
 import { formatTime } from "../SharedUI";
 import { playDtmfTone } from "../../audio/dtmfTones";
 import { useCallDuration } from "./useCallDuration";
+import ConferenceControls from './ConferenceControls';
 
 function fmtPhone(value) {
   const match = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(value || "");
@@ -133,19 +134,19 @@ function DtmfPad() {
   );
 }
 
-// Full control set during a live call: mute/hold (wired to the Voice
-// SDK), DTMF, a quick note, jumping to the contact's message thread,
-// and transfer. Transfer needs a Twilio REST call-redirect endpoint
-// that doesn't exist yet on the telephony server, so those two stay
-// disabled placeholders rather than pretending to work.
+// Transfer and Add Person share the server-authoritative conference controls.
 export default function ActiveCallExpanded({ onOpenMessages }) {
   const inbound = useInboundCall();
   const [panel, setPanel] = useState(null); // null | "notes" | "dtmf"
+  const [conferenceMode, setConferenceMode] = useState(null);
   const elapsedMs = useCallDuration(inbound?.connectedAt);
   const call = inbound?.activeCall;
   if (!call) return null;
 
   const { params } = call;
+  const controls = inbound.conferencing;
+  const held = controls?.conference ? controls.conference.customerHeld : inbound.isHeld;
+  const conferenceDisabled = !controls?.enabled || controls.busy || (controls.conference?.participants.filter(p => p.status !== 'left').length || 0) >= 3;
   const displayName =
     (inbound.contact && contactDisplayName(inbound.contact)) ||
     params.callerName ||
@@ -179,11 +180,12 @@ export default function ActiveCallExpanded({ onOpenMessages }) {
         </button>
         <button
           type="button"
-          className={`phone-expanded__action${inbound.isHeld ? " is-active" : ""}`}
+          className={`phone-expanded__action${held ? " is-active" : ""}`}
+          disabled={controls?.busy || controls?.conference?.phase === 'warm'}
           onClick={inbound.toggleHold}
         >
-          {inbound.isHeld ? <Play size={16} /> : <Pause size={16} />}
-          {inbound.isHeld ? "RESUME" : "HOLD"}
+          {held ? <Play size={16} /> : <Pause size={16} />}
+          {held ? "RESUME" : "HOLD"}
         </button>
         <button
           type="button"
@@ -210,22 +212,24 @@ export default function ActiveCallExpanded({ onOpenMessages }) {
           <MessageSquarePlus size={16} />
           MESSAGE
         </button>
-        <button type="button" className="phone-expanded__action" disabled title="Coming soon">
+        <button type="button" className="phone-expanded__action" disabled={conferenceDisabled} title={controls?.enabled ? 'Transfer and leave the call' : 'Conference calling is disabled'} onClick={() => setConferenceMode('blind')}>
           <ArrowLeftRight size={16} />
           BLIND XFER
         </button>
-        <button type="button" className="phone-expanded__action" disabled title="Coming soon">
+        <button type="button" className="phone-expanded__action" disabled={conferenceDisabled} title={controls?.enabled ? 'Consult privately before transferring' : 'Conference calling is disabled'} onClick={() => setConferenceMode('warm')}>
           <Users size={16} />
           WARM XFER
         </button>
+        <button type="button" className="phone-expanded__action" disabled={conferenceDisabled} onClick={() => setConferenceMode('add')} title={controls?.enabled ? 'Add a third person' : 'Conference calling is disabled'}><Users size={16} />ADD PERSON</button>
         <button type="button" className="phone-expanded__action phone-expanded__action--end" onClick={inbound.hangUp}>
           <PhoneOff size={16} />
-          END CALL
+          {controls?.conference && controls.conference.ownerAgentId !== inbound.agentId ? 'LEAVE CALL' : 'END CALL'}
         </button>
       </div>
 
       {panel === "dtmf" ? <DtmfPad /> : null}
       {panel === "notes" ? <NotesPad contact={inbound.contact} /> : null}
+      {controls && <ConferenceControls controls={controls} mode={conferenceMode} onClose={() => setConferenceMode(null)} agentId={inbound.agentId} thirdPartyTranscript={inbound.thirdPartyTranscript} />}
     </div>
   );
 }

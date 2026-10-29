@@ -6,15 +6,16 @@ export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = ()
   let tail = Promise.resolve();
   return message => {
     if (message.type !== 'transcript' || !message.isFinal || !message.text?.trim()) return;
-    const args = { p_attempt_id: claims.attemptId, p_segment_id: randomUUID(),
+    const offset = claims.participantId ? Math.max(0, message.timestamp - Date.parse(claims.startedAt) - (message.startMs || 0)) : 0;
+    const args = { ...(claims.participantId ? { p_participant_id: claims.participantId } : { p_attempt_id: claims.attemptId }), p_segment_id: randomUUID(),
       p_speaker: message.speaker, p_text: redactSensitiveText(message.text),
       p_captured_at: new Date(message.timestamp).toISOString(),
-      p_start_ms: Math.round(message.startMs || 0), p_end_ms: Math.round(message.endMs || 0) };
+      p_start_ms: Math.round(offset + (message.startMs || 0)), p_end_ms: Math.round(offset + (message.endMs || 0)) };
     tail = tail.then(async () => {
       // Retain this segment until acknowledged; retries remain independent of browser/media closure.
       for (;;) {
         try {
-          const { error } = await db.rpc('persist_telephony_transcript', args);
+          const { error } = await db.rpc(claims.participantId ? 'persist_conference_transcript' : 'persist_telephony_transcript', args);
           if (!error) return;
         } catch { /* retry transport failure */ }
         notify({ type: 'transcription_error', speaker: message.speaker, status: 'unavailable',
