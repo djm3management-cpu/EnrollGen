@@ -125,10 +125,14 @@ test('the actual call row and contact card display the same Talk, recording targ
     call_duration_seconds: 900, agent: 'Agent', disposition: 'connected', compliance_score: 91, compliance_status: 'complete' };
   const parts = { CallDirection: 'direction', ComplianceChip: 'compliance', DispositionChip: 'disposition', CallStatusOutcome: 'status-outcome', RecordingCell: 'recording' };
   const FragmentRow = componentSource('../src/components/callLog/CallLogTab.jsx', 'FragmentRow', {
-    ...parts, fmtDateTime: formatCallDateTime, fmtDuration: formatTalk, crmPath,
+    ...parts, CallBackButton: 'callback', fmtDateTime: formatCallDateTime, fmtDuration: formatTalk, crmPath,
   });
   const opened = [];
   const logNodes = nodes(FragmentRow({ row, onOpenContact: id => opened.push(id), isExpanded: false }));
+  assert.equal(logNodes.find(node => node.type === 'callback').props.row, row);
+  const actions = logNodes.find(node => node.props.className === 'call-log-row-actions');
+  assert.equal(actions.children[0].type, 'callback');
+  assert.equal(actions.children[1].props['aria-label'], 'Expand call');
   const Card = componentSource('../src/components/contacts/ContactCallCard.jsx', 'ContactCallCard', {
     ...parts, formatCallTime, formatCallDateTime, formatTalk, summarizeContactCalls,
   });

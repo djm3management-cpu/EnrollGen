@@ -13,6 +13,7 @@ async function componentHarness(file, stubs = {}, extra = '') {
     useState(initial) { const index = cursor++; if (!(index in states)) states[index] = initial;
       return [states[index], value => { states[index] = typeof value === 'function' ? value(states[index]) : value; }]; },
     useEffect(fn) { effects.push(fn); }, useCallback: fn => fn,
+    useRef(initial) { const index = cursor++; if (!(index in states)) states[index] = { current: initial }; return states[index]; },
   };
   const source = await readFile(new URL(file, import.meta.url), 'utf8');
   const { code } = await transform(source + extra, { loader: 'jsx', format: 'cjs', jsx: 'transform' });

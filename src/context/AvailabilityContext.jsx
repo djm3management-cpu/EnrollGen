@@ -90,12 +90,14 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
   const [snapshot, setSnapshot] = useState({
     status: "offline", statusSince: null, pendingStatus: null, isSaving: false, error: "",
   });
-  const { status, statusSince, pendingStatus, isSaving, error, wrapUpCallSid } = snapshot;
+  const { status, statusSince, pendingStatus, isSaving, error, wrapUpCallSid, activeCallSid } = snapshot;
+  const [phoneReady, setConfirmedPhoneReady] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const intentRef = useRef(null);
 
   useEffect(() => {
     setIsHydrated(false);
+    setConfirmedPhoneReady(false);
     setSnapshot({ status: "offline", statusSince: null, pendingStatus: null, isSaving: false, error: "" });
     const controller = new AbortController();
     const token = (...args) => getTokenRef.current(...args);
@@ -103,7 +105,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       onChange: setSnapshot,
       async write(nextStatus) {
         const payload = await availabilityRequest(token, { status: nextStatus });
-        return { status: extractStatus(payload) || nextStatus, statusSince: extractSince(payload) || new Date(), wrapUpCallSid: payload.wrap_up_call_sid || null };
+        return { status: extractStatus(payload) || nextStatus, statusSince: extractSince(payload) || new Date(), wrapUpCallSid: payload.wrap_up_call_sid || null, activeCallSid: payload.active_call_sid || null };
       },
     });
     const binding = { agentId, intent };
@@ -114,7 +116,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       try {
         if (!canAuthenticate || !agentId) return;
         const payload = await availabilityRequest(token, null, { signal: controller.signal });
-        intent.hydrate({ status: extractStatus(payload) || "offline", statusSince: extractSince(payload) || new Date(), wrapUpCallSid: payload.wrap_up_call_sid || null });
+        intent.hydrate({ status: extractStatus(payload) || "offline", statusSince: extractSince(payload) || new Date(), wrapUpCallSid: payload.wrap_up_call_sid || null, activeCallSid: payload.active_call_sid || null });
       } catch (err) {
         if (!controller.signal.aborted) intent.hydrate({ error: err?.message || "Availability lookup failed" });
       } finally {
@@ -126,7 +128,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       if (!identityLoaded || !canAuthenticate || !agentId) return;
       try {
         const payload = await availabilityRequest(token, null, { signal: controller.signal });
-        intent.refresh({ status:extractStatus(payload) || 'offline', statusSince:extractSince(payload), wrapUpCallSid:payload.wrap_up_call_sid || null });
+        intent.refresh({ status:extractStatus(payload) || 'offline', statusSince:extractSince(payload), wrapUpCallSid:payload.wrap_up_call_sid || null, activeCallSid:payload.active_call_sid || null });
       } catch { /* Keep the last confirmed status until the next refresh. */ }
     }, 5000);
     return () => {
@@ -148,7 +150,10 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
   // another agent's queued request.
   const setPhoneReady = useCallback((ready) => {
     const binding = intentRef.current;
-    if (binding?.agentId === agentId) binding.intent.setPhoneReady(ready);
+    if (binding?.agentId === agentId) {
+      setConfirmedPhoneReady(ready);
+      binding.intent.setPhoneReady(ready);
+    }
   }, [agentId]);
 
   const value = useMemo(
@@ -159,6 +164,8 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       status,
       statusSince,
       wrapUpCallSid,
+      activeCallSid,
+      phoneReady,
       isHydrated,
       isSaving,
       pendingStatus,
@@ -166,7 +173,7 @@ function AvailabilityProviderCore({ agentId, identityLoaded, children }) {
       error,
       changeStatus,
     }),
-    [agentId, identityLoaded, canAuthenticate, status, statusSince, wrapUpCallSid, isHydrated, isSaving, pendingStatus, error, changeStatus, setPhoneReady]
+    [agentId, identityLoaded, canAuthenticate, status, statusSince, wrapUpCallSid, activeCallSid, phoneReady, isHydrated, isSaving, pendingStatus, error, changeStatus, setPhoneReady]
   );
 
   return <AvailabilityContext.Provider value={value}>{children}</AvailabilityContext.Provider>;

@@ -2,6 +2,7 @@ import CallTranscriptPlayer from "./CallTranscriptPlayer";
 import CallNotesEditor from "./CallNotesEditor";
 import CallDateRangePicker from "./CallDateRangePicker";
 import CallLogIconSelect from "./CallLogIconSelect";
+import CallBackButton from "./CallBackButton";
 import { debugLog } from "../../lib/debugLog.js";
 import { useAppAuth } from "../../context/AuthContext";
 import { loadCallLogPages } from "../../lib/callLogApi";
@@ -362,7 +363,7 @@ export default function CallLogTab({ onOpenContact = null }) {
               <th>STATUS · OUTCOME</th>
               <th>RECORDING</th>
               <th>COMPLIANCE</th>
-              <th aria-label="Expand" />
+              <th aria-label="Call actions" />
             </tr>
           </thead>
           <tbody>
@@ -454,7 +455,7 @@ function FragmentRow({ row, isExpanded, isAlert, onToggle, onPlay, playRequest, 
         <td><CallStatusOutcome disposition={row.disposition} outcome={row.call_outcome} /></td>
         <td><RecordingCell row={row} onPlay={onPlay} /></td>
         <td><ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} duration={row.duration_seconds} /></td>
-        <td className="call-log-caret"><button type="button" className="call-expand-toggle" aria-label={isExpanded ? "Collapse call" : "Expand call"} aria-expanded={isExpanded} onClick={event => { event.stopPropagation(); onToggle(); }}>{isExpanded ? "⌄" : "›"}</button></td>
+        <td className="call-log-caret"><span className="call-log-row-actions"><CallBackButton row={row} /><button type="button" className="call-expand-toggle" aria-label={isExpanded ? "Collapse call" : "Expand call"} aria-expanded={isExpanded} onClick={event => { event.stopPropagation(); onToggle(); }}>{isExpanded ? "⌄" : "›"}</button></span></td>
       </tr>
       {isExpanded ? (
         <tr className="call-log-expand-row">
