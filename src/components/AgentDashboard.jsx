@@ -3,6 +3,7 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { buildDashboard, DASHBOARD_RANGES, formatMetric, metricDelta } from '../lib/dashboardMetrics';
 import { callOutcomeLabel } from '../lib/postCallPipeline';
 import ParagonCallbackTasks from './ParagonCallbackTasks';
+import AgentStatusLog from './AgentStatusLog';
 
 const METRICS = [['calls', 'Calls Today'], ['sales', 'Sales Today'], ['conversion', 'Conversion Rate'], ['duration', 'Avg Talk'], ['compliance', 'Compliance Score']];
 const TICKER_LABELS = { calls: 'CALLS', sales: 'SALES', conversion: 'CVR', duration: 'AVG TALK', compliance: 'COMPLIANCE' };
@@ -176,6 +177,7 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
         </span>;
       })}
     </section>
+    <AgentStatusLog />
     <div className="agent-dash-range-row"><span>{scopeLabel} · ACTIVITY WINDOW</span><div className="agent-dash-ranges" aria-label="Chart time range">{DASHBOARD_RANGES.map(([value, label]) => <button key={value} aria-pressed={range === value} onClick={() => setRange(value)}>{label}</button>)}</div></div>
     <div className="agent-dash-panel-grid">
     <section className="agent-dash-panel"><header><h2>Calls vs Sales</h2><span className="agent-dash-legend"><i /> Calls <b /> Sales</span></header><TimelineChart buckets={summary.buckets} hourly={range === 'today'} /></section>

@@ -18111,6 +18111,22 @@ body[data-bg-mode="classic"] .viewport-bg {
 .agent-dashboard thead { color: var(--eg-amber); font-size: 10px; text-transform: uppercase; }
 .agent-dashboard td:nth-child(2) { color: var(--eg-amber); }
 .agent-dash-error { border: 1px solid var(--eg-amber); color: var(--eg-amber); padding: 12px; font-size: 12px; }
+.agent-status-log { margin: 0 0 16px; }
+.agent-status-log__filters { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; }
+.agent-status-log__filters > div { display: flex; flex-direction: column; gap: 6px; }
+.agent-status-log__filters label { font-size: 10px; text-transform: uppercase; }
+.agent-status-log__filters input, .agent-status-log__filters select {
+  max-width: 100%; min-height: 34px; border: 1px solid var(--eg-border); background: #000;
+  color: var(--eg-amber); padding: 7px 10px; font: 11px var(--eg-font-mono); color-scheme: dark;
+}
+.agent-status-log__filters input:focus-visible, .agent-status-log__filters select:focus-visible { outline: 1px solid var(--eg-amber); outline-offset: 2px; }
+.agent-status-log .agent-dash-table-wrap { max-height: 360px; margin-top: 12px; overflow: auto; }
+.agent-status-log table { min-width: 560px; }
+.agent-status-log th, .agent-status-log td { padding: 9px 12px; text-align: left; white-space: nowrap; }
+.agent-status-log thead { position: sticky; top: 0; background: #000; }
+.agent-status-log td.agent-status-log__empty { text-align: center; padding: 24px 12px; }
+.agent-status-log__pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 12px; font-size: 10px; }
+.agent-status-log__pagination > div { display: flex; gap: 6px; }
 @media (max-width: 800px) {
   .agent-dashboard { padding: 8px 14px 14px; }
   .agent-dash-panel { padding: 12px; }

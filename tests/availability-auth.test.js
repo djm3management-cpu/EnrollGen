@@ -51,6 +51,7 @@ before(async () => {
   await pg.exec('UPDATE telephony_presence_policy SET enforced=true');
   await pg.exec(sql('../supabase/migrations/109_callbacks_only_availability.sql'));
   await pg.exec('ALTER TABLE agent_availability ADD COLUMN wrap_up_call_sid text');
+  await pg.exec(sql('../supabase/migrations/120_agent_status_log.sql'));
   await pg.exec('GRANT ALL ON agent_phone_sessions TO service_role; SET ROLE service_role');
 });
 after(async () => pg.close());
@@ -117,9 +118,14 @@ test('browser roster spoofing cannot grant another subject availability access',
 
 test('presence and active call guards still own effective status and resume intent', async () => {
   await pg.exec("DELETE FROM agent_phone_sessions WHERE agent_id='alice'");
+  const beforeDisconnected = (await query("SELECT count(*) FROM agent_availability_log WHERE agent_id='alice'"))[0].count;
   assert.equal((await call(auth, { status: 'available' })).status, 'offline');
   assert.equal((await call(auth, { status: 'callbacks_only' })).status, 'offline');
+  const disconnectedLogs = await query("SELECT status FROM agent_availability_log WHERE agent_id='alice' ORDER BY changed_at DESC");
+  assert.equal(disconnectedLogs[0].status, 'offline');
+  assert.equal(Number(disconnectedLogs.length), Number(beforeDisconnected) + 1, 'Only the saved transition to offline is logged');
   await pg.exec("INSERT INTO agent_phone_sessions VALUES(gen_random_uuid(),'alice',now()+interval '1 hour'); UPDATE agent_availability SET active_call_sid='CA-active',status='busy',available=false WHERE agent_id='alice'");
+  const beforeReserved = (await query("SELECT count(*) FROM agent_availability_log WHERE agent_id='alice'"))[0].count;
   const row = await call(auth, { status: 'offline' });
   assert.equal(row.status, 'busy');
   assert.equal(row.available, false);
@@ -130,8 +136,12 @@ test('presence and active call guards still own effective status and resume inte
   assert.equal((await query("SELECT resume_status FROM agent_availability WHERE agent_id='alice'"))[0].resume_status, 'available');
   assert.equal((await call(auth, { status: 'callbacks_only' })).status, 'busy');
   assert.equal((await query("SELECT resume_status FROM agent_availability WHERE agent_id='alice'"))[0].resume_status, 'callbacks_only');
+  assert.equal((await query("SELECT count(*) FROM agent_availability_log WHERE agent_id='alice'"))[0].count, beforeReserved, 'Resume preferences do not create false offline/online entries during a call');
   await query("SELECT release_call_agent('CA-active','alice')");
   assert.equal((await call(auth, null, 200, 'GET')).status, 'callbacks_only');
+  const finalLog = (await query("SELECT status, changed_at FROM agent_availability_log WHERE agent_id='alice' ORDER BY changed_at DESC LIMIT 1"))[0];
+  assert.equal(finalLog.status, 'callbacks_only');
+  assert.ok(finalLog.changed_at);
 });
 
 test('073 denies direct availability CRUD and identity-map access, including column grants', async () => {
