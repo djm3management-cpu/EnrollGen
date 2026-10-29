@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { before, after, beforeEach, afterEach, test } from 'node:test';
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
@@ -15,6 +16,7 @@ const agentB = '10000000-0000-4000-8000-000000000002';
 const contactA = '20000000-0000-4000-8000-000000000001';
 const contactB = '20000000-0000-4000-8000-000000000002';
 const callA = '30000000-0000-4000-8000-000000000001';
+const enrolledAgentA = '70000000-0000-4000-8000-000000000001';
 const sourceA = '60000000-0000-4000-8000-000000000001';
 const sourceB = '60000000-0000-4000-8000-000000000002';
 const archivedSourceA = '60000000-0000-4000-8000-000000000003';
@@ -75,11 +77,12 @@ before(async () => {
     GRANT USAGE ON SCHEMA auth TO authenticated,service_role;
     CREATE TABLE tenants(id uuid PRIMARY KEY, name text);
     CREATE TABLE tenant_agents(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants, name text,role text,agent_slug text,clerk_user_id text,is_active boolean DEFAULT true,ghl_user_id text,npn text);
+    CREATE TABLE enrolled_agents(id uuid PRIMARY KEY,tenant_id uuid,clerk_user_id text,is_active boolean DEFAULT true);
     CREATE TABLE contacts(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants,assigned_agent_id text,pii_encrypted jsonb,
       status text,source text,county text,state text,zip text,medicare_parts text,current_carrier text,current_plan text,mbi_last4 text,
       do_not_call boolean,ghl_contact_id text,first_initial text,last_initial text,phone_last4 text,email_set boolean,dob_set boolean,
       created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now());
-    CREATE TABLE call_records(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants,contact_id uuid REFERENCES contacts,call_start timestamptz,
+    CREATE TABLE call_records(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants,contact_id uuid REFERENCES contacts,call_start timestamptz,agent_id uuid,
       call_outcome text,product_type text,call_duration_seconds integer,transcript_raw text,transcript_diarized text,
       dg_sentiment jsonb,dg_intents jsonb,dg_topics jsonb,dg_summary jsonb,call_analytics jsonb,agent_assessment jsonb,beneficiary_risk jsonb,
       agent_notes text,carrier_name text,plan_name text,effective_date date);
@@ -90,6 +93,7 @@ before(async () => {
     INSERT INTO pii_vault.encryption_keys VALUES('50000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000001',1,true,now());
     INSERT INTO tenants VALUES('${tenantA}','A'),('${tenantB}','B');
     INSERT INTO tenant_agents(id,tenant_id,name,role,agent_slug,clerk_user_id) VALUES('${agentA}','${tenantA}','Agent A','admin','agent_a','user-a'),('${agentB}','${tenantB}','Agent B','admin','agent_b','user-b');
+    INSERT INTO enrolled_agents VALUES('${enrolledAgentA}','${tenantA}','user-a',true),('${agentB}','${tenantB}','user-b',true);
     -- Production catalog: existing CRM reads are broad, but lead_sources
     -- is service-only. Never grant the authenticated fixture source access.
     GRANT SELECT ON tenants,tenant_agents,contacts,call_records TO authenticated;
@@ -126,6 +130,8 @@ before(async () => {
   await db.exec('RESET ROLE');
   // Apply 062 over existing opportunities/history to exercise upgrade backfill.
   await db.exec(readFileSync(new URL('../supabase/migrations/062_opportunity_soft_delete.sql', import.meta.url), 'utf8'));
+  await db.exec(readFileSync(new URL('../supabase/migrations/119_ma_disposition_opportunities.sql', import.meta.url), 'utf8'));
+  await db.exec('GRANT UPDATE ON call_records TO authenticated');
 });
 beforeEach(async () => { await db.exec('BEGIN'); await asUser(); });
 afterEach(async () => { await db.exec('ROLLBACK; RESET ROLE'); });
@@ -136,6 +142,136 @@ test('seeded stages have the requested editable dark-theme colors and outcome fl
     ['New Lead','#a78bfa',false,false],['Contacted','#facc15',false,false],['Pending','#fb923c',false,false],['Enrolled','#4ade80',true,false],['Disenrolled','#f87171',false,true],
   ]);
   assert.equal(AUTO_CREATE_OPPS_FROM_CALLS, false);
+});
+
+const dispose = (outcome, callId = callA, product = 'MA') => query(
+  'UPDATE call_records SET call_outcome=$1,product_type=$2,agent_id=$3 WHERE id=$4', [outcome,product,enrolledAgentA,callId]);
+const opportunityColumns = 'id,stage_id,status,call_id,assigned_agent_id,line_of_business,stage_entered_at,updated_at,stage_change_source';
+const opportunity = async id => (await query(`SELECT ${opportunityColumns} FROM opportunities WHERE id=$1`,[id]))[0];
+const dispositionLog = callId => query('SELECT * FROM call_disposition_opportunity_log WHERE call_id=$1 ORDER BY id',[callId]);
+async function newDispositionCall(outcome, product = 'MA') {
+  const contact = randomUUID(), call = randomUUID();
+  await db.exec('RESET ROLE');
+  await query("INSERT INTO contacts(id,tenant_id,assigned_agent_id) VALUES($1,$2,'agent_a')",[contact,tenantA]);
+  await query('INSERT INTO call_records(id,tenant_id,contact_id,agent_id,call_outcome,product_type) VALUES($1,$2,$3,$4,$5,$6)',
+    [call,tenantA,contact,enrolledAgentA,outcome,product]);
+  await asUser();
+  return { call, contact, opp: (await query(`SELECT ${opportunityColumns} FROM opportunities WHERE call_id=$1`,[call]))[0] };
+}
+
+test('MA Enrolled moves the existing opportunity to Won and repeat saves duplicate no cards, moves or events', async () => {
+  await dispose('enrolled');
+  let opp = await opportunity(opportunityA);
+  assert.equal(opp.stage_id,stagesA[3].id); assert.equal(opp.status,'won'); assert.equal(opp.call_id,callA);
+  assert.equal((await dispositionLog(callA))[0].action,'moved');
+  assert.equal(opp.stage_change_source,'call_disposition');
+  assert.equal((await query('SELECT payload FROM opportunity_events WHERE opportunity_id=$1',[opp.id]))[0].payload.source,'call_disposition');
+  const entered = opp.stage_entered_at;
+  await dispose('enrolled'); opp = await opportunity(opp.id);
+  assert.deepEqual(opp.stage_entered_at,entered);
+  assert.equal((await query('SELECT id FROM opportunities WHERE tenant_id=$1 AND contact_id=$2',[tenantA,contactA])).length,1);
+  assert.equal((await query('SELECT id FROM opportunity_events WHERE opportunity_id=$1',[opp.id])).length,1);
+});
+
+test('new MA Enrolled creates an encrypted, owner-assigned Won opportunity linked to the exact call', async () => {
+  const { call, opp } = await newDispositionCall('enrolled');
+  assert.equal(opp.line_of_business,'MA'); assert.equal(opp.status,'won'); assert.equal(opp.stage_id,stagesA[3].id);
+  assert.equal(opp.assigned_agent_id,agentA);
+  await db.exec('RESET ROLE');
+  assert.equal((await query('SELECT title FROM opportunities WHERE id=$1',[opp.id]))[0].title,null);
+  const title = (await query("SELECT decrypt_pii_value(pii_encrypted->'title') AS title FROM opportunities WHERE id=$1",[opp.id]))[0].title;
+  assert.equal(title,'MA Enrollment'); await asUser();
+  assert.equal((await dispositionLog(call))[0].action,'created');
+});
+
+test('MA pending verification creates Pending/Open, never Won, and repeated saves keep its stage clock', async () => {
+  const { call, opp } = await newDispositionCall('enrolled_pending_verification');
+  assert.equal(opp.stage_id,stagesA[2].id); assert.equal(opp.status,'open');
+  await dispose('enrolled_pending_verification',call);
+  assert.deepEqual((await opportunity(opp.id)).stage_entered_at,opp.stage_entered_at);
+  assert.equal((await query('SELECT id FROM opportunity_stage_history WHERE opportunity_id=$1',[opp.id])).length,1);
+});
+
+test('pending verification respects existing manual stages; only Enrolled overrides a subsequent board move', async () => {
+  await dispose('enrolled_pending_verification');
+  assert.equal((await opportunity(opportunityA)).stage_id,stagesA[0].id);
+  assert.equal((await dispositionLog(callA))[0].action,'stage_preserved');
+  const { call, opp } = await newDispositionCall('enrolled_pending_verification');
+  await move(opp.id,stagesA[1].id,stagesA[2].id);
+  await dispose('enrolled_pending_verification',call);
+  assert.equal((await opportunity(opp.id)).stage_id,stagesA[1].id);
+  assert.match((await dispositionLog(call)).at(-1).reason,/manually set/);
+  await dispose('enrolled',call);
+  assert.equal((await opportunity(opp.id)).stage_id,stagesA[3].id);
+});
+
+for (const outcome of ['enrolled_pending_verification','callback_scheduled','not_interested',null]) {
+  test(`changing MA Enrolled to ${outcome} logs the change and retains even a manual stage`, async () => {
+    await dispose('enrolled');
+    await move(opportunityA,stagesA[4].id,stagesA[3].id);
+    const before = await opportunity(opportunityA);
+    await dispose(outcome);
+    const after = await opportunity(opportunityA), log = (await dispositionLog(callA)).at(-1);
+    assert.equal(after.stage_id,before.stage_id); assert.equal(after.status,'lost');
+    assert.deepEqual(after.stage_entered_at,before.stage_entered_at);
+    assert.equal(log.action,'enrollment_changed'); assert.equal(log.old_outcome,'enrolled'); assert.equal(log.new_outcome,outcome);
+    assert.equal(log.stage_id_before,before.stage_id); assert.equal(log.stage_id_after,before.stage_id);
+  });
+}
+
+test('Enrolled to pending verification leaves Won in place and logs the reversal', async () => {
+  await dispose('enrolled'); await dispose('enrolled_pending_verification');
+  assert.equal((await opportunity(opportunityA)).status,'won');
+  assert.equal((await dispositionLog(callA)).at(-1).action,'enrollment_changed');
+  await dispose('callback_scheduled'); await dispose('enrolled_pending_verification');
+  assert.equal((await opportunity(opportunityA)).status,'won');
+  assert.match((await dispositionLog(callA)).at(-1).reason,/cannot reopen/);
+});
+
+test('non-MA and unknown products never create, move, or log MA opportunities', async () => {
+  for (const product of ['ACA','MedSup','U65','Annuity','Ancillary','',null]) {
+    for (const outcome of ['enrolled','enrolled_pending_verification']) await dispose(outcome,callA,product);
+  }
+  assert.equal((await opportunity(opportunityA)).stage_id,stagesA[0].id);
+  assert.deepEqual(await dispositionLog(callA),[]);
+});
+
+test('deleted opportunities are not recreated by a repeated disposition; missing contacts are logged', async () => {
+  const before = await opportunity(opportunityA);
+  await query('SELECT delete_opportunity($1,$2,$3)',[opportunityA,agentA,before.updated_at]);
+  await dispose('enrolled');
+  assert.equal((await dispositionLog(callA))[0].reason,'Deleted opportunity retained');
+  assert.deepEqual(await query('SELECT id FROM opportunities WHERE call_id=$1',[callA]),[]);
+  const call = randomUUID(); await db.exec('RESET ROLE');
+  await query("INSERT INTO call_records(id,tenant_id,agent_id,product_type,call_outcome) VALUES($1,$2,$3,'MA','enrolled')",[call,tenantA,enrolledAgentA]);
+  await asUser(); assert.equal((await dispositionLog(call))[0].reason,'No linked contact in this workspace');
+});
+
+test('service disposition saves resolve the enrolled-agent identity to the opportunity owner', async () => {
+  await db.exec('RESET ROLE');
+  await query("SELECT set_config('request.jwt.claims',$1,false)",[JSON.stringify({role:'service_role'})]);
+  await dispose('enrolled'); await asUser();
+  assert.equal((await opportunity(opportunityA)).status,'won');
+  assert.equal((await dispositionLog(callA))[0].actor_id,agentA);
+});
+
+test('disposition audit is tenant scoped, cannot be forged, and foreign subjects cannot trigger an opportunity move', async () => {
+  await dispose('enrolled');
+  await expectFailure(()=>query("UPDATE opportunities SET stage_change_source='manual' WHERE id=$1",[opportunityA]),/permission denied/);
+  await asUser('user-b');
+  assert.deepEqual(await dispositionLog(callA),[]);
+  await expectFailure(()=>dispose('enrolled'),/outside this workspace/);
+  await expectFailure(()=>query("INSERT INTO call_disposition_opportunity_log(tenant_id,call_id,action) VALUES($1,$2,'moved')",[tenantA,callA]),/permission denied/);
+  await expectFailure(()=>query('SELECT sync_ma_disposition_opportunity()'),/permission denied/);
+});
+
+test('failure to log a disposition rolls back the outcome, opportunity move, history, and event together', async () => {
+  await db.exec('RESET ROLE; ALTER TABLE call_disposition_opportunity_log ADD CONSTRAINT test_log_failure CHECK (false) NOT VALID');
+  await asUser(); await expectFailure(()=>dispose('enrolled'),/test_log_failure/);
+  assert.equal((await opportunity(opportunityA)).stage_id,stagesA[0].id);
+  assert.equal((await query('SELECT call_outcome FROM call_records WHERE id=$1',[callA]))[0].call_outcome,null);
+  assert.equal((await query('SELECT id FROM opportunity_stage_history WHERE opportunity_id=$1',[opportunityA])).length,1);
+  assert.deepEqual(await query('SELECT id FROM opportunity_events WHERE opportunity_id=$1',[opportunityA]),[]);
 });
 
 test('authenticated board metadata loads with production-like grants while direct source reads stay denied', async () => {

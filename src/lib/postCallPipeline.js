@@ -87,6 +87,12 @@ export function callOutcomeLabel(value) {
   return CALL_OUTCOME_LABELS[value] || value || "--";
 }
 
+// Internal lifecycle values have no selectable disposition. Passing an unknown
+// value to a native select makes it display the first option (Enrolled).
+export function callOutcomeSelection(value) {
+  return value !== 'incomplete' && Object.hasOwn(CALL_OUTCOME_LABELS, value) ? value : '';
+}
+
 export const US_STATE_OPTIONS = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
   "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",

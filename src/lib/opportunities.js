@@ -1,7 +1,7 @@
 export const LINES_OF_BUSINESS = ['MA', 'Med Supp', 'ACA', 'U65', 'Annuity', 'Ancillary'];
 
-// TODO: future opt-in inbound automation should call the same transactional RPC.
-// Never create an opportunity from a call automatically in this MVP.
+// Ordinary incoming calls do not create opportunities. An explicitly saved MA
+// enrollment disposition is synchronized transactionally by the database.
 export const AUTO_CREATE_OPPS_FROM_CALLS = false;
 
 export async function readOpportunityMetadata(client, tenantId, agentId) {

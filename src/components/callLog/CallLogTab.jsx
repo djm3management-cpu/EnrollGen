@@ -13,7 +13,7 @@ import CallRecordings from "./CallRecordings";
 import { ArrowLeftRight, ClipboardCheck, Download, FileAudio, PhoneCall, RefreshCw, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
-import { CALL_OUTCOME_OPTIONS, callOutcomeLabel } from "../../lib/postCallPipeline";
+import { CALL_OUTCOME_OPTIONS, callOutcomeLabel, callOutcomeSelection } from "../../lib/postCallPipeline";
 import { ANCILLARY_PRODUCT_OPTIONS, buildCallOutcomePatch } from "../../lib/ancillarySale.js";
 import CallDetailPanel from "../callDetail/CallDetailPanel";
 import ComplianceReviewModal from "../callDetail/ComplianceReviewModal";
@@ -32,14 +32,14 @@ const DIRECTION_FILTERS = ["ALL", "INBOUND", "OUTBOUND"];
 
 function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient, onChanged, disabled = false }) {
   const [saving, setSaving] = useState(false);
-  const [selectedOutcome, setSelectedOutcome] = useState(outcome || "");
+  const [selectedOutcome, setSelectedOutcome] = useState(() => callOutcomeSelection(outcome));
   const [selectedProduct, setSelectedProduct] = useState(productType || "");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    setSelectedOutcome(outcome || "");
+    setSelectedOutcome(callOutcomeSelection(outcome));
     setSelectedProduct(productType || "");
-  }, [outcome, productType]);
+  }, [callRecordId, outcome, productType]);
 
   const saveOutcome = useCallback(
     async (value, product) => {
@@ -58,7 +58,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
         window.dispatchEvent(new Event('crm-calls-updated'));
       } catch (error) {
         if (value !== "sale_ancillary") {
-          setSelectedOutcome(outcome || "");
+          setSelectedOutcome(callOutcomeSelection(outcome));
           setSelectedProduct(productType || "");
         }
         setError(error?.message || "Unable to save call outcome.");
@@ -84,7 +84,8 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
       }}
       aria-label="Call outcome"
     >
-      <option value="" disabled>Select outcome...</option>
+      <option value="" disabled>Choose disposition</option>
+      {selectedOutcome === 'not_enrolled' && <option value="not_enrolled">{callOutcomeLabel('not_enrolled')}</option>}
       {CALL_OUTCOME_OPTIONS.map((group) => (
         <optgroup key={group.group} label={group.group}>
           {group.options.map((option) => (

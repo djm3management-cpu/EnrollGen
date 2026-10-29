@@ -66,8 +66,9 @@ export function useOpportunities(contactId = null) {
 
   useEffect(() => {
     const update = () => { void refresh({ background: true }); };
-    window.addEventListener(UPDATED, update);
-    return () => window.removeEventListener(UPDATED, update);
+    const events = [UPDATED, 'crm-calls-updated', 'call-disposition-saved'];
+    events.forEach(event => window.addEventListener(event, update));
+    return () => events.forEach(event => window.removeEventListener(event, update));
   }, [refresh]);
 
   const moveStage = useCallback(async (id, stageId) => {
