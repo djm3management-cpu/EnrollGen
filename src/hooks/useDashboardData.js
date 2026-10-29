@@ -65,6 +65,7 @@ export function useDashboardData(userId, scope = 'self') {
           pages(() => evidenceClient.from('enrolled_agents').select('id, name, clerk_user_id')
             .eq('tenant_id', tenantId).order('id')),
           pages(() => client.from('call_records')
+            .is('parent_call_id', null)
             .select('id, external_call_id, session_id, agent_id, call_start, call_duration_seconds, call_outcome, compliance_scorecard_id, compliance_scorecards!compliance_scorecards_call_id_fkey(id, overall_score, created_at, is_thread_composite)')
             .eq('tenant_id', tenantId)
             .gte('call_start', shiftDays(dayStart(now), -30).toISOString())

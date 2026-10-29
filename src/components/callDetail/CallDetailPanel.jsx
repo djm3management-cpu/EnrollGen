@@ -1,6 +1,8 @@
 import RecordingPanel from "./RecordingPanel";
 import { useState } from "react";
 import { redactSensitiveText } from "../../lib/redaction";
+import CombineCallsModal from '../callLog/CombineCallsModal';
+import CombinedCalls from '../callLog/CombinedCalls';
 
 // Call intelligence detail view shared by the CALLS tab and the
 // CONTACTS tab. Expects a detail object shaped like the
@@ -339,8 +341,9 @@ function ComplianceDetail({ detail }) {
   );
 }
 
-export default function CallDetailPanel({ attemptId, recordingRow, detail, loading }) {
+export default function CallDetailPanel({ attemptId, recordingRow, detail, loading, showCombination = true }) {
   const [activeTab, setActiveTab] = useState("Transcript");
+  const [combining, setCombining] = useState(false);
 
   if (loading) {
     return <div className="ops-detail-panel"><EmptyLine>Loading call intelligence</EmptyLine></div>;
@@ -351,12 +354,15 @@ export default function CallDetailPanel({ attemptId, recordingRow, detail, loadi
 
   return (
     <div className="ops-detail-panel">
+      {showCombination && detail.id && <button type="button" className="contacts-mini-btn" onClick={() => setCombining(true)}>Combine with…</button>}
       <DetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
       {activeTab === "Recording" ? <RecordingPanel row={recordingRow} callRecordId={detail.id} attemptId={attemptId} /> : null}
       {activeTab === "Transcript" ? <TranscriptDetail detail={detail} /> : null}
       {activeTab === "Analytics" ? <AnalyticsDetail detail={detail} /> : null}
       {activeTab === "Assessment" ? <AssessmentDetail detail={detail} /> : null}
       {activeTab === "Compliance" ? <ComplianceDetail detail={detail} /> : null}
+      {showCombination && detail.id && <CombinedCalls callId={detail.id} />}
+      {combining && <CombineCallsModal ids={[detail.id]} onClose={() => setCombining(false)} />}
     </div>
   );
 }

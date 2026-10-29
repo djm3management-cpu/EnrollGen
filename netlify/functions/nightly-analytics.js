@@ -151,6 +151,7 @@ async function fetchCallsWithScores(supabase, tenantId, sinceIso) {
   const { data: calls, error } = await supabase
     .from("call_records")
     .select("id, tenant_id, agent_name, writing_agent, beneficiary_name, customer_first_name, customer_last_name, call_outcome, enrollment_completed, call_duration_seconds, carrier_name, plan_name, effective_date, call_start, created_at, call_analytics, dg_sentiment, agent_assessment, beneficiary_risk")
+    .is('parent_call_id', null)
     .eq("tenant_id", tenantId)
     .gte("created_at", sinceIso)
     .order("created_at", { ascending: false });

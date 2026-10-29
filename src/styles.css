@@ -18525,6 +18525,14 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
 .call-actions-menu summary::-webkit-details-marker { display: none; }
 .call-actions-menu-items { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; min-width: 190px; padding: 6px; background: var(--eg-surface-2); border: 1px solid var(--border-default); border-radius: var(--eg-radius-card); box-shadow: var(--eg-shadow-card); }
 .call-actions-menu-items button { width: 100%; text-align: left; letter-spacing: 0; }
+.combine-calls-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.combine-calls-comparison dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; }
+.combine-calls-comparison dd { margin: 0; overflow-wrap: anywhere; }
+.combine-calls-warning.ops-error { display: flex; align-items: flex-start; gap: 10px; }
+.combine-call-candidate { text-align: left; white-space: normal; }
+.combined-calls { display: grid; gap: 12px; }
+.call-log-selection input { accent-color: var(--text-primary); cursor: pointer; }
+@media (max-width: 600px) { .combine-calls-comparison { grid-template-columns: minmax(0, 1fr); } }
 .call-log-workspace { display: grid; grid-template-columns: minmax(0, 7fr) minmax(240px, 3fr); gap: 16px; align-items: start; }
 .call-transcript-panel { min-width: 0; border: 1px solid var(--border-default); border-radius: var(--eg-radius-card); overflow: hidden; }
 .call-audio-bar { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--surface-raised); border-bottom: 1px solid var(--border-default); }
@@ -18576,10 +18584,10 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
   .call-log-table thead { display: none; }
   .call-log-table .call-log-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); position: relative; border-bottom: 1px solid var(--border-default); padding: 8px 4px; }
   .call-log-table .call-log-row > td { display: block; border: 0; white-space: normal; padding: 6px 10px; }
-  .call-log-row > td:nth-child(2) { text-align: right; padding-right: 76px; }
-  .call-log-row > td:nth-child(3), .call-log-row > td:nth-child(6) { grid-column: 1 / -1; }
-  .call-log-row > td:nth-child(4)::before { content: 'TALK '; color: var(--text-tertiary); font-size: 9px; }
-  .call-log-row > td:nth-child(5)::before { content: 'AGENT '; color: var(--text-tertiary); font-size: 9px; }
+  .call-log-row > td:nth-child(3) { text-align: right; padding-right: 100px; }
+  .call-log-row > td:nth-child(4), .call-log-row > td:nth-child(7) { grid-column: 1 / -1; }
+  .call-log-row > td:nth-child(5)::before { content: 'TALK '; color: var(--text-tertiary); font-size: 9px; }
+  .call-log-row > td:nth-child(6)::before { content: 'AGENT '; color: var(--text-tertiary); font-size: 9px; }
   .call-log-table .call-log-row > .call-log-caret { position: absolute; right: 0; top: 6px; padding: 0 8px; }
   .call-log-table .call-log-expand-row, .call-log-table .call-log-expand-row > td { display: block; width: 100%; box-sizing: border-box; }
   .call-log-table .call-log-expand-row > td { padding: 8px; }

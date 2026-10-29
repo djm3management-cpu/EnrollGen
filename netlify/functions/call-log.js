@@ -29,7 +29,7 @@ export async function measuredCallLogRows(db, tenantId, rows) {
   }
   return rows.map(row => {
     // 066's attempt rows already contain authoritative measured durations.
-    if (row.attempt_id) return row;
+    if (row.attempt_id || row.combined_count > 0) return row;
     const evidence = [...attempts.values()].filter(attempt => row.inbound_call_id
       ? attempt.inbound_call_id === row.inbound_call_id
       : attempt.call_record_id === row.call_record_id).filter(attempt => terminal.has(attempt.status));

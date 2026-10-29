@@ -1,4 +1,6 @@
 import CallTranscriptPlayer from "./CallTranscriptPlayer";
+import CombineCallsModal from "./CombineCallsModal";
+import CombinedCalls from "./CombinedCalls";
 import CallNotesEditor from "./CallNotesEditor";
 import CallDateRangePicker from "./CallDateRangePicker";
 import CallLogIconSelect from "./CallLogIconSelect";
@@ -120,7 +122,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
   );
 }
 
-function ExpandedRow({ row, supabaseClient, playRequest }) {
+function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(Boolean(row.call_record_id));
   const [showFullDetail, setShowFullDetail] = useState(false);
@@ -174,6 +176,8 @@ function ExpandedRow({ row, supabaseClient, playRequest }) {
   return (
     <div className="call-log-expand">
       <div className="call-log-expand-actions">
+        <span className="contacts-muted">{fmtDateTime(row.occurred_at)} · {row.agent || "Unknown agent"} · Talk {fmtDuration(row.original_talk_seconds ?? row.duration_seconds)}{row.combined_count > 0 ? ` · Combined talk ${fmtDuration(row.duration_seconds)}` : ""}</span>
+        <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={onCombine}>Combine with…</button>
         <CreateOpportunityButton contactId={row.contact_id} callId={row.call_record_id} contactName={row.contact_name} label="+ OPPORTUNITY" />
         <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} aria-expanded={showFullDetail} onClick={() => setShowFullDetail(current => !current)}>{showFullDetail ? "HIDE FULL DETAIL" : "FULL DETAIL"}</button>
         <details className="call-actions-menu">
@@ -188,7 +192,7 @@ function ExpandedRow({ row, supabaseClient, playRequest }) {
       </div>
       {detailError && <div className="ops-error" role="alert">{detailError} <button type="button" className="contacts-mini-btn" onClick={() => void loadDetail()}>RETRY</button></div>}
       <div className="call-log-workspace">
-        <CallTranscriptPlayer row={row} detail={detail} loading={loading} playRequest={playRequest} />
+        <CallTranscriptPlayer row={row.combined_count > 0 ? { ...row, duration_seconds: row.original_talk_seconds } : row} detail={detail} loading={loading} playRequest={playRequest} />
         <aside className="call-log-sidebar" aria-label="Call information">
           <section className="contacts-section">
             <div className="contacts-section-head">OUTCOME</div>
@@ -204,7 +208,7 @@ function ExpandedRow({ row, supabaseClient, playRequest }) {
           <section className="contacts-section">
             <div className="contacts-section-head">COMPLIANCE</div>
             <div className="call-sidebar-compliance">
-              <ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} duration={row.duration_seconds} />
+              <ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} duration={row.combined_count > 0 ? row.original_talk_seconds : row.duration_seconds} />
               {row.call_record_id && <button type="button" className="call-review-link" onClick={() => setShowComplianceReview(true)}>REVIEW →</button>}
             </div>
           </section>
@@ -215,10 +219,12 @@ function ExpandedRow({ row, supabaseClient, playRequest }) {
         </aside>
       </div>
 
+      {row.call_record_id && <CombinedCalls callId={row.call_record_id} />}
+
       {showComplianceReview ? (
         <ComplianceReviewModal
           callRecordId={row.call_record_id}
-          displayDurationSeconds={row.duration_seconds}
+          displayDurationSeconds={row.combined_count > 0 ? row.original_talk_seconds : row.duration_seconds}
           supabaseClient={supabaseClient}
           onClose={() => {
             setShowComplianceReview(false);
@@ -228,7 +234,7 @@ function ExpandedRow({ row, supabaseClient, playRequest }) {
       ) : null}
 
       {!row.call_record_id && (row.inbound_call_id || row.attempt_id) ? <RecordingPanel row={row} inboundCallId={row.inbound_call_id} attemptId={row.attempt_id} /> : null}
-      {showFullDetail ? <CallDetailPanel detail={detail ? { ...detail, call_duration_seconds: row.duration_seconds } : detail} recordingRow={row} loading={loading} attemptId={row.attempt_id} /> : null}
+      {showFullDetail ? <CallDetailPanel showCombination={false} detail={detail ? { ...detail, call_duration_seconds: row.duration_seconds } : detail} recordingRow={row} loading={loading} attemptId={row.attempt_id} /> : null}
     </div>
   );
 }
@@ -239,6 +245,8 @@ export default function CallLogTab({ onOpenContact = null }) {
   const [exporting, setExporting] = useState(false);
   const exportGeneration = useRef(0);
   const [showRecordings, setShowRecordings] = useState(false);
+  const [selectedCalls, setSelectedCalls] = useState([]);
+  const [combineIds, setCombineIds] = useState(null);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState(null);
@@ -296,6 +304,11 @@ export default function CallLogTab({ onOpenContact = null }) {
     } finally { if (request === exportGeneration.current) setExporting(false); }
   };
 
+  // Selection stays on the visible page and resets when its rows change.
+  useEffect(() => { setSelectedCalls([]); }, [rows]);
+  const toggleSelected = id => setSelectedCalls(current => current.includes(id)
+    ? current.filter(item => item !== id) : [...current, id]);
+
   // Filters reset pagination.
   useEffect(() => {
     setPage(0);
@@ -326,6 +339,7 @@ export default function CallLogTab({ onOpenContact = null }) {
           onChange={(event) => setSearch(event.target.value)}
         />
         <div className="call-log-toolbar-actions" role="group" aria-label="Call log filters and actions">
+          {selectedCalls.length === 2 && <button type="button" className="contacts-mini-btn" onClick={() => setCombineIds(selectedCalls)}>Combine Calls</button>}
           <CallLogIconSelect icon={UsersRound} label="Agent filter" title={`Agent: ${agentFilter === 'ALL' ? 'All agents' : agentFilter}`} value={agentFilter} onChange={event => setAgentFilter(event.target.value)}>
             {agentOptions.map(agent => <option key={agent} value={agent}>{agent === 'ALL' ? 'ALL AGENTS' : agent}</option>)}
           </CallLogIconSelect>
@@ -355,6 +369,7 @@ export default function CallLogTab({ onOpenContact = null }) {
         <table className="contacts-table call-log-table">
           <thead>
             <tr>
+              <th aria-label="Select calls" />
               <th>DATE/TIME</th>
               <th>DIR</th>
               <th>CONTACT</th>
@@ -368,9 +383,9 @@ export default function CallLogTab({ onOpenContact = null }) {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={9} className="contacts-muted">Loading call log...</td></tr>
+              <tr><td colSpan={10} className="contacts-muted">Loading call log...</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={9} className="contacts-muted">No calls match the current filters</td></tr>
+              <tr><td colSpan={10} className="contacts-muted">No calls match the current filters</td></tr>
             ) : (
               rows.map((row) => {
                 const isExpanded = expandedId === row.log_id;
@@ -381,6 +396,9 @@ export default function CallLogTab({ onOpenContact = null }) {
                     row={row}
                     isExpanded={isExpanded}
                     isAlert={isAlert}
+                    selected={selectedCalls.includes(row.call_record_id)}
+                    onSelect={() => toggleSelected(row.call_record_id)}
+                    onCombine={() => setCombineIds([row.call_record_id])}
                     onToggle={() => { setExpandedId(isExpanded ? null : row.log_id); setPlayRequest(current => ({ ...current, id: null })); }}
                     onPlay={() => { setExpandedId(row.log_id); setPlayRequest(current => ({ id: row.log_id, sequence: current.sequence + 1 })); }}
                     playRequest={playRequest.id === row.log_id ? playRequest.sequence : 0}
@@ -394,6 +412,10 @@ export default function CallLogTab({ onOpenContact = null }) {
         </table>
       </div>
 
+      {combineIds && <CombineCallsModal ids={combineIds} onClose={() => setCombineIds(null)} onCombined={primaryId => {
+        setSelectedCalls([]);
+        setExpandedId(rows.find(row => row.call_record_id === primaryId)?.log_id || null);
+      }} />}
       <div className="call-log-pagination">
         <button
           type="button"
@@ -417,10 +439,13 @@ export default function CallLogTab({ onOpenContact = null }) {
   );
 }
 
-function FragmentRow({ row, isExpanded, isAlert, onToggle, onPlay, playRequest, onOpenContact, supabaseClient }) {
+function FragmentRow({ row, isExpanded, isAlert, onToggle, onPlay, playRequest, onOpenContact, supabaseClient, selected, onSelect, onCombine }) {
   return (
     <>
       <tr className={`call-log-row${isAlert ? " is-alert" : ""}${isExpanded ? " is-expanded" : ""}`} onClick={onToggle}>
+        <td className="call-log-selection" onClick={event => event.stopPropagation()}>
+          <input type="checkbox" aria-label={`Select call ${fmtDateTime(row.occurred_at)} ${row.contact_name || row.contact_phone || ''}`} title={row.call_record_id ? 'Select call' : 'Available once this call has a saved record'} disabled={!row.call_record_id} checked={selected} onChange={onSelect} />
+        </td>
         <td className="mono">{fmtDateTime(row.occurred_at)}</td>
         <td>
           <CallDirection direction={row.direction} />
@@ -450,17 +475,20 @@ function FragmentRow({ row, isExpanded, isAlert, onToggle, onPlay, playRequest, 
             }}>{row.contact_phone}</a> : <span className="contacts-muted mono call-log-subphone"> {row.contact_phone}</span>
           ) : null}
         </td>
-        <td className="mono">{fmtDuration(row.duration_seconds)}</td>
+        <td className="mono">{fmtDuration(row.duration_seconds)}{row.combined_count > 0 && <span className="contacts-muted call-log-subphone">{row.combined_count + 1} calls</span>}</td>
         <td>{row.agent || "--"}</td>
         <td><CallStatusOutcome disposition={row.disposition} outcome={row.call_outcome} /></td>
         <td><RecordingCell row={row} onPlay={onPlay} /></td>
-        <td><ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} duration={row.duration_seconds} /></td>
-        <td className="call-log-caret"><span className="call-log-row-actions"><CallBackButton row={row} /><button type="button" className="call-expand-toggle" aria-label={isExpanded ? "Collapse call" : "Expand call"} aria-expanded={isExpanded} onClick={event => { event.stopPropagation(); onToggle(); }}>{isExpanded ? "⌄" : "›"}</button></span></td>
+        <td><ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} duration={row.combined_count > 0 ? row.original_talk_seconds : row.duration_seconds} /></td>
+        <td className="call-log-caret"><span className="call-log-row-actions"><CallBackButton row={row} /><details className="call-actions-menu" onClick={event => event.stopPropagation()}>
+          <summary className="contacts-mini-btn" aria-label="More call actions">⋯</summary>
+          <div className="call-actions-menu-items"><button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={event => { event.currentTarget.closest('details').open = false; onCombine(); }}>Combine with…</button></div>
+        </details><button type="button" className="call-expand-toggle" aria-label={isExpanded ? "Collapse call" : "Expand call"} aria-expanded={isExpanded} onClick={event => { event.stopPropagation(); onToggle(); }}>{isExpanded ? "⌄" : "›"}</button></span></td>
       </tr>
       {isExpanded ? (
         <tr className="call-log-expand-row">
-          <td colSpan={9}>
-            <ExpandedRow row={row} supabaseClient={supabaseClient} playRequest={playRequest} />
+          <td colSpan={10}>
+            <ExpandedRow row={row} supabaseClient={supabaseClient} playRequest={playRequest} onCombine={onCombine} />
           </td>
         </tr>
       ) : null}

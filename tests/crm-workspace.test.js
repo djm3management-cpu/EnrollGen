@@ -132,7 +132,8 @@ test('the actual call row and contact card display the same Talk, recording targ
   assert.equal(logNodes.find(node => node.type === 'callback').props.row, row);
   const actions = logNodes.find(node => node.props.className === 'call-log-row-actions');
   assert.equal(actions.children[0].type, 'callback');
-  assert.equal(actions.children[1].props['aria-label'], 'Expand call');
+  assert.ok(nodes(actions).some(node => node.props['aria-label'] === 'Expand call'));
+  assert.ok(nodes(actions).some(node => node.props['aria-label'] === 'More call actions'));
   const Card = componentSource('../src/components/contacts/ContactCallCard.jsx', 'ContactCallCard', {
     ...parts, formatCallTime, formatCallDateTime, formatTalk, summarizeContactCalls,
   });

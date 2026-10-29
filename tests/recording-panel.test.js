@@ -106,7 +106,7 @@ test('a successful empty lookup only shows the empty state when the call has no 
 test('full-detail Recording tab preserves the canonical call row rather than relying on intelligence metadata', async () => {
   const harness = hookHarness(), row = { attempt_id: 'actual-attempt', call_record_id: 'actual-record', recording_url: 'protected-recording' };
   const Detail = component('../src/components/callDetail/CallDetailPanel.jsx', 'CallDetailPanel', {
-    ...harness.hooks, RecordingPanel: 'recording-panel',
+    ...harness.hooks, RecordingPanel: 'recording-panel', CombinedCalls: 'combined-calls', CombineCallsModal: 'combine-modal',
   });
   try {
     harness.mount(() => Detail({ detail: { id: 'detail-only' }, recordingRow: row, loading: false }));
