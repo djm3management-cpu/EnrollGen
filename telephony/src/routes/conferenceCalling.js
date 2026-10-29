@@ -6,19 +6,23 @@ import { conferenceService, validUsPhone } from '../conferenceCalling.js';
 import { checked, ConferenceError } from '../conferenceStore.js';
 import { callbackPayload } from '../recordings.js';
 import { conferenceRuntime } from '../conferenceRuntime.js';
+import { randomUUID } from 'node:crypto';
+import { conferenceFailure, conferenceFailureLog } from '../conferenceErrors.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SID = /^CA[0-9a-f]{32}$/i;
 const xml = (res, body) => res.type('text/xml').send(body);
 export function createConferenceRouter({ service = conferenceService(), settings = config,
-  authenticate = requireClerkUser, signature = requireTwilioSignature } = {}) {
+  authenticate = requireClerkUser, signature = requireTwilioSignature, logError = entry => console.error(JSON.stringify(entry)) } = {}) {
   const router = Router(), db = service.store.db;
   const wrap = fn => async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     try { return await fn(req, res); }
     catch (error) {
-      const status = error instanceof ConferenceError ? error.status : 503;
-      return res.status(status).json({ error: status === 503 ? 'Call controls are temporarily unavailable. Please retry.' : error.message });
+      const requestId = randomUUID(), failure = conferenceFailure(error);
+      logError(conferenceFailureLog(error, { request_id: requestId, route: req.route?.path || req.originalUrl?.split('?')[0],
+        call_id: req.conferenceCallId || null, agent_id: req.conferenceAgent || null }));
+      return res.status(failure.status).json({ error: failure.error, code: failure.code, requestId });
     }
   };
   async function identity(req, res) {
@@ -31,6 +35,7 @@ export function createConferenceRouter({ service = conferenceService(), settings
     const member = checked(await db.from('enrolled_agents').select('id').eq('clerk_user_id', token.sub)
       .eq('tenant_id', agent.tenant_id).eq('is_active', true).maybeSingle());
     if (!member) throw new ConferenceError(403, 'Active agent membership required.');
+    req.conferenceAgent = agent.agent_slug;
     return agent;
   }
   async function resolve(req, agent) {
@@ -45,6 +50,7 @@ export function createConferenceRouter({ service = conferenceService(), settings
       if (p) c = await service.store.get(p.call_id);
     }
     if (c) {
+      req.conferenceCallId = c.call_id;
       if (c.tenant_id !== agent.tenant_id || ![c.original_agent_id, c.owner_agent_id].includes(agent.agent_slug)) {
         // A receiving agent may inspect/control the consultation after answering.
         const people = await service.store.participants(c.call_id);
@@ -91,6 +97,7 @@ export function createConferenceRouter({ service = conferenceService(), settings
         .eq('tenant_id', agent.tenant_id).maybeSingle()) : null;
       c = await service.upgrade(attempt, contact?.phone || attempt.to_number);
     }
+    req.conferenceCallId = c.call_id;
     const conference = await service.action(c.call_id, { ...input, actor: agent.agent_slug });
     return res.json({ enabled: settings.conferenceCallingEnabled, conference });
   }));
@@ -107,10 +114,20 @@ export function createConferenceRouter({ service = conferenceService(), settings
   router.post('/twilio/conference/join', ...signed(async (req, res) => {
     let p = await participant(req);
     if (!p.twilio_call_sid) { await service.status(p.id, { ...req.body, CallStatus: 'ringing' }); p = await service.store.participant(p.id); }
-    const c = await service.store.get(p.call_id);
-    if (c.ended_at || p.left_at) return xml(res, '<Response><Hangup/></Response>');
-    await service.media(c, p);
-    return xml(res, service.twiml(c, p));
+    try {
+      return await service.store.locked(p.call_id, async c => {
+        p = await service.store.participant(p.id);
+        if (c.ended_at || p.left_at) return xml(res, '<Response><Hangup/></Response>');
+        await service.media(c, p);
+        return xml(res, service.twiml(c, p));
+      });
+    } catch (error) {
+      if (!(error instanceof ConferenceError && error.code === 'CONFERENCE_LOCKED')) throw error;
+      // Calls.create can deliver this webhook before the dialing operation has
+      // unlocked. Keep that answered leg alive and retry TwiML instead of
+      // returning an HTTP error that would terminate the destination call.
+      return xml(res, `<Response><Pause length="1"/><Redirect method="POST">/twilio/conference/join?participantId=${p.id}</Redirect></Response>`);
+    }
   }));
   router.post('/twilio/conference/status', ...signed(async (req, res) => {
     const p = await participant(req); await service.status(p.id, req.body); return res.status(204).end();
@@ -142,6 +159,14 @@ export function createConferenceRouter({ service = conferenceService(), settings
   router.post('/twilio/conference/stream-status', ...signed(async (req, res) => {
     const p = await participant(req);
     if (req.body.StreamEvent === 'stream-error' || req.body.StreamEvent === 'stream-stopped') {
+      // Compare the exact SID in SQL. A late stop from the previous generation
+      // must never clear the replacement stream or its authenticated lease.
+      if (/^MZ[0-9a-f]{32}$/i.test(req.body.StreamSid || '')) {
+        checked(await db.from('call_participants').update({ stream_sid: null }).eq('id', p.id)
+          .eq('stream_sid', req.body.StreamSid), 'stream_status');
+        checked(await db.from('conference_media_leases').delete().eq('participant_id', p.id)
+          .eq('stream_sid', req.body.StreamSid), 'stream_status');
+      }
       await service.store.event(p.call_id, 'stream_interrupted', { participant_id: p.id });
     }
     return res.status(204).end();

@@ -11,6 +11,7 @@ export async function database() {
  await pg.exec(readFileSync(new URL('./conference-schema.sql',import.meta.url),'utf8'));
  const legacyWriterDefinition=(await pg.query("SELECT pg_get_functiondef('persist_telephony_transcript(uuid,uuid,text,text,timestamptz,integer,integer)'::regprocedure) definition")).rows[0].definition;
  await pg.exec(readFileSync(new URL('../../../supabase/migrations/121_conference_calling.sql',import.meta.url),'utf8'));
+ await pg.exec(readFileSync(new URL('../../../supabase/migrations/122_conference_stream_recovery.sql',import.meta.url),'utf8'));
  const base=evidenceDb(pg);
  const scalar=['lock_call_conference','unlock_call_conference','finish_call_conference','reserve_conference_agent','prepare_call_conference','outbound_dnc_status','claim_conference_media','renew_conference_media','release_conference_media'];
  const db={...base,async rpc(name,args){const result=await base.rpc(name,args);if(scalar.includes(name)&&!result.error)result.data=result.data?.[0]?.[name];return result;}};
@@ -40,7 +41,6 @@ export function provider(initial) {
  addCall(initial.parent);addCall(initial.child,initial.parent);
  function callResource(callSid){
   const streamResource=name=>({update:async value=>{operations.push(['stop-stream',callSid,name]);const stream=(streams.get(callSid)||[]).find(s=>s.sid===name||s.name===name);if(stream)Object.assign(stream,value);else throw Object.assign(Error('missing'),{code:20404});}});
-  streamResource.list=async()=>structuredClone(streams.get(callSid)||[]);
   streamResource.create=async data=>{const stream={...data,sid:sid('MZ'),status:'in-progress'};streams.set(callSid,[...(streams.get(callSid)||[]),stream]);operations.push(['stream',callSid,data]);return stream;};
   return {fetch:async()=>{if(!calls.has(callSid))throw Error('unknown call');return structuredClone(calls.get(callSid));},
    update:async data=>{operations.push(['update',callSid,data]);const call=calls.get(callSid);Object.assign(call,data);

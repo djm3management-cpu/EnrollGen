@@ -6,6 +6,7 @@ import { conferenceStreamUrl } from './media/conferenceMedia.js';
 import { conferenceRuntime } from './conferenceRuntime.js';
 import { callbackPayload } from './recordings.js';
 import parsePhoneNumber from 'libphonenumber-js/max';
+import { conferenceRequest, conferenceFailureLog } from './conferenceErrors.js';
 
 export const US_PHONE = /^\+1[2-9]\d{2}[2-9]\d{6}$/;
 export function validUsPhone(value) {
@@ -17,14 +18,15 @@ const terminal = new Set(['completed', 'canceled', 'failed', 'busy', 'no-answer'
 const live = p => p.status !== 'left';
 export function createConferenceService({ store = createConferenceStore(supabase), settings = config,
   client = twilio(settings.twilioAccountSid, settings.twilioAuthToken, { timeout: 5000, autoRetry: false }),
-  now = () => new Date().toISOString() } = {}) {
+  now = () => new Date().toISOString(), logError = entry => console.error(JSON.stringify(entry)) } = {}) {
   const url = path => settings.publicBaseUrl + path;
   const participantUrl = (p, action) => url(`/twilio/conference/${action}?participantId=${p.id}`);
-  const fail = (code, message) => { throw new ConferenceError(code, message); };
+  const fail = (status, message, code) => { throw new ConferenceError(status, message, code); };
+  const provider = (operation, request) => conferenceRequest('twilio', operation, request);
   const patch = (c, fields) => store.patch(c.call_id, fields);
   async function roomSid(c) {
     if (c.twilio_conference_sid) return c.twilio_conference_sid;
-    const [room] = await client.conferences.list({ friendlyName: c.name, status: 'in-progress', limit: 1 });
+    const [room] = await provider('conference_lookup', () => client.conferences.list({ friendlyName: c.name, status: 'in-progress', limit: 1 }));
     if (!room) fail(409, 'Conference is connecting. Please retry.');
     await patch(c, { twilio_conference_sid: room.sid });
     return room.sid;
@@ -32,9 +34,10 @@ export function createConferenceService({ store = createConferenceStore(supabase
   async function hold(c, enabled) {
     const customer = (await store.participants(c.call_id)).find(p => p.role === 'customer' && live(p));
     if (!customer) fail(409, 'Customer is no longer connected.');
-    await client.conferences(await roomSid(c)).participants(customer.twilio_call_sid).update({
+    const sid = await roomSid(c);
+    await provider('customer_hold', () => client.conferences(sid).participants(customer.twilio_call_sid).update({
       hold: enabled, holdUrl: url('/twilio/conference/hold'), holdMethod: 'POST',
-    });
+    }));
     await patch(c, { customer_held: enabled });
     await store.event(c.call_id, 'customer_hold_changed', { held: enabled });
   }
@@ -50,40 +53,54 @@ export function createConferenceService({ store = createConferenceStore(supabase
     }, c.name);
     return response.toString();
   }
-  async function media(c, p) {
+  async function media(c, p, { recover = false } = {}) {
+    p = await store.participant(p.id);
     if (!p.twilio_call_sid || !live(p)) return;
-    const streams = await client.calls(p.twilio_call_sid).streams.list({ limit: 20 });
     const name = `conference-${p.id}`;
-    if (!streams.some(s => s.name === name && s.status === 'in-progress')) {
+    let restart = !p.stream_sid;
+    if (recover && p.stream_sid) {
+      const lease = checked(await store.db.from('conference_media_leases').select('stream_sid,expires_at')
+        .eq('participant_id', p.id).maybeSingle(), 'stream_health');
+      const healthy = lease?.stream_sid === p.stream_sid && Date.parse(lease.expires_at) > Date.parse(now());
+      const connecting = Date.parse(now()) - Date.parse(p.stream_requested_at) < 30000;
+      restart = !healthy && !connecting;
+    }
+    if (restart) {
+      // Streams REST supports create and stop only. Health comes from the
+      // authenticated WebSocket lease and signed stream-status callbacks.
+      if (p.stream_sid || p.stream_generation > 0) {
+        try { await provider('stream_stop', () => client.calls(p.twilio_call_sid).streams(p.stream_sid || name).update({ status: 'stopped' })); }
+        catch (error) { if (error.code !== 20404) throw error; }
+      }
       // Explicitly release the previous generation before restart. A late close
       // cannot release its successor because lease owners are compared in SQL.
       await store.db.from('conference_media_leases').delete().eq('participant_id', p.id).then(checked);
       const generation = p.stream_generation + 1;
-      await store.patchParticipant(p.id, { stream_generation: generation });
-      const stream = await client.calls(p.twilio_call_sid).streams.create({ name, track: 'inbound_track',
+      await store.patchParticipant(p.id, { stream_generation: generation, stream_sid: null, stream_requested_at: now() });
+      const stream = await provider('stream_create', () => client.calls(p.twilio_call_sid).streams.create({ name, track: 'inbound_track',
         url: conferenceStreamUrl({ ...p, ...c, id: p.id, stream_generation: generation }, settings),
         'parameter1.name': 'agentId', 'parameter1.value': c.owner_agent_id,
         'parameter2.name': 'attemptId', 'parameter2.value': c.attempt_id,
         statusCallback: participantUrl(p, 'stream-status'), statusCallbackMethod: 'POST',
-      });
+      }));
       await store.patchParticipant(p.id, { stream_sid: stream.sid });
     }
     // Continuous per-leg dual-channel recordings survive TwiML changes and
     // retain private warm-consultation audio as well as the shared conversation.
     if (!p.recording_sid) {
-      const recording = await client.calls(p.twilio_call_sid).recordings.create({ recordingChannels: 'dual', recordingTrack: 'both',
+      const recording = await provider('recording_start', () => client.calls(p.twilio_call_sid).recordings.create({ recordingChannels: 'dual', recordingTrack: 'both',
         recordingStatusCallback: participantUrl(p, 'recording'), recordingStatusCallbackMethod: 'POST',
         recordingStatusCallbackEvent: ['completed', 'absent'],
-      });
+      }));
       await store.patchParticipant(p.id, { recording_sid: recording.sid });
     }
   }
   async function stop(p, { release = true } = {}) {
     if (!p.twilio_call_sid || !live(p)) return;
     try {
-      const call = await client.calls(p.twilio_call_sid).fetch();
+      const call = await provider('call_lookup', () => client.calls(p.twilio_call_sid).fetch());
       if (call.accountSid !== settings.twilioAccountSid) throw new Error('Account mismatch');
-      if (!terminal.has(call.status)) await client.calls(p.twilio_call_sid).update({ status: call.status === 'in-progress' ? 'completed' : 'canceled' });
+      if (!terminal.has(call.status)) await provider('call_end', () => client.calls(p.twilio_call_sid).update({ status: call.status === 'in-progress' ? 'completed' : 'canceled' }));
     }
     catch (error) { if (error.code !== 20404) throw error; }
     await store.patchParticipant(p.id, { status: 'left', left_at: now() });
@@ -104,7 +121,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     const existing = attempt.call_record_id && await store.get(attempt.call_record_id);
     if (existing) return existing;
     const [parent, child] = await Promise.all([
-      client.calls(attempt.parent_call_sid).fetch(), client.calls(attempt.child_call_sid).fetch(),
+      provider('parent_lookup', () => client.calls(attempt.parent_call_sid).fetch()), provider('child_lookup', () => client.calls(attempt.child_call_sid).fetch()),
     ]);
     if (parent.accountSid !== settings.twilioAccountSid || child.accountSid !== settings.twilioAccountSid ||
       child.parentCallSid !== parent.sid || parent.status !== 'in-progress' || child.status !== 'in-progress') {
@@ -126,17 +143,17 @@ export function createConferenceService({ store = createConferenceStore(supabase
   }
   async function connectOriginal(c) {
     const participants = (await store.participants(c.call_id)).filter(live);
-    if (participants.length < 2) fail(503, 'Conference setup is incomplete.');
+    if (participants.length < 2) fail(503, 'Conference setup is incomplete. Contact support with the request ID.', 'CONFERENCE_SETUP_INCOMPLETE');
     // Record/stream both legs before redirecting either. Keep the old recording
     // until Twilio ends Dial; the new recordings overlap that boundary.
     for (const p of participants) await media(c, p);
-    try { await client.calls(c.parent_call_sid).streams('agent-transcription').update({ status: 'stopped' }); }
+    try { await provider('legacy_stream_stop', () => client.calls(c.parent_call_sid).streams('agent-transcription').update({ status: 'stopped' })); }
     catch (error) { if (error.code !== 20404) throw error; }
     // Child first: redirecting the parent first would hang up Dial's child.
     // The legacy Dial action is intercepted below and joins the parent instead
     // of releasing/rerouting it. Persisted intent precedes both REST requests.
     for (const p of [...participants].sort((a) => a.twilio_call_sid === c.parent_call_sid ? 1 : -1)) {
-      await client.calls(p.twilio_call_sid).update({ twiml: twiml(c, p) });
+      await provider('conference_redirect', () => client.calls(p.twilio_call_sid).update({ twiml: twiml(c, p) }));
     }
     for (const p of participants) await media(c, await store.participant(p.id));
     await patch(c, { phase: 'active', last_error: null });
@@ -145,7 +162,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
   async function dial(c, { mode, phone, targetAgentId }) {
     if (!['add', 'warm', 'blind'].includes(mode)) fail(400, 'Choose Add Person, Warm Transfer, or Blind Transfer.');
     if (!targetAgentId && !validUsPhone(phone)) fail(400, 'Enter a valid US E.164 number, such as +16095551234.');
-    if (!validUsPhone(settings.twilioPhoneNumber)) fail(503, 'A US Twilio caller ID must be configured.');
+    if (!validUsPhone(settings.twilioPhoneNumber)) fail(503, 'A US Twilio caller ID must be configured.', 'CONFERENCE_CALLER_ID_MISSING');
     if (targetAgentId && mode !== 'warm') fail(400, 'Agent destinations require Warm Transfer.');
     if ((await store.participants(c.call_id)).some(p => p.role === 'third_party' && live(p))) fail(409, 'Remove the existing third party first.');
     if ((await store.participants(c.call_id)).filter(live).length >= 3) fail(409, 'One agent must leave before adding another person.');
@@ -167,11 +184,11 @@ export function createConferenceService({ store = createConferenceStore(supabase
       await patch(c, { phase: mode === 'add' ? 'active' : mode, transfer_participant_id: p.id,
         transfer_deadline: new Date(Date.parse(now()) + (settings.dialTimeoutSeconds + 15) * 1000).toISOString() });
       const to = targetAgentId ? clientAddress(c, targetAgentId) : phone;
-      const call = await client.calls.create({ to, from: settings.twilioPhoneNumber, url: participantUrl(p, 'join'),
+      const call = await provider('participant_dial', () => client.calls.create({ to, from: settings.twilioPhoneNumber, url: participantUrl(p, 'join'),
         method: 'POST', timeout: settings.dialTimeoutSeconds,
         statusCallback: participantUrl(p, 'status'), statusCallbackMethod: 'POST',
         statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-      });
+      }));
       await store.patchParticipant(p.id, { twilio_call_sid: call.sid });
       await store.event(c.call_id, `${mode}_dialed`, { participant_id: p.id, target_agent_id: targetAgentId || null });
       if (mode === 'blind') {
@@ -201,7 +218,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     response.record({ maxLength: 120, playBeep: true, recordingStatusCallback: participantUrl(customer, 'recording'),
       recordingStatusCallbackEvent: 'completed absent' });
     response.hangup();
-    await client.calls(customer.twilio_call_sid).update({ twiml: response.toString() });
+    await provider('voicemail_redirect', () => client.calls(customer.twilio_call_sid).update({ twiml: response.toString() }));
     await store.event(c.call_id, 'voicemail_fallback');
   }
   async function fallback(c) {
@@ -212,16 +229,16 @@ export function createConferenceService({ store = createConferenceStore(supabase
     const p = await store.add({ call_id: c.call_id, role: 'agent', agent_id: c.original_agent_id,
       phone: null, added_by_agent_id: c.original_agent_id });
     try {
-      const call = await client.calls.create({ to: clientAddress(c, c.original_agent_id), from: settings.twilioPhoneNumber,
+      const call = await provider('agent_return_dial', () => client.calls.create({ to: clientAddress(c, c.original_agent_id), from: settings.twilioPhoneNumber,
         url: participantUrl(p, 'join'), method: 'POST', timeout: settings.dialTimeoutSeconds,
-        statusCallback: participantUrl(p, 'status'), statusCallbackMethod: 'POST', statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'] });
+        statusCallback: participantUrl(p, 'status'), statusCallbackMethod: 'POST', statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'] }));
       await store.patchParticipant(p.id, { twilio_call_sid: call.sid });
     } catch { await store.patchParticipant(p.id, { status: 'left', left_at: now() }); await voicemail(c); }
   }
   async function finish(c) {
     if (c.ended_at) return;
     for (const p of (await store.participants(c.call_id)).filter(live)) await stop(p, { release: false });
-    if (c.twilio_conference_sid) await client.conferences(c.twilio_conference_sid).update({ status: 'completed' });
+    if (c.twilio_conference_sid) await provider('conference_end', () => client.conferences(c.twilio_conference_sid).update({ status: 'completed' }));
     if (await store.finish(c.call_id)) await store.event(c.call_id, 'ended');
   }
   async function departed(c, p) {
@@ -306,7 +323,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
   async function reconcileRecordings() {
     for (const p of await store.pendingRecordings()) {
       try {
-        const r = await client.recordings(p.recording_sid).fetch();
+        const r = await provider('recording_lookup', () => client.recordings(p.recording_sid).fetch());
         if (r.accountSid !== settings.twilioAccountSid || r.callSid !== p.twilio_call_sid || !['completed', 'absent'].includes(r.status)) continue;
         const payload = callbackPayload({ AccountSid: r.accountSid, CallSid: r.callSid, RecordingSid: r.sid,
           RecordingStatus: r.status, RecordingSource: r.source, RecordingChannels: r.channels,
@@ -328,16 +345,19 @@ export function createConferenceService({ store = createConferenceStore(supabase
           if (!people.some(p => p.role === 'customer' && live(p))) { await finish(c); return; }
           for (const p of people.filter(item => item.status === 'left' && item.agent_id)) await store.release(p.agent_id, c.parent_call_sid);
           let members = [];
-          if (c.phase !== 'voicemail') members = await client.conferences(await roomSid(c)).participants.list({ limit: 20 });
+          if (c.phase !== 'voicemail') {
+            const sid = await roomSid(c);
+            members = await provider('participant_lookup', () => client.conferences(sid).participants.list({ limit: 20 }));
+          }
           for (const p of (await store.participants(c.call_id)).filter(live)) {
             if (!p.twilio_call_sid) {
               if (Date.parse(now()) - Date.parse(p.dial_started_at) > 45000) { await store.patchParticipant(p.id, { status: 'left', left_at: now() }); await departed(c, p); }
               continue;
             }
-            const call = await client.calls(p.twilio_call_sid).fetch();
+            const call = await provider('call_lookup', () => client.calls(p.twilio_call_sid).fetch());
             if (call.accountSid !== settings.twilioAccountSid) throw new Error('Account mismatch');
             if (terminal.has(call.status)) { await store.patchParticipant(p.id, { status: 'left', left_at: now() }); await departed(await store.get(c.call_id), p); continue; }
-            if (call.status === 'in-progress') await media(c, p);
+            if (call.status === 'in-progress') await media(c, p, { recover: true });
             if (p.status === 'ringing' && members.some(m => m.callSid === p.twilio_call_sid)) await joined(c, p);
             if (p.agent_id && p.status === 'connected') {
               if (await store.online(p.agent_id)) { if (p.heartbeat_missing_at) await store.patchParticipant(p.id, { heartbeat_missing_at: null }); }
@@ -353,7 +373,12 @@ export function createConferenceService({ store = createConferenceStore(supabase
             else { if (c.customer_held) await hold(c, false); await patch(c, { phase: 'active', transfer_deadline: null }); }
           }
         });
-      } catch (error) { if (error.status !== 409) await store.patch(room.call_id, { last_error: 'recovery_pending' }); }
+      } catch (error) {
+        if (!(error instanceof ConferenceError && error.status === 409)) {
+          logError(conferenceFailureLog(error, { route: 'conference_recovery', call_id: room.call_id }));
+          await store.patch(room.call_id, { last_error: 'recovery_pending' });
+        }
+      }
     }
     await reconcileRecordings();
   }

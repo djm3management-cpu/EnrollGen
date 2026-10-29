@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
+import { ConferenceError, ConferenceDependencyError } from './conferenceErrors.js';
+export { ConferenceError } from './conferenceErrors.js';
 
-export const checked = result => { if (result.error) throw result.error; return result.data; };
-export class ConferenceError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
-}
+export const checked = (result, operation = 'query') => {
+  if (result.error) throw new ConferenceDependencyError('database', operation, result.error);
+  return result.data;
+};
 export function createConferenceStore(db) {
   return {
     db,
@@ -17,18 +19,30 @@ export function createConferenceStore(db) {
     async event(id, event, payload = {}) { checked(await db.rpc('conference_event', { p_call_id: id, p_event: event, p_payload: payload })); },
     async locked(id, action) {
       const token = randomUUID();
-      let unlockNeeded = true;
+      let unlockNeeded = true, actionError, cleanupError, result, actionFailed = false;
       try {
-        if (!checked(await db.rpc('lock_call_conference', { p_call_id: id, p_token: token }))) {
+        if (!checked(await db.rpc('lock_call_conference', { p_call_id: id, p_token: token }), 'lock_call_conference')) {
           unlockNeeded = false;
-          throw new ConferenceError(409, 'Call controls are updating. Please retry.');
+          throw new ConferenceError(409, 'Another call control operation is in progress. Please retry shortly.', 'CONFERENCE_LOCKED');
         }
-        return await action(await this.get(id));
+        result = await action(await this.get(id));
+      } catch (error) {
+        actionError = error; actionFailed = true;
       } finally {
         // Also attempt a token-checked unlock if acquisition committed but its
         // response was lost. Never clear a successor's lease.
-        if (unlockNeeded) checked(await db.rpc('unlock_call_conference', { p_call_id: id, p_token: token }));
+        if (unlockNeeded) {
+          try { checked(await db.rpc('unlock_call_conference', { p_call_id: id, p_token: token }), 'unlock_call_conference'); }
+          catch (error) { cleanupError = error; }
+        }
       }
+      // Retain the actual control failure if cleanup also fails.
+      if (actionFailed) {
+        if (cleanupError && actionError && typeof actionError === 'object') actionError.cleanupError = cleanupError;
+        throw actionError;
+      }
+      if (cleanupError) throw cleanupError;
+      return result;
     },
     async online(agent) {
       const rows = checked(await db.from('agent_phone_sessions').select('session_id')

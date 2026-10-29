@@ -2,6 +2,8 @@
 
 Branch: `feat/conference-calling`. The feature is off unless Railway has `CONFERENCE_CALLING_ENABLED=true`. No production migration, deployment, or environment change is part of this branch's implementation.
 
+Follow-up: [production 503 investigation and fix](conference-control-503-incident.md) on `fix/conference-control-503`. Migration **122** adds the durable stream connection timestamp. Stream health uses authenticated WebSocket leases and signed callbacks; Twilio Streams REST has no list/fetch operation. Apply 122 before running the updated service. Conference join is another shared-lock entry point and returns retry TwiML on contention so an early destination webhook keeps its leg alive.
+
 ## Design decision
 
 This uses **approach (b): upgrade a connected direct call on demand**. Normal inbound selection, sticky preferences, round-robin, licensing checks, overflow, voicemail, outbound admission/DNC checks, reservations, Twilio tokens, and phone heartbeats keep their existing path. Add Person, Warm Transfer, Blind Transfer, and actual customer Hold request conversion only after both original legs have answered.
@@ -17,7 +19,7 @@ Source references: [Twilio Call resource](https://www.twilio.com/docs/voice/api/
 - **Blind Transfer:** destination starts ringing, then the original agent leg is ended. On failure, a still-online and eligible original agent is reserved and rung again. An unavailable/busy original agent or a failed return call leads to voicemail. The customer leg remains the anchor throughout.
 - **End Call** terminates all conference legs. **Leave Call** removes only the current agent and requires another connected person. After an internal warm handoff, the original agent's end control becomes Leave Call.
 - A 15-second recovery sweep verifies provider leg state, repairs missed join/terminal callbacks and interrupted participant streams, and enforces transfer deadlines. A new browser invite has the configured ring timeout plus a 15-second callback allowance. Browser presence must remain absent for an additional 45 seconds after the server detects its lease loss before a surviving provider agent leg is removed; multiple live tabs count as online. If another person remains, customer/third-party conversation continues; otherwise the customer reaches voicemail.
-- PostgreSQL operation leases serialize controls across Railway instances. All four lock entry points (controls, participant status, recovery, conference webhook) use `store.locked`, whose `finally` calls `unlock_call_conference(call_id, token)`. The RPC clears only the matching token, including when acquisition succeeded but its response was lost; an expired owner's cleanup cannot clear a newer lease. Participant terminal state is monotonic; late callbacks cannot resurrect a removed person. Reservations remain call-SID scoped, including releases.
+- PostgreSQL operation leases serialize controls across Railway instances. All five lock entry points (controls, participant status, recovery, conference webhook, destination join) use `store.locked`, whose `finally` calls `unlock_call_conference(call_id, token)`. The RPC clears only the matching token, including when acquisition succeeded but its response was lost; an expired owner's cleanup cannot clear a newer lease. Participant terminal state is monotonic; late callbacks cannot resurrect a removed person. Reservations remain call-SID scoped, including releases.
 
 ## Recording and three separate transcript sources
 

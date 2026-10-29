@@ -5,6 +5,7 @@ import {database,seed,provider,settings,sid} from './helpers/conferenceHarness.j
 import {createServer} from 'node:http';
 import {once} from 'node:events';
 import WebSocket from 'ws';
+import twilio from 'twilio';
 for(const name of ['PUBLIC_BASE_URL','SUPABASE_URL'])process.env[name]='https://example.test';
 for(const name of ['SUPABASE_SERVICE_ROLE_KEY','TWILIO_ACCOUNT_SID','TWILIO_AUTH_TOKEN','TWILIO_API_KEY_SID','TWILIO_API_KEY_SECRET','TWILIO_TWIML_APP_SID','DEEPGRAM_API_KEY','INBOUND_VENDOR_API_KEY','CLERK_SECRET_KEY','AGENT_WS_SIGNING_SECRET'])process.env[name]='fixture';
 const {createConferenceStore}=await import('../src/conferenceStore.js');
@@ -21,7 +22,7 @@ async function harness(t,direction='inbound'){
  await pg.exec('BEGIN');const cleanup=[];t.after(async()=>{for(const close of cleanup)await close();await pg.exec('ROLLBACK');});
  const initial=await seed(pg,direction),twilio=provider(initial),store=createConferenceStore(db);
  let clock=Date.now();
- const service=createConferenceService({store,client:twilio.client,settings,now:()=>new Date(clock).toISOString()});
+ const service=createConferenceService({store,client:twilio.client,settings,now:()=>new Date(clock).toISOString(),logError:()=>{}});
  const c=await service.upgrade(initial.call,'+16095551234');
  const action=input=>service.action(c.call_id,{actor:initial.original,...input});
  const people=()=>store.participants(c.call_id);
@@ -140,7 +141,7 @@ test('watchdog handles missed join/no-answer events, restarts lost participant s
  const h=await harness(t);await h.action({action:'dial',mode:'add',phone:'+16095556789'});const p=await h.third();
  h.twilio.calls.get(p.twilio_call_sid).status='in-progress';h.twilio.members.set(p.twilio_call_sid,{callSid:p.twilio_call_sid});
  await h.service.tick();assert.equal((await h.store.participant(p.id)).status,'connected');
- h.twilio.streams.set(p.twilio_call_sid,[]);await h.service.tick();
+ h.twilio.streams.set(p.twilio_call_sid,[]);h.advance(31000);await h.service.tick();
  assert.equal((await h.store.participant(p.id)).stream_generation,2);
  await h.action({action:'end'});await h.service.tick();
  assert.equal((await pg.query('SELECT count(*)::int n FROM recording_ingestion WHERE call_record_id=$1',[h.initial.record])).rows[0].n,3);
@@ -248,6 +249,112 @@ test('US validation rejects international, Canadian, Caribbean, local-format and
  assert.equal(validUsPhone('+16095556789'),true);
  for(const phone of ['6095556789','+14165551234','+12425551234','+442079460000','+11111111111','+16095556789;123',null])assert.equal(validUsPhone(phone),false,String(phone));
 });
+
+for(const direction of ['inbound','outbound'])test(`${direction}: real Twilio SDK upgrades and adds a participant without unsupported Stream list/fetch methods`,async t=>{
+ const h=await harness(t,direction),requests=[];
+ const client=twilio(settings.twilioAccountSid,'fixture',{httpClient:{request:async request=>{
+  requests.push(request);const path=new URL(request.uri).pathname;
+  let body;
+  if(path.endsWith('/Streams/agent-transcription.json'))return{statusCode:404,body:JSON.stringify({code:20404,message:'No old stream'})};
+  if(path.endsWith('/Streams.json'))body={sid:sid('MZ'),status:'in-progress'};
+  else if(path.endsWith('/Recordings.json'))body={sid:sid('RE'),status:'in-progress'};
+  else if(path.endsWith('/Calls.json'))body={sid:sid('CA'),status:'ringing'};
+  else if(/\/Calls\/CA[a-f0-9]{32}\.json$/.test(path))body={sid:path.split('/').at(-1).slice(0,-5),status:'in-progress'};
+  else assert.fail(`Unexpected provider request: ${request.method} ${path}`);
+  return{statusCode:200,body:JSON.stringify(body)};
+ }}});
+ assert.equal(typeof client.calls(h.initial.parent).streams.list,'undefined');
+ assert.equal(typeof client.calls(h.initial.parent).streams('name').fetch,'undefined');
+ assert.throws(()=>client.calls(h.initial.parent).streams.list({limit:20}),/streams.list is not a function/);
+ const service=createConferenceService({store:h.store,client,settings});
+ const result=await service.action(h.c.call_id,{action:'dial',mode:'add',phone:'+16095556789'});
+ assert.equal(result.phase,'active');assert.equal(result.participants.length,3);
+ assert.equal(requests.filter(r=>r.uri.endsWith('/Streams.json')).length,2);
+ assert.ok(requests.filter(r=>r.uri.endsWith('/Streams.json')).every(r=>r.method==='post'));
+ assert.equal(requests.filter(r=>r.uri.endsWith('/Recordings.json')).length,2);
+ assert.equal((await h.people()).filter(p=>p.stream_sid&&p.recording_sid&&p.stream_generation===1).length,2);
+ assert.equal((await h.store.get(h.c.call_id)).operation_token,null);
+});
+
+test('stream recovery uses durable connection grace and authenticated leases; stale stop callbacks cannot clear a replacement',async t=>{
+ const h=await harness(t);await h.action({action:'dial',mode:'add',phone:'+16095556789'});
+ const p=(await h.people()).find(p=>p.role==='customer');
+ const restored=createConferenceService({store:h.store,client:h.twilio.client,settings,logError:()=>{}});
+ await restored.media(h.c,p,{recover:true});
+ assert.equal((await h.store.participant(p.id)).stream_generation,1);
+ await pg.query("UPDATE call_participants SET stream_requested_at=now()-interval '1 minute' WHERE id=$1",[p.id]);
+ await pg.query('SELECT claim_conference_media($1,$2,$3,$4,$5)',[p.id,p.twilio_call_sid,p.stream_generation,p.stream_sid,randomUUID()]);
+ await restored.media(h.c,p,{recover:true});assert.equal((await h.store.participant(p.id)).stream_generation,1);
+ await pg.query("UPDATE conference_media_leases SET expires_at=now()-interval '1 second' WHERE participant_id=$1",[p.id]);
+ await restored.media(h.c,p,{recover:true});
+ const replacement=await h.store.participant(p.id);assert.equal(replacement.stream_generation,2);assert.notEqual(replacement.stream_sid,p.stream_sid);
+ const callback=streamSid=>route(routerFor(h),'/twilio/conference/stream-status',{
+  AccountSid:settings.twilioAccountSid,CallSid:p.twilio_call_sid,StreamSid:streamSid,StreamEvent:'stream-stopped'},
+  {query:{participantId:p.id}});
+ assert.equal((await callback(p.stream_sid)).code,204);
+ assert.equal((await h.store.participant(p.id)).stream_sid,replacement.stream_sid);
+ assert.equal((await callback(replacement.stream_sid)).code,204);
+ assert.equal((await h.store.participant(p.id)).stream_sid,null);
+ await restored.media(h.c,replacement,{recover:true});
+ assert.equal((await h.store.participant(p.id)).stream_generation,3);
+ assert.ok(h.twilio.operations.some(op=>op[0]==='stop-stream'&&op[2]===p.stream_sid));
+});
+
+test('API distinguishes contention, database, Twilio, setup and internal failures with correlated safe diagnostics',async t=>{
+ const h=await harness(t),logs=[],router=routerFor(h,{logError:entry=>logs.push(entry)});
+ const input={callId:h.c.call_id,action:'dial',mode:'add',phone:'+16095556789'};
+ const token=randomUUID();await db.rpc('lock_call_conference',{p_call_id:h.c.call_id,p_token:token});
+ const locked=await route(router,'/api/voice/conference-action',input);
+ assert.equal(locked.code,409);assert.equal(locked.data.code,'CONFERENCE_LOCKED');assert.match(locked.data.error,/operation is in progress/);
+ await db.rpc('unlock_call_conference',{p_call_id:h.c.call_id,p_token:token});
+ const streams=h.twilio.client.calls;
+ h.twilio.client.calls=callSid=>{const call=streams(callSid);call.streams.create=async()=>{throw Object.assign(Error('secret provider body +16095556789'),{code:21220,status:400});};return call;};
+ for(let i=0;i<3;i++){
+  const failure=await route(router,'/api/voice/conference-action',input);
+  assert.equal(failure.code,502);assert.equal(failure.data.code,'CONFERENCE_TWILIO_FAILURE');assert.match(failure.data.error,/stream_create/);
+  assert.equal(logs.at(-1).request_id,failure.data.requestId);assert.equal(logs.at(-1).cause_code,21220);
+  assert.equal((await h.store.get(h.c.call_id)).operation_token,null);
+ }
+ h.twilio.client.calls=streams;
+ const rpc=db.rpc;db.rpc=async(name,args)=>name==='lock_call_conference'?{data:null,error:{code:'PGRST202',message:'secret SQL body +16095556789'}}:rpc(name,args);
+ const database=await route(router,'/api/voice/conference-action',input);db.rpc=rpc;
+ assert.equal(database.code,503);assert.equal(database.data.code,'CONFERENCE_DATABASE_FAILURE');assert.match(database.data.error,/lock_call_conference/);
+ assert.equal(logs.at(-1).cause_code,'PGRST202');
+ const action=h.service.action;
+ h.service.action=async()=>{throw TypeError('internal implementation error');};
+ const internal=await route(router,'/api/voice/conference-action',input);
+ assert.equal(internal.code,500);assert.equal(internal.data.code,'CONFERENCE_INTERNAL_FAILURE');assert.ok(logs.at(-1).frames.length);h.service.action=action;
+ const participants=h.store.participants;h.store.participants=async()=>[];
+ const incomplete=await route(router,'/api/voice/conference-action',input);h.store.participants=participants;
+ assert.equal(incomplete.code,503);assert.equal(incomplete.data.code,'CONFERENCE_SETUP_INCOMPLETE');assert.match(incomplete.data.error,/setup is incomplete/);
+ const misconfigured=createConferenceService({store:h.store,client:h.twilio.client,settings:{...settings,twilioPhoneNumber:''}});
+ const configError=await route(routerFor(h,{service:misconfigured}),'/api/voice/conference-action',input);
+ assert.equal(configError.code,503);assert.equal(configError.data.code,'CONFERENCE_CALLER_ID_MISSING');assert.match(configError.data.error,/caller ID/);
+ assert.doesNotMatch(JSON.stringify(logs),/secret|16095556789/);
+});
+
+test('an early destination join waits for the dial lock using successful TwiML, then starts media once',async t=>{
+ const h=await harness(t);await h.action({action:'dial',mode:'add',phone:'+16095556789'});
+ const p=await h.third(),token=randomUUID(),router=routerFor(h);
+ await db.rpc('lock_call_conference',{p_call_id:h.c.call_id,p_token:token});
+ const join=()=>route(router,'/twilio/conference/join',{AccountSid:settings.twilioAccountSid,CallSid:p.twilio_call_sid},{query:{participantId:p.id}});
+ const waiting=await join();assert.equal(waiting.code,200);assert.match(waiting.data,/<Pause length="1"/);assert.match(waiting.data,/<Redirect method="POST">/);
+ assert.equal((await h.store.participant(p.id)).stream_sid,null);
+ await db.rpc('unlock_call_conference',{p_call_id:h.c.call_id,p_token:token});
+ const connected=await join();assert.equal(connected.code,200);assert.match(connected.data,/<Conference /);
+ await join();assert.equal((await h.store.participant(p.id)).stream_generation,1);
+ assert.equal((await h.store.get(h.c.call_id)).operation_token,null);
+});
+
+test('a control failure remains identifiable if token unlock also fails, and cleanup failure is recorded',async t=>{
+ const h=await harness(t),rpc=db.rpc;
+ const broken=createConferenceStore({...db,async rpc(name,args){if(name==='unlock_call_conference')return{data:null,error:{code:'08006',message:'unlock disconnected'}};return rpc(name,args);}});
+ const original=Object.assign(Error('primary provider failure'),{source:'twilio'});
+ await assert.rejects(()=>broken.locked(h.c.call_id,async()=>{throw original;}),error=>error===original&&error.cleanupError.code==='08006');
+ // Without an earlier error, failed cleanup is itself a database failure.
+ await pg.query('UPDATE call_conferences SET operation_token=NULL,operation_until=NULL WHERE call_id=$1',[h.c.call_id]);
+ await assert.rejects(()=>broken.locked(h.c.call_id,async()=>{}),error=>error.source==='database'&&error.operation==='unlock_call_conference');
+});
 test('outbound conversion adopts the canonical session record even before the browser has linked its attempt',async t=>{
  await pg.exec('BEGIN');t.after(()=>pg.exec('ROLLBACK'));
  const initial=await seed(pg,'outbound');await pg.query('UPDATE telephony_call_attempts SET call_record_id=NULL WHERE id=$1',[initial.attempt]);
@@ -270,6 +377,7 @@ async function route(router,path,body={}, {subject='user',signed=true,query={}}=
  await next(0);return res;
 }
 const routerFor=(h,options={})=>createConferenceRouter({service:h.service,settings,
+ logError:()=>{},
  authenticate:async(req,res)=>{if(!req.subject){res.status(401).end();return null;}return {sub:req.subject,org_id:'org'};},
  signature:(req,res,next)=>req.signed?next():res.status(403).end(),...options});
 
