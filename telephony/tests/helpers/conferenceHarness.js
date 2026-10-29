@@ -9,11 +9,12 @@ export const sid = prefix => prefix + randomUUID().replaceAll('-', '');
 export async function database() {
  const pg = new PGlite();
  await pg.exec(readFileSync(new URL('./conference-schema.sql',import.meta.url),'utf8'));
+ const legacyWriterDefinition=(await pg.query("SELECT pg_get_functiondef('persist_telephony_transcript(uuid,uuid,text,text,timestamptz,integer,integer)'::regprocedure) definition")).rows[0].definition;
  await pg.exec(readFileSync(new URL('../../../supabase/migrations/121_conference_calling.sql',import.meta.url),'utf8'));
  const base=evidenceDb(pg);
- const scalar=['lock_call_conference','reserve_conference_agent','prepare_call_conference','outbound_dnc_status','claim_conference_media','renew_conference_media','release_conference_media'];
+ const scalar=['lock_call_conference','unlock_call_conference','finish_call_conference','reserve_conference_agent','prepare_call_conference','outbound_dnc_status','claim_conference_media','renew_conference_media','release_conference_media'];
  const db={...base,async rpc(name,args){const result=await base.rpc(name,args);if(scalar.includes(name)&&!result.error)result.data=result.data?.[0]?.[name];return result;}};
- return {pg,db};
+ return {pg,db,legacyWriterDefinition};
 }
 export async function seed(pg,direction='inbound') {
  const tenant=randomUUID(),owner=randomUUID(),receiver=randomUUID(),record=randomUUID(),attempt=randomUUID(),session=randomUUID(),inbound=randomUUID();

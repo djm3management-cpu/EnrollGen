@@ -142,7 +142,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
     try {
       const { data: callRecord, error } = await supabaseClient
         .from("call_records")
-        .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, plan_name, effective_date, call_start, agent_notes, compliance_scorecard_id, call_outcome, ancillary_product_type")
+        .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, plan_name, effective_date, call_start, agent_notes, compliance_scorecard_id, call_outcome, ancillary_product_type, metadata")
         .eq("id", row.call_record_id)
         .single();
       if (error) throw error;

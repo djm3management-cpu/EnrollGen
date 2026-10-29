@@ -35,10 +35,15 @@ DECLARE id uuid; BEGIN
  ON CONFLICT(recording_sid) DO UPDATE SET callback_call_sid=excluded.callback_call_sid RETURNING recording_ingestion.id INTO id;
  RETURN id;
 END $$;
+CREATE TABLE release_observations(call_sid text,agent_id text,changed integer);
 CREATE FUNCTION release_call_agent(p_call_sid text,p_agent_id text) RETURNS boolean LANGUAGE plpgsql AS $$
+DECLARE n integer;
 BEGIN
  UPDATE agent_availability SET active_call_sid=NULL,status=coalesce(resume_status,'available')
- WHERE active_call_sid=p_call_sid AND (p_agent_id IS NULL OR agent_id=p_agent_id); RETURN FOUND;
+ WHERE active_call_sid=p_call_sid AND (p_agent_id IS NULL OR agent_id=p_agent_id);
+ GET DIAGNOSTICS n=ROW_COUNT;
+ INSERT INTO release_observations VALUES(p_call_sid,p_agent_id,n);
+ RETURN n>0;
 END $$;
 CREATE FUNCTION outbound_dnc_status(p_phone text,p_tenant_id uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT false $$;
 CREATE FUNCTION start_telephony_session(p_tenant_id uuid,p_agent_id uuid,p_call_sid text,p_flow text)

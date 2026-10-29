@@ -17,12 +17,18 @@ export function createConferenceStore(db) {
     async event(id, event, payload = {}) { checked(await db.rpc('conference_event', { p_call_id: id, p_event: event, p_payload: payload })); },
     async locked(id, action) {
       const token = randomUUID();
-      if (!checked(await db.rpc('lock_call_conference', { p_call_id: id, p_token: token }))) {
-        throw new ConferenceError(409, 'Call controls are updating. Please retry.');
+      let unlockNeeded = true;
+      try {
+        if (!checked(await db.rpc('lock_call_conference', { p_call_id: id, p_token: token }))) {
+          unlockNeeded = false;
+          throw new ConferenceError(409, 'Call controls are updating. Please retry.');
+        }
+        return await action(await this.get(id));
+      } finally {
+        // Also attempt a token-checked unlock if acquisition committed but its
+        // response was lost. Never clear a successor's lease.
+        if (unlockNeeded) checked(await db.rpc('unlock_call_conference', { p_call_id: id, p_token: token }));
       }
-      try { return await action(await this.get(id)); }
-      finally { checked(await db.from('call_conferences').update({ operation_token: null, operation_until: null })
-        .eq('call_id', id).eq('operation_token', token)); }
     },
     async online(agent) {
       const rows = checked(await db.from('agent_phone_sessions').select('session_id')
@@ -34,7 +40,7 @@ export function createConferenceStore(db) {
     },
     async release(agent, sid) { checked(await db.rpc('release_call_agent', { p_agent_id: agent, p_call_sid: sid })); },
     async transfer(id, participant) { checked(await db.rpc('complete_conference_agent_transfer', { p_call_id: id, p_participant_id: participant })); },
-    async finish(id) { checked(await db.rpc('finish_call_conference', { p_call_id: id })); },
+    async finish(id) { return checked(await db.rpc('finish_call_conference', { p_call_id: id })) === true; },
     async active() { return checked(await db.from('call_conferences').select('*').is('ended_at', null).limit(200)); },
     async pendingRecordings() { return checked(await db.from('call_participants').select('*').not('recording_sid', 'is', null)
       .is('recording_ingested_at', null).limit(100)); },

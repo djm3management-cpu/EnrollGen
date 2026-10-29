@@ -2,6 +2,7 @@ import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient } from './_evidenceAccess.js';
 import { recordingIdentity, authorizeRecordingTarget, listTargetRecordings, publicRecording, recordingMediaGrant } from './_recordingAccess.js';
 import { recordingComplianceGrant } from './_recordingCompliance.js';
+import { conferencePlayback } from './_conferencePlayback.js';
 
 async function availableRecordingCalls(db, identity, offset) {
   const candidates = checked(await db.from('v_call_log').select('*')
@@ -90,7 +91,11 @@ export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb
       } else input = { call_record_id: params.get('call_record_id'), inbound_call_id: params.get('inbound_call_id'), attempt_id: params.get('attempt_id') };
       const target = await authorizeRecordingTarget(db, identity, input);
       const rows = await listTargetRecordings(db, identity, target);
-      if (request.method === 'GET') return evidenceJson(200, { recordings: rows.map(publicRecording), can_mint_conversly: identity.admin });
+      if (request.method === 'GET') {
+        const playback = await conferencePlayback(db, identity, target, rows);
+        return evidenceJson(200, { recordings: rows.map(publicRecording), can_mint_conversly: identity.admin,
+          ...(playback ? { playback } : {}) });
+      }
       const row = input.recording_id ? rows.find(r => r.id === input.recording_id)
         : rows.find(r => r.copy_status === 'stored') || rows.find(r => publicRecording(r).available);
       if (!row) throw new EvidenceError(404, 'Recording is unavailable.');

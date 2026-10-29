@@ -4,10 +4,12 @@ import { evidenceRequest } from '../../lib/evidenceApi';
 import { listRecordings, recordingMedia, recordingTarget, downloadRecordingUrl, recordingConverslyLink } from '../../lib/recordingsApi';
 import { formatCallDateTime } from '../../lib/callPresentation';
 import { RecordingCell } from '../callLog/CallRowParts';
+import MergedRecordingPlayer from './MergedRecordingPlayer';
 
 export default function RecordingPanel({ row, callRecordId, inboundCallId, attemptId }) {
   const { getToken } = useAppAuth();
   const [rows, setRows] = useState([]);
+  const [playback, setPlayback] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(null);
@@ -29,11 +31,11 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
     }
     try {
       const data = await listRecordings(getToken, target);
-      if (current === version.current) { setRows(data.recordings || []); setCanMintConversly(data.can_mint_conversly === true); }
+      if (current === version.current) { setRows(data.recordings || []); setPlayback(data.playback || null); setCanMintConversly(data.can_mint_conversly === true); }
     } catch (err) { if (current === version.current) setError(err.message); }
     finally { if (current === version.current) setLoading(false); }
   }, [getToken, target]);
-  useEffect(() => { setAudio(null); setRows([]); void load(); return () => { version.current = Symbol(); }; }, [load]);
+  useEffect(() => { setAudio(null); setRows([]); setPlayback(null); void load(); return () => { version.current = Symbol(); }; }, [load]);
   const media = async (row, download, provider = false) => {
     const current = version.current;
     setBusy(row.id); setError('');
@@ -68,6 +70,7 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
   return <div className="contacts-section">
     <div className="contacts-section-head">RECORDINGS <button type="button" className="contacts-mini-btn" onClick={load} disabled={loading}>REFRESH</button></div>
     {error ? <div className="ops-error" role="alert">{error}</div> : null}
+    {playback && <MergedRecordingPlayer target={target} playback={playback} />}
     {loading ? <div className="contacts-muted">Loading recordings...</div> : !error && !rows.length && !hasLinkedRecording ? <div className="contacts-muted">No recording received yet. Check missing recordings for copy or linkage issues.</div> : null}
     {!loading && !rows.length && hasLinkedRecording ? <div className="ops-summary-box">
       <span className="ops-mini-label">CALL RECORDING</span>

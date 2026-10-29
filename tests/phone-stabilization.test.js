@@ -35,6 +35,8 @@ function phoneFixture(){
  source=source.replace('import("@twilio/voice-sdk")','Promise.resolve({Device:globalThis.Device})').replace('return <InboundCallContext.Provider value={value}>{children}</InboundCallContext.Provider>;','return value;');
  const context=vm.createContext({...harness.hooks,installAgentAudio,requestAgentMicrophone:()=>{},readAudioPreferences:()=>({enabled:true}),updateLiveTranscript,callContinuity:createCallContinuity(),Device,console,Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
   useAppAuth:()=>({getToken:token}),useTenantConfig:()=>({agents:[],supabaseClient:null}),useAvailability:()=>availability,
+  // Conference-enabled lifecycle paths have their own SQL/WebSocket suite.
+  useConferenceCall:()=>({enabled:false,agents:[],conference:null,busy:false,error:'',run:async()=>{}}),
   resolveRequestingAgentUuid:()=>null,transcriptionHealthError:()=>'',transcriptionHealthForCall:()=>({}),
   updateTranscriptionHealth:()=>({}),publishSms:()=>{},publishAudioLevel:()=>{},debugLog:()=>{},createVoiceTelemetry:()=>()=>{},
   checkOutbound:async()=>({blocked:false}),canonicalOutbound:async()=>({contactId:null,attemptId:'attempt',phoneNumber:'+15555555555'}),

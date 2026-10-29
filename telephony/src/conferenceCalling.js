@@ -36,6 +36,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
       hold: enabled, holdUrl: url('/twilio/conference/hold'), holdMethod: 'POST',
     });
     await patch(c, { customer_held: enabled });
+    await store.event(c.call_id, 'customer_hold_changed', { held: enabled });
   }
   function twiml(c, p) {
     const response = new twilio.twiml.VoiceResponse();
@@ -77,7 +78,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
       await store.patchParticipant(p.id, { recording_sid: recording.sid });
     }
   }
-  async function stop(p) {
+  async function stop(p, { release = true } = {}) {
     if (!p.twilio_call_sid || !live(p)) return;
     try {
       const call = await client.calls(p.twilio_call_sid).fetch();
@@ -86,7 +87,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     }
     catch (error) { if (error.code !== 20404) throw error; }
     await store.patchParticipant(p.id, { status: 'left', left_at: now() });
-    if (p.agent_id) await store.release(p.agent_id, (await store.get(p.call_id)).parent_call_sid);
+    if (release && p.agent_id) await store.release(p.agent_id, (await store.get(p.call_id)).parent_call_sid);
   }
   async function snapshot(id) {
     const c = await store.get(id);
@@ -119,7 +120,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
       attempt = { ...attempt, call_record_id: session.call_record_id };
     }
     checked(await store.db.rpc('prepare_call_conference', { p_attempt_id: attempt.id,
-      p_customer_phone: US_PHONE.test(phone || '') ? phone : null }));
+      p_customer_phone: typeof phone === 'string' ? phone : null }));
     conferenceRuntime.draining = true;
     return store.get(attempt.call_record_id);
   }
@@ -219,10 +220,9 @@ export function createConferenceService({ store = createConferenceStore(supabase
   }
   async function finish(c) {
     if (c.ended_at) return;
-    for (const p of (await store.participants(c.call_id)).filter(live)) await stop(p);
+    for (const p of (await store.participants(c.call_id)).filter(live)) await stop(p, { release: false });
     if (c.twilio_conference_sid) await client.conferences(c.twilio_conference_sid).update({ status: 'completed' });
-    await store.finish(c.call_id);
-    await store.event(c.call_id, 'ended');
+    if (await store.finish(c.call_id)) await store.event(c.call_id, 'ended');
   }
   async function departed(c, p) {
     if (p.role === 'customer') return finish(c);

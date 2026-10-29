@@ -23,6 +23,8 @@ function harness({ claims = [], recovered = false } = {}) {
     createCallAttempt: async () => { attempts++; return 'attempt'; },
     sendRoutingTwiml: (res, response) => { res.twiml = response; return res; },
     requireTwilioSignature() {}, routingReplay() {}, dialAttribution() {},
+    // These existing cases exercise the default-off legacy outbound path.
+    conferenceGuard: () => (_req, _res, next) => next(),
     requireClerkUser: async (_, res) => { if (authorized) return { sub: 'verified-user' }; res.status(401).json({ error: 'Unauthorized' }); return null; },
     outboundDncStatus: async (_, tenant) => { assert.equal(tenant, 'tenant'); return true; },
     supabase: { from(table) {

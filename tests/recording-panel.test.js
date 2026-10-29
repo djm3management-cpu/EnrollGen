@@ -22,6 +22,7 @@ function panelFixture(row, load = async () => ({ recordings: [] }), bindings = {
   const Panel = component('../src/components/callDetail/RecordingPanel.jsx', 'RecordingPanel', {
     ...harness.hooks, useAppAuth: () => ({ getToken }), recordingTarget, formatCallDateTime,
     RecordingCell: 'shared-recording-controls',
+    MergedRecordingPlayer: 'merged-conference-player',
     listRecordings: async (token, target) => { requests.push(target); return load(token, target); },
     ...bindings,
   });
@@ -44,6 +45,17 @@ test('Recording tab uses the same target as row Play for outbound, linked inboun
       assert.ok(!text(fixture.harness.value).includes('No recording received'));
     } finally { fixture.harness.unmount(); }
   }
+});
+
+test('conference recording tab exposes merged playback while keeping individual source files available',async()=>{
+ const playback={callId:'record',startedAt:'2026-10-29T12:00:00Z',endedAt:'2026-10-29T12:01:00Z',segments:[]};
+ const fixture=panelFixture({call_record_id:'record'},async()=>({recordings:[],playback}));
+ try{
+  await fixture.harness.flush();
+  const merged=nodes(fixture.harness.value).find(node=>node.type==='merged-conference-player');
+  assert.equal(merged.props.playback,playback);
+  assert.deepEqual(JSON.parse(JSON.stringify(merged.props.target)),{call_record_id:'record'});
+ }finally{fixture.harness.unmount();}
 });
 
 test('Conversly copy controls are admin-only and copy a grant for the selected recording and format', async () => {

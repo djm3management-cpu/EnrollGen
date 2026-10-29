@@ -40,7 +40,7 @@ CREATE TABLE public.call_participants (
  stream_generation integer NOT NULL DEFAULT 0,
  heartbeat_missing_at timestamptz,
  dial_started_at timestamptz NOT NULL DEFAULT clock_timestamp(),
- CHECK(phone IS NULL OR phone ~ '^\+1[2-9][0-9]{2}[2-9][0-9]{6}$')
+ CHECK(role <> 'third_party' OR phone IS NULL OR phone ~ '^\+1[2-9][0-9]{2}[2-9][0-9]{6}$')
 );
 CREATE INDEX call_participants_call ON public.call_participants(call_id);
 CREATE INDEX call_conferences_active ON public.call_conferences(phase) WHERE ended_at IS NULL;
@@ -81,8 +81,17 @@ END $$;
 CREATE FUNCTION public.lock_call_conference(p_call_id uuid,p_token uuid)
 RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 BEGIN
+ IF p_token IS NULL THEN RETURN false; END IF;
  UPDATE call_conferences SET operation_token=p_token,operation_until=clock_timestamp()+interval '90 seconds'
  WHERE call_id=p_call_id AND (operation_until IS NULL OR operation_until<clock_timestamp());
+ RETURN FOUND;
+END $$;
+
+CREATE FUNCTION public.unlock_call_conference(p_call_id uuid,p_token uuid)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+ UPDATE call_conferences SET operation_token=NULL,operation_until=NULL
+ WHERE call_id=p_call_id AND operation_token=p_token;
  RETURN FOUND;
 END $$;
 
@@ -160,14 +169,8 @@ ALTER TABLE public.telephony_transcript_segments DROP CONSTRAINT telephony_trans
 ALTER TABLE public.telephony_transcript_segments ADD CONSTRAINT telephony_transcript_segments_speaker_check
  CHECK(speaker IN ('agent','customer','third_party'));
 ALTER TABLE public.telephony_transcript_segments ADD COLUMN participant_id uuid REFERENCES public.call_participants(id);
--- Legacy writers used positional INSERTs. Preserve their old seven-column
--- contract when adding the optional participant column.
-DO $$ DECLARE body text; BEGIN
- SELECT pg_get_functiondef('public.persist_telephony_transcript(uuid,uuid,text,text,timestamptz,integer,integer)'::regprocedure) INTO body;
- body:=regexp_replace(body,'INSERT INTO telephony_transcript_segments\s+VALUES\s*\(',
-  'INSERT INTO telephony_transcript_segments(id,attempt_id,speaker,text,captured_at,start_ms,end_ms) VALUES(', 'i');
- EXECUTE body;
-END $$;
+-- PostgreSQL supplies the default NULL for the appended eighth column when
+-- the existing writer inserts its original seven positional values.
 
 CREATE FUNCTION public.enqueue_conference_recording(p_participant_id uuid,p_callback jsonb)
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
@@ -244,11 +247,11 @@ BEGIN
 END $$;
 
 CREATE FUNCTION public.finish_call_conference(p_call_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE room call_conferences; at timestamptz:=clock_timestamp();
 BEGIN
  SELECT * INTO STRICT room FROM call_conferences WHERE call_id=p_call_id FOR UPDATE;
- IF room.ended_at IS NOT NULL THEN RETURN; END IF;
+ IF room.ended_at IS NOT NULL THEN RETURN false; END IF;
  UPDATE call_conferences SET phase='ended',ended_at=at,customer_held=false WHERE call_id=p_call_id;
  UPDATE call_participants SET status='left',left_at=coalesce(left_at,at) WHERE call_id=p_call_id;
  UPDATE telephony_call_attempts SET status='completed',ended_at=at,
@@ -260,11 +263,12 @@ BEGIN
  INSERT INTO telephony_events(tenant_id,twilio_call_sid,event,payload)
  VALUES(room.tenant_id,room.parent_call_sid,'call_completed',jsonb_build_object('CallSid',room.parent_call_sid,'CallStatus','completed','source','conference'));
  PERFORM release_call_agent(room.parent_call_sid,NULL);
+ RETURN true;
 END $$;
 
 DO $$ DECLARE f regprocedure; BEGIN
  FOR f IN SELECT oid::regprocedure FROM pg_proc WHERE pronamespace='public'::regnamespace
- AND proname IN ('lock_call_conference','conference_event','claim_conference_media','renew_conference_media',
+ AND proname IN ('lock_call_conference','unlock_call_conference','conference_event','claim_conference_media','renew_conference_media',
  'release_conference_media','persist_conference_transcript','complete_conference_agent_transfer','finish_call_conference','enqueue_conference_recording','reserve_conference_agent','prepare_call_conference') LOOP
   EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC,anon,authenticated',f);
   EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role',f);

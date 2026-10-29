@@ -4,6 +4,7 @@ import { useAppAuth } from '../../context/AuthContext';
 import { recordingMedia, recordingTarget } from '../../lib/recordingsApi';
 import { redactSensitiveText } from '../../lib/redaction';
 import { formatTalk } from '../../lib/callPresentation';
+import MergedRecordingPlayer from '../callDetail/MergedRecordingPlayer';
 
 export function transcriptLines(detail, preview = '') {
   const diarized = detail?.transcript_diarized;
@@ -32,7 +33,9 @@ export default function CallTranscriptPlayer({ row, detail, loading, playRequest
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
-  const hasRecording = Boolean(row.recording_storage_path || row.recording_url);
+  const [mergedSeek, setMergedSeek] = useState(null);
+  const isConference = Array.isArray(detail?.metadata?.conference_events);
+  const hasRecording = isConference || Boolean(row.recording_storage_path || row.recording_url);
   const lines = useMemo(() => transcriptLines(detail, row.transcript_preview), [detail, row.transcript_preview]);
   const total = duration || Number(row.duration_seconds) || 0;
   let active = -1;
@@ -59,14 +62,15 @@ export default function CallTranscriptPlayer({ row, detail, loading, playRequest
     if (!media) void loadMedia(); else play();
   };
   useEffect(() => {
-    if (!playRequest) return;
+    if (!playRequest || loading || isConference) return;
     shouldPlay.current = true;
     if (!audioRef.current?.getAttribute('src')) void loadMedia(); else play();
     // Each request is an explicit click on the row's Play button.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playRequest]);
+  }, [playRequest, loading, isConference]);
 
   const seek = seconds => {
+    if (isConference) { setMergedSeek(previous => ({ seconds, sequence: (previous?.sequence || 0) + 1 })); setTime(seconds); return; }
     pendingSeek.current = seconds;
     setTime(seconds);
     if (media && audioRef.current?.readyState >= 1) audioRef.current.currentTime = seconds;
@@ -74,7 +78,7 @@ export default function CallTranscriptPlayer({ row, detail, loading, playRequest
   };
 
   return <section className="call-transcript-panel" aria-label="Call recording and transcript">
-    <div className="call-audio-bar">
+    {isConference ? <MergedRecordingPlayer target={recordingTarget(row)} playRequest={playRequest} seekRequest={mergedSeek} onTime={setTime} /> : <div className="call-audio-bar">
       <button type="button" className="contacts-mini-btn call-recording-icon" aria-label={playing ? 'Pause recording' : 'Play recording'} disabled={!hasRecording || busy} onClick={toggle}>{playing ? <Pause size={16} /> : <Play size={16} />}</button>
       <span className="call-audio-time">{formatTalk(time)} / {formatTalk(total)}</span>
       <input type="range" min="0" max={total || 1} step="0.1" value={Math.min(time, total)} disabled={!hasRecording || busy || !total} aria-label="Recording position" aria-valuetext={`${formatTalk(time)} of ${formatTalk(total)}`} onChange={event => seek(Number(event.target.value))} />
@@ -92,7 +96,7 @@ export default function CallTranscriptPlayer({ row, detail, loading, playRequest
         if (media?.source === 'storage') { pendingSeek.current = time; void loadMedia(true); }
         else setError('Playback failed. Try downloading the recording.');
       }} />
-    </div>
+    </div>}
     {busy && <div className="call-player-message contacts-muted" role="status">Loading recording…</div>}
     {!hasRecording && <div className="call-player-message contacts-muted">No recording available</div>}
     {error && <div className="call-player-message ops-error" role="alert">{error}</div>}

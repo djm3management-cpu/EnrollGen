@@ -14,8 +14,8 @@ const {createConferenceMedia,conferenceStreamUrl}=await import('../src/media/con
 const {createConferenceRouter}=await import('../src/routes/conferenceCalling.js');
 const {conferenceGuard}=await import('../src/conferenceGuard.js');
 const {config}=await import('../src/config.js');
-let pg,db;
-before(async()=>{({pg,db}=await database());});
+let pg,db,legacyWriterDefinition;
+before(async()=>{({pg,db,legacyWriterDefinition}=await database());});
 after(async()=>pg?.close());
 async function harness(t,direction='inbound'){
  await pg.exec('BEGIN');const cleanup=[];t.after(async()=>{for(const close of cleanup)await close();await pg.exec('ROLLBACK');});
@@ -175,6 +175,73 @@ test('SQL privacy/ownership: browser roles cannot read/write participants or inv
  }
  const token=randomUUID();assert.equal((await pg.query('SELECT lock_call_conference($1,$2) ok',[h.c.call_id,token])).rows[0].ok,true);
  assert.equal((await pg.query('SELECT lock_call_conference($1,$2) ok',[h.c.call_id,randomUUID()])).rows[0].ok,false);
+});
+
+for(const phone of [null,'anonymous','restricted','+442079460000','+14165551234'])test(`prepare preserves customer phone ${phone} without applying third-party validation`,async t=>{
+ await pg.exec('BEGIN');t.after(()=>pg.exec('ROLLBACK'));const initial=await seed(pg);
+ await pg.query('SELECT prepare_call_conference($1,$2)',[initial.attempt,phone]);
+ assert.equal((await pg.query("SELECT phone FROM call_participants WHERE call_id=$1 AND role='customer'",[initial.record])).rows[0].phone,phone);
+ await pg.exec('SAVEPOINT invalid_destination');
+ await assert.rejects(()=>pg.query("INSERT INTO call_participants(call_id,role,speaker,phone,added_by_agent_id) VALUES($1,'third_party','third_party','anonymous','original')",[initial.record]),/check constraint/);
+ await pg.exec('ROLLBACK TO SAVEPOINT invalid_destination');
+});
+test('unlock only releases the matching call/token, including expired lease replacement',async t=>{
+ const h=await harness(t),first=randomUUID(),second=randomUUID();
+ const rpc=async(name,token,callId=h.c.call_id)=>(await pg.query(`SELECT ${name}($1,$2) ok`,[callId,token])).rows[0].ok;
+ assert.equal(await rpc('lock_call_conference',first),true);
+ assert.equal(await rpc('unlock_call_conference',second),false);
+ assert.equal(await rpc('unlock_call_conference',first,randomUUID()),false);
+ assert.equal(await rpc('unlock_call_conference',null),false);
+ await pg.query("UPDATE call_conferences SET operation_until=now()-interval '1 second' WHERE call_id=$1",[h.c.call_id]);
+ assert.equal(await rpc('lock_call_conference',second),true);
+ assert.equal(await rpc('unlock_call_conference',first),false);
+ assert.equal(await rpc('unlock_call_conference',second),true);
+ const c=await h.store.get(h.c.call_id);assert.equal(c.operation_token,null);assert.equal(c.operation_until,null);
+});
+test('every store lock releases through finally on success, thrown action, failed read and lost acquisition response',async t=>{
+ const h=await harness(t);
+ assert.equal(await h.store.locked(h.c.call_id,async()=>42),42);
+ await assert.rejects(()=>h.store.locked(h.c.call_id,async()=>{throw Error('action failed');}),/action failed/);
+ const broken=createConferenceStore(db);broken.get=async()=>{throw Error('read failed');};
+ await assert.rejects(()=>broken.locked(h.c.call_id,async()=>{}),/read failed/);
+ const uncertain=createConferenceStore({...db,async rpc(name,args){const result=await db.rpc(name,args);if(name==='lock_call_conference')throw Error('response lost');return result;}});
+ await assert.rejects(()=>uncertain.locked(h.c.call_id,async()=>{}),/response lost/);
+ const c=await h.store.get(h.c.call_id);assert.equal(c.operation_token,null);assert.equal(c.operation_until,null);
+});
+test('legacy writer is unchanged and inbound pre-conference segments remain exactly once after conference finals',async t=>{
+ await pg.exec('BEGIN');t.after(()=>pg.exec('ROLLBACK'));const initial=await seed(pg);
+ const definition=(await pg.query("SELECT pg_get_functiondef('persist_telephony_transcript(uuid,uuid,text,text,timestamptz,integer,integer)'::regprocedure) definition")).rows[0].definition;
+ assert.equal(definition,legacyWriterDefinition);
+ await pg.query("SELECT persist_telephony_transcript($1,$2,'customer','Before upgrade',now()-interval '1 minute',0,10)",[initial.attempt,randomUUID()]);
+ assert.equal((await pg.query('SELECT participant_id FROM telephony_transcript_segments')).rows[0].participant_id,null);
+ await pg.query('SELECT prepare_call_conference($1,$2)',[initial.attempt,'anonymous']);
+ const p=(await pg.query("SELECT id FROM call_participants WHERE call_id=$1 AND role='agent'",[initial.record])).rows[0];
+ const segment=randomUUID();
+ for(let i=0;i<2;i++)await pg.query("SELECT persist_conference_transcript($1,$2,'agent','After upgrade',now(),1000,2000)",[p.id,segment]);
+ const record=(await pg.query('SELECT transcript_raw,transcript_diarized,metadata FROM call_records WHERE id=$1',[initial.record])).rows[0];
+ assert.equal(record.metadata.conference_prior_transcript,'');
+ assert.equal(record.transcript_raw,'CUSTOMER: Before upgrade\nAGENT: After upgrade');
+ assert.equal(record.transcript_diarized.length,2);
+});
+for(const direction of ['inbound','outbound'])for(const callbackFirst of [false,true])test(`${direction}: normal completed callback ${callbackFirst?'before':'after'} finish cannot duplicate completion, effective release or disposition candidate`,async t=>{
+ const h=await harness(t,direction);await h.action({action:'dial',mode:'add',phone:'+16095556789'});await h.answer(await h.third());
+ const previous=config.conferenceCallingEnabled;config.conferenceCallingEnabled=true;t.after(()=>{config.conferenceCallingEnabled=previous;});
+ const guard=conferenceGuard('parent',()=>h.service,async()=>{});
+ const response={code:200,status(n){this.code=n;return this;},end(){}};let legacy=0;
+ const callback=()=>guard({body:{CallSid:h.initial.parent,CallStatus:'completed',AccountSid:config.twilioAccountSid}},response,()=>{legacy++;});
+ if(callbackFirst)await callback();
+ await h.service.finish(await h.store.get(h.c.call_id));
+ const ended=(await h.store.get(h.c.call_id)).ended_at;
+ const successor=sid('CA');await pg.query("UPDATE agent_availability SET active_call_sid=$1,status='busy' WHERE agent_id='original'",[successor]);
+ await callback();await callback();await h.service.finish(h.c);
+ assert.equal(legacy,0);assert.equal(response.code,204);
+ assert.equal(new Date((await h.store.get(h.c.call_id)).ended_at).getTime(),new Date(ended).getTime());
+ assert.equal((await pg.query("SELECT count(*)::int n FROM telephony_events WHERE event='call_completed'")).rows[0].n,1);
+ assert.equal((await pg.query("SELECT count(*)::int n FROM telephony_events WHERE event='conference_ended'")).rows[0].n,1);
+ assert.equal((await pg.query('SELECT coalesce(sum(changed),0)::int n FROM release_observations')).rows[0].n,1);
+ if(!callbackFirst)assert.equal((await pg.query('SELECT count(*)::int n FROM release_observations')).rows[0].n,1);
+ assert.equal((await pg.query("SELECT count(*)::int n FROM telephony_call_attempts WHERE status='completed' AND answered_at IS NOT NULL AND ended_at IS NOT NULL")).rows[0].n,1);
+ assert.equal((await pg.query("SELECT active_call_sid FROM agent_availability WHERE agent_id='original'")).rows[0].active_call_sid,successor);
 });
 
 test('US validation rejects international, Canadian, Caribbean, local-format and malformed destinations',()=>{

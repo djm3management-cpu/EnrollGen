@@ -18051,6 +18051,8 @@ body[data-bg-mode="classic"] .viewport-bg {
 .phone-conference li > span:first-child { flex: 1; overflow-wrap: anywhere; }
 .phone-conference__transcript { max-height: 160px; overflow-y: auto; margin-top: 12px; }
 .phone-conference__transcript p > span { color: var(--eg-amber); }
+.merged-recording-player audio { display: block; width: 100%; margin: 10px 0; }
+.merged-recording-player .contacts-mini-btn { display: inline-block; margin: 6px 0; }
 .app-workspace.app-workspace--dashboard { padding-right: 24px; }
 .agent-dashboard {
   width: 100%; max-width: none; margin: 0; padding: 8px 24px 24px;
