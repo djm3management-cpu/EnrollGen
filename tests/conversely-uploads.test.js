@@ -23,7 +23,7 @@ async function addCall(n,owner,carrier,score,time,{status='complete',recording=t
 before(async()=>{
  await pg.exec(`CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role BYPASSRLS;
  CREATE TABLE tenants(id uuid PRIMARY KEY);
- CREATE TABLE enrolled_agents(id uuid PRIMARY KEY,tenant_id uuid,clerk_user_id text,is_active boolean);
+ CREATE TABLE enrolled_agents(id uuid PRIMARY KEY,tenant_id uuid,clerk_user_id text,is_active boolean,name text);
  CREATE TABLE recording_agent_subjects(tenant_id uuid,clerk_user_id text,agent_slug text);
  CREATE TABLE call_records(id uuid PRIMARY KEY,tenant_id uuid,agent_id uuid,agent_name text,call_outcome text,carrier_name text,call_start timestamptz,
  compliance_status text,compliance_scorecard_id uuid,enrollment_confirmation_number text,metadata jsonb);
@@ -33,9 +33,10 @@ before(async()=>{
  CREATE TABLE recording_compliance_tickets(token_hash text,tenant_id uuid,recording_id text,minted_by text,format text,storage_path text,account_sid text,recording_sid text,
  expected_call_sid text,channels smallint,created_at timestamptz,expires_at timestamptz);
  INSERT INTO tenants VALUES('${tenant}');
- INSERT INTO enrolled_agents VALUES('${agent}','${tenant}','ordinary',true),('${mark}','${tenant}','mark-subject',true),('${empty}','${tenant}','empty',true);
+ INSERT INTO enrolled_agents(id,tenant_id,clerk_user_id,is_active) VALUES('${agent}','${tenant}','ordinary',true),('${mark}','${tenant}','mark-subject',true),('${empty}','${tenant}','empty',true);
  INSERT INTO recording_agent_subjects VALUES('${tenant}','mark-subject','mark_endres');`);
  await pg.exec(readFileSync(new URL('../supabase/migrations/123_compliance_uploads.sql',import.meta.url),'utf8'));
+ await pg.exec(readFileSync(new URL('../supabase/migrations/127_conversely_manual_runs.sql',import.meta.url),'utf8'));
  await addCall(10,agent,'Aetna',80,'2026-10-20T16:00:00Z');
  await addCall(11,agent,'UHC',95,'2026-10-21T16:00:00Z');
  await addCall(12,agent,'Devoted Health',95,'2026-10-23T16:00:00Z');

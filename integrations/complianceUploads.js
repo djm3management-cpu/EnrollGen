@@ -1,5 +1,6 @@
+import {selectConverselyWeek,processManualConverselyRun} from './converselyRuns.js';
 import {intakeCallFields} from '../src/lib/enrollmentIntake.js';
-import {converselyConfiguration,carrierEligibility,previousConverselyWeek,selectWeeklySamples} from './converselySelection.js';
+import {converselyConfiguration,carrierEligibility,previousConverselyWeek} from './converselySelection.js';
 import { recordingComplianceGrant } from './recordingComplianceGrant.js';
 import { postJson } from './transport.js';
 import { mediaUrl, fetchRecordingMedia } from '../telephony/src/recordings.js';
@@ -39,17 +40,10 @@ export async function playableMp3(candidate,{env=process.env,fetchImpl=fetch}={}
 }
 export async function scheduleConverselyWeek(db,{env=process.env,log=console.log,now=()=>Date.now(),isPlayable=playableMp3,fetchImpl=fetch}={}) {
   if(!uploadEnabled(env.CONVERSELY_UPLOAD_ENABLED))return;
-  const config=converselyConfiguration(env),week=previousConverselyWeek(now());
-  const existing=checked(await db.from('conversely_weekly_runs').select('week_start').eq('week_start',week).maybeSingle());
+  const week=previousConverselyWeek(now());
+  const existing=checked(await db.from('conversely_weekly_runs').select('week_start').eq('week_start',week).not('scheduled_at','is',null).maybeSingle());
   if(existing)return;
-  const candidates=checked(await db.rpc('conversely_week_candidates',{p_week:week}));
-  // Every candidate is evaluated, including low-scoring alternatives, for the audit.
-  for(const candidate of candidates){
-    candidate.playable=false;
-    if(candidate.call_id && !carrierEligibility(candidate,config) && candidate.compliance_status==='complete' && candidate.score!=null && !candidate.already_submitted)
-      candidate.playable=await isPlayable(candidate,{env,fetchImpl});
-  }
-  const decisions=selectWeeklySamples(candidates,config);
+  const {config,decisions}=await selectConverselyWeek(db,week,{env,now,isPlayable,fetchImpl});
   const audit=checked(await db.rpc('reserve_conversely_week',{p_week:week,p_samples:config.samples,p_decisions:decisions}));
   for(const row of audit)log(JSON.stringify({event:'conversely_weekly_selection',week,tenant_id:row.tenant_id,agent_id:row.agent_id,
     call_id:row.call_id,score:row.score,eligible:row.eligible,selected:row.selected,reason:row.reason,submission_id:row.submission_id}));
@@ -59,8 +53,15 @@ export async function scheduleConverselyWeek(db,{env=process.env,log=console.log
 export function createComplianceWorker(db,{env=process.env,send=postJson,log=console.log,now=()=>Date.now(),fetchImpl=fetch,
  isPlayable=playableMp3,providers={},scheduleExtras=async()=>{}}={}) {
   const rpc=async(name,params={})=>checked(await db.rpc(name,params));
-  let nextWeeklyCheck=0;
+  let nextWeeklyCheck=0,nextHeartbeat=0,nextFinalize=0;
   return async ({schedule=true,deliveries=true}={})=>{
+    if(schedule){
+      if(now()>=nextHeartbeat){
+        nextHeartbeat=now()+30_000;
+        try{await rpc('heartbeat_conversely_worker',{p_enabled:uploadEnabled(env.CONVERSELY_UPLOAD_ENABLED)});}catch{log(JSON.stringify({event:'conversely_worker_heartbeat_failed'}));}
+      }
+      try{await processManualConverselyRun(db,{env,now,isPlayable,fetchImpl});}catch{log(JSON.stringify({event:'conversely_manual_run_failed'}));}
+    }
     if(schedule && now()>=nextWeeklyCheck){
       nextWeeklyCheck=now()+60*60_000;
       try{await scheduleConverselyWeek(db,{env,log,now,isPlayable,fetchImpl});}
@@ -84,9 +85,12 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
             .eq('call_record_id',job.call_id).eq('recording_sid',job.twilio_recording_sid).eq('provider_status','completed').single());
           if(provider==='conversely'){
             // Never send a raw queue insert that was not selected by the weekly run.
-            const selection=checked(await db.from('conversely_weekly_audit').select('id,agent_id,agent_slug').eq('submission_id',job.id).eq('selected',true).single());
+            const selection=checked(await db.from('conversely_week_slots').select('agent_id,agent_slug,week_start').eq('submission_id',job.id).eq('tenant_id',job.tenant_id).maybeSingle());
+            if(!selection)throw Error('weekly_submission_not_reserved');
+            if(selection.agent_id!==call.agent_id)throw Error('agent_attribution_changed');
             if(call.compliance_status!=='complete')throw Error('score_incomplete');
-            const reason=carrierEligibility({...call,agent_slug:selection.agent_slug},converselyConfiguration(env));
+            const owner=checked(await db.from('enrolled_agents').select('clerk_user_id').eq('id',call.agent_id).eq('tenant_id',job.tenant_id).single());
+            const reason=carrierEligibility({...call,agent_slug:selection.agent_slug,clerk_user_id:owner.clerk_user_id},converselyConfiguration(env));
             if(reason)throw Error(reason);
             if(!env.CONVERSELY_API_KEY)throw Error('conversely_key_missing');
             const grant=await recordingComplianceGrant(db,{admin:true,tenant:{id:job.tenant_id},auth:{userId:'integrations-worker'}},recording,{env,format:'mp3'});
@@ -100,5 +104,6 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
         log(JSON.stringify({event:'compliance_upload',provider,id:job.id,call_id:job.call_id,attempt:job.attempts,success,error}));
       }
     }
+    if(now()>=nextFinalize){nextFinalize=now()+1000;try{await rpc('finalize_conversely_runs');}catch{log(JSON.stringify({event:'conversely_run_status_failed'}));}}
   };
 }

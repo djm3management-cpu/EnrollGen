@@ -1,19 +1,26 @@
 # Conversely weekly samples
 
-Apply migration 123 before deploying integrations-worker, Netlify and telephony.
+Apply migrations through **127_conversely_manual_runs.sql** before releasing the updated integrations worker and Netlify functions/UI.
 No deployment was performed. CONVERSELY_UPLOAD_ENABLED defaults off; only `true`
 enables sampling and delivery. Set CONVERSELY_API_KEY, TELEPHONY_BASE_URL,
 TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN on the worker before enabling it.
 
-The worker samples the last **completed Monday–Sunday week in America/New_York**,
-once per week, checking hourly for a missing run. This permits comparison across
-the entire week and handles DST boundaries. Enrolled and Enrolled Pending
-Verification calls qualify. Each active roster agent receives the highest-scored
-eligible call, breaking equal scores by newest call, then call UUID. Agents with
-no eligible call are logged and skipped. CONVERSELY_SAMPLES_PER_AGENT defaults to
-1; larger values select the top N eligible calls (or all eligible calls if fewer
-than N exist). There is no substitution after a selected upload fails, keeping the
-sample volume fixed. Retrying a selected upload retains the same provider key.
+The automatic scheduler has **no fixed cron day/time**. The Railway worker
+checks on process startup and then at 60-minute intervals measured from each
+check; its scheduler loop wakes every second. Once Monday **00:00
+America/New_York** has passed, the first eligible check selects the last
+completed week: previous Monday 00:00 inclusive through the following Monday
+00:00 exclusive (all of Sunday included). If the worker restarts or is enabled
+later, its startup check evaluates the latest closed week. Downtime does not
+cause every historical missed week to be replayed. DST boundaries use New York
+calendar arithmetic, not a fixed 168-hour UTC window.
+
+Each active enrolled agent receives at most **one** weekly submission: the
+highest-scored eligible call, breaking equal scores by newest call, then call
+UUID. Production scheduling and manual runs enforce this cap in both selection
+and SQL; the legacy CONVERSELY_SAMPLES_PER_AGENT setting cannot raise it. There
+is no substitution after a selected upload fails. Retries retain that same job
+and provider idempotency key.
 
 Calls must have compliance_status=complete, a current linked non-composite
 compliance scorecard, and a completed retained provider recording. A bounded
@@ -61,3 +68,48 @@ exponential backoff starting at 60 seconds, and at most five attempts. A success
 recording/enrollment pair is never reclaimed or enqueued again. Provider
 Idempotency-Key must also be honored for recovery after a lost response. The
 worker Docker image includes the shared recording-link and streaming helpers.
+
+## Run Conversely now
+
+The admin-only CRM Calls compliance uploads panel can request a run for the
+**current ongoing Monday-based week**, through the request timestamp. This
+intentionally differs from the automatic scheduler's closed-week window. The
+Netlify endpoint authenticates a tenant administrator and inserts a durable
+request; it does not send applicant data or provider credentials from the
+browser. The existing Railway worker checks requests on its next scheduler
+iteration (normally about one second), selects candidates and drains the usual
+compliance queue immediately without waiting for the next hourly check.
+
+The worker remains the source of CONVERSELY_UPLOAD_ENABLED, carrier allowlist
+and agent exclusions. It publishes only enabled/heartbeat state every 30 seconds;
+the API rejects new requests while disabled or when its heartbeat is over five
+minutes old. No duplicate provider configuration is needed in Netlify. The
+worker rechecks its enable flag before selection and delivery, and current
+carrier/agent rules before each POST, including exclusions keyed by Clerk ID.
+
+Migration 127 adds durable runs, per-agent results, and a unique weekly slot for
+each tenant/agent. It backfills slots/history from existing audit/submission
+records, preferring successful legacy submissions. Concurrent clicks reuse an
+active request. Repeated runs reuse a pending/failed job and skip an already
+successful agent; they can still select an agent previously skipped for lack of
+eligible calls. A later automatic closed-week run uses the same slots, so an
+earlier manual submission cannot be duplicated. Manual runs do not stamp the
+week as automatically evaluated, allowing the later scheduler to evaluate
+agents with no slot. Five-attempt terminal failures remain visible; this button
+does not reset exhausted provider attempts.
+
+The panel shows the latest run's requested/started time in Eastern Time, week,
+trigger, stage, and per-agent submitted/skipped/failed outcomes and reasons.
+Queued/uploading jobs are shown honestly as pending/uploading until the provider
+responds. Transient failures remain failed with retry state until the original
+job succeeds or exhausts attempts. While a run is active, the panel polls every
+three seconds. Historical automatic runs are included in the backfilled history.
+All new tables/RPCs are service-only; browser roles cannot create selections or
+claim jobs directly. Call routing and the IX pipeline are unchanged.
+
+Verification covers startup/hourly timing, Monday/DST boundaries, enabled and
+stale-worker gates, admin/tenant scope, concurrent request deduplication, current
+week cutoff, completed-intake eligibility, carrier rules/exclusions, the one-agent
+weekly cap, manual/automatic coordination, historical success backfill, retries,
+last-run results and panel controls. Tests use local PostgreSQL and synthetic
+provider transports; no live submission or deployment was performed.

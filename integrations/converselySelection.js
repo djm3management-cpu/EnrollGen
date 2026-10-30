@@ -36,6 +36,10 @@ export function previousConverselyWeek(now=Date.now()) {
   date.setUTCDate(date.getUTCDate()-((date.getUTCDay()+6)%7)-7);
   return date.toISOString().slice(0,10);
 }
+export function currentConverselyWeek(now=Date.now()) {
+  const monday=new Date(`${previousConverselyWeek(now)}T12:00:00Z`);
+  monday.setUTCDate(monday.getUTCDate()+7);return monday.toISOString().slice(0,10);
+}
 export function selectWeeklySamples(candidates,config) {
   const decisions=candidates.filter(row=>row.call_id).map(row=>{
     const reason=carrierEligibility(row,config) || (row.already_submitted?'already_submitted':null) ||
