@@ -11,7 +11,7 @@ const AC='AC'+'a'.repeat(32), RE='RE'+'b'.repeat(32), CA='CA'+'c'.repeat(32);
 const tenant='00000000-0000-4000-8000-000000000001', token='a'.repeat(43), wav=recordingWav();
 const config={twilioAccountSid:AC,twilioAuthToken:'secret'};
 async function app(t, {ticket:overrides={},providerCall=CA,unknownLength=false,ignoreRange=false,stored=false,missingStorage=false,body=wav}={}) {
-  const requests=[];
+  const requests=[],logs=[];
   const ticket={tenant_id:tenant,recording_id:'one-recording',account_sid:AC,recording_sid:RE,expected_call_sid:CA,
     channels:2,format:'wav',expires_at:new Date(Date.now()+86_400_000).toISOString(),...(stored?{storage_path:`${tenant}/one.wav`}:{}),...overrides};
   const db={from(table){assert.equal(table,'recording_compliance_tickets');return {
@@ -20,7 +20,7 @@ async function app(t, {ticket:overrides={},providerCall=CA,unknownLength=false,i
   };},storage:{from(bucket){assert.equal(bucket,'call-recordings');return {async createSignedUrl(path,ttl){
     assert.equal(path,ticket.storage_path);assert.equal(ttl,300);return {data:{signedUrl:'https://storage.test/audio.wav'},error:null};
   }};}}};
-  const handler=createRecordingComplianceHandler({db,config,log:()=>{},fetchImpl:async(url,options)=>{
+  const handler=createRecordingComplianceHandler({db,config,log:entry=>logs.push(JSON.parse(entry)),fetchImpl:async(url,options)=>{
     requests.push({url,options});
     if(url.endsWith('.json'))return Response.json({account_sid:AC,sid:RE,call_sid:providerCall,channels:2});
     if(url.startsWith('https://storage.test/')) {
@@ -38,7 +38,7 @@ async function app(t, {ticket:overrides={},providerCall=CA,unknownLength=false,i
   const application=express();application.all('/api/recordings/conversly/:token',handler);
   const server=createServer(application);server.listen(0,'127.0.0.1');await once(server,'listening');
   t.after(()=>new Promise(resolve=>{server.closeAllConnections();server.close(resolve);}));
-  return {url:`http://127.0.0.1:${server.address().port}/api/recordings/conversly/${token}`,requests,ticket};
+  return {url:`http://127.0.0.1:${server.address().port}/api/recordings/conversly/${token}`,requests,ticket,logs};
 }
 test('24-hour bearer can be HEADed and fetched repeatedly without a session, IP or user-agent binding',async t=>{
   const {url}=await app(t);
@@ -99,4 +99,19 @@ test('missing WAV storage falls back to the same verified provider recording',as
   const {url,requests}=await app(t,{stored:true,missingStorage:true});
   const response=await fetch(url);assert.equal(response.status,200);assert.deepEqual(Buffer.from(await response.arrayBuffer()),wav);
   assert.equal(requests.length,3);
+});
+
+test('every recording capability hit logs timestamp and a hash, without exposing the token',async t=>{
+ const {url,logs}=await app(t);
+ for(const method of ['HEAD','GET','POST']) {const response=await fetch(url,{method});await response.arrayBuffer();}
+ assert.equal(logs.length,3);
+ for(const entry of logs){assert.equal(entry.event,'conversely_recording_hit');assert.ok(Number.isFinite(Date.parse(entry.timestamp)));assert.equal(entry.token_hash,createHash('sha256').update(token).digest('hex'));assert.ok(!JSON.stringify(entry).includes(token));}
+});
+
+test('MP3 extension route preserves HEAD and byte ranges with audio/mpeg',async t=>{
+ const {url,requests}=await app(t,{ticket:{format:'mp3'}});
+ const head=await fetch(`${url}.mp3`,{method:'HEAD'});assert.equal(head.status,200);assert.equal(head.headers.get('content-type'),'audio/mpeg');
+ const response=await fetch(`${url}.mp3`,{headers:{Range:'bytes=2-5'}});
+ assert.equal(response.status,206);assert.equal(response.headers.get('content-type'),'audio/mpeg');assert.deepEqual(Buffer.from(await response.arrayBuffer()),wav.subarray(2,6));
+ assert.ok(requests.some(row=>row.url.includes('.mp3?')));
 });

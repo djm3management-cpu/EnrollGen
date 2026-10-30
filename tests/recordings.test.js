@@ -289,11 +289,11 @@ test('Conversly minting is admin-only, tenant-scoped, recording-scoped and separ
     const start=Date.now();const grant=await call(admin,{...body,format});
     assert.equal(grant.expires_in,86400);assert.equal(grant.format,format);
     assert.equal(grant.content_type,format==='mp3'?'audio/mpeg':'audio/wav');
-    assert.match(grant.url,/^https:\/\/telephony\.test\/api\/recordings\/conversly\/[A-Za-z0-9_-]{43}$/);
+    assert.match(grant.url,format==='mp3'?/^https:\/\/telephony\.test\/api\/recordings\/conversly\/[A-Za-z0-9_-]{43}\.mp3$/:/^https:\/\/telephony\.test\/api\/recordings\/conversly\/[A-Za-z0-9_-]{43}$/);
     assert.ok(Date.parse(grant.expires_at)>=start+86_400_000 && Date.parse(grant.expires_at)<=Date.now()+86_400_000);
     const ticket=(await sql('SELECT * FROM recording_compliance_tickets WHERE format=$1',[format]))[0];
     assert.equal(ticket.recording_id,row.id);assert.equal(ticket.tenant_id,T);assert.equal(ticket.minted_by,admin.userId);
-    assert.equal(ticket.token_hash.length,64);assert.equal(ticket.token_hash.includes(grant.url.split('/').at(-1)),false);
+    assert.equal(ticket.token_hash.length,64);assert.equal(ticket.token_hash.includes(grant.url.split('/').at(-1).replace(/\.mp3$/, '')),false);
     assert.equal(ticket.storage_path,format==='wav'?row.storage_path:null);
   }
   assert.equal((await sql('SELECT count(*)::int AS n FROM recording_download_tickets'))[0].n,before);

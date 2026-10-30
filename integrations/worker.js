@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { availabilityPayload, mappedDisposition, csvReport, assertPrivateFieldsAbsent } from './payloads.js';
 import { postJson, signature } from './transport.js';
+import { createComplianceWorker } from './complianceUploads.js';
 import { deliveryDiagnostic } from './diagnostics.js';
 
 export function retryDelay(kind, attempt) {
@@ -39,6 +40,7 @@ export async function deliver(job, target, { send=postJson, env=process.env } = 
 }
 export function createWorker(db, { send, env=process.env, log=console.log }={}) {
   const rpc=async(name,params={})=>{const {data,error}=await db.rpc(name,params);if(error)throw Error(name+' failed');return data;};
+  const complianceTick=createComplianceWorker(db,{env,send,log});
   let reportTick=0;
   return async function tick({schedule=true,deliveries=true}={}) {
     // Each stage fails independently; a vendor outage cannot prevent others' jobs.
@@ -49,6 +51,7 @@ export function createWorker(db, { send, env=process.env, log=console.log }={}) 
     }
     if(reportsDue)reportTick=Date.now()+60000;
     }
+    try{await complianceTick({schedule,deliveries});}catch{log(JSON.stringify({event:'compliance_upload_stage_failed'}));}
     if(!deliveries)return;
     for(let n=0;n<20;n++) {
       let job;

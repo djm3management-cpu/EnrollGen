@@ -43,13 +43,17 @@ async function openAudio(db, ticket, config, signal, range, fetchImpl) {
 
 export function createRecordingComplianceHandler({ db, config, fetchImpl = fetch, log = console.error }) {
   return async (req, res) => {
+    log(JSON.stringify({event:'conversely_recording_hit',timestamp:new Date().toISOString(),method:req.method,
+      token_hash:createHash('sha256').update(String(req.params?.token || '').replace(/\.mp3$/, '')).digest('hex')}));
     res.setHeader('Cache-Control', 'private, no-store');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     if (!['GET', 'HEAD'].includes(req.method)) {
       res.setHeader('Allow', 'GET, HEAD'); return res.status(405).end();
     }
-    const token = req.params?.token;
+    const rawToken = req.params?.token;
+    const mp3Path=String(rawToken || '').endsWith('.mp3');
+    const token=mp3Path ? rawToken.slice(0,-4) : rawToken;
     if (!/^[A-Za-z0-9_-]{43}$/.test(token || '')) return res.status(404).end();
     const controller = new AbortController();
     const cancel = () => controller.abort();
@@ -61,7 +65,7 @@ export function createRecordingComplianceHandler({ db, config, fetchImpl = fetch
       const ticket = checked(await db.from('recording_compliance_tickets').select('*')
         .eq('token_hash', createHash('sha256').update(token).digest('hex')).maybeSingle());
       const expires = Date.parse(ticket?.expires_at);
-      if (!ticket || !Number.isFinite(expires) || expires <= Date.now() || !['wav', 'mp3'].includes(ticket.format)) return res.status(404).end();
+      if (!ticket || !Number.isFinite(expires) || expires <= Date.now() || !['wav', 'mp3'].includes(ticket.format) || (mp3Path && ticket.format!=='mp3')) return res.status(404).end();
       // Range applies to GET. HEAD returns the headers of a full GET, without
       // requiring the provider itself to implement HEAD correctly.
       const range = req.method === 'GET' ? req.header('range') : null;
