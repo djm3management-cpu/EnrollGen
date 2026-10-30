@@ -1,3 +1,4 @@
+import {intakeCallFields} from '../src/lib/enrollmentIntake.js';
 import {converselyConfiguration,carrierEligibility,previousConverselyWeek,selectWeeklySamples} from './converselySelection.js';
 import { recordingComplianceGrant } from './recordingComplianceGrant.js';
 import { postJson } from './transport.js';
@@ -16,7 +17,7 @@ export function converselyPayload(call, recordingPath, agent = {}) {
     ApplicantZip: call.zip_code || '', CallDuration: call.call_duration_seconds || 0,
     Disposition: call.call_outcome || '', CampaignName: m.campaign_name || call.lead_source || '',
     PlanName: call.plan_name || '', CarrierName: call.carrier_name || '', EffectiveDate: call.effective_date || '',
-    SubmissionDate: m.submission_date || call.created_at || '', EnrollmentID: call.enrollment_confirmation_number || call.id,
+    SubmissionDate: m.submission_date || call.created_at || '', EnrollmentID: call.enrollment_intake_id ? (call.enrollment_confirmation_number || '') : (call.enrollment_confirmation_number || call.id),
     ContractYear: m.contract_year || call.effective_date?.slice(0,4) || '', ContractID: m.contract_id || '',
     PlanID: call.plan_id || '', SegmentID: m.segment_id || '',
   };
@@ -74,8 +75,11 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
         const [job]=await rpc('claim_compliance_upload',{p_provider:provider});if(!job)break;
         let success=false,receipt=null,error=null;
         try{
-          const call=checked(await db.from('call_records').select('*').eq('id',job.call_id).eq('tenant_id',job.tenant_id).single());
+          let call=checked(await db.from('call_records').select('*').eq('id',job.call_id).eq('tenant_id',job.tenant_id).single());
           if(!['enrolled','enrolled_pending_verification'].includes(call.call_outcome))throw Error('enrollment_no_longer_eligible');
+          const intake=checked(await db.from('enrollment_intakes').select('id,data,submitted_at,completed_at').eq('id',job.enrollment_key).eq('call_id',job.call_id).eq('tenant_id',job.tenant_id).not('completed_at','is',null).single());
+          if(!intake)throw Error('intake_incomplete');
+          call=intakeCallFields(call,intake);
           const recording=checked(await db.from('recording_ingestion').select('*').eq('tenant_id',job.tenant_id)
             .eq('call_record_id',job.call_id).eq('recording_sid',job.twilio_recording_sid).eq('provider_status','completed').single());
           if(provider==='conversely'){

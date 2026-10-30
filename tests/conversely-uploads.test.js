@@ -90,6 +90,8 @@ test('weekly run persists one highest-score MP3 sample per eligible agent and lo
  assert.equal(logs.filter(row=>row.event==='conversely_weekly_run').length,1);
 });
 test('delivery uses MP3-suffixed bearer URL, fresh retry tickets and stable idempotency key, then never duplicates success',async()=>{
+ await pg.exec(`CREATE TABLE enrollment_intakes(id text,tenant_id uuid,call_id uuid,data jsonb,submitted_at timestamptz DEFAULT now(),completed_at timestamptz DEFAULT now());
+ INSERT INTO enrollment_intakes(id,tenant_id,call_id,data) SELECT enrollment_key,tenant_id,call_id,'{"newCarrier":"Devoted Health","planName":"Test Plan"}'::jsonb FROM conversely_submissions;`);
  const sent=[];const tick=createComplianceWorker(db,{env,now,log:()=>{},send:async(url,body,headers)=>{sent.push({url,payload:JSON.parse(body),headers});return {status:sent.length===1?503:200};}});
  await tick({schedule:false});await tick({schedule:false});assert.equal(sent.length,1);
  await query(`UPDATE conversely_submissions SET next_attempt_at=now()-interval '1 minute'`);

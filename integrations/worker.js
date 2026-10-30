@@ -1,3 +1,4 @@
+import {deliverEnrollmentWebhooks} from './enrollmentWebhook.js';
 import { createSupabaseClient as createClient, supabaseSecretKey, reportSupabaseKeySelection } from "./supabase.js";
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -52,6 +53,7 @@ export function createWorker(db, { send, env=process.env, log=console.log }={}) 
     }
     if(reportsDue)reportTick=Date.now()+60000;
     }
+    if(deliveries){try{await deliverEnrollmentWebhooks(db,{env,send});}catch{log(JSON.stringify({event:'ghl_delivery_stage_failed'}));}}
     try{await complianceTick({schedule,deliveries});}catch{log(JSON.stringify({event:'compliance_upload_stage_failed'}));}
     if(!deliveries)return;
     for(let n=0;n<20;n++) {

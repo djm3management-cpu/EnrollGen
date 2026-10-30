@@ -55,20 +55,24 @@ export function createCallDispositionHandler({authenticate=r=>requireClerkAuth(r
     const session=checked(await db.from('sessions').select('id,call_record_id').eq('tenant_id',tenant.id).eq('agent_id',agent.id)
      .eq('twilio_call_sid',attempt.parent_call_sid).maybeSingle());
     if(!session)continue;
-    const record=checked(await db.from('call_records').select('id,session_id,transcript_id,call_outcome,metadata')
+    const record=checked(await db.from('call_records').select('id,session_id,transcript_id,call_outcome,metadata,product_type,contact_id')
      .eq('tenant_id',tenant.id).eq('agent_id',agent.id).eq('twilio_call_sid',attempt.parent_call_sid).maybeSingle());
     if(record?.metadata?.wrap_up_saved_at){
      if(input.call_sid)return evidenceJson(200,{saved:true,session_id:session.id,call_record_id:record.id,call_outcome:record.call_outcome});
      continue;
     }
     if(!record || (record.call_outcome && !['incomplete','pending'].includes(record.call_outcome)))continue;
-    selected={attempt,session,record,task:{call_sid:attempt.parent_call_sid,session_id:session.id,agent_leg_sid:leg,
+    selected={attempt,session,record,task:{call_sid:attempt.parent_call_sid,call_record_id:record.id,product_type:record.product_type,session_id:session.id,agent_leg_sid:leg,
      ended_at:attempt.ended_at,connected_seconds:connectedCallSeconds(attempt)}};break;
    }
    if(request.method==='GET')return evidenceJson(200,{in_progress:false,disposition:selected?.task||null});
    if(!selected)throw new EvidenceError(409,'This call has no confirmed completed agent leg.');
    const outcome=normalizeOutcome(input.call_outcome);
    if(!input.call_outcome || outcome==='incomplete')throw new EvidenceError(400,'Choose what happened on the call.');
+   if(['enrolled','enrolled_pending_verification'].includes(outcome) && String(selected.record.product_type||'').toUpperCase()==='MA'){
+    const intakes=checked(await db.from('enrollment_intakes').select('id').eq('call_id',selected.record.id).eq('tenant_id',tenant.id).not('completed_at','is',null).limit(1));
+    if(!intakes.length)throw new EvidenceError(400,'Complete the Medicare enrollment intake before saving this disposition.');
+   }
    const productError=ancillarySaleError(outcome,input.ancillary_product_type);
    if(productError)throw new EvidenceError(400,productError);
    if(outcome==='short_call_hangup' && input.automatic && selected.task.connected_seconds>=15)

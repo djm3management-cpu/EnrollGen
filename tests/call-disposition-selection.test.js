@@ -12,18 +12,18 @@ const editorSource = transformSync(source.slice(source.indexOf('function CallOut
   { loader: 'jsx', jsxFactory: 'element', jsxFragment: 'fragment', format: 'cjs' }).code;
 const walk = node => !node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flat(Infinity).flatMap(walk)];
 
-function fixture(initialOutcome) {
+function fixture(initialOutcome,callProductType) {
   const h = hookHarness(), saves = [], events = [];
   let outcome = initialOutcome;
   const db = { from: () => ({ update: patch => {
     saves.push(patch); return { eq: () => ({ select: () => ({ single: async () => ({ error: null }) }) }) };
   } }) };
   const editor = vm.runInNewContext(editorSource + ';CallOutcomeEditor', {
-    ...h.hooks, ...outcomes, buildCallOutcomePatch, debugLog() {}, Event, fragment: 'fragment',
+    ...h.hooks, ...outcomes, buildCallOutcomePatch, EnrollmentIntake:'EnrollmentIntake', debugLog() {}, Event, fragment: 'fragment',
     window: { dispatchEvent: event => events.push(event.type) },
     element: (type, props, ...children) => ({ type, props: props || {}, children }),
   });
-  h.mount(() => editor({ callRecordId: 'call', outcome, supabaseClient: db, onChanged() {} }));
+  h.mount(() => editor({ callRecordId: 'call', outcome, callProductType, supabaseClient: db, onChanged() {} }));
   return { h, saves, events, select: () => walk(h.value).find(node => node.props['aria-label'] === 'Call outcome'),
     changeOutcome(next) { outcome = next; h.render(); } };
 }
@@ -83,4 +83,14 @@ test('mounted Opportunities refreshes after a Calls or phone disposition save an
     assert.equal(reads, 3); assert.equal(h.value.rows[0].status, 'open');
   } finally { h.unmount(); }
   assert.equal(listeners.size, 0);
+});
+
+for(const outcome of ['enrolled','enrolled_pending_verification'])test(`MA ${outcome} opens native intake and only saves the disposition after completion`,async()=>{
+ const f=fixture('', 'MA');
+ try{
+  await f.h.flush();f.select().props.onChange({target:{value:outcome}});await f.h.flush();
+  assert.equal(f.saves.length,0);
+  const intake=walk(f.h.value).find(node=>node.type==='EnrollmentIntake');assert.ok(intake);assert.equal(intake.props.callId,'call');
+  intake.props.onSaved();await f.h.flush();assert.equal(f.saves.length,1);assert.equal(f.saves[0].call_outcome,outcome);
+ }finally{f.h.unmount();}
 });

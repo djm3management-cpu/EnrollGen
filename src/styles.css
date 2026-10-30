@@ -18675,3 +18675,16 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
   .contacts-workspace-tabs.contacts-subviews { gap: 4px; }
   .contacts-workspace-tabs.contacts-subviews > button { gap: 4px; padding-inline: 4px; font-size: 9px; }
 }
+
+/* Native intake uses the existing CRM dialog, labels, inputs, and color tokens. */
+.enrollment-intake-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.enrollment-intake .contacts-edit-input[aria-invalid="true"] {
+  border-color: var(--accent-red);
+}
+@media (max-width: 600px) {
+  .enrollment-intake-grid { grid-template-columns: 1fr; }
+}

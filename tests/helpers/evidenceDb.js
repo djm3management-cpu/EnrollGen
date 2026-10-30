@@ -26,6 +26,7 @@ export function evidenceDb(pg, onError = () => {}) {
         update(input) { operation = "update"; rows = [input]; return chain; },
         delete() { operation = 'delete'; return chain; },
         gte(column, item) { filters.push(q(column) + ">=" + value(item)); return chain; },
+        ilike(column, item) { filters.push(q(column) + " ILIKE " + value(item)); return chain; },
         lt(column, item) { filters.push(q(column) + "<" + value(item)); return chain; },
         eq(column, item) { filters.push(q(column) + "=" + value(item)); return chain; },
         or(expression) {

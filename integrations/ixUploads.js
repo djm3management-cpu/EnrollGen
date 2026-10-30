@@ -1,3 +1,4 @@
+import {canonicalCarrier} from './converselySelection.js';
 import {StubIxClient} from './ixClient.js';
 import {postJson} from './transport.js';
 import {mediaUrl,twilioHeaders,providerJson,fetchRecordingMedia} from '../telephony/src/recordings.js';
@@ -14,7 +15,7 @@ export async function uploadIx(job, recording, client, {env=process.env, fetchIm
     throw Error('recording_identity_mismatch');
   // Dual-channel full-call recording is mandatory; do not silently upload a single leg.
   if(info.channels!==2)throw Error('full_call_dual_channel_required');
-  const args={confirmationCode:job.confirmation_code,idempotencyKey:job.id};
+  const args={confirmationCode:job.confirmation_code,idempotencyKey:job.id,metadata:job.enrollment_metadata};
   const destination=await client.createUpload(args);
   const url=new URL(destination.url);
   if(url.protocol!=='https:' || url.username || url.password || !url.hostname.endsWith('.amazonaws.com'))throw Error('invalid_ix_upload_url');
@@ -47,8 +48,9 @@ export function createIxIntegration(db,{env=process.env,send=postJson,now=()=>Da
   let nextSweep=0,nextSummary=0;
   return {
     providers:{ix:{available:ixClient.available,deliver:async(job,call,recording)=>{
+      if(canonicalCarrier(call.carrier_name)!=='UnitedHealthcare')throw Error('carrier_no_longer_eligible');
       if(!String(call.sunfire_code || '').split(/[,;\n]+/).map(s=>s.trim()).includes(job.confirmation_code))throw Error('confirmation_code_changed');
-      return uploadIx(job,recording,ixClient,{env,fetchImpl});
+      return uploadIx({...job,enrollment_metadata:{CarrierName:call.carrier_name,PlanName:call.plan_name,ContractID:call.metadata.contract_id,PlanID:call.plan_id,SegmentID:call.metadata.segment_id,EnrollmentID:call.enrollment_confirmation_number,EffectiveDate:call.effective_date,SubmissionDate:call.metadata.submission_date,ApplicantFirstName:call.customer_first_name,ApplicantLastName:call.customer_last_name,ApplicantPhoneNumber:call.customer_phone,ApplicantState:call.customer_state,ApplicantZip:call.zip_code}},recording,ixClient,{env,fetchImpl});
     }}},
     scheduleExtras:async()=>{
       if(now()>=nextSweep){

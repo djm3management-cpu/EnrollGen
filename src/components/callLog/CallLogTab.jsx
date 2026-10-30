@@ -1,3 +1,4 @@
+import EnrollmentIntake from '../enrollment/EnrollmentIntake';
 import ComplianceUploads from './ComplianceUploads';
 import CallTranscriptPlayer from "./CallTranscriptPlayer";
 import CombineCallsModal from "./CombineCallsModal";
@@ -31,7 +32,9 @@ const PAGE_SIZE = 50;
 const DISPOSITION_FILTERS = ["ALL", "CONNECTED", "VOICEMAIL", "MISSED", "DECLINED"];
 const DIRECTION_FILTERS = ["ALL", "INBOUND", "OUTBOUND"];
 
-function CallOutcomeEditor({ callRecordId, outcome, productType, carrierName, sunfireCode, supabaseClient, onChanged, disabled = false }) {
+function CallOutcomeEditor({ callRecordId, outcome, productType, callProductType, carrierName, sunfireCode, supabaseClient, onChanged, disabled = false }) {
+  const [intakeOpen,setIntakeOpen]=useState(false);
+  const needsIntake=String(callProductType||'').toUpperCase()==='MA';
   const [saving, setSaving] = useState(false);
   const [selectedOutcome, setSelectedOutcome] = useState(() => callOutcomeSelection(outcome));
   const [selectedProduct, setSelectedProduct] = useState(productType || "");
@@ -51,7 +54,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, carrierName, su
       setSaving(true);
       try {
         const patch = buildCallOutcomePatch(value, product);
-        if (['enrolled','enrolled_pending_verification'].includes(value) && isUhc) {
+        if (['enrolled','enrolled_pending_verification'].includes(value) && isUhc && !needsIntake) {
           if(!codes.trim())throw Error('SunFire Confirmation Code is required for UHC enrollment.');
           patch.sunfire_code=codes.trim();
         }
@@ -75,7 +78,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, carrierName, su
         setSaving(false);
       }
     },
-    [callRecordId, supabaseClient, onChanged, outcome, productType, isUhc, codes]
+    [callRecordId, supabaseClient, onChanged, outcome, productType, isUhc, codes, needsIntake]
   );
 
   return (
@@ -88,6 +91,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, carrierName, su
         const value = event.target.value;
         setSelectedOutcome(value);
         setError("");
+        if(needsIntake && ['enrolled','enrolled_pending_verification'].includes(value)){setIntakeOpen(true);return;}
         if(isUhc && ['enrolled','enrolled_pending_verification'].includes(value) && !codes.trim())return;
         void saveOutcome(value, value === "sale_ancillary" ? selectedProduct : null);
       }}
@@ -103,7 +107,9 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, carrierName, su
         </optgroup>
       ))}
     </select>
-    {isUhc && ['enrolled','enrolled_pending_verification'].includes(selectedOutcome) && <div className="grid post-call-wrap-grid">
+    {needsIntake && ['enrolled','enrolled_pending_verification'].includes(selectedOutcome) && <button type="button" className="contacts-mini-btn" disabled={saving||disabled} onClick={()=>setIntakeOpen(true)}>Enrollment intake / save disposition</button>}
+    {intakeOpen && <EnrollmentIntake callId={callRecordId} onClose={()=>setIntakeOpen(false)} onSaved={()=>void saveOutcome(selectedOutcome,null)}/>}
+    {isUhc && !needsIntake && ['enrolled','enrolled_pending_verification'].includes(selectedOutcome) && <div className="grid post-call-wrap-grid">
       <label>SunFire Confirmation Codes (required, one per line)<textarea value={codes} disabled={saving || disabled} onChange={event=>setCodes(event.target.value)}/></label>
       <button type="button" className="contacts-mini-btn" disabled={saving || disabled || !codes.trim()} onClick={()=>void saveOutcome(selectedOutcome,null)}>Save disposition and codes</button>
     </div>}
@@ -139,6 +145,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, carrierName, su
 function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(Boolean(row.call_record_id));
+  const [showIntake,setShowIntake]=useState(false);
   const [showFullDetail, setShowFullDetail] = useState(false);
   const [showComplianceReview, setShowComplianceReview] = useState(false);
   const [detailError, setDetailError] = useState("");
@@ -155,7 +162,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
     try {
       const { data: callRecord, error } = await supabaseClient
         .from("call_records")
-        .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, sunfire_code, plan_name, effective_date, call_start, agent_notes, compliance_scorecard_id, call_outcome, ancillary_product_type, metadata")
+        .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, product_type, sunfire_code, plan_name, effective_date, call_start, agent_notes, compliance_scorecard_id, call_outcome, ancillary_product_type, metadata")
         .eq("id", row.call_record_id)
         .single();
       if (error) throw error;
@@ -192,6 +199,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
       <div className="call-log-expand-actions">
         <span className="contacts-muted">{fmtDateTime(row.occurred_at)} · {row.agent || "Unknown agent"} · Talk {fmtDuration(row.original_talk_seconds ?? row.duration_seconds)}{row.combined_count > 0 ? ` · Combined talk ${fmtDuration(row.duration_seconds)}` : ""}</span>
         <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={onCombine}>Combine with…</button>
+        <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={()=>setShowIntake(true)}>Enrollment Intake</button>
         <CreateOpportunityButton contactId={row.contact_id} callId={row.call_record_id} contactName={row.contact_name} label="+ OPPORTUNITY" />
         <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} aria-expanded={showFullDetail} onClick={() => setShowFullDetail(current => !current)}>{showFullDetail ? "HIDE FULL DETAIL" : "FULL DETAIL"}</button>
         <details className="call-actions-menu">
@@ -204,6 +212,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
           </div>
         </details>
       </div>
+      {showIntake&&<EnrollmentIntake callId={row.call_record_id} onClose={()=>setShowIntake(false)} onSaved={()=>void loadDetail()}/>}
       {detailError && <div className="ops-error" role="alert">{detailError} <button type="button" className="contacts-mini-btn" onClick={() => void loadDetail()}>RETRY</button></div>}
       <div className="call-log-workspace">
         <CallTranscriptPlayer row={row.combined_count > 0 ? { ...row, duration_seconds: row.original_talk_seconds } : row} detail={detail} loading={loading} playRequest={playRequest} />
@@ -214,6 +223,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
               disabled={loading || Boolean(detailError)}
               callRecordId={row.call_record_id}
               outcome={detail?.call_outcome ?? row.call_outcome}
+              callProductType={detail?.product_type}
               carrierName={detail?.carrier_name}
               sunfireCode={detail?.sunfire_code}
               productType={detail?.ancillary_product_type ?? row.ancillary_product_type}

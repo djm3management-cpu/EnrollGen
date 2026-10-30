@@ -132,6 +132,8 @@ test('IX uploads every UHC enrollment without sampling or requiring a compliance
   await query(`INSERT INTO call_records(id,tenant_id,call_outcome,carrier_name,product_type,sunfire_code,call_start) VALUES($1,$2,'enrolled',$3,'MA',$4,now())`,[newCall,tenant,index?'AARP Medicare Advantage':'United Healthcare',`HOUSEHOLD-${index}`]);
   await query(`INSERT INTO recording_ingestion(tenant_id,call_record_id,recording_sid,account_sid,callback_call_sid,recording_channels,provider_status) VALUES($1,$2,$3,$4,$5,2,'completed')`,[tenant,newCall,sid,account,parent]);
  }
+ await pg.exec(`CREATE TABLE enrollment_intakes(id text,tenant_id uuid,call_id uuid,data jsonb,submitted_at timestamptz DEFAULT now(),completed_at timestamptz DEFAULT now());
+ INSERT INTO enrollment_intakes(id,tenant_id,call_id,data) SELECT enrollment_key,tenant_id,call_id,jsonb_build_object('newCarrier','UnitedHealthcare','sunfireCode',confirmation_code) FROM ix_uploads;`);
  const received=[];
  const env={IX_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'secret'};
  const integration=createIxIntegration(db,{env,ixClient:{available:true,createUpload:async args=>{received.push(args);return {url:'https://bucket.s3.amazonaws.com/audio'};},confirmUpload:async args=>({receiptId:`receipt-${args.confirmationCode}`})},

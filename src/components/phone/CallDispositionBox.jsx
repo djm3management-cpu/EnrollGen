@@ -1,3 +1,4 @@
+import EnrollmentIntake from '../enrollment/EnrollmentIntake';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {X} from 'lucide-react';
 import {useAppAuth} from '../../context/AuthContext';
@@ -12,7 +13,7 @@ export default function CallDispositionBox({phone,onVisibleChange,collapsed=fals
  const {getToken}=useAppAuth();
  const [task,setTask]=useState(null),[serverInProgress,setServerInProgress]=useState(false);
  const [outcome,setOutcome]=useState('');
- const [sunfireCode,setSunfireCode]=useState('');
+ const [intakeOpen,setIntakeOpen]=useState(false),[intakeComplete,setIntakeComplete]=useState(false);
  const [saving,setSaving]=useState(false),[error,setError]=useState('');
  const phoneRef=useRef(phone);phoneRef.current=phone;
  const automaticAttempts=useRef(new Set());
@@ -23,14 +24,14 @@ export default function CallDispositionBox({phone,onVisibleChange,collapsed=fals
   try{
    const response=await fetchWithClerk(getToken,'/.netlify/functions/call-disposition',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({call_sid:current.call_sid,call_outcome:value,automatic,sunfire_code:sunfireCode}),
+    body:JSON.stringify({call_sid:current.call_sid,call_outcome:value,automatic}),
    });
    const result=await response.json();if(!response.ok)throw new Error(result.error||'Disposition could not be saved.');
    setActivePostCallMetadata({closed:true},result.session_id);
    window.dispatchEvent(new CustomEvent('call-disposition-saved',{detail:result}));
    setTask(previous=>previous?.call_sid===current.call_sid?null:previous);
   }catch(err){setError(err.message);}finally{setSaving(false);}
- },[getToken,sunfireCode]);
+ },[getToken]);
  useEffect(()=>{
   if(live)return;
   let stopped=false,pending=false;
@@ -51,7 +52,7 @@ export default function CallDispositionBox({phone,onVisibleChange,collapsed=fals
   void poll();const timer=setInterval(()=>void poll(),5000);
   return()=>{stopped=true;clearInterval(timer);};
  },[getToken,live]);
- useEffect(()=>{setSunfireCode('');setOutcome('');onCollapsedChange?.(false);setError('');},[task?.call_sid,onCollapsedChange]);
+ useEffect(()=>{setIntakeOpen(false);setIntakeComplete(false);setOutcome('');onCollapsedChange?.(false);setError('');},[task?.call_sid,onCollapsedChange]);
  const visible=mayShowCallDisposition(phone,serverInProgress,task);
  // Keep the pending indicator and selected outcome while a new call takes
  // priority. The full form and saving still require an idle phone.
@@ -70,16 +71,15 @@ export default function CallDispositionBox({phone,onVisibleChange,collapsed=fals
     <button type="button" className="top-bar-settings-button" aria-label="Collapse disposition" title="Collapse" onClick={()=>onCollapsedChange?.(true)}><X size={16}/></button>
    </div>
    <label htmlFor="dialer-disposition">What happened?</label>
-   <select id="dialer-disposition" className="ma-script-direction-select" value={outcome} disabled={saving} onChange={event=>setOutcome(event.target.value)}>
+   <select id="dialer-disposition" className="ma-script-direction-select" value={outcome} disabled={saving} onChange={event=>{const value=event.target.value;setOutcome(value);if(task.product_type?.toUpperCase()==='MA' && ['enrolled','enrolled_pending_verification'].includes(value))setIntakeOpen(true);}}>
     <option value="">Choose disposition</option>
     {CALL_OUTCOME_OPTIONS.map(group=><optgroup key={group.group} label={group.group}>
      {group.options.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
     </optgroup>)}
    </select>
-   {['enrolled','enrolled_pending_verification'].includes(outcome) && <label>SunFire Confirmation Codes (required for UHC, one per line)
-    <textarea className="ma-script-direction-select" value={sunfireCode} onChange={event=>setSunfireCode(event.target.value)} disabled={saving}/>
-   </label>}
+   {task.product_type?.toUpperCase()==='MA' && ['enrolled','enrolled_pending_verification'].includes(outcome) && <button type="button" className="contacts-mini-btn" onClick={()=>setIntakeOpen(true)}>{intakeComplete?'Edit completed intake':'Complete enrollment intake'}</button>}
+   {intakeOpen && <EnrollmentIntake callId={task.call_record_id} onClose={()=>setIntakeOpen(false)} onSaved={()=>setIntakeComplete(true)}/>}
    {error && <div role="alert" className="call-persistence-error">{error}</div>}
-   <button type="button" className="phone-expanded__save-note" disabled={saving||!outcome} onClick={()=>void save(task,outcome)}>{saving?'Saving…':'Save disposition'}</button>
+   <button type="button" className="phone-expanded__save-note" disabled={saving||!outcome||(task.product_type?.toUpperCase()==='MA' && ['enrolled','enrolled_pending_verification'].includes(outcome) && !intakeComplete)} onClick={()=>void save(task,outcome)}>{saving?'Saving…':'Save disposition'}</button>
  </div>;
 }

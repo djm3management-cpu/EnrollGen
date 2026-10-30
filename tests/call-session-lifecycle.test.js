@@ -276,11 +276,16 @@ test('a new call claiming the agent between GET/POST checks and the save is pres
  }finally{await pg.close();}
 });
 
- test('disposition alone closes an enrolled or ancillary call without notes, contact/enrollment data, cross-sell or an opportunity',async()=>{
+ test('MA enrolled disposition requires a completed intake; ancillary still closes without enrollment data',async()=>{
  const pg=await stabilizedFixture();try{
+  await pg.exec('CREATE TABLE enrollment_intakes(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,call_id uuid,completed_at timestamptz DEFAULT now())');
   const handler=dispositionHandler(pg);
   for(const [sid,outcome] of [[SID1,'enrolled'],[SID2,'sale_ancillary']]){
    const call=await endedAgentCall(pg,sid);
+   if(outcome==='enrolled'){
+    const blocked=await handler(dispositionRequest({call_sid:sid,call_outcome:outcome}));assert.equal(blocked.status,400);
+    await pg.query('INSERT INTO enrollment_intakes(tenant_id,call_id) VALUES($1,$2)',[T,call.call_record_id]);
+   }
    const response=await handler(dispositionRequest({call_sid:sid,call_outcome:outcome}));assert.equal(response.status,200,JSON.stringify(await response.clone().json()));
    const row=(await pg.query('SELECT call_outcome,ancillary_product_type,enrollment_completed FROM call_records WHERE id=$1',[call.call_record_id])).rows[0];
    assert.equal(row.call_outcome,outcome);assert.equal(row.ancillary_product_type,null);

@@ -48,12 +48,13 @@ ranges. Existing WAV links remain supported. Every hit logs a UTC timestamp,
 method and token hash, never the bearer token. The token hash correlates with
 recording_compliance_tickets; a hit alone does not prove a full download finished.
 
-Payload values come from call_records. metadata.agent_email, contract_id,
-segment_id, contract_year and submission_date enrich fields unavailable directly;
-unknown optional data is sent as empty strings. SubmissionDate falls back to
-created_at and EnrollmentID to enrollment_confirmation_number or call ID. An
-unauthenticated endpoint probe returned 403; authenticated vendor acceptance and
-X-API-Key semantics still require validation with live credentials.
+Migration 125 changes enrollment/applicant metadata to completed
+`enrollment_intakes` records. Calls without one are ineligible. Call, agent and
+recording details still come from their original sources. See
+[Native Medicare enrollment intake](enrollment-intakes.md) for the exact before/after
+field mapping and household enrollment keys. An unauthenticated endpoint probe
+returned 403; authenticated vendor acceptance and X-API-Key semantics still
+require validation with live credentials.
 
 Both providers use atomic claims, 30-minute leases, token-checked finishes,
 exponential backoff starting at 60 seconds, and at most five attempts. A successful
