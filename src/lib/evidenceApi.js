@@ -6,8 +6,16 @@ export async function evidenceRequest(getToken, endpoint, body = null) {
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || `Evidence request failed (${response.status}).`);
+  let data;
+  try { data = await response.json(); }
+  catch {
+    // A Vite/static-server fallback can return index.html with HTTP 200.
+    // Never let callers mistake that response for successful API data.
+    throw new Error(response.ok
+      ? 'API returned an invalid response. Check that the API server is running.'
+      : `Evidence request failed (${response.status}).`);
+  }
+  if (!response.ok) throw new Error(data?.error || `Evidence request failed (${response.status}).`);
   return data;
 }
 import { fetchWithClerk } from './clerkFetch.js';

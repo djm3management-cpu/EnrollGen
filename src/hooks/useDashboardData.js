@@ -45,6 +45,7 @@ export function useDashboardData(userId, scope = 'self') {
       for (let offset = 0; !cancelled; offset += PAGE_SIZE) {
         const { data, error } = await query().range(offset, offset + PAGE_SIZE - 1);
         if (error) throw error;
+        if (!Array.isArray(data)) throw new Error('Dashboard query returned an invalid response. Please retry.');
         rows.push(...data);
         if (data.length < PAGE_SIZE) break;
       }
@@ -125,7 +126,7 @@ export function useDashboardData(userId, scope = 'self') {
         }
         if (!cancelled) setState({ contextKey, calls: dashboardCalls, contactCounts, enrolled, loading: false, error: null, updatedAt: now });
       } catch (error) {
-        if (!cancelled) setState(previous => ({ ...previous, loading: false, error: error.message || 'Dashboard data could not be loaded.' }));
+        if (!cancelled) setState(previous => ({ ...previous, loading: false, error: error?.message || 'Dashboard data could not be loaded.' }));
       } finally {
         busy = false;
       }

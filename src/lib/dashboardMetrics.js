@@ -20,7 +20,9 @@ export function rangeStart(range, now) {
   return today;
 }
 export function callScore(call) {
-  const cards = [...(call.compliance_scorecards || [])].filter(card => !card.is_thread_composite);
+  const related = call.compliance_scorecards;
+  const cards = (Array.isArray(related) ? related : related && typeof related === 'object' ? [related] : [])
+    .filter(card => card && !card.is_thread_composite);
   const card = cards.find(item => item.id === call.compliance_scorecard_id)
     || cards.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
   if (card?.overall_score == null) return null;

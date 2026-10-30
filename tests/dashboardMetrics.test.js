@@ -71,3 +71,9 @@ test('all range selections filter calls, sales, compliance, and dispositions tog
     assert.equal(result.today.calls, 1, 'Today summary remains anchored to today');
   }
 });
+
+test('a single scorecard object, null entries and malformed relations do not crash dashboard rendering',()=>{
+ assert.equal(callScore({compliance_scorecards:{id:'single',overall_score:90}}),90);
+ assert.equal(callScore({compliance_scorecards:[null,{id:'single',overall_score:90}]}),90);
+ assert.equal(callScore({compliance_scorecards:'invalid'}),null);
+});

@@ -1,3 +1,4 @@
+import { evidenceRequest } from '../lib/evidenceApi';
 import { useCallback, useEffect, useState } from 'react';
 import { useAppAuth } from '../context/AuthContext';
 import { fetchWithClerk } from '../lib/clerkFetch';
@@ -7,10 +8,12 @@ export default function ParagonCallbackTasks() {
   const [tasks,setTasks] = useState([]);
   const [error,setError] = useState('');
   const refresh = useCallback(async () => {
-    const response = await fetchWithClerk(getToken,'/.netlify/functions/paragon-zip-confirm');
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error || 'Unable to load callbacks.');
-    setTasks(body.tasks || []);
+    const body = await evidenceRequest(getToken,'paragon-zip-confirm');
+    if (!Array.isArray(body?.tasks) || body.tasks.some(task => !task || typeof task !== 'object')) {
+      throw new Error('Callbacks returned an invalid response. Please retry.');
+    }
+    setTasks(body.tasks);
+    setError('');
   },[getToken]);
   useEffect(() => {
     refresh().catch(err => setError(err.message));

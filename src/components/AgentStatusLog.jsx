@@ -40,9 +40,17 @@ export default function AgentStatusLog() {
         if (agent) params.set('agent', agent);
         if (status) params.set('status', status);
         const result = await evidenceRequest(getToken, `agent-status-log?${params}`);
-        if (!cancelled) setState({ ...result, loading: false, error: '', key, identityKey });
+        if (!Array.isArray(result?.rows) || !Array.isArray(result?.agents)
+          || !Number.isSafeInteger(result.count) || result.count < 0
+          || result.rows.some(row => !row || typeof row.agent_name !== 'string'
+            || typeof row.status !== 'string' || typeof row.changed_at !== 'string'
+            || !Number.isFinite(Date.parse(row.changed_at)))
+          || result.agents.some(item => !item || typeof item.agent_id !== 'string' || typeof item.agent_name !== 'string')) {
+          throw new Error('Status history returned an invalid response. Please retry.');
+        }
+        if (!cancelled) setState({ rows: result.rows, agents: result.agents, count: result.count, loading: false, error: '', key, identityKey });
       } catch (error) {
-        if (!cancelled) setState(previous => ({ ...previous, loading: false, error: error.message || 'Status history could not be loaded.', key }));
+        if (!cancelled) setState(previous => ({ ...previous, loading: false, error: error?.message || 'Status history could not be loaded.', key }));
       } finally {
         busy = false;
       }
