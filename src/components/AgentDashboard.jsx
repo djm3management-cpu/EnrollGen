@@ -177,7 +177,6 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
         </span>;
       })}
     </section>
-    <AgentStatusLog />
     <div className="agent-dash-range-row"><span>{scopeLabel} · ACTIVITY WINDOW</span><div className="agent-dash-ranges" aria-label="Chart time range">{DASHBOARD_RANGES.map(([value, label]) => <button key={value} aria-pressed={range === value} onClick={() => setRange(value)}>{label}</button>)}</div></div>
     <div className="agent-dash-panel-grid">
     <section className="agent-dash-panel"><header><h2>Calls vs Sales</h2><span className="agent-dash-legend"><i /> Calls <b /> Sales</span></header><TimelineChart buckets={summary.buckets} hourly={range === 'today'} /></section>
@@ -185,5 +184,6 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
     <section className="agent-dash-panel"><header><h2>Call Disposition Breakdown</h2><span>{rangeLabel} · {dispositionRows.reduce((sum, [, count]) => sum + count, 0)} calls</span></header><DispositionChart rows={dispositionRows} /></section>
     <section className="agent-dash-panel"><header><h2>Today vs {averageLabel} Average</h2><span>Previous 30 complete days</span></header><div className="agent-dash-table-wrap"><table><thead><tr><th>Metric</th><th>Today</th><th>30-day average</th></tr></thead><tbody>{METRICS.map(([key, label]) => <tr key={key}><th scope="row">{label.replace(' Today', '')}</th><td>{data.loading || (data.error && !data.updatedAt) ? '--' : formatMetric(key, summary.today[key])}</td><td>{data.loading || (data.error && !data.updatedAt) ? '--' : formatMetric(key, summary.baseline[key])}</td></tr>)}</tbody></table></div></section>
     </div>
+    <AgentStatusLog />
   </div>;
 }
