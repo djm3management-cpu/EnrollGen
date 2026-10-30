@@ -11,7 +11,8 @@ export function readCrmLocation(location) {
   if (parts[0] === 'crm' && parts[1] === 'contacts' && parts[2]) {
     try { contactId = decodeURIComponent(parts[2]); } catch { contactId = null; }
   }
-  return { view, contactId };
+  return { view, contactId, ...(view==='followups'&&url.searchParams.get('source')==='paragon'?{taskSource:'paragon'}:{}),
+    ...(view==='calls'&&url.searchParams.get('inbound_call_id')?{inboundCallId:url.searchParams.get('inbound_call_id')}:{}) };
 }
 
 export function crmPath(view = 'calls', contactId = null) {
@@ -21,7 +22,10 @@ export function crmPath(view = 'calls', contactId = null) {
 
 export function navigateCrm(view, contactId = null, { replace = false, host = window } = {}) {
   const url = new URL(host.location.href);
+  const previousView=readCrmLocation(host.location).view;
   url.pathname = crmPath(view, contactId);
+  if(view!=='followups'||previousView!==view)url.searchParams.delete('source');
+  if(view!=='calls'||previousView!==view)url.searchParams.delete('inbound_call_id');
   url.searchParams.delete('view');
   url.searchParams.delete('contact');
   host.history[replace ? 'replaceState' : 'pushState'](null, '', url.pathname + url.search + url.hash);

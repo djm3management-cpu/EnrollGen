@@ -47,7 +47,7 @@ test('daily attachment uses the report columns and logs the send', async () => {
   assert.equal(body.reply_to,'mike@newgenhealthsolutions.com');
   assert.deepEqual(body.to,['dispo@paragonmedia.io']);
   const csv = Buffer.from(body.attachments[0].content,'base64').toString();
-  assert.equal(csv.split('\r\n')[0],'call_id,received_at,caller_phone,caller_state,duration_seconds,billable,non_billable_reason,disposition_category,app_written');
+  assert.equal(csv.split('\r\n')[0],'call_id,received_at,caller_phone,caller_state,duration_seconds,billable,non_billable_reason,disposition_category,app_written,serviceability');
   assert.ok(!csv.includes('SECRET'));
   assert.equal(events.find(([name]) => name === 'finish_paragon_report_email')[1].p_status,'sent');
 });
@@ -78,6 +78,6 @@ test('daily CSV labels sales consistently and app_written is TRUE exactly for sa
   const rows = Buffer.from(body.attachments[0].content,'base64').toString().split('\r\n').slice(1);
   assert.equal(rows.length,cases.length);
   cases.forEach(([,category,flag],index) => {
-    assert.ok(rows[index].endsWith(`,"${category}","${flag}"`),rows[index]);
+    assert.ok(rows[index].endsWith(`,"${category}","${flag}",""`),rows[index]);
   });
 });

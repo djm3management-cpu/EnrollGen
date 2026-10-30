@@ -3,7 +3,7 @@ import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServi
 import { recordingIdentity } from './_recordingAccess.js';
 
 const terminal = new Set(['completed', 'canceled', 'failed', 'busy', 'no-answer']);
-const allowed = new Set(['offset', 'limit', 'from', 'to', 'direction', 'disposition', 'agent', 'search', 'ascending', 'contact_id', 'record_ids', 'outcome']);
+const allowed = new Set(['offset', 'limit', 'from', 'to', 'direction', 'disposition', 'agent', 'search', 'ascending', 'contact_id', 'record_ids', 'outcome', 'inbound_call_id']);
 const validUuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 const integer = (value, fallback, max) => {
   if (value == null) return fallback;
@@ -87,6 +87,8 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
       const query = () => filters.reduce((current, apply) => apply(current), db.from('v_call_log').select('*', { count: 'exact' })
         .eq('tenant_id', identity.tenant.id)
         .order('occurred_at', { ascending: ascending === '1' }).order('log_id', { ascending: ascending === '1' }));
+      const inboundId=params.get('inbound_call_id');
+      if(inboundId){if(!validUuid(inboundId))throw new EvidenceError(400,'Invalid original call.');filters.push(query=>query.eq('inbound_call_id',inboundId));}
       const contactId = params.get('contact_id');
       if (contactId) {
         if (!validUuid(contactId)) throw new EvidenceError(400, 'Invalid contact.');

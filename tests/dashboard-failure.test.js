@@ -92,36 +92,11 @@ for(const table of ['enrolled_agents','call_records','contacts','call-log'])test
   const code=source('../src/components/AgentDashboard.jsx').replace(/^import .*;\n/gm,'').replace('export default function','function');
   const Dashboard=vm.runInNewContext(transformSync(code,{loader:'jsx',format:'cjs',jsxFactory:'element',jsxFragment:'fragment'}).code+';AgentDashboard',{
    ...view.hooks,...metrics,useId:()=> 'dashboard',useDashboardData:()=>data.value,element,fragment:'fragment',
-   ParagonCallbackTasks:'ParagonCallbackTasks',AgentStatusLog:'AgentStatusLog',callOutcomeLabel:code=>code,
+   ParagonCallbackBadge:'ParagonCallbackBadge',AgentStatusLog:'AgentStatusLog',callOutcomeLabel:code=>code,
   });
   view.mount(()=>Dashboard({userId:'user-a'}));await view.flush();
   assert.ok(walk(view.value).some(n=>n.props.role==='alert'));
   assert.ok(walk(view.value).some(n=>n.type==='h2'&&n.children.includes('Calls vs Sales')));
   assert.ok(walk(view.value).some(n=>n.type==='AgentStatusLog'));
  }finally{view.unmount();data.unmount();}
-});
-
-for(const [label,response] of [
- ['HTML fallback',()=>new Response('<html>EnrollGen</html>')],
- ['invalid task rows',()=>Response.json({tasks:[null]})],
- ['query failure',()=>Response.json({error:'Callbacks unavailable'},{status:503})],
-])test(`callback ${label} stays inline and clears after a successful refresh`,async()=>{
- const previous=globalThis.fetch;let fail=true;globalThis.fetch=async()=>fail?response():Response.json({tasks:[]});
- const h=hookHarness(),module={exports:{}};let refresh;
- vm.runInNewContext(transformSync(source('../src/components/ParagonCallbackTasks.jsx'),{loader:'jsx',format:'cjs',jsxFactory:'element'}).code,{
-  module,exports:module.exports,element,
-  window:{setInterval:fn=>{refresh=fn;return 1;},clearInterval(){}},
-  require(name){
-   if(name==='react')return h.hooks;
-   if(name.endsWith('/AuthContext'))return {useAppAuth:()=>({getToken})};
-   if(name.endsWith('/evidenceApi'))return {evidenceRequest};
-   if(name.endsWith('/clerkFetch'))return {fetchWithClerk:()=>{throw Error('Unexpected mutation');}};
-   throw Error(`Unexpected import: ${name}`);
-  },
- });
- h.mount(()=>module.exports.default());
- try{
-  await h.flush();assert.ok(walk(h.value).some(n=>n.props.role==='alert'));
-  fail=false;await refresh();await h.flush();assert.equal(h.value,null);
- }finally{h.unmount();globalThis.fetch=previous;}
 });

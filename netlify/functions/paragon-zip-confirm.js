@@ -2,30 +2,69 @@ import { requireClerkAuth } from './_clerkAuth.js';
 import { NGHS_TENANT_ID, JSON_HEADERS, getSupabase } from './_tenantSettings.js';
 
 const json = (body,status=200) => new Response(JSON.stringify(body),{ status,headers:JSON_HEADERS });
-export default async request => {
+export function createParagonZipHandler({authenticate=requireClerkAuth,getDb=getSupabase}={}) {
+ return async request => {
+ try {
   if (!['GET','POST'].includes(request.method)) return json({ error:'Method not allowed' },405);
-  const auth = await requireClerkAuth(request);
+  const auth = await authenticate(request);
   if (auth.response) return auth.response;
-  const db = getSupabase();
+  const db = getDb();
+  if(auth.orgId){
+    const {data:tenant,error}=await db.from('tenants').select('clerk_org_id').eq('id',NGHS_TENANT_ID).maybeSingle();
+    if(error||!tenant||tenant.clerk_org_id!==auth.orgId)return json({error:'Agency unavailable'},403);
+  }
   const { data:agent,error:agentError } = await db.from('tenant_agents')
     .select('id,agent_slug').eq('tenant_id',NGHS_TENANT_ID).eq('clerk_user_id',auth.userId)
     .eq('is_active',true).maybeSingle();
   if (agentError || !agent) return request.method === 'GET' ? json({ tasks:[] }) : json({ error:'Agent unavailable' },403);
   if (request.method === 'GET') {
-    const { data:tasks,error } = await db.from('paragon_callback_tasks')
-      .select('id,inbound_call_id,caller_state,confirmed_zip,created_at,status')
-      .eq('tenant_id',NGHS_TENANT_ID).eq('assigned_agent_id',agent.agent_slug).eq('status','open').order('created_at',{ ascending:false }).limit(50);
-    if (error) return json({ error:'Callback tasks unavailable' },503);
-    const ids = (tasks || []).map(task => task.inbound_call_id);
-    const { data:calls } = ids.length ? await db.from('inbound_calls').select('id,from_number').in('id',ids) : { data:[] };
-    return json({ tasks:(tasks || []).map(task => ({ ...task,caller_phone:calls?.find(call => call.id===task.inbound_call_id)?.from_number || null })) });
+    const params=new URL(request.url).searchParams;
+    const summary=params.get('summary')==='1';
+    const offset=Number(params.get('offset')||0),limit=Number(params.get('limit')||500);
+    if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>500)return json({error:'Invalid callback page.'},400);
+    const result=await db.from('paragon_callback_tasks')
+      .select('id,inbound_call_id,assigned_agent_id,caller_state,confirmed_zip,created_at,due_at,status',{count:'exact',head:summary})
+      .eq('tenant_id',NGHS_TENANT_ID).eq('assigned_agent_id',agent.agent_slug).eq('status','open')
+      .order('created_at',{ascending:false}).order('id').range(offset,offset+limit-1);
+    if(result.error)return json({error:'Callback tasks unavailable'},503);
+    if(summary)return json({count:result.count||0});
+    const tasks=result.data||[],ids=tasks.map(task=>task.inbound_call_id);
+    const calls=[],records=[];
+    for(let offset=0;offset<ids.length;offset+=100){
+      const {data,error}=await db.from('inbound_calls').select('id,from_number,call_record_id').eq('tenant_id',NGHS_TENANT_ID).in('id',ids.slice(offset,offset+100));
+      if(error)return json({error:'Callback call details unavailable'},503);calls.push(...(data||[]));
+    }
+    const recordIds=[...new Set(calls.map(call=>call.call_record_id).filter(Boolean))];
+    for(let offset=0;offset<recordIds.length;offset+=100){
+      const {data,error}=await db.from('call_records').select('id,contact_id,customer_first_name,customer_last_name').eq('tenant_id',NGHS_TENANT_ID).in('id',recordIds.slice(offset,offset+100));
+      if(error)return json({error:'Callback caller details unavailable'},503);records.push(...(data||[]));
+    }
+    const contactNames=new Map();
+    const missingNameIds=[...new Set(records.filter(record=>record.contact_id&&(!record.customer_first_name||!record.customer_last_name)).map(record=>record.contact_id))];
+    for(let offset=0;offset<missingNameIds.length;offset+=100){
+      const {data:contacts,error}=await db.from('contacts').select('id,pii_encrypted').eq('tenant_id',NGHS_TENANT_ID).in('id',missingNameIds.slice(offset,offset+100));
+      if(error)return json({error:'Callback contact details unavailable'},503);
+      for(const contact of contacts||[]){
+        const names=await Promise.all(['first_name','last_name'].map(async key=>{
+          const encrypted=contact.pii_encrypted?.[key];if(!encrypted)return '';
+          const {data,error}=await db.rpc('decrypt_pii_value',{p_encrypted:encrypted});if(error)throw Error('Contact name unavailable');return data||'';
+        }));
+        contactNames.set(contact.id,names);
+      }
+    }
+    return json({count:result.count||0,tasks:tasks.map(task=>{
+      const call=calls.find(call=>call.id===task.inbound_call_id),record=records.find(record=>record.id===call?.call_record_id);
+      return {...task,caller_phone:call?.from_number||'',caller_name:[record?.customer_first_name||contactNames.get(record?.contact_id)?.[0],record?.customer_last_name||contactNames.get(record?.contact_id)?.[1]].filter(Boolean).join(' ')||'Unknown caller',call_record_id:call?.call_record_id||null,contact_id:record?.contact_id||null};
+    })});
   }
-  const { inbound_call_id,zip,state,action,task_id } = await request.json().catch(() => ({}));
-  if (action === 'complete') {
-    if (typeof task_id !== 'string') return json({ error:'Task ID required' },400);
-    const { error } = await db.from('paragon_callback_tasks').update({ status:'completed' })
-      .eq('id',task_id).eq('tenant_id',NGHS_TENANT_ID).eq('assigned_agent_id',agent.agent_slug).eq('status','open');
-    return error ? json({ error:'Unable to complete task' },503) : json({ completed:true });
+  const { inbound_call_id,zip,state,action,task_id,due_at } = await request.json().catch(() => ({}));
+  if (['complete','reschedule'].includes(action)) {
+    if(typeof task_id!=='string'||!/^[0-9a-f-]{36}$/i.test(task_id))return json({error:'Task ID required'},400);
+    if(action==='reschedule'&&(!due_at||!Number.isFinite(Date.parse(due_at))))return json({error:'A valid due date is required'},400);
+    const patch=action==='complete'?{status:'completed',closed_at:new Date().toISOString()}:{due_at:new Date(due_at).toISOString()};
+    const {data,error}=await db.from('paragon_callback_tasks').update(patch)
+      .eq('id',task_id).eq('tenant_id',NGHS_TENANT_ID).eq('assigned_agent_id',agent.agent_slug).eq('status','open').select('id').maybeSingle();
+    return error?json({error:'Unable to update callback task'},503):!data?json({error:'Callback task unavailable'},403):json({saved:true});
   }
   if (typeof inbound_call_id !== 'string' || !/^\d{5}$/.test(zip || '')) return json({ error:'Enter a valid five digit ZIP.' },400);
   const { data:call,error:callError } = await db.from('inbound_calls').select('id,routed_agent_id,source_kind,lead_source_id,tenant_id')
@@ -41,50 +80,11 @@ export default async request => {
   if (states.length>1 && !state) return json({ states,needs_state_selection:true });
   const confirmedState = state || states[0];
   if (!states.includes(confirmedState)) return json({ error:'State does not match ZIP.' },400);
-  const { data:tier,error:tierError } = await db.rpc('paragon_agent_tier',{
-    p_agent_id:agent.agent_slug,p_state:confirmedState,p_source_id:source.id,
+  const {data:result,error}=await db.rpc('confirm_paragon_call_state',{
+    p_call:call.id,p_tenant:NGHS_TENANT_ID,p_agent:agent.agent_slug,p_zip:zip,p_state:confirmedState,
   });
-  if (tierError) return json({ error:'Eligibility unavailable' },503);
-  const wrongState = !['full','partial'].includes(tier);
-  const { error:updateError } = await db.from('inbound_calls').update({
-    confirmed_zip:zip,confirmed_state:confirmedState,wrong_state:wrongState,
-    return_reason:wrongState ? 'wrong_state' : null,
-  }).eq('id',call.id);
-  if (updateError) return json({ error:'Unable to save ZIP confirmation' },503);
-  let callbackAgent = null;
-  if (wrongState) {
-    const { data:matrix } = await db.from('vendor_agent_state_eligibility').select('agent_id')
-      .eq('source_id',source.id).eq('state',confirmedState);
-    const { data:agents } = await db.from('tenant_agents').select('id,agent_slug,npn')
-      .eq('tenant_id',NGHS_TENANT_ID).eq('is_active',true);
-    const { data:availability } = await db.from('agent_availability').select('agent_id,last_assigned_at');
-    const { data:priorTasks } = await db.from('paragon_callback_tasks')
-      .select('assigned_agent_id,created_at').eq('tenant_id',NGHS_TENANT_ID)
-      .order('created_at',{ ascending:false }).limit(1000);
-    const eligible = [];
-    for (const candidate of agents || []) {
-      if (!matrix?.some(row => row.agent_id===candidate.id)) continue;
-      const { data:candidateTier } = await db.rpc('paragon_agent_tier',{
-        p_agent_id:candidate.agent_slug,p_state:confirmedState,p_source_id:source.id,
-      });
-      if (['full','partial'].includes(candidateTier)) eligible.push(candidate);
-    }
-    eligible.sort((a,b) => {
-      const aTask = priorTasks?.find(task => task.assigned_agent_id===a.agent_slug)?.created_at || '';
-      const bTask = priorTasks?.find(task => task.assigned_agent_id===b.agent_slug)?.created_at || '';
-      if (aTask!==bTask) return aTask.localeCompare(bTask);
-      const at = availability?.find(row => row.agent_id===a.agent_slug)?.last_assigned_at || '';
-      const bt = availability?.find(row => row.agent_id===b.agent_slug)?.last_assigned_at || '';
-      return at.localeCompare(bt) || a.agent_slug.localeCompare(b.agent_slug);
-    });
-    callbackAgent = eligible[0]?.agent_slug || agents?.find(candidate => candidate.npn==='20574678')?.agent_slug;
-    if (callbackAgent) {
-      const { error:taskError } = await db.from('paragon_callback_tasks').upsert({
-        inbound_call_id:call.id,tenant_id:NGHS_TENANT_ID,assigned_agent_id:callbackAgent,
-        caller_state:confirmedState,confirmed_zip:zip,reason:'wrong_state',
-      },{ onConflict:'inbound_call_id' });
-      if (taskError) return json({ error:'Unable to create callback task' },503);
-    }
-  }
-  return json({ confirmed:true,zip,state:confirmedState,tier,wrong_state:wrongState,callback_agent_id:callbackAgent });
-};
+  return error?json({error:'Unable to confirm eligibility and callback assignment'},503):json(result);
+ }catch{return json({error:'Paragon callbacks unavailable. Please retry.'},503);}
+ };
+}
+export default createParagonZipHandler();

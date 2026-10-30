@@ -16,7 +16,7 @@ function FollowUpRow({ row, agents, update, onOpenContact }) {
     <td className="mono">{row.due_at ? new Date(row.due_at).toLocaleString() : 'No due date'}</td>
     <td>{row.reason || 'Follow-up'}</td>
     <td>{agents.find(agent => agent.agent_slug === row.agent_id)?.name || 'Unassigned'}</td>
-    <td><button type="button" className="contacts-mini-btn" onClick={() => onOpenContact(row.contact_id)}>OPEN CONTACT</button></td>
+    <td>{row.source==='paragon'&&<><div>{row.caller_name||'Unknown caller'}</div><div className="mono">{row.caller_phone||'Phone unavailable'} · {row.caller_state}</div><a className="contacts-mini-btn" href={`/crm/calls?inbound_call_id=${encodeURIComponent(row.inbound_call_id)}`}>ORIGINAL CALL</a>{' '}</>}{row.contact_id&&<button type="button" className="contacts-mini-btn" onClick={() => onOpenContact(row.contact_id)}>OPEN CONTACT</button>}</td>
     <td>
       <button type="button" className="contacts-mini-btn" disabled={pending} onClick={() => void save('complete')}>MARK COMPLETE</button>{' '}
       <button type="button" className="contacts-mini-btn" disabled={pending} onClick={() => setRescheduling(value => !value)}>RESCHEDULE</button>
@@ -29,16 +29,18 @@ function FollowUpRow({ row, agents, update, onOpenContact }) {
     </td>
   </tr>;
 }
-export default function FollowUpsView({ data, onOpenContact }) {
-  const [bucket, setBucket] = useState('today');
+export default function FollowUpsView({ data, onOpenContact, initialSource='' }) {
+  const [source,setSource]=useState(initialSource);
+  const [bucket, setBucket] = useState(initialSource==='paragon'?'all':'today');
   const [agent, setAgent] = useState('mine');
   const owner = agent === 'mine' ? data.agentSlug : agent;
-  const visible = data.rows.filter(row => (data.isAdmin && owner === 'all' || row.agent_id === owner) && followUpBucket(row, data.now) === bucket);
+  const visible = data.rows.filter(row => row.status==='open' && (data.isAdmin && owner === 'all' || row.agent_id === owner) && (source!=='paragon'||row.source==='paragon') && (bucket==='all'||followUpBucket(row, data.now) === bucket));
   return <div className="call-log-tab">
     <div className="ops-command-line"><span>FOLLOW-UPS</span><span className="ops-section-meta">{visible.length} OPEN</span></div>
     <div className="call-log-filters">
+      <select aria-label="Task type filter" value={source} onChange={event=>setSource(event.target.value)}><option value="">ALL TASKS</option><option value="paragon">PARAGON CALLBACKS</option></select>
       <select aria-label="Follow-up due date filter" value={bucket} onChange={event => setBucket(event.target.value)}>
-        <option value="today">DUE TODAY</option><option value="overdue">OVERDUE</option><option value="upcoming">UPCOMING</option>
+        <option value="all">ALL OPEN</option><option value="today">DUE TODAY</option><option value="overdue">OVERDUE</option><option value="upcoming">UPCOMING</option>
       </select>
       <select aria-label="Follow-up agent filter" value={agent} onChange={event => setAgent(event.target.value)}>
         <option value="mine">MY FOLLOW-UPS</option>

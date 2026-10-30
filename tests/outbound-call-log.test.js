@@ -214,3 +214,9 @@ test('recording catalog includes all playable parts, scopes calls before display
  assert.ok(legacy);assert.equal(legacy.recording_count,1);assert.equal(legacy.recording_available,true);
  await sql('UPDATE call_records SET recording_storage_path=$1 WHERE id=$2',[original,INC]);
 });
+
+test('original Paragon call links filter by the exact inbound call within the signed tenant',async()=>{
+ const result=await log(auth,`inbound_call_id=${IN}`);assert.ok(result.rows.length>0);assert.ok(result.rows.every(row=>row.inbound_call_id===IN));
+ await log(auth,'inbound_call_id=invalid',400);
+ assert.equal((await log(auth,`inbound_call_id=${id(999)}`)).rows.length,0);
+});

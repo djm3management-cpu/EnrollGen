@@ -47,7 +47,7 @@ test('CSV and page expose only approved columns', async () => {
       const body = await response.text();
       for (const secret of ['PRIVATE_NAME','PRIVATE_NOTES','PRIVATE_TRANSCRIPT','PRIVATE_RECORDING']) assert.ok(!body.includes(secret));
       if (format) {
-        assert.equal(body.split('\r\n')[0],'call_id,received_at,caller_phone,caller_state,duration_seconds,billable,non_billable_reason,disposition_category,app_written');
+        assert.equal(body.split('\r\n')[0],'call_id,received_at,caller_phone,caller_state,duration_seconds,billable,non_billable_reason,disposition_category,app_written,serviceability');
         assert.ok(body.includes(',"connected_no_sale","FALSE"'));
         assert.ok(body.includes(',"sale","TRUE"'));
       } else {
@@ -68,4 +68,22 @@ test('database report is scoped to the exact Paragon source', () => {
   assert.match(proof,/d\.source_id=s\.id AND d\.matched_call_sid=i\.twilio_call_sid AND d\.available/);
   assert.ok(!sql.includes("'mentally_unfit'"));
   assert.ok(!sql.includes("'possible_cognitive_impairment'"));
+});
+
+test('serviceability count/filter and CSV identify only unserviceable calls without rewriting billing',async()=>{
+ const previous={SUPABASE_SERVICE_ROLE_KEY:process.env.SUPABASE_SERVICE_ROLE_KEY,SUPABASE_URL:process.env.SUPABASE_URL};
+ process.env.SUPABASE_SERVICE_ROLE_KEY='test';process.env.SUPABASE_URL='https://example.supabase.co';
+ try{
+  const rows=[{call_id:'dispute-1',received_at:'2026-10-01T14:00:00Z',caller_phone:'+15555550123',caller_state:'NY',billable:'yes',duration_seconds:120,disposition_category:'completed',serviceability:'Out of state: not serviceable'},
+   {call_id:'callback-2',received_at:'2026-10-01T15:00:00Z',caller_state:'AZ',billable:'yes',disposition_category:'callback_scheduled',serviceability:'Paragon callback: out-of-state'}];
+  const handler=createHandler(()=>({rpc(name){
+   if(name==='authorize_paragon_report')return Promise.resolve({data:'source-id'});
+   if(name==='paragon_report_totals')return Promise.resolve({data:[{day:'2026-10-01',calls:2,billable:2,amount_due:56}]});
+   return {range:async()=>({data:rows})};
+  }}));
+  const query=`?token=${token}&start=2026-10-01&end=2026-10-01&serviceability=not_serviceable`;
+  const page=await (await handler(request(query))).text();assert.ok(page.includes('Out of state: not serviceable: 1'));assert.ok(page.includes('1 shown'));assert.ok(page.includes('dispute-1'));assert.ok(!page.includes('callback-2'));assert.ok(page.includes('serviceability=not_serviceable'));assert.ok(page.includes('Daily totals (all calls)'));
+  const csv=await (await handler(request(query+'&format=csv'))).text();assert.equal(csv.split('\r\n').length,2);assert.ok(csv.includes('NY'));assert.ok(csv.includes('"yes"'));assert.ok(csv.includes('Out of state: not serviceable'));assert.ok(!csv.includes('callback-2'));
+  assert.equal((await handler(request(`?token=${token}&serviceability=invalid`))).status,400);
+ }finally{for(const [key,value] of Object.entries(previous)){if(value===undefined)delete process.env[key];else process.env[key]=value;}}
 });

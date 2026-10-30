@@ -1332,8 +1332,8 @@ export default function ContactsTab({ variant = "home", onStartCall = null }) {
       <ContactsWorkspace variant={variant} onStartCall={onStartCall} active={location.view === 'contacts'}
         focusContact={location.contactId ? { id: location.contactId, ts: location.ts || 0 } : null} onSelectContact={id => updateLocation('contacts', id)} />
     </div>
-    {location.view === 'calls' && <Suspense fallback={<div className="contacts-muted">Loading calls...</div>}><CallLogTab onOpenContact={id => updateLocation('contacts', id)} /></Suspense>}
-    {location.view === 'followups' && <FollowUpsView key={followUps.agentSlug} data={followUps} onOpenContact={id => updateLocation('contacts', id)} />}
+    {location.view === 'calls' && <Suspense fallback={<div className="contacts-muted">Loading calls...</div>}><CallLogTab inboundCallId={location.inboundCallId} onOpenContact={id => updateLocation('contacts', id)} /></Suspense>}
+    {location.view === 'followups' && <FollowUpsView key={`${followUps.agentSlug}:${location.taskSource||''}`} initialSource={location.taskSource||''} data={followUps} onOpenContact={id => updateLocation('contacts', id)} />}
     {location.view === 'opportunities' && <OpportunitiesView onOpenContact={id => updateLocation('contacts', id)} />}
   </div>;
 }

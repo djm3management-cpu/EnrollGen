@@ -1,3 +1,4 @@
+import {notifyFollowUpsUpdated} from '../../lib/followUps';
 import { debugLog } from "../../lib/debugLog.js";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -49,6 +50,7 @@ function ParagonZipConfirm({ inboundCallId, callSid }) {
       if (!response.ok) throw new Error(body.error || 'ZIP confirmation failed.');
       if (body.needs_state_selection) { setStates(body.states);return; }
       setResult(body);
+      notifyFollowUpsUpdated();
       window.dispatchEvent(new CustomEvent('paragon-zip-status',{
         detail:{ callSid,status:body.wrong_state ? 'wrong' : 'confirmed' },
       }));
@@ -66,7 +68,7 @@ function ParagonZipConfirm({ inboundCallId, callSid }) {
       {!result && <button type="button" disabled={saving || zip.length!==5 || (states.length>1 && !state)} onClick={confirm}>{saving?'Checking…':'Confirm ZIP'}</button>}
     </div>
     {error && <div role="alert">{error}</div>}
-    {result?.wrong_state && <div className="phone-expanded__zip-block" role="alert">Not licensed/RTS in {result.state}. Do not discuss plans. A callback task was assigned to {result.callback_agent_id || 'the agency'}.</div>}
+    {result?.wrong_state && <div className="phone-expanded__zip-block" role="alert">Not licensed/RTS in {result.state}. Do not discuss plans. {result.serviceability==='not_serviceable'?'Out of state: not serviceable. Flagged on the Paragon report for a dispute or credit.':`A callback task was assigned to ${result.callback_agent_id}.`}</div>}
     {result && !result.wrong_state && <div>ZIP {result.zip} confirmed in {result.state}. Plan tools are available.</div>}
   </div>;
 }

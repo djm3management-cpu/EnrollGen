@@ -1,9 +1,12 @@
+import {useAppAuth} from '../context/AuthContext';
+import {loadParagonCallbacks,updateParagonCallback} from '../lib/paragonCallbacks';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTenantConfig } from './useTenantConfig';
 import { useCurrentAgent } from './useCurrentAgent';
 import { FOLLOW_UPS_UPDATED, notifyFollowUpsUpdated, updateFollowUp } from '../lib/followUps';
 
 export function useFollowUps() {
+  const {getToken}=useAppAuth();
   const { tenantId, supabaseClient, agents, loading: tenantLoading, error: tenantError } = useTenantConfig();
   const { agentUuid, agentSlug, isAdmin } = useCurrentAgent();
   const [rows, setRows] = useState([]);
@@ -19,20 +22,25 @@ export function useFollowUps() {
     }
     setLoading(true); setError('');
     try {
-      const all = [];
-      for (let offset = 0; ; offset += 500) {
-        const { data, error: readError } = await supabaseClient.from('follow_ups')
-          .select('id, contact_id, agent_id, due_at, reason, status').eq('tenant_id', tenantId).eq('status', 'open')
-          .order('due_at', { ascending: true }).order('id', { ascending: true }).range(offset, offset + 499);
-        if (readError) throw readError;
-        all.push(...(data || []));
-        if (!data || data.length < 500) break;
+      const reads=await Promise.allSettled([(async()=>{
+        const all=[];
+        for(let offset=0;;offset+=500){
+          const {data,error:readError}=await supabaseClient.from('follow_ups')
+            .select('id, contact_id, agent_id, due_at, reason, status').eq('tenant_id',tenantId).eq('status','open')
+            .order('due_at',{ascending:true}).order('id',{ascending:true}).range(offset,offset+499);
+          if(readError)throw readError;
+          all.push(...(data||[]));if(!data||data.length<500)break;
+        }
+        return all;
+      })(),loadParagonCallbacks(getToken)]);
+      if(request===generation.current){
+        setRows(reads.flatMap(result=>result.status==='fulfilled'?result.value:[]).sort((a,b)=>Date.parse(a.due_at||'9999-12-31')-Date.parse(b.due_at||'9999-12-31')||a.id.localeCompare(b.id)));setNow(new Date());
+        setError(reads.filter(result=>result.status==='rejected').map(result=>result.reason?.message||'Tasks unavailable.').join(' '));
       }
-      if (request === generation.current) { setRows(all); setNow(new Date()); }
     } catch (err) {
       if (request === generation.current) { setRows([]); setError(err.message || 'Follow-ups unavailable.'); }
     } finally { if (request === generation.current) setLoading(false); }
-  }, [tenantId, supabaseClient, agentUuid, tenantLoading, tenantError]);
+  }, [tenantId, supabaseClient, agentUuid, tenantLoading, tenantError, getToken]);
   useEffect(() => {
     setRows([]); void refresh();
     const update = () => { void refresh(); };
@@ -41,7 +49,8 @@ export function useFollowUps() {
     return () => { generation.current += 1; clearInterval(timer); window.removeEventListener(FOLLOW_UPS_UPDATED, update); };
   }, [refresh]);
   const update = async (id, action, dueAt) => {
-    await updateFollowUp(supabaseClient, tenantId, id, action, dueAt);
+    if(id.startsWith('paragon:'))await updateParagonCallback(getToken,id,action,dueAt);
+    else await updateFollowUp(supabaseClient, tenantId, id, action, dueAt);
     notifyFollowUpsUpdated();
   };
   return { rows, loading, error, refresh, update, agents, agentSlug, isAdmin, now };

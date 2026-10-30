@@ -265,7 +265,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
   );
 }
 
-export default function CallLogTab({ onOpenContact = null }) {
+export default function CallLogTab({ onOpenContact = null, inboundCallId=null }) {
   const { supabaseClient } = useTenantConfig();
   const { getToken } = useAppAuth();
   const [exporting, setExporting] = useState(false);
@@ -291,6 +291,7 @@ export default function CallLogTab({ onOpenContact = null }) {
   if (to) to.setDate(to.getDate() + 1);
   const { rows, count: totalCount, loading, error: loadError, refresh: load } = useCallLogRows({
     offset: page * PAGE_SIZE, limit: PAGE_SIZE,
+    inbound_call_id:inboundCallId,
     from: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : null,
     to: to?.toISOString(),
     direction: directionFilter === "ALL" ? null : directionFilter.toLowerCase(),
@@ -299,6 +300,13 @@ export default function CallLogTab({ onOpenContact = null }) {
     agent: agentFilter === "ALL" ? null : agentFilter,
     search: search.trim(),
   });
+  const openedOriginal=useRef(null);
+  useEffect(()=>{
+    if(inboundCallId&&openedOriginal.current!==inboundCallId){
+      const original=rows.find(row=>row.inbound_call_id===inboundCallId);
+      if(original){setExpandedId(original.log_id);openedOriginal.current=inboundCallId;}
+    }
+  },[inboundCallId,rows]);
   useEffect(() => {
     setAgentOptions(previous => [...new Set([...previous, ...rows.map(row => row.agent).filter(Boolean)])].sort((a, b) => a === "ALL" ? -1 : b === "ALL" ? 1 : a.localeCompare(b)));
   }, [rows]);
@@ -307,7 +315,7 @@ export default function CallLogTab({ onOpenContact = null }) {
     exportGeneration.current += 1;
     setExporting(false);
     return () => { exportGeneration.current += 1; };
-  }, [getToken, search, dateFrom, dateTo, agentFilter, dispositionFilter, directionFilter, outcomeFilter]);
+  }, [getToken, search, dateFrom, dateTo, agentFilter, dispositionFilter, directionFilter, outcomeFilter, inboundCallId]);
 
   const exportCalls = async () => {
     const request = ++exportGeneration.current;
@@ -316,6 +324,7 @@ export default function CallLogTab({ onOpenContact = null }) {
       const to = dateTo ? new Date(`${dateTo}T00:00:00`) : null;
       if (to) to.setDate(to.getDate() + 1);
       const exportRows = await loadCallLogPages(getToken, {
+        inbound_call_id:inboundCallId,
         from: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : null,
         to: to?.toISOString(),
         direction: directionFilter === "ALL" ? null : directionFilter.toLowerCase(),

@@ -2,7 +2,7 @@ import { useId, useMemo, useState } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { buildDashboard, DASHBOARD_RANGES, formatMetric, metricDelta } from '../lib/dashboardMetrics';
 import { callOutcomeLabel } from '../lib/postCallPipeline';
-import ParagonCallbackTasks from './ParagonCallbackTasks';
+import ParagonCallbackBadge from './ParagonCallbackBadge';
 import AgentStatusLog from './AgentStatusLog';
 
 const METRICS = [['calls', 'Calls Today'], ['sales', 'Sales Today'], ['conversion', 'Conversion Rate'], ['duration', 'Avg Talk'], ['compliance', 'Compliance Score']];
@@ -157,7 +157,6 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
     return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   }, [summary.dispositions]);
   return <div className="agent-dashboard" aria-busy={data.loading}>
-    <ParagonCallbackTasks />
     <header className="agent-dash-heading">
       <div className="agent-dash-scope"><h1>Dashboard</h1><label htmlFor="dashboard-scope">VIEW</label>
         <select id="dashboard-scope" value={scope} onChange={event => setScope(event.target.value)} aria-label="Dashboard data scope">
@@ -165,7 +164,7 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
           {data.agentOptions.map(agent => <option key={agent.key} value={agent.clerkUserId === userId ? "self" : agent.key}>{agent.label}{agent.clerkUserId === userId ? ' (you)' : ''}</option>)}
         </select>
       </div>
-      <div className="agent-dash-status"><button onClick={onOpenContacts}>{data.loading ? 'Loading' : data.contacts} {scope === 'agency' ? 'agency contacts' : 'assigned contacts'} ↗</button><button onClick={data.refresh} disabled={data.loading}>Refresh</button><span role="status">{data.loading ? 'Loading your activity...' : data.updatedAt ? `Updated ${data.updatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Awaiting data'}</span></div>
+      <div className="agent-dash-status"><ParagonCallbackBadge /><button onClick={onOpenContacts}>{data.loading ? 'Loading' : data.contacts} {scope === 'agency' ? 'agency contacts' : 'assigned contacts'} ↗</button><button onClick={data.refresh} disabled={data.loading}>Refresh</button><span role="status">{data.loading ? 'Loading your activity...' : data.updatedAt ? `Updated ${data.updatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Awaiting data'}</span></div>
     </header>
     {data.error && <p className="agent-dash-error" role="alert">{data.error} Use Refresh to retry. {data.updatedAt ? 'Showing the last successful update.' : 'Metrics are unavailable until data loads.'}</p>}
     <section className="agent-dash-metrics" aria-label="Today’s key metrics">
