@@ -184,3 +184,46 @@ test('UHC requirements use the intake carrier even when legacy call carrier meta
  await query(`UPDATE call_records SET call_outcome='enrolled' WHERE id=$1`,[id(61)]);
  assert.equal((await query('SELECT * FROM ix_uploads WHERE call_id=$1',[id(61)])).length,0);
 });
+
+const dylanAgent=id(70),dylanCall=id(71);
+const dylanAuth={userId:'user-dylan',orgId:'org-a',tokenPayload:{org_role:'org:member'}};
+const mikeAdminAuth={userId:'user-a',orgId:'org-a',tokenPayload:{public_metadata:{isAdmin:true}}};
+async function withDylanCall(work){
+ await pg.exec('BEGIN');
+ try{
+  await query(`INSERT INTO enrolled_agents VALUES($1,$2,'user-dylan',true,'Dylan Maria',NULL)`,[dylanAgent,tenant]);
+  await query(`INSERT INTO call_records(id,tenant_id,agent_id,contact_id,call_outcome,product_type,agent_name) VALUES($1,$2,$3,$4,'incomplete','MA','Dylan Maria')`,[dylanCall,tenant,dylanAgent,contact]);
+  await work();
+ }finally{await pg.exec('ROLLBACK');}
+}
+const intakeRequest=(method='GET',body=null,extra='')=>new Request(`https://app.test/api/enrollment-intakes?call_id=${dylanCall}${extra}`,method==='GET'?undefined:{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+for(const [label,identity] of [['agent-own',dylanAuth],['admin-other',mikeAdminAuth],['global-admin-without-active-org',{...mikeAdminAuth,orgId:null}]])test(`${label} can open, search plans, create and edit intakes while retaining the call's writing agent`,()=>withDylanCall(async()=>{
+ const api=handler({authenticate:async()=>identity});
+ let response=await api(intakeRequest());assert.equal(response.status,200);const initial=await response.json();assert.equal(initial.prefill.aor,'Dylan Maria');
+ assert.equal((await api(intakeRequest('GET',null,'&plans=1&state=NY&carrier=Aetna'))).status,200);
+ response=await api(intakeRequest('POST',{data:valid({aor:initial.prefill.aor})}));assert.equal(response.status,200);const intake=(await response.json()).id;
+ response=await api(intakeRequest('POST',{id:intake,data:valid({aor:'Dylan Maria',planName:'Updated by authorized user'})}));assert.equal(response.status,200);
+ const [saved]=await query('SELECT * FROM enrollment_intakes WHERE id=$1',[intake]);assert.equal(saved.data.aor,'Dylan Maria');assert.equal(saved.data.planName,'Updated by authorized user');
+ assert.equal((await query('SELECT agent_id FROM follow_ups WHERE id=$1',[saved.follow_up_id]))[0].agent_id,'dylan_maria');
+ const [ghl]=await query(`SELECT decrypt_pii_value(payload_encrypted)::jsonb AS payload FROM ghl_enrollment_deliveries WHERE intake_id=$1 ORDER BY revision DESC LIMIT 1`,[intake]);assert.equal(ghl.payload.aor,'Dylan Maria');assert.equal(ghl.payload.assignedUserId,'ybc6Z1qfF5PgD1k0DzOo');
+ assert.equal((await query('SELECT agent_id FROM call_records WHERE id=$1',[dylanCall]))[0].agent_id,dylanAgent,'admin editing never changes call ownership');
+ assert.equal((await (await api(intakeRequest())).json()).intakes[0].data.planName,'Updated by authorized user');
+}));
+test('non-admin Mike remains denied on Dylan calls, even with forged body or unsafe metadata admin fields',()=>withDylanCall(async()=>{
+ for(const identity of [{userId:'user-a',orgId:'org-a'},{userId:'user-a',orgId:'org-a',tokenPayload:{unsafe_metadata:{role:'admin',isAdmin:true}}}]){
+  const api=handler({authenticate:async()=>identity});
+  assert.equal((await api(intakeRequest())).status,403);
+  assert.equal((await api(intakeRequest('GET',null,'&plans=1&state=NY&carrier=Aetna'))).status,403);
+  assert.equal((await api(intakeRequest('POST',{role:'admin',isAdmin:true,data:valid({aor:'Dylan Maria'})}))).status,403);
+ }
+ assert.equal((await query('SELECT * FROM enrollment_intakes WHERE call_id=$1',[dylanCall])).length,0);
+}));
+test('admin claims require the matching organization and support Clerk role and compact owner claims',()=>withDylanCall(async()=>{
+ for(const tokenPayload of [{org_role:'org:admin'},{public_metadata:{role:'admin'}},{o:{id:'org-a',rol:'owner'}}]){
+  const api=handler({authenticate:async()=>({userId:'user-a',orgId:tokenPayload.o?null:'org-a',tokenPayload})});assert.equal((await api(intakeRequest())).status,200);
+ }
+ for(const identity of [{...mikeAdminAuth,orgId:'org-b'},{userId:'user-a',orgId:null,tokenPayload:{org_role:'org:admin'}},{userId:'unknown-admin',orgId:null,tokenPayload:{public_metadata:{isAdmin:true}}}])assert.equal((await handler({authenticate:async()=>identity})(intakeRequest())).status,403);
+ await query(`INSERT INTO tenants VALUES($1,'org-b')`,[id(73)]);
+ await query(`INSERT INTO call_records(id,tenant_id,agent_id,call_outcome,product_type) VALUES($1,$2,$3,'incomplete','MA')`,[id(74),id(73),id(75)]);
+ assert.equal((await handler({authenticate:async()=>mikeAdminAuth})(new Request(`https://app.test/api/enrollment-intakes?call_id=${id(74)}`))).status,403);
+}));

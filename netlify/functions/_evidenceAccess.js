@@ -66,9 +66,40 @@ export async function resolveEvidenceIdentity(db, auth, { provision = false } = 
   return { agent, tenant };
 }
 
+// Admin authority comes from verified Clerk claims, never a submitted role,
+// display name, NPN, or the browser-writable CRM roster.
+export function hasTenantAdminRole(auth) {
+  const payload=auth?.tokenPayload || {};
+  const orgId=auth?.orgId || payload.o?.id;
+  const isAdmin=roles=>roles.filter(Boolean).some(value=>['admin','org:admin','owner','org:owner'].includes(String(value).toLowerCase()));
+  return Boolean((orgId && isAdmin([payload.org_role,payload.o?.rol]))
+    || isAdmin([payload.role,payload.public_metadata?.role,payload.private_metadata?.role,payload.metadata?.role])
+    || payload.public_metadata?.isAdmin===true || payload.metadata?.isAdmin===true);
+}
+
+export async function resolveCallAccessIdentity(db, auth) {
+  if(!auth.userId || auth.userId==='dev-bypass')throw new EvidenceError(401,'Sign in to access calls.');
+  auth={...auth,orgId:auth.orgId || auth.tokenPayload?.o?.id || null};
+  if(hasTenantAdminRole(auth)) {
+    // Global Clerk admin metadata can be used without an active organization,
+    // but only the protected active enrolled membership supplies the tenant.
+    if(!auth.orgId)return {...await resolveEvidenceIdentity(db,auth),admin:true,auth};
+    const tenant=checked(await db.from('tenants').select('*').eq('clerk_org_id',auth.orgId).maybeSingle());
+    if(!tenant || tenant.clerk_org_id!==auth.orgId)throw new EvidenceError(403,'Organization is unavailable.');
+    return {tenant,admin:true,auth};
+  }
+  return {...await resolveEvidenceIdentity(db,auth),admin:false,auth};
+}
+
+export function scopeCallToIdentity(query, identity) {
+  query=query.eq('tenant_id',identity.tenant.id);
+  return identity.admin ? query : query.eq('agent_id',identity.agent.id);
+}
+
 export function canImportForOthers(auth, tenant) {
-  return Boolean(auth.orgId && auth.orgId === tenant.clerk_org_id
-    && ["org:admin", "admin"].includes(auth.tokenPayload?.org_role));
+  // Callers have already resolved their protected enrolled membership.
+  const orgId=auth.orgId || auth.tokenPayload?.o?.id;
+  return hasTenantAdminRole(auth) && (!orgId || orgId===tenant.clerk_org_id);
 }
 
 export async function requireOwnedSession(db, id, identity) {

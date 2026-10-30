@@ -1,5 +1,5 @@
 import {requireClerkAuth} from './_clerkAuth.js';
-import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveEvidenceIdentity} from './_evidenceAccess.js';
+import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveCallAccessIdentity,scopeCallToIdentity} from './_evidenceAccess.js';
 import {emptyIntake,normalizeIntake,intakeErrors,ghlPayload,carrierKey,CARRIERS,landscapeCarrierMatches} from '../../src/lib/enrollmentIntake.js';
 import {deliverEnrollmentWebhooks} from '../../integrations/enrollmentWebhook.js';
 export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth(r,{allowBypass:false}),getDb=getEvidenceServiceClient,deliver=deliverEnrollmentWebhooks,now=()=>new Date().toISOString()}={}){
@@ -7,10 +7,10 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
   if(!['GET','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try{
-   const db=getDb(),{agent,tenant}=await resolveEvidenceIdentity(db,auth),url=new URL(request.url);
+   const db=getDb(),identity=await resolveCallAccessIdentity(db,auth),{agent,tenant}=identity,url=new URL(request.url);
    const callId=url.searchParams.get('call_id');
    if(!/^[0-9a-f-]{36}$/i.test(callId||''))throw new EvidenceError(400,'Call ID is required.');
-   const call=checked(await db.from('call_records').select('*').eq('id',callId).eq('tenant_id',tenant.id).eq('agent_id',agent.id).maybeSingle());
+   const call=checked(await scopeCallToIdentity(db.from('call_records').select('*').eq('id',callId),identity).maybeSingle());
    if(!call)throw new EvidenceError(403,'Call is unavailable for this agent.');
    if(url.searchParams.has('plans')){
     const state=url.searchParams.get('state')||'',carrier=url.searchParams.get('carrier');
@@ -64,7 +64,8 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
     contact={...row};
     for(const key of ['first_name','last_name','dob','phone','email','mbi_full'])if(row?.pii_encrypted?.[key])contact[key]=checked(await db.rpc('decrypt_pii_value',{p_encrypted:row.pii_encrypted[key]}));
    }
-   const prefill={...emptyIntake(agent.name),firstName:contact.first_name||call.customer_first_name||'',lastName:contact.last_name||call.customer_last_name||'',dob:contact.dob||call.customer_dob||'',phone:contact.phone||call.customer_phone||'',email:contact.email||call.customer_email||'',state:contact.state||call.customer_state||call.state_code||'',zip:contact.zip||call.zip_code||'',mbi:contact.mbi_full||call.customer_mbi||'',prevCarrier:contact.current_carrier||'',sunfireCode:call.sunfire_code||''};
+   const callAgent=call.agent_id===agent?.id?agent:call.agent_id?checked(await db.from('enrolled_agents').select('id,name').eq('id',call.agent_id).eq('tenant_id',tenant.id).maybeSingle()):null;
+   const prefill={...emptyIntake(callAgent?.name||call.agent_name||''),firstName:contact.first_name||call.customer_first_name||'',lastName:contact.last_name||call.customer_last_name||'',dob:contact.dob||call.customer_dob||'',phone:contact.phone||call.customer_phone||'',email:contact.email||call.customer_email||'',state:contact.state||call.customer_state||call.state_code||'',zip:contact.zip||call.zip_code||'',mbi:contact.mbi_full||call.customer_mbi||'',prevCarrier:contact.current_carrier||'',sunfireCode:call.sunfire_code||''};
    return evidenceJson(200,{intakes,prefill,contact_id:call.contact_id,product_type:call.product_type});
   }catch(error){return evidenceFailure(error);}
  };

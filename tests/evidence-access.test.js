@@ -566,3 +566,12 @@ test("ancillary wrap-up allows omitted products, rejects invalid values, and per
    await Promise.all(pending);
   }finally{globalThis.fetch=oldFetch;}
  });
+
+test('signed Clerk isAdmin metadata permits importing compliance transcripts for a teammate within the resolved tenant',async()=>{
+ await role('service_role');
+ const admin=handlers({...auth,tokenPayload:{public_metadata:{isAdmin:true}}});
+ const roster=await call(admin.import,null,200,'GET');assert.ok(roster.agents.some(row=>row.id===peer));
+ const assigned=await call(admin.import,importForm({agentId:peer,agentName:'Agent B'}));
+ assert.equal((await query('SELECT owner_agent_id FROM call_transcripts WHERE id=$1',[assigned.transcriptId]))[0].owner_agent_id,peer);
+ await call(admin.import,importForm({agentId:foreign,agentName:'Agent C'}),403);
+});

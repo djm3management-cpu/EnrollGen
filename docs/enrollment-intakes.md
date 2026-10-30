@@ -8,7 +8,7 @@ The PY2027 picker filters the loaded `cms_plans_py2027` landscape by state and c
 
 ## Storage and delivery
 
-Each intake references a call and contact. DOB, MBI and Medicaid number use the existing `encrypt_pii_value` / `decrypt_pii_value` primitives and Vault keys. Those fields never enter the intake's plaintext `data`. The GHL outbox stores the complete payload encrypted, with no request/response body or sensitive field logging. Browser roles cannot read either table or execute writes/decryption directly. The API authorizes the signed-in tenant and owning call agent before reading or writing.
+Each intake references a call and contact. DOB, MBI and Medicaid number use the existing `encrypt_pii_value` / `decrypt_pii_value` primitives and Vault keys. Those fields never enter the intake's plaintext `data`. The GHL outbox stores the complete payload encrypted, with no request/response body or sensitive field logging. Browser roles cannot read either table or execute writes/decryption directly. The API authorizes the signed-in tenant and either the owning call agent or a verified Clerk administrator before reading or writing. New intake Writing Agent defaults to the call owner, including when an administrator opens another agent’s call; existing intake selections remain intact.
 
 Saving the intake, encrypting PII, creating/updating its follow-up task and inserting a GHL delivery are one transaction. Each enrollment gets its own task, assigned to the writing agent's existing slug, at 9 a.m. America/New_York on the editable follow-up date. Edits reuse the task and preserve the initial submission timestamp. The effective date calculation uses calendar days, including leap years and DST boundaries.
 
@@ -43,3 +43,9 @@ Previously IX transmitted only the confirmation code, idempotency key and audio 
 ## Verification
 
 `tests/enrollment-intakes.test.js` exercises the actual SQL migration, existing pgcrypto encryption functions, API authorization, GHL serialization/retries, household rows, follow-up tasks and compliance reads. `tests/enrollment-intake-ui.test.js` exercises the real form's event handlers; call-disposition tests cover the MA gate. Tests use local PostgreSQL fixtures and fake provider transports, never real applicants or webhook deliveries.
+
+## Administrator access
+
+`enrollment-intakes` and `call-record-details` share `resolveCallAccessIdentity` / `scopeCallToIdentity`. Call reads, plan lookup, intake creation/editing, and optional call-detail writes always pin the resolved tenant. Non-admin access additionally pins the enrolled agent ID. Transcript-import assignment and recording/compliance upload endpoints use the same verified Clerk admin-claim helper while retaining their protected recording/session ownership checks for ordinary agents. No display name, NPN, request-supplied role, unsafe metadata or mutable CRM roster role grants administrator access.
+
+The helper supports Clerk organization admin/owner claims (including compact `o.id` / `o.rol`) and signed admin-managed role / `isAdmin` metadata. An active organization selects its matching tenant. A global administrator without an active organization must resolve to a unique, active protected `enrolled_agents` membership to establish the tenant; no default tenant is assumed. Admins remain denied on calls outside that tenant. Session lifecycle and phone wrap-up ownership rules are unchanged. This authorization fix requires no migration.
