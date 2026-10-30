@@ -28,18 +28,21 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, conferenceGuar
 
   try {
     await enqueueBillingCallback(supabase,config,req.body);
-    if (["completed", "canceled", "failed", "busy", "no-answer"].includes(callStatus)) {
-      await releaseAgent(null, callSid);
-    }
     const inboundCall = await findInboundCall(callSid);
 
-    await supabase.from("telephony_events").insert({
+    const { error: eventError } = await supabase.from("telephony_events").insert({
       tenant_id: inboundCall?.tenant_id || config.defaultTenantId,
       inbound_call_id: inboundCall?.id || null,
       twilio_call_sid: callSid,
       event: `call_${callStatus}`,
       payload: req.body,
     });
+    if (eventError) throw eventError;
+    // Persist before releasing: delayed routing checks this evidence after its
+    // claim, preventing an already-ended parent from stranding an agent busy.
+    if (terminalStatuses.has(callStatus)) {
+      await releaseAgent(null, callSid);
+    }
 
     if (inboundCall && terminalStatuses.has(callStatus)) {
       await finishInboundCall(callSid, callStatus, req.body);

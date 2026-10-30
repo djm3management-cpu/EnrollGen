@@ -15,6 +15,7 @@ import { conferenceGuard } from '../conferenceGuard.js';
 import { vendorMetadata } from "../vendorMetadata.js";
 import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
 import { classifyCaller, decideMatchedParagon } from "../paragonRouting.js";
+import { endedParentCall } from "../terminalRouting.js";
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
@@ -190,6 +191,12 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next
       : { ...(await claimInitialInboundAgent({ callSid,callerId:from,contact,lookupError,
           vendorCall:publisherCall,directAgentId })),callerState:null,vendorCallId:null };
     claimedAgent = agent;
+    if (await endedParentCall(supabase, callSid)) {
+      await releaseAgent(agent?.agent_id || null, callSid);
+      const response = new VoiceResponse();
+      response.hangup();
+      return sendTwiml(res, response);
+    }
     const finalParagonDecision = decideMatchedParagon({ routingEnabled: config.paragonStateRoutingEnabled, ping, agent });
 
     if (paragon && finalParagonDecision.path === 'reject') {
@@ -321,6 +328,12 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, conference
     }
     const nextAgent = await claimNextAvailableAgent({ callSid, exclude: tried });
     claimedAgent = nextAgent;
+    if (await endedParentCall(supabase, callSid)) {
+      await releaseAgent(nextAgent?.agent_id || null, callSid);
+      const response = new VoiceResponse();
+      response.hangup();
+      return sendTwiml(res, response);
+    }
 
     if (!nextAgent) {
       await supabase

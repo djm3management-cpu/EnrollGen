@@ -17,7 +17,7 @@ function database(agents = ['a', 'b']) {
     contact_lead_intel: [], telephony_call_attempts: [], telephony_routing_responses: [] };
   const claims = []; const evidence = []; const releases = []; const finishes = [];
   const reservations = new Map();
-  const state = { tables, claims, evidence, releases, finishes, failEvidence: false, failAttempts: false,
+  const state = { tables, claims, evidence, releases, finishes, reservations, failEvidence: false, failAttempts: false,
     failPreferred: false, failContact: false, contactReads: 0, statuses: new Map(agents.map(a => [a, 'available'])) };
   supabase.from = table => {
     let action = 'select'; let value; let single = false; const filters = [];
@@ -25,6 +25,7 @@ function database(agents = ['a', 'b']) {
       select() { return this; }, insert(v) { action = 'insert'; value = v; return this; },
       update(v) { action = 'update'; value = v; return this; },
       eq(k, v) { filters.push(r => r[k] === v); return this; }, order() { return this; }, limit() { return this; },
+      in(k, values) { filters.push(r => values.includes(r[k])); return this; },
       single() { single = true; return this; }, maybeSingle() { single = true; return this; },
       then(resolve, reject) {
         const run = () => {
@@ -58,6 +59,7 @@ function database(agents = ['a', 'b']) {
     }
     if(name==='enqueue_paragon_billing_event') return {data:null,error:{code:'PGRST202'}};
     if (name === 'claim_call_agent' || name === 'claim_customer_call_agent') {
+      await state.beforeClaim?.();
       claims.push(args);
       if (args.p_preferred_agent_id && state.failPreferred) return { error: { message: 'Preferred claim failed' } };
       const eligible = agents.filter(a => (!args.p_agent_id || a === args.p_agent_id) &&
@@ -99,6 +101,44 @@ async function request(router, path, body, query = {}) {
 }
 const incoming = { CallSid: 'PARENT', From: '+16097787669', To: '+16090000000' };
 const answer = { ParentCallSid: 'PARENT', CallSid: 'CHILD', CallStatus: 'in-progress', Timestamp: 'Wed, 23 Sep 2026 10:00:00 +0000' };
+
+test('parent ending before or during a delayed claim cannot strand Dylan or release Mark', async () => {
+  for (const timing of ['before', 'during']) {
+    const db = database(['mark', 'dylan']);
+    await request(twilioVoiceRouter, '/twilio/voice', { ...incoming, CallSid: 'MARK_LIVE' });
+    const endParent = async () => {
+      const response = await request(twilioStatusRouter, '/twilio/status', {
+        CallSid: 'DYLAN_ENDED', CallStatus: 'no-answer',
+        Timestamp: 'Fri, 30 Oct 2026 15:45:34 +0000',
+      });
+      assert.equal(response.code, 204);
+    };
+    if (timing === 'before') await endParent();
+    else db.beforeClaim = endParent;
+    const result = await request(twilioVoiceRouter, '/twilio/voice', { ...incoming, CallSid: 'DYLAN_ENDED' });
+    assert.match(result.body, /<Hangup\/>/);
+    assert.doesNotMatch(result.body, /<Dial/);
+    assert.equal(db.reservations.has('dylan'), false);
+    assert.equal(db.reservations.get('mark'), 'MARK_LIVE');
+    assert.equal(db.tables.telephony_call_attempts.length, 1);
+  }
+});
+
+test('terminal callback evidence is durable before releasing an existing reservation', async () => {
+  const db = database();
+  await request(twilioVoiceRouter, '/twilio/voice', incoming);
+  const originalRpc = supabase.rpc;
+  supabase.rpc = async (name, args) => {
+    if (name === 'release_call_agent') {
+      assert.ok(db.tables.telephony_events.some(e => e.event === 'call_no-answer' && e.twilio_call_sid === 'PARENT'));
+    }
+    if (name === 'finalize_telephony_transcript') return {};
+    return originalRpc(name, args);
+  };
+  const response = await request(twilioStatusRouter, '/twilio/status', { CallSid: 'PARENT', CallStatus: 'no-answer' });
+  assert.equal(response.code, 204);
+  assert.equal(db.reservations.size, 0);
+});
 
 test('inbound TwiML persists attempt and requests answer/completion; replay never reassigns', async () => {
   const db = database();
