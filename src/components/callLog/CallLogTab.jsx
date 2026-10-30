@@ -1,3 +1,4 @@
+import ComplianceUploads from './ComplianceUploads';
 import CallTranscriptPlayer from "./CallTranscriptPlayer";
 import CombineCallsModal from "./CombineCallsModal";
 import CombinedCalls from "./CombinedCalls";
@@ -30,16 +31,19 @@ const PAGE_SIZE = 50;
 const DISPOSITION_FILTERS = ["ALL", "CONNECTED", "VOICEMAIL", "MISSED", "DECLINED"];
 const DIRECTION_FILTERS = ["ALL", "INBOUND", "OUTBOUND"];
 
-function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient, onChanged, disabled = false }) {
+function CallOutcomeEditor({ callRecordId, outcome, productType, carrierName, sunfireCode, supabaseClient, onChanged, disabled = false }) {
   const [saving, setSaving] = useState(false);
   const [selectedOutcome, setSelectedOutcome] = useState(() => callOutcomeSelection(outcome));
   const [selectedProduct, setSelectedProduct] = useState(productType || "");
   const [error, setError] = useState("");
+  const [codes, setCodes] = useState(sunfireCode || "");
+  const isUhc = /uhc|united\s*healthcare|aarp/i.test(carrierName || "");
 
   useEffect(() => {
     setSelectedOutcome(callOutcomeSelection(outcome));
     setSelectedProduct(productType || "");
-  }, [callRecordId, outcome, productType]);
+    setCodes(sunfireCode || "");
+  }, [callRecordId, outcome, productType, sunfireCode]);
 
   const saveOutcome = useCallback(
     async (value, product) => {
@@ -47,6 +51,10 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
       setSaving(true);
       try {
         const patch = buildCallOutcomePatch(value, product);
+        if (['enrolled','enrolled_pending_verification'].includes(value) && isUhc) {
+          if(!codes.trim())throw Error('SunFire Confirmation Code is required for UHC enrollment.');
+          patch.sunfire_code=codes.trim();
+        }
         const { error } = await supabaseClient
           .from("call_records")
           .update(patch)
@@ -67,7 +75,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
         setSaving(false);
       }
     },
-    [callRecordId, supabaseClient, onChanged, outcome, productType]
+    [callRecordId, supabaseClient, onChanged, outcome, productType, isUhc, codes]
   );
 
   return (
@@ -80,6 +88,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
         const value = event.target.value;
         setSelectedOutcome(value);
         setError("");
+        if(isUhc && ['enrolled','enrolled_pending_verification'].includes(value) && !codes.trim())return;
         void saveOutcome(value, value === "sale_ancillary" ? selectedProduct : null);
       }}
       aria-label="Call outcome"
@@ -94,6 +103,10 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, supabaseClient,
         </optgroup>
       ))}
     </select>
+    {isUhc && ['enrolled','enrolled_pending_verification'].includes(selectedOutcome) && <div className="grid post-call-wrap-grid">
+      <label>SunFire Confirmation Codes (required, one per line)<textarea value={codes} disabled={saving || disabled} onChange={event=>setCodes(event.target.value)}/></label>
+      <button type="button" className="contacts-mini-btn" disabled={saving || disabled || !codes.trim()} onClick={()=>void saveOutcome(selectedOutcome,null)}>Save disposition and codes</button>
+    </div>}
     {selectedOutcome === "sale_ancillary" && (
       <div className="grid post-call-wrap-grid">
         <label>
@@ -142,7 +155,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
     try {
       const { data: callRecord, error } = await supabaseClient
         .from("call_records")
-        .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, plan_name, effective_date, call_start, agent_notes, compliance_scorecard_id, call_outcome, ancillary_product_type, metadata")
+        .select("id, transcript_raw, transcript_diarized, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, call_duration_seconds, carrier_name, sunfire_code, plan_name, effective_date, call_start, agent_notes, compliance_scorecard_id, call_outcome, ancillary_product_type, metadata")
         .eq("id", row.call_record_id)
         .single();
       if (error) throw error;
@@ -201,6 +214,8 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
               disabled={loading || Boolean(detailError)}
               callRecordId={row.call_record_id}
               outcome={detail?.call_outcome ?? row.call_outcome}
+              carrierName={detail?.carrier_name}
+              sunfireCode={detail?.sunfire_code}
               productType={detail?.ancillary_product_type ?? row.ancillary_product_type}
               supabaseClient={supabaseClient}
               onChanged={handleOutcomeChanged}
@@ -323,6 +338,7 @@ export default function CallLogTab({ onOpenContact = null }) {
 
   return (
     <div className="call-log-tab">
+      <ComplianceUploads />
       <div className="ops-command-line">
         <span className="call-log-title-group">
           <span>CALL LOG</span>

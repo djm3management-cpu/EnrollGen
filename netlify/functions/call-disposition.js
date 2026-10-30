@@ -73,10 +73,16 @@ export function createCallDispositionHandler({authenticate=r=>requireClerkAuth(r
    if(productError)throw new EvidenceError(400,productError);
    if(outcome==='short_call_hangup' && input.automatic && selected.task.connected_seconds>=15)
     throw new EvidenceError(409,'This call needs a disposition selected by the agent.');
+   if(input.sunfire_code != null){
+    if(typeof input.sunfire_code!=='string' || input.sunfire_code.length>10000)throw new EvidenceError(400,'Invalid SunFire confirmation codes.');
+    if(input.sunfire_code.trim())checked(await db.from('call_records').update({sunfire_code:input.sunfire_code.trim()})
+     .eq('id',selected.record.id).eq('tenant_id',tenant.id).eq('agent_id',agent.id));
+   }
    const result=await db.rpc('save_agent_call_disposition',{
     p_tenant_id:tenant.id,p_agent_id:agent.id,p_agent_slug:roster.agent_slug,p_call_sid:input.call_sid,
     p_outcome:outcome,p_product:input.ancillary_product_type||null,p_automatic:input.automatic===true,
    });
+   if(result.error?.message?.includes('SunFire Confirmation Code is required'))throw new EvidenceError(400,'SunFire Confirmation Code is required for UHC enrollment.');
    if(result.error?.code==='P0001')throw new EvidenceError(409,'Call state changed. Refresh the disposition and try again.');
    return evidenceJson(200,checked(result));
   }catch(error){return evidenceFailure(error);}

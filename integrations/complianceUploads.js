@@ -62,9 +62,10 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
   return async ({schedule=true,deliveries=true}={})=>{
     if(schedule && now()>=nextWeeklyCheck){
       nextWeeklyCheck=now()+60*60_000;
-      await scheduleConverselyWeek(db,{env,log,now,isPlayable,fetchImpl});
+      try{await scheduleConverselyWeek(db,{env,log,now,isPlayable,fetchImpl});}
+      catch{log(JSON.stringify({event:'compliance_schedule_failed',stage:'conversely_weekly'}));}
     }
-    if(schedule)await scheduleExtras();
+    if(schedule){try{await scheduleExtras();}catch{log(JSON.stringify({event:'compliance_schedule_failed',stage:'ix'}));}}
     if(!deliveries)return;
     for(const provider of ['conversely',...Object.keys(providers)]){
       if(!uploadEnabled(env[provider==='conversely'?'CONVERSELY_UPLOAD_ENABLED':'IX_UPLOAD_ENABLED']))continue;

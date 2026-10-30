@@ -8,7 +8,7 @@ export const OPTIONAL_CALL_FIELDS = [
  ['customer_state','State'],['customer_mbi','MBI / Member ID'],['medicaid','Medicaid eligible'],
  ['medicaid_number','Medicaid number'],['previous_carrier','Previous carrier'],
  ['carrier_name','New carrier'],['plan_name','Plan name'],['plan_id','Plan ID'],
- ['enrollment_code','Plan / enrollment code'],['premium','Monthly premium'],['sunfire_code','Sunfire code'],
+ ['enrollment_code','Plan / enrollment code'],['premium','Monthly premium'],['sunfire_code','SunFire Confirmation Codes (one per line)','textarea'],
  ['effective_date','Effective date','date'],['sixty_day_date','Follow-up date','date'],
  ['enrollment_confirmation_number','Confirmation number'],['sep','SEP'],['agency','Agency'],
  ['writing_agent','Writing agent'],['hra','HRA completed'],['hra_date','HRA date','date'],

@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { availabilityPayload, mappedDisposition, csvReport, assertPrivateFieldsAbsent } from './payloads.js';
 import { postJson, signature } from './transport.js';
+import { createIxIntegration } from './ixUploads.js';
 import { createComplianceWorker } from './complianceUploads.js';
 import { deliveryDiagnostic } from './diagnostics.js';
 
@@ -40,7 +41,7 @@ export async function deliver(job, target, { send=postJson, env=process.env } = 
 }
 export function createWorker(db, { send, env=process.env, log=console.log }={}) {
   const rpc=async(name,params={})=>{const {data,error}=await db.rpc(name,params);if(error)throw Error(name+' failed');return data;};
-  const complianceTick=createComplianceWorker(db,{env,send,log});
+  const complianceTick=createComplianceWorker(db,{env,send,log,...createIxIntegration(db,{env,send})});
   let reportTick=0;
   return async function tick({schedule=true,deliveries=true}={}) {
     // Each stage fails independently; a vendor outage cannot prevent others' jobs.

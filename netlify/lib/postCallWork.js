@@ -534,6 +534,8 @@ async function handleWrapUp(supabase, payload, auth, tenant, tenantAgents, subsc
   if (!payload.call_outcome || outcome === "incomplete") throw new EvidenceError(400, "Select a Call Outcome before saving wrap-up.");
   const productError = ancillarySaleError(outcome, payload.ancillary_product_type);
   if (productError) throw new EvidenceError(400, productError);
+  if (['enrolled','enrolled_pending_verification'].includes(outcome) && /uhc|united\s*healthcare|aarp/i.test(payload.carrier_name || '')
+    && !safeText(payload.sunfire_code)) throw new EvidenceError(400, 'SunFire Confirmation Code is required for UHC enrollment.');
   const saved = await saveCheckpoint(supabase, payload, auth, tenant, { final: true });
   const callRecord = saved.callRecord;
   const now = new Date().toISOString();

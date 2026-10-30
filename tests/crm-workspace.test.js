@@ -291,7 +291,7 @@ test('the transcript player seeks before audio loads, tracks the active utteranc
 test('call filters reset pagination and follow exports while toolbar icons retain labels and recording access', async () => {
   const harness = hookHarness(), requests = [], exports = [], downloads = [], rows = [], getToken = async () => 'token';
   const Calls = componentSource('../src/components/callLog/CallLogTab.jsx', 'CallLogTab', {
-    ...harness.hooks, CallLogIconSelect: 'icon-select', ClipboardCheck: 'outcomes', callOutcomeLabel: value => value, UsersRound: 'agents', PhoneCall: 'phone', ArrowLeftRight: 'direction', CallDateRangePicker: 'date-picker', CallRecordings: 'call-recordings', FileAudio: 'file-audio', RefreshCw: 'refresh', Download: 'download', useAppAuth: () => ({ getToken }), useTenantConfig: () => ({ supabaseClient: {} }),
+    ...harness.hooks, ComplianceUploads: 'compliance-uploads', CallLogIconSelect: 'icon-select', ClipboardCheck: 'outcomes', callOutcomeLabel: value => value, UsersRound: 'agents', PhoneCall: 'phone', ArrowLeftRight: 'direction', CallDateRangePicker: 'date-picker', CallRecordings: 'call-recordings', FileAudio: 'file-audio', RefreshCw: 'refresh', Download: 'download', useAppAuth: () => ({ getToken }), useTenantConfig: () => ({ supabaseClient: {} }),
     useCallLogRows: filters => { requests.push(filters); return { rows, count: 51, loading: false, refresh() {} }; },
     CALL_OUTCOME_OPTIONS: [{ group: 'Enrollment Outcomes', options: [{ value: 'enrolled', label: 'Enrolled' }, { value: 'enrolled_pending_verification', label: 'Enrolled - Pending Verification' }] }],
     loadCallLogPages: async (_token, filters) => { exports.push(filters); return [{ call_outcome: filters.outcome }]; },
