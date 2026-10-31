@@ -79,9 +79,9 @@ export default function AgentAudioSettings() {
         onChange={event => setPreferences(value => ({ ...value, thresholdDb: Number(event.target.value) }))} />
     </label>
     <div className="tenant-settings-inline">
-      <button type="button" className="eg-key eg-key--primary billing-button" disabled={busy || callActive} onClick={() => void save(preferences)}>Save audio settings</button>
-      <button type="button" className="eg-key billing-button" disabled={busy || callActive || !preferences.enabled} onClick={() => void calibrate()}>Calibrate</button>
-      {busy && active.current ? <button type="button" className="eg-key billing-button" onClick={() => active.current?.cancel()}>Cancel</button> : null}
+      <button data-key-role="primary" type="button" className="eg-key eg-key--primary billing-button" disabled={busy || callActive} onClick={() => void save(preferences)}>Save audio settings</button>
+      <button data-key-role="secondary" type="button" className="eg-key billing-button" disabled={busy || callActive || !preferences.enabled} onClick={() => void calibrate()}>Calibrate</button>
+      {busy && active.current ? <button data-key-role="secondary" type="button" className="eg-key billing-button" onClick={() => active.current?.cancel()}>Cancel</button> : null}
     </div>
     <p className="tenant-settings-muted" role="status" aria-live="polite">{callActive ? 'Finish your call to change microphone settings.' : message}</p>
   </section>;

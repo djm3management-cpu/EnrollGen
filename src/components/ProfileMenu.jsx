@@ -33,7 +33,7 @@ export default function ProfileMenu() {
 
   return (
     <div ref={rootRef} className={`top-bar-profile${open ? ' is-open' : ''}`}>
-      <button ref={triggerRef} type="button" className="top-bar-profile-trigger"
+      <button data-key-role="secondary" ref={triggerRef} type="button" className="top-bar-profile-trigger"
         aria-label={`Account menu for ${displayName}`} aria-haspopup="menu" aria-expanded={open}
         onClick={() => setOpen(value => !value)}>
         <img src={user.imageUrl} alt="" className="top-bar-profile-avatar" />
@@ -42,7 +42,7 @@ export default function ProfileMenu() {
       </button>
       {open && (
         <div className="top-bar-profile-menu" role="menu" aria-label="Account">
-          <button type="button" role="menuitem" className="top-bar-profile-signout"
+          <button data-key-role="secondary" type="button" role="menuitem" className="top-bar-profile-signout"
             disabled={callProtected} title={callProtected ? 'Finish the call before signing out' : undefined}
             onClick={() => {
               if (callProtected || callContinuity.getSnapshot()) return;

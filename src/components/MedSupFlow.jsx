@@ -69,7 +69,7 @@ function Gate({ label, done, onDo, onUndo, disabled = false, disabledReason = ""
         justifyContent: "center",
       }}
     >
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="check flow-gate-check"
         onClick={done ? onUndo : onDo}
@@ -274,7 +274,7 @@ function SectionCard({ section }) {
           <div style={{ fontSize: 16, fontWeight: 700, color: "var(--status-live)" }}>
             Call Complete
           </div>
-          <button
+          <button data-key-role="secondary"
             onClick={() => dispatch({ type: "RESET" })}
             style={{
               marginTop: 12,
@@ -402,7 +402,7 @@ export default function MedSupFlow() {
             marginBottom: 10,
           }}
         >
-          <button
+          <button data-key-role="primary"
             className="primary script-start-call-button"
             onClick={() => dispatch({ type: "START_CALL" })}
             style={{

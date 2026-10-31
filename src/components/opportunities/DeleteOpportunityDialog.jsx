@@ -20,8 +20,8 @@ export default function DeleteOpportunityDialog({ row, data, onClose, onDeleted 
     </div>
     {error && <div className="ops-error" role="alert">{error}</div>}
     <div className="opps-actions">
-      <button type="button" className="contacts-mini-btn opps-danger" disabled={busy} onClick={() => { void confirm(); }}>{busy ? 'DELETING…' : 'DELETE OPPORTUNITY'}</button>
-      <button type="button" className="contacts-mini-btn" disabled={busy} onClick={onClose}>CANCEL</button>
+      <button data-key-role="secondary" type="button" className="contacts-mini-btn opps-danger" disabled={busy} onClick={() => { void confirm(); }}>{busy ? 'DELETING…' : 'DELETE OPPORTUNITY'}</button>
+      <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={busy} onClick={onClose}>CANCEL</button>
     </div>
   </OpportunityDialog>;
 }

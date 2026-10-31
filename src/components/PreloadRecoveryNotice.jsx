@@ -10,9 +10,9 @@ export default function PreloadRecoveryNotice({ callInProgress, onReload }) {
         ? "Some tools couldn't load. You can keep working and reload after your call."
         : "Some tools couldn't load. Reload when you're ready to try again."}</span>
       <div className="preload-recovery-notice__actions">
-        <button type="button" className="secondary" onClick={onReload} disabled={callInProgress}
+        <button data-key-role="secondary" type="button" className="secondary" onClick={onReload} disabled={callInProgress}
           title={callInProgress ? 'Finish your call before reloading' : 'Reload to try again'}>Reload</button>
-        <button type="button" className="secondary" onClick={preloadRecovery.dismiss}>Dismiss</button>
+        <button data-key-role="secondary" type="button" className="secondary" onClick={preloadRecovery.dismiss}>Dismiss</button>
       </div>
     </div>
   );

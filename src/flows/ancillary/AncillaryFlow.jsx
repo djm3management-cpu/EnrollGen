@@ -746,7 +746,7 @@ function ProductSelector() {
           {PRODUCT_ORDER.map((product) => {
             const meta = ANCILLARY_PRODUCT_META[product];
             return (
-              <button
+              <button data-key-role="secondary"
                 key={product}
                 type="button"
                 className="ancillary-product-button"
@@ -1290,7 +1290,7 @@ function GateToggle({ label, done, onDo, onUndo, disabled = false, disabledReaso
         justifyContent: "center",
       }}
     >
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="check flow-gate-check"
         onClick={done ? onUndo : onDo}
@@ -1481,7 +1481,7 @@ function CompletionPanel({ product, productMeta }) {
       <div style={{ fontSize: 16, fontWeight: 700, color: "var(--status-live)" }}>
         {productMeta.label} Flow Complete
       </div>
-      <button
+      <button data-key-role="secondary"
         type="button"
         onClick={() => dispatch({ type: "RESET_PRODUCT", product })}
         style={{
@@ -1519,7 +1519,7 @@ function AncillaryHeader({ product, productMeta }) {
         marginBottom: 14,
       }}
     >
-      <button
+      <button data-key-role="secondary"
         type="button"
         onClick={handleBack}
         title="Select ancillary product"
@@ -1595,7 +1595,7 @@ function StartCallGate({ product }) {
         marginBottom: 10,
       }}
     >
-      <button
+      <button data-key-role="primary"
         className="primary script-start-call-button"
         type="button"
         onClick={() => dispatch({ type: "START_CALL", product })}

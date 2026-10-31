@@ -14,7 +14,7 @@ export default function DtmfKeypad() {
 
   return (
     <div className="dtmf-keypad-wrap">
-      <button
+      <button data-key-role="secondary"
         type="button"
         className={`copilot-pill-button dtmf-toggle-btn${open ? " is-active" : ""}`}
         onClick={() => setOpen((current) => !current)}
@@ -26,7 +26,7 @@ export default function DtmfKeypad() {
       {open ? (
         <div className="dtmf-keypad-popover">
           {DIGITS.map((digit) => (
-            <button
+            <button data-key-role="secondary"
               key={digit}
               type="button"
               className="dtmf-keypad-key"

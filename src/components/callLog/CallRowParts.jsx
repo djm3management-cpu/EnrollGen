@@ -60,8 +60,8 @@ export function RecordingCell({ row, onPlay }) {
   }, [audioUrl, row, getToken]);
   if (!hasRecording) return <span className="contacts-muted">--</span>;
   return <span className="call-log-recording" onClick={event => event.stopPropagation()}>
-    <button type="button" className="contacts-mini-btn call-recording-icon" aria-label={audioUrl ? 'Hide recording player' : 'Play recording'} title="Play recording" onClick={() => onPlay ? onPlay() : handlePlay()} disabled={loading}>{audioUrl ? <Pause size={16} /> : <Play size={16} />}</button>
-    <button type="button" className="contacts-mini-btn call-recording-icon" aria-label="Download recording" title="Download WAV" onClick={() => handlePlay(true)} disabled={loading}><Download size={16} /></button>
+    <button data-key-role="icon" type="button" className="contacts-mini-btn call-recording-icon" aria-label={audioUrl ? 'Hide recording player' : 'Play recording'} title="Play recording" onClick={() => onPlay ? onPlay() : handlePlay()} disabled={loading}>{audioUrl ? <Pause size={16} /> : <Play size={16} />}</button>
+    <button data-key-role="icon" type="button" className="contacts-mini-btn call-recording-icon" aria-label="Download recording" title="Download WAV" onClick={() => handlePlay(true)} disabled={loading}><Download size={16} /></button>
     {error ? <span className="ops-error" role="alert">{error}</span> : null}
     {audioUrl ? <audio controls autoPlay preload="none" src={audioUrl.url} onError={() => {
       if (audioUrl.source === 'storage') void handlePlay(false, true);

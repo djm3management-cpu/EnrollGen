@@ -648,7 +648,7 @@ export default function DailyVerse() {
 
           {/* theme filter */}
           <div className="dv-dropdown-wrap" ref={themeMenuRef}>
-            <button
+            <button data-key-role="secondary"
               className={`dv-icon-btn${themeMenuOpen ? " is-active" : ""}`}
               onClick={() => setThemeMenuOpen((p) => !p)}
               title="Pick a verse by theme"
@@ -675,7 +675,7 @@ export default function DailyVerse() {
           </div>
 
           {/* parallel toggle */}
-          <button
+          <button data-key-role="icon"
             className={`dv-icon-btn${parallelMode ? " is-active" : ""}`}
             onClick={() => setParallelMode((p) => !p)}
             title="Parallel translation"
@@ -685,7 +685,7 @@ export default function DailyVerse() {
           </button>
 
           {/* favorites toggle */}
-          <button
+          <button data-key-role="icon"
             className={`dv-icon-btn${favoritesOpen ? " is-active" : ""}`}
             onClick={() => setFavoritesOpen((p) => !p)}
             title="Saved verses"
@@ -695,7 +695,7 @@ export default function DailyVerse() {
 
           {/* translation picker */}
           <div className="dv-dropdown-wrap" ref={dropdownRef}>
-            <button
+            <button data-key-role="secondary"
               className="dv-translation-btn"
               onClick={() => setDropdownOpen((p) => !p)}
               title={currentTrans?.full}
@@ -725,7 +725,7 @@ export default function DailyVerse() {
           </div>
 
           {/* refresh */}
-          <button
+          <button data-key-role="secondary"
             className="dv-refresh"
             onClick={() => fetchVerse()}
             disabled={loading}
@@ -756,7 +756,7 @@ export default function DailyVerse() {
                 return (
                   <li key={fav.reference + fav.savedAt} className="dv-favorites-item">
                     <div className="dv-favorites-main">
-                      <button
+                      <button data-key-role="secondary"
                         type="button"
                         className="dv-favorites-load"
                         onClick={() => loadFavorite(fav)}
@@ -776,14 +776,14 @@ export default function DailyVerse() {
                             autoFocus
                           />
                           <div className="dv-favorites-note-actions">
-                            <button
+                            <button data-key-role="primary"
                               type="button"
                               className="dv-favorites-note-btn is-save"
                               onClick={() => saveNote(fav)}
                             >
                               <SaveIcon size={11} /> Save
                             </button>
-                            <button
+                            <button data-key-role="secondary"
                               type="button"
                               className="dv-favorites-note-btn"
                               onClick={cancelEditingNote}
@@ -798,7 +798,7 @@ export default function DailyVerse() {
                     </div>
 
                     <div className="dv-favorites-item-actions">
-                      <button
+                      <button data-key-role="secondary"
                         type="button"
                         className="dv-favorites-mini"
                         onClick={() => startEditingNote(fav)}
@@ -807,7 +807,7 @@ export default function DailyVerse() {
                       >
                         <PenLine size={11} />
                       </button>
-                      <button
+                      <button data-key-role="secondary"
                         type="button"
                         className="dv-favorites-mini is-danger"
                         onClick={() => removeFavorite(fav)}
@@ -851,7 +851,7 @@ export default function DailyVerse() {
                   <ArrowLeftRight size={11} />
                   <span>Parallel</span>
                   <div className="dv-dropdown-wrap" ref={parallelDropdownRef}>
-                    <button
+                    <button data-key-role="secondary"
                       className="dv-translation-btn dv-translation-btn--mini"
                       onClick={() => setParallelDropdownOpen((p) => !p)}
                       title={currentParallelTrans?.full}
@@ -966,7 +966,7 @@ export default function DailyVerse() {
 
           {/* action row */}
           <div className="dv-actions">
-            <button
+            <button data-key-role="secondary"
               type="button"
               className={`dv-action${speaking ? " is-active" : ""}`}
               onClick={handleSpeak}
@@ -975,7 +975,7 @@ export default function DailyVerse() {
               {speaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
               <span>{speaking ? "Stop" : "Listen"}</span>
             </button>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className={`dv-action${copied ? " is-done" : ""}`}
               onClick={handleCopy}
@@ -984,7 +984,7 @@ export default function DailyVerse() {
               {copied ? <Check size={12} /> : <Copy size={12} />}
               <span>{copied ? "Copied" : "Copy"}</span>
             </button>
-            <button
+            <button data-key-role="icon"
               type="button"
               className={`dv-action${
                 imageStatus === "copied" || imageStatus === "downloaded" ? " is-done" : ""
@@ -1010,7 +1010,7 @@ export default function DailyVerse() {
                   : "Card"}
               </span>
             </button>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className={`dv-action${isFavorited ? " is-active" : ""}`}
               onClick={handleFavoriteToggle}
@@ -1022,7 +1022,7 @@ export default function DailyVerse() {
               />
               <span>{isFavorited ? "Saved" : "Save"}</span>
             </button>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className={`dv-action${contextOpen ? " is-active" : ""}`}
               onClick={() => setContextOpen((p) => !p)}
@@ -1031,7 +1031,7 @@ export default function DailyVerse() {
               <Layers size={12} />
               <span>Context</span>
             </button>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className={`dv-action${crossRefsOpen ? " is-active" : ""}`}
               onClick={() => setCrossRefsOpen((p) => !p)}
@@ -1077,7 +1077,7 @@ export default function DailyVerse() {
                 <ul className="dv-crossrefs-list">
                   {crossRefs.map((ref) => (
                     <li key={ref}>
-                      <button
+                      <button data-key-role="secondary"
                         type="button"
                         className="dv-crossrefs-item"
                         onClick={() => loadReference(ref)}
@@ -1111,7 +1111,7 @@ export default function DailyVerse() {
 
           {/* ── commentary toggle ── */}
           {bookData && (
-            <button
+            <button data-key-role="secondary"
               className={`dv-commentary-toggle${
                 commentaryOpen ? " open" : ""
               }`}

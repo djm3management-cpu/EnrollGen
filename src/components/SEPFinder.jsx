@@ -88,7 +88,7 @@ export default function SEPFinder({ zip }) {
 
       {!loading && hasResult ? (
         <div className="sep-finder-trigger-actions">
-          <button
+          <button data-key-role="secondary"
             type="button"
             className="sep-finder-trigger-btn"
             onClick={() => setShowSepModal(true)}
@@ -97,7 +97,7 @@ export default function SEPFinder({ zip }) {
             Show Available SEPs
             <span className="sep-finder-trigger-zip">ZIP {result?.zip || normalizedZip}</span>
           </button>
-          <button
+          <button data-key-role="secondary"
             type="button"
             className="sep-finder-trigger-refresh"
             onClick={runLookup}

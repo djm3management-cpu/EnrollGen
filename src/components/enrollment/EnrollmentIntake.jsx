@@ -91,7 +91,7 @@ export default function EnrollmentIntake({callId,onClose,onSaved}){
      })}</div>
     </section>;
    })}
-   <button type="submit" className="contacts-mini-btn" disabled={busy||!contactId}>{busy?'Saving…':'Save completed intake'}</button>
+   <button data-key-role="secondary" type="submit" className="contacts-mini-btn" disabled={busy||!contactId}>{busy?'Saving…':'Save completed intake'}</button>
   </form>}
  </OpportunityDialog>;
 }

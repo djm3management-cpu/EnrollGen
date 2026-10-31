@@ -73,7 +73,7 @@ function EnrollmentExtras({ state, dispatch, disabled }) {
 
       {!enrollOk ? <PreEnrollCheck state={state} /> : null}
 
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="secondary no-enrollment-wrapup-btn"
         disabled={disabled || enrollOk}

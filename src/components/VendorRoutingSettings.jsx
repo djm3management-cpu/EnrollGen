@@ -60,8 +60,8 @@ export default function VendorRoutingSettings({ getToken }) {
       <p className="tenant-settings-muted">{data.report_token_updated_at ? `Active · rotated ${new Date(data.report_token_updated_at).toLocaleString()}` : 'No active link'}</p>
       {reportLink && <label>New link — copy now <input readOnly aria-label="New Paragon report link" value={`${window.location.origin}${reportLink}`} onFocus={event => event.target.select()} /></label>}
       <div className="tenant-settings-inline">
-        <button className="billing-button is-primary" type="button" disabled={saving} onClick={() => save({action:'report_token_rotate'})}>{data.report_token_updated_at ? 'Rotate report link' : 'Create report link'}</button>
-        {data.report_token_updated_at && <button className="billing-button" type="button" disabled={saving} onClick={() => save({action:'report_token_revoke'})}>Revoke report link</button>}
+        <button data-key-role="secondary" className="billing-button is-primary" type="button" disabled={saving} onClick={() => save({action:'report_token_rotate'})}>{data.report_token_updated_at ? 'Rotate report link' : 'Create report link'}</button>
+        {data.report_token_updated_at && <button data-key-role="destructive" className="billing-button" type="button" disabled={saving} onClick={() => save({action:'report_token_revoke'})}>Revoke report link</button>}
       </div>
     </div>
     {staleAgents.length>0 && <div className="billing-alert" role="alert">
@@ -85,7 +85,7 @@ export default function VendorRoutingSettings({ getToken }) {
       })}
       <div className="tenant-settings-inline">
         <label>Rate per billable call ($) <input type="number" min="0.01" step="0.01" value={controls?.paragon_rate ?? 28} disabled={!billing_ready || saving} onChange={event=>setData(current=>({...current,controls:{...current.controls,paragon_rate:Number(event.target.value)}}))} /></label>
-        <button className="billing-button is-primary" type="button" disabled={!billing_ready || saving} onClick={()=>save({action:'controls',staffed_hours:controls.staffed_hours,rate:Number(controls.paragon_rate)})}>Save hours and billing</button>
+        <button data-key-role="primary" className="billing-button is-primary" type="button" disabled={!billing_ready || saving} onClick={()=>save({action:'controls',staffed_hours:controls.staffed_hours,rate:Number(controls.paragon_rate)})}>Save hours and billing</button>
       </div>
     </div>
     <div className="vendor-routing__config">
@@ -94,7 +94,7 @@ export default function VendorRoutingSettings({ getToken }) {
       <label>Allowed states <input value={config.allowed_states.join(', ')} onChange={event => updateConfig('allowed_states',event.target.value.toUpperCase().split(/[,\s]+/).filter(Boolean))} /></label>
       <label>Required carriers <input value={config.required_carriers.join(', ')} onChange={event => updateConfig('required_carriers',event.target.value.toLowerCase().split(/[,\s]+/).filter(Boolean))} /></label>
       <label>Critical carriers <input value={config.critical_carriers.join(', ')} onChange={event => updateConfig('critical_carriers',event.target.value.toLowerCase().split(/[,\s]+/).filter(Boolean))} /></label>
-      <button className="billing-button is-primary" type="button" disabled={saving} onClick={saveConfig}>Save routing settings</button>
+      <button data-key-role="primary" className="billing-button is-primary" type="button" disabled={saving} onClick={saveConfig}>Save routing settings</button>
     </div>
     <div className="vendor-routing__age">
       {agents.map(agent => {
@@ -110,12 +110,12 @@ export default function VendorRoutingSettings({ getToken }) {
         <td>{agents.find(agent => agent.id===row.agent_id)?.name || row.agent_id}</td><td>{row.state}</td>
         {CARRIERS.map(carrier => <td key={carrier}><input aria-label={`${row.state} ${carrier}`} type="checkbox" checked={row[carrier]} disabled={saving} onChange={() => saveRow(row,true,CARRIERS.filter(name => name===carrier ? !row[name] : row[name]))} /></td>)}
         <td>{new Date(row.updated_at).toLocaleDateString()}</td>
-        <td><button type="button" className="billing-button" disabled={saving} onClick={() => saveRow(row,false)}>Remove</button></td>
+        <td><button data-key-role="destructive" type="button" className="billing-button" disabled={saving} onClick={() => saveRow(row,false)}>Remove</button></td>
       </tr>)}</tbody></table></div>
     <div className="tenant-settings-inline">
       <select aria-label="Agent" value={newAgent} onChange={event => setNewAgent(event.target.value)}><option value="">Choose agent</option>{agents.map(agent => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select>
       <select aria-label="State" value={newState} onChange={event => setNewState(event.target.value)}><option value="">Choose state</option>{config.allowed_states.map(state => <option key={state} value={state}>{state}</option>)}</select>
-      <button className="billing-button" type="button" disabled={saving || !newAgent || !newState || matrix.some(row => row.agent_id===newAgent && row.state===newState)} onClick={() => save({ action:'matrix',agent_id:newAgent,state:newState,licensed:true,carriers:[] })}>Add licensed state</button>
+      <button data-key-role="secondary" className="billing-button" type="button" disabled={saving || !newAgent || !newState || matrix.some(row => row.agent_id===newAgent && row.state===newState)} onClick={() => save({ action:'matrix',agent_id:newAgent,state:newState,licensed:true,carriers:[] })}>Add licensed state</button>
     </div>
   </section>;
 }

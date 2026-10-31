@@ -111,3 +111,28 @@ html:not(.dark) #root :is(.operations-tab) {--ops-bg:var(--bg-surface) !importan
 html:not(.dark) #root :is(.flow-shell, .flow-main, .flow, .card, .active-card, .script-box, .flow-script-card) {--script-term-bg:var(--bg-surface) !important;--script-term-bg-soft:var(--bg-surface) !important;--script-term-row:var(--bg-surface) !important;--script-term-hover:var(--bg-surface) !important;--script-term-border:var(--chart-grid) !important;--script-term-border-bright:var(--chart-grid) !important;--script-term-amber:var(--text-secondary) !important;--script-term-amber-bright:var(--text-secondary) !important;--script-term-yellow:var(--text-secondary) !important;--script-term-cyan:var(--text-secondary) !important;--script-term-cyan-bright:var(--text-secondary) !important;--script-term-blue:var(--accent) !important;--script-term-green:var(--success) !important;--script-term-red:var(--accent) !important;--script-term-muted:var(--text-secondary) !important;}
 html:not(.dark) #root :is(.flow-quick-script-dialog) {--script-term-bg:var(--bg-surface) !important;--script-term-amber:var(--text-secondary) !important;--script-term-yellow:var(--text-secondary) !important;--script-term-border:var(--chart-grid) !important;--script-term-cyan:var(--text-secondary) !important;--script-term-red:var(--accent) !important;--script-term-green:var(--success) !important;--script-term-bg-soft:var(--bg-surface) !important;}
 html:not(.dark) #root :is(.left-rail-panel-shell.left-rail-panel-shell--sep-qualifier) {--sep-term-bg:var(--bg-surface) !important;--sep-term-bg-soft:var(--bg-surface) !important;--sep-term-row:var(--bg-surface) !important;--sep-term-hover:var(--bg-surface) !important;--sep-term-border:var(--chart-grid) !important;--sep-term-border-bright:var(--chart-grid) !important;--sep-term-amber:var(--text-secondary) !important;--sep-term-amber-bright:var(--text-secondary) !important;--sep-term-yellow:var(--text-secondary) !important;--sep-term-cyan:var(--text-secondary) !important;--sep-term-cyan-bright:var(--text-secondary) !important;--sep-term-blue:var(--accent) !important;--sep-term-blue-bright:var(--accent) !important;--sep-term-red:var(--accent) !important;--sep-term-red-dark:var(--accent) !important;--sep-term-red-bright:var(--accent) !important;--sep-term-green:var(--success) !important;--sep-term-muted:var(--text-secondary) !important;--sep-term-white:#FFFFFF !important;}
+
+#app-toast-stack {
+ position:fixed; top:112px; right:16px; z-index:130;
+ width:min(420px,calc(100vw - 32px)); display:flex; flex-direction:column; gap:8px;
+ max-height:calc(100vh - 140px); overflow:auto; pointer-events:none;
+}
+.app-toast {
+ display:flex; align-items:flex-start; gap:8px; padding:12px;
+ width:100%; max-width:420px; border:0; border-radius:4px;
+ background:var(--bg-elevated); color:var(--info); pointer-events:auto;
+ box-shadow:0 4px 16px rgba(15,23,42,.08); font:500 12px/1.5 var(--font-primary);
+}
+.app-toast--error { color:var(--danger); }
+.app-toast--warning { color:var(--warning); }
+.app-toast--success { color:var(--success); }
+.app-toast__dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex:none; margin-top:6px; }
+.app-toast__content { flex:1; min-width:0; overflow-wrap:anywhere; }
+.app-toast__close { border:0; background:transparent; box-shadow:none; color:inherit; padding:0 4px; cursor:pointer; font:inherit; }
+.app-toast__close:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+#root button[data-key-role="primary"] { --key-top:var(--key-primary-top); --key-bottom:var(--key-primary-bottom); --key-text:var(--key-primary-text); }
+#root button[data-key-role="destructive"] { --key-top:var(--key-danger-top); --key-bottom:var(--key-danger-bottom); --key-text:#FFFFFF; }
+#root button[data-key-role="go"] { --key-top:var(--key-go-top); --key-bottom:var(--key-go-bottom); --key-text:var(--key-go-text); }
+#root button[data-key-role="icon"]:not(:where(.top-bar-shell *)) { background:transparent !important; box-shadow:none !important; border:0 !important; color:var(--text-secondary) !important; }
+#root button[data-key-role="icon"]:not(:where(.top-bar-shell *)):hover { background:var(--focus-glow) !important; color:var(--accent) !important; }
+#root .top-bar-shell :is(.top-bar-settings-button,.theme-toggle,.phone-dd__trigger) { width:32px; height:28px; display:inline-flex; justify-content:center; align-items:center; }

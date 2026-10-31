@@ -411,7 +411,7 @@ function DisclosureCallout({ text }) {
       >
         "{text}"
       </div>
-      <button
+      <button data-key-role="secondary"
         onClick={handleCopy}
         style={{
           position: "absolute",
@@ -618,7 +618,7 @@ function Accordion({ title, defaultOpen, children }) {
 
   return (
     <section className={`at-training-section${open ? " is-open" : ""}`}>
-      <button
+      <button data-key-role="secondary"
         className="at-training-section-toggle"
         onClick={() => setOpen((v) => !v)}
         type="button"
@@ -728,7 +728,7 @@ export default function SEPGuide2026() {
             {parsed.states.map((state) => {
               const active = selectedState === state.abbrev;
               return (
-                <button
+                <button data-key-role="secondary"
                   key={state.abbrev}
                   onClick={() => setSelectedState(active ? null : state.abbrev)}
                   type="button"

@@ -298,7 +298,7 @@ function SEPReference({ script }) {
 
 function ToolCard({ tool, onOpen }) {
   return (
-    <button
+    <button data-key-role="secondary"
       className="at-tool-card"
       onClick={() => onOpen(tool.id)}
       type="button"
@@ -341,7 +341,7 @@ function ToolModal({ tool, onClose, children }) {
         aria-modal="true"
         aria-label={tool.title}
       >
-        <button className="at-modal-close" onClick={onClose} type="button" aria-label="Close">
+        <button data-key-role="icon" className="at-modal-close" onClick={onClose} type="button" aria-label="Close">
           <X size={18} />
         </button>
 
@@ -491,7 +491,7 @@ function CitizenshipDocsReference({
     return (
       <div className="at-doc-shell">
         <div className="at-doc-detail-toolbar">
-          <button className="at-doc-back" onClick={onBack} type="button">
+          <button data-key-role="secondary" className="at-doc-back" onClick={onBack} type="button">
             Back
           </button>
           <div>
@@ -564,7 +564,7 @@ function CitizenshipDocsReference({
 
       <div className="at-doc-status-tabs" role="tablist" aria-label="Citizenship status">
         {statuses.map((status) => (
-          <button
+          <button data-key-role="secondary"
             key={status.status}
             className={`at-doc-status-btn${status.status === currentStatus.status ? " is-active" : ""}`}
             onClick={() => onStatusChange(status.status)}
@@ -591,7 +591,7 @@ function CitizenshipDocsReference({
       <div className="at-doc-section-head">Document Types</div>
       <div className="at-doc-grid">
         {currentStatus.documentTypes.map((documentType) => (
-          <button
+          <button data-key-role="secondary"
             key={documentType.type}
             className="at-doc-card"
             onClick={() => onSelectDocType(documentType.type)}

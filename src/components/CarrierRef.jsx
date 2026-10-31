@@ -108,7 +108,7 @@ function SegmentSection({ segId, color, label, stateCode, data, startOpen }) {
         overflow: "hidden",
       }}
     >
-      <button
+      <button data-key-role="secondary"
         onClick={() => setOpen(!open)}
         style={{
           width: "100%",
@@ -317,7 +317,7 @@ function StateSidebar({ code, onClose, acaIssuers, states }) {
             {data.name}
           </h3>
         </div>
-        <button
+        <button data-key-role="secondary"
           onClick={onClose}
           style={{
             background: "color-mix(in srgb, var(--text-primary) 5%, transparent)",
@@ -702,7 +702,7 @@ export default function CarrierRef() {
 
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {MARKET_SEGMENTS.map((seg) => (
-                <button
+                <button data-key-role="secondary"
                   key={seg.id}
                   onClick={() =>
                     setActiveSeg(activeSeg === seg.id ? null : seg.id)
@@ -1112,7 +1112,7 @@ export default function CarrierRef() {
                   ACA Market Data
                 </h3>
               </div>
-              <button
+              <button data-key-role="secondary"
                 onClick={() => setSelected(null)}
                 style={{
                   background: "color-mix(in srgb, var(--text-primary) 5%, transparent)", border: "1px solid var(--border-default)",

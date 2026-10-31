@@ -190,7 +190,7 @@ function EditableCell({ row, field, allowed, saving, saved, onSave }) {
 function SortButton({ label, sortKey, agentName, sort, onSort }) {
   const active = sort.key === sortKey && sort.agentName === agentName;
   return (
-    <button
+    <button data-key-role="secondary"
       type="button"
       className={active ? "is-active" : ""}
       onClick={() => onSort(sortKey, agentName)}
@@ -491,7 +491,7 @@ export default function RTSTab() {
       {error ? (
         <div className="rts-error" role="alert">
           <span>{error}</span>
-          <button type="button" onClick={loadRows}>Retry</button>
+          <button data-key-role="secondary" type="button" onClick={loadRows}>Retry</button>
         </div>
       ) : null}
 
@@ -557,7 +557,7 @@ export default function RTSTab() {
               <tbody key={channel}>
                 <tr className="rts-channel-row">
                   <th colSpan={2 + tableAgents.length * 4}>
-                    <button
+                    <button data-key-role="secondary"
                       type="button"
                       onClick={() => setCollapsed((current) => ({ ...current, [channel]: !current[channel] }))}
                     >

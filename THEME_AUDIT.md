@@ -7490,3 +7490,405 @@ The overall refresh is **not complete**. Broad style coverage has been added, bu
 
 ## Revision — phase 2 roles
 White local script/rail/operations terminal palettes now resolve neutral labels/data instead of orange. Script bars explicitly use blue/white; reading text uses primary text, cues secondary text. Genuine warning/pending semantic tokens remain amber. Dashboard data labels are neutral. Source scan includes components and flows; protected map colors, emoji labels, and exported PDF score colors are retained.
+
+## Button role classification — revision
+
+| File:line | Label/class evidence | Role |
+|---|---|---|
+| src/App.jsx:258 | className="flow-select-trigger" | secondary |
+| src/App.jsx:276 | className={`flow-select-option${active ? " is-active" : ""}`} | secondary |
+| src/App.jsx:300 | className="flow-select-option" | secondary |
+| src/App.jsx:382 | Retry | secondary |
+| src/App.jsx:835 | className="left-rail-handle left-rail-handle-launcher" | secondary |
+| src/App.jsx:917 | className="top-panel-close" | icon |
+| src/App.jsx:951 | Refresh and return to the main page | preserve |
+| src/App.jsx:965 | className={`top-bar-tab${activeTabId === tab.id ? " is-active" : ""}`} | preserve |
+| src/App.jsx:1001 | className="top-bar-settings-button top-bar-theme-button" | secondary |
+| src/App.jsx:1011 | className={`top-bar-settings-button${openPanel === "settings" ? " is-active" : ""}`} | secondary |
+| src/App.jsx:1034 | RETURN TO CALL | secondary |
+| src/App.jsx:1364 | Sign in | secondary |
+| src/components/ACAIntelligence.jsx:335 |  | secondary |
+| src/components/ACAIntelligence.jsx:398 | REJECT | secondary |
+| src/components/ACAIntelligence.jsx:406 | APPROVE | secondary |
+| src/components/AgentAudioSettings.jsx:82 | Save audio settings | primary |
+| src/components/AgentAudioSettings.jsx:83 | Calibrate | secondary |
+| src/components/AgentAudioSettings.jsx:84 | Cancel | secondary |
+| src/components/AgentAvailabilityToggle.jsx:51 | className={`agent-availability-btn${ option.value === selectedStatus ? " is-active" : "" }`} | secondary |
+| src/components/AgentDashboard.jsx:167 | ↗ | secondary |
+| src/components/AgentDashboard.jsx:167 | Refresh | secondary |
+| src/components/AgentDashboard.jsx:179 |  | secondary |
+| src/components/AgentStatusLog.jsx:68 | Refresh log | secondary |
+| src/components/AgentStatusLog.jsx:80 | Previous | secondary |
+| src/components/AgentStatusLog.jsx:80 | Next | secondary |
+| src/components/AgentTools.jsx:301 | className="at-tool-card" | secondary |
+| src/components/AgentTools.jsx:344 | Close | icon |
+| src/components/AgentTools.jsx:494 | Back | secondary |
+| src/components/AgentTools.jsx:567 | className={`at-doc-status-btn${status.status === currentStatus.status ? " is-active" : ""}`} | secondary |
+| src/components/AgentTools.jsx:594 | className="at-doc-card" | secondary |
+| src/components/AgentTools.jsx:639 | className={`at-filter-tab${activeSection === section.id ? " is-active" : ""}`} | preserve |
+| src/components/AgentToolsProductQuiz.jsx:103 | Retake Quiz | secondary |
+| src/components/AgentToolsProductQuiz.jsx:177 | className={`at-quiz-choice${stateClass}`} | secondary |
+| src/components/AgentToolsProductQuiz.jsx:202 | className="at-quiz-next-btn" | secondary |
+| src/components/AppToast.jsx:53 | × | secondary |
+| src/components/AskCopilotMini.jsx:100 | Send | secondary |
+| src/components/AvailabilityStrip.jsx:71 | className="availability-strip" | secondary |
+| src/components/AvailabilityStrip.jsx:95 | className={`availability-menu__option${active ? " is-active" : ""}`} | secondary |
+| src/components/BillingSettings.jsx:110 | className="billing-icon-button" | icon |
+| src/components/BillingSettings.jsx:170 | Manage Billing | secondary |
+| src/components/BillingSettings.jsx:188 | className="billing-button" | secondary |
+| src/components/BillingSettings.jsx:208 | className="billing-button is-primary" | secondary |
+| src/components/CarrierQuickRef.jsx:80 | className={`carrier-quickref-filter-pill${ productFilter === filter.id ? " is-active" : "" }`} | secondary |
+| src/components/CarrierQuickRef.jsx:136 | className="carrier-quickref-plan-trigger" | secondary |
+| src/components/CarrierRef.jsx:111 |  | secondary |
+| src/components/CarrierRef.jsx:320 | ✕ | secondary |
+| src/components/CarrierRef.jsx:705 |  | secondary |
+| src/components/CarrierRef.jsx:1115 | ✕ | secondary |
+| src/components/CenterTimerBar.jsx:28 | className={`eg-audio-share-button${audioSharing ? " is-active" : ""}`} | secondary |
+| src/components/ClientQuickScripts.jsx:165 | className="client-quick-script-panel__close" | icon |
+| src/components/ClientQuickScripts.jsx:206 | className={`client-quick-script-branch-button client-quick-script-branch-button--${branch.id}${ activeBranchId === branch.id ? " i | secondary |
+| src/components/CompactCopilotRail.jsx:86 | className={`copilot-pill-button copilot-pill-button--listen${ listening ? " is-listening" : "" }`} | secondary |
+| src/components/CompactCopilotRail.jsx:98 | CLEAR | secondary |
+| src/components/CompactCopilotRail.jsx:104 | className="copilot-pill-button copilot-pill-button--analyze" | secondary |
+| src/components/CompactCopilotRail.jsx:252 | Expand co-pilot rail | secondary |
+| src/components/CompactCopilotRail.jsx:271 | Minimize co-pilot rail | secondary |
+| src/components/CompactCopilotRail.jsx:287 | className="right-rail-toggle" | secondary |
+| src/components/CompactCopilotRail.jsx:311 | Minimize co-pilot rail | secondary |
+| src/components/ComplianceDashboard.jsx:676 |  | secondary |
+| src/components/ComplianceIntentAccordion.jsx:58 | className="ops-intent-accordion-trigger" | secondary |
+| src/components/DailyVerse.jsx:651 | Pick by theme | secondary |
+| src/components/DailyVerse.jsx:678 | className={`dv-icon-btn${parallelMode ? " is-active" : ""}`} | icon |
+| src/components/DailyVerse.jsx:688 | className={`dv-icon-btn${favoritesOpen ? " is-active" : ""}`} | icon |
+| src/components/DailyVerse.jsx:698 | className="dv-translation-btn" | secondary |
+| src/components/DailyVerse.jsx:728 | Refresh verse | secondary |
+| src/components/DailyVerse.jsx:759 | className="dv-favorites-load" | secondary |
+| src/components/DailyVerse.jsx:779 | Save | primary |
+| src/components/DailyVerse.jsx:786 | Cancel | secondary |
+| src/components/DailyVerse.jsx:801 | className="dv-favorites-mini" | secondary |
+| src/components/DailyVerse.jsx:810 | Remove | secondary |
+| src/components/DailyVerse.jsx:854 | className="dv-translation-btn dv-translation-btn--mini" | secondary |
+| src/components/DailyVerse.jsx:969 | className={`dv-action${speaking ? " is-active" : ""}`} | secondary |
+| src/components/DailyVerse.jsx:978 | className={`dv-action${copied ? " is-done" : ""}`} | secondary |
+| src/components/DailyVerse.jsx:987 | className={`dv-action${ imageStatus === "copied" // imageStatus === "downloaded" ? " is-done" : "" }${imageGenerating ? " is-loadi | icon |
+| src/components/DailyVerse.jsx:1013 | className={`dv-action${isFavorited ? " is-active" : ""}`} | secondary |
+| src/components/DailyVerse.jsx:1025 | className={`dv-action${contextOpen ? " is-active" : ""}`} | secondary |
+| src/components/DailyVerse.jsx:1034 | className={`dv-action${crossRefsOpen ? " is-active" : ""}`} | secondary |
+| src/components/DailyVerse.jsx:1080 | className="dv-crossrefs-item" | secondary |
+| src/components/DailyVerse.jsx:1114 | className={`dv-commentary-toggle${ commentaryOpen ? " open" : "" }`} | secondary |
+| src/components/DtmfKeypad.jsx:17 | Toggle keypad | secondary |
+| src/components/DtmfKeypad.jsx:29 | className="dtmf-keypad-key" | secondary |
+| src/components/MAScriptBranches.jsx:59 | className="script-start-call-button" | primary |
+| src/components/MAScriptBranches.jsx:72 | className={`script-start-call-button ma-script-option${node.selected === option.value ? " is-active" : ""}`} | primary |
+| src/components/MedSupFlow.jsx:72 | className="check flow-gate-check" | secondary |
+| src/components/MedSupFlow.jsx:277 | New Call | secondary |
+| src/components/MedSupFlow.jsx:405 | START | primary |
+| src/components/MiniLiveTranscript.jsx:209 | Jump to latest | secondary |
+| src/components/Onboarding.jsx:205 | className="billing-icon-button" | icon |
+| src/components/Onboarding.jsx:215 | Add Agent | primary |
+| src/components/Onboarding.jsx:259 | Start Starter | primary |
+| src/components/Onboarding.jsx:269 | Start Pro | primary |
+| src/components/Onboarding.jsx:274 | Save setup and choose billing later | primary |
+| src/components/Onboarding.jsx:285 | Enter EnrollGen | secondary |
+| src/components/Onboarding.jsx:294 | Back | secondary |
+| src/components/Onboarding.jsx:302 | Continue | secondary |
+| src/components/PlaybookModal.jsx:13 | Close Private Plan Playbook | icon |
+| src/components/PreloadRecoveryNotice.jsx:13 | Reload | secondary |
+| src/components/PreloadRecoveryNotice.jsx:15 | Dismiss | secondary |
+| src/components/PrivatePlanCard.jsx:5 | className={`private-plan-card${selected ? " is-selected" : ""}`} | secondary |
+| src/components/PrivatePlanPanel.jsx:13 | Open Full Playbook | secondary |
+| src/components/ProfileMenu.jsx:36 | className="top-bar-profile-trigger" | secondary |
+| src/components/ProfileMenu.jsx:45 | Sign Out | secondary |
+| src/components/ProgressDots.jsx:18 | className={`progress-dot is-${status}${isActive ? " is-active" : ""}`} | secondary |
+| src/components/RTSIngestionPanel.jsx:295 | Import RTS | secondary |
+| src/components/RTSIngestionPanel.jsx:313 | Close RTS ingestion | icon |
+| src/components/RTSIngestionPanel.jsx:347 | Select file | secondary |
+| src/components/RTSIngestionPanel.jsx:562 | Start over | primary |
+| src/components/RTSIngestionPanel.jsx:565 | className="rts-primary-button" | secondary |
+| src/components/RTSIngestionPanel.jsx:590 | Done | secondary |
+| src/components/RTSTab.jsx:170 | className={`rts-cell-value${allowed ? " is-editable" : " is-locked"}${ saving ? " is-saving" : "" }${saved ? " is-saved" : ""}`} | preserve |
+| src/components/RTSTab.jsx:193 | className={active ? "is-active" : ""} | secondary |
+| src/components/RTSTab.jsx:494 | Retry | secondary |
+| src/components/RTSTab.jsx:560 |  | secondary |
+| src/components/SEPFinder.jsx:91 | Show Available SEPs | secondary |
+| src/components/SEPFinder.jsx:100 | Refresh SEP lookup | secondary |
+| src/components/SEPGuide2026.jsx:414 |  | secondary |
+| src/components/SEPGuide2026.jsx:621 | className="at-training-section-toggle" | secondary |
+| src/components/SEPGuide2026.jsx:731 |  | secondary |
+| src/components/SEPLookup.jsx:98 | Reset | secondary |
+| src/components/SEPLookup.jsx:162 | Plans ( ) | preserve |
+| src/components/SEPLookup.jsx:170 | SEPs ( ) | preserve |
+| src/components/SEPLookup.jsx:257 | Clear | secondary |
+| src/components/SEPResultsModal.jsx:42 | × | secondary |
+| src/components/SEPResultsModal.jsx:64 | Close | secondary |
+| src/components/SEPResultsPanel.jsx:162 | Refresh SEP lookup | secondary |
+| src/components/SEPResultsPanel.jsx:226 | className="sep-finder-card-detail-trigger" | secondary |
+| src/components/ScriptEditor.jsx:219 | Revert to Default | secondary |
+| src/components/ScriptEditor.jsx:222 | className="primary" | secondary |
+| src/components/ScriptEditor.jsx:230 | className={flow === id ? "is-active" : ""} | secondary |
+| src/components/ScriptEditor.jsx:260 |  | secondary |
+| src/components/ScriptEditor.jsx:263 |  | secondary |
+| src/components/ScriptEditor.jsx:266 |  | secondary |
+| src/components/ScriptEditor.jsx:325 | Add Section | secondary |
+| src/components/ScriptFlow.jsx:222 | className={`copilot-pill-button copilot-pill-button--listen${ listening ? " is-listening" : "" }`} | secondary |
+| src/components/ScriptFlow.jsx:239 | CLEAR | secondary |
+| src/components/ScriptFlow.jsx:245 | className="copilot-pill-button copilot-pill-button--analyze" | secondary |
+| src/components/ScriptFlow.jsx:386 | Expand Co-Pilot rail | secondary |
+| src/components/ScriptFlow.jsx:408 | Minimize Co-Pilot rail | secondary |
+| src/components/ScriptFlow.jsx:426 | className="right-rail-toggle" | secondary |
+| src/components/ScriptFlow.jsx:448 | Minimize Co-Pilot rail | secondary |
+| src/components/ScriptFlow.jsx:1057 | className="script-start-call-button" | primary |
+| src/components/ScriptFlow.jsx:1073 | Go to previous card | secondary |
+| src/components/ScriptSection.jsx:76 | No Enrollment - Wrap Up | secondary |
+| src/components/SessionLockOverlay.jsx:52 | I've verified my identity — continue | secondary |
+| src/components/SessionSummary.jsx:626 | Copy Summary | secondary |
+| src/components/SessionSummary.jsx:629 | className="btn-clay" | secondary |
+| src/components/SharedUI.jsx:72 | className={`copy-btn script-action-btn ${isEditing ? "is-active" : ""}`} | secondary |
+| src/components/SharedUI.jsx:85 | Copy script text | secondary |
+| src/components/SharedUI.jsx:199 | className="primary section-complete-btn" | secondary |
+| src/components/SmsToastHost.jsx:74 | ✕ | secondary |
+| src/components/TenantSettings.jsx:495 | className="eg-key eg-key--primary billing-button is-primary" | secondary |
+| src/components/TenantSettings.jsx:507 | className={`eg-key billing-button${vendorPaused ? " is-primary" : ""}`} | secondary |
+| src/components/TenantSettings.jsx:555 | className="billing-icon-button" | icon |
+| src/components/TenantSettings.jsx:596 | className="billing-icon-button" | icon |
+| src/components/TenantSettings.jsx:623 | Add Agent | primary |
+| src/components/TenantSettings.jsx:644 | className="billing-icon-button" | icon |
+| src/components/TenantSettings.jsx:657 | className="billing-icon-button" | icon |
+| src/components/TenantSettings.jsx:695 | className="billing-icon-button" | icon |
+| src/components/TenantSettings.jsx:705 | Add Rate | secondary |
+| src/components/TenantSettings.jsx:718 | className="billing-icon-button" | icon |
+| src/components/TranscriptUpload.jsx:363 | className="primary" | secondary |
+| src/components/UnderwritingChecker.jsx:5 | Acknowledge | secondary |
+| src/components/VendorRoutingSettings.jsx:63 | className="billing-button is-primary" | secondary |
+| src/components/VendorRoutingSettings.jsx:64 | Revoke report link | destructive |
+| src/components/VendorRoutingSettings.jsx:88 | Save hours and billing | primary |
+| src/components/VendorRoutingSettings.jsx:97 | Save routing settings | primary |
+| src/components/VendorRoutingSettings.jsx:113 | Remove | destructive |
+| src/components/VendorRoutingSettings.jsx:118 | Add licensed state | secondary |
+| src/components/aca/AcaFfmSepFinder.jsx:36 | className="aca-ffm-sep-category__trigger" | secondary |
+| src/components/aca/AcaFfmSepFinder.jsx:79 | className="aca-ffm-sep-category__proceed" | secondary |
+| src/components/ancillary/AncillaryPopup.jsx:69 | className="ancillary-popup-dismiss" | icon |
+| src/components/ancillary/AncillaryPopupManager.jsx:151 | className={`ancillary-popup-chip${ active ? " is-active" : "" }`} | preserve |
+| src/components/ancillary/AncillaryPopupManager.jsx:207 | className="ancillary-popup-link" | secondary |
+| src/components/ancillary/AncillaryPopupManager.jsx:285 | Mark Complete | secondary |
+| src/components/ancillary/CarrierReferencePopupManager.jsx:63 | className="ancillary-popup-accordion-toggle" | secondary |
+| src/components/ancillary/MOHRiderBundle.jsx:131 | Select Bundle | secondary |
+| src/components/callDetail/CallDetailPanel.jsx:72 | className={activeTab === tab ? "is-active" : ""} | preserve |
+| src/components/callDetail/CallDetailPanel.jsx:357 | Combine with… | secondary |
+| src/components/callDetail/ComplianceReviewModal.jsx:96 | className="compliance-review-category-head" | secondary |
+| src/components/callDetail/ComplianceReviewModal.jsx:112 | className={`compliance-review-flag ${status.className}${activeItemId === item.id ? " is-active" : ""}`} | secondary |
+| src/components/callDetail/ComplianceReviewModal.jsx:279 | CLOSE | secondary |
+| src/components/callDetail/MergedRecordingPlayer.jsx:69 | className="contacts-mini-btn" | secondary |
+| src/components/callDetail/RecordingPanel.jsx:71 | REFRESH | secondary |
+| src/components/callDetail/RecordingPanel.jsx:83 | PLAY | secondary |
+| src/components/callDetail/RecordingPanel.jsx:84 | DOWNLOAD WAV | secondary |
+| src/components/callDetail/RecordingPanel.jsx:85 | DOWNLOAD TWILIO COPY | secondary |
+| src/components/callDetail/RecordingPanel.jsx:87 | COPY CONVERSLY LINK (WAV) | secondary |
+| src/components/callDetail/RecordingPanel.jsx:88 | COPY CONVERSLY LINK (MP3) | secondary |
+| src/components/callDetail/RecordingPanel.jsx:92 | RETRY COPY | secondary |
+| src/components/callLog/CallDateRangePicker.jsx:67 | className={`contacts-mini-btn call-log-toolbar-icon call-date-trigger${from ? ' is-active' : ''}`} | icon |
+| src/components/callLog/CallDateRangePicker.jsx:74 | Previous month | secondary |
+| src/components/callLog/CallDateRangePicker.jsx:76 | Next month | secondary |
+| src/components/callLog/CallDateRangePicker.jsx:87 | className={`call-date-day${inRange ? ' is-in-range' : ''}${endpoint ? ' is-endpoint' : ''}${key === today ? ' is-today' : ''}`} | secondary |
+| src/components/callLog/CallDateRangePicker.jsx:97 | CLEAR | secondary |
+| src/components/callLog/CallDateRangePicker.jsx:98 | DONE | secondary |
+| src/components/callLog/CallLogTab.jsx:110 | Enrollment intake / save disposition | primary |
+| src/components/callLog/CallLogTab.jsx:114 | Save disposition and codes | primary |
+| src/components/callLog/CallLogTab.jsx:132 | className="contacts-mini-btn" | secondary |
+| src/components/callLog/CallLogTab.jsx:201 | Combine with… | secondary |
+| src/components/callLog/CallLogTab.jsx:202 | Enrollment Intake | secondary |
+| src/components/callLog/CallLogTab.jsx:204 | className="contacts-mini-btn" | secondary |
+| src/components/callLog/CallLogTab.jsx:208 | Compliance Review | secondary |
+| src/components/callLog/CallLogTab.jsx:216 | RETRY | secondary |
+| src/components/callLog/CallLogTab.jsx:238 | REVIEW → | secondary |
+| src/components/callLog/CallLogTab.jsx:378 | Combine Calls | secondary |
+| src/components/callLog/CallLogTab.jsx:395 | Recordings | secondary |
+| src/components/callLog/CallLogTab.jsx:396 | Refresh calls | secondary |
+| src/components/callLog/CallLogTab.jsx:397 | className="contacts-mini-btn call-log-toolbar-icon" | icon |
+| src/components/callLog/CallLogTab.jsx:456 | ← PREV | secondary |
+| src/components/callLog/CallLogTab.jsx:465 | NEXT → | secondary |
+| src/components/callLog/CallLogTab.jsx:521 | Combine with… | secondary |
+| src/components/callLog/CallLogTab.jsx:522 | className="call-expand-toggle" | secondary |
+| src/components/callLog/CallNotesEditor.jsx:37 | RETRY | secondary |
+| src/components/callLog/CallRecordDetailsEditor.jsx:30 | Edit notes and details | secondary |
+| src/components/callLog/CallRecordDetailsEditor.jsx:37 | className="contacts-mini-btn" | secondary |
+| src/components/callLog/CallRecordDetailsEditor.jsx:38 | Cancel | secondary |
+| src/components/callLog/CallRecordings.jsx:29 | RETRY | secondary |
+| src/components/callLog/CallRecordings.jsx:39 | className="contacts-mini-btn call-log-toolbar-icon" | icon |
+| src/components/callLog/CallRecordings.jsx:43 | ← PREV | secondary |
+| src/components/callLog/CallRecordings.jsx:45 | NEXT → | secondary |
+| src/components/callLog/CallRecordings.jsx:49 | Close recording details | icon |
+| src/components/callLog/CallRecordings.jsx:59 | Refresh recordings | secondary |
+| src/components/callLog/CallRecordings.jsx:61 | AVAILABLE | secondary |
+| src/components/callLog/CallRecordings.jsx:62 | MISSING | secondary |
+| src/components/callLog/CallRowParts.jsx:63 | className="contacts-mini-btn call-recording-icon" | icon |
+| src/components/callLog/CallRowParts.jsx:64 | Download recording | icon |
+| src/components/callLog/CallTranscriptPlayer.jsx:82 | className="contacts-mini-btn call-recording-icon" | icon |
+| src/components/callLog/CallTranscriptPlayer.jsx:85 | x | secondary |
+| src/components/callLog/CallTranscriptPlayer.jsx:105 | className={`call-transcript-line${active === index ? ' is-current' : ''}`} | secondary |
+| src/components/callLog/CombineCallsModal.jsx:47 | Reload calls | secondary |
+| src/components/callLog/CombineCallsModal.jsx:51 | · · · | secondary |
+| src/components/callLog/CombineCallsModal.jsx:74 | className="contacts-mini-btn" | secondary |
+| src/components/callLog/CombinedCalls.jsx:40 | Retry | secondary |
+| src/components/callLog/CombinedCalls.jsx:44 | className="contacts-mini-btn" | secondary |
+| src/components/callLog/ComplianceUploads.jsx:40 | Refresh | secondary |
+| src/components/callLog/ComplianceUploads.jsx:44 | className="contacts-mini-btn" | secondary |
+| src/components/callLog/ComplianceUploads.jsx:57 | Save codes | primary |
+| src/components/callLog/MissingRecordings.jsx:23 | Refresh missing recordings | secondary |
+| src/components/callLog/MissingRecordings.jsx:29 | VIEW RECORDINGS | secondary |
+| src/components/callLog/MissingRecordings.jsx:33 | PREV | secondary |
+| src/components/callLog/MissingRecordings.jsx:34 | NEXT | secondary |
+| src/components/contacts/ComposePickers.jsx:57 |  | secondary |
+| src/components/contacts/ComposePickers.jsx:59 | Emoji picker | secondary |
+| src/components/contacts/ComposePickers.jsx:60 | GIF picker | secondary |
+| src/components/contacts/ComposePickers.jsx:62 | × | secondary |
+| src/components/contacts/ComposePickers.jsx:66 | className={category === name ? "is-active" : ""} | secondary |
+| src/components/contacts/ComposePickers.jsx:70 | 🍌 FEATURED: MINIONS | secondary |
+| src/components/contacts/ComposePickers.jsx:74 |  | secondary |
+| src/components/contacts/ContactsTab.jsx:310 | className="contacts-accordion-head" | secondary |
+| src/components/contacts/ContactsTab.jsx:349 | className={filter === item ? "is-active" : ""} | secondary |
+| src/components/contacts/ContactsTab.jsx:367 | className={`contacts-conv-row${selectedContactId === contact.id ? " is-selected" : ""}`} | secondary |
+| src/components/contacts/ContactsTab.jsx:411 |  | secondary |
+| src/components/contacts/ContactsTab.jsx:414 |  | secondary |
+| src/components/contacts/ContactsTab.jsx:417 |  | secondary |
+| src/components/contacts/ContactsTab.jsx:473 | className="contacts-mini-btn" | secondary |
+| src/components/contacts/ContactsTab.jsx:487 | ADD NOTE | secondary |
+| src/components/contacts/ContactsTab.jsx:667 | SAVE CHANGES | primary |
+| src/components/contacts/ContactsTab.jsx:704 | DETAILS | secondary |
+| src/components/contacts/ContactsTab.jsx:716 | COLLAPSE | secondary |
+| src/components/contacts/ContactsTab.jsx:736 | className={rightTab === tab ? "is-active" : ""} | preserve |
+| src/components/contacts/ContactsTab.jsx:861 | ADD FOLLOW-UP | secondary |
+| src/components/contacts/ContactsTab.jsx:1180 | + ADD CONTACT | secondary |
+| src/components/contacts/ContactsTab.jsx:1197 | SAVE CONTACT | primary |
+| src/components/contacts/ContactsTab.jsx:1198 | OPEN EXISTING CONTACT | secondary |
+| src/components/contacts/ContactsTab.jsx:1199 | CANCEL | secondary |
+| src/components/contacts/ContactsTab.jsx:1203 | MERGE CONTACTS | secondary |
+| src/components/contacts/ContactsTab.jsx:1209 | CANCEL | secondary |
+| src/components/contacts/ContactsTab.jsx:1232 | className={centerTab === tab ? "is-active" : ""} | preserve |
+| src/components/contacts/ContactsTab.jsx:1244 | RETRY CALLS | secondary |
+| src/components/contacts/ContactsTab.jsx:1326 | Calls | secondary |
+| src/components/contacts/ContactsTab.jsx:1327 | Contacts | secondary |
+| src/components/contacts/ContactsTab.jsx:1328 | Opportunities | secondary |
+| src/components/contacts/ContactsTab.jsx:1329 | Follow-ups | secondary |
+| src/components/contacts/FollowUpsView.jsx:19 | OPEN CONTACT | secondary |
+| src/components/contacts/FollowUpsView.jsx:21 | MARK COMPLETE | secondary |
+| src/components/contacts/FollowUpsView.jsx:22 | RESCHEDULE | secondary |
+| src/components/contacts/FollowUpsView.jsx:25 | SAVE | primary |
+| src/components/contacts/FollowUpsView.jsx:26 | CANCEL | secondary |
+| src/components/contacts/FollowUpsView.jsx:49 | REFRESH | secondary |
+| src/components/contacts/MessagesThread.jsx:214 | REMOVE GIF | destructive |
+| src/components/contacts/MessagesThread.jsx:238 | className="msg-send-btn" | secondary |
+| src/components/copilot/CrossSellTrigger.jsx:277 | Present to Client | secondary |
+| src/components/copilot/CrossSellTrigger.jsx:308 | Client Declined All | secondary |
+| src/components/enrollment/EnrollmentIntake.jsx:94 | className="contacts-mini-btn" | secondary |
+| src/components/leftRail/ClientInfoCard.jsx:329 | className={`eg-rail-card__save-contact eg-rail-card__save-contact--icon is-${saveState}`} | icon |
+| src/components/leftRail/GLP1BridgeGuide.jsx:22 | className="glp1-bridge-guide__trigger" | secondary |
+| src/components/leftRail/GLP1BridgeGuide.jsx:38 | Close GLP-1 Bridge guidance | icon |
+| src/components/leftRail/LeftRailManager.jsx:323 | className={`left-rail-handle${item.isAttention ? " is-attention" : ""}`} | secondary |
+| src/components/leftRail/LeftRailManager.jsx:369 | className="rail-minimize-btn left-rail-minimize left-rail-minimize--external" | secondary |
+| src/components/leftRail/PlanContextCard.jsx:99 | Search plans | primary |
+| src/components/leftRail/PlanContextCard.jsx:115 | Clear selected plan | secondary |
+| src/components/leftRail/PlanContextCard.jsx:145 | className="eg-plan-lookup__result" | secondary |
+| src/components/leftRail/SEPQualifier.jsx:160 | className="sep-state-section-trigger" | secondary |
+| src/components/leftRail/SEPQualifier.jsx:397 | Reset | secondary |
+| src/components/leftRail/SEPQualifier.jsx:401 | Minimize | secondary |
+| src/components/leftRail/SEPQualifier.jsx:431 | className={`left-rail-tool-btn left-rail-tool-btn--finder${activeTool === "finder" ? " is-active" : ""}`} | secondary |
+| src/components/leftRail/SEPQualifier.jsx:441 | className={`left-rail-tool-btn left-rail-tool-btn--qualifier${activeTool === "qualifier" ? " is-active" : ""}`} | secondary |
+| src/components/leftRail/SEPQualifier.jsx:451 | className={`left-rail-tool-btn left-rail-tool-btn--snp${activeTool === "snp" ? " is-active" : ""}`} | secondary |
+| src/components/leftRail/SEPQualifier.jsx:474 | START SEP QUALIFICATION | primary |
+| src/components/leftRail/SEPQualifier.jsx:481 | Minimize Rail | secondary |
+| src/components/leftRail/SEPQualifier.jsx:520 | CONTINUE - VERIFY A & B | secondary |
+| src/components/leftRail/SEPQualifier.jsx:537 | YES | secondary |
+| src/components/leftRail/SEPQualifier.jsx:547 | NO | secondary |
+| src/components/leftRail/SEPQualifier.jsx:601 | className="sep-qualifier-shortcut-card" | secondary |
+| src/components/leftRail/SEPQualifier.jsx:627 | SELECT SEP CATEGORY | secondary |
+| src/components/leftRail/SEPQualifier.jsx:642 | NONE OF THESE APPLY | secondary |
+| src/components/leftRail/SEPQualifier.jsx:662 | className="sep-qualifier-category-card" | secondary |
+| src/components/leftRail/SEPQualifier.jsx:688 | Back | secondary |
+| src/components/leftRail/SEPQualifier.jsx:706 | className="sep-qualifier-subtype-card" | secondary |
+| src/components/leftRail/SEPQualifier.jsx:778 | New Qualification | secondary |
+| src/components/leftRail/SEPQualifier.jsx:781 | PROCEED TO ENROLLMENT | secondary |
+| src/components/leftRail/SNPRoutingWidget.jsx:37 | className="snp-routing-subsection-trigger" | secondary |
+| src/components/medsup/RateComparisonPanel.jsx:237 | className="sf-icon-button" | icon |
+| src/components/opportunities/ContactOpportunities.jsx:15 | className="contacts-mini-btn" | secondary |
+| src/components/opportunities/ContactOpportunities.jsx:27 | RETRY | secondary |
+| src/components/opportunities/ContactOpportunities.jsx:27 | className="opps-contact-opportunity" | secondary |
+| src/components/opportunities/ContactTagsPopover.jsx:33 | Close tags | icon |
+| src/components/opportunities/ContactTagsPopover.jsx:34 |  | secondary |
+| src/components/opportunities/ContactTagsPopover.jsx:37 | RETRY | secondary |
+| src/components/opportunities/ContactTagsPopover.jsx:38 | Add tag | secondary |
+| src/components/opportunities/DeleteOpportunityDialog.jsx:23 | className="contacts-mini-btn opps-danger" | secondary |
+| src/components/opportunities/DeleteOpportunityDialog.jsx:24 | CANCEL | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:21 | className="opps-card-action" | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:56 |  | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:148 | Board view | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:148 | List view | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:149 | Pipeline settings | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:150 | NEW OPPORTUNITY | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:159 | CLEAR | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:160 | REFRESH | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:173 |  | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:174 | className="opps-contact-link" | secondary |
+| src/components/opportunities/OpportunitiesView.jsx:175 | className="contacts-mini-btn" | secondary |
+| src/components/opportunities/OpportunityDialog.jsx:31 | Close | icon |
+| src/components/opportunities/OpportunityDrawer.jsx:52 | OPEN CONTACT | secondary |
+| src/components/opportunities/OpportunityDrawer.jsx:53 | DELETE | destructive |
+| src/components/opportunities/OpportunityDrawer.jsx:57 | RETRY | secondary |
+| src/components/opportunities/OpportunityDrawer.jsx:70 | className="contacts-mini-btn" | secondary |
+| src/components/opportunities/OpportunityEditor.jsx:81 | USE EXISTING CONTACT | secondary |
+| src/components/opportunities/OpportunityEditor.jsx:85 | Existing contact | primary |
+| src/components/opportunities/OpportunityEditor.jsx:86 | Create contact | primary |
+| src/components/opportunities/OpportunityEditor.jsx:125 | className="contacts-mini-btn opps-primary" | secondary |
+| src/components/opportunities/OpportunityEditor.jsx:132 | RETRY | secondary |
+| src/components/opportunities/OpportunityRowMenu.jsx:36 | Open opportunity | secondary |
+| src/components/opportunities/OpportunityRowMenu.jsx:37 | Delete opportunity | destructive |
+| src/components/opportunities/PipelineSettings.jsx:12 | className="contacts-mini-btn opps-drag-handle" | secondary |
+| src/components/opportunities/PipelineSettings.jsx:16 | className="contacts-mini-btn" | secondary |
+| src/components/opportunities/PipelineSettings.jsx:16 | className="contacts-mini-btn" | secondary |
+| src/components/opportunities/PipelineSettings.jsx:16 | DELETE | destructive |
+| src/components/opportunities/PipelineSettings.jsx:61 | + ADD STAGE | secondary |
+| src/components/opportunities/PipelineSettings.jsx:65 | className="contacts-mini-btn" | secondary |
+| src/components/opportunities/PipelineSettings.jsx:69 | CANCEL | secondary |
+| src/components/opportunities/PipelineSettings.jsx:73 | className="contacts-mini-btn opps-primary" | secondary |
+| src/components/opportunities/PipelineSettings.jsx:82 | + NEW PIPELINE | secondary |
+| src/components/sep/CountyGrid.jsx:46 | className={`sep-cg-tile${isActive ? " active" : ""}`} | secondary |
+| src/components/sep/CountyPenetration.jsx:31 | MA penetration | preserve |
+| src/components/sep/CountyPenetration.jsx:32 | Counties | preserve |
+| src/components/sep/FemaFeed.jsx:93 | className="fema-feed-item-header" | secondary |
+| src/components/sep/FemaFeed.jsx:200 | className="fema-feed-item-header" | secondary |
+| src/components/sep/FemaFeed.jsx:254 | className="fema-feed-show-all" | secondary |
+| src/components/sep/FemaFeed.jsx:267 | Live News | preserve |
+| src/components/sep/FemaFeed.jsx:277 | Bulletins | preserve |
+| src/components/sep/FemaFeed.jsx:303 | className="fema-feed-show-all" | secondary |
+| src/components/sep/FemaFeed.jsx:347 | className="fema-feed-show-all" | secondary |
+| src/components/sep/PlanTable.jsx:87 | Clear | secondary |
+| src/components/sep/SearchBar.jsx:17 | Search | secondary |
+| src/components/sep/SearchBar.jsx:27 | className="sep-quick-zip-btn" | secondary |
+| src/components/sep/StatsBar.jsx:47 | className={`tab${activeTab === k ? " active" : ""}`} | preserve |
+| src/flows/aca/ACAFlow.jsx:101 | className="check flow-gate-check" | secondary |
+| src/flows/aca/ACAFlow.jsx:285 |  | secondary |
+| src/flows/aca/ACAFlow.jsx:593 | New Call | secondary |
+| src/flows/aca/ACAFlow.jsx:657 | START | primary |
+| src/flows/aca/ACAScript.jsx:68 |  | secondary |
+| src/flows/aca/StateACAFlow.jsx:105 | className="check flow-gate-check" | secondary |
+| src/flows/aca/StateACAFlow.jsx:379 | START | primary |
+| src/flows/aca/StateACAFlow.jsx:484 | New Call | secondary |
+| src/flows/ancillary/AncillaryFlow.jsx:749 | className="ancillary-product-button" | secondary |
+| src/flows/ancillary/AncillaryFlow.jsx:819 | className={`at-filter-tab${mode === value ? " is-active" : ""}`} | preserve |
+| src/flows/ancillary/AncillaryFlow.jsx:1293 | className="check flow-gate-check" | secondary |
+| src/flows/ancillary/AncillaryFlow.jsx:1484 | New Call | secondary |
+| src/flows/ancillary/AncillaryFlow.jsx:1522 |  | secondary |
+| src/flows/ancillary/AncillaryFlow.jsx:1598 | START | primary |
+| src/flows/u65/U65Flow.jsx:269 | className={`u65-nepq-choice${selected === variant.id ? " is-selected" : ""}`} | secondary |
+| src/flows/u65/U65Flow.jsx:306 | className="u65-nepq-callout__toggle" | secondary |
+| src/flows/u65/U65Flow.jsx:362 | className="u65-nepq-branch__header" | secondary |
+| src/flows/u65/U65Flow.jsx:394 | Switch to Med Supp script | secondary |
+| src/flows/u65/U65Flow.jsx:517 | className="u65-nepq-group__toggle" | secondary |
+| src/flows/u65/U65Flow.jsx:605 | Close objections | icon |
+| src/flows/u65/U65Flow.jsx:762 | Objections | secondary |
+| src/flows/u65/U65Flow.jsx:802 | Back | secondary |
+| src/flows/u65/U65Flow.jsx:814 | className="u65-nepq-nav__button is-next" | secondary |
+| src/flows/u65/U65Flow.jsx:840 | Back to | secondary |
+| src/flows/u65/U65Flow.jsx:849 | New Call | secondary |
+| src/flows/u65/U65Script.jsx:73 |  | secondary |
+
+## Revision — phase 3
+Explicit presentation-only button role attributes document action classifications. Top-nav tabs now adopt secondary glossy keys and pressed active state without underlines, per updated request. Main script START is primary/lg. Native selects remain flat, and icon-only actions remain flat. No event handlers or data requests changed during classification.

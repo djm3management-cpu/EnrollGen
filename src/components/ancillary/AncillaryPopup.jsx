@@ -66,7 +66,7 @@ const AncillaryPopup = memo(
             onPointerDown={onInteract}
             onKeyDown={onInteract}
           >
-            <button
+            <button data-key-role="icon"
               type="button"
               className="ancillary-popup-dismiss"
               onClick={onDismiss}

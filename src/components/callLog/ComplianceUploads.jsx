@@ -37,11 +37,11 @@ export default function ComplianceUploads(){
  if(!data||data.identity!==identity)return error?<p className="ops-error" role="alert">{error}</p>:null;
  return <details className="contacts-section">
   <summary className="contacts-section-head">COMPLIANCE UPLOADS · {data.failures.length} errors · {data.missing.length} missing codes</summary>
-  <button className="contacts-mini-btn" onClick={()=>void load()}>Refresh</button>
+  <button data-key-role="secondary" className="contacts-mini-btn" onClick={()=>void load()}>Refresh</button>
   {error && <p className="ops-error" role="alert">{error}</p>}
   <h3 className="contacts-section-head">CONVERSELY WEEKLY SUBMISSION</h3>
   <p className="contacts-muted">Automatic: startup and hourly checks for the previous Monday–Sunday week (America/New_York). Run now selects the current week through the request time, at most one submission per agent.</p>
-  <button type="button" className="contacts-mini-btn" disabled={running||activeRun||!data.weekly?.enabled||!data.weekly?.worker_available} onClick={()=>void runNow()}>{running?'Starting…':'Run Conversely now'}</button>
+  <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={running||activeRun||!data.weekly?.enabled||!data.weekly?.worker_available} onClick={()=>void runNow()}>{running?'Starting…':'Run Conversely now'}</button>
   {!data.weekly?.enabled&&<p className="contacts-muted">Conversely uploads are disabled on the worker.</p>}
   {data.weekly?.enabled&&!data.weekly?.worker_available&&<p className="contacts-muted">Conversely worker is unavailable.</p>}
   {data.weekly?.error&&<p className="ops-error" role="alert">{data.weekly.error}</p>}
@@ -54,7 +54,7 @@ export default function ComplianceUploads(){
    </tbody></table>
   </>:<p className="contacts-muted">No Conversely run recorded.</p>}
   <p className="contacts-muted">UHC enrollments missing a SunFire code for more than two hours</p>
-  {data.missing.map(row=><div key={row.call_id}>{row.agent_name} · {new Date(row.call_start).toLocaleString()} · {row.call_id} <label>SunFire Confirmation Codes<textarea value={codes[row.call_id] || ''} onChange={event=>setCodes(previous=>({...previous,[row.call_id]:event.target.value}))}/></label><button className="contacts-mini-btn" disabled={!codes[row.call_id]?.trim()} onClick={()=>void fix(row.call_id)}>Save codes</button></div>)}
+  {data.missing.map(row=><div key={row.call_id}>{row.agent_name} · {new Date(row.call_start).toLocaleString()} · {row.call_id} <label>SunFire Confirmation Codes<textarea value={codes[row.call_id] || ''} onChange={event=>setCodes(previous=>({...previous,[row.call_id]:event.target.value}))}/></label><button data-key-role="primary" className="contacts-mini-btn" disabled={!codes[row.call_id]?.trim()} onClick={()=>void fix(row.call_id)}>Save codes</button></div>)}
   <table className="call-log-table"><thead><tr><th>Provider</th><th>Call</th><th>Status</th><th>Attempts</th><th>Error</th></tr></thead>
    <tbody>{data.failures.map(row=><tr key={row.id}><td>{row.provider}</td><td>{row.call_id}</td><td>{row.status}</td><td>{row.attempts}/5</td><td>{row.last_error}</td></tr>)}</tbody></table>
   <p className="contacts-muted">Daily UHC reconciliation · household codes count as separate expected uploads</p>

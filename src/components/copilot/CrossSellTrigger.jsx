@@ -274,7 +274,7 @@ export default function CrossSellTrigger({
               <span>{item.premiumRange}</span>
               {clientState ? <span>{clientState}</span> : null}
             </div>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="sf-action-button"
               onClick={() => handlePresent(item)}
@@ -305,7 +305,7 @@ export default function CrossSellTrigger({
             placeholder="Required if no product is presented"
           />
         </label>
-        <button
+        <button data-key-role="secondary"
           type="button"
           className="sf-secondary-button"
           onClick={handleDeclineAll}

@@ -66,7 +66,7 @@ export default function MergedRecordingPlayer({ target, playback, playRequest = 
   return <section className="merged-recording-player ops-summary-box" aria-label="Merged conference playback">
     <div className="contacts-section-head">MERGED CONFERENCE PLAYBACK</div>
     <p className="contacts-muted">One timeline with overlaps trimmed. Private consultation uses the agent recording.</p>
-    <button type="button" className="contacts-mini-btn" disabled={busy} onClick={() => void build(true)}>{busy ? 'Preparing merged recording…' : media ? 'Rebuild merged playback' : 'Prepare merged playback'}</button>
+    <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={busy} onClick={() => void build(true)}>{busy ? 'Preparing merged recording…' : media ? 'Rebuild merged playback' : 'Prepare merged playback'}</button>
     {busy && <p className="contacts-muted" role="status">Loading and aligning source recordings…</p>}
     {error && <p className="ops-error" role="alert">{error}</p>}
     {media && <>

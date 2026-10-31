@@ -71,7 +71,7 @@ export default function SmsToastHost({ onOpenContactMessages }) {
             <span className="sms-toast__label">{toast.label.toUpperCase()}</span>
             <span className="sms-toast__preview">{toast.preview}</span>
           </span>
-          <button
+          <button data-key-role="secondary"
             type="button"
             className="sms-toast__close"
             aria-label="Dismiss notification"

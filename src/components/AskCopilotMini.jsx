@@ -97,7 +97,7 @@ const AskCopilotMini = memo(function AskCopilotMini() {
           placeholder="Ask Co-Pilot..."
           disabled={loading}
         />
-        <button
+        <button data-key-role="secondary"
           className="ask-copilot-mini__send"
           onClick={handleAsk}
           disabled={loading || !question.trim()}

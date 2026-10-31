@@ -14,7 +14,7 @@ export function SearchBar({ zip, setZip, handleSearch, handleKeyDown, isValidZip
           onKeyDown={handleKeyDown}
           placeholder="Enter 5-digit zip code..."
         />
-        <button className="primary" onClick={handleSearch} disabled={!isValidZip || loading}>
+        <button data-key-role="secondary" className="primary" onClick={handleSearch} disabled={!isValidZip || loading}>
           {loading ? <span className="sep-spinner-sm" /> : <Search size={18} strokeWidth={2.5} />}{" "}
           Search
         </button>
@@ -24,7 +24,7 @@ export function SearchBar({ zip, setZip, handleSearch, handleKeyDown, isValidZip
         <div className="sep-quick-zips">
           <span>Try:</span>
           {QUICK_ZIPS.map((z) => (
-            <button key={z} className="sep-quick-zip-btn" onClick={() => setZip(z)}>
+            <button data-key-role="secondary" key={z} className="sep-quick-zip-btn" onClick={() => setZip(z)}>
               {z}
             </button>
           ))}

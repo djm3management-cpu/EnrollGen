@@ -15,7 +15,7 @@ const ProgressDots = memo(function ProgressDots({
         const status = section.status || "pending";
         const isActive = status === "active";
         return (
-          <button
+          <button data-key-role="secondary"
             key={section.key ?? section.label ?? index}
             type="button"
             role="tab"

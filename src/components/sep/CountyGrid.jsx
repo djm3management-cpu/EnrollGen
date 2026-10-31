@@ -43,7 +43,7 @@ export function CountyGrid({
             const count = planCounts[county] || 0;
             const isActive = selectedCounty === county;
             return (
-              <button
+              <button data-key-role="secondary"
                 key={county}
                 className={`sep-cg-tile${isActive ? " active" : ""}`}
                 onClick={() => onCountySelect(county)}

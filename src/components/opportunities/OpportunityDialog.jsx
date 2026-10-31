@@ -28,7 +28,7 @@ export default function OpportunityDialog({ title, drawer = false, busy = false,
     if (event.target === event.currentTarget && !busy) onClose();
   }}>
     <section className={`opps-dialog${drawer ? ' opps-dialog--drawer' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={panel}>
-      <header className="opps-dialog-head"><h2>{title}</h2><button type="button" className="contacts-mini-btn" aria-label="Close" disabled={busy} onClick={onClose}><X size={16} /></button></header>
+      <header className="opps-dialog-head"><h2>{title}</h2><button data-key-role="icon" type="button" className="contacts-mini-btn" aria-label="Close" disabled={busy} onClick={onClose}><X size={16} /></button></header>
       <div className="opps-dialog-body">{children}</div>
     </section>
   </div>, document.body);

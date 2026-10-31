@@ -77,7 +77,7 @@ export default function CarrierQuickRef() {
 
         <div className="carrier-quickref-filter-row" role="tablist">
           {CARRIER_PRODUCT_FILTERS.map((filter) => (
-            <button
+            <button data-key-role="secondary"
               key={filter.id}
               type="button"
               role="tab"
@@ -133,7 +133,7 @@ export default function CarrierQuickRef() {
                   const isExpanded = expandedKey === key;
                   return (
                     <div key={key} className="carrier-quickref-plan">
-                      <button
+                      <button data-key-role="secondary"
                         type="button"
                         className="carrier-quickref-plan-trigger"
                         onClick={() => togglePlan(key)}

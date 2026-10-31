@@ -623,10 +623,10 @@ export default React.memo(function SessionSummary() {
         <span>Enrollment complete, save your records</span>
       </span>
       <div style={{ display: "flex", gap: 10 }}>
-        <button className="btn-clay" onClick={handleCopyToClipboard}>
+        <button data-key-role="secondary" className="btn-clay" onClick={handleCopyToClipboard}>
           Copy Summary
         </button>
-        <button className="btn-clay" onClick={handlePDF} disabled={exportingPdf}>
+        <button data-key-role="secondary" className="btn-clay" onClick={handlePDF} disabled={exportingPdf}>
           {exportingPdf ? "Preparing PDF..." : "Download PDF"}
         </button>
       </div>

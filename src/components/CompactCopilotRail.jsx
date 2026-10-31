@@ -83,7 +83,7 @@ function RailWidgets({
         <CallTimer fallbackStartTime={startTime} />
 
         <div className="right-rail-control-row" style={{ display: "flex", gap: 4, marginTop: 8, marginBottom: 8 }}>
-          <button
+          <button data-key-role="secondary"
             className={`copilot-pill-button copilot-pill-button--listen${
               listening ? " is-listening" : ""
             }`}
@@ -95,13 +95,13 @@ function RailWidgets({
           >
             {!supportsRecognition ? "NO MIC" : listening ? "STOP" : "START"}
           </button>
-          <button
+          <button data-key-role="secondary"
             className="copilot-pill-button copilot-pill-button--clear"
             onClick={onClear}
           >
             CLEAR
           </button>
-          <button
+          <button data-key-role="secondary"
             className="copilot-pill-button copilot-pill-button--analyze"
             onClick={onAnalyze}
             disabled={!hasTranscript || analyzing}
@@ -249,7 +249,7 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
     <>
       {!isCompactRail ? (
         fullRailMinimized ? (
-          <button
+          <button data-key-role="secondary"
             className="right-rail-toggle right-rail-toggle--restore"
             style={COMPACT_RAIL_TOGGLE_STYLE}
             onClick={() => setFullRailMinimized(false)}
@@ -268,7 +268,7 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
               "--right-rail-width": `${FULL_RAIL_WIDTH}px`,
             }}
           >
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="rail-minimize-btn right-rail-minimize"
               onClick={() => setFullRailMinimized(true)}
@@ -284,7 +284,7 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
         )
       ) : (
         <>
-          <button
+          <button data-key-role="secondary"
             className="right-rail-toggle"
             style={COMPACT_RAIL_TOGGLE_STYLE}
             onClick={() => setOpen((previous) => !previous)}
@@ -308,7 +308,7 @@ const CompactCopilotRail = memo(function CompactCopilotRail({
           >
             {open ? (
               <>
-                <button
+                <button data-key-role="secondary"
                   type="button"
                   className="rail-minimize-btn right-rail-overlay-minimize"
                   onClick={() => setOpen(false)}

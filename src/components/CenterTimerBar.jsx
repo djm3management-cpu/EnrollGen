@@ -25,7 +25,7 @@ const CenterTimerBar = memo(function CenterTimerBar({
   return (
     <div className="eg-timer-bar eg-audio-meter-bar" aria-label="Live audio levels">
       {onShareAudio ? (
-        <button
+        <button data-key-role="secondary"
           type="button"
           className={`eg-audio-share-button${audioSharing ? " is-active" : ""}`}
           onClick={onShareAudio}

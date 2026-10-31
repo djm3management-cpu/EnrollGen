@@ -79,10 +79,10 @@ export default function CallTranscriptPlayer({ row, detail, loading, playRequest
 
   return <section className="call-transcript-panel" aria-label="Call recording and transcript">
     {isConference ? <MergedRecordingPlayer target={recordingTarget(row)} playRequest={playRequest} seekRequest={mergedSeek} onTime={setTime} /> : <div className="call-audio-bar">
-      <button type="button" className="contacts-mini-btn call-recording-icon" aria-label={playing ? 'Pause recording' : 'Play recording'} disabled={!hasRecording || busy} onClick={toggle}>{playing ? <Pause size={16} /> : <Play size={16} />}</button>
+      <button data-key-role="icon" type="button" className="contacts-mini-btn call-recording-icon" aria-label={playing ? 'Pause recording' : 'Play recording'} disabled={!hasRecording || busy} onClick={toggle}>{playing ? <Pause size={16} /> : <Play size={16} />}</button>
       <span className="call-audio-time">{formatTalk(time)} / {formatTalk(total)}</span>
       <input type="range" min="0" max={total || 1} step="0.1" value={Math.min(time, total)} disabled={!hasRecording || busy || !total} aria-label="Recording position" aria-valuetext={`${formatTalk(time)} of ${formatTalk(total)}`} onChange={event => seek(Number(event.target.value))} />
-      <button type="button" className="contacts-mini-btn call-audio-speed" aria-label={`Playback speed ${speed}x`} onClick={() => {
+      <button data-key-role="secondary" type="button" className="contacts-mini-btn call-audio-speed" aria-label={`Playback speed ${speed}x`} onClick={() => {
         const rates = [1, 1.25, 1.5, 2];
         const next = rates[(rates.indexOf(speed) + 1) % rates.length];
         setSpeed(next); if (audioRef.current) audioRef.current.playbackRate = next;
@@ -102,7 +102,7 @@ export default function CallTranscriptPlayer({ row, detail, loading, playRequest
     {error && <div className="call-player-message ops-error" role="alert">{error}</div>}
     <div className="call-transcript-heading contacts-section-head">TRANSCRIPT <span>{lines.length ? `${lines.length} UTTERANCES` : ''}</span></div>
     <div className="call-transcript-scroll" role="region" aria-label="Full transcript" tabIndex={0}>
-      {loading ? <p className="contacts-muted">Loading transcript…</p> : !lines.length ? <p className="contacts-muted">No transcript stored</p> : lines.map((line, index) => <button
+      {loading ? <p className="contacts-muted">Loading transcript…</p> : !lines.length ? <p className="contacts-muted">No transcript stored</p> : lines.map((line, index) => <button data-key-role="secondary"
         type="button" key={index} className={`call-transcript-line${active === index ? ' is-current' : ''}`}
         disabled={!hasRecording || line.time == null || busy} onClick={() => seek(line.time)} aria-current={active === index ? 'true' : undefined}
         aria-label={line.time == null ? undefined : `Seek to ${formatTalk(line.time)}: ${line.speaker}, ${line.text}`}

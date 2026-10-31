@@ -95,7 +95,7 @@ export default function SEPLookupTool() {
                 {s.selectedCounty && (
                   <span className="sep-map-county-tag">{s.selectedCounty} County</span>
                 )}
-                <button
+                <button data-key-role="secondary"
                   className="sep-map-reset"
                   onClick={() => s.handleStateClick(null)}
                 >
@@ -254,7 +254,7 @@ export default function SEPLookupTool() {
                     {s.allProducts.map((p) => <option key={p} value={p}>{p}</option>)}
                   </select>
                   {(s.filterCategory !== "all" || s.filterProduct !== "all") && (
-                    <button className="undo-btn" onClick={() => { s.setFilterCategory("all"); s.setFilterProduct("all"); }}>
+                    <button data-key-role="secondary" className="undo-btn" onClick={() => { s.setFilterCategory("all"); s.setFilterProduct("all"); }}>
                       <X size={14} /> Clear
                     </button>
                   )}

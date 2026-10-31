@@ -1,3 +1,4 @@
+import AppToast from './components/AppToast';
 import { navigateCrm } from "./lib/crmRoutes";
 import { callContinuity } from "./lib/callContinuity.js";
 import { debugLog } from "./lib/debugLog.js";
@@ -254,7 +255,7 @@ function FlowSelector({ mode, onChange, onPreload }) {
         "--flow-bg": activeFlow.bg,
       }}
     >
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="flow-select-trigger"
         aria-haspopup="menu"
@@ -272,7 +273,7 @@ function FlowSelector({ mode, onChange, onPreload }) {
             const active = mode === flow.id;
             return (
               <div className="flow-select-item" key={flow.id} role="none">
-              <button
+              <button data-key-role="secondary"
                 type="button"
                 role="menuitem"
                 aria-current={active ? "true" : undefined}
@@ -296,7 +297,7 @@ function FlowSelector({ mode, onChange, onPreload }) {
               {modeSupportsQuickScripts(flow.id) ? (
                 <div className="flow-select-submenu" role="menu" aria-label={`${flow.label} client scripts`}>
                   {[{ id: "disenrolled", label: "Disenrolled" }, { id: "check-in", label: "Follow Up" }].map((script) => (
-                    <button
+                    <button data-key-role="secondary"
                       key={script.id}
                       type="button"
                       role="menuitem"
@@ -378,7 +379,7 @@ class PanelErrorBoundary extends Component {
             Panel failed to load.
           </div>
           {this.props.fallbackControls}
-          <button
+          <button data-key-role="secondary"
             type="button"
             className="primary"
             onClick={() => this.setState({ error: null })}
@@ -831,7 +832,7 @@ function AppShell({ currentUser = null }) {
 
   const sepLauncher =
     mode === "ma" && !hasLeftRailItem(LEFT_RAIL_IDS.sepQualifier) ? (
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="left-rail-handle left-rail-handle-launcher"
         onClick={openSepQualifier}
@@ -913,7 +914,7 @@ function AppShell({ currentUser = null }) {
             ? (canAdmin ? "Agency Settings" : "Agent Settings")
             : navTabs.find((tab) => tab.id === openPanel)?.label || "Panel"}
         </div>
-        <button
+        <button data-key-role="icon"
           type="button"
           className="top-panel-close"
           onClick={() => setOpenPanel(null)}
@@ -997,7 +998,7 @@ function AppShell({ currentUser = null }) {
             {INBOUND_CALLS_ENABLED ? (
               <PhoneDropdown onOpenMessages={handleOpenContactMessages} />
             ) : null}
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="top-bar-settings-button top-bar-theme-button"
               onClick={toggleTheme}
@@ -1007,7 +1008,7 @@ function AppShell({ currentUser = null }) {
               {isDark ? <Sun size={14} /> : <SquareTerminal size={14} />}
             </button>
             {!LOGIN_DISABLED ? <ProfileMenu /> : null}
-              <button
+              <button data-key-role="secondary"
                 type="button"
                 className={`top-bar-settings-button${openPanel === "settings" ? " is-active" : ""}`}
                 onClick={() => {
@@ -1030,7 +1031,7 @@ function AppShell({ currentUser = null }) {
           <div className="return-to-call-strip" role="status">
             <span className="return-to-call-strip__pulse" aria-hidden="true" />
             <span className="return-to-call-strip__label">CALL SESSION ACTIVE</span>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="return-to-call-strip__btn"
               onClick={() => {
@@ -1150,17 +1151,17 @@ function SubscriptionBanner() {
 
   if (isTrial) {
     return (
-      <div className="subscription-banner">
-        Trial ends in {days ?? "--"} days. Upgrade to continue uninterrupted.
-      </div>
+      <AppToast tone="info">
+        Trial ends in {days ?? "--"} days.
+      </AppToast>
     );
   }
 
   if (isStarter) {
     return (
-      <div className="subscription-banner is-starter">
-        Starter plan active. Co-Pilot, transcription, CRM sync, and advanced analytics require Pro.
-      </div>
+      <AppToast tone="info">
+        Starter plan active.
+      </AppToast>
     );
   }
 
@@ -1358,12 +1359,12 @@ function AuthedCallAuthBanner() {
   const {sessionExpired, callProtected, isSignedIn} = useAppAuth();
   const {openSignIn} = useClerk();
   if (!sessionExpired && isSignedIn) return null;
-  return <div className="billing-alert is-error call-auth-banner" role="status">
+  return <AppToast tone="error">
     <span>Session expired, sign in after this call</span>
-    {!callProtected && <button type="button" className="contacts-mini-btn" onClick={() => {
+    {!callProtected && <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => {
       if (!callContinuity.getSnapshot()) openSignIn();
     }}>Sign in</button>}
-  </div>;
+  </AppToast>;
 }
 
 function CallAuthBanner() {

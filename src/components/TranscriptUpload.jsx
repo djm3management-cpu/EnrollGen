@@ -360,7 +360,7 @@ export default function TranscriptUpload() {
           </div>
         )}
 
-        <button className="primary" type="submit" disabled={submitting}>
+        <button data-key-role="secondary" className="primary" type="submit" disabled={submitting}>
           {submitting ? "Processing..." : "Upload Transcript"}
         </button>
       </form>

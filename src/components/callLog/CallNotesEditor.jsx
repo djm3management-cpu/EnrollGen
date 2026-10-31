@@ -34,6 +34,6 @@ export default function CallNotesEditor({ callRecordId, notes, loading, onSaved 
       dirty.current = true; setDraft(event.target.value); setSaved(false);
     }} onBlur={() => void save()} />
     <span className="call-notes-state contacts-muted" role="status">{saving ? 'Saving…' : saved ? 'Saved' : !callRecordId ? 'No call record linked' : 'Saves when you leave this field'}</span>
-    {error && <div className="ops-error" role="alert">{error} <button type="button" className="contacts-mini-btn" onClick={() => void save()}>RETRY</button></div>}
+    {error && <div className="ops-error" role="alert">{error} <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => void save()}>RETRY</button></div>}
   </>;
 }

@@ -37,11 +37,11 @@ export default function CombinedCalls({ callId }) {
   return <section className="contacts-section combined-calls">
     <h3 className="contacts-section-head">Combined Calls</h3>
     {loading && <p className="contacts-muted" role="status">Loading linked calls…</p>}
-    {error && <div className="ops-error" role="alert">{error} <button className="contacts-mini-btn" onClick={refresh}>Retry</button></div>}
+    {error && <div className="ops-error" role="alert">{error} <button data-key-role="secondary" className="contacts-mini-btn" onClick={refresh}>Retry</button></div>}
     {rows.map(row => <section key={row.call_record_id} className="ops-summary-box">
       <div className="contacts-section-head">
         <span>{formatCallDateTime(row.occurred_at)} · {row.agent || 'Unknown agent'} · Talk {formatTalk(row.duration_seconds)} · {row.disposition || 'Unknown disposition'}</span>
-        <button type="button" className="contacts-mini-btn" disabled={busy !== null} onClick={() => uncombine(row.call_record_id)}>{busy === row.call_record_id ? 'Restoring…' : 'Uncombine'}</button>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={busy !== null} onClick={() => uncombine(row.call_record_id)}>{busy === row.call_record_id ? 'Restoring…' : 'Uncombine'}</button>
       </div>
       <CallTranscriptPlayer row={row} detail={row} loading={false} />
     </section>)}

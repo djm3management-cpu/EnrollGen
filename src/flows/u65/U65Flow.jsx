@@ -266,7 +266,7 @@ function OpenerSelector({ selected, suggested, premium, onSelect }) {
       <div className="u65-nepq-opener__label">SELECT FROM LEAD FORM</div>
       <div className="u65-nepq-opener__choices" role="group" aria-label="Opener variant">
         {U65_OPENER_VARIANTS.map((variant) => (
-          <button
+          <button data-key-role="secondary"
             type="button"
             className={`u65-nepq-choice${selected === variant.id ? " is-selected" : ""}`}
             key={variant.id}
@@ -303,7 +303,7 @@ function ConditionalCallout({
 
   return (
     <div className={`u65-nepq-callout is-${block.tone || "default"}${open ? " is-open" : ""}`}>
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="u65-nepq-callout__toggle"
         onClick={() => setOpen((current) => !current)}
@@ -359,7 +359,7 @@ function BranchSet({
             className={`u65-nepq-branch is-${branch.tone || "default"}${open ? " is-open" : ""}`}
             key={branch.label}
           >
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="u65-nepq-branch__header"
               onClick={() => setOpenBranch(open ? null : branch.label)}
@@ -391,7 +391,7 @@ function BranchSet({
                     onOpenerSelect={onOpenerSelect}
                   />
                   {branch.action === "medsup" ? (
-                    <button
+                    <button data-key-role="secondary"
                       type="button"
                       className="u65-nepq-switch"
                       onClick={switchToMedSupp}
@@ -514,7 +514,7 @@ function ScreenSection({
 
   return (
     <section className={`u65-nepq-group${open ? " is-open" : ""}`}>
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="u65-nepq-group__toggle"
         onClick={onToggle}
@@ -602,7 +602,7 @@ function ObjectionOverlay({ open, onClose, returnFocusRef, objections }) {
                 <span>AVAILABLE ON EVERY SCREEN</span>
                 <h2 id="u65-objections-title">Objections</h2>
               </div>
-              <button
+              <button data-key-role="icon"
                 ref={closeButtonRef}
                 type="button"
                 className="u65-nepq-objection-modal__close"
@@ -759,7 +759,7 @@ export default function U65Flow({
               <span>{currentScreen.code}</span>
               <strong>{currentScreen.label}</strong>
             </div>
-            <button
+            <button data-key-role="secondary"
               ref={objectionButtonRef}
               type="button"
               className="u65-nepq-objection-trigger"
@@ -799,7 +799,7 @@ export default function U65Flow({
           </div>
 
           <div className="u65-nepq-nav">
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="u65-nepq-nav__button is-back"
               onClick={goBack}
@@ -811,7 +811,7 @@ export default function U65Flow({
             <span className="u65-nepq-nav__count">
               {currentScreenIndex + 1} / {screens.length}
             </span>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="u65-nepq-nav__button is-next"
               onClick={goNext}
@@ -837,7 +837,7 @@ export default function U65Flow({
             All {screens.length} {screens.length === 1 ? "screen is" : "screens are"} complete.
           </p>
           <div className="u65-nepq-complete__actions">
-            <button
+            <button data-key-role="secondary"
               type="button"
               onClick={() => {
                 setComplete(false);
@@ -846,7 +846,7 @@ export default function U65Flow({
             >
               Back to {screens[lastScreenIndex]?.shortLabel || "Last Screen"}
             </button>
-            <button type="button" onClick={resetFlow}>New Call</button>
+            <button data-key-role="secondary" type="button" onClick={resetFlow}>New Call</button>
           </div>
         </motion.section>
       )}

@@ -202,7 +202,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
                       )
                     }
                   />
-                  <button
+                  <button data-key-role="icon"
                     type="button"
                     className="billing-icon-button"
                     onClick={() => setAgents((current) => current.filter((_, idx) => idx !== index))}
@@ -212,7 +212,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
                 </div>
               ))}
             </div>
-            <button
+            <button data-key-role="primary"
               type="button"
               className="billing-button"
               onClick={() => setAgents((current) => [...current, { name: "", npn: "", ghl_user_id: "" }])}
@@ -256,7 +256,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
                   <strong>$49</strong>
                 </div>
                 <p>Script flows, compliance scoring, call records, and basic analytics.</p>
-                <button type="button" className="billing-button" disabled={saving} onClick={() => choosePlan("starter")}>
+                <button data-key-role="primary" type="button" className="billing-button" disabled={saving} onClick={() => choosePlan("starter")}>
                   Start Starter
                 </button>
               </article>
@@ -266,12 +266,12 @@ export default function Onboarding({ currentUser = null, onComplete }) {
                   <strong>$99</strong>
                 </div>
                 <p>Live Co-Pilot, transcription, CRM integration, and advanced analytics.</p>
-                <button type="button" className="billing-button is-primary" disabled={saving} onClick={() => choosePlan("pro")}>
+                <button data-key-role="primary" type="button" className="billing-button is-primary" disabled={saving} onClick={() => choosePlan("pro")}>
                   Start Pro
                 </button>
               </article>
             </div>
-            <button type="button" className="onboarding-skip" onClick={finishWithoutCheckout} disabled={saving}>
+            <button data-key-role="primary" type="button" className="onboarding-skip" onClick={finishWithoutCheckout} disabled={saving}>
               Save setup and choose billing later
             </button>
           </section>
@@ -282,7 +282,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
             <span className="billing-eyebrow">READY</span>
             <h1>Your agency workspace is ready</h1>
             <p>Settings, agents, CRM configuration, and default content have been created.</p>
-            <button type="button" className="billing-button is-primary" onClick={onComplete}>
+            <button data-key-role="secondary" type="button" className="billing-button is-primary" onClick={onComplete}>
               <Check size={15} />
               Enter EnrollGen
             </button>
@@ -291,7 +291,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
 
         {step < 3 ? (
           <div className="onboarding-footer">
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="billing-button"
               disabled={step === 0}
@@ -299,7 +299,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
             >
               Back
             </button>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="billing-button is-primary"
               disabled={!canContinue}

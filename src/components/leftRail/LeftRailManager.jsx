@@ -320,7 +320,7 @@ export function LeftRail({
       <div className="left-rail-handles">
         {launcher}
         {visibleMinimizedItems.map((item) => (
-          <button
+          <button data-key-role="secondary"
             key={item.id}
             type="button"
             className={`left-rail-handle${item.isAttention ? " is-attention" : ""}`}
@@ -366,7 +366,7 @@ export function LeftRail({
         ) : null}
       </aside>
       {visibleExpandedItem ? (
-        <button
+        <button data-key-role="secondary"
           type="button"
           className="rail-minimize-btn left-rail-minimize left-rail-minimize--external"
           style={{ left: visibleRailWidth }}

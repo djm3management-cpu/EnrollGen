@@ -78,12 +78,12 @@ export function OpportunityEditor({ data, prefill = {}, existing = null, onSaved
 
   return <form className="opps-editor" onSubmit={submit}>
     {error && <div className="ops-error" role="alert">{error}</div>}
-    {duplicateId && <button type="button" className="contacts-mini-btn" onClick={() => { set('contact_id', duplicateId); setCreateNew(false); setError(''); setDuplicateId(null); }}>USE EXISTING CONTACT</button>}
+    {duplicateId && <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => { set('contact_id', duplicateId); setCreateNew(false); setError(''); setDuplicateId(null); }}>USE EXISTING CONTACT</button>}
     <fieldset disabled={saving}>
       {!existing && <>
       <div className="opps-actions contacts-filters">
-        <button type="button" className={!createNew ? 'is-active' : ''} onClick={() => setCreateNew(false)}>Existing contact</button>
-        <button type="button" className={createNew ? 'is-active' : ''} onClick={() => {
+        <button data-key-role="primary" type="button" className={!createNew ? 'is-active' : ''} onClick={() => setCreateNew(false)}>Existing contact</button>
+        <button data-key-role="primary" type="button" className={createNew ? 'is-active' : ''} onClick={() => {
           setCreateNew(true);
           setFields((current) => ({ ...current, contact_id: '', call_id: '' }));
         }}>Create contact</button>
@@ -122,14 +122,14 @@ export function OpportunityEditor({ data, prefill = {}, existing = null, onSaved
       </div>
     </fieldset>
     {callError && <div className="ops-error" role="alert">Linked calls: {callError}</div>}
-    <button className="contacts-mini-btn opps-primary" disabled={saving || !data.agentUuid || !data.stages.length}>{saving ? 'SAVING…' : existing ? 'SAVE OPPORTUNITY' : 'CREATE OPPORTUNITY'}</button>
+    <button data-key-role="secondary" className="contacts-mini-btn opps-primary" disabled={saving || !data.agentUuid || !data.stages.length}>{saving ? 'SAVING…' : existing ? 'SAVE OPPORTUNITY' : 'CREATE OPPORTUNITY'}</button>
   </form>;
 }
 
 export default function NewOpportunityModal({ data, prefill, onClose, onSaved = onClose }) {
   const [busy, setBusy] = useState(false);
   return <OpportunityDialog title="New Opportunity" busy={busy} onClose={onClose}>
-    {data.loading ? <p className="contacts-muted">Loading pipeline…</p> : data.error && !data.stages.length ? <div className="ops-error" role="alert">{data.error}<button className="contacts-mini-btn" onClick={() => data.refresh()}>RETRY</button></div>
+    {data.loading ? <p className="contacts-muted">Loading pipeline…</p> : data.error && !data.stages.length ? <div className="ops-error" role="alert">{data.error}<button data-key-role="secondary" className="contacts-mini-btn" onClick={() => data.refresh()}>RETRY</button></div>
       : <OpportunityEditor data={data} prefill={prefill} onBusyChange={setBusy} onSaved={onSaved} />}
   </OpportunityDialog>;
 }

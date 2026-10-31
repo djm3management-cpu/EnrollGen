@@ -30,11 +30,11 @@ export default function ContactTagsPopover({ contactId, contactName, anchor, tag
     try { await tags.add(contactId, draft.trim()); setDraft(''); inputRef.current?.focus(); } catch { /* Hook displays the error. */ }
   };
   return createPortal(<section ref={panelRef} className="opps-tags-popover" style={position} role="dialog" aria-label={`Tags for ${contactName}`}>
-    <header><strong>Contact tags</strong><button type="button" className="contacts-mini-btn" aria-label="Close tags" onClick={() => { onClose(); anchor.focus(); }}><X size={14} /></button></header>
-    <div className="opps-tag-list">{contactTags.map((tag) => <span key={tag.id} className="contacts-chip">{tag.name}<button type="button" aria-label={`Remove ${tag.name} tag`} disabled={tags.saving} onClick={() => { void tags.remove(tag.id).catch(() => {}); }}><X size={12} /></button></span>)}
+    <header><strong>Contact tags</strong><button data-key-role="icon" type="button" className="contacts-mini-btn" aria-label="Close tags" onClick={() => { onClose(); anchor.focus(); }}><X size={14} /></button></header>
+    <div className="opps-tag-list">{contactTags.map((tag) => <span key={tag.id} className="contacts-chip">{tag.name}<button data-key-role="secondary" type="button" aria-label={`Remove ${tag.name} tag`} disabled={tags.saving} onClick={() => { void tags.remove(tag.id).catch(() => {}); }}><X size={12} /></button></span>)}
       {!contactTags.length && <span className="contacts-muted">{tags.loading ? 'Loading tags…' : 'No tags yet'}</span>}
     </div>
-    {tags.error && <div className="ops-error" role="alert">{tags.error}<button type="button" className="contacts-mini-btn" disabled={tags.loading} onClick={() => { void tags.refresh(); }}>RETRY</button></div>}
-    <form onSubmit={submit}><input ref={inputRef} className="contacts-edit-input" aria-label="New contact tag" placeholder="Add a tag…" value={draft} maxLength={60} onChange={(event) => setDraft(event.target.value)} disabled={tags.saving || tags.loading} /><button type="submit" className="contacts-mini-btn" aria-label="Add tag" disabled={!draft.trim() || tags.saving || tags.loading}><Plus size={16} /></button></form>
+    {tags.error && <div className="ops-error" role="alert">{tags.error}<button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={tags.loading} onClick={() => { void tags.refresh(); }}>RETRY</button></div>}
+    <form onSubmit={submit}><input ref={inputRef} className="contacts-edit-input" aria-label="New contact tag" placeholder="Add a tag…" value={draft} maxLength={60} onChange={(event) => setDraft(event.target.value)} disabled={tags.saving || tags.loading} /><button data-key-role="secondary" type="submit" className="contacts-mini-btn" aria-label="Add tag" disabled={!draft.trim() || tags.saving || tags.loading}><Plus size={16} /></button></form>
   </section>, document.body);
 }

@@ -56,7 +56,7 @@ export default function MAScriptBranches({ view, sectionKey, dispatch }) {
     }
     if (node.type === "close") {
       rendered.push(
-        <button key={node.key} type="button" className="script-start-call-button"
+        <button data-key-role="primary" key={node.key} type="button" className="script-start-call-button"
           onClick={() => dispatch({ type: "CLOSE_MA_SCRIPT", outcome: node.outcome })}>
           {node.label}
         </button>
@@ -69,7 +69,7 @@ export default function MAScriptBranches({ view, sectionKey, dispatch }) {
         <legend>{node.label}</legend>
         <div className="ma-script-options">
           {node.options.map((option) => (
-            <button key={option.value} type="button"
+            <button data-key-role="primary" key={option.value} type="button"
               className={`script-start-call-button ma-script-option${node.selected === option.value ? " is-active" : ""}`}
               aria-pressed={node.selected === option.value}
               onClick={() => dispatch({ type: "SET_MA_ANSWER", section: sectionKey, key: node.key, value: option.value })}>

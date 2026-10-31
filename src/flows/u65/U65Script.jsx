@@ -70,7 +70,7 @@ function U65FlowSelector({ variant, onChange }) {
         {U65_FLOW_OPTIONS.map((flow) => {
           const active = variant === flow.id;
           return (
-            <button
+            <button data-key-role="secondary"
               key={flow.id}
               type="button"
               onClick={() => onChange(flow.id)}
