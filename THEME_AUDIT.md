@@ -8228,3 +8228,10 @@ This section supersedes the earlier in-progress status notes. Verification metho
 - No merge, production deployment, API/data/authentication/telephony logic change was made. The notification lifecycle changes were explicitly requested.
 
 Runtime screenshot QA is not exhaustive: rows explicitly marked “No screenshot sign-off recorded” must not be represented as visually certified. Their shared styling and component source were reviewed. Data-dependent checks above remain pending and are not an implementation blocker.
+
+## 2026-10-31 — ancillary prompt and rail header follow-up
+- Fixed collapsed ancillary prompts: labeled keys can fit/wrap their label, while floating icon-only prompts retain a centered 38px circle. Fixed-size/global key styles no longer squeeze the label.
+- White popup copy, quotes, notes and recap text use primary text; title uses accent and metadata uses secondary text. Expanded and collapsed MA prompt were checked in the white browser preview.
+- Co-Pilot and Live Transcript fill-widget shells extend across the rail gutters, with body insets preserved. Removed the inherited max-width constraint that clipped the extension.
+- Header icons have a 16px left inset; header color bars extend to the rail edges.
+- CSS-only changes. Production build passed before the final max-width/icon-inset correction; rebuilt below.

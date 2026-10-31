@@ -442,3 +442,49 @@ html:not(.dark) #root .vendor-routing { --text:var(--text-primary); --muted:var(
 #root .tenant-settings-toggle { display:flex !important; flex-direction:row !important; align-items:center !important; justify-content:flex-start !important; }
 #root .tenant-settings-toggle input { width:auto !important; flex:none; margin:0 !important; accent-color:var(--accent); }
 #root input[type="range"] { box-shadow:none !important; background:transparent !important; border:0 !important; accent-color:var(--accent); }
+
+/* Ancillary prompts: readable light text and a stable collapsed key. */
+html:not(.dark) #root .ancillary-popup-card {
+ background:var(--bg-elevated) !important; color:var(--text-primary) !important;
+}
+html:not(.dark) #root .ancillary-popup-card :is(
+ .ancillary-popup-copy,.ancillary-popup-note,.ancillary-popup-quote,
+ .ancillary-popup-extra-quote,.ancillary-popup-followup-summary,
+ .ancillary-popup-recap-title,.ancillary-popup-recap-meta,
+ .ancillary-popup-link-title,.ancillary-popup-link-detail,
+ .ancillary-popup-chip-title,.ancillary-popup-chip-subtitle,
+ .ancillary-popup-accordion-title,.ancillary-popup-total
+) { color:var(--text-primary) !important; }
+html:not(.dark) #root .ancillary-popup-title { color:var(--accent) !important; }
+html:not(.dark) #root .ancillary-popup-footnote { color:var(--text-secondary) !important; }
+html:not(.dark) #root .ancillary-popup-icon { background:var(--accent); color:#FFFFFF; }
+#root .ancillary-popup-pill.ancillary-popup-pill--with-label {
+ width:fit-content; max-width:100%; height:auto; min-height:38px;
+ padding:8px 12px; gap:8px; justify-content:flex-start; flex:none;
+}
+#root .ancillary-popup-pill-icon { flex:none; }
+#root .ancillary-popup-pill-label { min-width:0; white-space:normal; overflow-wrap:anywhere; text-align:left; color:inherit; }
+#root .left-floating-popup-stack .ancillary-popup-pill--inline {
+ width:38px; min-width:38px; height:38px; min-height:38px;
+ padding:0; gap:0; justify-content:center; border-radius:50% !important; flex:none;
+}
+
+/* Full-width rail headers; body text retains its existing inset. */
+#root .right-rail-full > .right-rail-scroll > .right-rail-widget-shell--fill {
+ width:calc(100% + 24px) !important; margin-left:-12px; margin-right:-12px;
+ border-radius:0 !important;
+}
+#root .right-rail-full > .right-rail-scroll > .right-rail-widget-shell--fill > .right-rail-widget-content {
+ margin-left:12px; margin-right:12px;
+}
+#root .right-rail-overlay > .right-rail-widget-shell--fill {
+ width:calc(100% + 32px) !important; margin-left:-14px; margin-right:-18px;
+ border-radius:0 !important;
+}
+#root .right-rail-overlay > .right-rail-widget-shell--fill > .right-rail-widget-content {
+ margin-left:14px; margin-right:18px;
+}
+#root .right-rail-full > .right-rail-scroll > .right-rail-widget-shell--fill,
+#root .right-rail-overlay > .right-rail-widget-shell--fill { max-width:none !important; }
+#root :is(.right-rail-full,.right-rail-overlay) .right-rail-widget-header { padding-left:16px !important; padding-right:12px !important; }
+html:not(.dark) #root .ancillary-popup-icon { background:var(--accent) !important; color:#FFFFFF !important; }
