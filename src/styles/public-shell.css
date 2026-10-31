@@ -74,3 +74,7 @@ body {
   font-size: 10px;
   letter-spacing: 0.08em;
 }
+
+/* Corporate white background; Terminal artwork remains untouched. */
+html:not(.dark) .viewport-bg, html:not(.dark) .viewport-bg::before, html:not(.dark) .viewport-bg::after { background: #FFFFFF !important; background-image: none !important; }
+html:not(.dark) .viewport-wallpaper-image { display: none !important; }

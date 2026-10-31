@@ -7427,3 +7427,6 @@ All items below are pending interactive verification in **both** themes:
 - [ ] Logged-out landing and sign-in
 
 Terminal default and saved light preference behavior already exist in ThemeContext and bootstrap. Bootstrap light theme-color remains the original palette until the complete white palette lands.
+
+## Continuation — phase 2
+Replaced core light surfaces, text, accent and status palettes; preserved all existing token names and the `.dark` block byte-for-byte. Light Contacts uses white clay tokens with unchanged radii. Dialer light phone tokens are frozen to their previous resolved values. White wallpaper is suppressed. Raw chart/map/pipeline color isolation still requires visual verification; this phase is not yet accepted as complete.
