@@ -7452,3 +7452,6 @@ Fallback stack now follows the requested Avenir/Segoe stack; script-read token u
 - `src/components/AgentTools.jsx`: `<p className="at-modal-desc">{tool.description}</p>`
 
 Ambiguous script guidance, compliance descriptions, map notes and document reference descriptions remain intact pending content review. Dynamic tool descriptions are no longer rendered; underlying data is unchanged.
+
+## Continuation — phase 7
+Terminal remains the explicit default in both bootstrap and ThemeProvider. Saved light preference still selects light without migration. Bootstrap white theme-color now matches the new page token; ThemeProvider continues syncing the meta tag on toggles. No persistence or API changes.
