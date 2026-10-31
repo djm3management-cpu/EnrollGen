@@ -48,7 +48,7 @@ const AgentAvailabilityToggle = memo(function AgentAvailabilityToggle() {
     >
       <div className="agent-availability-buttons" role="group" aria-label="Agent availability">
         {STATUS_OPTIONS.map((option) => (
-          <button
+          <button data-key-role="secondary"
             key={option.value}
             type="button"
             className={`agent-availability-btn${

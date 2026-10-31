@@ -164,7 +164,7 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
           {data.agentOptions.map(agent => <option key={agent.key} value={agent.clerkUserId === userId ? "self" : agent.key}>{agent.label}{agent.clerkUserId === userId ? ' (you)' : ''}</option>)}
         </select>
       </div>
-      <div className="agent-dash-status"><ParagonCallbackBadge /><button onClick={onOpenContacts}>{data.loading ? 'Loading' : data.contacts} {scope === 'agency' ? 'agency contacts' : 'assigned contacts'} ↗</button><button onClick={data.refresh} disabled={data.loading}>Refresh</button><span role="status">{data.loading ? 'Loading your activity...' : data.updatedAt ? `Updated ${data.updatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Awaiting data'}</span></div>
+      <div className="agent-dash-status"><ParagonCallbackBadge /><button data-key-role="secondary" onClick={onOpenContacts}>{data.loading ? 'Loading' : data.contacts} {scope === 'agency' ? 'agency contacts' : 'assigned contacts'} ↗</button><button data-key-role="secondary" onClick={data.refresh} disabled={data.loading}>Refresh</button><span role="status">{data.loading ? 'Loading your activity...' : data.updatedAt ? `Updated ${data.updatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Awaiting data'}</span></div>
     </header>
     {data.error && <p className="agent-dash-error" role="alert">{data.error} Use Refresh to retry. {data.updatedAt ? 'Showing the last successful update.' : 'Metrics are unavailable until data loads.'}</p>}
     <section className="agent-dash-metrics" aria-label="Today’s key metrics">
@@ -176,7 +176,7 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
         </span>;
       })}
     </section>
-    <div className="agent-dash-range-row"><span>{scopeLabel} · ACTIVITY WINDOW</span><div className="agent-dash-ranges" aria-label="Chart time range">{DASHBOARD_RANGES.map(([value, label]) => <button key={value} aria-pressed={range === value} onClick={() => setRange(value)}>{label}</button>)}</div></div>
+    <div className="agent-dash-range-row"><span>{scopeLabel} · ACTIVITY WINDOW</span><div className="agent-dash-ranges" aria-label="Chart time range">{DASHBOARD_RANGES.map(([value, label]) => <button data-key-role="secondary" key={value} aria-pressed={range === value} onClick={() => setRange(value)}>{label}</button>)}</div></div>
     <div className="agent-dash-panel-grid">
     <section className="agent-dash-panel"><header><h2>Calls vs Sales</h2><span className="agent-dash-legend"><i /> Calls <b /> Sales</span></header><TimelineChart buckets={summary.buckets} hourly={range === 'today'} /></section>
     <section className="agent-dash-panel"><header><h2>Compliance Score Trend</h2><span>Daily average · Reference {THRESHOLD}%</span></header><TimelineChart buckets={summary.daily} compliance /></section>

@@ -2,7 +2,7 @@ import { ChevronRight } from "lucide-react";
 
 export default function PrivatePlanCard({ product, selected, onSelect }) {
   return (
-    <button
+    <button data-key-role="secondary"
       type="button"
       className={`private-plan-card${selected ? " is-selected" : ""}`}
       onClick={() => onSelect?.(product.id)}

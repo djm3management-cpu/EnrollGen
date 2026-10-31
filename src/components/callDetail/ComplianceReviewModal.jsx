@@ -93,7 +93,7 @@ function CategorySection({ category, items, onJumpToEvidence, activeItemId }) {
 
   return (
     <div className="compliance-review-category">
-      <button type="button" className="compliance-review-category-head" onClick={() => setOpen((v) => !v)}>
+      <button data-key-role="secondary" type="button" className="compliance-review-category-head" onClick={() => setOpen((v) => !v)}>
         <span>{CATEGORY_LABELS[category] || category}</span>
         <span className="compliance-review-category-count">
           {scoredCount ? `${passCount}/${scoredCount} passed` : "Not scored"}
@@ -109,7 +109,7 @@ function CategorySection({ category, items, onJumpToEvidence, activeItemId }) {
           {items.map((item) => {
             const status = complianceItemStatus(item);
             return (
-              <button
+              <button data-key-role="secondary"
                 type="button"
                 key={item.id}
                 className={`compliance-review-flag ${status.className}${activeItemId === item.id ? " is-active" : ""}`}
@@ -276,7 +276,7 @@ export default function ComplianceReviewModal({ callRecordId, supabaseClient, on
       <div className="compliance-review-modal" onClick={(event) => event.stopPropagation()}>
         <div className="compliance-review-head">
           <h2>COMPLIANCE REVIEW</h2>
-          <button type="button" className="contacts-mini-btn" onClick={onClose}>CLOSE</button>
+          <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={onClose}>CLOSE</button>
         </div>
 
         {loading ? (

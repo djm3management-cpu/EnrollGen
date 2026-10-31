@@ -33,7 +33,7 @@ export default function AcaFfmSepFinder({ onProceed }) {
               key={category.id}
               className={`aca-ffm-sep-category${expanded ? " is-expanded" : ""}`}
             >
-              <button
+              <button data-key-role="secondary"
                 type="button"
                 className="aca-ffm-sep-category__trigger"
                 aria-expanded={expanded}
@@ -76,7 +76,7 @@ export default function AcaFfmSepFinder({ onProceed }) {
                     </div>
                   </dl>
 
-                  <button
+                  <button data-key-role="secondary"
                     type="button"
                     className="aca-ffm-sep-category__proceed"
                     onClick={() => onProceed?.(category)}

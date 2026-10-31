@@ -162,7 +162,7 @@ export default function ClientQuickScripts({ flowType, activeScriptId, onClose }
               <span>Quick Script</span>
               <h2>{activeScript.title}</h2>
             </div>
-            <button
+            <button data-key-role="icon"
               type="button"
               className="client-quick-script-panel__close"
               onClick={onClose}
@@ -203,7 +203,7 @@ export default function ClientQuickScripts({ flowType, activeScriptId, onClose }
                   aria-label="New plan satisfaction"
                 >
                   {activeScript.branches.map((branch) => (
-                    <button
+                    <button data-key-role="secondary"
                       key={branch.id}
                       type="button"
                       className={`client-quick-script-branch-button client-quick-script-branch-button--${branch.id}${

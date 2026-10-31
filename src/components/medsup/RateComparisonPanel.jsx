@@ -234,7 +234,7 @@ export default function RateComparisonPanel({
           onChange={(event) => setManualRate((current) => ({ ...current, monthlyPremium: event.target.value }))}
           placeholder="$ / mo"
         />
-        <button type="button" className="sf-icon-button" onClick={addManualRate} title="Add manual quote">
+        <button data-key-role="icon" type="button" className="sf-icon-button" onClick={addManualRate} title="Add manual quote">
           <Plus size={13} />
         </button>
       </div>

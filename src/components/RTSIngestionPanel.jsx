@@ -292,7 +292,7 @@ export default function RTSIngestionPanel({ currentAgent, tenantAgents, onCommit
 
   return (
     <>
-      <button type="button" className="rts-upload-trigger" onClick={() => setOpen(true)}>
+      <button data-key-role="secondary" type="button" className="rts-upload-trigger" onClick={() => setOpen(true)}>
         <Upload size={13} aria-hidden="true" />
         Import RTS
       </button>
@@ -310,7 +310,7 @@ export default function RTSIngestionPanel({ currentAgent, tenantAgents, onCommit
                 <span className="rts-eyebrow">AI NORMALIZATION</span>
                 <h3 id="rts-ingest-title">Import carrier RTS data</h3>
               </div>
-              <button
+              <button data-key-role="icon"
                 type="button"
                 className="rts-ingest-close"
                 onClick={close}
@@ -344,7 +344,7 @@ export default function RTSIngestionPanel({ currentAgent, tenantAgents, onCommit
                   accept={ACCEPTED_FILE_TYPES}
                   onChange={(event) => analyzeFile(event.target.files?.[0])}
                 />
-                <button
+                <button data-key-role="secondary"
                   type="button"
                   className="rts-primary-button"
                   onClick={() => inputRef.current?.click()}
@@ -362,7 +362,7 @@ export default function RTSIngestionPanel({ currentAgent, tenantAgents, onCommit
               <div className="rts-ingest-loading" aria-live="polite">
                 <LoaderCircle className="is-spinning" size={24} aria-hidden="true" />
                 <h4>Normalizing carrier data</h4>
-                <p>Detecting columns, matching agents and carriers, and parsing appointment details.</p>
+
               </div>
             ) : null}
 
@@ -559,10 +559,10 @@ export default function RTSIngestionPanel({ currentAgent, tenantAgents, onCommit
                       ? "Committing will upsert the selected records and write an audit log."
                       : "Review is available, but a tenant admin must commit this ingestion."}
                   </span>
-                  <button type="button" className="rts-secondary-button" onClick={reset} disabled={phase === "committing"}>
+                  <button data-key-role="primary" type="button" className="rts-secondary-button" onClick={reset} disabled={phase === "committing"}>
                     Start over
                   </button>
-                  <button
+                  <button data-key-role="secondary"
                     type="button"
                     className="rts-primary-button"
                     disabled={!isAdmin || selectedRecords.size === 0 || phase === "committing"}
@@ -587,7 +587,7 @@ export default function RTSIngestionPanel({ currentAgent, tenantAgents, onCommit
                   {commitResult.records_skipped} skipped
                 </p>
                 <small>Audit ID {commitResult.ingestion_id}</small>
-                <button type="button" className="rts-primary-button" onClick={close}>Done</button>
+                <button data-key-role="secondary" type="button" className="rts-primary-button" onClick={close}>Done</button>
               </div>
             ) : null}
           </section>

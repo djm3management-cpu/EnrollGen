@@ -96,7 +96,7 @@ const PlanContextCard = memo(function PlanContextCard() {
             placeholder="PLAN NAME / #"
             aria-label="Plan name or number"
           />
-          <button
+          <button data-key-role="primary"
             type="submit"
             className="eg-plan-lookup__submit"
             disabled={lookupLoading}
@@ -112,7 +112,7 @@ const PlanContextCard = memo(function PlanContextCard() {
 
         {manualOverride ? (
           <div className="eg-plan-lookup__clear-row">
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="eg-plan-lookup__clear"
               onClick={handleClearPlan}
@@ -142,7 +142,7 @@ const PlanContextCard = memo(function PlanContextCard() {
               ].filter(Boolean).join(" - ");
 
               return (
-                <button
+                <button data-key-role="secondary"
                   key={getPlanResultKey(plan, index)}
                   type="button"
                   className="eg-plan-lookup__result"

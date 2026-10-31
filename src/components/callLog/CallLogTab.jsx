@@ -107,11 +107,11 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, callProductType
         </optgroup>
       ))}
     </select>
-    {needsIntake && ['enrolled','enrolled_pending_verification'].includes(selectedOutcome) && <button type="button" className="contacts-mini-btn" disabled={saving||disabled} onClick={()=>setIntakeOpen(true)}>Enrollment intake / save disposition</button>}
+    {needsIntake && ['enrolled','enrolled_pending_verification'].includes(selectedOutcome) && <button data-key-role="primary" type="button" className="contacts-mini-btn" disabled={saving||disabled} onClick={()=>setIntakeOpen(true)}>Enrollment intake / save disposition</button>}
     {intakeOpen && <EnrollmentIntake callId={callRecordId} onClose={()=>setIntakeOpen(false)} onSaved={()=>void saveOutcome(selectedOutcome,null)}/>}
     {isUhc && !needsIntake && ['enrolled','enrolled_pending_verification'].includes(selectedOutcome) && <div className="grid post-call-wrap-grid">
       <label>SunFire Confirmation Codes (required, one per line)<textarea value={codes} disabled={saving || disabled} onChange={event=>setCodes(event.target.value)}/></label>
-      <button type="button" className="contacts-mini-btn" disabled={saving || disabled || !codes.trim()} onClick={()=>void saveOutcome(selectedOutcome,null)}>Save disposition and codes</button>
+      <button data-key-role="primary" type="button" className="contacts-mini-btn" disabled={saving || disabled || !codes.trim()} onClick={()=>void saveOutcome(selectedOutcome,null)}>Save disposition and codes</button>
     </div>}
     {selectedOutcome === "sale_ancillary" && (
       <div className="grid post-call-wrap-grid">
@@ -129,7 +129,7 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, callProductType
             ))}
           </select>
         </label>
-        <button
+        <button data-key-role="secondary"
           type="button"
           className="contacts-mini-btn"
           disabled={saving || disabled}
@@ -198,14 +198,14 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
     <div className="call-log-expand">
       <div className="call-log-expand-actions">
         <span className="contacts-muted">{fmtDateTime(row.occurred_at)} · {row.agent || "Unknown agent"} · Talk {fmtDuration(row.original_talk_seconds ?? row.duration_seconds)}{row.combined_count > 0 ? ` · Combined talk ${fmtDuration(row.duration_seconds)}` : ""}</span>
-        <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={onCombine}>Combine with…</button>
-        <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={()=>setShowIntake(true)}>Enrollment Intake</button>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={onCombine}>Combine with…</button>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={()=>setShowIntake(true)}>Enrollment Intake</button>
         <CreateOpportunityButton contactId={row.contact_id} callId={row.call_record_id} contactName={row.contact_name} label="+ OPPORTUNITY" />
-        <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} aria-expanded={showFullDetail} onClick={() => setShowFullDetail(current => !current)}>{showFullDetail ? "HIDE FULL DETAIL" : "FULL DETAIL"}</button>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={!row.call_record_id} aria-expanded={showFullDetail} onClick={() => setShowFullDetail(current => !current)}>{showFullDetail ? "HIDE FULL DETAIL" : "FULL DETAIL"}</button>
         <details className="call-actions-menu">
           <summary className="contacts-mini-btn" aria-label="More call actions">⋯</summary>
           <div className="call-actions-menu-items">
-            <button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={event => {
+            <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={event => {
               event.currentTarget.closest('details').open = false;
               setShowComplianceReview(true);
             }}>Compliance Review</button>
@@ -213,7 +213,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
         </details>
       </div>
       {showIntake&&<EnrollmentIntake callId={row.call_record_id} onClose={()=>setShowIntake(false)} onSaved={()=>void loadDetail()}/>}
-      {detailError && <div className="ops-error" role="alert">{detailError} <button type="button" className="contacts-mini-btn" onClick={() => void loadDetail()}>RETRY</button></div>}
+      {detailError && <div className="ops-error" role="alert">{detailError} <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => void loadDetail()}>RETRY</button></div>}
       <div className="call-log-workspace">
         <CallTranscriptPlayer row={row.combined_count > 0 ? { ...row, duration_seconds: row.original_talk_seconds } : row} detail={detail} loading={loading} playRequest={playRequest} />
         <aside className="call-log-sidebar" aria-label="Call information">
@@ -235,7 +235,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
             <div className="contacts-section-head">COMPLIANCE</div>
             <div className="call-sidebar-compliance">
               <ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} duration={row.combined_count > 0 ? row.original_talk_seconds : row.duration_seconds} />
-              {row.call_record_id && <button type="button" className="call-review-link" onClick={() => setShowComplianceReview(true)}>REVIEW →</button>}
+              {row.call_record_id && <button data-key-role="secondary" type="button" className="call-review-link" onClick={() => setShowComplianceReview(true)}>REVIEW →</button>}
             </div>
           </section>
           <section className="contacts-section">
@@ -375,7 +375,7 @@ export default function CallLogTab({ onOpenContact = null, inboundCallId=null })
           onChange={(event) => setSearch(event.target.value)}
         />
         <div className="call-log-toolbar-actions" role="group" aria-label="Call log filters and actions">
-          {selectedCalls.length === 2 && <button type="button" className="contacts-mini-btn" onClick={() => setCombineIds(selectedCalls)}>Combine Calls</button>}
+          {selectedCalls.length === 2 && <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => setCombineIds(selectedCalls)}>Combine Calls</button>}
           <CallLogIconSelect icon={UsersRound} label="Agent filter" title={`Agent: ${agentFilter === 'ALL' ? 'All agents' : agentFilter}`} value={agentFilter} onChange={event => setAgentFilter(event.target.value)}>
             {agentOptions.map(agent => <option key={agent} value={agent}>{agent === 'ALL' ? 'ALL AGENTS' : agent}</option>)}
           </CallLogIconSelect>
@@ -392,9 +392,9 @@ export default function CallLogTab({ onOpenContact = null, inboundCallId=null })
             </optgroup>)}
           </CallLogIconSelect>
           <CallDateRangePicker from={dateFrom} to={dateTo} onChange={(from, to) => { setDateFrom(from); setDateTo(to); }} />
-          <button type="button" className={`contacts-mini-btn call-log-toolbar-icon${showRecordings ? ' is-active' : ''}`} aria-label="Recordings" title="Recordings" aria-expanded={showRecordings} onClick={() => setShowRecordings(value => !value)}><FileAudio size={16} aria-hidden="true" /></button>
-          <button type="button" className="contacts-mini-btn call-log-toolbar-icon" aria-label="Refresh calls" title="Refresh calls" onClick={load}><RefreshCw size={16} aria-hidden="true" /></button>
-          <button type="button" className="contacts-mini-btn call-log-toolbar-icon" aria-label={exporting ? "Exporting calls" : "Export calls (CSV)"} title={exporting ? "Exporting calls…" : "Export calls (CSV)"} aria-busy={exporting} disabled={loading || exporting} onClick={() => void exportCalls()}><Download size={16} aria-hidden="true" /></button>
+          <button data-key-role="secondary" type="button" className={`contacts-mini-btn call-log-toolbar-icon${showRecordings ? ' is-active' : ''}`} aria-label="Recordings" title="Recordings" aria-expanded={showRecordings} onClick={() => setShowRecordings(value => !value)}><FileAudio size={16} aria-hidden="true" /></button>
+          <button data-key-role="secondary" type="button" className="contacts-mini-btn call-log-toolbar-icon" aria-label="Refresh calls" title="Refresh calls" onClick={load}><RefreshCw size={16} aria-hidden="true" /></button>
+          <button data-key-role="icon" type="button" className="contacts-mini-btn call-log-toolbar-icon" aria-label={exporting ? "Exporting calls" : "Export calls (CSV)"} title={exporting ? "Exporting calls…" : "Export calls (CSV)"} aria-busy={exporting} disabled={loading || exporting} onClick={() => void exportCalls()}><Download size={16} aria-hidden="true" /></button>
         </div>
       </div>
 
@@ -453,7 +453,7 @@ export default function CallLogTab({ onOpenContact = null, inboundCallId=null })
         setExpandedId(rows.find(row => row.call_record_id === primaryId)?.log_id || null);
       }} />}
       <div className="call-log-pagination">
-        <button
+        <button data-key-role="secondary"
           type="button"
           className="contacts-mini-btn"
           disabled={page === 0}
@@ -462,7 +462,7 @@ export default function CallLogTab({ onOpenContact = null, inboundCallId=null })
           ← PREV
         </button>
         <span className="mono">{pageLabel}</span>
-        <button
+        <button data-key-role="secondary"
           type="button"
           className="contacts-mini-btn"
           disabled={page + 1 >= totalPages}
@@ -518,8 +518,8 @@ function FragmentRow({ row, isExpanded, isAlert, onToggle, onPlay, playRequest, 
         <td><ComplianceChip score={row.compliance_score} status={row.compliance_status} grade={row.compliance_grade} passFail={row.compliance_pass_fail} duration={row.combined_count > 0 ? row.original_talk_seconds : row.duration_seconds} /></td>
         <td className="call-log-caret"><span className="call-log-row-actions"><CallBackButton row={row} /><details className="call-actions-menu" onClick={event => event.stopPropagation()}>
           <summary className="contacts-mini-btn" aria-label="More call actions">⋯</summary>
-          <div className="call-actions-menu-items"><button type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={event => { event.currentTarget.closest('details').open = false; onCombine(); }}>Combine with…</button></div>
-        </details><button type="button" className="call-expand-toggle" aria-label={isExpanded ? "Collapse call" : "Expand call"} aria-expanded={isExpanded} onClick={event => { event.stopPropagation(); onToggle(); }}>{isExpanded ? "⌄" : "›"}</button></span></td>
+          <div className="call-actions-menu-items"><button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={!row.call_record_id} onClick={event => { event.currentTarget.closest('details').open = false; onCombine(); }}>Combine with…</button></div>
+        </details><button data-key-role="secondary" type="button" className="call-expand-toggle" aria-label={isExpanded ? "Collapse call" : "Expand call"} aria-expanded={isExpanded} onClick={event => { event.stopPropagation(); onToggle(); }}>{isExpanded ? "⌄" : "›"}</button></span></td>
       </tr>
       {isExpanded ? (
         <tr className="call-log-expand-row">

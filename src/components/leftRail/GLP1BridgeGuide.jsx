@@ -19,7 +19,7 @@ export default function GLP1BridgeGuide() {
 
   return (
     <div className="glp1-bridge-guide">
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="glp1-bridge-guide__trigger"
         aria-expanded={isOpen}
@@ -35,7 +35,7 @@ export default function GLP1BridgeGuide() {
         <aside className="glp1-bridge-guide__panel" id="glp1-bridge-guide-content" role="dialog" aria-label="GLP-1 Bridge guidance">
           <div className="glp1-bridge-guide__panel-header">
             <strong>GLP-1 BRIDGE</strong>
-            <button type="button" onClick={() => setIsOpen(false)} aria-label="Close GLP-1 Bridge guidance" title="Close">
+            <button data-key-role="icon" type="button" onClick={() => setIsOpen(false)} aria-label="Close GLP-1 Bridge guidance" title="Close">
               <X size={14} aria-hidden="true" />
             </button>
           </div>

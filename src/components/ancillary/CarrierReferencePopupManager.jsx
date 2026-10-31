@@ -60,7 +60,7 @@ const CarrierAccordionSection = memo(function CarrierAccordionSection({
         open ? " ancillary-popup-accordion--open" : ""
       }`}
     >
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="ancillary-popup-accordion-toggle"
         onClick={onToggle}

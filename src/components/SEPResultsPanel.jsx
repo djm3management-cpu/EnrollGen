@@ -159,7 +159,7 @@ export default function SEPResultsPanel({
           ) : null}
         </div>
         {onRefresh ? (
-          <button
+          <button data-key-role="secondary"
             type="button"
             className="sep-finder-refresh"
             onClick={onRefresh}
@@ -223,7 +223,7 @@ export default function SEPResultsPanel({
                   ) : null}
                   {detail.label ? (
                     canExpand ? (
-                      <button
+                      <button data-key-role="secondary"
                         type="button"
                         className="sep-finder-card-detail-trigger"
                         aria-expanded={isExpanded}

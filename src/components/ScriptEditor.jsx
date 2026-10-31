@@ -216,10 +216,10 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
           <p>{loading ? "Loading template..." : `${sections.length} sections loaded`}</p>
         </div>
         <div className="script-editor-actions">
-          <button type="button" className="secondary" onClick={loadTemplate} disabled={saving}>
+          <button data-key-role="secondary" type="button" className="secondary" onClick={loadTemplate} disabled={saving}>
             <RotateCcw size={14} /> Revert to Default
           </button>
-          <button type="button" className="primary" onClick={saveTemplate} disabled={flow === "ma" || saving || !changedCount}>
+          <button data-key-role="secondary" type="button" className="primary" onClick={saveTemplate} disabled={flow === "ma" || saving || !changedCount}>
             <Save size={14} /> {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
@@ -227,7 +227,7 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
 
       <div className="script-editor-tabs">
         {FLOWS.map(([id, label]) => (
-          <button
+          <button data-key-role="secondary"
             type="button"
             key={id}
             className={flow === id ? "is-active" : ""}
@@ -257,13 +257,13 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
                 value={section.title}
                 onChange={(event) => patchSection(index, { title: event.target.value })}
               />
-              <button type="button" title="Move up" disabled={flow === "ma"} onClick={() => moveSection(index, -1)}>
+              <button data-key-role="secondary" type="button" title="Move up" disabled={flow === "ma"} onClick={() => moveSection(index, -1)}>
                 <ArrowUp size={14} />
               </button>
-              <button type="button" title="Move down" disabled={flow === "ma"} onClick={() => moveSection(index, 1)}>
+              <button data-key-role="secondary" type="button" title="Move down" disabled={flow === "ma"} onClick={() => moveSection(index, 1)}>
                 <ArrowDown size={14} />
               </button>
-              <button
+              <button data-key-role="secondary"
                 type="button"
                 title={section.compliance_locked ? "Compliance-locked sections cannot be deleted" : "Delete section"}
                 disabled={flow === "ma" || section.compliance_locked}
@@ -322,7 +322,7 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
         ))}
       </div>
 
-      <button type="button" className="script-editor-add" disabled={flow === "ma"} onClick={addSection}>
+      <button data-key-role="secondary" type="button" className="script-editor-add" disabled={flow === "ma"} onClick={addSection}>
         <Plus size={14} /> Add Section
       </button>
     </section>

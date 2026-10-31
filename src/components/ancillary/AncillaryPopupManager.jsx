@@ -204,7 +204,7 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
 
             <div className="ancillary-popup-link-list">
               {portalProducts.map((product, index) => (
-                <button
+                <button data-key-role="secondary"
                   key={product.id}
                   type="button"
                   className="ancillary-popup-link"
@@ -282,7 +282,7 @@ const AncillaryPopupManager = memo(function AncillaryPopupManager({
                 </div>
               ))}
             </div>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="ancillary-popup-complete-btn"
               onClick={() => {

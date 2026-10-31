@@ -13,7 +13,7 @@ export function penetrationLabel(row) {
 export function penetrationColor(row) {
   if (row?.penetration_pct == null) return 'var(--bg-elevated)';
   const rate = Number(row.penetration_pct);
-  return `color-mix(in srgb, var(--danger) ${15 + Math.min(100, Math.max(0, rate)) * 0.7}%, var(--bg-surface))`;
+  return `color-mix(in srgb, var(--county-map-color, var(--danger)) calc(var(--county-map-base-opacity, 15%) + ${Math.min(100, Math.max(0, rate)) * 0.7}%), var(--bg-surface))`;
 }
 export async function fetchCountyPenetration(client, state) {
   const latest = await client.from('cms_county_penetration').select('file_month').order('file_month', { ascending: false }).limit(1);

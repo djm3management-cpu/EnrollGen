@@ -128,7 +128,7 @@ export default function MOHRiderBundle({
               <span>Pricing varies by age</span>
               <span>{bundle.riders.length} riders</span>
             </div>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="sf-action-button"
               onClick={() => applyBundle(bundle)}

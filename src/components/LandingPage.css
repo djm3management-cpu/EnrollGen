@@ -205,7 +205,7 @@ body {
   margin: 0;
   font-family: var(--font-primary);
   font-size: clamp(1.9rem, 3.2vw, 3.25rem);
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1.04;
   letter-spacing: 0;
   text-transform: none;
@@ -377,7 +377,7 @@ body {
   color: #ffffff;
   font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   white-space: nowrap;
 }
 

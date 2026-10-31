@@ -49,12 +49,12 @@ export default function OpportunityDrawer({ row, data, onClose, onOpenContact, i
 
   return <OpportunityDialog title={row.title || 'Opportunity'} drawer busy={busy} onClose={onClose}>
     <div className="opps-drawer-summary"><strong>{row.contact_name}</strong><StageBadge stage={stage} />
-      <button className="contacts-mini-btn" type="button" disabled={busy} onClick={() => onOpenContact(row.contact_id)}>OPEN CONTACT</button>
-      {canDeleteOpportunity(row, data.agentUuid, data.isAdmin) && <button className="contacts-mini-btn opps-danger" type="button" disabled={busy || data.pendingIds.has(row.id)} onClick={() => setDeleting(true)}>DELETE</button>}
+      <button data-key-role="secondary" className="contacts-mini-btn" type="button" disabled={busy} onClick={() => onOpenContact(row.contact_id)}>OPEN CONTACT</button>
+      {canDeleteOpportunity(row, data.agentUuid, data.isAdmin) && <button data-key-role="destructive" className="contacts-mini-btn opps-danger" type="button" disabled={busy || data.pendingIds.has(row.id)} onClick={() => setDeleting(true)}>DELETE</button>}
     </div>
     <OpportunityEditor key={row.id} data={data} existing={row} focusNotes={initialSection === 'notes'} onBusyChange={setBusy} onSaved={() => setNotice('Opportunity saved.')} />
     {notice && <p className="contacts-muted" role="status">{notice}</p>}
-    {error && <div className="ops-error" role="alert">{error}<button className="contacts-mini-btn" type="button" onClick={load}>RETRY</button></div>}
+    {error && <div className="ops-error" role="alert">{error}<button data-key-role="secondary" className="contacts-mini-btn" type="button" onClick={load}>RETRY</button></div>}
     <section className="contacts-section opps-timeline"><h3 className="contacts-section-head">STAGE HISTORY</h3>
       {loading ? <p className="contacts-muted">Loading history…</p> : !history.length ? <p className="contacts-muted">No stage changes yet.</p> : <ol>
         {history.map((item) => <li key={item.id} style={{ '--stage-color': historyStage(item, 'to', data.stages).color }}><div className="opps-history-stages">
@@ -67,7 +67,7 @@ export default function OpportunityDrawer({ row, data, onClose, onOpenContact, i
     <section className="contacts-section"><h3 className="contacts-section-head">LINKED CALLS</h3>
       {!loading && !calls.length && <p className="contacts-muted">No calls for this contact.</p>}
       {calls.map((call) => <div className="opps-call" key={call.id}><span>{call.call_start ? new Date(call.call_start).toLocaleString() : 'Call'} · {call.call_outcome || call.product_type || 'Unknown outcome'}{call.id === row.call_id ? ' · Linked' : ''}</span>
-        <button type="button" className="contacts-mini-btn" disabled={callLoading} onClick={() => openCall(call)}>{callDetail?.id === call.id ? 'HIDE CALL' : 'VIEW CALL'}</button></div>)}
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={callLoading} onClick={() => openCall(call)}>{callDetail?.id === call.id ? 'HIDE CALL' : 'VIEW CALL'}</button></div>)}
       {callLoading && <p className="contacts-muted">Loading call…</p>}
       {callDetail && <CallDetailPanel detail={callDetail} loading={callLoading} />}
     </section>

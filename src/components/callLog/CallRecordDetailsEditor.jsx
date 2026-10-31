@@ -27,15 +27,15 @@ export default function CallRecordDetailsEditor({callRecordId,onSaved}){
  return <div className="contacts-section">
   <div className="contacts-section-head">OPTIONAL CALL DETAILS</div>
   {error && <p className="ops-error" role="alert">{error}</p>}
-  {!editing ? <button type="button" className="contacts-mini-btn" disabled={!record} onClick={()=>{setDraft({});setEditing(true);}}>Edit notes and details</button> : <>
-   <p className="contacts-muted">All fields are optional. These edits do not rerun scoring.</p>
+  {!editing ? <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={!record} onClick={()=>{setDraft({});setEditing(true);}}>Edit notes and details</button> : <>
+
    <div className="grid post-call-wrap-grid">{OPTIONAL_CALL_FIELDS.map(([key,label,type])=>{
     const value=Object.hasOwn(draft,key)?draft[key]:record?.[key];
     const props={value:(type==='date'?normalizeDateInput(value):value)||'',disabled:saving,onChange:event=>setDraft(previous=>({...previous,[key]:event.target.value}))};
     return <label key={key}>{label}{type==='textarea'?<textarea {...props} rows={3}/>:<input {...props} type={type||'text'}/>}</label>;
    })}</div>
-   <div className="call-log-expand-actions"><button type="button" className="contacts-mini-btn" disabled={saving} onClick={()=>void save()}>{saving?'Saving…':'Save details'}</button>
-   <button type="button" className="contacts-mini-btn" disabled={saving} onClick={()=>setEditing(false)}>Cancel</button></div>
+   <div className="call-log-expand-actions"><button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={saving} onClick={()=>void save()}>{saving?'Saving…':'Save details'}</button>
+   <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={saving} onClick={()=>setEditing(false)}>Cancel</button></div>
   </>}
  </div>;
 }

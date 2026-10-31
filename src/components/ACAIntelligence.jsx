@@ -332,7 +332,7 @@ export default function ACAIntelligence() {
             style={{ width: "100%", paddingLeft: 34 }}
           />
         </div>
-        <button
+        <button data-key-role="secondary"
           onClick={handleSearch}
           disabled={loading || zip.length < 5}
           style={{
@@ -395,7 +395,7 @@ export default function ACAIntelligence() {
                     <pre style={{ ...diffBoxStyle, borderColor: "var(--status-live-border)" }}>{preview.afterLines}</pre>
                   </div>
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
-                    <button
+                    <button data-key-role="secondary"
                       type="button"
                       disabled={reviewBusyId === update.id}
                       onClick={() => reviewUpdate(update, "reject")}
@@ -403,7 +403,7 @@ export default function ACAIntelligence() {
                     >
                       REJECT
                     </button>
-                    <button
+                    <button data-key-role="secondary"
                       type="button"
                       disabled={reviewBusyId === update.id}
                       onClick={() => reviewUpdate(update, "approve")}

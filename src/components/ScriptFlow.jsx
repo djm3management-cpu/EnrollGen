@@ -219,7 +219,7 @@ function RailWidgets({
         <CallTimer fallbackStartTime={state.tpmoStart} />
 
         <div className="right-rail-control-row" style={{ display: "flex", gap: 4, marginTop: 8, marginBottom: 8 }}>
-          <button
+          <button data-key-role="secondary"
             className={`copilot-pill-button copilot-pill-button--listen${
               listening ? " is-listening" : ""
             }`}
@@ -236,13 +236,13 @@ function RailWidgets({
           >
             {!supportsRecognition ? "NO MIC" : listening ? "STOP" : "START"}
           </button>
-          <button
+          <button data-key-role="secondary"
             className="copilot-pill-button copilot-pill-button--clear"
             onClick={() => copilotHandlersRef.current.clearAll?.()}
           >
             CLEAR
           </button>
-          <button
+          <button data-key-role="secondary"
             className="copilot-pill-button copilot-pill-button--analyze"
             onClick={() => copilotHandlersRef.current.requestCoaching?.()}
             disabled={!hasTranscript || coachingLoading}
@@ -383,7 +383,7 @@ function RightRail({
   if (!isCompactRail) {
     if (fullRailMinimized) {
       return (
-        <button
+        <button data-key-role="secondary"
           className="right-rail-toggle right-rail-toggle--restore"
           style={COMPACT_RAIL_TOGGLE_STYLE}
           onClick={() => setFullRailMinimized(false)}
@@ -405,7 +405,7 @@ function RightRail({
           "--right-rail-width": `${FULL_RAIL_WIDTH}px`,
         }}
       >
-        <button
+        <button data-key-role="secondary"
           type="button"
           className="rail-minimize-btn right-rail-minimize"
           onClick={() => setFullRailMinimized(true)}
@@ -423,7 +423,7 @@ function RightRail({
 
   return (
     <>
-      <button
+      <button data-key-role="secondary"
         className="right-rail-toggle"
         style={COMPACT_RAIL_TOGGLE_STYLE}
         onClick={() => setOpen((p) => !p)}
@@ -445,7 +445,7 @@ function RightRail({
       >
         {open ? (
           <>
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="rail-minimize-btn right-rail-overlay-minimize"
               onClick={() => setOpen(false)}
@@ -1054,7 +1054,7 @@ export default function ScriptFlow() {
             </select>
             <span className="ma-script-direction-caret" aria-hidden="true">▾</span>
           </div>
-          <button
+          <button data-key-role="primary"
             type="button"
             className="script-start-call-button"
             onClick={handleManualCopilotStart}
@@ -1070,7 +1070,7 @@ export default function ScriptFlow() {
       <>
       {canGoBack ? (
         <div className="flow-card-nav">
-          <button
+          <button data-key-role="secondary"
             type="button"
             className="flow-back-button"
             onClick={handleGoBack}

@@ -69,7 +69,7 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim, edi
     <div className={`script-box ${verbatim ? "verbatim" : ""}`}>
       <div className="script-box-header">
         <div className="script-box-actions">
-          <button
+          <button data-key-role="secondary"
             className={`copy-btn script-action-btn ${isEditing ? "is-active" : ""}`}
             onClick={() => setIsEditing((current) => !current)}
             disabled={!editable}
@@ -82,7 +82,7 @@ export const ScriptBox = React.memo(function ScriptBox({ children, verbatim, edi
               <Pencil size={13} />
             )}
           </button>
-          <button
+          <button data-key-role="secondary"
             className="copy-btn"
             onClick={handleCopy}
             title="Copy to clipboard"
@@ -196,7 +196,7 @@ export const SectionAdvanceButton = React.memo(function SectionAdvanceButton({
   const accessibleLabel = ariaLabel || "Mark section complete";
 
   return (
-    <button
+    <button data-key-role="secondary"
       type="button"
       className="primary section-complete-btn"
       disabled={disabled}

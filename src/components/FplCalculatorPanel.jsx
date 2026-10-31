@@ -353,9 +353,7 @@ export default function FplCalculatorPanel({
               >
                 ${acaEstimate.low} to ${acaEstimate.high}/month
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>
-                Use this as a reference point before pivoting away from ACA.
-              </div>
+
             </div>
           )}
         </motion.div>

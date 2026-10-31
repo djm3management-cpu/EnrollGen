@@ -10,7 +10,7 @@ export default function PlaybookModal({ open, src, onClose }) {
           <div className="playbook-modal__kicker">O'Neill Marketing</div>
           <div className="playbook-modal__title">Private Plan Playbook</div>
         </div>
-        <button
+        <button data-key-role="icon"
           type="button"
           className="playbook-modal__close"
           onClick={onClose}

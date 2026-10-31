@@ -1,3 +1,4 @@
+import AppToast from './AppToast';
 import {useEffect,useRef,useState} from 'react';
 import {useAppAuth} from '../context/AuthContext';
 import {getActiveSessionMetadata} from '../hooks/useSessionTracker';
@@ -17,6 +18,5 @@ export default function PostCallStatusAlert() {
     onStatus:job=>setMessage(postCallFailureMessage(job)),
     onError:error=>setMessage(`Unable to check post-call status. ${error.message}`),
   }),[getToken,allowMissingEndpoint]);
-  return message?<div className="call-persistence-error" role="alert" aria-live="assertive"
-    style={{position:'fixed',top:'var(--top-bar-height)',left:16,right:16,zIndex:130}}>{message}</div>:null;
+  return message ? <AppToast message={message} tone="error" onDismiss={() => setMessage('')} /> : null;
 }

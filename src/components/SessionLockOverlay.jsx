@@ -49,7 +49,7 @@ export default function SessionLockOverlay() {
           <p>You've been idle for a while. Sign in again to keep working — your session isn't ending.</p>
         </div>
         <SignIn routing="virtual" afterSignInUrl={markerUrlRef.current} />
-        <button type="button" className="session-lock-manual-continue" onClick={unlock}>
+        <button data-key-role="secondary" type="button" className="session-lock-manual-continue" onClick={unlock}>
           I've verified my identity — continue
         </button>
       </div>

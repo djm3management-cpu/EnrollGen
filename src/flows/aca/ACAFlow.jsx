@@ -98,7 +98,7 @@ function Gate({ label, done, onDo, onUndo }) {
         justifyContent: "center",
       }}
     >
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="check flow-gate-check"
         onClick={done ? onUndo : onDo}
@@ -282,7 +282,7 @@ function G0({ gate }) {
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {["OEP", "SEP"].map((period) => (
-            <button
+            <button data-key-role="secondary"
               key={period}
               onClick={() => dispatch({ type: "SET_ENROLLMENT_PERIOD", period })}
               style={{
@@ -590,7 +590,7 @@ function G6({ gate }) {
         >
           <div style={{ fontSize: 24, marginBottom: 6 }}>✓</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: "var(--status-live)" }}>ACA Enrollment Complete</div>
-          <button
+          <button data-key-role="secondary"
             onClick={() => dispatch({ type: "RESET" })}
             style={{
               marginTop: 12,
@@ -654,7 +654,7 @@ export default function ACAFlow() {
 
       {!state.callStarted ? (
         <section className="script-start-call-gate" style={{ background: `var(--status-pending-bg)`, border: `1px solid var(--status-pending-border)`, borderRadius: 10, padding: "28px 20px", textAlign: "center", marginBottom: 10 }}>
-          <button className="primary script-start-call-button" onClick={() => dispatch({ type: "START_CALL" })} style={{
+          <button data-key-role="primary" className="primary script-start-call-button" onClick={() => dispatch({ type: "START_CALL" })} style={{
             fontSize: 15, fontFamily: "var(--font-primary)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 36px",
             background: `linear-gradient(145deg, var(--status-pending-border), var(--status-pending-bg))`, border: `1px solid var(--status-pending-border)`, color: ACCENT, borderRadius: 8, cursor: "pointer",
           }}>

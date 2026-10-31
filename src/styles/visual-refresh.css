@@ -1,0 +1,662 @@
+/* Visual refresh. Protected dialer, map and Terminal Contacts subtrees are excluded. */
+#root button:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where([role="tab"], .contacts-workspace-tabs button, [class*="transcript-tab"], [class*="copilot-tab"])) {
+ --key-top: var(--key-secondary-top); --key-bottom: var(--key-secondary-bottom); --key-text: var(--key-secondary-text);
+ border: 0 !important; border-radius: 4px !important;
+ background: linear-gradient(var(--key-top),var(--key-bottom)) !important;
+ color: var(--key-text) !important;
+ box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.25), 0 1px 2px var(--key-drop) !important;
+}
+#root button:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where([role="tab"], .contacts-workspace-tabs button, [class*="transcript-tab"], [class*="copilot-tab"])):is(.is-primary,.eg-key--primary,[class*="primary"],[class*="save"],[class*="start-btn"]) { --key-top: var(--key-primary-top); --key-bottom: var(--key-primary-bottom); --key-text: var(--key-primary-text); }
+#root button:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where([role="tab"], .contacts-workspace-tabs button, [class*="transcript-tab"], [class*="copilot-tab"])):is(.eg-key--destructive,.opps-danger,[class*="delete"],[class*="danger"]) { --key-top: var(--key-danger-top); --key-bottom: var(--key-danger-bottom); --key-text: #FFFFFF; }
+#root button:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where([role="tab"], .contacts-workspace-tabs button, [class*="transcript-tab"], [class*="copilot-tab"])):is(.eg-key--go,[class*="go-live"]) { --key-top: var(--key-go-top); --key-bottom: var(--key-go-bottom); --key-text: var(--key-go-text); }
+#root button:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where([role="tab"], .contacts-workspace-tabs button, [class*="transcript-tab"], [class*="copilot-tab"])):hover:not(:disabled) { filter: brightness(1.08); }
+#root button:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where([role="tab"], .contacts-workspace-tabs button, [class*="transcript-tab"], [class*="copilot-tab"])):is(:active,[aria-pressed="true"],.is-active,.active) { background: linear-gradient(var(--key-bottom),var(--key-top)) !important; box-shadow: inset 0 1px 0 rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.1) !important; }
+#root button:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where([role="tab"], .contacts-workspace-tabs button, [class*="transcript-tab"], [class*="copilot-tab"])):disabled { background: var(--key-bottom) !important; box-shadow:none !important; opacity:.5; cursor:not-allowed; }
+#root button:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where([role="tab"], .contacts-workspace-tabs button, [class*="transcript-tab"], [class*="copilot-tab"])):focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+#root button:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where([role="tab"], .contacts-workspace-tabs button, [class*="transcript-tab"], [class*="copilot-tab"])):is([class*="icon-btn"],[class*="icon-button"],[class*="row-action"],.contacts-icon-actions button) { background:transparent !important; color:var(--text-secondary) !important; box-shadow:none !important; }
+#root button:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where([role="tab"], .contacts-workspace-tabs button, [class*="transcript-tab"], [class*="copilot-tab"])):is([class*="icon-btn"],[class*="icon-button"],[class*="row-action"]):hover { background:var(--focus-glow) !important; color:var(--accent) !important; }
+
+/* Surface separation and field focus, without changing spacing. */
+:is([class$="-panel"],[class$="-card"],[class$="-modal"],[class$="-dialog"],[class$="-section"],[class$="-toolbar"],[class$="-table-wrap"]):not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where(.opps-card,.opps-card *,.opps-column,.opps-column *,[class*="badge"],[class*="chip"],[class*="tag"],[class*="map"],[class*="legend"])) { border:0 !important; }
+:is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea):not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where(.opps-card,.opps-card *,.opps-column,.opps-column *,[class*="badge"],[class*="chip"],[class*="tag"],[class*="map"],[class*="legend"])) { border:0 !important; border-radius:4px !important; background:var(--bg-input) !important; color:var(--text-primary); }
+:is(input,select,textarea):not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where(.opps-card,.opps-card *,.opps-column,.opps-column *,[class*="badge"],[class*="chip"],[class*="tag"],[class*="map"],[class*="legend"])):focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+:is(input,textarea):not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where(.opps-card,.opps-card *,.opps-column,.opps-column *,[class*="badge"],[class*="chip"],[class*="tag"],[class*="map"],[class*="legend"]))::placeholder { color:var(--text-muted); }
+:is(table,th,td):not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where(.opps-card,.opps-card *,.opps-column,.opps-column *,[class*="badge"],[class*="chip"],[class*="tag"],[class*="map"],[class*="legend"])) { border-left:0 !important; border-right:0 !important; border-top:0 !important; border-bottom:1px solid var(--chart-grid); }
+th:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(:where(.opps-card,.opps-card *,.opps-column,.opps-column *,[class*="badge"],[class*="chip"],[class*="tag"],[class*="map"],[class*="legend"])) { color:var(--text-label); background:var(--bg-input); }
+.tenant-settings-toggle { display:flex; align-items:center; }
+.tenant-settings-toggle input { width:auto; margin:0; }
+.tenant-settings-field input[type="range"] { accent-color:var(--accent); }
+
+/* Keep mono data faces; cap visual hierarchy at medium weight. */
+*:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(.landing-logo-text) { font-weight:500 !important; }
+:is(h1,h2,h3,h4,h5,h6,button,nav,[class*="section-title"]):not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)) { font-family:var(--font-primary) !important; }
+:is(.flow-script-text,.ma-script-line,.ma-script-cue,.ma-script-instruction,.client-quick-script-panel__body) { font-family:var(--font-script-read) !important; }
+html:not(.dark) .top-bar-shell { background:var(--bg-surface) !important; border:0 !important; }
+.top-bar-logo-text, .landing-logo-text { color:#ff9900 !important; }
+html:not(.dark) .agent-dashboard { background:var(--bg-primary); --eg-amber:var(--accent); }
+html:not(.dark) .agent-dash-panel { background:var(--bg-surface); }
+html:not(.dark) .agent-dash-chart { background:var(--bg-primary); }
+html:not(.dark) .agent-dash-chart text { fill:var(--text-secondary); }
+html:not(.dark) .agent-dash-gridline { stroke:var(--chart-grid); }
+html:not(.dark) .agent-dash-call-bar, html:not(.dark) .agent-dash-point { fill:var(--accent); }
+html:not(.dark) .agent-dash-line { stroke:var(--accent); }
+html:not(.dark) .agent-dash-legend, html:not(.dark) .agent-dash-pie-legend li { color:var(--text-secondary); }
+html:not(.dark) .agent-dash-pie-tooltip { background:var(--bg-elevated); color:var(--text-primary); box-shadow:var(--shadow-float); border:0; }
+.agent-dash-error, .agent-dash-metric { border:0 !important; }
+
+/* Form/select controls are fields, never glossy action keys. */
+#root :is(select, [role="combobox"], button[aria-haspopup="listbox"], .filter-select-trigger, .view-select-trigger):not(:where(.flow-select-trigger, .phone-dd__panel *, .phone-toast *, .phone-active-bar *)) {
+  appearance: auto;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: var(--bg-input) !important;
+  background-image: none !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  padding-right: 28px !important;
+  outline: none;
+}
+#root :is(select, [role="combobox"], button[aria-haspopup="listbox"], .filter-select-trigger, .view-select-trigger):not(:where(.flow-select-trigger, .phone-dd__panel *, .phone-toast *, .phone-active-bar *)):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Reading and data roles are neutral in corporate mode. */
+html:not(.dark) #root :is(.flow,.card,.active-card,.script-box,.flow-script-card) {
+ --script-term-amber:var(--text-primary); --script-term-amber-bright:var(--text-primary);
+ --script-term-yellow:var(--accent); --script-term-cyan:var(--text-secondary);
+ --script-term-cyan-bright:var(--text-secondary); --script-term-muted:var(--text-secondary);
+ --script-term-hover:var(--bg-input); --script-term-border:transparent;
+}
+html:not(.dark) #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child) {
+ background:var(--accent) !important; color:#FFFFFF !important; border:0 !important;
+}
+html:not(.dark) #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child) * { color:#FFFFFF !important; }
+html:not(.dark) #root :is(.ma-script-cue,.ma-script-instruction,.client-quick-script-section__label) { color:var(--text-secondary) !important; }
+html:not(.dark) #root :is(.checklist,.check,.compliance-mini__section-label,.compliance-note,.compliance-note__label,.compliance-note-label,.pre-enrollment-checklist) { color:var(--text-primary) !important; }
+html:not(.dark) #root :is(label,td,th,.agent-dash-metric,.agent-dash-metric strong,.agent-dash-status,.agent-dash-range-row,.agent-dash-empty,.agent-dash-note,.agent-dash-panel > header > span) { color:var(--text-secondary) !important; }
+#root :is(.script-box-editor,.script-box.verbatim,.ma-script-line,.flow-script-text,.flow-script-text *,.script-prompt,.script-content,.section-prompt,.client-quick-script-panel__body,.sf-script-box) {
+ font-family:Tahoma,Verdana,"Segoe UI",sans-serif !important;
+}
+html:not(.dark) #root :is(.script-box-editor,.script-box.verbatim,.ma-script-line,.flow-script-text,.flow-script-text *,.script-prompt,.script-content,.section-prompt,.client-quick-script-panel__body,.sf-script-box) { color:var(--text-primary) !important; }
+
+/* Every editable field is flat in every interaction state. */
+#root :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,select,[contenteditable="true"]):not(:where(.phone-dd__panel *,.phone-toast *,.phone-active-bar *)) {
+ background:var(--bg-input) !important; background-image:none !important;
+ box-shadow:none !important; text-shadow:none !important; border:0 !important;
+ border-radius:4px !important; color:var(--text-primary) !important; outline:none !important;
+ filter:none !important;
+}
+#root :is(input,textarea,select,[contenteditable="true"]):not(:where(.phone-dd__panel *,.phone-toast *,.phone-active-bar *)):focus {
+ outline:2px solid var(--accent) !important; outline-offset:2px;
+}
+#root :is(.ops-error,.billing-alert,.agent-dash-error):not(.call-auth-banner) {
+ position:relative !important; inset:auto !important; transform:none !important;
+ max-width:420px; width:auto; align-self:start; flex-shrink:0; border:0 !important;
+ background:var(--bg-elevated); color:var(--danger); overflow-wrap:anywhere;
+}
+
+/* Top navigation adopts keys; CRM and Co-Pilot tabs remain flat. */
+#root .top-bar-tab::after { display:none !important; }
+#root .top-bar-tab.is-active { color:var(--accent) !important; }
+#root button.script-start-call-button:not(.ma-script-option) {
+ --key-top:var(--key-primary-top); --key-bottom:var(--key-primary-bottom); --key-text:var(--key-primary-text);
+ font-size:15px !important;
+}
+
+/* White roles for legacy local terminal palettes; dark definitions stay intact. */
+html:not(.dark) #root :is(.right-rail-full, .right-rail-overlay, .right-rail-toggle, .left-rail-footer, .top-panel-overlay--tools) {--rail-term-bg:var(--bg-surface) !important;--rail-term-bg-soft:var(--bg-surface) !important;--rail-term-row:var(--bg-surface) !important;--rail-term-hover:var(--bg-surface) !important;--rail-term-border:var(--chart-grid) !important;--rail-term-border-bright:var(--chart-grid) !important;--rail-term-amber:var(--text-secondary) !important;--rail-term-amber-bright:var(--text-secondary) !important;--rail-term-yellow:var(--text-secondary) !important;--rail-term-cyan:var(--text-secondary) !important;--rail-term-cyan-bright:var(--text-secondary) !important;--rail-term-blue:var(--accent) !important;--rail-term-blue-bright:var(--accent) !important;--rail-term-red:var(--accent) !important;--rail-term-red-dark:var(--accent) !important;--rail-term-red-bright:var(--accent) !important;--rail-term-green:var(--success) !important;--rail-term-white:#FFFFFF !important;--rail-term-muted:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab) {--ops-bg:var(--bg-surface) !important;--ops-bg-soft:var(--bg-surface) !important;--ops-surface:var(--bg-surface) !important;--ops-surface-alt:var(--bg-surface) !important;--ops-surface-hover:var(--bg-surface) !important;--ops-border:var(--chart-grid) !important;--ops-border-bright:var(--chart-grid) !important;--ops-text:var(--text-secondary) !important;--ops-text-bright:var(--text-secondary) !important;--ops-amber:var(--text-secondary) !important;--ops-amber-bright:var(--text-secondary) !important;--ops-yellow:var(--text-secondary) !important;--ops-cyan:var(--text-secondary) !important;--ops-cyan-bright:var(--text-secondary) !important;--ops-blue:var(--accent) !important;--ops-blue-bright:var(--accent) !important;--ops-red:var(--accent) !important;--ops-red-dark:var(--accent) !important;--ops-red-bright:var(--accent) !important;--ops-green:var(--success) !important;--ops-white:#FFFFFF !important;--ops-muted:var(--text-secondary) !important;--ops-label:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.flow-shell, .flow-main, .flow, .card, .active-card, .script-box, .flow-script-card) {--script-term-bg:var(--bg-surface) !important;--script-term-bg-soft:var(--bg-surface) !important;--script-term-row:var(--bg-surface) !important;--script-term-hover:var(--bg-surface) !important;--script-term-border:var(--chart-grid) !important;--script-term-border-bright:var(--chart-grid) !important;--script-term-amber:var(--text-secondary) !important;--script-term-amber-bright:var(--text-secondary) !important;--script-term-yellow:var(--text-secondary) !important;--script-term-cyan:var(--text-secondary) !important;--script-term-cyan-bright:var(--text-secondary) !important;--script-term-blue:var(--accent) !important;--script-term-green:var(--success) !important;--script-term-red:var(--accent) !important;--script-term-muted:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.flow-quick-script-dialog) {--script-term-bg:var(--bg-surface) !important;--script-term-amber:var(--text-secondary) !important;--script-term-yellow:var(--text-secondary) !important;--script-term-border:var(--chart-grid) !important;--script-term-cyan:var(--text-secondary) !important;--script-term-red:var(--accent) !important;--script-term-green:var(--success) !important;--script-term-bg-soft:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell.left-rail-panel-shell--sep-qualifier) {--sep-term-bg:var(--bg-surface) !important;--sep-term-bg-soft:var(--bg-surface) !important;--sep-term-row:var(--bg-surface) !important;--sep-term-hover:var(--bg-surface) !important;--sep-term-border:var(--chart-grid) !important;--sep-term-border-bright:var(--chart-grid) !important;--sep-term-amber:var(--text-secondary) !important;--sep-term-amber-bright:var(--text-secondary) !important;--sep-term-yellow:var(--text-secondary) !important;--sep-term-cyan:var(--text-secondary) !important;--sep-term-cyan-bright:var(--text-secondary) !important;--sep-term-blue:var(--accent) !important;--sep-term-blue-bright:var(--accent) !important;--sep-term-red:var(--accent) !important;--sep-term-red-dark:var(--accent) !important;--sep-term-red-bright:var(--accent) !important;--sep-term-green:var(--success) !important;--sep-term-muted:var(--text-secondary) !important;--sep-term-white:#FFFFFF !important;}
+
+#app-toast-stack {
+ position:fixed; top:112px; right:16px; z-index:130;
+ width:min(420px,calc(100vw - 32px)); display:flex; flex-direction:column; gap:8px;
+ max-height:calc(100vh - 140px); overflow:auto; pointer-events:none;
+}
+.app-toast {
+ display:flex; align-items:flex-start; gap:8px; padding:12px;
+ width:100%; max-width:420px; border:0; border-radius:4px;
+ background:var(--bg-elevated); color:var(--info); pointer-events:auto;
+ box-shadow:0 4px 16px rgba(15,23,42,.08); font:500 12px/1.5 var(--font-primary);
+}
+.app-toast--error { color:var(--danger); }
+.app-toast--warning { color:var(--warning); }
+.app-toast--success { color:var(--success); }
+.app-toast__dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex:none; margin-top:6px; }
+.app-toast__content { flex:1; min-width:0; overflow-wrap:anywhere; }
+.app-toast__close { border:0; background:transparent; box-shadow:none; color:inherit; padding:0 4px; cursor:pointer; font:inherit; }
+.app-toast__close:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+#root button[data-key-role="primary"] { --key-top:var(--key-primary-top); --key-bottom:var(--key-primary-bottom); --key-text:var(--key-primary-text); }
+#root button[data-key-role="destructive"] { --key-top:var(--key-danger-top); --key-bottom:var(--key-danger-bottom); --key-text:#FFFFFF; }
+#root button[data-key-role="go"] { --key-top:var(--key-go-top); --key-bottom:var(--key-go-bottom); --key-text:var(--key-go-text); }
+#root button[data-key-role="icon"]:not(:where(.top-bar-shell *,html.dark [data-crm-view="contacts"] *)) { background:transparent !important; box-shadow:none !important; border:0 !important; color:var(--text-secondary) !important; }
+#root button[data-key-role="icon"]:not(:where(.top-bar-shell *,html.dark [data-crm-view="contacts"] *)):hover { background:var(--focus-glow) !important; color:var(--accent) !important; }
+#root .top-bar-shell :is(.top-bar-settings-button,.theme-toggle,.phone-dd__trigger) { width:32px; height:28px; display:inline-flex; justify-content:center; align-items:center; }
+
+/* Background steps replace container outlines; protected objects retain theirs. */
+#root :is(div,section,article,aside,main,header,footer,fieldset,form,table):not(:where(
+ .phone-dd,.phone-dd *, .phone-toast,.phone-toast *, .phone-active-bar,.phone-active-bar *,
+ html.dark [data-crm-view="contacts"],html.dark [data-crm-view="contacts"] *,
+ .sep-map-section,.sep-map-section *, .sep-penetration-map,.sep-penetration-map *,
+ .opps-card,.opps-card *, .opps-column,.opps-column *,
+ [class*="badge"],[class*="chip"],[class*="tag"],[class*="legend"],
+ .top-bar-logo-text,.landing-logo-text
+)) { border:0 !important; outline:none; }
+#root :is(.card,.eg-card,.sf-panel,.script-box,.flow-script-line,.agent-status-log,.call-log-table-wrap,.tenant-settings-card,.billing-panel,.contacts-section):not(:where(html.dark [data-crm-view="contacts"] *, .phone-dd *,.sep-map-section *)) {
+ border:0 !important; outline:none !important; box-shadow:none !important;
+}
+#root :is(.card,.sf-panel,.tenant-settings-card,.agent-status-log) { background:var(--bg-surface) !important; }
+#root :is([role="dialog"],.modal,.opps-dialog) { background:var(--bg-elevated); box-shadow:0 4px 16px rgba(15,23,42,.08); }
+#root :is(.right-rail-widget-header,.ops-intent-accordion-trigger,.ancillary-popup-accordion-toggle,.snp-routing-subsection-trigger,.sep-state-section-trigger) {
+ background:var(--bg-surface) !important; box-shadow:none !important; color:var(--text-primary) !important;
+}
+#root button[aria-pressed="true"]:not(:where(.contacts-subviews *,[data-key-role="primary"],[data-key-role="go"],[data-key-role="destructive"])) { color:var(--accent) !important; }
+
+/* Audited decorative warm-color uses in white mode. Status warnings remain semantic. */
+html:not(.dark) #root :is(.sf-dot--amber) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.sf-savings-callout.is-negative) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sf-empty-state, .sf-inline-lock) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-card) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-dismiss:hover) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-icon) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.ancillary-popup-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-copy, .ancillary-popup-note, .ancillary-popup-footnote, .ancillary-popup-followup-summary, .ancillary-popup-recap-meta, .ancillary-popup-link-detail) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-followup-summary) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-chip) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-link) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-link-num, .ancillary-popup-recap-index) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.ancillary-popup-link-title, .ancillary-popup-recap-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-total) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-complete-btn) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.ancillary-popup-complete-btn:hover) {background:var(--bg-surface) !important;border-color:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.ancillary-popup-pill) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-accordion-toggle) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-accordion-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-accordion-arrow) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-feed-mini) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-feed-mini__entry) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-msg) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-msg--info) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-msg--remind) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.rail-minimize-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-full, .right-rail-overlay, .right-rail-toggle, .left-rail-footer, .top-panel-overlay--tools) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-full > .right-rail-scroll, .right-rail-overlay) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-scroll::-webkit-scrollbar-thumb:hover, .right-rail-overlay::-webkit-scrollbar-thumb:hover) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.right-rail-widget-shell, .right-rail-control-panel, .agent-availability-panel) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-widget-header) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.right-rail-widget-content) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-control-panel .copilot-pill-button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-control-panel .copilot-pill-button--analyze:not(:disabled)) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ask-copilot-mini) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ask-copilot-mini__send) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.mini-live-transcript, .copilot-feed-mini, .compliance-mini) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.mini-live-transcript__text) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-feed-mini__entry, .copilot-msg) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-msg--remind) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-floating-alert) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-floating-alert__text) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.panel-empty--input .panel-empty-dot, .panel-empty--ai .panel-empty-dot) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.agent-availability-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.compliance-mini .section-timer--inline) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.compliance-mini__category-name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-toggle svg) {color:var(--text-secondary) !important;stroke:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-command-market) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-tab-amber) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-filter-label) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-ticker) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-ticker-item) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-ticker-item.is-callback .icon) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-section-head) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-section-head .ops-cmd) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-window-toggle button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-window-toggle button:hover) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row .name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row.is-rank-1 .name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row .value) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row.is-rank-1 .value) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row .bar) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row .bar.amber) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-detail-toggle) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-detail-grid strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-control select, .operations-tab .ops-custom-range input) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-date-buttons button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-metric-value) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-export-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-sort-th button:hover, .operations-tab .ops-sort-th.is-active button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-sort-th.is-active .ops-sort-indicator) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-table tbody td) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-table tbody td.num) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-time-cell) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-out-callback) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-table tbody tr.is-selected .ops-out-callback) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-carrier-row .name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-carrier-row .bar) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-carrier-row .pct) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-compliance-row .val) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-inline-empty) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-briefing-card strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-briefing-card span) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-collapsible-head) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-stat-grid strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-coaching-summary p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-rank .name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-rank strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-detail-tabs button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-summary-box p, .operations-tab .ops-coaching-priority p, .operations-tab .ops-beneficiary-box p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-utterance p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-wpm-head strong, .operations-tab .ops-kpi-pair strong, .operations-tab .ops-beneficiary-row strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-wpm-track .marker) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-sentiment-chart polyline) {stroke:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-gauge .ring span) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-list-block p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-risk-badge.medium) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-compliance-overview strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-category-row strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-followup-filters button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-followup-row .customer) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-followup-row select) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-pipeline-cell .val) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-pipeline-cell .val.is-amber) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-tracker-row.due .dot) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-tracker-row.due .date) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-tracker-row .customer) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-tracker-row .meta) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-cursor) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.secondary) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-reminder-label) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.part-b-toggle .part-b-premium-trigger) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.flow-main .active-card, .card.active-card, .flow-script-card.active-card) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.client-quick-script-panel) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.client-quick-script-panel__header) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.client-quick-script-section__lines p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.flow-script-card.active-card > div:first-child, .card.active-card > h2) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.script-box) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.script-box.verbatim, .script-box.verbatim *) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.script-box .copy-btn, .active-card .copy-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.script-box-editor) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.flow-script-text) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-voicemail-section.is-open .u65-voicemail-toggle) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-nepq-group.is-open .u65-nepq-group__state) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-nepq-interpolation) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-nepq-choice.is-selected) {border-color:var(--chart-grid) !important;color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-nepq-callout.is-open .u65-nepq-callout__toggle) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-nepq-capture:focus-within) {border-color:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.u65-nepq-capture__input) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.section-next-action .no-enrollment-wrapup-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.section-next-action .no-enrollment-wrapup-btn:hover:not(:disabled)) {border-color:var(--chart-grid) !important;color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-reference-badge) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.prompter-interim) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-setup-popup-shell .ancillary-popup-icon) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.copilot-setup-popup-shell .ancillary-popup-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-setup-popup-note strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-client-sidebar__summary strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-finder) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-finder__header h2) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-finder__header p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-category__trigger) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-category.is-expanded .aca-ffm-sep-category__trigger) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-category__questions li) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-category__notes dd) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-notes-widget) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-notes-widget-header) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.agent-notes-widget-input) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .left-rail-tool-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier :is(   .left-rail-tool-btn.is-active,   .left-rail-tool-btn--finder.is-active,   .left-rail-tool-btn--qualifier.is-active,   .left-rail-tool-btn--snp.is-active )) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .left-rail-tool-prompt) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier :is(   .sep-qualifier-action,   .sep-qualifier-secondary,   .sep-qualifier-back,   .sep-qualifier-primary,   .sep-qualifier-toggle,   .left-rail-tool-start-btn,   .left-rail-tool-minimize,   .sep-finder-trigger-btn,   .sep-finder-trigger-refresh,   .sep-finder-refresh,   .sep-finder-card-detail-trigger,   .snp-routing-subsection-trigger )) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .sep-qualifier-primary, .left-rail-panel-shell--sep-qualifier .left-rail-tool-start-btn, .left-rail-panel-shell--sep-qualifier .sep-finder-trigger-btn) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .snp-routing-progress-fill) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .snp-routing-recommendation-badge) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .snp-routing-alert.is-conditional, .left-rail-panel-shell--sep-qualifier .sep-state-card-fema) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-range-row) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-scope select) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-heading h1) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard button:hover, .agent-dashboard button[aria-pressed="true"]) {color:var(--text-secondary) !important;border-color:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.agent-dash-metric) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-metric strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-panel h2) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-chart text) {fill:var(--accent) !important;}
+html:not(.dark) #root :is(.agent-dash-call-bar) {fill:var(--accent) !important;}
+html:not(.dark) #root :is(.agent-dash-reference line) {stroke:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.agent-dash-reference text) {fill:var(--accent) !important;}
+html:not(.dark) #root :is(.agent-dash-empty, .agent-dash-note) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-pie-slice:focus-visible) {stroke:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.agent-dash-pie-tooltip) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard th, .agent-dashboard td) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard thead) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard td:nth-child(2)) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ma-script-direction-select) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ma-script-direction-caret) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ma-script-line::before) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.eg-audio-share-button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-handle-pip) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.compliance-note, .callout-compliance) {background:var(--bg-surface) !important;color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.compliance-note::before) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.compliance-note__label, .compliance-note-label) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.progress-dot__pill.is-active) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.subscription-banner) {background:var(--bg-surface) !important;color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-snp-badge) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-product-badge.pdp) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-product-badge.csnp) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-urgency-pill.medium) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-select-county-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.fema-feed-type.pa) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-doc-note-label) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-doc-field-alias) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-training-subheading.is-minor) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-training-alert.is-note .at-training-alert-label) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .top-panel-header) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .top-panel-close:hover) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .at-root) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .at-tool-card) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .at-tool-icon-badge, .top-panel-overlay--tools .at-tool-icon-badge-large) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .at-tool-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-modal) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-modal-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-modal-close) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-modal .at-link-name, .at-modal .at-carrier-name, .at-modal .at-doc-title, .at-modal .at-doc-detail-title, .at-modal .at-doc-card-title, .at-modal .at-doc-field-name, .at-modal .at-sep-ref-header h4, .at-modal .at-sep-ask) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-shell) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-stat strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-question-card h4) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-choice) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-feedback p, .at-quiz-missed-card p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-next-btn, .at-quiz-secondary-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-final-main strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-section-title span) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-missed-question) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.eg-rail-card__field-key,.eg-rail-card__label,.eg-rail-card__field-label,.compliance-mini__section-label) { color:var(--text-secondary) !important; }
+html:not(.dark) #root label:not(:where(.phone-dd *)) { color:var(--text-secondary) !important; }
+html:not(.dark) #root .progress-dot__pill.is-active { background:var(--accent) !important; }
+#root .script-box-header button { font-family:var(--font-primary) !important; }
+
+/* Final role precedence over legacy terminal declarations. */
+html:not(.dark) { --text-label:var(--text-secondary); color-scheme:light; }
+html:not(.dark) #root :is(.script-box.verbatim,.script-box.verbatim *,.script-box-editor,.flow-script-text,.flow-script-text *,.ma-script-line) {
+ color:var(--text-primary) !important; font-family:Tahoma,Verdana,"Segoe UI",sans-serif !important;
+}
+html:not(.dark) #root :is(.script-box.verbatim .ma-script-cue,.script-box.verbatim .ma-script-instruction) { color:var(--text-secondary) !important; }
+html:not(.dark) #root :is(.card.active-card > h2,.flow-script-card.active-card > div:first-child),
+html:not(.dark) #root :is(.card.active-card > h2,.flow-script-card.active-card > div:first-child) * { color:#FFFFFF !important; }
+#root .top-bar-shell :is(.top-bar-settings-button,.theme-toggle,.phone-dd__trigger) {
+ background:linear-gradient(var(--key-secondary-top),var(--key-secondary-bottom)) !important;
+ color:var(--key-secondary-text) !important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.25),0 1px 2px var(--key-drop) !important;
+}
+
+/* Latest corporate contrast and field visibility requirements. */
+html:not(.dark) #root :is(label,td,th,.eg-rail-card__field-key,.eg-rail-card__field-value,.compliance-mini__section-label,.agent-dash-metric,.agent-dash-metric strong,.agent-dash-status,.agent-dash-range-row,.agent-dash-empty,.agent-dash-note) { color:var(--text-primary) !important; }
+html:not(.dark) #root :is(.eg-rail-card,.tenant-settings-card,.sf-panel,.agent-dash-panel) { background:var(--bg-surface) !important; }
+html:not(.dark) #root :is(.eg-rail-card,.tenant-settings-card,.sf-panel,.agent-dash-panel) :is(input,textarea,select) { background:#FFFFFF !important; }
+html:not(.dark) #root .eg-rail-card__field-value { background:#FFFFFF !important; color:var(--text-primary) !important; }
+html:not(.dark) #root :is(.left-rail-tool-btn.is-active,.right-rail-widget-header,.agent-notes-widget-header,.client-quick-script-panel__header,.top-panel-overlay--tools .top-panel-header),
+html:not(.dark) #root :is(.left-rail-tool-btn.is-active,.right-rail-widget-header,.agent-notes-widget-header,.client-quick-script-panel__header,.top-panel-overlay--tools .top-panel-header) * {
+ color:#FFFFFF !important;
+}
+html:not(.dark) #root :is(.left-rail-tool-btn.is-active,.right-rail-widget-header) { background:var(--accent) !important; }
+html:not(.dark) {
+ --key-primary-top:#1268BC; --key-danger-top:#D52E2E; --key-go-top:#15803D;
+ --key-secondary-text:#1F2937;
+}
+.dark { --key-danger-top:#CF3027; --key-danger-bottom:#A91E17; }
+/* Panel notices keep their local width and never become viewport banners. */
+#root :is(.billing-alert,.flow-compliance-banner,.sf-warning-banner,.snp-routing-alert,.compliance-review-banner,.compliance-mini__violation-banner,.call-persistence-error) {
+ max-width:420px; width:auto; border:0 !important; box-shadow:none;
+ position:relative; inset:auto; overflow-wrap:anywhere;
+}
+#root .call-log-toolbar-icon { border:0 !important; background:var(--bg-input) !important; box-shadow:none !important; }
+#root button.call-log-toolbar-icon { background:transparent !important; }
+/* Wordmark light-mode color requested after the original brand exclusion. */
+html:not(.dark) .top-bar-logo-text,
+html:not(.dark) .landing-logo-text { color:#0066CC !important; }
+html:not(.dark) #root :is(.fema-feed-hz,.fema-feed-hz-col,.fema-feed-hz-bar,.fema-feed-hz-columns,.fema-feed-item,.fema-feed-bulletin) { background:var(--bg-surface) !important; background-image:none !important; box-shadow:none !important; }
+html:not(.dark) #root :is(.fema-feed-title,.fema-feed-item-title,.fema-feed-states,.fema-feed-section-label,.fema-feed-hz-empty) { color:var(--text-primary) !important; }
+html:not(.dark) #root :is(.fema-feed-hz-footnote,.fema-feed-time,.fema-feed-source,.fema-feed-source-label) { color:var(--text-secondary) !important; }
+
+/* Softphone: white palette only; geometry and Terminal are unchanged. */
+html:not(.dark) {
+ --phone-panel-bg:var(--bg-elevated); --phone-border:var(--chart-grid);
+ --phone-header-text:var(--accent); --phone-body-text:var(--text-primary);
+ --phone-answer-bg:var(--success); --phone-answer-bg-hover:#116B33;
+ --phone-decline-bg:var(--danger); --phone-decline-bg-hover:#B91C1C;
+}
+html:not(.dark) :is(.phone-dd__panel,.phone-toast,.phone-active-bar) {
+ background:var(--phone-panel-bg); color:var(--text-primary);
+ --eg-accent-dim:#DBEAFE;
+}
+html:not(.dark) :is(.phone-dd__panel,.phone-toast,.phone-active-bar) button {
+ background-image:none !important; box-shadow:none !important; text-shadow:none !important;
+}
+html:not(.dark) :is(.phone-expanded__action,.phone-active-bar__btn).is-active {
+ background:#DBEAFE; color:var(--accent); border-color:var(--accent);
+}
+html:not(.dark) #root :is(.tenant-settings-section-title,.tenant-settings-header p,.vendor-routing,.vendor-routing__error) { color:var(--text-primary) !important; }
+html:not(.dark) #root .vendor-routing { --text:var(--text-primary); --muted:var(--text-secondary); --surface:var(--bg-surface); --border:var(--chart-grid); }
+#root .tenant-settings-toggle { display:flex !important; flex-direction:row !important; align-items:center !important; justify-content:flex-start !important; }
+#root .tenant-settings-toggle input { width:auto !important; flex:none; margin:0 !important; accent-color:var(--accent); }
+#root input[type="range"] { box-shadow:none !important; background:transparent !important; border:0 !important; accent-color:var(--accent); }
+
+/* Ancillary prompts: readable light text and a stable collapsed key. */
+html:not(.dark) #root .ancillary-popup-card {
+ background:var(--bg-elevated) !important; color:var(--text-primary) !important;
+}
+html:not(.dark) #root .ancillary-popup-card :is(
+ .ancillary-popup-copy,.ancillary-popup-note,.ancillary-popup-quote,
+ .ancillary-popup-extra-quote,.ancillary-popup-followup-summary,
+ .ancillary-popup-recap-title,.ancillary-popup-recap-meta,
+ .ancillary-popup-link-title,.ancillary-popup-link-detail,
+ .ancillary-popup-chip-title,.ancillary-popup-chip-subtitle,
+ .ancillary-popup-accordion-title,.ancillary-popup-total
+) { color:var(--text-primary) !important; }
+html:not(.dark) #root .ancillary-popup-title { color:var(--accent) !important; }
+html:not(.dark) #root .ancillary-popup-footnote { color:var(--text-secondary) !important; }
+html:not(.dark) #root .ancillary-popup-icon { background:var(--accent); color:#FFFFFF; }
+#root .ancillary-popup-pill.ancillary-popup-pill--with-label {
+ width:fit-content; max-width:100%; height:auto; min-height:38px;
+ padding:8px 12px; gap:8px; justify-content:flex-start; flex:none;
+}
+#root .ancillary-popup-pill-icon { flex:none; }
+#root .ancillary-popup-pill-label { min-width:0; white-space:normal; overflow-wrap:anywhere; text-align:left; color:inherit; }
+#root .left-floating-popup-stack .ancillary-popup-pill--inline {
+ width:38px; min-width:38px; height:38px; min-height:38px;
+ padding:0; gap:0; justify-content:center; border-radius:50% !important; flex:none;
+}
+
+/* Full-width rail headers; body text retains its existing inset. */
+#root .right-rail-full > .right-rail-scroll > .right-rail-widget-shell--fill {
+ width:calc(100% + 24px) !important; margin-left:-12px; margin-right:-12px;
+ border-radius:0 !important;
+}
+#root .right-rail-full > .right-rail-scroll > .right-rail-widget-shell--fill > .right-rail-widget-content {
+ margin-left:12px; margin-right:12px;
+}
+#root .right-rail-overlay > .right-rail-widget-shell--fill {
+ width:calc(100% + 32px) !important; margin-left:-14px; margin-right:-18px;
+ border-radius:0 !important;
+}
+#root .right-rail-overlay > .right-rail-widget-shell--fill > .right-rail-widget-content {
+ margin-left:14px; margin-right:18px;
+}
+#root .right-rail-full > .right-rail-scroll > .right-rail-widget-shell--fill,
+#root .right-rail-overlay > .right-rail-widget-shell--fill { max-width:none !important; }
+#root :is(.right-rail-full,.right-rail-overlay) .right-rail-widget-header { padding-left:16px !important; padding-right:12px !important; }
+html:not(.dark) #root .ancillary-popup-icon { background:var(--accent) !important; color:#FFFFFF !important; }
+
+/* Intelligence maps use flat white canvases in the corporate theme. */
+html:not(.dark) #root :is(.sep-map-section,.sep-map-landing,.sep-map-compact,.sep-penetration,.sep-county-grid-panel,.carrier-ref-map-panel) {
+ background:var(--bg-elevated) !important;
+ background-image:none !important;
+}
+
+/* Stronger blue state/county map palette in the white theme. */
+html:not(.dark) .sep-map-section {
+ --state-map-fill:color-mix(in srgb,#0066CC 28%,transparent);
+ --state-map-stroke:color-mix(in srgb,#0066CC 55%,transparent);
+ --state-map-hover-fill:#0057B0; --state-map-hover-stroke:#004A96;
+ --state-map-selected-fill:#004A96; --state-map-selected-stroke:#004A96;
+ --state-map-label:#1F2937; --state-map-active-label:#FFFFFF;
+}
+html:not(.dark) .sep-penetration {
+ --county-map-color:#0066CC; --county-map-base-opacity:28%;
+ --county-map-base-fill:color-mix(in srgb,#0066CC 28%,#FFFFFF);
+}
+html:not(.dark) #root .sep-penetration-map path { stroke:color-mix(in srgb,#0066CC 55%,transparent); }
+html:not(.dark) #root .sep-penetration-map path:is(:hover,:focus-visible) { fill:#0057B0; stroke:#004A96; }
+html:not(.dark) #root .sep-penetration-map path[data-selected="true"] { fill:#004A96; stroke:#004A96; }
+html:not(.dark) #root .sep-penetration > .sep-tab-bar {
+ background:transparent !important; background-image:none !important; box-shadow:none !important;
+}
+
+/* Keep the left-rail plan-search glyph white, including its loading icon. */
+#root .left-rail .eg-plan-lookup__submit svg { color:#FFFFFF !important; stroke:#FFFFFF !important; }
+
+/* Script section bars share the primary key palette and gloss in each theme. */
+html:not(.dark) #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child),
+html.dark #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child) {
+ background:linear-gradient(var(--key-primary-top),var(--key-primary-bottom)) !important;
+ color:var(--key-primary-text) !important;
+ border:0 !important; border-radius:4px !important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.25),0 1px 2px var(--key-drop) !important;
+ font-family:var(--font-primary) !important; font-weight:500 !important;
+}
+html:not(.dark) #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child) *,
+html.dark #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child) * {
+ color:var(--key-primary-text) !important;
+}
+
+/* Requested bright green for healthy countdowns and completed flow sections. */
+:root { --flow-green:#00FF00; }
+#root .ma-first-card-countdown--active { --ma-timer-accent:var(--flow-green); }
+#root .ancillary-fe-countdown--active { --fe-timer-accent:var(--flow-green); }
+#root .progress-dots .progress-dot__pill.is-done { background:var(--flow-green) !important; }
+
+#root .right-rail-control-panel .right-rail-control-row { gap:2px !important; }
+
+/* Half-size minimize controls on both rails, including compact overlays. */
+#root .rail-minimize-btn {
+ width:11px !important; height:11px !important;
+ min-width:11px !important; min-height:11px !important;
+ padding:0 !important; border-radius:2px !important; flex-shrink:0;
+}
+#root .rail-minimize-btn svg { width:6px !important; height:6px !important; }
+
+/* Terminal plan search matches the graphite secondary keys. */
+html.dark #root .left-rail .eg-plan-lookup__submit {
+ --key-top:var(--key-secondary-top); --key-bottom:var(--key-secondary-bottom);
+ --key-text:var(--key-secondary-text);
+}
+html.dark #root .left-rail .eg-plan-lookup__submit svg {
+ color:var(--accent) !important; stroke:var(--accent) !important;
+}
+
+/* Compact main-flow START keys; retain their current text size. */
+#root :is(.script-start-call-gate,.start-call-gate) { justify-content:flex-start !important; text-align:left !important; }
+#root :is(.script-start-call-gate,.start-call-gate) > .script-start-call-button {
+ width:max-content !important; min-width:0 !important; max-width:100%;
+ height:auto !important; min-height:0 !important; padding:6px 10px !important;
+ flex:0 0 auto !important; align-self:flex-start;
+}
+html.dark #root :is(.script-start-call-gate,.start-call-gate) > .script-start-call-button {
+ --key-top:var(--key-secondary-top); --key-bottom:var(--key-secondary-bottom); --key-text:var(--key-secondary-text);
+}
+/* Keep the custom accent caret and suppress the browser's duplicate arrow. */
+#root select.ma-script-direction-select {
+ appearance:none !important; -webkit-appearance:none !important; -moz-appearance:none !important;
+ background-image:none !important;
+}
+#root .ma-script-direction-caret { color:var(--accent); }
+
+/* Center the idle-flow controls and leave room for the full direction label. */
+#root :is(.script-start-call-gate,.start-call-gate) { justify-content:center !important; text-align:center !important; }
+#root .ma-script-direction-wrap { flex:0 0 auto; }
+#root select.ma-script-direction-select {
+ width:calc(8ch + 48px) !important; min-width:calc(8ch + 48px) !important;
+ padding-left:10px !important; padding-right:28px !important;
+}
+
+/* Match main START and direction controls with ample room for OUTBOUND. */
+#root :is(.script-start-call-gate,.start-call-gate) {
+ --flow-start-control-width:120px; --flow-start-control-height:32px;
+ align-items:center !important;
+}
+#root .ma-script-direction-wrap { width:var(--flow-start-control-width); flex:0 0 var(--flow-start-control-width); }
+#root select.ma-script-direction-select,
+#root :is(.script-start-call-gate,.start-call-gate) > .script-start-call-button {
+ box-sizing:border-box !important;
+ width:var(--flow-start-control-width) !important; min-width:var(--flow-start-control-width) !important;
+ height:var(--flow-start-control-height) !important; min-height:var(--flow-start-control-height) !important;
+ align-self:center; line-height:normal !important;
+}
+#root select.ma-script-direction-select { padding:6px 28px 6px 10px !important; text-overflow:clip; }
+#root :is(.script-start-call-gate,.start-call-gate) > .script-start-call-button { text-align:center !important; }
+
+/* Bible: replace decorative gold/parchment with corporate light roles. */
+html:not(.dark) #root :is(.dv-card::before):not(button) {background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-card::after):not(button) {background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-label):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-translation-btn:hover):not(button) {border-color:var(--chart-grid) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-dropdown-item.active):not(button) {background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-dropdown-item.active .dv-dropdown-abbr):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-refresh:hover:not(:disabled)):not(button) {color:var(--accent) !important;border-color:var(--chart-grid) !important;background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-quote-glyph):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-text):not(button) {border-left:0 !important;}
+html:not(.dark) #root :is(.dv-text-close):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-ref):not(button) {text-shadow:none !important;}
+html:not(.dark) #root :is(.dv-original-block--scroll):not(button) {background:var(--focus-glow) !important;border:1px solid var(--chart-grid) !important;box-shadow:none !important;}
+html:not(.dark) #root :is(.dv-original-hint):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-original-hint a:hover):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-original-word:hover):not(button) {background:var(--focus-glow) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-original-word:hover .dv-original-script):not(button) {text-decoration-color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-original-word:hover .dv-original-gloss):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-original-head span:first-child):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-original-tag):not(button) {background:var(--focus-glow) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-trans-tag):not(button) {background:var(--focus-glow) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-commentary-toggle:hover):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-commentary-toggle.open):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-meta-pills):not(button) {border-bottom:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-meta-pill .dv-meta-label):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-section):not(button) {border-bottom:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-section-head):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-date-chip):not(button) {background:var(--focus-glow) !important;border:1px solid var(--chart-grid) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-streak-chip):not(button) {background:var(--focus-glow) !important;border:1px solid var(--chart-grid) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-icon-btn:hover):not(button) {color:var(--accent) !important;border-color:var(--chart-grid) !important;background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-icon-btn.is-active):not(button) {color:var(--accent) !important;border-color:var(--chart-grid) !important;background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-actions):not(button) {border-top:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-action:hover):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-action.is-active):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-parallel):not(button) {border:1px solid var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-parallel-head):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-parallel-fallback-note):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-context):not(button) {border:1px solid var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-context-num):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-context-verse.is-focus):not(button) {background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-context-verse.is-focus .dv-context-num):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-favorites):not(button) {border:1px solid var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-favorites-head):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-favorites-load:hover):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-favorites-ref):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-crossrefs):not(button) {border:1px solid var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-crossrefs-item):not(button) {background:var(--focus-glow) !important;border:1px solid var(--chart-grid) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-crossrefs-item:hover):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-favorites-mini:hover):not(button) {color:var(--accent) !important;border-color:var(--chart-grid) !important;background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-favorites-note):not(button) {background:var(--focus-glow) !important;border-left:0 !important;}
+html:not(.dark) #root :is(.dv-favorites-note-input):not(button) {border:1px solid var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-favorites-note-input:focus):not(button) {border-color:var(--chart-grid) !important;box-shadow:none !important;}
+html:not(.dark) #root :is(.dv-favorites-note-btn:hover):not(button) {color:var(--accent) !important;border-color:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-favorites-note-btn.is-save):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-favorites-note-btn.is-save:hover):not(button) {background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-card,.dv-original-block,.dv-original-block--scroll,.dv-section,.dv-favorites-panel,.dv-parallel-block) {
+ background:var(--bg-surface) !important; background-image:none !important; box-shadow:none !important;
+}
+html:not(.dark) #root :is(.dv-dropdown,.dv-context-panel,.dv-word-popup) { background:var(--bg-elevated) !important; background-image:none !important; color:var(--text-primary); }
+html:not(.dark) #root :is(.dv-ref,.dv-original-gloss,.dv-dropdown-full,.dv-section-body) { color:var(--text-primary) !important; text-shadow:none !important; }
+html:not(.dark) #root :is(.dv-original-hint,.dv-context-loading) { color:var(--text-secondary) !important; }
+html:not(.dark) #root .dv-text { border-left:0 !important; }
+html:not(.dark) #root .dv-quote-glyph { color:var(--focus-glow) !important; }

@@ -90,7 +90,7 @@ export function FemaFeed({
 
       return (
         <div key={itemKey} className="fema-feed-bulletin">
-          <button
+          <button data-key-role="secondary"
             className="fema-feed-item-header"
             onClick={() => toggleItem(itemKey)}
           >
@@ -197,7 +197,7 @@ export function FemaFeed({
                   key={disaster.id}
                   className={`fema-feed-item ${hasIA ? "has-sep" : "pa-only"}`}
                 >
-                  <button
+                  <button data-key-role="secondary"
                     className="fema-feed-item-header"
                     onClick={() => toggleItem(disaster.id)}
                   >
@@ -251,7 +251,7 @@ export function FemaFeed({
               );
             })}
             {sortedDisasters.length > 4 && (
-              <button
+              <button data-key-role="secondary"
                 className="fema-feed-show-all"
                 onClick={() => setShowAllFema(!showAllFema)}
               >
@@ -300,7 +300,7 @@ export function FemaFeed({
                 {renderFeedItems(displayNews)}
 
                 {liveNews.length > 6 && (
-                  <button
+                  <button data-key-role="secondary"
                     className="fema-feed-show-all"
                     onClick={() => setShowAllNews(!showAllNews)}
                   >
@@ -344,7 +344,7 @@ export function FemaFeed({
                 {renderFeedItems(displayBulletins)}
 
                 {bulletins.length > 8 && (
-                  <button
+                  <button data-key-role="secondary"
                     className="fema-feed-show-all"
                     onClick={() => setShowAllBulletins(!showAllBulletins)}
                   >

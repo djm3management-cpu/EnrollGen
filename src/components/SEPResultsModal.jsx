@@ -39,7 +39,7 @@ export default function SEPResultsModal({
           <h2 id="sep-modal-title" className="sep-modal-title">
             Available SEPs - ZIP {displayZip}
           </h2>
-          <button
+          <button data-key-role="secondary"
             type="button"
             className="sep-modal-close"
             onClick={onClose}
@@ -61,7 +61,7 @@ export default function SEPResultsModal({
           />
         </div>
         <div className="sep-modal-footer">
-          <button
+          <button data-key-role="secondary"
             type="button"
             className="sep-modal-close-btn"
             onClick={onClose}

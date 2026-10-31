@@ -84,7 +84,7 @@ export function PlanTable({
           style={{ flex: "1 1 160px", minWidth: 120 }}
         />
         {(planFilterCarrier !== "all" || planFilterType !== "all" || planFilterSnp !== "all" || planSearch) && (
-          <button
+          <button data-key-role="secondary"
             className="undo-btn"
             onClick={() => {
               setPlanFilterCarrier("all");

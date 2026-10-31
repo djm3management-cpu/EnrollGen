@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./styles/design-tokens.css";
 import "./styles/public-shell.css";
+import "./styles/visual-refresh.css";
 import { CopilotLogProvider } from "./context/CopilotTranscriptLog";
 import { LiveCallProvider } from "./context/LiveCallContext";
 import { ClerkProvider } from "@clerk/clerk-react";

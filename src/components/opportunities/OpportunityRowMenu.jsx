@@ -33,7 +33,7 @@ export default function OpportunityRowMenu({ row, anchor, canDelete, onOpen, onD
     };
   }, [anchor, onClose]);
   return createPortal(<div ref={panel} className="opps-row-menu" role="menu" aria-label={`Actions for ${row.contact_name}`} style={position}>
-    <button type="button" role="menuitem" onClick={onOpen}>Open opportunity</button>
-    {canDelete && <button type="button" role="menuitem" className="opps-danger" onClick={onDelete}>Delete opportunity</button>}
+    <button data-key-role="secondary" type="button" role="menuitem" onClick={onOpen}>Open opportunity</button>
+    {canDelete && <button data-key-role="destructive" type="button" role="menuitem" className="opps-danger" onClick={onDelete}>Delete opportunity</button>}
   </div>, document.body);
 }

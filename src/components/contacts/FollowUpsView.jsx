@@ -16,14 +16,14 @@ function FollowUpRow({ row, agents, update, onOpenContact }) {
     <td className="mono">{row.due_at ? new Date(row.due_at).toLocaleString() : 'No due date'}</td>
     <td>{row.reason || 'Follow-up'}</td>
     <td>{agents.find(agent => agent.agent_slug === row.agent_id)?.name || 'Unassigned'}</td>
-    <td>{row.source==='paragon'&&<><div>{row.caller_name||'Unknown caller'}</div><div className="mono">{row.caller_phone||'Phone unavailable'} · {row.caller_state}</div><a className="contacts-mini-btn" href={`/crm/calls?inbound_call_id=${encodeURIComponent(row.inbound_call_id)}`}>ORIGINAL CALL</a>{' '}</>}{row.contact_id&&<button type="button" className="contacts-mini-btn" onClick={() => onOpenContact(row.contact_id)}>OPEN CONTACT</button>}</td>
+    <td>{row.source==='paragon'&&<><div>{row.caller_name||'Unknown caller'}</div><div className="mono">{row.caller_phone||'Phone unavailable'} · {row.caller_state}</div><a className="contacts-mini-btn" href={`/crm/calls?inbound_call_id=${encodeURIComponent(row.inbound_call_id)}`}>ORIGINAL CALL</a>{' '}</>}{row.contact_id&&<button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => onOpenContact(row.contact_id)}>OPEN CONTACT</button>}</td>
     <td>
-      <button type="button" className="contacts-mini-btn" disabled={pending} onClick={() => void save('complete')}>MARK COMPLETE</button>{' '}
-      <button type="button" className="contacts-mini-btn" disabled={pending} onClick={() => setRescheduling(value => !value)}>RESCHEDULE</button>
+      <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={pending} onClick={() => void save('complete')}>MARK COMPLETE</button>{' '}
+      <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={pending} onClick={() => setRescheduling(value => !value)}>RESCHEDULE</button>
       {rescheduling && <form className="contacts-inline-form contacts-followup-form" onSubmit={event => { event.preventDefault(); void save('reschedule'); }}>
         <input type="datetime-local" aria-label="New follow-up due date" required value={dueAt} onChange={event => setDueAt(event.target.value)} />
-        <button type="submit" className="contacts-mini-btn" disabled={pending || !dueAt}>SAVE</button>
-        <button type="button" className="contacts-mini-btn" onClick={() => setRescheduling(false)}>CANCEL</button>
+        <button data-key-role="primary" type="submit" className="contacts-mini-btn" disabled={pending || !dueAt}>SAVE</button>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => setRescheduling(false)}>CANCEL</button>
       </form>}
       {error && <div className="ops-error" role="alert">{error}</div>}
     </td>
@@ -46,8 +46,8 @@ export default function FollowUpsView({ data, onOpenContact, initialSource='' })
         <option value="mine">MY FOLLOW-UPS</option>
         {data.isAdmin && <><option value="all">ALL AGENTS</option>{data.agents.filter(item => item.is_active !== false).map(item => <option key={item.id} value={item.agent_slug}>{item.name}</option>)}</>}
       </select>
-      <button type="button" className="contacts-mini-btn" disabled={data.loading} onClick={() => void data.refresh()}>REFRESH</button>
-      <span className="contacts-muted">Create follow-ups from a contact’s detail panel.</span>
+      <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={data.loading} onClick={() => void data.refresh()}>REFRESH</button>
+
     </div>
     {data.error && <div className="ops-error" role="alert">{data.error}</div>}
     <div className="contacts-table-wrap"><table className="contacts-table">

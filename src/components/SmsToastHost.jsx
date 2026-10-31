@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import AppToast from "./AppToast";
 import { MessageSquare } from "lucide-react";
 import { subscribeSms } from "../lib/smsEvents";
 
-const TOAST_TTL_MS = 8000;
+const TOAST_TTL_MS = 6000;
 
 function toastLabel(event) {
   const contact = event?.contact;
@@ -53,37 +53,14 @@ export default function SmsToastHost({ onOpenContactMessages }) {
 
   if (!toasts.length) return null;
 
-  return createPortal(
-    <div className="sms-toast-stack" role="status" aria-live="polite">
-      {toasts.map((toast) => (
-        <div
-          key={toast.id}
-          className="sms-toast"
-          onClick={() => {
-            dismiss(toast.id);
-            if (toast.contactId) onOpenContactMessages?.(toast.contactId);
-          }}
-        >
-          <span className="sms-toast__icon" aria-hidden="true">
-            <MessageSquare size={14} />
-          </span>
-          <span className="sms-toast__body">
-            <span className="sms-toast__label">{toast.label.toUpperCase()}</span>
-            <span className="sms-toast__preview">{toast.preview}</span>
-          </span>
-          <button
-            type="button"
-            className="sms-toast__close"
-            aria-label="Dismiss notification"
-            onClick={(event) => {
-              event.stopPropagation();
-              dismiss(toast.id);
-            }}
-          >
-            ✕
-          </button>
-        </div>
-      ))}
-    </div>, document.body
-  );
+  return <>{toasts.map((toast) => <AppToast key={toast.id} tone="info" onDismiss={() => dismiss(toast.id)}>
+    <div onClick={() => {
+      dismiss(toast.id);
+      if (toast.contactId) onOpenContactMessages?.(toast.contactId);
+    }}>
+      <MessageSquare size={14} aria-hidden="true" />
+      <span>{toast.label.toUpperCase()}</span>
+      <span>{toast.preview}</span>
+    </div>
+  </AppToast>)}</>;
 }

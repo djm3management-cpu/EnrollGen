@@ -68,7 +68,7 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
         availability.isSaving ? " is-saving" : ""
       }`}
     >
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="availability-strip"
         title={title}
@@ -92,7 +92,7 @@ const AvailabilityStrip = memo(function AvailabilityStrip() {
           {STATUS_OPTIONS.map((option) => {
             const active = option.value === selectedStatus;
             return (
-              <button
+              <button data-key-role="secondary"
                 key={option.value}
                 type="button"
                 role="menuitemradio"

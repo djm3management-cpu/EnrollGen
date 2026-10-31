@@ -49,7 +49,7 @@
 
 .sep-modal-title {
   font-family: var(--font-primary);
-  font-weight: 700;
+  font-weight: 500;
   font-size: 20px;
   letter-spacing: 0.04em;
   color: var(--text-primary);
@@ -112,7 +112,7 @@
   border-radius: 10px;
   color: var(--text-muted);
   font-family: var(--font-primary);
-  font-weight: 700;
+  font-weight: 500;
   font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;

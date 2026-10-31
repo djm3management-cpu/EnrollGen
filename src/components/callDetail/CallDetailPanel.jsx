@@ -354,7 +354,7 @@ export default function CallDetailPanel({ attemptId, recordingRow, detail, loadi
 
   return (
     <div className="ops-detail-panel">
-      {showCombination && detail.id && <button type="button" className="contacts-mini-btn" onClick={() => setCombining(true)}>Combine with…</button>}
+      {showCombination && detail.id && <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => setCombining(true)}>Combine with…</button>}
       <DetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
       {activeTab === "Recording" ? <RecordingPanel row={recordingRow} callRecordId={detail.id} attemptId={attemptId} /> : null}
       {activeTab === "Transcript" ? <TranscriptDetail detail={detail} /> : null}

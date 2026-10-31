@@ -47,7 +47,6 @@ export default function SEPLookupTool() {
           isValidZip={s.isValidZip}
           loading={s.loading}
           inputRef={s.inputRef}
-          hasResults={!!s.results || !!s.selectedState}
         />
 
         {(s.sepFinderZip || s.sepFinderLoading || s.sepFinderError || s.sepFinderResult) && (
@@ -95,7 +94,7 @@ export default function SEPLookupTool() {
                 {s.selectedCounty && (
                   <span className="sep-map-county-tag">{s.selectedCounty} County</span>
                 )}
-                <button
+                <button data-key-role="secondary"
                   className="sep-map-reset"
                   onClick={() => s.handleStateClick(null)}
                 >
@@ -109,11 +108,7 @@ export default function SEPLookupTool() {
               onStateClick={s.handleStateClick}
             />
 
-            {!s.hasView && (
-              <div className="sep-map-landing-hint">
-                Or enter a zip code above for carrier & SEP data
-              </div>
-            )}
+            
           </div>
         )}
 
@@ -254,7 +249,7 @@ export default function SEPLookupTool() {
                     {s.allProducts.map((p) => <option key={p} value={p}>{p}</option>)}
                   </select>
                   {(s.filterCategory !== "all" || s.filterProduct !== "all") && (
-                    <button className="undo-btn" onClick={() => { s.setFilterCategory("all"); s.setFilterProduct("all"); }}>
+                    <button data-key-role="secondary" className="undo-btn" onClick={() => { s.setFilterCategory("all"); s.setFilterProduct("all"); }}>
                       <X size={14} /> Clear
                     </button>
                   )}

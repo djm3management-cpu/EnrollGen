@@ -211,7 +211,7 @@ export default function MessagesThread({ contactId, agentId = null, activityItem
       </div>
 
       <ContactToast message={sendError || notice} error={Boolean(sendError)} onDismiss={() => { setSendError(""); setNotice(""); }} />
-      {gif && <div className="compose-gif-preview"><img src={gif.url} alt={gif.title} /><span>MMS preview · {Math.ceil(gif.size / 1000)} KB</span><button className="contacts-mini-btn" type="button" disabled={sending} onClick={() => setGif(null)}>REMOVE GIF</button></div>}
+      {gif && <div className="compose-gif-preview"><img src={gif.url} alt={gif.title} /><span>MMS preview · {Math.ceil(gif.size / 1000)} KB</span><button data-key-role="destructive" className="contacts-mini-btn" type="button" disabled={sending} onClick={() => setGif(null)}>REMOVE GIF</button></div>}
 
       <div className="msg-compose">
         <textarea
@@ -235,7 +235,7 @@ export default function MessagesThread({ contactId, agentId = null, activityItem
             {segments > 1 ? ` (${segments} segments)` : ""}
           </span>
           <ComposePickers onEmoji={insertEmoji} onGif={setGif} disabled={sending} />
-          <button
+          <button data-key-role="secondary"
             type="button"
             className="msg-send-btn"
             onClick={handleSend}

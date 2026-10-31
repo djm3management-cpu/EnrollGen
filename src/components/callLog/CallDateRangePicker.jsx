@@ -64,16 +64,16 @@ export default function CallDateRangePicker({ from, to, onChange }) {
   return <div className="call-date-picker" ref={rootRef} onKeyDown={event => {
     if (open && event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); }
   }}>
-    <button type="button" ref={triggerRef} className={`contacts-mini-btn call-log-toolbar-icon call-date-trigger${from ? ' is-active' : ''}`} title={`Filter calls by date: ${label}`} aria-label={`Filter calls by date: ${label}`} aria-haspopup="dialog" aria-expanded={open} aria-controls={id} onClick={() => {
+    <button data-key-role="icon" type="button" ref={triggerRef} className={`contacts-mini-btn call-log-toolbar-icon call-date-trigger${from ? ' is-active' : ''}`} title={`Filter calls by date: ${label}`} aria-label={`Filter calls by date: ${label}`} aria-haspopup="dialog" aria-expanded={open} aria-controls={id} onClick={() => {
       if (open) { close(); return; }
       const key = from || today;
       setAnchor(null); setHovered(null); focusDay.current = true; setFocusedDay(key); setMonth(localDate(key)); setOpen(true);
     }}><CalendarDays size={16} aria-hidden="true" /></button>
     {open && <div id={id} className="call-date-popover" role="dialog" aria-label="Choose call dates">
       <div className="call-date-month">
-        <button type="button" className="contacts-mini-btn" aria-label="Previous month" onClick={() => move(shiftMonth(localDate(focusedDay), -1))}><ChevronLeft size={16} /></button>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" aria-label="Previous month" onClick={() => move(shiftMonth(localDate(focusedDay), -1))}><ChevronLeft size={16} /></button>
         <span aria-live="polite">{monthLabel}</span>
-        <button type="button" className="contacts-mini-btn" aria-label="Next month" onClick={() => move(shiftMonth(localDate(focusedDay), 1))}><ChevronRight size={16} /></button>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" aria-label="Next month" onClick={() => move(shiftMonth(localDate(focusedDay), 1))}><ChevronRight size={16} /></button>
       </div>
       <p className="call-date-help">Click one day, or click a start and end date.</p>
       <div className="call-date-weekdays" aria-hidden="true">{['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => <span key={day}>{day}</span>)}</div>
@@ -84,7 +84,7 @@ export default function CallDateRangePicker({ from, to, onChange }) {
           const selected = Boolean(from && key >= from && key <= (to || from));
           const inRange = preview[0] && key >= preview[0] && key <= preview[1];
           const endpoint = key === preview[0] || key === preview[1];
-          return <button type="button" key={key} data-date={key} tabIndex={key === focusedDay ? 0 : -1}
+          return <button data-key-role="secondary" type="button" key={key} data-date={key} tabIndex={key === focusedDay ? 0 : -1}
             className={`call-date-day${inRange ? ' is-in-range' : ''}${endpoint ? ' is-endpoint' : ''}${key === today ? ' is-today' : ''}`}
             aria-label={date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
             aria-pressed={selected} aria-current={key === today ? 'date' : undefined}
@@ -94,8 +94,8 @@ export default function CallDateRangePicker({ from, to, onChange }) {
       </div>
       <div className="call-date-selection" role="status">{!from ? 'All calls' : label}{anchor ? ' · Choose another day for a range' : ''}</div>
       <div className="call-date-footer">
-        <button type="button" className="contacts-mini-btn" onClick={() => { onChange('', ''); setAnchor(null); setHovered(null); }}>CLEAR</button>
-        <button type="button" className="contacts-mini-btn" onClick={close}>DONE</button>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => { onChange('', ''); setAnchor(null); setHovered(null); }}>CLEAR</button>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={close}>DONE</button>
       </div>
     </div>}
   </div>;

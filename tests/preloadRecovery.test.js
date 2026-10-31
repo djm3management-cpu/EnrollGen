@@ -99,6 +99,7 @@ test('notice offers an explicit reload, disables it during calls and can be dism
   const module = { exports: {} };
   vm.runInNewContext(code, { module, exports: module.exports, React,
     require(name) {
+      if (name === './AppToast') return { default: function AppToast() {} };
       if (name === 'react') return { useSyncExternalStore: (_subscribe, snapshot) => snapshot() };
       if (name.includes('preloadRecovery')) return { preloadRecovery: h.recovery };
       throw Error(`Unexpected import: ${name}`);
@@ -111,7 +112,8 @@ test('notice offers an explicit reload, disables it during calls and can be dism
   const active = Notice({ ...props, callInProgress: true });
   const activeButtons = React.Children.toArray(active.props.children[1].props.children);
   assert.equal(activeButtons[0].props.disabled, true);
-  assert.equal(active.props.role, 'status');
+  assert.equal(active.props.tone, 'error');
+  assert.equal(active.props.onDismiss, h.recovery.dismiss);
   const idle = Notice(props);
   const buttons = React.Children.toArray(idle.props.children[1].props.children);
   assert.equal(buttons[0].props.disabled, false);

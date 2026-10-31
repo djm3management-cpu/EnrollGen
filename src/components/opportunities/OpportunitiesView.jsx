@@ -18,7 +18,7 @@ import DeleteOpportunityDialog from './DeleteOpportunityDialog';
 import OpportunityRowMenu from './OpportunityRowMenu';
 
 function CardAction({ label, count = 0, children, onClick, disabled, expanded }) {
-  return <button type="button" className="opps-card-action" aria-label={label} title={label} disabled={disabled} aria-expanded={expanded}
+  return <button data-key-role="secondary" type="button" className="opps-card-action" aria-label={label} title={label} disabled={disabled} aria-expanded={expanded}
     onPointerDown={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === ' ' || event.key === 'Enter') event.stopPropagation(); }}
     onClick={(event) => { event.stopPropagation(); onClick(event); }}>{children}
     {count > 0 && <span className="opps-action-count" aria-label={`${count} ${label.toLowerCase()}`}>{count > 99 ? '99+' : count}</span>}
@@ -53,7 +53,7 @@ function StageColumn({ stage, rows, data, onOpen, actions }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id, data: { stageId: stage.id } });
   return <section ref={setNodeRef} className={`opps-column${isOver ? ' is-over' : ''}`} style={{ '--stage-color': stage.color }} aria-label={`${stage.name} stage`}>
     <header className="opps-column-head"><div><h3>{stage.name}</h3><span>{rows.length} opportunities&nbsp; {money(rows.reduce((total, row) => total + Number(row.est_value || 0), 0))}</span></div>
-      <button type="button" aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${stage.name}`} aria-expanded={!collapsed} aria-controls={`opps-stage-${stage.id}`} onClick={() => setCollapsed((current) => !current)}>{collapsed ? <ChevronRight size={17} /> : <ChevronDown size={17} />}</button>
+      <button data-key-role="secondary" type="button" aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${stage.name}`} aria-expanded={!collapsed} aria-controls={`opps-stage-${stage.id}`} onClick={() => setCollapsed((current) => !current)}>{collapsed ? <ChevronRight size={17} /> : <ChevronDown size={17} />}</button>
     </header>
     <SortableContext items={rows.map((row) => row.id)} strategy={verticalListSortingStrategy}>
       <div id={`opps-stage-${stage.id}`} className="opps-column-cards" hidden={collapsed}>{rows.map((row) => <OpportunityCard key={row.id} row={row} stage={stage} source={data.sources.find((item) => item.id === row.lead_source_id)} pending={data.pendingIds.has(row.id)} onOpen={() => onOpen(row.id)} actions={actions} />)}
@@ -145,9 +145,9 @@ export default function OpportunitiesView({ onOpenContact }) {
 
   return <div className="opps-view">
     <header className="opps-header"><div className="opps-pipeline-picker"><label className="contacts-edit-field"><span>PIPELINE</span><select aria-label="Pipeline" className="contacts-edit-input" value={pipelineId} onChange={(event) => { setFilter('pipeline', event.target.value); closeTags(); }}>{data.pipelines.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label><span className="opps-total-pill">{visible.length} opportunities</span></div>
-      <div className="opps-actions"><div className="opps-layout-toggle" role="group" aria-label="Opportunity layout"><button type="button" className={layout === 'board' ? 'is-active' : ''} aria-label="Board view" title="Board view" aria-pressed={layout === 'board'} onClick={() => { setLayout('board'); closeTags(); }}><LayoutGrid size={17} /></button><button type="button" className={layout === 'list' ? 'is-active' : ''} aria-label="List view" title="List view" aria-pressed={layout === 'list'} onClick={() => { setLayout('list'); closeTags(); }}><List size={17} /></button></div>
-        <button className="contacts-mini-btn" aria-label="Pipeline settings" title="Pipeline settings" disabled={data.loading || !pipelineId} onClick={() => setSettings(true)}><Settings size={16} /></button>
-        <button className="contacts-mini-btn opps-primary" disabled={data.loading || !stageRows.length || !data.agentUuid} onClick={() => setCreating(true)}><Plus size={15} /> NEW OPPORTUNITY</button>
+      <div className="opps-actions"><div className="opps-layout-toggle" role="group" aria-label="Opportunity layout"><button data-key-role="secondary" type="button" className={layout === 'board' ? 'is-active' : ''} aria-label="Board view" title="Board view" aria-pressed={layout === 'board'} onClick={() => { setLayout('board'); closeTags(); }}><LayoutGrid size={17} /></button><button data-key-role="secondary" type="button" className={layout === 'list' ? 'is-active' : ''} aria-label="List view" title="List view" aria-pressed={layout === 'list'} onClick={() => { setLayout('list'); closeTags(); }}><List size={17} /></button></div>
+        <button data-key-role="secondary" className="contacts-mini-btn" aria-label="Pipeline settings" title="Pipeline settings" disabled={data.loading || !pipelineId} onClick={() => setSettings(true)}><Settings size={16} /></button>
+        <button data-key-role="secondary" className="contacts-mini-btn opps-primary" disabled={data.loading || !stageRows.length || !data.agentUuid} onClick={() => setCreating(true)}><Plus size={15} /> NEW OPPORTUNITY</button>
       </div>
     </header>
     <div className="opps-filters">
@@ -156,8 +156,8 @@ export default function OpportunitiesView({ onOpenContact }) {
       <label className="contacts-edit-field"><span>CARRIER</span><select className="contacts-edit-input" value={filters.carrier} onChange={(event) => setFilter('carrier', event.target.value)}><option value="">All carriers</option>{carriers.map((carrier) => <option key={carrier}>{carrier}</option>)}</select></label>
       <label className="contacts-edit-field"><span>SOURCE</span><select className="contacts-edit-input" value={filters.source} onChange={(event) => setFilter('source', event.target.value)}><option value="">All sources</option>{data.sources.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
       <label className="contacts-edit-field opps-search"><span><Search size={10} /> CONTACT NAME</span><input className="contacts-edit-input" placeholder="Search contact name…" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} /></label>
-      <button type="button" className="contacts-mini-btn" onClick={() => setFilters({ pipeline: pipelineId, agent: '', lob: '', carrier: '', source: '', search: '' })}>CLEAR</button>
-      <button type="button" className="contacts-mini-btn" disabled={data.loading || data.pendingIds.size > 0} onClick={() => data.refresh()}>REFRESH</button>
+      <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => setFilters({ pipeline: pipelineId, agent: '', lob: '', carrier: '', source: '', search: '' })}>CLEAR</button>
+      <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={data.loading || data.pendingIds.size > 0} onClick={() => data.refresh()}>REFRESH</button>
     </div>
     {data.error && <div className="ops-error" role="alert">{data.error}</div>}
     {contactsError && <div className="ops-error" role="alert">Contact phone numbers could not be loaded: {contactsError}</div>}
@@ -170,9 +170,9 @@ export default function OpportunitiesView({ onOpenContact }) {
       }}>
       <ScrollBoard>{stageRows.map((stage) => <StageColumn key={stage.id} stage={stage} rows={visible.filter((row) => row.stage_id === stage.id)} data={data} onOpen={openDrawer} actions={actions} />)}</ScrollBoard>
       <DragOverlay>{dragging && <div className="opps-card opps-card-overlay" style={{ '--stage-color': data.stages.find((row) => row.id === dragging.stage_id)?.color }}><CardSummary row={dragging} source={data.sources.find((row) => row.id === dragging.lead_source_id)} /></div>}</DragOverlay>
-    </DndContext> : <div className="contacts-table-wrap"><table className="contacts-table opps-table"><thead><tr>{COLUMNS.map(([key, label]) => <th key={key} aria-sort={sort.key === key ? sort.direction === 'asc' ? 'ascending' : 'descending' : 'none'}><button type="button" onClick={() => setSort({ key, direction: sort.key === key && sort.direction === 'asc' ? 'desc' : 'asc' })}>{label}{sort.key === key ? sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}</button></th>)}<th scope="col">Actions</th></tr></thead>
-      <tbody>{sorted.map((row) => <tr key={row.id}>{COLUMNS.map(([key]) => <td key={key}>{key === 'contact_name' ? <button type="button" className="opps-contact-link" onClick={() => openDrawer(row.id)}>{row.contact_name}</button> : key === 'stage_id' ? <StageBadge stage={data.stages.find((stage) => stage.id === row.stage_id)} /> : key === 'est_value' ? money(row.est_value) : valueFor(row, key) === '' ? '—' : String(valueFor(row, key))}</td>)}
-        <td><button type="button" className="contacts-mini-btn" aria-label={`Actions for ${row.contact_name}`} aria-haspopup="menu" aria-expanded={rowMenu?.id === row.id} disabled={data.pendingIds.has(row.id)} onClick={(event) => {
+    </DndContext> : <div className="contacts-table-wrap"><table className="contacts-table opps-table"><thead><tr>{COLUMNS.map(([key, label]) => <th key={key} aria-sort={sort.key === key ? sort.direction === 'asc' ? 'ascending' : 'descending' : 'none'}><button data-key-role="secondary" type="button" onClick={() => setSort({ key, direction: sort.key === key && sort.direction === 'asc' ? 'desc' : 'asc' })}>{label}{sort.key === key ? sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}</button></th>)}<th scope="col">Actions</th></tr></thead>
+      <tbody>{sorted.map((row) => <tr key={row.id}>{COLUMNS.map(([key]) => <td key={key}>{key === 'contact_name' ? <button data-key-role="secondary" type="button" className="opps-contact-link" onClick={() => openDrawer(row.id)}>{row.contact_name}</button> : key === 'stage_id' ? <StageBadge stage={data.stages.find((stage) => stage.id === row.stage_id)} /> : key === 'est_value' ? money(row.est_value) : valueFor(row, key) === '' ? '—' : String(valueFor(row, key))}</td>)}
+        <td><button data-key-role="secondary" type="button" className="contacts-mini-btn" aria-label={`Actions for ${row.contact_name}`} aria-haspopup="menu" aria-expanded={rowMenu?.id === row.id} disabled={data.pendingIds.has(row.id)} onClick={(event) => {
           const anchor = event.currentTarget;
           setRowMenu((current) => current?.id === row.id ? null : { id: row.id, anchor });
         }}><MoreHorizontal size={16} /></button></td>

@@ -10,7 +10,7 @@ export default function PrivatePlanPanel({ highlightUnderwriting = false, onAckn
   return <section className="private-plan-panel">
     <U65ProductGuidance />
     <UnderwritingChecker highlighted={highlightUnderwriting} onAcknowledgeHighlight={onAcknowledgeUnderwritingHighlight} />
-    <button type="button" className="private-plan-open-btn private-plan-open-btn--bottom" onClick={() => setModalOpen(true)}>
+    <button data-key-role="secondary" type="button" className="private-plan-open-btn private-plan-open-btn--bottom" onClick={() => setModalOpen(true)}>
       <ExternalLink size={13} />Open Full Playbook
     </button>
     <PlaybookModal open={modalOpen} src={PRIVATE_PLAN_PLAYBOOK_URL} onClose={() => setModalOpen(false)} />

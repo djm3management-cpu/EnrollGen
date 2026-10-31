@@ -100,7 +100,7 @@ export default function AgentToolsProductQuiz({
         </div>
 
         <div className="at-quiz-actions">
-          <button className="at-quiz-secondary-btn" type="button" onClick={resetQuiz}>
+          <button data-key-role="secondary" className="at-quiz-secondary-btn" type="button" onClick={resetQuiz}>
             <RotateCw size={13} />
             Retake Quiz
           </button>
@@ -174,7 +174,7 @@ export default function AgentToolsProductQuiz({
                     : "";
 
             return (
-              <button
+              <button data-key-role="secondary"
                 key={choiceId}
                 className={`at-quiz-choice${stateClass}`}
                 type="button"
@@ -199,7 +199,7 @@ export default function AgentToolsProductQuiz({
             Correct answer: {currentQuestion.answer}) {getChoiceText(currentQuestion, currentQuestion.answer)}
           </div>
           <p>{currentQuestion.explanation}</p>
-          <button className="at-quiz-next-btn" type="button" onClick={goNext}>
+          <button data-key-role="secondary" className="at-quiz-next-btn" type="button" onClick={goNext}>
             {currentIndex >= questions.length - 1 ? "Finish Quiz" : "Next Question"}
           </button>
         </section>

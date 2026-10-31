@@ -490,10 +490,9 @@ export default function TenantSettings({ currentUser = null }) {
       <div className="tenant-settings-header">
         <div>
           <span className="billing-eyebrow">TENANT ADMIN</span>
-          <h2>Agency Settings</h2>
           <p>{profile.agency_display_name || profile.name || "Agency configuration"}</p>
         </div>
-        <button type="button" className="billing-button is-primary" onClick={saveTenant} disabled={saving}>
+        <button data-key-role="secondary" type="button" className="eg-key eg-key--primary billing-button is-primary" onClick={saveTenant} disabled={saving}>
           <Check size={15} />
           {saving ? "Saving" : "Save Settings"}
         </button>
@@ -505,8 +504,7 @@ export default function TenantSettings({ currentUser = null }) {
       <section className="tenant-settings-card tenant-settings-card-wide">
         <div className="tenant-settings-section-title">Vendor availability</div>
         <div className="tenant-settings-inline">
-          <span className="tenant-settings-muted">Global vendor pause immediately reports unavailable and is audit logged.</span>
-          <button type="button" className={`billing-button${vendorPaused ? " is-primary" : ""}`} onClick={toggleVendorPause} disabled={vendorPauseSaving}>
+          <button data-key-role="secondary" type="button" className={`eg-key billing-button${vendorPaused ? " is-primary" : ""}`} onClick={toggleVendorPause} disabled={vendorPauseSaving}>
             {vendorPauseSaving ? "Saving" : vendorPaused ? "Resume vendors" : "Pause vendors"}
           </button>
         </div>
@@ -554,7 +552,7 @@ export default function TenantSettings({ currentUser = null }) {
                 onChange={(event) => updateProfile("ghl_webhook_url", event.target.value)}
                 placeholder="https://services.leadconnectorhq.com/hooks/..."
               />
-              <button type="button" className="billing-icon-button" onClick={testWebhook} title="Test webhook">
+              <button data-key-role="icon" type="button" className="billing-icon-button" onClick={testWebhook} title="Test webhook">
                 <Send size={15} />
               </button>
             </div>
@@ -565,9 +563,7 @@ export default function TenantSettings({ currentUser = null }) {
               onChange={(event) => updateProfile("ghl_location_id", event.target.value)}
             />
           </SettingsField>
-          <p className="tenant-settings-muted">
-            Enter your CRM inbound webhook URL. EnrollGen sends enrollment data here after each completed call.
-          </p>
+
         </section>
 
         <section className="tenant-settings-card tenant-settings-card-wide">
@@ -597,7 +593,7 @@ export default function TenantSettings({ currentUser = null }) {
                     onChange={(event) => updateAgent(agent, { is_active: event.target.checked })}
                   />
                 </label>
-                <button
+                <button data-key-role="icon"
                   type="button"
                   className="billing-icon-button"
                   onClick={() => updateAgent(agent, { is_active: false })}
@@ -624,7 +620,7 @@ export default function TenantSettings({ currentUser = null }) {
               value={newAgent.ghl_user_id}
               onChange={(event) => setNewAgent((current) => ({ ...current, ghl_user_id: event.target.value }))}
             />
-            <button type="button" className="billing-button" onClick={addAgent} disabled={atSeatLimit}>
+            <button data-key-role="primary" type="button" className="eg-key billing-button" onClick={addAgent} disabled={atSeatLimit}>
               <Plus size={14} />
               Add Agent
             </button>
@@ -645,7 +641,7 @@ export default function TenantSettings({ currentUser = null }) {
                     )
                   }
                 />
-                <button
+                <button data-key-role="icon"
                   type="button"
                   className="billing-icon-button"
                   onClick={() => setCarriers((current) => current.filter((_, idx) => idx !== index))}
@@ -658,7 +654,7 @@ export default function TenantSettings({ currentUser = null }) {
           </div>
           <div className="tenant-settings-inline">
             <input value={newCarrier} onChange={(event) => setNewCarrier(event.target.value)} placeholder="Add carrier" />
-            <button
+            <button data-key-role="icon"
               type="button"
               className="billing-icon-button"
               onClick={() => {
@@ -696,7 +692,7 @@ export default function TenantSettings({ currentUser = null }) {
                     )
                   }
                 />
-                <button
+                <button data-key-role="icon"
                   type="button"
                   className="billing-icon-button"
                   onClick={() => setCoopRows((current) => current.filter((_, idx) => idx !== index))}
@@ -706,9 +702,9 @@ export default function TenantSettings({ currentUser = null }) {
               </div>
             ))}
           </div>
-          <button
+          <button data-key-role="secondary"
             type="button"
-            className="billing-button"
+            className="eg-key billing-button"
             onClick={() => setCoopRows((current) => [...current, { carrier: "", amount: 0 }])}
           >
             <Plus size={14} />
@@ -719,7 +715,7 @@ export default function TenantSettings({ currentUser = null }) {
         <section className="tenant-settings-card tenant-settings-card-wide">
           <div className="tenant-settings-section-title">
             Compliance Configuration
-            <button
+            <button data-key-role="icon"
               type="button"
               className="billing-icon-button"
               onClick={() => setComplianceConfig(cloneComplianceConfig(DEFAULT_COMPLIANCE_CONFIG))}

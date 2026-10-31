@@ -102,7 +102,7 @@ function Gate({ label, done, onDo, onUndo }) {
         justifyContent: "center",
       }}
     >
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="check flow-gate-check"
         onClick={done ? onUndo : onDo}
@@ -376,7 +376,7 @@ export default function StateACAFlow() {
             marginBottom: 10,
           }}
         >
-          <button
+          <button data-key-role="primary"
             className="primary script-start-call-button"
             onClick={() => dispatch({ type: "START_CALL" })}
             style={{
@@ -481,7 +481,7 @@ export default function StateACAFlow() {
                 >
                   State ACA Flow Complete
                 </div>
-                <button
+                <button data-key-role="secondary"
                   onClick={() => dispatch({ type: "RESET" })}
                   style={{
                     marginTop: 12,

@@ -55,7 +55,7 @@ export default function ComplianceIntentAccordion() {
       className={`operations-tab compliance-intent-accordion${open ? " is-open" : ""}`}
       aria-label="Compliance 152 flags"
     >
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="ops-intent-accordion-trigger"
         aria-expanded={open}

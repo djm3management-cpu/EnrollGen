@@ -673,7 +673,7 @@ const ComplianceDashboard = memo(function ComplianceDashboard({
             }}
           >
             {!forceShowDetail && (
-              <button
+              <button data-key-role="secondary"
                 onClick={() => setShowDetail((p) => !p)}
                 style={{
                   background: "linear-gradient(180deg, var(--eg-surface-2) 0%, var(--eg-surface-1) 100%)",

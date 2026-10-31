@@ -34,7 +34,7 @@ const EMPTY_LOOKUP = {
 function CollapsibleSubsection({ title, open, onToggle, children }) {
   return (
     <div className="snp-routing-subsection">
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="snp-routing-subsection-trigger"
         onClick={onToggle}

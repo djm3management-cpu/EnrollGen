@@ -157,7 +157,7 @@ function StateInfoCard({
 
         return (
           <div key={section.id} className="sep-state-section">
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="sep-state-section-trigger"
               onClick={() => onToggleSection(section.id)}
@@ -394,11 +394,11 @@ export default function SEPQualifier({ onMinimize }) {
         {stageIndex > 0 ? (
           <div className="sep-qualifier-toolbar">
             <div className="sep-qualifier-actions">
-              <button type="button" className="sep-qualifier-action" onClick={resetAll}>
+              <button data-key-role="secondary" type="button" className="sep-qualifier-action" onClick={resetAll}>
                 <RotateCcw size={13} />
                 Reset
               </button>
-              <button type="button" className="sep-qualifier-action" onClick={onMinimize}>
+              <button data-key-role="secondary" type="button" className="sep-qualifier-action" onClick={onMinimize}>
                 <Minimize2 size={13} />
                 Minimize
               </button>
@@ -428,7 +428,7 @@ export default function SEPQualifier({ onMinimize }) {
               </div>
 
               <div className="left-rail-tool-row" role="tablist" aria-label="Left rail tools">
-                <button
+                <button data-key-role="secondary"
                   type="button"
                   role="tab"
                   aria-selected={activeTool === "finder"}
@@ -438,7 +438,7 @@ export default function SEPQualifier({ onMinimize }) {
                   <Search size={11} strokeWidth={2.2} aria-hidden="true" />
                   <span>SEP Finder</span>
                 </button>
-                <button
+                <button data-key-role="secondary"
                   type="button"
                   role="tab"
                   aria-selected={activeTool === "qualifier"}
@@ -448,7 +448,7 @@ export default function SEPQualifier({ onMinimize }) {
                   <ListChecks size={11} strokeWidth={2.2} aria-hidden="true" />
                   <span>SEP Qualifier</span>
                 </button>
-                <button
+                <button data-key-role="secondary"
                   type="button"
                   role="tab"
                   aria-selected={activeTool === "snp"}
@@ -471,14 +471,14 @@ export default function SEPQualifier({ onMinimize }) {
 
                   {activeTool === "qualifier" ? (
                     <div className="left-rail-tool-panel-inner">
-                      <button
+                      <button data-key-role="primary"
                         type="button"
                         className="left-rail-tool-start-btn"
                         onClick={() => setStageIndex(1)}
                       >
                         START SEP QUALIFICATION
                       </button>
-                      <button
+                      <button data-key-role="secondary"
                         type="button"
                         className="left-rail-tool-minimize"
                         onClick={onMinimize}
@@ -517,7 +517,7 @@ export default function SEPQualifier({ onMinimize }) {
               <p>{OPENER_SCRIPT}</p>
             </div>
 
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="sep-qualifier-primary"
               onClick={() => setStageIndex(2)}
@@ -534,7 +534,7 @@ export default function SEPQualifier({ onMinimize }) {
                 Do you currently have both Medicare Part A and Part B?
               </div>
               <div className="sep-qualifier-toggle-row">
-                <button
+                <button data-key-role="secondary"
                   type="button"
                   className={`sep-qualifier-toggle${hasPartAandB === true ? " is-active" : ""}`}
                   onClick={() => {
@@ -544,7 +544,7 @@ export default function SEPQualifier({ onMinimize }) {
                 >
                   YES
                 </button>
-                <button
+                <button data-key-role="secondary"
                   type="button"
                   className={`sep-qualifier-toggle${hasPartAandB === false ? " is-active is-danger" : ""}`}
                   onClick={() => {
@@ -598,7 +598,7 @@ export default function SEPQualifier({ onMinimize }) {
                     const category = SEP_QUALIFIER_CATEGORY_MAP[question.categoryId];
 
                     return (
-                      <button
+                      <button data-key-role="secondary"
                         key={question.id}
                         type="button"
                         className="sep-qualifier-shortcut-card"
@@ -624,7 +624,7 @@ export default function SEPQualifier({ onMinimize }) {
               </div>
             ) : null}
 
-            <button
+            <button data-key-role="secondary"
               type="button"
               className="sep-qualifier-primary"
               onClick={() => {
@@ -639,7 +639,7 @@ export default function SEPQualifier({ onMinimize }) {
 
             {canAdvanceToCategory ? (
               <>
-                <button
+                <button data-key-role="secondary"
                   type="button"
                   className="sep-qualifier-secondary sep-qualifier-none-button"
                   onClick={() => setShowNoSepNotice((currentValue) => !currentValue)}
@@ -659,7 +659,7 @@ export default function SEPQualifier({ onMinimize }) {
           <div className="sep-qualifier-stage">
             <div className="sep-qualifier-category-grid">
               {SEP_QUALIFIER_CATEGORIES.map((category) => (
-                <button
+                <button data-key-role="secondary"
                   key={category.id}
                   type="button"
                   className="sep-qualifier-category-card"
@@ -685,7 +685,7 @@ export default function SEPQualifier({ onMinimize }) {
         {stageIndex === 4 && selectedCategory ? (
           <div className="sep-qualifier-stage">
             <div className="sep-qualifier-subtype-header">
-              <button
+              <button data-key-role="secondary"
                 type="button"
                 className="sep-qualifier-back"
                 onClick={() => setStageIndex(usedQuestionShortcut ? 2 : 3)}
@@ -703,7 +703,7 @@ export default function SEPQualifier({ onMinimize }) {
 
             <div className="sep-qualifier-subtype-list">
               {selectedCategory.subTypes.map((subType) => (
-                <button
+                <button data-key-role="secondary"
                   key={subType.id}
                   type="button"
                   className="sep-qualifier-subtype-card"
@@ -775,10 +775,10 @@ export default function SEPQualifier({ onMinimize }) {
             </div>
 
             <div className="sep-qualifier-result-actions">
-              <button type="button" className="sep-qualifier-secondary" onClick={resetAll}>
+              <button data-key-role="secondary" type="button" className="sep-qualifier-secondary" onClick={resetAll}>
                 New Qualification
               </button>
-              <button
+              <button data-key-role="secondary"
                 type="button"
                 className="sep-qualifier-primary"
                 onClick={onMinimize}

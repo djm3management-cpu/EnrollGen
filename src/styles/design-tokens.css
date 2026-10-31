@@ -6,52 +6,52 @@
 
 :root {
   /* ----- Core surfaces (darkest to lightest) ----- */
-  --eg-base: #171411;
-  --eg-surface-1: #1e1a16;
-  --eg-surface-2: #262119;
-  --eg-surface-3: #2e2820;
-  --eg-surface-4: #382f25;
+  --eg-base: #FFFFFF;
+  --eg-surface-1: #F7F8FA;
+  --eg-surface-2: #F1F3F6;
+  --eg-surface-3: #FFFFFF;
+  --eg-surface-4: #E6E9EE;
 
   /* ----- Borders ----- */
-  --eg-border: #3d352b;
-  --eg-border-hover: #564a3c;
-  --eg-border-active: #7a6a56;
+  --eg-border: #E9ECF1;
+  --eg-border-hover: #6B7280;
+  --eg-border-active: #0066CC;
 
   /* ----- Text ----- */
-  --eg-text: #e4dace;
-  --eg-text-mid: #b5a898;
-  --eg-text-dim: #7d7060;
-  --eg-text-faint: #524838;
+  --eg-text: #1F2937;
+  --eg-text-mid: #4B5563;
+  --eg-text-dim: #6B7280;
+  --eg-text-faint: #6B7280;
 
   /* ----- Accent (brand) ----- */
-  --eg-accent: #c08b55;
-  --eg-accent-bright: #daa76d;
-  --eg-accent-dim: #8a6338;
+  --eg-accent: #0066CC;
+  --eg-accent-bright: #0057B0;
+  --eg-accent-dim: #004A96;
 
   /* ----- Semantic, green ----- */
-  --eg-green: #6aab7d;
-  --eg-green-dim: #2d4a35;
-  --eg-green-text: #a0d4ac;
+  --eg-green: #15803D;
+  --eg-green-dim: #DCFCE7;
+  --eg-green-text: #15803D;
 
   /* ----- Semantic, red ----- */
-  --eg-red: #b85c5c;
-  --eg-red-dim: #4a2828;
-  --eg-red-text: #e09898;
+  --eg-red: #DC2626;
+  --eg-red-dim: #FEE2E2;
+  --eg-red-text: #DC2626;
 
   /* ----- Semantic, blue ----- */
-  --eg-blue: #5c88b8;
-  --eg-blue-dim: #283a4a;
-  --eg-blue-text: #98bce0;
+  --eg-blue: #0066CC;
+  --eg-blue-dim: #DBEAFE;
+  --eg-blue-text: #0066CC;
 
   /* ----- Semantic, amber ----- */
-  --eg-amber: #c49940;
-  --eg-amber-dim: #4a3818;
-  --eg-amber-text: #e0c080;
+  --eg-amber: #B45309;
+  --eg-amber-dim: #FEF3C7;
+  --eg-amber-text: #B45309;
 
   /* ----- Semantic, purple ----- */
-  --eg-purple: #8b6eb8;
-  --eg-purple-dim: #352a4a;
-  --eg-purple-text: #bca8e0;
+  --eg-purple: #7E22CE;
+  --eg-purple-dim: #F3E8FF;
+  --eg-purple-text: #7E22CE;
 
   /* ----- Flow colors (named aliases) ----- */
   --eg-flow-ma: var(--eg-red);
@@ -74,7 +74,7 @@
   --text-primary: var(--eg-text);
   --text-secondary: var(--eg-text-mid);
   --text-muted: var(--eg-text-dim);
-  --text-label: var(--eg-text-dim);
+  --text-label: #0066CC;
   --border-default: var(--eg-border);
   --border-focus: var(--eg-border-active);
   --accent: var(--eg-accent);
@@ -97,11 +97,11 @@
   --info-bg: rgba(92, 136, 184, 0.08);
   --info-border: rgba(92, 136, 184, 0.32);
   --selection-bg: var(--eg-accent);
-  --selection-text: #171411;
+  --selection-text: #FFFFFF;
   --button-primary-text: #ffffff;
   --overlay-backdrop: rgba(0, 0, 0, 0.72);
-  --focus-glow: rgba(192, 139, 85, 0.16);
-  --chart-track: rgba(255, 255, 255, 0.06);
+  --focus-glow: rgba(0,102,204,.16);
+  --chart-track: #F1F3F6;
   --chart-1: var(--eg-accent);
   --chart-2: var(--eg-blue);
   --chart-3: var(--eg-green);
@@ -146,11 +146,11 @@
      Both app themes are dark (text tokens are light-colored), so
      "grey" here means a soft neutral dark grey, not a light-mode
      grey, otherwise light body text would sit on a light panel. */
-  --clay-surface: #38383d;
-  --clay-surface-soft: #414146;
-  --clay-border: rgba(255, 255, 255, 0.07);
-  --clay-shadow-dark: rgba(0, 0, 0, 0.45);
-  --clay-shadow-light: rgba(255, 255, 255, 0.05);
+  --clay-surface: #F7F8FA;
+  --clay-surface-soft: #FFFFFF;
+  --clay-border: #E9ECF1;
+  --clay-shadow-dark: rgba(15,23,42,.08);
+  --clay-shadow-light: rgba(255,255,255,.5);
   --clay-radius: 22px;
   --clay-radius-sm: 12px;
 
@@ -161,10 +161,10 @@
   --bubble-customer-text: #1c1c1e;
 
   /* ----- Phone dropdown (GHL-style dialer) ----- */
-  --phone-panel-bg: var(--eg-surface-2);
-  --phone-border: var(--eg-border);
-  --phone-header-text: var(--eg-accent);
-  --phone-body-text: var(--eg-text-mid);
+  --phone-panel-bg: #262119;
+  --phone-border: #3d352b;
+  --phone-header-text: #c08b55;
+  --phone-body-text: #b5a898;
   --phone-answer-bg: #22c55e;
   --phone-answer-bg-hover: #16a34a;
   --phone-decline-bg: #ef4444;
@@ -174,8 +174,7 @@
   --phone-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 
   /* ----- Typography ----- */
-  --font-primary: "Avenir Next", "Nunito Sans", -apple-system,
-                  BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-primary: "Avenir Next", "Avenir", "Segoe UI", sans-serif;
   --eg-font-system: var(--font-primary);
   --eg-font-display: var(--font-primary);
   --eg-font-body: var(--font-primary);
@@ -235,7 +234,7 @@
   --font-display: var(--font-primary);
   --font-body: var(--font-primary);
   --font-mono: var(--eg-font-mono);
-  --font-script-read: var(--font-primary);
+  --font-script-read: Tahoma, Verdana, "Segoe UI", sans-serif;
 
   /* Radii */
   --radius-sm: var(--eg-radius-card);
@@ -247,7 +246,7 @@
   --speed-normal: 0.2s;
 
   /* Disable legacy drop shadows, depth comes from surface layering */
-  --shadow-float: none;
+  --shadow-float: 0 4px 16px rgba(15,23,42,.08);
   --shadow-float-hover: none;
   --shadow-btn: none;
   --shadow-btn-hover: none;

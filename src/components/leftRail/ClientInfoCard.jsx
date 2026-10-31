@@ -326,7 +326,7 @@ const ClientInfoCard = memo(function ClientInfoCard({ countyLabel = "" }) {
             onChange={(e) => setNote("customerDob", formatDobInput(e.target.value))}
             aria-label="Date of birth"
           />
-          <button
+          <button data-key-role="icon"
             type="button"
             className={`eg-rail-card__save-contact eg-rail-card__save-contact--icon is-${saveState}`}
             onClick={handleSaveToContact}

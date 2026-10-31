@@ -307,7 +307,7 @@ function ToggleField({ label, checked, onCommit }) {
 function AccordionSection({ id, title, open, onToggle, meta = null, children }) {
   return (
     <section className="contacts-accordion">
-      <button
+      <button data-key-role="secondary"
         type="button"
         className="contacts-accordion-head"
         onClick={() => onToggle(id)}
@@ -346,7 +346,7 @@ function ContactListPanel({
       </div>
       <div className="contacts-conv-filters">
         {LIST_FILTERS.map((item) => (
-          <button
+          <button data-key-role="secondary"
             key={item}
             type="button"
             className={filter === item ? "is-active" : ""}
@@ -364,7 +364,7 @@ function ContactListPanel({
         {contacts.map((contact) => {
           const unread = unreadByContact[contact.id] || 0;
           return (
-            <button
+            <button data-key-role="secondary"
               type="button"
               key={contact.id}
               className={`contacts-conv-row${selectedContactId === contact.id ? " is-selected" : ""}`}
@@ -408,13 +408,13 @@ function CenterTopBar({ contact, onStartCall, onEmail }) {
         >
           <Phone size={15} aria-hidden="true" />
         </DncCallControl>
-        <button type="button" title="Email" disabled={!contact?.email_set} onClick={onEmail}>
+        <button data-key-role="secondary" type="button" title="Email" disabled={!contact?.email_set} onClick={onEmail}>
           <Mail size={15} aria-hidden="true" />
         </button>
-        <button type="button" title="Star contact" disabled={!contact}>
+        <button data-key-role="secondary" type="button" title="Star contact" disabled={!contact}>
           <Star size={15} aria-hidden="true" />
         </button>
-        <button type="button" title="Archive conversation" disabled={!contact}>
+        <button data-key-role="secondary" type="button" title="Archive conversation" disabled={!contact}>
           <Archive size={15} aria-hidden="true" />
         </button>
       </div>
@@ -470,7 +470,7 @@ function NotesPanel({ notes, noteDraft, setNoteDraft, onAddNote, onTogglePin, sa
         <div key={note.id} className={`contacts-note${note.pinned ? " is-pinned" : ""}`}>
           <div className="contacts-note-meta">
             <span className="mono">{fmtDateTime(note.created_at)}</span>
-            <button type="button" className="contacts-mini-btn" onClick={() => onTogglePin(note.id, !note.pinned)}>
+            <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => onTogglePin(note.id, !note.pinned)}>
               {note.pinned ? "UNPIN" : "PIN"}
             </button>
           </div>
@@ -484,7 +484,7 @@ function NotesPanel({ notes, noteDraft, setNoteDraft, onAddNote, onTogglePin, sa
           value={noteDraft}
           onChange={(event) => setNoteDraft(event.target.value)}
         />
-        <button type="button" className="contacts-mini-btn" disabled={saving} onClick={onAddNote}>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={saving} onClick={onAddNote}>
           ADD NOTE
         </button>
       </div>
@@ -664,7 +664,7 @@ function PoliciesFields({ policies, policyDraft, setPolicyDraft, onSavePolicy, o
             </option>
           ))}
         </select>
-        <button type="button" className="contacts-mini-btn" disabled={saving} onClick={onAddPolicy}>
+        <button data-key-role="primary" type="button" className="contacts-mini-btn" disabled={saving} onClick={onAddPolicy}>
           SAVE CHANGES
         </button>
       </div>
@@ -701,7 +701,7 @@ function RightPanel({
   if (!rightOpen) {
     return (
       <aside className="contacts-conv-right-collapsed">
-        <button type="button" className="contacts-mini-btn" onClick={() => setRightOpen(true)}>
+        <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => setRightOpen(true)}>
           DETAILS
         </button>
       </aside>
@@ -713,7 +713,7 @@ function RightPanel({
       <div className="contacts-right-panel-head">
         <span>CONTACT DETAILS</span>
         <div className="contacts-right-panel-head-actions">
-          <button type="button" className="contacts-mini-btn" onClick={() => setRightOpen(false)}>
+          <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => setRightOpen(false)}>
             COLLAPSE
           </button>
         </div>
@@ -858,7 +858,7 @@ function RightPanel({
                     value={followUpDraft.reason}
                     onChange={(event) => setFollowUpDraft((prev) => ({ ...prev, reason: event.target.value }))}
                   />
-                  <button type="button" className="contacts-mini-btn" disabled={saving} onClick={onAddFollowUp}>
+                  <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={saving} onClick={onAddFollowUp}>
                     ADD FOLLOW-UP
                   </button>
                 </div>
@@ -1177,8 +1177,8 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
     <div className={shellClass} onCopy={() => logCopy()}>
       <ContactToast message={inlineError || notice} error={Boolean(inlineError)} onDismiss={() => { setInlineError(""); setNotice(""); }} />
       <div className="contacts-create-toolbar">
-        <button className="contacts-mini-btn" type="button" onClick={() => setNewContact({ first_name: "", last_name: "", phone: "", email: "" })}>+ ADD CONTACT</button>
-        <span className="contacts-muted">Details save when you leave a field or press Enter.</span>
+        <button data-key-role="secondary" className="contacts-mini-btn" type="button" onClick={() => setNewContact({ first_name: "", last_name: "", phone: "", email: "" })}>+ ADD CONTACT</button>
+
       </div>
       {newContact && <form className="contacts-new-form" onSubmit={async (event) => {
         event.preventDefault(); setSaving(true); setInlineError(""); setExistingContactId(null);
@@ -1194,19 +1194,19 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
           <input className="contacts-edit-input" type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
             required={field === "phone"} value={newContact[field]} onChange={(event) => setNewContact({ ...newContact, [field]: event.target.value })} />
         </label>)}
-        <button className="contacts-mini-btn" disabled={saving || !agentUuid}>SAVE CONTACT</button>
-        {existingContactId && <button className="contacts-mini-btn" type="button" onClick={() => { setSelectedContactId(existingContactId); onSelectContact?.(existingContactId); setNewContact(null); setExistingContactId(null); setInlineError(""); }}>OPEN EXISTING CONTACT</button>}
-        <button className="contacts-mini-btn" type="button" onClick={() => setNewContact(null)}>CANCEL</button>
+        <button data-key-role="primary" className="contacts-mini-btn" disabled={saving || !agentUuid}>SAVE CONTACT</button>
+        {existingContactId && <button data-key-role="secondary" className="contacts-mini-btn" type="button" onClick={() => { setSelectedContactId(existingContactId); onSelectContact?.(existingContactId); setNewContact(null); setExistingContactId(null); setInlineError(""); }}>OPEN EXISTING CONTACT</button>}
+        <button data-key-role="secondary" className="contacts-mini-btn" type="button" onClick={() => setNewContact(null)}>CANCEL</button>
       </form>}
       {merge && <div className="contacts-merge-prompt" role="alert">
         <span>This phone belongs to another contact. Merge its messages, calls, notes and policies into this contact? Existing details here take priority; conflicting details are archived.</span>
-        <button className="contacts-mini-btn" disabled={saving} onClick={async () => {
+        <button data-key-role="secondary" className="contacts-mini-btn" disabled={saving} onClick={async () => {
           setSaving(true);
           try { await mergeContacts(merge.contactId, merge.duplicateId, merge.phone); setMerge(null); setInlineError(""); await refreshSelected(); await reloadPii(); setNotice("Contacts merged."); }
           catch (err) { setInlineError(err.message || "Could not merge contacts."); }
           finally { setSaving(false); }
         }}>MERGE CONTACTS</button>
-        <button className="contacts-mini-btn" disabled={saving} onClick={() => setMerge(null)}>CANCEL</button>
+        <button data-key-role="secondary" className="contacts-mini-btn" disabled={saving} onClick={() => setMerge(null)}>CANCEL</button>
       </div>}
       <div className="contacts-conv-shell">
         <ContactListPanel
@@ -1241,7 +1241,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
           </div>
           {error ? <div className="ops-error">{error}</div> : null}
           {detailError ? <div className="ops-error">{detailError}</div> : null}
-          {callData.error ? <div className="ops-error" role="alert">{callData.error} <button type="button" className="contacts-mini-btn" onClick={callData.refresh}>RETRY CALLS</button></div> : null}
+          {callData.error ? <div className="ops-error" role="alert">{callData.error} <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={callData.refresh}>RETRY CALLS</button></div> : null}
 
           {piiError ? <div className="ops-error">{piiError}</div> : null}
           <div className="contacts-conv-center-body">
@@ -1321,12 +1321,12 @@ export default function ContactsTab({ variant = "home", onStartCall = null }) {
       window.removeEventListener(CRM_NAVIGATION_EVENT, onLocation);
     };
   }, []);
-  return <div className={`contacts-views${location.view === 'opportunities' ? ' contacts-views--opportunities' : location.view === 'calls' ? ' contacts-views--calls' : ''}`}>
+  return <div data-crm-view={location.view} className={`contacts-views${location.view === 'opportunities' ? ' contacts-views--opportunities' : location.view === 'calls' ? ' contacts-views--calls' : ''}`}>
     <div className="contacts-workspace-tabs contacts-subviews" role="group" aria-label="CRM workspace">
-      <button type="button" className={location.view === 'calls' ? 'is-active' : ''} aria-pressed={location.view === 'calls'} onClick={() => updateLocation('calls')}><Phone size={14} aria-hidden="true" />Calls</button>
-      <button type="button" className={location.view === 'contacts' ? 'is-active' : ''} aria-pressed={location.view === 'contacts'} onClick={() => updateLocation('contacts', location.contactId)}><UsersRound size={14} aria-hidden="true" />Contacts</button>
-      <button type="button" className={location.view === 'opportunities' ? 'is-active' : ''} aria-pressed={location.view === 'opportunities'} onClick={() => updateLocation('opportunities')}><BriefcaseBusiness size={14} aria-hidden="true" />Opportunities</button>
-      <button type="button" className={location.view === 'followups' ? 'is-active' : ''} aria-pressed={location.view === 'followups'} onClick={() => updateLocation('followups')}><CalendarClock size={14} aria-hidden="true" />Follow-ups{dueToday > 0 && <span className="call-log-chip" aria-label={`${dueToday} follow-ups due today`}> {dueToday}</span>}</button>
+      <button data-key-role="secondary" type="button" className={location.view === 'calls' ? 'is-active' : ''} aria-pressed={location.view === 'calls'} onClick={() => updateLocation('calls')}><Phone size={14} aria-hidden="true" />Calls</button>
+      <button data-key-role="secondary" type="button" className={location.view === 'contacts' ? 'is-active' : ''} aria-pressed={location.view === 'contacts'} onClick={() => updateLocation('contacts', location.contactId)}><UsersRound size={14} aria-hidden="true" />Contacts</button>
+      <button data-key-role="secondary" type="button" className={location.view === 'opportunities' ? 'is-active' : ''} aria-pressed={location.view === 'opportunities'} onClick={() => updateLocation('opportunities')}><BriefcaseBusiness size={14} aria-hidden="true" />Opportunities</button>
+      <button data-key-role="secondary" type="button" className={location.view === 'followups' ? 'is-active' : ''} aria-pressed={location.view === 'followups'} onClick={() => updateLocation('followups')}><CalendarClock size={14} aria-hidden="true" />Follow-ups{dueToday > 0 && <span className="call-log-chip" aria-label={`${dueToday} follow-ups due today`}> {dueToday}</span>}</button>
     </div>
     <div hidden={location.view !== 'contacts'}>
       <ContactsWorkspace variant={variant} onStartCall={onStartCall} active={location.view === 'contacts'}

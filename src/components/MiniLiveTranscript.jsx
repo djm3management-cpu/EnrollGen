@@ -206,7 +206,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
         </div>
       </div>
       {userScrolled && (
-        <button type="button" className="copilot-pill-button" onClick={followLatest}>
+        <button data-key-role="secondary" type="button" className="copilot-pill-button" onClick={followLatest}>
           Jump to latest
         </button>
       )}

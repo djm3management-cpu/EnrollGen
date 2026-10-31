@@ -12,7 +12,7 @@ function CreateFromRecordModal({ contactId, callId, contactName, onClose }) {
 export function CreateOpportunityButton({ contactId, callId = null, contactName, label = 'CREATE OPPORTUNITY' }) {
   const [open, setOpen] = useState(false);
   const needsContact = Boolean(callId && !contactId);
-  return <><button type="button" className="contacts-mini-btn" disabled={needsContact} title={needsContact ? 'Link a contact to this call first.' : undefined} onClick={() => setOpen(true)}>{label}</button>
+  return <><button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={needsContact} title={needsContact ? 'Link a contact to this call first.' : undefined} onClick={() => setOpen(true)}>{label}</button>
     {needsContact && <span className="contacts-muted">Link a contact to this call first.</span>}
     {open && <CreateFromRecordModal contactId={contactId} callId={callId} contactName={contactName} onClose={() => setOpen(false)} />}
   </>;
@@ -24,7 +24,7 @@ export default function ContactOpportunities({ contactId, onOpenContact = () => 
   const selected = data.rows.find((row) => row.id === selectedId);
   return <section className="opps-contact-section">
     <div className="opps-section-head"><h3>OPPORTUNITIES</h3><CreateOpportunityButton contactId={contactId} /></div>
-    {data.loading ? <p className="contacts-muted">Loading opportunities…</p> : data.error ? <div className="ops-error" role="alert">{data.error}<button className="contacts-mini-btn" onClick={() => data.refresh()}>RETRY</button></div> : !data.rows.length ? <p className="contacts-muted">No opportunities yet.</p> : data.rows.map((row) => <button type="button" className="opps-contact-opportunity" key={row.id} onClick={() => setSelectedId(row.id)}><strong>{row.title}</strong><StageBadge stage={data.stages.find((stage) => stage.id === row.stage_id)} /><span>{row.line_of_business} · {money(row.est_value)}</span></button>)}
+    {data.loading ? <p className="contacts-muted">Loading opportunities…</p> : data.error ? <div className="ops-error" role="alert">{data.error}<button data-key-role="secondary" className="contacts-mini-btn" onClick={() => data.refresh()}>RETRY</button></div> : !data.rows.length ? <p className="contacts-muted">No opportunities yet.</p> : data.rows.map((row) => <button data-key-role="secondary" type="button" className="opps-contact-opportunity" key={row.id} onClick={() => setSelectedId(row.id)}><strong>{row.title}</strong><StageBadge stage={data.stages.find((stage) => stage.id === row.stage_id)} /><span>{row.line_of_business} · {money(row.est_value)}</span></button>)}
     {selected && <OpportunityDrawer row={selected} data={data} onClose={() => setSelectedId(null)} onOpenContact={(id) => { setSelectedId(null); onOpenContact(id); }} />}
   </section>;
 }
