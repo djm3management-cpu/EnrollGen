@@ -8254,3 +8254,6 @@ Script section bars (including Introduction & Recording) now use the primary but
 
 ## 2026-10-31 — countdown/completed section green
 Healthy MA and ancillary countdown color and completed main-flow progress dots now use the requested #00FF00 in both themes. Warning/expired countdown states and active/pending progress colors retain their existing roles. Local commit; no push.
+
+## 2026-10-31 — right-rail action spacing
+Set the START / CLEAR / ANALYZE flex-row gap to 2px in both themes, overriding the legacy zero-gap rule. Local commit; no push.

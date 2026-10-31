@@ -536,3 +536,5 @@ html.dark #root :is(.script-section-title,.card.active-card > h2,.flow-script-ca
 #root .ma-first-card-countdown--active { --ma-timer-accent:var(--flow-green); }
 #root .ancillary-fe-countdown--active { --fe-timer-accent:var(--flow-green); }
 #root .progress-dots .progress-dot__pill.is-done { background:var(--flow-green) !important; }
+
+#root .right-rail-control-panel .right-rail-control-row { gap:2px !important; }
