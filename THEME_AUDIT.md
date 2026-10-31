@@ -7433,3 +7433,6 @@ Replaced core light surfaces, text, accent and status palettes; preserved all ex
 
 ## Continuation — phase 3
 Shared glossy utility styling now covers native buttons with explicit exclusions for tabs, dialer, map subtrees, logo, and Terminal Contacts. Known primary/destructive/go class roles map to gradient tokens. Icon action classes use the flat treatment. Dynamic and unclassified button roles remain manual QA candidates; dropdown caret geometry remains unverified.
+
+## Continuation — phase 4
+Added surface/field/table border rules with protected Contacts, phone, maps, pipeline cards/columns and badge exclusions. Inputs use filled surfaces and visible focus rings. Settings checkbox is inline. Classes outside the suffix-based surface selectors still require manual review.
