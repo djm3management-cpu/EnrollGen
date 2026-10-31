@@ -109,9 +109,7 @@ export default function SEPLookupTool() {
               onStateClick={s.handleStateClick}
             />
 
-            {!s.hasView && (
-              
-            )}
+            
           </div>
         )}
 
