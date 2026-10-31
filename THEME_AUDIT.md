@@ -8260,3 +8260,6 @@ Set the START / CLEAR / ANALYZE flex-row gap to 2px in both themes, overriding t
 
 ## 2026-10-31 — smaller rail minimize controls
 Halved both rails' minimize buttons from 22×22px to 11×11px and their chevrons from 12×12px to 6×6px, including the compact right-rail overlay control. Positioning and minimize behavior remain unchanged. Local commit only.
+
+## 2026-10-31 — Terminal plan search key
+Dark-mode plan search now uses the shared graphite secondary-key gradient with an amber Lucide glyph/spinner. Existing hover, pressed, disabled and focus treatments still apply. Light-mode blue key and white icon are unchanged. Local commit only.

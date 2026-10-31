@@ -546,3 +546,12 @@ html.dark #root :is(.script-section-title,.card.active-card > h2,.flow-script-ca
  padding:0 !important; border-radius:2px !important; flex-shrink:0;
 }
 #root .rail-minimize-btn svg { width:6px !important; height:6px !important; }
+
+/* Terminal plan search matches the graphite secondary keys. */
+html.dark #root .left-rail .eg-plan-lookup__submit {
+ --key-top:var(--key-secondary-top); --key-bottom:var(--key-secondary-bottom);
+ --key-text:var(--key-secondary-text);
+}
+html.dark #root .left-rail .eg-plan-lookup__submit svg {
+ color:var(--accent) !important; stroke:var(--accent) !important;
+}
