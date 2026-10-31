@@ -7430,3 +7430,6 @@ Terminal default and saved light preference behavior already exist in ThemeConte
 
 ## Continuation — phase 2
 Replaced core light surfaces, text, accent and status palettes; preserved all existing token names and the `.dark` block byte-for-byte. Light Contacts uses white clay tokens with unchanged radii. Dialer light phone tokens are frozen to their previous resolved values. White wallpaper is suppressed. Raw chart/map/pipeline color isolation still requires visual verification; this phase is not yet accepted as complete.
+
+## Continuation — phase 3
+Shared glossy utility styling now covers native buttons with explicit exclusions for tabs, dialer, map subtrees, logo, and Terminal Contacts. Known primary/destructive/go class roles map to gradient tokens. Icon action classes use the flat treatment. Dynamic and unclassified button roles remain manual QA candidates; dropdown caret geometry remains unverified.
