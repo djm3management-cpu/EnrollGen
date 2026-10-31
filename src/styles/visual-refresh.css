@@ -538,3 +538,11 @@ html.dark #root :is(.script-section-title,.card.active-card > h2,.flow-script-ca
 #root .progress-dots .progress-dot__pill.is-done { background:var(--flow-green) !important; }
 
 #root .right-rail-control-panel .right-rail-control-row { gap:2px !important; }
+
+/* Half-size minimize controls on both rails, including compact overlays. */
+#root .rail-minimize-btn {
+ width:11px !important; height:11px !important;
+ min-width:11px !important; min-height:11px !important;
+ padding:0 !important; border-radius:2px !important; flex-shrink:0;
+}
+#root .rail-minimize-btn svg { width:6px !important; height:6px !important; }

@@ -8257,3 +8257,6 @@ Healthy MA and ancillary countdown color and completed main-flow progress dots n
 
 ## 2026-10-31 — right-rail action spacing
 Set the START / CLEAR / ANALYZE flex-row gap to 2px in both themes, overriding the legacy zero-gap rule. Local commit; no push.
+
+## 2026-10-31 — smaller rail minimize controls
+Halved both rails' minimize buttons from 22×22px to 11×11px and their chevrons from 12×12px to 6×6px, including the compact right-rail overlay control. Positioning and minimize behavior remain unchanged. Local commit only.
