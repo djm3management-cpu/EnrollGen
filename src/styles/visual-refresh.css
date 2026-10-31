@@ -580,3 +580,19 @@ html.dark #root :is(.script-start-call-gate,.start-call-gate) > .script-start-ca
  width:calc(8ch + 48px) !important; min-width:calc(8ch + 48px) !important;
  padding-left:10px !important; padding-right:28px !important;
 }
+
+/* Match main START and direction controls with ample room for OUTBOUND. */
+#root :is(.script-start-call-gate,.start-call-gate) {
+ --flow-start-control-width:120px; --flow-start-control-height:32px;
+ align-items:center !important;
+}
+#root .ma-script-direction-wrap { width:var(--flow-start-control-width); flex:0 0 var(--flow-start-control-width); }
+#root select.ma-script-direction-select,
+#root :is(.script-start-call-gate,.start-call-gate) > .script-start-call-button {
+ box-sizing:border-box !important;
+ width:var(--flow-start-control-width) !important; min-width:var(--flow-start-control-width) !important;
+ height:var(--flow-start-control-height) !important; min-height:var(--flow-start-control-height) !important;
+ align-self:center; line-height:normal !important;
+}
+#root select.ma-script-direction-select { padding:6px 28px 6px 10px !important; text-overflow:clip; }
+#root :is(.script-start-call-gate,.start-call-gate) > .script-start-call-button { text-align:center !important; }

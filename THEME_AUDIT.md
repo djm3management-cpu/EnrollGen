@@ -8269,3 +8269,6 @@ Main-flow START buttons now size to their existing text with 6px vertical/10px h
 
 ## 2026-10-31 — centered idle controls and full direction labels
 Restored centered alignment for the main START/direction control group. The inbound/outbound selector now reserves eight text characters plus 48px for letter spacing and caret padding so both labels fit without truncation. Retains the single custom caret and compact START sizing. Local commit only.
+
+## 2026-10-31 — uniform START/direction dimensions
+Replaced font-dependent selector width with shared 120×32px dimensions for the direction control and main START. Selector reserves 28px on the caret side, leaving sufficient room for the full INBOUND/OUTBOUND strings. Group remains centered in both themes. Local commit only.
