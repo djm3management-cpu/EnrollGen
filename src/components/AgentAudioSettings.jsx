@@ -68,7 +68,6 @@ export default function AgentAudioSettings() {
 
   return <section className="tenant-settings-card tenant-settings-card-wide">
     <div className="tenant-settings-section-title">Your microphone</div>
-    <p className="tenant-settings-muted">Reduce background noise on your calls. Settings are saved to your user profile. Calibrate with your usual headset and room.</p>
     <label className="tenant-settings-toggle">
       <input type="checkbox" checked={preferences.enabled} disabled={busy || callActive}
         onChange={event => void save({ ...preferences, enabled: event.target.checked })} />
@@ -79,7 +78,6 @@ export default function AgentAudioSettings() {
       <input type="range" min="-80" max="-10" step="1" value={preferences.thresholdDb} disabled={busy || callActive}
         onChange={event => setPreferences(value => ({ ...value, thresholdDb: Number(event.target.value) }))} />
     </label>
-    <p className="tenant-settings-muted">Lower values keep softer speech; higher values block more room noise. Changes apply to the next call.</p>
     <div className="tenant-settings-inline">
       <button type="button" className="billing-button" disabled={busy || callActive} onClick={() => void save(preferences)}>Save audio settings</button>
       <button type="button" className="billing-button" disabled={busy || callActive || !preferences.enabled} onClick={() => void calibrate()}>Calibrate</button>

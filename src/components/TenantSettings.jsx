@@ -505,7 +505,6 @@ export default function TenantSettings({ currentUser = null }) {
       <section className="tenant-settings-card tenant-settings-card-wide">
         <div className="tenant-settings-section-title">Vendor availability</div>
         <div className="tenant-settings-inline">
-          <span className="tenant-settings-muted">Global vendor pause immediately reports unavailable and is audit logged.</span>
           <button type="button" className={`billing-button${vendorPaused ? " is-primary" : ""}`} onClick={toggleVendorPause} disabled={vendorPauseSaving}>
             {vendorPauseSaving ? "Saving" : vendorPaused ? "Resume vendors" : "Pause vendors"}
           </button>

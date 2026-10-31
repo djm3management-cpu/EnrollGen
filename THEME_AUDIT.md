@@ -7393,3 +7393,8 @@ src/styles.css:9329: .dv-original-hint a:hover {
 src/styles.css:10885: .sidebar-wallpaper-panel-hint {
 src/styles.css:11810: .tenant-settings-muted,
 ```
+
+## Phase 6 — removed strings
+- `src/components/AgentAudioSettings.jsx`: Reduce background noise on your calls. Settings are saved to your user profile. Calibrate with your usual headset and room.
+- `src/components/AgentAudioSettings.jsx`: Lower values keep softer speech; higher values block more room noise. Changes apply to the next call.
+- `src/components/TenantSettings.jsx`: Global vendor pause immediately reports unavailable and is audit logged.
