@@ -8146,3 +8146,85 @@ Normal white-theme labels/data/checklist items use primary text. Caller fields u
 
 ## Softphone follow-up — white-only palette
 White phone tokens now use elevated white surfaces, primary text, blue accent and subtle dividers. Answer/call uses semantic green, end uses red, active mute/hold uses a pale blue surface with blue icon/text. No gradients or glossy shadows inside the panel. Only CSS changed; component markup, geometry, event handlers, telephony and conference logic remain untouched. `.dark` phone tokens and rules are unchanged.
+
+## Complete removed JSX text ledger against main
+
+Literal text segments removed or shortened during the refresh (dynamic expression removals are listed separately above):
+- `src/App.jsx`: days. Upgrade to continue uninterrupted.
+- `src/App.jsx`: Starter plan active. Co-Pilot, transcription, CRM sync, and advanced analytics require Pro.
+- `src/components/AgentAudioSettings.jsx`: Reduce background noise on your calls. Settings are saved to your user profile. Calibrate with your usual headset and room.
+- `src/components/AgentAudioSettings.jsx`: Lower values keep softer speech; higher values block more room noise. Changes apply to the next call.
+- `src/components/AgentStatusLog.jsx`: Auto-refreshes every 30 seconds
+- `src/components/AgentStatusLog.jsx`: Availability changes, newest first. Times use your local time zone (
+- `src/components/AgentStatusLog.jsx`: ).
+- `src/components/BillingSettings.jsx`: Script flows, compliance scoring, call records, and basic analytics.
+- `src/components/BillingSettings.jsx`: Everything in Starter plus Co-Pilot, transcription, CRM sync, and advanced analytics.
+- `src/components/ContactToast.jsx`: ×
+- `src/components/FplCalculatorPanel.jsx`: Use this as a reference point before pivoting away from ACA.
+- `src/components/Onboarding.jsx`: Script flows, compliance scoring, call records, and basic analytics.
+- `src/components/Onboarding.jsx`: Live Co-Pilot, transcription, CRM integration, and advanced analytics.
+- `src/components/RTSIngestionPanel.jsx`: Detecting columns, matching agents and carriers, and parsing appointment details.
+- `src/components/SEPLookup.jsx`: Or enter a zip code above for carrier & SEP data
+- `src/components/SectionWrapUp.jsx`: After the call, save its disposition in the dialer. Notes, contact details and opportunities are optional and can be edited later in Calls.
+- `src/components/SmsToastHost.jsx`: ✕
+- `src/components/TenantSettings.jsx`: Agency Settings
+- `src/components/TenantSettings.jsx`: Global vendor pause immediately reports unavailable and is audit logged.
+- `src/components/TenantSettings.jsx`: Enter your CRM inbound webhook URL. EnrollGen sends enrollment data here after each completed call.
+- `src/components/VendorRoutingSettings.jsx`: A matrix row asserts the agent is licensed in that state. Carrier checks control full and partial routing. Missing rows are ineligible.
+- `src/components/VendorRoutingSettings.jsx`: Read-only call report. Rotating creates a new link and immediately invalidates the old one.
+- `src/components/VendorRoutingSettings.jsx`: Eastern Time. Accepted pings remain valid for calls arriving within 30 seconds. Existing calls continue after closing.
+- `src/components/callLog/CallRecordDetailsEditor.jsx`: All fields are optional. These edits do not rerun scoring.
+- `src/components/callLog/CombineCallsModal.jsx`: Keep both recordings and transcripts as separate call segments in one panel. The primary keeps its contact, agent, and disposition.
+- `src/components/callLog/CombineCallsModal.jsx`: Primary: longer recording, then measured talk time, then earlier call. Existing linked calls move into the same panel.
+- `src/components/contacts/ContactsTab.jsx`: Details save when you leave a field or press Enter.
+- `src/components/contacts/FollowUpsView.jsx`: Create follow-ups from a contact’s detail panel.
+- `src/components/opportunities/PipelineSettings.jsx`: Drag stages or use the arrows to reorder. Colors apply to headers, cards, and badges.
+
+# Final verification record — 2026-10-31
+
+This section supersedes the earlier in-progress status notes. Verification methods are explicit: source review is not a claim of screenshot verification.
+
+## Phase disposition
+
+| Phase | Implementation | Verification / exception |
+|---|---|---|
+| 2 White theme | Implemented | Core tokens and local script/rail/ops palettes converted; genuine status, map and pipeline colors exempt. Light wordmark now blue by follow-up request. |
+| 3 Keys | Implemented | Shared gradients, role inventory, disabled/focus/pressed variants, glossy top nav, primary main START. Form selects are flat per follow-up. Protected controls and ambiguous badge roles retained. |
+| 4 Borders/fields | Implemented | Background steps, flat fields/selects, table row dividers. Protected Contacts/map/pipeline shapes remain. White-only phone palette added by follow-up. |
+| 5 Typography | Implemented with specified fallback | Tahoma reading selectors and Windows token corrected; Formula1 retained for logo. Adobe kit absent, so requested Avenir/Avenir Next/Segoe fallback used. Adobe-hosted Windows/Mac delivery is not asserted. |
+| 6 Prose | Implemented with documented safe-retention exceptions | Removed-string ledgers above include every removed literal segment and dynamic render expression. Ambiguous compliance/source/confirmation content retained per original rule. |
+| 7 Default | Complete | Explicit dark default in bootstrap and provider; saved light retained; theme-color synchronized. |
+
+## Full screen checklist and evidence
+
+| Screen / state | Source check | Browser evidence | Data-dependent follow-up |
+|---|---|---|---|
+| Dashboard, charts, status log | Reviewed theme roles, empty/error branches and chart colors | Dark and white empty/error screenshots; hardcoded backgrounds corrected | Populated tooltips and series values pending |
+| CRM Calls | Reviewed fields, filters, row actions, errors and recording containers | White loading/error/empty table screenshot; tabs remain unobscured | Populated rows/recording playback pending |
+| CRM Contacts | Reviewed protected subtree exclusions | White and Terminal empty workspace screenshots; charcoal shapes retained | Populated detail panes pending |
+| CRM Opportunities | Reviewed stages/card exclusions, filters, dialogs and action roles | Terminal loading and white empty/error/filter screenshots | Populated stages/cards and drag overlay pending |
+| CRM Follow-ups | Reviewed filters/table/empty branches | White empty/error accessibility state | Populated follow-ups pending |
+| Agent Tools / tool dialogs | Reviewed shared key/field/modal rules and helper removals | Tool launcher accessibility state | Server-provided document payloads pending |
+| Intelligence feed / ZIP / maps / legends | Reviewed map exclusions and feed roles | White loading/feed/ZIP/map accessibility state and screenshot; feed backdrop corrected | ZIP-specific carrier/county payloads pending |
+| RTS | Reviewed table/form/empty/loading/error source branches and shared styles | No screenshot sign-off recorded | Populated appointment data pending |
+| Daily Verse | Reviewed content/font/key rules; scripture/context retained | No screenshot sign-off recorded | Remote passage failures depend on service availability |
+| MA script | Reviewed ScriptBox/branch reading selectors, section bars, cues, START | White script screenshot and repaired shell accessibility state | Live call-derived transcript/scoring pending |
+| Med Sup / ACA / state ACA / U65 | Reviewed shared flow-script-text paths, sizes/line heights unchanged | No screenshot sign-off recorded | Call-derived content pending |
+| Annuity / ancillary flows | Reviewed shared AncillaryFlow reading paths | No screenshot sign-off recorded | Call-derived content pending |
+| SEP Finder / Qualifier / SNP | Reviewed labels, filled active headers and excluded maps | MA shell accessibility state; SEP helper removal JSX repaired | Live ZIP eligibility content pending |
+| Co-Pilot / transcript / compliance | Reviewed waiting/error states, text colors, headers and control roles | MA waiting-state screenshot/accessibility state | Live transcript and analysis pending |
+| Agency Settings / audio / routing / billing | Reviewed fields, sliders, titles, checkbox and helper removals | White screenshot and both-theme accessibility states; invisible heading/stacked checkbox/range bevel found and corrected | Remote save and routing payloads pending |
+| Other modals / dropdowns / toasts | Reviewed shared rules and AppToast lifecycle/stack positioning | Settings and Intelligence overlays; source tests cover recovery dismissal/reload | Data-created dialogs pending |
+| Softphone | White-only phone token and active-state CSS reviewed; no logic/markup edit | No screenshot sign-off recorded | Active call states pending |
+| Landing / sign-in | Reviewed shared public CSS, dark bootstrap, logo and fields | No screenshot sign-off recorded | Account-specific hosted auth states pending |
+
+## Checks
+
+- All JSX source files parsed after empty-conditional repair; no further syntax errors found.
+- Recovery notice test: 5/5 passing, including disabled reload during a call and explicit dismissal.
+- Full suite: **728/728 passing**, no skipped tests (116.6 seconds).
+- Production build passed; subsequent CSS-only corrections were rebuilt.
+- `docs/UHC_IX_Integration_Spec.md` remains untracked and unstaged.
+- No merge, production deployment, API/data/authentication/telephony logic change was made. The notification lifecycle changes were explicitly requested.
+
+Runtime screenshot QA is not exhaustive: rows explicitly marked “No screenshot sign-off recorded” must not be represented as visually certified. Their shared styling and component source were reviewed. Data-dependent checks above remain pending and are not an implementation blocker.

@@ -437,3 +437,8 @@ html:not(.dark) :is(.phone-dd__panel,.phone-toast,.phone-active-bar) button {
 html:not(.dark) :is(.phone-expanded__action,.phone-active-bar__btn).is-active {
  background:#DBEAFE; color:var(--accent); border-color:var(--accent);
 }
+html:not(.dark) #root :is(.tenant-settings-section-title,.tenant-settings-header p,.vendor-routing,.vendor-routing__error) { color:var(--text-primary) !important; }
+html:not(.dark) #root .vendor-routing { --text:var(--text-primary); --muted:var(--text-secondary); --surface:var(--bg-surface); --border:var(--chart-grid); }
+#root .tenant-settings-toggle { display:flex !important; flex-direction:row !important; align-items:center !important; justify-content:flex-start !important; }
+#root .tenant-settings-toggle input { width:auto !important; flex:none; margin:0 !important; accent-color:var(--accent); }
+#root input[type="range"] { box-shadow:none !important; background:transparent !important; border:0 !important; accent-color:var(--accent); }
