@@ -513,3 +513,6 @@ html:not(.dark) #root .sep-penetration-map path[data-selected="true"] { fill:#00
 html:not(.dark) #root .sep-penetration > .sep-tab-bar {
  background:transparent !important; background-image:none !important; box-shadow:none !important;
 }
+
+/* Keep the left-rail plan-search glyph white, including its loading icon. */
+#root .left-rail .eg-plan-lookup__submit svg { color:#FFFFFF !important; stroke:#FFFFFF !important; }
