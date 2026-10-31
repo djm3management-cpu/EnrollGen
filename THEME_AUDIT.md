@@ -8143,3 +8143,6 @@ Retained as ambiguous/required: underwriting and carrier eligibility guidance, m
 
 ## 2026-10-31 — latest contrast correction
 Normal white-theme labels/data/checklist items use primary text. Caller fields use white fill against the F7F8FA parent panel; white-surface fields retain F1F3F6. Blue-filled headers and selected SEP tools use white text/icons. Button gradient top stops were darkened from the originally specified colors where white labels could not meet 4.5:1; Terminal destructive gradient was also darkened. This resolves the conflict in favor of the latest explicit AA requirement.
+
+## Softphone follow-up — white-only palette
+White phone tokens now use elevated white surfaces, primary text, blue accent and subtle dividers. Answer/call uses semantic green, end uses red, active mute/hold uses a pale blue surface with blue icon/text. No gradients or glossy shadows inside the panel. Only CSS changed; component markup, geometry, event handlers, telephony and conference logic remain untouched. `.dark` phone tokens and rules are unchanged.

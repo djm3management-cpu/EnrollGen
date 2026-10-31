@@ -416,3 +416,24 @@ html:not(.dark) {
 /* Wordmark light-mode color requested after the original brand exclusion. */
 html:not(.dark) .top-bar-logo-text,
 html:not(.dark) .landing-logo-text { color:#0066CC !important; }
+html:not(.dark) #root :is(.fema-feed-hz,.fema-feed-hz-col,.fema-feed-hz-bar,.fema-feed-hz-columns,.fema-feed-item,.fema-feed-bulletin) { background:var(--bg-surface) !important; background-image:none !important; box-shadow:none !important; }
+html:not(.dark) #root :is(.fema-feed-title,.fema-feed-item-title,.fema-feed-states,.fema-feed-section-label,.fema-feed-hz-empty) { color:var(--text-primary) !important; }
+html:not(.dark) #root :is(.fema-feed-hz-footnote,.fema-feed-time,.fema-feed-source,.fema-feed-source-label) { color:var(--text-secondary) !important; }
+
+/* Softphone: white palette only; geometry and Terminal are unchanged. */
+html:not(.dark) {
+ --phone-panel-bg:var(--bg-elevated); --phone-border:var(--chart-grid);
+ --phone-header-text:var(--accent); --phone-body-text:var(--text-primary);
+ --phone-answer-bg:var(--success); --phone-answer-bg-hover:#116B33;
+ --phone-decline-bg:var(--danger); --phone-decline-bg-hover:#B91C1C;
+}
+html:not(.dark) :is(.phone-dd__panel,.phone-toast,.phone-active-bar) {
+ background:var(--phone-panel-bg); color:var(--text-primary);
+ --eg-accent-dim:#DBEAFE;
+}
+html:not(.dark) :is(.phone-dd__panel,.phone-toast,.phone-active-bar) button {
+ background-image:none !important; box-shadow:none !important; text-shadow:none !important;
+}
+html:not(.dark) :is(.phone-expanded__action,.phone-active-bar__btn).is-active {
+ background:#DBEAFE; color:var(--accent); border-color:var(--accent);
+}
