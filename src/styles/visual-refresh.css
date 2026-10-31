@@ -530,3 +530,9 @@ html:not(.dark) #root :is(.script-section-title,.card.active-card > h2,.flow-scr
 html.dark #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child) * {
  color:var(--key-primary-text) !important;
 }
+
+/* Requested bright green for healthy countdowns and completed flow sections. */
+:root { --flow-green:#00FF00; }
+#root .ma-first-card-countdown--active { --ma-timer-accent:var(--flow-green); }
+#root .ancillary-fe-countdown--active { --fe-timer-accent:var(--flow-green); }
+#root .progress-dots .progress-dot__pill.is-done { background:var(--flow-green) !important; }

@@ -8251,3 +8251,6 @@ Made the left-rail plan-name search Lucide glyph (and loading spinner) white. No
 
 ## 2026-10-31 — glossy script section headers
 Script section bars (including Introduction & Recording) now use the primary button's theme-specific gradient, foreground, 4px corners, top highlight, bottom shade and small drop shadow. White mode uses blue/white; Terminal uses amber/black. Header geometry and script wording remain unchanged. Static headers do not receive interactive button states. Local commit only; pushes are held.
+
+## 2026-10-31 — countdown/completed section green
+Healthy MA and ancillary countdown color and completed main-flow progress dots now use the requested #00FF00 in both themes. Warning/expired countdown states and active/pending progress colors retain their existing roles. Local commit; no push.
