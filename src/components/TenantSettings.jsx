@@ -563,9 +563,7 @@ export default function TenantSettings({ currentUser = null }) {
               onChange={(event) => updateProfile("ghl_location_id", event.target.value)}
             />
           </SettingsField>
-          <p className="tenant-settings-muted">
-            Enter your CRM inbound webhook URL. EnrollGen sends enrollment data here after each completed call.
-          </p>
+          
         </section>
 
         <section className="tenant-settings-card tenant-settings-card-wide">

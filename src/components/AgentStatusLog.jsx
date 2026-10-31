@@ -65,13 +65,13 @@ export default function AgentStatusLog() {
   const current = state.key === key ? state : { rows: [], agents: [], count: 0, loading: true, error: '' };
   const changeFilter = setter => event => { setter(event.target.value); setPage(0); };
   return <section className="agent-dash-panel agent-status-log" aria-labelledby={`${id}-title`} aria-busy={current.loading}>
-    <header><h2 id={`${id}-title`}>Agent Status Log</h2><div className="agent-dash-status"><span>Auto-refreshes every 30 seconds</span><button onClick={() => setVersion(value => value + 1)} disabled={current.loading}>Refresh log</button></div></header>
+    <header><h2 id={`${id}-title`}>Agent Status Log</h2><div className="agent-dash-status"><button onClick={() => setVersion(value => value + 1)} disabled={current.loading}>Refresh log</button></div></header>
     <div className="agent-status-log__filters">
       <div><label htmlFor={`${id}-date`}>Date</label><input id={`${id}-date`} type="date" value={date} max={localDate()} onChange={changeFilter(setDate)} /></div>
       <div><label htmlFor={`${id}-agent`}>Agent</label><select id={`${id}-agent`} value={agent} onChange={changeFilter(setAgent)}><option value="">All agents</option>{current.agents.map(item => <option key={item.agent_id} value={item.agent_id}>{item.agent_name}</option>)}</select></div>
       <div><label htmlFor={`${id}-status`}>Status</label><select id={`${id}-status`} value={status} onChange={changeFilter(setStatus)}><option value="">All statuses</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
     </div>
-    <p className="agent-dash-note">Availability changes, newest first. Times use your local time zone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</p>
+    
     {current.error && <p className="agent-dash-error" role="alert">{current.error} Use Refresh log to retry.</p>}
     <div className="agent-dash-table-wrap"><table><thead><tr><th scope="col">Agent</th><th scope="col">Status</th><th scope="col">Date</th><th scope="col">Time</th></tr></thead><tbody>
       {current.rows.map(row => <tr key={row.id}><th scope="row">{row.agent_name}</th><td>{STATUS_LABELS[row.status] || row.status}</td><td>{new Date(row.changed_at).toLocaleDateString()}</td><td><time dateTime={row.changed_at}>{timeFormat.format(new Date(row.changed_at))}</time></td></tr>)}

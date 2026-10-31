@@ -52,11 +52,11 @@ export default function VendorRoutingSettings({ getToken }) {
     save({ action:'matrix',agent_id:row.agent_id,state:row.state,licensed,carriers });
   return <section className="tenant-settings-card tenant-settings-card-wide vendor-routing">
     <div className="tenant-settings-section-title">Paragon state and carrier routing</div>
-    <p className="tenant-settings-muted">A matrix row asserts the agent is licensed in that state. Carrier checks control full and partial routing. Missing rows are ineligible.</p>
+    
     {message && <div className="billing-alert">{message}</div>}
     <div className="tenant-settings-card vendor-routing__report">
       <div className="tenant-settings-section-title">Paragon vendor report link</div>
-      <p className="tenant-settings-muted">Read-only call report. Rotating creates a new link and immediately invalidates the old one.</p>
+      
       <p className="tenant-settings-muted">{data.report_token_updated_at ? `Active · rotated ${new Date(data.report_token_updated_at).toLocaleString()}` : 'No active link'}</p>
       {reportLink && <label>New link — copy now <input readOnly aria-label="New Paragon report link" value={`${window.location.origin}${reportLink}`} onFocus={event => event.target.select()} /></label>}
       <div className="tenant-settings-inline">
@@ -69,7 +69,7 @@ export default function VendorRoutingSettings({ getToken }) {
     </div>}
     <div className="tenant-settings-card vendor-routing__report">
       <div className="tenant-settings-section-title">Hours and billing</div>
-      <p className="tenant-settings-muted">Eastern Time. Accepted pings remain valid for calls arriving within 30 seconds. Existing calls continue after closing.</p>
+      
       {!billing_ready && <p className="billing-alert">Hours and rate become editable after migration 067.</p>}
       {counter && <p className="tenant-settings-muted">
         {counter.billable_count} billable today · No daily call limit · ${Number(counter.amount_due).toFixed(2)}

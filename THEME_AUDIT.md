@@ -7439,3 +7439,16 @@ Added surface/field/table border rules with protected Contacts, phone, maps, pip
 
 ## Continuation — phase 5
 Fallback stack now follows the requested Avenir/Segoe stack; script-read token uses Tahoma. Added medium-weight cap outside protected surfaces and removed redundant inner Agency Settings heading. Formula1 import is retained for the logo. Adobe kit is absent; no kit identifier was supplied, so production Mac/Windows Adobe loading cannot be confirmed. Existing raw weight declarations remain beneath the override and require source cleanup after exclusion review.
+
+## Continuation — phase 6 removed UI strings
+- `src/components/VendorRoutingSettings.jsx`: `A matrix row asserts the agent is licensed in that state. Carrier checks control full and partial routing. Missing rows are ineligible.`
+- `src/components/VendorRoutingSettings.jsx`: `Read-only call report. Rotating creates a new link and immediately invalidates the old one.`
+- `src/components/VendorRoutingSettings.jsx`: `Eastern Time. Accepted pings remain valid for calls arriving within 30 seconds. Existing calls continue after closing.`
+- `src/components/TenantSettings.jsx`: `Enter your CRM inbound webhook URL. EnrollGen sends enrollment data here after each completed call.`
+- `src/components/AgentStatusLog.jsx`: `<span>Auto-refreshes every 30 seconds</span>`
+- `src/components/AgentStatusLog.jsx`: `<p className="agent-dash-note">Availability changes, newest first. Times use your local time zone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</p>`
+- `src/components/contacts/ContactsTab.jsx`: `<span className="contacts-muted">Details save when you leave a field or press Enter.</span>`
+- `src/components/AgentTools.jsx`: `<span className="at-tool-desc">{tool.description}</span>`
+- `src/components/AgentTools.jsx`: `<p className="at-modal-desc">{tool.description}</p>`
+
+Ambiguous script guidance, compliance descriptions, map notes and document reference descriptions remain intact pending content review. Dynamic tool descriptions are no longer rendered; underlying data is unchanged.

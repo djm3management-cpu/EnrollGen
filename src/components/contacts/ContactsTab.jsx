@@ -1178,7 +1178,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
       <ContactToast message={inlineError || notice} error={Boolean(inlineError)} onDismiss={() => { setInlineError(""); setNotice(""); }} />
       <div className="contacts-create-toolbar">
         <button className="contacts-mini-btn" type="button" onClick={() => setNewContact({ first_name: "", last_name: "", phone: "", email: "" })}>+ ADD CONTACT</button>
-        <span className="contacts-muted">Details save when you leave a field or press Enter.</span>
+        
       </div>
       {newContact && <form className="contacts-new-form" onSubmit={async (event) => {
         event.preventDefault(); setSaving(true); setInlineError(""); setExistingContactId(null);
