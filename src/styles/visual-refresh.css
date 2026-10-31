@@ -26,3 +26,8 @@ th:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *
 .tenant-settings-toggle { display:flex; align-items:center; }
 .tenant-settings-toggle input { width:auto; margin:0; }
 .tenant-settings-field input[type="range"] { accent-color:var(--accent); }
+
+/* Keep mono data faces; cap visual hierarchy at medium weight. */
+*:not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)):not(.lp-logo-text) { font-weight:500 !important; }
+:is(h1,h2,h3,h4,h5,h6,button,nav,[class*="section-title"]):not(:where(.phone-dd__panel, .phone-dd__panel *, .phone-toast, .phone-toast *, .phone-active-bar, .phone-active-bar *, html.dark [data-crm-view="contacts"], html.dark [data-crm-view="contacts"] *, .sep-map-section, .sep-map-section *, .sep-penetration-map, .sep-penetration-map *, .top-bar-logo-text, .top-bar-logo-image-button)) { font-family:var(--font-primary) !important; }
+:is(.flow-script-text,.ma-script-line,.ma-script-cue,.ma-script-instruction,.client-quick-script-panel__body) { font-family:var(--font-script-read) !important; }

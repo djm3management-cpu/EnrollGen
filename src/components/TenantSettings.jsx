@@ -490,7 +490,6 @@ export default function TenantSettings({ currentUser = null }) {
       <div className="tenant-settings-header">
         <div>
           <span className="billing-eyebrow">TENANT ADMIN</span>
-          <h2>Agency Settings</h2>
           <p>{profile.agency_display_name || profile.name || "Agency configuration"}</p>
         </div>
         <button type="button" className="eg-key eg-key--primary billing-button is-primary" onClick={saveTenant} disabled={saving}>

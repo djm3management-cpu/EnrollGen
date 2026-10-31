@@ -174,8 +174,7 @@
   --phone-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 
   /* ----- Typography ----- */
-  --font-primary: "Avenir Next", "Nunito Sans", -apple-system,
-                  BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-primary: "Avenir Next", "Avenir", "Segoe UI", sans-serif;
   --eg-font-system: var(--font-primary);
   --eg-font-display: var(--font-primary);
   --eg-font-body: var(--font-primary);
@@ -235,7 +234,7 @@
   --font-display: var(--font-primary);
   --font-body: var(--font-primary);
   --font-mono: var(--eg-font-mono);
-  --font-script-read: var(--font-primary);
+  --font-script-read: Tahoma, Verdana, "Segoe UI", sans-serif;
 
   /* Radii */
   --radius-sm: var(--eg-radius-card);

@@ -7436,3 +7436,6 @@ Shared glossy utility styling now covers native buttons with explicit exclusions
 
 ## Continuation — phase 4
 Added surface/field/table border rules with protected Contacts, phone, maps, pipeline cards/columns and badge exclusions. Inputs use filled surfaces and visible focus rings. Settings checkbox is inline. Classes outside the suffix-based surface selectors still require manual review.
+
+## Continuation — phase 5
+Fallback stack now follows the requested Avenir/Segoe stack; script-read token uses Tahoma. Added medium-weight cap outside protected surfaces and removed redundant inner Agency Settings heading. Formula1 import is retained for the logo. Adobe kit is absent; no kit identifier was supplied, so production Mac/Windows Adobe loading cannot be confirmed. Existing raw weight declarations remain beneath the override and require source cleanup after exclusion review.
