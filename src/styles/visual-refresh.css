@@ -555,3 +555,20 @@ html.dark #root .left-rail .eg-plan-lookup__submit {
 html.dark #root .left-rail .eg-plan-lookup__submit svg {
  color:var(--accent) !important; stroke:var(--accent) !important;
 }
+
+/* Compact main-flow START keys; retain their current text size. */
+#root :is(.script-start-call-gate,.start-call-gate) { justify-content:flex-start !important; text-align:left !important; }
+#root :is(.script-start-call-gate,.start-call-gate) > .script-start-call-button {
+ width:max-content !important; min-width:0 !important; max-width:100%;
+ height:auto !important; min-height:0 !important; padding:6px 10px !important;
+ flex:0 0 auto !important; align-self:flex-start;
+}
+html.dark #root :is(.script-start-call-gate,.start-call-gate) > .script-start-call-button {
+ --key-top:var(--key-secondary-top); --key-bottom:var(--key-secondary-bottom); --key-text:var(--key-secondary-text);
+}
+/* Keep the custom accent caret and suppress the browser's duplicate arrow. */
+#root select.ma-script-direction-select {
+ appearance:none !important; -webkit-appearance:none !important; -moz-appearance:none !important;
+ background-image:none !important;
+}
+#root .ma-script-direction-caret { color:var(--accent); }

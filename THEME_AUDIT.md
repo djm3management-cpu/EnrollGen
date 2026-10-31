@@ -8263,3 +8263,6 @@ Halved both rails' minimize buttons from 22×22px to 11×11px and their chevrons
 
 ## 2026-10-31 — Terminal plan search key
 Dark-mode plan search now uses the shared graphite secondary-key gradient with an amber Lucide glyph/spinner. Existing hover, pressed, disabled and focus treatments still apply. Light-mode blue key and white icon are unchanged. Local commit only.
+
+## 2026-10-31 — compact main START and single direction caret
+Main-flow START buttons now size to their existing text with 6px vertical/10px horizontal padding, no forced minimum width, and left alignment. Terminal main START uses graphite/amber secondary-key colors; light mode remains blue/white. Removed the browser-native select arrow from the inbound/outbound control, retaining only its custom accent-colored caret. No flow/direction event handlers changed. Local commit only.
