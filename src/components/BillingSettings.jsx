@@ -184,7 +184,7 @@ export default function BillingSettings() {
             <span>Starter</span>
             <strong>$49</strong>
           </div>
-          <p>Script flows, compliance scoring, call records, and basic analytics.</p>
+          
           <button data-key-role="secondary"
             type="button"
             className="billing-button"
@@ -204,7 +204,7 @@ export default function BillingSettings() {
             <span>Pro</span>
             <strong>$99</strong>
           </div>
-          <p>Everything in Starter plus Co-Pilot, transcription, CRM sync, and advanced analytics.</p>
+          
           <button data-key-role="secondary"
             type="button"
             className="billing-button is-primary"

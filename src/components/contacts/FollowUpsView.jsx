@@ -47,7 +47,7 @@ export default function FollowUpsView({ data, onOpenContact, initialSource='' })
         {data.isAdmin && <><option value="all">ALL AGENTS</option>{data.agents.filter(item => item.is_active !== false).map(item => <option key={item.id} value={item.agent_slug}>{item.name}</option>)}</>}
       </select>
       <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={data.loading} onClick={() => void data.refresh()}>REFRESH</button>
-      <span className="contacts-muted">Create follow-ups from a contact’s detail panel.</span>
+      
     </div>
     {data.error && <div className="ops-error" role="alert">{data.error}</div>}
     <div className="contacts-table-wrap"><table className="contacts-table">

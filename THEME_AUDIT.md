@@ -7898,3 +7898,21 @@ Container borders removed with explicit protected-subtree exclusions. Fields are
 
 ## Revision — phase 5
 Removed high-weight declarations from non-protected CSS; logo's Formula1 remains isolated. Reading selectors cover MA ScriptBox/branches, Med Sup, ACA/state ACA, U65, and ancillary/annuity shared flow text. Windows no longer overrides the script font with Avenir. Avenir kit is absent, so the explicitly requested fallback stack is used; no claim of Adobe-hosted font delivery is made.
+
+## Revision — phase 6 removed strings
+- `src/components/AgentTools.jsx:562`: <p className="at-doc-description">{reference.description}</p>
+- `src/components/BillingSettings.jsx:187`: <p>Script flows, compliance scoring, call records, and basic analytics.</p>
+- `src/components/BillingSettings.jsx:207`: <p>Everything in Starter plus Co-Pilot, transcription, CRM sync, and advanced analytics.</p>
+- `src/components/FplCalculatorPanel.jsx:356`: <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}> Use this as a reference point before pivoting away from ACA. </div>
+- `src/components/Onboarding.jsx:258`: <p>Script flows, compliance scoring, call records, and basic analytics.</p>
+- `src/components/Onboarding.jsx:268`: <p>Live Co-Pilot, transcription, CRM integration, and advanced analytics.</p>
+- `src/components/RTSIngestionPanel.jsx:365`: <p>Detecting columns, matching agents and carriers, and parsing appointment details.</p>
+- `src/components/SEPLookup.jsx:113`: <div className="sep-map-landing-hint"> Or enter a zip code above for carrier & SEP data </div>
+- `src/components/SectionWrapUp.jsx:11`: <p className="sf-status-text">After the call, save its disposition in the dialer. Notes, contact details and opportunities are optional and can be edited later in Calls.</p>
+- `src/components/callLog/CallRecordDetailsEditor.jsx:31`: <p className="contacts-muted">All fields are optional. These edits do not rerun scoring.</p>
+- `src/components/callLog/CombineCallsModal.jsx:45`: <p>Keep both recordings and transcripts as separate call segments in one panel. The primary keeps its contact, agent, and disposition.</p>
+- `src/components/callLog/CombineCallsModal.jsx:69`: <p className="contacts-muted">Primary: longer recording, then measured talk time, then earlier call. Existing linked calls move into the same panel.</p>
+- `src/components/contacts/FollowUpsView.jsx:50`: <span className="contacts-muted">Create follow-ups from a contact’s detail panel.</span>
+- `src/components/opportunities/PipelineSettings.jsx:55`: <p className="contacts-muted">Drag stages or use the arrows to reorder. Colors apply to headers, cards, and badges.</p>
+
+Retained as ambiguous/required: underwriting and carrier eligibility guidance, merge/delete consequence confirmations, source/map explanations, upload limits, access restrictions, compliance instructions, scripture/context content and empty-state lines. These are content or safety/validation information rather than decorative UI descriptions.

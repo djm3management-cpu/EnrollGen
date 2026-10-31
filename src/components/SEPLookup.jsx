@@ -110,9 +110,7 @@ export default function SEPLookupTool() {
             />
 
             {!s.hasView && (
-              <div className="sep-map-landing-hint">
-                Or enter a zip code above for carrier & SEP data
-              </div>
+              
             )}
           </div>
         )}

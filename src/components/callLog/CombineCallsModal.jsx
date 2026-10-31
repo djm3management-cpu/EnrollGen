@@ -42,7 +42,7 @@ export default function CombineCallsModal({ ids, onClose, onCombined }) {
     finally { setBusy(false); }
   };
   return <OpportunityDialog title={second ? 'Combine Calls' : 'Combine with…'} busy={busy} onClose={onClose}>
-    <p>Keep both recordings and transcripts as separate call segments in one panel. The primary keeps its contact, agent, and disposition.</p>
+    
     {loading && <p role="status">Loading calls…</p>}
     {error && <div className="ops-error" role="alert">{error} <button data-key-role="secondary" className="contacts-mini-btn" disabled={busy} onClick={() => setRetry(value => value + 1)}>Reload calls</button></div>}
     {!second && !loading && !error && <>
@@ -66,7 +66,7 @@ export default function CombineCallsModal({ ids, onClose, onCombined }) {
           </dl>
         </section>)}
       </div>
-      <p className="contacts-muted">Primary: longer recording, then measured talk time, then earlier call. Existing linked calls move into the same panel.</p>
+      
       {preview.different_contacts && <label className="combine-calls-warning ops-error">
         <input type="checkbox" checked={confirmed} onChange={event => setConfirmed(event.target.checked)} />
         These calls belong to different contacts. I confirm they should be combined under the primary contact.

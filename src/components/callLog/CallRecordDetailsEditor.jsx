@@ -28,7 +28,7 @@ export default function CallRecordDetailsEditor({callRecordId,onSaved}){
   <div className="contacts-section-head">OPTIONAL CALL DETAILS</div>
   {error && <p className="ops-error" role="alert">{error}</p>}
   {!editing ? <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={!record} onClick={()=>{setDraft({});setEditing(true);}}>Edit notes and details</button> : <>
-   <p className="contacts-muted">All fields are optional. These edits do not rerun scoring.</p>
+   
    <div className="grid post-call-wrap-grid">{OPTIONAL_CALL_FIELDS.map(([key,label,type])=>{
     const value=Object.hasOwn(draft,key)?draft[key]:record?.[key];
     const props={value:(type==='date'?normalizeDateInput(value):value)||'',disabled:saving,onChange:event=>setDraft(previous=>({...previous,[key]:event.target.value}))};

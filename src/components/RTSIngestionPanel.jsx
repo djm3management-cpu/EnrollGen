@@ -362,7 +362,7 @@ export default function RTSIngestionPanel({ currentAgent, tenantAgents, onCommit
               <div className="rts-ingest-loading" aria-live="polite">
                 <LoaderCircle className="is-spinning" size={24} aria-hidden="true" />
                 <h4>Normalizing carrier data</h4>
-                <p>Detecting columns, matching agents and carriers, and parsing appointment details.</p>
+                
               </div>
             ) : null}
 

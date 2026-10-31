@@ -559,7 +559,7 @@ function CitizenshipDocsReference({
     <div className="at-doc-shell">
       <div className="at-doc-intro">
         <h4 className="at-doc-title">{reference.title}</h4>
-        <p className="at-doc-description">{reference.description}</p>
+        
       </div>
 
       <div className="at-doc-status-tabs" role="tablist" aria-label="Citizenship status">

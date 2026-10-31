@@ -255,7 +255,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
                   <span>Starter</span>
                   <strong>$49</strong>
                 </div>
-                <p>Script flows, compliance scoring, call records, and basic analytics.</p>
+                
                 <button data-key-role="primary" type="button" className="billing-button" disabled={saving} onClick={() => choosePlan("starter")}>
                   Start Starter
                 </button>
@@ -265,7 +265,7 @@ export default function Onboarding({ currentUser = null, onComplete }) {
                   <span>Pro</span>
                   <strong>$99</strong>
                 </div>
-                <p>Live Co-Pilot, transcription, CRM integration, and advanced analytics.</p>
+                
                 <button data-key-role="primary" type="button" className="billing-button is-primary" disabled={saving} onClick={() => choosePlan("pro")}>
                   Start Pro
                 </button>

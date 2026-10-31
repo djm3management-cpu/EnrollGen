@@ -52,7 +52,7 @@ function SettingsEditor({ data, pipeline, onClose, onBusyChange }) {
     {error && <div className="ops-error" role="alert">{error}</div>}
     <fieldset disabled={saving || !data.isAdmin}>
       <div className="contacts-edit-grid"><label className="contacts-edit-field"><span>PIPELINE NAME</span><input className="contacts-edit-input" required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} /></label><label className="contacts-edit-field"><span>LINE OF BUSINESS (OPTIONAL)</span><select className="contacts-edit-input" value={lob} onChange={(event) => setLob(event.target.value)}><option value="">All lines</option>{LINES_OF_BUSINESS.map((line) => <option key={line}>{line}</option>)}</select></label></div>
-      <p className="contacts-muted">Drag stages or use the arrows to reorder. Colors apply to headers, cards, and badges.</p>
+      
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={({ active, over }) => {
         if (over && active.id !== over.id) reorder(stages.findIndex((row) => row.id === active.id), stages.findIndex((row) => row.id === over.id));
       }}><SortableContext items={stages.map((row) => row.id)} strategy={verticalListSortingStrategy}>
