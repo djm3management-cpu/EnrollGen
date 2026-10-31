@@ -51,7 +51,7 @@ before(async()=>{
  INSERT INTO enrolled_agents VALUES('${agent}','${tenant}','user-a','Agent A',NULL,true),('${mark}','${tenant}','mark-user','Mark Endres',NULL,true),('${excluded}','${tenant}','excluded-user','Agent C',NULL,true),('${id(6)}','${foreign}','foreign-user','Foreign',NULL,true);
  INSERT INTO recording_agent_subjects VALUES('${tenant}','user-a','agent_a'),('${tenant}','mark-user','mark_endres');`);
  await pg.exec(file('123_compliance_uploads.sql'));
- await pg.exec('CREATE TABLE ix_uploads(LIKE conversely_submissions INCLUDING ALL)');
+ await pg.exec('CREATE TABLE ix_uploads(LIKE conversely_submissions INCLUDING ALL);ALTER TABLE ix_uploads ADD COLUMN provider_message text,ADD COLUMN finalized_at timestamptz');
  const migration=file('125_enrollment_intakes.sql'),start=migration.indexOf('CREATE OR REPLACE FUNCTION public.conversely_week_candidates'),end=migration.indexOf('-- Historical rows',start);
  await pg.exec(migration.slice(start,end));
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,call_start,call_outcome) VALUES($1,$2,$3,'2020-01-07T12:00:00Z','enrolled')`,[id(99),tenant,agent]);

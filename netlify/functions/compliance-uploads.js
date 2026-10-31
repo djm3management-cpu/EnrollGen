@@ -40,8 +40,8 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
       }catch{weekly={available:false,enabled:false,worker_available:false,run:null,results:[],error:'Conversely run history is unavailable. Apply migration 127 and start the updated worker.'};}
       const [conversely,ix,missing,reconciliation]=await Promise.all([
         ...['conversely_submissions','ix_uploads'].map(table=>db.from(table)
-          .select('id,call_id,twilio_recording_sid,confirmation_code,status,attempts,last_error,updated_at,next_attempt_at')
-          .eq('tenant_id',identity.tenant.id).in('status',['failed','pending']).not('last_error','is',null).order('updated_at',{ascending:false}).limit(200)),
+          .select('id,call_id,twilio_recording_sid,confirmation_code,status,attempts,last_error,updated_at,next_attempt_at'+(table==='ix_uploads'?',provider_message,finalized_at,ix_receipt_id':''))
+          .eq('tenant_id',identity.tenant.id).in('status',table==='ix_uploads'?['failed','pending','needs_attention','duplicate_on_sunfire']:['failed','pending']).not('last_error','is',null).order('updated_at',{ascending:false}).limit(200)),
         db.from('compliance_missing_codes').select('*').eq('tenant_id',identity.tenant.id).order('call_start').limit(200),
         db.from('compliance_reconciliation').select('*').eq('tenant_id',identity.tenant.id).order('day',{ascending:false}).limit(30),
       ]);

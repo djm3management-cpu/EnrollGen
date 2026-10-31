@@ -8,7 +8,8 @@ import {emptyIntake,normalizeIntake,intakeErrors,formatPhone,formatMbi,formatPre
 import {createEnrollmentIntakesHandler} from '../netlify/functions/enrollment-intakes.js';
 import {deliverEnrollmentWebhooks} from '../integrations/enrollmentWebhook.js';
 import {converselyPayload,createComplianceWorker} from '../integrations/complianceUploads.js';
-import {createIxIntegration} from '../integrations/ixUploads.js';
+import {createIxIntegration,dailySummaries,ixCallAttribution,ixMetadata} from '../integrations/ixUploads.js';
+import {createComplianceUploadsHandler} from '../netlify/functions/compliance-uploads.js';
 const pg=new PGlite({extensions:{pgcrypto}}),base=evidenceDb(pg);
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const tenant=id(1),agent=id(2),contact=id(3),call=id(4),household=id(5);
@@ -41,6 +42,9 @@ before(async()=>{
  CREATE TABLE follow_ups(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,contact_id uuid,agent_id text,due_at timestamptz,reason text,status text DEFAULT 'open',updated_at timestamptz DEFAULT now());
  CREATE TABLE call_records(id uuid PRIMARY KEY,tenant_id uuid,agent_id uuid,contact_id uuid,call_outcome text,carrier_name text,product_type text,sunfire_code text,call_start timestamptz,agent_name text,
  enrollment_confirmation_number text,compliance_status text,compliance_scorecard_id uuid,metadata jsonb,call_type text,created_at timestamptz,call_duration_seconds integer);
+ CREATE TABLE inbound_calls(id uuid,tenant_id uuid,lead_source_id uuid);
+ CREATE TABLE lead_sources(id uuid,tenant_id uuid,name text);
+ CREATE TABLE paragon_billing_facts(inbound_call_id uuid,tenant_id uuid,amount_due numeric,finalized_at timestamptz);
  CREATE TABLE recording_agent_subjects(tenant_id uuid,clerk_user_id text,agent_slug text);
  CREATE TABLE compliance_scorecards(id uuid,tenant_id uuid,call_id uuid,overall_score numeric,is_thread_composite boolean);
  CREATE TABLE recording_ingestion(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,call_record_id uuid,recording_sid text,account_sid text,callback_call_sid text,recording_channels smallint,copy_status text DEFAULT 'stored',provider_status text,recording_duration_seconds integer,first_seen_at timestamptz DEFAULT now());
@@ -48,11 +52,11 @@ before(async()=>{
  INSERT INTO enrolled_agents VALUES('${agent}','${tenant}','user-a',true,'Mike Shiomos',NULL);
  INSERT INTO contacts(id,tenant_id,state,zip,current_carrier) VALUES('${contact}','${tenant}','NY','10001','Original Medicare'),('${household}','${tenant}','NY','10001','Aetna');
  INSERT INTO call_records VALUES('${call}','${tenant}','${agent}','${contact}','incomplete','Aetna','MA',NULL,'2026-10-20T15:00:00Z','Mike Shiomos','OLD','complete',NULL,'{}','inbound',now(),120);
- INSERT INTO recording_ingestion(tenant_id,call_record_id,recording_sid,account_sid,callback_call_sid,recording_channels,provider_status) VALUES('${tenant}','${call}','REfixture','ACfixture','CAfixture',2,'completed');`);
+ INSERT INTO recording_ingestion(tenant_id,call_record_id,recording_sid,account_sid,callback_call_sid,recording_channels,provider_status) VALUES('${tenant}','${call}','REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb','ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','CAcccccccccccccccccccccccccccccccc',2,'completed');`);
  const pii=readFileSync(new URL('../supabase/migrations/022_pii_protection_phase1.sql',import.meta.url),'utf8');
  await pg.exec(pii.slice(pii.indexOf('CREATE OR REPLACE FUNCTION pii_vault.get_active_key()'),pii.indexOf('-- Blind-index HMAC key')));
  await pg.exec(readFileSync(new URL('../supabase/migrations/071_contacts_pii_json_null.sql',import.meta.url),'utf8'));
- for(const migration of ['123_compliance_uploads.sql','124_ix_uploads.sql','125_enrollment_intakes.sql'])await pg.exec(readFileSync(new URL(`../supabase/migrations/${migration}`,import.meta.url),'utf8'));
+ for(const migration of ['123_compliance_uploads.sql','124_ix_uploads.sql','125_enrollment_intakes.sql','127_conversely_manual_runs.sql','128_sunfire_ix_api.sql'])await pg.exec(readFileSync(new URL(`../supabase/migrations/${migration}`,import.meta.url),'utf8'));
 });
 after(()=>pg.close());
 test('every required field and UHC-only confirmation rule are enforced; defaults are valid',()=>{
@@ -146,13 +150,13 @@ test('compliance metadata comes only from the selected completed intake and subm
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,call_outcome,product_type,carrier_name,call_start) VALUES($1,$2,$3,'incomplete','MA','UnitedHealthcare','2026-10-20')`,[id(60),tenant,agent]);
  assert.ok(!(await db.rpc('conversely_week_candidates',{p_week:'2026-10-19'})).data.some(row=>row.call_id===id(60)));
 });
-test('IX receives enrollment metadata and does not deliver a queued call without an intake',async()=>{
+test('IX sends Type A metadata and does not deliver a queued call without an intake',async()=>{
  const received=[];
- const env={IX_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:'ACfixture',TWILIO_AUTH_TOKEN:'test'};
- const integration=createIxIntegration(db,{env,ixClient:{available:true,createUpload:async args=>{received.push(args);return {url:'https://bucket.s3.amazonaws.com/audio'};},confirmUpload:async()=>({receiptId:'receipt'})},fetchImpl:async(url,options)=>url.endsWith('.json')?Response.json({sid:'REfixture',account_sid:'ACfixture',call_sid:'CAfixture',channels:2}):options.method==='PUT'?new Response(null,{status:200}):new Response(new Uint8Array([1,2]))});
+ const env={IX_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
+ const integration=createIxIntegration(db,{env,ixClient:{environment:'test',available:true,register:async args=>{received.push(args);return {callRecordingId:id(88),recordingUploads:args.callMetadata.recordings.map(({filename})=>({filename,presignedUrl:'https://bucket.s3.amazonaws.com/audio',expiresAt:'2099-01-01T00:00:00Z'}))};},finalize:async()=>({status:'finalized'})},fetchImpl:async(url,options)=>url.endsWith('.json')?Response.json({sid:'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',account_sid:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',call_sid:'CAcccccccccccccccccccccccccccccccc',channels:2,start_time:'2026-10-20T15:00:00Z',duration:'120'}):options.method==='PUT'?new Response(null,{status:200}):new Response(new Uint8Array([1,2]))});
  await createComplianceWorker(db,{env,...integration,log:()=>{}})({schedule:false});assert.equal(received.length,2);
- assert.equal(received[0].metadata.ContractID,'H1234');assert.equal(received[0].metadata.CarrierName,'UnitedHealthcare');assert.ok(received[0].metadata.SubmissionDate);
- await query(`INSERT INTO ix_uploads(tenant_id,call_id,twilio_recording_sid,enrollment_key,confirmation_code) VALUES($1,$2,'REfixture',$3,'ORPHAN')`,[tenant,call,id(99)]);
+ assert.equal(received[0].sunfireEnrollmentCode,'SF-123');assert.deepEqual(Object.keys(received[0]).sort(),['callMetadata','sunfireEnrollmentCode']);assert.equal(received[0].callMetadata.recordings.length,1);assert.equal(received[0].callMetadata.teamName,'New Gen Health Solutions');
+ await query(`INSERT INTO ix_uploads(tenant_id,call_id,twilio_recording_sid,enrollment_key,confirmation_code) VALUES($1,$2,'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',$3,'ORPHAN')`,[tenant,call,id(99)]);
  await createComplianceWorker(db,{env,...integration,log:()=>{}})({schedule:false});assert.equal(received.length,2);
 });
 test('browser roles cannot read PII envelopes or invoke intake writes and webhook leases',async()=>{
@@ -161,6 +165,7 @@ test('browser roles cannot read PII envelopes or invoke intake writes and webhoo
   await assert.rejects(()=>query('SELECT * FROM enrollment_intakes'),/permission denied/);
   await assert.rejects(()=>query('SELECT * FROM ghl_enrollment_deliveries'),/permission denied/);
   await assert.rejects(()=>query(`SELECT claim_compliance_upload('ghl')`),/permission denied/);
+  await assert.rejects(()=>query('SELECT claim_ix_upload()'),/permission denied/);
   await assert.rejects(()=>query(`SELECT save_enrollment_intake(NULL,NULL,NULL,NULL,'{}','Other','{}')`),/permission denied/);
  }finally{await pg.exec('RESET ROLE');}
 });
@@ -227,3 +232,129 @@ test('admin claims require the matching organization and support Clerk role and 
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,call_outcome,product_type) VALUES($1,$2,$3,'incomplete','MA')`,[id(74),id(73),id(75)]);
  assert.equal((await handler({authenticate:async()=>mikeAdminAuth})(new Request(`https://app.test/api/enrollment-intakes?call_id=${id(74)}`))).status,403);
 }));
+
+const ixEnv={IX_UPLOAD_ENABLED:'true',IX_USERNAME:'ix-user',IX_PASSWORD:'ix-password',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
+const ixFetch=(status,extra={})=>async(url,options)=>{
+ if(url.endsWith('/authenticate'))return Response.json({username:'ix-user',token:'private-token',expiresIn:100});
+ if(url.endsWith('.json'))return Response.json({sid:'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',account_sid:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',call_sid:'CAcccccccccccccccccccccccccccccccc',channels:2,start_time:'2026-10-20T15:00:00Z',duration:120});
+ if(url.endsWith('/internalenrollment'))return Response.json({message:'Provider says ix-password private-token',...extra},{status});
+ if(options?.method==='PUT')return new Response(null,{status:200});
+ if(url.endsWith('/finalize'))return Response.json({status:'finalized'});
+ return new Response(new Uint8Array([1,2]),{headers:{'Content-Type':'audio/mpeg'}});
+};
+async function queuedIntake(code){
+ await query('UPDATE ix_uploads SET retryable=false');
+ const response=await handler()(req(valid({sunfireCode:code})));assert.equal(response.status,200);return (await response.json()).id;
+}
+for(const [http,status,error,retryable] of [[404,'needs_attention','invalid_sunfire_code',false],[409,'duplicate_on_sunfire','duplicate_on_sunfire',false],[400,'failed','ix_http_400',false],[403,'failed','ix_http_403',false],[500,'pending','ix_http_500',true]]){
+ test(`IX worker persists register HTTP ${http} outcome, admin status and code remediation`,async()=>{
+  await pg.exec('BEGIN');try{
+   const intake=await queuedIntake(`HTTP-${http}`),fetchImpl=ixFetch(http),logs=[];
+   const integration=createIxIntegration(db,{env:ixEnv,fetchImpl});
+   const tick=createComplianceWorker(db,{env:ixEnv,...integration,log:value=>logs.push(value)});
+   await tick({schedule:false});
+   let [row]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[intake]);
+   assert.equal(row.status,status);assert.equal(row.last_error,error);assert.equal(row.retryable,retryable);assert.equal(row.attempts,1);
+   assert.ok(row.provider_message.includes('[redacted]'));assert.ok(!JSON.stringify(logs).includes('private-token'));assert.ok(!JSON.stringify(logs).includes('Provider says'));
+   const admin=createComplianceUploadsHandler({getDb:()=>db,authenticate:async()=>({userId:'user-a',orgId:'org-a',tokenPayload:{org_role:'org:admin'}})});
+   const response=await admin(new Request('https://app.test/compliance-uploads'));assert.equal(response.status,200);
+   const data=await response.json();assert.ok(data.failures.some(item=>item.id===row.id&&item.status===status));
+   assert.ok(!JSON.stringify(data).includes('presignedUrl'));
+   if(http===404){
+    assert.ok(data.missing.some(item=>item.call_id===call));
+    const correction=await handler()(req(valid({sunfireCode:'CORRECTED'}),{id:intake}));assert.equal(correction.status,200);
+    [row]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[intake]);
+    assert.equal(row.confirmation_code,'CORRECTED');assert.equal(row.status,'pending');assert.equal(row.attempts,0);assert.equal(row.retryable,true);assert.deepEqual(row.ix_state,{});
+    assert.equal((await query('SELECT * FROM compliance_missing_codes WHERE call_id=$1',[call])).length,0);
+   }else if(!retryable){
+    await query("UPDATE ix_uploads SET next_attempt_at=now()-interval '1 hour' WHERE id=$1",[row.id]);
+    await tick({schedule:false});assert.equal((await query('SELECT attempts FROM ix_uploads WHERE id=$1',[row.id]))[0].attempts,1);
+   }
+  }finally{await pg.exec('ROLLBACK');}
+ });
+}
+test('IX retries stop after five attempts with exponential delays and token-checked finishes',async()=>{
+ await pg.exec('BEGIN');try{
+  const intake=await queuedIntake('RETRY-FIVE'),fetchImpl=ixFetch(503);
+  const tick=createComplianceWorker(db,{env:ixEnv,...createIxIntegration(db,{env:ixEnv,fetchImpl}),log:()=>{}});
+  for(let attempt=1;attempt<=5;attempt++){
+   await query("UPDATE ix_uploads SET next_attempt_at=now()-interval '1 minute' WHERE enrollment_key=$1",[intake]);
+   await tick({schedule:false});
+   const [row]=await query('SELECT *,extract(epoch FROM(next_attempt_at-updated_at))::integer AS delay FROM ix_uploads WHERE enrollment_key=$1',[intake]);
+   assert.equal(row.attempts,attempt);assert.equal(row.delay,60*2**(attempt-1));assert.equal(row.status,attempt===5?'failed':'pending');
+   await db.rpc('finish_ix_upload',{p_id:row.id,p_token:id(999),p_outcome:'uploaded',p_error:null,p_message:null,p_receipt:{callRecordingId:id(88),status:'finalized'}});
+  }
+  await tick({schedule:false});assert.equal((await query('SELECT attempts FROM ix_uploads WHERE enrollment_key=$1',[intake]))[0].attempts,5);
+ }finally{await pg.exec('ROLLBACK');}
+});
+test('IX worker resumes durable registration after finalize failure and records a real final receipt once',async()=>{
+ await pg.exec('BEGIN');try{
+  const intake=await queuedIntake('RESUME'),registrationId=id(888);let registers=0,puts=0,finalizes=0;
+  const fetchImpl=async(url,options)=>{
+   if(url.endsWith('/internalenrollment')){registers++;const payload=JSON.parse(options.body);return Response.json({callRecordingId:registrationId,recordingUploads:payload.callMetadata.recordings.map(({filename})=>({filename,presignedUrl:'https://bucket.s3.amazonaws.com/audio',expiresAt:'2099-01-01T00:00:00Z'}))});}
+   if(options?.method==='PUT'){
+    puts++;const [saved]=await query('SELECT ix_state FROM ix_uploads WHERE enrollment_key=$1',[intake]);assert.equal(saved.ix_state.callRecordingId,registrationId);return new Response(null,{status:200});
+   }
+   if(url.endsWith('/finalize')){finalizes++;return finalizes===1?Response.json({message:'try later'},{status:500}):Response.json({status:'already_finalized'});}
+   return ixFetch(200)(url,options);
+  };
+  const tick=createComplianceWorker(db,{env:ixEnv,...createIxIntegration(db,{env:ixEnv,fetchImpl}),log:()=>{}});
+  await tick({schedule:false});let [row]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[intake]);assert.equal(row.status,'pending');assert.equal(row.ix_state.uploadedFilenames.length,1,JSON.stringify({error:row.last_error,state:row.ix_state}));
+  await query("UPDATE ix_uploads SET next_attempt_at=now()-interval '1 minute' WHERE id=$1",[row.id]);
+  await tick({schedule:false});[row]=await query('SELECT * FROM ix_uploads WHERE id=$1',[row.id]);
+  assert.equal(row.status,'uploaded');assert.equal(row.ix_receipt_id,registrationId);assert.ok(row.finalized_at);assert.equal(row.finalize_receipt.status,'already_finalized');
+  assert.equal(registers,1);assert.equal(puts,1);assert.equal(finalizes,2);
+  await db.rpc('enqueue_compliance_uploads');await tick({schedule:false});assert.equal(registers,1);
+  await db.rpc('finish_ix_upload',{p_id:row.id,p_token:id(999),p_outcome:'failed',p_error:'late_failure',p_message:null,p_receipt:null});
+  assert.equal((await query('SELECT status FROM ix_uploads WHERE id=$1',[row.id]))[0].status,'uploaded');
+ }finally{await pg.exec('ROLLBACK');}
+});
+test('IX expired URL attention is durable and registration is never repeated',async()=>{
+ await pg.exec('BEGIN');try{
+  const intake=await queuedIntake('EXPIRED'),fetchImpl=async(url,options)=>{
+   if(url.endsWith('/internalenrollment')){const payload=JSON.parse(options.body);return Response.json({callRecordingId:id(888),recordingUploads:payload.callMetadata.recordings.map(({filename})=>({filename,presignedUrl:'https://bucket.s3.amazonaws.com/audio',expiresAt:'2000-01-01T00:00:00Z'}))});}
+   if(options?.method==='PUT')assert.fail('expired URL must never upload');return ixFetch(200)(url,options);
+  };
+  await createComplianceWorker(db,{env:ixEnv,...createIxIntegration(db,{env:ixEnv,fetchImpl}),log:()=>{}})({schedule:false});
+  const [row]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[intake]);assert.equal(row.status,'needs_attention');assert.equal(row.last_error,'upload_url_expired');assert.equal(row.ix_state.callRecordingId,id(888));
+  await handler()(req(valid({sunfireCode:'CHANGED-AFTER-REGISTER'}),{id:intake}));
+  assert.equal((await query('SELECT status FROM ix_uploads WHERE id=$1',[row.id]))[0].status,'needs_attention');
+ }finally{await pg.exec('ROLLBACK');}
+});
+test('IX default off and missing credentials never consume attempts; daily summaries stay durable',async()=>{
+ await pg.exec('BEGIN');try{
+  const intake=await queuedIntake('DISABLED');
+  for(const env of [{},{IX_UPLOAD_ENABLED:'true'}])await createComplianceWorker(db,{env,...createIxIntegration(db,{env}),log:()=>{}})({schedule:false});
+  assert.equal((await query('SELECT attempts FROM ix_uploads WHERE enrollment_key=$1',[intake]))[0].attempts,0);
+  const reportDay=(await query('SELECT day::text FROM compliance_reconciliation ORDER BY day LIMIT 1'))[0].day;
+  const sent=[],opts={env:{RESEND_API_KEY:'mail-key',INTEGRATIONS_REPORT_FROM:'reports@example.test'},now:()=>Date.parse(`${reportDay}T17:00:00Z`)+86400000,
+   send:async(url,body,headers)=>{sent.push({url,body:JSON.parse(body),headers});return {status:200};}};
+  await dailySummaries(db,opts);await dailySummaries(db,opts);assert.equal(sent.length,1);assert.deepEqual(sent[0].body.to,['mike@newgenhealthsolutions.com']);assert.ok(sent[0].headers['Idempotency-Key']);
+ }finally{await pg.exec('ROLLBACK');}
+});
+
+test('IX uses linked, tenant-scoped source and finalized per-call billing cost when known',async()=>{
+ await pg.exec('BEGIN');try{
+  await query(`INSERT INTO inbound_calls VALUES($1,$2,$3)`,[id(900),tenant,id(901)]);
+  await query(`INSERT INTO lead_sources VALUES($1,$2,'Paragon Media')`,[id(901),tenant]);
+  await query(`INSERT INTO paragon_billing_facts VALUES($1,$2,33,now())`,[id(900),tenant]);
+  const sourceCall={tenant_id:tenant,metadata:{campaign_name:'Fall',lead_medium:'phone'}};
+  const attributed=await ixCallAttribution(db,sourceCall,[{inbound_call_id:id(900)}]);
+  const metadata=ixMetadata(attributed,[]);assert.equal(metadata.leadSource,'Paragon Media');assert.equal(metadata.leadCost,33);assert.equal(metadata.leadCampaign,'Fall');
+  const foreign=await ixCallAttribution(db,{tenant_id:id(999)},[{inbound_call_id:id(900)}]);assert.equal(foreign.lead_source,undefined);assert.equal(foreign.lead_cost,undefined);
+ }finally{await pg.exec('ROLLBACK');}
+});
+
+test('completed UHC intakes queue before recordings arrive and wait without consuming attempts',async()=>{
+ await pg.exec('BEGIN');try{
+  await query('UPDATE ix_uploads SET retryable=false');
+  await query(`INSERT INTO call_records(id,tenant_id,agent_id,contact_id,call_outcome,carrier_name,product_type) VALUES($1,$2,$3,$4,'incomplete','UHC','MA')`,[id(910),tenant,agent,contact]);
+  const response=await handler()(new Request(`https://app.test/api/enrollment-intakes?call_id=${id(910)}`,{method:'POST',body:JSON.stringify({data:valid({sunfireCode:'WAIT-RECORDING'})})}));assert.equal(response.status,200);
+  await query(`UPDATE call_records SET call_outcome='enrolled' WHERE id=$1`,[id(910)]);
+  let [row]=await query('SELECT * FROM ix_uploads WHERE call_id=$1',[id(910)]);assert.equal(row.twilio_recording_sid,'pending');
+  assert.equal((await db.rpc('claim_ix_upload')).data.length,0);
+  await query(`INSERT INTO recording_ingestion(tenant_id,call_record_id,recording_sid,account_sid,callback_call_sid,provider_status) VALUES($1,$2,'REnew','ACnew','CAnew','completed')`,[tenant,id(910)]);
+  [row]=await query('SELECT * FROM ix_uploads WHERE call_id=$1',[id(910)]);assert.equal(row.twilio_recording_sid,'REnew');assert.equal(row.attempts,0);
+  assert.equal((await db.rpc('claim_ix_upload')).data[0].id,row.id);
+ }finally{await pg.exec('ROLLBACK');}
+});

@@ -15,6 +15,7 @@ function fixture(){
   setInterval:(fn,ms)=>{timers.set(++timerId,{fn,ms});return timerId;},clearInterval:id=>timers.delete(id),
   require(name){
    if(name==='react')return h.hooks;
+   if(name.endsWith('/EnrollmentIntake'))return {__esModule:true,default:'enrollment-intake'};
    if(name.endsWith('/AuthContext'))return {useAppAuth:()=>auth};
    if(name.endsWith('/clerkFetch.js'))return {fetchWithClerk:async(_token,url,options)=>{
     requests.push({url,options});
@@ -57,5 +58,20 @@ test('disabled/stale workers disable the button and server rejection shows inlin
   f.setData({...empty(),weekly:{...empty().weekly,enabled:false}});await f.h.flush();assert.equal(f.nodes().find(n=>n.type==='button'&&n.children.includes('Run Conversely now')).props.disabled,true);
   f.setData(empty());[...f.timers.values()][0].fn();await f.h.flush();f.setPostStatus(409);
   await f.nodes().find(n=>n.type==='button'&&n.children.includes('Run Conversely now')).props.onClick();await f.h.flush();assert.ok(f.nodes().some(n=>n.props.role==='alert'));assert.equal(f.h.value.type,'details');
+ }finally{f.h.unmount();}
+});
+
+test('IX attention and duplicate errors render and missing/invalid codes open the native intake',async()=>{
+ const f=fixture();try{
+  f.setData({...empty(),missing:[{call_id:'call-a',agent_name:'Agent A',call_start:'2026-10-30T15:00:00Z'}],failures:[
+   {id:'a',provider:'UHC IX',call_id:'call-a',status:'needs_attention',last_error:'invalid_sunfire_code',provider_message:'Enrollment code unknown',attempts:1},
+   {id:'b',provider:'UHC IX',call_id:'call-b',status:'duplicate_on_sunfire',last_error:'duplicate_on_sunfire',attempts:1},
+  ]});await f.h.flush();
+  const text=f.nodes().flatMap(n=>n.children.filter(c=>typeof c==='string')).join(' ');
+  for(const value of ['needs_attention','invalid_sunfire_code','Enrollment code unknown','duplicate_on_sunfire'])assert.ok(text.includes(value));
+  f.nodes().find(n=>n.type==='button'&&n.children.includes('Edit enrollment / SunFire code')).props.onClick();f.h.render();
+  const intake=f.nodes().find(n=>n.type==='enrollment-intake');assert.ok(intake);assert.equal(intake.props.callId,'call-a');
+  intake.props.onSaved();await f.h.flush();assert.ok(!f.nodes().some(n=>n.type==='enrollment-intake'));
+  assert.ok(!f.requests.some(r=>r.options?.method==='PATCH'));
  }finally{f.h.unmount();}
 });

@@ -1,0 +1,1384 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Sunfire API Integration",
+    "description": "# Overview\n\nThis documentation is for partners integrating **directly with the Sunfire API** to submit call\nrecordings to IntelligenceX. After you complete the flow below, **IntelligenceX receives calls\nautomatically**—no separate IX upload step is required.\n\n**Draft notice:** This specification is **version 0.3.x draft**. Endpoints and field requirements may\nchange before general availability. Confirm details with your onboarding contact.\n\n## Environments\n\nUse the base URL for the environment you are integrating against:\n\n| Environment | API base URL | Authenticate URL |\n|-------------|--------------|------------------|\n| **Test** | `https://test-api.sunfirematrix.com/api` | `https://test-api.sunfirematrix.com/v2/authenticate` |\n| **Production** | `https://api.sunfirematrix.com/api` | `https://api.sunfirematrix.com/v2/authenticate` |\n\nIX call-recording routes live under the **`/api`** base URL. **`POST /v2/authenticate`** has **no** `/api` prefix.\n\n## Integration flow\n\n1. **Authenticate** — `POST /v2/authenticate` on your environment host (see **Environments** and the authenticate operation below; no `/api` prefix on this path). Send `username` and `password` from onboarding. Use the returned `token` as `Authorization: Bearer <token>` on `/api/ix/callrecordings/*` requests.\n\n2. **Register the call** — `POST /ix/callrecordings/internalenrollment` or `POST /ix/callrecordings/externalenrollment`. You receive a `callRecordingId` (UUID v4) and one presigned S3 upload URL per recording in `recordingUploads[]`.\n\n3. **Upload recordings** — PUT each audio file to its presigned URL from step 2.\n\n4. **Finalize** — `POST /ix/callrecordings/{callRecordingId}/finalize` when all uploads are complete. Returns `status: finalized`, or `status: already_finalized` (HTTP 200) on idempotent replay.\n\n### Internal vs external enrollment\n\n- **Internal enrollment** — send `callMetadata` with `sunfireEnrollmentCode`. Do not send `dateSold`, `callType`, or `disposition` on the wire; those are inferred from the enrollment code.\n\n- **External enrollment** — send `callMetadata` plus the full `ICPostRequest` enrollment body. `agent` is required on this route (`npn` and `email` mandatory). `affiliateId` is required on this route.\n\nSuccess responses for both routes return `callRecordingId` and `recordingUploads[]` only.\n\n## Authentication\n\nCall `POST /v2/authenticate` on **`https://test-api.sunfirematrix.com`** (test) or **`https://api.sunfirematrix.com`** (production) with JSON `{ \"username\", \"password\" }` to receive `{ \"username\", \"token\", \"expiresIn\" }`. Send `Authorization: Bearer <token>` on `/api/ix/callrecordings/*` (see `IxAuthenticateResponse`). Access level matches other IntelligenceX partner POST routes; confirm scope at onboarding.\n\n## Error responses\n\nFor IX call-recording routes (except validation errors from the enrollment step), HTTP 400, 403, 404, and 409 typically return JSON `{ \"message\": \"<string>\" }` (see `IxErrorResponse`). Internal enrollment intake may return **404** when the enrollment code is unknown; both intake routes may return **409** when a recording already exists for the same enrollment, affiliate, and partner. Duplicate finalize returns HTTP 200 with `already_finalized`, not an error body.\n\n## Media upload\n\nEach `presignedUrl` targets one recording file. `expiresAt` is UTC date-time. `recordingUploads[]` order is not guaranteed to match `callMetadata.recordings[]` — pair rows using `filename` (or another stable identifier agreed at integration).\n",
+    "version": "0.3.12",
+    "contact": {
+      "name": "SunFire integration",
+      "url": "https://www.sunfireinc.com/"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://test-api.sunfirematrix.com/api",
+      "description": "**Test environment.** OpenAPI paths under **`/ix/...`** are relative to this URL—for example, `POST /ix/callrecordings/internalenrollment` → `https://test-api.sunfirematrix.com/api/ix/callrecordings/internalenrollment`. **JWT:** obtain **`token`** first via **`POST https://test-api.sunfirematrix.com/v2/authenticate`** (see **`paths./v2/authenticate`**; that path overrides **`servers`**—no **`/api`** prefix)."
+    },
+    {
+      "url": "https://api.sunfirematrix.com/api",
+      "description": "**Production environment.** OpenAPI paths under **`/ix/...`** are relative to this URL—for example, `POST /ix/callrecordings/internalenrollment` → `https://api.sunfirematrix.com/api/ix/callrecordings/internalenrollment`. **JWT:** obtain **`token`** first via **`POST https://api.sunfirematrix.com/v2/authenticate`** (see **`paths./v2/authenticate`**; that path overrides **`servers`**—no **`/api`** prefix)."
+    }
+  ],
+  "paths": {
+    "/v2/authenticate": {
+      "servers": [
+        {
+          "url": "https://test-api.sunfirematrix.com",
+          "description": "**Test environment.** This path has **no** `/api` prefix (contrast with call-recordings URLs under top-level **`servers`**)."
+        },
+        {
+          "url": "https://api.sunfirematrix.com",
+          "description": "**Production environment.** This path has **no** `/api` prefix (contrast with call-recordings URLs under top-level **`servers`**)."
+        }
+      ],
+      "post": {
+        "summary": "Authenticate — obtain JWT for IX APIs",
+        "description": "**`POST`** JSON **`username`** and **`password`** from partner onboarding. Response includes **`token`** — pass as\n**`Authorization: Bearer <token>`** when calling **`POST https://test-api.sunfirematrix.com/api/ix/callrecordings/...`**\n(test) or **`POST https://api.sunfirematrix.com/api/ix/callrecordings/...`** (production).\n**`expiresIn`** is a server-specific lifetime hint (seconds).\n",
+        "operationId": "ixV2Authenticate",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IxAuthenticateRequest"
+              },
+              "examples": {
+                "partnerCredentials": {
+                  "summary": "Username and password",
+                  "value": {
+                    "username": "partner_api_user",
+                    "password": "<use secret from onboarding>"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success — JSON includes **`token`** for subsequent **`Bearer`** requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxAuthenticateResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "username": "partner_api_user",
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "expiresIn": 14400
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid username/password (`IxErrorResponse` or legacy error shape — confirm per environment).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ix/callrecordings/internalenrollment": {
+      "post": {
+        "summary": "Register internal-enrollment call (all-in-one)",
+        "description": "Accepts internal enrollment call metadata and returns **`callRecordingId`** (**UUID v4**) plus\n**`recordingUploads[]`**, with one presigned S3 URL per recording item in the request (pair by **`filename`**;\nresponse array order is not guaranteed to match **`callMetadata.recordings[]`**).\nRequest includes top-level **`sunfireEnrollmentCode`** plus **`callMetadata`** (`InternalEnrollmentCallMetadata`):\n**`recordings`** required; **`dateSold`**, **`callType`**, and **`disposition`** are inferred from the enrollment, not sent.\n",
+        "operationId": "ixCallRecordingsInternalEnrollment",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InternalEnrollmentCallRequest"
+              },
+              "examples": {
+                "internalEnrollmentAllInOne": {
+                  "summary": "Internal enrollment call metadata with one recording",
+                  "value": {
+                    "sunfireEnrollmentCode": "WXP003ZBT7",
+                    "callMetadata": {
+                      "leadSource": "P Inbound",
+                      "leadChannel": "P Inbound",
+                      "leadMedium": "EnrollHere",
+                      "leadCampaign": "P Inbound",
+                      "leadCost": 42.5,
+                      "teamName": "Sales Team A",
+                      "recordings": [
+                        {
+                          "filename": "enrollment_call_001.mp3",
+                          "startTime": "2026-01-28T10:31:21Z",
+                          "endTime": "2026-01-28T11:31:21Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success — returns callRecordingId and presigned upload URLs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallRecordingCreateResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "callRecordingId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                      "recordingUploads": [
+                        {
+                          "filename": "enrollment_call_001.mp3",
+                          "presignedUrl": "https://s3.amazonaws.com/bucket-name/org-name/callMetadataRecordings/2026-01-28/enrollment_call_001.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&...",
+                          "expiresAt": "2026-01-28T15:30:00Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or business rule failure (`IxErrorResponse`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT (`IxErrorResponse`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed for this resource (`IxErrorResponse`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No Sunfire enrollment matches the given **`sunfireEnrollmentCode`**.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                },
+                "examples": {
+                  "enrollmentNotFound": {
+                    "value": {
+                      "message": "No enrollment found for the given enrollment code."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A call recording already exists for this enrollment, affiliate, and partner combination.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                },
+                "examples": {
+                  "duplicateCallRecording": {
+                    "value": {
+                      "message": "A call recording already exists for this enrollment, affiliate, and partner."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error (`IxErrorResponse`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ix/callrecordings/externalenrollment": {
+      "post": {
+        "summary": "Register external-enrollment call (all-in-one)",
+        "description": "Accepts **`callMetadata`** plus the same fields as **`ICPostRequest`** (Ignite Customer Post enrollment body).\n**`agent`** is **required** here (**`npn`** and **`email`** mandatory)—stricter than generic Customer Post, where **`agent`** may be omitted.\n**`affiliateId`** is **required** on this route (optional on plain Customer Post).\n\nSunFire processes the external enrollment before issuing presigned URLs.\n\nSuccess response includes **`callRecordingId`** and **`recordingUploads[]`** only (same shape as internal enrollment intake).\n",
+        "operationId": "ixCallRecordingsExternalEnrollment",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalEnrollmentCallRequest"
+              },
+              "examples": {
+                "externalEnrollmentIgniteCustomerPost": {
+                  "summary": "Ignite Customer Post–style body + callMetadata (add partnerId for your tenant)",
+                  "value": {
+                    "partnerId": 9988881710,
+                    "affiliateId": "SFQAUTA01",
+                    "firstName": "Tina",
+                    "lastName": "Smith",
+                    "ndc": true,
+                    "medicareNumber": "7P86V15HJ33",
+                    "medicaidNumber": "98765432AD",
+                    "hasMedicaid": true,
+                    "phone": [
+                      {
+                        "type": "mobile",
+                        "number": "555-123-5680",
+                        "isPrimary": true
+                      }
+                    ],
+                    "email": "test2@example.com",
+                    "zip": "33010",
+                    "county": "12086",
+                    "externalId": "ext-13",
+                    "birthMonth": 1,
+                    "birthDay": 15,
+                    "birthYear": 1980,
+                    "partADate": "2020-01-01",
+                    "partBDate": "2020-02-01",
+                    "enrollmentDate": "2025-05-09",
+                    "externalEnrollmentId": "enroll-13",
+                    "effectiveDate": "2025-06-01",
+                    "plan": {
+                      "contractId": "H1036",
+                      "planId": "054",
+                      "segmentId": "000",
+                      "electionPeriod": "AEP",
+                      "planYear": "2025"
+                    },
+                    "agent": {
+                      "firstName": "SG",
+                      "lastName": "Testor",
+                      "npn": "49865221",
+                      "email": "sg.test@sunfireinc.com"
+                    },
+                    "pharmacy": {
+                      "id": 1669538930
+                    },
+                    "drugs": [
+                      {
+                        "ndc": "00173069700",
+                        "qty": 30,
+                        "frequency": 30
+                      },
+                      {
+                        "ndc": "00143924510",
+                        "qty": 30,
+                        "frequency": 30
+                      }
+                    ],
+                    "doctors": [
+                      {
+                        "id": "1003901893"
+                      }
+                    ],
+                    "parameters": {
+                      "param1": "value1",
+                      "param2": "value2"
+                    },
+                    "callMetadata": {
+                      "leadSource": "P Inbound",
+                      "leadChannel": "P Inbound",
+                      "leadMedium": "EnrollHere",
+                      "leadCampaign": "P Inbound",
+                      "leadCost": 42.5,
+                      "teamName": "Sales Team A",
+                      "dateSold": "2026-01-28T10:22:00Z",
+                      "callType": "enrollment",
+                      "disposition": "sold",
+                      "recordings": [
+                        {
+                          "filename": "enrollment_call_001.mp3",
+                          "startTime": "2026-01-28T10:31:21Z",
+                          "endTime": "2026-01-28T11:31:21Z"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "externalEnrollmentMinimal": {
+                  "summary": "Smaller ICPostRequest + callMetadata (smoke test)",
+                  "value": {
+                    "partnerId": 9988881710,
+                    "affiliateId": "SFQAUTA01",
+                    "firstName": "Jane",
+                    "lastName": "Doe",
+                    "medicareNumber": "1EG4TE5MK72",
+                    "phone": [
+                      {
+                        "type": "mobile",
+                        "number": "5555555555"
+                      }
+                    ],
+                    "zip": "33010",
+                    "externalId": "partner-ext-001",
+                    "birthMonth": 1,
+                    "birthDay": 15,
+                    "birthYear": 1950,
+                    "enrollmentDate": "2026-01-01",
+                    "externalEnrollmentId": "oea-001",
+                    "effectiveDate": "2026-02-01",
+                    "plan": {
+                      "contractId": "H1036",
+                      "planId": "054",
+                      "segmentId": "000",
+                      "planYear": "2025"
+                    },
+                    "agent": {
+                      "npn": "12345678",
+                      "email": "agent.minimal@example.com"
+                    },
+                    "callMetadata": {
+                      "leadSource": "P Inbound",
+                      "leadChannel": "P Inbound",
+                      "leadMedium": "EnrollHere",
+                      "leadCampaign": "P Inbound",
+                      "leadCost": 42.5,
+                      "teamName": "Sales Team A",
+                      "dateSold": "2026-01-28T10:22:00Z",
+                      "callType": "enrollment",
+                      "disposition": "sold",
+                      "recordings": [
+                        {
+                          "filename": "enrollment_call_001.mp3",
+                          "startTime": "2026-01-28T10:31:21Z",
+                          "endTime": "2026-01-28T11:31:21Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success — returns **`callRecordingId`** and **`recordingUploads[]`** (same as internal intake).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalEnrollmentCallResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "callRecordingId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                      "recordingUploads": [
+                        {
+                          "filename": "enrollment_call_001.mp3",
+                          "presignedUrl": "https://s3.amazonaws.com/bucket-name/org-name/callMetadataRecordings/2026-01-28/enrollment_call_001.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&...",
+                          "expiresAt": "2026-01-28T15:30:00Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "IX-layer or request-shape failure before/after IC save, typically **`{ \"message\": \"...\" }`** (`IxErrorResponse`).\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT (`IxErrorResponse`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (`IxErrorResponse`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A call recording already exists for this enrollment, affiliate, and partner combination.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                },
+                "examples": {
+                  "duplicateCallRecording": {
+                    "value": {
+                      "message": "A call recording already exists for this enrollment, affiliate, and partner."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation or downstream rule failure from Ignite Customer Post enrollment processing,\nincluding field validation messages and plan lookup failures.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ICPostValidationErrorResponse"
+                },
+                "examples": {
+                  "missingFirstName": {
+                    "summary": "Joi required field",
+                    "value": {
+                      "statusCode": 422,
+                      "error": "Unprocessable Entity",
+                      "message": "\"firstName\" is required"
+                    }
+                  },
+                  "planNotFound": {
+                    "summary": "Plan / PBP not found",
+                    "value": {
+                      "statusCode": 422,
+                      "error": "Unprocessable Entity",
+                      "message": "Plan details not found for the provided Plan Benefit Package (PBP): H5216-068-000"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error (`IxErrorResponse` or generic error body).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ix/callrecordings/{callRecordingId}/finalize": {
+      "post": {
+        "summary": "Finalize call uploads",
+        "description": "Signals that all files for this call have been uploaded. **No request body.**\nOn success, SunFire returns **`{ \"status\": \"finalized\" }`** when the call transitions to finalized.\nIf this **`callRecordingId`** was **already** finalized, SunFire returns **`{ \"status\": \"already_finalized\" }`** (**HTTP 200**)—same idempotent pattern as other IX finalize flows; do **not** treat as an error.\n",
+        "operationId": "ixCallRecordingsFinalize",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "callRecordingId",
+            "in": "path",
+            "required": true,
+            "description": "UUID v4 returned from internal or external enrollment intake.",
+            "schema": {
+              "$ref": "#/components/schemas/CallRecordingId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success — **`status`** is **`finalized`** when the call was just marked complete,\nor **`already_finalized`** when finalize was already done for this id (**HTTP 200**, idempotent replay).\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinalizeCallResponse"
+                },
+                "examples": {
+                  "finalized": {
+                    "summary": "First successful finalize",
+                    "value": {
+                      "status": "finalized"
+                    }
+                  },
+                  "alreadyFinalized": {
+                    "summary": "Duplicate finalize (success, idempotent)",
+                    "value": {
+                      "status": "already_finalized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — e.g. not all objects uploaded, invalid transition.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "message": "Not all recording files were uploaded before finalize."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed to finalize this call.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown **`callRecordingId`** or finalize not available for this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IxErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT from `POST /v2/authenticate`. Send as `Authorization: Bearer YOUR_JWT_TOKEN` on `/api/ix/callrecordings/*` requests."
+      }
+    },
+    "schemas": {
+      "IxAuthenticateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "username",
+          "password"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Partner API username from onboarding."
+          },
+          "password": {
+            "type": "string",
+            "description": "Partner API password from onboarding (treat as secret; never log in clear text)."
+          }
+        }
+      },
+      "IxAuthenticateResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "username",
+          "token",
+          "expiresIn"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "description": "JWT — send as Authorization Bearer scheme on IX call-recordings routes (`Authorization: Bearer <token>`)."
+          },
+          "expiresIn": {
+            "type": "number",
+            "description": "Token lifetime hint in **seconds** (server-defined; may vary by partner config)."
+          }
+        }
+      },
+      "IxErrorResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable error (IX-style JSON errors for these routes)."
+          }
+        }
+      },
+      "CallRecordingId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID version 4 (RFC 4122). Hyphenated lowercase hex canonical form\n(e.g. `f47ac10b-58cc-4372-a567-0e02b2c3d479`).\n",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+        "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      },
+      "CallRecordingCreateResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "callRecordingId",
+          "recordingUploads"
+        ],
+        "properties": {
+          "callRecordingId": {
+            "$ref": "#/components/schemas/CallRecordingId"
+          },
+          "recordingUploads": {
+            "type": "array",
+            "minItems": 1,
+            "description": "One upload target per **`callMetadata.recordings[]`** entry. **Array order is not guaranteed** to match\nthe request’s **`recordings[]`** order—use **`filename`** on each item to correlate with the matching request row.\n",
+            "items": {
+              "$ref": "#/components/schemas/RecordingUploadTarget"
+            }
+          }
+        }
+      },
+      "RecordingUploadTarget": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "filename",
+          "presignedUrl",
+          "expiresAt"
+        ],
+        "properties": {
+          "filename": {
+            "$ref": "#/components/schemas/RecordingFilename"
+          },
+          "presignedUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL for uploading the corresponding recording file."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the presigned URL expires.",
+            "example": "2026-01-28T15:30:00Z"
+          }
+        }
+      },
+      "InternalEnrollmentCallRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sunfireEnrollmentCode",
+          "callMetadata"
+        ],
+        "properties": {
+          "sunfireEnrollmentCode": {
+            "type": "string",
+            "description": "SunFire enrollment code associated with the internal enrollment.",
+            "example": "WXP003ZBT7"
+          },
+          "callMetadata": {
+            "$ref": "#/components/schemas/InternalEnrollmentCallMetadata"
+          }
+        }
+      },
+      "InternalEnrollmentCallMetadata": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "**`callMetadata`** for **`POST /ix/callrecordings/internalenrollment`** only.\n**Required:** **`recordings`** (non-empty). **Optional:** **`leadSource`**, **`leadChannel`**, **`leadMedium`**,\n**`leadCampaign`**, **`leadCost`**, **`teamName`**.\nDo **not** send **`dateSold`**, **`callType`**, or **`disposition`**—SunFire infers them from **`sunfireEnrollmentCode`**.\n",
+        "required": [
+          "recordings"
+        ],
+        "properties": {
+          "leadSource": {
+            "type": "string",
+            "description": "Optional lead / attribution source."
+          },
+          "leadChannel": {
+            "type": "string",
+            "description": "Optional lead / attribution channel."
+          },
+          "leadMedium": {
+            "type": "string",
+            "description": "Optional lead / attribution medium."
+          },
+          "leadCampaign": {
+            "type": "string",
+            "description": "Optional lead / attribution campaign."
+          },
+          "leadCost": {
+            "type": "number",
+            "format": "float",
+            "description": "Optional numeric cost amount when provided."
+          },
+          "teamName": {
+            "type": "string",
+            "description": "Optional team name associated with the call."
+          },
+          "recordings": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/RecordingInput"
+            }
+          }
+        }
+      },
+      "ICPostPhoneEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "number"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ICPostPlan": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "Plan object for Ignite Customer Post. **`contractId`**, **`planId`**, **`segmentId`**, and **`planYear`**\nare required; **`electionPeriod`** is optional. Additional fields may be accepted depending on program.\n",
+        "required": [
+          "contractId",
+          "planId",
+          "segmentId",
+          "planYear"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string"
+          },
+          "planId": {
+            "type": "string"
+          },
+          "segmentId": {
+            "type": "string"
+          },
+          "planYear": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4
+          },
+          "electionPeriod": {
+            "type": "string"
+          }
+        }
+      },
+      "ICPostAgent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "firstName",
+          "lastName",
+          "email"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "npn": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "ExternalEnrollmentAgent": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "**`agent`** object for **`ExternalEnrollmentCallRequest`** only. Ignite Customer Post does not require **`agent`**,\nbut external enrollment call registration **does**. **`npn`** and **`email`** are **required**; include other agent fields\n(**`firstName`**, **`lastName`**, etc.) when Ignite save validation expects them for your program.\n",
+        "required": [
+          "npn",
+          "email"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "npn": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "ICPostPharmacy": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "chainId": {
+            "type": "integer"
+          }
+        }
+      },
+      "ICPostDrug": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "One drug entry on an enrollment record. `qty` and `frequency` are required on each row.\n\n`frequency` is the number of days in the fill period (for example `30` for a monthly fill, `90`\nfor a quarterly fill). It is **not** doses per day. `qty` is the number of units dispensed for\nthat fill period. Partners that store dosage differently should map to this pair before sending:\n\n| Dosage | Quantity (`qty`) | Frequency |\n| --- | --- | --- |\n| 1/day for 30 days | 30 | 30 |\n| 2/day for 30 days | 60 | 30 |\n| 1/day for 90 days | 90 | 90 |\n| 2/day for 90 days | 180 | 90 |\n",
+        "required": [
+          "qty",
+          "frequency"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "ndc": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number",
+            "description": "Number of units (tablets, capsules, and so on) dispensed for the fill period identified by\n`frequency`. Required. See the `ICPostDrug` schema description for mapping examples.\n"
+          },
+          "frequency": {
+            "type": "number",
+            "description": "Number of days in the fill period. Required. Use `30` for a monthly fill, `90` for a\nquarterly fill, and so on. This is **not** doses per day.\n"
+          },
+          "ps": {
+            "type": "number"
+          },
+          "pm": {
+            "type": "number"
+          }
+        }
+      },
+      "ICPostDoctorAddress": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "address1",
+          "zip"
+        ],
+        "properties": {
+          "address1": {
+            "type": "string"
+          },
+          "address2": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          }
+        }
+      },
+      "ICPostDoctor": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "Doctor row; shape depends on NDC mode. With NDC drugs and **`ndc`** enabled, entries are typically\n`{ \"id\": \"<doctor id>\" }` only.\n",
+        "properties": {
+          "id": {
+            "description": "Doctor identifier (string or number on the wire).",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "npi": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "pcpId": {
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/ICPostDoctorAddress"
+          }
+        }
+      },
+      "SFEnrollmentReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "enrollmentCode",
+          "customerCode",
+          "partnerId",
+          "submitDate",
+          "sessionCode",
+          "sessionPartnerId"
+        ],
+        "properties": {
+          "enrollmentCode": {
+            "type": "string"
+          },
+          "customerCode": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string"
+          },
+          "submitDate": {
+            "type": "string"
+          },
+          "sessionCode": {
+            "type": "string"
+          },
+          "sessionPartnerId": {
+            "type": "string"
+          }
+        }
+      },
+      "ICPostRequestMetadata": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "Optional **`metadata`** on Customer Post. Arbitrary keys may be allowed; confirm typed metadata shapes\nwith your onboarding contact.\n",
+        "properties": {
+          "enrollmentType": {
+            "type": "string"
+          },
+          "sfEnrollmentReferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SFEnrollmentReference"
+            }
+          },
+          "sdrPersonId": {
+            "type": "string"
+          }
+        }
+      },
+      "ICPostRequest": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "Ignite Customer Post body shape (**`ICPostRequest`**). Required fields and validation rules are enforced\nat enrollment time; confirm program-specific requirements with your onboarding contact.\n",
+        "required": [
+          "partnerId",
+          "firstName",
+          "lastName",
+          "medicareNumber",
+          "phone",
+          "zip",
+          "externalId",
+          "birthMonth",
+          "birthDay",
+          "birthYear",
+          "enrollmentDate",
+          "externalEnrollmentId",
+          "effectiveDate",
+          "plan"
+        ],
+        "properties": {
+          "partnerId": {
+            "type": "integer"
+          },
+          "affiliateId": {
+            "type": "string"
+          },
+          "ndc": {
+            "type": "boolean"
+          },
+          "customerSessionCode": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "medicareNumber": {
+            "type": "string"
+          },
+          "medicaidNumber": {
+            "type": "string"
+          },
+          "hasMedicaid": {
+            "type": "boolean"
+          },
+          "phone": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/ICPostPhoneEntry"
+            }
+          },
+          "email": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "county": {
+            "type": "string"
+          },
+          "address1": {
+            "type": "string"
+          },
+          "address2": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "birthMonth": {
+            "type": "integer"
+          },
+          "birthDay": {
+            "type": "integer"
+          },
+          "birthYear": {
+            "type": "integer"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "smoker": {
+            "type": "boolean"
+          },
+          "health": {
+            "type": "string"
+          },
+          "lowIncomeSubsidyCode": {
+            "type": "string"
+          },
+          "partADate": {
+            "type": "string"
+          },
+          "partBDate": {
+            "type": "string"
+          },
+          "pharmacyType": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "enrollmentDate": {
+            "type": "string"
+          },
+          "externalEnrollmentId": {
+            "type": "string"
+          },
+          "effectiveDate": {
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/ICPostPlan"
+          },
+          "agent": {
+            "$ref": "#/components/schemas/ICPostAgent"
+          },
+          "pharmacy": {
+            "$ref": "#/components/schemas/ICPostPharmacy"
+          },
+          "drugs": {
+            "type": "array",
+            "description": "Prescription rows (`ICPostDrug`). Each row requires `qty` (units in the fill) and `frequency`\n(days in the fill period — `30` monthly, `90` quarterly). See `ICPostDrug` for mapping examples.\n",
+            "items": {
+              "$ref": "#/components/schemas/ICPostDrug"
+            }
+          },
+          "doctors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ICPostDoctor"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ICPostRequestMetadata"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ExternalEnrollmentCallRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ICPostRequest"
+          },
+          {
+            "type": "object",
+            "description": "IX call recording extension — requires **`callMetadata`**, a top-level **`agent`** object, and **`affiliateId`**.\n**`agent.npn`** and **`agent.email`** are mandatory ( **`ExternalEnrollmentAgent`** ), unlike plain Customer Post where **`agent`** may be omitted.\n**`affiliateId`** is mandatory here even though it is optional on plain Ignite Customer Post.\n",
+            "required": [
+              "callMetadata",
+              "agent",
+              "affiliateId"
+            ],
+            "properties": {
+              "callMetadata": {
+                "$ref": "#/components/schemas/CallMetadata"
+              },
+              "agent": {
+                "$ref": "#/components/schemas/ExternalEnrollmentAgent"
+              }
+            }
+          }
+        ]
+      },
+      "ExternalEnrollmentCallResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CallRecordingCreateResponse"
+          }
+        ],
+        "description": "Same success payload as internal enrollment intake — **`callRecordingId`** (**UUID v4**) and **`recordingUploads[]`** only.\n"
+      },
+      "ICPostValidationErrorResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "statusCode",
+          "error",
+          "message"
+        ],
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 422
+          },
+          "error": {
+            "type": "string",
+            "example": "Unprocessable Entity"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable validation or rule message from Ignite / ICPost processing."
+          }
+        }
+      },
+      "CallMetadata": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "**`callMetadata`** for **`POST /ix/callrecordings/externalenrollment`** (merged with Ignite Customer Post fields).\n**Required:** **`dateSold`** (ISO 8601 **`date-time`**), **`recordings`** (non-empty). **Optional when sent:** **`leadSource`**, **`leadChannel`**,\n**`leadMedium`**, **`leadCampaign`**, **`leadCost`**, **`teamName`**, **`callType`**, **`disposition`**.\n",
+        "required": [
+          "dateSold",
+          "recordings"
+        ],
+        "properties": {
+          "leadSource": {
+            "type": "string",
+            "description": "Optional lead / attribution source."
+          },
+          "leadChannel": {
+            "type": "string",
+            "description": "Optional lead / attribution channel."
+          },
+          "leadMedium": {
+            "type": "string",
+            "description": "Optional lead / attribution medium."
+          },
+          "leadCampaign": {
+            "type": "string",
+            "description": "Optional lead / attribution campaign."
+          },
+          "leadCost": {
+            "type": "number",
+            "format": "float",
+            "description": "Optional numeric cost amount when provided."
+          },
+          "teamName": {
+            "type": "string",
+            "description": "Optional team name associated with the call."
+          },
+          "dateSold": {
+            "type": "string",
+            "format": "date-time",
+            "description": "**Required.** Sale (or contract-effective) datetime for this call context.\n**ISO 8601** (`date-time`), e.g. **`2026-01-28T10:22:00Z`**. Send **UTC** with a **`Z`** suffix unless partner onboarding specifies otherwise.\n",
+            "example": "2026-01-28T10:22:00Z"
+          },
+          "callType": {
+            "type": "string",
+            "description": "Optional category of call (e.g. enrollment vs service).",
+            "example": "enrollment"
+          },
+          "disposition": {
+            "type": "string",
+            "description": "Optional outcome disposition (controlled vocabulary may be tightened at onboarding).",
+            "example": "sold"
+          },
+          "recordings": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/RecordingInput"
+            }
+          }
+        }
+      },
+      "RecordingFilename": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.(mp3|wav|mp4)$",
+        "description": "Base file name only (no path segments), aligned with **IX** filename rules: **first character** ASCII alphanumeric;\nremaining characters before the extension may be only ASCII alphanumeric, **`.`**, **`_`**, or **`-`** (no spaces or other punctuation).\nExtension must be exactly **`.mp3`**, **`.wav`**, or **`.mp4`** (lowercase). Max **255** characters inclusive.\nEchoed on each **`recordingUploads[]`** row for correlation with the matching **`recordings[]`** entry.\n",
+        "example": "enrollment_call_001.mp3"
+      },
+      "RecordingInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "filename",
+          "startTime",
+          "endTime"
+        ],
+        "properties": {
+          "filename": {
+            "$ref": "#/components/schemas/RecordingFilename"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-01-28T10:31:21Z"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-01-28T11:31:21Z"
+          }
+        }
+      },
+      "FinalizeCallResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "finalized",
+              "already_finalized"
+            ],
+            "description": "**`finalized`** — call moved to finalized (IX processing continues per server behavior).\n**`already_finalized`** — call was already finalized; **HTTP 200** success for idempotent replay (aligned with other IX finalize behavior).\n",
+            "example": "finalized"
+          }
+        }
+      }
+    }
+  }
+}

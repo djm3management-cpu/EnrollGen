@@ -21,6 +21,7 @@ before(async()=>{
  CREATE TABLE telephony_call_attempts(id uuid,tenant_id uuid,call_record_id uuid,parent_call_sid text,agent_id text);
  CREATE TABLE conversely_submissions(id uuid,tenant_id uuid,call_id uuid,twilio_recording_sid text,confirmation_code text,status text,attempts integer,last_error text,updated_at timestamptz,next_attempt_at timestamptz);
  CREATE TABLE ix_uploads(LIKE conversely_submissions);
+ ALTER TABLE ix_uploads ADD COLUMN provider_message text,ADD COLUMN finalized_at timestamptz,ADD COLUMN ix_receipt_id text;
  CREATE TABLE compliance_missing_codes(tenant_id uuid,call_start timestamptz);
  CREATE TABLE compliance_reconciliation(tenant_id uuid,day date);
  INSERT INTO tenants VALUES('${tenant}','org-a'),('${id(7)}','org-b');

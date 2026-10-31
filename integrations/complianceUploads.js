@@ -73,8 +73,8 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
       if(!uploadEnabled(env[provider==='conversely'?'CONVERSELY_UPLOAD_ENABLED':'IX_UPLOAD_ENABLED']))continue;
       if(providers[provider]?.available===false)continue;
       for(let n=0;n<10;n++){
-        const [job]=await rpc('claim_compliance_upload',{p_provider:provider});if(!job)break;
-        let success=false,receipt=null,error=null;
+        const [job]=providers[provider]?.claim?await providers[provider].claim():await rpc('claim_compliance_upload',{p_provider:provider});if(!job)break;
+        let success=false,receipt=null,error=null,failure=null;
         try{
           let call=checked(await db.from('call_records').select('*').eq('id',job.call_id).eq('tenant_id',job.tenant_id).single());
           if(!['enrolled','enrolled_pending_verification'].includes(call.call_outcome))throw Error('enrollment_no_longer_eligible');
@@ -99,8 +99,9 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
             if(result.status<200 || result.status>=300)throw Error(`conversely_http_${result.status}`);
           }else receipt=await providers[provider].deliver(job,call,recording);
           success=true;
-        }catch(e){error=/^[a-z_]+(?:_\d{3})?$/.test(e.message)?e.message:'upload_failed';}
-        await rpc('finish_compliance_upload',{p_provider:provider,p_id:job.id,p_token:job.lease_token,p_success:success,p_error:error,p_receipt:receipt});
+        }catch(e){failure=e;error=/^[a-z_]+(?:_\d{3})?$/.test(e.message)?e.message:'upload_failed';}
+        if(providers[provider]?.finish)await providers[provider].finish(job,{success,receipt,error,failure});
+        else await rpc('finish_compliance_upload',{p_provider:provider,p_id:job.id,p_token:job.lease_token,p_success:success,p_error:error,p_receipt:receipt});
         log(JSON.stringify({event:'compliance_upload',provider,id:job.id,call_id:job.call_id,attempt:job.attempts,success,error}));
       }
     }

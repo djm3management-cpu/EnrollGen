@@ -1,4 +1,5 @@
 import {useCallback,useEffect,useState} from 'react';
+import EnrollmentIntake from '../enrollment/EnrollmentIntake';
 import {useAppAuth} from '../../context/AuthContext';
 import {fetchWithClerk} from '../../lib/clerkFetch.js';
 
@@ -6,7 +7,7 @@ export default function ComplianceUploads(){
  const {getToken,user,organization}=useAppAuth();
  const identity=`${user?.id||''}:${organization?.id||''}`;
  const [data,setData]=useState(null),[error,setError]=useState('');
- const [codes,setCodes]=useState({}),[running,setRunning]=useState(false);
+ const [intakeCall,setIntakeCall]=useState(null),[running,setRunning]=useState(false);
  const load=useCallback(async()=>{
   try{
    const response=await fetchWithClerk(getToken,'/.netlify/functions/compliance-uploads');
@@ -27,13 +28,6 @@ export default function ComplianceUploads(){
    await load();
   }catch(e){setError(e.message);}finally{setRunning(false);}
  };
- const fix=async call=>{
-  const code=codes[call];if(!code?.trim())return;
-  try{
-   const response=await fetchWithClerk(getToken,'/.netlify/functions/compliance-uploads',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({call_id:call,sunfire_code:code})});
-   const result=await response.json();if(!response.ok)throw Error(result.error);await load();
-  }catch(e){setError(e.message);}
- };
  if(!data||data.identity!==identity)return error?<p className="ops-error" role="alert">{error}</p>:null;
  return <details className="contacts-section">
   <summary className="contacts-section-head">COMPLIANCE UPLOADS · {data.failures.length} errors · {data.missing.length} missing codes</summary>
@@ -53,10 +47,11 @@ export default function ComplianceUploads(){
     {(data.weekly.results||[]).map(row=><tr key={row.agent_id}><td>{row.agent_name}</td><td>{row.status}</td><td>{(row.reason||'').replaceAll('_',' ')}</td><td>{row.attempts}/5</td></tr>)}
    </tbody></table>
   </>:<p className="contacts-muted">No Conversely run recorded.</p>}
-  <p className="contacts-muted">UHC enrollments missing a SunFire code for more than two hours</p>
-  {data.missing.map(row=><div key={row.call_id}>{row.agent_name} · {new Date(row.call_start).toLocaleString()} · {row.call_id} <label>SunFire Confirmation Codes<textarea value={codes[row.call_id] || ''} onChange={event=>setCodes(previous=>({...previous,[row.call_id]:event.target.value}))}/></label><button data-key-role="primary" className="contacts-mini-btn" disabled={!codes[row.call_id]?.trim()} onClick={()=>void fix(row.call_id)}>Save codes</button></div>)}
+  <p className="contacts-muted">UHC enrollments with an invalid SunFire code or a missing code for more than two hours</p>
+  {data.missing.map(row=><div key={row.call_id}>{row.agent_name} · {new Date(row.call_start).toLocaleString()} · {row.call_id} <button data-key-role="primary" className="contacts-mini-btn" onClick={()=>setIntakeCall(row.call_id)}>Edit enrollment / SunFire code</button></div>)}
+  {intakeCall&&<EnrollmentIntake callId={intakeCall} onClose={()=>setIntakeCall(null)} onSaved={()=>{setIntakeCall(null);void load();}}/>}
   <table className="call-log-table"><thead><tr><th>Provider</th><th>Call</th><th>Status</th><th>Attempts</th><th>Error</th></tr></thead>
-   <tbody>{data.failures.map(row=><tr key={row.id}><td>{row.provider}</td><td>{row.call_id}</td><td>{row.status}</td><td>{row.attempts}/5</td><td>{row.last_error}</td></tr>)}</tbody></table>
+   <tbody>{data.failures.map(row=><tr key={row.id}><td>{row.provider}</td><td>{row.call_id}</td><td>{row.status}</td><td>{row.attempts}/5</td><td>{row.last_error}{row.provider_message&&<span> · {row.provider_message}</span>}</td></tr>)}</tbody></table>
   <p className="contacts-muted">Daily UHC reconciliation · household codes count as separate expected uploads</p>
   <table className="call-log-table"><thead><tr><th>Date (ET)</th><th>Enrollments</th><th>Expected uploads</th><th>Uploaded</th><th>Failed</th><th>Missing codes</th><th>Gap</th></tr></thead>
    <tbody>{data.reconciliation.map(row=><tr key={row.day}><td>{row.day}</td><td>{row.enrollments}</td><td>{row.expected_uploads}</td><td>{row.uploaded}</td><td>{row.failed}</td><td>{row.missing_codes}</td><td>{row.expected_uploads-row.uploaded}</td></tr>)}</tbody></table>
