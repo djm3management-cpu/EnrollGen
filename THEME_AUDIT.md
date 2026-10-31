@@ -7487,3 +7487,6 @@ All native selects and combobox/listbox filter triggers use flat filled backgrou
 | Landing / sign-in | Pending | Pending | Shared CSS wired; visual verification outstanding |
 
 The overall refresh is **not complete**. Broad style coverage has been added, but the source audit still contains unclassified button roles, raw colors, legacy borders/weights beneath overrides, and ambiguous descriptions. Those are not silently certified. Dropdown flat-field correction is implemented; caret geometry and button role coverage still need per-screen inspection. Resolve local backend signing-key configuration through the normal environment setup (do not put credentials in this audit) before accepting populated-screen QA.
+
+## Revision — phase 2 roles
+White local script/rail/operations terminal palettes now resolve neutral labels/data instead of orange. Script bars explicitly use blue/white; reading text uses primary text, cues secondary text. Genuine warning/pending semantic tokens remain amber. Dashboard data labels are neutral. Source scan includes components and flows; protected map colors, emoji labels, and exported PDF score colors are retained.

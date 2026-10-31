@@ -527,7 +527,7 @@ html[data-platform="windows"] {
   --font-display: var(--font-primary);
   --font-body: var(--font-primary);
   --font-mono: var(--eg-font-mono);
-  --font-script-read: var(--font-primary);
+  --font-script-read: Tahoma, Verdana, "Segoe UI", sans-serif;
 }
 
 html[data-platform="windows"],
