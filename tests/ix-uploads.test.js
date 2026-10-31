@@ -118,7 +118,10 @@ test('IX credentials and base URLs are isolated by environment',()=>{
 });
 test('daily summary is durable, addressed to Mike and sends once per tenant/day',async()=>{
  const sent=[];
- const opts={env:{RESEND_API_KEY:'mail-key',INTEGRATIONS_REPORT_FROM:'reports@example.test'},now:()=>Date.now()+86400000,
+ // Use the fixture's reporting day, independent of UTC/New York midnight.
+ const reportDay=(await query('SELECT day::text FROM compliance_reconciliation LIMIT 1')).rows[0].day;
+ const reportTime=new Date(`${reportDay}T17:00:00Z`).getTime()+86400000;
+ const opts={env:{RESEND_API_KEY:'mail-key',INTEGRATIONS_REPORT_FROM:'reports@example.test'},now:()=>reportTime,
   send:async(url,body,headers)=>{sent.push({url,body:JSON.parse(body),headers});return {status:200};}};
  await dailySummaries(db,opts);await dailySummaries(db,opts);
  assert.equal(sent.length,1);assert.deepEqual(sent[0].body.to,['mike@newgenhealthsolutions.com']);

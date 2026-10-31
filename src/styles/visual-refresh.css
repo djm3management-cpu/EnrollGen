@@ -413,3 +413,6 @@ html:not(.dark) {
 }
 #root .call-log-toolbar-icon { border:0 !important; background:var(--bg-input) !important; box-shadow:none !important; }
 #root button.call-log-toolbar-icon { background:transparent !important; }
+/* Wordmark light-mode color requested after the original brand exclusion. */
+html:not(.dark) .top-bar-logo-text,
+html:not(.dark) .landing-logo-text { color:#0066CC !important; }
