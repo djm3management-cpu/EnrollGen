@@ -494,3 +494,22 @@ html:not(.dark) #root :is(.sep-map-section,.sep-map-landing,.sep-map-compact,.se
  background:var(--bg-elevated) !important;
  background-image:none !important;
 }
+
+/* Stronger blue state/county map palette in the white theme. */
+html:not(.dark) .sep-map-section {
+ --state-map-fill:color-mix(in srgb,#0066CC 28%,transparent);
+ --state-map-stroke:color-mix(in srgb,#0066CC 55%,transparent);
+ --state-map-hover-fill:#0057B0; --state-map-hover-stroke:#004A96;
+ --state-map-selected-fill:#004A96; --state-map-selected-stroke:#004A96;
+ --state-map-label:#1F2937; --state-map-active-label:#FFFFFF;
+}
+html:not(.dark) .sep-penetration {
+ --county-map-color:#0066CC; --county-map-base-opacity:28%;
+ --county-map-base-fill:color-mix(in srgb,#0066CC 28%,#FFFFFF);
+}
+html:not(.dark) #root .sep-penetration-map path { stroke:color-mix(in srgb,#0066CC 55%,transparent); }
+html:not(.dark) #root .sep-penetration-map path:is(:hover,:focus-visible) { fill:#0057B0; stroke:#004A96; }
+html:not(.dark) #root .sep-penetration-map path[data-selected="true"] { fill:#004A96; stroke:#004A96; }
+html:not(.dark) #root .sep-penetration > .sep-tab-bar {
+ background:transparent !important; background-image:none !important; box-shadow:none !important;
+}

@@ -18,8 +18,8 @@ export function StateMap({ selectedState, onStateClick, compact = false }) {
 
     if (isSel) {
       return {
-        fill: "color-mix(in srgb, var(--danger) 35%, transparent)",
-        stroke: "var(--danger)",
+        fill: "var(--state-map-selected-fill, color-mix(in srgb, var(--danger) 35%, transparent))",
+        stroke: "var(--state-map-selected-stroke, var(--danger))",
         strokeWidth: 2,
         cursor: "pointer",
         filter: "url(#sep-glow)",
@@ -27,16 +27,16 @@ export function StateMap({ selectedState, onStateClick, compact = false }) {
     }
     if (isHov) {
       return {
-        fill: "color-mix(in srgb, var(--danger) 18%, transparent)",
-        stroke: "color-mix(in srgb, var(--danger) 60%, transparent)",
+        fill: "var(--state-map-hover-fill, color-mix(in srgb, var(--danger) 18%, transparent))",
+        stroke: "var(--state-map-hover-stroke, color-mix(in srgb, var(--danger) 60%, transparent))",
         strokeWidth: 1.5,
         cursor: "pointer",
         filter: "url(#sep-glow-s)",
       };
     }
     return {
-      fill: "color-mix(in srgb, var(--danger) 8%, transparent)",
-      stroke: "color-mix(in srgb, var(--text-primary) 12%, transparent)",
+      fill: "var(--state-map-fill, color-mix(in srgb, var(--danger) 8%, transparent))",
+      stroke: "var(--state-map-stroke, color-mix(in srgb, var(--text-primary) 12%, transparent))",
       strokeWidth: 0.8,
       cursor: "pointer",
       filter: undefined,
@@ -101,7 +101,7 @@ export function StateMap({ selectedState, onStateClick, compact = false }) {
                 x={lx} y={ly}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fill={isSel ? "var(--text-primary)" : isHov ? "var(--text-primary)" : "var(--text-muted)"}
+                fill={isSel || isHov ? "var(--state-map-active-label, var(--text-primary))" : "var(--state-map-label, var(--text-muted))"}
                 style={{
                   fontFamily: "var(--font-primary)",
                   fontWeight: 800,

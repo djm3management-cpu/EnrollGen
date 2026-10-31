@@ -8241,3 +8241,7 @@ Removed white-mode background gradients from the state map wrappers, county map 
 
 ## 2026-10-31 — remove sample ZIP suggestions
 Removed the Intelligence search suggestion row from `src/components/sep/SearchBar.jsx`: “Try:” and sample ZIP buttons “33601”, “77002”, “28801”, “40502”, “90001”. Removed its unused constant/prop. ZIP entry and search behavior are unchanged.
+
+## 2026-10-31 — blue state and county maps
+White-mode state map base fill increased from 8% red to 28% corporate blue; hover uses darker blue and selection uses pressed blue, both with white labels. County map uses the same blue palette, higher base opacity, darker hover and selected county. Penetration rates, missing-data handling and shade ordering remain unchanged. Terminal uses the original fallback colors/opacity. Changes remain local until the user finishes the batch.
+- Removed the dark background/shadow from the white-mode MA Penetration / Counties selector strip; buttons sit directly on the map panel.

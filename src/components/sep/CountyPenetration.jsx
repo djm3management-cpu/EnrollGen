@@ -38,7 +38,7 @@ export function CountyPenetration({ state, selectedCounty, counties = [], onCoun
             const county = counties.find(name => countyKey(name) === countyKey(path.county)) || path.county;
             const active = countyKey(selectedCounty) === countyKey(county);
             const select = () => onCountySelect(county);
-            return <path key={path.fips} d={path.d} fill={layer === 'penetration' ? penetrationColor(row) : 'var(--bg-elevated)'}
+            return <path data-selected={active} key={path.fips} d={path.d} fill={layer === 'penetration' ? penetrationColor(row) : 'var(--county-map-base-fill, var(--bg-elevated))'}
               stroke={active ? 'var(--text-primary)' : 'var(--border-default)'} strokeWidth={active ? 2.5 : 0.6}
               fillRule="evenodd" role="button" tabIndex={0} aria-label={`${path.county}: ${penetrationLabel(row)}`}
               onClick={select} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(); } }}>
