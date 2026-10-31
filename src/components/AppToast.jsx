@@ -32,10 +32,13 @@ export default function AppToast({ children, message, tone = 'info', onDismiss }
     const observer = new ResizeObserver(position);
     observer.observe(document.body);
     document.querySelectorAll('.top-bar-shell, .contacts-subviews').forEach(bar => observer.observe(bar));
+    const mutations = new MutationObserver(position);
+    mutations.observe(document.body, { childList: true, subtree: true });
     window.addEventListener('resize', position);
     window.addEventListener('scroll', position, true);
     return () => {
       observer.disconnect();
+      mutations.disconnect();
       window.removeEventListener('resize', position);
       window.removeEventListener('scroll', position, true);
     };

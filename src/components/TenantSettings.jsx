@@ -563,7 +563,7 @@ export default function TenantSettings({ currentUser = null }) {
               onChange={(event) => updateProfile("ghl_location_id", event.target.value)}
             />
           </SettingsField>
-          
+
         </section>
 
         <section className="tenant-settings-card tenant-settings-card-wide">

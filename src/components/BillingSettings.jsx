@@ -184,7 +184,7 @@ export default function BillingSettings() {
             <span>Starter</span>
             <strong>$49</strong>
           </div>
-          
+
           <button data-key-role="secondary"
             type="button"
             className="billing-button"
@@ -204,7 +204,7 @@ export default function BillingSettings() {
             <span>Pro</span>
             <strong>$99</strong>
           </div>
-          
+
           <button data-key-role="secondary"
             type="button"
             className="billing-button is-primary"

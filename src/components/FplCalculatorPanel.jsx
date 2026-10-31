@@ -353,7 +353,7 @@ export default function FplCalculatorPanel({
               >
                 ${acaEstimate.low} to ${acaEstimate.high}/month
               </div>
-              
+
             </div>
           )}
         </motion.div>

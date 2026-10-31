@@ -8,6 +8,6 @@ export default React.memo(function SectionWrapUp({scriptBody}) {
   return <section className="section card active-card" data-section="8">
     <h2>Closing</h2>
     <ScriptBox>{scriptBody || MA_CLOSING}</ScriptBox>
-    
+
   </section>;
 });

@@ -318,7 +318,7 @@ function ToolCard({ tool, onOpen }) {
           <span className="at-tool-title-row">
             <span className="at-tool-title">{tool.title}</span>
           </span>
-          
+
         </span>
       </span>
     </button>
@@ -358,7 +358,7 @@ function ToolModal({ tool, onClose, children }) {
           <div className="at-modal-copy">
             <div className="at-modal-kicker">{tool.groupLabel}</div>
             <h3 className="at-modal-title">{tool.title}</h3>
-            
+
           </div>
         </div>
 
@@ -559,7 +559,7 @@ function CitizenshipDocsReference({
     <div className="at-doc-shell">
       <div className="at-doc-intro">
         <h4 className="at-doc-title">{reference.title}</h4>
-        
+
       </div>
 
       <div className="at-doc-status-tabs" role="tablist" aria-label="Citizenship status">

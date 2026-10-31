@@ -133,8 +133,8 @@ html:not(.dark) #root :is(.left-rail-panel-shell.left-rail-panel-shell--sep-qual
 #root button[data-key-role="primary"] { --key-top:var(--key-primary-top); --key-bottom:var(--key-primary-bottom); --key-text:var(--key-primary-text); }
 #root button[data-key-role="destructive"] { --key-top:var(--key-danger-top); --key-bottom:var(--key-danger-bottom); --key-text:#FFFFFF; }
 #root button[data-key-role="go"] { --key-top:var(--key-go-top); --key-bottom:var(--key-go-bottom); --key-text:var(--key-go-text); }
-#root button[data-key-role="icon"]:not(:where(.top-bar-shell *)) { background:transparent !important; box-shadow:none !important; border:0 !important; color:var(--text-secondary) !important; }
-#root button[data-key-role="icon"]:not(:where(.top-bar-shell *)):hover { background:var(--focus-glow) !important; color:var(--accent) !important; }
+#root button[data-key-role="icon"]:not(:where(.top-bar-shell *,html.dark [data-crm-view="contacts"] *)) { background:transparent !important; box-shadow:none !important; border:0 !important; color:var(--text-secondary) !important; }
+#root button[data-key-role="icon"]:not(:where(.top-bar-shell *,html.dark [data-crm-view="contacts"] *)):hover { background:var(--focus-glow) !important; color:var(--accent) !important; }
 #root .top-bar-shell :is(.top-bar-settings-button,.theme-toggle,.phone-dd__trigger) { width:32px; height:28px; display:inline-flex; justify-content:center; align-items:center; }
 
 /* Background steps replace container outlines; protected objects retain theirs. */
@@ -155,3 +155,261 @@ html:not(.dark) #root :is(.left-rail-panel-shell.left-rail-panel-shell--sep-qual
  background:var(--bg-surface) !important; box-shadow:none !important; color:var(--text-primary) !important;
 }
 #root button[aria-pressed="true"]:not(:where(.contacts-subviews *,[data-key-role="primary"],[data-key-role="go"],[data-key-role="destructive"])) { color:var(--accent) !important; }
+
+/* Audited decorative warm-color uses in white mode. Status warnings remain semantic. */
+html:not(.dark) #root :is(.sf-dot--amber) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.sf-savings-callout.is-negative) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sf-empty-state, .sf-inline-lock) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-card) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-dismiss:hover) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-icon) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.ancillary-popup-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-copy, .ancillary-popup-note, .ancillary-popup-footnote, .ancillary-popup-followup-summary, .ancillary-popup-recap-meta, .ancillary-popup-link-detail) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-followup-summary) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-chip) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-link) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-link-num, .ancillary-popup-recap-index) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.ancillary-popup-link-title, .ancillary-popup-recap-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-total) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-complete-btn) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.ancillary-popup-complete-btn:hover) {background:var(--bg-surface) !important;border-color:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.ancillary-popup-pill) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-accordion-toggle) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-accordion-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ancillary-popup-accordion-arrow) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-feed-mini) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-feed-mini__entry) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-msg) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-msg--info) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-msg--remind) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.rail-minimize-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-full, .right-rail-overlay, .right-rail-toggle, .left-rail-footer, .top-panel-overlay--tools) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-full > .right-rail-scroll, .right-rail-overlay) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-scroll::-webkit-scrollbar-thumb:hover, .right-rail-overlay::-webkit-scrollbar-thumb:hover) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.right-rail-widget-shell, .right-rail-control-panel, .agent-availability-panel) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-widget-header) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.right-rail-widget-content) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-control-panel .copilot-pill-button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-control-panel .copilot-pill-button--analyze:not(:disabled)) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ask-copilot-mini) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ask-copilot-mini__send) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.mini-live-transcript, .copilot-feed-mini, .compliance-mini) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.mini-live-transcript__text) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-feed-mini__entry, .copilot-msg) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-msg--remind) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-floating-alert) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-floating-alert__text) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.panel-empty--input .panel-empty-dot, .panel-empty--ai .panel-empty-dot) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.agent-availability-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.compliance-mini .section-timer--inline) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.compliance-mini__category-name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.right-rail-toggle svg) {color:var(--text-secondary) !important;stroke:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-command-market) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-tab-amber) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-filter-label) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-ticker) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-ticker-item) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-ticker-item.is-callback .icon) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-section-head) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-section-head .ops-cmd) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-window-toggle button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-window-toggle button:hover) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row .name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row.is-rank-1 .name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row .value) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row.is-rank-1 .value) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row .bar) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-lb-row .bar.amber) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-detail-toggle) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-detail-grid strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-control select, .operations-tab .ops-custom-range input) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-date-buttons button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-metric-value) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-export-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-sort-th button:hover, .operations-tab .ops-sort-th.is-active button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-sort-th.is-active .ops-sort-indicator) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-table tbody td) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-table tbody td.num) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-time-cell) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-out-callback) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-table tbody tr.is-selected .ops-out-callback) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-carrier-row .name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-carrier-row .bar) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-carrier-row .pct) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-compliance-row .val) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-inline-empty) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-briefing-card strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-briefing-card span) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-collapsible-head) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-stat-grid strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-coaching-summary p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-rank .name) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-agent-rank strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-detail-tabs button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-summary-box p, .operations-tab .ops-coaching-priority p, .operations-tab .ops-beneficiary-box p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-utterance p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-wpm-head strong, .operations-tab .ops-kpi-pair strong, .operations-tab .ops-beneficiary-row strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-wpm-track .marker) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-sentiment-chart polyline) {stroke:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-gauge .ring span) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-list-block p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-risk-badge.medium) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-compliance-overview strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-category-row strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-followup-filters button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-followup-row .customer) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-followup-row select) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-pipeline-cell .val) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-pipeline-cell .val.is-amber) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-tracker-row.due .dot) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-tracker-row.due .date) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-tracker-row .customer) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-tracker-row .meta) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.operations-tab .ops-cursor) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.secondary) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-reminder-label) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.part-b-toggle .part-b-premium-trigger) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.flow-main .active-card, .card.active-card, .flow-script-card.active-card) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.client-quick-script-panel) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.client-quick-script-panel__header) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.client-quick-script-section__lines p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.flow-script-card.active-card > div:first-child, .card.active-card > h2) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.script-box) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.script-box.verbatim, .script-box.verbatim *) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.script-box .copy-btn, .active-card .copy-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.script-box-editor) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.flow-script-text) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-voicemail-section.is-open .u65-voicemail-toggle) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-nepq-group.is-open .u65-nepq-group__state) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-nepq-interpolation) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-nepq-choice.is-selected) {border-color:var(--chart-grid) !important;color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-nepq-callout.is-open .u65-nepq-callout__toggle) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.u65-nepq-capture:focus-within) {border-color:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.u65-nepq-capture__input) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.section-next-action .no-enrollment-wrapup-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.section-next-action .no-enrollment-wrapup-btn:hover:not(:disabled)) {border-color:var(--chart-grid) !important;color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-reference-badge) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.prompter-interim) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-setup-popup-shell .ancillary-popup-icon) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.copilot-setup-popup-shell .ancillary-popup-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.copilot-setup-popup-note strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-client-sidebar__summary strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-finder) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-finder__header h2) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-finder__header p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-category__trigger) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-category.is-expanded .aca-ffm-sep-category__trigger) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-category__questions li) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.aca-ffm-sep-category__notes dd) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-notes-widget) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-notes-widget-header) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.agent-notes-widget-input) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .left-rail-tool-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier :is(   .left-rail-tool-btn.is-active,   .left-rail-tool-btn--finder.is-active,   .left-rail-tool-btn--qualifier.is-active,   .left-rail-tool-btn--snp.is-active )) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .left-rail-tool-prompt) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier :is(   .sep-qualifier-action,   .sep-qualifier-secondary,   .sep-qualifier-back,   .sep-qualifier-primary,   .sep-qualifier-toggle,   .left-rail-tool-start-btn,   .left-rail-tool-minimize,   .sep-finder-trigger-btn,   .sep-finder-trigger-refresh,   .sep-finder-refresh,   .sep-finder-card-detail-trigger,   .snp-routing-subsection-trigger )) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .sep-qualifier-primary, .left-rail-panel-shell--sep-qualifier .left-rail-tool-start-btn, .left-rail-panel-shell--sep-qualifier .sep-finder-trigger-btn) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .snp-routing-progress-fill) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .snp-routing-recommendation-badge) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-panel-shell--sep-qualifier .snp-routing-alert.is-conditional, .left-rail-panel-shell--sep-qualifier .sep-state-card-fema) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-range-row) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-scope select) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-heading h1) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard button:hover, .agent-dashboard button[aria-pressed="true"]) {color:var(--text-secondary) !important;border-color:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.agent-dash-metric) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-metric strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-panel h2) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-chart text) {fill:var(--accent) !important;}
+html:not(.dark) #root :is(.agent-dash-call-bar) {fill:var(--accent) !important;}
+html:not(.dark) #root :is(.agent-dash-reference line) {stroke:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.agent-dash-reference text) {fill:var(--accent) !important;}
+html:not(.dark) #root :is(.agent-dash-empty, .agent-dash-note) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dash-pie-slice:focus-visible) {stroke:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.agent-dash-pie-tooltip) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard th, .agent-dashboard td) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard thead) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.agent-dashboard td:nth-child(2)) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ma-script-direction-select) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ma-script-direction-caret) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.ma-script-line::before) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.eg-audio-share-button) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.left-rail-handle-pip) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.compliance-note, .callout-compliance) {background:var(--bg-surface) !important;color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.compliance-note::before) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.compliance-note__label, .compliance-note-label) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.progress-dot__pill.is-active) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.subscription-banner) {background:var(--bg-surface) !important;color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-snp-badge) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-product-badge.pdp) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-product-badge.csnp) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-urgency-pill.medium) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.sep-select-county-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.fema-feed-type.pa) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-doc-note-label) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-doc-field-alias) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-training-subheading.is-minor) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-training-alert.is-note .at-training-alert-label) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .top-panel-header) {background:var(--accent) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .top-panel-close:hover) {background:var(--bg-surface) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .at-root) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .at-tool-card) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .at-tool-icon-badge, .top-panel-overlay--tools .at-tool-icon-badge-large) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.top-panel-overlay--tools .at-tool-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-modal) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-modal-title) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-modal-close) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-modal .at-link-name, .at-modal .at-carrier-name, .at-modal .at-doc-title, .at-modal .at-doc-detail-title, .at-modal .at-doc-card-title, .at-modal .at-doc-field-name, .at-modal .at-sep-ref-header h4, .at-modal .at-sep-ask) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-shell) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-stat strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-question-card h4) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-choice) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-feedback p, .at-quiz-missed-card p) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-next-btn, .at-quiz-secondary-btn) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-final-main strong) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-section-title span) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.at-quiz-missed-question) {color:var(--text-secondary) !important;}
+html:not(.dark) #root :is(.eg-rail-card__field-key,.eg-rail-card__label,.eg-rail-card__field-label,.compliance-mini__section-label) { color:var(--text-secondary) !important; }
+html:not(.dark) #root label:not(:where(.phone-dd *)) { color:var(--text-secondary) !important; }
+html:not(.dark) #root .progress-dot__pill.is-active { background:var(--accent) !important; }
+#root .script-box-header button { font-family:var(--font-primary) !important; }
+
+/* Final role precedence over legacy terminal declarations. */
+html:not(.dark) { --text-label:var(--text-secondary); color-scheme:light; }
+html:not(.dark) #root :is(.script-box.verbatim,.script-box.verbatim *,.script-box-editor,.flow-script-text,.flow-script-text *,.ma-script-line) {
+ color:var(--text-primary) !important; font-family:Tahoma,Verdana,"Segoe UI",sans-serif !important;
+}
+html:not(.dark) #root :is(.script-box.verbatim .ma-script-cue,.script-box.verbatim .ma-script-instruction) { color:var(--text-secondary) !important; }
+html:not(.dark) #root :is(.card.active-card > h2,.flow-script-card.active-card > div:first-child),
+html:not(.dark) #root :is(.card.active-card > h2,.flow-script-card.active-card > div:first-child) * { color:#FFFFFF !important; }
+#root .top-bar-shell :is(.top-bar-settings-button,.theme-toggle,.phone-dd__trigger) {
+ background:linear-gradient(var(--key-secondary-top),var(--key-secondary-bottom)) !important;
+ color:var(--key-secondary-text) !important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.25),0 1px 2px var(--key-drop) !important;
+}
+
+/* Latest corporate contrast and field visibility requirements. */
+html:not(.dark) #root :is(label,td,th,.eg-rail-card__field-key,.eg-rail-card__field-value,.compliance-mini__section-label,.agent-dash-metric,.agent-dash-metric strong,.agent-dash-status,.agent-dash-range-row,.agent-dash-empty,.agent-dash-note) { color:var(--text-primary) !important; }
+html:not(.dark) #root :is(.eg-rail-card,.tenant-settings-card,.sf-panel,.agent-dash-panel) { background:var(--bg-surface) !important; }
+html:not(.dark) #root :is(.eg-rail-card,.tenant-settings-card,.sf-panel,.agent-dash-panel) :is(input,textarea,select) { background:#FFFFFF !important; }
+html:not(.dark) #root .eg-rail-card__field-value { background:#FFFFFF !important; color:var(--text-primary) !important; }
+html:not(.dark) #root :is(.left-rail-tool-btn.is-active,.right-rail-widget-header,.agent-notes-widget-header,.client-quick-script-panel__header,.top-panel-overlay--tools .top-panel-header),
+html:not(.dark) #root :is(.left-rail-tool-btn.is-active,.right-rail-widget-header,.agent-notes-widget-header,.client-quick-script-panel__header,.top-panel-overlay--tools .top-panel-header) * {
+ color:#FFFFFF !important;
+}
+html:not(.dark) #root :is(.left-rail-tool-btn.is-active,.right-rail-widget-header) { background:var(--accent) !important; }
+html:not(.dark) {
+ --key-primary-top:#1268BC; --key-danger-top:#D52E2E; --key-go-top:#15803D;
+ --key-secondary-text:#1F2937;
+}
+.dark { --key-danger-top:#CF3027; --key-danger-bottom:#A91E17; }
+/* Panel notices keep their local width and never become viewport banners. */
+#root :is(.billing-alert,.flow-compliance-banner,.sf-warning-banner,.snp-routing-alert,.compliance-review-banner,.compliance-mini__violation-banner,.call-persistence-error) {
+ max-width:420px; width:auto; border:0 !important; box-shadow:none;
+ position:relative; inset:auto; overflow-wrap:anywhere;
+}
+#root .call-log-toolbar-icon { border:0 !important; background:var(--bg-input) !important; box-shadow:none !important; }
+#root button.call-log-toolbar-icon { background:transparent !important; }
