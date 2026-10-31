@@ -7892,3 +7892,9 @@ White local script/rail/operations terminal palettes now resolve neutral labels/
 
 ## Revision — phase 3
 Explicit presentation-only button role attributes document action classifications. Top-nav tabs now adopt secondary glossy keys and pressed active state without underlines, per updated request. Main script START is primary/lg. Native selects remain flat, and icon-only actions remain flat. No event handlers or data requests changed during classification.
+
+## Revision — phase 4
+Container borders removed with explicit protected-subtree exclusions. Fields are flat in all states, with accent outline only on focus. Panel headers are flat. Inline errors stay in flow within their owner, bounded to 420px; global errors use the shared toast stack. Phone controls, map objects, pipeline columns/cards, and outlined badges remain excluded.
+
+## Revision — phase 5
+Removed high-weight declarations from non-protected CSS; logo's Formula1 remains isolated. Reading selectors cover MA ScriptBox/branches, Med Sup, ACA/state ACA, U65, and ancillary/annuity shared flow text. Windows no longer overrides the script font with Avenir. Avenir kit is absent, so the explicitly requested fallback stack is used; no claim of Adobe-hosted font delivery is made.

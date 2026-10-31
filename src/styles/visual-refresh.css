@@ -136,3 +136,22 @@ html:not(.dark) #root :is(.left-rail-panel-shell.left-rail-panel-shell--sep-qual
 #root button[data-key-role="icon"]:not(:where(.top-bar-shell *)) { background:transparent !important; box-shadow:none !important; border:0 !important; color:var(--text-secondary) !important; }
 #root button[data-key-role="icon"]:not(:where(.top-bar-shell *)):hover { background:var(--focus-glow) !important; color:var(--accent) !important; }
 #root .top-bar-shell :is(.top-bar-settings-button,.theme-toggle,.phone-dd__trigger) { width:32px; height:28px; display:inline-flex; justify-content:center; align-items:center; }
+
+/* Background steps replace container outlines; protected objects retain theirs. */
+#root :is(div,section,article,aside,main,header,footer,fieldset,form,table):not(:where(
+ .phone-dd,.phone-dd *, .phone-toast,.phone-toast *, .phone-active-bar,.phone-active-bar *,
+ html.dark [data-crm-view="contacts"],html.dark [data-crm-view="contacts"] *,
+ .sep-map-section,.sep-map-section *, .sep-penetration-map,.sep-penetration-map *,
+ .opps-card,.opps-card *, .opps-column,.opps-column *,
+ [class*="badge"],[class*="chip"],[class*="tag"],[class*="legend"],
+ .top-bar-logo-text,.landing-logo-text
+)) { border:0 !important; outline:none; }
+#root :is(.card,.eg-card,.sf-panel,.script-box,.flow-script-line,.agent-status-log,.call-log-table-wrap,.tenant-settings-card,.billing-panel,.contacts-section):not(:where(html.dark [data-crm-view="contacts"] *, .phone-dd *,.sep-map-section *)) {
+ border:0 !important; outline:none !important; box-shadow:none !important;
+}
+#root :is(.card,.sf-panel,.tenant-settings-card,.agent-status-log) { background:var(--bg-surface) !important; }
+#root :is([role="dialog"],.modal,.opps-dialog) { background:var(--bg-elevated); box-shadow:0 4px 16px rgba(15,23,42,.08); }
+#root :is(.right-rail-widget-header,.ops-intent-accordion-trigger,.ancillary-popup-accordion-toggle,.snp-routing-subsection-trigger,.sep-state-section-trigger) {
+ background:var(--bg-surface) !important; box-shadow:none !important; color:var(--text-primary) !important;
+}
+#root button[aria-pressed="true"]:not(:where(.contacts-subviews *,[data-key-role="primary"],[data-key-role="go"],[data-key-role="destructive"])) { color:var(--accent) !important; }

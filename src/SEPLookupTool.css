@@ -34,7 +34,7 @@
 .sep-search-bar input {
   flex: 1;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.08em;
   border: none;
   box-shadow: none;
@@ -97,7 +97,7 @@
   font-size: 13px;
   font-family: var(--font-mono);
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
   box-shadow: var(--shadow-inset);
   transition: all 0.15s ease;
 }
@@ -159,7 +159,7 @@
 
 .sep-stat-label {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -171,7 +171,7 @@
 
 .sep-stat-value {
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 500;
   font-family: var(--font-mono);
 }
 
@@ -195,7 +195,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -242,7 +242,7 @@
 .sep-plan-table th {
   padding: 12px 10px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -289,7 +289,7 @@
   padding: 4px 10px;
   border-radius: 50px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   background: rgba(173, 173, 173, 0.06);
   border: 1px solid rgba(173, 173, 173, 0.15);
   color: var(--accent-teal);
@@ -315,7 +315,7 @@
 
 .sep-plan-id-label {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -325,7 +325,7 @@
 
 .sep-plan-id-value {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -339,7 +339,7 @@
   padding: 2px 8px;
   border-radius: 3px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   font-family: var(--font-primary);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -354,7 +354,7 @@
   padding: 2px 8px;
   border-radius: 50px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--accent-gold);
   background: rgba(251, 191, 36, 0.1);
   border: 1px solid rgba(251, 191, 36, 0.15);
@@ -366,7 +366,7 @@
   padding: 2px 10px;
   border-radius: 50px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.04em;
   margin-right: 4px;
   margin-bottom: 4px;
@@ -486,7 +486,7 @@
 /* â”€â”€ Urgency pills â”€â”€ */
 .sep-urgency-pill {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.06em;
   padding: 3px 10px;
   border-radius: 50px;
@@ -518,7 +518,7 @@
 /* â”€â”€ Category pills â”€â”€ */
 .sep-category-pill {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.06em;
   padding: 3px 10px;
   border-radius: 50px;
@@ -540,7 +540,7 @@
 /* â”€â”€ Days-left pill â”€â”€ */
 .sep-days-pill {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.04em;
   padding: 3px 8px;
   border-radius: 50px;
@@ -581,7 +581,7 @@
 
 .sep-info-box-label {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -593,7 +593,7 @@
 
 .sep-info-box-main {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -659,7 +659,7 @@
 
 .sep-carrier-name {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 6px;
 }
@@ -710,7 +710,7 @@
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   vertical-align: middle;
@@ -884,7 +884,7 @@
   cursor: pointer;
   font-family: var(--font-primary);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   transition: color 0.18s ease, background 0.18s ease;
@@ -923,7 +923,7 @@
 
 .sep-select-county-title {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--accent-gold);
   margin-bottom: 4px;
 }
@@ -957,7 +957,7 @@
   padding: 14px 18px;
   border-bottom: 1px solid var(--border-subtle);
   font-family: var(--font-primary);
-  font-weight: 700;
+  font-weight: 500;
   font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -968,7 +968,7 @@
   margin-left: auto;
   font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-muted);
   background: rgba(232, 0, 45, 0.08);
   border: 1px solid rgba(232, 0, 45, 0.15);
@@ -1031,7 +1031,7 @@
   background: linear-gradient(180deg, var(--eg-surface-3) 0%, var(--eg-surface-2) 100%);
   color: var(--text-secondary);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
@@ -1059,7 +1059,7 @@
 .sep-cg-tile-count {
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-muted);
   opacity: 0.7;
 }
@@ -1100,7 +1100,7 @@
 .sep-sub-table th {
   padding: 8px 6px;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1208,7 +1208,7 @@
   gap: 5px;
   padding: 7px 10px;
   font-family: var(--font-primary);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1323,7 +1323,7 @@
   align-items: center;
   gap: 8px;
   font-family: var(--font-primary);
-  font-weight: 700;
+  font-weight: 500;
   font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1345,7 +1345,7 @@
   align-items: center;
   gap: 6px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   font-family: var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1374,7 +1374,7 @@
   gap: 6px;
   padding: 12px 16px 6px;
   font-family: var(--font-primary);
-  font-weight: 700;
+  font-weight: 500;
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1385,7 +1385,7 @@
   margin-left: auto;
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   color: #E8002D;
   background: rgba(232, 0, 45, 0.1);
   border: 1px solid rgba(232, 0, 45, 0.2);
@@ -1448,7 +1448,7 @@
 .fema-feed-type {
   font-family: var(--font-primary);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 1px 6px;
@@ -1471,7 +1471,7 @@
 .fema-feed-state {
   font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -1485,7 +1485,7 @@
 
 .fema-feed-item-title {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
   line-height: 1.4;
   flex: 1;
@@ -1517,7 +1517,7 @@
 .fema-ongoing-tag {
   font-family: var(--font-primary);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.06em;
   color: #E8002D;
   background: rgba(232, 0, 45, 0.1);
@@ -1530,7 +1530,7 @@
 .fema-feed-sep-window {
   font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   color: #E8002D;
 }
 
@@ -1545,7 +1545,7 @@
 .fema-feed-carrier-tag {
   font-family: var(--font-primary);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 1px 7px;
@@ -1558,7 +1558,7 @@
 .fema-feed-kind {
   font-family: var(--font-primary);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 1px 6px;
@@ -1594,7 +1594,7 @@
 .fema-feed-states {
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
@@ -1603,7 +1603,7 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: #E8002D;
   text-decoration: none;
   margin-top: 4px;
@@ -1623,7 +1623,7 @@
   background: transparent;
   color: var(--text-muted);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   font-family: var(--font-mono);
   cursor: pointer;
   transition: all 0.15s;
