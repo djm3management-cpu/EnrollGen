@@ -8272,3 +8272,6 @@ Restored centered alignment for the main START/direction control group. The inbo
 
 ## 2026-10-31 — uniform START/direction dimensions
 Replaced font-dependent selector width with shared 120×32px dimensions for the direction control and main START. Selector reserves 28px on the caret side, leaving sufficient room for the full INBOUND/OUTBOUND strings. Group remains centered in both themes. Local commit only.
+
+## 2026-10-31 — Bible white-theme styling
+Replaced decorative gold text, borders, highlights and parchment effects in Daily Verse with corporate blue/neutral roles in light mode. Scripture and reference text use primary text, interactive accents use blue, metadata uses secondary text, surfaces follow the shared white palette and existing action keys keep their shared gloss. Removed the decorative left border. Scripture, translations, study content and Terminal colors are unchanged. Local commit only.

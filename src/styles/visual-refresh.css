@@ -596,3 +596,67 @@ html.dark #root :is(.script-start-call-gate,.start-call-gate) > .script-start-ca
 }
 #root select.ma-script-direction-select { padding:6px 28px 6px 10px !important; text-overflow:clip; }
 #root :is(.script-start-call-gate,.start-call-gate) > .script-start-call-button { text-align:center !important; }
+
+/* Bible: replace decorative gold/parchment with corporate light roles. */
+html:not(.dark) #root :is(.dv-card::before):not(button) {background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-card::after):not(button) {background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-label):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-translation-btn:hover):not(button) {border-color:var(--chart-grid) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-dropdown-item.active):not(button) {background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-dropdown-item.active .dv-dropdown-abbr):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-refresh:hover:not(:disabled)):not(button) {color:var(--accent) !important;border-color:var(--chart-grid) !important;background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-quote-glyph):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-text):not(button) {border-left:0 !important;}
+html:not(.dark) #root :is(.dv-text-close):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-ref):not(button) {text-shadow:none !important;}
+html:not(.dark) #root :is(.dv-original-block--scroll):not(button) {background:var(--focus-glow) !important;border:1px solid var(--chart-grid) !important;box-shadow:none !important;}
+html:not(.dark) #root :is(.dv-original-hint):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-original-hint a:hover):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-original-word:hover):not(button) {background:var(--focus-glow) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-original-word:hover .dv-original-script):not(button) {text-decoration-color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-original-word:hover .dv-original-gloss):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-original-head span:first-child):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-original-tag):not(button) {background:var(--focus-glow) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-trans-tag):not(button) {background:var(--focus-glow) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-commentary-toggle:hover):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-commentary-toggle.open):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-meta-pills):not(button) {border-bottom:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-meta-pill .dv-meta-label):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-section):not(button) {border-bottom:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-section-head):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-date-chip):not(button) {background:var(--focus-glow) !important;border:1px solid var(--chart-grid) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-streak-chip):not(button) {background:var(--focus-glow) !important;border:1px solid var(--chart-grid) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-icon-btn:hover):not(button) {color:var(--accent) !important;border-color:var(--chart-grid) !important;background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-icon-btn.is-active):not(button) {color:var(--accent) !important;border-color:var(--chart-grid) !important;background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-actions):not(button) {border-top:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-action:hover):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-action.is-active):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-parallel):not(button) {border:1px solid var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-parallel-head):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-parallel-fallback-note):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-context):not(button) {border:1px solid var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-context-num):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-context-verse.is-focus):not(button) {background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-context-verse.is-focus .dv-context-num):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-favorites):not(button) {border:1px solid var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-favorites-head):not(button) {color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-favorites-load:hover):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-favorites-ref):not(button) {color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-crossrefs):not(button) {border:1px solid var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-crossrefs-item):not(button) {background:var(--focus-glow) !important;border:1px solid var(--chart-grid) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-crossrefs-item:hover):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--accent) !important;}
+html:not(.dark) #root :is(.dv-favorites-mini:hover):not(button) {color:var(--accent) !important;border-color:var(--chart-grid) !important;background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-favorites-note):not(button) {background:var(--focus-glow) !important;border-left:0 !important;}
+html:not(.dark) #root :is(.dv-favorites-note-input):not(button) {border:1px solid var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-favorites-note-input:focus):not(button) {border-color:var(--chart-grid) !important;box-shadow:none !important;}
+html:not(.dark) #root :is(.dv-favorites-note-btn:hover):not(button) {color:var(--accent) !important;border-color:var(--chart-grid) !important;}
+html:not(.dark) #root :is(.dv-favorites-note-btn.is-save):not(button) {background:var(--focus-glow) !important;border-color:var(--chart-grid) !important;color:var(--text-primary) !important;}
+html:not(.dark) #root :is(.dv-favorites-note-btn.is-save:hover):not(button) {background:var(--focus-glow) !important;}
+html:not(.dark) #root :is(.dv-card,.dv-original-block,.dv-original-block--scroll,.dv-section,.dv-favorites-panel,.dv-parallel-block) {
+ background:var(--bg-surface) !important; background-image:none !important; box-shadow:none !important;
+}
+html:not(.dark) #root :is(.dv-dropdown,.dv-context-panel,.dv-word-popup) { background:var(--bg-elevated) !important; background-image:none !important; color:var(--text-primary); }
+html:not(.dark) #root :is(.dv-ref,.dv-original-gloss,.dv-dropdown-full,.dv-section-body) { color:var(--text-primary) !important; text-shadow:none !important; }
+html:not(.dark) #root :is(.dv-original-hint,.dv-context-loading) { color:var(--text-secondary) !important; }
+html:not(.dark) #root .dv-text { border-left:0 !important; }
+html:not(.dark) #root .dv-quote-glyph { color:var(--focus-glow) !important; }
