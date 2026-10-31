@@ -572,3 +572,11 @@ html.dark #root :is(.script-start-call-gate,.start-call-gate) > .script-start-ca
  background-image:none !important;
 }
 #root .ma-script-direction-caret { color:var(--accent); }
+
+/* Center the idle-flow controls and leave room for the full direction label. */
+#root :is(.script-start-call-gate,.start-call-gate) { justify-content:center !important; text-align:center !important; }
+#root .ma-script-direction-wrap { flex:0 0 auto; }
+#root select.ma-script-direction-select {
+ width:calc(8ch + 48px) !important; min-width:calc(8ch + 48px) !important;
+ padding-left:10px !important; padding-right:28px !important;
+}

@@ -8266,3 +8266,6 @@ Dark-mode plan search now uses the shared graphite secondary-key gradient with a
 
 ## 2026-10-31 — compact main START and single direction caret
 Main-flow START buttons now size to their existing text with 6px vertical/10px horizontal padding, no forced minimum width, and left alignment. Terminal main START uses graphite/amber secondary-key colors; light mode remains blue/white. Removed the browser-native select arrow from the inbound/outbound control, retaining only its custom accent-colored caret. No flow/direction event handlers changed. Local commit only.
+
+## 2026-10-31 — centered idle controls and full direction labels
+Restored centered alignment for the main START/direction control group. The inbound/outbound selector now reserves eight text characters plus 48px for letter spacing and caret padding so both labels fit without truncation. Retains the single custom caret and compact START sizing. Local commit only.
