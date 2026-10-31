@@ -78,3 +78,78 @@ body {
 /* Corporate white background; Terminal artwork remains untouched. */
 html:not(.dark) .viewport-bg, html:not(.dark) .viewport-bg::before, html:not(.dark) .viewport-bg::after { background: #FFFFFF !important; background-image: none !important; }
 html:not(.dark) .viewport-wallpaper-image { display: none !important; }
+
+/* Shared glossy key utilities. Existing geometry remains caller-owned. */
+:root {
+  --key-secondary-top: #FFFFFF;
+  --key-secondary-bottom: #E6E9EE;
+  --key-secondary-text: #1F2937;
+  --key-primary-top: #1A7FE0;
+  --key-primary-bottom: #0058B3;
+  --key-primary-text: #FFFFFF;
+  --key-danger-top: #EF4444;
+  --key-danger-bottom: #B91C1C;
+  --key-go-top: #22A85A;
+  --key-go-bottom: #137A3D;
+  --key-go-text: #FFFFFF;
+  --key-drop: rgba(15,23,42,.15);
+}
+.dark {
+  --key-secondary-top: #2A2A2A;
+  --key-secondary-bottom: #141414;
+  --key-secondary-text: var(--accent);
+  --key-primary-top: #FFB020;
+  --key-primary-bottom: #E08600;
+  --key-primary-text: #000000;
+  --key-danger-top: #FF4A3D;
+  --key-danger-bottom: #C4221A;
+  --key-go-top: #1FE07F;
+  --key-go-bottom: #00A653;
+  --key-go-text: #000000;
+  --key-drop: rgba(0,0,0,.3);
+}
+.eg-key, .tenant-settings .billing-button {
+  --key-top: var(--key-secondary-top);
+  --key-bottom: var(--key-secondary-bottom);
+  --key-text: var(--key-secondary-text);
+  border: 0;
+  border-radius: 4px;
+  background: linear-gradient(var(--key-top), var(--key-bottom));
+  color: var(--key-text);
+  font-family: "Avenir Next", "Avenir", "Segoe UI", sans-serif;
+  font-weight: 500;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.25), 0 1px 2px var(--key-drop);
+}
+.eg-key--primary, .tenant-settings .billing-button.is-primary {
+  --key-top: var(--key-primary-top);
+  --key-bottom: var(--key-primary-bottom);
+  --key-text: var(--key-primary-text);
+}
+.eg-key--destructive {
+  --key-top: var(--key-danger-top);
+  --key-bottom: var(--key-danger-bottom);
+  --key-text: #FFFFFF;
+}
+.eg-key--go {
+  --key-top: var(--key-go-top);
+  --key-bottom: var(--key-go-bottom);
+  --key-text: var(--key-go-text);
+}
+.eg-key:hover:not(:disabled) { filter: brightness(1.08); }
+.eg-key:active, .eg-key[aria-pressed="true"] {
+  background: linear-gradient(var(--key-bottom), var(--key-top));
+  box-shadow: inset 0 1px 0 rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.1);
+}
+.eg-key:disabled {
+  background: var(--key-bottom);
+  box-shadow: none;
+  opacity: .5;
+  cursor: not-allowed;
+}
+.eg-key:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.eg-key--sm { font-size: 11px; }
+.eg-key--md { font-size: 13px; }
+.eg-key--lg { font-size: 15px; }

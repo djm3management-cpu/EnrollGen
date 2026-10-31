@@ -7455,3 +7455,35 @@ Ambiguous script guidance, compliance descriptions, map notes and document refer
 
 ## Continuation — phase 7
 Terminal remains the explicit default in both bootstrap and ThemeProvider. Saved light preference still selects light without migration. Bootstrap white theme-color now matches the new page token; ThemeProvider continues syncing the meta tag on toggles. No persistence or API changes.
+
+## Select treatment correction
+All native selects and combobox/listbox filter triggers use flat filled backgrounds, no border/shadows/gradient, 4px radius and 28px caret padding. Phone controls remain excluded. The header product trigger stays glossy. Pressed gloss has zero-blur vertical-only inset shadows.
+
+## Phase 8 — verification and genuine environment blocker
+
+- PASS: `npm test`: 728 passed, 0 failed, 0 skipped (84.0 seconds).
+- PASS: production Vite build after select correction (5.46 seconds).
+- PASS: Dashboard inspected in Terminal and white; corrected hardcoded white-mode header/dashboard surfaces and chart grid/text/series. Confirmed white screenshot after correction.
+- PASS: shared button utilities now load on logged-out pages as well as authenticated pages.
+- BLOCKED: populated-data QA. Vite alone returns HTML for API requests. Started local Netlify function server at port 8888 without deployment; protected endpoints then return HTTP 500 with `Clerk auth is enabled but no backend signing key is set`. No authentication bypass or backend change was made.
+- BLOCKED: Adobe production Mac/Windows verification: no Adobe kit configured or supplied, and no Windows QA surface available.
+
+### Screen QA disposition (not acceptance sign-off)
+
+| Screen | Terminal | White | Remaining verification |
+| --- | --- | --- | --- |
+| Dashboard | Inspected empty/error state | Inspected and corrected | Populated data, tooltips |
+| CRM Calls | Pending | Inspected empty/error state | Populated rows and recordings blocked by authentication configuration |
+| CRM Contacts | Pending | Pending | Data/API-dependent states blocked |
+| CRM Opportunities | Pending | Pending | Data/API-dependent stages and cards blocked |
+| CRM Follow-ups | Pending | Pending | Data/API-dependent states blocked |
+| Agency Settings | Pending | Pending | Protected API configuration blocked |
+| Agent Tools | Pending | Pending | Interactive walkthrough outstanding |
+| Intelligence feed/ZIP/maps | Pending | Pending | Interactive walkthrough outstanding |
+| RTS / Daily Verse | Pending | Pending | Interactive walkthrough outstanding |
+| All script flows / SEP / SNP | Pending | Pending | Interactive walkthrough outstanding |
+| Co-Pilot / transcript / compliance | Pending | Pending | Interactive walkthrough outstanding |
+| Other modals / dropdowns / toasts | Pending | Pending | Interactive walkthrough outstanding |
+| Landing / sign-in | Pending | Pending | Shared CSS wired; visual verification outstanding |
+
+The overall refresh is **not complete**. Broad style coverage has been added, but the source audit still contains unclassified button roles, raw colors, legacy borders/weights beneath overrides, and ambiguous descriptions. Those are not silently certified. Dropdown flat-field correction is implemented; caret geometry and button role coverage still need per-screen inspection. Resolve local backend signing-key configuration through the normal environment setup (do not put credentials in this audit) before accepting populated-screen QA.
