@@ -8238,3 +8238,6 @@ Runtime screenshot QA is not exhaustive: rows explicitly marked “No screenshot
 
 ## 2026-10-31 — Intelligence map backgrounds
 Removed white-mode background gradients from the state map wrappers, county map panel, county grid and carrier-reference geographic panel. Flat elevated white replaces the decorative background only. SVG state/county fills, penetration shading, legends, interactions and all Terminal backgrounds remain unchanged.
+
+## 2026-10-31 — remove sample ZIP suggestions
+Removed the Intelligence search suggestion row from `src/components/sep/SearchBar.jsx`: “Try:” and sample ZIP buttons “33601”, “77002”, “28801”, “40502”, “90001”. Removed its unused constant/prop. ZIP entry and search behavior are unchanged.

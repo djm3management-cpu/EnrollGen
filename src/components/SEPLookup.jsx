@@ -47,7 +47,6 @@ export default function SEPLookupTool() {
           isValidZip={s.isValidZip}
           loading={s.loading}
           inputRef={s.inputRef}
-          hasResults={!!s.results || !!s.selectedState}
         />
 
         {(s.sepFinderZip || s.sepFinderLoading || s.sepFinderError || s.sepFinderResult) && (
