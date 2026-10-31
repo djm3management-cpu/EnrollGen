@@ -8248,3 +8248,6 @@ White-mode state map base fill increased from 8% red to 28% corporate blue; hove
 
 ## 2026-10-31 — plan search icon
 Made the left-rail plan-name search Lucide glyph (and loading spinner) white. No search behavior or button geometry changes. Held locally per the current no-push instruction.
+
+## 2026-10-31 — glossy script section headers
+Script section bars (including Introduction & Recording) now use the primary button's theme-specific gradient, foreground, 4px corners, top highlight, bottom shade and small drop shadow. White mode uses blue/white; Terminal uses amber/black. Header geometry and script wording remain unchanged. Static headers do not receive interactive button states. Local commit only; pushes are held.

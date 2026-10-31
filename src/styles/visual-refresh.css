@@ -516,3 +516,17 @@ html:not(.dark) #root .sep-penetration > .sep-tab-bar {
 
 /* Keep the left-rail plan-search glyph white, including its loading icon. */
 #root .left-rail .eg-plan-lookup__submit svg { color:#FFFFFF !important; stroke:#FFFFFF !important; }
+
+/* Script section bars share the primary key palette and gloss in each theme. */
+html:not(.dark) #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child),
+html.dark #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child) {
+ background:linear-gradient(var(--key-primary-top),var(--key-primary-bottom)) !important;
+ color:var(--key-primary-text) !important;
+ border:0 !important; border-radius:4px !important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.25),0 1px 2px var(--key-drop) !important;
+ font-family:var(--font-primary) !important; font-weight:500 !important;
+}
+html:not(.dark) #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child) *,
+html.dark #root :is(.script-section-title,.card.active-card > h2,.flow-script-card.active-card > div:first-child) * {
+ color:var(--key-primary-text) !important;
+}
