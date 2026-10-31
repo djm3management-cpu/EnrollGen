@@ -7398,3 +7398,32 @@ src/styles.css:11810: .tenant-settings-muted,
 - `src/components/AgentAudioSettings.jsx`: Reduce background noise on your calls. Settings are saved to your user profile. Calibrate with your usual headset and room.
 - `src/components/AgentAudioSettings.jsx`: Lower values keep softer speech; higher values block more room noise. Changes apply to the next call.
 - `src/components/TenantSettings.jsx`: Global vendor pause immediately reports unavailable and is audit logged.
+
+## Implementation status / review limitations
+
+This branch is an incomplete refresh, not acceptance-ready. Phase 1 contains exhaustive pattern matches, but button roles and helper candidates still require manual classification. Only the three explicitly recorded helper sentences were removed. Shared key utility variants are introduced and settings actions adopt them; other controls are pending.
+
+The global cascade in `src/styles.css`, `src/styles/v3-overrides.css`, and `src/styles/design-tokens.css` needs further isolation of protected surfaces before safe palette and border replacement. White palette replacement, app-wide button migration, typography normalization, and remaining helper removal are outstanding. Formula1 remains because the wordmark uses it. Adobe production verification has not been performed. No claim of WCAG conformance is made: requested button gradients also need contrast assessment.
+
+## Per-screen QA checklist
+
+All items below are pending interactive verification in **both** themes:
+
+- [ ] Dashboard
+- [ ] CRM Calls
+- [ ] CRM Contacts (Terminal preservation)
+- [ ] CRM Opportunities (pipeline color preservation)
+- [ ] CRM Follow-ups
+- [ ] Agent Tools
+- [ ] Intelligence feed, ZIP search, maps and legends
+- [ ] RTS
+- [ ] Daily Verse
+- [ ] MA, Med Sup, ACA, U65, annuity script flows
+- [ ] SEP Finder / SEP Qualifier / SNP Routing
+- [ ] Co-Pilot / live transcript / compliance
+- [ ] Agency Settings and other modals
+- [ ] Dropdowns, toasts, empty and loading states
+- [ ] Softphone and wordmark preservation
+- [ ] Logged-out landing and sign-in
+
+Terminal default and saved light preference behavior already exist in ThemeContext and bootstrap. Bootstrap light theme-color remains the original palette until the complete white palette lands.

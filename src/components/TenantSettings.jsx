@@ -493,7 +493,7 @@ export default function TenantSettings({ currentUser = null }) {
           <h2>Agency Settings</h2>
           <p>{profile.agency_display_name || profile.name || "Agency configuration"}</p>
         </div>
-        <button type="button" className="billing-button is-primary" onClick={saveTenant} disabled={saving}>
+        <button type="button" className="eg-key eg-key--primary billing-button is-primary" onClick={saveTenant} disabled={saving}>
           <Check size={15} />
           {saving ? "Saving" : "Save Settings"}
         </button>
@@ -505,7 +505,7 @@ export default function TenantSettings({ currentUser = null }) {
       <section className="tenant-settings-card tenant-settings-card-wide">
         <div className="tenant-settings-section-title">Vendor availability</div>
         <div className="tenant-settings-inline">
-          <button type="button" className={`billing-button${vendorPaused ? " is-primary" : ""}`} onClick={toggleVendorPause} disabled={vendorPauseSaving}>
+          <button type="button" className={`eg-key billing-button${vendorPaused ? " is-primary" : ""}`} onClick={toggleVendorPause} disabled={vendorPauseSaving}>
             {vendorPauseSaving ? "Saving" : vendorPaused ? "Resume vendors" : "Pause vendors"}
           </button>
         </div>
@@ -623,7 +623,7 @@ export default function TenantSettings({ currentUser = null }) {
               value={newAgent.ghl_user_id}
               onChange={(event) => setNewAgent((current) => ({ ...current, ghl_user_id: event.target.value }))}
             />
-            <button type="button" className="billing-button" onClick={addAgent} disabled={atSeatLimit}>
+            <button type="button" className="eg-key billing-button" onClick={addAgent} disabled={atSeatLimit}>
               <Plus size={14} />
               Add Agent
             </button>
@@ -707,7 +707,7 @@ export default function TenantSettings({ currentUser = null }) {
           </div>
           <button
             type="button"
-            className="billing-button"
+            className="eg-key billing-button"
             onClick={() => setCoopRows((current) => [...current, { carrier: "", amount: 0 }])}
           >
             <Plus size={14} />
