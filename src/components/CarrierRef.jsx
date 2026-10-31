@@ -653,7 +653,7 @@ export default function CarrierRef() {
       >
         {/* Geographic SVG Map */}
         <section
-          className="card"
+          className="card carrier-ref-map-panel"
           style={{
             padding: "16px 20px 12px",
             background:

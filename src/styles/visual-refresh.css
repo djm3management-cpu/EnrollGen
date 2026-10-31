@@ -488,3 +488,9 @@ html:not(.dark) #root .ancillary-popup-icon { background:var(--accent); color:#F
 #root .right-rail-overlay > .right-rail-widget-shell--fill { max-width:none !important; }
 #root :is(.right-rail-full,.right-rail-overlay) .right-rail-widget-header { padding-left:16px !important; padding-right:12px !important; }
 html:not(.dark) #root .ancillary-popup-icon { background:var(--accent) !important; color:#FFFFFF !important; }
+
+/* Intelligence maps use flat white canvases in the corporate theme. */
+html:not(.dark) #root :is(.sep-map-section,.sep-map-landing,.sep-map-compact,.sep-penetration,.sep-county-grid-panel,.carrier-ref-map-panel) {
+ background:var(--bg-elevated) !important;
+ background-image:none !important;
+}

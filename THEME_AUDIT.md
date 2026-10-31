@@ -8235,3 +8235,6 @@ Runtime screenshot QA is not exhaustive: rows explicitly marked “No screenshot
 - Co-Pilot and Live Transcript fill-widget shells extend across the rail gutters, with body insets preserved. Removed the inherited max-width constraint that clipped the extension.
 - Header icons have a 16px left inset; header color bars extend to the rail edges.
 - CSS-only changes. Production build passed before the final max-width/icon-inset correction; rebuilt below.
+
+## 2026-10-31 — Intelligence map backgrounds
+Removed white-mode background gradients from the state map wrappers, county map panel, county grid and carrier-reference geographic panel. Flat elevated white replaces the decorative background only. SVG state/county fills, penetration shading, legends, interactions and all Terminal backgrounds remain unchanged.
