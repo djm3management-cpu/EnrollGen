@@ -1,4 +1,4 @@
-import { debugLog } from "../lib/debugLog.js";
+import { debugLog, warnSttOverlap, logSttUsageFailure } from "../lib/debugLog.js";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useCallStore } from "../stores/callStore";
 import { useAppAuth } from "../context/AuthContext";
@@ -96,7 +96,7 @@ function downsampleToInt16(float32Array, sourceSampleRate) {
   return result;
 }
 
-export function useCustomerAudio() {
+export function useCustomerAudio({ enabled = true, serverTranscriptionActive = false, callSid = null } = {}) {
   const { getToken } = useAppAuth();
   const [isCapturing, setIsCapturing] = useState(false);
   const [customerTranscript, setCustomerTranscript] = useState([]);
@@ -110,10 +110,26 @@ export function useCustomerAudio() {
   const sourceRef = useRef(null);
   const wsRef = useRef(null);
   const cleaningUpRef = useRef(false);
+  const ownershipRef = useRef({});
+  ownershipRef.current = { enabled, serverTranscriptionActive, callSid };
+  const generationRef = useRef(0);
+  const usageRef = useRef(null);
+  const authRef = useRef(getToken);
+  authRef.current = getToken;
 
   const cleanup = useCallback(() => {
     if (cleaningUpRef.current) return;
     cleaningUpRef.current = true;
+    generationRef.current++;
+    const usage = usageRef.current;
+    usageRef.current = null;
+    if (usage) {
+      void fetchWithClerk(authRef.current, '/api/stt-usage', { method: 'POST', keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectionId: usage.id, callSid: usage.callSid, seconds: usage.bytes / 32000 }),
+      }).then(response => { if (!response.ok) throw new Error('usage rejected'); })
+        .catch(() => logSttUsageFailure(usage.callSid));
+    }
 
     if (wsRef.current) {
       const closingSocket = wsRef.current;
@@ -192,6 +208,11 @@ export function useCustomerAudio() {
   }, []);
 
   const startCapture = useCallback(async (options = {}) => {
+    if (!ownershipRef.current.enabled || ownershipRef.current.serverTranscriptionActive) return;
+    const generation = ++generationRef.current;
+    const captureCallSid = ownershipRef.current.callSid;
+    const allowed = () => generation === generationRef.current && ownershipRef.current.enabled
+      && !ownershipRef.current.serverTranscriptionActive && ownershipRef.current.callSid === captureCallSid;
     setError(null);
 
     let stream;
@@ -245,6 +266,7 @@ export function useCustomerAudio() {
       throw new Error(msg);
     }
 
+    if (!allowed()) { releaseCandidate(); return; }
     let deepgramToken;
     try {
       deepgramToken = await fetchDeepgramToken(getToken);
@@ -255,9 +277,12 @@ export function useCustomerAudio() {
       throw new Error(msg);
     }
 
+    if (!allowed()) { releaseCandidate(); return; }
+
     // Keep the working source alive while the picker is open or cancelled.
     // Swap only after the replacement has audio and authentication succeeded.
     cleanup();
+    const activeGeneration = generationRef.current;
     mediaStreamRef.current = stream;
     keepAliveAudioRef.current = stream.captureKeepAlive || null;
     const onEnded = () => {
@@ -275,6 +300,10 @@ export function useCustomerAudio() {
       throw new Error("Customer audio processing could not start.");
     }
 
+    if (generationRef.current !== activeGeneration || !ownershipRef.current.enabled || ownershipRef.current.serverTranscriptionActive || ownershipRef.current.callSid !== captureCallSid) {
+      if (generationRef.current === activeGeneration) cleanup();
+      return;
+    }
     const source = audioContext.createMediaStreamSource(stream);
     sourceRef.current = source;
 
@@ -283,6 +312,12 @@ export function useCustomerAudio() {
     const streamId = `customer-${++captureSequence}`;
     let audioStartedAt;
     wsRef.current = ws;
+    const usage = { id: crypto.randomUUID(), callSid: captureCallSid, bytes: 0 };
+    usageRef.current = usage;
+    const sendPcm = pcm => {
+      if (!ownershipRef.current.enabled || ownershipRef.current.serverTranscriptionActive || ownershipRef.current.callSid !== captureCallSid) { cleanup(); return; }
+      if (wsRef.current === ws && ws.readyState === WebSocket.OPEN) { ws.send(pcm); usage.bytes += pcm.byteLength; }
+    };
 
     ws.onopen = () => {
       if (wsRef.current !== ws) return;
@@ -316,7 +351,7 @@ export function useCustomerAudio() {
             silentGain.gain.value = 0;
             processor.port.onmessage = ({ data }) => {
               publishAudioLevel("customer", data.level || 0, { peaks: data.peaks });
-              if (ws.readyState === WebSocket.OPEN && data.pcm) ws.send(data.pcm);
+              if (data.pcm) sendPcm(data.pcm);
             };
             processorRef.current = processor;
             silentGainRef.current = silentGain;
@@ -336,7 +371,7 @@ export function useCustomerAudio() {
             peaks: computeWaveformPeaks(inputData),
           });
           if (ws.readyState === WebSocket.OPEN) {
-            ws.send(downsampleToInt16(inputData, audioContext.sampleRate).buffer);
+            sendPcm(downsampleToInt16(inputData, audioContext.sampleRate).buffer);
           }
         };
         processorRef.current = processor;
@@ -394,6 +429,11 @@ export function useCustomerAudio() {
 
     setIsCapturing(true);
   }, [cleanup, getToken]);
+
+  useEffect(() => {
+    if (serverTranscriptionActive && wsRef.current) warnSttOverlap(callSid);
+    if (!enabled || serverTranscriptionActive || (usageRef.current && usageRef.current.callSid !== callSid)) cleanup();
+  }, [enabled, serverTranscriptionActive, callSid, cleanup]);
 
   const stopCapture = useCallback(() => {
     cleanup();

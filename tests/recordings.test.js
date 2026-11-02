@@ -29,8 +29,10 @@ const enqueue=async(n,extra={},attempt=ATT)=> {
 };
 const storage=new Map(); let storageFail=false; let storageReads=0;
 db.storage={from(bucket){assert.equal(bucket,'call-recordings');return {
-  async upload(path,stream){if(storageFail)return {error:{message:'fixture failure'}};
+  async upload(path,stream,options){assert.equal(options.upsert,false);if(storageFail)return {error:{message:'fixture failure'}};
+    if(storage.has(path))return {error:{statusCode:'409'}};
     const chunks=[];for await(const chunk of stream)chunks.push(chunk);storage.set(path,Buffer.concat(chunks));return {data:{path},error:null};},
+  async download(path){ const bytes=storage.get(path); return bytes ? {data:new Blob([bytes])} : {error:{message:'missing'}}; },
   async createSignedUrl(path,_ttl,opts){storageReads++;const rows=await sql('SELECT name FROM storage.objects WHERE name=$1',[path]);
     return rows.length ? {data:{signedUrl:`https://storage.test/${path}${opts?.download?'?download='+opts.download:''}`},error:null}
       : {data:null,error:{message:'not found'}};},
@@ -55,6 +57,8 @@ before(async()=>{
   await sql("INSERT INTO telephony_events(tenant_id,inbound_call_id,twilio_call_sid,event) VALUES($1,$2,$3,'routing_agent_selected')",[T,I,CA]);
   await pg.exec(readFileSync(new URL('../supabase/migrations/064_recording_ingestion.sql',import.meta.url),'utf8'));
   await pg.exec(readFileSync(new URL('../supabase/migrations/112_recording_compliance_tickets.sql',import.meta.url),'utf8'));
+  await pg.exec('CREATE TABLE usage_records(id uuid PRIMARY KEY,record_type text);');
+  await pg.exec(readFileSync(new URL('../supabase/migrations/129_stt_cost_controls.sql',import.meta.url),'utf8'));
 });
 after(()=>pg.close());
 

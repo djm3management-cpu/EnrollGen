@@ -111,6 +111,7 @@ export async function downloadRecording({ job, config, fetchImpl = fetch, maxByt
       hash.update(chunk); done(null, chunk);
     } });
     await pipeline(Readable.fromWeb(response.body), bound, createWriteStream(path, { mode: 0o600 }), { signal });
+    if (length > 0 && bytes !== length) throw new RecordingError('source_size_mismatch');
     if (bytes < 12 || prefix.toString('ascii', 0, 4) !== 'RIFF' || prefix.toString('ascii', 8, 12) !== 'WAVE') {
       throw new RecordingError('invalid_wav');
     }
@@ -130,7 +131,44 @@ export async function downloadRecording({ job, config, fetchImpl = fetch, maxByt
   } catch (error) { await cleanup(); throw error; }
 }
 
-export async function processRecording({ db, job, config, fetchImpl, maxBytes, timeoutMs }) {
+export async function verifyStoredRecording({ db, storagePath, bytes, sha256 }) {
+  const result = await db.storage.from('call-recordings').download(storagePath);
+  if (result.error || !result.data || result.data.size !== Number(bytes)) throw new RecordingError('storage_verification_failed');
+  const hash = createHash('sha256').update(Buffer.from(await result.data.arrayBuffer())).digest('hex');
+  if (hash !== sha256) throw new RecordingError('storage_checksum_mismatch');
+}
+
+// Only reads Supabase audio. A failed deletion is retried independently of copying,
+// so a provider deletion can never force an upload or overwrite on retry.
+export async function deleteVerifiedTwilioRecording({ db, job, config, fetchImpl = fetch, log = console.error }) {
+  if (!config.deleteTwilioRecordingsAfterCopy || job.twilio_deleted_at) return false;
+  try {
+    if (job.account_sid !== config.twilioAccountSid || !SID.recording.test(job.recording_sid || '') ||
+      job.copy_status !== 'stored' || !job.storage_path || !job.sha256 || !(Number(job.stored_bytes) > 0)) throw new RecordingError('unverified_copy');
+    await verifyStoredRecording({ db, storagePath: job.storage_path, bytes: job.stored_bytes, sha256: job.sha256 });
+    const verifiedAt = new Date().toISOString();
+    const verified = checked(await db.from('recording_ingestion').update({ copy_verified_at: verifiedAt, twilio_delete_attempted_at: verifiedAt })
+      .eq('id', job.id).eq('copy_status', 'stored').select('id'));
+    if (!verified?.length) throw new RecordingError('verification_status_not_saved');
+    const response = await fetchImpl(`https://api.twilio.com/2010-04-01/Accounts/${job.account_sid}/Recordings/${job.recording_sid}.json`,
+      { method: 'DELETE', headers: twilioHeaders(config), redirect: 'error', signal: AbortSignal.timeout(15000) });
+    // A retry after a successful DELETE / lost DB response sees an absent provider copy.
+    if (!response.ok && response.status !== 404) throw new RecordingError(`twilio_delete_http_${response.status}`);
+    checked(await db.from('recording_ingestion').update({ twilio_deleted_at: new Date().toISOString(), twilio_delete_error: null })
+      .eq('id', job.id).eq('copy_status', 'stored'));
+    return true;
+  } catch (error) {
+    const code = error instanceof RecordingError ? error.code : 'recording_delete_error';
+    log(JSON.stringify({ event: 'recording_delete_failed', recording_sid: job.recording_sid, code }));
+    try {
+      checked(await db.from('recording_ingestion').update({ twilio_delete_error: code,
+        twilio_delete_next_attempt_at: new Date(Date.now() + 60000).toISOString() }).eq('id', job.id));
+    } catch { log(JSON.stringify({ event: 'recording_delete_status_failed', recording_sid: job.recording_sid })); }
+    return false;
+  }
+}
+
+export async function processRecording({ db, job, config, fetchImpl, maxBytes, timeoutMs, log = console.error }) {
   let audio;
   try {
     if (job.account_sid !== config.twilioAccountSid) throw new RecordingError('account_mismatch');
@@ -141,18 +179,23 @@ export async function processRecording({ db, job, config, fetchImpl, maxBytes, t
     const stream = createReadStream(audio.path);
     try {
       const upload = await db.storage.from('call-recordings').upload(storagePath, stream, {
-        contentType: 'audio/wav', upsert: true, duplex: 'half',
+        contentType: 'audio/wav', upsert: false, duplex: 'half',
       });
-      if (upload.error) throw new RecordingError('storage_upload_failed');
+      if (upload.error && !['409', 'Duplicate', '409 Conflict'].includes(String(upload.error.statusCode || upload.error.code))) throw new RecordingError('storage_upload_failed');
     } finally { stream.destroy(); }
+    await verifyStoredRecording({ db, storagePath, bytes: audio.bytes, sha256: audio.sha256 });
     const updated = checked(await db.from('recording_ingestion').update({ copy_status: 'stored', storage_path: storagePath,
+      copy_verified_at: new Date().toISOString(), retention_until: new Date(new Date().setUTCFullYear(new Date().getUTCFullYear() + 10)).toISOString(),
       stored_bytes: audio.bytes, sha256: audio.sha256, stored_at: new Date().toISOString(),
       lease_token: null, lease_until: null, last_error_code: null, updated_at: new Date().toISOString(),
     }).eq('id', job.id).eq('lease_token', job.lease_token).select('id'));
-    return updated?.length ? 'stored' : 'lease_lost';
+    if (!updated?.length) return 'lease_lost';
+    await deleteVerifiedTwilioRecording({ db, job: { ...job, copy_status: 'stored', storage_path: storagePath, stored_bytes: audio.bytes, sha256: audio.sha256 }, config, fetchImpl, log });
+    return 'stored';
   } catch (error) {
     const code = error instanceof RecordingError ? error.code :
       ['AbortError', 'TimeoutError'].includes(error.name) ? 'download_timeout' : 'copy_error';
+    log(JSON.stringify({ event: 'recording_copy_failed', recording_sid: job.recording_sid, code }));
     const permanent = ['recording_too_large', 'invalid_wav', 'channel_mismatch', 'account_mismatch'].includes(code);
     checked(await db.from('recording_ingestion').update({ copy_status: permanent ? 'failed' : 'retry',
       next_attempt_at: new Date(Date.now() + retryDelay(job.attempts)).toISOString(),
@@ -221,9 +264,12 @@ export function startRecordingWorker({ db, config, log = console.error }) {
       }
       const jobs = checked(await db.rpc('claim_recording_ingestion', { p_limit: 2 })) || [];
       const checks = checked(await db.rpc('claim_recording_reconciliation', { p_limit: 2 })) || [];
+      const deletions = config.deleteTwilioRecordingsAfterCopy ? checked(await db.from('recording_ingestion').select('*')
+        .eq('copy_status', 'stored').is('twilio_deleted_at', null).lte('twilio_delete_next_attempt_at', new Date().toISOString()).limit(2)) || [] : [];
       const results = await Promise.allSettled([...jobs.map(job => processRecording({ db, job, config,
         maxBytes: config.recordingMaxBytes, timeoutMs: config.recordingTimeoutMs })),
-      ...checks.map(job => reconcileCall({ db, job, config }))]);
+      ...checks.map(job => reconcileCall({ db, job, config })),
+      ...deletions.map(job => deleteVerifiedTwilioRecording({ db, job, config, log }))]);
       if (results.some(result => result.status === 'rejected')) throw new RecordingError('worker_job_failed');
     } catch { log(JSON.stringify({ event: 'recording_worker_failed', code: 'database_or_worker_error' })); }
     finally { running = false; }

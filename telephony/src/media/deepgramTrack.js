@@ -1,5 +1,6 @@
 import WebSocket from 'ws';
 import { randomUUID } from 'node:crypto';
+import { reportServerSttUsage } from '../sttUsage.js';
 import { config } from '../config.js';
 
 const URL = 'wss://api.deepgram.com/v1/listen' +
@@ -8,7 +9,7 @@ const URL = 'wss://api.deepgram.com/v1/listen' +
 export const TRACK_LIMITS = Object.freeze({ queueFrames: 100, queueBytes: 16 * 1024,
   bufferedBytes: 64 * 1024, reconnects: 3, connectMs: 5000 });
 
-export function openDeepgramTrack({ speaker, notify, Socket = WebSocket,
+export function openDeepgramTrack({ speaker, notify, claims, reportUsage = reportServerSttUsage, Socket = WebSocket,
   schedule = setTimeout, cancel = clearTimeout, every = setInterval, cancelEvery = clearInterval,
   now = Date.now, timelineOrigin = now(), limits = TRACK_LIMITS }) {
   let current = null, retry = null, flushTimer = null, retries = 0, closed = false, exhausted = false;
@@ -34,6 +35,15 @@ export function openDeepgramTrack({ speaker, notify, Socket = WebSocket,
       overflowReported = true;
       health('reconnecting', `${label} transcription buffer filled; some audio is missing.`, { coverageGap: true, gapSince });
     }
+  }
+  function recordUsage(connection) {
+    if (connection.usageReported || !connection.streamId || !claims?.tenantId) return;
+    connection.usageReported = true;
+    void Promise.resolve().then(() => reportUsage({ id: connection.streamId, tenant_id: claims.tenantId,
+      record_type: 'stt_seconds', quantity: (connection.sentBytes || 0) / 8000,
+      metadata: { call_sid: claims.parentCallSid || claims.callSid, connection_call_sid: claims.callSid,
+        track: speaker, source: 'server', model: 'nova-2', connection_id: connection.streamId } }))
+      .catch(() => console.error(JSON.stringify({ event: 'stt_usage_failed', call_sid: claims.callSid, connection_id: connection.streamId })));
   }
   function stopSocket(connection) {
     cancel(connection.timeout); cancelEvery(connection.keepAlive);
@@ -63,7 +73,10 @@ export function openDeepgramTrack({ speaker, notify, Socket = WebSocket,
     }
     try {
       if (Number.isFinite(startMs)) connection.audioStartMs ??= startMs;
-      connection.ws.send(chunk, error => { if (error) fail(connection); });
+      connection.ws.send(chunk, error => {
+        if (error) { fail(connection); return; }
+        if (typeof chunk !== 'string') connection.sentBytes = (connection.sentBytes || 0) + chunk.length;
+      });
     }
     catch { enqueue(chunk, startMs); fail(connection); return false; }
     return true;
@@ -120,6 +133,7 @@ export function openDeepgramTrack({ speaker, notify, Socket = WebSocket,
     });
     ws.on('error', () => fail(connection));
     ws.on('close', () => {
+      recordUsage(connection);
       if (closed) { cancel(flushTimer); current = null; return; }
       fail(connection);
     });

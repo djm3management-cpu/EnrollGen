@@ -38,9 +38,6 @@ const ScriptPrompter = memo(function ScriptPrompter({
   const lastAudioErrorRef = useRef(null);
   const transcriptSourceRef = useRef("browser");
 
-  /* ─── Customer audio capture (opt-in via getDisplayMedia + Deepgram) ─── */
-  const customerAudio = useCustomerAudio();
-
   /* ─── Speech recognition (agent mic) ─── */
   const speechRef = useRef(null);
   const speech = useSpeechRecognition({
@@ -53,6 +50,10 @@ const ScriptPrompter = memo(function ScriptPrompter({
      track. Use those authoritative sources for speaker labels; browser
      microphone recognition can also hear caller audio from speakers. ─── */
   const inbound = useInboundCall();
+  const serverTranscriptionActive = Boolean(inbound?.serverTranscriptionActive || inbound?.serverTranscriptionReserved);
+  const customerAudioEnabled = import.meta.env.VITE_ENABLE_CUSTOMER_AUDIO !== "false";
+  const audioCallSid = inbound?.serverTranscriptionCallSid || inbound?.activeCall?.params?.twilioCallSid || inbound?.activeCall?.call?.parameters?.CallSid || null;
+  const customerAudio = useCustomerAudio({ enabled: customerAudioEnabled, serverTranscriptionActive, callSid: audioCallSid });
   const remoteStream = inbound?.remoteStream;
   const softphoneActive = Boolean(inbound?.activeCall);
   const outboundSoftphoneActive =
@@ -119,7 +120,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
   // WebRTC stream. Feed that stream into the existing customer Deepgram
   // pipeline; inbound PSTN calls continue using Railway's server transcript.
   useEffect(() => {
-    if (!outboundSoftphoneActive || !remoteStream || customerAudio.isCapturing) {
+    if (!customerAudioEnabled || serverTranscriptionActive || !outboundSoftphoneActive || !remoteStream || customerAudio.isCapturing) {
       return;
     }
     if (!customerCapturePromiseRef.current && attemptedRemoteStreamRef.current !== remoteStream) {
@@ -140,6 +141,8 @@ const ScriptPrompter = memo(function ScriptPrompter({
     }
   }, [
     outboundSoftphoneActive,
+    customerAudioEnabled,
+    serverTranscriptionActive,
     remoteStream,
     customerAudio,
     copilot,
@@ -202,11 +205,9 @@ const ScriptPrompter = memo(function ScriptPrompter({
   }, [copilot.coachingLoading, onCoachingLoadingChange]);
 
   /* ─── Unified START / STOP handler ─── */
-  const customerAudioEnabled =
-    import.meta.env.VITE_ENABLE_CUSTOMER_AUDIO !== "false";
 
   const startCustomerAudio = useCallback(async () => {
-    if (!customerAudioEnabled || customerAudio.isCapturing) {
+    if (!customerAudioEnabled || serverTranscriptionActive || customerAudio.isCapturing) {
       return;
     }
     if (customerCapturePromiseRef.current) {
@@ -226,13 +227,13 @@ const ScriptPrompter = memo(function ScriptPrompter({
       });
 
     return customerCapturePromiseRef.current;
-  }, [customerAudio, customerAudioEnabled, copilot]);
+  }, [customerAudio, customerAudioEnabled, serverTranscriptionActive, copilot]);
 
   const handleStart = useCallback(async () => {
     // Inbound Twilio calls wire their own audio (remote stream + mic)
     // in the accept effect above; never open the tab picker for them.
     if (softphoneActive) {
-      if (outboundSoftphoneActive && remoteStream && !customerAudio.isCapturing) {
+      if (customerAudioEnabled && !serverTranscriptionActive && outboundSoftphoneActive && remoteStream && !customerAudio.isCapturing) {
         await customerAudio.startCapture({ mediaStream: remoteStream }).catch(() => {});
       }
       if (!speech.listening) speech.startListening();
@@ -240,7 +241,7 @@ const ScriptPrompter = memo(function ScriptPrompter({
     }
     transcriptSourceRef.current = "browser";
     speech.startListening();
-  }, [speech, softphoneActive, outboundSoftphoneActive, remoteStream, customerAudio]);
+  }, [speech, softphoneActive, outboundSoftphoneActive, remoteStream, customerAudio, customerAudioEnabled, serverTranscriptionActive]);
 
   const handleStop = useCallback(() => {
     speech.stopListening();

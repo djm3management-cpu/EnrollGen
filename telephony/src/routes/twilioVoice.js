@@ -17,12 +17,15 @@ import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.j
 import { classifyCaller, decideMatchedParagon } from "../paragonRouting.js";
 import { endedParentCall } from "../terminalRouting.js";
 
+import { signalMediaLifecycle } from '../media/mediaLifecycle.js';
+
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
 export const twilioVoiceRouter = Router();
 
-function voicemailTwiml() {
+export function voicemailTwiml() {
   const response = new VoiceResponse();
+  response.stop().stream({ name: "agent-transcription" });
   response.say(
     { voice: "Polly.Joanna" },
     "Thank you for calling. All of our licensed agents are currently assisting other callers. " +
@@ -283,6 +286,7 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, conference
   const inboundCallId = req.query.inboundCallId;
   const tried = String(req.query.tried || "").split(",").filter(Boolean);
   const dialStatus = req.body.DialCallStatus;
+  signalMediaLifecycle({ callSid: req.body.CallSid, attemptId: req.query.attemptId, ended: true });
   const callSid = req.body.CallSid;
   let claimedAgent = null;
   let paragonCall = false;

@@ -1,8 +1,9 @@
-import { debugLog } from "../src/lib/debugLog.js";
+import { debugLog, warnSttOverlap, logSttUsageFailure } from "../src/lib/debugLog.js";
 import { updateLiveTranscript } from '../src/lib/liveTranscript.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {randomUUID} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 
 // Exercise the real hook's event callbacks with browser/React boundaries mocked.
@@ -19,7 +20,7 @@ function harness() {
     close(){this.readyState=3;this.onclose?.({code:1000});}
   }
   const clone={getAudioTracks:()=>[{readyState:'live'}],getTracks:()=>[{stop:()=>stops++}]};
-  const context=vm.createContext({ debugLog, updateLiveTranscript,
+  const context=vm.createContext({ debugLog, warnSttOverlap, logSttUsageFailure, updateLiveTranscript,
     useState:initial=>{const index=states.length;states.push(initial);return [initial,value=>{states[index]=typeof value==='function'?value(states[index]):value;}];},
     useRef:current=>({current}),useCallback:fn=>fn,useEffect:()=>{},
     useAppAuth:()=>({getToken:async()=> 'clerk-test'}),
@@ -27,7 +28,7 @@ function harness() {
     useCallStore:{getState:()=>({startCall(){},endCall(){}})},
     waitForActiveSessionMetadata:async()=>({}),publishAudioLevel:()=>{},
     computeRmsLevel:()=>0,computeWaveformPeaks:()=>[],
-    WebSocket:Socket,console:{info(){},error(){}},URL,
+    crypto:{randomUUID},WebSocket:Socket,console:{info(){},error(){}},URL,
     Audio:class {play(){return Promise.resolve();}pause(){}},
     window:{AudioContext:class {state='running';createMediaStreamSource(){return {connect(){},disconnect(){}};}close(){}}},
   });
@@ -72,4 +73,69 @@ test('customer results replace their interim and never leave stale partial text 
   assert.equal(h.states[1].length,2);assert.equal(h.states[1].at(-1).text,'The newest speech');
   result(0,'Stale partial',false);
   assert.equal(h.states[1].length,2);assert.equal(h.states[1].at(-1).text,'The newest speech');
+});
+
+// Re-render the real hook so ownership transitions and pending async starts are exercised.
+async function costHarness(initial = {}, deferToken = false) {
+  const {hookHarness} = await import('./helpers/hookHarness.js');
+  const h=hookHarness(), sockets=[], reports=[], warnings=[], processors=[];
+  let options={enabled:true,serverTranscriptionActive:false,callSid:'CA'+'1'.repeat(32),...initial}, tokenResolve;
+  const tokenReady=deferToken ? new Promise(resolve=>{tokenResolve=resolve;}) : Promise.resolve();
+  class Socket {
+    static OPEN=1;
+    constructor(){this.readyState=0;this.sent=[];sockets.push(this);}
+    send(data){this.sent.push(data);}
+    close(){this.readyState=3;this.onclose?.({code:1000});}
+  }
+  let stopped=0;
+  const stream={clone:()=>({getAudioTracks:()=>[{}],getTracks:()=>[{stop(){stopped++;}}]})};
+  class AudioContext {
+    state='running';sampleRate=16000;
+    createMediaStreamSource(){return {connect(){},disconnect(){}};}
+    createScriptProcessor(){const p={connect(){},disconnect(){}};processors.push(p);return p;}
+    close(){}
+  }
+  const context=vm.createContext({...h.hooks,debugLog(){},warnSttOverlap:sid=>warnings.push(sid),logSttUsageFailure(){},
+    updateLiveTranscript,crypto:{randomUUID},WebSocket:Socket,URL,window:{AudioContext},
+    Audio:class {play(){return Promise.resolve();}pause(){}},
+    useAppAuth:()=>({getToken:async()=>''}),
+    fetchWithClerk:async(_get,path,init)=>{
+      if(path==='/api/stt-usage'){reports.push(JSON.parse(init.body));return {ok:true};}
+      await tokenReady;return {ok:true,text:async()=>JSON.stringify({access_token:'token'})};
+    },
+    useCallStore:{getState:()=>({startCall(){},endCall(){}})},waitForActiveSessionMetadata:async()=>({}),
+    publishAudioLevel(){},computeRmsLevel:()=>0,computeWaveformPeaks:()=>[],
+  });
+  vm.runInContext(source+';globalThis.useHook=useCustomerAudio;',context);
+  h.mount(()=>context.useHook(options));
+  return {h,sockets,reports,warnings,processors,stream,releaseToken:()=>tokenResolve?.(),stopped:()=>stopped,
+    update(next){options={...options,...next};h.render();}};
+}
+test('browser capture refuses both manual and remote starts when disabled or server-owned',async()=>{
+  for(const options of [{enabled:false},{serverTranscriptionActive:true}]){
+    const f=await costHarness(options);
+    await f.h.value.startCapture({mediaStream:f.stream});
+    await f.h.value.startCapture();
+    assert.equal(f.sockets.length,0);assert.equal(f.stopped(),0);f.h.unmount();
+  }
+});
+test('server handoff cancels an in-flight browser token grant before socket creation',async()=>{
+  const f=await costHarness({},true);
+  const pending=f.h.value.startCapture({mediaStream:f.stream});
+  f.update({serverTranscriptionActive:true});f.releaseToken();await pending;
+  assert.equal(f.sockets.length,0);assert.equal(f.stopped(),1);f.h.unmount();
+});
+test('conference handoff stops browser capture, warns with SID, and reports actual PCM seconds exactly once',async()=>{
+  const f=await costHarness();
+  await f.h.value.startCapture({mediaStream:f.stream});await f.h.flush();
+  const ws=f.sockets[0];ws.readyState=1;ws.onopen();await f.h.flush();
+  f.processors[0].onaudioprocess({inputBuffer:{getChannelData:()=>new Float32Array(16000)}});
+  assert.equal(ws.sent[0].byteLength,32000);
+  f.update({serverTranscriptionActive:true});await f.h.flush();
+  f.h.value.stopCapture();ws.onclose({code:1000});await f.h.flush();
+  assert.equal(ws.readyState,3);assert.equal(f.h.value.isCapturing,false);
+  assert.deepEqual(f.warnings,['CA'+'1'.repeat(32)]);
+  assert.equal(f.reports.length,1);assert.equal(f.reports[0].seconds,1);
+  assert.equal(f.reports[0].callSid,'CA'+'1'.repeat(32));
+  assert.match(f.reports[0].connectionId,/^[0-9a-f-]{36}$/);f.h.unmount();
 });

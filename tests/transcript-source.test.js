@@ -46,3 +46,19 @@ test("inbound speaker sources exclude mic bleed and survive disconnect; outbound
   assert.equal(merged.agentTranscriptRows, speech.transcriptRows);
   assert.equal(merged.customerTranscript, customer.customerTranscript);
 });
+
+test('manual sharing, automatic outbound capture and START respect the feature flag and server ownership', async () => {
+  for (const [enabled, reserved, active, expected] of [[true,false,false,3],[false,false,false,0],[true,true,false,0],[true,false,true,0]]) {
+    const effects=[], controls={current:null}; let starts=0;
+    const inbound={activeCall:{params:{direction:'outbound',twilioCallSid:'CA'+'1'.repeat(32)}},remoteStream:{},serverTranscriptionReserved:reserved,serverTranscriptionActive:active};
+    const customer={customerTranscript:[],isCapturing:false,startCapture:async()=>{starts++;},stopCapture(){}};
+    const context=vm.createContext({memo:fn=>fn,useRef:value=>({current:value}),useEffect:fn=>effects.push(fn),useCallback:fn=>fn,useMemo:fn=>fn(),
+      useScript:()=>({}),useCustomerAudio:()=>customer,useSpeechRecognition:()=>({listening:true,transcriptRows:[],startListening(){},stopListening(){}}),
+      useInboundCall:()=>inbound,useMergedTranscript:()=>({}),useCopilotEngine:()=>({})});
+    vm.runInContext(source.replace("'true'",JSON.stringify(String(enabled))),context);
+    context.render({controlsRef:controls});effects.forEach(fn=>fn());
+    await new Promise(resolve=>setImmediate(resolve));
+    await controls.current.shareCustomerAudio();await controls.current.handleStart();
+    assert.equal(starts,expected,JSON.stringify({enabled,reserved,active}));
+  }
+});

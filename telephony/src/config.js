@@ -40,6 +40,8 @@ if (!Number.isSafeInteger(recordingMaxBytes) || recordingMaxBytes < 1024 ||
 
 export const config = {
   recordingMaxBytes, recordingTimeoutMs,
+  sttWaitForAnswer: process.env.STT_WAIT_FOR_ANSWER?.trim().toLowerCase() !== 'false',
+  deleteTwilioRecordingsAfterCopy: process.env.DELETE_TWILIO_RECORDINGS_AFTER_COPY?.trim().toLowerCase() === 'true',
   port: Number(process.env.PORT || 8080),
   publicBaseUrl: stripTrailingSlash(process.env.PUBLIC_BASE_URL),
   supabaseUrl: process.env.SUPABASE_URL,

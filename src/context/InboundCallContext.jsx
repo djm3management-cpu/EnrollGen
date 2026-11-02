@@ -97,6 +97,16 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const [customerTranscript, setCustomerTranscript] = useState([]);
   const [thirdPartyTranscript, setThirdPartyTranscript] = useState([]);
   const conferencing = useConferenceCall({ getToken, activeCall });
+  // Single ownership flag: reserve server transcription before handoff, even
+  // while answer-gated or reconnecting, so browser fallback cannot overlap it.
+  const [serverStreams, setServerStreams] = useState({ callSid: null, ids: [] });
+  const transcriptionCall = activeCall || incomingCall;
+  const serverTranscriptionCallSid = transcriptionCall?.params?.twilioCallSid || transcriptionCall?.call?.parameters?.CallSid;
+  const currentCallSid = serverTranscriptionCallSid;
+  const serverTranscriptionActive = Boolean(currentCallSid && serverStreams.callSid === currentCallSid && serverStreams.ids.length > 0);
+  const serverTranscriptionReserved = Boolean(transcriptionCall && (
+    transcriptionCall.params?.direction !== 'outbound' || conferencing.conference || conferencing.serverTranscriptionStarting
+  ));
   const [error, setError] = useState("");
   const [transcriptionHealth, setTranscriptionHealth] = useState({});
   const transcriptionError = transcriptionHealthError(transcriptionHealth);
@@ -196,6 +206,19 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       // A blind-transferred conversation may outlive this agent's next call.
       // Its persistence continues on the server; never mix it into a new call.
       if (!owned || parentSid !== message.parentCallSid) return;
+    }
+    if (message.type === "call_status" && message.status === 'server_transcription_started') {
+      const owned = ownedCallRef.current;
+      const sid = paramsFromCall(owned).twilioCallSid || owned?.parameters?.CallSid;
+      if (sid && sid === (message.parentCallSid || message.callSid)) setServerStreams(previous => ({
+        callSid: sid, ids: [...new Set([...(previous.callSid === sid ? previous.ids : []), message.streamId || sid])],
+      }));
+      return;
+    }
+    if (message.type === "call_status" && message.status === 'stream_stopped') {
+      setServerStreams(previous => previous.callSid === (message.parentCallSid || message.callSid)
+        ? { ...previous, ids: previous.ids.filter(id => id !== (message.streamId || previous.callSid)) } : previous);
+      return;
     }
     if (message.type === "audio_level") {
       if (message.speaker === "customer") {
@@ -700,6 +723,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const value = useMemo(
     () => ({
       enabled: true,
+      serverTranscriptionActive,
+      serverTranscriptionReserved,
+      serverTranscriptionCallSid,
       agentId,
       deviceStatus,
       error,
@@ -729,6 +755,9 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       toggleHold,
     }),
     [
+      serverTranscriptionActive,
+      serverTranscriptionReserved,
+      serverTranscriptionCallSid,
       agentId,
       deviceStatus,
       error,

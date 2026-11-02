@@ -46,7 +46,7 @@ function phoneFixture(){
  });
  vm.runInContext(source+';globalThis.component=InboundCallProviderCore;',context);
  harness.mount(()=>context.component({agentId,identityReady:true}));
- return {harness,devices,transcript(message){deliverTranscript({type:'transcript',...message});},switchAgent(id){agentId=id;harness.render();},rotate(){token=async()=>'rotated';availability={...availability,isHydrated:false,status:'wrap_up',wrapUpCallSid:SID};harness.render();}};
+ return {harness,devices,event(message){deliverTranscript(message);},transcript(message){deliverTranscript({type:'transcript',...message});},switchAgent(id){agentId=id;harness.render();},rotate(){token=async()=>'rotated';availability={...availability,isHydrated:false,status:'wrap_up',wrapUpCallSid:SID};harness.render();}};
 }
 
 test('agent speech in progress is visible without entering finalized evidence, and clears for the next call',async()=>{
@@ -92,7 +92,7 @@ test('Deepgram dual-channel stream reaches the rendered panel with the latest in
  const read=file=>readFileSync(new URL(`../${file}`,import.meta.url),'utf8');
  const open=vm.runInNewContext(stripImports(read('telephony/src/media/deepgramTrack.js'))
   .replace(/^export /gm,'')+';openDeepgramTrack',{
-   WebSocket:Socket,randomUUID,config:{deepgramApiKey:'fixture'},setTimeout,clearTimeout,setInterval,clearInterval,
+   WebSocket:Socket,randomUUID,reportServerSttUsage:async()=>{},config:{deepgramApiKey:'fixture'},setTimeout,clearTimeout,setInterval,clearInterval,
   });
  const merge=vm.runInNewContext(stripImports(read('src/hooks/useMergedTranscript.js'))
   .replace(/^export /gm,'')+';useMergedTranscript',view.hooks);
@@ -323,4 +323,24 @@ test('an outbound connect reservation still protects against a simultaneous inbo
   outgoing.disconnect();await harness.flush();
   const next=new Call();devices[0].emit('incoming',next);await harness.flush();assert.equal(next.phase,'open');
  }finally{harness.unmount();}
+});
+
+
+test('live call ownership blocks browser fallback before answer and tracks conference streams independently',async()=>{
+ const f=phoneFixture();try{
+  await f.harness.flush();f.devices[0].emit('incoming',new Call());await f.harness.flush();
+  assert.equal(f.harness.value.serverTranscriptionReserved,true);
+  assert.equal(f.harness.value.serverTranscriptionCallSid,SID);
+  f.harness.value.acceptCall();await f.harness.flush();
+  assert.equal(f.harness.value.serverTranscriptionReserved,true);
+  assert.equal(f.harness.value.serverTranscriptionActive,false);
+  for(const streamId of ['first','second'])f.event({type:'call_status',status:'server_transcription_started',callSid:SID,streamId});
+  await f.harness.flush();assert.equal(f.harness.value.serverTranscriptionActive,true);
+  f.event({type:'call_status',status:'stream_stopped',callSid:SID,streamId:'first'});
+  await f.harness.flush();assert.equal(f.harness.value.serverTranscriptionActive,true);
+  f.event({type:'call_status',status:'stream_stopped',callSid:SID,streamId:'second'});
+  await f.harness.flush();assert.equal(f.harness.value.serverTranscriptionActive,false);
+  f.event({type:'call_status',status:'server_transcription_started',callSid:NEXT,streamId:'foreign'});
+  await f.harness.flush();assert.equal(f.harness.value.serverTranscriptionActive,false);
+ }finally{f.harness.unmount();}
 });

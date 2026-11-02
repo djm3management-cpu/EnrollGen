@@ -11,3 +11,11 @@ export function debugLog(event) {
 export function logAudioProcessingError(label, error) {
   console.error(label, error instanceof Error ? error.message : String(error));
 }
+
+// STT ownership diagnostics intentionally include only the provider call SID.
+export function warnSttOverlap(callSid) {
+  console.warn('[stt] Duplicate transcription prevented', /^CA[0-9a-f]{32}$/i.test(callSid || '') ? callSid : null);
+}
+export function logSttUsageFailure(callSid) {
+  console.error('[stt] Browser usage report failed', /^CA[0-9a-f]{32}$/i.test(callSid || '') ? callSid : null);
+}

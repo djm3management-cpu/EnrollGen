@@ -8,6 +8,7 @@ export function useConferenceCall({ getToken, activeCall }) {
   const [agents, setAgents] = useState([]);
   const [conference, setConference] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [serverTranscriptionStarting, setServerTranscriptionStarting] = useState(false);
   const [error, setError] = useState('');
   const callSid = activeCall?.params?.twilioCallSid || activeCall?.call?.parameters?.CallSid;
   const conferenceCallId = activeCall?.params?.conferenceCallId;
@@ -30,7 +31,7 @@ export function useConferenceCall({ getToken, activeCall }) {
   }, [request, key]);
   useEffect(() => {
     let canceled = false, pending = false;
-    setConference(null); setError(''); setBusy(false);
+    setConference(null); setError(''); setBusy(false); setServerTranscriptionStarting(false);
     async function refresh() {
       if (!key || pending) return;
       pending = true;
@@ -47,6 +48,8 @@ export function useConferenceCall({ getToken, activeCall }) {
   const run = useCallback(async input => {
     if (!key || busy) throw new Error('Wait for the call controls to finish.');
     setBusy(true); setError('');
+    const upgrading = !conference?.callId && ['dial', 'hold'].includes(input.action);
+    if (upgrading) setServerTranscriptionStarting(true);
     try {
       if (!conference?.callId && ['dial', 'hold'].includes(input.action)) await flushConferenceCheckpoint(callSid);
       if (current.current !== key) throw new Error('This call has ended.');
@@ -55,7 +58,7 @@ export function useConferenceCall({ getToken, activeCall }) {
       if (current.current === key) { setConference(result.conference); setEnabled(result.enabled); }
       return result.conference;
     } catch (err) { if (current.current === key) setError(err.message); throw err; }
-    finally { if (current.current === key) setBusy(false); }
+    finally { if (current.current === key) { setBusy(false); setServerTranscriptionStarting(false); } }
   }, [key, callSid, conferenceCallId, conference?.callId, busy, request]);
-  return useMemo(() => ({ enabled, agents, conference, busy, error, run }), [enabled, agents, conference, busy, error, run]);
+  return useMemo(() => ({ enabled, agents, conference, serverTranscriptionStarting, busy, error, run }), [enabled, agents, conference, serverTranscriptionStarting, busy, error, run]);
 }

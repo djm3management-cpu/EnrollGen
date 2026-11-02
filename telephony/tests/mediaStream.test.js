@@ -4,6 +4,7 @@ import { Buffer } from 'node:buffer';
 import process from 'node:process';
 import { EventEmitter, once } from 'node:events';
 import { createServer } from 'node:http';
+import { signalMediaLifecycle } from '../src/media/mediaLifecycle.js';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
@@ -64,9 +65,9 @@ async function until(check) {
 }
 async function harness(t, options = {}) {
   const events = [], tracks = [], clients = [];
-  const media = createMediaServer({ transcriptWriter: () => () => {}, leases: createMediaLeaseClient(db),notify: (agentId,message) => events.push({ agentId,...message }),
-    openTrack: ({ speaker,notify }) => {
-      const track = { speaker,notify,audio: [],closed: false,send(chunk) { this.audio.push(chunk); },close() { this.closed = true; } };
+  const media = createMediaServer({ waitForAnswer: false, transcriptWriter: () => () => {}, leases: createMediaLeaseClient(db),notify: (agentId,message) => events.push({ agentId,...message }),
+    openTrack: ({ speaker,notify,timelineOrigin }) => {
+      const track = { speaker,notify,timelineOrigin,audio: [],closed: false,send(chunk) { this.audio.push(chunk); },close() { this.closed = true; } };
       tracks.push(track); return track;
     }, ...options });
   const server = createServer(); server.on('upgrade',media.handleUpgrade);
@@ -236,7 +237,7 @@ test('a live Deepgram drop delivers the correct speaker failure to the call owne
     terminate() { this.readyState=3; this.emit('close'); }
     close() { this.terminate(); }
   }
-  const h = await harness(t,{ openTrack: options => openDeepgramTrack({ ...options,Socket }) });
+  const h = await harness(t,{ openTrack: options => openDeepgramTrack({ ...options,reportUsage:async()=>{},Socket }) });
   const claims = await seedCall(), ws = await h.connect(claims);
   ws.send(JSON.stringify(start(claims))); await until(() => sockets.length === 2);
   for (const socket of sockets) { socket.readyState=1; socket.emit('open'); }
@@ -427,4 +428,133 @@ test('Deepgram flushes the last short-call final after media stop', () => {
     channel:{alternatives:[{transcript:'Last words'}]}})));
   assert.equal(h.messages.at(-1).text,'Last words'); assert.equal(h.messages.at(-1).startMs,1000);
   h.sockets[0].terminate();assert.equal(h.timers.size,0);
+});
+
+test('answer gate drops ringing audio and opens both tracks only after persisted answer, then closes on reroute', async t => {
+  let answered = false, clock = Date.now();
+  const origin = clock;
+  const leases = { ...createMediaLeaseClient(db), answered: async () => answered };
+  const h = await harness(t, { waitForAnswer: true, answerPollMs: 10, leases, now: () => clock });
+  const claims = await seedCall(), ws = await h.connect(claims), packet = start(claims);
+  ws.send(JSON.stringify(packet));
+  await until(() => h.events.some(e => e.status === 'stream_started'));
+  ws.send(JSON.stringify(frame(packet.streamSid)));
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(h.tracks.length, 0);
+  clock += 15000;
+  answered = true;
+  signalMediaLifecycle({ callSid: claims.callSid, attemptId: claims.attemptId });
+  await until(() => h.tracks.length === 2);
+  assert.ok(h.tracks.every(track => track.audio.length === 0));
+  assert.ok(h.tracks.every(track => track.timelineOrigin === origin));
+  ws.send(JSON.stringify(frame(packet.streamSid)));
+  await until(() => h.tracks[0].audio.length === 1);
+  const closed = once(ws, 'close');
+  signalMediaLifecycle({ callSid: claims.callSid, attemptId: claims.attemptId, ended: true });
+  await closed;
+  assert.ok(h.tracks.every(track => track.closed));
+  // The next agent's attempt starts fresh with no Deepgram connections.
+  answered = false;
+  const next = await seedCall(), nextWs = await h.connect(next), nextPacket = start(next);
+  nextWs.send(JSON.stringify(nextPacket));
+  await until(() => h.events.filter(e => e.status === 'stream_started').length === 2);
+  nextWs.send(JSON.stringify(frame(nextPacket.streamSid)));
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(h.tracks.length, 2);
+});
+
+test('answer evidence errors fail closed, while the kill switch restores pre-answer transcription', async t => {
+  const leases = { ...createMediaLeaseClient(db), answered: async () => { throw new Error('unavailable'); } };
+  const gated = await harness(t, { waitForAnswer: true, answerPollMs: 10, leases });
+  const claims = await seedCall(), ws = await gated.connect(claims);
+  ws.send(JSON.stringify(start(claims)));
+  await until(() => gated.events.some(e => e.status === 'stream_started'));
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(gated.tracks.length, 0);
+  const legacy = await harness(t, { waitForAnswer: false, leases });
+  const other = await seedCall(), otherWs = await legacy.connect(other);
+  otherWs.send(JSON.stringify(start(other)));
+  await until(() => legacy.tracks.length === 2);
+});
+
+test('STT usage counts audio bytes per connection, excludes keepalives and queued frames, and reports once across retries', async () => {
+  const rows = [], claims = { tenantId: tenant, callSid: sid('CA') };
+  const h = deepgramHarness('customer', { claims, reportUsage: async row => rows.push(row) });
+  h.track.send(Buffer.alloc(8000)); // queued, then sent exactly once on open
+  h.sockets[0].open();
+  for (const keepalive of h.intervals.values()) keepalive();
+  h.sockets[0].terminate();
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(rows.length, 1); assert.equal(rows[0].quantity, 1);
+  h.retry(); h.sockets[1].open(); h.track.send(Buffer.alloc(4000));
+  h.track.close(); h.sockets[1].terminate(); h.track.close();
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(rows.length, 2); assert.equal(rows[1].quantity, 0.5);
+  assert.notEqual(rows[0].id, rows[1].id);
+  assert.equal(rows[1].metadata.call_sid, claims.callSid);
+  assert.equal(rows[1].metadata.source, 'server');
+  assert.equal(rows[1].metadata.track, 'customer');
+  assert.equal(rows[1].metadata.model, 'nova-2');
+});
+
+test('voicemail explicitly stops the named media stream before greeting or recording', async () => {
+  const {voicemailTwiml} = await import('../src/routes/twilioVoice.js');
+  const xml=voicemailTwiml().toString();
+  assert.match(xml, /<Stop><Stream name="agent-transcription"\/><\/Stop>/);
+  assert.ok(xml.indexOf('<Stop>')<xml.indexOf('<Say'));
+  assert.ok(xml.indexOf('<Stop>')<xml.indexOf('<Record'));
+});
+
+test('persisted answer lookup requires answer evidence and a nonterminal attempt', async () => {
+  let row={answered_at:null,ended_at:null};
+  const filters=[];
+  const query={select(){return this;},eq(column,value){filters.push([column,value]);return this;},abortSignal(){return this;},async maybeSingle(){return {data:row};}};
+  const leases=createMediaLeaseClient({from(table){assert.equal(table,'telephony_call_attempts');return query;}});
+  const claims={attemptId:randomUUID(),callSid:sid('CA')};
+  assert.equal(await leases.answered(claims),false);
+  row={answered_at:new Date().toISOString(),ended_at:null};assert.equal(await leases.answered(claims),true);
+  row.ended_at=new Date().toISOString();assert.equal(await leases.answered(claims),false);
+  assert.deepEqual(filters.slice(0,2),[['id',claims.attemptId],['parent_call_sid',claims.callSid]]);
+});
+
+test('server STT writer uses one idempotent usage row and surfaces database errors', async () => {
+  const {reportServerSttUsage}=await import('../src/sttUsage.js');
+  const row={id:randomUUID(),record_type:'stt_seconds',quantity:1,tenant_id:tenant};
+  const db={from(table){assert.equal(table,'usage_records');return {async upsert(actual,options){assert.equal(actual,row);assert.deepEqual(options,{onConflict:'id',ignoreDuplicates:true});return {};}};}};
+  await reportServerSttUsage(row,db);
+  await assert.rejects(reportServerSttUsage(row,{from:()=>({upsert:async()=>({error:new Error('database unavailable')})})}),/database unavailable/);
+});
+
+
+test('stop arriving during lease acquisition wins over a simultaneous answer and opens no Deepgram sockets', async t => {
+  let resolveClaim;
+  const leases={claim:()=>new Promise(resolve=>{resolveClaim=resolve;}),answered:async()=>true,release:async()=>true,renew:async()=>true};
+  const h=await harness(t,{waitForAnswer:true,leases}),claims=await seedCall(),ws=await h.connect(claims),packet=start(claims);
+  ws.send(JSON.stringify(packet));await until(()=>Boolean(resolveClaim));
+  ws.send(JSON.stringify({event:'stop',streamSid:packet.streamSid,stop:{callSid:claims.callSid,accountSid}}));
+  await new Promise(resolve=>setTimeout(resolve,15));
+  const closed=once(ws,'close');resolveClaim(true);await closed;
+  assert.equal(h.tracks.length,0);
+});
+
+test('failed socket writes are not counted as audio sent', async () => {
+  const rows=[],claims={tenantId:tenant,callSid:sid('CA')};
+  const h=deepgramHarness('agent',{claims,reportUsage:async row=>rows.push(row)});
+  h.sockets[0].open();
+  h.sockets[0].send=(_chunk,callback)=>callback(new Error('write failed'));
+  h.track.send(Buffer.alloc(8000));
+  await Promise.resolve();await Promise.resolve();
+  assert.equal(rows.length,1);assert.equal(rows[0].quantity,0);
+  h.track.close();
+});
+
+test('Railway cost switch defaults and explicit overrides are parsed by the production configuration', async () => {
+  const {execFileSync}=await import('node:child_process');
+  const script=`const {config}=await import('./src/config.js'); process.stdout.write(JSON.stringify([config.sttWaitForAnswer,config.deleteTwilioRecordingsAfterCopy]));`;
+  for(const [wait,remove,expected] of [[undefined,undefined,[true,false]],['false','true',[false,true]],['true','false',[true,false]]]){
+    const env={...process.env};delete env.STT_WAIT_FOR_ANSWER;delete env.DELETE_TWILIO_RECORDINGS_AFTER_COPY;
+    if(wait!==undefined)env.STT_WAIT_FOR_ANSWER=wait;if(remove!==undefined)env.DELETE_TWILIO_RECORDINGS_AFTER_COPY=remove;
+    const result=execFileSync(process.execPath,['--input-type=module','-e',script],{cwd:new URL('../',import.meta.url),env,encoding:'utf8'});
+    assert.deepEqual(JSON.parse(result),expected);
+  }
 });

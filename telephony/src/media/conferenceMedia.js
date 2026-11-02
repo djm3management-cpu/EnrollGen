@@ -33,6 +33,8 @@ export function createConferenceMedia({ db = supabase, settings = config, ...ove
   return createMediaServer({ pathPrefix: '/conference-media', verify: token => verifyConferenceToken(token, settings),
     speakersFor: claims => ({ inbound: claims.speaker }),
     leases: {
+      // A conference media lease is granted only for a joined participant.
+      answered: async () => true,
       claim: (claims, streamSid, owner) => rpc('claim_conference_media', { p_participant_id: claims.participantId,
         p_call_sid: claims.callSid, p_generation: claims.generation, p_stream_sid: streamSid, p_owner: owner }),
       renew: (_sid, owner, claims) => rpc('renew_conference_media', { p_participant_id: claims.participantId, p_owner: owner }),

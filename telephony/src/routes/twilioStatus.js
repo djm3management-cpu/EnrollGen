@@ -1,3 +1,4 @@
+import { signalMediaLifecycle } from '../media/mediaLifecycle.js';
 import { enqueueBillingCallback } from "../paragonBilling.js";
 import { createRecordingCallback } from "../recordings.js";
 import { Router } from "express";
@@ -41,6 +42,7 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, conferenceGuar
     // Persist before releasing: delayed routing checks this evidence after its
     // claim, preventing an already-ended parent from stranding an agent busy.
     if (terminalStatuses.has(callStatus)) {
+      signalMediaLifecycle({ callSid, ended: true });
       await releaseAgent(null, callSid);
     }
 
@@ -61,6 +63,8 @@ twilioStatusRouter.post("/twilio/agent-status", requireTwilioSignature, conferen
   try {
     await enqueueBillingCallback(supabase,config,req.body);
     await recordCallbackEvidence(req, "child");
+    signalMediaLifecycle({ callSid: req.body.ParentCallSid, attemptId: req.query.attemptId,
+      ended: terminalStatuses.has(req.body.CallStatus) });
     if (["completed", "canceled", "failed", "busy", "no-answer"].includes(req.body.CallStatus)) {
       await releaseAgent(req.query.agentId, req.body.ParentCallSid);
     }

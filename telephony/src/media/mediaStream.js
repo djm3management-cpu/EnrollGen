@@ -1,3 +1,5 @@
+import { config } from '../config.js';
+import { onMediaLifecycle } from './mediaLifecycle.js';
 import { supabase } from '../supabase.js';
 import { createTranscriptWriter } from '../transcripts.js';
 import { randomUUID } from 'node:crypto';
@@ -15,6 +17,7 @@ const SPEAKERS = { inbound: 'customer', outbound: 'agent' };
 
 export function createMediaServer({ leases = createMediaLeaseClient(), notify = sendToAgent,
   openTrack = openDeepgramTrack, verify = verifyMediaStreamToken, now = Date.now,
+  waitForAnswer = config.sttWaitForAnswer, answerPollMs = 1000,
   pathPrefix = '/media', speakersFor = () => SPEAKERS,
   limits = MEDIA_LIMITS, transcriptWriter = claims => createTranscriptWriter({ db: supabase, claims }) } = {}) {
   const wss = new WebSocketServer({ noServer: true, maxPayload: limits.frameBytes, perMessageDeflate: false });
@@ -47,6 +50,19 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     let pending = [], pendingBytes = 0, renewal = null, renewing = false;
     let customerChunks = [], customerBytes = 0, lastLevel = now();
     const tracks = {};
+    let answerTimer = null, checkingAnswer = false, timelineOrigin = null, unsubscribe = () => {};
+    const openTracks = () => {
+      if (stopped || Object.keys(tracks).length) return;
+      for (const [track, speaker] of Object.entries(speakers)) tracks[track] = openTrack({ speaker, notify: emit, timelineOrigin, claims });
+      emit({ type: 'call_status', status: 'server_transcription_started', streamId: streamSid, callSid: claims.parentCallSid || claims.callSid });
+    };
+    const checkAnswer = async () => {
+      if (stopped || checkingAnswer || Object.keys(tracks).length) return;
+      checkingAnswer = true;
+      try { if (await leases.answered(claims)) { openTracks(); clearInterval(answerTimer); } }
+      catch { /* Fail closed: no audio leaves the server without answer evidence. */ }
+      finally { checkingAnswer = false; }
+    };
     const persist = transcriptWriter(claims);
     const emit = message => {
       if (binding) void persist(message);
@@ -61,11 +77,12 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       if (stopped) return;
       if (code !== 1000) console.warn(`[media] rejected: ${reason}`);
       stopped = true; state = 'stopped'; clearTimeout(timer); clearInterval(renewal);
+      clearInterval(answerTimer); unsubscribe();
       pending = []; pendingBytes = 0; customerChunks = []; customerBytes = 0;
       for (const track of Object.values(tracks)) track.close();
       if (active.get(claims.callSid)?.owner === owner) active.delete(claims.callSid);
       if (owned) void leases.release(claims.callSid, owner, claims).catch(() => {});
-      if (binding) emit({ type: 'call_status', status: 'stream_stopped' });
+      if (binding) emit({ type: 'call_status', status: 'stream_stopped', streamId: streamSid, callSid: claims.parentCallSid || claims.callSid });
       if (ws.readyState === ws.OPEN) ws.close(code, reason);
     }
     const denied = (reason = 'Invalid media binding') => end(1008, reason);
@@ -85,6 +102,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         payload.length > Math.ceil(limits.audioBytes / 3) * 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(payload)) return denied();
       const audio = Buffer.from(payload, 'base64');
       if (!audio.length || audio.length > limits.audioBytes) return denied();
+      if (!tracks[track]) return; // Drop ringing audio; never queue it for later.
       tracks[track].send(audio, message.media.timestamp == null ? undefined : Number(message.media.timestamp));
       if (track === 'inbound') {
         customerChunks.push(audio); customerBytes += audio.length;
@@ -121,8 +139,20 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         active.get(claims.callSid)?.end(1000, 'Call attempt replaced');
         active.set(claims.callSid, { owner, end });
         binding = true; state = 'active'; clearTimeout(timer);
-        const timelineOrigin = now();
-        for (const [track, speaker] of Object.entries(speakers)) tracks[track] = openTrack({ speaker, notify: emit, timelineOrigin });
+        timelineOrigin = now();
+        // A stop received during lease acquisition wins over answer evidence.
+        const pendingStop = pending.find(packet => packet.event === 'stop');
+        if (pendingStop) { consume(pendingStop); if (stopped) return; }
+        unsubscribe = onMediaLifecycle(event => {
+          if (event.callSid !== claims.callSid || (event.attemptId && event.attemptId !== claims.attemptId)) return;
+          if (event.ended) end(); else void checkAnswer();
+        });
+        if (!waitForAnswer) openTracks();
+        else {
+          await checkAnswer();
+          if (!stopped && !Object.keys(tracks).length) { answerTimer = setInterval(() => void checkAnswer(), answerPollMs); answerTimer.unref(); }
+        }
+        if (stopped) return;
         emit({ type: 'call_status', status: 'stream_started' });
         renewal = setInterval(async () => {
           if (stopped || renewing) return;
@@ -146,7 +176,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       if (!message || typeof message !== 'object') return denied();
       if (message.event === 'connected' && state === 'waiting') return;
       if (message.event === 'start') { void start(message); return; }
-      if (state === 'binding') { buffer(message, raw.length); return; }
+      if (state === 'binding') { if (!waitForAnswer || message.event !== 'media') buffer(message, raw.length); return; }
       if (state !== 'active') return denied();
       consume(message);
     });

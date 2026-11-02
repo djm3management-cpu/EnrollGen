@@ -12,6 +12,13 @@ export function createMediaLeaseClient(db = supabase) {
     return data === true;
   };
   return {
+    async answered(claims) {
+      const { data, error } = await db.from('telephony_call_attempts').select('answered_at,ended_at')
+        .eq('id', claims.attemptId).eq('parent_call_sid', claims.callSid)
+        .abortSignal(AbortSignal.timeout(3000)).maybeSingle();
+      if (error) throw error;
+      return Boolean(data?.answered_at && !data.ended_at);
+    },
     claim(claims, streamSid, owner) {
       return rpc('claim_media_stream', { p_call_sid: claims.callSid, p_attempt_id: claims.attemptId,
         p_agent_id: claims.agentId, p_tenant_id: claims.tenantId, p_inbound_call_id: claims.inboundCallId,
