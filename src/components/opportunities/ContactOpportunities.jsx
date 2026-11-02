@@ -1,3 +1,4 @@
+import CrmPanelBoundary from '../CrmPanelBoundary';
 import { useState } from 'react';
 import { useOpportunities } from '../../hooks/useOpportunities';
 import { money } from '../../lib/opportunities';
@@ -25,6 +26,6 @@ export default function ContactOpportunities({ contactId, onOpenContact = () => 
   return <section className="opps-contact-section">
     <div className="opps-section-head"><h3>OPPORTUNITIES</h3><CreateOpportunityButton contactId={contactId} /></div>
     {data.loading ? <p className="contacts-muted">Loading opportunities…</p> : data.error ? <div className="ops-error" role="alert">{data.error}<button data-key-role="secondary" className="contacts-mini-btn" onClick={() => data.refresh()}>RETRY</button></div> : !data.rows.length ? <p className="contacts-muted">No opportunities yet.</p> : data.rows.map((row) => <button data-key-role="secondary" type="button" className="opps-contact-opportunity" key={row.id} onClick={() => setSelectedId(row.id)}><strong>{row.title}</strong><StageBadge stage={data.stages.find((stage) => stage.id === row.stage_id)} /><span>{row.line_of_business} · {money(row.est_value)}</span></button>)}
-    {selected && <OpportunityDrawer row={selected} data={data} onClose={() => setSelectedId(null)} onOpenContact={(id) => { setSelectedId(null); onOpenContact(id); }} />}
+    {selected && <CrmPanelBoundary label="Opportunity details" resetKey={selected.id}><OpportunityDrawer row={selected} data={data} onClose={() => setSelectedId(null)} onOpenContact={(id) => { setSelectedId(null); onOpenContact(id); }} /></CrmPanelBoundary>}
   </section>;
 }

@@ -1,3 +1,4 @@
+import CrmPanelBoundary from '../CrmPanelBoundary';
 import EnrollmentIntake from '../enrollment/EnrollmentIntake';
 import ComplianceUploads from './ComplianceUploads';
 import CallTranscriptPlayer from "./CallTranscriptPlayer";
@@ -39,13 +40,13 @@ function CallOutcomeEditor({ callRecordId, outcome, productType, callProductType
   const [selectedOutcome, setSelectedOutcome] = useState(() => callOutcomeSelection(outcome));
   const [selectedProduct, setSelectedProduct] = useState(productType || "");
   const [error, setError] = useState("");
-  const [codes, setCodes] = useState(sunfireCode || "");
+  const [codes, setCodes] = useState(String(sunfireCode ?? ""));
   const isUhc = /uhc|united\s*healthcare|aarp/i.test(carrierName || "");
 
   useEffect(() => {
     setSelectedOutcome(callOutcomeSelection(outcome));
     setSelectedProduct(productType || "");
-    setCodes(sunfireCode || "");
+    setCodes(String(sunfireCode ?? ""));
   }, [callRecordId, outcome, productType, sunfireCode]);
 
   const saveOutcome = useCallback(
@@ -215,7 +216,9 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
       {showIntake&&<EnrollmentIntake callId={row.call_record_id} onClose={()=>setShowIntake(false)} onSaved={()=>void loadDetail()}/>}
       {detailError && <div className="ops-error" role="alert">{detailError} <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => void loadDetail()}>RETRY</button></div>}
       <div className="call-log-workspace">
-        <CallTranscriptPlayer row={row.combined_count > 0 ? { ...row, duration_seconds: row.original_talk_seconds } : row} detail={detail} loading={loading} playRequest={playRequest} />
+        <CrmPanelBoundary label="Call recording and transcript" resetKey={row.log_id || row.call_record_id}>
+          <CallTranscriptPlayer row={row.combined_count > 0 ? { ...row, duration_seconds: row.original_talk_seconds } : row} detail={detail} loading={loading} playRequest={playRequest} />
+        </CrmPanelBoundary>
         <aside className="call-log-sidebar" aria-label="Call information">
           <section className="contacts-section">
             <div className="contacts-section-head">OUTCOME</div>
@@ -240,7 +243,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
           </section>
           <section className="contacts-section">
             <div className="contacts-section-head">NOTES</div>
-            <CallNotesEditor callRecordId={row.call_record_id} notes={detail?.agent_notes ?? row.agent_notes} loading={loading || Boolean(detailError)} onSaved={value => setDetail(current => current ? { ...current, agent_notes: value } : current)} />
+            <CrmPanelBoundary label="Call notes" resetKey={row.call_record_id}><CallNotesEditor callRecordId={row.call_record_id} notes={detail?.agent_notes ?? row.agent_notes} loading={loading || Boolean(detailError)} onSaved={value => setDetail(current => current ? { ...current, agent_notes: value } : current)} /></CrmPanelBoundary>
           </section>
         </aside>
       </div>
@@ -308,7 +311,7 @@ export default function CallLogTab({ onOpenContact = null, inboundCallId=null })
     }
   },[inboundCallId,rows]);
   useEffect(() => {
-    setAgentOptions(previous => [...new Set([...previous, ...rows.map(row => row.agent).filter(Boolean)])].sort((a, b) => a === "ALL" ? -1 : b === "ALL" ? 1 : a.localeCompare(b)));
+    setAgentOptions(previous => [...new Set([...previous, ...rows.map(row => row.agent).filter(agent => typeof agent === 'string' && agent.trim())])].sort((a, b) => a === "ALL" ? -1 : b === "ALL" ? 1 : a.localeCompare(b)));
   }, [rows]);
 
   useEffect(() => {
@@ -427,8 +430,8 @@ export default function CallLogTab({ onOpenContact = null, inboundCallId=null })
                 const isExpanded = expandedId === row.log_id;
                 const isAlert = row.disposition === "missed" || row.disposition === "voicemail";
                 return (
+                  <CrmPanelBoundary key={row.log_id} label="Call record" resetKey={row.log_id} tableColumns={10}>
                   <FragmentRow
-                    key={row.log_id}
                     row={row}
                     isExpanded={isExpanded}
                     isAlert={isAlert}
@@ -441,6 +444,7 @@ export default function CallLogTab({ onOpenContact = null, inboundCallId=null })
                     onOpenContact={onOpenContact}
                     supabaseClient={supabaseClient}
                   />
+                  </CrmPanelBoundary>
                 );
               })
             )}
@@ -524,7 +528,7 @@ function FragmentRow({ row, isExpanded, isAlert, onToggle, onPlay, playRequest, 
       {isExpanded ? (
         <tr className="call-log-expand-row">
           <td colSpan={10}>
-            <ExpandedRow row={row} supabaseClient={supabaseClient} playRequest={playRequest} onCombine={onCombine} />
+            <CrmPanelBoundary label="Call details" resetKey={row.log_id}><ExpandedRow row={row} supabaseClient={supabaseClient} playRequest={playRequest} onCombine={onCombine} /></CrmPanelBoundary>
           </td>
         </tr>
       ) : null}

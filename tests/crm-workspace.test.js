@@ -96,7 +96,7 @@ const h = (type, props, ...children) => ({ type, props: props || {}, children })
 const nodes = tree => !tree || typeof tree !== 'object' ? [] : [tree, ...(tree.children || []).flat(Infinity).flatMap(nodes)];
 function componentSource(path, name, bindings) {
   const source = readFileSync(new URL(path, import.meta.url), 'utf8').replace(/^import .*;\n/gm, '').replace(/^export default /gm, '').replace(/^export /gm, '');
-  const context = vm.createContext({ h, Fragment: 'fragment', ...bindings });
+  const context = vm.createContext({ h, Fragment: 'fragment', CrmPanelBoundary: 'crm-boundary', ...bindings });
   vm.runInContext(transformSync(source, { loader: 'jsx', jsxFactory: 'h', jsxFragment: 'Fragment', format: 'cjs' }).code + `;globalThis.component=${name};`, context);
   return context.component;
 }
@@ -431,4 +431,31 @@ test('icon dropdowns keep native selection, hover labels and a visible active st
  assert.equal(select.props['aria-label'],'Agent filter');assert.equal(select.props.title,'Agent: Sample Agent');
  assert.equal(select.props.value,'sample');select.props.onChange({target:{value:'ALL'}});assert.deepEqual(changes,['ALL']);
  assert.ok(!nodes(Select({icon:'direction-icon',label:'Direction filter',title:'Call direction: Inbound and outbound',value:'ALL'}))[0].props.className.includes('is-active'));
+});
+
+test('voicemail and unanswered calls with no agent, contact name, disposition or transcript render safely before and after detail loading', async () => {
+  const harness = hookHarness();
+  const Player = componentSource('../src/components/callLog/CallTranscriptPlayer.jsx', 'CallTranscriptPlayer', {
+    ...harness.hooks, Play: 'play', Pause: 'pause', useAppAuth: () => ({ getToken: async () => 'token' }),
+    redactSensitiveText: value => typeof value === 'string' ? value : '', formatTalk,
+    recordingTarget: row => ({ inbound_call_id: row.inbound_call_id }),
+  });
+  const row = { log_id: 'voicemail', inbound_call_id: 'inbound-one', call_record_id: null,
+    direction: 'inbound', agent: null, contact_name: null, contact_phone: null,
+    disposition: null, call_outcome: null, transcript_preview: null, duration_seconds: null };
+  let detail = null, loading = true;
+  try {
+    harness.mount(() => Player({ row, detail, loading }));
+    assert.ok(nodes(harness.value).some(node => node.children.includes('Loading transcript…')));
+    loading = false; detail = { transcript_raw: null, transcript_diarized: null };
+    harness.render();
+    assert.ok(nodes(harness.value).some(node => node.children.includes('No transcript stored')));
+    detail = { transcript_raw: '', transcript_diarized: [] }; harness.render();
+    assert.ok(nodes(harness.value).some(node => node.children.includes('No transcript stored')));
+    const Row = componentSource('../src/components/callLog/CallLogTab.jsx', 'FragmentRow', {
+      CrmPanelBoundary: 'boundary', CallDirection: 'direction', ComplianceChip: 'compliance', CallStatusOutcome: 'status', RecordingCell: 'recording', CallBackButton: 'callback',
+      fmtDateTime: formatCallDateTime, fmtDuration: formatTalk, crmPath,
+    });
+    assert.ok(nodes(Row({ row, isExpanded: false })).some(node => node.children.includes('Unknown')));
+  } finally { harness.unmount(); }
 });

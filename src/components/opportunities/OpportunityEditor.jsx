@@ -98,7 +98,7 @@ export function OpportunityEditor({ data, prefill = {}, existing = null, onSaved
           setFields((current) => ({ ...current, contact_id: event.target.value, call_id: '' }));
         }}><option value="">{contactsLoading ? 'Loading contacts…' : 'Choose contact'}</option>
           {fields.contact_id && !matching.some((row) => row.id === fields.contact_id) && <option value={fields.contact_id}>{selectedContact ? contactDisplayName(selectedContact) : existing?.contact_name || prefill.contact_name || 'Selected contact'}</option>}
-          {matching.map((row) => <option key={row.id} value={row.id}>{contactDisplayName(row)} · {row.phone_last4 || row.id.slice(0, 8)}</option>)}
+          {matching.map((row) => <option key={row.id} value={row.id}>{contactDisplayName(row)} · {row.phone_last4 || String(row.id ?? '').slice(0, 8)}</option>)}
         </select></label>
         {contactsError && <div className="ops-error" role="alert">{contactsError}</div>}
       </div>}
@@ -116,7 +116,7 @@ export function OpportunityEditor({ data, prefill = {}, existing = null, onSaved
         <label className="contacts-edit-field"><span>SOURCE</span><select className="contacts-edit-input" value={fields.lead_source_id} onChange={(event) => set('lead_source_id', event.target.value)}><option value="">No source</option>{data.sources.filter((row) => data.activeSources.some((source) => source.id === row.id) || row.id === fields.lead_source_id).map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
         <label className="contacts-edit-field"><span>LINKED CALL</span><select className="contacts-edit-input" value={fields.call_id} onChange={(event) => set('call_id', event.target.value)}><option value="">{existing ? 'No call' : 'Latest related call (if any)'}</option>
           {fields.call_id && !calls.some((row) => row.id === fields.call_id) && <option value={fields.call_id}>Selected call</option>}
-          {calls.map((row) => <option key={row.id} value={row.id}>{row.call_start ? new Date(row.call_start).toLocaleString() : row.id.slice(0, 8)} · {row.call_outcome || row.product_type || 'Call'}</option>)}
+          {calls.map((row) => <option key={row.id} value={row.id}>{row.call_start ? new Date(row.call_start).toLocaleString() : String(row.id ?? '').slice(0, 8)} · {row.call_outcome || row.product_type || 'Call'}</option>)}
         </select></label>
         <label className="contacts-edit-field contacts-edit-field-wide"><span>NOTES</span><textarea ref={notesRef} className="contacts-edit-input contacts-edit-textarea" rows={4} maxLength={10000} value={fields.notes} onChange={(event) => set('notes', event.target.value)} /></label>
       </div>

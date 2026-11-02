@@ -34,17 +34,17 @@ export function opportunityStatus(row, stage) {
 }
 
 export function agentInitials(agent) {
-  return (agent?.name || '').trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || '—';
+  return String(agent?.name ?? '').trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || '—';
 }
 
 export function filterOpportunities(rows, filters) {
-  const term = (filters.search || '').trim().toLocaleLowerCase();
+  const term = String(filters.search ?? '').trim().toLocaleLowerCase();
   return rows.filter((row) => !row.deleted_at && (!filters.pipeline || row.pipeline_id === filters.pipeline)
     && (!filters.agent || row.assigned_agent_id === filters.agent)
     && (!filters.lob || row.line_of_business === filters.lob)
     && (!filters.carrier || row.carrier === filters.carrier)
     && (!filters.source || row.lead_source_id === filters.source)
-    && (!term || (row.contact_name || '').toLocaleLowerCase().includes(term)));
+    && (!term || String(row.contact_name ?? '').toLocaleLowerCase().includes(term)));
 }
 
 export function sortOpportunities(rows, key, direction, valueFor = (row) => row[key]) {

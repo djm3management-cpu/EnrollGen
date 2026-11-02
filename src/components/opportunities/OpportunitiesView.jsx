@@ -1,3 +1,4 @@
+import CrmPanelBoundary from '../CrmPanelBoundary';
 import DncCallControl from "../phone/DncCallControl";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DndContext, DragOverlay, KeyboardSensor, MouseSensor, TouchSensor, closestCorners, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
@@ -26,7 +27,7 @@ function CardAction({ label, count = 0, children, onClick, disabled, expanded })
 }
 
 function CardSummary({ row, source }) {
-  return <><div className="opps-card-top"><strong>{row.contact_name}</strong><span className="opps-days" title="Days in stage">{daysInStage(row)}d</span></div>
+  return <><div className="opps-card-top"><strong>{row.contact_name || 'Unknown contact'}</strong><span className="opps-days" title="Days in stage">{daysInStage(row)}d</span></div>
     <dl className="opps-card-values"><div><dt>Source:</dt><dd>{source?.name || 'No source'}</dd></div><div><dt>Value:</dt><dd>{money(row.est_value)}</dd></div></dl>
   </>;
 }
@@ -43,7 +44,7 @@ function OpportunityCard({ row, stage, source, pending, onOpen, actions }) {
       <DncCallControl type="button" className="opps-card-action" aria-label="Call" title="Call" phone={actions.contact(row.contact_id)?.phone} doNotCall={actions.contact(row.contact_id)?.do_not_call} disabled={pending || !actions.canCall(row.contact_id)} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); actions.call(row.contact_id); }}><Phone size={16} strokeWidth={1.5} /></DncCallControl>
       <CardAction label="Conversation" count={actions.unread[row.contact_id] || 0} disabled={pending} onClick={() => actions.conversation(row.contact_id)}><MessageCircle size={16} strokeWidth={1.5} /></CardAction>
       <CardAction label="Tags" count={actions.tags.tags.filter((tag) => tag.contact_id === row.contact_id).length} disabled={pending} expanded={actions.tagContact === row.contact_id} onClick={(event) => actions.openTags(row, event.currentTarget)}><Tag size={16} strokeWidth={1.5} /></CardAction>
-      <CardAction label="Notes" count={row.notes?.trim() ? 1 : 0} disabled={pending} onClick={() => actions.notes(row.id)}><FileText size={16} strokeWidth={1.5} /></CardAction>
+      <CardAction label="Notes" count={String(row.notes ?? '').trim() ? 1 : 0} disabled={pending} onClick={() => actions.notes(row.id)}><FileText size={16} strokeWidth={1.5} /></CardAction>
     </div>
   </article>;
 }
@@ -180,7 +181,7 @@ export default function OpportunitiesView({ onOpenContact }) {
         {!sorted.length && <tr><td colSpan={COLUMNS.length + 1} className="contacts-muted">No opportunities match these filters.</td></tr>}
       </tbody></table></div>}
     {creating && <NewOpportunityModal data={data} prefill={{ pipeline_id: pipelineId }} onClose={() => setCreating(false)} />}
-    {selected && <OpportunityDrawer row={selected} data={data} initialSection={drawerSection} onClose={() => setSelectedId(null)} onOpenContact={onOpenContact} />}
+    {selected && <CrmPanelBoundary label="Opportunity details" resetKey={selected.id}><OpportunityDrawer row={selected} data={data} initialSection={drawerSection} onClose={() => setSelectedId(null)} onOpenContact={onOpenContact} /></CrmPanelBoundary>}
     {tagPopover && <ContactTagsPopover {...tagPopover} tags={tags} onClose={closeTags} />}
     {settings && <PipelineSettings data={data} pipelineId={pipelineId} onClose={() => setSettings(false)} />}
     {menuRow && <OpportunityRowMenu row={menuRow} anchor={rowMenu.anchor} canDelete={canDeleteOpportunity(menuRow, data.agentUuid, data.isAdmin)} onClose={closeRowMenu} onOpen={() => { closeRowMenu(); openDrawer(menuRow.id); }} onDelete={() => { closeRowMenu(); setDeleteId(menuRow.id); }} />}

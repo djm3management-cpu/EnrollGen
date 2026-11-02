@@ -1,3 +1,4 @@
+import CrmPanelBoundary from '../CrmPanelBoundary';
 import { useCallback, useEffect, useState } from 'react';
 import { OpportunityEditor } from './OpportunityEditor';
 import OpportunityDialog from './OpportunityDialog';
@@ -48,7 +49,7 @@ export default function OpportunityDrawer({ row, data, onClose, onOpenContact, i
   };
 
   return <OpportunityDialog title={row.title || 'Opportunity'} drawer busy={busy} onClose={onClose}>
-    <div className="opps-drawer-summary"><strong>{row.contact_name}</strong><StageBadge stage={stage} />
+    <div className="opps-drawer-summary"><strong>{row.contact_name || 'Unknown contact'}</strong><StageBadge stage={stage} />
       <button data-key-role="secondary" className="contacts-mini-btn" type="button" disabled={busy} onClick={() => onOpenContact(row.contact_id)}>OPEN CONTACT</button>
       {canDeleteOpportunity(row, data.agentUuid, data.isAdmin) && <button data-key-role="destructive" className="contacts-mini-btn opps-danger" type="button" disabled={busy || data.pendingIds.has(row.id)} onClick={() => setDeleting(true)}>DELETE</button>}
     </div>
@@ -69,7 +70,7 @@ export default function OpportunityDrawer({ row, data, onClose, onOpenContact, i
       {calls.map((call) => <div className="opps-call" key={call.id}><span>{call.call_start ? new Date(call.call_start).toLocaleString() : 'Call'} · {call.call_outcome || call.product_type || 'Unknown outcome'}{call.id === row.call_id ? ' · Linked' : ''}</span>
         <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={callLoading} onClick={() => openCall(call)}>{callDetail?.id === call.id ? 'HIDE CALL' : 'VIEW CALL'}</button></div>)}
       {callLoading && <p className="contacts-muted">Loading call…</p>}
-      {callDetail && <CallDetailPanel detail={callDetail} loading={callLoading} />}
+      {callDetail && <CrmPanelBoundary label="Opportunity call details" resetKey={callDetail.id}><CallDetailPanel detail={callDetail} loading={callLoading} /></CrmPanelBoundary>}
     </section>
   </OpportunityDialog>;
 }

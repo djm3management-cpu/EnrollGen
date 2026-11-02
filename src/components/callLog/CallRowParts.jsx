@@ -11,7 +11,7 @@ export function CallDirection({ direction }) {
 }
 
 export function DispositionChip({ disposition }) {
-  const value = (disposition || 'unknown').toLowerCase();
+  const value = String(disposition || 'unknown').toLowerCase();
   return <span className={`call-log-chip disposition-${value}`}>{value.toUpperCase()}</span>;
 }
 
@@ -20,13 +20,14 @@ const COMPLIANCE_LABELS = {
   scoring: 'Scoring', complete: 'Complete', failed: 'Scoring failed', dispo_changed: 'Disposition changed',
 };
 export function CallStatusOutcome({ disposition, outcome }) {
-  const value = (disposition || 'unknown').toLowerCase();
-  const status = outcome && value === outcome ? 'connected' : value;
+  const outcomeValue = String(outcome ?? '');
+  const value = String(disposition || 'unknown').toLowerCase();
+  const status = outcomeValue && value === outcomeValue ? 'connected' : value;
   if (status === 'missed') return <span className="call-status-missed">Missed</span>;
-  const tone = outcome?.startsWith('enrolled') ? 'enrolled' : outcome?.includes('callback') ? 'callback' : 'other';
+  const tone = outcomeValue.startsWith('enrolled') ? 'enrolled' : outcomeValue.includes('callback') ? 'callback' : 'other';
   return <span className="call-status-outcome">
     <span className="call-status">{status.charAt(0).toUpperCase() + status.slice(1).replaceAll('_', ' ')}</span>
-    {outcome && <><span className="call-status-separator"> · </span><span className={`call-outcome is-${tone}`}>{callOutcomeLabel(outcome)}</span></>}
+    {outcomeValue && <><span className="call-status-separator"> · </span><span className={`call-outcome is-${tone}`}>{callOutcomeLabel(outcomeValue)}</span></>}
   </span>;
 }
 

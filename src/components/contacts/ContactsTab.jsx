@@ -1,3 +1,4 @@
+import CrmPanelBoundary from '../CrmPanelBoundary';
 import { debugLog } from "../../lib/debugLog.js";
 import DncCallControl from "../phone/DncCallControl";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
@@ -782,7 +783,7 @@ function RightPanel({
                     saving={saving}
                   />
                 </AccordionSection>
-                <ContactOpportunities key={contact.id} contactId={contact.id} />
+                <CrmPanelBoundary label="Contact opportunities" resetKey={contact.id}><ContactOpportunities key={contact.id} contactId={contact.id} /></CrmPanelBoundary>
               </>
             ) : null}
             {rightTab === "DND" ? (
@@ -1329,11 +1330,13 @@ export default function ContactsTab({ variant = "home", onStartCall = null }) {
       <button data-key-role="secondary" type="button" className={location.view === 'followups' ? 'is-active' : ''} aria-pressed={location.view === 'followups'} onClick={() => updateLocation('followups')}><CalendarClock size={14} aria-hidden="true" />Follow-ups{dueToday > 0 && <span className="call-log-chip" aria-label={`${dueToday} follow-ups due today`}> {dueToday}</span>}</button>
     </div>
     <div hidden={location.view !== 'contacts'}>
-      <ContactsWorkspace variant={variant} onStartCall={onStartCall} active={location.view === 'contacts'}
-        focusContact={location.contactId ? { id: location.contactId, ts: location.ts || 0 } : null} onSelectContact={id => updateLocation('contacts', id)} />
+      <CrmPanelBoundary label="Contacts" resetKey={location.contactId}>
+        <ContactsWorkspace variant={variant} onStartCall={onStartCall} active={location.view === 'contacts'}
+          focusContact={location.contactId ? { id: location.contactId, ts: location.ts || 0 } : null} onSelectContact={id => updateLocation('contacts', id)} />
+      </CrmPanelBoundary>
     </div>
-    {location.view === 'calls' && <Suspense fallback={<div className="contacts-muted">Loading calls...</div>}><CallLogTab inboundCallId={location.inboundCallId} onOpenContact={id => updateLocation('contacts', id)} /></Suspense>}
-    {location.view === 'followups' && <FollowUpsView key={`${followUps.agentSlug}:${location.taskSource||''}`} initialSource={location.taskSource||''} data={followUps} onOpenContact={id => updateLocation('contacts', id)} />}
-    {location.view === 'opportunities' && <OpportunitiesView onOpenContact={id => updateLocation('contacts', id)} />}
+    {location.view === 'calls' && <CrmPanelBoundary label="Calls" resetKey={location.inboundCallId}><Suspense fallback={<div className="contacts-muted">Loading calls...</div>}><CallLogTab inboundCallId={location.inboundCallId} onOpenContact={id => updateLocation('contacts', id)} /></Suspense></CrmPanelBoundary>}
+    {location.view === 'followups' && <CrmPanelBoundary label="Follow-ups" resetKey={location.taskSource}><FollowUpsView key={`${followUps.agentSlug}:${location.taskSource||''}`} initialSource={location.taskSource||''} data={followUps} onOpenContact={id => updateLocation('contacts', id)} /></CrmPanelBoundary>}
+    {location.view === 'opportunities' && <CrmPanelBoundary label="Opportunities"><OpportunitiesView onOpenContact={id => updateLocation('contacts', id)} /></CrmPanelBoundary>}
   </div>;
 }

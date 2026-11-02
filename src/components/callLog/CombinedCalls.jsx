@@ -1,3 +1,4 @@
+import CrmPanelBoundary from '../CrmPanelBoundary';
 import { useCallback, useEffect, useState } from 'react';
 import { useAppAuth } from '../../context/AuthContext';
 import { evidenceRequest } from '../../lib/evidenceApi';
@@ -43,7 +44,7 @@ export default function CombinedCalls({ callId }) {
         <span>{formatCallDateTime(row.occurred_at)} · {row.agent || 'Unknown agent'} · Talk {formatTalk(row.duration_seconds)} · {row.disposition || 'Unknown disposition'}</span>
         <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={busy !== null} onClick={() => uncombine(row.call_record_id)}>{busy === row.call_record_id ? 'Restoring…' : 'Uncombine'}</button>
       </div>
-      <CallTranscriptPlayer row={row} detail={row} loading={false} />
+      <CrmPanelBoundary label="Linked call transcript" resetKey={row.call_record_id}><CallTranscriptPlayer row={row} detail={row} loading={false} /></CrmPanelBoundary>
     </section>)}
   </section>;
 }

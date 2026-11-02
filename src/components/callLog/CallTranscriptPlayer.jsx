@@ -8,12 +8,16 @@ import MergedRecordingPlayer from '../callDetail/MergedRecordingPlayer';
 
 export function transcriptLines(detail, preview = '') {
   const diarized = detail?.transcript_diarized;
-  if (Array.isArray(diarized) && diarized.length) return diarized.map(line => ({
+  if (Array.isArray(diarized) && diarized.length) return diarized.filter(line => line && typeof line === 'object').map(line => ({
     text: redactSensitiveText(line.text || ''),
     speaker: String(line.speaker).toLowerCase() === 'third_party' ? 'third_party' : String(line.speaker).toLowerCase() === 'customer' ? 'customer' : 'agent',
     time: line.start_ms != null && Number.isFinite(Number(line.start_ms)) ? Math.max(0, Number(line.start_ms) / 1000) : null,
   })).sort((a, b) => (a.time ?? Infinity) - (b.time ?? Infinity));
-  return (detail?.transcript_raw || preview).split('\n').filter(line => line.trim()).map(line => {
+  // SQL LEFT JOINs return null for calls without transcript evidence; defaults
+  // on parameters cover undefined only, not an explicit null preview.
+  const raw = typeof detail?.transcript_raw === 'string' && detail.transcript_raw
+    ? detail.transcript_raw : typeof preview === 'string' ? preview : '';
+  return raw.split('\n').filter(line => line.trim()).map(line => {
     const match = line.match(/^\[?(\d+:\d{2}(?::\d{2})?)\]?\s*(?:[|–-]\s*)?(Agent|Customer|Third[ _]Party)?:?\s*(.*)$/i);
     if (match) return { time: match[1].split(':').reduce((total, part) => total * 60 + Number(part), 0), speaker: match[2]?.toLowerCase().replace(' ', '_') || 'unknown', text: redactSensitiveText(match[3]) };
     const speaker = line.match(/^(Agent|Customer|Third[ _]Party):\s*(.*)$/i);

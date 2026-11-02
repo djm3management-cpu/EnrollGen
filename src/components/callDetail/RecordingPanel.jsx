@@ -77,7 +77,7 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
       <RecordingCell row={row} />
     </div> : null}
     {rows.map((row, index) => <div className="ops-summary-box" key={row.id}>
-      <span className="ops-mini-label">PART {index + 1} · {row.channels} CHANNEL{row.channels === 1 ? '' : 'S'} · {row.status.toUpperCase()}</span>
+      <span className="ops-mini-label">PART {index + 1} · {row.channels} CHANNEL{row.channels === 1 ? '' : 'S'} · {String(row.status || 'unknown').toUpperCase()}</span>
       {row.created_at ? <p>{formatCallDateTime(row.created_at)}</p> : null}
       {row.error ? <p className="contacts-muted">Copy issue: {row.error}. The retained Twilio copy can still be downloaded when available.</p> : null}
       <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={!row.available || busy === row.id} onClick={() => media(row, false)}>PLAY</button>{' '}
@@ -87,7 +87,7 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
         <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={!row.available || busy === row.id} onClick={() => copyConversly(row, 'wav')}>COPY CONVERSLY LINK (WAV)</button>{' '}
         {row.provider_available ? <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={busy === row.id} onClick={() => copyConversly(row, 'mp3')}>COPY CONVERSLY LINK (MP3)</button> : null}{' '}
       </> : null}
-      {copied?.id === row.id ? <p className="contacts-muted" role="status">Conversly {copied.format.toUpperCase()} link copied. Valid for 24 hours.</p> : null}
+      {copied?.id === row.id ? <p className="contacts-muted" role="status">Conversly {String(copied.format || 'wav').toUpperCase()} link copied. Valid for 24 hours.</p> : null}
       {copyFallback?.id === row.id ? <label className="contacts-muted">Clipboard unavailable. Copy this link (valid for 24 hours): <input className="input-dark" aria-label="Conversly link" readOnly value={copyFallback.url} onFocus={event => event.target.select()} /></label> : null}
       {['retry', 'failed'].includes(row.status) ? <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={busy === row.id} onClick={() => retry(row)}>RETRY COPY</button> : null}
       {audio?.id === row.id ? <audio controls autoPlay preload="none" src={audio.url} onError={() => { if (audio.source === 'storage' && row.provider_available) void media(row, false, true); else setError('Playback failed. Refresh and try again, or download the recording.'); }} /> : null}
