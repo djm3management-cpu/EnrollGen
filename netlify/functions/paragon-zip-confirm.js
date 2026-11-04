@@ -1,8 +1,9 @@
+// Legacy URL retained for callback clients; residence confirmation is retired.
 import { requireClerkAuth } from './_clerkAuth.js';
 import { NGHS_TENANT_ID, JSON_HEADERS, getSupabase } from './_tenantSettings.js';
 
 const json = (body,status=200) => new Response(JSON.stringify(body),{ status,headers:JSON_HEADERS });
-export function createParagonZipHandler({authenticate=requireClerkAuth,getDb=getSupabase}={}) {
+export function createParagonCallbacksHandler({authenticate=requireClerkAuth,getDb=getSupabase}={}) {
  return async request => {
  try {
   if (!['GET','POST'].includes(request.method)) return json({ error:'Method not allowed' },405);
@@ -23,7 +24,7 @@ export function createParagonZipHandler({authenticate=requireClerkAuth,getDb=get
     const offset=Number(params.get('offset')||0),limit=Number(params.get('limit')||500);
     if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>500)return json({error:'Invalid callback page.'},400);
     const result=await db.from('paragon_callback_tasks')
-      .select('id,inbound_call_id,assigned_agent_id,caller_state,confirmed_zip,created_at,due_at,status',{count:'exact',head:summary})
+      .select('id,inbound_call_id,assigned_agent_id,caller_state,created_at,due_at,status',{count:'exact',head:summary})
       .eq('tenant_id',NGHS_TENANT_ID).eq('assigned_agent_id',agent.agent_slug).eq('status','open')
       .order('created_at',{ascending:false}).order('id').range(offset,offset+limit-1);
     if(result.error)return json({error:'Callback tasks unavailable'},503);
@@ -57,7 +58,7 @@ export function createParagonZipHandler({authenticate=requireClerkAuth,getDb=get
       return {...task,caller_phone:call?.from_number||'',caller_name:[record?.customer_first_name||contactNames.get(record?.contact_id)?.[0],record?.customer_last_name||contactNames.get(record?.contact_id)?.[1]].filter(Boolean).join(' ')||'Unknown caller',call_record_id:call?.call_record_id||null,contact_id:record?.contact_id||null};
     })});
   }
-  const { inbound_call_id,zip,state,action,task_id,due_at } = await request.json().catch(() => ({}));
+  const { action,task_id,due_at } = await request.json().catch(() => ({}));
   if (['complete','reschedule'].includes(action)) {
     if(typeof task_id!=='string'||!/^[0-9a-f-]{36}$/i.test(task_id))return json({error:'Task ID required'},400);
     if(action==='reschedule'&&(!due_at||!Number.isFinite(Date.parse(due_at))))return json({error:'A valid due date is required'},400);
@@ -66,25 +67,8 @@ export function createParagonZipHandler({authenticate=requireClerkAuth,getDb=get
       .eq('id',task_id).eq('tenant_id',NGHS_TENANT_ID).eq('assigned_agent_id',agent.agent_slug).eq('status','open').select('id').maybeSingle();
     return error?json({error:'Unable to update callback task'},503):!data?json({error:'Callback task unavailable'},403):json({saved:true});
   }
-  if (typeof inbound_call_id !== 'string' || !/^\d{5}$/.test(zip || '')) return json({ error:'Enter a valid five digit ZIP.' },400);
-  const { data:call,error:callError } = await db.from('inbound_calls').select('id,routed_agent_id,source_kind,lead_source_id,tenant_id')
-    .eq('id',inbound_call_id).eq('tenant_id',NGHS_TENANT_ID).maybeSingle();
-  if (callError || !call || call.routed_agent_id!==agent.agent_slug || call.source_kind!=='publisher') return json({ error:'Call unavailable' },403);
-  const { data:source } = await db.from('lead_sources').select('id').eq('id',call.lead_source_id)
-    .eq('name','Paragon Media').maybeSingle();
-  if (!source) return json({ error:'Not a Paragon call' },403);
-  const { data:zipRows,error:zipError } = await db.from('zip_county_crosswalk').select('state_code').eq('zip',zip);
-  if (zipError) return json({ error:'ZIP lookup unavailable' },503);
-  const states = [...new Set((zipRows || []).map(row => row.state_code).filter(value => /^[A-Z]{2}$/.test(value)))].sort();
-  if (!states.length) return json({ error:'ZIP not found. Verify the beneficiary residence ZIP.' },422);
-  if (states.length>1 && !state) return json({ states,needs_state_selection:true });
-  const confirmedState = state || states[0];
-  if (!states.includes(confirmedState)) return json({ error:'State does not match ZIP.' },400);
-  const {data:result,error}=await db.rpc('confirm_paragon_call_state',{
-    p_call:call.id,p_tenant:NGHS_TENANT_ID,p_agent:agent.agent_slug,p_zip:zip,p_state:confirmedState,
-  });
-  return error?json({error:'Unable to confirm eligibility and callback assignment'},503):json(result);
+  return json({ error:'Unsupported callback action' },400);
  }catch{return json({error:'Paragon callbacks unavailable. Please retry.'},503);}
  };
 }
-export default createParagonZipHandler();
+export default createParagonCallbacksHandler();

@@ -72,7 +72,7 @@ export default function PhoneDropdown({ onOpenMessages }) {
   // swapped to an empty ActiveCallExpanded (which needs a connected
   // activeCall, not just a ringing dialingCall).
   useEffect(() => {
-    if (hasCall) setIsOpen(inbound?.activeCall?.params?.paragon === 'true');
+    if (hasCall) setIsOpen(false);
   }, [hasCall, inbound?.activeCall]);
 
   const collapseDisposition = useCallback((value) => {

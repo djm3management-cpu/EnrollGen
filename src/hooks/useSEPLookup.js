@@ -13,10 +13,15 @@ import { fetchCountiesForState, fetchPlansFromSupabase, fetchCountyPlanCounts, t
 import { getCountyFromZip } from "../data/sepPlanDb";
 import { getSEPsForZip, getSEPsForState } from "../lib/sepEngine";
 import { supabase } from "../lib/supabase";
-import { parseSepRpcResult } from "../components/SEPResultsPanel";
+import { normalizeSepZip, parseSepRpcResult } from "../components/SEPResultsPanel";
 
-export function useSEPLookup() {
-  const [zip, setZip] = useState("");
+export function useSEPLookup({ initialZip = "" } = {}) {
+  const [zip, setZip] = useState(() => normalizeSepZip(initialZip));
+  // Contact hydration may finish after this tool opens. Preserve agent input.
+  useEffect(() => {
+    const contactZip = normalizeSepZip(initialZip);
+    if (contactZip.length === 5) setZip(current => current || contactZip);
+  }, [initialZip]);
   const [searchedZip, setSearchedZip] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
   const [results, setResults] = useState(null);

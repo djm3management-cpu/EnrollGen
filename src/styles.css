@@ -18367,11 +18367,6 @@ body[data-bg-mode="classic"] .viewport-bg {
 .vendor-routing__table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .vendor-routing__table th, .vendor-routing__table td { border-bottom: 1px solid var(--border, #334155); padding: 8px; text-align: left; white-space: nowrap; }
 .vendor-routing__table input[type=checkbox] { width: 16px; height: 16px; }
-.phone-expanded__zip-gate { border: 1px solid #b45309; border-radius: 8px; padding: 12px; margin: 10px 0; background: rgba(180,83,9,.12); color: inherit; }
-.phone-expanded__zip-fields { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.phone-expanded__zip-fields input, .phone-expanded__zip-fields select { min-width: 110px; padding: 8px; border-radius: 6px; }
-.phone-expanded__zip-fields button { border-radius: 6px; padding: 8px 12px; cursor: pointer; }
-.phone-expanded__zip-block { margin-top: 10px; padding: 10px; border-radius: 6px; background: #7f1d1d; color: #fff; font-weight: 700; }
 .paragon-callbacks { padding: 16px; margin-bottom: 16px; }
 .paragon-callbacks__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border, #334155); }
 
@@ -18504,7 +18499,6 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
   .opps-stage-settings > .contacts-edit-field:nth-of-type(3), .opps-stage-settings > .opps-actions { grid-column: 2 / -1; }
   .opps-call { flex-wrap: wrap; }
 }
-.paragon-inert-container { display: contents; }
 
 /* County intelligence follows existing dark cards, tabs and color variables. */
 .sep-penetration { margin-top: 20px; }

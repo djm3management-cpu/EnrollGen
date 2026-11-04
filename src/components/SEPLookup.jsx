@@ -1,3 +1,4 @@
+import { useInboundCall } from "../context/InboundCallContext";
 import { AlertTriangle, Filter, X, Map, MapPin } from "lucide-react";
 import { useSEPLookup } from "../hooks/useSEPLookup";
 import { SearchBar } from "./sep/SearchBar";
@@ -12,7 +13,8 @@ import SEPResultsPanel, { SEP_FINDER_FULL_DISCLAIMER } from "./SEPResultsPanel";
 import "../SEPLookupTool.css";
 
 export default function SEPLookupTool() {
-  const s = useSEPLookup();
+  const inbound = useInboundCall();
+  const s = useSEPLookup({ initialZip: inbound?.contact?.zip || "" });
 
   const handleCountySelect = (county) => {
     s.setSelectedCounty(county);
