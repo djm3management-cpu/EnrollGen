@@ -1,3 +1,4 @@
+import {postCallExceptionDetails} from './postCallException.js';
 import {verifyPostCallEnded} from './postCallGuard.js';
 import { isComplianceSale } from "../../src/lib/saleCompliance.js";
 import { linkTelephonyRecord } from "../functions/_telephonyLink.js";
@@ -803,7 +804,7 @@ return async request => {
 
     return json(400, { error: `Unknown action: ${action}` });
   } catch (error) {
-    console.error(JSON.stringify({event:'post_call_storage_error',session_id:body.session_id,action,code:/^[A-Za-z0-9_]{1,64}$/.test(error.code || '')?error.code:null,status:error.status || null}));
+    console.error(JSON.stringify({event:'post_call_storage_error',session_id:body.session_id,action,code:/^[A-Za-z0-9_]{1,64}$/.test(error.code || '')?error.code:null,status:error.status || null,exception:postCallExceptionDetails(error)}));
     return evidenceFailure(error);
   }
 };

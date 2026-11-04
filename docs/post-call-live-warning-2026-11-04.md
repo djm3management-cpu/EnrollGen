@@ -185,3 +185,30 @@ through the authenticated admin endpoint. Narrow ranges to fewer than 1,000 call
 - Production migration remains unapplied pending the CLI's explicit hosted-change
   consent. Main has not been pushed, so Railway rollout is also pending. No
   Supabase edge function was modified or deployed.
+
+## Additive-only review and exception logging follow-up
+
+The subsequent deployment approval was conditional on migration 130 being purely
+additive, with no locking ALTER operations or data deletes. **That condition is
+not met.** No migration or production deployment was attempted in this follow-up,
+and main remains unpushed.
+
+In one line: migration 130 adds processing/retry and parent-call verification
+infrastructure and reconciles existing call-processing state.
+
+It adds columns to existing `post_call_requests` and `call_records`, requiring
+table locks; replaces existing error/reconciliation functions; installs triggers
+that change runtime behavior; updates existing job/call rows; and includes a
+DELETE against the newly created (normally empty) status-ticket table. It must
+not be described or approved as new columns/tables/indexes only. The migration
+file was left unchanged for review. The requested deployment order, if subsequently
+authorized, is edge functions (none changed), Netlify production, and main push
+last for Railway. Deployment must also account for the fact that Netlify's new
+parent-status verifier needs the new Railway endpoint before final work can pass.
+
+The checkpoint catch now includes a structured exception with message, complete
+stack, code/status, storage details/hint, and nested causes/original errors.
+Credentials, common beneficiary identifiers and SQL failing-row contents are
+redacted. Agent responses retain the generic error. Tests exercise native Error
+non-enumerable stacks, plain storage errors, nested causes, circular references,
+redaction, and the actual checkpoint handler failure path.
