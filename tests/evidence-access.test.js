@@ -77,6 +77,8 @@ before(async () => {
     GRANT USAGE ON SCHEMA auth,public TO anon,authenticated,service_role,outsider;
   `);
   await pg.exec(readFileSync(new URL("./fixtures/evidence-live-schema.sql",import.meta.url),"utf8"));
+  const safety=readFileSync(new URL('../supabase/migrations/130_post_call_lifecycle_safety.sql',import.meta.url),'utf8');
+  await pg.exec(safety.slice(safety.indexOf('CREATE TABLE public.post_call_webhook_claims'),safety.indexOf('CREATE OR REPLACE FUNCTION public.unresolved_post_call_error')));
   const ancillaryMigration = readFileSync(new URL("../supabase/migrations/098_ancillary_sale_disposition.sql", import.meta.url), "utf8");
   await pg.exec(ancillaryMigration.slice(0, ancillaryMigration.indexOf('CREATE OR REPLACE FUNCTION public.paragon_vendor_report')) + 'COMMIT;');
   const dispositionOnly=readFileSync(new URL('../supabase/migrations/108_disposition_only_wrap_up.sql',import.meta.url),'utf8');

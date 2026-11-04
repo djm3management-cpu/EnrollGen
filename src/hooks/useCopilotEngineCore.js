@@ -1,3 +1,4 @@
+import {createSuggestionDedupe} from '../lib/copilotDedupe.js';
 import { liveAssistantEntry, disclosureChecklist } from "../lib/liveAssistantPolicy.js";
 /**
  * useCopilotEngineCore.js, shared infrastructure for all copilot engines
@@ -310,6 +311,9 @@ export function useCopilotEngineCore({
 
   /* ─── Refs ─── */
   const messagesRef = useRef([]);
+  const suggestionDedupeRef = useRef(null);
+  if (!suggestionDedupeRef.current) suggestionDedupeRef.current = createSuggestionDedupe();
+  useEffect(()=>{suggestionDedupeRef.current.clear();},[state.callStart,callStarted]);
   const debounceRef = useRef(null);
   const floatTimeout = useRef(null);
   const floatFadeTimeout = useRef(null);
@@ -387,6 +391,7 @@ export function useCopilotEngineCore({
     const allowed = liveAssistantEntry(level, formatCopilotDisplayMessage(text), extra);
     if (!allowed) return null;
     const displayText = allowed.message;
+    if (!extra.skipLog && extra.issueTag !== 'disclosure_checkpoint' && !suggestionDedupeRef.current.accept(displayText,{issueTag:extra.issueTag,transcript:`${transcriptRef.current} ${additionalTranscriptRef.current}`})) return null;
     const entry = {
       id: Date.now() + Math.floor(Math.random() * 1000),
       level,
@@ -394,7 +399,8 @@ export function useCopilotEngineCore({
       ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       ...extra,
     };
-    setMessages((prev) => [...prev.slice(-19), entry]);
+    messagesRef.current = [...messagesRef.current.slice(-19), entry];
+    setMessages(messagesRef.current);
     if (!extra.skipLog) {
       logEntry(LOG_TYPES.COPILOT_MSG, level, displayText, {
         section: extra.section || currentStep,
@@ -404,7 +410,7 @@ export function useCopilotEngineCore({
       });
     }
     return entry;
-  }, [currentStep, logEntry]);
+  }, [currentStep, logEntry, transcriptRef]);
 
   const checkpointHistoryRef = useRef(new Set());
   useEffect(() => {
@@ -480,6 +486,8 @@ export function useCopilotEngineCore({
   const clearFeed = useCallback(() => {
     void skipReporterRef.current.flush();
     transcriptGuardRef.current = createTranscriptGuard();
+    suggestionDedupeRef.current.clear();
+    messagesRef.current = [];
     setMessages([]);
     setFloatingAlert(null);
     lastCoachingTime.current = 0;

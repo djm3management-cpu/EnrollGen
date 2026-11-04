@@ -1,3 +1,4 @@
+import {createPostCallStatusHandler} from './postCallStatus.js';
 import { startParagonBillingWorker } from "./paragonBilling.js";
 import { startCallStatusRecoveryWorker } from "./callStatusRecovery.js";
 import { startRecordingWorker } from "./recordings.js";
@@ -57,6 +58,7 @@ app.use(express.json({ limit: "256kb" }));
 
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
+app.post('/internal/post-call-status',createPostCallStatusHandler({db:supabase,config}));
 app.use(twilioVoiceRouter);
 app.use(twilioStatusRouter);
 app.use(leadsRouter);

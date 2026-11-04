@@ -1,3 +1,4 @@
+import {useInboundCall} from '../context/InboundCallContext';
 import AppToast from './AppToast';
 import {useEffect,useRef,useState} from 'react';
 import {useAppAuth} from '../context/AuthContext';
@@ -6,6 +7,7 @@ import {observePostCallStatus,postCallFailureMessage} from '../lib/postCallStatu
 
 export default function PostCallStatusAlert() {
   const {getToken}=useAppAuth();
+  const inbound=useInboundCall();
   const lastSession=useRef(null);
   const [message,setMessage]=useState('');
   const allowMissingEndpoint=import.meta.env.DEV && ['localhost','127.0.0.1','[::1]'].includes(window.location.hostname);
@@ -16,7 +18,7 @@ export default function PostCallStatusAlert() {
       return lastSession.current;
     },
     onStatus:job=>setMessage(postCallFailureMessage(job)),
-    onError:error=>setMessage(`Unable to check post-call status. ${error.message}`),
+    onError:()=>{},
   }),[getToken,allowMissingEndpoint]);
-  return message ? <AppToast message={message} tone="error" onDismiss={() => setMessage('')} /> : null;
+  return message && !inbound?.activeCall ? <AppToast message={message} tone="error" onDismiss={() => setMessage('')} /> : null;
 }

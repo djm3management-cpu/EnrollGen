@@ -1,3 +1,4 @@
+import {verifyPostCallEnded} from './postCallGuard.js';
 import { isComplianceSale } from "../../src/lib/saleCompliance.js";
 import { linkTelephonyRecord } from "../functions/_telephonyLink.js";
 import { ancillarySaleError, buildCallOutcomePatch } from "../../src/lib/ancillarySale.js";
@@ -649,6 +650,8 @@ async function handleWrapUp(supabase, payload, auth, tenant, tenantAgents, subsc
     const webhookAllowed = requirePlan(subscription, "pro");
     if (webhookAllowed.response) {
       webhookStatus = "skipped_plan";
+    } else if (!checked(await supabase.rpc('claim_post_call_webhook',{p_call_record_id:updatedCallRecord.id,p_tenant_id:tenant.id}))) {
+      webhookStatus = updatedCallRecord.webhook_sent ? 'sent' : 'already_attempted';
     } else {
       const webhookResult = await sendEnrollmentWebhook(tenant, tenantAgents, {
         ...payload,
@@ -720,7 +723,7 @@ async function handleWebhookResult(supabase, payload, tenant) {
   };
 }
 
-export function createPostCallHandler({ authenticate = requireClerkAuth, getDb = getEvidenceServiceClient } = {}) {
+export function createPostCallHandler({ authenticate = requireClerkAuth, getDb = getEvidenceServiceClient, verifyEnded = verifyPostCallEnded } = {}) {
 return async request => {
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
@@ -749,6 +752,7 @@ return async request => {
     const identity = await resolveEvidenceIdentity(supabase, auth);
     body = await bindPostCallPayload(supabase, body, identity);
     auth = { ...auth, evidenceIdentity: identity };
+    if (action === 'finalize' || action === 'wrap_up') await verifyEnded(supabase,body);
     const tenant = normalizeTenant(identity.tenant);
     const subscription = await requireActiveSubscription(supabase, tenant.id);
     if (subscription.response) return subscription.response;
@@ -799,6 +803,7 @@ return async request => {
 
     return json(400, { error: `Unknown action: ${action}` });
   } catch (error) {
+    console.error(JSON.stringify({event:'post_call_storage_error',session_id:body.session_id,action,code:/^[A-Za-z0-9_]{1,64}$/.test(error.code || '')?error.code:null,status:error.status || null}));
     return evidenceFailure(error);
   }
 };

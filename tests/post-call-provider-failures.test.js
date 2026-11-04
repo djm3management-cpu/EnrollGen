@@ -29,7 +29,7 @@ const embeddingRequest=()=>new Request('https://app.test/embeddings',{method:'PO
 test('provider quota errors persist failed status and code; success clears only its own stage',async()=>{
  const handler=createEmbeddingsHandler({authenticate:async()=>auth,getDb:()=>db,env:{OPENAI_API_KEY:'fixture'},send:async()=>Response.json({error:{code:'insufficient_quota'}},{status:429})});
  const response=await handler(embeddingRequest());assert.equal(response.status,429);assert.equal((await response.json()).code,'insufficient_quota');
- let job=await getJob();assert.equal(job.status,'failed');assert.equal(job.error_code,'insufficient_quota');assert.match(postCallFailureMessage(job),/OpenAI credits.*insufficient_quota|insufficient_quota.*OpenAI credits/);
+ let job=await getJob();assert.equal(job.status,'failed');assert.equal(job.error_code,'insufficient_quota');assert.equal(postCallFailureMessage(job),'Call saved. Summary is still processing.');
  await recordProviderStatus(db,S,'scoring','provider_http_500');
  const ok=createEmbeddingsHandler({authenticate:async()=>auth,getDb:()=>db,env:{OPENAI_API_KEY:'fixture'},send:async()=>Response.json({data:[{index:0,embedding:Array(1536).fill(1)}]})});
  assert.equal((await ok(embeddingRequest())).status,200);
@@ -80,7 +80,7 @@ test('status-only API is ownership protected and exposes safe failure fields wit
 test('UI observer reports provider failures, clears after success, and stops polling after cleanup',async()=>{
  let tick,stopped=false;const seen=[];let job={status:'failed',error_code:'credit_balance_exhausted'};
  const stop=observePostCallStatus({getToken:async()=>'',getSessionId:()=>S,onStatus:j=>seen.push(postCallFailureMessage(j)),onError:e=>{throw e;},schedule:fn=>{tick=fn;return 1;},cancel:()=>{stopped=true;},send:async()=>Response.json({job})});
- await new Promise(resolve=>setImmediate(resolve));assert.match(seen[0],/credit_balance_exhausted/);job={status:'completed'};tick();await new Promise(resolve=>setImmediate(resolve));assert.equal(seen.at(-1),'');stop();tick();await new Promise(resolve=>setImmediate(resolve));assert.equal(seen.length,2);assert.equal(stopped,true);
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(seen[0],'Call saved. Summary is still processing.');job={status:'completed'};tick();await new Promise(resolve=>setImmediate(resolve));assert.equal(seen.at(-1),'');stop();tick();await new Promise(resolve=>setImmediate(resolve));assert.equal(seen.length,2);assert.equal(stopped,true);
 });
 
 test('service worker bypasses functions, Supabase and other data; navigation/static retain offline handling',async()=>{

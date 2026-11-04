@@ -651,6 +651,7 @@ export default function ScriptFlow() {
     mergedTranscriptEntries,
     isListening,
     liveComplianceResult,
+    inbound?.activeCall,
   ]);
 
   useEffect(() => {
@@ -658,6 +659,7 @@ export default function ScriptFlow() {
       state,
       liveCall: {
         callStarted,
+        softphoneActive: Boolean(inbound?.activeCall),
         callDirection: state.callDirection,
         transcript,
         customerTranscript,
@@ -674,6 +676,7 @@ export default function ScriptFlow() {
     mergedTranscriptEntries,
     isListening,
     liveComplianceResult,
+    inbound?.activeCall,
   ]);
 
   const persistPostCallTranscript = useCallback(
@@ -682,6 +685,8 @@ export default function ScriptFlow() {
       const snapshot = latestPostCallRef.current;
       if (!snapshot?.state) return null;
 
+      // Enrollment, navigation and unload can happen during a connected call.
+      if (final && snapshot.liveCall?.softphoneActive) final = false;
       let metadata = getActiveSessionMetadata();
       if (metadata.closed) return null;
       if (!metadata.sessionId || !metadata.agentId) {
@@ -721,6 +726,7 @@ export default function ScriptFlow() {
       } finally { if (!final) checkpointPendingRef.current = false; }
 
       if (getActiveSessionMetadata().sessionId === metadata.sessionId) {
+        setPostCallPersistenceError('');
         setActivePostCallMetadata({
           sessionId: result.session_id || metadata.sessionId,
           callRecordId: result.call_record_id || metadata.callRecordId || null,
@@ -851,7 +857,9 @@ export default function ScriptFlow() {
   useEffect(() => {
     if (!callStarted || !state.enrollOk || finalTranscriptSavedRef.current) return;
     finalTranscriptSavedRef.current = true;
-    void persistPostCallTranscript({ final: true, force: true });
+    void persistPostCallTranscript({ final: true, force: true }).catch(()=>{
+      setPostCallPersistenceError('Call saved. Summary is still processing.');
+    });
   }, [callStarted, state.enrollOk, persistPostCallTranscript]);
 
   useEffect(() => {
@@ -1031,7 +1039,7 @@ export default function ScriptFlow() {
         onCoachingLoadingChange={setCoachingLoading}
       />
 
-      {postCallPersistenceError ? (
+      {postCallPersistenceError && !inbound?.activeCall ? (
         <div className="call-persistence-error" role="alert">
           {postCallPersistenceError}
         </div>

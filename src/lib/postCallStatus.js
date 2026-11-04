@@ -3,11 +3,7 @@ import {fetchWithClerk} from './clerkFetch.js';
 export function postCallFailureMessage(job) {
   const failures=Object.values(job?.provider_errors || {});
   if (job?.status!=='failed' && !failures.length) return '';
-  const code=job.error_code || failures.at(-1)?.code || 'processing_failed';
-  const detail=/credit_balance_exhausted|insufficient_quota/.test(code)
-    ? 'OpenAI credits are exhausted. Contact your administrator.'
-    : 'Processing needs attention. Contact your administrator.';
-  return `Post-call failed (${code}). ${detail} Your transcript is retained.`;
+  return 'Call saved. Summary is still processing.';
 }
 
 export function observePostCallStatus({getToken,getSessionId,onStatus,onError,send=fetchWithClerk,

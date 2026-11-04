@@ -373,11 +373,11 @@ export async function watchPostCallRequest(getToken, sessionId, requestKey, {
     const params = new URLSearchParams({session_id:sessionId,request_key:requestKey});
     const response = await send(getToken, `${POST_CALL_ENDPOINT}?${params}`, {signal:AbortSignal.timeout(15000)});
     const row = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(row.error || `Post-call status failed (${response.status}).`);
+    if (!response.ok) throw new Error('Call saved. Summary is still processing.');
     onProgress({status:row.status,progress:row.job?.progress});
     if (row.job?.provider_errors && Object.keys(row.job.provider_errors).length) throw new Error(postCallFailureMessage(row.job));
     if (row.status === 'completed') return row.result || {};
-    if (row.status === 'failed') throw new Error(`Post-call save failed (${row.error_code || 'processing_failed'}). The request is retained.`);
+    if (row.status === 'failed') throw new Error('Call saved. Summary is still processing.');
     await wait(Math.min(5000, 500 + poll * 500));
   }
   throw new Error('Post-call processing is taking longer than expected. Check Calls; the request remains saved.');
@@ -400,7 +400,7 @@ async function postCallAction(getToken, action, payload = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(data?.error || data?.detail || raw || `Post-call action failed (${response.status})`);
+    throw new Error('Call saved. Summary is still processing.');
   }
 
   if (response.status === 202 && data?.request_key) {

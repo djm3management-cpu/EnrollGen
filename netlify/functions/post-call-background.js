@@ -1,3 +1,4 @@
+import {retryPostCall} from '../lib/postCallRetry.js';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { createPostCallHandler } from '../lib/postCallWork.js';
 import { checked, getEvidenceServiceClient } from './_evidenceAccess.js';
@@ -5,7 +6,7 @@ import {providerErrorCode,recordProviderStatus} from '../lib/postCallProvider.js
 
 export const config = {background:true};
 const equal=(a,b)=>typeof a==='string' && typeof b==='string' && Buffer.byteLength(a)===Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a),Buffer.from(b));
-export function createPostCallWorker({getDb=getEvidenceServiceClient, work=createPostCallHandler, send=(...args)=>fetch(...args), now=()=>Date.now()}={}) {
+export function createPostCallWorker({getDb=getEvidenceServiceClient, work=createPostCallHandler, send=(...args)=>fetch(...args), now=()=>Date.now(), wait}={}) {
   return async request => {
     if (request.method !== 'POST') return;
     let input;
@@ -26,9 +27,10 @@ export function createPostCallWorker({getDb=getEvidenceServiceClient, work=creat
       try {
         if (now()-start>12*60*1000) throw new Error('worker_budget_exceeded');
         const pending=[];
-        const response=await handler(new Request(new URL('/api/post-call',request.url),{
+        const run=()=>handler(new Request(new URL('/api/post-call',request.url),{
           method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...next.payload,action:next.action==='recover'?'finalize':next.action}),
         }),{waitUntil:promise=>pending.push(promise)});
+        const response=await retryPostCall(run,{wait,onRetry:({attempt,status})=>console.warn(JSON.stringify({event:'post_call_retry',session_id:job.session_id,request_key:next.request_key,attempt,status}))});
         const body=await response.json();
         if (!response.ok) {
           errorCode=body.code || `post_call_http_${response.status}`;

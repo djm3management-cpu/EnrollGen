@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import twilio from 'twilio';
 for (const name of ['PUBLIC_BASE_URL', 'SUPABASE_URL']) process.env[name] = 'https://example.test';
@@ -12,6 +12,8 @@ const { twilioStatusRouter } = await import('../src/routes/twilioStatus.js');
 const { voiceOutboundRouter } = await import('../src/routes/voiceOutbound.js');
 const { verifyMediaStreamToken } = await import('../src/media/streamToken.js');
 
+const originalFetch=globalThis.fetch;
+after(()=>{globalThis.fetch=originalFetch;});
 function database(agents = ['a', 'b']) {
   const tables = { tenant_agents: agents.map(agent_slug => ({ agent_slug, is_active: true, tenant_id: config.defaultTenantId })), contacts: [], inbound_calls: [], telephony_events: [], contact_activities: [],
     contact_lead_intel: [], telephony_call_attempts: [], telephony_routing_responses: [] };
@@ -19,6 +21,7 @@ function database(agents = ['a', 'b']) {
   const reservations = new Map();
   const state = { tables, claims, evidence, releases, finishes, reservations, failEvidence: false, failAttempts: false,
     failPreferred: false, failContact: false, contactReads: 0, statuses: new Map(agents.map(a => [a, 'available'])) };
+  globalThis.fetch=async url=>Response.json({sid:new URL(url).pathname.split('/').at(-1).replace('.json',''),account_sid:config.twilioAccountSid,status:state.providerStatus || 'completed',parent_call_sid:state.providerParent || null});
   supabase.from = table => {
     let action = 'select'; let value; let single = false; const filters = [];
     const q = {
@@ -427,4 +430,12 @@ test('DNC lookup errors fail closed and another tenant DNC does not block', asyn
   db.failDnc = false;
   db.tables.contacts.push({ id: 'other', tenant_id: 'other-tenant', phone: '+16097787669', do_not_call: true });
   assert.match((await request(voiceOutboundRouter, '/api/voice/outbound', body)).body, /<Dial/);
+});
+
+test('terminal child-shaped or stale active-parent callbacks cannot finalize or stop a live parent',async()=>{
+ for(const mode of ['active','child']) {
+  const db=database();db.providerStatus=mode==='active'?'in-progress':'completed';db.providerParent=mode==='child'?'PARENT':null;
+  const response=await request(twilioStatusRouter,'/twilio/status',{CallSid:'PARENT',CallStatus:'completed'});
+  assert.equal(response.code,204);assert.equal(db.finishes.length,0);assert.equal(db.releases.length,0);
+ }
 });

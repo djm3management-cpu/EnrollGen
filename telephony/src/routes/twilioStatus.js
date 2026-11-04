@@ -1,3 +1,4 @@
+import {verifyTerminalParentCall} from '../parentCallStatus.js';
 import { signalMediaLifecycle } from '../media/mediaLifecycle.js';
 import { enqueueBillingCallback } from "../paragonBilling.js";
 import { createRecordingCallback } from "../recordings.js";
@@ -31,6 +32,10 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, conferenceGuar
     await enqueueBillingCallback(supabase,config,req.body);
     const inboundCall = await findInboundCall(callSid);
 
+    if (terminalStatuses.has(callStatus) && !(await verifyTerminalParentCall({callSid,config}))) {
+      console.warn(JSON.stringify({event:'ignored_nonterminal_parent_callback',call_sid:callSid,status:callStatus}));
+      return res.status(204).end();
+    }
     const { error: eventError } = await supabase.from("telephony_events").insert({
       tenant_id: inboundCall?.tenant_id || config.defaultTenantId,
       inbound_call_id: inboundCall?.id || null,

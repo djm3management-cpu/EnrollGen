@@ -1,3 +1,4 @@
+import {verifyPostCallEnded} from '../lib/postCallGuard.js';
 import { complete } from "../../src/lib/llm/client.ts";
 import { resolveEngine } from "../../src/lib/llm/config.js";
 import { llmRuntime } from "./_llmTelemetry.js";
@@ -36,7 +37,7 @@ function errorDetails(error) {
     ...(error?.errors ? { causes: error.errors.map(errorDetails) } : {}) };
 }
 
-export function createScoreCallHandler({ getDb = getEvidenceServiceClient, classify, recordStatus=recordProviderStatus } = {}) {
+export function createScoreCallHandler({ getDb = getEvidenceServiceClient, classify, recordStatus=recordProviderStatus, verifyEnded=verifyPostCallEnded } = {}) {
 return async (request, context) => {
   if (request.method !== "POST") return new Response('Method not allowed', { status: 405 });
   if (!hasInternalJobAuthorization(request)) {
@@ -79,6 +80,15 @@ return async (request, context) => {
     if (!isComplianceSale(callRecord.call_outcome)) {
       console.log(JSON.stringify({ event: 'scoring_skipped', call_record_id: callId, reason: 'non_sale_disposition' }));
       return Response.json({ skipped: true, reason: 'non_sale_disposition' });
+    }
+
+    stage = 'verify_parent_call';
+    if (callRecord.twilio_call_sid || callRecord.metadata?.telephony_call) {
+      try { await verifyEnded(sb,{session_id:callRecord.session_id,call_record_id:callRecord.id}); }
+      catch(error) {
+        if(error.status===409)return Response.json({pending:true,reason:'parent_call_active'},{status:202});
+        throw error;
+      }
     }
 
     stage = 'subscription_gate';

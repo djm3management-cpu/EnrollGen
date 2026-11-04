@@ -699,8 +699,8 @@ export function useCopilotEngine({
       .join("\n");
     const liveMessages = messagesRef.current;
     const recentInterventions = liveMessages
-      .filter((e) => e.level === "warn" || e.level === "critical" || e.level === "remind")
-      .slice(-3);
+      .filter((e) => !e.skipLog && e.text)
+      .slice(-8);
 
     const recentInterventionText = recentInterventions
       .map((e, i) => `${i + 1}. [${e.level}] ${e.text.replace(/\s+/g, " ").slice(0, 220)}`)
@@ -991,7 +991,7 @@ SECTION CONTEXT (rolling window for current section):
     const recentTranscript = transcriptRef.current.trim().slice(-1500);
     const liveMessages = messagesRef.current;
     const recentInterventions = liveMessages
-      .filter((e) => e.level === "warn" || e.level === "critical" || e.level === "remind")
+      .filter((e) => !e.skipLog && e.text)
       .slice(-4);
     const copilotContext = buildCopilotContext(recentInterventions);
 
