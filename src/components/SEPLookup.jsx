@@ -1,3 +1,6 @@
+import {useCallback} from "react";
+import {useAppAuth} from "../context/AuthContext";
+import {queueResidenceLookup,residenceEnvelope,residenceScope} from "../lib/paragonResidence.js";
 import { useInboundCall } from "../context/InboundCallContext";
 import { AlertTriangle, Filter, X, Map, MapPin } from "lucide-react";
 import { useSEPLookup } from "../hooks/useSEPLookup";
@@ -14,11 +17,19 @@ import "../SEPLookupTool.css";
 
 export default function SEPLookupTool() {
   const inbound = useInboundCall();
-  const s = useSEPLookup({ initialZip: inbound?.contact?.zip || "" });
+  const {user,organization}=useAppAuth();
+  const activeCall=inbound?.activeCall;
+  const scope=residenceScope(user,organization);
+  const onResidenceLookup=useCallback(lookup=>{
+    queueResidenceLookup(scope,residenceEnvelope(activeCall,lookup));
+  },[activeCall,scope]);
+  const s = useSEPLookup({ initialZip: inbound?.contact?.zip || "", onResidenceLookup });
 
   const handleCountySelect = (county) => {
     s.setSelectedCounty(county);
-    s.loadPlansForCounty(s.state, county);
+    void s.loadPlansForCounty(s.state, county).then(success=>{
+      if(success&&s.searchedZip)s.reportResidenceLookup({zip:s.searchedZip,state:s.state,county_name:county});
+    });
   };
 
   const showPlans = s.activeTab === "plans" &&

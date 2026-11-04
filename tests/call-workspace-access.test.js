@@ -24,8 +24,8 @@ test('a connected publisher call with no ZIP renders controls directly after the
  }finally{harness.unmount();}
 });
 
-function lookup(initialZip=''){
- const harness=hookHarness();let options={initialZip};
+function lookup(initialZip='',onResidenceLookup){
+ const harness=hookHarness();let options={initialZip,onResidenceLookup};
  const context=vm.createContext({...harness.hooks,debugLog:()=>{},getStateFromZip:()=>'',
   fetchLiveFemaDisasters:async()=>({disasters:[],fetchedAt:'fixture',apiFailed:false}),fetchBulletins:async()=>[],fetchLiveNews:async()=>[],fetchBulletinStatus:async()=>({feeds:[]}),
   window:{setInterval:()=>1,clearInterval(){},addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},
@@ -33,7 +33,7 @@ function lookup(initialZip=''){
  const normalize=read('src/components/SEPResultsPanel.jsx').match(/export function normalizeSepZip\([\s\S]*?\n}/)[0].replace('export ','');
  vm.runInContext(normalize+'\n'+stripImports(read('src/hooks/useSEPLookup.js'))+';globalThis.lookup=useSEPLookup;',context);
  harness.mount(()=>context.lookup(options));
- return {harness,setContactZip(zip){options={initialZip:zip};harness.render();}};
+ return {harness,setContactZip(zip){options={...options,initialZip:zip};harness.render();}};
 }
 test('the plan tool uses an existing contact ZIP and remains editable',async()=>{
  const {harness}=lookup('07001');
@@ -44,4 +44,26 @@ test('late contact ZIP hydration prefills an empty tool without replacing an age
   const fixture=lookup();
   try{await fixture.harness.flush();assert.equal(fixture.harness.value.zip,'');if(typed)fixture.harness.value.setZip(typed);await fixture.harness.flush();fixture.setContactZip('07001');await fixture.harness.flush();assert.equal(fixture.harness.value.zip,typed||'07001');}finally{fixture.harness.unmount();}
  }
+});
+
+test('untouched contact/vendor prefill never becomes SEP residence evidence; only agent entry can publish it',async()=>{
+ const sent=[],fixture=lookup('07001',value=>sent.push(value));
+ try{
+  await fixture.harness.flush();fixture.harness.value.reportResidenceLookup({zip:'07001',state:'NJ'});assert.equal(sent.length,0);
+  fixture.harness.value.setZip('33101');await fixture.harness.flush();fixture.harness.value.reportResidenceLookup({zip:'07001',state:'NJ'});assert.equal(sent.length,0);
+  fixture.harness.value.reportResidenceLookup({zip:'33101',state:'FL'});assert.equal(sent.length,1);assert.equal(sent[0].entry,'agent_typed');
+ }finally{fixture.harness.unmount();}
+});
+
+test('residence outbox renders nothing and unavailable browser storage cannot block the workspace',async()=>{
+ const harness=hookHarness(),window={get localStorage(){throw new Error('storage unavailable');}};
+ const context=vm.createContext({...harness.hooks,window,useAppAuth:()=>({user:{id:'agent'},getToken:async()=>''}),residenceScope:()=> 'agent:org',createResidenceOutbox:()=>{throw new Error('must not reach');}});
+ vm.runInContext(stripImports(read('src/components/ParagonResidenceOutbox.jsx'))+';globalThis.Component=ParagonResidenceOutbox;',context);
+ try{harness.mount(()=>context.Component());await harness.flush();assert.equal(harness.value,null);}finally{harness.unmount();}
+});
+test('ordinary agent cannot see residence admin review and its request never blocks call UI',async()=>{
+ const harness=hookHarness(),getToken=async()=>'';
+ const context=vm.createContext({...harness.hooks,useAppAuth:()=>({getToken}),fetchWithClerk:async()=>new Response('{}',{status:403}),setInterval:()=>1,clearInterval(){},h:(type,props,...children)=>({type,props,children})});
+ vm.runInContext(transformSync(stripImports(read('src/components/callLog/ParagonResidenceReview.jsx')),{loader:'jsx',jsxFactory:'h',format:'cjs'}).code+';globalThis.Component=ParagonResidenceReview;',context);
+ try{harness.mount(()=>context.Component());assert.equal(harness.value,null);await harness.flush();assert.equal(harness.value,null);}finally{harness.unmount();}
 });

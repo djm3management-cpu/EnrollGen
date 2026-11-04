@@ -1,3 +1,4 @@
+import ParagonResidenceOutbox from './components/ParagonResidenceOutbox';
 import AppToast from './components/AppToast';
 import { navigateCrm } from "./lib/crmRoutes";
 import { callContinuity } from "./lib/callContinuity.js";
@@ -1012,6 +1013,7 @@ function AppShell({ currentUser = null }) {
         </header>
 
         <SmsToastHost onOpenContactMessages={handleOpenContactMessages} />
+        <ParagonResidenceOutbox />
         <PostCallStatusAlert />
         <PreloadRecoveryNotice callInProgress={reloadBlocked} onReload={handleLogoClick} />
 

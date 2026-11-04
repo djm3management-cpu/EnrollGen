@@ -15,13 +15,22 @@ import { getSEPsForZip, getSEPsForState } from "../lib/sepEngine";
 import { supabase } from "../lib/supabase";
 import { normalizeSepZip, parseSepRpcResult } from "../components/SEPResultsPanel";
 
-export function useSEPLookup({ initialZip = "" } = {}) {
+export function useSEPLookup({ initialZip = "", onResidenceLookup } = {}) {
   const [zip, setZip] = useState(() => normalizeSepZip(initialZip));
   // Contact hydration may finish after this tool opens. Preserve agent input.
   useEffect(() => {
     const contactZip = normalizeSepZip(initialZip);
     if (contactZip.length === 5) setZip(current => current || contactZip);
   }, [initialZip]);
+  const typedZipRef = useRef(null);
+  const setSearchZip = useCallback(value => {
+    typedZipRef.current = typeof value === 'string' ? value : null;
+    setZip(value);
+  }, []);
+  const reportResidenceLookup = useCallback((lookup, deliver = onResidenceLookup) => {
+    if (typedZipRef.current !== lookup.zip) return;
+    try { deliver?.({...lookup, entry:'agent_typed'}); } catch { /* Never interrupt a tool. */ }
+  }, [onResidenceLookup]);
   const [searchedZip, setSearchedZip] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
   const [results, setResults] = useState(null);
@@ -132,13 +141,13 @@ export function useSEPLookup({ initialZip = "" } = {}) {
   }, [loadTopFeed]);
 
   const loadPlansForCounty = useCallback(async (st, county) => {
-    if (!st || !county) return;
+    if (!st || !county) return false;
     setCountyLoading(true);
     try {
       const cmsRows = await fetchPlansFromSupabase(st, county);
       if (!cmsRows.length) {
         setPlans([]);
-        return;
+        return true;
       }
       const seen = new Set();
       const transformed = [];
@@ -154,9 +163,11 @@ export function useSEPLookup({ initialZip = "" } = {}) {
         return a.name.localeCompare(b.name);
       });
       setPlans(transformed);
+      return true;
     } catch {
       debugLog("Supabase plan fetch error");
       setPlans([]);
+      return false;
     } finally {
       setCountyLoading(false);
     }
@@ -268,6 +279,7 @@ export function useSEPLookup({ initialZip = "" } = {}) {
   const handleSearch = useCallback(async () => {
     const cleanZip = zip.trim();
     if (!/^\d{5}$/.test(cleanZip)) return;
+    const residenceDelivery = onResidenceLookup;
     setLoading(true);
     setSepFinderZip(cleanZip);
     setSepFinderResult(null);
@@ -332,13 +344,16 @@ export function useSEPLookup({ initialZip = "" } = {}) {
         setSelectedCounty(null);
         setPlans([]);
       }
-      await sepFinderPromise;
+      const residenceSepResult = await sepFinderPromise;
+      // Publish only after a successful lookup, using the call identity frozen
+      // when this search began. Untouched contact/vendor prefill is never proof.
+      if (residenceSepResult && !countyError && countyRows?.length) reportResidenceLookup({zip:cleanZip,state:st,county_fips:countyFips.length===1?countyFips[0]:null}, residenceDelivery);
     } catch {
       debugLog("Search error");
     } finally {
       setLoading(false);
     }
-  }, [zip, loadPlansForCounty, loadSepFinderResults]);
+  }, [zip, loadPlansForCounty, loadSepFinderResults, onResidenceLookup, reportResidenceLookup]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSearch();
@@ -387,7 +402,7 @@ export function useSEPLookup({ initialZip = "" } = {}) {
   const hasView = !!(selectedState || results);
 
   return {
-    zip, setZip, searchedZip, results, carriers, loading,
+    zip, setZip:setSearchZip, reportResidenceLookup, searchedZip, results, carriers, loading,
     expanded, setExpanded, filterCategory, setFilterCategory,
     filterProduct, setFilterProduct, activeTab, setActiveTab,
     plans, expandedPlans, setExpandedPlans,
