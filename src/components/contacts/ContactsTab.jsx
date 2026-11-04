@@ -1,3 +1,5 @@
+import {useAppAuth} from '../../context/AuthContext';
+import {saveAgentContactZip} from '../../lib/paragonResidence.js';
 import CrmPanelBoundary from '../CrmPanelBoundary';
 import { debugLog } from "../../lib/debugLog.js";
 import DncCallControl from "../phone/DncCallControl";
@@ -873,6 +875,7 @@ function RightPanel({
 }
 
 function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact = null, onSelectContact = null, active = true }) {
+  const {getToken}=useAppAuth();
   const [search, setSearch] = useState("");
   const [newContact, setNewContact] = useState(null);
   const [merge, setMerge] = useState(null);
@@ -981,7 +984,8 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
       setSaving(true);
       setInlineError("");
       try {
-        await updateContact(selectedContact.id, { [field]: next });
+        if (field === 'zip') await saveAgentContactZip(getToken,selectedContact.id,next);
+        else await updateContact(selectedContact.id, { [field]: next });
         if (PII_FIELD_SET.has(field)) patchField(field, field === "phone" ? normalizePhoneE164(next) : next);
         await refreshSelected();
         setNotice("Contact details saved.");
@@ -993,7 +997,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         setSaving(false);
       }
     },
-    [selectedContact, updateContact, refreshSelected, patchField]
+    [selectedContact, updateContact, refreshSelected, patchField, getToken]
   );
 
   const saveMbiFull = useCallback(

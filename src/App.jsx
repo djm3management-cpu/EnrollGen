@@ -1,3 +1,4 @@
+import ParagonResidenceOutbox from './components/ParagonResidenceOutbox';
 import AppToast from './components/AppToast';
 import { navigateCrm } from "./lib/crmRoutes";
 import { callContinuity } from "./lib/callContinuity.js";
@@ -599,18 +600,6 @@ function AppShell({ currentUser = null }) {
   const maCallBoundary = useRef(null);
   if (!maCallBoundary.current) maCallBoundary.current = createCallSessionBoundary();
   const maCallKey = maCallBoundary.current(inboundActiveCall);
-  const [confirmedParagonCallSid,setConfirmedParagonCallSid] = useState(null);
-  const paragonCallSid = inboundActiveCall?.params?.paragon === 'true'
-    ? inboundActiveCall.params.twilioCallSid : null;
-  const paragonLocked = Boolean(paragonCallSid && confirmedParagonCallSid !== paragonCallSid);
-  useEffect(() => {
-    const onZipStatus = event => {
-      if (event.detail?.callSid !== paragonCallSid) return;
-      setConfirmedParagonCallSid(event.detail.status === 'confirmed' ? paragonCallSid : null);
-    };
-    window.addEventListener('paragon-zip-status',onZipStatus);
-    return () => window.removeEventListener('paragon-zip-status',onZipStatus);
-  },[paragonCallSid]);
   useEffect(() => {
     if (!inboundActiveCall) return;
     syncModePath("ma");
@@ -1024,6 +1013,7 @@ function AppShell({ currentUser = null }) {
         </header>
 
         <SmsToastHost onOpenContactMessages={handleOpenContactMessages} />
+        <ParagonResidenceOutbox />
         <PostCallStatusAlert />
         <PreloadRecoveryNotice callInProgress={reloadBlocked} onReload={handleLogoClick} />
 
@@ -1073,7 +1063,7 @@ function AppShell({ currentUser = null }) {
           </>
         ) : mode === "ma" ? (
           <ScriptProvider key={maCallKey}>
-            <div className="paragon-inert-container" inert={paragonLocked ? '' : undefined}><LeftRail launcher={sepLauncher} visibleItemIds={visibleLeftRailIds} footer={<LeftRailCompliance />} /></div>
+            <LeftRail launcher={sepLauncher} visibleItemIds={visibleLeftRailIds} footer={<LeftRailCompliance />} />
 
             {overlayNode}
 
@@ -1081,8 +1071,7 @@ function AppShell({ currentUser = null }) {
               <main className="app-center">
                 <div className="main-script-layout">
                   <div className="main-script-primary">
-                    {paragonLocked && <div className="billing-alert">Confirm the beneficiary ZIP in the active call panel before using Co-Pilot or plan tools.</div>}
-                    <div className="paragon-inert-container" inert={paragonLocked ? '' : undefined}><LazyPanel><ScriptFlow /></LazyPanel></div>
+                    <LazyPanel><ScriptFlow /></LazyPanel>
                     <SessionSummarySlot />
                   </div>
                 </div>

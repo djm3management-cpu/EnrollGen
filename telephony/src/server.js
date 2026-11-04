@@ -1,3 +1,4 @@
+import {startParagonResidenceWorker} from './paragonResidenceWorker.js';
 import {createPostCallStatusHandler} from './postCallStatus.js';
 import { startParagonBillingWorker } from "./paragonBilling.js";
 import { startCallStatusRecoveryWorker } from "./callStatusRecovery.js";
@@ -69,6 +70,7 @@ app.use(voiceOutboundRouter);
 app.use(createConferenceRouter());
 app.use(smsRouter);
 app.use(recordingMediaRouter);
+startParagonResidenceWorker({db:createRecordingServiceClient()});
 startRecordingWorker({ db: createRecordingServiceClient(), config });
 startParagonBillingWorker({ db: createRecordingServiceClient(), config });
 startCallStatusRecoveryWorker({ db: createRecordingServiceClient(), config });

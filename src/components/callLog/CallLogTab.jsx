@@ -1,3 +1,4 @@
+import ParagonResidenceReview from './ParagonResidenceReview';
 import CrmPanelBoundary from '../CrmPanelBoundary';
 import EnrollmentIntake from '../enrollment/EnrollmentIntake';
 import ComplianceUploads from './ComplianceUploads';
@@ -360,6 +361,7 @@ export default function CallLogTab({ onOpenContact = null, inboundCallId=null })
 
   return (
     <div className="call-log-tab">
+      <ParagonResidenceReview />
       <ComplianceUploads />
       <div className="ops-command-line">
         <span className="call-log-title-group">
