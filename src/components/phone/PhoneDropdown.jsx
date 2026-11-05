@@ -84,6 +84,15 @@ export default function PhoneDropdown({ onOpenMessages }) {
 
   return (
     <div className="phone-dd" ref={rootRef}>
+      {pendingDisposition && (dispositionCollapsed || callInProgress) ? (
+        <button type="button" className="phone-dd__disposition-pill"
+          disabled={callInProgress}
+          onClick={() => { setDispositionCollapsed(false); setIsOpen(false); }}
+          title={callInProgress ? "Finish disposition after this call" : "Finish disposition"}>
+          <span className="phone-dd__disposition-label">DISPOSITION PENDING</span>
+        </button>
+      ) : null}
+
       <button
         type="button"
         className={`top-bar-settings-button phone-dd__trigger${isOpen ? " is-active" : ""}`}
@@ -96,23 +105,15 @@ export default function PhoneDropdown({ onOpenMessages }) {
         aria-label={pendingDisposition ? "Phone dialer, disposition pending" : "Phone dialer"}
       >
         <Phone size={14} />
-        {hasCall || pendingDisposition ? <span className={`phone-dd__badge${pendingDisposition ? " phone-dd__badge--pending" : ""}`} aria-hidden="true" /> : null}
+        {hasCall ? <span className="phone-dd__badge" aria-hidden="true" /> : null}
       </button>
 
       <IncomingCallToast />
 
-      {pendingDisposition && (dispositionCollapsed || callInProgress) ? (
-        <button type="button" className="top-bar-settings-button phone-dd__disposition-pill"
-          disabled={callInProgress}
-          onClick={() => { setDispositionCollapsed(false); setIsOpen(false); }}
-          title={callInProgress ? "Finish disposition after this call" : "Finish disposition"}>
-          Disposition pending
-        </button>
-      ) : null}
-
       {hasCall && !isOpen ? <ActiveCallBar onExpand={() => setIsOpen(true)} /> : null}
 
-      <div className="phone-dd__panel" hidden={!panelOpen} role="dialog" aria-label="Phone">
+      {pendingDisposition && panelOpen ? <div className="phone-dd__backdrop" aria-hidden="true" /> : null}
+      <div className={`phone-dd__panel${pendingDisposition && panelOpen ? " phone-dd__panel--disposition-modal" : ""}`} hidden={!panelOpen} role="dialog" aria-label="Phone">
         <CallDispositionBox phone={inbound} onVisibleChange={setDispositionPending} collapsed={dispositionCollapsed} onCollapsedChange={collapseDisposition} />
         {isOpen ? (hasCall ? (
             <ActiveCallExpanded onOpenMessages={onOpenMessages} />

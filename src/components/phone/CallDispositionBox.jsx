@@ -54,6 +54,7 @@ export default function CallDispositionBox({phone,onVisibleChange,collapsed=fals
  },[getToken,live]);
  useEffect(()=>{setIntakeOpen(false);setIntakeComplete(false);setOutcome('');onCollapsedChange?.(false);setError('');},[task?.call_sid,onCollapsedChange]);
  const visible=mayShowCallDisposition(phone,serverInProgress,task);
+ useEffect(()=>{if(!CALL_OUTCOME_OPTIONS.length)console.error('No dispositions configured for Call disposition.');},[]);
  // Keep the pending indicator and selected outcome while a new call takes
  // priority. The full form and saving still require an idle phone.
  const pending=Boolean(task?.ended_at && task?.agent_leg_sid);
@@ -72,10 +73,10 @@ export default function CallDispositionBox({phone,onVisibleChange,collapsed=fals
    </div>
    <label htmlFor="dialer-disposition">What happened?</label>
    <select id="dialer-disposition" className="ma-script-direction-select" value={outcome} disabled={saving} onChange={event=>{const value=event.target.value;setOutcome(value);if(task.product_type?.toUpperCase()==='MA' && ['enrolled','enrolled_pending_verification'].includes(value))setIntakeOpen(true);}}>
-    <option value="">Choose disposition</option>
-    {CALL_OUTCOME_OPTIONS.map(group=><optgroup key={group.group} label={group.group}>
+    <option value="">Select disposition</option>
+    {CALL_OUTCOME_OPTIONS.length ? CALL_OUTCOME_OPTIONS.map(group=><optgroup key={group.group} label={group.group}>
      {group.options.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
-    </optgroup>)}
+    </optgroup>) : <option value="" disabled>No dispositions configured</option>}
    </select>
    {task.product_type?.toUpperCase()==='MA' && ['enrolled','enrolled_pending_verification'].includes(outcome) && <button type="button" className="contacts-mini-btn" onClick={()=>setIntakeOpen(true)}>{intakeComplete?'Edit completed intake':'Complete enrollment intake'}</button>}
    {intakeOpen && <EnrollmentIntake callId={task.call_record_id} onClose={()=>setIntakeOpen(false)} onSaved={()=>setIntakeComplete(true)}/>}

@@ -8,6 +8,8 @@
 .phone-dd {
   position: relative;
   display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .phone-dd__trigger {
@@ -783,6 +785,24 @@
 
 /* Pending outcome stays attached to the dialer; collapsing never clears it. */
 .phone-dd__panel[hidden] { display: none; }
+.phone-dd__panel--disposition-modal {
+  position: fixed;
+  z-index: 1001;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(600px, calc(100dvh - 32px));
+  transform: translate(-50%, -50%);
+  overflow: auto;
+  border-radius: var(--phone-radius-outer);
+}
+.phone-dd__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgb(0 0 0 / 55%);
+}
 .phone-disposition {
   display: flex;
   flex-direction: column;
@@ -797,16 +817,66 @@
   border-bottom: 1px solid var(--phone-border);
 }
 .phone-disposition .ma-script-direction-select { width: 100%; }
+#root .phone-disposition #dialer-disposition {
+  box-sizing: border-box !important;
+  display: block;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 6px 10px !important;
+  margin: 0;
+  text-indent: 0 !important;
+  letter-spacing: normal !important;
+  text-align: left;
+  text-overflow: clip;
+  overflow: visible;
+  border-radius: 4px;
+  background: var(--phone-panel-bg) !important;
+  color: var(--phone-body-text) !important;
+  color-scheme: light;
+}
+html.dark #root .phone-disposition #dialer-disposition { color-scheme: dark; }
+#root .phone-disposition #dialer-disposition option {
+  background: var(--phone-panel-bg);
+  color: var(--phone-body-text);
+}
 
 .phone-dd__badge--pending { background: var(--status-pending); }
 .phone-dd__disposition-pill {
-  margin-left: 6px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 28px !important;
+  margin: 0;
   border: 1px solid var(--phone-border);
   border-radius: 999px;
-  padding: 4px 8px;
+  padding: 0 10px;
+  background: var(--phone-panel-bg) !important;
   color: var(--status-pending);
   font-family: var(--eg-font-mono);
   font-size: 10px;
+  font-weight: 500;
   white-space: nowrap;
+  cursor: pointer;
+}
+.phone-dd__disposition-pill::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status-pending);
+  box-shadow: 0 0 0 2px var(--phone-panel-bg);
 }
 .phone-dd__disposition-pill:disabled { opacity: 1; cursor: default; }
+
+@media (max-width: 1279px) {
+  .phone-dd__disposition-label { font-size: 0; }
+  .phone-dd__disposition-label::after { content: "PENDING"; font-size: 10px; }
+}
