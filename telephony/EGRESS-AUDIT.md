@@ -1,6 +1,26 @@
 # Telephony egress audit — 2026-11-05
 
-## Production evidence
+## Root cause: oversized recording upload retries
+
+Production has 32 recording jobs with `storage_upload_failed`, totaling 8,512
+upload attempts. All 32 exceed 50 MiB. A controlled reproduction returned Supabase
+Storage statusCode 413: "The object exceeded the maximum allowed size." The worker
+collapsed this permanent failure into a generic retry and resent full WAVs forever.
+Using persisted durations/channels, the attempts represent approximately 923.77 GB
+of PCM WAV payload, consistent with most of the reported 984.53 GB egress. This is
+an estimate of attempted payload, not a billing ledger measurement.
+
+The first production metric interval also measured 630.8 MB sent to Supabase in
+five minutes with zero Twilio media, Deepgram or browser sockets open. All 32
+oversized retry jobs were marked failed, preserving provider originals.
+
+Fix: a configurable RECORDING_STORAGE_MAX_BYTES (default 50 MiB) bounds downloads
+before upload, Content-Length accompanies storage uploads, and 413 is permanent.
+Oversized jobs become failed without deleting Twilio originals; provider playback
+continues. After raising the storage project limit, raise this setting and explicitly
+requeue these jobs. They must not be retried automatically until capacity changes.
+
+## Additional production evidence
 
 Inspected Railway service `ba14e4c7-0437-42d5-b22a-7408bb143dd2`
 (EnrollGen), production, source `/telephony`, revision 89de3b9.
@@ -11,8 +31,7 @@ The 15-second recovery worker repeatedly rediscovered those unfinished rooms.
 Fix: treat a missing provider room as terminal, then perform the existing database
 completion. Other provider errors still retry; routing and reservations are unchanged.
 
-This is a confirmed accumulating background-request defect, not proof of the entire
-984.53 GB bill. A 500-flow egress sample from 14:13:20–14:19:55 UTC contained about
+The conference loop is a separate, smaller accumulating background-request defect. A 500-flow egress sample from 14:13:20–14:19:55 UTC contained about
 0.98 MB, mainly Cloudflare HTTPS (Supabase) and Twilio HTTPS. DNS logs showed only
 Supabase and Twilio in the recent 100-query sample. The seven-day HTTP query for
 responses larger than 1 MB returned no entries. Sampling cannot establish historical

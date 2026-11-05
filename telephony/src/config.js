@@ -31,6 +31,8 @@ if (!Number.isInteger(minConnectedSeconds) || minConnectedSeconds < 1) {
   throw new Error("MIN_CONNECTED_SECONDS must be a positive integer");
 }
 
+const recordingStorageMaxBytes = Number(process.env.RECORDING_STORAGE_MAX_BYTES || 50 * 1024 * 1024);
+if (!Number.isSafeInteger(recordingStorageMaxBytes) || recordingStorageMaxBytes < 1024) throw new Error("Invalid RECORDING_STORAGE_MAX_BYTES");
 const recordingMaxBytes = Number(process.env.RECORDING_MAX_BYTES || 256 * 1024 * 1024);
 const recordingTimeoutMs = Number(process.env.RECORDING_TIMEOUT_MS || 60_000);
 if (!Number.isSafeInteger(recordingMaxBytes) || recordingMaxBytes < 1024 ||
@@ -39,7 +41,7 @@ if (!Number.isSafeInteger(recordingMaxBytes) || recordingMaxBytes < 1024 ||
 }
 
 export const config = {
-  recordingMaxBytes, recordingTimeoutMs,
+  recordingMaxBytes, recordingStorageMaxBytes, recordingTimeoutMs,
   sttWaitForAnswer: process.env.STT_WAIT_FOR_ANSWER?.trim().toLowerCase() !== 'false',
   deleteTwilioRecordingsAfterCopy: process.env.DELETE_TWILIO_RECORDINGS_AFTER_COPY?.trim().toLowerCase() === 'true',
   port: Number(process.env.PORT || 8080),

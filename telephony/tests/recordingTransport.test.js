@@ -18,3 +18,20 @@ test('actual Supabase Storage SDK upload uses the bounded HTTP transport',async 
   const result=await createRecordingServiceClient().storage.from('call-recordings').upload('fixture.wav',Buffer.from('fixture'));
   assert.ok(result.error);assert.equal(signal.aborted,true);
 });
+
+const { processRecording } = await import('../src/recordings.js');
+const { recordingWav } = await import('../../tests/helpers/recordingWav.js');
+for (const failure of ['oversize', '413', '503']) test(`recording ${failure}: size failures stop retries while transient failures retry`, async () => {
+ const updates=[];let uploads=0;
+ const job={id:'job',lease_token:'lease',attempts:10,account_sid:'AC'+'a'.repeat(32),recording_sid:'RE'+'b'.repeat(32),recording_channels:2,tenant_id:'tenant',parent_call_sid:'call'};
+ const db={from:()=>({update(fields){updates.push(fields);return this;},eq(){return this;},select:async()=>({data:[{id:'job'}]})}),storage:{from:()=>({upload:async(_path,_stream,options)=>{
+  uploads++;assert.ok(Number(options.headers['Content-Length'])>0);
+  return {error:{status:400,statusCode:failure}};
+ }})}};
+ const wav=recordingWav();
+ const result=await processRecording({db,job,config:{twilioAccountSid:job.account_sid,recordingStorageMaxBytes:1024},
+  fetchImpl:async()=>new Response(wav,{headers:{'content-length':failure==='oversize'?'2048':String(wav.length)}}),log:()=>{}});
+ assert.equal(result,failure==='503'?'retry':'failed');
+ assert.equal(uploads,failure==='oversize'?0:1);
+ assert.equal(updates.at(-1).last_error_code,failure==='oversize'?'recording_too_large':failure==='413'?'storage_object_too_large':'storage_upload_failed');
+});

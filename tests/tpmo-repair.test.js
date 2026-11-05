@@ -89,7 +89,9 @@ test('repair creates an atomic scorecard revision with review evidence, preserve
       if(name==='persist_tpmo_timing_repair')args={...args,p_result:{...args.p_result,items:args.p_result.items.slice(1)}};
       return db.rpc(name,args);
     }};
-    await assert.rejects(applyTpmoRepair(snapshot,brokenDb),/Incomplete scoring/);
+    // Items may arrive in UUID order: removing the first can omit either a
+    // normal score or mandatory TPMO review evidence. Both must reject atomically.
+    await assert.rejects(applyTpmoRepair(snapshot,brokenDb),/Incomplete scoring|Uncertain TPMO evidence/);
     assert.equal(Number((await pg.query('SELECT count(*) n FROM compliance_scorecards WHERE call_id=$1',[callId])).rows[0].n),1);
     assert.equal(Number((await pg.query("SELECT count(*) n FROM scoring_jobs WHERE call_id=$1 AND status='pending'",[callId])).rows[0].n),0);
     const applied=await applyTpmoRepair(snapshot,db);

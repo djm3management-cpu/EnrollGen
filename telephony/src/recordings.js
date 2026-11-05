@@ -172,15 +172,20 @@ export async function processRecording({ db, job, config, fetchImpl, maxBytes, t
   let audio;
   try {
     if (job.account_sid !== config.twilioAccountSid) throw new RecordingError('account_mismatch');
-    audio = await downloadRecording({ job, config, fetchImpl, maxBytes, timeoutMs });
+    // The storage project limit may be lower than the download safety cap.
+    // Reject from provider Content-Length (or while downloading) before sending
+    // an oversized WAV repeatedly to storage. Keep the provider original.
+    const storageLimit = config.recordingStorageMaxBytes || 50 * 1024 * 1024;
+    audio = await downloadRecording({ job, config, fetchImpl, maxBytes: Math.min(maxBytes ?? 256 * 1024 * 1024, storageLimit), timeoutMs });
     const storagePath = `${job.tenant_id}/${job.parent_call_sid}/${job.recording_sid}.wav`;
     // Immutable identity per RecordingSid; replay after a crash safely restores
     // the same bytes, without overwriting a different recording on the call.
     const stream = createReadStream(audio.path);
     try {
       const upload = await db.storage.from('call-recordings').upload(storagePath, stream, {
-        contentType: 'audio/wav', upsert: false, duplex: 'half',
+        contentType: 'audio/wav', upsert: false, duplex: 'half', headers: { 'Content-Length': String(audio.bytes) },
       });
+      if (String(upload.error?.statusCode || upload.error?.status) === '413') throw new RecordingError('storage_object_too_large');
       if (upload.error && !['409', 'Duplicate', '409 Conflict'].includes(String(upload.error.statusCode || upload.error.code))) throw new RecordingError('storage_upload_failed');
     } finally { stream.destroy(); }
     await verifyStoredRecording({ db, storagePath, bytes: audio.bytes, sha256: audio.sha256 });
@@ -196,7 +201,7 @@ export async function processRecording({ db, job, config, fetchImpl, maxBytes, t
     const code = error instanceof RecordingError ? error.code :
       ['AbortError', 'TimeoutError'].includes(error.name) ? 'download_timeout' : 'copy_error';
     log(JSON.stringify({ event: 'recording_copy_failed', recording_sid: job.recording_sid, code }));
-    const permanent = ['recording_too_large', 'invalid_wav', 'channel_mismatch', 'account_mismatch'].includes(code);
+    const permanent = ['recording_too_large', 'storage_object_too_large', 'invalid_wav', 'channel_mismatch', 'account_mismatch'].includes(code);
     checked(await db.from('recording_ingestion').update({ copy_status: permanent ? 'failed' : 'retry',
       next_attempt_at: new Date(Date.now() + retryDelay(job.attempts)).toISOString(),
       last_error_code: code, lease_token: null, lease_until: null, updated_at: new Date().toISOString(),
