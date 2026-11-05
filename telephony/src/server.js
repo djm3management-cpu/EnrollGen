@@ -1,3 +1,4 @@
+import { startEgressMetrics } from './egressMetrics.js';
 import {startParagonResidenceWorker} from './paragonResidenceWorker.js';
 import {createPostCallStatusHandler} from './postCallStatus.js';
 import { startParagonBillingWorker } from "./paragonBilling.js";
@@ -27,6 +28,8 @@ import { createConferenceMedia } from './media/conferenceMedia.js';
 import { conferenceRuntime } from './conferenceRuntime.js';
 
 import { expirePhoneSessions } from "./phonePresence.js";
+
+startEgressMetrics();
 
 // Routing checks lease expiry itself, even if this maintenance job is delayed.
 let expiryRunning = false;

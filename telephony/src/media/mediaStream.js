@@ -1,3 +1,4 @@
+import { egressMetrics } from '../egressMetrics.js';
 import { config } from '../config.js';
 import { onMediaLifecycle } from './mediaLifecycle.js';
 import { supabase } from '../supabase.js';
@@ -44,6 +45,14 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
   }
 
   wss.on('connection', (ws, claims) => {
+    const releaseSocket = egressMetrics.acquire('twilio_media');
+    ws._socket.egressDestination = 'twilio';
+    ws.once('close', releaseSocket);
+    let lastFrame = now();
+    const watchdog = setInterval(() => {
+      if (now() - lastFrame >= 45000) end(1008, 'Media heartbeat timeout');
+    }, 5000);
+    watchdog.unref();
     const speakers = speakersFor(claims);
     const owner = randomUUID();
     let state = 'waiting', streamSid = null, binding = false, owned = false, stopped = false;
@@ -76,7 +85,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     function end(code = 1000, reason = 'Stream stopped') {
       if (stopped) return;
       if (code !== 1000) console.warn(`[media] rejected: ${reason}`);
-      stopped = true; state = 'stopped'; clearTimeout(timer); clearInterval(renewal);
+      stopped = true; state = 'stopped'; clearInterval(watchdog); clearTimeout(timer); clearInterval(renewal);
       clearInterval(answerTimer); unsubscribe();
       pending = []; pendingBytes = 0; customerChunks = []; customerBytes = 0;
       for (const track of Object.values(tracks)) track.close();
@@ -84,6 +93,9 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       if (owned) void leases.release(claims.callSid, owner, claims).catch(() => {});
       if (binding) emit({ type: 'call_status', status: 'stream_stopped', streamId: streamSid, callSid: claims.parentCallSid || claims.callSid });
       if (ws.readyState === ws.OPEN) ws.close(code, reason);
+      const forceClose = setTimeout(() => ws.terminate(), 1000);
+      forceClose.unref();
+      ws.once('close', () => clearTimeout(forceClose));
     }
     const denied = (reason = 'Invalid media binding') => end(1008, reason);
     function buffer(message, size) {
@@ -170,6 +182,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     }
     ws.on('message', (raw, isBinary) => {
       if (stopped) return;
+      lastFrame = now();
       if (isBinary || raw.length > limits.frameBytes) return end(1009, 'Invalid media frame');
       let message;
       try { message = JSON.parse(raw.toString()); } catch { return denied(); }

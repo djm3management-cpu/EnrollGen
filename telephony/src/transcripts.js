@@ -13,6 +13,7 @@ export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = ()
       p_start_ms: Math.round(offset + (message.startMs || 0)), p_end_ms: Math.round(offset + (message.endMs || 0)) };
     tail = tail.then(async () => {
       // Retain this segment until acknowledged; retries remain independent of browser/media closure.
+      let failures = 0;
       for (;;) {
         try {
           const { error } = await db.rpc(claims.participantId ? 'persist_conference_transcript' : 'persist_telephony_transcript', args);
@@ -20,7 +21,7 @@ export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = ()
         } catch { /* retry transport failure */ }
         notify({ type: 'transcription_error', speaker: message.speaker, status: 'unavailable',
           message: 'Transcript persistence delayed; server is retrying.' });
-        await new Promise(resolve => setTimeout(resolve, retryMs));
+        await new Promise(resolve => setTimeout(resolve, Math.min(60000, retryMs * 2 ** Math.min(failures++, 16))));
       }
     });
     return tail;

@@ -1,3 +1,4 @@
+import { egressMetrics } from '../egressMetrics.js';
 import WebSocket from 'ws';
 import { randomUUID } from 'node:crypto';
 import { reportServerSttUsage } from '../sttUsage.js';
@@ -90,6 +91,8 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
       const connection = { ws: { terminate() {} }, timeout: null, keepAlive: null };
       current = connection; fail(connection); return;
     }
+    const releaseSocket = egressMetrics.acquire('deepgram');
+    ws.once('close', releaseSocket);
     const connection = { ws, failed: false, timeout: null, keepAlive: null, streamId: randomUUID(), audioStartMs: null };
     current = connection;
     connection.timeout = schedule(() => fail(connection), limits.connectMs);
@@ -134,7 +137,7 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
     ws.on('error', () => fail(connection));
     ws.on('close', () => {
       recordUsage(connection);
-      if (closed) { cancel(flushTimer); current = null; return; }
+      if (closed) { if (current === connection) { cancel(flushTimer); current = null; } return; }
       fail(connection);
     });
   }

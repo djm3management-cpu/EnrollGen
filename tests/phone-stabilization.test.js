@@ -1,3 +1,4 @@
+import { egressMetrics } from '../telephony/src/egressMetrics.js';
 import {createCallContinuity} from '../src/lib/callContinuity.js';
 import {installAgentAudio} from '../src/lib/audio/AgentAudioProcessor.js';
 import {updateLiveTranscript} from '../src/lib/liveTranscript.js';
@@ -92,7 +93,7 @@ test('Deepgram dual-channel stream reaches the rendered panel with the latest in
  const read=file=>readFileSync(new URL(`../${file}`,import.meta.url),'utf8');
  const open=vm.runInNewContext(stripImports(read('telephony/src/media/deepgramTrack.js'))
   .replace(/^export /gm,'')+';openDeepgramTrack',{
-   WebSocket:Socket,randomUUID,reportServerSttUsage:async()=>{},config:{deepgramApiKey:'fixture'},setTimeout,clearTimeout,setInterval,clearInterval,
+   egressMetrics,WebSocket:Socket,randomUUID,reportServerSttUsage:async()=>{},config:{deepgramApiKey:'fixture'},setTimeout,clearTimeout,setInterval,clearInterval,
   });
  const merge=vm.runInNewContext(stripImports(read('src/hooks/useMergedTranscript.js'))
   .replace(/^export /gm,'')+';useMergedTranscript',view.hooks);

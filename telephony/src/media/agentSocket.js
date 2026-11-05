@@ -1,3 +1,4 @@
+import { egressMetrics } from '../egressMetrics.js';
 import { WebSocketServer } from "ws";
 import { attachPhonePresence } from "../phonePresence.js";
 import { inspectAgentWsToken } from "../wsToken.js";
@@ -8,7 +9,7 @@ import { activeTenantAgent } from "../availability.js";
 // call status messages for calls routed to that agent.
 const socketsByAgent = new Map();
 
-export const agentWss = new WebSocketServer({ noServer: true });
+export const agentWss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024, perMessageDeflate: false });
 agentWss.on('wsClientError', (_error, socket) => {
   console.warn('[agent] rejected: invalid_websocket_handshake');
   socket.end('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
@@ -33,6 +34,9 @@ export function handleAgentUpgrade(request, socket, head) {
 }
 
 agentWss.on("connection", async (ws, _request, claims) => {
+  const releaseSocket = egressMetrics.acquire('browser');
+  ws.once('close', releaseSocket);
+  ws.on('error', () => ws.terminate());
   const { agentId } = claims;
   try {
     const agent = await activeTenantAgent(agentId, claims.clerkSubject);
@@ -46,6 +50,7 @@ agentWss.on("connection", async (ws, _request, claims) => {
     ws.close(1011, "Identity check failed");
     return;
   }
+  if (ws.readyState !== ws.OPEN) return;
   attachPhonePresence(ws, agentId);
   if (!socketsByAgent.has(agentId)) socketsByAgent.set(agentId, new Set());
   socketsByAgent.get(agentId).add(ws);
@@ -66,6 +71,9 @@ export function sendToAgent(agentId, message) {
   if (!set) return;
   const data = JSON.stringify(message);
   for (const ws of set) {
-    if (ws.readyState === ws.OPEN) ws.send(data);
+    if (ws.readyState === ws.OPEN) {
+      if (ws.bufferedAmount > 256 * 1024) ws.terminate();
+      else ws.send(data);
+    }
   }
 }

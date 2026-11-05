@@ -558,3 +558,42 @@ test('Railway cost switch defaults and explicit overrides are parsed by the prod
     assert.deepEqual(JSON.parse(result),expected);
   }
 });
+
+// Exercise the shared transport used by legacy and conference legs. Conference
+// control behavior (including transfers/flag-off draining) is covered separately.
+const { egressMetrics } = await import('../src/egressMetrics.js');
+for (const scenario of ['normal hangup', 'three-way call', 'warm transfer', 'blind transfer', 'agent browser disconnect', 'stream error']) {
+  test(`${scenario}: media sockets and tracks return to baseline`, async t => {
+    const baseline = egressMetrics.snapshot().open.twilio_media || 0;
+    const h = await harness(t);
+    const count = scenario === 'three-way call' ? 3 : scenario.includes('transfer') ? 3 : 1;
+    const legs = [];
+    for (let i = 0; i < count; i++) {
+      const claims = await seedCall(), ws = await h.connect(claims), packet = start(claims);
+      ws.send(JSON.stringify(packet));
+      legs.push({ claims, ws, packet });
+    }
+    await until(() => h.tracks.length === count * 2);
+    assert.equal(egressMetrics.snapshot().open.twilio_media, baseline + count);
+    for (const { claims, ws, packet } of legs) {
+      if (scenario === 'normal hangup' || scenario === 'three-way call') {
+        ws.send(JSON.stringify({ event: 'stop', streamSid: packet.streamSid, stop: { callSid: claims.callSid, accountSid } }));
+      } else if (scenario === 'agent browser disconnect') ws.terminate();
+      else if (scenario === 'stream error') [...h.media.wss.clients][0].emit('error', new Error('transport failure'));
+      else signalMediaLifecycle({ callSid: claims.callSid, attemptId: claims.attemptId, ended: true });
+    }
+    await until(() => h.tracks.every(track => track.closed) && egressMetrics.snapshot().open.twilio_media === baseline);
+  });
+}
+
+test('silent media transport expires after 45 seconds and closes its tracks', async t => {
+  let clock = Date.now();
+  const h = await harness(t, { now: () => clock });
+  const claims = await seedCall(), ws = await h.connect(claims);
+  ws.send(JSON.stringify(start(claims)));
+  await until(() => h.tracks.length === 2);
+  clock += 45001;
+  // The watchdog ticks every five seconds; allow one real tick.
+  await new Promise(resolve => setTimeout(resolve, 5100));
+  assert.ok(h.tracks.every(track => track.closed));
+});

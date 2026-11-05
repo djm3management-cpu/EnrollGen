@@ -238,7 +238,14 @@ export function createConferenceService({ store = createConferenceStore(supabase
   async function finish(c) {
     if (c.ended_at) return;
     for (const p of (await store.participants(c.call_id)).filter(live)) await stop(p, { release: false });
-    if (c.twilio_conference_sid) await provider('conference_end', () => client.conferences(c.twilio_conference_sid).update({ status: 'completed' }));
+    if (c.twilio_conference_sid) {
+      try { await provider('conference_end', () => client.conferences(c.twilio_conference_sid).update({ status: 'completed' })); }
+      catch (error) {
+        // An already-removed provider room is terminal too. Persist completion
+        // so recovery does not poll this historical call every 15 seconds.
+        if (error.code !== 20404) throw error;
+      }
+    }
     if (await store.finish(c.call_id)) await store.event(c.call_id, 'ended');
   }
   async function departed(c, p) {

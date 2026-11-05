@@ -463,3 +463,55 @@ test('Media WebSocket: isolated inbound tracks retain three speaker identities a
  await until(async()=>Boolean((await pg.query('SELECT transcript_raw FROM call_records WHERE id=$1',[h.c.call_id])).rows[0].transcript_raw?.includes('THIRD_PARTY: Distinct third speaker')));
  assert.equal(track.closed,undefined);assert.equal(events.some(message=>message.speaker==='third_party'),true);
 });
+
+test('already-removed Twilio room completes durably and leaves the recovery set', async t => {
+ const h = await harness(t);
+ await h.store.patch(h.c.call_id, { twilio_conference_sid: 'CF'+'c'.repeat(32) });
+ const conferences = h.twilio.client.conferences;
+ h.twilio.client.conferences = id => ({ ...conferences(id), update: async () => { throw Object.assign(new Error('Room gone'), { code: 20404 }); } });
+ await h.service.finish(await h.store.get(h.c.call_id));
+ assert.ok((await h.store.get(h.c.call_id)).ended_at);
+ assert.ok(!(await h.store.active()).some(c => c.call_id === h.c.call_id));
+ const before = h.twilio.operations.length;
+ await h.service.tick();
+ assert.equal(h.twilio.operations.length, before);
+});
+
+test('transient provider failure preserves unfinished conference for recovery', async t => {
+ const h = await harness(t);
+ await h.store.patch(h.c.call_id, { twilio_conference_sid: 'CF'+'c'.repeat(32) });
+ h.twilio.client.conferences = () => ({ update: async () => { throw Object.assign(new Error('Unavailable'), { code: 20500 }); } });
+ await assert.rejects(() => h.service.finish({ ...h.c, twilio_conference_sid: 'CF'+'c'.repeat(32) }), /Unavailable/);
+ assert.equal((await h.store.get(h.c.call_id)).ended_at, null);
+});
+
+for (const mode of ['add', 'warm', 'blind']) test(`${mode}: real conference media sockets close after terminal hangup`, async t => {
+ const { egressMetrics } = await import('../src/egressMetrics.js');
+ const baseline = egressMetrics.snapshot().open.twilio_media;
+ const h = await harness(t);
+ await h.action({action:'dial',mode,phone:'+16095556789'});
+ await h.answer(await h.third());
+ if (mode === 'warm') await h.action({action:'warm_complete'});
+ const tracks=[], clients=[];
+ const mediaDb={...db,rpc(name,args){const pending=db.rpc(name,args);pending.abortSignal=()=>pending;return pending;}};
+ const { MEDIA_LIMITS } = await import('../src/media/mediaStream.js');
+ const media=createConferenceMedia({db:mediaDb,settings,notify:()=>{},limits:{...MEDIA_LIMITS,renewMs:25},
+  openTrack:()=>{const track={send(){},close(){this.closed=true;}};tracks.push(track);return track;}});
+ const server=createServer();server.on('upgrade',media.handleUpgrade);
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ h.cleanup.push(async()=>{for(const ws of clients)ws.terminate();for(const ws of media.wss.clients)ws.terminate();await new Promise(resolve=>media.wss.close(resolve));await new Promise(resolve=>server.close(resolve));});
+ const until=async check=>{for(let i=0;i<400;i++){if(check())return;await new Promise(resolve=>setTimeout(resolve,5));}assert.fail('Expected media cleanup');};
+ const c=await h.store.get(h.c.call_id);
+ const participants=(await h.people()).filter(p=>p.status!=='left');
+ for(const p of participants){
+  const path=new URL(conferenceStreamUrl({...p,...c,id:p.id},settings)).pathname;
+  const ws=new WebSocket(`ws://127.0.0.1:${server.address().port}${path}`);clients.push(ws);await once(ws,'open');
+  const stream=sid('MZ');
+  ws.send(JSON.stringify({event:'start',streamSid:stream,start:{streamSid:stream,callSid:p.twilio_call_sid,accountSid:settings.twilioAccountSid,
+   customParameters:{agentId:c.owner_agent_id,attemptId:c.attempt_id},tracks:['inbound'],mediaFormat:{encoding:'audio/x-mulaw',sampleRate:8000,channels:1}}}));
+ }
+ await until(()=>tracks.length===participants.length);
+ await h.service.finish(await h.store.get(h.c.call_id));
+ await until(()=>tracks.every(track=>track.closed) && egressMetrics.snapshot().open.twilio_media===baseline);
+ assert.ok((await h.store.get(h.c.call_id)).ended_at);
+});
