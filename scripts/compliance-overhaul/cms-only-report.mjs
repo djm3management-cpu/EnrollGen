@@ -4,6 +4,7 @@ import {RULE_CATALOG,ACTIVE_RULE_CATALOG,RULES_VERSION} from '../../src/complian
 import {WORDING_REFERENCE} from '../../src/compliance/rules/cmsBasis.js';
 import {aggregateVersion} from '../../src/compliance/engine/VersionAggregator.js';
 import {evaluateRules} from '../../src/compliance/rules/evaluate.js';
+if(RULES_VERSION!=='cy2027-cms-only-4')throw Error('Historical generator; use full-rubric-report.mjs --dry-run.');
 if(!process.argv.includes('--dry-run'))throw Error('Use --dry-run; live execution is not implemented.');
 const dir='docs/compliance-overhaul',data=JSON.parse(await readFile('/tmp/enrollgen-compliance-audit.json','utf8')),baseline=JSON.parse(await readFile(`${dir}/cms-only-baseline.json`,'utf8'));
 const cards=data.historicalCards||data.cards,clean=s=>String(s??'').replaceAll('|','/').replaceAll('\n',' ');

@@ -1,3 +1,5 @@
+> Historical policy/report. The current full-rubric restoration is [FULL-RUBRIC-REPORT.md](FULL-RUBRIC-REPORT.md), version cy2027-full-rubric-5.
+
 # Compliance scoring and live transcription overhaul
 
 Superseded grading policy: the current CMS-only authority and dry run are in [CMS-ONLY-REPORT.md](CMS-ONLY-REPORT.md) and [cms-only-rules.md](cms-only-rules.md). Earlier figures below are retained as historical before-states.

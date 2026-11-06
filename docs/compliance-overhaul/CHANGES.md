@@ -167,3 +167,15 @@ Current rule version: cy2027-cms-only-4. [Full rules/citations](cms-only-rules.m
 | Scoring fixture files | Replace superseded script assertions; topic/consent/citation/ordering regressions and budget/API safeguards | Injected doubles only |
 
 Documentation and private reports updated. No styles, transcription, Deepgram, Railway transport or telephony source changed. User PDF and two unrelated duplicate UI/style files remain untouched. No provider request, production query/write, rescore, dispatch/queue action, migration application, deploy, merge or push occurred.
+
+## Full original rubric restoration, current v5
+
+- `rules/originalRubric.js`: exact original MA template questions, points, category/order; 138 rows / 255 points, no customer data. `originalMatchers.js`: restore the prior full matcher catalog. `catalog.js`: only three retirements, 135 MA / 251 points plus 24 separate annuity rules; preserve maintained agency descriptions.
+- `rules/cmsBasis.js`, `evaluate.js`: 41 CMS rule/component updates with citations and explicit criteria; tolerant full-channel TPMO, product-scope agreement, stage-bound pre-enrollment topics, enrollment-section plan linkage, signature affirmation and recording refusal/renewal. CPU-only changes, no provider requests.
+- `callStages.js`, `shared/tpmo2027.js`: unrelated doctor-name submission, plan-qualification wording, internet prices and Part B subsidy intake no longer create false scoring events. Changes are confined to scoring, not capture or transport.
+- `JudgmentPass.js`, `judgmentRequest.js`: restore agency judgment rules in the same one pass; CMS conduct remains REVIEW only; correct-stage evidence anchoring. No extra request, retry, fallback or output cap increase. More restored instructions than the seven-rule subset may change future cold input estimates; no calls or charges occurred during this work.
+- `ScoringEngine.js`, `VersionAggregator.js`: original points, stored positive agency evidence, original-weight admin confirmation, no automatic AI deductions/AUTO-FAIL. CPU aggregation only.
+- Pending migrations `138` (v5 incomplete stamp), `143` (clone original template and N/A fence): unapplied, no data changes. Older templates/cards are preserved.
+- `full-rubric-report.mjs --dry-run`, fixture comparator, full-rubric tests and updated policy assertions: local files only, private evidence excluded from Git. Historical report generators cannot regenerate old migration artifacts under v5.
+
+[Full report](FULL-RUBRIC-REPORT.md), [all 135 items and CMS changes](FULL-RUBRIC-INVENTORY.md), [validation](VALIDATION-FULL-RUBRIC.md). No transcription, Deepgram, Railway transport, telephony or UI styling source changed.

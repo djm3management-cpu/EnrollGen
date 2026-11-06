@@ -1,7 +1,7 @@
 import {RULE_CATALOG,RULES_VERSION} from '../../src/compliance/rules/catalog.js';
 import {ruleHasScriptBasis} from '../../src/compliance/rules/scriptBasis.js';
 import {readFile,writeFile} from 'node:fs/promises';
-if(RULES_VERSION==='cy2027-cms-only-4')throw Error('Use cms-only-report.mjs --dry-run for the current inventory.');
+if(RULES_VERSION!=='cy2027-overhaul-draft-2')throw Error('Use cms-only-report.mjs --dry-run for the current inventory.');
 const rows=JSON.parse(await readFile('docs/compliance-overhaul/rubric-inventory.json','utf8'));
 const mapping=JSON.parse(await readFile('docs/compliance-overhaul/script-mapping.json','utf8'));
 const escape=x=>String(x??'Not stored').replaceAll('|','/').replaceAll('\n',' ');

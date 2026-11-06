@@ -1,3 +1,3 @@
-# Current CMS-only inventory
+# Current full-rubric inventory
 
-Rules cy2027-cms-only-4. 21 active requirements and 141 removed definitions. [Full lists with citations](cms-only-rules.md). Earlier script-based inventories are superseded. Historical stored outcomes are retained in the private baseline, not reclassified as new observations.
+cy2027-full-rubric-5: 135 active MA rows / 251 original points. [Full kept list and CMS changes](FULL-RUBRIC-INVENTORY.md). The earlier script-only and CMS-only exclusions are superseded.

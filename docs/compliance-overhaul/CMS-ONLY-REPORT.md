@@ -1,3 +1,5 @@
+> Historical policy/report. The current full-rubric restoration is [FULL-RUBRIC-REPORT.md](FULL-RUBRIC-REPORT.md), version cy2027-full-rubric-5.
+
 # CMS-only scoring dry run
 
 Rules cy2027-cms-only-4. 21 cited requirements; 141 excluded definitions. No provider requests, production queries/writes, rescores, queue actions, migration applications, deploys, merges or pushes. The same 376-call saved October 1-onward snapshot was used. No transcription, Deepgram, Railway transport or telephony source changed.

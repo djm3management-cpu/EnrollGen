@@ -1,3 +1,7 @@
+# Current rollout: full original rubric
+
+Use the **cy2027-full-rubric-5** section at the end. Earlier script-only and CMS-only sections are historical and superseded. No deploy or migration execution is authorized.
+
 # Unapplied SQL and future rollout
 
 Nothing in this document was executed. The branch remains `fix/compliance-scoring-overhaul`; no branch was pushed and no deployment was requested. Complete the acceptance work in REPORT.md before requesting deployment approval.
@@ -100,3 +104,13 @@ Spoken confirmation-number and live federal-contract-statement checks are not gr
 No transcription, Deepgram, Railway transport, or telephony source changed. Eligible scoring keeps the same single request, low reasoning, 4,096 total output ceiling, compact same-request assessment, pricing and 2M UTC daily budget. The judgment catalog falls from 27 to seven items; excluded calls make no provider request. No request or cost was incurred in this task.
 
 [CMS-ONLY-REPORT.md](CMS-ONLY-REPORT.md) contains the saved-cohort comparison. [VALIDATION-CMS-ONLY.md](VALIDATION-CMS-ONLY.md) lists offline checks and remaining SQL/provider acceptance limitations. This work does not authorize deploy, merge, push, migration application or data repair.
+
+## Full original rubric, superseding v3 and v4 exclusions
+
+Future approved version: `COMPLIANCE_RULES_VERSION=cy2027-full-rubric-5`. Restore the original MA template 00000000-0000-0000-0000-000000000115 (138 rows / 255 points), excluding only ELIG_010, CONDUCT_013 and ENROLL_008. The new template is 135 rows / 251 original points. The 24 annuity definitions stay separate and are never added to an MA denominator. The approximately 152 figure does not match the saved active MA template. [Current inventory and CMS changes](FULL-RUBRIC-INVENTORY.md).
+
+All SQL remains unapplied. Apply pending migrations 132 through **143** in order only after explicit approval and isolated-schema validation. Migration 143 must follow 142; it clones the original 138-item template, not the restricted 21-item successor, updates CMS wording, retains original point values and historical templates/cards, and replaces the N/A version fence. It aborts if the original count/point assertions fail. The pending incomplete-header routine in 138 now stamps v5. If any draft migration was already applied elsewhere, use a new additive migration rather than replay edited files.
+
+Keep SCORING_ENABLED and database scoring fences disabled throughout acceptance. Preserve the approved 2,000,000 input-plus-output UTC daily cap, lifetime automatic-pass lock, manual confirmation/limit, cached pricing, no fallbacks/retries and 4096 total output cap. No provider call is part of migration application or verification. Static judgment content is first and the transcript last. The restored full judgment catalog has more instructions than the seven-rule CMS-only subset; future cold prompt estimates can differ, while the single-request and maximum token/dollar guards are unchanged. No extra assessment request is introduced. This task incurred no provider charges.
+
+After approval, validate 143 and earlier transaction/RLS/ledger routines against a production-equivalent isolated schema, verify original source/history retention and active-template version targeting, and verify N/A/INCOMPLETE/REVIEW labels in preview. Compare offline Mark and Dylan regression evidence and all remaining TPMO fails before any scoring switch is enabled. A separate approved deploy and controlled acceptance plan is required; this document does not authorize it. No main push, merge, deployment, transcription or telephony changes occurred.

@@ -20,7 +20,7 @@ test('approved cap and cached pricing, including invalid and excessive cached co
  assert.equal(DEEPGRAM_BATCH_PER_MINUTE_USD,.0043);
 });
 test('retired IDs never return to active rubric, while misleading comparisons stay active',()=>{
- assert.equal(RULES_VERSION,'cy2027-cms-only-4');assert.equal(ACTIVE_RULE_CATALOG.length,21);assert.equal(RULE_CATALOG.length,162);
+ assert.equal(RULES_VERSION,'cy2027-full-rubric-5');assert.equal(ACTIVE_RULE_CATALOG.length,159);assert.equal(RULE_CATALOG.length,162);
  for(const id of RETIRED_RULE_IDS)assert.ok(!ACTIVE_RULE_CATALOG.some(r=>r.id===id));
  assert.ok(ACTIVE_RULE_CATALOG.some(r=>r.id==='CONDUCT_004_NO_MISLEADING_LANGUAGE'));
 });
@@ -48,8 +48,8 @@ test('maximal valid assessment is 341 ASCII bytes, below hard 400 token bound; i
  for(const bad of [{...assessment,a:{...assessment.a,n:'a'.repeat(191)}},{...assessment,b:{...assessment.b,r:Array(4).fill('reason')}},{...assessment,a:{...assessment.a,n:'quoted " text'}}])assert.throws(()=>legacyAssessment(bad));
  let count=0;await assert.rejects(classifyJudgmentOnce({callContext:call([]),diarized:call([]).transcript_diarized,callLLM:async()=>{count++;return {assessment:{...assessment,a:{...assessment.a,n:'a'.repeat(191)}}};}}));assert.equal(count,1);
 });
-test('agency-only statements and optional needs checks remain excluded',()=>{
- for(const id of ['CALL_OPEN_001_RECORDING_ANNOUNCE','ELIG_001_PARTS_AB_CONFIRM','NEEDS_014_TRAVEL_FREQUENCY','PLAN_006_MOOP_STATED'])assert.equal(item(call([]),id).result,'na');
+test('agency-only statements and optional needs checks are restored',()=>{
+ for(const id of ['CALL_OPEN_001_RECORDING_ANNOUNCE','ELIG_001_PARTS_AB_CONFIRM','NEEDS_014_TRAVEL_FREQUENCY','PLAN_006_MOOP_STATED'])assert.equal(item(call([]),id).result,'fail');
 });
 test('scope discussion question needs named product and affirmative reply, not a needs-only question',()=>{
  const c=call([line('We offer Medicare Advantage and prescription drug plans. Would you like to discuss all of these options?'),line('Yes.',1100,'customer')]);

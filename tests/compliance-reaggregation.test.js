@@ -12,7 +12,7 @@ const detection=(patch={})=>({intent_code:code,detected:true,confidence:0.95,tra
 
 test('missing and unevaluated rules never become failures or change denominator',()=>{
  const result=score([detection()],[item(),item('unscored'),item('absent')]);
- assert.equal(result.overall_score,100);assert.equal(result.total_points_possible,1);
+ assert.equal(result.overall_score,100);assert.equal(result.total_points_possible,3);
  assert.deepEqual(result.scorecard_items.map(i=>i.result),['pass','na','na']);assert.equal(result.auto_fail_triggered,false);
  assert.equal(score([]).overall_grade,'N/A');assert.equal(score([]).corrective_actions_needed,false);
 });

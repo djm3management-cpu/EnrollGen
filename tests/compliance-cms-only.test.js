@@ -10,19 +10,18 @@ const l=(text,start_ms=0,speaker='agent')=>({id:`${speaker}-${start_ms}`,text,st
 const tpmo='We do not offer every plan available in your area. Currently represent, looks like, two organizations which offer about 16 products in your area. Please contact medicare.gov at 1800 to get information on all of your options.';
 const scope='We have Medicare Advantage plans and prescription drug plans. Would you like to discuss all of these options or are you only interested in certain ones?';
 const topics={providers:'Your doctor and specialists are in network with this plan.',pharmacy:'Your pharmacy is a preferred in-network pharmacy.',drugs:'Your medications are covered on the formulary with a five dollar copay.',services:'Your specialist office visit copay is $20.',premiums:'Your monthly plan premium is zero dollars.',benefits:'This plan includes dental and vision benefits.',needs:'Do you have durable medical equipment or physical therapy requirements?'};
-const call=(extra=[])=>({id:'call',tenant_id:'tenant',product_type:'MA',call_direction:'inbound',call_outcome:'enrolled',plan_name:'Humana Value Choice PPO',call_duration_seconds:1200,metadata:{full_call_recorded:true},transcript_diarized:[l('This Medicare call is recorded; is it okay if I continue?',0),l('Yes',1200,'customer'),l(tpmo,10000),l(scope,20000),l('Yes',21200,'customer'),l('Humana Value Choice PPO is the plan I am presenting.',40000),...Object.values(topics).map((t,i)=>l(t,60000+i*40000)),l('Enrolling in this plan will replace your current coverage and end your other MA plan.',400000),l('Would you like to enroll in Humana Value Choice PPO?',500000),l('Yes, I want to enroll.',501200,'customer'),...extra,l('I am submitting your enrollment now.',700000),l('Thank you',1199000)]});
+const call=(extra=[])=>({id:'call',tenant_id:'tenant',product_type:'MA',call_direction:'inbound',call_outcome:'enrolled',plan_name:'Humana Value Choice PPO',call_duration_seconds:1200,metadata:{full_call_recorded:true},transcript_diarized:[l('This Medicare call is recorded; is it okay if I continue?',0),l('Yes',1200,'customer'),l(tpmo,10000),l(scope,20000),l('Yes',21200,'customer'),l('Humana Value Choice PPO is the plan I am presenting.',40000),...Object.values(topics).map((t,i)=>l(t,60000+i*40000)),l('Enrolling in this plan will replace your current coverage and end your other MA plan.',400000),l('We will begin the enrollment in Humana Value Choice PPO.',450000),l('Would you like to enroll in Humana Value Choice PPO?',500000),l('Yes, I want to enroll.',501200,'customer'),...extra,l('I am submitting your enrollment now.',700000),l('Thank you',1199000)]});
 const item=(c,id)=>evaluateRules(c).items.find(i=>i.rule_id===id);
-test('only cited CMS rules are active; wording PDF is August 3 final, never the September draft',()=>{
- assert.equal(RULES_VERSION,'cy2027-cms-only-4');assert.equal(ACTIVE_RULE_CATALOG.length,21);assert.equal(WORDING_REFERENCE.date,'2026-08-03');
- for(const r of ACTIVE_RULE_CATALOG){assert.ok(r.cmsBasis.sources.length);assert.ok(r.cmsBasis.sources.every(s=>s.reference&&/^https:\/\/(?:www\.)?(?:cms\.gov|ecfr\.gov|govinfo\.gov)\//.test(s.url)));}
- for(const id of ['NEEDS_014_TRAVEL_FREQUENCY','CALL_OPEN_004_AGENT_IDENTIFY_NAME','ENROLL_004_CONFIRMATION_NUMBER','PLAN_009_REFERRAL_REQUIREMENTS','PLAN_027_NO_MISLEADING_COMPARISONS'])assert.ok(RETIRED_RULE_IDS.has(id));
+test('full original rubric is active; only three retirements and August 3 wording source',()=>{
+ assert.equal(RULES_VERSION,'cy2027-full-rubric-5');assert.equal(ACTIVE_RULE_CATALOG.filter(r=>r.product_type==='MA').length,135);assert.equal(ACTIVE_RULE_CATALOG.length,159);assert.equal(RETIRED_RULE_IDS.size,3);assert.equal(WORDING_REFERENCE.date,'2026-08-03');
+ for(const r of ACTIVE_RULE_CATALOG.filter(r=>r.cmsBasis))assert.ok(r.cmsBasis.sources.every(s=>s.reference&&/^https:\/\/(?:www\.)?(?:cms\.gov|ecfr\.gov|govinfo\.gov)\//.test(s.url)));
 });
-for(const r of ACTIVE_RULE_CATALOG.filter(r=>r.bucket==='DETERMINISTIC'&&r.cmsBasis.method!=='metadata'))test(`${r.id}: CMS-positive full-call evidence matches`,()=>{assert.equal(item(call(),r.id).result,'pass');});
-for(const r of ACTIVE_RULE_CATALOG.filter(r=>r.cmsBasis.method==='topic'))test(`${r.id}: before submission anywhere counts; after submission fails without AUTO-FAIL`,()=>{
+for(const r of ACTIVE_RULE_CATALOG.filter(r=>r.bucket==='DETERMINISTIC'&&r.cmsBasis&& !['metadata','agency','recordingRefusal'].includes(r.cmsBasis.method)))test(`${r.id}: CMS-positive full-call evidence matches`,()=>{assert.equal(item(call(),r.id).result,'pass');});
+for(const r of ACTIVE_RULE_CATALOG.filter(r=>r.cmsBasis?.method==='topic'))test(`${r.id}: before submission anywhere counts; after submission fails without AUTO-FAIL`,()=>{
  const c=call();c.transcript_diarized=c.transcript_diarized.filter(x=>x.text!==topics[r.cmsBasis.topic]);c.transcript_diarized.push(l(topics[r.cmsBasis.topic],800000));
  assert.equal(item(c,r.id).result,'fail',JSON.stringify(item(c,r.id)));assert.equal(item(c,r.id).auto_fail_triggered,false);
  c.transcript_diarized.push(l(topics[r.cmsBasis.topic],650000));assert.equal(item(c,r.id).result,'pass');
- c.call_outcome='callback_scheduled';assert.equal(item(c,r.id).result,'na');
+ if(r.stage==='enrollment'){c.call_outcome='callback_scheduled';assert.equal(item(c,r.id).result,'na');}
 });
 test('application-only questions do not satisfy pharmacy or drug coverage topics',()=>{
  const c=call();c.transcript_diarized=c.transcript_diarized.filter(x=>![topics.pharmacy,topics.drugs].includes(x.text));c.transcript_diarized.push(l('Which pharmacy do you use?',100000),l('Will you have any other prescription drug coverage?',200000));
@@ -57,7 +56,7 @@ test('AI compliant/no-finding output adds no points; anchored concerns remain RE
  for(const concern of [false,true]){const s=scoreCall({callContext:call(),templateItems:[t],template:{},detections:[{intent_code:id,detected:true,anti_pattern_match:concern,confidence:1,transcript_segment:'A quote',segment_start_ms:1000,hard_cms_violation:true,detection_method:'judgment_review'}]});assert.equal(s.total_points_possible,0);assert.equal(s.auto_fail_triggered,false);assert.equal(s.scorecard_items[0].result,concern?'review':'na');}
 });
 test('CMS re-evaluation does not inherit an old script-based administrator failure for a deterministic topic',()=>{
- const id='PECL_005_PROVIDER_NETWORK_CONFIRMED',r=aggregateVersion({call:call(),source:{id:'old',template_id:'t',rules_version:'cy2027-script-stages-3'},items:[{id:'old-item',template_item_id:'ti',decided_by:'Admin',result:'fail',points_possible:20,points_earned:0}],templateItems:[{id:'ti',intent_id:'i',category:'PRE_ENROLLMENT_CHECKLIST',points_possible:20}],intents:[{id:'i',intent_code:id}]});assert.equal(r.items[0].result,'pass');assert.equal(r.items[0].points_possible,1);assert.equal(r.scorecard.overall_score,100);
+ const id='PECL_005_PROVIDER_NETWORK_CONFIRMED',r=aggregateVersion({call:call(),source:{id:'old',template_id:'t',rules_version:'cy2027-script-stages-3'},items:[{id:'old-item',template_item_id:'ti',decided_by:'Admin',result:'fail',points_possible:20,points_earned:0}],templateItems:[{id:'ti',intent_id:'i',category:'PRE_ENROLLMENT_CHECKLIST',points_possible:20}],intents:[{id:'i',intent_code:id}]});assert.equal(r.items[0].result,'pass');assert.equal(r.items[0].points_possible,2);assert.equal(r.scorecard.overall_score,100);
 });
 test('trigger-size missing tail remains incomplete without any numeric result',()=>{
  const c={...call(),call_duration_seconds:4390,transcript_diarized:[l('Medicare',544579)]};const r=aggregateVersion({call:c,source:{id:'old',template_id:'t'},items:[],templateItems:[{id:'ti',intent_id:'i',category:'OPEN',points_possible:1}],intents:[{id:'i',intent_code:'CALL_OPEN_009_TPMO_TIMING_2027'}]});assert.equal(r.scorecard.scoring_state,'incomplete');assert.equal(r.scorecard.overall_score,null);assert.equal(r.scorecard.auto_fail_triggered,false);
@@ -68,7 +67,7 @@ test('TPMO tolerates spoken phone numbers and ASR omission of the possessive wit
 });
 test('new versions use the active CMS template even when the historical template omitted a requirement',()=>{
  const r=aggregateVersion({call:call(),source:{id:'old',template_id:'old-script'},targetTemplateId:'active-cms',items:[],templateItems:[{id:'new-scope',intent_id:'scope',category:'SOA',points_possible:20}],intents:[{id:'scope',intent_code:'SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027'}]});
- assert.equal(r.scorecard.template_id,'active-cms');assert.equal(r.scorecard.supersedes_id,'old');assert.equal(r.items[0].result,'pass');assert.equal(r.scorecard.total_points_possible,1);
+ assert.equal(r.scorecard.template_id,'active-cms');assert.equal(r.scorecard.supersedes_id,'old');assert.equal(r.items[0].result,'pass');assert.equal(r.scorecard.total_points_possible,3);
 });
 
 test('contract renewal language is not a current-coverage replacement explanation',()=>{

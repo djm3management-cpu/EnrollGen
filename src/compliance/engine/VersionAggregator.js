@@ -1,5 +1,5 @@
 import {randomUUID} from 'node:crypto';
-import {evaluateRules} from '../rules/evaluate.js';
+import {evaluateRules,evidenceWithinStage} from '../rules/evaluate.js';
 import {RULE_CATALOG,RULES_VERSION} from '../rules/catalog.js';
 import {calculateServerGrade} from '../shared/serverGradeScale.js';
 export function aggregateVersion({call,source,items,templateItems,intents,decision=null,judgmentDetections=null,targetTemplateId=source.template_id}){
@@ -9,18 +9,27 @@ export function aggregateVersion({call,source,items,templateItems,intents,decisi
   let row={...prior,id:randomUUID(),scorecard_id:undefined,template_item_id:t.id,intent_id:t.intent_id,rule_id:code,category:t.category,question_text:rule?.description||t.question_text,display_order:t.display_order||0,points_earned:0,points_possible:rule?.points??0,result:'review',decided_by:'Code',auto_fail_triggered:false,is_auto_fail:false,confidence:1};
   if(rule?.bucket==='DETERMINISTIC')row={...row,...result,rule_id:code,notes:result?.missing||null,missing_reason:result?.missing||null,points_earned:result?.result==='pass'?row.points_possible:0};
   else if(!rule||rule.bucket==='RETIRE'||result?.result==='na')row={...row,result:'na',points_possible:0,notes:rule?.reviewNote||result?.missing};
-  else row={...row,decided_by:'AI',result:prior?.result==='review'&&prior?.evidence_text&&prior?.evidence_timestamp_ms!=null?'review':'na',points_earned:0,points_possible:0,notes:prior?.notes||'No confirmed CMS conduct violation'};
+  else {
+   const anchored=prior?.evidence_text?.trim()&&prior?.evidence_timestamp_ms!=null&&evidenceWithinStage(rule,call,prior.evidence_timestamp_ms);
+   const pass=anchored&&!rule.reviewOnly&&['pass','partial'].includes(prior?.result)&&Number(prior.confidence)>=.5;
+   row={...row,decided_by:'AI',result:pass?prior.result:'review',
+    points_earned:pass?(prior.result==='partial'?Math.floor(rule.points*.5):rule.points):0,points_possible:pass?rule.points:0,
+    notes:pass?'Stored judgment evidence retained; no new model request':prior?.notes||'Judgment evidence unavailable; no new model request'};
+  }
   if(judgmentDetections && rule?.bucket==='JUDGMENT' && result?.result!=='na'){
    const d=judgmentDetections.find(d=>d.intent_code===code);
-   row={...row,decided_by:'AI',result:d?.anti_pattern_match&&d?.transcript_segment&&d?.segment_start_ms!=null?'review':'na',
+   const anchored=d?.transcript_segment?.trim()&&d?.segment_start_ms!=null&&Number(d.confidence)>=.7&&evidenceWithinStage(rule,call,d.segment_start_ms);
+   const flag=anchored&&d.anti_pattern_match;
+   const pass=anchored&&!flag&&!rule.reviewOnly&&d.detected;
+   row={...row,decided_by:'AI',result:flag?'review':pass?'pass':rule.reviewOnly?'na':'review',
     evidence_text:d?.transcript_segment||null,evidence_timestamp_ms:d?.segment_start_ms??null,confidence:d?.confidence||0,
-    notes:d?.llm_reasoning||'No reliable judgment evidence',points_earned:0};
+    notes:d?.llm_reasoning||'No reliable judgment evidence',points_earned:pass?rule.points:0,points_possible:pass?rule.points:0};
   }
-  if(prior?.decided_by==='Admin'&&!judgmentDetections&&rule?.bucket==='JUDGMENT'&&source.rules_version===RULES_VERSION)row={...row,result:prior.result,decided_by:'Admin',points_earned:prior.result==='pass'?1:0,points_possible:prior.result==='fail'?1:0,notes:prior.notes,evidence_text:prior.evidence_text,evidence_timestamp_ms:prior.evidence_timestamp_ms,auto_fail_triggered:false};
+  if(prior?.decided_by==='Admin'&&!judgmentDetections&&rule?.bucket==='JUDGMENT'&&source.rules_version===RULES_VERSION)row={...row,result:prior.result,decided_by:'Admin',points_earned:prior.result==='pass'?rule.points:0,points_possible:['pass','fail'].includes(prior.result)?rule.points:0,notes:prior.notes,evidence_text:prior.evidence_text,evidence_timestamp_ms:prior.evidence_timestamp_ms,auto_fail_triggered:false};
   if(decision&&prior?.id===decision.item_id){
    if(row.result!=='review')throw Error('Only review items can be decided');
    if(decision.decision==='confirm'&&(!row.evidence_text?.trim()||row.evidence_timestamp_ms==null))throw Error('Confirmation requires timestamped quoted evidence');
-   row={...row,decided_by:'Admin',result:decision.decision==='confirm'?'fail':'na',points_possible:decision.decision==='confirm'?1:0,points_earned:0,auto_fail_triggered:false,notes:decision.note||null};
+   row={...row,decided_by:'Admin',result:decision.decision==='confirm'?'fail':'na',points_possible:decision.decision==='confirm'?rule.points:0,points_earned:0,auto_fail_triggered:false,notes:decision.note||null};
   }
   if(!rule||rule.bucket==='RETIRE'||result?.result==='na')row={...row,result:'na',points_earned:0,points_possible:0,decided_by:'Code',auto_fail_triggered:false,notes:result?.missing||rule?.reviewNote};
   if(['review','na'].includes(row.result))row.points_possible=0;

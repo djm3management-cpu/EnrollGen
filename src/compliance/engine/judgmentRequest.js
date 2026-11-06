@@ -1,6 +1,6 @@
 import {detectCallStages} from '../rules/callStages.js';
-import {ruleHasCmsBasis as ruleHasScriptBasis} from '../rules/cmsBasis.js';
-import {RULE_CATALOG} from '../rules/catalog.js';
+
+import {RULE_CATALOG,ruleMatchesProduct} from '../rules/catalog.js';
 import {ruleApplies} from '../rules/evaluate.js';
 import {sortTranscript} from '../rules/transcript.js';
 import {classificationFormat} from '../../lib/llm/schemas/compliance.js';
@@ -15,13 +15,13 @@ const judgmentIds=RULE_CATALOG.filter(r=>r.bucket==='JUDGMENT').map(r=>r.id);
 const base=classificationFormat.json_schema.schema;
 export const judgmentFormat={type:'json_schema',json_schema:{name:'judgment_and_assessment',strict:true,schema:object({...base.properties,
  detections:{...base.properties.detections,items:object(Object.fromEntries(Object.entries(base.properties.detections.items.properties).filter(([k])=>!['applicable','hard_cms_violation','anti_pattern_detail','sequence_position'].includes(k)).map(([k,v])=>[k,k==='intent_code'?{type:'string',enum:judgmentIds}:v])))},assessment:ASSESSMENT_SCHEMA})}};
-export const JUDGMENT_SYSTEM=`Review the supplied full chronological call. Evaluate ONLY the supplied judgment rule IDs. Raise review flags, never final violations or auto-fails. An affirmative concern requires an exact transcript quote, confidence, and an explanation. Absence of a statement does not establish misconduct. Do not evaluate deterministic disclosures or applicability. Do not invent plan facts. Return compact structured JSON. Reserve at most 400 output tokens for assessment within the total 4096, leaving at most 3696 for findings. Assessment a: r=rapport, l=listening, k=product knowledge (1-10); n=assessment/coaching summary, at most 120 words and 190 ASCII characters. Assessment b: e=engagement (1-10); l=beneficiary risk low/medium/high; r=at most 3 reasons, at most 25 ASCII characters each. Do not repeat the transcript or speculate. Offering a separate future review in the approved closing is not cross-selling or a scope violation.`;
+export const JUDGMENT_SYSTEM=`Review the supplied full chronological call. Evaluate ONLY the supplied judgment rule IDs. For agency practice judgment items, return positive findings only with quoted evidence. For prohibited-conduct items, raise review flags only. Findings are never final violations or auto-fails. An affirmative concern requires an exact transcript quote, confidence, and an explanation. Absence of a statement does not establish misconduct. Do not evaluate deterministic disclosures or applicability. Do not invent plan facts. Return compact structured JSON. Reserve at most 400 output tokens for assessment within the total 4096, leaving at most 3696 for findings. Assessment a: r=rapport, l=listening, k=product knowledge (1-10); n=assessment/coaching summary, at most 120 words and 190 ASCII characters. Assessment b: e=engagement (1-10); l=beneficiary risk low/medium/high; r=at most 3 reasons, at most 25 ASCII characters each. Do not repeat the transcript or speculate. Offering a separate future review in the approved closing is not cross-selling or a scope violation.`;
 export function buildJudgmentRequest(call){
  const stages=detectCallStages(call);
  const judgment=RULE_CATALOG.filter(r=>r.bucket==='JUDGMENT'&&ruleApplies(r,call,stages)===true);
  // Product rules and schema form a stable prefix; transcript remains last.
- const productRules=RULE_CATALOG.filter(r=>r.bucket==='JUDGMENT'&&ruleHasScriptBasis(r.id,call.product_type));
- const system=JUDGMENT_SYSTEM+'\n'+productRules.map(r=>`${r.id}: ${r.description}${r.scriptBasis?.limitedTo?' Scope: '+r.scriptBasis.limitedTo:''}`).join('\n')+'\nApplicable IDs: '+judgment.map(r=>r.id).join(',');
+ const productRules=RULE_CATALOG.filter(r=>r.bucket==='JUDGMENT'&&ruleMatchesProduct(r,call.product_type));
+ const system=JUDGMENT_SYSTEM+'\n'+productRules.map(r=>`${r.id}: ${r.cmsBasis?.name||r.description} [${r.reviewOnly?'REVIEW ONLY':'Agency judgment'}]${r.scriptBasis?.limitedTo?' Scope: '+r.scriptBasis.limitedTo:''}`).join('\n')+'\nApplicable IDs: '+judgment.map(r=>r.id).join(',');
  const transcript=redactPHI(sortTranscript(call.transcript_diarized).map(l=>`[${l.start_ms}-${l.end_ms}] ${l.speaker}: ${l.text}`).join('\n')).redacted;
  const response_format=structuredClone(judgmentFormat);
  response_format.json_schema.schema.properties.detections.items.properties.intent_code.enum=productRules.map(r=>r.id);

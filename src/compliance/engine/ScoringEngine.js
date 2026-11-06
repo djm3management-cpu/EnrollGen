@@ -1,5 +1,6 @@
-import {CMS_RULE_BASIS as SCRIPT_RULE_BASIS} from '../rules/cmsBasis.js';
-import {evaluateRules} from '../rules/evaluate.js';
+import {RULE_CATALOG} from '../rules/catalog.js';
+const ACTIVE_RULES=Object.fromEntries(RULE_CATALOG.filter(r=>r.bucket!=='RETIRE').map(r=>[r.id,r]));
+import {evaluateRules,evidenceWithinStage} from '../rules/evaluate.js';
 import {RETIRED_RULE_IDS} from '../rules/catalog.js';
 /**
  * ScoringEngine, Calculates compliance scores from intent detections.
@@ -59,16 +60,17 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
 
   for (const rawItem of templateItems) {
     const calibrated = calibratedTemplateItem(rawItem, template.policy_version);
-    if(!SCRIPT_RULE_BASIS[calibrated.intent_code]||RETIRED_RULE_IDS.has(calibrated.intent_code)||evaluated?.items.find(r=>r.rule_id===calibrated.intent_code)?.result==='na') {
+    if(!ACTIVE_RULES[calibrated.intent_code]||RETIRED_RULE_IDS.has(calibrated.intent_code)||evaluated?.items.find(r=>r.rule_id===calibrated.intent_code)?.result==='na') {
       scorecardItems.push({template_item_id:rawItem.id,intent_id:rawItem.intent_id,intent_code:calibrated.intent_code,
         category:rawItem.category,question_text:rawItem.question_text,result:'na',points_earned:0,points_possible:0,
-        confidence:1,decided_by:'Code',is_auto_fail:false,auto_fail_triggered:false,notes:evaluated?.items.find(r=>r.rule_id===calibrated.intent_code)?.missing||'Excluded from active script rubric',display_order:rawItem.display_order||0});
+        confidence:1,decided_by:'Code',is_auto_fail:false,auto_fail_triggered:false,notes:evaluated?.items.find(r=>r.rule_id===calibrated.intent_code)?.missing||'Not applicable to the restored rubric',display_order:rawItem.display_order||0});
       continue;
     }
-    const item = {...calibrated,points_possible:SCRIPT_RULE_BASIS[calibrated.intent_code]?.points??0,question_text:preserveRuleText?rawItem.question_text:SCRIPT_RULE_BASIS[calibrated.intent_code]?.name||calibrated.question_text};
-    const detection = findBestDetection(detections, item.intent_id, item.intent_code);
+    const item = {...calibrated,points_possible:ACTIVE_RULES[calibrated.intent_code]?.points??0,question_text:preserveRuleText?rawItem.question_text:ACTIVE_RULES[calibrated.intent_code]?.description||calibrated.question_text};
+    let detection = findBestDetection(detections, item.intent_id, item.intent_code);
+    if(callContext&&detection?.detection_method==='judgment_review'&&!evidenceWithinStage(ACTIVE_RULES[item.intent_code],callContext,detection.segment_start_ms))detection={...detection,detected:false,confidence:0,detection_method:'unscored',llm_reasoning:'Manual review required: evidence is outside the reached rule stage'};
 
-    if(SCRIPT_RULE_BASIS[item.intent_code]?.method==='judgment'){
+    if(ACTIVE_RULES[item.intent_code]?.bucket==='JUDGMENT'&&ACTIVE_RULES[item.intent_code]?.reviewOnly){
       const flag=!!(detection?.anti_pattern_match&&detection?.transcript_segment&&detection?.segment_start_ms!=null&&Number(detection.confidence)>=.7);
       scorecardItems.push({template_item_id:item.id,intent_id:item.intent_id,intent_code:item.intent_code,category:item.category,question_text:item.question_text,
         result:flag?'review':'na',points_earned:0,points_possible:0,decided_by:'AI',confidence:detection?.confidence||0,
@@ -198,7 +200,7 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
         ? `${detection.llm_reasoning || ''} Sequence: ${detection.sequence_violation_detail}`.trim()
         : detection?.llm_reasoning || null,
       evidence_text: detection?.transcript_segment || null,
-      evidence_timestamp_ms: detection?.segment_start_ms || null,
+      evidence_timestamp_ms: detection?.segment_start_ms ?? null,
       display_order: item.display_order || 0,
     });
   }

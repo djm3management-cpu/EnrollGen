@@ -114,3 +114,7 @@ No new production SQL or RPC queries were executed in this continuation. The dry
 ## CMS-only continuation
 
 No production SQL or RPC query was executed. The same private local 376-call snapshot was used. Primary CMS/eCFR/govinfo sources were read for citations; the final local PDF was read for wording. Generated migration 142 and edited pending migration text were not executed.
+
+## Full-rubric v5 continuation
+
+Production SQL/RPC queries executed: **none**. No production queries to show. Read-only local snapshot `/tmp/enrollgen-compliance-audit.json` supplied the original active template, original weights, calls/transcripts, saved items and agent assignments. `full-rubric-report.mjs --dry-run` wrote local reports and proposed SQL only; it has no provider, database or execute mode. No LLM, transcription, rescore, dispatch or queue calls ran.
