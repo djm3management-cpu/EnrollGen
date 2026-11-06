@@ -35,6 +35,8 @@ BEGIN
   OR card.supersedes_id<>original.id OR nullif(card.rules_version,'') IS NULL THEN RAISE EXCEPTION 'Version identity mismatch'; END IF;
  IF EXISTS(SELECT 1 FROM compliance_llm_passes p WHERE p.call_id=c.id AND p.status IN ('reserved','running') AND (card.llm_pass_id IS NULL OR p.id<>card.llm_pass_id)) THEN RAISE EXCEPTION 'Scoring in progress'; END IF;
  card.id:=gen_random_uuid();card.created_at:=clock_timestamp();card.updated_at:=card.created_at;
+ IF card.scoring_state='na' AND (card.overall_score IS NOT NULL OR card.overall_grade IS NOT NULL OR card.auto_fail_triggered OR card.pass_fail IS DISTINCT FROM 'N/A' OR coalesce(card.total_points_earned,0)<>0 OR coalesce(card.total_points_possible,0)<>0
+ OR EXISTS(SELECT 1 FROM jsonb_array_elements(p_payload->'items') i WHERE i->>'result'<>'na' OR coalesce((i->>'points_possible')::numeric,0)<>0 OR coalesce((i->>'points_earned')::numeric,0)<>0)) THEN RAISE EXCEPTION 'N/A version cannot grade line items'; END IF;
  IF card.scoring_state='incomplete' AND (card.overall_score IS NOT NULL OR card.auto_fail_triggered OR card.overall_grade IS NOT NULL) THEN RAISE EXCEPTION 'Incomplete version cannot have grade or auto-fail'; END IF;
  INSERT INTO compliance_scorecards SELECT card.*;
  FOR v IN SELECT * FROM jsonb_array_elements(p_payload->'items') LOOP
@@ -53,8 +55,8 @@ BEGIN
  IF card.llm_pass_id IS NOT NULL THEN UPDATE compliance_llm_passes SET status=CASE WHEN card.scoring_state='complete' THEN 'complete' ELSE 'failed' END WHERE id=card.llm_pass_id AND call_id=c.id AND tenant_id=c.tenant_id AND mode='manual'; END IF;
  INSERT INTO compliance_version_requests VALUES(p_request_id,c.id,c.tenant_id,card.id,p_requested_by,clock_timestamp());
  -- A free version never creates or resets a scoring dispatch or model job.
- UPDATE call_records SET compliance_scorecard_id=card.id,metadata=coalesce(metadata,'{}')||jsonb_build_object('scoring_status',CASE WHEN card.scoring_state='complete' THEN 'complete' ELSE 'incomplete' END) WHERE id=c.id;
- UPDATE call_records SET compliance_status=CASE WHEN card.scoring_state='complete' THEN 'complete' ELSE 'incomplete' END WHERE id=c.id;
+ UPDATE call_records SET compliance_scorecard_id=card.id,metadata=coalesce(metadata,'{}')||jsonb_build_object('scoring_status',CASE WHEN card.scoring_state='complete' THEN 'complete' WHEN card.scoring_state='na' THEN 'na' ELSE 'incomplete' END) WHERE id=c.id;
+ UPDATE call_records SET compliance_status=CASE WHEN card.scoring_state='complete' THEN 'complete' WHEN card.scoring_state='na' THEN 'na' ELSE 'incomplete' END WHERE id=c.id;
  IF jsonb_typeof(p_payload->'agentAssessment')='object' AND jsonb_typeof(p_payload->'beneficiaryRisk')='object' THEN
   UPDATE call_records SET agent_assessment=p_payload->'agentAssessment',beneficiary_risk=p_payload->'beneficiaryRisk' WHERE id=c.id AND tenant_id=c.tenant_id;
  END IF;

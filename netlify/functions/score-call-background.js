@@ -1,3 +1,4 @@
+import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
 import {RULES_VERSION} from '../../src/compliance/rules/catalog.js';
 import {verifyPostCallEnded} from '../lib/postCallGuard.js';
 import { complete } from "../../src/lib/llm/client.ts";
@@ -78,6 +79,12 @@ return async (request, context) => {
     if (!callRecord) throw Object.assign(new Error('Call not found'), { code: 'scoring_call_not_found' });
     if(callRecord.compliance_scorecard_id)return Response.json({scorecard_id:callRecord.compliance_scorecard_id,reused:true,reason:'call_scorecard_frozen'});
 
+    const eligibility=scoringEligibility(callRecord);
+    if(eligibility.status==='na'){
+      const {data:cardId,error:naError}=await sb.rpc('mark_compliance_not_applicable',{p_call_id:callRecord.id,p_tenant_id:callRecord.tenant_id,p_reason:eligibility.reason,p_rules_version:RULES_VERSION});
+      if(naError)throw naError;
+      return Response.json({status:'N/A',scorecard_id:cardId,reason:eligibility.reason});
+    }
     // Check the saved disposition, never a client/job-supplied outcome. The
     // database repeats this check under lock before claiming and saving a job.
     if (!isComplianceSale(callRecord.call_outcome)) {
@@ -124,6 +131,7 @@ return async (request, context) => {
         console.log(JSON.stringify({ event: 'scoring_progress', call_record_id: callId, percent, stage }));
       },
     });
+    if(result.notApplicable)return Response.json({status:'N/A',reason:result.reason,scorecard_id:result.scorecard_id});
     if (result.incomplete) return Response.json({status:'SCORING INCOMPLETE',reason:result.reason,coverage:result.coverage});
     // The scoring transaction owns completion and linkage; busy/replayed jobs don't rerun side effects.
     if (result.skipped || result.pending) {

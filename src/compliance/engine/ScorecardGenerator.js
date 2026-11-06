@@ -1,3 +1,4 @@
+import {scoringEligibility} from '../rules/callStages.js';
 import {RULES_VERSION} from '../rules/catalog.js';
 import { transcriptCoverage, sortTranscript } from '../rules/transcript.js';
 import { debugLog } from "../../lib/debugLog.js";
@@ -57,9 +58,14 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
   const workStarted=Date.now();
   const progress = (pct, msg) => onProgress && onProgress(pct, msg);
 
+  const eligibility=scoringEligibility(callRecord);
   const coverage = transcriptCoverage(callRecord);
-  if (!coverage.complete || coverage.durationMs<120000) {
-    const reason = coverage.durationMs<120000?'Call below scoring minimum':`Transcript ${Math.round(coverage.endMs/1000)}s of ${Math.round(coverage.durationMs/1000)}s (${(coverage.ratio*100).toFixed(1)}%)`;
+  if(eligibility.status==='na'){
+    const saved=await checked(supabase.rpc('mark_compliance_not_applicable',{p_call_id:callRecord.id,p_tenant_id:callRecord.tenant_id,p_reason:eligibility.reason,p_rules_version:RULES_VERSION}),'Record not-applicable call');
+    return {notApplicable:true,reason:eligibility.reason,scorecard_id:saved,coverage};
+  }
+  if (eligibility.status==='incomplete') {
+    const reason = `Transcript ${Math.round(coverage.endMs/1000)}s of ${Math.round(coverage.durationMs/1000)}s (${(coverage.ratio*100).toFixed(1)}%)`;
     await checked(supabase.from('call_records').update({metadata:{...(callRecord.metadata||{}),scoring_status:'incomplete',scoring_error:reason,transcript_coverage:coverage}}).eq('id',callRecord.id).eq('tenant_id',callRecord.tenant_id),'Record incomplete transcript');
     return {incomplete:true,reason,coverage};
   }
@@ -169,7 +175,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
   const scoreResult = scoreCall({
     detections: detectionsWithIds,
     templateItems: enrichedItems,
-    template,
+    template,callContext:callRecord,
   });
 
   // 7. Create the scorecard record

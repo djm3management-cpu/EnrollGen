@@ -10,6 +10,7 @@ BEGIN
  SELECT cr.* INTO STRICT c FROM call_records cr JOIN scoring_jobs j ON j.call_id=cr.id WHERE j.id=p_job_id FOR UPDATE OF cr;
  SELECT max(coalesce((x->>'end_ms')::numeric,(x->>'start_ms')::numeric,0)) INTO endpoint
  FROM jsonb_array_elements(coalesce(c.transcript_diarized,'[]')) x;
+ IF compliance_call_excluded(c) THEN RAISE EXCEPTION 'Call is not applicable for scoring'; END IF;
  IF coalesce(c.call_duration_seconds,0)<=0 OR coalesce(endpoint,0)<c.call_duration_seconds*950 THEN
   RAISE EXCEPTION 'SCORING INCOMPLETE: transcript coverage below 95 percent';
  END IF;

@@ -1,3 +1,4 @@
+import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
 import {estimateJudgment} from '../../src/compliance/engine/judgmentRequest.js';
 import {DEEPGRAM_BATCH_PER_MINUTE_USD} from '../../src/compliance/shared/scoringConfig.js';
 import {authorizeRecordingTarget,listTargetRecordings} from './_recordingAccess.js';
@@ -16,7 +17,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
    const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
    const call=checked(await db.from('call_records').select('*').eq('id',input.call_id).eq('tenant_id',identity.tenant.id).maybeSingle());
    if(!call)throw new EvidenceError(403,'Call unavailable');
-   const coverage=transcriptCoverage(call);
+   const coverage=transcriptCoverage(call),eligibility=scoringEligibility(call);
    if(!call.agent_name||call.agent_name==='Agent'){
     const owner=checked(await db.from('enrolled_agents').select('clerk_user_id,name').eq('id',call.agent_id).eq('tenant_id',call.tenant_id).maybeSingle());
     const subject=owner?checked(await db.from('availability_agent_subjects').select('agent_slug').eq('clerk_user_id',owner.clerk_user_id).eq('tenant_id',call.tenant_id).eq('is_active',true).maybeSingle()):null;
@@ -30,7 +31,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
     let contact=null;
     if(call.contact_id){contact=checked(await db.from('contacts').select('first_name,last_name,source,pii_encrypted').eq('id',call.contact_id).eq('tenant_id',call.tenant_id).maybeSingle());
      for(const k of ['first_name','last_name'])if(contact?.pii_encrypted?.[k])contact[k]=checked(await db.rpc('decrypt_pii_value',{p_encrypted:contact.pii_encrypted[k]}));}
-    return evidenceJson(200,{call:{...call,transcript_diarized:sortTranscript(call.transcript_diarized),beneficiary_name:call.beneficiary_name||[contact?.first_name,contact?.last_name].filter(Boolean).join(' ')||null},coverage,versions,scorecard:card,items,active_pass:activePass,admin:identity.admin,source:contact?.source||null});
+    return evidenceJson(200,{call:{...call,transcript_diarized:sortTranscript(call.transcript_diarized),beneficiary_name:call.beneficiary_name||[contact?.first_name,contact?.last_name].filter(Boolean).join(' ')||null},coverage,eligibility,versions,scorecard:card,items,active_pass:activePass,admin:identity.admin,source:contact?.source||null});
    }
    if(!identity.admin)throw new EvidenceError(403,'Administrator required');
    const estimatePreview=estimateJudgment(call),batchRate=DEEPGRAM_BATCH_PER_MINUTE_USD;
@@ -72,7 +73,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
    }
    if(input.action==='rescore'){
     if(env.SCORING_ENABLED!=='true'||env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)throw new EvidenceError(409,'Scoring disabled');
-    if(!coverage.complete)throw new EvidenceError(409,'SCORING INCOMPLETE');
+    if(eligibility.status!=='eligible')throw new EvidenceError(409,eligibility.status==='na'?`N/A: ${eligibility.reason}`:'SCORING INCOMPLETE');
     const estimate=estimatePreview.estimated_cost_usd;
     if(!Number.isFinite(input.approved_cost_usd)||input.approved_cost_usd<estimate)throw new EvidenceError(409,'Scoring estimate changed; confirm again');
     if(input.confirm!==true||!/^[0-9a-f-]{36}$/i.test(input.request_id||''))throw new EvidenceError(400,'Confirmed request ID required');

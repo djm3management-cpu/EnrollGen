@@ -112,3 +112,38 @@ See [APPROVED-DECISIONS.md](APPROVED-DECISIONS.md) for the current costs, 15-rul
 | `tests/compliance-review-display.test.js` | Updated required assessment fixture | No provider requests |
 
 Documentation updated: REPORT.md, ROLLOUT.md, rubric-inventory.md, rule-buckets.md and APPROVED-DECISIONS.md in this directory. The private sample review is ignored by Git to keep stored call evidence local. The two unrelated user-created duplicate UI/style files are untouched.
+
+## Script/stage scoring continuation
+
+Current policy: `cy2027-script-stages-3`. See [STAGE-GATES-REPORT.md](STAGE-GATES-REPORT.md) for the 376-call dry run, same 15-rule comparison and agent means, and [script-backed-rules.md](script-backed-rules.md) for all 87 kept/75 excluded definitions. No transcription, Deepgram, Railway transport or telephony code changed.
+
+| File | Change | Cost impact |
+|---|---|---|
+| `src/compliance/rules/scriptBasis.js` | Explicit per-product script/CMS allowlist; exact source lines; conditional branches; CMS-only metadata checks | CPU only; smaller judgment catalog |
+| `src/compliance/rules/callStages.js` | 15-minute/outcome/conversation eligibility and detected stages, exact Enrolled and SEP gates | Skipped calls consume zero model tokens |
+| `src/compliance/rules/acknowledgment.js` | Requested PECL response window/refusal policy and submission order; dormant without exact PECL basis | CPU only |
+| `src/compliance/rules/catalog.js` | New version, 87 kept/75 excluded definitions; script-matched labels | Reduced prompt input; no new requests |
+| `src/compliance/rules/evaluate.js` | Stage/path/product applicability, metadata-only results, script scope matching; PECL application questions cannot count | CPU only |
+| `src/compliance/engine/IntentClassifier.js` | Legacy classifyCall delegates to the same gated one-pass implementation; removed old paid window loop | Prevents old multi-request path |
+| `src/compliance/engine/JudgmentPass.js` | Explicit N/A/incomplete results and Code REVIEW detections | No request for excluded/incomplete calls |
+| `src/compliance/engine/judgmentRequest.js` | Only supported product judgments; narrow CMS review scope and approved-closing exception | 27 judgment definitions versus 75; same 4096 output maximum |
+| `src/compliance/engine/ScorecardGenerator.js` | Persist N/A before template/job/paid-pass claim; apply eligibility in scoring | Zero model calls for N/A |
+| `src/compliance/engine/ScoringEngine.js` | Fail-closed allowlist, applicable denominator, Code REVIEW without deductions | CPU only |
+| `src/compliance/engine/VersionAggregator.js` | N/A headers/zero points, reapply gates despite historical admin results, unknown rules excluded | Free re-aggregation only |
+| `netlify/functions/score-call-background.js` | N/A response before fresh paid scoring | Prevents paid work |
+| `netlify/functions/compliance-review.js` | Eligibility returned with reads; manual Rescore refuses N/A before claim/dispatch | Prevents paid work |
+| `netlify/functions/compliance-review-background.js` | Recheck manual eligibility, save N/A instead of invoking provider | Prevents paid work |
+| `netlify/functions/compliance.js` | Current scored-call aggregates exclude null/incomplete/N/A values | No provider work |
+| `src/lib/complianceScore.js` | N/A is distinct from incomplete and never a percentage | No provider work |
+| `src/components/callDetail/ComplianceReviewModal.jsx` | Disable Rescore for N/A; N/A zero-item headers do not show an item-loading error | No style or transcription behavior implementation changes |
+| `supabase/migrations/132_compliance_overhaul_safety.sql` | Pending DB guard for under-minimum/excluded calls at pass claim and reservation | Unapplied; constrains future spending |
+| `supabase/migrations/133_compliance_atomic_versions.sql` | Pending guard prevents excluded complete scores | Unapplied |
+| `supabase/migrations/134_compliance_admin_versions.sql` | Pending N/A version validation and N/A call status | Unapplied |
+| `supabase/migrations/138_scoring_incomplete_status.sql` | Pending distinct N/A status and current rules stamp | Unapplied |
+| `supabase/migrations/141_script_stage_applicability.sql` | Pending N/A header RPC and 86-item MA successor; preserves historical templates/cards | Unapplied |
+| `scripts/compliance-overhaul/stage-gates-report.mjs` | Explicit dry-run-only full source/rule/cohort/sample report, no database/provider client | Zero provider cost |
+| `scripts/compliance-overhaul/render-inventory.mjs` | Current version/counts and link to exact allowlist | Local reports only |
+| `tests/compliance-stage-gates.test.js` | Eligibility, source/CMS boundary, dormant PECL policy, recording metadata, unsupported historical/custom rows | Fixture doubles only |
+| `tests/compliance-overhaul.test.js`, `tests/compliance-approved-decisions.test.js`, `tests/compliance-version-aggregation.test.js`, `tests/compliance-judgment-pass.test.js`, `tests/compliance-reaggregation.test.js`, `tests/compliance-review-api.test.js` | Bring fixtures onto eligible 15-minute calls or assert exclusion, preserve review/locking checks | Fixture doubles only |
+
+The private full sample cards and baselines are excluded from Git. Original production headers/items are included alongside previous-draft and proposed cards locally; no production card was updated. The two unrelated duplicate UI/style files remain untouched.

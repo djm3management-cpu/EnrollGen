@@ -1,5 +1,7 @@
 # Approved scoring updates, November 6
 
+Later script/stage applicability changes are in [STAGE-GATES-REPORT.md](STAGE-GATES-REPORT.md). The draft-2 counts below are retained as the historical before-state. Current rules are cy2027-script-stages-3.
+
 Implemented locally on fix/compliance-scoring-overhaul. No provider requests, transcription, production SQL queries or production writes were performed in this continuation. No rescore/dispatch/queue, migration application, deploy, merge or push occurred.
 
 The 2,000,000-token daily UTC cap now has a persistent halt and a once-per-day alert claim; manual and automatic scoring share it. The three approved rules are excluded in future scoring, including stale detections and preserved admin results; historical cards remain intact. Rules version is cy2027-overhaul-draft-2. Active source counts: 159 (84 deterministic, 75 judgment), with three archived retirements. Migration 140 creates the 135-item successor MA template.

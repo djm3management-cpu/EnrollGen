@@ -42,7 +42,7 @@ export function currentScoredCards(cards, scoredOnly = true) {
     const existing = byCall.get(key);
     if (!existing || String(card.created_at || '') > String(existing.created_at || '')) byCall.set(key, card);
   }
-  return [...byCall.values()].filter(card => !scoredOnly || (card.overall_grade !== 'N/A' && card.pass_fail !== 'N/A' && card.pass_fail !== 'INSUFFICIENT'));
+  return [...byCall.values()].filter(card => !scoredOnly || (card.overall_score!=null&&Number.isFinite(Number(card.overall_score))&&!['na','incomplete'].includes(card.scoring_state)&&card.overall_grade !== 'N/A' && card.pass_fail !== 'N/A' && card.pass_fail !== 'INSUFFICIENT'));
 }
 
 const JSON_HEADERS = { "Content-Type": "application/json" };

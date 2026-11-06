@@ -81,6 +81,14 @@ CREATE TABLE public.compliance_daily_budget(
 );
 -- No seeded cap or legacy ledger mutation in this migration. The rollout
 -- requires an explicitly reviewed legacy-import plan before enabling scoring.
+-- Shared service-only guard also protects alternate/manual provider entry paths.
+CREATE FUNCTION public.compliance_call_excluded(c public.call_records) RETURNS boolean
+LANGUAGE sql IMMUTABLE SET search_path=public AS $$
+ SELECT (c.call_duration_seconds IS NOT NULL AND c.call_duration_seconds>=0 AND c.call_duration_seconds<900)
+ OR lower(regexp_replace(coalesce(c.call_outcome,''),'[ -]+','_','g')) ~ '^(no_answer|not_connected|(customer_)?hung_up|hang_?up|short_call(_hangup)?|wrong_number|voicemail(_left)?|hostile(_caller)?|test(_call)?)$'
+$$;
+REVOKE ALL ON FUNCTION public.compliance_call_excluded(public.call_records) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.compliance_call_excluded(public.call_records) TO service_role;
 CREATE FUNCTION public.claim_compliance_pass(p_call_id uuid,p_tenant_id uuid,p_request_id uuid,p_mode text,p_requested_by text DEFAULT NULL)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE c call_records; p compliance_llm_passes; n integer;
@@ -88,6 +96,7 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM compliance_runtime_control WHERE id AND enabled) THEN RETURN jsonb_build_object('status','disabled'); END IF;
  IF EXISTS(SELECT 1 FROM compliance_daily_budget WHERE day=(clock_timestamp() AT TIME ZONE 'UTC')::date AND halted) THEN RETURN jsonb_build_object('status','daily_scoring_token_cap'); END IF;
  SELECT * INTO STRICT c FROM call_records WHERE id=p_call_id AND tenant_id=p_tenant_id FOR UPDATE;
+ IF compliance_call_excluded(c) THEN RETURN jsonb_build_object('status','not_applicable'); END IF;
  SELECT * INTO p FROM compliance_llm_passes WHERE request_id=p_request_id;
  IF FOUND THEN
   IF p.call_id<>c.id THEN RAISE EXCEPTION 'Request belongs to another call'; END IF;
@@ -118,6 +127,7 @@ DECLARE p compliance_llm_passes; b compliance_daily_budget; n integer; result uu
 BEGIN
  IF NOT EXISTS(SELECT 1 FROM compliance_runtime_control WHERE id AND enabled) THEN RAISE EXCEPTION 'scoring_disabled'; END IF;
  SELECT * INTO STRICT p FROM compliance_llm_passes WHERE id=p_pass_id FOR UPDATE;
+ IF EXISTS(SELECT 1 FROM call_records cr WHERE cr.id=p.call_id AND compliance_call_excluded(cr)) THEN RAISE EXCEPTION 'Call is not applicable for scoring'; END IF;
  IF p.status NOT IN ('reserved','running') OR p_tokens<1 THEN RAISE EXCEPTION 'Pass unavailable'; END IF;
  SELECT id INTO result FROM compliance_llm_requests WHERE request_id=p_request_id AND pass_id=p.id;
  IF FOUND THEN RAISE EXCEPTION 'Provider request already reserved; never replay'; END IF;

@@ -1,3 +1,4 @@
+import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
 import {RULES_VERSION} from '../../src/compliance/rules/catalog.js';
 import {getEvidenceServiceClient,checked,evidenceJson,evidenceFailure} from './_evidenceAccess.js';
 import {classifyJudgmentOnce} from '../../src/compliance/engine/JudgmentPass.js';
@@ -5,7 +6,6 @@ import {complete} from '../../src/lib/llm/client.ts';
 import {resolveEngine} from '../../src/lib/llm/config.js';
 import {llmRuntime} from './_llmTelemetry.js';
 import {prepareVersion,saveVersion} from '../lib/complianceVersions.js';
-import {transcriptCoverage} from '../../src/compliance/rules/transcript.js';
 export function createManualScoringHandler({getDb=getEvidenceServiceClient,callModel=complete,env=process.env}={}){
  return async (request,context)=>{
   if(request.method!=='POST'||!env.SCORE_CALL_JOB_SECRET||request.headers.get('x-enrollgen-job-secret')!==env.SCORE_CALL_JOB_SECRET)return evidenceJson(401,{error:'Unauthorized'});
@@ -18,7 +18,14 @@ export function createManualScoringHandler({getDb=getEvidenceServiceClient,callM
    call=checked(await db.from('call_records').select('*').eq('id',pass.call_id).eq('tenant_id',pass.tenant_id).single());
    if(env.SCORING_ENABLED!=='true'||env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)throw Error('scoring_disabled');
 
-   if(!transcriptCoverage(call).complete)throw Error('SCORING INCOMPLETE: transcript coverage');
+   const eligibility=scoringEligibility(call);
+   if(eligibility.status==='na'){
+    const payload=await prepareVersion(db,call);payload.scorecard.llm_pass_id=pass.id;
+    const id=await saveVersion(db,call,payload,{requestId:pass.request_id,userId:pass.requested_by});
+    checked(await db.from('compliance_llm_passes').update({status:'failed'}).eq('id',pass.id));
+    return evidenceJson(200,{status:'N/A',scorecard_id:id});
+   }
+   if(eligibility.status==='incomplete')throw Error('SCORING INCOMPLETE: transcript coverage');
    const started=Date.now();
    const result=await classifyJudgmentOnce({diarized:call.transcript_diarized,callContext:call,passId:pass.id,callLLM:async(system,user,options)=>{
     const response=await callModel({engine:resolveEngine(call.product_type),path:'scoring',system,messages:[{role:'user',content:user}],max_completion_tokens:4096,response_format:options.response_format},llmRuntime(db,call.tenant_id,context,{pass_id:pass.id,call_record_id:call.id,endpoint:'compliance-review-background'}));

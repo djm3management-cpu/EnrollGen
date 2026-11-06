@@ -5,15 +5,15 @@ DO $$ DECLARE r record; BEGIN
  FOR r IN SELECT conname FROM pg_constraint WHERE conrelid='public.call_records'::regclass AND contype='c'
  AND pg_get_constraintdef(oid) LIKE '%compliance_status%' LOOP EXECUTE format('ALTER TABLE public.call_records DROP CONSTRAINT %I',r.conname); END LOOP;
 END $$;
-ALTER TABLE public.call_records ADD CONSTRAINT call_records_compliance_status_v2 CHECK(compliance_status IN ('not_requested','transcript_pending','queued','scoring','complete','failed','dispo_changed','incomplete'));
+ALTER TABLE public.call_records ADD CONSTRAINT call_records_compliance_status_v2 CHECK(compliance_status IN ('not_requested','transcript_pending','queued','scoring','complete','failed','dispo_changed','incomplete','na'));
 ALTER FUNCTION public.refresh_sale_compliance_request(uuid) RENAME TO refresh_sale_compliance_request_legacy_138;
 REVOKE ALL ON FUNCTION public.refresh_sale_compliance_request_legacy_138(uuid) FROM PUBLIC,anon,authenticated,service_role;
 CREATE FUNCTION public.refresh_sale_compliance_request(p_call_id uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE c call_records;
 BEGIN
  SELECT * INTO STRICT c FROM call_records WHERE id=p_call_id FOR UPDATE;
- IF c.metadata->>'scoring_status'='incomplete' AND NOT EXISTS(SELECT 1 FROM compliance_scorecards s WHERE s.id=c.compliance_scorecard_id AND s.scoring_state='complete') THEN
-  UPDATE call_records SET compliance_status='incomplete' WHERE id=c.id;
+ IF c.metadata->>'scoring_status' IN ('incomplete','na') AND NOT EXISTS(SELECT 1 FROM compliance_scorecards s WHERE s.id=c.compliance_scorecard_id AND s.scoring_state='complete') THEN
+  UPDATE call_records SET compliance_status=c.metadata->>'scoring_status' WHERE id=c.id;
   UPDATE transcript_score_dispatch SET delivered_revision=revision,available_at='infinity' WHERE call_id=c.id;
   RETURN;
  END IF;
@@ -34,7 +34,7 @@ BEGIN
  INSERT INTO compliance_scorecards(call_id,tenant_id,template_id,overall_score,overall_grade,total_points_earned,total_points_possible,pass_fail,
   auto_fail_triggered,auto_fail_reasons,category_scores,risk_level,risk_flags,corrective_actions_needed,rules_version,scoring_state,supersedes_id,transcript_revision)
  VALUES(c.id,c.tenant_id,j.template_id,NULL,NULL,NULL,NULL,NULL,false,'{}','{}','low',ARRAY[left(p_reason,2000)],false,
-  'cy2027-overhaul-draft-2','incomplete',c.compliance_scorecard_id,j.transcript_revision) RETURNING id INTO card_id;
+  'cy2027-script-stages-3','incomplete',c.compliance_scorecard_id,j.transcript_revision) RETURNING id INTO card_id;
  UPDATE scoring_jobs SET incomplete_scorecard_id=card_id WHERE id=j.id;
  UPDATE call_records SET compliance_scorecard_id=card_id,metadata=coalesce(metadata,'{}')||jsonb_build_object('scoring_status','incomplete','scoring_error',left(p_reason,2000)) WHERE id=c.id;
  RETURN card_id;

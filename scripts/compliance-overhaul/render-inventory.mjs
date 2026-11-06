@@ -1,3 +1,5 @@
+import {RULE_CATALOG,RULES_VERSION} from '../../src/compliance/rules/catalog.js';
+import {ruleHasScriptBasis} from '../../src/compliance/rules/scriptBasis.js';
 import {readFile,writeFile} from 'node:fs/promises';
 const rows=JSON.parse(await readFile('docs/compliance-overhaul/rubric-inventory.json','utf8'));
 const mapping=JSON.parse(await readFile('docs/compliance-overhaul/script-mapping.json','utf8'));
@@ -14,10 +16,23 @@ const legal=r=>{
  if(/NEEDS_|CONDUCT_006|CONDUCT_007|CONDUCT_008|PLAN_029/.test(r.id))return 'Agency quality item; no standalone universal CY2027 spoken wording requirement verified.';
  return 'CMS/carrier/script applicability needs rule-specific sign-off; source citation is inherited, not certified by this inventory.';
 };
-const header=`# Full rubric inventory\n\nDraft inventory, not a certified legal rubric. Source: 162 current intents (138 Medicare, 24 annuity); production snapshot template: 138 MA items; unapplied migration 140 creates a 135-item successor. Active source: 159 intents (84 deterministic, 75 judgment), with 3 retired definitions retained for history. The requested 167/143 counts do not match current source. The database retains 148 intent rows, including historical entries.\n\nCounts below include every stored item on scorecards created since October 1, including previous scorecard versions. A blank/zero count means no matching stored observation; it is not a new pass or failure. Annuity items have no active MA template points.\n\nCMS reference: [CMS-4212-F published rule](https://www.govinfo.gov/content/pkg/FR-2026-04-06/html/2026-06600.htm). No current standalone 2027 MCMG edition was established during this task; the per-rule legal check remains incomplete.\n\n`;
+const kept=RULE_CATALOG.filter(r=>r.bucket!=='RETIRE');
+const header=`# Full rubric inventory
+
+Rules ${RULES_VERSION}: ${kept.length} kept definitions (${kept.filter(r=>r.bucket==='DETERMINISTIC').length} deterministic, ${kept.filter(r=>r.bucket==='JUDGMENT').length} judgment), ${RULE_CATALOG.length-kept.length} excluded. ${kept.filter(r=>ruleHasScriptBasis(r.id,'MA')).length} are supported on MA. The production snapshot still has its original 138-item active MA template; migration 140 proposes 135 and migration 141 proposes the script-backed successor. Neither was applied.
+
+[Exact kept/removed lists and script statements](script-backed-rules.md) are the current grading authority. Candidate keyword matches below are historical research context, not authorization to grade a rule. Counts are original stored item outcomes since October 1, not newly scored outcomes. No new legal mandate is inferred from a generic intent citation.
+
+`;
 const lines=[header,'| Rule / DB intent ID | Category / check | Points | Bucket / decision | AUTO-FAIL old / new | Product / direction | N/A / pass / partial / fail | Script candidates | CY2027 review |','|---|---|---|---|---|---|---|---|---|'];
 for(const r of rows){const m=mapping.find(m=>m.id===r.id);lines.push(`| ${escape(r.id)} / ${escape(r.database_intent_id)} | ${escape(r.category)}: ${escape(r.description)} | ${r.points.length?r.points.join(','):'No active item'} | ${r.bucket} / ${r.decision} | ${!!r.source_auto_fail} / ${!!r.effective_auto_fail} | ${escape(r.product)} / ${escape(r.direction)} | ${(r.counts.na||0)+(r.counts.not_applicable||0)} / ${r.counts.pass||0} / ${r.counts.partial||0} / ${r.counts.fail||0} | ${m?.matches.length||0} candidate source lines | ${legal(r)} |`);}
 await writeFile('docs/compliance-overhaul/rubric-inventory.md',lines.join('\n')+'\n');
 const buckets=rows.reduce((a,r)=>{(a[r.bucket]??=[]).push(r.id);return a;},{});
-await writeFile('docs/compliance-overhaul/rule-buckets.md','# Rule buckets, cy2027-overhaul-draft-2\n\n159 active rules: 84 deterministic and 75 judgment. Three approved retirements are retained below for historical lookup only. Production snapshot: 138 MA template items; unapplied migration 140 creates 135 future items.\n\n'+Object.entries(buckets).map(([bucket,ids])=>`## ${bucket} (${ids.length})\n\n`+ids.map(id=>`- ${id}`).join('\n')).join('\n\n')+'\n');
+await writeFile('docs/compliance-overhaul/rule-buckets.md',`# Rule buckets, ${RULES_VERSION}
+
+${kept.length} kept rules, ${RULE_CATALOG.length-kept.length} excluded. Product-specific script bases and stages are in [script-backed-rules.md](script-backed-rules.md). Historical scorecards are unchanged.
+
+`+Object.entries(buckets).map(([bucket,ids])=>`## ${bucket} (${ids.length})
+
+`+ids.map(id=>`- ${id}`).join('\n')).join('\n\n')+'\n');
 console.log(JSON.stringify({rules:rows.length,buckets:Object.fromEntries(Object.entries(buckets).map(([k,v])=>[k,v.length]))}));

@@ -25,12 +25,12 @@ test('LLM cannot hard fail, regardless of hard misconduct classification',()=>{
 });
 for(const rule of RULE_CATALOG.filter(r=>r.bucket==='DETERMINISTIC')) {
  test(`${rule.id}: absence is explicit and never evidence-free auto-fail`,()=>{
-  const result=evaluateRules({product_type:rule.product_type||'MA',call_outcome:'enrolled',election_period:'SEP',medicaid:true,metadata:{prior_coverage_type:'MedSup',plan_benefits:['dental','vision','hearing','otc','fitness','transportation','telehealth','giveback']},call_direction:rule.subcategory==='OUTBOUND'?'outbound':'inbound',call_duration_seconds:100,transcript_diarized:[{...line('unrelated speech',99000),end_ms:100000}]});
+  const result=evaluateRules({product_type:rule.product_type||'MA',call_outcome:'enrolled',election_period:'SEP',medicaid:true,ptc_on_file:false,metadata:{has_prescriptions:true,pdp_mapd_comparison:true,non_renewing_plan:true,inbound_callback_received:true,prior_coverage_type:'MedSup',plan_benefits:['dental','vision','hearing','otc','fitness','transportation','telehealth','giveback']},call_direction:rule.subcategory==='OUTBOUND'?'outbound':'inbound',call_duration_seconds:1200,transcript_diarized:[line('Medicare',10000),line('Yes',12000,'customer'),line('This plan gives you $50',500000),{...line('Goodbye',1199000),end_ms:1200000}]});
   const item=result.items.find(x=>x.rule_id===rule.id);assert.notEqual(item.result,'pass');assert.equal(item.auto_fail_triggered,false);assert.ok(item.missing);
  });
 }
 test('consent requires beneficiary reply',()=>{
- const call={product_type:'MA',call_outcome:'enrolled',call_direction:'inbound',call_duration_seconds:100,transcript_diarized:[line('Do you consent to enroll?',1000),line('no',2500,'customer'),line('end',99000)]};
+ const call={product_type:'MA',call_outcome:'enrolled',call_direction:'inbound',call_duration_seconds:1200,transcript_diarized:[line('Do you consent to enroll?',1000),line('no',2500,'customer'),line('Medicare conversation',1199000)]};
  assert.equal(evaluateRules(call).items.find(x=>x.rule_id==='ENROLL_002_VERBAL_CONSENT').result,'fail');
  call.transcript_diarized[1].text='yes';assert.equal(evaluateRules(call).items.find(x=>x.rule_id==='ENROLL_002_VERBAL_CONSENT').result,'pass');
 });
@@ -39,13 +39,13 @@ for(const rule of RULE_CATALOG.filter(r=>r.bucket==='DETERMINISTIC')){
   let phrase=rule.sample_phrases.find(p=>rule.pattern?.test(p))||rule.sample_phrases[0];
   if(/TPMO/.test(rule.id))phrase='We do not offer every plan available in your area. We represent right now looks like two organizations which offer sixteen products in your area. Contact Medicare.gov to get information on all of your options.';
   if(/^SOA_00[134]/.test(rule.id))phrase='Before we discuss plans, may I have permission to discuss Medicare Advantage and prescription drug plans?';
-  const rows=[line(phrase,1000),line('Yes, I agree and understand.',2500,'customer'),{...line('Thank you.',99000),end_ms:100000}];
-  const result=evaluateRules({product_type:rule.product_type||'MA',call_outcome:'enrolled',election_period:'SEP',medicaid:true,metadata:{prior_coverage_type:'MedSup',plan_benefits:['dental','vision','hearing','otc','fitness','transportation','telehealth','giveback']},call_direction:rule.subcategory==='OUTBOUND'?'outbound':'inbound',call_duration_seconds:100,transcript_diarized:rows});
+  const rows=[line(phrase,1000),line('Yes, I agree and understand.',2500,'customer'),line('Medicare',10000),line('This plan gives you $50',500000),{...line('Thank you.',1199000),end_ms:1200000}];
+  const result=evaluateRules({product_type:rule.product_type||'MA',call_outcome:'enrolled',election_period:'SEP',medicaid:true,ptc_on_file:true,metadata:{full_call_recorded:true,recording_gaps_absent:true,tpmo_sharing:true,tpmo_sharing_written_consent:true,has_prescriptions:true,pdp_mapd_comparison:true,non_renewing_plan:true,inbound_callback_received:true,prior_coverage_type:'MedSup',plan_benefits:['dental','vision','hearing','otc','fitness','transportation','telehealth','giveback']},call_direction:rule.subcategory==='OUTBOUND'?'outbound':'inbound',call_duration_seconds:1200,transcript_diarized:rows});
   assert.equal(result.items.find(i=>i.rule_id===rule.id).result,'pass',phrase);
  });
 }
 test('split recording statement is matched across agent segments, preserving source IDs',()=>{
- const call={product_type:'MA',call_direction:'inbound',call_duration_seconds:100,transcript_diarized:[{...line('Please know this call will be',0),id:'first'},{...line('recorded for quality and training purposes',1200),id:'second'},line('Yes.',2500,'customer'),{...line('Goodbye',99000),end_ms:100000}]};
+ const call={product_type:'MA',call_direction:'inbound',call_duration_seconds:1200,transcript_diarized:[{...line('Please know this call will be',0),id:'first'},{...line('recorded for quality and training purposes',1200),id:'second'},line('Yes.',2500,'customer'),{...line('Medicare conversation',1199000),end_ms:1200000}]};
  const item=evaluateRules(call).items.find(i=>i.rule_id==='CALL_OPEN_001_RECORDING_ANNOUNCE');assert.equal(item.result,'pass');assert.match(item.evidence_text,/will be recorded/);assert.equal(item.evidence_timestamp_ms,0);
 });
 test('needs and generic extras are coaching only, a carrier pitch or known plan name is a trigger',()=>{

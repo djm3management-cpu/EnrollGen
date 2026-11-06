@@ -106,3 +106,7 @@ SELECT public.decrypt_pii_value($1::jsonb); -- 31: contact f40e704a-9b80-4e63-ab
 SELECT public.decrypt_pii_value($1::jsonb); -- 32: contact fc562812-ca6e-4a0f-801d-cef511b78496, first_name; binding private log [31].body.p_encrypted
 SELECT public.decrypt_pii_value($1::jsonb); -- 33: contact fc562812-ca6e-4a0f-801d-cef511b78496, last_name; binding private log [32].body.p_encrypted
 ```
+
+## Script/stage scoring continuation
+
+No new production SQL or RPC queries were executed in this continuation. The dry runs read the existing local October 1 snapshot. SQL added/edited in migrations 132/133/134/138/141 is an unapplied source proposal, not a record of executed queries. Primary eCFR pages were read to verify the narrow CMS-only allowlist exceptions.

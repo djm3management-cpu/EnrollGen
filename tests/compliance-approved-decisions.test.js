@@ -1,3 +1,4 @@
+import {acknowledgmentAfter} from '../src/compliance/rules/acknowledgment.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {scoringCost,scoringDailyCap,DEEPGRAM_BATCH_PER_MINUTE_USD} from '../src/compliance/shared/scoringConfig.js';
@@ -10,7 +11,7 @@ import {legacyAssessment,buildJudgmentRequest,estimateJudgment,assertAssessmentW
 import {toResponsesRequest} from '../src/lib/llm/openai.ts';
 import {llmRuntime} from '../netlify/functions/_llmTelemetry.js';
 const line=(text,start_ms=0,speaker='agent',duration=1000)=>({text,start_ms,end_ms:start_ms+duration,speaker});
-const call=lines=>({id:'call',tenant_id:'tenant',product_type:'MA',call_outcome:'enrolled',call_direction:'inbound',call_duration_seconds:120,transcript_diarized:[...lines,line('Thank you',119000)]});
+const call=lines=>({id:'call',tenant_id:'tenant',product_type:'MA',call_outcome:'enrolled',call_direction:'inbound',call_duration_seconds:1200,transcript_diarized:[...lines,line('I can help you with Medicare',100000),line('Yes',102000,'customer'),line('This plan gives you $50',500000),line('Thank you',1199000)]});
 const item=(c,id)=>evaluateRules(c).items.find(i=>i.rule_id===id);
 const assessment={a:{r:8,l:7,k:8,n:'Ask for acknowledgment after explaining costs.'},b:{e:7,l:'medium',r:['Cost confusion','Needs follow-up']}};
 test('approved cap and cached pricing, including invalid and excessive cached counts',()=>{
@@ -20,7 +21,7 @@ test('approved cap and cached pricing, including invalid and excessive cached co
  assert.equal(DEEPGRAM_BATCH_PER_MINUTE_USD,.0043);
 });
 test('retired IDs never return to active rubric, while misleading comparisons stay active',()=>{
- assert.equal(RULES_VERSION,'cy2027-overhaul-draft-2');assert.equal(ACTIVE_RULE_CATALOG.length,159);assert.equal(RULE_CATALOG.length,162);
+ assert.equal(RULES_VERSION,'cy2027-script-stages-3');assert.equal(ACTIVE_RULE_CATALOG.length,87);assert.equal(RULE_CATALOG.length,162);
  for(const id of RETIRED_RULE_IDS)assert.ok(!ACTIVE_RULE_CATALOG.some(r=>r.id===id));
  assert.ok(ACTIVE_RULE_CATALOG.some(r=>r.id==='PLAN_027_NO_MISLEADING_COMPARISONS'));
 });
@@ -46,7 +47,7 @@ test('maximal valid assessment is 341 ASCII bytes, below hard 400 token bound; i
  const largest={a:{r:10,l:10,k:10,n:'a'.repeat(190)},b:{e:10,l:'medium',r:Array(3).fill('a'.repeat(25))}};
  assert.equal(new TextEncoder().encode(JSON.stringify(largest)).length,341);assert.ok(legacyAssessment(largest));
  for(const bad of [{...assessment,a:{...assessment.a,n:'a'.repeat(191)}},{...assessment,b:{...assessment.b,r:Array(4).fill('reason')}},{...assessment,a:{...assessment.a,n:'quoted " text'}}])assert.throws(()=>legacyAssessment(bad));
- let count=0;await assert.rejects(classifyJudgmentOnce({callContext:call([]),diarized:[],callLLM:async()=>{count++;return {assessment:{...assessment,a:{...assessment.a,n:'a'.repeat(191)}}};}}));assert.equal(count,1);
+ let count=0;await assert.rejects(classifyJudgmentOnce({callContext:call([]),diarized:call([]).transcript_diarized,callLLM:async()=>{count++;return {assessment:{...assessment,a:{...assessment.a,n:'a'.repeat(191)}}};}}));assert.equal(count,1);
 });
 test('reverse recorded-line wording, shared Parts A and B, travel inflection and max out of pocket',()=>{
  const c=call([line("I'm a licensed agent on a recorded line."),line('Do you have Parts A and B?',3000),line('Are you traveling or on vacation?',5000),line('Your max out of pocket is five thousand dollars.',7000)]);
@@ -55,19 +56,20 @@ test('reverse recorded-line wording, shared Parts A and B, travel inflection and
  assert.equal(item(call([line("So if you're traveling, you can use that.")]),'NEEDS_014_TRAVEL_FREQUENCY').result,'fail');
 });
 test('scope discussion question needs named product and affirmative reply, not a needs-only question',()=>{
- const c=call([line('Are you interested in discussing Medicare options for yourself?'),line('Yes.',1100,'customer')]);
+ const c=call([line('We offer Medicare Advantage and prescription drug plans. Would you like to discuss all of these options?'),line('Yes.',1100,'customer')]);
  assert.equal(item(c,'SOA_001_SOA_REFERENCE').result,'pass');
  assert.equal(item(call([line('Are you interested in giveback or OTC?'),line('Yes.',1100,'customer')]),'SOA_001_SOA_REFERENCE').result,'fail');
 });
 test('overlapping positive reply within 500ms counts; premature replies and explicit refusal do not',()=>{
  const statement=line('Do you understand the benefits included in this plan?',1000, 'agent',4000);
- assert.equal(item(call([statement,line('Yes.',4889,'customer')]),'PECL_008_BENEFITS_UNDERSTOOD').result,'pass');
- assert.equal(item(call([statement,line('Yes.',4000,'customer')]),'PECL_008_BENEFITS_UNDERSTOOD').result,'fail');
- assert.equal(item(call([statement,line('No.',5100,'customer'),line('Yes.',7000,'customer')]),'PECL_008_BENEFITS_UNDERSTOOD').result,'fail');
+ assert.ok(acknowledgmentAfter(statement,[line('Yes.',4889,'customer')],{pecl:true}));
+ assert.equal(item(call([statement,line('Yes.',4889,'customer')]),'PECL_008_BENEFITS_UNDERSTOOD').result,'na');
+ assert.equal(item(call([statement,line('Yes.',4000,'customer')]),'PECL_008_BENEFITS_UNDERSTOOD').result,'na');
+ assert.equal(item(call([statement,line('No.',5100,'customer'),line('Yes.',7000,'customer')]),'PECL_008_BENEFITS_UNDERSTOOD').result,'na');
 });
 test('completed repeat supersedes unacknowledged prompt; record permission is not enrollment consent',()=>{
  const c=call([line('Do I have your permission to record this enrollment?'),line('Yes.',1100,'customer'),line('Do you understand the benefits included in this plan?',3000),line('Do you understand the benefits included in this plan?',30000),line('Yes.',31100,'customer')]);
- assert.equal(item(c,'PECL_008_BENEFITS_UNDERSTOOD').result,'pass');assert.equal(item(c,'ENROLL_002_VERBAL_CONSENT').result,'fail');
+ assert.equal(item(c,'PECL_008_BENEFITS_UNDERSTOOD').result,'na');assert.equal(item(c,'ENROLL_002_VERBAL_CONSENT').result,'fail');
 });
 test('ledger records discounted cached input; daily-cap denial is returned before provider authorization',async()=>{
  let update,cap;const db={rpc:async(name,args)=>{cap=args.p_daily_cap;return {data:{status:'daily_cap',alert_claimed:false},error:null}},from:()=>({update:row=>{update=row;return {eq(){return this},then(resolve){resolve({error:null})}}},insert:async()=>({error:null})})};

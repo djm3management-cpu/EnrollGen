@@ -1,5 +1,5 @@
 export function isUnscoredCompliance(scorecard) {
-  return scorecard?.overall_grade === 'N/A' || ['N/A', 'INSUFFICIENT'].includes(scorecard?.pass_fail);
+  return scorecard?.scoring_state==='na' || scorecard?.overall_grade === 'N/A' || ['N/A', 'INSUFFICIENT'].includes(scorecard?.pass_fail);
 }
 
 export function complianceItemStatus(item) {
@@ -15,9 +15,10 @@ export function complianceItemStatus(item) {
 }
 
 export function complianceViewModel({scorecard,items=[],coverage,filter='all'}){
- const incomplete=!coverage?.complete||scorecard?.scoring_state==='incomplete'||!!scorecard&&items.length===0;
+ const notApplicable=scorecard?.scoring_state==='na';
+ const incomplete=!notApplicable&&(!coverage?.complete||scorecard?.scoring_state==='incomplete'||!!scorecard&&items.length===0);
  const visible=items.filter(i=>filter==='all'?!['na','not_applicable'].includes(i.result):filter==='na'?['na','not_applicable'].includes(i.result):i.result===filter);
  const groups=visible.reduce((a,i)=>{(a[i.category]??=[]).push(i);return a;},{});
  const reviewRequired=items.some(i=>i.result==='review')||[...(scorecard?.risk_flags||[]),...(scorecard?.coaching_notes||[])].some(n=>/manual review required/i.test(n));
- return {incomplete,groups,reviewRequired,score:incomplete||isUnscoredCompliance(scorecard)?null:scorecard?.overall_score??null,status:incomplete?'SCORING INCOMPLETE':scorecard?.auto_fail_triggered?'AUTO-FAIL':scorecard?.pass_fail||'PENDING'};
+ return {incomplete,groups,reviewRequired,score:incomplete||isUnscoredCompliance(scorecard)?null:scorecard?.overall_score??null,status:notApplicable?'N/A':incomplete?'SCORING INCOMPLETE':scorecard?.auto_fail_triggered?'AUTO-FAIL':scorecard?.pass_fail||'PENDING'};
 }

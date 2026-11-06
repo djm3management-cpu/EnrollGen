@@ -1,5 +1,6 @@
+import {SCRIPT_RULE_BASIS} from './scriptBasis.js';
 import {ALL_INTENTS} from '../intents/index.js';
-export const RULES_VERSION='cy2027-overhaul-draft-2';
+export const RULES_VERSION='cy2027-script-stages-3';
 // Topic matching proves a statement occurred, not that quoted plan facts are true.
 // Plan accuracy and suitability always remain judgment/evidence review.
 const topics={
@@ -20,7 +21,7 @@ const topics={
  CURRENT_MEDICATIONS:/medications?|prescriptions?/i, CURRENT_PROVIDERS:/doctors?|providers?|specialists?/i,
  PREFERRED_PHARMACY:/\bpharmac(?:y|ies)\b/i, CURRENT_COVERAGE_TYPE:/current.{0,25}(?:coverage|insurance|plan)/i,
  UPCOMING_PROCEDURES:/coming up|upcoming|planned.{0,20}(?:surgery|procedure)/i,
- TRAVEL_FREQUENCY:/(?:do you|will you|are you|how often|how much).{0,50}(?:travel(?:ing|ling)?|vacations?)|(?:travel(?:ing|ling)?|vacations?).{0,40}(?:often|frequen|important to you)/i, DENTAL_VISION_HEARING:/dental|vision|hearing/i,
+ TRAVEL_FREQUENCY:/(?:do you|will you|are you|how often|how much).{0,50}(?:travel(?:ing|ling)?|vacations?)|(?:travel(?:ing|ling)?|vacations?).{0,50}(?:often|frequen|important to you|living elsewhere|lifestyle)/i, DENTAL_VISION_HEARING:/dental|vision|hearing/i,
  TRANSPORTATION_NEEDS:/transportation/i, OTC_BENEFIT_INTEREST:/\botc\b|over.the.counter/i,
  FITNESS_BENEFIT_INTEREST:/fitness|gym|silver.?sneakers/i,
  PLAN_TYPE_EXPLAINED:/\b(?:HMO|PPO)\b.{0,100}(?:network|referral|provider)|(?:network|referral|provider).{0,100}\b(?:HMO|PPO)\b/i,
@@ -57,16 +58,17 @@ const topics={
  CARRIER_CONTACT_PROVIDED:/member services|carrier.{0,20}(?:phone|number)/i,
  BENEFICIARY_QUESTIONS:/(?:any|other).{0,15}questions/i,
 };
-export const RETIRED_RULE_IDS=new Set(['ELIG_010_ESRD_STATUS_CHECK','CONDUCT_013_NO_COMPARISON_BY_NAME','ENROLL_008_CMS_REVIEW_PERIOD']);
+export const RETIRED_RULE_IDS=new Set(ALL_INTENTS.filter(i=>!SCRIPT_RULE_BASIS[i.intent_code]).map(i=>i.intent_code));
 const judgment=/^(?:CONDUCT_|RECORD_|agent_|client_)|(?:ACCURATE|MISLEADING|UNSUBSTANTIATED|MATCHES_NEEDS|SUITABILITY|SCOPE_MATCH|SCOPE_VIOLATION|HEALTH_NEEDS|HEALTH_HISTORY|DETAILS|NAMES_CAPTURED|NAME_CAPTURED|FINANCIAL|SENSITIVITY|SATISFACTION|SUMMARY_STATED|NETWORK_CHECK|FORMULARY|COSTS_QUOTED|SNP_ELIGIBILITY|MULTIPLE_PLANS)/;
 export const RULE_CATALOG=ALL_INTENTS.map(intent=>{
  const suffix=intent.intent_code.replace(/^[A-Z]+(?:_[A-Z]+)?_\d+_/, '');
  const special=/TPMO|^SOA_00[134]/.test(intent.intent_code);
  const pattern=topics[suffix];
- const bucket=RETIRED_RULE_IDS.has(intent.intent_code)?'RETIRE':(special||pattern)&&!judgment.test(intent.intent_code)?'DETERMINISTIC':'JUDGMENT';
- return {...intent,id:intent.intent_code,bucket,pattern,decided_by:bucket==='DETERMINISTIC'?'Code':'AI',
+ const bucket=RETIRED_RULE_IDS.has(intent.intent_code)?'RETIRE':SCRIPT_RULE_BASIS[intent.intent_code]?.metadataOnly?'DETERMINISTIC':(special||pattern)&&!judgment.test(intent.intent_code)?'DETERMINISTIC':'JUDGMENT';
+ const wording=intent.intent_code==='SOA_001_SOA_REFERENCE'?{intent_name:'Scope agreement obtained',description:'Obtain the beneficiary agreement to discuss the scripted product options.'}:intent.intent_code==='NEEDS_014_TRAVEL_FREQUENCY'?{intent_name:'Asks about travel or living elsewhere',description:'Ask whether travel or living elsewhere is part of the beneficiary lifestyle.'}:intent.intent_code==='CONDUCT_011_NO_SAVINGS_CLAIMS'?{intent_name:'No prohibited unrealized-cost savings comparison',description:'Flag only savings comparisons based on the unrealized uninsured/dual-eligible costs prohibited by 42 CFR 422.2263(b)(10).'}:{};
+ return {...intent,...wording,id:intent.intent_code,bucket,pattern,scriptBasis:SCRIPT_RULE_BASIS[intent.intent_code]||null,decided_by:bucket==='DETERMINISTIC'?'Code':'AI',
   requiresReply:/CONSENT|^SOA_00[134]|^PECL_/.test(intent.intent_code),
-  reviewNote:RETIRED_RULE_IDS.has(intent.intent_code)?'Retired by approved rubric decision; excluded from future scoring and denominator.':bucket==='JUDGMENT'?'Requires contextual review; never auto-fail.':'Statement presence only; factual accuracy is separately reviewed.'};
+  reviewNote:RETIRED_RULE_IDS.has(intent.intent_code)?'Excluded from the script/CMS allowlist; not graded.':bucket==='JUDGMENT'?'Requires contextual review; never auto-fail.':'Statement presence only; factual accuracy is separately reviewed.'};
 });
 
 export const ACTIVE_RULE_CATALOG=RULE_CATALOG.filter(r=>r.bucket!=='RETIRE');

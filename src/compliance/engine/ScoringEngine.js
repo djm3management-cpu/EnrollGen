@@ -1,3 +1,5 @@
+import {SCRIPT_RULE_BASIS} from '../rules/scriptBasis.js';
+import {evaluateRules} from '../rules/evaluate.js';
 import {RETIRED_RULE_IDS} from '../rules/catalog.js';
 /**
  * ScoringEngine, Calculates compliance scores from intent detections.
@@ -42,7 +44,8 @@ function determineBucket(overallScore, autoFail, severity, categoryScores) {
  * @param {Object} params.template - The scoring template record
  * @returns {Object} Complete scorecard data
  */
-export function scoreCall({ detections, templateItems, template, preserveRuleText = false }) {
+export function scoreCall({ detections, templateItems, template, preserveRuleText = false, callContext = null }) {
+  const evaluated=callContext?evaluateRules(callContext):null;
   let totalEarned = 0;
   let totalPossible = 0;
   let autoFailTriggered = false;
@@ -56,15 +59,24 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
 
   for (const rawItem of templateItems) {
     const calibrated = calibratedTemplateItem(rawItem, template.policy_version);
-    if(RETIRED_RULE_IDS.has(calibrated.intent_code)) {
+    if(!SCRIPT_RULE_BASIS[calibrated.intent_code]||RETIRED_RULE_IDS.has(calibrated.intent_code)||evaluated?.items.find(r=>r.rule_id===calibrated.intent_code)?.result==='na') {
       scorecardItems.push({template_item_id:rawItem.id,intent_id:rawItem.intent_id,intent_code:calibrated.intent_code,
         category:rawItem.category,question_text:rawItem.question_text,result:'na',points_earned:0,points_possible:0,
-        confidence:1,decided_by:'Code',is_auto_fail:false,auto_fail_triggered:false,notes:'Retired by approved rubric decision',display_order:rawItem.display_order||0});
+        confidence:1,decided_by:'Code',is_auto_fail:false,auto_fail_triggered:false,notes:evaluated?.items.find(r=>r.rule_id===calibrated.intent_code)?.missing||'Excluded from active script rubric',display_order:rawItem.display_order||0});
       continue;
     }
     const item = preserveRuleText ? { ...calibrated, question_text: rawItem.question_text } : calibrated;
     const detection = findBestDetection(detections, item.intent_id, item.intent_code);
 
+    const ruleResult=evaluated?.items.find(r=>r.rule_id===item.intent_code);
+    if(ruleResult?.result==='review'&&ruleResult.decided_by==='Code'||detection?.detection_method==='deterministic_review'){
+      reviewRequired=true;
+      scorecardItems.push({template_item_id:item.id,intent_id:item.intent_id,intent_code:item.intent_code,
+        category:item.category,question_text:item.question_text,result:'review',points_earned:0,points_possible:0,
+        confidence:0,decided_by:'Code',is_auto_fail:false,auto_fail_triggered:false,notes:ruleResult?.missing||detection?.llm_reasoning,
+        evidence_text:ruleResult?.evidence_text||null,evidence_timestamp_ms:ruleResult?.evidence_timestamp_ms??null,display_order:item.display_order||0});
+      continue;
+    }
     let result, pointsEarned;
 
     // AI judgments are review-only. No deduction until an authenticated admin
@@ -203,12 +215,14 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
     || (reviewRequired ? 'COACHING_OPPORTUNITIES' : null);
   const correctiveActionsNeeded = bucket !== null;
 
+  const notApplicable=evaluated?.eligibility.status==='na',incomplete=evaluated?.eligibility.status==='incomplete';
   return {
-    overall_score: Math.round(overallScore * 100) / 100,
-    overall_grade: totalPossible > 0 ? grade : 'N/A',
+    scoring_state:notApplicable?'na':incomplete?'incomplete':'complete',
+    overall_score:notApplicable||incomplete?null:Math.round(overallScore * 100) / 100,
+    overall_grade:notApplicable||incomplete?null:totalPossible > 0 ? grade : 'N/A',
     total_points_earned: totalEarned,
     total_points_possible: totalPossible,
-    pass_fail: totalPossible > 0 ? passFail : 'N/A',
+    pass_fail:incomplete?null:notApplicable?'N/A':totalPossible > 0 ? passFail : 'N/A',
     auto_fail_triggered: autoFailTriggered,
     auto_fail_reasons: autoFailReasons,
     category_scores: categoryScoresWithPct,

@@ -1,5 +1,7 @@
 # Compliance scoring and live transcription overhaul
 
+Current scoring continuation: [stage applicability dry run](STAGE-GATES-REPORT.md) and [script/CMS-backed kept/removed rules](script-backed-rules.md) supersede the earlier draft scoring applicability below. Rules version is cy2027-script-stages-3. The live-transcription findings below are historical; this continuation changed no transcription, Deepgram, Railway transport or telephony code.
+
 **Status: implementation draft, not ready for deployment approval.** Branch: `fix/compliance-scoring-overhaul`. No deployment, branch push, merge, production mutation, migration execution, LLM request or transcription API request was performed. Tests use injected model/socket/transcription doubles. Production reads were PostgREST GETs and 33 calls to the existing read-only `decrypt_pii_value` function; query statements were printed, and encrypted query bindings are retained in the private local query log.
 
 ## 1. Live transcript findings
