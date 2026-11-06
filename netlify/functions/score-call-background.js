@@ -166,7 +166,7 @@ return async (request, context) => {
     } catch (statusError) {
       console.error(JSON.stringify({event:'provider_failure_status_write_failed',call_record_id:callId,code,...errorDetails(statusError)}));
     }
-    if (code === 'scoring_attempts_exhausted' || code === 'call_token_budget_exceeded' || code === 'daily_scoring_token_cap') {
+    if (code === 'scoring_attempts_exhausted' || code === 'call_token_budget_exceeded') {
       try { await sendProviderFailureAlert(sb,callRecord.session_id,'scoring',code); }
       catch (alertError) { console.error(JSON.stringify({event:'scoring_safety_alert_failed',call_record_id:callId,code:providerErrorCode(alertError,'alert_send_failed')})); }
       try {

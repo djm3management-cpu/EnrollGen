@@ -1,4 +1,6 @@
-# Draft rule buckets
+# Rule buckets, cy2027-overhaul-draft-2
+
+159 active rules: 84 deterministic and 75 judgment. Three approved retirements are retained below for historical lookup only. Production snapshot: 138 MA template items; unapplied migration 140 creates 135 future items.
 
 ## DETERMINISTIC (84)
 

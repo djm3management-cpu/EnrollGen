@@ -43,3 +43,5 @@ supabase/.temp/
 # Local compliance audit reports contain production evidence and contact names.
 /docs/compliance-overhaul/*.json
 /compliance-overhaul-preview.html
+
+/docs/compliance-overhaul/matcher-false-fail-review.md

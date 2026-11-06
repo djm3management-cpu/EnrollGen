@@ -1,3 +1,5 @@
+import {estimateJudgment} from '../../src/compliance/engine/judgmentRequest.js';
+import {DEEPGRAM_BATCH_PER_MINUTE_USD} from '../../src/compliance/shared/scoringConfig.js';
 import {authorizeRecordingTarget,listTargetRecordings} from './_recordingAccess.js';
 import {prepareVersion,saveVersion} from '../lib/complianceVersions.js';
 import {requireClerkAuth} from './_clerkAuth.js';
@@ -31,10 +33,8 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
     return evidenceJson(200,{call:{...call,transcript_diarized:sortTranscript(call.transcript_diarized),beneficiary_name:call.beneficiary_name||[contact?.first_name,contact?.last_name].filter(Boolean).join(' ')||null},coverage,versions,scorecard:card,items,active_pass:activePass,admin:identity.admin,source:contact?.source||null});
    }
    if(!identity.admin)throw new EvidenceError(403,'Administrator required');
-   const estimatedInputTokens=Math.ceil(JSON.stringify(sortTranscript(call.transcript_diarized)).length/3.5)+4000;
-   const inputRate=Number(env.SCORING_INPUT_USD_PER_MILLION),outputRate=Number(env.SCORING_OUTPUT_USD_PER_MILLION),batchRate=Number(env.DEEPGRAM_BATCH_PER_MINUTE_USD);
-   const priceConfigured=Number.isFinite(inputRate)&&inputRate>0&&Number.isFinite(outputRate)&&outputRate>0;
-   if(input.action==='preview')return evidenceJson(200,{coverage,estimated_input_tokens:estimatedInputTokens,maximum_output_tokens:4096,estimated_cost_usd:priceConfigured?(estimatedInputTokens*inputRate+4096*outputRate)/1e6:null,gap_minutes:coverage.missingMinutes,gap_cost_usd:Number.isFinite(batchRate)&&batchRate>0?coverage.missingMinutes*(call.metadata?.recording_channel_speakers?.length||2)*batchRate:null,rules_version:RULES_VERSION});
+   const estimatePreview=estimateJudgment(call),batchRate=DEEPGRAM_BATCH_PER_MINUTE_USD;
+   if(input.action==='preview')return evidenceJson(200,{coverage,...estimatePreview,gap_minutes:coverage.missingMinutes,gap_cost_usd:coverage.durationNeedsVerification||!coverage.durationMs?null:coverage.missingMinutes*(call.metadata?.recording_channel_speakers?.length||2)*batchRate,rules_version:RULES_VERSION});
    if(['evaluate','review'].includes(input.action)){
     if(input.action==='review'&&!['confirm','dismiss'].includes(input.decision))throw new EvidenceError(400,'Choose confirm or dismiss');
     const decision=input.action==='review'?{item_id:input.item_id,decision:input.decision,note:String(input.note||'').slice(0,2000)}:null;
@@ -73,8 +73,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
    if(input.action==='rescore'){
     if(env.SCORING_ENABLED!=='true'||env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)throw new EvidenceError(409,'Scoring disabled');
     if(!coverage.complete)throw new EvidenceError(409,'SCORING INCOMPLETE');
-    if(!priceConfigured)throw new EvidenceError(409,'Contracted pricing is not configured');
-    const estimate=(estimatedInputTokens*inputRate+4096*outputRate)/1e6;
+    const estimate=estimatePreview.estimated_cost_usd;
     if(!Number.isFinite(input.approved_cost_usd)||input.approved_cost_usd<estimate)throw new EvidenceError(409,'Scoring estimate changed; confirm again');
     if(input.confirm!==true||!/^[0-9a-f-]{36}$/i.test(input.request_id||''))throw new EvidenceError(400,'Confirmed request ID required');
     const pass=checked(await db.rpc('claim_compliance_pass',{p_call_id:call.id,p_tenant_id:call.tenant_id,p_request_id:input.request_id,p_mode:'manual',p_requested_by:auth.userId}));

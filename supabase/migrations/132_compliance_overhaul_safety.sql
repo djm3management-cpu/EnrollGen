@@ -70,13 +70,14 @@ CREATE UNIQUE INDEX compliance_one_automatic_pass ON public.compliance_llm_passe
 CREATE TABLE public.compliance_llm_requests(
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),pass_id uuid NOT NULL REFERENCES compliance_llm_passes(id),
  request_id uuid NOT NULL UNIQUE,model text NOT NULL,attempt integer NOT NULL,
- reserved_tokens integer NOT NULL CHECK(reserved_tokens>0),input_tokens integer,output_tokens integer,
+ reserved_tokens integer NOT NULL CHECK(reserved_tokens>0),input_tokens integer,cached_input_tokens integer NOT NULL DEFAULT 0,output_tokens integer,
  estimated_cost_usd numeric,error_code text,fallback boolean NOT NULL DEFAULT false,
  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),completed_at timestamptz,
  UNIQUE(pass_id,attempt)
 );
 CREATE TABLE public.compliance_daily_budget(
- day date PRIMARY KEY, reserved_tokens bigint NOT NULL DEFAULT 0,token_cap bigint NOT NULL CHECK(token_cap>0)
+ day date PRIMARY KEY, reserved_tokens bigint NOT NULL DEFAULT 0,token_cap bigint NOT NULL CHECK(token_cap>0 AND token_cap<=2000000),
+ halted boolean NOT NULL DEFAULT false,alert_claimed boolean NOT NULL DEFAULT false
 );
 -- No seeded cap or legacy ledger mutation in this migration. The rollout
 -- requires an explicitly reviewed legacy-import plan before enabling scoring.
@@ -85,6 +86,7 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE c call_records; p compliance_llm_passes; n integer;
 BEGIN
  IF NOT EXISTS(SELECT 1 FROM compliance_runtime_control WHERE id AND enabled) THEN RETURN jsonb_build_object('status','disabled'); END IF;
+ IF EXISTS(SELECT 1 FROM compliance_daily_budget WHERE day=(clock_timestamp() AT TIME ZONE 'UTC')::date AND halted) THEN RETURN jsonb_build_object('status','daily_scoring_token_cap'); END IF;
  SELECT * INTO STRICT c FROM call_records WHERE id=p_call_id AND tenant_id=p_tenant_id FOR UPDATE;
  SELECT * INTO p FROM compliance_llm_passes WHERE request_id=p_request_id;
  IF FOUND THEN
@@ -111,8 +113,8 @@ BEGIN
  RETURN jsonb_build_object('status','claimed','id',p.id);
 END $$;
 CREATE FUNCTION public.reserve_compliance_request(p_pass_id uuid,p_request_id uuid,p_model text,p_tokens integer,p_daily_cap bigint,p_fallback boolean DEFAULT false)
-RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE p compliance_llm_passes; b compliance_daily_budget; n integer; result uuid;
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE p compliance_llm_passes; b compliance_daily_budget; n integer; result uuid; alert_now boolean:=false; budget_day date:=(clock_timestamp() AT TIME ZONE 'UTC')::date;
 BEGIN
  IF NOT EXISTS(SELECT 1 FROM compliance_runtime_control WHERE id AND enabled) THEN RAISE EXCEPTION 'scoring_disabled'; END IF;
  SELECT * INTO STRICT p FROM compliance_llm_passes WHERE id=p_pass_id FOR UPDATE;
@@ -123,14 +125,22 @@ BEGIN
  -- One request per pass. No retry or Terra fallback can silently add a pass.
  IF n>=1 OR p_fallback THEN RAISE EXCEPTION 'Paid request limit reached'; END IF;
  IF p_daily_cap IS NULL OR p_daily_cap<1 THEN RAISE EXCEPTION 'Daily scoring cap not configured'; END IF;
- INSERT INTO compliance_daily_budget(day,token_cap) VALUES((clock_timestamp() AT TIME ZONE 'UTC')::date,p_daily_cap) ON CONFLICT DO NOTHING;
- SELECT * INTO b FROM compliance_daily_budget WHERE day=(clock_timestamp() AT TIME ZONE 'UTC')::date FOR UPDATE;
- IF NOT FOUND OR b.reserved_tokens+p_tokens>least(b.token_cap,p_daily_cap) THEN RAISE EXCEPTION 'daily_scoring_token_cap'; END IF;
- UPDATE compliance_daily_budget SET reserved_tokens=reserved_tokens+p_tokens WHERE day=b.day;
+ INSERT INTO compliance_daily_budget(day,token_cap) VALUES(budget_day,least(p_daily_cap,2000000)) ON CONFLICT DO NOTHING;
+ SELECT * INTO b FROM compliance_daily_budget WHERE day=budget_day FOR UPDATE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Daily budget unavailable'; END IF;
+ IF b.halted OR b.reserved_tokens+p_tokens>least(b.token_cap,p_daily_cap,2000000) THEN
+  alert_now:=NOT b.alert_claimed;
+  UPDATE compliance_daily_budget SET halted=true,alert_claimed=true WHERE day=b.day;
+  -- Return instead of raising: the halt and once-per-day claim must commit.
+  RETURN jsonb_build_object('status','daily_cap','alert_claimed',alert_now,'day',b.day);
+ END IF;
+ alert_now:=b.reserved_tokens+p_tokens=least(b.token_cap,p_daily_cap,2000000) AND NOT b.alert_claimed;
+ UPDATE compliance_daily_budget SET reserved_tokens=reserved_tokens+p_tokens,
+ halted=reserved_tokens+p_tokens>=least(token_cap,p_daily_cap,2000000),alert_claimed=alert_claimed OR alert_now WHERE day=b.day;
  UPDATE compliance_llm_passes SET status='running' WHERE id=p.id;
  INSERT INTO compliance_llm_requests(pass_id,request_id,model,attempt,reserved_tokens,fallback)
  VALUES(p.id,p_request_id,p_model,n+1,p_tokens,p_fallback) RETURNING id INTO result;
- RETURN result;
+ RETURN jsonb_build_object('status','reserved','id',result,'alert_claimed',alert_now,'day',b.day);
 END $$;
 
 CREATE TABLE public.compliance_review_decisions(

@@ -26,19 +26,19 @@ async function sendProviderQuotaAlert(db, sessionId, stage, code) {
   return sendProviderAlert(db, sessionId, stage, code, 'EnrollGen OpenAI quota or billing failure');
 }
 
-export async function sendProviderFailureAlert(db, sessionId, stage, code) {
-  return sendProviderAlert(db, sessionId, stage, code, 'EnrollGen scoring stopped after safety limit');
+export async function sendProviderFailureAlert(db, sessionId, stage, code, options={}) {
+  return sendProviderAlert(db, sessionId, stage, code, 'EnrollGen scoring stopped after safety limit',options);
 }
 
-async function sendProviderAlert(db, sessionId, stage, code, subject) {
-  const claimed=checked(await db.rpc('claim_provider_quota_alert'));
+async function sendProviderAlert(db, sessionId, stage, code, subject, options={}) {
+  const claimed=options.dailyClaim || checked(await db.rpc('claim_provider_quota_alert'));
   if (!claimed) return;
   const env=globalThis.process?.env || {};
   const recipient=env.POST_CALL_ALERT_EMAIL || 'mike@newgenhealthsolutions.com';
   if (!env.RESEND_API_KEY) throw new Error('alert_email_not_configured');
   const response=await fetch('https://api.resend.com/emails',{
     method:'POST', signal:AbortSignal.timeout(15000),
-    headers:{Authorization:`Bearer ${env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':`post-call-quota-${new Date().toISOString().slice(0,13)}`},
+    headers:{Authorization:`Bearer ${env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':`post-call-quota-${options.dailyClaim || new Date().toISOString().slice(0,13)}`},
     body:JSON.stringify({from:'reports@newgenhealthsolutions.com',to:[recipient],
       subject,
       text:`EnrollGen post-call processing stopped with ${code} during ${stage}. Session: ${sessionId}. The failure is visible in the app and the transcript remains retained.`}),

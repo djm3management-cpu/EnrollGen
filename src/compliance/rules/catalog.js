@@ -1,16 +1,16 @@
 import {ALL_INTENTS} from '../intents/index.js';
-export const RULES_VERSION='cy2027-overhaul-draft-1';
+export const RULES_VERSION='cy2027-overhaul-draft-2';
 // Topic matching proves a statement occurred, not that quoted plan facts are true.
 // Plan accuracy and suitability always remain judgment/evidence review.
 const topics={
- RECORDING_ANNOUNCE:/\b(?:call|conversation|line).{0,35}record(?:ed|ing)/i,
- RECORDING_CONSENT:/\b(?:call|conversation|line).{0,35}record(?:ed|ing)/i,
+ RECORDING_ANNOUNCE:/\b(?:(?:call|conversation|line).{0,35}record(?:ed|ing)|record(?:ed|ing).{0,20}(?:call|conversation|line))/i,
+ RECORDING_CONSENT:/\b(?:(?:call|conversation|line).{0,35}record(?:ed|ing)|record(?:ed|ing).{0,20}(?:call|conversation|line))/i,
  AGENT_IDENTIFY_NAME:/\b(?:my name is|this is|i am|i'm)\s+[a-z]+/i,
  AGENT_IDENTIFY_AGENCY:/newgen|new gen|new generation|health solutions|our agency|calling from [a-z]+|here at [a-z]+/i,
  AGENT_LICENSED:/licensed.{0,20}(?:agent|sell)|certified.{0,20}agent/i,
  CALL_PURPOSE:/review.{0,40}(?:coverage|options|benefits)|help.{0,30}(?:medicare|coverage)/i,
  INBOUND_GREETING:/thank(?:s| you) for calling/i,
- PARTS_AB_CONFIRM:/part\s*a\b.{0,50}part\s*b\b/i,
+ PARTS_AB_CONFIRM:/parts?\s*a\b.{0,30}(?:part\s*)?b\b/i,
  PART_B_PREMIUM:/part\s*b.{0,60}premium/i,
  ZIP_CODE_CONFIRM:/zip\s*(?:code)?/i, COUNTY_CONFIRM:/\bcounty\b/i,
  ELECTION_PERIOD_VERIFY:/annual enrollment|open enrollment|special enrollment|initial enrollment|\b(?:AEP|OEP|SEP|IEP)\b/i,
@@ -20,15 +20,15 @@ const topics={
  CURRENT_MEDICATIONS:/medications?|prescriptions?/i, CURRENT_PROVIDERS:/doctors?|providers?|specialists?/i,
  PREFERRED_PHARMACY:/\bpharmac(?:y|ies)\b/i, CURRENT_COVERAGE_TYPE:/current.{0,25}(?:coverage|insurance|plan)/i,
  UPCOMING_PROCEDURES:/coming up|upcoming|planned.{0,20}(?:surgery|procedure)/i,
- TRAVEL_FREQUENCY:/\btravel\b/i, DENTAL_VISION_HEARING:/dental|vision|hearing/i,
+ TRAVEL_FREQUENCY:/(?:do you|will you|are you|how often|how much).{0,50}(?:travel(?:ing|ling)?|vacations?)|(?:travel(?:ing|ling)?|vacations?).{0,40}(?:often|frequen|important to you)/i, DENTAL_VISION_HEARING:/dental|vision|hearing/i,
  TRANSPORTATION_NEEDS:/transportation/i, OTC_BENEFIT_INTEREST:/\botc\b|over.the.counter/i,
  FITNESS_BENEFIT_INTEREST:/fitness|gym|silver.?sneakers/i,
  PLAN_TYPE_EXPLAINED:/\b(?:HMO|PPO)\b.{0,100}(?:network|referral|provider)|(?:network|referral|provider).{0,100}\b(?:HMO|PPO)\b/i,
  PREMIUM_STATED:/premium.{0,35}(?:\$?\d|zero|no cost)/i,
  DEDUCTIBLE_STATED:/deductible.{0,35}(?:\$?\d|zero|no)/i,
- MOOP_STATED:/maximum out.of.pocket|out.of.pocket maximum/i,
+ MOOP_STATED:/(?:max(?:imum)?|annual).{0,12}out[ -]of[ -]pocket|out[ -]of[ -]pocket.{0,12}(?:max(?:imum)?|limit)|\bMOOP\b/i,
  COPAY_STRUCTURE:/co.?pay|co.?insurance/i, NETWORK_TYPE_EXPLAINED:/in.network|out.of.network/i,
- REFERRAL_REQUIREMENTS:/referral/i, DRUG_COVERAGE_OVERVIEW:/part\s*d|prescription.{0,20}coverage/i,
+ REFERRAL_REQUIREMENTS:/referrals?/i, DRUG_COVERAGE_OVERVIEW:/part\s*d|prescription.{0,20}coverage/i,
  DRUG_TIERS_EXPLAINED:/\btier\b/i, DENTAL_BENEFITS:/dental/i, VISION_BENEFITS:/vision/i, HEARING_BENEFITS:/hearing/i,
  OTC_BENEFITS:/\botc\b|over.the.counter/i, FITNESS_BENEFITS:/fitness|silver.?sneakers|gym/i,
  TRANSPORTATION_BENEFITS:/transportation/i, TELEHEALTH_BENEFITS:/telehealth|virtual visit/i,
@@ -39,15 +39,15 @@ const topics={
  MEDICAID_IMPACT:/medicaid/i, PART_D_PENALTY_WARNING:/late enrollment penalty/i,
  COVERAGE_GAP_WARNING:/gap.{0,20}coverage|coverage.{0,20}gap/i,
  VOLUNTARY_DISENROLLMENT:/voluntary|not required to enroll/i,
- CHECKLIST_REFERENCED:/pre.enrollment checklist/i,
+ CHECKLIST_REFERENCED:/pre[ -]?enrollment check[ -]?list/i,
  PREMIUM_CONFIRMED:/premium/i, DEDUCTIBLE_CONFIRMED:/deductible/i, MOOP_CONFIRMED:/maximum out.of.pocket/i,
  PROVIDER_NETWORK_CONFIRMED:/provider|doctor|network/i, PHARMACY_NETWORK_CONFIRMED:/pharmacy/i,
- DRUG_COVERAGE_CONFIRMED:/drug coverage|prescription coverage/i, BENEFITS_UNDERSTOOD:/understand.{0,30}benefits/i,
- COST_SHARING_UNDERSTOOD:/understand.{0,40}(?:cost|copay)/i, DISENROLLMENT_UNDERSTOOD:/disenroll/i,
+ DRUG_COVERAGE_CONFIRMED:/(?:drug|prescription).{0,15}(?:coverage|benefits)/i, BENEFITS_UNDERSTOOD:/understand.{0,60}benefits|benefits.{0,40}(?:understand|clear)/i,
+ COST_SHARING_UNDERSTOOD:/understand.{0,60}(?:cost|co.?pay|co.?insurance|deductible)|(?:cost|co.?pay).{0,40}(?:understand|clear)/i, DISENROLLMENT_UNDERSTOOD:/disenroll/i,
  PLAN_RULES_ACKNOWLEDGED:/plan rules|network rules/i, SUMMARY_OF_BENEFITS:/summary of benefits/i,
  STAR_RATINGS_PROVIDED:/star.{0,15}rating/i, ENROLLMENT_FORM_EXPLAINED:/enrollment.{0,20}(?:form|application)/i,
  ENROLLMENT_VOLUNTARY:/voluntary|not required to enroll/i,
- VERBAL_CONSENT:/(?:agree|consent|permission|authorize|want).{0,60}(?:enroll|submit|application)/i,
+ VERBAL_CONSENT:/(?:(?:agree|consent|authorize|want).{0,60}(?:enroll|submit|application)|permission.{0,25}(?:submit|enroll you))/i,
  ENROLLMENT_CONFIRMED:/(?:submitted|completed).{0,30}(?:enrollment|application)|successfully enrolled/i,
  CONFIRMATION_NUMBER:/confirmation.{0,15}(?:number|code)/i,
  EFFECTIVE_DATE_CONFIRMED:/effective.{0,25}(?:january|february|march|april|may|june|july|august|september|october|november|december|\d)/i,
@@ -57,14 +57,16 @@ const topics={
  CARRIER_CONTACT_PROVIDED:/member services|carrier.{0,20}(?:phone|number)/i,
  BENEFICIARY_QUESTIONS:/(?:any|other).{0,15}questions/i,
 };
-const retire=new Set(['ELIG_010_ESRD_STATUS_CHECK','CONDUCT_013_NO_COMPARISON_BY_NAME','ENROLL_008_CMS_REVIEW_PERIOD']);
+export const RETIRED_RULE_IDS=new Set(['ELIG_010_ESRD_STATUS_CHECK','CONDUCT_013_NO_COMPARISON_BY_NAME','ENROLL_008_CMS_REVIEW_PERIOD']);
 const judgment=/^(?:CONDUCT_|RECORD_|agent_|client_)|(?:ACCURATE|MISLEADING|UNSUBSTANTIATED|MATCHES_NEEDS|SUITABILITY|SCOPE_MATCH|SCOPE_VIOLATION|HEALTH_NEEDS|HEALTH_HISTORY|DETAILS|NAMES_CAPTURED|NAME_CAPTURED|FINANCIAL|SENSITIVITY|SATISFACTION|SUMMARY_STATED|NETWORK_CHECK|FORMULARY|COSTS_QUOTED|SNP_ELIGIBILITY|MULTIPLE_PLANS)/;
 export const RULE_CATALOG=ALL_INTENTS.map(intent=>{
  const suffix=intent.intent_code.replace(/^[A-Z]+(?:_[A-Z]+)?_\d+_/, '');
  const special=/TPMO|^SOA_00[134]/.test(intent.intent_code);
  const pattern=topics[suffix];
- const bucket=retire.has(intent.intent_code)?'RETIRE':(special||pattern)&&!judgment.test(intent.intent_code)?'DETERMINISTIC':'JUDGMENT';
+ const bucket=RETIRED_RULE_IDS.has(intent.intent_code)?'RETIRE':(special||pattern)&&!judgment.test(intent.intent_code)?'DETERMINISTIC':'JUDGMENT';
  return {...intent,id:intent.intent_code,bucket,pattern,decided_by:bucket==='DETERMINISTIC'?'Code':'AI',
   requiresReply:/CONSENT|^SOA_00[134]|^PECL_/.test(intent.intent_code),
-  reviewNote:retire.has(intent.intent_code)?'Retire pending compliance approval: not a blanket CY2027 enrollment requirement.':bucket==='JUDGMENT'?'Requires contextual review; never auto-fail.':'Statement presence only; factual accuracy is separately reviewed.'};
+  reviewNote:RETIRED_RULE_IDS.has(intent.intent_code)?'Retired by approved rubric decision; excluded from future scoring and denominator.':bucket==='JUDGMENT'?'Requires contextual review; never auto-fail.':'Statement presence only; factual accuracy is separately reviewed.'};
 });
+
+export const ACTIVE_RULE_CATALOG=RULE_CATALOG.filter(r=>r.bucket!=='RETIRE');

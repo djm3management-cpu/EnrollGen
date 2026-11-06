@@ -25,9 +25,9 @@ export function toResponsesRequest(request: CompletionRequest, model: string): J
   }
   const body: Json = {
     model, input, store: false,
-    reasoning: { effort: request.path === 'summary' || request.path === 'scoring' ? 'medium' : 'low' },
+    reasoning: { effort: request.path === 'summary' ? 'medium' : 'low' },
     // max_completion_tokens is the shared interface; Responses calls this max_output_tokens.
-    max_output_tokens: request.max_completion_tokens ?? (request.path === 'summary' || request.path === 'scoring' ? 16384 : 2048),
+    max_output_tokens: request.path === 'scoring' ? Math.min(request.max_completion_tokens ?? 4096, 4096) : request.max_completion_tokens ?? (request.path === 'summary' ? 16384 : 2048),
   };
   // Only the live builders opt in. Classifier/summary request bodies stay unchanged.
   if (hasCachePrefix) body.prompt_cache_options = { mode: 'explicit' };

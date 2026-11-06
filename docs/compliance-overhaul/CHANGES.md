@@ -77,3 +77,38 @@ Recovering dropped audio can increase observed billed minutes relative to a brok
 | `tests/manual-transcript-gaps.test.js` | Local regression/fixture coverage; no provider traffic. | 0 during tests |
 | `tests/scoring-provider-guard.test.js` | Local regression/fixture coverage; no provider traffic. | 0 during tests |
 | `tests/wav-gaps.test.js` | Local regression/fixture coverage; no provider traffic. | 0 during tests |
+
+
+## November 6 approved continuation
+
+See [APPROVED-DECISIONS.md](APPROVED-DECISIONS.md) for the current costs, 15-rule failure table, sample-review link and tests. No Deepgram transport or provider submission ran or changed in this continuation.
+
+| File | Approved change | Cost impact |
+|---|---|---|
+| `src/compliance/shared/scoringConfig.js` | Approved prices, cached-token formula and hard 2M daily maximum | No provider work; caps cost |
+| `src/compliance/engine/judgmentRequest.js` | Compact assessment in existing pass, stable product prefix, shared estimation and accepted section bound | No extra request; same 4096 output ceiling; lower estimated input |
+| `src/compliance/engine/JudgmentPass.js` | Carry assessment; skip provider when no judgment applies | At most one request; zero for excluded calls |
+| `src/lib/llm/openai.ts` | Low scoring reasoning and hard 4096 output clamp | No increased request ceiling |
+| `netlify/functions/_llmTelemetry.js` | Cached cost and daily reservation denial/alert handling | No extra model request |
+| `netlify/lib/postCallProvider.js` | Durable daily alert claim uses daily email idempotency key | Email only, no model or transcription |
+| `netlify/functions/score-call-background.js` | Daily alert handled at reservation boundary to avoid duplicate sends | No added paid work |
+| `netlify/functions/compliance-review.js` | Shared priced Rescore estimate and approved batch gap estimate | Estimates only; manual confirmation retained |
+| `src/compliance/engine/ScorecardGenerator.js` | Assessment/risk included in atomic payload and current version stamp | No second assessment request |
+| `netlify/functions/compliance-review-background.js` | Manual version carries same-request assessment/risk | No extra request |
+| `src/compliance/rules/catalog.js` | Approved retirements/version and tolerant phrase patterns | CPU only |
+| `src/compliance/rules/evaluate.js` | Completed repeat prompts, bounded channel overlap, scope wording and corrected applicability/consent deadline | CPU only |
+| `src/compliance/engine/ScoringEngine.js` | Retirements excluded despite stale detections | CPU only |
+| `src/compliance/engine/VersionAggregator.js` | Retirements excluded despite historical admin outcomes | CPU only |
+| `supabase/migrations/132_compliance_overhaul_safety.sql` | Unapplied cached ledger field and persistent UTC budget latch/alert claim | No current cost; blocks future paid requests |
+| `supabase/migrations/133_compliance_atomic_versions.sql` | Unapplied same-transaction legacy assessment writes | No model request |
+| `supabase/migrations/134_compliance_admin_versions.sql` | Unapplied manual same-transaction assessment writes; free versions preserve fields | No model request |
+| `supabase/migrations/138_scoring_incomplete_status.sql` | Unapplied current rules stamp | No provider work |
+| `supabase/migrations/140_approved_cy2027_retirements.sql` | Unapplied successor template with 135 items; history retained | No provider work |
+| `scripts/compliance-overhaul/dry-run.mjs` | Approved row and total gap estimates | Local reports only |
+| `scripts/compliance-overhaul/approved-report.mjs` | Baseline/post-fix samples and per-call estimated costs | Local reports only |
+| `scripts/compliance-overhaul/render-inventory.mjs` | Updated active/archive counts and inventory text | Local reports only |
+| `tests/compliance-approved-decisions.test.js` | New budget/cache/schema/retirement/matcher fixtures | No provider requests |
+| `tests/compliance-judgment-pass.test.js` | Updated required assessment fixture | No provider requests |
+| `tests/compliance-review-display.test.js` | Updated required assessment fixture | No provider requests |
+
+Documentation updated: REPORT.md, ROLLOUT.md, rubric-inventory.md, rule-buckets.md and APPROVED-DECISIONS.md in this directory. The private sample review is ignored by Git to keep stored call evidence local. The two unrelated user-created duplicate UI/style files are untouched.

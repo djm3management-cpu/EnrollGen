@@ -1,3 +1,4 @@
+import {RETIRED_RULE_IDS} from '../rules/catalog.js';
 /**
  * ScoringEngine, Calculates compliance scores from intent detections.
  * Implements the full scoring algorithm: confidence thresholds, auto-fail,
@@ -55,6 +56,12 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
 
   for (const rawItem of templateItems) {
     const calibrated = calibratedTemplateItem(rawItem, template.policy_version);
+    if(RETIRED_RULE_IDS.has(calibrated.intent_code)) {
+      scorecardItems.push({template_item_id:rawItem.id,intent_id:rawItem.intent_id,intent_code:calibrated.intent_code,
+        category:rawItem.category,question_text:rawItem.question_text,result:'na',points_earned:0,points_possible:0,
+        confidence:1,decided_by:'Code',is_auto_fail:false,auto_fail_triggered:false,notes:'Retired by approved rubric decision',display_order:rawItem.display_order||0});
+      continue;
+    }
     const item = preserveRuleText ? { ...calibrated, question_text: rawItem.question_text } : calibrated;
     const detection = findBestDetection(detections, item.intent_id, item.intent_code);
 

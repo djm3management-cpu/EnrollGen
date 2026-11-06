@@ -22,6 +22,7 @@ export function aggregateVersion({call,source,items,templateItems,intents,decisi
    if(decision.decision==='confirm'&&(!row.evidence_text?.trim()||row.evidence_timestamp_ms==null))throw Error('Confirmation requires timestamped quoted evidence');
    row={...row,decided_by:'Admin',result:decision.decision==='confirm'?'fail':'na',points_earned:0,auto_fail_triggered:false,notes:decision.note||null};
   }
+  if(rule?.bucket==='RETIRE')row={...row,result:'na',points_earned:0,points_possible:0,decided_by:'Code',auto_fail_triggered:false,notes:rule.reviewNote};
   if(['review','na'].includes(row.result))row.points_possible=0;
   if(!row.evidence_text?.trim()||row.evidence_timestamp_ms==null||row.decided_by!=='Code')row.auto_fail_triggered=false;
   return row;

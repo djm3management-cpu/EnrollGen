@@ -37,7 +37,7 @@ Current source contains **162 intents: 138 Medicare and 24 annuity**, rather tha
 
 The full per-rule inventory is [rubric-inventory.md](rubric-inventory.md), with machine-readable detail in [rubric-inventory.json](rubric-inventory.json). It includes IDs, categories, descriptions, active points, decision source, old/new hard-fail eligibility, product/direction, historical N/A/pass/partial/fail counts, script candidate counts and legal-review notes. Historical counts include previous scorecard versions, not only current cards.
 
-The draft classification is **84 DETERMINISTIC, 75 JUDGMENT, three RETIRE**. The complete bucket lists are [rule-buckets.md](rule-buckets.md). Retire candidates are the blanket ESRD eligibility check, blanket carrier-name comparison prohibition and generic CMS review-period statement. Their retirement remains a proposed policy decision, not a claim that every related clinical, carrier or state requirement is irrelevant.
+The draft classification is **84 DETERMINISTIC, 75 JUDGMENT, three RETIRE**. The complete bucket lists are [rule-buckets.md](rule-buckets.md). The November 6 approved retirements are the blanket ESRD eligibility check, blanket carrier-name comparison prohibition and generic CMS review-period statement. Active source counts are 159 (84 deterministic, 75 judgment), with three archived definitions. Rules version is cy2027-overhaul-draft-2. Historical items remain unchanged; unapplied migration 140 creates a 135-item successor MA template. Related conditional clinical/carrier/state requirements remain separate.
 
 Actual script sources include:
 
@@ -60,7 +60,7 @@ A standalone full 2027 MCMG edition was not established during this task. The pu
 
 TPMO supports up to five filler words before counts, digits/number words, organizations/carriers/companies, plan/product counts and Medicare.gov/phone variants including 1800. Abandoned starts do not override a later completed passage. Needs questions and generic extras do not create a benefit trigger; extras create coaching evidence. Known plan names, carrier pitches, price and plan-benefit language do create triggers.
 
-`JudgmentPass.js` submits one bounded, sorted full transcript with static instructions first. It filters judgment applicability in code and anchors returned quotes to stored utterances. AI cannot create a deterministic finding or an AUTO-FAIL. Unsupported quotes remain unscored review/completeness concerns. The separate paid assessment request is removed; this draft does not regenerate the former agent/beneficiary assessment fields as a second call.
+`JudgmentPass.js` submits one bounded, sorted full transcript with static instructions first. It filters judgment applicability in code and anchors returned quotes to stored utterances. AI cannot create a deterministic finding or an AUTO-FAIL. Unsupported quotes remain unscored review/completeness concerns. The separate assessment request remains removed. The November 6 update restores compact assessment/risk fields inside the same judgment response and legacy columns, without adding a request. See APPROVED-DECISIONS.md for token/cost estimates and the accepted-output section guard.
 
 `scoringPolicy.js` and `ScoringEngine.js` restrict hard failures to code decisions with timestamped quotes. AI misconduct findings become REVIEW without deductions pending admin confirmation. Free aggregation preserves stored admin decisions. AUTO-FAIL header/item consistency is enforced in the proposed SQL.
 
@@ -76,7 +76,7 @@ The modal has a terminal default and an explicit local corporate light mode, bot
 
 Free re-evaluation and review adjudication use one version transaction, preserving originals. Confirmation requires evidence; dismissal excludes points. Only verified admins can mutate these decisions. Paid rescore requires a price confirmation and sufficient coverage; active passes disable conflicting actions.
 
-Manual gap fill is a separate administrator-created job, never a cron or reconciliation action. The implementation slices PCM WAV ranges before submitting them to Nova-2 batch, records the request before provider access and never automatically retries uncertain requests. It requires a verified full-call recording ID, channel mapping and recording/transcript timeline offset. Those values have **not** been populated for existing calls. The trigger's exact recording offset is not assumed. Paid execution remains disabled until pricing and these prerequisites are verified. The gap-fill path never calls an LLM or automatically scores its result.
+Manual gap fill is a separate administrator-created job, never a cron or reconciliation action. The implementation slices PCM WAV ranges before submitting them to Nova-2 batch, records the request before provider access and never automatically retries uncertain requests. It requires a verified full-call recording ID, channel mapping and recording/transcript timeline offset. Those values have **not** been populated for existing calls. The trigger's exact recording offset is not assumed. Approved pricing is now configured in source. Paid execution remains disabled until recording prerequisites and deployment acceptance are verified. The gap-fill path never calls an LLM or automatically scores its result.
 
 Visual inspection could not be completed because the browser access host was unavailable. The local synthetic preview fixture is `compliance-overhaul-preview.html` (ignored by Git). The theme description above reflects the implementation, not a claimed screenshot review.
 
@@ -109,7 +109,7 @@ Outputs:
 
 For the trigger: **62.5%, AUTO-FAIL → proposed INCOMPLETE, no percentage, no AUTO-FAIL**. Its stored 138 items remain intact; the branch has not repaired its production records. Draft numeric re-evaluations for other calls are not approved replacements.
 
-Contracted pricing was unavailable, so dollar fields are null rather than invented. A pricing question is pending. The trigger tail estimate is 64.0737 timeline minutes; a verified two-channel fill would submit approximately 128.1474 channel-minutes. Multiply by the contracted batch rate. The UI refuses a paid action without configured pricing and an accepted estimate.
+Approved November 6 prices are now populated: input $0.20/M, output $1.20/M, cached input $0.02/M, batch transcription $0.0043/channel-minute. The trigger tail is 64.0737 timeline minutes, approximately 128.1474 channel-minutes and $0.551034 assuming two channels. Across 166 duration-valid incomplete candidates: 834.3763 timeline minutes, 1,668.7526 channel-minutes, $7.175636. Fourteen unknown durations and three duration anomalies remain unpriced and excluded, with explicit reasons. Recording/channel/timeline mapping still requires verification before any paid fill.
 
 Private JSON reports and the raw snapshot are local-only and excluded from Git. Reproduction:
 
@@ -124,14 +124,14 @@ These tools do not have a production execute mode. The extractor only reads; the
 
 ## 6. Validation and remaining acceptance work
 
-Passed: 226 selected frontend/engine/API/transport/accounting tests and nine isolated Railway recovery tests, including approved positive and absent-statement cases for all 84 draft deterministic matchers. Passed: Vite production build, LLM typecheck and targeted lint. All provider boundaries in those tests are injected doubles. No production-equivalent SQL integration suite, production RLS impersonation test, actual provider timing test or real-audio batch test was run. The complete repository suite was not claimed to pass; old SQL-backed scoring/transport suites still need migration to the new lifecycle contract.
+November 6 update: passed 241 selected frontend/engine/API/transport/accounting tests and nine isolated Railway recovery tests, including approved positive and absent-statement cases for all 84 draft deterministic matchers. Passed: Vite production build, LLM typecheck and targeted lint. All provider boundaries in those tests are injected doubles. No production-equivalent SQL integration suite, production RLS impersonation test, actual provider timing test or real-audio batch test was run. The complete repository suite was not claimed to pass; old SQL-backed scoring/transport suites still need migration to the new lifecycle contract.
 
 Required before deployment approval:
 
 1. Finish per-rule legal/script/conditional applicability review, including the 414 unmapped candidates and missing product-specific coverage. Add stronger negative/paraphrase validation for topic-based matchers. Positive phrase matches do not prove absence detection is ready to grade people.
 2. Validate migrations and concurrency/RLS using an isolated production-equivalent schema; validate existing dependent functions and legacy repair RPCs after wrapping persistence.
 3. Finish full transport ownership acceptance, including cross-process/browser handoff and active conferences, not only isolated per-track socket tests.
-4. Confirm contracted rates, the daily token cap and gap recording/channel/offset metadata. Cost per recovered call minute cannot be certified from these dry runs.
+4. Approved rates and the 2,000,000 UTC-day token cap are documented. Verify gap recording/channel/offset metadata and budget concurrency in staging. Cost per recovered call minute cannot be certified from these dry runs.
 5. Review the modal visually in both themes and validate admin actions/version selection against staging data without provider calls.
 6. Verify the under-two-minute target after an explicitly approved future canary. No real-provider timing claim is made here.
 

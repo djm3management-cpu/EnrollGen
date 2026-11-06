@@ -1,3 +1,4 @@
+import {RULES_VERSION} from '../rules/catalog.js';
 import { transcriptCoverage, sortTranscript } from '../rules/transcript.js';
 import { debugLog } from "../../lib/debugLog.js";
 import { randomUUID } from "node:crypto";
@@ -250,7 +251,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
 
   return persist({ scorecard, items: itemRows, detections: detectionRows,
     actions: correctiveActions, redactions: allRedactions, isShortCall: false,
-    detectedDirection: classificationResult.detectedDirection || null, passId:pass.id, rulesVersion:'cy2027-overhaul-draft-1' });
+    detectedDirection: classificationResult.detectedDirection || null, passId:pass.id, rulesVersion:RULES_VERSION, agentAssessment:classificationResult.agentAssessment, beneficiaryRisk:classificationResult.beneficiaryRisk });
 }
 
 async function updateAgentProfile(supabase, callRecord, scorecard) {

@@ -4,9 +4,9 @@ import {sortTranscript,evidence,transcriptCoverage} from './transcript.js';
 import {evaluateTpmo2027} from '../shared/tpmo2027.js';
 const affirmative=/\b(?:yes|yeah|yep|correct|i (?:agree|consent|understand|do)|okay|ok|absolutely)\b/i;
 const negative=/\b(?:no|not|don't|do not|disagree|unsure)\b/i;
-const scope=/scope of appointment|permission.{0,40}discuss|may (?:we|i).{0,30}(?:discuss|review)/i;
-export function matchAgentStatement(agent,pattern){
- if(!pattern)return null;
+const scope=/scope of appointment|permission.{0,40}discuss|may (?:we|i).{0,30}(?:discuss|review)|(?:are you interested in|would you like to).{0,20}discuss(?:ing)?.{0,65}(?:medicare|advantage|prescription|part d)/i;
+export function matchAgentStatements(agent,pattern){
+ if(!pattern)return [];
  const matches=[];
  for(let i=0;i<agent.length;i++){
   const passage=[];
@@ -17,16 +17,19 @@ export function matchAgentStatement(agent,pattern){
    if(pattern.test(text)){matches.push({...agent[i],text,end_ms:agent[j].end_ms,segment_ids:passage.map(p=>p.id||p.segmentId).filter(Boolean)});break;}
   }
  }
- return matches.sort((a,b)=>a.end_ms-b.end_ms||b.start_ms-a.start_ms)[0]||null;
+ return matches.sort((a,b)=>a.end_ms-b.end_ms||b.start_ms-a.start_ms);
+}
+export function matchAgentStatement(agent,pattern){
+ return matchAgentStatements(agent,pattern)[0]||null;
 }
 export function ruleApplies(rule,call){
  const product=String(call.product_type||'').toUpperCase();
 
  if(!product)return null;
  if(rule.product_type && String(rule.product_type).toUpperCase()!==product)return false;
- if(rule.subcategory==='OUTBOUND')return call.call_direction==='outbound';
- if(rule.subcategory==='INBOUND')return call.call_direction==='inbound';
  if(['no_answer','wrong_number','test_call','voicemail_left'].includes(call.call_outcome))return false;
+ if(rule.subcategory==='OUTBOUND'&&call.call_direction!=='outbound')return false;
+ if(rule.subcategory==='INBOUND'&&call.call_direction!=='inbound')return false;
  const sale=isComplianceSale(call.call_outcome)||call.enrollment_completed===true||call.metadata?.enrollment_started===true;
  if(/^(?:PECL_|ENROLL_)/.test(rule.id)&&!sale)return call.call_outcome?false:null;
  if(rule.id==='ELIG_007_SEP_REASON_DOCUMENTED')return call.election_period?/SEP|special/i.test(call.election_period):null;
@@ -44,17 +47,21 @@ export function evaluateRules(call){
  const tpmo=evaluateTpmo2027(lines,call);
  const presentation=tpmo.firstBenefit;
  const enrollment=agent.find(x=>/submitted.{0,30}(?:application|enrollment)|successfully enrolled/i.test(x.text));
- const consent=agent.find(x=>/(?:consent|agree|permission|authorize).{0,60}(?:enroll|submit|application)/i.test(x.text));
- const replyAfter=(line)=>lines.find(x=>x.speaker==='customer'&&x.start_ms>=(line.end_ms??line.start_ms)&&x.start_ms-(line.end_ms??line.start_ms)<=20000&&affirmative.test(x.text)&&!negative.test(x.text));
+ const consent=matchAgentStatement(agent,RULE_CATALOG.find(r=>r.id==='ENROLL_002_VERBAL_CONSENT').pattern);
+ const replyAfter=(line)=>{
+  const reply=lines.find(x=>x.speaker==='customer'&&x.text?.trim()&&x.start_ms>=Math.max(line.start_ms,(line.end_ms??line.start_ms)-500)&&x.end_ms>=(line.end_ms??line.start_ms)&&x.start_ms-(line.end_ms??line.start_ms)<=20000);
+  return reply&&affirmative.test(reply.text)&&!negative.test(reply.text)?reply:null;
+ };
  const items=RULE_CATALOG.map(rule=>{
   const base={rule_id:rule.id,category:rule.category,question_text:rule.description,decided_by:rule.decided_by,rules_version:RULES_VERSION,auto_fail_triggered:false};
   const applies=ruleApplies(rule,call);
   if(rule.bucket==='RETIRE'||applies===false)return {...base,result:'na',missing:rule.bucket==='RETIRE'?rule.reviewNote:'Not applicable to call metadata'};
   if(applies===null)return {...base,result:'review',missing:'Product metadata missing'};
   if(rule.bucket==='JUDGMENT')return {...base,result:'review',missing:'Stored judgment evidence requires review'};
-  let line=matchAgentStatement(agent,rule.pattern), ordered=true;
+  const candidates=matchAgentStatements(agent,/^SOA_00[134]/.test(rule.id)?scope:rule.pattern);
+  let line=candidates[0]||null, ordered=true;
   if(/TPMO/.test(rule.id))line=tpmo.disclaimer;
-  if(/^SOA_00[134]/.test(rule.id))line=matchAgentStatement(agent,scope);
+  if(rule.requiresReply&&!/TPMO/.test(rule.id))line=candidates.find(candidate=>replyAfter(candidate))||line;
   if(line&&(!Number.isFinite(line.start_ms)||!Number.isFinite(line.end_ms)))return {...base,result:'review',missing:'Statement has no reliable timestamp'};
   if(rule.requiresReply&&line){const reply=replyAfter(line);if(!reply)return {...base,...evidence(line),result:'fail',missing:'Beneficiary affirmative reply not found within 20 seconds'};line={...line,text:`${line.text} / Customer: ${reply.text}`,end_ms:reply.end_ms};}
   let trigger=null;

@@ -55,6 +55,9 @@ BEGIN
  -- A free version never creates or resets a scoring dispatch or model job.
  UPDATE call_records SET compliance_scorecard_id=card.id,metadata=coalesce(metadata,'{}')||jsonb_build_object('scoring_status',CASE WHEN card.scoring_state='complete' THEN 'complete' ELSE 'incomplete' END) WHERE id=c.id;
  UPDATE call_records SET compliance_status=CASE WHEN card.scoring_state='complete' THEN 'complete' ELSE 'incomplete' END WHERE id=c.id;
+ IF jsonb_typeof(p_payload->'agentAssessment')='object' AND jsonb_typeof(p_payload->'beneficiaryRisk')='object' THEN
+  UPDATE call_records SET agent_assessment=p_payload->'agentAssessment',beneficiary_risk=p_payload->'beneficiaryRisk' WHERE id=c.id AND tenant_id=c.tenant_id;
+ END IF;
  RETURN card.id;
 END $$;
 REVOKE ALL ON FUNCTION public.save_compliance_version(uuid,uuid,uuid,uuid,text,jsonb,jsonb) FROM PUBLIC,anon,authenticated;

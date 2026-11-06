@@ -38,6 +38,9 @@ BEGIN
  IF p_result->>'passId' IS NOT NULL THEN
   UPDATE compliance_llm_passes SET status='complete' WHERE id=(p_result->>'passId')::uuid AND call_id=c.id AND tenant_id=c.tenant_id;
  END IF;
+ IF jsonb_typeof(p_result->'agentAssessment')='object' AND jsonb_typeof(p_result->'beneficiaryRisk')='object' THEN
+  UPDATE call_records SET agent_assessment=p_result->'agentAssessment',beneficiary_risk=p_result->'beneficiaryRisk' WHERE id=c.id AND tenant_id=c.tenant_id;
+ END IF;
  RETURN scoring_job_result(p_job_id);
 END $$;
 REVOKE ALL ON FUNCTION public.persist_scoring_result(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated;

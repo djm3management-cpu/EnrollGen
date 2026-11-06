@@ -26,7 +26,7 @@ test('saved inbound direction excludes outbound-only checks despite outbound-sou
   const result=await classifyCall({callContext:{call_direction:'inbound',product_type:'MA'},
     diarized:[{speaker:'agent',text:'I am calling to follow up on your request. You submitted a form and gave us permission to contact you.',start_ms:0,end_ms:10000},
       {speaker:'agent',text:'Thank you.',start_ms:179000,end_ms:180000}],
-    callLLM:async()=>({detections:[]})});
+    callLLM:async()=>({detections:[],assessment:{a:{r:7,l:7,k:7,n:'Fixture assessment.'},b:{e:7,l:'low',r:[]}}})});
   assert.equal(result.detectedDirection,'inbound');
   const ptc=result.detections.find(d=>d.intent_code==='CALL_OPEN_014_OUTBOUND_PTC_VALID');
   assert.equal(ptc.direction_excluded,true);
