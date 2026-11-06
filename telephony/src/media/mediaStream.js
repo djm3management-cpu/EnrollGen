@@ -51,6 +51,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     let lastFrame = now();
     const watchdog = setInterval(() => {
       if (now() - lastFrame >= 45000) end(1008, 'Media heartbeat timeout');
+      else if(ws.readyState===ws.OPEN)ws.ping();
     }, 5000);
     watchdog.unref();
     const speakers = speakersFor(claims);
@@ -59,10 +60,11 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     let pending = [], pendingBytes = 0, renewal = null, renewing = false;
     let customerChunks = [], customerBytes = 0, lastLevel = now();
     const tracks = {};
+    const reconnectBudget = {used:0};
     let answerTimer = null, checkingAnswer = false, timelineOrigin = null, unsubscribe = () => {};
     const openTracks = () => {
       if (stopped || Object.keys(tracks).length) return;
-      for (const [track, speaker] of Object.entries(speakers)) tracks[track] = openTrack({ speaker, notify: emit, timelineOrigin, claims });
+      for (const [track, speaker] of Object.entries(speakers)) tracks[track] = openTrack({ speaker, notify: emit, timelineOrigin, claims, reconnectBudget });
       emit({ type: 'call_status', status: 'server_transcription_started', streamId: streamSid, callSid: claims.parentCallSid || claims.callSid });
     };
     const checkAnswer = async () => {
@@ -180,6 +182,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         pending = []; pendingBytes = 0;
       } catch { if (!stopped) reportUnavailable(); end(1011, 'Lease claim unavailable'); }
     }
+    ws.on('pong',()=>{lastFrame=now();});
     ws.on('message', (raw, isBinary) => {
       if (stopped) return;
       lastFrame = now();

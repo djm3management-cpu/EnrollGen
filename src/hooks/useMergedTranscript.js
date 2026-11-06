@@ -20,7 +20,7 @@ import { useMemo } from "react";
  */
 function normalizeAgentRows(transcriptRows) {
   return transcriptRows.map((row) => ({
-    segmentId: row.segmentId,
+    segmentId: row.segmentId,id:row.id,startMs:row.startMs??row.start_ms,endMs:row.endMs??row.end_ms,
     speaker: "agent",
     text: row.text,
     timestamp: typeof row.timestamp === "number" ? row.timestamp : row.id,
@@ -42,7 +42,8 @@ export function useMergedTranscript({
     // Only include final customer entries in the merged view (interims are noisy)
     const customerFinals = customerTranscript.filter((e) => e.isFinal);
     const all = [...agentEntries, ...customerFinals, ...thirdPartyTranscript.filter(e => e.isFinal)];
-    all.sort((a, b) => a.timestamp - b.timestamp);
+    const speechTime=all.every(e=>Number.isFinite(e.startMs??e.start_ms));
+    all.sort((a,b)=>speechTime?(a.startMs??a.start_ms)-(b.startMs??b.start_ms):a.timestamp-b.timestamp);
     return all;
   }, [agentTranscriptRows, customerTranscript, thirdPartyTranscript]);
 

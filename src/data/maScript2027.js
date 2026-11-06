@@ -18,7 +18,7 @@ export const MA_CLOSING = `“It’s been a pleasure speaking with you today. If
 
 function tpmo(id, callback = false) {
   return { id, ...say(callback
-      ? "We do not offer every plan available in your area. Currently we represent [insert number of organizations] organizations which offer [insert number of plans] products in your area. Please contact Medicare.gov, 1-800-MEDICARE."
+      ? "We do not offer every plan available in your area. Currently we represent [insert number of organizations] organizations which offer [insert number of plans] products in your area. Please contact Medicare.gov, 1-800-MEDICARE, to get information on all of your options."
       : "We do not offer every plan available in your area. Currently we represent [insert number of organizations] organizations which offer [insert number of plans] products in your area. Please contact Medicare.gov, 1-800-MEDICARE, to get information on all of your options.") };
 }
 
@@ -131,7 +131,7 @@ const maBenefits = [
 ];
 const pdpReview = [
   say("I will be happy to go over the benefits our PDP plans offer with you in more detail."),
-  note("Review monthly premium and plan stages, Rx deductible, tiers and cost shares (at least 30-day retail), coverage gap and catastrophic level. Offer to look up all medications."),
+  note("Review monthly premium, the deductible, initial coverage and catastrophic phases, Rx deductible, tiers and cost shares (at least 30-day retail). Offer to look up all medications."),
   yesNo("rxLookup", "Prescription lookup accepted?", [note("Review medication coverage and costs under the selected plan.")], [say("I suggest we look them up since, it is possible they may not be covered or require prior authorization and may lead to higher than expected out of pocket costs.")]),
 ];
 const enrollmentPlatform = [note("Move to the CMS / carrier-approved telephonic enrollment platform and follow its enrollment scripting."), choice("submitted", "Enrollment result", [option("submitted", "Application submitted"), option("notSubmitted", "Not submitted", [close()])])];

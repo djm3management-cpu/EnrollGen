@@ -1,65 +1,41 @@
-// CY2027: disclaimer completion must precede benefits, regardless of elapsed time.
-export const TPMO_RULE_VERSION = 'MA-CY2027-2026-10-01';
-const number = '(?:\\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty)';
-const gap = '[\\s,;:]+';
-const fillers = `(?:(?:about|approximately|around|uh|um|your)${gap}){0,3}`;
-const org = new RegExp(`represent${gap}${fillers}${number}${gap}(?:organizations?|carriers?)`, 'i');
-const plans = new RegExp(`${number}${gap}(?:products?|plans?)\\s+in your area`, 'i');
-export function hasMedicareResource(text) {
-  return /medicare(?:\s*\.\s*gov|\s+dot\s+gov)|1\s*[-–—]?\s*800\s*[-–—]?\s*medicare/i.test(text);
+// CMS-4212-F: full disclaimer before benefits, not an elapsed-minute deadline.
+export const TPMO_RULE_VERSION='MA-CY2027-overhaul-1';
+const number='(?:\\d[\\d,]*|(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)(?:[ -]+(?:and|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|hundred|thousand)){0,4})';
+const gap='[\\s,;:]+';
+const org=new RegExp(`represent${gap}(?:[a-z]+${gap}){0,5}${number}${gap}(?:organizations?|carriers?|companies)`,'i');
+const plans=new RegExp(`${number}${gap}(?:products?|plans?)\\b`,'i');
+export const hasTpmoOrgCount=text=>org.test(text);
+export const hasTpmoPlanCount=text=>plans.test(text);
+export const hasMedicareResource=text=>/medicare(?:\s*\.\s*gov|\s+dot\s+gov)|\b1\s*[-–—]?\s*800(?:\s*[-–—]?\s*medicare)?\b/i.test(text);
+export function hasTpmo2027(text){return org.test(text)&&plans.test(text)&&hasMedicareResource(text)&&/all (?:of )?your options|help with plan choices/i.test(text)&&/\b(?:we do not|we don't|we don’t) offer every plan\b/i.test(text);}
+export function findBenefitTrigger(line,{plan_name,carrier_name}={}){
+ const text=String(line.text||'');
+ const needs=/(?:are you|do you|would you|looking for|interested in|what (?:benefits|coverage)|which (?:benefits|coverage)|do you (?:want|need|prefer)).{0,100}(?:give.?back|otc|benefit|dental|vision|hearing|premium|allowance)/i;
+ if(needs.test(text))return null;
+ if(plan_name&&text.toLowerCase().includes(plan_name.toLowerCase()))return {...line,trigger_reason:'Plan name'};
+ const carrier=carrier_name?text.toLowerCase().includes(carrier_name.toLowerCase()):/\b(?:humana|aetna|united ?healthcare|wellcare|cigna|anthem|devoted|alignment)\b/i.test(text);
+ const pitch=carrier&&/\b(?:plan|offers?|gives?|includes?|premium|covers?)\b/i.test(text);
+ const trigger=/(?:\$\s*\d+|\b(?:zero|one|two|three|four|five|ten|twenty|fifty|hundred|thousand|\d+)\s+dollars?\b|\b(?:monthly\s+)?premium\b|\bcopay(?:ment)?\b|\bdeductible\b|\bout.of.pocket maximum\b|\b(?:this|the|your) plan\s+(?:has|gives you|includes|covers|offers|provides)\b)/i.exec(text);
+ return pitch||trigger?{...line,trigger_reason:pitch?'Carrier plan pitch':'Plan benefit or price',trigger_index:trigger?.index??0}:null;
 }
-export const hasTpmoOrgCount = text => org.test(text);
-export const hasTpmoPlanCount = text => plans.test(text);
-export function hasTpmo2027(text) {
-  return org.test(text) && plans.test(text) && hasMedicareResource(text) &&
-    /(?:all (?:of )?your options|help with plan choices)/i.test(text) &&
-    /(?:do not offer every plan|don't offer every plan|you can always contact)/i.test(text);
-}
-// Specific benefit/price discussion, excluding disclosure and generic permission/SOA.
-const benefits = /(?:\b(?:(?:monthly )?premium|copay(?:ment)?|deductible|out.of.pocket maximum)\b|\b(?:plan|your|this|it)\s+(?:also\s+)?(?:covers?|includes?|offers?|has|provides?)\b|\b(?:dental|vision|hearing|grocery|food)\s+(?:benefit|allowance|coverage)\b)/i;
-export function evaluateTpmo2027(utterances) {
-  let text = '', disclaimer = null, firstBenefit = null, earlyDisclosure = null;
-  let passageStart = null, passageActive = false;
-  const ordered = [...utterances].sort((a, b) => (a.start_ms ?? 0) - (b.start_ms ?? 0));
-  for (const u of ordered) {
-    if (!['agent', 'unknown', ''].includes(String(u.speaker || '').toLowerCase())) continue;
-    const value = String(u.text || '');
-    const benefit = benefits.exec(value);
-    // Restrict accumulation to the disclosure passage, preventing unrelated references
-    // elsewhere in a call from filling a missing disclaimer component.
-    const startsDisclosure = /\b(?:currently we represent|we currently represent|we do not offer every plan|we don't offer every plan)\b/i;
-    if ((startsDisclosure.test(value) && (!passageActive || org.test(text))) ||
-      (passageStart != null && u.start_ms != null && u.start_ms - passageStart > 90000)) {
-      text = ''; passageActive = false; passageStart = null;
-    }
-    const previousText = text;
-    text += ` ${value}`;
-    if (!passageActive && startsDisclosure.test(text)) {
-      passageActive = true;
-      passageStart = u.start_ms ?? null;
-    }
-    // Avoid stitching distant counts and referrals into a single disclosure.
-    if (!passageActive) text = text.slice(-600);
-    if (!earlyDisclosure && !firstBenefit && org.test(text) && plans.test(text) && hasMedicareResource(text) &&
-      /(?:do not offer every plan|don't offer every plan|you can always contact)/i.test(text)) {
-      earlyDisclosure = { ...u, text: text.trim(), start_ms: passageStart ?? u.start_ms,
-        completion_ms: u.end_ms ?? u.start_ms ?? null };
-    }
-    if (!disclaimer && hasTpmo2027(text)) {
-      disclaimer = { ...u, text: text.trim(), start_ms: passageStart ?? u.start_ms,
-        completion_ms: u.end_ms ?? u.start_ms ?? null };
-      // A benefit in the same utterance before the completed disclosure is late.
-      if (benefit && !hasTpmo2027(previousText + value.slice(0, benefit.index))) firstBenefit ??= u;
-    } else if (benefit) firstBenefit ??= u;
-    if (benefit) { text = ''; passageActive = false; passageStart = null; }
+export function evaluateTpmo2027(utterances=[],context={}){
+ const ordered=[...(Array.isArray(utterances)?utterances:[])].filter(u=>u?.speaker==='agent').sort((a,b)=>(a.start_ms??0)-(b.start_ms??0));
+ let passage=[],disclaimer=null,firstBenefit=null,earlyDisclosure=null;const coachingFlags=[];
+ for(const u of ordered){
+  const value=String(u.text||'');
+  if(/\bwe (?:do not|don't|don’t) offer\b/i.test(value))passage=[];
+  passage.push(u);passage=passage.filter(p=>(u.end_ms??u.start_ms)-(p.start_ms??0)<=90000);
+  const text=passage.map(p=>p.text).join(' '),prior=passage.slice(0,-1).map(p=>p.text).join(' ');
+  const trigger=findBenefitTrigger(u,context);
+  if(trigger&&!firstBenefit){
+   const prefix=prior+' '+value.slice(0,trigger.trigger_index||0);
+   firstBenefit={...trigger,disclaimer_before_trigger_in_same_line:hasTpmo2027(prefix)};
   }
-  const beforeBenefits = !!disclaimer && (!firstBenefit ||
-    (disclaimer.completion_ms != null && firstBenefit.start_ms != null && disclaimer.completion_ms <= firstBenefit.start_ms));
-  // An earlier substantial disclosure with uncertain wording needs review. It
-  // earns no automatic completion credit, but a later repeat cannot prove that
-  // the first disclosure occurred late.
-  const timingUncertain = !beforeBenefits && !!earlyDisclosure && !!firstBenefit &&
-    earlyDisclosure.completion_ms != null && firstBenefit.start_ms != null &&
-    earlyDisclosure.completion_ms <= firstBenefit.start_ms;
-  return { disclaimer, firstBenefit, earlyDisclosure, beforeBenefits, timingOk: beforeBenefits, timingUncertain };
+  if(!disclaimer&&hasTpmo2027(text))disclaimer={...u,text,start_ms:passage[0].start_ms,completion_ms:u.end_ms??u.start_ms};
+  if(!earlyDisclosure&&org.test(text)&&plans.test(text)&&hasMedicareResource(text))earlyDisclosure={...u,text,start_ms:passage[0].start_ms,completion_ms:u.end_ms??u.start_ms};
+  if(!disclaimer&&!trigger&&/\b(?:dental|vision|hearing|grocery|food|otc|give.?back)\b/i.test(value))coachingFlags.push({...u,reason:'Extras mentioned before disclaimer'});
+ }
+ const beforeBenefits=!!disclaimer&&(!firstBenefit||firstBenefit.disclaimer_before_trigger_in_same_line||disclaimer.completion_ms!=null&&firstBenefit.start_ms!=null&&disclaimer.completion_ms<=firstBenefit.start_ms);
+ const timingUncertain=!beforeBenefits&&!!earlyDisclosure&&!!firstBenefit&&earlyDisclosure.completion_ms<=firstBenefit.start_ms;
+ return {disclaimer,firstBenefit,earlyDisclosure,beforeBenefits,timingOk:beforeBenefits,timingUncertain,coachingFlags};
 }

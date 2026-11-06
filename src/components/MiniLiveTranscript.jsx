@@ -1,3 +1,4 @@
+import { useInboundCall } from '../context/InboundCallContext';
 import { useRef, useEffect, useLayoutEffect, useState, memo } from "react";
 import PanelIdleSpinner from "./PanelIdleSpinner";
 
@@ -61,6 +62,8 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
   listening = false,
   highlightSpeakers = false,
 }) {
+  const inbound=useInboundCall();
+  const reconnecting=Object.values(inbound?.transcriptionHealth||{}).some(t=>t.status==='reconnecting');
   const scrollRef = useRef(null);
   const contentRef = useRef(null);
   const followingRef = useRef(true);
@@ -111,6 +114,7 @@ const MiniLiveTranscript = memo(function MiniLiveTranscript({
 
   return (
     <div className="mini-live-transcript" style={{ padding: "0 0 6px" }}>
+      {reconnecting&&<span className="transcript-reconnecting" role="status">Transcript reconnecting</span>}
       <div
         ref={scrollRef}
         className="right-rail-scroll mini-live-transcript__scroll"

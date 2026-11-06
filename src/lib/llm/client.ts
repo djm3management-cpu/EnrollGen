@@ -28,7 +28,8 @@ function background(task: Promise<unknown>, runtime: Runtime) {
   else void safe; // CLI/tests are long-lived; serverless callers must supply waitUntil.
 }
 
-function record(runtime: Runtime, row: Json) {
+async function record(runtime: Runtime, row: Json) {
+  if(row.metadata?.path==='scoring') {await runtime.telemetry?.(row);return;}
   background(Promise.resolve().then(() => runtime.telemetry?.(row)), runtime);
 }
 
@@ -56,8 +57,14 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
   const sleep = runtime.sleep || (ms => new Promise(resolve => setTimeout(resolve, ms)));
   const random = runtime.random || Math.random;
 
+  if(request.path === 'scoring') {
+    if(env.SCORING_ENABLED !== 'true') throw Object.assign(new Error('Scoring disabled'),{code:'scoring_disabled'});
+    if(!runtime.authorizeScoringRequest) throw Object.assign(new Error('Scoring ledger authorization required'),{code:'scoring_ledger_required'});
+    if(JSON.stringify(request.messages).length<200) throw new Error('Scoring payload too small');
+    await runtime.authorizeScoringRequest(request,model,requestId);
+  }
   // Three primary attempts, followed by exactly one fallback attempt when eligible.
-  for (let attempt = 1; attempt <= 4; attempt++) {
+  for (let attempt = 1; attempt <= (request.path === 'scoring' ? 1 : 4); attempt++) {
     if (attempt === 4) {
       if (provider !== 'openai' || model !== PRIMARY_MODEL || !fallback || !transient(lastError) || runtime.signal?.aborted) break;
       originalError = errorCode(lastError);
@@ -79,7 +86,7 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
         if (!result) throw Object.assign(new Error('Stream ended without completion'), { code: 'ETIMEDOUT' });
       } else result = await adapters[provider].complete(request, model, signal);
       result = validateCompletion(result, request);
-      record(runtime, { request_id: requestId, engine_name: engine, model: result.model || model,
+      await record(runtime, { request_id: requestId, engine_name: engine, model: result.model || model,
         prompt_tokens: result.usage.input_tokens, cached_tokens: result.usage.cached_tokens,
         completion_tokens: result.usage.output_tokens, reasoning_tokens: result.usage.reasoning_tokens,
         latency_ms: Date.now() - attemptStarted, fallback_used: fallbackUsed, original_error_code: originalError,
@@ -89,11 +96,11 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
       const error = caught as any;
       lastError = timeout.aborted && !runtime.signal?.aborted ? Object.assign(new Error('LLM request timed out'), { code: 'ETIMEDOUT' }) : error;
       const usage = result?.usage || error.completion?.usage || EMPTY_USAGE;
-      record(runtime, { request_id: requestId, engine_name: engine, model,
+      await record(runtime, { request_id: requestId, engine_name: engine, model,
         prompt_tokens: usage.input_tokens, cached_tokens: usage.cached_tokens, completion_tokens: usage.output_tokens, reasoning_tokens: usage.reasoning_tokens,
         latency_ms: Date.now() - attemptStarted, fallback_used: fallbackUsed, original_error_code: originalError,
         metadata: { attempt, provider, path: request.path || 'live', shadow: !!shadowModel, error_code: errorCode(lastError) } });
-      if (!transient(lastError) || runtime.signal?.aborted || attempt === 4) break;
+      if (request.path==='scoring' || !transient(lastError) || runtime.signal?.aborted || attempt === 4) break;
       if (attempt < 3) await sleep(250 * 2 ** (attempt - 1) * (0.5 + random()));
     }
   }

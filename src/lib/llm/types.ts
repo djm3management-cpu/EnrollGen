@@ -35,6 +35,7 @@ export interface Adapter {
   stream(request: CompletionRequest, model: string, signal: AbortSignal): AsyncIterable<Json>;
 }
 export interface Runtime {
+  authorizeScoringRequest?: (request: CompletionRequest, model: string, requestId: string) => Promise<void>;
   env?: Record<string, string | undefined>;
   adapters?: Record<Provider, Adapter>;
   telemetry?: (row: Json) => Promise<void>;

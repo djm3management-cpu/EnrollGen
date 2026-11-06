@@ -31,7 +31,7 @@ function fixture(initialEntries) {
   { loader: 'jsx', jsxFactory: 'element', format: 'cjs' }).code;
   const component = vm.runInNewContext(source + ';MiniLiveTranscript', {
     ...h.hooks, useLayoutEffect: h.hooks.useEffect, memo: fn => fn,
-    PanelIdleSpinner: 'spinner', ResizeObserver, setInterval, clearInterval,
+    useInboundCall:()=>null, PanelIdleSpinner: 'spinner', ResizeObserver, setInterval, clearInterval,
     element(type, props, ...children) {
       if (props?.ref) props.ref.current = props.className?.includes('__scroll') ? viewport : content;
       return { type, props: props || {}, children };

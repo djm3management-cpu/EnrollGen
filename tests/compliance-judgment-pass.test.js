@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {classifyJudgmentOnce} from '../src/compliance/engine/JudgmentPass.js';
+test('one mock request sees full sorted transcript and cannot inject deterministic decisions',async()=>{
+ let calls=0;
+ const result=await classifyJudgmentOnce({callContext:{product_type:'MA',call_direction:'inbound',call_duration_seconds:4500},diarized:[{speaker:'agent',text:'FINAL AT 75 MINUTES',start_ms:4499000,end_ms:4500000},{speaker:'agent',text:'First sentence',start_ms:0,end_ms:1000}],passId:'fixture',callLLM:async(system,transcript)=>{
+  calls++;assert.ok(transcript.indexOf('First sentence')<transcript.indexOf('FINAL'));assert.match(transcript,/4499000/);assert.match(system,/never final violations/);assert.doesNotMatch(system,/Agent guarantees future annuity returns/);
+  return {detections:[{intent_code:'CALL_OPEN_009_TPMO_TIMING_2027',detected:false,anti_pattern:true,hard_cms_violation:true,evidence_text:'invented'},{intent_code:'CONDUCT_004_NO_MISLEADING_LANGUAGE',detected:true,anti_pattern:true,evidence_text:'invented quote',confidence:.99}],sentiment:{}};
+ }});
+ assert.equal(calls,1);const flag=result.detections.find(d=>d.intent_code==='CONDUCT_004_NO_MISLEADING_LANGUAGE');assert.equal(flag.transcript_segment,null);assert.equal(flag.hard_cms_violation,false);assert.equal(result.detections.filter(d=>d.intent_code==='CALL_OPEN_009_TPMO_TIMING_2027').length,1);
+});

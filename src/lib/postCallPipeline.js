@@ -253,24 +253,16 @@ export function buildDiarizedTranscript(mergedTranscript = [], fallbackTranscrip
     (mergedTranscript || []).filter((entry) => entry?.isFinal !== false && entry?.text?.trim())
   );
   if (finalEntries.length > 0) {
-    const firstTimestamp = Number(finalEntries[0]?.timestamp) || Date.now();
-    return finalEntries.map((entry, index) => {
-      const timestamp = Number(entry.timestamp) || firstTimestamp + index * 5000;
-      const startMs = Math.max(0, timestamp - firstTimestamp);
-      const text = entry.text.trim();
-      return {
-        speaker: entry.speaker === "customer" || entry.speaker === "beneficiary" ? "customer" : "agent",
-        text,
-        start_ms: startMs,
-        end_ms: startMs + Math.max(1200, Math.round(text.length / 14) * 1000),
-      };
-    });
+    const timestamps=finalEntries.map(e=>Number(e.timestamp)).filter(Number.isFinite);
+    const origin=timestamps.length?Math.min(...timestamps):null;
+    return finalEntries.map(entry=>{
+      const suppliedStart=entry.start_ms??entry.startMs,suppliedEnd=entry.end_ms??entry.endMs;
+      const startMs=Number.isFinite(suppliedStart)?suppliedStart:origin!=null&&Number.isFinite(Number(entry.timestamp))?Math.max(0,Number(entry.timestamp)-origin):null;
+      return {id:entry.id,segmentId:entry.segmentId,speaker:['agent','customer','third_party'].includes(entry.speaker)?entry.speaker:entry.speaker==='beneficiary'?'customer':'unknown',text:entry.text.trim(),start_ms:startMs,end_ms:Number.isFinite(suppliedEnd)?suppliedEnd:startMs,timing_source:Number.isFinite(suppliedStart)&&Number.isFinite(suppliedEnd)?'audio':'receipt'};
+    }).sort((a,b)=>(a.start_ms??Infinity)-(b.start_ms??Infinity));
   }
-
-  const text = redactSensitiveText(String(fallbackTranscript || "").trim());
-  return text
-    ? [{ speaker: "agent", text, start_ms: 0, end_ms: Math.max(120000, Math.round(text.length / 12) * 1000) }]
-    : [];
+  const text=redactSensitiveText(String(fallbackTranscript||'').trim());
+  return text?[{speaker:'unknown',text,start_ms:null,end_ms:null,timing_source:'unknown'}]:[];
 }
 
 function normalizeDateInput(value) {

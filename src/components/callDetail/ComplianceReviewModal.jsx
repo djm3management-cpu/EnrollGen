@@ -1,350 +1,76 @@
-import { formatCallDateTime as fmtDateTime } from "../../lib/callPresentation";
-import { isComplianceSale } from "../../lib/saleCompliance.js";
-import { debugLog } from "../../lib/debugLog.js";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { redactSensitiveText } from "../../lib/redaction";
-import { callOutcomeLabel } from "../../lib/postCallPipeline";
-import { CATEGORY_WEIGHTS } from "../../compliance/intents/index.js";
-import { scoringFailureMessage } from "../../lib/scoringStatus.js";
-import { complianceItemStatus, isUnscoredCompliance } from "../../lib/complianceScore.js";
-
-// Full compliance breakdown: metadata header, overall score, a
-// section-by-section flag breakdown (from scorecard_items, which
-// already carries evidence_text/evidence_timestamp_ms per flag —
-// see supabase/migrations/001_compliance_engine.sql), and the full
-// diarized transcript side-by-side so a flag click can jump/highlight
-// the moment that triggered it. This is additive to (not a
-// replacement for) CallDetailPanel's lightweight Compliance tab.
-
-const CATEGORY_LABELS = {
-  CALL_OPENING: "Call Opening",
-  SOA_VERIFICATION: "Scope of Appointment Verification",
-  ELIGIBILITY_VERIFICATION: "Eligibility / PII Verification",
-  NEEDS_ASSESSMENT: "Needs Assessment",
-  PLAN_PRESENTATION: "Plan Presentation",
-  IMPACT_ON_CURRENT_COVERAGE: "Impact on Current Coverage",
-  PRE_ENROLLMENT_CHECKLIST: "Pre-Enrollment Checklist",
-  ENROLLMENT_CLOSING: "Enrollment / Closing",
-  SALES_CONDUCT: "Sales Conduct",
-  CALL_RECORDING_COMPLIANCE: "Call Recording Compliance",
-  ANNUITY_BEST_INTEREST: "Annuity Best Interest",
-};
-
-const CATEGORY_ORDER = Object.keys(CATEGORY_WEIGHTS);
-const POLL_INTERVAL_MS = 3000;
-const POLL_TIMEOUT_MS = 5 * 60 * 1000;
-const IN_FLIGHT_STATUSES = ["transcript_pending", "queued", "scoring"];
-export const COMPLIANCE_WARNING_THRESHOLD = 80;
-
-function fmtDuration(seconds) {
-  if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return "--";
-  const total = Math.max(0, Math.round(Number(seconds)));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
-}
-
-function asNumber(value, fallback = 0) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : fallback;
-}
-
-function nearestUtteranceIndex(utterances, timestampMs) {
-  if (!Array.isArray(utterances) || !utterances.length || timestampMs == null) return -1;
-  let bestIndex = -1;
-  let bestDelta = Infinity;
-  utterances.forEach((utterance, index) => {
-    const delta = Math.abs(asNumber(utterance.start_ms, 0) - timestampMs);
-    if (delta < bestDelta) {
-      bestDelta = delta;
-      bestIndex = index;
-    }
-  });
-  return bestIndex;
-}
-
-function ScoreBanner({ scorecard }) {
-  const unscored = isUnscoredCompliance(scorecard);
-  const score = scorecard?.overall_score;
-  const value = !unscored && score !== null && score !== undefined ? Math.round(Number(score)) : null;
-  const isWarning = value !== null && value < COMPLIANCE_WARNING_THRESHOLD;
-  const reviewRequired = [...(scorecard?.risk_flags || []), ...(scorecard?.coaching_notes || [])]
-    .some(note => /manual review required/i.test(note));
-
-  return (
-    <div className={`compliance-review-banner${isWarning ? " is-warning" : ""}`}>
-      <div className="compliance-review-score">
-        <strong>{unscored ? "N/A" : value !== null ? `${value}%` : "--"}</strong>
-        <span>{scorecard?.overall_grade || "--"}</span>
-      </div>
-      <div className="compliance-review-banner-meta">
-        <span>{String(scorecard?.pass_fail || "--").toUpperCase()}</span>
-        {scorecard?.auto_fail_triggered ? <span className="is-autofail">AUTO-FAIL</span> : null}
-        {reviewRequired ? <span className="is-warning-label">REVIEW REQUIRED</span> : null}
-        {isWarning ? <span className="is-warning-label">⚠ BELOW {COMPLIANCE_WARNING_THRESHOLD}% THRESHOLD</span> : null}
-      </div>
-    </div>
-  );
-}
-
-function CategorySection({ category, items, onJumpToEvidence, activeItemId }) {
-  const [open, setOpen] = useState(false);
-  const passCount = items.filter((item) => String(item.result || "").toLowerCase() === "pass").length;
-  const scoredCount = items.filter(item => complianceItemStatus(item).scored).length;
-  const pct = scoredCount ? Math.round((passCount / scoredCount) * 100) : 0;
-
-  return (
-    <div className="compliance-review-category">
-      <button data-key-role="secondary" type="button" className="compliance-review-category-head" onClick={() => setOpen((v) => !v)}>
-        <span>{CATEGORY_LABELS[category] || category}</span>
-        <span className="compliance-review-category-count">
-          {scoredCount ? `${passCount}/${scoredCount} passed` : "Not scored"}
-          {items.length > scoredCount ? ` · ${items.length - scoredCount} excluded` : ""}
-        </span>
-        <div className="compliance-review-category-track">
-          <span style={{ width: `${pct}%` }} />
-        </div>
-        <b>{open ? "▼" : "▶"}</b>
-      </button>
-      {open ? (
-        <div className="compliance-review-category-body">
-          {items.map((item) => {
-            const status = complianceItemStatus(item);
-            return (
-              <button data-key-role="secondary"
-                type="button"
-                key={item.id}
-                className={`compliance-review-flag ${status.className}${activeItemId === item.id ? " is-active" : ""}`}
-                onClick={() => onJumpToEvidence(item)}
-              >
-                <span className="compliance-review-flag-result">{status.label}</span>
-                <span className="compliance-review-flag-question">{item.question_text || item.intent_id}</span>
-                {!status.scored && item.notes ? <span className="compliance-review-flag-evidence">{item.notes}</span> : null}
-                {item.evidence_text ? (
-                  <span className="compliance-review-flag-evidence">
-                    "{redactSensitiveText(item.evidence_text).slice(0, 140)}"
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function TranscriptPanel({ utterances, highlightIndex, containerRef }) {
-  return (
-    <div className="compliance-review-transcript" ref={containerRef}>
-      {utterances.length === 0 ? (
-        <div className="contacts-muted">No diarized transcript stored</div>
-      ) : (
-        utterances.map((utterance, index) => {
-          const speaker = utterance.speaker === 'third_party' ? 'Third party' : utterance.speaker === "customer" ? "Customer" : "Agent";
-          return (
-            <div
-              key={`${utterance.start_ms || 0}-${index}`}
-              id={`utterance-${utterance.start_ms || 0}-${index}`}
-              className={`ops-utterance${highlightIndex === index ? " is-highlighted" : ""}`}
-            >
-              <span className="speaker">{speaker}</span>
-              <span className="time">{fmtDuration((utterance.start_ms || 0) / 1000)}</span>
-              <p>{redactSensitiveText(utterance.text || "")}</p>
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
-}
-
-export default function ComplianceReviewModal({ callRecordId, supabaseClient, onClose, displayDurationSeconds }) {
-  const [callRecord, setCallRecord] = useState(null);
-  const [contactSource, setContactSource] = useState(null);
-  const [scorecard, setScorecard] = useState(null);
-  const [scorecardItems, setScorecardItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [scoringError, setScoringError] = useState(null);
-  const [highlightIndex, setHighlightIndex] = useState(-1);
-  const [activeItemId, setActiveItemId] = useState(null);
-  const transcriptRef = useRef(null);
-  const pollStartRef = useRef(null);
-
-  const load = useCallback(async () => {
-    if (!supabaseClient || !callRecordId) return;
-    const { data: record, error } = await supabaseClient
-      .from("call_records")
-      .select(
-        "id, call_start, call_duration_seconds, agent_name, beneficiary_name, contact_id, call_outcome, transcript_diarized, compliance_scorecard_id, metadata, compliance_status, compliance_dispo_changed_at"
-      )
-      .eq("id", callRecordId)
-      .single();
-    if (error) {
-      debugLog("[ComplianceReviewModal] call_records load failed");
-      return;
-    }
-    setCallRecord(record);
-
-    if (record.contact_id) {
-      const { data: contact } = await supabaseClient
-        .from("contacts")
-        .select("source")
-        .eq("id", record.contact_id)
-        .maybeSingle();
-      setContactSource(contact?.source || null);
-    }
-
-    setScoringError(scoringFailureMessage(record));
-
-    if (!record.compliance_scorecard_id) {
-      setScorecard(null);
-      setScorecardItems([]);
-      return;
-    }
-
-    const { data: scorecardRow } = await supabaseClient
-      .from("compliance_scorecards")
-      .select("*")
-      .eq("id", record.compliance_scorecard_id)
-      .maybeSingle();
-    setScorecard(scorecardRow || null);
-
-    if (scorecardRow?.id) {
-      const { data: items } = await supabaseClient
-        .from("scorecard_items")
-        .select("*")
-        .eq("scorecard_id", scorecardRow.id)
-        .order("display_order", { ascending: true });
-      setScorecardItems(items || []);
-    }
-  }, [supabaseClient, callRecordId]);
-
-  useEffect(() => {
-    setLoading(true);
-    load().finally(() => setLoading(false));
-  }, [load]);
-
-  // Poll while scoring is still in flight (fire-and-forget background
-  // function — see netlify/functions/score-call-background.js).
-  useEffect(() => {
-    if (!IN_FLIGHT_STATUSES.includes(callRecord?.compliance_status) || callRecord.compliance_scorecard_id || scoringError) return undefined;
-    if (!pollStartRef.current) pollStartRef.current = Date.now();
-
-    const interval = setInterval(async () => {
-      if (Date.now() - pollStartRef.current > POLL_TIMEOUT_MS) {
-        clearInterval(interval);
-        return;
-      }
-      await load();
-    }, POLL_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-  }, [callRecord, scoringError, load]);
-
-  const utterances = useMemo(
-    () => (Array.isArray(callRecord?.transcript_diarized) ? callRecord.transcript_diarized : []),
-    [callRecord?.transcript_diarized]
-  );
-
-  const groupedItems = useMemo(() => {
-    const byCategory = {};
-    for (const item of scorecardItems) {
-      const category = item.category || "UNCATEGORIZED";
-      if (!byCategory[category]) byCategory[category] = [];
-      byCategory[category].push(item);
-    }
-    return byCategory;
-  }, [scorecardItems]);
-
-  const handleJumpToEvidence = useCallback(
-    (item) => {
-      setActiveItemId(item.id);
-      const index = nearestUtteranceIndex(utterances, item.evidence_timestamp_ms);
-      if (index < 0) return;
-      setHighlightIndex(index);
-      const utterance = utterances[index];
-      const el = document.getElementById(`utterance-${utterance.start_ms || 0}-${index}`);
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
-      window.setTimeout(() => setHighlightIndex(-1), 4000);
-    },
-    [utterances]
-  );
-
-  const isScoring = IN_FLIGHT_STATUSES.includes(callRecord?.compliance_status) && !callRecord?.compliance_scorecard_id && !scoringError;
-
-  return (
-    <div className="compliance-review-overlay" onClick={onClose}>
-      <div className="compliance-review-modal" onClick={(event) => event.stopPropagation()}>
-        <div className="compliance-review-head">
-          <h2>COMPLIANCE REVIEW</h2>
-          <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={onClose}>CLOSE</button>
-        </div>
-
-        {loading ? (
-          <div className="contacts-muted">Loading call record...</div>
-        ) : !callRecord ? (
-          <div className="ops-error">Call record unavailable</div>
-        ) : (
-          <>
-            <dl className="compliance-review-meta">
-              <div><dt>CALL DATE</dt><dd className="mono">{fmtDateTime(callRecord.call_start)}</dd></div>
-              <div><dt>TALK</dt><dd className="mono">{fmtDuration(displayDurationSeconds === undefined ? callRecord.call_duration_seconds : displayDurationSeconds)}</dd></div>
-              <div><dt>AGENT</dt><dd>{callRecord.agent_name || "--"}</dd></div>
-              <div><dt>CONSUMER</dt><dd>{callRecord.beneficiary_name || "--"}</dd></div>
-              <div><dt>OUTCOME</dt><dd>{callOutcomeLabel(callRecord.call_outcome)}</dd></div>
-              <div><dt>LEAD SOURCE</dt><dd>{contactSource || "--"}</dd></div>
-            </dl>
-
-            {callRecord.compliance_dispo_changed_at ? (
-              <div className="contacts-muted">DISPO CHANGED — existing compliance results retained.</div>
-            ) : null}
-            {!isComplianceSale(callRecord.call_outcome) && !callRecord.compliance_scorecard_id ? (
-              <div className="contacts-muted">Post-call compliance runs only for Enrolled or Enrolled - Pending Verification.</div>
-            ) : !callRecord.compliance_scorecard_id && !isScoring && !scoringError ? (
-              <div className="contacts-muted">No post-call compliance result for this call.</div>
-            ) : isScoring ? (
-              <div className="compliance-review-scoring">
-                <span className="compliance-review-spinner" />
-                {callRecord.compliance_status === "transcript_pending"
-                  ? "Waiting for the full call transcript. Compliance is queued."
-                  : "Scoring in progress — this can take a minute."}
-              </div>
-            ) : scoringError ? (
-              <div className="ops-error" role="alert">
-                Scoring failed: {scoringError}
-              </div>
-            ) : (
-              <>
-                <ScoreBanner scorecard={scorecard} />
-                {scorecard?.auto_fail_triggered && scorecard?.auto_fail_reasons?.length ? (
-                  <div className="compliance-review-autofail-reasons">
-                    {scorecard.auto_fail_reasons.map((reason, index) => (
-                      <p key={index}>⚠ {reason}</p>
-                    ))}
-                  </div>
-                ) : null}
-
-                <div className="compliance-review-body">
-                  <div className="compliance-review-sections">
-                    {CATEGORY_ORDER.filter((category) => groupedItems[category]?.length).map((category) => (
-                      <CategorySection
-                        key={category}
-                        category={category}
-                        items={groupedItems[category]}
-                        onJumpToEvidence={handleJumpToEvidence}
-                        activeItemId={activeItemId}
-                      />
-                    ))}
-                    {Object.keys(groupedItems).length === 0 ? (
-                      <div className="contacts-muted">No scorecard line items stored</div>
-                    ) : null}
-                  </div>
-                  <TranscriptPanel utterances={utterances} highlightIndex={highlightIndex} containerRef={transcriptRef} />
-                </div>
-              </>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
+import {useCallback,useEffect,useMemo,useState} from 'react';
+import {useAppAuth} from '../../context/AuthContext';
+import {evidenceRequest} from '../../lib/evidenceApi.js';
+import {formatCallDateTime} from '../../lib/callPresentation';
+import {redactSensitiveText} from '../../lib/redaction';
+import {complianceItemStatus,complianceViewModel} from '../../lib/complianceScore.js';
+import {evaluateRules} from '../../compliance/rules/evaluate.js';
+import CallTranscriptPlayer from '../callLog/CallTranscriptPlayer.jsx';
+export const COMPLIANCE_WARNING_THRESHOLD=80;
+const duration=ms=>`${Math.floor(ms/60000)}:${String(Math.floor(ms/1000)%60).padStart(2,'0')}`;
+const money=value=>value==null?'Unavailable':`$${Number(value).toFixed(4)}`;
+const filters=['fail','partial','review','pass','na'];
+export default function ComplianceReviewModal({callRecordId,onClose,displayDurationSeconds}){
+ const {getToken}=useAppAuth();
+ const [theme,setTheme]=useState('terminal');
+ const [data,setData]=useState(null),[error,setError]=useState(''),[version,setVersion]=useState(''),[filter,setFilter]=useState('all'),[busy,setBusy]=useState(false),[seek,setSeek]=useState(null),[preview,setPreview]=useState(null);
+ const load=useCallback(async()=>{
+  try{const token=await getToken();const params=new URLSearchParams({call_id:callRecordId,...(version?{version_id:version}:{})});
+   const r=await fetch(`/.netlify/functions/compliance-review?${params}`,{headers:{Authorization:`Bearer ${token}`}});const body=await r.json();if(!r.ok)throw Error(body.error||'Scorecard load failed');setData(body);setError('');
+  }catch(e){setError(e.message);}
+ },[getToken,callRecordId,version]);
+ useEffect(()=>{void load();},[load]);
+ useEffect(()=>{if(!['scoring','queued','transcript_pending'].includes(data?.call?.compliance_status)&&!data?.active_pass?.id)return;const timer=setInterval(load,5000);return()=>clearInterval(timer);},[data?.call?.compliance_status,data?.active_pass?.id,load]);
+ const jump=useCallback(item=>{if(item.evidence_timestamp_ms!=null)setSeek({seconds:item.evidence_timestamp_ms/1000,nonce:Date.now()});},[]);
+ const card=data?.scorecard,coverage=data?.coverage;
+ const view=complianceViewModel({scorecard:card,items:data?.items,coverage,filter});
+ const incomplete=view.incomplete;
+ const items=data?.items||[];
+ const groups=view.groups;
+ const computed=useMemo(()=>data?evaluateRules(data.call):null,[data]);
+ const action=async name=>{
+  setBusy(true);setError('');
+  try{
+   const estimate=await evidenceRequest(getToken,'compliance-review',{call_id:callRecordId,action:'preview'});
+   if(name==='evaluate'){
+    const result=await evidenceRequest(getToken,'compliance-review',{call_id:callRecordId,action:'evaluate',confirm:true,dry_run:false,request_id:crypto.randomUUID()});setPreview(result.dry_run?result:null);await load();return;
+   }
+   const cost=name==='fill'?estimate.gap_cost_usd:estimate.estimated_cost_usd;
+   if(cost==null)throw Error('Contracted pricing is not configured');
+   const details=name==='fill'?`${estimate.gap_minutes.toFixed(2)} minutes, ${money(cost)}`:`${estimate.estimated_input_tokens} input tokens, up to ${estimate.maximum_output_tokens} output tokens, ${money(cost)}`;
+   if(!window.confirm(`${name==='fill'?'Fill transcript gaps':'Rescore call'}: ${details}?`))return;
+   await evidenceRequest(getToken,'compliance-review',{call_id:callRecordId,action:name,confirm:true,approved_cost_usd:estimate.estimated_cost_usd,approved_gap_cost_usd:estimate.gap_cost_usd,approved_gap_minutes:estimate.gap_minutes,request_id:crypto.randomUUID()});await load();
+  }catch(e){setError(e.message);}finally{setBusy(false);}
+ };
+ const decide=async(item,decision)=>{
+  setBusy(true);try{await evidenceRequest(getToken,'compliance-review',{call_id:callRecordId,action:'review',confirm:true,dry_run:false,item_id:item.id,decision,note:window.prompt('Note')||'',request_id:crypto.randomUUID()});await load();}catch(e){setError(e.message);}finally{setBusy(false);}
+ };
+ const autoFails=items.filter(i=>i.auto_fail_triggered);
+ return <div className="compliance-review-overlay" onClick={onClose}><div className={`compliance-review-modal compliance-overhaul${theme==='terminal'?' dark':''}`}  onClick={e=>e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Compliance review">
+  <header className="compliance-review-head"><h2>COMPLIANCE REVIEW</h2><button className="contacts-mini-btn" onClick={()=>setTheme(theme==='terminal'?'light':'terminal')}>{theme==='terminal'?'Light':'Terminal'}</button><button className="contacts-mini-btn" onClick={onClose}>Close</button></header>
+  {error&&<div className="ops-error" role="alert">{error}</div>}
+  {!data&&!error&&<div>Loading</div>}
+  {data&&<>
+   <div className="compliance-overhaul-toolbar">
+    <span className="compliance-overhaul-score">{incomplete?'INCOMPLETE':card?view.score==null?'N/A':`${Math.round(view.score)}% ${card.overall_grade}`:'Pending'}</span>
+    <span className="compliance-overhaul-badge">{incomplete?'SCORING INCOMPLETE':card?.auto_fail_triggered?'AUTO-FAIL':card?.pass_fail||'PENDING'}</span>
+    {view.reviewRequired&&<span className="compliance-overhaul-badge">REVIEW REQUIRED</span>}<span>{card?.rules_version||'Legacy'}</span><span>{card?.created_at?formatCallDateTime(card.created_at):''}</span>
+    <span>{card?.scoring_duration_ms==null?'':duration(card.scoring_duration_ms)}</span>
+    <span>{card?.request_attempts==null?'':`${card.request_attempts} attempts`}</span><span>{card?.tokens_used==null?'':`${card.tokens_used.toLocaleString()} tokens`}</span><span>{card?.estimated_cost_usd==null?'':money(card.estimated_cost_usd)}</span>
+    <select aria-label="Scorecard version" value={version||card?.id||''} onChange={e=>setVersion(e.target.value)}>{data.versions.map((v,i)=><option key={v.id} value={v.id}>Version {data.versions.length-i} · {formatCallDateTime(v.created_at)}</option>)}</select>
+    {data.admin&&<><button className="contacts-mini-btn" disabled={busy||!!data.active_pass} onClick={()=>action('evaluate')}>Re-evaluate</button><button className="contacts-mini-btn" disabled={busy||incomplete||(data.call.compliance_status==='scoring'||!!data.active_pass)} onClick={()=>action('rescore')}>Rescore</button>{incomplete&&<button className="contacts-mini-btn" disabled={busy} onClick={()=>action('fill')}>Fill transcript gaps</button>}</>}
+   </div>
+   <dl className="compliance-review-meta"><div><dt>Agent</dt><dd>{data.call.agent_name||'Unknown'}</dd></div><div><dt>Consumer</dt><dd>{data.call.beneficiary_name||'Unknown'}</dd></div><div><dt>Talk</dt><dd>{duration((displayDurationSeconds??data.call.call_duration_seconds)*1000)}</dd></div><div><dt>Source</dt><dd>{data.source||'Unknown'}</dd></div></dl>
+   <div className={`compliance-overhaul-coverage${incomplete?' is-incomplete':''}`}><span>Transcript {duration(coverage.endMs)} of {duration(coverage.durationMs)} · {(coverage.ratio*100).toFixed(1)}%</span><progress max="1" value={coverage.ratio}/></div>
+   {!incomplete&&autoFails.length>0&&<section><h3>AUTO-FAIL</h3>{autoFails.map(i=><button className="compliance-overhaul-evidence" key={i.id} onClick={()=>{document.getElementById(`rule-${i.id}`)?.scrollIntoView({block:'center'});jump(i);}}>{i.question_text}<q>{redactSensitiveText(i.evidence_text||'Evidence unavailable')}</q><span>{i.evidence_timestamp_ms==null?'Timestamp unavailable':duration(i.evidence_timestamp_ms)}</span></button>)}</section>}
+   {items.some(i=>i.result==='review')&&<section><h3>REVIEW</h3>{items.filter(i=>i.result==='review').map(i=><div key={i.id} className="compliance-overhaul-review"><button className="compliance-overhaul-evidence" onClick={()=>jump(i)}>{i.question_text}<q>{redactSensitiveText(i.evidence_text||'Evidence unavailable')}</q><span>{Math.round((i.confidence||0)*100)}%</span></button>{data.admin&&<><button className="contacts-mini-btn" disabled={busy||!!data.active_pass} onClick={()=>decide(i,'confirm')}>Confirm violation</button><button className="contacts-mini-btn" disabled={busy||!!data.active_pass} onClick={()=>decide(i,'dismiss')}>Dismiss</button></>}</div>)}</section>}
+   <nav className="compliance-overhaul-timeline" aria-label="Compliance timeline">{Object.entries(computed?.timeline||{}).map(([name,line])=><button key={name} disabled={!line} onClick={()=>jump({evidence_timestamp_ms:line?.start_ms})}>{({recording:'Recording',tpmo:'TPMO',firstBenefit:'First benefit',soa:'SOA',needsAssessment:'Needs assessment',planPresentation:'Plan presentation',pecl:'PECL',consent:'Consent',enrollment:'Enrollment'})[name]||name} · {line?duration(line.start_ms):'Missing'}</button>)}</nav>
+   <div className="compliance-overhaul-categories">{Object.entries(card?.category_scores||{}).map(([name,c])=><div key={name}><span>{name.replaceAll('_',' ')} {c.earned}/{c.possible}</span><progress max={c.possible||1} value={c.earned}/></div>)}</div>
+   <div className="compliance-overhaul-filters"><button aria-pressed={filter==='all'} onClick={()=>setFilter('all')}>All</button>{filters.map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='na'?'N/A':f}</button>)}</div>
+   {preview&&<div role="status">Dry run · {preview.status} · {preview.items.filter(i=>i.result==='fail').length} findings</div>}
+   <div className="compliance-overhaul-items">{Object.entries(groups).map(([category,rows])=><section key={category}><h3>{category.replaceAll('_',' ')}</h3>{rows.map(i=><article id={`rule-${i.id}`} key={i.id} className="compliance-overhaul-item"><div><span>{i.question_text}</span><span className="compliance-overhaul-badge">{complianceItemStatus(i).label}</span><span>{i.points_earned}/{i.points_possible}</span><span>{i.decided_by||'Legacy'}</span></div><p>{redactSensitiveText(i.evidence_text||i.missing_reason||i.notes||'Evidence unavailable')}</p>{i.evidence_timestamp_ms!=null&&<button onClick={()=>jump(i)}>{duration(i.evidence_timestamp_ms)}</button>}</article>)}</section>)}</div>
+   {items.length===0&&card&&<div className="ops-error">Scorecard items unavailable</div>}
+   <CallTranscriptPlayer row={{...data.call,call_record_id:callRecordId,duration_seconds:data.call.call_duration_seconds}} detail={data.call} seekRequest={seek}/>
+  </>}
+ </div></div>;
 }

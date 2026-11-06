@@ -39,3 +39,7 @@ dist-ssr
 !/infra/office-nextcloud/.env.example
 data/
 supabase/.temp/
+
+# Local compliance audit reports contain production evidence and contact names.
+/docs/compliance-overhaul/*.json
+/compliance-overhaul-preview.html

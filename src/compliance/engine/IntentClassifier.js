@@ -1,3 +1,4 @@
+import { sortTranscript } from '../rules/transcript.js';
 import { debugLog } from "../../lib/debugLog.js";
 import { evaluateTpmo2027, hasMedicareResource, hasTpmoOrgCount, hasTpmoPlanCount } from '../shared/tpmo2027.js';
 import { classificationFormat } from "../../lib/llm/schemas/compliance.js";
@@ -131,6 +132,7 @@ function getMajoritySpeaker(utterances) {
  * @returns {Object} { detections, riskIndicators, sentiment }
  */
 export async function classifyCall({ diarized, callContext, callLLM, onProgress, loadSegmentResult, saveSegmentResult, reserveInputTokens }) {
+  diarized=sortTranscript(diarized);
   const segments = segmentTranscript(diarized);
   const redactedSegments = redactTranscriptSegments(segments);
 

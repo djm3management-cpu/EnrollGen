@@ -1,3 +1,4 @@
+import {RULES_VERSION} from '../../src/compliance/rules/catalog.js';
 import {verifyPostCallEnded} from '../lib/postCallGuard.js';
 import { complete } from "../../src/lib/llm/client.ts";
 import { resolveEngine } from "../../src/lib/llm/config.js";
@@ -57,6 +58,7 @@ return async (request, context) => {
     return new Response('Missing callId or tenantId', { status: 400 });
   }
 
+  if(process.env.SCORING_ENABLED!=='true'||process.env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)return Response.json({status:'disabled'},{status:503});
   console.log(`[score-bg] Starting scoring for call ${callId}`);
   const startedAt=new Date().toISOString();
   let sb, callRecord;
@@ -74,6 +76,7 @@ return async (request, context) => {
     if (error) throw error;
     callRecord = data;
     if (!callRecord) throw Object.assign(new Error('Call not found'), { code: 'scoring_call_not_found' });
+    if(callRecord.compliance_scorecard_id)return Response.json({scorecard_id:callRecord.compliance_scorecard_id,reused:true,reason:'call_scorecard_frozen'});
 
     // Check the saved disposition, never a client/job-supplied outcome. The
     // database repeats this check under lock before claiming and saving a job.
@@ -111,9 +114,9 @@ return async (request, context) => {
         console.log(JSON.stringify({ event: 'scoring_llm_request', call_record_id: callId, provider: 'openai' }));
         const response = await complete({
           engine: resolveEngine(callRecord.product_type || 'MA'), path: 'scoring',
-          system, messages: [{ role: 'user', content: user }], max_completion_tokens: 16384,
+          system, messages: [{ role: 'user', content: user }], max_completion_tokens: 4096,
           response_format: options.response_format,
-        }, llmRuntime(sb, callRecord.tenant_id, context, { endpoint: 'score-call-background', call_record_id: callId }));
+        }, llmRuntime(sb, callRecord.tenant_id, context, { endpoint: 'score-call-background', call_record_id: callId, pass_id:options.passId }));
         return response.content.filter(block => block.type === 'text').map(block => block.text).join('');
       }),
       onProgress: (percent, message) => {
@@ -121,6 +124,7 @@ return async (request, context) => {
         console.log(JSON.stringify({ event: 'scoring_progress', call_record_id: callId, percent, stage }));
       },
     });
+    if (result.incomplete) return Response.json({status:'SCORING INCOMPLETE',reason:result.reason,coverage:result.coverage});
     // The scoring transaction owns completion and linkage; busy/replayed jobs don't rerun side effects.
     if (result.skipped || result.pending) {
       console.log(JSON.stringify({ event: result.pending ? 'scoring_pending' : 'scoring_skipped', call_record_id: callId, reason: result.reason }));
@@ -162,7 +166,7 @@ return async (request, context) => {
     } catch (statusError) {
       console.error(JSON.stringify({event:'provider_failure_status_write_failed',call_record_id:callId,code,...errorDetails(statusError)}));
     }
-    if (code === 'scoring_attempts_exhausted' || code === 'call_token_budget_exceeded') {
+    if (code === 'scoring_attempts_exhausted' || code === 'call_token_budget_exceeded' || code === 'daily_scoring_token_cap') {
       try { await sendProviderFailureAlert(sb,callRecord.session_id,'scoring',code); }
       catch (alertError) { console.error(JSON.stringify({event:'scoring_safety_alert_failed',call_record_id:callId,code:providerErrorCode(alertError,'alert_send_failed')})); }
       try {

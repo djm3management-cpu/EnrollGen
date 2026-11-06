@@ -25,7 +25,7 @@ export function transcriptLines(detail, preview = '') {
   });
 }
 
-export default function CallTranscriptPlayer({ row, detail, loading, playRequest = 0 }) {
+export default function CallTranscriptPlayer({ row, detail, loading, playRequest = 0, seekRequest }) {
   const { getToken } = useAppAuth();
   const audioRef = useRef(null);
   const pendingSeek = useRef(0);
@@ -53,6 +53,14 @@ export default function CallTranscriptPlayer({ row, detail, loading, playRequest
     } catch (err) { setError(err.message || 'Unable to load recording.'); }
     finally { setBusy(false); }
   }, [getToken, row]);
+
+  useEffect(() => {
+    if(!seekRequest || !Number.isFinite(seekRequest.seconds))return;
+    pendingSeek.current=Math.max(0,seekRequest.seconds);
+    setMergedSeek({seconds:pendingSeek.current,nonce:seekRequest.nonce});
+    if(audioRef.current)audioRef.current.currentTime=pendingSeek.current;
+    else if(!media)void loadMedia();
+  },[seekRequest,media,loadMedia]);
 
   const play = useCallback(() => {
     const audio = audioRef.current;

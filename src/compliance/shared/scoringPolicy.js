@@ -14,20 +14,20 @@ const HARD_VIOLATIONS = new Set([
 
 export function isHardViolation(code, detection, policyVersion) {
   const current = policyVersion === MA_2027_POLICY_VERSION;
+  if (['CALL_OPEN_001_RECORDING_ANNOUNCE','CALL_OPEN_009_TPMO_TIMING_2027','SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027','ENROLL_002_VERBAL_CONSENT'].includes(code) && detection?.detection_method==='deterministic_hard_rule') return Boolean(detection.transcript_segment?.trim()) && detection.segment_start_ms!=null;
   if (current && code === 'CALL_OPEN_009_TPMO_TIMING_2027') {
     return detection?.detection_method === 'tpmo_2027_policy'
-      && detection.detected === false && Number(detection.confidence) >= 0.9;
+      && detection.detected === false && Number(detection.confidence) >= 0.9
+      && Boolean(detection.transcript_segment?.trim()) && detection.segment_start_ms != null;
   }
-  return (HARD_VIOLATIONS.has(code) || (current && code === 'RECORD_005_DATA_SHARING_CONSENT')) && detection?.anti_pattern_match === true
-    && (detection.hard_cms_violation === true || detection.detection_method === 'cms_hard_violation')
-    && Number(detection.confidence) >= 0.9 && Boolean(detection.transcript_segment?.trim());
+  return false; // Judgment evidence can only produce REVIEW, never AUTO-FAIL.
 }
 
 export function isUnscoredDetection(detection) {
   return !detection || detection.detection_method === 'unscored'
     || detection.direction_excluded || detection.detection_method === 'direction_filter'
     || (!detection.detected && !detection.anti_pattern_match
-      && detection.detection_method !== 'tpmo_2027_policy')
+      && !['tpmo_2027_policy','deterministic_rule','deterministic_hard_rule'].includes(detection.detection_method))
     || /^(?:no (?:statement|evidence|indication)|not (?:found|detected|present)|none\b)/i.test(detection.transcript_segment || '')
     || Number(detection.confidence || 0) < (detection.anti_pattern_match ? 0.7 : 0.5);
 }
@@ -36,7 +36,7 @@ export function calibratedTemplateItem(item, policyVersion) {
   const code = item.intent_code || item.compliance_intents?.intent_code;
   const intent = getIntentByCode(code);
   const current = policyVersion === MA_2027_POLICY_VERSION;
-  const autoFail = HARD_VIOLATIONS.has(code) || (current && ['CALL_OPEN_009_TPMO_TIMING_2027', 'RECORD_005_DATA_SHARING_CONSENT'].includes(code));
+  const autoFail = current && ['CALL_OPEN_001_RECORDING_ANNOUNCE','CALL_OPEN_009_TPMO_TIMING_2027','SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027','ENROLL_002_VERBAL_CONSENT'].includes(code);
   return { ...item, intent_code: code,
     question_text: current ? intent?.description || item.question_text : item.question_text || intent?.description,
     is_auto_fail: autoFail, is_critical: current ? intent?.failure_severity === 'critical' : HARD_VIOLATIONS.has(code) };

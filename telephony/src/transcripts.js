@@ -28,12 +28,13 @@ export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = ()
   };
 }
 
-export async function runTranscriptDispatch({ db, scoringUrl, secret, transport = fetch }) {
+export async function runTranscriptDispatch({ db, scoringUrl, secret, transport = fetch, scoringEnabled = process.env.SCORING_ENABLED === 'true' }) {
   // Store/reconcile terminal transcripts independently. Only disposition-created
   // sale requests can be returned for dispatch; call end cannot create eligibility.
   const reconciled = await db.rpc('reconcile_telephony_transcripts');
   if (reconciled.error) throw reconciled.error;
   if (!scoringUrl || !secret) throw new Error('Transcript scoring URL/secret is not configured');
+  if(!scoringEnabled)return;
   const { data, error } = await db.rpc('get_sale_compliance_dispatch');
   if (error) throw error;
   for (const job of data || []) {

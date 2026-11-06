@@ -28,11 +28,11 @@ test('late positive evidence replaces high-confidence segment absence; absent pr
 test('old template auto-fail flags cannot auto-fail a soft or unconfirmed violation',()=>{
  for(const intent_code of ['CONDUCT_006_PROFESSIONAL_TONE','CONDUCT_004_NO_MISLEADING_LANGUAGE']){
   const result=score([detection(),detection({intent_code,anti_pattern_match:true})],[item(),item(intent_code,2)]);
-  assert.equal(result.auto_fail_triggered,false);assert.equal(result.overall_score,83.33);
+  assert.equal(result.auto_fail_triggered,false);assert.equal(result.overall_score,100);assert.equal(result.scorecard_items[1].result,'review');
  }
  const intent_code='CONDUCT_004_NO_MISLEADING_LANGUAGE';
  const hard=score([detection(),detection({intent_code,anti_pattern_match:true,detection_method:'cms_hard_violation'})],[item(),item(intent_code,2)]);
- assert.equal(hard.auto_fail_triggered,true);assert.equal(hard.overall_grade,'F');
+ assert.equal(hard.auto_fail_triggered,false);assert.equal(hard.overall_grade,'A+');
  assert.equal(score([detection({intent_code,anti_pattern_match:true,detection_method:'cms_hard_violation',confidence:0.8})],[item(intent_code)]).auto_fail_triggered,false);
 });
 test('re-aggregation retains historical rule meaning, labels and observed misconduct',()=>{
@@ -42,7 +42,7 @@ test('re-aggregation retains historical rule meaning, labels and observed miscon
  assert.deepEqual(merged,[original]);
  const result=score(merged,[item(intent_code)]);
  assert.equal(result.scorecard_items[0].question_text,'Original saved wording');
- assert.equal(result.scorecard_items[0].result,'fail');assert.equal(result.auto_fail_triggered,false);
+ assert.equal(result.scorecard_items[0].result,'review');assert.equal(result.auto_fail_triggered,false);
 });
 test('saved scorecard items are a fallback without inventing failures for zero-confidence items',()=>{
  const template=[{...item(),compliance_intents:{intent_code:code}}];

@@ -60,6 +60,17 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
 
     let result, pointsEarned;
 
+    // AI judgments are review-only. No deduction until an authenticated admin
+    // confirms the evidence in a separate, versioned aggregation.
+    if ((detection?.detection_method === 'judgment_review' && (!detection.detected || detection.anti_pattern_match || !detection.transcript_segment || detection.segment_start_ms==null || Number(detection.confidence)<0.7) || detection?.anti_pattern_match && detection.detection_method !== 'tpmo_2027_policy') && !detection.manually_overridden) {
+      reviewRequired = true;
+      scorecardItems.push({template_item_id:item.id,intent_id:item.intent_id,detection_id:detection.id||null,
+        intent_code:item.intent_code,decided_by:'AI',question_text:item.question_text,category:item.category,result:'review',
+        points_earned:0,points_possible:0,confidence:detection.confidence||0,is_auto_fail:false,auto_fail_triggered:false,
+        notes:detection.llm_reasoning||'Judgment requires administrator review',evidence_text:detection.transcript_segment||null,
+        evidence_timestamp_ms:detection.segment_start_ms??null,display_order:item.display_order||0});
+      continue;
+    }
     // Direction-excluded intents are N/A, don't count against the score
     if (isUnscoredDetection(detection)) {
       const needsReview = /manual review required/i.test(detection?.llm_reasoning || '');
@@ -73,6 +84,7 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
         intent_id: item.intent_id,
         detection_id: detection?.id || null,
         intent_code: detection?.intent_code || item.intent_code,
+      decided_by:detection?.detection_method==='judgment_review'?'AI':'Code',
         question_text: item.question_text,
         category: item.category,
         result: 'na',
@@ -147,6 +159,7 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
       intent_id: item.intent_id,
       detection_id: detection?.id || null,
       intent_code: detection?.intent_code || item.intent_code,
+      decided_by:detection?.detection_method==='judgment_review'?'AI':'Code',
       question_text: item.question_text,
       category: item.category,
       result,

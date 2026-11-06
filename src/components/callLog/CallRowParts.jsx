@@ -17,7 +17,7 @@ export function DispositionChip({ disposition }) {
 
 const COMPLIANCE_LABELS = {
   not_requested: 'Not requested', transcript_pending: 'Transcript pending', queued: 'Queued',
-  scoring: 'Scoring', complete: 'Complete', failed: 'Scoring failed', dispo_changed: 'Disposition changed',
+  scoring: 'Scoring', complete: 'Complete', failed: 'Scoring failed', incomplete:'Scoring incomplete', dispo_changed: 'Disposition changed',
 };
 export function CallStatusOutcome({ disposition, outcome }) {
   const outcomeValue = String(outcome ?? '');
@@ -33,6 +33,7 @@ export function CallStatusOutcome({ disposition, outcome }) {
 
 export function ComplianceChip({ score, status, grade, passFail, duration }) {
   if ((duration != null && Number.isFinite(Number(duration)) && Number(duration) < 120) || isUnscoredCompliance({ overall_grade: grade, pass_fail: passFail })) return <span className="call-compliance-pill is-neutral" title="Insufficient for compliance scoring">N/A</span>;
+  if (status === 'incomplete') return <span className="contacts-muted" title="Scoring incomplete">Incomplete</span>;
   if (status === 'failed') return <span className="contacts-muted" title="Scoring failed">Not scored</span>;
   if (score == null || !Number.isFinite(Number(score))) return <span className="contacts-muted" title={COMPLIANCE_LABELS[status]}>Not scored</span>;
   const value = Math.round(Number(score));

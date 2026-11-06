@@ -1,3 +1,4 @@
+import { RecoveringSttSocket } from '../lib/recoveringSttSocket.js';
 import { debugLog, warnSttOverlap, logSttUsageFailure } from "../lib/debugLog.js";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useCallStore } from "../stores/callStore";
@@ -114,6 +115,7 @@ export function useCustomerAudio({ enabled = true, serverTranscriptionActive = f
   ownershipRef.current = { enabled, serverTranscriptionActive, callSid };
   const generationRef = useRef(0);
   const usageRef = useRef(null);
+  const reconnectBudgetRef=useRef({callSid:null,used:0,started:false});
   const authRef = useRef(getToken);
   authRef.current = getToken;
 
@@ -308,7 +310,8 @@ export function useCustomerAudio({ enabled = true, serverTranscriptionActive = f
     sourceRef.current = source;
 
     // /auth/grant returns a JWT, which requires Bearer authentication.
-    const ws = new WebSocket(DEEPGRAM_WS_URL, ["bearer", deepgramToken]);
+    if(reconnectBudgetRef.current.callSid!==captureCallSid)reconnectBudgetRef.current={callSid:captureCallSid,used:0,started:false};
+    const ws = new RecoveringSttSocket(DEEPGRAM_WS_URL, {callId:captureCallSid,budget:reconnectBudgetRef.current,reserveReconnect:async()=>{if(!captureCallSid)return false;const response=await fetchWithClerk(getToken,'/.netlify/functions/stt-reconnect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({call_sid:captureCallSid})});if(!response.ok)return false;return (await response.json()).allowed===true;},getProtocols:async()=>{const token=deepgramToken || await fetchDeepgramToken(getToken);deepgramToken=null;return ['bearer',token];},onAudioSent:bytes=>{if(usageRef.current?.callSid===captureCallSid)usageRef.current.bytes+=bytes;},onHealth:status=>setError(status==='connected'?'':status==='reconnecting'?'Transcript reconnecting':'Transcript reconnect limit reached')});
     const streamId = `customer-${++captureSequence}`;
     let audioStartedAt;
     wsRef.current = ws;
@@ -316,7 +319,7 @@ export function useCustomerAudio({ enabled = true, serverTranscriptionActive = f
     usageRef.current = usage;
     const sendPcm = pcm => {
       if (!ownershipRef.current.enabled || ownershipRef.current.serverTranscriptionActive || ownershipRef.current.callSid !== captureCallSid) { cleanup(); return; }
-      if (wsRef.current === ws && ws.readyState === WebSocket.OPEN) { ws.send(pcm); usage.bytes += pcm.byteLength; }
+      if (wsRef.current === ws) { ws.send(pcm); }
     };
 
     ws.onopen = () => {

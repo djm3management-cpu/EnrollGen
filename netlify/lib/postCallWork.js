@@ -164,13 +164,14 @@ function normalizeDiarized(entries) {
   if (!Array.isArray(entries)) return [];
   return entries
     .map((entry) => ({
-      speaker: entry?.speaker === "customer" || entry?.speaker === "beneficiary" ? "customer" : "agent",
+      id:entry.id,segmentId:entry.segmentId,timing_source:entry.timing_source,
+      speaker: entry?.speaker === "beneficiary"?"customer":["agent","customer","third_party"].includes(entry?.speaker)?entry.speaker:"unknown",
       text: safeText(entry?.text),
-      start_ms: Number.isFinite(Number(entry?.start_ms)) ? Number(entry.start_ms) : 0,
-      end_ms: Number.isFinite(Number(entry?.end_ms)) ? Number(entry.end_ms) : 0,
+      start_ms: entry?.start_ms!=null&&Number.isFinite(Number(entry.start_ms)) ? Number(entry.start_ms) : null,
+      end_ms: entry?.end_ms!=null&&Number.isFinite(Number(entry.end_ms)) ? Number(entry.end_ms) : null,
       confidence: Number.isFinite(Number(entry?.confidence)) ? Number(entry.confidence) : undefined,
     }))
-    .filter((entry) => entry.text);
+    .filter((entry) => entry.text).sort((a,b)=>(a.start_ms??Infinity)-(b.start_ms??Infinity));
 }
 
 function mergeMetadata(current, patch) {

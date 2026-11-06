@@ -18682,3 +18682,34 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
 @media (max-width: 600px) {
   .enrollment-intake-grid { grid-template-columns: 1fr; }
 }
+
+/* Compliance review uses the shared terminal / corporate theme tokens. */
+.compliance-overhaul { color:var(--eg-text); background:var(--eg-surface-1); font-weight:400; }
+.compliance-overhaul :is(h2,h3,strong,b) {font-weight:500;}
+.compliance-overhaul :is(section,article,nav) {border:0;border-radius:0;background:transparent;}
+.compliance-overhaul-toolbar,.compliance-overhaul-timeline,.compliance-overhaul-filters,.compliance-overhaul-item>div,.compliance-overhaul-review {display:flex;flex-wrap:wrap;align-items:center;gap:12px;}
+.compliance-overhaul-toolbar {padding:16px 0;}
+.compliance-overhaul-score {font-size:28px;font-weight:500;}
+.compliance-overhaul-badge {border:1px solid currentColor;border-radius:4px;padding:3px 7px;font-size:11px;}
+.compliance-overhaul button {font:inherit;font-weight:500;cursor:pointer;}
+.compliance-overhaul .contacts-mini-btn {border:0;border-radius:4px;background:linear-gradient(180deg,var(--eg-accent),var(--eg-accent-hover,var(--eg-accent)));box-shadow:inset 0 1px 0 #ffffff30;}
+.compliance-overhaul button:disabled {opacity:.45;cursor:default;}
+.compliance-overhaul-coverage {display:grid;gap:6px;margin:16px 0;color:var(--eg-text);}
+.compliance-overhaul-coverage.is-incomplete {color:var(--eg-danger,#ef6464);}
+.compliance-overhaul progress {width:100%;height:3px;accent-color:currentColor;}
+.compliance-overhaul-timeline {gap:18px;padding:20px 0;}
+.compliance-overhaul-timeline button,.compliance-overhaul-evidence,.compliance-overhaul-item>button {color:var(--eg-text);background:transparent;border:0;text-align:left;padding:0;}
+.compliance-overhaul-evidence {display:grid;gap:6px;padding:10px 0;}
+.compliance-overhaul-categories {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;padding:18px 0;}
+.compliance-overhaul-filters {padding:16px 0;}
+.compliance-overhaul-filters button {border:1px solid transparent;background:transparent;color:var(--eg-text);border-radius:4px;}
+.compliance-overhaul-filters button[aria-pressed=true] {border-color:currentColor;}
+.compliance-overhaul-item {padding:12px 0;margin-bottom:12px;}
+.compliance-overhaul-item>div>span:first-child {flex:1;min-width:220px;}
+.compliance-overhaul-item p {margin:8px 0;color:var(--eg-text-muted,var(--eg-text));font-weight:400;}
+.compliance-review-modal.compliance-overhaul {border:0;border-radius:0;background:var(--eg-surface-1);font-family:var(--eg-font-sans,'Avenir Next',sans-serif);}
+.compliance-review-modal.compliance-overhaul * {font-weight:400;}
+.compliance-review-modal.compliance-overhaul :is(h2,h3,strong,b,button,.compliance-overhaul-score) {font-weight:500;}
+.compliance-review-modal.compliance-overhaul .compliance-review-head {border:0;}
+.compliance-review-modal.compliance-overhaul .compliance-review-head h2 {margin-right:auto;}
+.transcript-reconnecting {display:inline-block;color:var(--eg-amber-text);font-size:11px;font-weight:500;padding:3px 8px;}

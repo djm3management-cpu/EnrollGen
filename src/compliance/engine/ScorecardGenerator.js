@@ -1,27 +1,15 @@
-import { MA_CY2027_GUIDANCE } from '../../data/maCompliance2027.js';
+import { transcriptCoverage, sortTranscript } from '../rules/transcript.js';
 import { debugLog } from "../../lib/debugLog.js";
 import { randomUUID } from "node:crypto";
-import { assessmentFormat } from "../../lib/llm/schemas/compliance.js";
 /**
  * ScorecardGenerator, Orchestrates the full scoring pipeline:
  * transcript → classification → scoring → scorecard + corrective actions.
  * Persists results to Supabase.
  */
 
-import { classifyCall } from './IntentClassifier.js';
+import { classifyJudgmentOnce } from './JudgmentPass.js';
 import { scoreCall, calculateAverageConfidence } from './ScoringEngine.js';
 import { calibratedTemplateItem } from '../shared/scoringPolicy.js';
-import { AGENCY_CLOSING_GUIDANCE } from '../../data/agencyClosing.js';
-
-const ASSESSMENT_SYSTEM_PROMPT = `You are a Medicare enrollment quality analyst. You will receive a call transcript with compliance scoring results. Follow the supplied assessment schema.
-
-${AGENCY_CLOSING_GUIDANCE}
-
-${MA_CY2027_GUIDANCE}
-
-For the agent, score rapport, listening, and product knowledge from 1 to 10 with one sentence of notes for each. List missed cross-sell or clarification opportunities and anything a CMS auditor would flag beyond compliance scoring. Identify the single most impactful coaching priority.
-
-For the beneficiary, score engagement from 1 to 10 based on their responsiveness. List moments of confusion, indicate whether a competing plan was mentioned, and assess disenrollment risk as low, medium, or high with a one-sentence explanation. Recommend the first follow-up between 14 and 60 days.`;
 
 /**
  * Generate a complete compliance scorecard for a call.
@@ -45,10 +33,12 @@ export async function generateScorecard(params) {
     return await generateScorecardWork({ ...params, setJob: value => { job = value; } });
   } catch (error) {
     try {
+      if(job?.passId)await checked(params.supabase.from('compliance_llm_passes').update({status:'failed'}).eq('id',job.passId),'Record pass failure');
       if (job) {
         await checked(params.supabase.rpc('fail_scoring_job', {
           p_job_id: job.jobId, p_attempt_token: job.attemptToken, p_error: error.message,
         }), 'Record failed scoring job');
+        await checked(params.supabase.rpc('mark_scoring_incomplete',{p_job_id:job.jobId,p_attempt_token:job.attemptToken,p_reason:error.message}),'Record incomplete scoring version');
       } else {
         await checked(params.supabase.from('call_records').update({
           metadata: { ...(params.callRecord.metadata || {}), scoring_status: 'failed', scoring_error: error.message,
@@ -63,8 +53,15 @@ export async function generateScorecard(params) {
 }
 
 async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress, setJob }) {
+  const workStarted=Date.now();
   const progress = (pct, msg) => onProgress && onProgress(pct, msg);
 
+  const coverage = transcriptCoverage(callRecord);
+  if (!coverage.complete || coverage.durationMs<120000) {
+    const reason = coverage.durationMs<120000?'Call below scoring minimum':`Transcript ${Math.round(coverage.endMs/1000)}s of ${Math.round(coverage.durationMs/1000)}s (${(coverage.ratio*100).toFixed(1)}%)`;
+    await checked(supabase.from('call_records').update({metadata:{...(callRecord.metadata||{}),scoring_status:'incomplete',scoring_error:reason,transcript_coverage:coverage}}).eq('id',callRecord.id).eq('tenant_id',callRecord.tenant_id),'Record incomplete transcript');
+    return {incomplete:true,reason,coverage};
+  }
   // 1. Get the active scoring template
   progress(5, 'Loading scoring template...');
   const { data: template, error: templateError } = await supabase
@@ -106,7 +103,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
   setJob(job);
   const persist = async result => {
     const saved = await checked(supabase.rpc('persist_scoring_result', {
-      p_job_id: job.jobId, p_attempt_token: job.attemptToken, p_result: result,
+      p_job_id: job.jobId, p_attempt_token: job.attemptToken, p_result: {...result,scoringDurationMs:Date.now()-workStarted},
     }), 'Persist scoring result');
     if (saved?.skipped) return saved;
     if (!saved?.scorecard?.id) throw new Error('Scoring transaction returned no scorecard');
@@ -120,7 +117,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
 
   // 3. Parse transcript
   progress(10, 'Preparing transcript...');
-  const diarized = structuredClone(callRecord.transcript_diarized || []);
+  const diarized = sortTranscript(structuredClone(callRecord.transcript_diarized || []));
   if (diarized.length === 0 && callRecord.transcript_raw) {
     // Fallback: treat raw transcript as single agent segment
     diarized.push({
@@ -131,71 +128,14 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
     });
   }
 
-  // 3a. Short-call filter, calls under 2 min are flagged as insufficient
-  const callDurationS = callRecord.call_duration_seconds
-    || (diarized.length > 0 ? Math.max(...diarized.map(u => (u.end_ms || 0))) / 1000 : 0);
-
-  if (callDurationS > 0 && callDurationS < 120) {
-    progress(90, 'Short call, insufficient for scoring');
-    const scorecard = {
-        tenant_id: callRecord.tenant_id,
-        call_id: callRecord.id,
-        template_id: template.id,
-        thread_id: callRecord.thread_id,
-        is_thread_composite: false,
-        overall_score: 0,
-        overall_grade: 'N/A',
-        total_points_earned: 0,
-        total_points_possible: 0,
-        pass_fail: 'N/A',
-        auto_fail_triggered: false,
-        auto_fail_reasons: [],
-        category_scores: {},
-        risk_level: 'low',
-        risk_flags: [`Call duration ${Math.round(callDurationS)}s, insufficient for compliance scoring (minimum 120s)`],
-        sequence_violations: 0,
-        sentiment_summary: {},
-        coaching_notes: [`Short call (${Math.round(callDurationS)}s) flagged as insufficient rather than scored at 0%`],
-        corrective_actions_needed: false,
-      };
-    return persist({ scorecard, items: [], detections: [], actions: [], redactions: [], isShortCall: true });
-  }
-
   // 4. Classify intents
   progress(15, 'Classifying intents...');
-  const { data: cachedSegments, error: cachedSegmentsError } = await supabase
-    .from('scoring_segment_progress').select('segment_index,result').eq('job_id', job.jobId);
-  if (cachedSegmentsError) throw new Error(`Load segment progress: ${cachedSegmentsError.message}`);
-  const segmentCache = new Map((cachedSegments || []).map(row => [row.segment_index, row.result]));
-  const classificationResult = await classifyCall({
-    diarized,
-    callContext: {
-      call_type: callRecord.call_type,
-      product_type: callRecord.product_type,
-      call_direction: callRecord.call_direction,
-    },
-    callLLM,
-    loadSegmentResult: index => segmentCache.get(index),
-    saveSegmentResult: async (index, result) => {
-      const { error } = await supabase.from('scoring_segment_progress').upsert({
-        job_id: job.jobId, segment_index: index, result,
-      }, { onConflict: 'job_id,segment_index' });
-      if (error) throw new Error(`Save segment progress: ${error.message}`);
-      segmentCache.set(index, result);
-    },
-    reserveInputTokens: async tokens => {
-      const reserved = await checked(supabase.rpc('reserve_scoring_input_tokens', {
-        p_job_id: job.jobId, p_attempt_token: job.attemptToken, p_tokens: tokens,
-      }), 'Reserve scoring input token budget');
-      if (reserved?.status === 'exceeded') {
-        const failure = new Error(`Call input token budget exceeded (${reserved.estimatedInputTokens})`);
-        failure.code = 'call_token_budget_exceeded';
-        throw failure;
-      }
-      if (reserved?.status !== 'reserved') throw new Error('Scoring attempt lease superseded');
-    },
-    onProgress: (innerPct, msg) => progress(15 + Math.round(innerPct * 0.6), msg),
-  });
+  const pass=await checked(supabase.rpc('claim_compliance_pass',{
+    p_call_id:callRecord.id,p_tenant_id:callRecord.tenant_id,p_request_id:randomUUID(),p_mode:'automatic',p_requested_by:null,
+  }),'Claim lifetime scoring pass');
+  if(pass.status==='claimed')job.passId=pass.id;
+  if(pass.status!=='claimed')throw Object.assign(new Error(pass.status),{code:'paid_pass_already_exists'});
+  const classificationResult=await classifyJudgmentOnce({diarized,callContext:callRecord,callLLM,passId:pass.id});
 
   // 5. Prepare intent detections for the atomic save
   progress(80, 'Preparing detections...');
@@ -255,33 +195,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
       corrective_actions_needed: scoreResult.corrective_actions_needed,
     };
 
-  // 7b. Agent performance + beneficiary risk assessment
-  if (callDurationS >= 120 && diarized.length >= 10) {
-    progress(92, 'Assessing agent performance...');
-    let assessment;
-    try {
-      const assessmentPrompt = buildAssessmentPrompt(callRecord, diarized, scoreResult);
-      const assessmentRaw = await callLLM(ASSESSMENT_SYSTEM_PROMPT, assessmentPrompt, { response_format: assessmentFormat });
-      assessment = parseAssessmentResponse(assessmentRaw);
-    } catch (error) {
-      debugLog("[ScorecardGenerator] Assessment generation failed");
-      throw error;
-    }
-    if (assessment) {
-
-      let assessmentQuery = supabase.from('call_records').update({
-        agent_assessment: assessment.agent,
-        beneficiary_risk: assessment.beneficiary,
-        updated_at: new Date().toISOString(),
-      }).eq('id', callRecord.id);
-      if (callRecord.tenant_id) assessmentQuery = assessmentQuery.eq('tenant_id', callRecord.tenant_id);
-      const { error: assessmentError } = await assessmentQuery;
-      if (assessmentError) throw assessmentError;
-
-      await upsertFollowupQueue(supabase, callRecord, assessment.beneficiary);
-    }
-  }
-
+  // No separate assessment request; judgments share one bounded pass.
   // 8. Prepare scorecard line items
   const itemRows = scoreResult.scorecard_items.map(item => ({
     template_item_id: item.template_item_id,
@@ -299,6 +213,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
     evidence_text: item.evidence_text,
     evidence_timestamp_ms: item.evidence_timestamp_ms,
     display_order: item.display_order,
+    rule_id:item.intent_code,decided_by:item.decided_by||'Code',
   }));
 
 
@@ -335,7 +250,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
 
   return persist({ scorecard, items: itemRows, detections: detectionRows,
     actions: correctiveActions, redactions: allRedactions, isShortCall: false,
-    detectedDirection: classificationResult.detectedDirection || null });
+    detectedDirection: classificationResult.detectedDirection || null, passId:pass.id, rulesVersion:'cy2027-overhaul-draft-1' });
 }
 
 async function updateAgentProfile(supabase, callRecord, scorecard) {
@@ -422,100 +337,3 @@ function buildCorrectiveDescription(scoreResult) {
   return lines.join('\n');
 }
 
-function formatScore(value) {
-  const numeric = Number(value || 0);
-  return Number.isFinite(numeric) ? numeric.toFixed(1) : '0.0';
-}
-
-function buildAssessmentPrompt(callRecord, diarized, scoreResult) {
-  const transcriptText = diarized
-    .map(u => `[${u.speaker}]: ${u.text}`)
-    .join('\n');
-
-  const words = transcriptText.split(/\s+/);
-  const truncated = words.length > 3000
-    ? `${words.slice(0, 3000).join(' ')}\n[TRUNCATED]`
-    : transcriptText;
-
-  const weakCategories = Object.entries(scoreResult.category_scores || {})
-    .filter(([, scores]) => Number(scores?.pct || 0) < 70)
-    .map(([category, scores]) => `${category}: ${scores.pct}%`)
-    .join(', ') || 'None';
-
-  return `Call Metadata:
-- Agent: ${callRecord.agent_name || callRecord.writing_agent || 'Unknown'}
-- Carrier: ${callRecord.carrier_name || 'Unknown'}
-- Duration: ${Math.round((callRecord.call_duration_seconds || 0) / 60)} minutes
-- Product: ${callRecord.product_type || 'MA'}
-- Compliance Score: ${formatScore(scoreResult.overall_score)}% (${scoreResult.overall_grade})
-- Pass/Fail: ${scoreResult.pass_fail}
-- Auto-Fail: ${scoreResult.auto_fail_triggered ? 'YES - ' + scoreResult.auto_fail_reasons.join(', ') : 'No'}
-
-Weak Categories: ${weakCategories}
-
-Transcript:
-${truncated}`;
-}
-
-function parseAssessmentResponse(raw) {
-  try {
-    const parsed = typeof raw === "object" ? raw : JSON.parse(raw);
-    return {
-      agent: parsed.agent || { rapport_score: null, top_coaching_priority: 'Assessment missing agent section' },
-      beneficiary: parsed.beneficiary || { disenrollment_risk: 'unknown', recommended_followup_days: 30 },
-    };
-  } catch {
-    return {
-      agent: { rapport_score: null, top_coaching_priority: 'Assessment parsing failed' },
-      beneficiary: { disenrollment_risk: 'unknown', recommended_followup_days: 30 },
-    };
-  }
-}
-
-function addDays(dateValue, days) {
-  const base = dateValue ? new Date(dateValue) : new Date();
-  const validBase = Number.isNaN(base.getTime()) ? new Date() : base;
-  validBase.setDate(validBase.getDate() + days);
-  return validBase.toISOString().slice(0, 10);
-}
-
-function clampFollowupDays(value) {
-  const days = Number.parseInt(value, 10);
-  if (!Number.isFinite(days)) return 30;
-  return Math.min(60, Math.max(14, days));
-}
-
-async function upsertFollowupQueue(supabase, callRecord, beneficiaryRisk) {
-  const riskLevel = beneficiaryRisk?.disenrollment_risk;
-  const shouldQueue =
-    (callRecord.call_outcome === 'enrolled' || callRecord.enrollment_completed === true)
-    && (riskLevel === 'medium' || riskLevel === 'high');
-
-  if (!shouldQueue || !callRecord.tenant_id) return;
-
-  const customerName = [callRecord.customer_first_name, callRecord.customer_last_name]
-    .filter(Boolean)
-    .join(' ') || callRecord.beneficiary_name || null;
-  const enrollmentDate = callRecord.effective_date
-    || (callRecord.call_start ? String(callRecord.call_start).slice(0, 10) : new Date().toISOString().slice(0, 10));
-  const followupDays = clampFollowupDays(beneficiaryRisk?.recommended_followup_days);
-
-  try {
-    const { error } = await supabase.from('followup_queue').upsert({
-      tenant_id: callRecord.tenant_id,
-      call_id: callRecord.id,
-      agent_name: callRecord.writing_agent || callRecord.agent_name || null,
-      customer_name: customerName,
-      carrier_name: callRecord.carrier_name || null,
-      plan_name: callRecord.plan_name || null,
-      enrollment_date: enrollmentDate,
-      risk_level: riskLevel,
-      risk_reason: beneficiaryRisk?.disenrollment_risk_reason || null,
-      recommended_followup_date: addDays(enrollmentDate, followupDays),
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'call_id' });
-    if (error) throw error;
-  } catch (error) {
-    throw new Error(`Queue beneficiary follow-up: ${error.message || error}`);
-  }
-}
