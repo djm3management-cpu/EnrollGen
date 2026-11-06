@@ -6,6 +6,7 @@ import {evaluateRules} from '../../src/compliance/rules/evaluate.js';
 import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
 import {transcriptCoverage} from '../../src/compliance/rules/transcript.js';
 import {aggregateVersion} from '../../src/compliance/engine/VersionAggregator.js';
+if(RULES_VERSION!=='cy2027-script-stages-3')throw Error('Historical generator retired; use cms-only-report.mjs --dry-run. It must not rewrite migration 141.');
 if(!process.argv.includes('--dry-run'))throw Error('This tool requires --dry-run; live execution does not exist.');
 const dir='docs/compliance-overhaul';
 const data=JSON.parse(await readFile('/tmp/enrollgen-compliance-audit.json','utf8'));

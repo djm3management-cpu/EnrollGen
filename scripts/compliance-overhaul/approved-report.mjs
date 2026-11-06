@@ -7,6 +7,7 @@ import {transcriptCoverage,sortTranscript} from '../../src/compliance/rules/tran
 import {buildJudgmentRequest,estimateJudgment} from '../../src/compliance/engine/judgmentRequest.js';
 import {classificationFormat} from '../../src/lib/llm/schemas/compliance.js';
 import {scoringCost,DEEPGRAM_BATCH_PER_MINUTE_USD} from '../../src/compliance/shared/scoringConfig.js';
+if(RULES_VERSION!=='cy2027-overhaul-draft-2')throw Error('Historical generator retired; use cms-only-report.mjs --dry-run.');
 const baselinePath=process.argv[2];
 if(!baselinePath)throw Error('Pass the saved pre-change matcher report path; this tool is dry-run only.');
 const data=JSON.parse(await readFile('/tmp/enrollgen-compliance-audit.json','utf8'));

@@ -28,8 +28,8 @@ test('saved inbound direction excludes outbound-only checks despite outbound-sou
       {speaker:'agent',text:'Thank you.',start_ms:179000,end_ms:180000}],
     callLLM:async()=>({detections:[],assessment:{a:{r:7,l:7,k:7,n:'Fixture assessment.'},b:{e:7,l:'low',r:[]}}})});
   assert.equal(result.detectedDirection,'inbound');
-  const ptc=result.detections.find(d=>d.intent_code==='CALL_OPEN_014_OUTBOUND_PTC_VALID');
-  assert.equal(ptc.direction_excluded,true);
+  assert.equal(result.detections.some(d=>d.intent_code==='CALL_OPEN_014_OUTBOUND_PTC_VALID'),false);
+  const ptc={intent_code:'CALL_OPEN_014_OUTBOUND_PTC_VALID'};
   const score=scoreCall({detections:result.detections,templateItems:[{id:'ptc',intent_code:ptc.intent_code,points_possible:5,category:'CALL_OPENING'}],template:{}});
   assert.equal(score.total_points_possible,0);assert.equal(score.scorecard_items[0].result,'na');
 });

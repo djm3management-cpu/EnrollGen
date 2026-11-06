@@ -1,4 +1,4 @@
-import {SCRIPT_RULE_BASIS} from '../rules/scriptBasis.js';
+import {CMS_RULE_BASIS as SCRIPT_RULE_BASIS} from '../rules/cmsBasis.js';
 import {evaluateRules} from '../rules/evaluate.js';
 import {RETIRED_RULE_IDS} from '../rules/catalog.js';
 /**
@@ -65,9 +65,16 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
         confidence:1,decided_by:'Code',is_auto_fail:false,auto_fail_triggered:false,notes:evaluated?.items.find(r=>r.rule_id===calibrated.intent_code)?.missing||'Excluded from active script rubric',display_order:rawItem.display_order||0});
       continue;
     }
-    const item = preserveRuleText ? { ...calibrated, question_text: rawItem.question_text } : calibrated;
+    const item = {...calibrated,points_possible:SCRIPT_RULE_BASIS[calibrated.intent_code]?.points??0,question_text:preserveRuleText?rawItem.question_text:SCRIPT_RULE_BASIS[calibrated.intent_code]?.name||calibrated.question_text};
     const detection = findBestDetection(detections, item.intent_id, item.intent_code);
 
+    if(SCRIPT_RULE_BASIS[item.intent_code]?.method==='judgment'){
+      const flag=!!(detection?.anti_pattern_match&&detection?.transcript_segment&&detection?.segment_start_ms!=null&&Number(detection.confidence)>=.7);
+      scorecardItems.push({template_item_id:item.id,intent_id:item.intent_id,intent_code:item.intent_code,category:item.category,question_text:item.question_text,
+        result:flag?'review':'na',points_earned:0,points_possible:0,decided_by:'AI',confidence:detection?.confidence||0,
+        is_auto_fail:false,auto_fail_triggered:false,evidence_text:flag?detection.transcript_segment:null,evidence_timestamp_ms:flag?detection.segment_start_ms:null,notes:detection?.llm_reasoning||'No confirmed CMS conduct violation',display_order:item.display_order||0});
+      reviewRequired=reviewRequired||flag;continue;
+    }
     const ruleResult=evaluated?.items.find(r=>r.rule_id===item.intent_code);
     if(ruleResult?.result==='review'&&ruleResult.decided_by==='Code'||detection?.detection_method==='deterministic_review'){
       reviewRequired=true;

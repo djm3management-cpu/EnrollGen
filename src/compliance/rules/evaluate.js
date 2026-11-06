@@ -1,86 +1,96 @@
-import {detectCallStages,scoringEligibility,isEnrolled} from './callStages.js';
-import {ruleHasScriptBasis,SCRIPT_RULE_BASIS} from './scriptBasis.js';
-import {acknowledgmentAfter,beforeSubmission} from './acknowledgment.js';
 import {RULE_CATALOG,RULES_VERSION} from './catalog.js';
-import {sortTranscript,evidence,transcriptCoverage} from './transcript.js';
-const scope=/scope of appointment|permission.{0,40}discuss|may (?:we|i).{0,30}(?:discuss|review)|would you like to discuss.{0,65}(?:all of these options|medicare advantage|prescription)|brief overview.{0,120}would that be (?:ok|okay)/i;
-export function matchAgentStatements(agent,pattern){
+import {ruleHasCmsBasis} from './cmsBasis.js';
+import {detectCallStages,scoringEligibility,isEnrolled} from './callStages.js';
+import {sortTranscript,evidence} from './transcript.js';
+import {acknowledgmentAfter} from './acknowledgment.js';
+const scope=/(?:permission.{0,50}(?:discuss|review)|may (?:we|i).{0,40}discuss|would you like to discuss.{0,80}(?:options|plans?|these|medicare advantage|prescription drug)|brief overview.{0,120}would that be (?:ok|okay))/i;
+const product=/medicare advantage|prescription drug|part d|medicare supplement|medigap|stand.alone (?:dental|vision)/i;
+const consent=/(?:agree|consent|authorize|want|like|ready).{0,55}(?:to )?enroll|proceed with.{0,20}(?:enrollment|application)/i;
+const recording=/(?:(?:call|conversation|enrollment).{0,45}record(?:ed|ing)|record(?:ed|ing).{0,25}(?:call|conversation|enrollment|line))/i;
+export function matchAgentStatements(agent,pattern,{windowMs=30000,maxLines=40}={}){
  if(!pattern)return [];
  const matches=[];
- for(let i=0;i<agent.length;i++){
-  const passage=[];
-  for(let j=i;j<agent.length&&j<i+12;j++){
-   if(agent[j].end_ms-agent[i].start_ms>30000)break;
-   passage.push(agent[j]);
-   const text=passage.map(p=>p.text).join(' ');
-   if(pattern.test(text)){matches.push({...agent[i],text,end_ms:agent[j].end_ms,segment_ids:passage.map(p=>p.id||p.segmentId).filter(Boolean)});break;}
-  }
+ for(let i=0;i<agent.length;i++)for(let j=i;j<agent.length&&j<i+maxLines;j++){
+  if(j>i&&agent[j].end_ms-agent[i].start_ms>windowMs)break;
+  const passage=agent.slice(i,j+1),text=passage.map(l=>l.text).join(' ');
+  if(pattern.test(text)){matches.push({...agent[i],text,end_ms:agent[j].end_ms,segment_ids:passage.map(l=>l.id||l.segmentId).filter(Boolean)});break;}
  }
  return matches.sort((a,b)=>a.end_ms-b.end_ms||b.start_ms-a.start_ms);
 }
-export function matchAgentStatement(agent,pattern){
- return matchAgentStatements(agent,pattern)[0]||null;
-}
+export const matchAgentStatement=(agent,pattern,options)=>matchAgentStatements(agent,pattern,options)[0]||null;
 export function ruleApplies(rule,call,stages=detectCallStages(call)){
- if(!rule||rule.bucket==='RETIRE'||!ruleHasScriptBasis(rule.id,call.product_type))return false;
- if(scoringEligibility(call,stages).status!=='eligible')return false;
- const basis=SCRIPT_RULE_BASIS[rule.id];
- if(!stages[basis.stage])return false;
- if(rule.subcategory==='OUTBOUND'&&call.call_direction!=='outbound')return false;
- if(rule.subcategory==='INBOUND'&&call.call_direction!=='inbound')return false;
- if(/^(?:PECL_|ENROLL_)/.test(rule.id)&&!isEnrolled(call))return false;
- if(basis.condition==='identified_sep')return stages.identifiedSep;
- if(basis.condition==='prescriptions')return typeof call.metadata?.has_prescriptions==='boolean'?call.metadata.has_prescriptions:null;
- if(basis.condition==='plan_comparison')return stages.comparison||call.metadata?.plan_comparison===true;
- if(basis.condition==='tpmo_sharing')return call.metadata?.tpmo_sharing===true;
- if(basis.condition==='pdp_comparison')return call.metadata?.pdp_mapd_comparison===true;
- if(basis.condition==='non_renewing_plan')return call.metadata?.non_renewing_plan===true;
- if(basis.condition==='outbound_callback')return call.call_direction==='outbound'&&call.metadata?.inbound_callback_received===true;
- const extra={PLAN_015_DENTAL_BENEFITS:'dental',PLAN_016_VISION_BENEFITS:'vision',PLAN_017_HEARING_BENEFITS:'hearing',PLAN_018_OTC_BENEFITS:'otc',PLAN_020_TRANSPORTATION_BENEFITS:'transportation',PLAN_023_PART_B_GIVEBACK:'giveback'}[rule.id];
- if(extra){const benefits=call.metadata?.plan_benefits;if(!Array.isArray(benefits))return null;return benefits.includes(extra);}
- if(basis.condition==='medicaid')return typeof call.medicaid==='boolean'?call.medicaid:null;
- if(basis.condition==='snp')return call.metadata?.plan_type?/SNP/i.test(call.metadata.plan_type):null;
+ if(!rule||!ruleHasCmsBasis(rule.id,call.product_type)||scoringEligibility(call,stages).status!=='eligible')return false;
+ if(!stages[rule.cmsBasis.stage])return false;
+ if(rule.cmsBasis.stage==='enrollment'&&!isEnrolled(call))return false;
+ if(rule.cmsBasis.condition==='tpmo_sharing')return call.metadata?.tpmo_sharing===true;
  return true;
 }
+export const TOPIC_PATTERNS={
+ providers:/(?:doctor|specialist|provider|physician).{0,100}(?:in.network|out.of.network|network|accepts? (?:this|the|your) plan)|(?:in.network|out.of.network|network).{0,100}(?:doctor|specialist|provider|physician)/i,
+ pharmacy:/pharmac(?:y|ies)(?:(?!\b(?:doctor|provider|specialist)\b).){0,100}(?:network|preferred|standard|participat)|(?:network|preferred|standard).{0,70}pharmac(?:y|ies)/i,
+ drugs:/(?:medications?|prescriptions?|drugs?).{0,100}(?:cover(?:ed|age)?|formulary|cost|co.?pay|tier)|(?:cover(?:ed|age)?|formulary|cost|co.?pay).{0,80}(?:medications?|prescriptions?|drugs?)/i,
+ services:/(?:doctor|specialist|hospital|office visit|health care|medical service).{0,70}(?:cost|co.?pay|co.?insurance|\$|dollars|pay)|(?:cost|co.?pay|co.?insurance|\$\d).{0,60}(?:office visit|hospital|medical service)/i,
+ premiums:/premium.{0,65}(?:\$?\d|zero|no (?:monthly |plan )?premium|dollars|[a-z]+ dollars)|(?:\$\s*\d|zero|no|\d+ dollars).{0,40}premium/i,
+ benefits:/(?:this|your|the|selected) plan.{0,75}(?:covers?\b|includes?\b|provides?\b|gives?\b|benefit\b)|(?:dental|vision|hearing|otc|over.the.counter|transportation).{0,70}(?:allowance|cover|benefit|\$|dollars)|benefits?.{0,40}(?:included|coverage|plan)/i,
+ needs:/durable medical equipment|\bDME\b|physical therapy|\bPT\b|oxygen|dialysis|home health|(?:specific|other|any).{0,35}(?:health ?care|medical) needs|(?:surgery|diabetes|treatment).{0,50}(?:need|care|require|condition)/i,
+};
+const applicationOnly=/\b(?:will|do) you have any other (?:prescription )?drug coverage\b/i;
+export function matchTopic(agent,topic){return matchAgentStatement(agent.filter(l=>!applicationOnly.test(l.text.trim())),TOPIC_PATTERNS[topic]);}
+function namedPlan(text,call){
+ const normalize=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ if(call.plan_name&&normalize(text).includes(normalize(call.plan_name)))return true;
+ return /\bH\d{4}\s*[- ]\s*\d{3}\b/i.test(text)||/\b(?:humana|aetna|united ?healthcare|wellcare|cigna|anthem|devoted|alignment)\b.{0,100}\b(?:HMO|PPO|PFFS|MAPD|PDP|choice|gold|value|secure|complete|saver)\b/i.test(text);
+}
 export function evaluateRules(call){
- const stages=detectCallStages(call),eligibility=scoringEligibility(call,stages);
- const coverage=transcriptCoverage(call),lines=sortTranscript(call.transcript_diarized);
- const agent=lines.filter(x=>x.speaker==='agent');
- const tpmo=stages.tpmo;
- const presentation=tpmo.firstBenefit;
- const enrollment=stages.submission;
- const consent=matchAgentStatement(agent,RULE_CATALOG.find(r=>r.id==='ENROLL_002_VERBAL_CONSENT').pattern);
- const replyAfter=(line,rule)=>acknowledgmentAfter(line,lines,{pecl:rule.id.startsWith('PECL_')});
+ const stages=detectCallStages(call),eligibility=scoringEligibility(call,stages),coverage=eligibility.coverage;
+ const lines=sortTranscript(call.transcript_diarized),agent=lines.filter(l=>l.speaker==='agent'),submission=stages.submission,firstBenefit=stages.firstBenefit;
+ const reply=(line,method)=>{
+  const normal=acknowledgmentAfter(line,lines,{pecl:true});if(normal)return normal;
+  const first=lines.find(l=>l.speaker==='customer'&&l.start_ms>=Math.max(line.start_ms,line.end_ms-500)&&l.end_ms>=line.end_ms&&l.text?.trim());
+  if(!first||/\b(?:no|not|don't|decline|refuse)\b/i.test(first.text))return null;
+  if(method==='scope'&&product.test(first.text))return first;
+  if(method==='consent'&&/i (?:want|would like) to enroll|i authorize.{0,30}(?:enrollment|submission)|enroll me|let(?:'s| us) (?:enroll|submit)/i.test(first.text))return first;
+  return null;
+ };
  const items=RULE_CATALOG.map(rule=>{
   const base={rule_id:rule.id,category:rule.category,question_text:rule.description,decided_by:rule.decided_by,rules_version:RULES_VERSION,auto_fail_triggered:false};
-  const applies=ruleApplies(rule,call,stages);
-  if(rule.bucket==='RETIRE'||applies===false)return {...base,result:'na',missing:rule.bucket==='RETIRE'?rule.reviewNote:'Not applicable to call metadata'};
-  if(applies===null)return {...base,result:'review',missing:'Conditional script-path metadata missing'};
-  if(rule.bucket==='JUDGMENT')return {...base,result:'review',missing:'Stored judgment evidence requires review'};
-  if(rule.scriptBasis?.metadataOnly){
-   const value=call[rule.scriptBasis.metadataOnly]??call.metadata?.[rule.scriptBasis.metadataOnly];
-   return {...base,result:typeof value==='boolean'?(value?'pass':'fail'):'review',missing:value===true?null:`Required metadata evidence not verified: ${rule.scriptBasis.metadataOnly}`};
+  const out=(result,line,missing=null,extra={})=>({...base,...evidence(line),result,missing,...extra});
+  if(!ruleApplies(rule,call,stages))return out('na',null,rule.bucket==='RETIRE'?rule.reviewNote:eligibility.reason||'CMS requirement not applicable at the reached stage');
+  const basis=rule.cmsBasis;
+  if(basis.method==='judgment')return out('review',null,'Only anchored prohibited-conduct findings may be reviewed; no automatic deduction');
+  if(basis.method==='metadata'){
+   const value=call.metadata?.[basis.metadataOnly];
+   return out(typeof value==='boolean'?(value?'pass':'fail'):'review',null,value===true?null:`Verified metadata unavailable: ${basis.metadataOnly}`);
   }
-  const candidates=matchAgentStatements(agent,/^SOA_00[134]/.test(rule.id)?scope:rule.pattern);
-  let line=candidates[0]||null, ordered=true;
-  if(/TPMO/.test(rule.id))line=tpmo.disclaimer;
-  if(rule.requiresReply&&!/TPMO/.test(rule.id))line=candidates.find(candidate=>replyAfter(candidate,rule))||line;
-  if(rule.id==='SOA_004_SOA_SCOPE_STATED'&&line&&!/medicare advantage|prescription drug|part d|medicare supplement|stand.alone (?:dental|vision)/i.test(line.text))line=null;
-  if(line&&(!Number.isFinite(line.start_ms)||!Number.isFinite(line.end_ms)))return {...base,result:'review',missing:'Statement has no reliable timestamp'};
-  if(rule.requiresReply&&line){const reply=replyAfter(line,rule);if(!reply)return {...base,...evidence(line),result:'fail',missing:rule.id.startsWith('PECL_')?'Beneficiary acknowledgment not found within 30 seconds or next customer turn':'Beneficiary affirmative reply not found within 20 seconds'};line={...line,text:`${line.text} / Customer: ${reply.text}`,end_ms:reply.end_ms};}
-  let trigger=null;
-  if(rule.id==='CALL_OPEN_001_RECORDING_ANNOUNCE'){trigger=presentation;ordered=!!line&&(!trigger||line.end_ms<=trigger.start_ms);}
-  if(rule.id==='CALL_OPEN_009_TPMO_TIMING_2027'){ordered=tpmo.beforeBenefits;trigger=presentation;}
-  if(rule.id==='SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027'){trigger=presentation;ordered=!!line&&(!trigger||line.end_ms<=trigger.start_ms);}
-  if(/^PECL_/.test(rule.id)){trigger=enrollment;ordered=!!line&&beforeSubmission(line,trigger);}
-  if(rule.id==='ENROLL_002_VERBAL_CONSENT'){trigger=enrollment;ordered=!!line&&(!trigger||line.end_ms<=trigger.start_ms);}
-  if(line&&ordered===null)return {...base,...evidence(line),result:'review',missing:'Application submission timestamp unavailable'};
-  const result=line&&ordered?'pass':'fail';
-  // Absence and ambiguous ordering cannot manufacture an auto-fail quote.
-  const autoFail=coverage.complete&&result==='fail'&&line&&trigger&&line.start_ms>trigger.start_ms&&['CALL_OPEN_001_RECORDING_ANNOUNCE','CALL_OPEN_009_TPMO_TIMING_2027','SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027','ENROLL_002_VERBAL_CONSENT'].includes(rule.id);
-  return {...base,...evidence(line),result,auto_fail_triggered:Boolean(autoFail),missing:!line?'Required statement not found':!ordered?'Required event occurred after its prerequisite deadline':null,
-   trigger_evidence:trigger?evidence(trigger):null};
+  let candidates=[],line=null,deadline=null,missing='CMS-required topic/statement not found';
+  if(basis.method==='tpmo'){line=stages.tpmo.disclaimer;deadline=firstBenefit;}
+  else if(basis.method==='scope'){
+   candidates=matchAgentStatements(agent,scope,{windowMs:90000,maxLines:80}).filter(l=>product.test(l.text));
+   line=candidates.find(l=>reply(l,basis.method))||null;deadline=firstBenefit;
+  }else if(basis.method==='recordingConsent'){
+   candidates=matchAgentStatements(agent,recording);line=candidates.find(l=>reply(l,basis.method))||null;deadline=submission;
+  }else if(basis.method==='consent'){
+   candidates=matchAgentStatements(agent,consent,{windowMs:90000,maxLines:80}).filter(l=>namedPlan(l.text,call));
+   line=candidates.find(l=>reply(l,basis.method))||null;deadline=submission;
+   missing='Named-plan enrollment request and clear beneficiary affirmative agreement not found';
+  }else{
+   deadline=submission;
+   const pattern=basis.method==='impact'?/(?:enroll|join|new (?:plan|coverage)).{0,140}(?:replace|disenroll|\bends?\b.{0,35}(?:current|existing|other|plan|coverage))|(?:replace|disenroll).{0,100}(?:current|existing|coverage|plan)|when.{0,60}(?:coverage|plan).{0,35}begins?.{0,130}(?:get|receive).{0,40}(?:medical|prescription|health care).{0,50}from/i:TOPIC_PATTERNS[basis.topic];
+   const usable=agent.filter(l=>!applicationOnly.test(l.text.trim()));
+   candidates=matchAgentStatements(usable,pattern);
+   line=candidates.find(l=>!deadline||l.end_ms<=deadline.start_ms)||candidates[0]||null;
+  }
+  if(!line)return out('fail',null,missing);
+  if(['scope','consent','recordingConsent'].includes(basis.method)){
+   const acknowledgment=reply(line,basis.method);line={...line,text:`${line.text} / Customer: ${acknowledgment.text}`,end_ms:acknowledgment.end_ms};
+  }
+  if(['topic','impact','consent','recordingConsent'].includes(basis.method)&&!deadline)return out('review',line,'Submission timestamp unavailable; before-submission ordering cannot be verified');
+  const late=deadline&&line.end_ms>deadline.start_ms;
+  const sameLineTpmo=basis.method==='tpmo'&&stages.tpmo.beforeBenefits;
+  const failed=late&&!sameLineTpmo;
+  const hard=failed&&line.start_ms>deadline.start_ms&&['tpmo','scope','consent'].includes(basis.method);
+  return out(failed?'fail':'pass',line,failed?'Required event occurred after its CMS deadline':null,{auto_fail_triggered:!!hard,trigger_evidence:deadline?evidence(deadline):null});
  });
- return {rules_version:RULES_VERSION,coverage,eligibility,stages:{opening:stages.opening,qualifications:stages.qualifications,needs:stages.needs,plan:stages.plan,application:stages.application,enrollment:stages.enrollment,identifiedSep:stages.identifiedSep},status:eligibility.status==='na'?'N/A':eligibility.status==='incomplete'?'SCORING INCOMPLETE':'evaluated',items,
-  timeline:{recording:agent.find(x=>/call.{0,35}recorded/i.test(x.text)),tpmo:tpmo.disclaimer,firstBenefit:presentation,soa:agent.find(x=>scope.test(x.text)),needsAssessment:agent.find(x=>/what.{0,30}(?:needs|goals|important)|looking for|do you (?:take|see|have)/i.test(x.text)),planPresentation:presentation,pecl:agent.find(x=>/pre.enrollment checklist/i.test(x.text)),consent,enrollment}};
+ return {rules_version:RULES_VERSION,coverage,eligibility,status:eligibility.status==='na'?'N/A':eligibility.status==='incomplete'?'SCORING INCOMPLETE':'evaluated',items,
+  stages:{opening:stages.opening,plan:stages.plan,enrollment:stages.enrollment,identifiedSep:stages.identifiedSep},timeline:{tpmo:stages.tpmo.disclaimer,firstBenefit,soa:items.find(i=>i.rule_id==='SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027')?.evidence_timestamp_ms!=null?{start_ms:items.find(i=>i.rule_id==='SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027').evidence_timestamp_ms}:null,enrollment:submission}};
 }

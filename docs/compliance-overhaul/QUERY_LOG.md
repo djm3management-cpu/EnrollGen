@@ -110,3 +110,7 @@ SELECT public.decrypt_pii_value($1::jsonb); -- 33: contact fc562812-ca6e-4a0f-80
 ## Script/stage scoring continuation
 
 No new production SQL or RPC queries were executed in this continuation. The dry runs read the existing local October 1 snapshot. SQL added/edited in migrations 132/133/134/138/141 is an unapplied source proposal, not a record of executed queries. Primary eCFR pages were read to verify the narrow CMS-only allowlist exceptions.
+
+## CMS-only continuation
+
+No production SQL or RPC query was executed. The same private local 376-call snapshot was used. Primary CMS/eCFR/govinfo sources were read for citations; the final local PDF was read for wording. Generated migration 142 and edited pending migration text were not executed.

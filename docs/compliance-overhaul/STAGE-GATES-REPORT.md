@@ -1,5 +1,7 @@
 # Stage and script applicability dry run
 
+Superseded grading policy: the current CMS-only authority and dry run are in [CMS-ONLY-REPORT.md](CMS-ONLY-REPORT.md) and [cms-only-rules.md](cms-only-rules.md). Earlier figures below are retained as historical before-states.
+
 No calls were actually scored or repaired. All figures below come from the same 376-call local snapshot starting October 1. No new production queries were run. Source scripts were read, not modified.
 
 Rules: cy2027-script-stages-3. 87 kept definitions (86 on MA), 75 excluded. 62 calls had a numeric previous-draft estimate; now 24 qualify for a numeric estimate, 318 are N/A, 34 remain INCOMPLETE. 311 calls have a known talk time under 15 minutes, including 6 zero-duration calls.

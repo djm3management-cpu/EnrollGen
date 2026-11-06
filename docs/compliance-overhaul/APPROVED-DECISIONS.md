@@ -1,5 +1,7 @@
 # Approved scoring updates, November 6
 
+Superseded grading policy: the current CMS-only authority and dry run are in [CMS-ONLY-REPORT.md](CMS-ONLY-REPORT.md) and [cms-only-rules.md](cms-only-rules.md). Earlier figures below are retained as historical before-states.
+
 Later script/stage applicability changes are in [STAGE-GATES-REPORT.md](STAGE-GATES-REPORT.md). The draft-2 counts below are retained as the historical before-state. Current rules are cy2027-script-stages-3.
 
 Implemented locally on fix/compliance-scoring-overhaul. No provider requests, transcription, production SQL queries or production writes were performed in this continuation. No rescore/dispatch/queue, migration application, deploy, merge or push occurred.

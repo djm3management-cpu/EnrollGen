@@ -1,5 +1,5 @@
 import {detectCallStages} from '../rules/callStages.js';
-import {ruleHasScriptBasis} from '../rules/scriptBasis.js';
+import {ruleHasCmsBasis as ruleHasScriptBasis} from '../rules/cmsBasis.js';
 import {RULE_CATALOG} from '../rules/catalog.js';
 import {ruleApplies} from '../rules/evaluate.js';
 import {sortTranscript} from '../rules/transcript.js';

@@ -5,14 +5,14 @@ import {aggregateSavedDetections, detectionsFromSavedItems} from '../src/complia
 import {classifyCall} from '../src/compliance/engine/IntentClassifier.js';
 import {currentScoredCards} from '../netlify/functions/compliance.js';
 import {INTENT_CLASSIFICATION_SYSTEM} from '../src/compliance/prompts/intent-classification.js';
-const code='SOA_001_SOA_REFERENCE';
+const code='SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027';
 const item=(intent_code=code,points_possible=10)=>({id:intent_code,intent_code,question_text:'Original saved wording',category:'fixture',points_possible,is_auto_fail:true});
 const score=(detections,items=[item()])=>scoreCall({detections,templateItems:items,template:{passing_threshold:85},preserveRuleText:true});
-const detection=(patch={})=>({intent_code:code,detected:true,confidence:0.95,transcript_segment:'Authorized discussion',...patch});
+const detection=(patch={})=>({intent_code:code,detected:true,confidence:0.95,transcript_segment:'Authorized discussion',segment_start_ms:1000,...patch});
 
 test('missing and unevaluated rules never become failures or change denominator',()=>{
  const result=score([detection()],[item(),item('unscored'),item('absent')]);
- assert.equal(result.overall_score,100);assert.equal(result.total_points_possible,10);
+ assert.equal(result.overall_score,100);assert.equal(result.total_points_possible,1);
  assert.deepEqual(result.scorecard_items.map(i=>i.result),['pass','na','na']);assert.equal(result.auto_fail_triggered,false);
  assert.equal(score([]).overall_grade,'N/A');assert.equal(score([]).corrective_actions_needed,false);
 });
@@ -26,17 +26,17 @@ test('late positive evidence replaces high-confidence segment absence; absent pr
  assert.equal(score([detection({sequence_violation:true,sequence_violation_detail:'detected but prerequisite other was not found'})]).overall_score,100);
 });
 test('old template auto-fail flags cannot auto-fail a soft or unconfirmed violation',()=>{
- for(const intent_code of ['PLAN_025_BENEFITS_ACCURATE','ENROLL_011_NO_PRESSURE_TACTICS']){
+ for(const intent_code of ['CONDUCT_004_NO_MISLEADING_LANGUAGE','ENROLL_011_NO_PRESSURE_TACTICS']){
   const result=score([detection(),detection({intent_code,anti_pattern_match:true})],[item(),item(intent_code,2)]);
   assert.equal(result.auto_fail_triggered,false);assert.equal(result.overall_score,100);assert.equal(result.scorecard_items[1].result,'review');
  }
- const intent_code='PLAN_025_BENEFITS_ACCURATE';
+ const intent_code='CONDUCT_004_NO_MISLEADING_LANGUAGE';
  const hard=score([detection(),detection({intent_code,anti_pattern_match:true,detection_method:'cms_hard_violation'})],[item(),item(intent_code,2)]);
  assert.equal(hard.auto_fail_triggered,false);assert.equal(hard.overall_grade,'A+');
  assert.equal(score([detection({intent_code,anti_pattern_match:true,detection_method:'cms_hard_violation',confidence:0.8})],[item(intent_code)]).auto_fail_triggered,false);
 });
 test('re-aggregation retains historical rule meaning, labels and observed misconduct',()=>{
- const intent_code='PLAN_025_BENEFITS_ACCURATE';
+ const intent_code='CONDUCT_004_NO_MISLEADING_LANGUAGE';
  const original=detection({intent_code,anti_pattern_match:true,llm_reasoning:'Original rule interpretation',detection_method:'intent_classifier'});
  const merged=aggregateSavedDetections({detections:[original]});
  assert.deepEqual(merged,[original]);
@@ -61,7 +61,7 @@ test('aggregates select current revision and exclude N/A zeros',()=>{
 test('new-call rules respect inbound verbal SOA and no scheduled outbound evidence; mock only',async()=>{
  const soaDet={intent_code:code,detected:true,confidence:0.95,anti_pattern:false,evidence_text:'May we discuss Medicare Advantage? Yes.'};
  const diarized=[{speaker:'agent',text:'Thank you for calling. May we discuss Medicare Advantage?',start_ms:0,end_ms:5000},
-  {speaker:'customer',text:'Yes.',start_ms:5000,end_ms:6000},{speaker:'agent',text:'Thank you.',start_ms:1199000,end_ms:1200000}];
+  {speaker:'customer',text:'Yes.',start_ms:5000,end_ms:6000},{speaker:'agent',text:'This plan gives you $50.',start_ms:100000,end_ms:101000},{speaker:'agent',text:'Thank you.',start_ms:1199000,end_ms:1200000}];
  const r=await classifyCall({diarized,callContext:{call_direction:'inbound',product_type:'MA',call_duration_seconds:1200},callLLM:async(system,user)=>{
   assert.ok(system.includes('never final violations'));assert.ok(user.includes('May we discuss Medicare Advantage?'));
   return {detections:[soaDet],assessment:{a:{r:7,l:7,k:7,n:'Fixture assessment.'},b:{e:7,l:'low',r:[]}}};

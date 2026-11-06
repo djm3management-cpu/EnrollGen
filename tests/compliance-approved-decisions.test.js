@@ -1,4 +1,3 @@
-import {acknowledgmentAfter} from '../src/compliance/rules/acknowledgment.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {scoringCost,scoringDailyCap,DEEPGRAM_BATCH_PER_MINUTE_USD} from '../src/compliance/shared/scoringConfig.js';
@@ -21,9 +20,9 @@ test('approved cap and cached pricing, including invalid and excessive cached co
  assert.equal(DEEPGRAM_BATCH_PER_MINUTE_USD,.0043);
 });
 test('retired IDs never return to active rubric, while misleading comparisons stay active',()=>{
- assert.equal(RULES_VERSION,'cy2027-script-stages-3');assert.equal(ACTIVE_RULE_CATALOG.length,87);assert.equal(RULE_CATALOG.length,162);
+ assert.equal(RULES_VERSION,'cy2027-cms-only-4');assert.equal(ACTIVE_RULE_CATALOG.length,21);assert.equal(RULE_CATALOG.length,162);
  for(const id of RETIRED_RULE_IDS)assert.ok(!ACTIVE_RULE_CATALOG.some(r=>r.id===id));
- assert.ok(ACTIVE_RULE_CATALOG.some(r=>r.id==='PLAN_027_NO_MISLEADING_COMPARISONS'));
+ assert.ok(ACTIVE_RULE_CATALOG.some(r=>r.id==='CONDUCT_004_NO_MISLEADING_LANGUAGE'));
 });
 for(const id of RETIRED_RULE_IDS)test(`${id}: stale detection and prior admin decision cannot restore denominator`,()=>{
  const t={id:'template-item',intent_id:'intent',intent_code:id,points_possible:9,category:'TEST'};
@@ -49,27 +48,13 @@ test('maximal valid assessment is 341 ASCII bytes, below hard 400 token bound; i
  for(const bad of [{...assessment,a:{...assessment.a,n:'a'.repeat(191)}},{...assessment,b:{...assessment.b,r:Array(4).fill('reason')}},{...assessment,a:{...assessment.a,n:'quoted " text'}}])assert.throws(()=>legacyAssessment(bad));
  let count=0;await assert.rejects(classifyJudgmentOnce({callContext:call([]),diarized:call([]).transcript_diarized,callLLM:async()=>{count++;return {assessment:{...assessment,a:{...assessment.a,n:'a'.repeat(191)}}};}}));assert.equal(count,1);
 });
-test('reverse recorded-line wording, shared Parts A and B, travel inflection and max out of pocket',()=>{
- const c=call([line("I'm a licensed agent on a recorded line."),line('Do you have Parts A and B?',3000),line('Are you traveling or on vacation?',5000),line('Your max out of pocket is five thousand dollars.',7000)]);
- for(const id of ['CALL_OPEN_001_RECORDING_ANNOUNCE','ELIG_001_PARTS_AB_CONFIRM','NEEDS_014_TRAVEL_FREQUENCY','PLAN_006_MOOP_STATED'])assert.equal(item(c,id).result,'pass',id);
- assert.equal(item(call([line('My maximum benefit is five thousand.')]),'PLAN_006_MOOP_STATED').result,'fail');
- assert.equal(item(call([line("So if you're traveling, you can use that.")]),'NEEDS_014_TRAVEL_FREQUENCY').result,'fail');
+test('agency-only statements and optional needs checks remain excluded',()=>{
+ for(const id of ['CALL_OPEN_001_RECORDING_ANNOUNCE','ELIG_001_PARTS_AB_CONFIRM','NEEDS_014_TRAVEL_FREQUENCY','PLAN_006_MOOP_STATED'])assert.equal(item(call([]),id).result,'na');
 });
 test('scope discussion question needs named product and affirmative reply, not a needs-only question',()=>{
  const c=call([line('We offer Medicare Advantage and prescription drug plans. Would you like to discuss all of these options?'),line('Yes.',1100,'customer')]);
- assert.equal(item(c,'SOA_001_SOA_REFERENCE').result,'pass');
- assert.equal(item(call([line('Are you interested in giveback or OTC?'),line('Yes.',1100,'customer')]),'SOA_001_SOA_REFERENCE').result,'fail');
-});
-test('overlapping positive reply within 500ms counts; premature replies and explicit refusal do not',()=>{
- const statement=line('Do you understand the benefits included in this plan?',1000, 'agent',4000);
- assert.ok(acknowledgmentAfter(statement,[line('Yes.',4889,'customer')],{pecl:true}));
- assert.equal(item(call([statement,line('Yes.',4889,'customer')]),'PECL_008_BENEFITS_UNDERSTOOD').result,'na');
- assert.equal(item(call([statement,line('Yes.',4000,'customer')]),'PECL_008_BENEFITS_UNDERSTOOD').result,'na');
- assert.equal(item(call([statement,line('No.',5100,'customer'),line('Yes.',7000,'customer')]),'PECL_008_BENEFITS_UNDERSTOOD').result,'na');
-});
-test('completed repeat supersedes unacknowledged prompt; record permission is not enrollment consent',()=>{
- const c=call([line('Do I have your permission to record this enrollment?'),line('Yes.',1100,'customer'),line('Do you understand the benefits included in this plan?',3000),line('Do you understand the benefits included in this plan?',30000),line('Yes.',31100,'customer')]);
- assert.equal(item(c,'PECL_008_BENEFITS_UNDERSTOOD').result,'na');assert.equal(item(c,'ENROLL_002_VERBAL_CONSENT').result,'fail');
+ assert.equal(item(c,'SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027').result,'pass');
+ assert.equal(item(call([line('Are you interested in giveback or OTC?'),line('Yes.',1100,'customer')]),'SOA_003_SOA_BEFORE_PLAN_DISCUSSION_2027').result,'fail');
 });
 test('ledger records discounted cached input; daily-cap denial is returned before provider authorization',async()=>{
  let update,cap;const db={rpc:async(name,args)=>{cap=args.p_daily_cap;return {data:{status:'daily_cap',alert_claimed:false},error:null}},from:()=>({update:row=>{update=row;return {eq(){return this},then(resolve){resolve({error:null})}}},insert:async()=>({error:null})})};

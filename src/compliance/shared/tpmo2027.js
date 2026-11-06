@@ -6,8 +6,8 @@ const org=new RegExp(`represent${gap}(?:[a-z]+${gap}){0,5}${number}${gap}(?:orga
 const plans=new RegExp(`${number}${gap}(?:products?|plans?)\\b`,'i');
 export const hasTpmoOrgCount=text=>org.test(text);
 export const hasTpmoPlanCount=text=>plans.test(text);
-export const hasMedicareResource=text=>/medicare(?:\s*\.\s*gov|\s+dot\s+gov)|\b1\s*[-–—]?\s*800(?:\s*[-–—]?\s*medicare)?\b/i.test(text);
-export function hasTpmo2027(text){return org.test(text)&&plans.test(text)&&hasMedicareResource(text)&&/all (?:of )?your options|help with plan choices/i.test(text)&&/\b(?:we do not|we don't|we don’t) offer every plan\b/i.test(text);}
+export const hasMedicareResource=text=>/medicare(?:\s*\.\s*gov|\s+dot\s+gov)|\bone[ -]+eight[ -]+hundred(?:[ -]+medicare)?\b|\b1\s*[-–—]?\s*800(?:\s*[-–—]?\s*medicare)?\b/i.test(text);
+export function hasTpmo2027(text,context={}){return org.test(text)&&plans.test(text)&&hasMedicareResource(text)&&/all (?:of )?(?:your )?options|help with plan choices/i.test(text)&&(context.tpmo_sells_all===true||/\b(?:we do not|we don't|we don’t) offer every plan\b/i.test(text));}
 export function findBenefitTrigger(line,{plan_name,carrier_name}={}){
  const text=String(line.text||'');
  const needs=/(?:are you|do you|would you|looking for|interested in|what (?:benefits|coverage)|which (?:benefits|coverage)|do you (?:want|need|prefer)).{0,100}(?:give.?back|otc|benefit|dental|vision|hearing|premium|allowance)/i;
@@ -29,9 +29,9 @@ export function evaluateTpmo2027(utterances=[],context={}){
   const trigger=findBenefitTrigger(u,context);
   if(trigger&&!firstBenefit){
    const prefix=prior+' '+value.slice(0,trigger.trigger_index||0);
-   firstBenefit={...trigger,disclaimer_before_trigger_in_same_line:hasTpmo2027(prefix)};
+   firstBenefit={...trigger,disclaimer_before_trigger_in_same_line:hasTpmo2027(prefix,context)};
   }
-  if(!disclaimer&&hasTpmo2027(text))disclaimer={...u,text,start_ms:passage[0].start_ms,completion_ms:u.end_ms??u.start_ms};
+  if(!disclaimer&&hasTpmo2027(text,context))disclaimer={...u,text,start_ms:passage[0].start_ms,completion_ms:u.end_ms??u.start_ms};
   if(!earlyDisclosure&&org.test(text)&&plans.test(text)&&hasMedicareResource(text))earlyDisclosure={...u,text,start_ms:passage[0].start_ms,completion_ms:u.end_ms??u.start_ms};
   if(!disclaimer&&!trigger&&/\b(?:dental|vision|hearing|grocery|food|otc|give.?back)\b/i.test(value))coachingFlags.push({...u,reason:'Extras mentioned before disclaimer'});
  }

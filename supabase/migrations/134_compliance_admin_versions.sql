@@ -27,11 +27,13 @@ BEGIN
  IF nullif(p_requested_by,'') IS NULL THEN RAISE EXCEPTION 'Verified administrator required'; END IF;
  IF c.compliance_scorecard_id IS DISTINCT FROM p_source_id THEN RAISE EXCEPTION 'Scorecard changed; reload before reviewing'; END IF;
  SELECT * INTO STRICT original FROM compliance_scorecards WHERE id=p_source_id AND call_id=c.id AND tenant_id=c.tenant_id;
- SELECT count(*) INTO expected FROM scoring_template_items WHERE template_id=original.template_id;
+ card:=jsonb_populate_record(NULL::compliance_scorecards,p_payload->'scorecard');
+ IF NOT EXISTS(SELECT 1 FROM scoring_templates t WHERE t.id=card.template_id AND t.product_type=c.product_type AND t.is_active) THEN RAISE EXCEPTION 'Target must be the active product rubric'; END IF;
+ SELECT count(*) INTO expected FROM scoring_template_items WHERE template_id=card.template_id;
  IF expected=0 OR jsonb_array_length(p_payload->'items')<>expected THEN RAISE EXCEPTION 'SCORING INCOMPLETE: item coverage mismatch'; END IF;
  IF (SELECT count(DISTINCT x->>'template_item_id') FROM jsonb_array_elements(p_payload->'items')x)<>expected THEN RAISE EXCEPTION 'Duplicate items'; END IF;
  card:=jsonb_populate_record(NULL::compliance_scorecards,p_payload->'scorecard');
- IF card.call_id<>c.id OR card.tenant_id<>c.tenant_id OR card.template_id<>original.template_id
+ IF card.call_id<>c.id OR card.tenant_id<>c.tenant_id OR card.template_id IS NULL
   OR card.supersedes_id<>original.id OR nullif(card.rules_version,'') IS NULL THEN RAISE EXCEPTION 'Version identity mismatch'; END IF;
  IF EXISTS(SELECT 1 FROM compliance_llm_passes p WHERE p.call_id=c.id AND p.status IN ('reserved','running') AND (card.llm_pass_id IS NULL OR p.id<>card.llm_pass_id)) THEN RAISE EXCEPTION 'Scoring in progress'; END IF;
  card.id:=gen_random_uuid();card.created_at:=clock_timestamp();card.updated_at:=card.created_at;
@@ -41,7 +43,7 @@ BEGIN
  INSERT INTO compliance_scorecards SELECT card.*;
  FOR v IN SELECT * FROM jsonb_array_elements(p_payload->'items') LOOP
   item:=jsonb_populate_record(NULL::scorecard_items,v);item.scorecard_id:=card.id;
-  IF NOT EXISTS(SELECT 1 FROM scoring_template_items t WHERE t.id=item.template_item_id AND t.template_id=original.template_id) THEN RAISE EXCEPTION 'Item belongs to another template'; END IF;
+  IF NOT EXISTS(SELECT 1 FROM scoring_template_items t WHERE t.id=item.template_item_id AND t.template_id=card.template_id) THEN RAISE EXCEPTION 'Item belongs to another template'; END IF;
   IF item.detection_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM intent_detections d WHERE d.id=item.detection_id AND d.call_id=c.id) THEN RAISE EXCEPTION 'Evidence belongs to another call'; END IF;
   INSERT INTO scorecard_items SELECT item.*;
  END LOOP;

@@ -147,3 +147,23 @@ Current policy: `cy2027-script-stages-3`. See [STAGE-GATES-REPORT.md](STAGE-GATE
 | `tests/compliance-overhaul.test.js`, `tests/compliance-approved-decisions.test.js`, `tests/compliance-version-aggregation.test.js`, `tests/compliance-judgment-pass.test.js`, `tests/compliance-reaggregation.test.js`, `tests/compliance-review-api.test.js` | Bring fixtures onto eligible 15-minute calls or assert exclusion, preserve review/locking checks | Fixture doubles only |
 
 The private full sample cards and baselines are excluded from Git. Original production headers/items are included alongside previous-draft and proposed cards locally; no production card was updated. The two unrelated duplicate UI/style files remain untouched.
+
+## CMS-only continuation
+
+Current rule version: cy2027-cms-only-4. [Full rules/citations](cms-only-rules.md), [dry run](CMS-ONLY-REPORT.md), [validation](VALIDATION-CMS-ONLY.md).
+
+| Files | Change | Provider cost impact |
+|---|---|---|
+| `src/compliance/rules/cmsBasis.js`, `catalog.js`, `scriptBasis.js` | Citation-only authority; old script export is a compatibility alias; 21 active, 141 removed/consolidated | No provider work; fewer judgment items |
+| `src/compliance/rules/evaluate.js` | Topic-based pre-enrollment checks, named-plan intent/affirmative, scope agreement, before-submission order, metadata checks | CPU only |
+| `src/compliance/rules/callStages.js` | Preserve duration/outcome/stage/coverage gates; use verified submission metadata when present; no non-MA CMS assumptions | Zero model work for N/A |
+| `src/compliance/shared/tpmo2027.js` | Full statutory options clause, filler/count/resource tolerance and explicit all-organizations wording variant | CPU only |
+| `src/compliance/engine/JudgmentPass.js`, `judgmentRequest.js` | Only cited judgments; omit retired Code detections | One request maximum unchanged; judgment catalog 27 to seven |
+| `src/compliance/engine/ScoringEngine.js`, `VersionAggregator.js` | One-point internal weights, no AI pass points, no unconfirmed deductions, new CMS deterministic evidence replaces old script admin outcomes | Free aggregation only |
+| `netlify/lib/complianceVersions.js` | New versions use active rubric and evidence maps across template copies | Read/transaction work only; no model call |
+| `supabase/migrations/134_compliance_admin_versions.sql`, `138_scoring_incomplete_status.sql`, `142_cms_only_rubric.sql` | Pending active-rubric versions, current stamp/N/A fence, cloned CMS template | Unapplied; no current cost |
+| `scripts/compliance-overhaul/cms-only-report.mjs` | Explicit dry-run-only inventory, per-call/agent means, full original/before/after cards and pending SQL | No SQL/provider client |
+| Historical `approved-report.mjs`, `stage-gates-report.mjs`, `render-inventory.mjs` | Guard against generating old-policy artifacts under the new authority | Local guard only |
+| Scoring fixture files | Replace superseded script assertions; topic/consent/citation/ordering regressions and budget/API safeguards | Injected doubles only |
+
+Documentation and private reports updated. No styles, transcription, Deepgram, Railway transport or telephony source changed. User PDF and two unrelated duplicate UI/style files remain untouched. No provider request, production query/write, rescore, dispatch/queue action, migration application, deploy, merge or push occurred.
