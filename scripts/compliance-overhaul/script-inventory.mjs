@@ -15,5 +15,5 @@ function walk(value,product,path){
  else if(value&&typeof value==='object')for(const [k,v]of Object.entries(value))if(!['id','key','type','gate','value','title','label','outcome','image','icon'].includes(k))walk(v,product,`${path}.${k}`);
 }
 walk(MA_SCRIPT_SECTIONS,'MA','MA_SCRIPT_SECTIONS');walk({MA_CSNP_DISCLOSURE,MA_DSNP_DISCLOSURE,MA_PART_B_REDUCTION},'MA','conditional');walk(MEDSUP_SECTIONS,'MEDSUP','MEDSUP_SECTIONS');walk(ACA_GATES,'ACA','ACA_GATES');walk([U65_GATES,U65_SMALL_BUSINESS_GATES,U65_OPENER_VARIANTS],'U65','U65');
-await writeFile('docs/compliance-overhaul/script-statements.json',JSON.stringify(statements,null,2));
+await writeFile('docs/compliance-overhaul/script-statements.json',JSON.stringify(statements,null,2),{mode:0o600});
 console.log(JSON.stringify({mode:'OFFLINE',statements:statements.length,unmapped:statements.filter(s=>!s.candidate_rules.length).length,products:[...new Set(statements.map(s=>s.product))]}));

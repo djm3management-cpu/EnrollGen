@@ -30,6 +30,7 @@ BEGIN
   WHERE scorecard_id=card_id AND template_item_id=(v->>'template_item_id')::uuid;
  END LOOP;
  SELECT coalesce(array_agg(id),'{}') INTO item_ids FROM scorecard_items WHERE scorecard_id=card_id AND auto_fail_triggered;
+ IF (SELECT auto_fail_triggered FROM compliance_scorecards WHERE id=card_id) IS DISTINCT FROM (cardinality(item_ids)>0) THEN RAISE EXCEPTION 'Auto-fail header must match evidence line items'; END IF;
  UPDATE compliance_scorecards SET rules_version=p_result->>'rulesVersion',scoring_state='complete',
   supersedes_id=prior,auto_fail_item_ids=item_ids,llm_pass_id=(p_result->>'passId')::uuid,request_attempts=(SELECT count(*) FROM compliance_llm_requests WHERE pass_id=(p_result->>'passId')::uuid),scoring_duration_ms=(p_result->>'scoringDurationMs')::integer,
   tokens_used=(SELECT sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)) FROM compliance_llm_requests WHERE pass_id=(p_result->>'passId')::uuid),

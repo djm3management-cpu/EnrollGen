@@ -1,6 +1,32 @@
 -- UNAPPLIED. Apply only after review, with scoring disabled on both services.
 BEGIN;
 SET LOCAL lock_timeout='5s';
+-- Database rollout fence also stops older workers that do not know the env flag.
+CREATE TABLE public.compliance_runtime_control(id boolean PRIMARY KEY DEFAULT true CHECK(id),enabled boolean NOT NULL DEFAULT false);
+INSERT INTO public.compliance_runtime_control(id,enabled) VALUES(true,false);
+ALTER TABLE public.compliance_runtime_control ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.compliance_runtime_control FROM PUBLIC,anon,authenticated;
+GRANT ALL ON public.compliance_runtime_control TO service_role;
+CREATE POLICY runtime_service_only ON public.compliance_runtime_control TO service_role USING(true) WITH CHECK(true);
+ALTER FUNCTION public.get_sale_compliance_dispatch() RENAME TO get_sale_compliance_dispatch_pre132;
+REVOKE ALL ON FUNCTION public.get_sale_compliance_dispatch_pre132() FROM PUBLIC,anon,authenticated,service_role;
+CREATE FUNCTION public.get_sale_compliance_dispatch() RETURNS SETOF public.transcript_score_dispatch LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM compliance_runtime_control WHERE id AND enabled) THEN RETURN; END IF;
+ RETURN QUERY SELECT * FROM get_sale_compliance_dispatch_pre132();
+END $$;
+REVOKE ALL ON FUNCTION public.get_sale_compliance_dispatch() FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.get_sale_compliance_dispatch() TO service_role;
+ALTER FUNCTION public.begin_scoring_job(uuid,uuid,jsonb) RENAME TO begin_scoring_job_pre132;
+REVOKE ALL ON FUNCTION public.begin_scoring_job_pre132(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated,service_role;
+CREATE FUNCTION public.begin_scoring_job(p_call_id uuid,p_template_id uuid,p_transcript jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM compliance_runtime_control WHERE id AND enabled) THEN RETURN jsonb_build_object('status','skipped','reason','scoring_disabled'); END IF;
+ RETURN begin_scoring_job_pre132(p_call_id,p_template_id,p_transcript);
+END $$;
+REVOKE ALL ON FUNCTION public.begin_scoring_job(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.begin_scoring_job(uuid,uuid,jsonb) TO service_role;
+
 ALTER TABLE public.compliance_scorecards
  ADD COLUMN rules_version text,
  ADD COLUMN scoring_state text NOT NULL DEFAULT 'legacy',
@@ -58,6 +84,7 @@ CREATE FUNCTION public.claim_compliance_pass(p_call_id uuid,p_tenant_id uuid,p_r
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE c call_records; p compliance_llm_passes; n integer;
 BEGIN
+ IF NOT EXISTS(SELECT 1 FROM compliance_runtime_control WHERE id AND enabled) THEN RETURN jsonb_build_object('status','disabled'); END IF;
  SELECT * INTO STRICT c FROM call_records WHERE id=p_call_id AND tenant_id=p_tenant_id FOR UPDATE;
  SELECT * INTO p FROM compliance_llm_passes WHERE request_id=p_request_id;
  IF FOUND THEN
@@ -87,6 +114,7 @@ CREATE FUNCTION public.reserve_compliance_request(p_pass_id uuid,p_request_id uu
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE p compliance_llm_passes; b compliance_daily_budget; n integer; result uuid;
 BEGIN
+ IF NOT EXISTS(SELECT 1 FROM compliance_runtime_control WHERE id AND enabled) THEN RAISE EXCEPTION 'scoring_disabled'; END IF;
  SELECT * INTO STRICT p FROM compliance_llm_passes WHERE id=p_pass_id FOR UPDATE;
  IF p.status NOT IN ('reserved','running') OR p_tokens<1 THEN RAISE EXCEPTION 'Pass unavailable'; END IF;
  SELECT id INTO result FROM compliance_llm_requests WHERE request_id=p_request_id AND pass_id=p.id;

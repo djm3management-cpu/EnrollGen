@@ -44,6 +44,7 @@ BEGIN
   INSERT INTO scorecard_items SELECT item.*;
  END LOOP;
  IF EXISTS(SELECT 1 FROM unnest(card.auto_fail_item_ids) id WHERE NOT EXISTS(SELECT 1 FROM scorecard_items i WHERE i.id=id AND i.scorecard_id=card.id AND i.auto_fail_triggered)) THEN RAISE EXCEPTION 'Auto-fail link invalid'; END IF;
+ IF coalesce(card.auto_fail_triggered,false) IS DISTINCT FROM (coalesce(cardinality(card.auto_fail_item_ids),0)>0) OR EXISTS(SELECT 1 FROM scorecard_items i WHERE i.scorecard_id=card.id AND i.auto_fail_triggered AND NOT(i.id=ANY(card.auto_fail_item_ids))) THEN RAISE EXCEPTION 'Auto-fail header and evidence disagree'; END IF;
  IF p_decision IS NOT NULL THEN
   IF NOT EXISTS(SELECT 1 FROM scorecard_items i WHERE i.id=(p_decision->>'item_id')::uuid AND i.scorecard_id=original.id AND i.result='review') THEN RAISE EXCEPTION 'Review item unavailable'; END IF;
   INSERT INTO compliance_review_decisions(scorecard_item_id,tenant_id,request_id,decision,decided_by,note,replacement_scorecard_id)

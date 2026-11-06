@@ -39,6 +39,7 @@ export function createManualScoringHandler({getDb=getEvidenceServiceClient,callM
     try{
      const payload=await prepareVersion(db,call);
      Object.assign(payload.scorecard,{scoring_state:'incomplete',overall_score:null,overall_grade:null,pass_fail:null,total_points_earned:null,total_points_possible:null,auto_fail_triggered:false,auto_fail_item_ids:[],auto_fail_reasons:[],risk_flags:[String(error.message).slice(0,2000)],llm_pass_id:pass.id});
+     for(const item of payload.items)item.auto_fail_triggered=false;
      await saveVersion(db,call,payload,{requestId:pass.request_id,userId:pass.requested_by});
     }catch{console.error(JSON.stringify({event:'manual_scoring_incomplete_write_failed',call_id:call.id,pass_id:pass.id}));}
    }

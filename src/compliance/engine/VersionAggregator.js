@@ -27,7 +27,9 @@ export function aggregateVersion({call,source,items,templateItems,intents,decisi
   return row;
  });
  const earned=rows.reduce((s,r)=>s+r.points_earned,0),possible=rows.reduce((s,r)=>s+r.points_possible,0),score=possible?Math.round(earned/possible*10000)/100:null;
- const failed=rows.filter(i=>i.auto_fail_triggered),complete=evaluated.coverage.complete&&evaluated.coverage.durationMs>=120000&&rows.length===templateItems.length&&rows.length>0;
+ const complete=evaluated.coverage.complete&&evaluated.coverage.durationMs>=120000&&rows.length===templateItems.length&&rows.length>0;
+ if(!complete)for(const row of rows)row.auto_fail_triggered=false;
+ const failed=rows.filter(i=>i.auto_fail_triggered);
  const categories={};for(const r of rows){const c=categories[r.category]??={earned:0,possible:0};c.earned+=r.points_earned;c.possible+=r.points_possible;c.pct=c.possible?Math.round(c.earned/c.possible*100):0;}
  return {rules_version:RULES_VERSION,coverage:evaluated.coverage,items:rows,scorecard:{tenant_id:call.tenant_id,call_id:call.id,template_id:source.template_id,supersedes_id:source.id,rules_version:RULES_VERSION,scoring_state:complete?'complete':'incomplete',overall_score:complete?score:null,overall_grade:complete&&score!=null?calculateServerGrade(score,failed.length>0):null,total_points_earned:complete?earned:null,total_points_possible:complete?possible:null,pass_fail:complete&&score!=null?(failed.length||score<85?'FAIL':'PASS'):null,auto_fail_triggered:complete&&failed.length>0,auto_fail_item_ids:complete?failed.map(i=>i.id):[],auto_fail_reasons:complete?failed.map(i=>i.question_text):[],category_scores:categories,risk_level:failed.length?'critical':'low',risk_flags:rows.some(i=>i.result==='review')?['Administrator review required']:[],coaching_notes:[],corrective_actions_needed:failed.length>0,sequence_violations:0}};
 }

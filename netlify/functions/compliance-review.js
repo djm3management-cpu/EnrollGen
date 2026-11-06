@@ -1,7 +1,7 @@
 import {authorizeRecordingTarget,listTargetRecordings} from './_recordingAccess.js';
 import {prepareVersion,saveVersion} from '../lib/complianceVersions.js';
 import {requireClerkAuth} from './_clerkAuth.js';
-import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveCallAccessIdentity,scopeCallToIdentity} from './_evidenceAccess.js';
+import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveCallAccessIdentity} from './_evidenceAccess.js';
 import {transcriptCoverage,sortTranscript} from '../../src/compliance/rules/transcript.js';
 import {RULES_VERSION} from '../../src/compliance/rules/catalog.js';
 export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(r,{allowBypass:false}),getDb=getEvidenceServiceClient,transport=fetch,env=process.env}={}){
@@ -12,7 +12,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
    const input=request.method==='GET'?Object.fromEntries(new URL(request.url).searchParams):await request.json();
    if(!/^[0-9a-f-]{36}$/i.test(input.call_id||''))throw new EvidenceError(400,'Call ID required');
    const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
-   const call=checked(await scopeCallToIdentity(db.from('call_records').select('*').eq('id',input.call_id),identity).maybeSingle());
+   const call=checked(await db.from('call_records').select('*').eq('id',input.call_id).eq('tenant_id',identity.tenant.id).maybeSingle());
    if(!call)throw new EvidenceError(403,'Call unavailable');
    const coverage=transcriptCoverage(call);
    if(!call.agent_name||call.agent_name==='Agent'){

@@ -5,6 +5,12 @@ import { redactSensitiveText } from './lib/redaction.js';
 export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = () => {} }) {
   let tail = Promise.resolve();
   return message => {
+    if(message.type==='transcription_gap'){
+      const offset=claims.participantId?Math.max(0,message.timestamp-Date.parse(claims.startedAt)-message.startMs):0;
+      const args={p_attempt_id:claims.attemptId||null,p_participant_id:claims.participantId||null,p_gap_id:randomUUID(),p_start_ms:Math.round(offset+message.startMs),p_end_ms:Math.round(offset+message.endMs)};
+      tail=tail.then(async()=>{for(;;){try{const {error}=await db.rpc('append_transcription_gap',args);if(!error)return;}catch{/* Persist known loss independently from provider recovery. */}notify({type:'transcription_error',speaker:message.speaker,status:'unavailable',message:'Transcript coverage logging delayed'});await new Promise(resolve=>setTimeout(resolve,Math.min(retryMs,5000)));}});
+      return tail;
+    }
     if (message.type !== 'transcript' || !message.isFinal || !message.text?.trim()) return;
     const offset = claims.participantId ? Math.max(0, message.timestamp - Date.parse(claims.startedAt) - (message.startMs || 0)) : 0;
     const args = { ...(claims.participantId ? { p_participant_id: claims.participantId } : { p_attempt_id: claims.attemptId }), p_segment_id: randomUUID(),

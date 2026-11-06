@@ -1,8 +1,8 @@
 // Browser screen-capture fallback only. Server ownership still disables it.
 // KeepAlive is text; this transport never generates audio or replays sent audio.
 export class RecoveringSttSocket {
- constructor(url,{getProtocols,callId,onHealth=()=>{},onAudioSent=()=>{},reserveReconnect=async()=>true,budget={used:0,started:false},Socket=WebSocket,now=Date.now,every=setInterval,cancelEvery=clearInterval,maxReconnects=20,maxBytes=320000}={}){
-  Object.assign(this,{url,getProtocols,callId,onHealth,onAudioSent,reserveReconnect,budget,Socket,now,every,cancelEvery,maxReconnects,maxBytes});
+ constructor(url,{getProtocols,callId,onHealth=()=>{},onAudioSent=()=>{},reserveReconnect=async()=>true,registerStream=async()=>true,budget={used:0,started:false},Socket=WebSocket,now=Date.now,every=setInterval,cancelEvery=clearInterval,maxReconnects=20,maxBytes=320000}={}){
+  Object.assign(this,{url,getProtocols,callId,onHealth,onAudioSent,reserveReconnect,registerStream,budget,Socket,now,every,cancelEvery,maxReconnects,maxBytes});
   this.readyState=0;this.queue=[];this.bytes=0;this.reconnects=0;this.active=null;this.closed=false;this.connecting=false;this.origin=now();this.opened=false;this.lastAudio=now();
   this.timer=every(()=>{const s=this.active;if(s?.readyState===1&&now()-this.lastAudio>=5000){s.send(JSON.stringify({type:'KeepAlive'}));this.log('keepalive_gap',{idle_ms:now()-this.lastAudio});}},5000);
   void this.connect();
@@ -15,6 +15,7 @@ export class RecoveringSttSocket {
   this.connecting=true;
   try{
    if(this.budget.started){if(!await this.reserveReconnect()){this.onHealth('unavailable');this.close();return;}this.budget.used++;this.reconnects++;}
+   else if(!await this.registerStream()){this.onHealth('unavailable');this.close();return;}
    this.budget.started=true;
    const protocols=await this.getProtocols();if(this.closed)return;
    const s=new this.Socket(this.url,protocols);this.active=s;this.budget.active=s;

@@ -1,4 +1,4 @@
-import { reserveSttReconnect } from './sttReconnectBudget.js';
+import { reserveSttReconnect,registerSttStream } from './sttReconnectBudget.js';
 import { reportSttLimit } from './sttAlert.js';
 import { egressMetrics } from '../egressMetrics.js';
 import WebSocket from 'ws';
@@ -9,15 +9,15 @@ import { config } from '../config.js';
 const URL = 'wss://api.deepgram.com/v1/listen' +
   '?encoding=mulaw&sample_rate=8000&channels=1&model=nova-2' +
   '&punctuate=true&smart_format=true&interim_results=true&utterance_end_ms=1500&vad_events=true';
-export const TRACK_LIMITS = Object.freeze({ queueFrames: 250, queueBytes: 40 * 1024,
+export const TRACK_LIMITS = Object.freeze({ queueFrames: 15000, queueBytes: 2 * 1024 * 1024,
   bufferedBytes: 64 * 1024, reconnects: 20, connectMs: 5000 });
 
 export function openDeepgramTrack({ speaker, notify, claims, reportUsage = reportServerSttUsage, Socket = WebSocket,
   schedule = setTimeout, cancel = clearTimeout, every = setInterval, cancelEvery = clearInterval,
-  now = Date.now, timelineOrigin = now(), limits = TRACK_LIMITS, reconnectBudget = { used: 0 }, onLimit = reportSttLimit, reserveReconnect = reserveSttReconnect }) {
+  now = Date.now, timelineOrigin = now(), limits = TRACK_LIMITS, reconnectBudget = { used: 0 }, onLimit = reportSttLimit, reserveReconnect = reserveSttReconnect, registerStream = registerSttStream }) {
   let current = null, closing = null, retry = null, flushTimer = null, retries = 0, closed = false, exhausted = false;
   let queue = [], queueBytes = 0, gapSince = null, overflowReported = false;
-  let audioMs = 0, reserving = false;
+  let audioMs = 0, reserving = false, initializing = true;
   const health = (status, message, extra = {}) => notify({
     type: status === 'connected' ? 'transcription_health' : 'transcription_error',
     speaker, status, message, timestamp: now(), ...extra,
@@ -26,14 +26,15 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
   const label = speaker === 'agent' ? 'Agent' : speaker === 'third_party' ? 'Third party' : 'Customer';
   function enqueue(chunk, startMs) {
     if (closed || exhausted) return;
-    if (chunk.length > limits.queueBytes) return markOverflow();
+    if (chunk.length > limits.queueBytes) return markOverflow(startMs,chunk.length/8);
     while (queue.length && (queue.length >= limits.queueFrames || queueBytes + chunk.length > limits.queueBytes)) {
-      queueBytes -= queue.shift().chunk.length;
-      markOverflow();
+      const dropped=queue.shift();queueBytes -= dropped.chunk.length;
+      markOverflow(dropped.startMs,dropped.chunk.length/8);
     }
     queue.push({ chunk, startMs }); queueBytes += chunk.length;
   }
-  function markOverflow() {
+  function markOverflow(startMs,durationMs) {
+    if(Number.isFinite(startMs))notify({type:'transcription_gap',speaker,startMs,endMs:startMs+durationMs,timestamp:timelineOrigin+startMs,reason:'reconnect_buffer_overflow'});
     gapSince ??= now();
     if (!overflowReported) {
       overflowReported = true;
@@ -50,7 +51,7 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
       .catch(() => console.error(JSON.stringify({ event: 'stt_usage_failed', call_sid: claims.callSid, connection_id: connection.streamId })));
   }
   function stopSocket(connection) {
-    cancel(connection.timeout); cancelEvery(connection.keepAlive);
+    cancel(connection.timeout); cancel(connection.drainTimer); cancelEvery(connection.keepAlive);
     connection.ws.terminate();
   }
   function fail(connection, reason = 'transport_failure') {
@@ -98,6 +99,15 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
     catch { if(typeof chunk!=='string')enqueue(chunk, startMs); fail(connection); return false; }
     return true;
   }
+  function drain(connection){
+    if(connection.drainTimer)return;
+    if(closed||current!==connection||connection.ws.readyState!==WebSocket.OPEN)return;
+    while(queue.length&&current===connection){
+      const next=queue[0];
+      if(connection.ws.bufferedAmount+next.chunk.length>limits.bufferedBytes){connection.drainTimer=schedule(()=>{connection.drainTimer=null;drain(connection);},20);connection.drainTimer?.unref?.();return;}
+      queue.shift();queueBytes-=next.chunk.length;if(!write(connection,next.chunk,next.startMs))return;
+    }
+  }
   function connect() {
     if (closed || exhausted || current) return;
     let ws;
@@ -122,10 +132,7 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
       health('connected', hadGap ? `${label} transcription reconnected; audio during the interruption may be missing.` : '',
         { coverageGap: hadGap, ...(hadGap ? { gapSince, gapUntil: now() } : {}) });
       gapSince = null; overflowReported = false;
-      while (queue.length && current === connection) {
-        const { chunk, startMs } = queue.shift(); queueBytes -= chunk.length;
-        if (!write(connection, chunk, startMs)) break;
-      }
+      drain(connection);
       if (current !== connection) return;
       connection.keepAlive = every(() => {
         if (current !== connection || ws.readyState !== WebSocket.OPEN) return;
@@ -165,7 +172,7 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
     });
   }
   function reconnect() {
-    if(closed||exhausted||closing||current||reserving)return;
+    if(closed||exhausted||closing||current||reserving||initializing)return;
     if(reconnectBudget.used>=limits.reconnects){exhausted=true;health('unavailable','Transcript reconnect limit reached',{alert:true});alertLimit('reconnect_limit');return;}
     reserving=true;
     const proceed=allowed=>{
@@ -176,13 +183,14 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
     };
     try{const result=reserveReconnect({claims,speaker});if(result?.then)result.then(proceed,()=>proceed(false));else proceed(result===true);}catch{proceed(false);}
   }
-  connect();
+  const initialized=allowed=>{initializing=false;if(closed)return;if(!allowed){exhausted=true;health('unavailable','Transcript connection unavailable',{alert:true});alertLimit('stream_registration_failed');return;}connect();};
+  try{const result=registerStream({claims,speaker});if(result?.then)result.then(initialized,()=>initialized(false));else initialized(result===true);}catch{initialized(false);}
   return {
     send(chunk, streamTimestampMs) {
       if (closed || exhausted) return;
       const startMs = Number.isFinite(streamTimestampMs) && streamTimestampMs >= 0 ? streamTimestampMs : audioMs;
       audioMs = startMs + chunk.length / 8; // 8 kHz, one byte per mulaw sample
-      if (current?.ws.readyState === WebSocket.OPEN) write(current, chunk, startMs);
+      if (current?.ws.readyState === WebSocket.OPEN) {enqueue(chunk,startMs);drain(current);}
       else { enqueue(chunk, startMs); reconnect(); }
     },
     close() {
@@ -190,7 +198,7 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
       closed = true; if(closing)stopSocket(closing); cancel(retry); queue = []; queueBytes = 0;
       const connection = current;
       if (connection) {
-        cancel(connection.timeout); cancelEvery(connection.keepAlive);
+        cancel(connection.timeout); cancel(connection.drainTimer); cancelEvery(connection.keepAlive);
         if (connection.ws.readyState === WebSocket.OPEN) {
           try { connection.ws.send(JSON.stringify({ type: 'CloseStream' })); } catch { /* closing */ }
           // CloseStream asks Deepgram to flush final results before closing.

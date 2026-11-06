@@ -18692,7 +18692,7 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
 .compliance-overhaul-score {font-size:28px;font-weight:500;}
 .compliance-overhaul-badge {border:1px solid currentColor;border-radius:4px;padding:3px 7px;font-size:11px;}
 .compliance-overhaul button {font:inherit;font-weight:500;cursor:pointer;}
-.compliance-overhaul .contacts-mini-btn {border:0;border-radius:4px;background:linear-gradient(180deg,var(--eg-accent),var(--eg-accent-hover,var(--eg-accent)));box-shadow:inset 0 1px 0 #ffffff30;}
+.compliance-overhaul .contacts-mini-btn {border:0;border-radius:4px;background:linear-gradient(180deg,var(--eg-accent),var(--eg-accent-hover,var(--eg-accent-dim)));box-shadow:inset 0 1px 0 #ffffff30;}
 .compliance-overhaul button:disabled {opacity:.45;cursor:default;}
 .compliance-overhaul-coverage {display:grid;gap:6px;margin:16px 0;color:var(--eg-text);}
 .compliance-overhaul-coverage.is-incomplete {color:var(--eg-danger,#ef6464);}
@@ -18713,3 +18713,4 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
 .compliance-review-modal.compliance-overhaul .compliance-review-head {border:0;}
 .compliance-review-modal.compliance-overhaul .compliance-review-head h2 {margin-right:auto;}
 .transcript-reconnecting {display:inline-block;color:var(--eg-amber-text);font-size:11px;font-weight:500;padding:3px 8px;}
+.compliance-light {color-scheme:light;}

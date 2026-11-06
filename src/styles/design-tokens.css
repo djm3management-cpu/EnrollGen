@@ -4,7 +4,8 @@
    See docs/DESIGN_SYSTEM.md for usage rules.
    ============================================================ */
 
-:root {
+:root,
+.compliance-light {
   /* ----- Core surfaces (darkest to lightest) ----- */
   --eg-base: #FFFFFF;
   --eg-surface-1: #F7F8FA;
