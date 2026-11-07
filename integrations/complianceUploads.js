@@ -78,8 +78,10 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
         try{
           let call=checked(await db.from('call_records').select('*').eq('id',job.call_id).eq('tenant_id',job.tenant_id).single());
           if(!['enrolled','enrolled_pending_verification'].includes(call.call_outcome))throw Error('enrollment_no_longer_eligible');
-          const intake=checked(await db.from('enrollment_intakes').select('id,data,submitted_at,completed_at').eq('id',job.enrollment_key).eq('call_id',job.call_id).eq('tenant_id',job.tenant_id).not('completed_at','is',null).single());
+          const intake=checked(await db.from('enrollment_intakes').select('id,data,submitted_at,completed_at,is_test_enrollment').eq('id',job.enrollment_key).eq('call_id',job.call_id).eq('tenant_id',job.tenant_id).not('completed_at','is',null).single());
           if(!intake)throw Error('intake_incomplete');
+          if(provider==='conversely' && intake.is_test_enrollment)throw Error('test_enrollment_excluded');
+          if(provider==='ix' && intake.is_test_enrollment!==((env.IX_ENV||'test')==='test'))throw Error('ix_enrollment_environment_mismatch');
           call=intakeCallFields(call,intake);
           const recording=checked(await db.from('recording_ingestion').select('*').eq('tenant_id',job.tenant_id)
             .eq('call_record_id',job.call_id).eq('recording_sid',job.twilio_recording_sid).eq('provider_status','completed').single());

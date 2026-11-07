@@ -8,7 +8,7 @@ import * as domain from '../src/lib/enrollmentIntake.js';
 const source=readFileSync(new URL('../src/components/enrollment/EnrollmentIntake.jsx',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export default function','function');
 const compiled=transformSync(source,{loader:'jsx',jsxFactory:'element',format:'cjs'}).code;
 const walk=node=>!node||typeof node!=='object'?[]:[node,...(node.children||[]).flat(Infinity).flatMap(walk)];
-function fixture(){
+function fixture({admin=false}={}){
  const h=hookHarness(),requests=[],timers=new Map();let timerId=0,saved=0,closed=0;
  const prefill={...domain.emptyIntake('Mike Shiomos'),firstName:'Jane',lastName:'Doe',dob:'1955-02-28',phone:'2125550101',state:'NY',mbi:'1ab2cd3ef45',prevCarrier:'Original Medicare',newCarrier:'Aetna',planName:'Manual Plan',enrollCode:'AEP',premium:'0',contractId:'H1234',planId:'001',sixtyDayDate:'2027-03-02'};
  const getToken=()=> 'token';
@@ -20,7 +20,7 @@ function fixture(){
   window:{dispatchEvent(){}},element:(type,props,...children)=>({type,props:props||{},children}),
   fetchWithClerk:async(token,url,options)=>{
    requests.push({url,options});
-   return Response.json(options?{saved:true,id:'intake'}:url.includes('&plans=')?{plans:[{id:1,plan_name:'Landscape Plan',contract_id:'H9999',plan_id:'012',segment_id:'2',monthly_premium:25.5}]}:{intakes:[],prefill,contact_id:'contact'});
+   return Response.json(options?{saved:true,id:'intake'}:url.includes('&plans=')?{plans:[{id:1,plan_name:'Landscape Plan',contract_id:'H9999',plan_id:'012',segment_id:'2',monthly_premium:25.5}]}:{admin,intakes:[],prefill,contact_id:'contact'});
   },
  });
  h.mount(()=>component({callId:'call',onClose:()=>closed++,onSaved:()=>saved++}));
@@ -47,4 +47,22 @@ test('plan dropdown autofills editable plan fields and failed validation highlig
   f.field('firstName').props.onChange({target:{value:'Jane'}});f.field('sunfireCode').props.onChange({target:{value:'SF-123'}});await f.h.flush();
   await f.nodes().find(n=>n.type==='form').props.onSubmit({preventDefault(){}});await f.h.flush();assert.equal(f.requests.filter(r=>r.options).length,1);assert.deepEqual(f.counts(),{saved:1,closed:1});
  }finally{f.h.unmount();}
+});
+
+
+test('test enrollment checkbox is admin-only, defaults unchecked, and persists a checked save',async()=>{
+ for(const admin of [false,true]){
+  const f=fixture({admin});try{
+   await f.h.flush();
+   const checkbox=f.nodes().find(n=>n.type==='input'&&n.props.type==='checkbox');
+   assert.equal(Boolean(checkbox),admin);
+   if(admin){
+    assert.equal(checkbox.props.checked,false);
+    checkbox.props.onChange({target:{checked:true}});await f.h.flush();
+    assert.equal(f.nodes().find(n=>n.type==='input'&&n.props.type==='checkbox').props.checked,true);
+    await f.nodes().find(n=>n.type==='form').props.onSubmit({preventDefault(){}});await f.h.flush();
+    assert.equal(JSON.parse(f.requests.find(r=>r.options?.method==='POST').options.body).data.testEnrollment,true);
+   }
+  }finally{f.h.unmount();}
+ }
 });

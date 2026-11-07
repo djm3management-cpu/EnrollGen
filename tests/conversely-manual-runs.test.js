@@ -42,7 +42,7 @@ before(async()=>{
  CREATE TABLE recording_agent_subjects(tenant_id uuid,clerk_user_id text,agent_slug text);
  CREATE TABLE call_records(id uuid PRIMARY KEY,tenant_id uuid,agent_id uuid,agent_name text,call_start timestamptz,call_outcome text,compliance_status text,compliance_scorecard_id uuid,metadata jsonb,product_type text,enrollment_confirmation_number text,carrier_name text);
  CREATE TABLE compliance_scorecards(id uuid,tenant_id uuid,call_id uuid,overall_score numeric,is_thread_composite boolean);
- CREATE TABLE enrollment_intakes(id uuid PRIMARY KEY,tenant_id uuid,call_id uuid,carrier_key text,data jsonb,completed_at timestamptz DEFAULT now(),submitted_at timestamptz DEFAULT now());
+ CREATE TABLE enrollment_intakes(id uuid PRIMARY KEY,tenant_id uuid,call_id uuid,carrier_key text,data jsonb,is_test_enrollment boolean NOT NULL DEFAULT false,completed_at timestamptz DEFAULT now(),submitted_at timestamptz DEFAULT now());
  CREATE TABLE recording_ingestion(id uuid,tenant_id uuid,call_record_id uuid,recording_sid text,account_sid text,callback_call_sid text,recording_channels smallint,provider_status text,copy_status text,recording_duration_seconds integer,first_seen_at timestamptz DEFAULT now());
  CREATE TABLE recording_compliance_tickets(token_hash text,tenant_id uuid,recording_id text,minted_by text,format text,storage_path text,account_sid text,recording_sid text,expected_call_sid text,channels integer,created_at timestamptz,expires_at timestamptz);
  CREATE TABLE compliance_missing_codes(tenant_id uuid,call_start timestamptz);
@@ -51,7 +51,7 @@ before(async()=>{
  INSERT INTO enrolled_agents VALUES('${agent}','${tenant}','user-a','Agent A',NULL,true),('${mark}','${tenant}','mark-user','Mark Endres',NULL,true),('${excluded}','${tenant}','excluded-user','Agent C',NULL,true),('${id(6)}','${foreign}','foreign-user','Foreign',NULL,true);
  INSERT INTO recording_agent_subjects VALUES('${tenant}','user-a','agent_a'),('${tenant}','mark-user','mark_endres');`);
  await pg.exec(file('123_compliance_uploads.sql'));
- await pg.exec('CREATE TABLE ix_uploads(LIKE conversely_submissions INCLUDING ALL);ALTER TABLE ix_uploads ADD COLUMN provider_message text,ADD COLUMN finalized_at timestamptz');
+ await pg.exec('CREATE TABLE ix_uploads(LIKE conversely_submissions INCLUDING ALL);ALTER TABLE ix_uploads ADD COLUMN provider_message text,ADD COLUMN finalized_at timestamptz;CREATE VIEW ix_upload_admin_rows AS SELECT *,false AS is_test_enrollment FROM ix_uploads');
  const migration=file('125_enrollment_intakes.sql'),start=migration.indexOf('CREATE OR REPLACE FUNCTION public.conversely_week_candidates'),end=migration.indexOf('-- Historical rows',start);
  await pg.exec(migration.slice(start,end));
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,call_start,call_outcome) VALUES($1,$2,$3,'2020-01-07T12:00:00Z','enrolled')`,[id(99),tenant,agent]);

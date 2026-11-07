@@ -6,7 +6,7 @@ import {transformSync} from 'esbuild';
 import {hookHarness} from './helpers/hookHarness.js';
 const walk=node=>!node||typeof node!=='object'?[]:[node,...(node.children||[]).flat(Infinity).flatMap(walk)];
 const code=transformSync(readFileSync(new URL('../src/components/callLog/ComplianceUploads.jsx',import.meta.url),'utf8'),{loader:'jsx',format:'cjs',jsxFactory:'element',jsxFragment:'fragment'}).code;
-const empty=()=>({failures:[],missing:[],reconciliation:[],weekly:{available:true,enabled:true,worker_available:true,current_week:'2026-10-26',run:null,results:[]}});
+const empty=()=>({admin:true,ix_environment:'TEST',failures:[],missing:[],reconciliation:[],weekly:{available:true,enabled:true,worker_available:true,current_week:'2026-10-26',run:null,results:[]}});
 function fixture(){
  const h=hookHarness(),module={exports:{}},requests=[],timers=new Map();let timerId=0,status=200,data=empty(),postStatus=202;
  const auth={getToken:async()=> 'token',user:{id:'admin'},organization:{id:'org-a'}};
@@ -73,5 +73,29 @@ test('IX attention and duplicate errors render and missing/invalid codes open th
   const intake=f.nodes().find(n=>n.type==='enrollment-intake');assert.ok(intake);assert.equal(intake.props.callId,'call-a');
   intake.props.onSaved();await f.h.flush();assert.ok(!f.nodes().some(n=>n.type==='enrollment-intake'));
   assert.ok(!f.requests.some(r=>r.options?.method==='PATCH'));
+ }finally{f.h.unmount();}
+});
+
+
+test('IX environment is visible, filters request the selected type, and Retry is limited to admins with unfinalized failures',async()=>{
+ const f=fixture();try{
+  const rows=[
+   {id:'test-failure',provider:'UHC IX',call_id:'test-call',status:'needs_attention',last_error:'upload_url_expired',attempts:1,is_test_enrollment:true},
+   {id:'real-failure',provider:'UHC IX',call_id:'real-call',status:'failed',last_error:'ix_http_400',attempts:5,is_test_enrollment:false},
+   {id:'finalized',provider:'UHC IX',status:'failed',attempts:1,finalized_at:'2026-10-30T15:00:00Z'},
+   {id:'duplicate',provider:'UHC IX',status:'duplicate_on_sunfire',attempts:1},
+  ];
+  f.setData({...empty(),failures:rows});await f.h.flush();
+  assert.ok(f.nodes().some(n=>n.type==='summary'&&n.children.includes('TEST')));
+  assert.equal(f.nodes().filter(n=>n.type==='button'&&n.children.includes('Retry')).length,2);
+  await f.nodes().find(n=>n.type==='button'&&n.children.includes('Retry')).props.onClick();await f.h.flush();
+  assert.deepEqual(JSON.parse(f.requests.find(r=>r.options?.method==='POST').options.body),{action:'retry_ix_upload',id:'test-failure'});
+  f.nodes().find(n=>n.type==='select').props.onChange({target:{value:'test'}});await f.h.flush();
+  assert.ok(f.requests.some(r=>r.url.endsWith('enrollment_type=test')));
+  assert.equal(f.nodes().filter(n=>n.type==='button'&&n.children.includes('Retry')).length,1);
+  f.setData({...empty(),admin:false,failures:rows});[...f.timers.values()][0].fn();await f.h.flush();
+  assert.equal(f.nodes().filter(n=>n.type==='button'&&n.children.includes('Retry')).length,0);
+  f.setData({...empty(),ix_environment:'PRODUCTION',failures:rows});[...f.timers.values()][0].fn();await f.h.flush();
+  assert.ok(f.nodes().some(n=>n.type==='summary'&&n.children.includes('PRODUCTION')));
  }finally{f.h.unmount();}
 });

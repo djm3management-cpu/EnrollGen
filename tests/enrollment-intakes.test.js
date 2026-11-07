@@ -56,7 +56,7 @@ before(async()=>{
  const pii=readFileSync(new URL('../supabase/migrations/022_pii_protection_phase1.sql',import.meta.url),'utf8');
  await pg.exec(pii.slice(pii.indexOf('CREATE OR REPLACE FUNCTION pii_vault.get_active_key()'),pii.indexOf('-- Blind-index HMAC key')));
  await pg.exec(readFileSync(new URL('../supabase/migrations/071_contacts_pii_json_null.sql',import.meta.url),'utf8'));
- for(const migration of ['123_compliance_uploads.sql','124_ix_uploads.sql','125_enrollment_intakes.sql','127_conversely_manual_runs.sql','128_sunfire_ix_api.sql'])await pg.exec(readFileSync(new URL(`../supabase/migrations/${migration}`,import.meta.url),'utf8'));
+ for(const migration of ['123_compliance_uploads.sql','124_ix_uploads.sql','125_enrollment_intakes.sql','127_conversely_manual_runs.sql','128_sunfire_ix_api.sql','132_ix_test_enrollment_safeguards.sql'])await pg.exec(readFileSync(new URL(`../supabase/migrations/${migration}`,import.meta.url),'utf8'));
 });
 after(()=>pg.close());
 test('every required field and UHC-only confirmation rule are enforced; defaults are valid',()=>{
@@ -152,8 +152,8 @@ test('compliance metadata comes only from the selected completed intake and subm
 });
 test('IX sends Type A metadata and does not deliver a queued call without an intake',async()=>{
  const received=[];
- const env={IX_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
- const integration=createIxIntegration(db,{env,ixClient:{environment:'test',available:true,register:async args=>{received.push(args);return {callRecordingId:id(88),recordingUploads:args.callMetadata.recordings.map(({filename})=>({filename,presignedUrl:'https://bucket.s3.amazonaws.com/audio',expiresAt:'2099-01-01T00:00:00Z'}))};},finalize:async()=>({status:'finalized'})},fetchImpl:async(url,options)=>url.endsWith('.json')?Response.json({sid:'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',account_sid:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',call_sid:'CAcccccccccccccccccccccccccccccccc',channels:2,start_time:'2026-10-20T15:00:00Z',duration:'120'}):options.method==='PUT'?new Response(null,{status:200}):new Response(new Uint8Array([1,2]))});
+ const env={IX_ENV:'production',IX_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
+ const integration=createIxIntegration(db,{env,ixClient:{environment:'production',available:true,register:async args=>{received.push(args);return {callRecordingId:id(88),recordingUploads:args.callMetadata.recordings.map(({filename})=>({filename,presignedUrl:'https://bucket.s3.amazonaws.com/audio',expiresAt:'2099-01-01T00:00:00Z'}))};},finalize:async()=>({status:'finalized'})},fetchImpl:async(url,options)=>url.endsWith('.json')?Response.json({sid:'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',account_sid:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',call_sid:'CAcccccccccccccccccccccccccccccccc',channels:2,start_time:'2026-10-20T15:00:00Z',duration:'120'}):options.method==='PUT'?new Response(null,{status:200}):new Response(new Uint8Array([1,2]))});
  await createComplianceWorker(db,{env,...integration,log:()=>{}})({schedule:false});assert.equal(received.length,2);
  assert.equal(received[0].sunfireEnrollmentCode,'SF-123');assert.deepEqual(Object.keys(received[0]).sort(),['callMetadata','sunfireEnrollmentCode']);assert.equal(received[0].callMetadata.recordings.length,1);assert.equal(received[0].callMetadata.teamName,'New Gen Health Solutions');
  await query(`INSERT INTO ix_uploads(tenant_id,call_id,twilio_recording_sid,enrollment_key,confirmation_code) VALUES($1,$2,'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',$3,'ORPHAN')`,[tenant,call,id(99)]);
@@ -233,7 +233,7 @@ test('admin claims require the matching organization and support Clerk role and 
  assert.equal((await handler({authenticate:async()=>mikeAdminAuth})(new Request(`https://app.test/api/enrollment-intakes?call_id=${id(74)}`))).status,403);
 }));
 
-const ixEnv={IX_UPLOAD_ENABLED:'true',IX_USERNAME:'ix-user',IX_PASSWORD:'ix-password',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
+const ixEnv={IX_ENV:'production',IX_UPLOAD_ENABLED:'true',IX_USERNAME:'ix-user',IX_PASSWORD:'ix-password',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
 const ixFetch=(status,extra={})=>async(url,options)=>{
  if(url.endsWith('/authenticate'))return Response.json({username:'ix-user',token:'private-token',expiresIn:100});
  if(url.endsWith('.json'))return Response.json({sid:'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',account_sid:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',call_sid:'CAcccccccccccccccccccccccccccccccc',channels:2,start_time:'2026-10-20T15:00:00Z',duration:120});
@@ -352,9 +352,111 @@ test('completed UHC intakes queue before recordings arrive and wait without cons
   const response=await handler()(new Request(`https://app.test/api/enrollment-intakes?call_id=${id(910)}`,{method:'POST',body:JSON.stringify({data:valid({sunfireCode:'WAIT-RECORDING'})})}));assert.equal(response.status,200);
   await query(`UPDATE call_records SET call_outcome='enrolled' WHERE id=$1`,[id(910)]);
   let [row]=await query('SELECT * FROM ix_uploads WHERE call_id=$1',[id(910)]);assert.equal(row.twilio_recording_sid,'pending');
-  assert.equal((await db.rpc('claim_ix_upload')).data.length,0);
+  assert.equal((await db.rpc('claim_ix_upload',{p_environment:'production'})).data.length,0);
   await query(`INSERT INTO recording_ingestion(tenant_id,call_record_id,recording_sid,account_sid,callback_call_sid,provider_status) VALUES($1,$2,'REnew','ACnew','CAnew','completed')`,[tenant,id(910)]);
   [row]=await query('SELECT * FROM ix_uploads WHERE call_id=$1',[id(910)]);assert.equal(row.twilio_recording_sid,'REnew');assert.equal(row.attempts,0);
-  assert.equal((await db.rpc('claim_ix_upload')).data[0].id,row.id);
+  assert.equal((await db.rpc('claim_ix_upload',{p_environment:'production'})).data[0].id,row.id);
  }finally{await pg.exec('ROLLBACK');}
 });
+
+async function safeguardFixture(work){
+ return withDylanCall(async()=>{
+  await query('UPDATE ix_uploads SET retryable=false');
+  const api=handler({authenticate:async()=>mikeAdminAuth});
+  const create=async(testEnrollment,sunfireCode)=>{
+   const response=await api(intakeRequest('POST',{data:valid({testEnrollment,sunfireCode,aor:'Dylan Maria'})}));
+   assert.equal(response.status,200,JSON.stringify(await response.clone().json()));return (await response.json()).id;
+  };
+  await query(`INSERT INTO recording_ingestion(tenant_id,call_record_id,recording_sid,account_sid,callback_call_sid,recording_channels,provider_status) VALUES($1,$2,'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb','ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','CAcccccccccccccccccccccccccccccccc',2,'completed')`,[tenant,dylanCall]);
+  await work({api,create});
+ });
+}
+const adminUploads=(auth=mikeAdminAuth,env={IX_ENV:'test'})=>createComplianceUploadsHandler({getDb:()=>db,authenticate:async()=>auth,env});
+const retryRequest=id=>new Request('https://app.test/compliance-uploads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'retry_ix_upload',id})});
+
+test('test environment sends only test intakes; real rows preserve checkpoints, attempts and scheduling until production',()=>safeguardFixture(async({create})=>{
+ const real=await create(false,'SAFE-REAL'),sandbox=await create(true,'SAFE-TEST');
+ await query(`UPDATE call_records SET call_outcome='enrolled' WHERE id=$1`,[dylanCall]);
+ await query(`UPDATE ix_uploads SET ix_state='{"sentinel":"untouched"}',next_attempt_at=now()-interval '1 minute' WHERE enrollment_key=$1`,[real]);
+ const [before]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[real]);
+ const registrations=[],testEnv={...ixEnv,IX_ENV:'test'};
+ const fetchImpl=async(url,options)=>{
+  if(url.endsWith('/internalenrollment')){
+   const payload=JSON.parse(options.body);registrations.push(payload.sunfireEnrollmentCode);
+   return Response.json({callRecordingId:id(922),recordingUploads:payload.callMetadata.recordings.map(({filename})=>({filename,presignedUrl:'https://bucket.s3.amazonaws.com/audio',expiresAt:'2099-01-01T00:00:00Z'}))});
+  }
+  return ixFetch(200)(url,options);
+ };
+ await createComplianceWorker(db,{env:testEnv,...createIxIntegration(db,{env:testEnv,fetchImpl}),log:()=>{}})({schedule:false});
+ assert.deepEqual(registrations,['SAFE-TEST']);
+ const [waiting]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[real]);
+ assert.deepEqual(waiting,{...before,status:'waiting_for_production'});
+ assert.equal((await query('SELECT status FROM ix_uploads WHERE enrollment_key=$1',[sandbox]))[0].status,'uploaded');
+ const [production]=await query(`SELECT * FROM claim_ix_upload('production')`);
+ assert.equal(production.enrollment_key,real);assert.equal(production.attempts,1);assert.deepEqual(production.ix_state,before.ix_state);
+}));
+
+test('production skips test rows without sending audio or consuming attempts',()=>safeguardFixture(async({create})=>{
+ const sandbox=await create(true,'PRODUCTION-SKIP');
+ await query(`UPDATE call_records SET call_outcome='enrolled' WHERE id=$1`,[dylanCall]);
+ await createComplianceWorker(db,{env:ixEnv,...createIxIntegration(db,{env:ixEnv,fetchImpl:()=>assert.fail('test intake must not reach provider')}),log:()=>{}})({schedule:false});
+ const [row]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[sandbox]);
+ assert.equal(row.status,'skipped_test_enrollment');assert.equal(row.attempts,0);assert.deepEqual(row.ix_state,{});
+ const response=await adminUploads(mikeAdminAuth,{IX_ENV:'production'})(new Request('https://app.test/compliance-uploads'));
+ const data=await response.json();assert.equal(data.ix_environment,'PRODUCTION');assert.ok(data.failures.some(r=>r.id===row.id&&r.is_test_enrollment));
+ for(const type of ['test','real']){
+  const filtered=await (await adminUploads()(new Request(`https://app.test/compliance-uploads?enrollment_type=${type}`))).json();
+  assert.ok(filtered.failures.every(r=>Boolean(r.is_test_enrollment)===(type==='test')));
+ }
+ assert.equal((await adminUploads()(new Request('https://app.test/compliance-uploads?enrollment_type=invalid'))).status,400);
+}));
+
+test('test enrollments create no GHL jobs, are excluded from Conversely candidates and reporting; mixed households retain real enrollments',()=>safeguardFixture(async({create})=>{
+ const sandbox=await create(true,'NO-EXTERNAL');
+ await query(`UPDATE call_records SET call_outcome='enrolled' WHERE id=$1`,[dylanCall]);
+ assert.equal((await query('SELECT * FROM ghl_enrollment_deliveries WHERE intake_id=$1',[sandbox])).length,0);
+ assert.equal((await query('SELECT * FROM compliance_reconciliation WHERE tenant_id=$1',[tenant])).reduce((n,r)=>n+Number(r.enrollments),0),2,'only the existing real household counts');
+ assert.equal((await query(`SELECT * FROM conversely_week_candidates('2026-10-19') WHERE enrollment_key=$1`,[sandbox])).length,0);
+ assert.equal((await query('SELECT is_test_enrollment FROM call_records WHERE id=$1',[dylanCall]))[0].is_test_enrollment,true);
+ const real=await create(false,'MIXED-REAL');
+ assert.equal((await query('SELECT is_test_enrollment FROM call_records WHERE id=$1',[dylanCall]))[0].is_test_enrollment,false);
+ assert.equal((await query(`SELECT * FROM conversely_week_candidates('2026-10-19') WHERE enrollment_key=$1`,[real])).length,0,'fixture call has no call_start');
+ // Even a pre-existing/manual GHL or Conversely queue row cannot bypass the claim guard.
+ await query(`INSERT INTO ghl_enrollment_deliveries(tenant_id,call_id,twilio_recording_sid,enrollment_key,intake_id,payload_encrypted) VALUES($1,$2,'ghl','test-legacy',$3,'{}')`,[tenant,dylanCall,sandbox]);
+ await query(`INSERT INTO conversely_submissions(tenant_id,call_id,twilio_recording_sid,enrollment_key) VALUES($1,$2,'REtest',$3)`,[tenant,dylanCall,sandbox]);
+ await query(`UPDATE ghl_enrollment_deliveries SET attempts=5 WHERE intake_id<>$1`,[sandbox]);
+ assert.equal((await query(`SELECT * FROM claim_compliance_upload('ghl')`)).length,0);
+ assert.equal((await query(`SELECT * FROM claim_compliance_upload('conversely') WHERE enrollment_key=$1`,[sandbox])).length,0);
+}));
+
+test('only admins can set or change the test flag, and the checkbox defaults unchecked',()=>safeguardFixture(async({api,create})=>{
+ const member=handler({authenticate:async()=>dylanAuth});
+ const initial=await (await member(intakeRequest())).json();assert.equal(initial.admin,false);assert.equal(initial.prefill.testEnrollment,false);
+ assert.equal((await member(intakeRequest('POST',{data:valid({testEnrollment:true,aor:'Dylan Maria'})}))).status,403);
+ const sandbox=await create(true,'ADMIN-ONLY');
+ assert.equal((await member(intakeRequest('POST',{id:sandbox,data:valid({testEnrollment:false,aor:'Dylan Maria'})}))).status,403);
+ assert.equal((await (await api(intakeRequest())).json()).admin,true);
+}));
+
+test('admin retry clears unfinalized registration and targets and records actor/time; rejects non-admin, foreign tenant and finalized retries',()=>safeguardFixture(async({create})=>{
+ const sandbox=await create(true,'RETRY-SANDBOX');
+ await query(`UPDATE call_records SET call_outcome='enrolled' WHERE id=$1`,[dylanCall]);
+ const [row]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[sandbox]);
+ for(const status of ['needs_attention','failed']){
+  await query(`UPDATE ix_uploads SET status=$2,attempts=5,retryable=false,last_error='upload_url_expired',ix_state='{"callRecordingId":"old","recordingUploads":[{"presignedUrl":"secret"}],"uploadedFilenames":["a.mp3"]}' WHERE id=$1`,[row.id,status]);
+  assert.equal((await adminUploads(dylanAuth)(retryRequest(row.id))).status,403);
+  assert.equal((await adminUploads()(retryRequest(row.id))).status,200);
+  const [reset]=await query('SELECT * FROM ix_uploads WHERE id=$1',[row.id]);
+  assert.equal(reset.status,'pending');assert.equal(reset.attempts,0);assert.equal(reset.retryable,true);assert.deepEqual(reset.ix_state,{});assert.equal(reset.last_error,null);assert.equal(reset.lease_token,null);
+ }
+ const audit=await query('SELECT * FROM ix_upload_retries WHERE upload_id=$1',[row.id]);assert.equal(audit.length,2);assert.ok(audit.every(r=>r.actor==='user-a'&&r.retried_at));
+ await query(`UPDATE ix_uploads SET status='failed',finalized_at=now(),finalize_receipt='{"status":"finalized"}' WHERE id=$1`,[row.id]);
+ assert.equal((await adminUploads()(retryRequest(row.id))).status,409);
+ assert.equal((await query(`SELECT retry_ix_upload($1,$2,'actor') AS ok`,[row.id,id(999)]))[0].ok,false);
+ assert.equal((await adminUploads(dylanAuth)(new Request('https://app.test/compliance-uploads'))).status,403);
+ for(const operation of [()=>query(`SELECT retry_ix_upload($1,$2,'forged')`,[row.id,tenant]),()=>query('SELECT * FROM ix_upload_retries')]){
+  await pg.exec('SAVEPOINT denied_retry; SET ROLE authenticated');
+  await assert.rejects(operation,/permission denied/);
+  await pg.exec('ROLLBACK TO SAVEPOINT denied_retry; RELEASE SAVEPOINT denied_retry');
+ }
+}));

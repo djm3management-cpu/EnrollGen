@@ -82,6 +82,7 @@ function groupBy(rows, keyFn) {
 async function fetchCallsWithScores(supabase, tenantId, sinceIso) {
   const { data: calls, error } = await supabase
     .from("call_records")
+    .eq("is_test_enrollment", false)
     .select("id, tenant_id, agent_name, writing_agent, call_outcome, enrollment_completed, call_duration_seconds, created_at, call_analytics, dg_sentiment, agent_assessment")
     .is('parent_call_id', null)
     .eq("tenant_id", tenantId)

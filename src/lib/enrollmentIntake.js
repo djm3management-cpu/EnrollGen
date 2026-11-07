@@ -8,7 +8,7 @@ export const INTAKE_FIELDS=[
  ['contractId','Contract ID','text',true],['planId','Plan ID','text',true],['segmentId','Segment ID','text'],['enrollmentId','Enrollment ID','text'],['pcpName','PCP Name','text'],['agency','Agency','text',true],['aor','Writing Agent','agent',true],['hra','HRA Completed','yesno',true],['hraDate','Date of HRA','date'],['sunfireCode','SunFire Confirmation Code','text'],
 ];
 export const fieldVisible=(key,d)=>key==='medicaidNum'?d.medicaid==='Yes':key==='hraDate'?d.hra==='Yes':true;
-export const emptyIntake=(agent='')=>Object.fromEntries([...INTAKE_FIELDS.map(([key])=>[key,'']),...Object.entries({agency:'New Gen Health Solutions',aor:WRITING_AGENTS.includes(agent)?agent:'',medicaid:'No',sep:'No',hra:'No',segmentId:'0'})]);
+export const emptyIntake=(agent='')=>Object.fromEntries([...INTAKE_FIELDS.map(([key])=>[key,'']),...Object.entries({agency:'New Gen Health Solutions',aor:WRITING_AGENTS.includes(agent)?agent:'',medicaid:'No',sep:'No',hra:'No',segmentId:'0',testEnrollment:false})]);
 export function formatPhone(value){let s=String(value||'').replace(/\D/g,'');if(s.length===11 && s[0]==='1')s=s.slice(1);s=s.slice(0,10);return s.length>6?`(${s.slice(0,3)}) ${s.slice(3,6)}-${s.slice(6)}`:s.length>3?`(${s.slice(0,3)}) ${s.slice(3)}`:s?`(${s}`:'';}
 export function formatMbi(value){const s=String(value||'').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,11);return [s.slice(0,4),s.slice(4,7),s.slice(7)].filter(Boolean).join('-');}
 export function formatPremium(value){const s=String(value??'').replace(/[$,\s]/g,'');return /^\d+(\.\d{0,2})?$/.test(s)?`$${Number(s).toFixed(2)}`:'';}
@@ -21,7 +21,7 @@ export function landscapeCarrierMatches(name,label){
  if(label==='HCSC / BCBS' && patterns['Elevance / Anthem'].test(name))return false;
  return Boolean(patterns[label]?.test(name));
 }
-export function normalizeIntake(input){const d=Object.fromEntries(INTAKE_FIELDS.map(([key])=>[key,String(input[key]??'').trim()]));return {...d,phone:formatPhone(d.phone),mbi:formatMbi(d.mbi),premium:formatPremium(d.premium),state:d.state.toUpperCase(),segmentId:d.segmentId||'0',medicaidNum:d.medicaid==='Yes'?d.medicaidNum:'',hraDate:d.hra==='Yes'?d.hraDate:''};}
+export function normalizeIntake(input){const d=Object.fromEntries(INTAKE_FIELDS.map(([key])=>[key,String(input[key]??'').trim()]));return {...d,testEnrollment:input.testEnrollment===true,phone:formatPhone(d.phone),mbi:formatMbi(d.mbi),premium:formatPremium(d.premium),state:d.state.toUpperCase(),segmentId:d.segmentId||'0',medicaidNum:d.medicaid==='Yes'?d.medicaidNum:'',hraDate:d.hra==='Yes'?d.hraDate:''};}
 export function intakeErrors(d){const errors={};for(const [key,label,type,required] of INTAKE_FIELDS){if(required && !String(d[key]??'').trim())errors[key]=label;if(type==='date' && d[key] && !validDate(d[key]))errors[key]=`${label} (valid date required)`;if(String(d[key]||'').length>500)errors[key]=`${label} (too long)`;}
  if(!/^\(\d{3}\) \d{3}-\d{4}$/.test(d.phone||''))errors.phone='Phone (10 digits required)';
  if(!/^[A-Z0-9]{4}-[A-Z0-9]{3}-[A-Z0-9]{4}$/.test(d.mbi||''))errors.mbi='MBI (11 characters required)';

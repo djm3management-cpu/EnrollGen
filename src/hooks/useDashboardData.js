@@ -66,7 +66,7 @@ export function useDashboardData(userId, scope = 'self') {
           pages(() => evidenceClient.from('enrolled_agents').select('id, name, clerk_user_id')
             .eq('tenant_id', tenantId).order('id')),
           pages(() => client.from('call_records')
-            .select('id, external_call_id, session_id, agent_id, call_start, call_duration_seconds, call_outcome, compliance_scorecard_id, compliance_scorecards!compliance_scorecards_call_id_fkey(id, overall_score, created_at, is_thread_composite)')
+            .select('id, is_test_enrollment, external_call_id, session_id, agent_id, call_start, call_duration_seconds, call_outcome, compliance_scorecard_id, compliance_scorecards!compliance_scorecards_call_id_fkey(id, overall_score, created_at, is_thread_composite)')
             .is('parent_call_id', null)
             .eq('tenant_id', tenantId)
             .gte('call_start', shiftDays(dayStart(now), -30).toISOString())
@@ -115,7 +115,7 @@ export function useDashboardData(userId, scope = 'self') {
             agent_notes: log.agent_notes,
           }));
         const measuredByRecord = new Map(callLogs.filter(log => log.call_record_id).map(log => [log.call_record_id, log.duration_seconds]));
-        const measuredCalls = calls.map(call => ({ ...call, call_duration_seconds: measuredByRecord.get(call.id) ?? null }));
+        const measuredCalls = calls.filter(call=>!call.is_test_enrollment).map(call => ({ ...call, call_duration_seconds: measuredByRecord.get(call.id) ?? null }));
         const dashboardCalls = [...measuredCalls, ...testCalls].sort(
           (a, b) => new Date(a.call_start) - new Date(b.call_start) || String(a.id).localeCompare(String(b.id))
         );

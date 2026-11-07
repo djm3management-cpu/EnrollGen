@@ -109,7 +109,7 @@ export async function dailySummaries(db,{env,send,now}) {
 export function createIxIntegration(db,{env=process.env,send=postJson,now=()=>Date.now(),fetchImpl=fetch,ixClient=new SunfireIxClient(env,{fetchImpl,now})}={}) {
   let nextSweep=0,nextSummary=0;
   return {
-    providers:{ix:{available:ixClient.available,claim:async()=>checked(await db.rpc('claim_ix_upload')),deliver:async(job,call)=>{
+    providers:{ix:{available:ixClient.available,claim:async()=>checked(await db.rpc('claim_ix_upload',{p_environment:ixClient.environment})),deliver:async(job,call)=>{
       if(canonicalCarrier(call.carrier_name)!=='UnitedHealthcare')throw Error('carrier_no_longer_eligible');
       if(call.sunfire_code!==job.confirmation_code)throw new IxError('confirmation_code_changed',{outcome:'needs_attention'});
       const saved=checked(await db.from('ix_uploads').select('ix_state').eq('id',job.id).eq('tenant_id',job.tenant_id).single());

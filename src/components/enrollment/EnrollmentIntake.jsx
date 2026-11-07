@@ -13,6 +13,7 @@ export default function EnrollmentIntake({callId,onClose,onSaved}){
  const {contacts,loading:contactsLoading,error:contactsError}=useContactsList('',agentUuid,true);
  const [contactSearch,setContactSearch]=useState('');
  const [record,setRecord]=useState(null),[data,setData]=useState(null),[records,setRecords]=useState([]),[prefill,setPrefill]=useState(null),[contactId,setContactId]=useState('');
+ const [admin,setAdmin]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[errors,setErrors]=useState({}),[sync,setSync]=useState(null);
  const [search,setSearch]=useState(''),[plans,setPlans]=useState([]),[planStatus,setPlanStatus]=useState('');
  const request=async(suffix='',options)=>{
@@ -23,7 +24,7 @@ export default function EnrollmentIntake({callId,onClose,onSaved}){
   let cancelled=false;
   request().then(result=>{
    if(cancelled)return;
-   setRecords(result.intakes);setPrefill(normalizeIntake(result.prefill));setContactId(result.contact_id||'');
+   setAdmin(result.admin===true);setRecords(result.intakes);setPrefill(normalizeIntake(result.prefill));setContactId(result.contact_id||'');
    const first=result.intakes[0];setRecord(first?.id||null);setData(first?.data||normalizeIntake(result.prefill));setSync(first?.sync||null);
   }).catch(err=>{if(!cancelled)setError(err.message);});
   return()=>{cancelled=true;};
@@ -65,10 +66,12 @@ export default function EnrollmentIntake({callId,onClose,onSaved}){
   {!data&&!error&&<p role="status">Loading intake…</p>}
   {data&&<form onSubmit={save} noValidate className="enrollment-intake">
    <p className="contacts-muted">Required fields are marked *. Save a completed intake before saving an MA enrollment disposition.</p>
+   {admin&&<label className="contacts-edit-field"><span><input type="checkbox" checked={data.testEnrollment===true} disabled={busy} onChange={event=>change('testEnrollment',event.target.checked)}/> Test enrollment (SunFire sandbox)</span></label>}
    {records.length>0&&<label className="contacts-edit-field"><span>Enrollment / household member</span><select className="contacts-edit-input" disabled={busy} value={record||''} onChange={event=>{
-    const next=records.find(row=>row.id===event.target.value);setRecord(next?.id||null);setData(next?.data||{...prefill,firstName:'',lastName:'',dob:'',mbi:'',sunfireCode:''});setContactId(next?.contact_id||contactId);setSync(next?.sync||null);setErrors({});setError('');
+    const next=records.find(row=>row.id===event.target.value);setRecord(next?.id||null);setData(next?.data||{...prefill,firstName:'',lastName:'',dob:'',mbi:'',sunfireCode:'',testEnrollment:false});setContactId(next?.contact_id||contactId);setSync(next?.sync||null);setErrors({});setError('');
    }}><option value="">Add another enrollment</option>{records.map(row=><option key={row.id} value={row.id}>{row.data.firstName} {row.data.lastName} · {row.data.planName}</option>)}</select></label>}
-   {sync&&<p role="status" className="contacts-muted">GHL sync: {sync.status==='uploaded'?'Synced':sync.status} · attempts {sync.attempts}{sync.status==='failed'?' — delivery needs attention':''}</p>}
+   {data.testEnrollment&&<p className="contacts-muted" role="status">Test enrollment: SunFire sandbox only. Excluded from GHL, Conversely, and reporting.</p>}
+   {sync&&!data.testEnrollment&&<p role="status" className="contacts-muted">GHL sync: {sync.status==='uploaded'?'Synced':sync.status} · attempts {sync.attempts}{sync.status==='failed'?' — delivery needs attention':''}</p>}
    <label className="contacts-edit-field"><span>Search contacts</span><input className="contacts-edit-input" value={contactSearch} onChange={event=>setContactSearch(event.target.value)} placeholder="Search contact name…"/></label>
    <label className="contacts-edit-field"><span>Linked contact *</span><select className="contacts-edit-input" value={contactId} disabled={busy} required onChange={event=>{
     const next=contacts.find(contact=>contact.id===event.target.value);setContactId(event.target.value);
