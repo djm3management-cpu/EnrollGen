@@ -82,9 +82,9 @@ test('typing formats phone and uppercase MBI, premiums accept zero, and calendar
  assert.equal(followUpDate('2027-01-01'),'2027-03-02');assert.equal(followUpDate('2028-01-01'),'2028-03-01');assert.equal(followUpDate('2026-10-01'),'2026-11-30');assert.equal(followUpDate('2027-02-30'),'');
  assert.deepEqual(planAutofill({plan_name:'Landscape',contract_id:'H9999',plan_id:'012',segment_id:'',monthly_premium:0}),{planName:'Landscape',contractId:'H9999',planId:'012',segmentId:'0',premium:'$0.00'});
 });
-test('GHL has exactly the legacy keys, date/phone/MBI/premium formats and mapped agent assignment',()=>{
+test('GHL has the legacy keys plus plan type and ZIP, date/phone/MBI/premium formats and mapped agent assignment',()=>{
  const payload=ghlPayload(valid({medicaid:'Yes',medicaidNum:'CASE',hra:'Yes',hraDate:'2026-10-29'}),'2026-10-29T16:00:00.000Z');
- assert.deepEqual(Object.keys(payload).sort(),'firstName,lastName,dob,phone,email,state,mbi,medicaid,medicaidNum,prevCarrier,newCarrier,planName,enrollCode,premium,sunfireCode,effectiveDate,sixtyDayDate,sep,contractId,planId,segmentId,enrollmentId,pcpName,agency,aor,assignedUserId,assignedTo,hra,hraDate,submittedAt'.split(',').sort());
+ assert.deepEqual(Object.keys(payload).sort(),'planType,zip,firstName,lastName,dob,phone,email,state,mbi,medicaid,medicaidNum,prevCarrier,newCarrier,planName,enrollCode,premium,sunfireCode,effectiveDate,sixtyDayDate,sep,contractId,planId,segmentId,enrollmentId,pcpName,agency,aor,assignedUserId,assignedTo,hra,hraDate,submittedAt'.split(',').sort());
  assert.equal(payload.phone,'(212) 555-0101');assert.equal(payload.mbi,'1AB2-CD3-EF45');assert.equal(payload.premium,'$0.00');assert.equal(payload.dob,'1955-02-28');assert.equal(payload.medicaid,'Yes');assert.equal(payload.sep,'No');assert.equal(payload.hra,'Yes');
  assert.equal(payload.agency,'New Gen Health Solutions');assert.equal(payload.assignedUserId,'1UVVwLG5sFIzHVOJJjmE');assert.equal(payload.assignedTo,payload.assignedUserId);
  assert.equal(ghlPayload(valid({aor:'Dylan Maria'}),'now').assignedUserId,'ybc6Z1qfF5PgD1k0DzOo');
@@ -100,17 +100,22 @@ test('disposition cannot bypass completed intake requirement and API rejects mis
  assert.equal((await query('SELECT * FROM enrollment_intakes')).length,0);
 });
 test('saving survives GHL failure, encrypts all sensitive fields and creates assigned follow-up atomically',async()=>{
- const data=valid({medicaid:'Yes',medicaidNum:'SECRET-CASE'});
+ const data=valid({medicaid:'Yes',medicaidNum:'SECRET-CASE',hra:'Yes',hraDate:'2026-10-29',planType:'D-SNP',email:'jane@example.test',personalCode:'PC-1',enrollmentId:'APP-1',pcpName:'Dr Test',segmentId:'2'});
  const response=await handler({deliver:async()=>{throw Error('provider unavailable');}})(req(data));
  assert.equal(response.status,200);intakeId=(await response.json()).id;assert.ok(intakeId);
  const [row]=await query('SELECT * FROM enrollment_intakes WHERE id=$1',[intakeId]);
+ for(const [key] of INTAKE_FIELDS)if(!['dob','mbi','medicaidNum'].includes(key))assert.equal(row.data[key],data[key],key);
+ const payload=ghlPayload(data,'now');assert.equal(payload.planType,'D-SNP');assert.equal(payload.zip,'10001');
  for(const key of ['dob','mbi','medicaidNum']){
   assert.equal(Object.hasOwn(row.data,key),false);assert.ok(row.pii_encrypted[key].c);assert.ok(row.pii_encrypted[key].k);
   assert.equal((await db.rpc('decrypt_pii_value',{p_encrypted:row.pii_encrypted[key]})).data,data[key]);
  }
  assert.ok(!JSON.stringify(row).includes('SECRET-CASE'));assert.ok(!JSON.stringify(row).includes('1955-02-28'));
  const [task]=await query('SELECT * FROM follow_ups WHERE id=$1',[row.follow_up_id]);assert.equal(task.agent_id,'mike_shiomos');assert.equal(task.contact_id,contact);assert.equal(new Date(task.due_at).toISOString(),'2027-03-02T14:00:00.000Z');
- const [delivery]=await query('SELECT * FROM ghl_enrollment_deliveries');assert.equal(delivery.status,'pending');assert.ok(delivery.payload_encrypted.c);assert.ok(!JSON.stringify(delivery).includes('SECRET-CASE'));
+ const [delivery]=await query('SELECT * FROM ghl_enrollment_deliveries');assert.equal(delivery.status,'pending');
+ const sent=JSON.parse((await db.rpc('decrypt_pii_value',{p_encrypted:delivery.payload_encrypted})).data);
+ for(const [key] of INTAKE_FIELDS)if(key!=='personalCode')assert.equal(sent[key],data[key],`GHL ${key}`);
+ assert.ok(delivery.payload_encrypted.c);assert.ok(!JSON.stringify(delivery).includes('SECRET-CASE'));
  await query(`UPDATE call_records SET call_outcome='enrolled' WHERE id=$1`,[call]);assert.equal((await query('SELECT * FROM ix_uploads')).length,1);
 });
 test('GET decrypts only owned intakes and shows sync status; foreign call and organization are denied',async()=>{
@@ -460,3 +465,25 @@ test('admin retry clears unfinalized registration and targets and records actor/
   await pg.exec('ROLLBACK TO SAVEPOINT denied_retry; RELEASE SAVEPOINT denied_retry');
  }
 }));
+
+test('migration preserves historical fields in encrypted native drafts, keeps newer intake values, and completing a draft marks it complete',async()=>{
+ const historical=id(400),unlinked=id(401);
+ await query(`ALTER TABLE call_records ADD COLUMN plan_name text,ADD COLUMN plan_id text,ADD COLUMN effective_date date,ADD COLUMN application_id text,ADD COLUMN customer_dob date,ADD COLUMN customer_mbi text,ADD COLUMN medicaid_number text`);
+ await query(`INSERT INTO call_records(id,tenant_id,agent_id,contact_id,product_type,carrier_name,plan_name,plan_id,effective_date,application_id,customer_dob,customer_mbi,medicaid_number,agent_name) VALUES($1,$2,$3,$4,'MA','Aetna','Legacy plan','008','2027-01-01','OLD-APP','1955-02-28','1AB2CD3EF45','PRIVATE','Mike Shiomos')`,[historical,tenant,agent,contact]);
+ await query(`INSERT INTO call_records(id,tenant_id,agent_id,product_type,plan_name) VALUES($1,$2,$3,'MA','Unlinked legacy')`,[unlinked,tenant,agent]);
+ const migration=readFileSync(new URL('../supabase/migrations/146_script_enrollment_intake.sql',import.meta.url),'utf8');
+ await pg.exec(migration);
+ const [draft]=await query('SELECT * FROM enrollment_intakes WHERE call_id=$1',[historical]);
+ assert.equal(draft.completed_at,null);assert.equal(draft.data.planName,'Legacy plan');assert.equal(draft.data.enrollmentId,'OLD-APP');assert.equal(draft.data.planType,'MA/MAPD/PDP');
+ assert.equal((await db.rpc('decrypt_pii_value',{p_encrypted:draft.pii_encrypted.medicaidNum})).data,'PRIVATE');assert.ok(!JSON.stringify(draft).includes('PRIVATE'));
+ assert.equal((await query('SELECT * FROM enrollment_intakes WHERE call_id=$1',[unlinked])).length,1);
+ assert.equal((await query('SELECT * FROM ghl_enrollment_deliveries WHERE intake_id=$1',[draft.id])).length,0);
+ await query(`UPDATE call_records SET plan_name='Earlier conflicting note' WHERE id=$1`,[call]);
+ await query('ALTER TABLE enrollment_intakes DROP CONSTRAINT enrollment_intake_completed_contact');
+ await pg.exec(migration);
+ const [existing]=await query('SELECT * FROM enrollment_intakes WHERE id=$1',[intakeId]);
+ assert.notEqual(existing.data.planName,'Earlier conflicting note');assert.equal(existing.data.legacyStep7.planName,'Earlier conflicting note');
+ const response=await handler()(new Request(`https://app.test/api/enrollment-intakes?call_id=${historical}`,{method:'POST',body:JSON.stringify({id:draft.id,contact_id:contact,data:valid({planType:'C-SNP'})})}));
+ assert.equal(response.status,200);const [completed]=await query('SELECT * FROM enrollment_intakes WHERE id=$1',[draft.id]);assert.ok(completed.completed_at);assert.equal(completed.data.legacyStep7.applicationId,'OLD-APP');
+ const summary=await handler()(new Request(`https://app.test/api/enrollment-intakes?contact_id=${contact}`));assert.equal(summary.status,200);assert.ok((await summary.json()).intakes.some(row=>row.id===draft.id));
+});

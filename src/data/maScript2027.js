@@ -1,8 +1,8 @@
 // Source of truth: docs/MULTIPLAN_2113SMS_SalesScript2027_M draft 09.28.2026.docx.
 // Spoken wording follows the supplied draft; notes retain only operational requirements.
-import { AGENCY_CLOSING } from "./agencyClosing.js";
+import { ENROLLMENT_CLOSING } from "./enrollmentClosing.js";
 
-export const MA_SCRIPT_REVISION = "sms-2027-2026-10-23-cms";
+export const MA_SCRIPT_REVISION = "sms-2027-2026-11-07-intake";
 const say = (text) => ({ type: "text", text });
 const cue = (text) => ({ type: "cue", text });
 const note = (text) => ({ type: "note", text });
@@ -14,7 +14,7 @@ const direction = (inbound, outbound) => ({ type: "direction", inbound, outbound
 const consent = (id) => yesNo(id, "Permission to continue recording?", [], [close()]);
 const recording = say("Please know our call will be recorded for quality and training purposes; is it ok if I continue?");
 const location = say("In order to provide you information about the plans available in your area, may I have your zip code, county and state?");
-export const MA_CLOSING = `“It’s been a pleasure speaking with you today. If you have any family members or friends that would benefit by speaking with me, please give them my number and I would be happy to assist them too.”\n\n“Thank you for [calling/choosing] [Carrier name] and have a great day!”\n\n${AGENCY_CLOSING}`;
+export const MA_CLOSING = ENROLLMENT_CLOSING;
 
 function tpmo(id, callback = false) {
   return { id, ...say(callback

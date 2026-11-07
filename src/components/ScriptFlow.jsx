@@ -1,3 +1,4 @@
+import {AGENCY_CLOSING} from '../data/agencyClosing.js';
 import { debugLog } from "../lib/debugLog.js";
 import {
   useEffect,
@@ -1114,7 +1115,7 @@ export default function ScriptFlow() {
 
       {activeSection >= 8 && (
         <>
-          <SectionWrapUp scriptBody={wrapUpSection?.body} />
+          <SectionWrapUp scriptBody={state.enrollOk ? wrapUpSection?.body : AGENCY_CLOSING} />
         </>
       )}
 

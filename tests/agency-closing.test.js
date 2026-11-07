@@ -1,3 +1,4 @@
+import {ENROLLMENT_CLOSING} from '../src/data/enrollmentClosing.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AGENCY_CLOSING } from '../src/data/agencyClosing.js';
@@ -26,11 +27,11 @@ const score = (detections, intentCode = code) => scoreCall({ detections,
 test('MA, shared PDP flow and Med Supp end with the exact closing and agency number', () => {
   assert.equal(AGENCY_CLOSING, closing);
   const wrap = MA_SCRIPT_SECTIONS.at(-1);
-  assert.ok(wrap.body.endsWith(closing));
+  assert.equal(wrap.body,ENROLLMENT_CLOSING);
   for (const planKind of ['mapd', 'pdp']) {
     const state = { ...structuredClone(initialState), maAnswers: { sob: { planKind } } };
     const view = getMAScriptView(wrap, state);
-    assert.ok(view.items.at(-1).text.endsWith(closing));
+    assert.equal(view.items.at(-1).text,ENROLLMENT_CLOSING);
   }
   assert.equal(MEDSUP_SECTIONS.at(-1).script.at(-1), closing);
   assert.equal(MEDSUP_COMPLIANCE_KNOWLEDGE['Wrap Up'].verbatimScript.at(-1), closing);

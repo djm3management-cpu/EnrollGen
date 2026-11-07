@@ -1,3 +1,4 @@
+import EnrollmentSummary from '../enrollment/EnrollmentSummary';
 import {useAppAuth} from '../../context/AuthContext';
 import {saveAgentContactZip} from '../../lib/paragonResidence.js';
 import CrmPanelBoundary from '../CrmPanelBoundary';
@@ -725,6 +726,7 @@ function RightPanel({
         <div className="contacts-muted">Select a contact</div>
       ) : (
         <>
+          <EnrollmentSummary key={contact.id} contactId={contact.id}/>
           <ContactCallSummary calls={bundle?.calls || []} loading={callData.loading} error={callData.error} />
           <div className="contacts-right-card">
             <span className="contacts-avatar contacts-avatar-large">{initialsFor(contact)}</span>

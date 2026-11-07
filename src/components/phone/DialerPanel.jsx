@@ -20,12 +20,7 @@ import { useTenantConfig } from "../../hooks/useTenantConfig";
 import { normalizePhoneE164 } from "../../lib/phone";
 import { playDtmfTone } from "../../audio/dtmfTones";
 
-// The line calls actually go out on (telephony/src/config.js
-// TWILIO_PHONE_NUMBER, falls back to this same number in
-// voiceOutbound.js). Not exposed to the frontend anywhere, so it's
-// mirrored here for display only.
-const CALLING_FROM_LABEL = "NGHS MAIN DID";
-const CALLING_FROM_NUMBER = "+16098065996";
+import {AGENCY_LINE_LABEL as CALLING_FROM_LABEL,AGENCY_LINE_NUMBER as CALLING_FROM_NUMBER} from '../../lib/agencyLine.js';
 
 const NAV_TABS = [
   { id: "RECENTS", label: "RECENTS", icon: History },

@@ -1,7 +1,9 @@
-import React from "react";
+import React, {useState} from "react";
+import EnrollmentIntake from "./enrollment/EnrollmentIntake";
+import {scriptIntakePrefill} from "../lib/enrollmentIntake.js";
+import {getActiveSessionMetadata,waitForActiveSessionMetadata} from "../hooks/useSessionTracker";
 import MAScriptBranches from "./MAScriptBranches";
 import { getMAScriptView } from "../lib/maScriptFlow.js";
-import { normalizeDateInput } from '../lib/dateInput.js';
 import { ShieldCheck } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
 import {
@@ -23,7 +25,6 @@ function PreEnrollCheck({ state }) {
   if (!state.qualOk) gaps.push("Qualifications not marked complete");
   if (!state.neadsOk) gaps.push("NEADS Assessment not marked complete");
   if (!state.sobOk) gaps.push("Plan Selection & SOB not marked complete");
-  if (!state.notes?.planName?.trim()) gaps.push("Plan name not entered");
 
   if (gaps.length === 0) return null;
 
@@ -41,76 +42,21 @@ function PreEnrollCheck({ state }) {
   );
 }
 
-function EnrollmentExtras({ state, dispatch, disabled }) {
-  const { notes, enrollOk } = state;
-  const handleNoEnrollmentWrapUp = () => {
-    dispatch({ type: "CLOSE_MA_SCRIPT", outcome: "not_interested" });
+function EnrollmentExtras({ state, dispatch, disabled, intakeDisabled=disabled }) {
+  const [callId,setCallId]=useState(null),[error,setError]=useState('');
+  const open=async()=>{
+    setError('');
+    const metadata=getActiveSessionMetadata().callRecordId?getActiveSessionMetadata():await waitForActiveSessionMetadata();
+    if(!metadata.callRecordId){setError('Call record is still syncing. Try again in a moment.');return;}
+    setCallId(metadata.callRecordId);
   };
-
-  return (
-    <>
-      <div className="grid">
-        {[
-          ["Carrier (local note)", "carrierName", "Carrier"],
-          ["Plan Name (local note)", "planName", "Plan name"],
-          ["Plan ID (local note)", "planId", "Contract / PBP / plan ID"],
-          ["Effective Date (local note)", "effectiveDate", "MM/DD/YYYY"],
-        ].map(([label, field, placeholder]) => (
-          <label key={field}>
-            {label}
-            <input
-              type={field === 'effectiveDate' ? 'date' : 'text'}
-              disabled={disabled}
-              value={field === 'effectiveDate' ? normalizeDateInput(notes[field]) : notes[field]}
-              onChange={(event) =>
-                dispatch({ type: "SET_NOTE", field, value: event.target.value })
-              }
-              placeholder={placeholder}
-            />
-          </label>
-        ))}
-      </div>
-
-      {!enrollOk ? <PreEnrollCheck state={state} /> : null}
-
-      <button data-key-role="secondary"
-        type="button"
-        className="secondary no-enrollment-wrapup-btn"
-        disabled={disabled || enrollOk}
-        onClick={handleNoEnrollmentWrapUp}
-      >
-        No Enrollment - Wrap Up
-      </button>
-
-      <div className="enrollment-code">
-        <label>
-          Enrollment / Application ID (enter after submission)
-          <div className="enrollment-code-row">
-            <input
-              disabled={!enrollOk}
-              value={notes.enrollmentCode}
-              onChange={(event) =>
-                dispatch({
-                  type: "SET_NOTE",
-                  field: "enrollmentCode",
-                  value: event.target.value,
-                })
-              }
-              placeholder="Enrollment / Application #"
-              className="input-flex"
-            />
-            <span
-              className={`enrollment-check ${
-                enrollOk && (notes.enrollmentCode || "").trim().length >= 4 ? "visible" : ""
-              }`}
-              title="Entered"
-              aria-hidden="true"
-            />
-          </div>
-        </label>
-      </div>
-    </>
-  );
+  return <>
+    {!state.enrollOk ? <PreEnrollCheck state={state} /> : null}
+    <button type="button" className="secondary" disabled={intakeDisabled} onClick={open}>Complete Enrollment Intake</button>
+    {error&&<p className="ops-error" role="alert">{error}</p>}
+    {callId&&<EnrollmentIntake callId={callId} initialPrefill={scriptIntakePrefill(state)} onClose={()=>setCallId(null)} onSaved={()=>dispatch({type:'SET_GATE',field:'enrollOk',value:true})}/>}
+    <button data-key-role="secondary" type="button" className="secondary no-enrollment-wrapup-btn" disabled={disabled || state.enrollOk} onClick={()=>dispatch({type:'CLOSE_MA_SCRIPT',outcome:'not_interested'})}>No Enrollment - Wrap Up</button>
+  </>;
 }
 
 export default React.memo(function ScriptSection({ section }) {
@@ -140,10 +86,10 @@ export default React.memo(function ScriptSection({ section }) {
       ) : null}
 
       {isEnrollment ? (
-        <EnrollmentExtras state={state} dispatch={dispatch} disabled={!state.sobOk} />
+        <EnrollmentExtras state={state} dispatch={dispatch} disabled={!state.sobOk} intakeDisabled={!isUnlocked || !view?.complete} />
       ) : null}
 
-      {gateField ? (
+      {gateField && !isEnrollment ? (
         <div className={`section-next-action${isEnrollment ? " section-next-action-wrap" : ""}`}>
           <SectionAdvanceButton
             disabled={!isUnlocked || gateDone || (view && !view.complete)}

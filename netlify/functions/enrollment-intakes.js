@@ -8,6 +8,16 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try{
    const db=getDb(),identity=await resolveCallAccessIdentity(db,auth),{agent,tenant}=identity,url=new URL(request.url);
+   if(request.method==='GET' && url.searchParams.has('contact_id')){
+    const contactId=url.searchParams.get('contact_id');
+    if(!/^[0-9a-f-]{36}$/i.test(contactId||''))throw new EvidenceError(400,'Contact ID is required.');
+    // A contact does not grant access to another agent's call or its intake.
+    const rows=checked(await db.from('enrollment_intakes').select('*').eq('tenant_id',tenant.id).eq('contact_id',contactId).order('submitted_at'))||[];
+    const callIds=[...new Set(rows.map(row=>row.call_id))];
+    const calls=callIds.length?checked(await scopeCallToIdentity(db.from('call_records').select('id').in('id',callIds),identity))||[]:[];
+    const allowed=new Set(calls.map(call=>call.id));
+    return evidenceJson(200,{intakes:await readIntakes(db,rows.filter(row=>allowed.has(row.call_id)))});
+   }
    const callId=url.searchParams.get('call_id');
    if(!/^[0-9a-f-]{36}$/i.test(callId||''))throw new EvidenceError(400,'Call ID is required.');
    const call=checked(await scopeCallToIdentity(db.from('call_records').select('*').eq('id',callId),identity).maybeSingle());
@@ -41,24 +51,18 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
     if(!contact)throw new EvidenceError(400,'Link a contact before saving the enrollment intake.');
     let previous=null;
     if(input.id){
-     previous=checked(await db.from('enrollment_intakes').select('id,submitted_at,is_test_enrollment').eq('id',input.id).eq('call_id',callId).eq('tenant_id',tenant.id).maybeSingle());
+     previous=checked(await db.from('enrollment_intakes').select('id,submitted_at,is_test_enrollment,data').eq('id',input.id).eq('call_id',callId).eq('tenant_id',tenant.id).maybeSingle());
      if(!previous)throw new EvidenceError(403,'Intake unavailable for this call.');
     }
     if(!identity.admin && data.testEnrollment!==(previous?.is_test_enrollment||false))throw new EvidenceError(403,'Only admins can change test enrollment mode.');
     const submittedAt=previous?.submitted_at||now();
-    const id=checked(await db.rpc('save_enrollment_intake',{p_id:previous?.id||null,p_tenant:tenant.id,p_call:callId,p_contact:contactId,p_data:data,p_carrier:carrierKey(data.newCarrier),p_payload:ghlPayload(data,submittedAt)}));
+    const id=checked(await db.rpc('save_enrollment_intake',{p_id:previous?.id||null,p_tenant:tenant.id,p_call:callId,p_contact:contactId,p_data:{...data,...(previous?.data?.legacyStep7?{legacyStep7:previous.data.legacyStep7}:{})},p_carrier:carrierKey(data.newCarrier),p_payload:ghlPayload(data,submittedAt)}));
     // Durable save precedes delivery. Provider failures never change save success.
     try{if(!data.testEnrollment)await deliver(db,{limit:1});}catch{ /* No submitted PII or provider response is logged. */ }
     return evidenceJson(200,{saved:true,id});
    }
    const rows=checked(await db.from('enrollment_intakes').select('*').eq('call_id',callId).eq('tenant_id',tenant.id).order('submitted_at'))||[];
-   const intakes=[];
-   for(const row of rows){
-    const data={...row.data,testEnrollment:row.is_test_enrollment};
-    for(const key of ['dob','mbi','medicaidNum'])data[key]=checked(await db.rpc('decrypt_pii_value',{p_encrypted:row.pii_encrypted[key]}))||'';
-    const jobs=checked(await db.from('ghl_enrollment_deliveries').select('status,attempts,last_error,created_at').eq('intake_id',row.id).order('revision',{ascending:false}).limit(1));
-    intakes.push({id:row.id,contact_id:row.contact_id,data,submitted_at:row.submitted_at,sync:jobs[0]||{status:'pending'}});
-   }
+   const intakes=await readIntakes(db,rows);
    let contact={};
    if(call.contact_id){
     const row=checked(await db.from('contacts').select('*').eq('id',call.contact_id).eq('tenant_id',tenant.id).maybeSingle());
@@ -70,5 +74,15 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
    return evidenceJson(200,{admin:identity.admin,intakes,prefill,contact_id:call.contact_id,product_type:call.product_type});
   }catch(error){return evidenceFailure(error);}
  };
+}
+async function readIntakes(db,rows){
+ const intakes=[];
+ for(const row of rows){
+  const data={...emptyIntake(),...row.data,testEnrollment:row.is_test_enrollment};
+  for(const key of ['dob','mbi','medicaidNum'])data[key]=row.pii_encrypted?.[key]?checked(await db.rpc('decrypt_pii_value',{p_encrypted:row.pii_encrypted[key]}))||'':'';
+  const jobs=checked(await db.from('ghl_enrollment_deliveries').select('status,attempts,last_error,created_at').eq('intake_id',row.id).order('revision',{ascending:false}).limit(1));
+  intakes.push({id:row.id,call_id:row.call_id,contact_id:row.contact_id,data,completed_at:row.completed_at,submitted_at:row.submitted_at,sync:jobs?.[0]||null});
+ }
+ return intakes;
 }
 export default createEnrollmentIntakesHandler();

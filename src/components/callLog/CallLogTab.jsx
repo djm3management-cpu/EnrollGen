@@ -1,3 +1,4 @@
+import EnrollmentSummary from '../enrollment/EnrollmentSummary';
 import ParagonResidenceReview from './ParagonResidenceReview';
 import CrmPanelBoundary from '../CrmPanelBoundary';
 import EnrollmentIntake from '../enrollment/EnrollmentIntake';
@@ -214,6 +215,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
           </div>
         </details>
       </div>
+      <EnrollmentSummary callId={row.call_record_id}/>
       {showIntake&&<EnrollmentIntake callId={row.call_record_id} onClose={()=>setShowIntake(false)} onSaved={()=>void loadDetail()}/>}
       {detailError && <div className="ops-error" role="alert">{detailError} <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => void loadDetail()}>RETRY</button></div>}
       <div className="call-log-workspace">

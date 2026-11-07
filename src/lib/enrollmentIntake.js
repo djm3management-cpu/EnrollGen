@@ -2,13 +2,14 @@ import {canonicalCarrier} from '../../integrations/converselySelection.js';
 export const CARRIERS=['Devoted Health','Aetna','Elevance / Anthem','UnitedHealthcare','Humana','Cigna / HealthSpring','Wellcare / Centene','Zing Health','HCSC / BCBS','Manhattan Life','Other'];
 export const WRITING_AGENTS=['Mike Shiomos','Mark Endres','Dylan Maria'];
 export const GHL_USERS={'Mark Endres':'1UVVwLG5sFIzHVOJJjmE','Dylan Maria':'ybc6Z1qfF5PgD1k0DzOo','Mike Shiomos':''};
+export const PLAN_TYPES=['MA/MAPD/PDP','C-SNP','D-SNP'];
 export const INTAKE_FIELDS=[
  ['firstName','First Name','text',true],['lastName','Last Name','text',true],['dob','Date of Birth','date',true],['phone','Phone','tel',true],['email','Email','email'],['state','State','text',true],['zip','ZIP','text'],['mbi','MBI','text',true],['medicaid','Medicaid/Subsidy Eligible','yesno'],['medicaidNum','Medicaid #/Case #','text'],
- ['prevCarrier','Previous Carrier','text',true],['newCarrier','New Carrier','carrier',true],['planName','Plan Name','text',true],['enrollCode','Plan/Enrollment Code','text',true],['premium','Monthly Premium','text',true],['personalCode','Personal Code (Sunfire/CRM)','text'],['effectiveDate','Effective Date','date'],['sixtyDayDate','60 Day Follow-Up Date','date',true],['sep','SEP/Special Circumstance','yesno'],
+ ['planType','Plan type','planType',true],['prevCarrier','Previous Carrier','text',true],['newCarrier','New Carrier','carrier',true],['planName','Plan Name','text',true],['enrollCode','Plan/Enrollment Code','text',true],['premium','Monthly Premium','text',true],['personalCode','Personal Code (Sunfire/CRM)','text'],['effectiveDate','Effective Date','date'],['sixtyDayDate','60 Day Follow-Up Date','date',true],['sep','SEP/Special Circumstance','yesno'],
  ['contractId','Contract ID','text',true],['planId','Plan ID','text',true],['segmentId','Segment ID','text'],['enrollmentId','Enrollment ID','text'],['pcpName','PCP Name','text'],['agency','Agency','text',true],['aor','Writing Agent','agent',true],['hra','HRA Completed','yesno',true],['hraDate','Date of HRA','date'],['sunfireCode','SunFire Confirmation Code','text'],
 ];
 export const fieldVisible=(key,d)=>key==='medicaidNum'?d.medicaid==='Yes':key==='hraDate'?d.hra==='Yes':true;
-export const emptyIntake=(agent='')=>Object.fromEntries([...INTAKE_FIELDS.map(([key])=>[key,'']),...Object.entries({agency:'New Gen Health Solutions',aor:WRITING_AGENTS.includes(agent)?agent:'',medicaid:'No',sep:'No',hra:'No',segmentId:'0',testEnrollment:false})]);
+export const emptyIntake=(agent='')=>Object.fromEntries([...INTAKE_FIELDS.map(([key])=>[key,'']),...Object.entries({agency:'New Gen Health Solutions',aor:WRITING_AGENTS.includes(agent)?agent:'',medicaid:'No',sep:'No',hra:'No',segmentId:'0',planType:'MA/MAPD/PDP',testEnrollment:false})]);
 export function formatPhone(value){let s=String(value||'').replace(/\D/g,'');if(s.length===11 && s[0]==='1')s=s.slice(1);s=s.slice(0,10);return s.length>6?`(${s.slice(0,3)}) ${s.slice(3,6)}-${s.slice(6)}`:s.length>3?`(${s.slice(0,3)}) ${s.slice(3)}`:s?`(${s}`:'';}
 export function formatMbi(value){const s=String(value||'').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,11);return [s.slice(0,4),s.slice(4,7),s.slice(7)].filter(Boolean).join('-');}
 export function formatPremium(value){const s=String(value??'').replace(/[$,\s]/g,'');return /^\d+(\.\d{0,2})?$/.test(s)?`$${Number(s).toFixed(2)}`:'';}
@@ -27,6 +28,7 @@ export function intakeErrors(d){const errors={};for(const [key,label,type,requir
  if(!/^[A-Z0-9]{4}-[A-Z0-9]{3}-[A-Z0-9]{4}$/.test(d.mbi||''))errors.mbi='MBI (11 characters required)';
  if(!/^[A-Z]{2}$/.test(d.state||''))errors.state='State (two-letter code required)';
  if(!formatPremium(d.premium))errors.premium='Monthly Premium';
+ if(!PLAN_TYPES.includes(d.planType))errors.planType='Plan type';
  if(!CARRIERS.includes(d.newCarrier))errors.newCarrier='New Carrier';
  if(!WRITING_AGENTS.includes(d.aor))errors.aor='Writing Agent';
  for(const key of ['medicaid','sep','hra'])if(!['Yes','No'].includes(d[key]))errors[key]=key;
@@ -34,5 +36,24 @@ export function intakeErrors(d){const errors={};for(const [key,label,type,requir
  if(d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email))errors.email='Email (valid email required)';
  return errors;}
 export const planAutofill=plan=>({planName:plan.plan_name,contractId:plan.contract_id,planId:plan.plan_id,segmentId:plan.segment_id||'0',premium:plan.monthly_premium==null?'':formatPremium(plan.monthly_premium)});
-export function ghlPayload(d,submittedAt,users=GHL_USERS){const assigned=users[d.aor]||users['Mark Endres'];return Object.fromEntries(['firstName','lastName','dob','phone','email','state','mbi','medicaid','medicaidNum','prevCarrier','newCarrier','planName','enrollCode','premium','sunfireCode','effectiveDate','sixtyDayDate','sep','contractId','planId','segmentId','enrollmentId','pcpName','agency','aor','assignedUserId','assignedTo','hra','hraDate','submittedAt'].map(key=>[key,({assignedUserId:assigned,assignedTo:assigned,submittedAt,agency:'New Gen Health Solutions'})[key]??d[key]??'']));}
+export function ghlPayload(d,submittedAt,users=GHL_USERS){const assigned=users[d.aor]||users['Mark Endres'];return Object.fromEntries(['planType','zip','firstName','lastName','dob','phone','email','state','mbi','medicaid','medicaidNum','prevCarrier','newCarrier','planName','enrollCode','premium','sunfireCode','effectiveDate','sixtyDayDate','sep','contractId','planId','segmentId','enrollmentId','pcpName','agency','aor','assignedUserId','assignedTo','hra','hraDate','submittedAt'].map(key=>[key,({assignedUserId:assigned,assignedTo:assigned,submittedAt,agency:'New Gen Health Solutions'})[key]??d[key]??'']));}
 export function intakeCallFields(call,intake){const d=intake.data;return {...call,enrollment_intake_id:intake.id,carrier_name:d.newCarrier,plan_name:d.planName,plan_id:d.planId,effective_date:d.effectiveDate,enrollment_confirmation_number:d.enrollmentId,sunfire_code:d.sunfireCode,customer_first_name:d.firstName,customer_last_name:d.lastName,customer_phone:d.phone,customer_state:d.state,zip_code:d.zip,metadata:{...call.metadata,contract_id:d.contractId,segment_id:d.segmentId,submission_date:intake.submitted_at}};}
+
+// Selected script branches use internal values; persisted intakes use display labels.
+export function scriptIntakePrefill(state){
+ const n=state.notes||{};
+ const selected=Object.entries(state.maAnswers||{}).find(([key])=>key.endsWith(':selectedSnp'))?.[1];
+ const mapping={firstName:'customerFirstName',lastName:'customerLastName',dob:'customerDob',phone:'customerPhone',email:'customerEmail',state:'customerState',zip:'customerZip',mbi:'customerMbi',newCarrier:'carrierName',planName:'planName',planId:'planId',effectiveDate:'effectiveDate',enrollmentId:'enrollmentCode',sunfireCode:'sunfireCode',prevCarrier:'previousCarrier',premium:'premium',medicaid:'medicaid',medicaidNum:'medicaidNumber',sixtyDayDate:'sixtyDayDate',sep:'sep',hra:'hra',hraDate:'hraDate'};
+ const plan=n.selectedPlanContext||{};
+ const combined=/^([A-Z]\d{4})[- /](\d{3})(?:[- /](\d{1,3}))?$/i.exec(n.planId||'');
+ return {...Object.fromEntries(Object.entries(mapping).filter(([,key])=>n[key]).map(([key,note])=>[key,n[note]])),
+  ...(plan.contractId||combined?{contractId:plan.contractId||combined[1]}:{}),
+  ...(plan.planId||combined?{planId:plan.planId||combined[2]}:{}),...(combined?.[3]?{segmentId:combined[3]}:{}),
+  ...(state.agentName?{aor:state.agentName}:{}),planType:({standard:'MA/MAPD/PDP',csnp:'C-SNP',dsnp:'D-SNP'})[selected]||'MA/MAPD/PDP'};
+}
+export function mergeIntakePrefill(server,local={}){
+ // Server contact/call identity wins; live notes fill gaps. The live plan selection wins.
+ const result={...server};for(const [key,value] of Object.entries(local))if(value&&!result[key])result[key]=value;
+ if(local.planType)result.planType=local.planType;
+ return normalizeIntake(result);
+}

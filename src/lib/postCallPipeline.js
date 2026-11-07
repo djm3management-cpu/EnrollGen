@@ -284,7 +284,7 @@ export function buildPostCallPayload({
     ? Math.max(0, Math.round((Date.now() - state.tpmoStart) / 1000))
     : null;
 
-  return {
+  const payload = {
     session_id: sessionMetadata?.sessionId || null,
     twilio_call_sid: sessionMetadata?.twilioCallSid || null,
     telephony_call: sessionMetadata?.telephonyCall === true,
@@ -331,6 +331,8 @@ export function buildPostCallPayload({
     agent_notes: notes.agentNotes || null,
     final,
   };
+  if(flow==='ma')for(const key of ['carrier_name','plan_name','plan_id','effective_date','application_id','enrollment_code','enrollment_confirmation_number','premium','sunfire_code','sixty_day_date','medicaid','medicaid_number','previous_carrier','sep','agency','writing_agent','hra','hra_date'])delete payload[key];
+  return payload;
 }
 
 export function installTranscriptExitFlush({ windowTarget, documentTarget, getSnapshot, getToken,

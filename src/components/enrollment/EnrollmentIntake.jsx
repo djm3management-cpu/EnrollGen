@@ -5,9 +5,9 @@ import {useEffect,useState} from 'react';
 import {useAppAuth} from '../../context/AuthContext';
 import {fetchWithClerk} from '../../lib/clerkFetch.js';
 import OpportunityDialog from '../opportunities/OpportunityDialog';
-import {INTAKE_FIELDS,CARRIERS,WRITING_AGENTS,fieldVisible,normalizeIntake,intakeErrors,formatPhone,formatMbi,formatPremium,followUpDate,planAutofill} from '../../lib/enrollmentIntake.js';
+import {INTAKE_FIELDS,PLAN_TYPES,mergeIntakePrefill,CARRIERS,WRITING_AGENTS,fieldVisible,normalizeIntake,intakeErrors,formatPhone,formatMbi,formatPremium,followUpDate,planAutofill} from '../../lib/enrollmentIntake.js';
 
-export default function EnrollmentIntake({callId,onClose,onSaved}){
+export default function EnrollmentIntake({callId,onClose,onSaved,initialPrefill={},intakeId}){
  const {getToken}=useAppAuth();
  const {agentUuid}=useCurrentAgent();
  const {contacts,loading:contactsLoading,error:contactsError}=useContactsList('',agentUuid,true);
@@ -24,8 +24,13 @@ export default function EnrollmentIntake({callId,onClose,onSaved}){
   let cancelled=false;
   request().then(result=>{
    if(cancelled)return;
-   setAdmin(result.admin===true);setRecords(result.intakes);setPrefill(normalizeIntake(result.prefill));setContactId(result.contact_id||'');
-   const first=result.intakes[0];setRecord(first?.id||null);setData(first?.data||normalizeIntake(result.prefill));setSync(first?.sync||null);
+   const defaults=mergeIntakePrefill(result.prefill,initialPrefill);
+   const first=result.intakes.find(row=>row.id===intakeId)||result.intakes[0];
+   const savedFields=Object.fromEntries(Object.entries(first?.data||{}).filter(([,value])=>value!==''&&value!=null));
+   const selectedType=first&&!first.completed_at&&initialPrefill.planType?{planType:initialPrefill.planType}:{};
+   setAdmin(result.admin===true);setRecords(result.intakes);setPrefill(defaults);
+   setContactId(first?.contact_id||result.contact_id||'');setRecord(first?.id||null);
+   setData(first?mergeIntakePrefill({...defaults,...savedFields},selectedType):defaults);setSync(first?.sync||null);
   }).catch(err=>{if(!cancelled)setError(err.message);});
   return()=>{cancelled=true;};
  // Fetch belongs to this call and signed-in agent.
@@ -82,13 +87,13 @@ export default function EnrollmentIntake({callId,onClose,onSaved}){
    </select></label>
    {contactsError&&<p className="ops-error" role="alert">{contactsError}</p>}
    {['Client','Plan','IDs','Agency / Agent','SunFire Confirmation'].map((section,index)=>{
-    const ranges=[[0,10],[10,19],[19,24],[24,28],[28,29]],fields=INTAKE_FIELDS.slice(...ranges[index]);
+    const ranges=[[0,10],[10,20],[20,25],[25,29],[29,30]],fields=INTAKE_FIELDS.slice(...ranges[index]);
     return <section className="contacts-section" key={section}><h3 className="contacts-section-head">{section}</h3>
      {section==='Plan'&&<div className="post-call-core-panel"><label className="contacts-edit-field"><span>Search PY2027 plans</span><input className="contacts-edit-input" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Search plan name…" disabled={!data.newCarrier||!data.state||busy}/></label>
       <p className="contacts-muted" role="status">{planStatus}</p>
       <label className="contacts-edit-field"><span>Available plans</span><select className="contacts-edit-input" value="" disabled={busy||!plans.length} onChange={event=>{const plan=plans.find(p=>String(p.id)===event.target.value);if(plan)setData(previous=>({...previous,...planAutofill(plan)}));}}><option value="">Select a plan or enter details manually</option>{plans.map(plan=><option key={plan.id} value={plan.id}>{plan.plan_name} · {plan.contract_id}-{plan.plan_id}-{plan.segment_id} · {plan.monthly_premium==null?'Premium unavailable':formatPremium(plan.monthly_premium)}</option>)}</select></label></div>}
      <div className="enrollment-intake-grid">{fields.filter(([key])=>fieldVisible(key,data)).map(([key,label,type,required])=>{
-      const options=type==='yesno'?['No','Yes']:type==='carrier'?CARRIERS:type==='agent'?WRITING_AGENTS:null;
+      const options=type==='yesno'?['No','Yes']:type==='carrier'?CARRIERS:type==='agent'?WRITING_AGENTS:type==='planType'?PLAN_TYPES:null;
       const props={id:`intake-${key}`,className:'contacts-edit-input',value:data[key]||'',disabled:busy,'aria-invalid':Boolean(errors[key]),required:required||(key==='sunfireCode'&&data.newCarrier==='UnitedHealthcare'),onChange:event=>change(key,event.target.value)};
       return <label className="contacts-edit-field" key={key} htmlFor={props.id}><span>{label}{props.required?' *':''}</span>{options?<select {...props}>{type!=='yesno'&&<option value="">Choose…</option>}{options.map(option=><option key={option}>{option}</option>)}</select>:<input {...props} type={type} maxLength={key==='state'?2:500} onBlur={key==='premium'?()=>change(key,formatPremium(data[key])):undefined}/>}{errors[key]&&<small className="ops-error">{errors[key]}</small>}</label>;
      })}</div>

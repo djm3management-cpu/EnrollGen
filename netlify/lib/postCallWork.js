@@ -1,3 +1,7 @@
+const LEGACY_ENROLLMENT_COLUMNS=['carrier_name','plan_name','plan_id','effective_date','application_id','enrollment_code','enrollment_confirmation_number','premium','sunfire_code','sixty_day_date','medicaid','medicaid_number','previous_carrier','sep','agency','writing_agent','hra','hra_date'];
+function omitMAEnrollmentColumns(record,payload){
+ if(normalizeProductType(payload.product_type)==='MA')for(const key of LEGACY_ENROLLMENT_COLUMNS)delete record[key];
+}
 import {postCallExceptionDetails} from './postCallException.js';
 import {verifyPostCallEnded} from './postCallGuard.js';
 import { isComplianceSale } from "../../src/lib/saleCompliance.js";
@@ -278,6 +282,7 @@ async function ensureCallRecordRow(supabase, payload, auth, tenant) {
       telephony_user_id: auth.userId || null,
     },
   };
+  omitMAEnrollmentColumns(insertPayload,payload);
 
   const { data: callRecord, error } = await supabase
     .from("call_records")
@@ -448,6 +453,7 @@ async function saveCheckpoint(supabase, payload, auth, tenant, { final = false }
     updated_at: now,
   };
 
+  omitMAEnrollmentColumns(callUpdate,payload);
   const { data: updatedCallRecord, error } = await supabase
     .from("call_records")
     .update(callUpdate)
@@ -593,6 +599,7 @@ async function handleWrapUp(supabase, payload, auth, tenant, tenantAgents, subsc
     updated_at: now,
   };
 
+  omitMAEnrollmentColumns(updatePayload,payload);
   let { data: updatedCallRecord, error } = await supabase
     .from("call_records")
     .update(updatePayload)
