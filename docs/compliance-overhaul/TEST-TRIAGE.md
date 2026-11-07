@@ -104,3 +104,11 @@ All provider requests in tests use injected doubles. scripts/compliance-overhaul
 - `root/tests/customer-audio.test.js:42:1` — connection close clears capturing despite pre-start React state in closure. Transient closes should recover. The fallback processor stopped sending audio during a disconnect, preventing speech-triggered recovery. Keep feeding its bounded recovery buffer.
 - `root/tests/customer-audio.test.js:54:1` — speech-service error is surfaced and releases capture resources. The recovery wrapper swallowed provider rejection and did not deliver terminal closure, so capture could remain active. Forward rejection and notify terminal close so the hook releases resources.
 - `root/tests/tpmo-grading.test.js:121:1` — an earlier substantial disclosure with unclear wording requires review, rather than a late-repeat auto-fail. An uncertain earlier TPMO disclosure was treated as a proven late event. Preserve its timestamped evidence and review all affected TPMO rows without deductions or auto-fail.
+
+## Final verification
+
+Code commit: 3b48ead on fix/compliance-scoring-overhaul. Post-commit full app suite: 958 passed, 1 failed, 959 total. Full telephony suite: 313 passed, 0 failed. Combined: **1271 passed, 1 failed**. The only remaining failure is the same housekeeping source-diagnostics test on main; no branch-only failure remains. Build, typecheck:llm, full lint and git diff --check passed.
+
+Logs saved locally: /tmp/enrollgen-main-tests.log, /tmp/enrollgen-main-telephony-tests.log, /tmp/enrollgen-branch-tests.log, /tmp/enrollgen-branch-telephony-tests.log, /tmp/enrollgen-final-tests.log, /tmp/enrollgen-final-telephony-tests.log, /tmp/enrollgen-build.log, /tmp/enrollgen-typecheck.log and /tmp/enrollgen-lint.log. The initial branch logs back the per-failure classifications above. The final runs used NODE_OPTIONS to preload scripts/compliance-overhaul/offline-tests.cjs (root) or ../scripts/compliance-overhaul/offline-tests.cjs (telephony).
+
+Main remains 90f128b; its worktree is clean. The branch contains main and no longer contains duplicate IX commit 3f9672f. IX files match main. The four pre-existing untracked files were left untouched. No push, merge, deploy, production setting change, production migration application, LLM call or transcription call occurred. Production access was the read-only migration-history SELECT only.
