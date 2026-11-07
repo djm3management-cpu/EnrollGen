@@ -6,6 +6,7 @@ import {aggregateVersion} from '../../src/compliance/engine/VersionAggregator.js
 import {evaluateRules} from '../../src/compliance/rules/evaluate.js';
 import {evaluateTpmo2027 as previousTpmo} from './fixtures/tpmo-cms-only-4.js';
 import {detectCallStages} from '../../src/compliance/rules/callStages.js';
+if(RULES_VERSION!=='cy2027-full-rubric-5')throw Error('Historical v5 generator; use event-fixes-report.mjs --dry-run.');
 if(!process.argv.includes('--dry-run'))throw Error('Use --dry-run; no live execution exists.');
 const dir='docs/compliance-overhaul',data=JSON.parse(await readFile('/tmp/enrollgen-compliance-audit.json','utf8'));
 const cards=data.historicalCards||data.cards,template=data.templates[0],byIntent=new Map(data.intents.map(i=>[i.id,i.intent_code]));

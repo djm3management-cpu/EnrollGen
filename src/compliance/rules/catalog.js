@@ -1,7 +1,7 @@
 import {RULE_CATALOG as ORIGINAL_MATCHERS} from './originalMatchers.js';
 import {CMS_RULE_BASIS,normalizeProduct} from './cmsBasis.js';
 import {ORIGINAL_MA_RUBRIC} from './originalRubric.js';
-export const RULES_VERSION='cy2027-full-rubric-5';
+export const RULES_VERSION='cy2027-full-rubric-6';
 export const RETIRED_RULE_IDS=new Set(['ELIG_010_ESRD_STATUS_CHECK','CONDUCT_013_NO_COMPARISON_BY_NAME','ENROLL_008_CMS_REVIEW_PERIOD']);
 export const RULE_CATALOG=ORIGINAL_MATCHERS.map(intent=>{
  const original=ORIGINAL_MA_RUBRIC[intent.id],basis=CMS_RULE_BASIS[intent.id];

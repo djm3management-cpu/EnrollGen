@@ -10,11 +10,20 @@ export function transcriptCoverage(call) {
   const endMs=Math.max(0,...lines.filter(x=>x.text?.trim()).map(x=>Number(x.end_ms)||Number(x.start_ms)||0));
   const durationNeedsVerification=durationMs>6*60*60*1000;
   const ratio=durationMs>0?Math.min(1,endMs/durationMs):0;
-  const gaps=(call.metadata?.transcription_gaps||[]).filter(g=>Number.isFinite(g.start_ms)&&Number.isFinite(g.end_ms)&&g.end_ms>g.start_ms);
+  const channels=Object.fromEntries(['agent','customer'].map(speaker=>{
+  const channel=lines.filter(l=>l.speaker===speaker&&l.text?.trim()&&Number.isFinite(l.start_ms)&&Number.isFinite(l.end_ms));
+  const firstMs=channel.length?Math.min(...channel.map(l=>l.start_ms)):null;
+  const lastMs=channel.length?Math.max(...channel.map(l=>l.end_ms)):0;
+  const spanRatio=durationMs>0&&firstMs!=null?Math.min(1,Math.max(0,lastMs-firstMs)/durationMs):0;
+  return [speaker,{firstMs,endMs:lastMs,ratio:spanRatio,complete:spanRatio>=.95&&(speaker!=='agent'||firstMs<=120000)}];
+ }));
+ const channelReasons=Object.entries(channels).flatMap(([speaker,c])=>[...(c.firstMs==null?[`${speaker} channel missing`]:speaker==='agent'&&c.firstMs>120000?[`agent channel starts at ${(c.firstMs/1000).toFixed(1)}s`]:[]),...(c.ratio<.95?[`${speaker} span ${(c.ratio*100).toFixed(1)}% of talk time`]:[])]);
+ const channelsComplete=Object.values(channels).every(c=>c.complete);
+ const gaps=(call.metadata?.transcription_gaps||[]).filter(g=>Number.isFinite(g.start_ms)&&Number.isFinite(g.end_ms)&&g.end_ms>g.start_ms);
   const missingRanges=[...gaps,...(durationMs>endMs?[{start_ms:endMs,end_ms:durationMs}]:[])].sort((a,b)=>a.start_ms-b.start_ms);
   const merged=[];
   for(const g of missingRanges){const start=Math.max(0,g.start_ms),end=Math.min(durationMs,g.end_ms);if(end<=start)continue;const last=merged.at(-1);if(last&&start<=last.end_ms)last.end_ms=Math.max(last.end_ms,end);else merged.push({start_ms:start,end_ms:end});}
   const missingMs=merged.reduce((n,g)=>n+g.end_ms-g.start_ms,0);
-  return {durationMs,endMs,ratio,durationNeedsVerification,complete:!durationNeedsVerification&&durationMs>0&&ratio>=.95&&missingMs/durationMs<=.05,missingRanges:merged,missingMinutes:missingMs/60000};
+  return {durationMs,endMs,ratio,reason:channelReasons.join('; ')||null,durationNeedsVerification,channels,channelsComplete,complete:channelsComplete&&!durationNeedsVerification&&durationMs>0&&ratio>=.95&&missingMs/durationMs<=.05,missingRanges:merged,missingMinutes:missingMs/60000};
 }
 export function evidence(line){return line?{evidence_text:line.text,evidence_timestamp_ms:line.start_ms??null,evidence_end_ms:line.end_ms??line.start_ms,segment_id:line.id||line.segmentId||null}:{};}

@@ -1,3 +1,4 @@
+import {applyEventDeductions} from '../rules/eventDeductions.js';
 import {RULE_CATALOG} from '../rules/catalog.js';
 const ACTIVE_RULES=Object.fromEntries(RULE_CATALOG.filter(r=>r.bucket!=='RETIRE').map(r=>[r.id,r]));
 import {evaluateRules,evidenceWithinStage} from '../rules/evaluate.js';
@@ -205,6 +206,12 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
     });
   }
 
+  applyEventDeductions(scorecardItems);
+  totalEarned=0;totalPossible=0;
+  for(const key of Object.keys(categoryScores))delete categoryScores[key];
+  for(const i of scorecardItems){totalEarned+=i.points_earned;totalPossible+=i.points_possible;const category=categoryScores[i.category]??={earned:0,possible:0};category.earned+=i.points_earned;category.possible+=i.points_possible;}
+  autoFailTriggered=scorecardItems.some(i=>i.auto_fail_triggered);
+  autoFailReasons.splice(0,autoFailReasons.length,...scorecardItems.filter(i=>i.auto_fail_triggered).map(i=>i.question_text));
   // Calculate category percentages
   const categoryScoresWithPct = {};
   for (const [cat, scores] of Object.entries(categoryScores)) {

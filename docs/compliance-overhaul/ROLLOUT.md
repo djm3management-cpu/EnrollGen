@@ -1,3 +1,5 @@
+> Current continuation: **cy2027-full-rubric-6**, described in EVENT-FIXES-REPORT.md and the final section below. Rule membership and original weights remain unchanged.
+
 # Current rollout: full original rubric
 
 Use the **cy2027-full-rubric-5** section at the end. Earlier script-only and CMS-only sections are historical and superseded. No deploy or migration execution is authorized.
@@ -114,3 +116,13 @@ All SQL remains unapplied. Apply pending migrations 132 through **143** in order
 Keep SCORING_ENABLED and database scoring fences disabled throughout acceptance. Preserve the approved 2,000,000 input-plus-output UTC daily cap, lifetime automatic-pass lock, manual confirmation/limit, cached pricing, no fallbacks/retries and 4096 total output cap. No provider call is part of migration application or verification. Static judgment content is first and the transcript last. The restored full judgment catalog has more instructions than the seven-rule CMS-only subset; future cold prompt estimates can differ, while the single-request and maximum token/dollar guards are unchanged. No extra assessment request is introduced. This task incurred no provider charges.
 
 After approval, validate 143 and earlier transaction/RLS/ledger routines against a production-equivalent isolated schema, verify original source/history retention and active-template version targeting, and verify N/A/INCOMPLETE/REVIEW labels in preview. Compare offline Mark and Dylan regression evidence and all remaining TPMO fails before any scoring switch is enabled. A separate approved deploy and controlled acceptance plan is required; this document does not authorize it. No main push, merge, deployment, transcription or telephony changes occurred.
+
+## v6 event deductions, Section 3 and per-channel coverage
+
+Use `COMPLIANCE_RULES_VERSION=cy2027-full-rubric-6` only in a future approved rollout. Keep the original 135 MA rules / 251 points. One missing group event now costs one highest-weight failure; covered siblings store N/A 0/0 with a visible Covered by rule ID label. Passing rows retain original points. The exact groups and conditions are listed in EVENT-FIXES-REPORT.md.
+
+Pending migration 144 follows 143 and replaces the N/A routine's version fence only. No template rebuild or membership/weight change is required. The still-unapplied incomplete routine in 138 stamps v6. All migration SQL remains unapplied; validate against an isolated production-equivalent schema after approval. If any edited pending migration was applied elsewhere, use an additive compatibility migration rather than replaying it.
+
+Scoring now requires both channel timestamp spans >=95%, plus agent first utterance <=120 seconds. A full customer tail cannot mask a missing agent opening. This is not audio-duration billing, not proof of interior completeness, and not authorization for transcript gap fill. No recording, capture, Deepgram, transport or telephony code changed. No automatic provider pass, transcript revision, dispatch or repair ran. The one-pass lock, 2M UTC daily cap, pricing and 4096 output ceiling remain unchanged; these changes are CPU only and add no provider request/cost.
+
+Use `node scripts/compliance-overhaul/event-fixes-report.mjs --dry-run` for the saved-snapshot preview. Do not run the guarded v5 generator under v6 or overwrite its baseline. The two Section 3 regression calls retain credit at 268582ms and 270301ms respectively, from genuine product agreement after POA, not from self/decision-maker questions. Validate covered-row labels, incomplete headers and the four status-changing calls before enabling scoring after a separately approved deploy. No rollout is authorized by this file.

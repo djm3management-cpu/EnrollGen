@@ -1,3 +1,4 @@
+import {applyEventDeductions} from '../rules/eventDeductions.js';
 import {randomUUID} from 'node:crypto';
 import {evaluateRules,evidenceWithinStage} from '../rules/evaluate.js';
 import {RULE_CATALOG,RULES_VERSION} from '../rules/catalog.js';
@@ -36,6 +37,7 @@ export function aggregateVersion({call,source,items,templateItems,intents,decisi
   if(!row.evidence_text?.trim()||row.evidence_timestamp_ms==null||row.decided_by!=='Code')row.auto_fail_triggered=false;
   return row;
  });
+ applyEventDeductions(rows);
  const earned=rows.reduce((s,r)=>s+r.points_earned,0),possible=rows.reduce((s,r)=>s+r.points_possible,0),score=possible?Math.round(earned/possible*10000)/100:null;
  const notApplicable=evaluated.eligibility.status==='na'||evaluated.eligibility.status==='eligible'&&possible===0;
  const complete=evaluated.eligibility.status==='eligible'&&rows.length===templateItems.length&&rows.length>0;

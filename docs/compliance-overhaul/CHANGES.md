@@ -179,3 +179,18 @@ Documentation and private reports updated. No styles, transcription, Deepgram, R
 - `full-rubric-report.mjs --dry-run`, fixture comparator, full-rubric tests and updated policy assertions: local files only, private evidence excluded from Git. Historical report generators cannot regenerate old migration artifacts under v5.
 
 [Full report](FULL-RUBRIC-REPORT.md), [all 135 items and CMS changes](FULL-RUBRIC-INVENTORY.md), [validation](VALIDATION-FULL-RUBRIC.md). No transcription, Deepgram, Railway transport, telephony or UI styling source changed.
+
+## v6 targeted fixes
+
+- `rules/eventDeductions.js`: shared event-group reducer used by ScoringEngine and VersionAggregator, preserving original definitions/weights. Covered rows are 0/0 and never AUTO-FAIL. Added identical-topic groups and same-quoted-event judgment deduplication.
+- `rules/evaluate.js`, `acknowledgment.js`: Section 3 only, explicit POA exclusion, full question evidence and up to 1.5-second SOA reply overlap; tolerant voluntary/date/current-coverage/drug-price and whole-presentation HMO/PPO/network recognition. CPU only.
+- `rules/conditions.js`: positive current-coverage/gap facts gate warnings; enrollment gates employer check; remaining direction, SEP, Medicaid, SNP, supplemental-benefit and consent conditions documented.
+- `rules/transcript.js`: scoring coverage tests each channel's timestamp span and agent's late start. No capture or transcription code changed.
+- `lib/complianceScore.js`: display Covered by rule ID labels using stored notes and show those rows in the normal list. Existing theme/style tokens are untouched.
+- `catalog.js`: rules stamp v6, no membership/weight edits. Pending `138` and new `144`: version stamps/fence only, unapplied.
+- `event-fixes-report.mjs --dry-run`: local v5 comparison, coverage changes, real Section 3/full TPMO counts and top remaining losses. Private transcript reports stay excluded from Git. Old generator guarded against rewriting the v5 baseline/migration.
+- Tests cover the new contracts; existing synthetic positive fixtures now contain customer-channel endpoints so they satisfy the stricter coverage gate rather than silently relying on an absent customer channel.
+
+Provider impact for every changed scoring file: no added OpenAI/LLM or Deepgram requests, retries, fallback, audio minutes, model/output cap or rate changes. No actual provider calls or charges during implementation. No telephony/Railway transport code changed.
+
+The legacy `compliance.js` in-place override/recalculate endpoints are fenced off for the full-rubric versions because their per-item writes bypass both channel coverage and cross-item event grouping. Modern versioned Compliance Review actions remain available. `ScorecardGenerator.js` now reports the actual channel coverage failure rather than a misleading combined-tail 100% message. Neither endpoint was called during this task.

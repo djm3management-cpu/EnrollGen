@@ -9,10 +9,10 @@ import {hasTpmo2027,evaluateTpmo2027,findBenefitTrigger} from '../src/compliance
 import {aggregateVersion} from '../src/compliance/engine/VersionAggregator.js';
 const line=(text,start_ms,speaker='agent',duration=1000)=>({id:`${speaker}-${start_ms}`,text,start_ms,end_ms:start_ms+duration,speaker});
 const complete='We do not offer every plan available in your area. We represent two organizations which offer sixteen products. Contact Medicare.gov for information on all of your options.';
-const call=extras=>({id:'fixture',tenant_id:'tenant',product_type:'MA',call_direction:'inbound',call_outcome:'enrolled',call_duration_seconds:7200,transcript_diarized:[line('Our Medicare call is recorded.',0),line('Yes',1500,'customer'),line(complete,10000),line('This plan gives you $20.',700000),line('We will start the enrollment process.',5000000),line('Devoted C SNP Choice plan is your selected plan.',5143702),...extras,line("Thank you. And I'll now submit the enrollment.",6691632),line('Goodbye',7199000)]});
+const call=extras=>({id:'fixture',tenant_id:'tenant',product_type:'MA',call_direction:'inbound',call_outcome:'enrolled',call_duration_seconds:7200,transcript_diarized:[line('Our Medicare call is recorded.',0),line('Yes',1500,'customer'),line(complete,10000),line('This plan gives you $20.',700000),line('We will start the enrollment process.',5000000),line('Devoted C SNP Choice plan is your selected plan.',5143702),...extras,line("Thank you. And I'll now submit the enrollment.",6691632),line('Goodbye',7199000),line('Fixture close',7199000,'customer')]});
 const item=(c,id)=>evaluateRules(c).items.find(i=>i.rule_id===id);
 test('restore all 138 original MA definitions except exactly the three approved retirements; preserve every weight',()=>{
- assert.equal(RULES_VERSION,'cy2027-full-rubric-5');assert.equal(Object.keys(ORIGINAL_MA_RUBRIC).length,138);
+ assert.equal(RULES_VERSION,'cy2027-full-rubric-6');assert.equal(Object.keys(ORIGINAL_MA_RUBRIC).length,138);
  const active=RULE_CATALOG.filter(r=>r.product_type==='MA'&&r.bucket!=='RETIRE');assert.equal(active.length,135);assert.equal(active.reduce((s,r)=>s+r.points,0),251);
  assert.deepEqual([...RETIRED_RULE_IDS].sort(),['CONDUCT_013_NO_COMPARISON_BY_NAME','ELIG_010_ESRD_STATUS_CHECK','ENROLL_008_CMS_REVIEW_PERIOD']);
  for(const r of active){assert.equal(r.points,ORIGINAL_MA_RUBRIC[r.id].points_possible);if(!r.cmsBasis)assert.equal(r.description,ALL_INTENTS.find(i=>i.intent_code===r.id).description);}

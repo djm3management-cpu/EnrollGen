@@ -1,4 +1,4 @@
-# Full-rubric buckets, cy2027-full-rubric-5
+# Full-rubric buckets, cy2027-full-rubric-6
 
 ## DETERMINISTIC
 
@@ -170,3 +170,5 @@
 - ELIG_010_ESRD_STATUS_CHECK
 - ENROLL_008_CMS_REVIEW_PERIOD
 - CONDUCT_013_NO_COMPARISON_BY_NAME
+
+Current event, applicability and coverage policy: [EVENT-FIXES-REPORT.md](EVENT-FIXES-REPORT.md). Membership and original points unchanged.

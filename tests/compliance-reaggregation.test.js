@@ -60,7 +60,7 @@ test('aggregates select current revision and exclude N/A zeros',()=>{
 });
 test('new-call rules respect inbound verbal SOA and no scheduled outbound evidence; mock only',async()=>{
  const soaDet={intent_code:code,detected:true,confidence:0.95,anti_pattern:false,evidence_text:'May we discuss Medicare Advantage? Yes.'};
- const diarized=[{speaker:'agent',text:'Thank you for calling. May we discuss Medicare Advantage?',start_ms:0,end_ms:5000},
+ const diarized=[{speaker:'customer',text:'Fixture close',start_ms:1199000,end_ms:1200000},{speaker:'agent',text:'Thank you for calling. May we discuss Medicare Advantage?',start_ms:0,end_ms:5000},
   {speaker:'customer',text:'Yes.',start_ms:5000,end_ms:6000},{speaker:'agent',text:'This plan gives you $50.',start_ms:100000,end_ms:101000},{speaker:'agent',text:'Thank you.',start_ms:1199000,end_ms:1200000}];
  const r=await classifyCall({diarized,callContext:{call_direction:'inbound',product_type:'MA',call_duration_seconds:1200},callLLM:async(system,user)=>{
   assert.ok(system.includes('never final violations'));assert.ok(user.includes('May we discuss Medicare Advantage?'));

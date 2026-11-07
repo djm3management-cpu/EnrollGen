@@ -34,7 +34,7 @@ BEGIN
  INSERT INTO compliance_scorecards(call_id,tenant_id,template_id,overall_score,overall_grade,total_points_earned,total_points_possible,pass_fail,
   auto_fail_triggered,auto_fail_reasons,category_scores,risk_level,risk_flags,corrective_actions_needed,rules_version,scoring_state,supersedes_id,transcript_revision)
  VALUES(c.id,c.tenant_id,j.template_id,NULL,NULL,NULL,NULL,NULL,false,'{}','{}','low',ARRAY[left(p_reason,2000)],false,
-  'cy2027-full-rubric-5','incomplete',c.compliance_scorecard_id,j.transcript_revision) RETURNING id INTO card_id;
+  'cy2027-full-rubric-6','incomplete',c.compliance_scorecard_id,j.transcript_revision) RETURNING id INTO card_id;
  UPDATE scoring_jobs SET incomplete_scorecard_id=card_id WHERE id=j.id;
  UPDATE call_records SET compliance_scorecard_id=card_id,metadata=coalesce(metadata,'{}')||jsonb_build_object('scoring_status','incomplete','scoring_error',left(p_reason,2000)) WHERE id=c.id;
  RETURN card_id;

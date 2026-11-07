@@ -118,3 +118,7 @@ No production SQL or RPC query was executed. The same private local 376-call sna
 ## Full-rubric v5 continuation
 
 Production SQL/RPC queries executed: **none**. No production queries to show. Read-only local snapshot `/tmp/enrollgen-compliance-audit.json` supplied the original active template, original weights, calls/transcripts, saved items and agent assignments. `full-rubric-report.mjs --dry-run` wrote local reports and proposed SQL only; it has no provider, database or execute mode. No LLM, transcription, rescore, dispatch or queue calls ran.
+
+## v6 targeted event fixes
+
+Production SQL/RPC queries run: **none**. All analysis used the saved local audit snapshot and the unchanged saved v5 dry run. Every report-writing script was run with --dry-run. No scoring/transcription providers, production writes, rescore/dispatch/queue actions or SQL applications occurred.

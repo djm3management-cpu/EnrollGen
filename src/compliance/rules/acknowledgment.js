@@ -1,10 +1,10 @@
 // PECL response policy is implemented independently of the allowlist. No PECL
 // rule becomes gradeable until an exact local script basis has been approved.
-const affirmative=/\b(?:yes|yeah|yep|correct|right|i (?:agree|consent|understand|do)|okay|ok|absolutely|uh[ -]?huh|mm[ -]?hmm)\b/i;
+const affirmative=/\b(?:yes|yeah|yep|correct|right|i (?:agree|consent|understand|do)|okay|ok|sure|absolutely|uh[ -]?huh|mm[ -]?hmm)\b/i;
 const refusal=/\b(?:no|nope|not|don't|do not|disagree|unsure|refuse|decline|can't|cannot)\b/i;
-export function acknowledgmentAfter(statement,lines,{pecl=false}={}){
+export function acknowledgmentAfter(statement,lines,{pecl=false,overlapMs=500}={}){
  const end=statement.end_ms??statement.start_ms;
- const responses=lines.filter(l=>l.speaker==='customer'&&l.text?.trim()&&l.start_ms>=Math.max(statement.start_ms,end-500)&&l.end_ms>=end);
+ const responses=lines.filter(l=>l.speaker==='customer'&&l.text?.trim()&&l.start_ms>=Math.max(statement.start_ms,end-overlapMs)&&l.end_ms>=end-overlapMs);
  const first=responses[0];
  const deadline=pecl?Math.max(end+30000,first?.start_ms??end+30000):end+20000;
  for(const reply of responses){

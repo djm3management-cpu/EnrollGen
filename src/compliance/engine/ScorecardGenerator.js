@@ -65,7 +65,7 @@ async function generateScorecardWork({ supabase, callRecord, callLLM, onProgress
     return {notApplicable:true,reason:eligibility.reason,scorecard_id:saved,coverage};
   }
   if (eligibility.status==='incomplete') {
-    const reason = `Transcript ${Math.round(coverage.endMs/1000)}s of ${Math.round(coverage.durationMs/1000)}s (${(coverage.ratio*100).toFixed(1)}%)`;
+    const reason = coverage.reason || `Transcript ${Math.round(coverage.endMs/1000)}s of ${Math.round(coverage.durationMs/1000)}s (${(coverage.ratio*100).toFixed(1)}%)`;
     await checked(supabase.from('call_records').update({metadata:{...(callRecord.metadata||{}),scoring_status:'incomplete',scoring_error:reason,transcript_coverage:coverage}}).eq('id',callRecord.id).eq('tenant_id',callRecord.tenant_id),'Record incomplete transcript');
     return {incomplete:true,reason,coverage};
   }

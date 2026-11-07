@@ -21,6 +21,7 @@
  *   GET    /compliance/agents                     — Agent profiles aggregation
  */
 
+import {RULES_VERSION} from '../../src/compliance/rules/catalog.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import {
@@ -498,6 +499,8 @@ export default async (request) => {
 
     // POST /calls/:id/override — override a scorecard item
     if (parts[0] === "calls" && parts[2] === "override" && method === "POST") {
+      // Legacy item-by-item writes bypass call coverage, event grouping and versions.
+      if(RULES_VERSION.startsWith('cy2027-full-rubric-'))return json(409,{error:'Use versioned Compliance Review actions; legacy in-place scoring is disabled'});
       const body = await request.json();
       const { scorecard_item_id, new_result, reason } = body;
 
@@ -815,6 +818,8 @@ export default async (request) => {
 
     // POST /recalculate — retroactive score recalculation for existing scored calls
     if (parts[0] === "recalculate" && !parts[1] && method === "POST") {
+      // Legacy item-by-item writes bypass call coverage, event grouping and versions.
+      if(RULES_VERSION.startsWith('cy2027-full-rubric-'))return json(409,{error:'Use versioned Compliance Review actions; legacy in-place scoring is disabled'});
       // Batched approach — minimize DB round-trips to stay under 10s limit
 
       // 1. Fetch all data upfront in parallel

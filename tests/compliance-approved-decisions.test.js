@@ -10,7 +10,7 @@ import {legacyAssessment,buildJudgmentRequest,estimateJudgment,assertAssessmentW
 import {toResponsesRequest} from '../src/lib/llm/openai.ts';
 import {llmRuntime} from '../netlify/functions/_llmTelemetry.js';
 const line=(text,start_ms=0,speaker='agent',duration=1000)=>({text,start_ms,end_ms:start_ms+duration,speaker});
-const call=lines=>({id:'call',tenant_id:'tenant',product_type:'MA',call_outcome:'enrolled',call_direction:'inbound',call_duration_seconds:1200,transcript_diarized:[...lines,line('I can help you with Medicare',100000),line('Yes',102000,'customer'),line('This plan gives you $50',500000),line('Thank you',1199000)]});
+const call=lines=>({id:'call',tenant_id:'tenant',product_type:'MA',call_outcome:'enrolled',call_direction:'inbound',call_duration_seconds:1200,transcript_diarized:[...lines,line('I can help you with Medicare',0),line('Yes',102000,'customer'),line('This plan gives you $50',500000),line('Thank you',1199000),line('Fixture start',0,'customer'),line('Fixture close',1199000,'customer')]});
 const item=(c,id)=>evaluateRules(c).items.find(i=>i.rule_id===id);
 const assessment={a:{r:8,l:7,k:8,n:'Ask for acknowledgment after explaining costs.'},b:{e:7,l:'medium',r:['Cost confusion','Needs follow-up']}};
 test('approved cap and cached pricing, including invalid and excessive cached counts',()=>{
@@ -20,7 +20,7 @@ test('approved cap and cached pricing, including invalid and excessive cached co
  assert.equal(DEEPGRAM_BATCH_PER_MINUTE_USD,.0043);
 });
 test('retired IDs never return to active rubric, while misleading comparisons stay active',()=>{
- assert.equal(RULES_VERSION,'cy2027-full-rubric-5');assert.equal(ACTIVE_RULE_CATALOG.length,159);assert.equal(RULE_CATALOG.length,162);
+ assert.equal(RULES_VERSION,'cy2027-full-rubric-6');assert.equal(ACTIVE_RULE_CATALOG.length,159);assert.equal(RULE_CATALOG.length,162);
  for(const id of RETIRED_RULE_IDS)assert.ok(!ACTIVE_RULE_CATALOG.some(r=>r.id===id));
  assert.ok(ACTIVE_RULE_CATALOG.some(r=>r.id==='CONDUCT_004_NO_MISLEADING_LANGUAGE'));
 });

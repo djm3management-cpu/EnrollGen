@@ -15,7 +15,7 @@ test('needs question does not trigger benefits and unknown speaker cannot supply
 });
 test('coverage rejects missing tail and preserves segment identity when sorting',()=>{
  assert.equal(transcriptCoverage({call_duration_seconds:4390,transcript_diarized:[line('last',544000)]}).complete,false);
- assert.equal(transcriptCoverage({call_duration_seconds:100,transcript_diarized:[{...line('last',95000),end_ms:96000}]}).complete,true);
+ assert.equal(transcriptCoverage({call_duration_seconds:100,transcript_diarized:[line('first',0),line('first',0,'customer'),{...line('last',95000),end_ms:96000},{...line('last',95000,'customer'),end_ms:96000}]}).complete,true);
  assert.deepEqual(sortTranscript([{id:'b',start_ms:2},{id:'a',start_ms:1}]).map(x=>x.id),['a','b']);
  assert.equal(transcriptCoverage({transcript_diarized:null}).complete,false);
 });
