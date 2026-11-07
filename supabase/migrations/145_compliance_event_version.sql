@@ -1,4 +1,4 @@
--- UNAPPLIED. After 133-144, with scoring disabled. Scoring only.
+-- Apply after 144 with scoring disabled. Migration 143 is intentionally skipped.
 BEGIN;
 SET LOCAL lock_timeout='5s';
 CREATE OR REPLACE FUNCTION public.mark_compliance_not_applicable(p_call_id uuid,p_tenant_id uuid,p_reason text,p_rules_version text)

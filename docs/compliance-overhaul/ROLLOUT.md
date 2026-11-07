@@ -1,3 +1,13 @@
+# Approved direct rollout after migration 142
+
+This section supersedes every historical apply order below. Migration 143 (`cms_only_rubric`) is abandoned and must not be applied or marked applied. Its failed production attempt rolled back. Production completed 132–142.
+
+The remaining route is **142 → 144 → 145**. No replacement migration is necessary: 144 clones the preserved original template `00000000-0000-0000-0000-000000000115` (138 items / 255 points), independently of the active template created by 143. It creates 135 items / 251 original points and preserves historical scorecards and template items. Migration 145 only replaces the existing N/A routine with the `cy2027-full-rubric-6` fence; it also has no dependency on 143. Keep scoring and gap fill disabled throughout this sequence. Do not replay 132–142.
+
+Before applying, run `NODE_OPTIONS=--require=./scripts/compliance-overhaul/offline-tests.cjs node --test tests/compliance-migration-direct.test.js`. This exercises the actual 142, 144 and 145 SQL in PGlite, without 143, and verifies final membership/weights, preserved historical cards/items, the disabled fence and the v6 routine. Then apply 144 and 145 in order and record their actual filenames in migration history. The intentional missing version 143 is expected; do not require contiguous version numbers or insert a synthetic 143 history row.
+
+Run `verify-before-enable.sql` read-only, including the direct-route history, final 135-item / 251-point template and v6 routine checks. Verify same-tenant item reads and no new complete cards without items. Follow the approved Git-based deployment and scoring-off UI/provider-usage verification, then the approved enablement steps. No historical rescore, redispatch, requeue or repair is authorized.
+
 > Current continuation: **cy2027-full-rubric-6**, described in EVENT-FIXES-REPORT.md and the final section below. Rule membership and original weights remain unchanged.
 
 # Current rollout: full original rubric

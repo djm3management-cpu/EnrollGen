@@ -1,4 +1,4 @@
--- UNAPPLIED. After 133-143, with scoring disabled. Scoring only.
+-- Apply after 142 with scoring disabled; skip abandoned 143. Reads the preserved original template, not the active successor.
 BEGIN;
 SET LOCAL lock_timeout='5s';
 CREATE OR REPLACE FUNCTION public.mark_compliance_not_applicable(p_call_id uuid,p_tenant_id uuid,p_reason text,p_rules_version text)

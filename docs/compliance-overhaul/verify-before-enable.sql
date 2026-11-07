@@ -1,3 +1,10 @@
+-- Approved route: 132–142, then 144–145. Version 143 must remain absent.
+SELECT version,name FROM supabase_migrations.schema_migrations WHERE version >= '132' ORDER BY version;
+SELECT s.id,s.version,count(i.id) AS items,sum(i.points_possible) AS original_points
+ FROM public.scoring_templates s LEFT JOIN public.scoring_template_items i ON i.template_id=s.id
+ WHERE s.product_type='MA' AND s.is_active GROUP BY s.id; -- Expect one row, 135 items, 251 points.
+SELECT pg_get_functiondef('public.mark_compliance_not_applicable(uuid,uuid,text,text)'::regprocedure)
+ LIKE '%cy2027-full-rubric-6%' AS current_na_policy; -- Expect true; never invoke the write RPC for verification.
 -- READ ONLY. Supplied for the approved rollout; NOT RUN during this task.
 SELECT id,enabled FROM public.compliance_runtime_control;
 SELECT id,call_id,status,lease_until FROM public.scoring_jobs
