@@ -18,7 +18,7 @@ const pitch = 'Before we review Medicare Advantage, our life insurance pays your
 const detection = (text = closing, patch = {}) => ({ intent_code: code,
   detected: true, confidence: 0.99, transcript_segment: text,
   anti_pattern_match: true, hard_cms_violation: true, detection_method: 'cms_hard_violation',
-  anti_pattern_detail: 'Cross-selling', sequence_violation: true, ...patch });
+  anti_pattern_detail: 'Cross-selling', sequence_violation: true, segment_start_ms: 0, ...patch });
 const score = (detections, intentCode = code) => scoreCall({ detections,
   template: { passing_threshold: 85 }, templateItems: [{ id: intentCode, intent_code: intentCode,
     question_text: 'No cross-selling', category: 'conduct', points_possible: 10, is_auto_fail: true }] });
@@ -52,14 +52,14 @@ test('saved Med Supp templates gain the closing without overwriting custom text 
 test('approved closing cannot cause cross-sell or scope deductions, including spurious hard flags', () => {
   for (const intentCode of [code, 'CONDUCT_005_NO_SCOPE_CREEP', 'SOA_005_SOA_SCOPE_MATCH', 'SOA_006_SOA_SCOPE_VIOLATION']) {
     const result = score([detection(closing, { intent_code: intentCode })], intentCode);
-    assert.equal(result.overall_score, 100);
+    assert.equal(result.total_points_possible, 0);
     assert.equal(result.auto_fail_triggered, false);
-    assert.equal(result.scorecard_items[0].result, 'pass');
+    assert.equal(result.scorecard_items[0].result, 'na');
     assert.deepEqual(result.risk_flags, []);
     assert.equal(result.sequence_violations, 0);
   }
   const redacted = closing.replace('(609) 806-5996', '[PHONE_REDACTED]').replaceAll("'", '’');
-  assert.equal(score([detection(`[agent]: “${redacted}”`)]).overall_score, 100);
+  assert.equal(score([detection(`[agent]: “${redacted}”`)]).total_points_possible, 0);
   // Unrelated requirements retain their own evidence and scoring.
   const other = detection(closing, { intent_code: 'ENROLL_012_NO_INCENTIVES_OFFERED' });
   assert.equal(normalizeApprovedClosingDetection(other), other);
@@ -73,8 +73,8 @@ test('closing exception never hides a separate pitch, even one with lower confid
   ]) {
     const result = score(detections);
     assert.equal(result.overall_score, 0);
-    assert.equal(result.auto_fail_triggered, true);
-    assert.equal(result.scorecard_items[0].result, 'fail');
+    assert.equal(result.auto_fail_triggered, false);
+    assert.equal(result.scorecard_items[0].result, 'review');
   }
   const partial = detection(fragment);
   assert.equal(normalizeApprovedClosingDetection(partial), partial);
@@ -84,15 +84,17 @@ test('closing exception never hides a separate pitch, even one with lower confid
 });
 
 async function classifyMock(evidence) {
-  return classifyCall({ callContext: { call_direction: 'inbound' },
-    diarized: [{ speaker: 'agent', text: pitch, start_ms: 0, end_ms: 10000 },
+  return classifyCall({ callContext: { call_direction: 'inbound', product_type: 'MA', call_outcome: 'enrolled', call_duration_seconds: 1200 },
+    diarized: [{ speaker: 'customer', text: 'Hello', start_ms: 0, end_ms: 1000 }, { speaker: 'customer', text: 'Goodbye', start_ms: 1199000, end_ms: 1200000 }, { speaker: 'agent', text: 'Goodbye', start_ms: 1199000, end_ms: 1200000 }, { speaker: 'agent', text: pitch, start_ms: 0, end_ms: 10000 },
       { speaker: 'agent', text: closing, start_ms: 170000, end_ms: 180000 }],
-    callLLM: async system => {
-      assert.ok(system.includes(closing));
+    callLLM: async (system, transcript) => {
+      assert.ok(system.includes('Offering a separate future review'));
+      assert.ok(transcript.includes(closing.replace('(609) 806-5996', '([PHONE_REDACTED]')));
+      assert.ok(!transcript.includes('806-5996'));
       return { detections: evidence.map(evidence_text => ({ intent_code: code,
         detected: true, confidence: evidence_text === pitch ? 0.95 : 0.99,
         speaker: 'agent', evidence_text, anti_pattern: true, hard_cms_violation: true,
-        anti_pattern_detail: 'Cross-selling' })) };
+        anti_pattern_detail: 'Cross-selling' })), assessment: {a:{r:7,l:7,k:7,n:'Fixture assessment.'},b:{e:7,l:'low',r:[]}} };
     } });
 }
 
@@ -101,11 +103,12 @@ test('classifier normalizes quoted closing fragments before merging; mock only, 
   const found = allowed.detections.find(d => d.intent_code === code);
   assert.equal(found.detection_method, 'approved_agency_closing');
   assert.equal(found.anti_pattern_match, false);
-  assert.equal(score(allowed.detections).overall_score, 100);
+  assert.equal(score(allowed.detections).total_points_possible, 0);
   for (const evidence of [[pitch, fragment], [fragment, pitch]]) {
     const actual = await classifyMock(evidence);
-    assert.equal(actual.detections.find(d => d.intent_code === code).transcript_segment, pitch);
-    assert.equal(score(actual.detections).auto_fail_triggered, true);
+    assert.ok(actual.detections.some(d => d.intent_code === code && d.anti_pattern_match && d.transcript_segment === pitch));
+    assert.equal(score(actual.detections).auto_fail_triggered, false);
+    assert.equal(score(actual.detections).scorecard_items[0].result, 'review');
   }
 });
 

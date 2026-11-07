@@ -1,3 +1,4 @@
+import {normalizeApprovedClosingDetection} from '../shared/approvedClosing.js';
 import {RULE_CATALOG} from '../rules/catalog.js';
 import {ruleApplies,evaluateRules,evidenceWithinStage} from '../rules/evaluate.js';
 import {sortTranscript} from '../rules/transcript.js';
@@ -18,7 +19,7 @@ export async function classifyJudgmentOnce({diarized,callContext,callLLM,passId}
   if(!judgment.some(j=>j.id===r.intent_code))continue;
   // Exact quote anchoring is required before presenting model evidence.
   const line=call.transcript_diarized.find(l=>r.evidence_text?.trim()&&l.text?.includes(r.evidence_text.trim())&&evidenceWithinStage(RULE_CATALOG.find(j=>j.id===r.intent_code),call,l.start_ms));
-  detections.push({intent_code:r.intent_code,detected:!!r.detected,confidence:Number(r.confidence)||0,detection_method:line?'judgment_review':'unscored',speaker:line?.speaker||'unknown',transcript_segment:line?r.evidence_text:null,segment_start_ms:line?.start_ms??null,segment_end_ms:line?.end_ms??null,anti_pattern_match:!!line&&!!r.anti_pattern,sequence_violation:false,llm_reasoning:line?r.reasoning:'Manual review required: model evidence could not be anchored to transcript',hard_cms_violation:false});
+  detections.push(normalizeApprovedClosingDetection({intent_code:r.intent_code,detected:!!r.detected,confidence:Number(r.confidence)||0,detection_method:line?'judgment_review':'unscored',speaker:line?.speaker||'unknown',transcript_segment:line?r.evidence_text:null,segment_start_ms:line?.start_ms??null,segment_end_ms:line?.end_ms??null,anti_pattern_match:!!line&&!!r.anti_pattern,sequence_violation:false,llm_reasoning:line?r.reasoning:'Manual review required: model evidence could not be anchored to transcript',hard_cms_violation:false},call.transcript_diarized.map(l=>l.text).join(' ')));
  }
  return {status:evaluated.status,eligibility:evaluated.eligibility,...legacyAssessment(parsed.assessment),detections,sentiment:parsed.sentiment||{},riskIndicators:parsed.risk_indicators||[],detectedDirection:call.call_direction};
 }
