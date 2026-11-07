@@ -1,4 +1,4 @@
--- UNAPPLIED. After 132-140, with scoring disabled. Scoring only.
+-- UNAPPLIED. After 133-141, with scoring disabled. Scoring only.
 BEGIN;
 SET LOCAL lock_timeout='5s';
 CREATE FUNCTION public.mark_compliance_not_applicable(p_call_id uuid,p_tenant_id uuid,p_reason text,p_rules_version text)
@@ -25,7 +25,7 @@ DO $$
 DECLARE original scoring_templates; replacement uuid:=gen_random_uuid();
 BEGIN
  SELECT * INTO STRICT original FROM scoring_templates WHERE product_type='MA' AND is_active FOR UPDATE;
- IF (SELECT count(*) FROM scoring_template_items WHERE template_id=original.id)<>135 THEN RAISE EXCEPTION 'Expected post-140 template with 135 items; inspect before applying'; END IF;
+ IF (SELECT count(*) FROM scoring_template_items WHERE template_id=original.id)<>135 THEN RAISE EXCEPTION 'Expected post-141 template with 135 items; inspect before applying'; END IF;
  INSERT INTO scoring_templates(id,template_name,product_type,carrier_name,version,is_active,total_possible_points,passing_threshold,auto_fail_threshold,categories,policy_version)
  VALUES(replacement,'NGHS MA script/stage rubric v5',original.product_type,original.carrier_name,original.version+1,false,0,original.passing_threshold,original.auto_fail_threshold,original.categories,original.policy_version);
  INSERT INTO scoring_template_items(template_id,intent_id,question_text,category,points_possible,is_auto_fail,is_critical,display_order,notes)

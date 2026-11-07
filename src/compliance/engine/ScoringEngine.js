@@ -84,7 +84,7 @@ export function scoreCall({ detections, templateItems, template, preserveRuleTex
       scorecardItems.push({template_item_id:item.id,intent_id:item.intent_id,intent_code:item.intent_code,
         category:item.category,question_text:item.question_text,result:'review',points_earned:0,points_possible:0,
         confidence:0,decided_by:'Code',is_auto_fail:false,auto_fail_triggered:false,notes:ruleResult?.missing||detection?.llm_reasoning,
-        evidence_text:ruleResult?.evidence_text||null,evidence_timestamp_ms:ruleResult?.evidence_timestamp_ms??null,display_order:item.display_order||0});
+        evidence_text:ruleResult?.evidence_text||detection?.transcript_segment||null,evidence_timestamp_ms:ruleResult?.evidence_timestamp_ms??detection?.segment_start_ms??null,display_order:item.display_order||0});
       continue;
     }
     let result, pointsEarned;

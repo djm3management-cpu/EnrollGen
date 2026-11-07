@@ -30,7 +30,7 @@ Rules cy2027-cms-only-4: 21 active (14 code checks, 7 AI REVIEW rules); 141 excl
 
 ## Removed rules
 
-Removed rows do not fail or count in the denominator. A legacy-template re-evaluation retains zero-point N/A rows as audit history; migration 142 omits these definitions from the new active template. Original saved scorecards are unchanged.
+Removed rows do not fail or count in the denominator. A legacy-template re-evaluation retains zero-point N/A rows as audit history; migration 143 omits these definitions from the new active template. Original saved scorecards are unchanged.
 
 | ID / previous name | Removal reason |
 |---|---|

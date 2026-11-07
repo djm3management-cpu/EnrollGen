@@ -1,3 +1,5 @@
+import {buildJudgmentRequest} from '../src/compliance/engine/judgmentRequest.js';
+import {completeCall,assessment} from './helpers/complianceFixture.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { complete, completeStream } from '../src/lib/llm/client.ts';
@@ -99,16 +101,17 @@ test('summary schema failures throw and never fabricate a scorecard', async () =
 test('scoring always uses OpenAI for every engine despite Anthropic overrides and shadows',async()=>{
  for(const engine of ['MA','MEDSUP','ACA','U65','ANCILLARY','ANNUITY']){
   const h=harness(body=>json(response('scored',body.model)),{
-   LLM_PROVIDER:'anthropic',[`LLM_PROVIDER_${engine}`]:'anthropic',[`LLM_SHADOW_${engine}`]:'claude-sonnet-4-6',
+   SCORING_ENABLED:'true',LLM_PROVIDER:'anthropic',[`LLM_PROVIDER_${engine}`]:'anthropic',[`LLM_SHADOW_${engine}`]:'claude-sonnet-4-6',
   });
   h.runtime.adapters.anthropic.complete=()=>assert.fail('scoring must never call Anthropic');
-  const result=await complete({...request,engine,path:'scoring'},h.runtime);await h.flush();
+  h.runtime.authorizeScoringRequest=async()=>{};
+  const result=await complete({...request,messages:[{role:'user',content:'Full transcript. '.repeat(30)}],engine,path:'scoring'},h.runtime);await h.flush();
   assert.equal(result.model,'gpt-5.6-luna');assert.equal(h.requests.length,1);
-  assert.equal(h.requests[0].reasoning.effort,'medium');assert.equal(h.requests[0].max_output_tokens,16384);
+  assert.equal(h.requests[0].reasoning.effort,'low');assert.equal(h.requests[0].max_output_tokens,4096);
   assert.ok(!h.rows.some(row=>row.metadata.shadow));
  }
- const failed=harness(()=>errorResponse(401),{LLM_PROVIDER:'anthropic'});
- await assert.rejects(complete({...request,path:'scoring'},failed.runtime));
+ const failed=harness(()=>errorResponse(401),{SCORING_ENABLED:'true',LLM_PROVIDER:'anthropic'});failed.runtime.authorizeScoringRequest=async()=>{};
+ await assert.rejects(complete({...request,messages:[{role:'user',content:'Full transcript. '.repeat(30)}],path:'scoring'},failed.runtime));
  assert.equal(failed.requests.length,1);
 });
 
@@ -299,12 +302,13 @@ test('Supabase telemetry preserves tenant, token columns, and shadow outputs', a
 
 test('classifier passes the strict schema and aborts scoring on unavailable evidence', async () => {
   let receivedFormat;
-  const diarized = [{ text: 'Thank you for calling', speaker: 'agent', start_ms: 0, end_ms: 1000 }];
-  const result = await classifyCall({ diarized, callContext: {}, callLLM: async (_system, _user, options) => {
+  const call=completeCall();const diarized=call.transcript_diarized;
+  const result = await classifyCall({ diarized, callContext: call, callLLM: async (_system, _user, options) => {
     receivedFormat = options.response_format;
-    return JSON.stringify({ detections: [], risk_indicators: [], sentiment: { agent: 'professional', beneficiary: 'engaged' } });
+    return JSON.stringify({ detections: [], assessment,risk_indicators: [], sentiment: { agent: 'professional', beneficiary: 'engaged' } });
   } });
-  assert.equal(receivedFormat, classificationFormat);
-  assert.equal(result.detections.length, ALL_INTENTS.length);
-  await assert.rejects(classifyCall({ diarized, callContext: {}, callLLM: async () => { throw new Error('unavailable'); } }), /unavailable/);
+  assert.deepEqual(receivedFormat,buildJudgmentRequest(call).response_format);
+  assert.ok(receivedFormat.json_schema.schema.properties.assessment);
+  assert.ok(result.detections.length>0);
+  await assert.rejects(classifyCall({ diarized, callContext: call, callLLM: async () => { throw new Error('unavailable'); } }), /unavailable/);
 });

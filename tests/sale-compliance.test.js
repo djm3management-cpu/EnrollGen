@@ -1,3 +1,5 @@
+import {excludedOutcome} from '../src/compliance/rules/callStages.js';
+import {assessment,installComplianceFixture} from './helpers/complianceFixture.js';
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -15,15 +17,15 @@ const tenant=randomUUID(),agent=randomUUID(),template=randomUUID(),intent=random
 const migration=name=>readFileSync(new URL('../supabase/migrations/'+name,import.meta.url),'utf8');
 const query=(sql,args=[])=>pg.query(sql,args).then(r=>r.rows);
 const record=async id=>(await query('SELECT * FROM call_records WHERE id=$1',[id]))[0];
-const segments=[{speaker:'agent',text:'This call is recorded. FULL_AGENT_START',start_ms:0,end_ms:1200},
+const segments=[{speaker:'agent',text:'Hello, Medicare. This call is recorded. FULL_AGENT_START',start_ms:0,end_ms:1200},
  {speaker:'customer',text:'I understand. FULL_CUSTOMER_MIDDLE',start_ms:1300,end_ms:2500},
- {speaker:'agent',text:'Your enrollment is complete. FULL_AGENT_END',start_ms:150000,end_ms:160000},
- {speaker:'customer',text:'Thank you. FULL_CUSTOMER_TAIL',start_ms:170000,end_ms:179000}];
+ {speaker:'agent',text:'Your enrollment is complete. FULL_AGENT_END',start_ms:899000,end_ms:900000},
+ {speaker:'customer',text:'Thank you. FULL_CUSTOMER_TAIL',start_ms:899000,end_ms:900000}];
 let modelCalls=[];
 const classify=async(system,user)=>{
  modelCalls.push(user);
  return {detections:[{intent_code:'CALL_OPEN_001_RECORDING_ANNOUNCE',detected:true,confidence:0.99,
-  speaker:'agent',evidence_text:'This call is recorded.',sequence_position:1}],risk_indicators:[],sentiment:{}};
+  speaker:'agent',evidence_text:'This call is recorded.',sequence_position:1}],assessment,risk_indicators:[],sentiment:{}};
 };
 const worker=createScoreCallHandler({getDb:()=>db,classify,recordStatus:async()=>{}});
 async function score(id) {
@@ -34,7 +36,7 @@ async function newCall({finished=true,diarized=segments}={}) {
  const id=randomUUID();
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_direction,call_type,product_type,
   call_start,call_end,call_duration_seconds,transcript_raw,transcript_diarized,metadata)
-  VALUES($1,$2,$3,'Fixture Agent','inbound','sales','MA',now()-interval '3 minutes',$4,180,$5,$6,$7)`,
+  VALUES($1,$2,$3,'Fixture Agent','inbound','sales','MA',now()-interval '15 minutes',$4,900,$5,$6,$7)`,
  [id,tenant,agent,finished?new Date().toISOString():null,diarized.map(u=>u.speaker+': '+u.text).join('\n'),JSON.stringify(diarized),
   JSON.stringify(finished?{transcript_finalized_at:new Date().toISOString(),transcript_source:'deepgram_server'}:{})]);
  return id;
@@ -94,11 +96,13 @@ before(async()=>{
  const stalled=await newCall();await setOutcome(stalled,'enrolled');
  await query("UPDATE transcript_score_dispatch SET available_at=now()+interval '60 seconds' WHERE call_id=$1",[stalled]);
  const before=modelCalls.length;
- assert.equal((await score(stalled)).status,202);
+ const stalledCall=await record(stalled);
+ assert.equal((await db.rpc('begin_scoring_job',{p_call_id:stalled,p_template_id:template,p_transcript:{raw:stalledCall.transcript_raw,diarized:stalledCall.transcript_diarized,duration:900}})).data.status,'pending');
  assert.equal((await record(stalled)).compliance_status,'queued');assert.equal(modelCalls.length,before);
  await setOutcome(stalled,'test_call');
  await pg.exec(migration('113_scoring_dispatch_retry_bounds.sql'));
  await pg.exec(migration('114_manual_scoring_retry.sql'));
+ await installComplianceFixture(pg);
 });
 after(async()=>{ if(oldSecret===undefined)delete process.env.SCORE_CALL_JOB_SECRET;else process.env.SCORE_CALL_JOB_SECRET=oldSecret;await pg.close(); });
 
@@ -295,15 +299,16 @@ test('every non-sale disposition, including ancillary sales and partial enrollme
   assert.equal(isComplianceSale(outcome),false);
   const id=await newCall();await setOutcome(id,outcome);
   assert.equal((await query('SELECT * FROM transcript_score_dispatch WHERE call_id=$1',[id])).length,0,outcome);
-  assert.equal((await (await score(id)).json()).skipped,true,outcome);
+  const response=await (await score(id)).json();
+  assert.equal(excludedOutcome(outcome)?response.status==='N/A':response.skipped,true,outcome);
   const lower=await generateScorecard({supabase:db,callRecord:await record(id),callLLM:()=>{throw Error('must not classify');}});
-  assert.equal(lower.skipped,true,outcome);
-  assert.equal(await cardCount(id),0);
+  assert.equal(excludedOutcome(outcome)?lower.notApplicable:lower.skipped,true,outcome);
+  assert.equal(await cardCount(id),excludedOutcome(outcome)?1:0);
  }
  assert.equal(modelCalls.length,calls);
 });
 
-test('sale re-disposition and duration-only edits reuse the transcript hash; a changed transcript gets one new result',async()=>{
+test('sale re-disposition and duration-only edits reuse the transcript hash; a changed transcript cannot authorize another paid result',async()=>{
  const id=await newCall();await setOutcome(id,'enrolled');await due(id);await score(id);
  const first=await record(id),calls=modelCalls.length;
  for(const outcome of ['enrolled_pending_verification','enrolled','enrolled_pending_verification']){
@@ -316,15 +321,15 @@ test('sale re-disposition and duration-only edits reuse the transcript hash; a c
  await query('UPDATE call_records SET transcript_diarized=$2,transcript_raw=transcript_raw||$3 WHERE id=$1',
   [id,JSON.stringify(revised),'\nCUSTOMER: A late customer final.']);
  await due(id);await score(id);await score(id);
- assert.notEqual((await record(id)).compliance_transcript_hash,first.compliance_transcript_hash);
- assert.equal(await cardCount(id),2);
+ assert.equal((await record(id)).compliance_transcript_hash,first.compliance_transcript_hash);
+ assert.equal(await cardCount(id),1);assert.equal(modelCalls.length,calls);
 });
 
 test('sale before transcript completion stays queued and runs when final stored dual-channel evidence lands',async()=>{
  const id=await newCall({finished:false,diarized:[]});await setOutcome(id,'enrolled_pending_verification');
  assert.equal((await record(id)).compliance_status,'transcript_pending');
  const before=modelCalls.length;
- assert.equal((await score(id)).status,202);assert.equal(modelCalls.length,before);
+ assert.equal((await (await score(id)).json()).status,'SCORING INCOMPLETE');assert.equal(modelCalls.length,before);
  const jobs=await query('SELECT * FROM get_sale_compliance_dispatch()');assert.ok(!jobs.some(j=>j.call_id===id));
  await query(`UPDATE call_records SET call_end=now(),transcript_raw=$2,transcript_diarized=$3,
   metadata=jsonb_build_object('transcript_finalized_at',now()) WHERE id=$1`,

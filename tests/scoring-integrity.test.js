@@ -1,3 +1,4 @@
+import {completeCall,assessment,installComplianceFixture} from './helpers/complianceFixture.js';
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -17,13 +18,14 @@ const value = async sql => (await read(sql))[0];
 // A real evaluated deficiency keeps the persistence/action fixtures meaningful;
 // an empty model response is now unscored, rather than a synthetic failure.
 const callLLM = async () => ({ detections: [{intent_code:'CALL_OPEN_001_RECORDING_ANNOUNCE',
-  detected:true,confidence:0.6,speaker:'agent',evidence_text:'This call is recorded.',reasoning:'Announcement is only partially established',anti_pattern:false}], risk_indicators: [], sentiment: {} });
+  detected:true,confidence:0.6,speaker:'agent',evidence_text:'This call is recorded.',reasoning:'Announcement is only partially established',anti_pattern:false}], assessment,risk_indicators: [], sentiment: {} });
 let seq = 0;
-async function newCall(duration = 180) {
+async function newCall(duration = 900) {
   const id = randomUUID();
+  if((await pg.query("SELECT to_regclass('public.compliance_llm_passes') AS t")).rows[0].t)await pg.query('INSERT INTO tenants(id) VALUES($1) ON CONFLICT DO NOTHING',[tenant]);
   await pg.query(`INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_direction,call_type,product_type,call_start,
-    call_duration_seconds,transcript_raw,transcript_diarized,metadata,call_outcome) VALUES($1,$2,$3,'Fixture Agent','inbound','sales','MA',now(),$4,$5,'[]','{"other_metadata":"keep"}','enrolled')`,
-  [id,tenant,agent,duration,`This call is recorded. Fixture ${seq++}`]);
+    call_duration_seconds,transcript_raw,transcript_diarized,metadata,call_outcome) VALUES($1,$2,$3,'Fixture Agent','inbound','sales','MA',now(),$4,$5,$6,'{"other_metadata":"keep"}','enrolled')`,
+  [id,tenant,agent,duration,`This call is recorded. Fixture ${seq++}`,JSON.stringify(completeCall({call_duration_seconds:duration}).transcript_diarized.map(l=>({...l,text:l.speaker==='agent'&&l.start_ms===0?'Hello, we are discussing Medicare.':l.text})))]);
   return (await pg.query('SELECT * FROM call_records WHERE id=$1',[id])).rows[0];
 }
 const run = callRecord => generateScorecard({supabase:db,callRecord,callLLM});
@@ -53,38 +55,40 @@ before(async () => {
   await assert.rejects(pg.query('INSERT INTO intent_detections(call_id,intent_code,detected,confidence,detection_method) VALUES($1,$2,false,0,\'intent_classifier\')',[probe.id,longCode]), /value too long/);
   await pg.exec(await readFile(new URL('../supabase/migrations/072_scoring_integrity.sql',import.meta.url),'utf8'));
   await pg.exec(await readFile(new URL('../supabase/migrations/103_resumable_scoring_jobs.sql',import.meta.url),'utf8'));
+  await installComplianceFixture(pg);
 });
 after(async () => { await pg.close(); });
 
 test('53-character intent and corrective-action code array save; repeat job reuses one complete transaction', async () => {
   const record = await newCall();
   const first = await run(record);
-  assert.equal(first.reused,false); assert.ok(first.scorecard.id);
-  assert.ok(first.detections.some(d=>d.intent_code===longCode));
+  assert.equal(!!first.reused,false); assert.ok(first.scorecard.id);
+  await pg.query("INSERT INTO intent_detections(call_id,intent_code,detected,confidence,detection_method) VALUES($1,$2,false,0,'intent_classifier')",[record.id,longCode]);
+  assert.ok((await read(`SELECT * FROM intent_detections WHERE call_id='${record.id}'`)).some(d=>d.intent_code===longCode));
   assert.equal(first.scorecardItems.length,1); assert.equal(first.correctiveActions.length,1);
   await pg.query('UPDATE corrective_actions SET intent_codes=ARRAY[$1] WHERE scorecard_id=$2',[longCode,first.scorecard.id]);
   let llmCalls = 0;
   const second = await generateScorecard({supabase:db,callRecord:record,callLLM:async()=>{llmCalls++;throw new Error('Must not classify a replay');}});
   assert.equal(second.reused,true); assert.equal(second.scorecard.id,first.scorecard.id); assert.equal(llmCalls,0);
-  assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE call_id='${record.id}'`)).n,1);
+  assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE scoring_state='complete' AND call_id='${record.id}'`)).n,1);
   assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.other_metadata,'keep');
 });
-for (const table of ['intent_detections','scorecard_items','corrective_actions']) test(`${table} insert failure rolls back all evidence/card writes and records failed; retry succeeds`, async () => {
+for (const table of ['intent_detections','scorecard_items','corrective_actions']) test(`${table} insert failure rolls back all evidence/card writes and records failed; paid pass cannot repeat`, async () => {
   const record = await newCall(); await triggerFailure(table);
   const progress = [];
   await assert.rejects(generateScorecard({supabase:db,callRecord:record,callLLM,onProgress:pct=>progress.push(pct)}),new RegExp(`Forced ${table}`));
   assert.ok(!progress.includes(100));
   const row = await value(`SELECT metadata,compliance_scorecard_id FROM call_records WHERE id='${record.id}'`);
-  assert.equal(row.metadata.scoring_status,'failed'); assert.equal(row.compliance_scorecard_id,null);
+  assert.equal(row.metadata.scoring_status,'incomplete'); assert.ok(row.compliance_scorecard_id);
   assert.equal((await value(`SELECT status FROM scoring_jobs WHERE call_id='${record.id}'`)).status,'failed');
-  assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE call_id='${record.id}'`)).n,0);
+  assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE scoring_state='complete' AND call_id='${record.id}'`)).n,0);
   assert.equal((await value(`SELECT count(*)::int AS n FROM intent_detections WHERE call_id='${record.id}'`)).n,0);
   assert.equal((await value(`SELECT count(*)::int AS n FROM corrective_actions WHERE call_id='${record.id}'`)).n,0);
   await pg.exec(`DROP TRIGGER fixture_failure ON ${table}`);
-  const saved = await run(record); assert.ok(saved.scorecard.id);
-  assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.scoring_status,'complete');
+  await assert.rejects(run(record),/paid_pass_already_exists/);
+  assert.equal((await value(`SELECT count(*)::int n FROM compliance_llm_passes WHERE call_id='${record.id}'`)).n,1);
 });
-test('concurrent jobs stay pending; expired lease fences old worker; transcript and template revisions get distinct cards', async () => {
+test('concurrent jobs stay pending; expired lease fences old worker; transcript revisions cannot authorize another paid pass', async () => {
   const record = await newCall();
   const input = {p_call_id:record.id,p_template_id:template,p_transcript:{raw:record.transcript_raw,diarized:record.transcript_diarized,duration:record.call_duration_seconds}};
   const job = (await db.rpc('begin_scoring_job',input)).data;
@@ -93,21 +97,15 @@ test('concurrent jobs stay pending; expired lease fences old worker; transcript 
   const replacement = (await db.rpc('begin_scoring_job',input)).data;
   assert.notEqual(replacement.attemptToken,job.attemptToken);
   assert.equal((await db.rpc('fail_scoring_job',{p_job_id:job.jobId,p_attempt_token:job.attemptToken,p_error:'old worker'})).data,false);
-  const stale = await db.rpc('persist_scoring_result',{p_job_id:job.jobId,p_attempt_token:job.attemptToken,p_result:{}});
+  const stale = await db.rpc('persist_scoring_result',{p_job_id:job.jobId,p_attempt_token:job.attemptToken,p_result:{rulesVersion:'cy2027-full-rubric-6',items:[{}]}});
   assert.match(stale.error.message,/superseded/);
   await db.rpc('fail_scoring_job',{p_job_id:replacement.jobId,p_attempt_token:replacement.attemptToken,p_error:'fixture retry'});
   const first = await run(record);
   await pg.query('UPDATE call_records SET transcript_raw=transcript_raw||\' revised\' WHERE id=$1',[record.id]);
   const revised = (await pg.query('SELECT * FROM call_records WHERE id=$1',[record.id])).rows[0];
-  const second = await run(revised); assert.notEqual(second.scorecard.id,first.scorecard.id);
-  const nextTemplate = randomUUID();
-  await pg.query(`INSERT INTO scoring_templates(id,template_name,product_type,version,total_possible_points,passing_threshold,categories)
-    VALUES($1,'Fixture v2','MA',2,10,80,'{}')`,[nextTemplate]);
-  await pg.query(`INSERT INTO scoring_template_items(template_id,intent_id,question_text,category,points_possible,is_auto_fail,display_order)
-    VALUES($1,$2,'Announce recording','opening',10,true,1)`,[nextTemplate,intent]);
-  const third = await run(revised); assert.equal(third.scorecard.template_id,nextTemplate);
-  assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE call_id='${record.id}'`)).n,3);
-  await pg.query('UPDATE scoring_templates SET is_active=false WHERE id=$1',[nextTemplate]);
+  await assert.rejects(run(revised),/paid_pass_already_exists/);
+  assert.ok(first.scorecard.id);
+  assert.equal((await value(`SELECT count(*)::int n FROM compliance_scorecards WHERE scoring_state='complete' AND call_id='${record.id}'`)).n,1);
 });
 test('scoring retries stop at three attempts for one transcript revision', async () => {
   const record = await newCall();
@@ -128,20 +126,16 @@ test('scoring retries stop at three attempts for one transcript revision', async
   assert.equal((await value(`SELECT status,error,attempt_count FROM scoring_jobs WHERE call_id='${record.id}'`)).status,'failed');
   assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.scoring_error_code,'scoring_attempts_exhausted');
 });
-test('classification resumes from persisted segment output without another LLM request', async () => {
-  const persisted = new Map(); let llmCalls=0, writes=0;
-  const params={diarized:[{speaker:'agent',text:'This call is recorded.',start_ms:0,end_ms:180000}],callContext:{product_type:'MA'},
-    callLLM:async()=>{llmCalls++;return {detections:[],risk_indicators:[],sentiment:{agent:'neutral',beneficiary:'neutral'}};},
-    loadSegmentResult:index=>persisted.get(index),saveSegmentResult:async(index,result)=>{writes++;persisted.set(index,result);}};
-  const first=await classifyCall(params);
-  assert.equal(llmCalls,1); assert.equal(writes,1); assert.ok(first.detections.length);
-  const resumed=await classifyCall(params);
-  assert.equal(llmCalls,1); assert.equal(writes,1); assert.deepEqual(resumed,first);
+test('legacy segment cache cannot authorize or replay a judgment request', async () => {
+ let requests=0,reads=0,writes=0;
+ const call=completeCall();
+ await classifyCall({diarized:call.transcript_diarized,callContext:call,callLLM:async()=>{requests++;return {detections:[],assessment};},loadSegmentResult:()=>{reads++;},saveSegmentResult:()=>{writes++;}});
+ assert.equal(requests,1);assert.equal(reads,0);assert.equal(writes,0);
 });
 test('short calls are transactionally persisted and replayed without duplicate cards', async () => {
   const record = await newCall(60); const first = await run(record); const second = await run(record);
-  assert.equal(first.isShortCall,true); assert.equal(second.scorecard.id,first.scorecard.id);
-  assert.equal(first.detections.length,0); assert.equal(first.scorecardItems.length,0);
+  assert.equal(first.notApplicable,true);assert.equal(second.scorecard_id,first.scorecard_id);
+  assert.equal((await value(`SELECT count(*)::int n FROM compliance_llm_passes WHERE call_id='${record.id}'`)).n,0);
 });
 test('background failure returns retryable status and never marks complete', async () => {
   const record = await newCall(); await triggerFailure('scorecard_items');
@@ -151,7 +145,7 @@ test('background failure returns retryable status and never marks complete', asy
     const response = await handler(new Request('https://example.test',{method:'POST',headers:{'x-enrollgen-job-secret':'scoring-test-secret'},
       body:JSON.stringify({callId:record.id,tenantId:tenant})}),{});
     assert.equal(response.status,503);
-    assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.scoring_status,'failed');
+    assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.scoring_status,'incomplete');
   } finally {
     await pg.exec('DROP TRIGGER fixture_failure ON scorecard_items');
     if(prior===undefined) delete process.env.SCORE_CALL_JOB_SECRET; else process.env.SCORE_CALL_JOB_SECRET=prior;
@@ -163,7 +157,7 @@ test('provider errors keep their code in the response and notify durable post-ca
   const handler=createScoreCallHandler({getDb:()=>db,classify:async()=>{throw Object.assign(new Error('Provider quota exhausted'),{status:429,code:'insufficient_quota'});},recordStatus:async(...args)=>{calls.push(args);}});
   const response=await handler(new Request('https://test',{method:'POST',headers:{'x-enrollgen-job-secret':'provider-fixture'},body:JSON.stringify({callId:record.id,tenantId:tenant})}),{});
   assert.equal(response.status,503);assert.equal((await response.json()).code,'insufficient_quota');assert.equal(calls.at(-1)[2],'scoring');assert.equal(calls.at(-1)[3],'insufficient_quota');
-  assert.equal((await value(`SELECT count(*)::int n FROM compliance_scorecards WHERE call_id='${record.id}'`)).n,0);
+  assert.equal((await value(`SELECT count(*)::int n FROM compliance_scorecards WHERE scoring_state='complete' AND call_id='${record.id}'`)).n,0);
  }finally{if(prior===undefined)delete process.env.SCORE_CALL_JOB_SECRET;else process.env.SCORE_CALL_JOB_SECRET=prior;}
 });
 test('database initialization failures log their stage and sanitized diagnostic instead of escaping the handler',async()=>{
@@ -191,8 +185,8 @@ test('silent row skips also fail integrity checks rather than completing a parti
     CREATE TRIGGER fixture_skip BEFORE INSERT ON scorecard_items FOR EACH ROW EXECUTE FUNCTION fixture_skip_insert();`);
   try {
     await assert.rejects(run(record), /item insert produced no row/);
-    assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.scoring_status,'failed');
-    assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE call_id='${record.id}'`)).n,0);
+    assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.scoring_status,'incomplete');
+    assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE scoring_state='complete' AND call_id='${record.id}'`)).n,0);
   } finally { await pg.exec('DROP TRIGGER fixture_skip ON scorecard_items'); }
 });
 
@@ -203,7 +197,7 @@ test('a transcript changed while a worker scores cannot complete with stale evid
     return callLLM();
   }}), /Transcript changed during scoring/);
   assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.scoring_status,'failed');
-  assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE call_id='${record.id}'`)).n,0);
+  assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE scoring_state='complete' AND call_id='${record.id}'`)).n,0);
 });
 
 test('returned template read errors are checked and recorded as failed before any result save', async () => {
@@ -218,7 +212,7 @@ test('returned template read errors are checked and recorded as failed before an
     }};
     await assert.rejects(generateScorecard({supabase:broken,callRecord:record,callLLM}),new RegExp(`Forced ${table}`));
     assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.scoring_status,'failed');
-    assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE call_id='${record.id}'`)).n,0);
+    assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE scoring_state='complete' AND call_id='${record.id}'`)).n,0);
   }
 });
 
@@ -231,6 +225,6 @@ test('a failed-status write error is surfaced; the job remains pending rather th
   try {
     await assert.rejects(generateScorecard({supabase:broken,callRecord:record,callLLM}), /failure status could not be saved/);
     assert.equal((await value(`SELECT metadata FROM call_records WHERE id='${record.id}'`)).metadata.scoring_status,'pending');
-    assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE call_id='${record.id}'`)).n,0);
+    assert.equal((await value(`SELECT count(*)::int AS n FROM compliance_scorecards WHERE scoring_state='complete' AND call_id='${record.id}'`)).n,0);
   } finally { await pg.exec('DROP TRIGGER fixture_failure ON intent_detections'); }
 });

@@ -52,14 +52,14 @@ Recovering dropped audio can increase observed billed minutes relative to a brok
 | `src/lib/wavGaps.js` | Manual, range-cropped, ledgered Nova-2 batch gap fill; never automatic. | Only approved missing channel-minutes; configured rate required |
 | `src/styles.css` | Modal/recording/status/theme/indicator presentation and score visibility. | 0 LLM/STT |
 | `src/styles/design-tokens.css` | Modal/recording/status/theme/indicator presentation and score visibility. | 0 LLM/STT |
-| `supabase/migrations/132_compliance_overhaul_safety.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
-| `supabase/migrations/133_compliance_atomic_versions.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
-| `supabase/migrations/134_compliance_admin_versions.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
-| `supabase/migrations/135_compliance_dispatch_freeze.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
-| `supabase/migrations/136_manual_transcript_gaps.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
-| `supabase/migrations/137_call_display_names.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
-| `supabase/migrations/138_scoring_incomplete_status.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
-| `supabase/migrations/139_stt_reconnect_budget.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
+| `supabase/migrations/133_compliance_overhaul_safety.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
+| `supabase/migrations/134_compliance_atomic_versions.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
+| `supabase/migrations/135_compliance_admin_versions.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
+| `supabase/migrations/136_compliance_dispatch_freeze.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
+| `supabase/migrations/137_manual_transcript_gaps.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
+| `supabase/migrations/138_call_display_names.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
+| `supabase/migrations/139_scoring_incomplete_status.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
+| `supabase/migrations/140_stt_reconnect_budget.sql` | Unapplied schema, authorization, evidence/version, status or transport budget changes; see rollout order. | 0 until applied; constrains future paid requests |
 | `telephony/src/media/deepgramTrack.js` | Idle text KeepAlive, gated close-before-reconnect, buffered/paced speech and timeline mapping. | Same Nova-2/channel rate; no filler or replay; recovered real audio adds normal minutes |
 | `telephony/src/media/mediaStream.js` | Shared call reconnect budget and transport ping/pong health. | No audio generated; no extra channel |
 | `telephony/src/media/sttAlert.js` | Existing text alert path on exhaustion. | No LLM/STT |
@@ -99,11 +99,11 @@ See [APPROVED-DECISIONS.md](APPROVED-DECISIONS.md) for the current costs, 15-rul
 | `src/compliance/rules/evaluate.js` | Completed repeat prompts, bounded channel overlap, scope wording and corrected applicability/consent deadline | CPU only |
 | `src/compliance/engine/ScoringEngine.js` | Retirements excluded despite stale detections | CPU only |
 | `src/compliance/engine/VersionAggregator.js` | Retirements excluded despite historical admin outcomes | CPU only |
-| `supabase/migrations/132_compliance_overhaul_safety.sql` | Unapplied cached ledger field and persistent UTC budget latch/alert claim | No current cost; blocks future paid requests |
-| `supabase/migrations/133_compliance_atomic_versions.sql` | Unapplied same-transaction legacy assessment writes | No model request |
-| `supabase/migrations/134_compliance_admin_versions.sql` | Unapplied manual same-transaction assessment writes; free versions preserve fields | No model request |
-| `supabase/migrations/138_scoring_incomplete_status.sql` | Unapplied current rules stamp | No provider work |
-| `supabase/migrations/140_approved_cy2027_retirements.sql` | Unapplied successor template with 135 items; history retained | No provider work |
+| `supabase/migrations/133_compliance_overhaul_safety.sql` | Unapplied cached ledger field and persistent UTC budget latch/alert claim | No current cost; blocks future paid requests |
+| `supabase/migrations/134_compliance_atomic_versions.sql` | Unapplied same-transaction legacy assessment writes | No model request |
+| `supabase/migrations/135_compliance_admin_versions.sql` | Unapplied manual same-transaction assessment writes; free versions preserve fields | No model request |
+| `supabase/migrations/139_scoring_incomplete_status.sql` | Unapplied current rules stamp | No provider work |
+| `supabase/migrations/141_approved_cy2027_retirements.sql` | Unapplied successor template with 135 items; history retained | No provider work |
 | `scripts/compliance-overhaul/dry-run.mjs` | Approved row and total gap estimates | Local reports only |
 | `scripts/compliance-overhaul/approved-report.mjs` | Baseline/post-fix samples and per-call estimated costs | Local reports only |
 | `scripts/compliance-overhaul/render-inventory.mjs` | Updated active/archive counts and inventory text | Local reports only |
@@ -136,11 +136,11 @@ Current policy: `cy2027-script-stages-3`. See [STAGE-GATES-REPORT.md](STAGE-GATE
 | `netlify/functions/compliance.js` | Current scored-call aggregates exclude null/incomplete/N/A values | No provider work |
 | `src/lib/complianceScore.js` | N/A is distinct from incomplete and never a percentage | No provider work |
 | `src/components/callDetail/ComplianceReviewModal.jsx` | Disable Rescore for N/A; N/A zero-item headers do not show an item-loading error | No style or transcription behavior implementation changes |
-| `supabase/migrations/132_compliance_overhaul_safety.sql` | Pending DB guard for under-minimum/excluded calls at pass claim and reservation | Unapplied; constrains future spending |
-| `supabase/migrations/133_compliance_atomic_versions.sql` | Pending guard prevents excluded complete scores | Unapplied |
-| `supabase/migrations/134_compliance_admin_versions.sql` | Pending N/A version validation and N/A call status | Unapplied |
-| `supabase/migrations/138_scoring_incomplete_status.sql` | Pending distinct N/A status and current rules stamp | Unapplied |
-| `supabase/migrations/141_script_stage_applicability.sql` | Pending N/A header RPC and 86-item MA successor; preserves historical templates/cards | Unapplied |
+| `supabase/migrations/133_compliance_overhaul_safety.sql` | Pending DB guard for under-minimum/excluded calls at pass claim and reservation | Unapplied; constrains future spending |
+| `supabase/migrations/134_compliance_atomic_versions.sql` | Pending guard prevents excluded complete scores | Unapplied |
+| `supabase/migrations/135_compliance_admin_versions.sql` | Pending N/A version validation and N/A call status | Unapplied |
+| `supabase/migrations/139_scoring_incomplete_status.sql` | Pending distinct N/A status and current rules stamp | Unapplied |
+| `supabase/migrations/142_script_stage_applicability.sql` | Pending N/A header RPC and 86-item MA successor; preserves historical templates/cards | Unapplied |
 | `scripts/compliance-overhaul/stage-gates-report.mjs` | Explicit dry-run-only full source/rule/cohort/sample report, no database/provider client | Zero provider cost |
 | `scripts/compliance-overhaul/render-inventory.mjs` | Current version/counts and link to exact allowlist | Local reports only |
 | `tests/compliance-stage-gates.test.js` | Eligibility, source/CMS boundary, dormant PECL policy, recording metadata, unsupported historical/custom rows | Fixture doubles only |
@@ -161,7 +161,7 @@ Current rule version: cy2027-cms-only-4. [Full rules/citations](cms-only-rules.m
 | `src/compliance/engine/JudgmentPass.js`, `judgmentRequest.js` | Only cited judgments; omit retired Code detections | One request maximum unchanged; judgment catalog 27 to seven |
 | `src/compliance/engine/ScoringEngine.js`, `VersionAggregator.js` | One-point internal weights, no AI pass points, no unconfirmed deductions, new CMS deterministic evidence replaces old script admin outcomes | Free aggregation only |
 | `netlify/lib/complianceVersions.js` | New versions use active rubric and evidence maps across template copies | Read/transaction work only; no model call |
-| `supabase/migrations/134_compliance_admin_versions.sql`, `138_scoring_incomplete_status.sql`, `142_cms_only_rubric.sql` | Pending active-rubric versions, current stamp/N/A fence, cloned CMS template | Unapplied; no current cost |
+| `supabase/migrations/135_compliance_admin_versions.sql`, `139_scoring_incomplete_status.sql`, `143_cms_only_rubric.sql` | Pending active-rubric versions, current stamp/N/A fence, cloned CMS template | Unapplied; no current cost |
 | `scripts/compliance-overhaul/cms-only-report.mjs` | Explicit dry-run-only inventory, per-call/agent means, full original/before/after cards and pending SQL | No SQL/provider client |
 | Historical `approved-report.mjs`, `stage-gates-report.mjs`, `render-inventory.mjs` | Guard against generating old-policy artifacts under the new authority | Local guard only |
 | Scoring fixture files | Replace superseded script assertions; topic/consent/citation/ordering regressions and budget/API safeguards | Injected doubles only |
@@ -175,7 +175,7 @@ Documentation and private reports updated. No styles, transcription, Deepgram, R
 - `callStages.js`, `shared/tpmo2027.js`: unrelated doctor-name submission, plan-qualification wording, internet prices and Part B subsidy intake no longer create false scoring events. Changes are confined to scoring, not capture or transport.
 - `JudgmentPass.js`, `judgmentRequest.js`: restore agency judgment rules in the same one pass; CMS conduct remains REVIEW only; correct-stage evidence anchoring. No extra request, retry, fallback or output cap increase. More restored instructions than the seven-rule subset may change future cold input estimates; no calls or charges occurred during this work.
 - `ScoringEngine.js`, `VersionAggregator.js`: original points, stored positive agency evidence, original-weight admin confirmation, no automatic AI deductions/AUTO-FAIL. CPU aggregation only.
-- Pending migrations `138` (v5 incomplete stamp), `143` (clone original template and N/A fence): unapplied, no data changes. Older templates/cards are preserved.
+- Pending migrations `139` (v5 incomplete stamp), `144` (clone original template and N/A fence): unapplied, no data changes. Older templates/cards are preserved.
 - `full-rubric-report.mjs --dry-run`, fixture comparator, full-rubric tests and updated policy assertions: local files only, private evidence excluded from Git. Historical report generators cannot regenerate old migration artifacts under v5.
 
 [Full report](FULL-RUBRIC-REPORT.md), [all 135 items and CMS changes](FULL-RUBRIC-INVENTORY.md), [validation](VALIDATION-FULL-RUBRIC.md). No transcription, Deepgram, Railway transport, telephony or UI styling source changed.

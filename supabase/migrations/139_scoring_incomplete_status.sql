@@ -6,8 +6,8 @@ DO $$ DECLARE r record; BEGIN
  AND pg_get_constraintdef(oid) LIKE '%compliance_status%' LOOP EXECUTE format('ALTER TABLE public.call_records DROP CONSTRAINT %I',r.conname); END LOOP;
 END $$;
 ALTER TABLE public.call_records ADD CONSTRAINT call_records_compliance_status_v2 CHECK(compliance_status IN ('not_requested','transcript_pending','queued','scoring','complete','failed','dispo_changed','incomplete','na'));
-ALTER FUNCTION public.refresh_sale_compliance_request(uuid) RENAME TO refresh_sale_compliance_request_legacy_138;
-REVOKE ALL ON FUNCTION public.refresh_sale_compliance_request_legacy_138(uuid) FROM PUBLIC,anon,authenticated,service_role;
+ALTER FUNCTION public.refresh_sale_compliance_request(uuid) RENAME TO refresh_sale_compliance_request_legacy_139;
+REVOKE ALL ON FUNCTION public.refresh_sale_compliance_request_legacy_139(uuid) FROM PUBLIC,anon,authenticated,service_role;
 CREATE FUNCTION public.refresh_sale_compliance_request(p_call_id uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE c call_records;
 BEGIN
@@ -17,7 +17,7 @@ BEGIN
   UPDATE transcript_score_dispatch SET delivered_revision=revision,available_at='infinity' WHERE call_id=c.id;
   RETURN;
  END IF;
- PERFORM refresh_sale_compliance_request_legacy_138(p_call_id);
+ PERFORM refresh_sale_compliance_request_legacy_139(p_call_id);
 END $$;
 REVOKE ALL ON FUNCTION public.refresh_sale_compliance_request(uuid) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.refresh_sale_compliance_request(uuid) TO service_role;

@@ -20,7 +20,7 @@ const legal=r=>{
 const kept=RULE_CATALOG.filter(r=>r.bucket!=='RETIRE');
 const header=`# Full rubric inventory
 
-Rules ${RULES_VERSION}: ${kept.length} kept definitions (${kept.filter(r=>r.bucket==='DETERMINISTIC').length} deterministic, ${kept.filter(r=>r.bucket==='JUDGMENT').length} judgment), ${RULE_CATALOG.length-kept.length} excluded. ${kept.filter(r=>ruleHasScriptBasis(r.id,'MA')).length} are supported on MA. The production snapshot still has its original 138-item active MA template; migration 140 proposes 135 and migration 141 proposes the script-backed successor. Neither was applied.
+Rules ${RULES_VERSION}: ${kept.length} kept definitions (${kept.filter(r=>r.bucket==='DETERMINISTIC').length} deterministic, ${kept.filter(r=>r.bucket==='JUDGMENT').length} judgment), ${RULE_CATALOG.length-kept.length} excluded. ${kept.filter(r=>ruleHasScriptBasis(r.id,'MA')).length} are supported on MA. The production snapshot still has its original 138-item active MA template; migration 141 proposes 135 and migration 142 proposes the script-backed successor. Neither was applied.
 
 [Exact kept/removed lists and script statements](script-backed-rules.md) are the current grading authority. Candidate keyword matches below are historical research context, not authorization to grade a rule. Counts are original stored item outcomes since October 1, not newly scored outcomes. No new legal mandate is inferred from a generic intent citation.
 

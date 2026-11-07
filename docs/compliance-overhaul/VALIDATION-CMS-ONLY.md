@@ -17,4 +17,4 @@ Dry run: 376 saved calls, 24 numeric estimates, 318 N/A, 34 INCOMPLETE. Trigger:
 
 The PDF was read and relevant complete pages visually checked. The file is the user's existing FINAL (1) copy, dated 8/03/2026, not the requested underscore filename or the September draft. It was not modified or added to the commit.
 
-Migration 142 and edited pending persistence/version routines remain unapplied. PostgreSQL integration, database concurrency/RLS and live provider behavior were not exercised. Those remain approval-stage acceptance work. Endpoint transcript coverage does not prove all interior or per-channel speech exists; no capture/transcription behavior was changed.
+Migration 143 and edited pending persistence/version routines remain unapplied. PostgreSQL integration, database concurrency/RLS and live provider behavior were not exercised. Those remain approval-stage acceptance work. Endpoint transcript coverage does not prove all interior or per-channel speech exists; no capture/transcription behavior was changed.

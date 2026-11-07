@@ -8,21 +8,21 @@ ALTER TABLE public.compliance_runtime_control ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.compliance_runtime_control FROM PUBLIC,anon,authenticated;
 GRANT ALL ON public.compliance_runtime_control TO service_role;
 CREATE POLICY runtime_service_only ON public.compliance_runtime_control TO service_role USING(true) WITH CHECK(true);
-ALTER FUNCTION public.get_sale_compliance_dispatch() RENAME TO get_sale_compliance_dispatch_pre132;
-REVOKE ALL ON FUNCTION public.get_sale_compliance_dispatch_pre132() FROM PUBLIC,anon,authenticated,service_role;
+ALTER FUNCTION public.get_sale_compliance_dispatch() RENAME TO get_sale_compliance_dispatch_pre133;
+REVOKE ALL ON FUNCTION public.get_sale_compliance_dispatch_pre133() FROM PUBLIC,anon,authenticated,service_role;
 CREATE FUNCTION public.get_sale_compliance_dispatch() RETURNS SETOF public.transcript_score_dispatch LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 BEGIN
  IF NOT EXISTS(SELECT 1 FROM compliance_runtime_control WHERE id AND enabled) THEN RETURN; END IF;
- RETURN QUERY SELECT * FROM get_sale_compliance_dispatch_pre132();
+ RETURN QUERY SELECT * FROM get_sale_compliance_dispatch_pre133();
 END $$;
 REVOKE ALL ON FUNCTION public.get_sale_compliance_dispatch() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.get_sale_compliance_dispatch() TO service_role;
-ALTER FUNCTION public.begin_scoring_job(uuid,uuid,jsonb) RENAME TO begin_scoring_job_pre132;
-REVOKE ALL ON FUNCTION public.begin_scoring_job_pre132(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated,service_role;
+ALTER FUNCTION public.begin_scoring_job(uuid,uuid,jsonb) RENAME TO begin_scoring_job_pre133;
+REVOKE ALL ON FUNCTION public.begin_scoring_job_pre133(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated,service_role;
 CREATE FUNCTION public.begin_scoring_job(p_call_id uuid,p_template_id uuid,p_transcript jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 BEGIN
  IF NOT EXISTS(SELECT 1 FROM compliance_runtime_control WHERE id AND enabled) THEN RETURN jsonb_build_object('status','skipped','reason','scoring_disabled'); END IF;
- RETURN begin_scoring_job_pre132(p_call_id,p_template_id,p_transcript);
+ RETURN begin_scoring_job_pre133(p_call_id,p_template_id,p_transcript);
 END $$;
 REVOKE ALL ON FUNCTION public.begin_scoring_job(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.begin_scoring_job(uuid,uuid,jsonb) TO service_role;

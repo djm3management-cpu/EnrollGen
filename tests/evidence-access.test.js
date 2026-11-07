@@ -1,3 +1,4 @@
+import {completeCall,assessment,installComplianceFixture} from './helpers/complianceFixture.js';
 import {createCallRecordDetailsHandler} from '../netlify/functions/call-record-details.js';
 import { debugLog } from "../src/lib/debugLog.js";
 import assert from "node:assert/strict";
@@ -159,6 +160,7 @@ test("072 scoring before 063 saves the long intent and complete evidence", async
   await role("postgres");
   await pg.exec(readFileSync(new URL("../supabase/migrations/072_scoring_integrity.sql",import.meta.url),"utf8"));
   await pg.exec(readFileSync(new URL("../supabase/migrations/103_resumable_scoring_jobs.sql",import.meta.url),"utf8"));
+  await installComplianceFixture(pg);
   preMigrationScoring = await scoreFixtureCall();
 });
 
@@ -355,7 +357,7 @@ test("unrelated SQL errors do not trigger anonymous/ownership fallbacks or discl
 
 async function scoreFixtureCall() {
   await role("service_role");
-  await query("UPDATE call_records SET call_outcome='enrolled',call_duration_seconds=180,transcript_raw='This call is recorded.',transcript_diarized='[]' WHERE id=$1",[windowCall.call_record_id]);
+  await query("UPDATE call_records SET call_outcome='enrolled',call_duration_seconds=900,transcript_raw='This call is recorded.',transcript_diarized=$2 WHERE id=$1",[windowCall.call_record_id,JSON.stringify(completeCall().transcript_diarized)]);
   process.env.SCORE_CALL_JOB_SECRET = "fixture-only-job-secret";
   const firstError = sqlErrors.length;
   const priorScores = (await query("SELECT count(*)::int AS n FROM scoring_jobs WHERE call_id=$1 AND status='complete'",[windowCall.call_record_id]))[0].n;
@@ -363,7 +365,7 @@ async function scoreFixtureCall() {
   const scoring = createScoreCallHandler({getDb:()=>db,recordStatus:async()=>{},classify:async()=> {
     llmCalls++;
     return { detections:[{intent_code:"CALL_OPEN_001_RECORDING_ANNOUNCE",detected:true,confidence:0.99,speaker:"agent",
-      evidence_text:"This call is recorded.",sequence_position:1}],risk_indicators:[],sentiment:{agent:"neutral",beneficiary:"neutral"} };
+      evidence_text:"This call is recorded.",sequence_position:1}],assessment,risk_indicators:[],sentiment:{agent:"neutral",beneficiary:"neutral"} };
   }});
   assert.equal((await scoring(bodyRequest({callId:windowCall.call_record_id,tenantId:tenant}))).status,401);
   await scoring(new Request("https://example.invalid", {method:"POST",headers:{"x-enrollgen-job-secret":"fixture-only-job-secret"},

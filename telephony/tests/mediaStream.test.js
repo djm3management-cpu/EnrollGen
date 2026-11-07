@@ -17,7 +17,7 @@ process.env.TWILIO_ACCOUNT_SID = accountSid;
 const { createMediaServer, MEDIA_LIMITS } = await import('../src/media/mediaStream.js');
 const { mintMediaStreamToken, verifyMediaStreamToken } = await import('../src/media/streamToken.js');
 const { createMediaLeaseClient } = await import('../src/media/streamLease.js');
-const { openDeepgramTrack } = await import('../src/media/deepgramTrack.js');
+const { openDeepgramTrack,TRACK_LIMITS } = await import('../src/media/deepgramTrack.js');
 const { mintAgentWsToken } = await import('../src/wsToken.js');
 
 const pg = new PGlite();
@@ -237,7 +237,7 @@ test('a live Deepgram drop delivers the correct speaker failure to the call owne
     terminate() { this.readyState=3; this.emit('close'); }
     close() { this.terminate(); }
   }
-  const h = await harness(t,{ openTrack: options => openDeepgramTrack({ ...options,reportUsage:async()=>{},Socket }) });
+  const h = await harness(t,{ openTrack: options => openDeepgramTrack({ ...options,registerStream:()=>true,reserveReconnect:()=>true,onLimit:async()=>{},reportUsage:async()=>{},Socket }) });
   const claims = await seedCall(), ws = await h.connect(claims);
   ws.send(JSON.stringify(start(claims))); await until(() => sockets.length === 2);
   for (const socket of sockets) { socket.readyState=1; socket.emit('open'); }
@@ -275,9 +275,9 @@ function deepgramHarness(speaker, options = {}) {
     close() { this.terminate(); }
   }
   const schedule = (fn,delay) => { const key={}; timers.set(key,{fn,delay}); return key; };
-  const track = openDeepgramTrack({ speaker,Socket,notify: event => messages.push(event),schedule,cancel: key => timers.delete(key),
+  const track = openDeepgramTrack({ speaker,Socket,registerStream:()=>true,reserveReconnect:()=>true,onLimit:async()=>{},reportUsage:async()=>{},limits:{...TRACK_LIMITS,queueFrames:100,queueBytes:16*1024,reconnects:3},notify: event => messages.push(event),schedule,cancel: key => timers.delete(key),
     every: fn => { const key={}; intervals.set(key,fn); return key; },cancelEvery: key => intervals.delete(key), ...options });
-  function retry() { const entry=[...timers.entries()].find(([,timer]) => timer.delay < 5000); assert.ok(entry); timers.delete(entry[0]); entry[1].fn(); }
+  function retry() { assert.ok(sockets.length>1,'new speech opens a replacement after the old socket closes'); }
   return { sockets,messages,timers,intervals,track,retry };
 }
 
@@ -303,8 +303,7 @@ test('both Deepgram tracks emit interim and segment-final results immediately on
     assert.ok(final.timestamp < agent.messages.at(-1).timestamp, 'arrival latency cannot reorder the speakers');
     result(customer, 2, 'Latest continuous speech', false);
     assert.equal(customer.messages.at(-1).text, 'Latest continuous speech');
-    customer.sockets[0].emit('close'); customer.retry(); customer.sockets[1].open();
-    customer.track.send(Buffer.alloc(160), 5000);
+    customer.sockets[0].emit('close');customer.track.send(Buffer.alloc(160),5000);customer.retry();customer.sockets[1].open();
     result(customer, 0, 'After reconnect', false);
     assert.equal(customer.messages.at(-1).timestamp, 15000);
     assert.equal(customer.messages.at(-1).startMs, 5000);
@@ -328,7 +327,7 @@ test('media forwards Twilio timestamps and gives both channels the same timeline
   assert.deepEqual(sent, [['customer', 240], ['agent', 240]]);
 });
 for (const speaker of ['customer','agent']) {
-  test(`Deepgram ${speaker} errors/close notify browser, reconnect with gap markers and stop after three retries`, () => {
+  test(`Deepgram ${speaker} errors/close notify browser, reconnect with gap markers and stop after the configured three retries`, () => {
     const h = deepgramHarness(speaker); h.sockets[0].open();
     h.sockets[0].emit('error',new Error('drop')); h.sockets[0].emit('close');
     assert.equal(h.messages.filter(event => event.type==='transcription_error').length,1);
@@ -351,9 +350,13 @@ test('Deepgram CONNECTING queue, transport backpressure and provider Error messa
   assert.ok(h.track.stats().queuedFrames<=100); assert.ok(h.track.stats().queuedBytes<=16*1024);
   assert.ok(h.messages.some(event => event.coverageGap));
   h.sockets[0].open(); h.sockets[0].bufferedAmount=65536; h.track.send(Buffer.alloc(160));
-  assert.equal(h.messages.at(-1).status,'reconnecting'); h.retry(); h.sockets[1].open();
-  h.sockets[1].emit('message',Buffer.from('{"type":"Error"}'));
-  assert.equal(h.messages.at(-1).speaker,'agent'); h.track.close();
+  assert.equal(h.track.stats().queuedFrames,1);
+  h.sockets[0].bufferedAmount=0;
+  const drain=[...h.timers.entries()].find(([,timer])=>timer.delay===20);assert.ok(drain);h.timers.delete(drain[0]);drain[1].fn();
+  assert.equal(h.track.stats().queuedFrames,0);assert.equal(h.sockets.length,1);
+  h.sockets[0].emit('message',Buffer.from('{"type":"Error"}'));
+  assert.equal(h.messages.at(-1).status,'reconnecting');h.track.send(Buffer.alloc(160));h.retry();h.sockets[1].open();
+  assert.equal(h.messages.at(-1).speaker,'agent'); h.track.close();h.sockets[1].terminate();
   assert.equal(h.timers.size,0); assert.equal(h.intervals.size,0);
 });
 
@@ -486,7 +489,7 @@ test('STT usage counts audio bytes per connection, excludes keepalives and queue
   h.sockets[0].terminate();
   await Promise.resolve(); await Promise.resolve();
   assert.equal(rows.length, 1); assert.equal(rows[0].quantity, 1);
-  h.retry(); h.sockets[1].open(); h.track.send(Buffer.alloc(4000));
+  h.track.send(Buffer.alloc(4000));h.retry();h.sockets[1].open();
   h.track.close(); h.sockets[1].terminate(); h.track.close();
   await Promise.resolve(); await Promise.resolve();
   assert.equal(rows.length, 2); assert.equal(rows[1].quantity, 0.5);

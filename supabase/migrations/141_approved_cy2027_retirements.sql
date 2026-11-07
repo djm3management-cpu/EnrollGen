@@ -1,4 +1,4 @@
--- UNAPPLIED. After 132-139, with scoring disabled. No historical item changes.
+-- UNAPPLIED. After 133-140, with scoring disabled. No historical item changes.
 BEGIN;
 SET LOCAL lock_timeout='5s';
 DO $$

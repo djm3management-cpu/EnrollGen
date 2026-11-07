@@ -1,3 +1,5 @@
+import {completeCall,assessment} from './helpers/complianceFixture.js';
+import {RULE_CATALOG} from '../src/compliance/rules/catalog.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -23,11 +25,11 @@ const detection = (code, patch = {}) => ({intent_code:code,detected:true,applica
   speaker:'agent',evidence_text:'Quoted transcript evidence',anti_pattern:false,...patch});
 const utterance = (text,start_ms=0,end_ms=1000,speaker='agent') => ({text,start_ms,end_ms,speaker});
 async function classified(text, observations = [], direction='inbound') {
-  return classifyCall({diarized:[utterance(text),utterance('Thank you.',179000,180000)],
-    callContext:{call_direction:direction,product_type:'MA'},
+  return classifyCall({diarized:[...completeCall().transcript_diarized,utterance(text),utterance('Yes.',1100,2000,'customer'),utterance('This plan includes dental.',300000,301000)],
+    callContext:completeCall({call_direction:direction,metadata:{tpmo_sharing:/TPMO B/.test(text)}}),
     callLLM:async (system,prompt) => {
-      assert.ok(system.includes('Same-call')); assert.ok(prompt.includes('Whole-call context'));
-      return {detections:observations};
+      assert.match(system,/never final violations/);assert.ok(prompt.includes(text));
+      return {detections:observations,assessment};
     }});
 }
 
@@ -45,7 +47,7 @@ test('active taxonomy removes retired flags and adds required critical scope-bef
 
 test('same-call SOA is evaluated for inbound and scheduled outbound calls; retired exceptions are absent', async () => {
   for(const direction of ['inbound','outbound']) {
-    const result=await classified('Our appointment is today. Before reviewing plans, may we discuss Medicare Advantage? Yes.',[detection(soa)],direction);
+    const result=await classified('We have Medicare Advantage and prescription drug plans. Would you like to discuss all of these options or certain ones?',[detection(soa)],direction);
     const found=result.detections.find(d=>d.intent_code===soa);
     assert.equal(found.detected,true);assert.notEqual(found.direction_excluded,true);
     const card=scoreCall({detections:result.detections,templateItems:[item(soa)],template:currentTemplate});
@@ -57,15 +59,15 @@ test('same-call SOA is evaluated for inbound and scheduled outbound calls; retir
   assert.equal(scoreCall({detections:late.detections,templateItems:[item(soa)],template:currentTemplate}).scorecard_items[0].result,'fail');
 });
 
-test('only the new template auto-fails verified TPMO timing, even when weighted score is high', () => {
+test('original rubric weights override caller-supplied point inflation; timing needs timestamped evidence', () => {
   const code='CONDUCT_006_PROFESSIONAL_TONE';
   const ds=[{intent_code:code,detected:true,confidence:1,transcript_segment:'Professional conversation'},
     {intent_code:timing,detected:false,confidence:1,detection_method:'tpmo_2027_policy',transcript_segment:'Disclaimer after benefits'}];
   const templateItems=[item(code,100),item(timing)];
   const current=scoreCall({detections:ds,templateItems,template:currentTemplate});
-  assert.ok(current.overall_score>98);assert.equal(current.auto_fail_triggered,true);assert.equal(current.pass_fail,'FAIL');
+  assert.equal(current.total_points_possible,RULE_CATALOG.find(r=>r.id===code).points+RULE_CATALOG.find(r=>r.id===timing).points);assert.equal(current.auto_fail_triggered,false);
   const historical=scoreCall({detections:ds,templateItems,template:{passing_threshold:85},preserveRuleText:true});
-  assert.equal(historical.auto_fail_triggered,false);assert.equal(historical.pass_fail,'PASS');
+  assert.equal(historical.auto_fail_triggered,false);assert.equal(historical.overall_score,current.overall_score);
   assert.equal(historical.scorecard_items[1].question_text,item(timing).question_text);
 });
 
@@ -81,15 +83,15 @@ test('no sharing, a live warm transfer and carrier enrollment are unscored rathe
   }
 });
 
-test('actual sharing with another TPMO for later contact evaluates written consent; confirmed unauthorized sharing can auto-fail', async () => {
+test('actual sharing with another TPMO produces anchored review flags and never AI auto-fails', async () => {
   for(const consent of [true,false]) {
     const text=consent?'Your signed consent names TPMO B; we sent it your data for a later callback.'
       :'I sent your data to TPMO B for its callback tomorrow even though you refused written consent.';
     const result=await classified(text,[detection(sharing,{applicable:true,detected:consent,anti_pattern:!consent,
       hard_cms_violation:!consent,evidence_text:text})]);
     const card=scoreCall({detections:result.detections,templateItems:[item(sharing)],template:currentTemplate});
-    assert.equal(card.scorecard_items[0].result,consent?'pass':'fail');
-    assert.equal(card.auto_fail_triggered,!consent);
+    assert.equal(card.scorecard_items[0].result,'review');
+    assert.equal(card.auto_fail_triggered,false);
   }
 });
 
@@ -99,7 +101,7 @@ test('supported superlatives do not trigger a standalone lexical violation', () 
   const code='PLAN_028_NO_UNSUBSTANTIATED_CLAIMS';
   const card=scoreCall({detections:[{intent_code:code,detected:true,confidence:0.99,
     transcript_segment:'Best rating among these plans according to current CMS data'}],templateItems:[item(code)],template:currentTemplate});
-  assert.equal(card.overall_score,100);assert.equal(card.auto_fail_triggered,false);
+  assert.equal(card.total_points_possible,0);assert.equal(card.auto_fail_triggered,false);
 });
 
 test('Co-Pilot prompts use the new rules and exclude obsolete retrieved timing guidance', async () => {

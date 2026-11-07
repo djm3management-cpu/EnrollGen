@@ -97,6 +97,7 @@ export function evaluateRules(call){
    return out(typeof value==='boolean'?(value?'pass':'fail'):'review',null,value===true?null:`Verified metadata unavailable: ${basis.metadataOnly}`);
   }
   let candidates=[],line=null,deadline=null,missing=rule.cmsBasis?'CMS-required topic/statement not found':'Agency-required statement not found';
+  if(basis.method.startsWith('tpmo')&&stages.tpmo.timingUncertain)return out('review',stages.tpmo.earlyDisclosure,'Manual review required: earlier TPMO disclosure wording is uncertain; a later repeat cannot prove a timing violation');
   if(basis.method.startsWith('tpmo')){
    line=stages.tpmo.disclaimer;
    const predicate={tpmoOrg:hasTpmoOrgCount,tpmoPlans:hasTpmoPlanCount,tpmoResource:t=>hasMedicareResource(t)&&/all (?:of )?(?:your )?options|help with plan choices/i.test(t)}[basis.method];

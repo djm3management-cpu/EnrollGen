@@ -1,3 +1,4 @@
+import {completeCall,assessment} from './helpers/complianceFixture.js';
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -46,9 +47,11 @@ before(async () => {
 after(() => pg.close());
 const utterance = (text, start_ms = 5000, end_ms = 20000, speaker = 'agent') => ({text, start_ms, end_ms, speaker});
 async function classify(utterances) {
-  return (await classifyCall({diarized: [...utterances, utterance('Thank you for calling.', 179000, 180000)], callContext: {product_type:'MA'},
+  const duration=Math.max(900,...utterances.map(l=>Math.ceil(l.end_ms/1000)));
+  const call=completeCall({call_duration_seconds:duration});
+  return (await classifyCall({diarized: [...call.transcript_diarized,...utterances,utterance('This plan includes dental coverage.',duration*1000-2000,duration*1000-1000)], callContext: call,
     // Deliberately wrong model results must not overrule the TPMO policy.
-    callLLM: async () => ({detections: callOpening.map(i => ({intent_code:i.intent_code, detected:true, confidence:1, speaker:'agent'}))})})).detections;
+    callLLM: async () => ({assessment,detections: callOpening.map(i => ({intent_code:i.intent_code, detected:true, confidence:1, speaker:'agent'}))})})).detections;
 }
 function tpmoScore(detections) {
   return scoreCall({detections, templateItems:items.filter(i => i.intent_code.includes('TPMO')), template});
@@ -58,11 +61,13 @@ for (const [name, text] of [
   ['Medicare.gov only', approved.replace('Medicare.gov, 1-800-MEDICARE,', 'Medicare.gov')],
   ['1-800-MEDICARE only', approved.replace('Medicare.gov, 1-800-MEDICARE,', '1-800-MEDICARE')],
   ['all-organization script', 'Currently we represent 5 organizations which offer 25 products in your area. You can always contact Medicare.gov, 1800–MEDICARE for help with plan choices.'],
-]) test(`${name} receives full persisted TPMO and live referral credit without SHIP`, async () => {
+]) test(`${name} is graded against the complete applicable TPMO disclaimer`, async () => {
   const detections = await classify([utterance(text)]);
   const score = tpmoScore(detections);
-  assert.equal(score.pass_fail, 'PASS'); assert.equal(score.overall_score, 100);
-  assert.ok(score.scorecard_items.every(i => i.result === 'pass'));
+  assert.equal(score.pass_fail,name==='all-organization script'?'N/A':'PASS');
+  if(name!=='all-organization script')assert.equal(score.overall_score,100);
+  else assert.ok(score.scorecard_items.every(i=>i.result==='review'));
+  if(name!=='all-organization script')assert.ok(score.scorecard_items.every(i => i.result === 'pass'||i.points_possible===0));
   assert.equal(analyzeTranscript(text).results.tpmo_medicare_gov_referral.confidence, 95);
 });
 test('missing disclaimer fails even if model says it passed; customer speech cannot satisfy it', async () => {
@@ -74,7 +79,7 @@ test('missing disclaimer fails even if model says it passed; customer speech can
 test('benefits before disclaimer flag timing within the same LLM window', async () => {
   const detections = await classify([utterance('This plan includes dental coverage.', 1000, 4000), utterance(approved)]);
   const timing = detections.find(d => d.intent_code === 'CALL_OPEN_009_TPMO_TIMING_2027');
-  assert.equal(timing.detected, false); assert.equal(timing.sequence_violation, true);
+  assert.equal(timing.detected, false); assert.equal(timing.detection_method,'deterministic_hard_rule');
   assert.equal(tpmoScore(detections).pass_fail, 'FAIL');
   assert.equal(tpmoScore(detections).auto_fail_triggered, true);
 });
@@ -126,10 +131,11 @@ test('an earlier substantial disclosure with unclear wording requires review, ra
   assert.equal(evaluated.earlyDisclosure.start_ms,186440);
   const score=tpmoScore(await classify(transcript));
   const timing=score.scorecard_items.find(i=>i.intent_code==='CALL_OPEN_009_TPMO_TIMING_2027');
-  assert.equal(timing.result,'na');assert.equal(timing.points_possible,0);assert.match(timing.notes,/Manual review required/);
+  assert.equal(timing.result,'review');assert.equal(timing.points_possible,0);assert.match(timing.notes,/Manual review required/);
   assert.equal(timing.evidence_timestamp_ms,186440);assert.equal(score.auto_fail_triggered,false);
-  assert.equal(score.corrective_actions_needed,true);assert.equal(score.risk_level,'medium');
-  assert.ok(score.risk_flags.some(note=>/Manual review required/.test(note)));
+  assert.equal(score.total_points_possible,0);
+  assert.ok(score.scorecard_items.every(i=>i.result==='review'));
+  assert.ok(score.scorecard_items.some(i=>/Manual review required/.test(i.notes)));
 });
 
 test('customer disclosures and unrelated references cannot excuse genuinely late agent disclosures', async () => {

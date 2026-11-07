@@ -16,7 +16,7 @@ export function complianceItemStatus(item) {
 }
 
 export function complianceViewModel({scorecard,items=[],coverage,filter='all'}){
- const notApplicable=scorecard?.scoring_state==='na';
+ const notApplicable=isUnscoredCompliance(scorecard);
  const incomplete=!notApplicable&&(!coverage?.complete||scorecard?.scoring_state==='incomplete'||!!scorecard&&items.length===0);
  const visible=items.filter(i=>filter==='all'?(!['na','not_applicable'].includes(i.result)||/^Covered by /.test(i.notes||'')):filter==='na'?['na','not_applicable'].includes(i.result):i.result===filter);
  const groups=visible.reduce((a,i)=>{(a[i.category]??=[]).push(i);return a;},{});

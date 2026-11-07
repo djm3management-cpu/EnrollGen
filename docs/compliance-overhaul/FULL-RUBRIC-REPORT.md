@@ -18,6 +18,6 @@ Regression cases: Mark 0e9f4a74… has complete TPMO at 145180–174340ms before
 
 The August 3 FINAL wording reference is unchanged. No September draft supplies matcher requirements. Early small talk cannot satisfy plan/pre-enrollment items. The 15-minute, excluded outcome, exact-Enrolled, SEP and transcript coverage gates remain.
 
-No production SQL/RPC was run, so there are no production queries to list. No LLM/transcription request, rescore, redispatch, requeue, live write, deploy, push or merge occurred. No transcription, Deepgram, Railway transport or telephony source changed. Migration 143 is a local unapplied proposal; it clones the original 138-item template, excludes only the three retirements and retains historical versions.
+No production SQL/RPC was run, so there are no production queries to list. No LLM/transcription request, rescore, redispatch, requeue, live write, deploy, push or merge occurred. No transcription, Deepgram, Railway transport or telephony source changed. Migration 144 is a local unapplied proposal; it clones the original 138-item template, excludes only the three retirements and retains historical versions.
 
 Reproduce: `node scripts/compliance-overhaul/full-rubric-report.mjs --dry-run`. Requires the private saved snapshot. No execute mode. See VALIDATION-FULL-RUBRIC.md for tests and limits.

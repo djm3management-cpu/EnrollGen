@@ -93,7 +93,7 @@ test('Deepgram dual-channel stream reaches the rendered panel with the latest in
  const read=file=>readFileSync(new URL(`../${file}`,import.meta.url),'utf8');
  const open=vm.runInNewContext(stripImports(read('telephony/src/media/deepgramTrack.js'))
   .replace(/^export /gm,'')+';openDeepgramTrack',{
-   egressMetrics,WebSocket:Socket,randomUUID,reportServerSttUsage:async()=>{},config:{deepgramApiKey:'fixture'},setTimeout,clearTimeout,setInterval,clearInterval,
+   egressMetrics,WebSocket:Socket,randomUUID,reportServerSttUsage:async()=>{},reportSttLimit:async()=>{},reserveSttReconnect:async()=>true,registerSttStream:async()=>true,config:{deepgramApiKey:'fixture'},setTimeout,clearTimeout,setInterval,clearInterval,
   });
  const merge=vm.runInNewContext(stripImports(read('src/hooks/useMergedTranscript.js'))
   .replace(/^export /gm,'')+';useMergedTranscript',view.hooks);
@@ -101,7 +101,7 @@ test('Deepgram dual-channel stream reaches the rendered panel with the latest in
   .replace('export const TranscriptTimer','const TranscriptTimer').replace('export default MiniLiveTranscript;',''),
   {loader:'jsx',jsxFactory:'element',format:'cjs'}).code;
  const widget=vm.runInNewContext(widgetSource+';MiniLiveTranscript',{
-  ...view.hooks,useLayoutEffect:view.hooks.useEffect,memo:fn=>fn,PanelIdleSpinner:'spinner',
+  ...view.hooks,useInboundCall:()=>phone.harness.value,useLayoutEffect:view.hooks.useEffect,memo:fn=>fn,PanelIdleSpinner:'spinner',
   element:(type,props,...children)=>({type,props,children}),
  });
  const tracks=['customer','agent'].map(speaker=>open({speaker,timelineOrigin:10000,now:()=>99000,notify:phone.transcript}));

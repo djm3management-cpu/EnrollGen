@@ -93,7 +93,7 @@ Only local scoring source, scoring API/UI, scoring migrations and fixtures chang
 node scripts/compliance-overhaul/stage-gates-report.mjs --dry-run
 ```
 
-The private baseline and audit snapshot must already be present. There is no execute mode. Migration 141 is generated as an unapplied proposal; no SQL in any migration was executed.
+The private baseline and audit snapshot must already be present. There is no execute mode. Migration 142 is generated as an unapplied proposal; no SQL in any migration was executed.
 
 ## Validation and limits
 

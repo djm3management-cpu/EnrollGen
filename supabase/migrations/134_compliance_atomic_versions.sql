@@ -1,8 +1,8 @@
--- UNAPPLIED. Apply after 132. Preserve the prior transaction as an internal
+-- UNAPPLIED. Apply after 133. Preserve the prior transaction as an internal
 -- implementation; only the guarded wrapper remains service-callable.
 BEGIN;
-ALTER FUNCTION public.persist_scoring_result(uuid,uuid,jsonb) RENAME TO persist_scoring_result_legacy_133;
-REVOKE ALL ON FUNCTION public.persist_scoring_result_legacy_133(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated,service_role;
+ALTER FUNCTION public.persist_scoring_result(uuid,uuid,jsonb) RENAME TO persist_scoring_result_legacy_134;
+REVOKE ALL ON FUNCTION public.persist_scoring_result_legacy_134(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated,service_role;
 CREATE FUNCTION public.persist_scoring_result(p_job_id uuid,p_attempt_token uuid,p_result jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE saved jsonb; card_id uuid; v jsonb; item_ids uuid[]; prior uuid; c call_records; endpoint numeric;
@@ -18,7 +18,7 @@ BEGIN
   RAISE EXCEPTION 'SCORING INCOMPLETE: version or line items missing';
  END IF;
  prior:=c.compliance_scorecard_id;
- saved:=persist_scoring_result_legacy_133(p_job_id,p_attempt_token,p_result);
+ saved:=persist_scoring_result_legacy_134(p_job_id,p_attempt_token,p_result);
  card_id:=(saved->'scorecard'->>'id')::uuid;
  IF card_id IS NULL OR coalesce((saved->>'reused')::boolean,false) THEN RETURN saved; END IF;
  FOR v IN SELECT * FROM jsonb_array_elements(p_result->'items') LOOP

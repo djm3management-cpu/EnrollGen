@@ -24,7 +24,7 @@ export class RecoveringSttSocket {
     const first=!this.opened;this.opened=true;
     const send=(chunk,at)=>{const duration=chunk.byteLength/32;const prior=ranges.at(-1);if(prior&&Math.abs(prior.at+prior.duration-at)<2)prior.duration+=duration;else ranges.push({stream:audioMs,at,duration});audioMs+=duration;s.send(chunk);this.onAudioSent(chunk.byteLength);};
     this.sendActive=send;for(const row of this.queue)send(row.chunk,row.at);this.queue=[];this.bytes=0;if(first)this.onopen?.();};
-   s.onmessage=event=>{if(this.active!==s)return;try{const d=JSON.parse(event.data);if(d.type==='Results'){const map=seconds=>{const ms=seconds*1000;const r=ranges.find(r=>ms>=r.stream&&ms<r.stream+r.duration)||ranges.at(-1);return (r?r.at+ms-r.stream:offset+ms)/1000;};const end=map((d.start||0)+(d.duration||0));d.start=map(d.start||0);d.duration=Math.max(0,end-d.start);for(const a of d.channel?.alternatives||[])for(const w of a.words||[]){w.start=map(w.start);w.end=map(w.end);}this.onmessage?.({data:JSON.stringify(d)});}else if(d.type==='Error'){this.log('provider_error',{code:d.code});s.close();}}catch{this.log('invalid_message');}};
+   s.onmessage=event=>{if(this.active!==s)return;try{const d=JSON.parse(event.data);if(d.type==='Results'){const map=seconds=>{const ms=seconds*1000;const r=ranges.find(r=>ms>=r.stream&&ms<r.stream+r.duration)||ranges.at(-1);return (r?r.at+ms-r.stream:offset+ms)/1000;};const end=map((d.start||0)+(d.duration||0));d.start=map(d.start||0);d.duration=Math.max(0,end-d.start);for(const a of d.channel?.alternatives||[])for(const w of a.words||[]){w.start=map(w.start);w.end=map(w.end);}this.onmessage?.({data:JSON.stringify(d)});}else if(d.type==='Error'){this.log('provider_error',{code:d.code});this.onmessage?.(event);this.close();}}catch{this.log('invalid_message');}};
    s.onerror=()=>{this.log('error');s.close();};
    s.onclose=event=>{if(this.active!==s)return;this.active=null;if(this.budget.active===s)this.budget.active=null;this.connecting=false;this.sendActive=null;this.log('close',{code:event.code});if(this.closed)return;this.readyState=0;this.onHealth('reconnecting');if(this.queue.length)void this.connect();};
   }catch{this.connecting=false;this.readyState=0;this.onHealth('reconnecting');this.log('connect_error');}
@@ -37,5 +37,5 @@ export class RecoveringSttSocket {
   if(this.bytes+chunk.byteLength>this.maxBytes){this.onHealth('unavailable');this.log('buffer_limit',{alert:true});this.close();return;}
   this.queue.push({chunk,at});this.bytes+=chunk.byteLength;void this.connect();
  }
- close(){if(this.closed)return;this.closed=true;this.readyState=3;this.cancelEvery(this.timer);this.queue=[];this.bytes=0;this.active?.close();}
+ close(){if(this.closed)return;this.closed=true;this.readyState=3;this.cancelEvery(this.timer);this.queue=[];this.bytes=0;this.active?.close();this.onclose?.({code:1000});}
 }

@@ -1,3 +1,5 @@
+import {enableFixtureScoring} from './helpers/complianceFixture.js';
+enableFixtureScoring();
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {verifyPostCallEnded} from '../netlify/lib/postCallGuard.js';

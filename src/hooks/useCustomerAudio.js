@@ -373,9 +373,7 @@ export function useCustomerAudio({ enabled = true, serverTranscriptionActive = f
           publishAudioLevel("customer", computeRmsLevel(inputData), {
             peaks: computeWaveformPeaks(inputData),
           });
-          if (ws.readyState === WebSocket.OPEN) {
-            sendPcm(downsampleToInt16(inputData, audioContext.sampleRate).buffer);
-          }
+          sendPcm(downsampleToInt16(inputData, audioContext.sampleRate).buffer);
         };
         processorRef.current = processor;
         source.connect(processor);

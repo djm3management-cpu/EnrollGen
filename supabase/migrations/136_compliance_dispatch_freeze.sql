@@ -1,7 +1,7 @@
 -- UNAPPLIED. A transcript revision never reauthorizes a paid call.
 BEGIN;
-ALTER FUNCTION public.get_sale_compliance_dispatch() RENAME TO get_sale_compliance_dispatch_legacy_135;
-REVOKE ALL ON FUNCTION public.get_sale_compliance_dispatch_legacy_135() FROM PUBLIC,anon,authenticated,service_role;
+ALTER FUNCTION public.get_sale_compliance_dispatch() RENAME TO get_sale_compliance_dispatch_legacy_136;
+REVOKE ALL ON FUNCTION public.get_sale_compliance_dispatch_legacy_136() FROM PUBLIC,anon,authenticated,service_role;
 CREATE FUNCTION public.get_sale_compliance_dispatch() RETURNS SETOF public.transcript_score_dispatch
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 BEGIN
@@ -10,7 +10,7 @@ BEGIN
   c.metadata->>'manual_gap_fill'='true' OR c.compliance_scorecard_id IS NOT NULL
   OR EXISTS(SELECT 1 FROM compliance_llm_passes p WHERE p.call_id=c.id)
   OR EXISTS(SELECT 1 FROM usage_records u WHERE u.metadata->>'call_record_id'=c.id::text AND u.record_type='llm_tokens'));
- RETURN QUERY SELECT * FROM get_sale_compliance_dispatch_legacy_135();
+ RETURN QUERY SELECT * FROM get_sale_compliance_dispatch_legacy_136();
 END $$;
 REVOKE ALL ON FUNCTION public.get_sale_compliance_dispatch() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.get_sale_compliance_dispatch() TO service_role;

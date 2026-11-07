@@ -9,6 +9,8 @@ import { loadCallLog, loadCallLogPages } from '../src/lib/callLogApi.js';
 import { transformSync } from 'esbuild';
 import { scoringFailureMessage } from '../src/lib/scoringStatus.js';
 import { isComplianceSale } from '../src/lib/saleCompliance.js';
+import {evaluateRules} from '../src/compliance/rules/evaluate.js';
+import {complianceItemStatus,complianceViewModel} from '../src/lib/complianceScore.js';
 import { isUnscoredCompliance } from '../src/lib/complianceScore.js';
 
 test('CRM routes support direct contact links and legacy Calls/Contacts URLs', () => {
@@ -102,12 +104,12 @@ function componentSource(path, name, bindings) {
 }
 test('the review modal shows an alert for code-only and generic failed states; call chips flag failure over old scores',async()=>{
  for(const metadata of [{scoring_error_code:'scoring_attempts_exhausted'},{}]){
-  const hooks=hookHarness();
+  const hooks=hookHarness();const getToken=async()=>'';
   const record={id:'failed-call',compliance_status:'failed',call_outcome:'enrolled',transcript_diarized:[],metadata};
   const chain={select:()=>chain,eq:()=>chain,single:async()=>({data:record,error:null})};
   const client={from:()=>chain};
   const Modal=componentSource('../src/components/callDetail/ComplianceReviewModal.jsx','ComplianceReviewModal',{
-   ...hooks.hooks,CATEGORY_WEIGHTS:{},scoringFailureMessage,isComplianceSale,debugLog:()=>{},fmtDateTime:()=>'',callOutcomeLabel:value=>value,
+   ...hooks.hooks,CallTranscriptPlayer:'transcript-player',redactSensitiveText:v=>v,useAppAuth:()=>({getToken}),URLSearchParams,fetch:async()=>({ok:true,json:async()=>({call:record,items:[],versions:[],coverage:{complete:false}})}),complianceViewModel,complianceItemStatus,evaluateRules,CATEGORY_WEIGHTS:{},scoringFailureMessage,isComplianceSale,debugLog:()=>{},fmtDateTime:()=>'',callOutcomeLabel:value=>value,
   });
   hooks.mount(()=>Modal({callRecordId:record.id,supabaseClient:client,onClose:()=>{}}));
   await hooks.flush();
@@ -157,13 +159,12 @@ test('the actual call row and contact card display the same Talk, recording targ
 
 test('short call chips and review banners show neutral N/A while a real zero remains a warning', () => {
  const Chip=componentSource('../src/components/callLog/CallRowParts.jsx','ComplianceChip',{COMPLIANCE_WARNING_THRESHOLD:80,isUnscoredCompliance});
- const Banner=componentSource('../src/components/callDetail/ComplianceReviewModal.jsx','ScoreBanner',{CATEGORY_WEIGHTS:{},isUnscoredCompliance});
+
  for(const fields of [{overall_grade:'N/A',pass_fail:'N/A'},{pass_fail:'INSUFFICIENT'}]) {
   const chip=Chip({score:0,status:'complete',grade:fields.overall_grade,passFail:fields.pass_fail});
   assert.match(chip.props.className,/is-neutral/);assert.deepEqual(chip.children,['N/A']);
-  const banner=Banner({scorecard:{overall_score:0,...fields}});
-  assert.ok(nodes(banner).some(node=>node.type==='strong'&&node.children.includes('N/A')));
-  assert.ok(!nodes(banner).some(node=>String(node.props.className).includes('is-warning')));
+  const view=complianceViewModel({scorecard:{overall_score:0,...fields},items:[],coverage:{complete:false}});
+  assert.equal(view.score,null);assert.equal(view.status,'N/A');
  }
  assert.match(Chip({score:0,status:'complete',grade:'F',passFail:'FAIL'}).props.className,/compliance-low/);
 });

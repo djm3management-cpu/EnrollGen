@@ -1,3 +1,4 @@
+import {scoringFailureMessage} from '../../lib/scoringStatus.js';
 import {useCallback,useEffect,useMemo,useState} from 'react';
 import {useAppAuth} from '../../context/AuthContext';
 import {evidenceRequest} from '../../lib/evidenceApi.js';
@@ -23,6 +24,7 @@ export default function ComplianceReviewModal({callRecordId,onClose,displayDurat
  useEffect(()=>{if(!['scoring','queued','transcript_pending'].includes(data?.call?.compliance_status)&&!data?.active_pass?.id)return;const timer=setInterval(load,5000);return()=>clearInterval(timer);},[data?.call?.compliance_status,data?.active_pass?.id,load]);
  const jump=useCallback(item=>{if(item.evidence_timestamp_ms!=null)setSeek({seconds:item.evidence_timestamp_ms/1000,nonce:Date.now()});},[]);
  const card=data?.scorecard,coverage=data?.coverage;
+ const failure=scoringFailureMessage(data?.call);
  const view=complianceViewModel({scorecard:card,items:data?.items,coverage,filter});
  const incomplete=view.incomplete;
  const items=data?.items||[];
@@ -49,6 +51,7 @@ export default function ComplianceReviewModal({callRecordId,onClose,displayDurat
  return <div className="compliance-review-overlay" onClick={onClose}><div className={`compliance-review-modal compliance-overhaul${theme==='terminal'?' dark':' compliance-light'}`}  onClick={e=>e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Compliance review">
   <header className="compliance-review-head"><h2>COMPLIANCE REVIEW</h2><button className="contacts-mini-btn" onClick={()=>setTheme(theme==='terminal'?'light':'terminal')}>{theme==='terminal'?'Light':'Terminal'}</button><button className="contacts-mini-btn" onClick={onClose}>Close</button></header>
   {error&&<div className="ops-error" role="alert">{error}</div>}
+  {failure&&<div className="ops-error" role="alert">Scoring failed: {failure} The transcript is retained.</div>}
   {!data&&!error&&<div>Loading</div>}
   {data&&<>
    <div className="compliance-overhaul-toolbar">

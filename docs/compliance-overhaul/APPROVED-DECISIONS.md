@@ -8,7 +8,7 @@ Later script/stage applicability changes are in [STAGE-GATES-REPORT.md](STAGE-GA
 
 Implemented locally on fix/compliance-scoring-overhaul. No provider requests, transcription, production SQL queries or production writes were performed in this continuation. No rescore/dispatch/queue, migration application, deploy, merge or push occurred.
 
-The 2,000,000-token daily UTC cap now has a persistent halt and a once-per-day alert claim; manual and automatic scoring share it. The three approved rules are excluded in future scoring, including stale detections and preserved admin results; historical cards remain intact. Rules version is cy2027-overhaul-draft-2. Active source counts: 159 (84 deterministic, 75 judgment), with three archived retirements. Migration 140 creates the 135-item successor MA template.
+The 2,000,000-token daily UTC cap now has a persistent halt and a once-per-day alert claim; manual and automatic scoring share it. The three approved rules are excluded in future scoring, including stale detections and preserved admin results; historical cards remain intact. Rules version is cy2027-overhaul-draft-2. Active source counts: 159 (84 deterministic, 75 judgment), with three archived retirements. Migration 141 creates the 135-item successor MA template.
 
 Agent assessment and beneficiary risk now share the one judgment request and the legacy call-record fields. Static product rules/schema precede the transcript. Reasoning is low and the adapter clamps total output to 4,096. Cached input has its own ledger field and discounted pricing. Matcher changes fix recorded-line wording, Parts A and B, max-out-of-pocket wording, acknowledged scope questions, repeated prompts and bounded response overlap. Travel benefit pitches are not accepted as travel-needs questions.
 
@@ -70,9 +70,9 @@ Outside the tied top 15, recording disclosure improves from 98/181 failures to 3
 | src/lib/llm/openai.ts | Low scoring reasoning; 4,096 hard overall output clamp | No increase to request ceiling |
 | netlify/functions/_llmTelemetry.js, netlify/lib/postCallProvider.js | Cached ledger cost, persistent daily denial and daily alert idempotency | Caps paid work; alert only |
 | netlify/functions/compliance-review.js | Rescore/gap preview uses approved prices and shared full-pass estimator | Confirmation estimate only; no automatic paid work |
-| ScorecardGenerator.js, compliance-review-background.js, migrations 133/134 | Carry assessment and risk into existing fields in scorecard transaction | Removes any need for separate assessment request |
+| ScorecardGenerator.js, compliance-review-background.js, migrations 134/135 | Carry assessment and risk into existing fields in scorecard transaction | Removes any need for separate assessment request |
 | catalog.js, evaluate.js, ScoringEngine.js, VersionAggregator.js | Retirement enforcement and bounded matcher corrections | CPU only; no provider work |
-| migrations 132/138/140 | Durable UTC cap/cache ledger, version stamp and cloned template | Unapplied; no current cost |
+| migrations 133/139/141 | Durable UTC cap/cache ledger, version stamp and cloned template | Unapplied; no current cost |
 | scripts/compliance-overhaul/dry-run.mjs, approved-report.mjs, render-inventory.mjs | Local coverage/cost/evidence reports and updated inventory | No database/provider client in dry runs |
 
 Paths above are relative to src/compliance/engine or src/compliance/rules where shortened. No Deepgram transport or transcription submission implementation was changed in this continuation. The approved batch price populates estimates only.
@@ -91,4 +91,4 @@ node scripts/compliance-overhaul/render-inventory.mjs
 node scripts/compliance-overhaul/approved-report.mjs docs/compliance-overhaul/matcher-before-approved-decisions.json
 ```
 
-[ROLLOUT.md](ROLLOUT.md) contains the approved values, conservative reservation behavior, unapplied SQL order 132-140 and future deployment steps. No approval to deploy or execute data repair is inferred from the source changes.
+[ROLLOUT.md](ROLLOUT.md) contains the approved values, conservative reservation behavior, unapplied SQL order 133-141 and future deployment steps. No approval to deploy or execute data repair is inferred from the source changes.
