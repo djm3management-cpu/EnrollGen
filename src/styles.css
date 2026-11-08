@@ -7177,6 +7177,13 @@ html #root .flow-script-card.active-card > div.u65-nepq-screen__header button.u6
   min-width: 132px !important;
 }
 
+/* Size only the MA idle START key to its label; retain the shared control height. */
+#root .script-start-call-gate > button.ma-script-start-button {
+  width: max-content !important;
+  min-width: 0 !important;
+  padding-inline: 8px !important;
+}
+
 .script-start-call-button:hover {
   background: #075523 !important;
   color: #ffffff !important;

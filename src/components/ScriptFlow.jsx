@@ -1064,7 +1064,7 @@ export default function ScriptFlow() {
           </div>
           <button data-key-role="primary"
             type="button"
-            className="script-start-call-button"
+            className="script-start-call-button ma-script-start-button"
             onClick={handleManualCopilotStart}
             disabled={!canStartCopilot || availability?.status === "wrap_up"}
           >
