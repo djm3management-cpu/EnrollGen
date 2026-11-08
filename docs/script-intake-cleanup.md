@@ -2,7 +2,7 @@
 
 Migration: **146_script_enrollment_intake.sql** (not applied by this change).
 
-Step 7 keeps the selected plan type and No Enrollment - Wrap Up. Complete Enrollment Intake opens the native form for the active call, using authorized server contact/call details, filling gaps from live notes, and carrying the selected plan type. Saving the completed intake advances to the new exact closing. A call that closes without enrollment uses the existing general closing.
+Step 7 keeps the selected plan type and No Enrollment - Wrap Up. Complete Enrollment Intake opens the native form for the active call, using authorized server contact/call details, filling gaps from live notes, and carrying the selected plan type. Selecting Application submitted immediately displays the exact enrollment closing, with Complete Enrollment Intake (after call) below it. The closing does not wait for an intake save; the MA enrolled disposition still requires a completed intake. A call that closes without enrollment uses the existing general closing.
 
 The dialer and enrollment closing both import `src/lib/agencyLine.js`, the dialer's shared display source for NGHS MAIN DID. No agent number is consulted. This refactor changes no telephony configuration or call routing.
 

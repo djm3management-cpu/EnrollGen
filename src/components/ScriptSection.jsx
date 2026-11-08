@@ -1,7 +1,4 @@
-import React, {useState} from "react";
-import EnrollmentIntake from "./enrollment/EnrollmentIntake";
-import {scriptIntakePrefill} from "../lib/enrollmentIntake.js";
-import {getActiveSessionMetadata,waitForActiveSessionMetadata} from "../hooks/useSessionTracker";
+import React from "react";
 import MAScriptBranches from "./MAScriptBranches";
 import { getMAScriptView } from "../lib/maScriptFlow.js";
 import { ShieldCheck } from "lucide-react";
@@ -42,19 +39,9 @@ function PreEnrollCheck({ state }) {
   );
 }
 
-function EnrollmentExtras({ state, dispatch, disabled, intakeDisabled=disabled }) {
-  const [callId,setCallId]=useState(null),[error,setError]=useState('');
-  const open=async()=>{
-    setError('');
-    const metadata=getActiveSessionMetadata().callRecordId?getActiveSessionMetadata():await waitForActiveSessionMetadata();
-    if(!metadata.callRecordId){setError('Call record is still syncing. Try again in a moment.');return;}
-    setCallId(metadata.callRecordId);
-  };
+function EnrollmentExtras({ state, dispatch, disabled }) {
   return <>
     {!state.enrollOk ? <PreEnrollCheck state={state} /> : null}
-    <button type="button" className="secondary" disabled={intakeDisabled} onClick={open}>Complete Enrollment Intake</button>
-    {error&&<p className="ops-error" role="alert">{error}</p>}
-    {callId&&<EnrollmentIntake callId={callId} initialPrefill={scriptIntakePrefill(state)} onClose={()=>setCallId(null)} onSaved={()=>dispatch({type:'SET_GATE',field:'enrollOk',value:true})}/>}
     <button data-key-role="secondary" type="button" className="secondary no-enrollment-wrapup-btn" disabled={disabled || state.enrollOk} onClick={()=>dispatch({type:'CLOSE_MA_SCRIPT',outcome:'not_interested'})}>No Enrollment - Wrap Up</button>
   </>;
 }
@@ -86,7 +73,7 @@ export default React.memo(function ScriptSection({ section }) {
       ) : null}
 
       {isEnrollment ? (
-        <EnrollmentExtras state={state} dispatch={dispatch} disabled={!state.sobOk} intakeDisabled={!isUnlocked || !view?.complete} />
+        <EnrollmentExtras state={state} dispatch={dispatch} disabled={!state.sobOk} />
       ) : null}
 
       {gateField && !isEnrollment ? (

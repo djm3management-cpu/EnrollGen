@@ -1,4 +1,3 @@
-import {AGENCY_CLOSING} from '../data/agencyClosing.js';
 import { debugLog } from "../lib/debugLog.js";
 import {
   useEffect,
@@ -50,7 +49,7 @@ import CenterTimerBar from "./CenterTimerBar";
 import ProgressDots from "./ProgressDots";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
-import SectionWrapUp from "./SectionWrapUp";
+import MAFlowClosing from "./MAFlowClosing";
 import ScriptSection from "./ScriptSection";
 import ScriptPrompter from "./ScriptPrompter";
 import AncillaryPopupManager from "./ancillary/AncillaryPopupManager";
@@ -1113,11 +1112,7 @@ export default function ScriptFlow() {
           return rendered;
         })}
 
-      {activeSection >= 8 && (
-        <>
-          <SectionWrapUp scriptBody={state.enrollOk ? wrapUpSection?.body : AGENCY_CLOSING} />
-        </>
-      )}
+      <MAFlowClosing scriptBody={wrapUpSection?.body} />
 
       <ProgressDots
         sections={scriptSections
