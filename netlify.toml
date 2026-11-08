@@ -39,9 +39,6 @@
 [functions."sync-bulletins"]
   schedule = "0 10 * * *"
 
-[functions."update-knowledge"]
-  schedule = "0 7 * * 0"
-
 # Try at 18:00 ET, with retries at 18:15 and 18:30 if needed.
 [functions."paragon-daily-email"]
   schedule = "0,15,30 22,23 * * *"
