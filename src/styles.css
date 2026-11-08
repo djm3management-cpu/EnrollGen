@@ -12608,47 +12608,52 @@ body[data-bg-mode="classic"] .viewport-bg {
   font-size: 10px;
 }
 
-/* Flat marketplace choices in the center of the ACA workspace. */
+/* Only the colored dots are buttons; the ACA selector has no enclosing surface. */
 .aca-flow-selector {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 24px;
   width: fit-content;
   margin: 0 auto 14px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: var(--eg-surface-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-/* Keep these color selectors flat through the global action-key states. */
-#root .aca-flow-selector button.aca-flow-option,
-#root .aca-flow-selector button.aca-flow-option:is(:hover, :active, :focus-visible, [aria-pressed]) {
+.aca-flow-choice {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
-  padding: 4px 8px;
+}
+
+#root .aca-flow-selector button.aca-flow-option,
+#root .aca-flow-selector button.aca-flow-option:is(:hover, :active, :focus-visible, [aria-pressed]) {
+  display: flex;
+  width: 14px;
+  height: 14px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
   border: 0 !important;
+  border-radius: 50% !important;
   background: transparent !important;
-  color: var(--text-muted) !important;
   box-shadow: none !important;
   text-shadow: none !important;
   filter: none !important;
   transform: none !important;
   cursor: pointer;
-  font-family: var(--font-primary);
-}
-
-#root .aca-flow-selector button.aca-flow-option[aria-pressed="true"] {
-  color: var(--aca-option-color) !important;
+  appearance: none;
 }
 
 #root .aca-flow-selector button.aca-flow-option:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 .aca-flow-option__dot {
+  box-sizing: border-box;
   width: 14px;
   height: 14px;
   flex-shrink: 0;
@@ -12663,11 +12668,16 @@ body[data-bg-mode="classic"] .viewport-bg {
 }
 
 .aca-flow-option__label {
-  color: inherit;
+  color: var(--text-muted);
+  font-family: var(--font-primary);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.1em;
   line-height: 1;
+}
+
+.aca-flow-option[aria-pressed="true"] + .aca-flow-option__label {
+  color: var(--aca-option-color);
 }
 
 /* FFM SEP Finder — shares the MA SEP rail's terminal surface and handle system. */

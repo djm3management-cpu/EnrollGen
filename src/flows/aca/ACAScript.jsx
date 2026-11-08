@@ -41,18 +41,23 @@ function ACAFlowSelector({ variant, onChange }) {
   return (
     <div className="aca-flow-selector" role="group" aria-label="ACA marketplace">
       {ACA_FLOW_OPTIONS.map((flow) => (
-        <button
+        <div
           key={flow.id}
-          type="button"
-          className="aca-flow-option"
-          aria-pressed={variant === flow.id}
-          onClick={() => onChange(flow.id)}
-          title={flow.title}
+          className="aca-flow-choice"
           style={{"--aca-option-color":flow.color,"--aca-option-soft":flow.soft,"--aca-option-border":flow.border}}
         >
-          <span className="aca-flow-option__dot" aria-hidden="true" />
+          <button
+            type="button"
+            className="aca-flow-option"
+            aria-label={flow.label}
+            aria-pressed={variant === flow.id}
+            onClick={() => onChange(flow.id)}
+            title={flow.title}
+          >
+            <span className="aca-flow-option__dot" aria-hidden="true" />
+          </button>
           <span className="aca-flow-option__label">{flow.label}</span>
-        </button>
+        </div>
       ))}
     </div>
   );
