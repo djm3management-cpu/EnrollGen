@@ -7,7 +7,7 @@ export default function U65ProductGuidance({ selector = true }) {
   return (
     <section className="private-plan-section">
       <div className="private-plan-section-head"><div>
-        <span className="private-plan-kicker">DE · MD · FL agent guidance</span>
+        <span className="private-plan-kicker">U65 agent guidance</span>
         <h3>Product guidance</h3>
       </div></div>
       <p>For higher earners priced out of unsubsidized ACA. Enroll Prime is our current agent portal. Availability: verify with carrier.</p>

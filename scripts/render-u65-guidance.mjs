@@ -13,7 +13,7 @@ const file = path.join(root, 'public/private-plan-playbook.html');
 const old = fs.readFileSync(file, 'utf8');
 const head = old.slice(0, old.indexOf('<body'));
 const pages = ['<body><div id="deck">'];
-pages.push('<section class="slide slide-content active"><div class="slide-header"><h2>U65 Product Guidance</h2></div><div class="split-right" style="display:block"><h2>DE · MD · FL agents</h2><p class="body-text">Higher earners priced out of unsubsidized ACA. Enroll Prime is the CURRENT agent portal. Select a coverage group, then review a plan. Never compare premiums across groups.</p>');
+pages.push('<section class="slide slide-content active"><div class="slide-header"><h2>U65 Product Guidance</h2></div><div class="split-right" style="display:block"><h2>U65 agent guidance</h2><p class="body-text">Higher earners priced out of unsubsidized ACA. Enroll Prime is the CURRENT agent portal. Select a coverage group, then review a plan. Never compare premiums across groups.</p>');
 for (const group of catalog.coverageGroups) {
   pages.push(`<h3 class="subhead">${escape(group)}</h3>`);
   catalog.plans.forEach((plan, index) => {
@@ -46,7 +46,7 @@ openHash();
 </script></body></html>`);
 fs.writeFileSync(file, head.trimEnd() + '\n' + pages.join('\n') + '\n');
 
-const table = ['# F57 Step 2 — per-product guidance', '', 'All 59 variants in the primary workbook. Coverage groups describe benefit structure, not ACA/MEC certification. Enroll Prime is the current agent portal. DE, MD, FL agents; higher earners priced out of unsubsidized ACA. No cross-group premium comparison or personalized premium quote is presented.', '', 'All three source files were reviewed read only, including all eight pages of `U65 Plan Map.pdf`. Per-product map page references distinguish network evidence from exact-product participation. No external insurance facts were added.', '', 'Unknown facts: **verify with carrier**. Conflicting/provisional facts: **confirm with carrier**. ACA/MEC status and underwriting lookbacks are verification fields for every variant. HSA labels do not determine personal contribution eligibility.', '', 'Source file SHA-256:', ''];
+const table = ['# F57 Step 2 — per-product guidance', '', 'All 59 variants in the primary workbook. Coverage groups describe benefit structure, not ACA/MEC certification. Enroll Prime is the current agent portal. Higher earners priced out of unsubsidized ACA. No cross-group premium comparison or personalized premium quote is presented.', '', 'All three source files were reviewed read only, including all eight pages of `U65 Plan Map.pdf`. Per-product map page references distinguish network evidence from exact-product participation. No external insurance facts were added.', '', 'Unknown facts: **verify with carrier**. Conflicting/provisional facts: **confirm with carrier**. ACA/MEC status and underwriting lookbacks are verification fields for every variant. HSA labels do not determine personal contribution eligibility.', '', 'Source file SHA-256:', ''];
 for (const source of catalog.sourceFiles) table.push(`- ${source.name}: \`${source.sha256}\``);
 for (const group of catalog.coverageGroups) {
   table.push('', `## ${group}`, '', '| Plan | Type / network | Deductible | Stated OOP | Hospital / office / other limits | Rx | Maternity | Waiting periods | Required agent statements | Source |', '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |');

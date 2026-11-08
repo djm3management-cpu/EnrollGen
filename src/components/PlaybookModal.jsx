@@ -1,9 +1,10 @@
+import {createPortal} from "react-dom";
 import { X } from "lucide-react";
 
 export default function PlaybookModal({ open, src, onClose }) {
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="playbook-modal" role="dialog" aria-modal="true" aria-label="Private Plan Playbook">
       <div className="playbook-modal__bar">
         <div>
@@ -24,6 +25,7 @@ export default function PlaybookModal({ open, src, onClose }) {
         src={src}
         title="Private Plan Playbook"
       />
-    </div>
+    </div>,
+    document.body
   );
 }

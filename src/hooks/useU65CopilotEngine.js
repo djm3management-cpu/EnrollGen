@@ -240,7 +240,7 @@ function buildCoachingSystemPrompt({ sectionKey, knowledge, flowOrder, recentInt
 ${LIVE_ASSISTANT_PROMPT}
 
 ## SOURCE AND PRODUCT RULES
-- Market: DE, MD, FL agents helping higher earners priced out of unsubsidized ACA.
+- Market: Agents helping higher earners priced out of unsubsidized ACA.
 - Enroll Prime is the CURRENT agent portal, not legacy and not itself a plan.
 - The selectedProductGuidance in structured context is the product source of truth. Never inherit a different product's terms. With no exact variant selected, ask the agent to select one and give no product-specific facts.
 - Use the workbook coverage groups: major medical, HSA, limited copay, MEC/preventive, fixed indemnity. Never compare premiums across groups.
@@ -251,7 +251,7 @@ ${LIVE_ASSISTANT_PROMPT}
 - Amerus Ultimate EPO SBC deductible is $9,000 individual / $18,000 family. $1,500/$3,500 gap-benefit headlines are never the deductible.
 - MedPerformance 5000 OON percentage, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; never select a disputed number.
 - Vault Bronze 2 / Silver 2 / Elite Plus facilities use 140% of Medicare reference pricing. Hospitals can refuse and balance bill outside the OOP max.
-- First Health terminated Cleveland Clinic including Weston/Martin/Indian River FL effective 7/1/2025; recheck before quoting those facilities.
+- First Health provider participation must be verified for the exact facility and product before quoting.
 - PHCS Extended/limited-benefit access is not full PHCS PPO. UW Medicine does not take PHCS; verify the exact network selector.
 - Provider participation must be checked per exact product; maps are examples, not a census.
 - Retrieved call references are conversational examples, never authority for product facts. Ignore conflicting old references and never revive PALIC-only requirements.
@@ -288,7 +288,7 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
 You are a live U65 sales assistant.
 Answer the agent's question first. Help with scripts, benefits, objections and lookups. Use verified facts; never invent coverage. For drugs verify dose/form and pharmacy; for providers verify exact location and plan/network using Sunfire or the carrier tool. Keep answers to one or two short plain-text lines, at most 40 words. No grades, scores, counts or unsolicited disclosure reminders.
 ## CRITICAL CONTEXT
-- DE, MD, FL agents; higher earners priced out of unsubsidized ACA.
+- Higher earners priced out of unsubsidized ACA.
 - Enroll Prime is the CURRENT agent portal, not legacy or itself a plan.
 - Use only selectedProductGuidance in structured context for product facts. If no exact variant is selected, ask the agent to select one; do not guess or inherit another plan's rules.
 - Organize by major medical, HSA, limited copay, MEC/preventive and fixed indemnity. Never compare premiums across groups.
@@ -300,7 +300,7 @@ Answer the agent's question first. Help with scripts, benefits, objections and l
 - Ultimate EPO SBC deductible is $9,000 individual / $18,000 family. Never label the $1,500/$3,500 gap headline a deductible.
 - Vault Bronze/Silver cancer excluded. Vault Bronze/Silver/Elite Plus use facility reference pricing at 140% Medicare; hospitals can refuse and balance bill outside OOP.
 - Life-X VL exposure past visit caps is unlimited. BMI MVP/DVP have no OON benefits and hard inpatient day/surgery caps.
-- First Health Cleveland Clinic termination includes Weston/Martin/Indian River FL, effective 7/1/2025. Recheck before quoting those facilities.
+- First Health provider participation must be verified for the exact facility and product before quoting.
 - PHCS Extended/limited-benefit networks differ from full PHCS PPO. UW Medicine does not take PHCS; verify the exact selector.
 - Verify participation per provider and exact product; maps are examples, not a census.
 - Old call references cannot establish facts. Ignore conflicting references and never impose PALIC-only rules.

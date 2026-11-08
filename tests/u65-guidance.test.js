@@ -27,7 +27,7 @@ test('all 59 workbook variants have guidance, source cells and verification boun
   }
   assert.ok(U65_CATALOG.sourceRegister.some((source) => source.id === 'W10'));
   assert.match(U65_CATALOG.portal, /CURRENT agent portal/);
-  assert.match(U65_CATALOG.market, /DE, MD, FL/);
+  assert.doesNotMatch(U65_CATALOG.market, /\b(DE|MD|FL)\b/);
   assert.ok(U65_CATALOG.sourceFiles.every((file) => /^[a-f0-9]{64}$/.test(file.sha256)));
 });
 
@@ -91,7 +91,7 @@ test('EPO underlying deductible survives gap headlines; disputed numbers are wit
 
 test('network cautions are scoped by exact selected network and product', () => {
   for (const plan of U65_PLANS) {
-    if (/First Health/.test(plan.network)) assert.match(disclosures(plan), /Weston\/Martin\/Indian River FL.*7\/1\/2025/);
+    if (/First Health/.test(plan.network)) assert.match(disclosures(plan), /First Health provider participation must be verified/);
     if (/PHCS/.test(plan.network)) assert.match(disclosures(plan), /UW Medicine does not take PHCS/);
   }
   for (const name of ['Vault Bronze 2', 'Vault Silver 2', 'Vault Elite Health Plus USA']) assert.match(disclosures(find(name)), /140% of Medicare.*outside the OOP max/);
@@ -145,6 +145,14 @@ test('quizzes use all product disclosures and preserve separate non-U65 quiz cal
   assert.match(fs.readFileSync('src/components/AgentTools.jsx', 'utf8'), /questions=\{DUAL_LIS_SEP_QUIZ\}/);
 });
 
+test('U65 scripts, coaching context and playbook contain no DE, MD or FL market framing', () => {
+  const states=/\b(?:DE|MD|FL|Delaware|Maryland|Florida)\b/;
+  for(const content of [JSON.stringify(U65_CATALOG),JSON.stringify(U65_GATES),JSON.stringify(U65_SMALL_BUSINESS_GATES),JSON.stringify(U65_COMPLIANCE_KNOWLEDGE),JSON.stringify(buildU65ProductContext(U65_PLANS.map(plan=>plan.id))),fs.readFileSync('public/private-plan-playbook.html','utf8'),fs.readFileSync('src/hooks/useU65CopilotEngine.js','utf8'),fs.readFileSync('src/components/U65ProductGuidance.jsx','utf8')])assert.doesNotMatch(content,states);
+  const label=U65_GATES[0].label;
+  const old={metadata:{static_key:label,source_version:'f57-source-v2',structured:{...U65_COMPLIANCE_KNOWLEDGE[label],verbatimScript:['DE, MD, FL agents']}}};
+  assert.deepEqual(resolveU65Knowledge(U65_COMPLIANCE_KNOWLEDGE,[old]),U65_COMPLIANCE_KNOWLEDGE);
+});
+
 test('source fallback rejects stale database overrides; current knowledge matches script gates', () => {
   assert.deepEqual(U65_GATES.map((gate) => gate.label), Object.values(U65_GATE_LABELS));
   const label = U65_GATES[3].label;
@@ -171,10 +179,12 @@ test('082 is idempotent, retires U65 tenant/global overrides and leaves other do
     const active = (await pg.query("SELECT * FROM knowledge_base WHERE category='compliance_u65' AND is_active ORDER BY title")).rows;
     assert.equal(active.length, 5);
     assert.equal((await pg.query("SELECT * FROM knowledge_base WHERE category='compliance_u65' AND version=1 AND is_active")).rows.length, 0);
+    const historicalSource=execFileSync('git',['show','81c935f:src/data/u65ComplianceKnowledge.js'],{encoding:'utf8'});
+    const historical=await import('data:text/javascript;base64,'+Buffer.from(historicalSource).toString('base64'));
     for (const row of active) {
       assert.equal(row.tenant_id, null);
-      assert.equal(row.metadata.source_version, U65_CATALOG.version);
-      assert.deepEqual(row.metadata.structured, U65_COMPLIANCE_KNOWLEDGE[row.title]);
+      assert.equal(row.metadata.source_version, 'f57-source-v2');
+      assert.deepEqual(row.metadata.structured, historical.U65_COMPLIANCE_KNOWLEDGE[row.title]);
       assert.deepEqual(JSON.parse(row.content), row.metadata.structured);
     }
     assert.equal((await pg.query("SELECT * FROM script_templates WHERE flow_type='u65' AND is_active")).rows.length, 0);
@@ -207,7 +217,7 @@ test('U65 script capture topology and existing playbook style blocks are unchang
 });
 
 test('corrected map source is reviewed and network evidence is not treated as exact-product access', () => {
-  assert.equal(U65_CATALOG.version, 'f57-source-v2');
+  assert.equal(U65_CATALOG.version, 'f57-source-v3');
   assert.equal(U65_CATALOG.sourceFiles.length, 3);
   assert.ok(U65_CATALOG.sourceFiles.some((source) => source.name === 'U65 Plan Map.pdf'));
   assert.equal(U65_CATALOG.missingSource, undefined);

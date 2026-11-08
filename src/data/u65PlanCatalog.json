@@ -1,6 +1,6 @@
 {
-  "version": "f57-source-v2",
-  "market": "DE, MD, FL agents; higher earners priced out of unsubsidized ACA",
+  "version": "f57-source-v3",
+  "market": "Higher earners priced out of unsubsidized ACA",
   "portal": "Enroll Prime is the CURRENT agent portal, not a legacy product.",
   "sourceFiles": [
     {
@@ -30,7 +30,7 @@
     "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
   ],
   "networkWarnings": [
-    "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+    "First Health provider participation must be verified for the exact facility and product before quoting.",
     "PHCS Extended / limited-benefit networks are not the same as full PHCS PPO. UW Medicine does not take PHCS. Verify the exact network selector.",
     "Vault Bronze 2 / Silver 2 / Elite Plus facilities use reference-based pricing at 140% of Medicare. Hospitals can refuse payment and balance bill outside the OOP max.",
     "UW Medicine excludes Cigna Behavioral Health/Evernorth Behavioral Health; its medical Cigna participation does not confirm behavioral coverage. Verify the exact product and service.",
@@ -2015,7 +2015,7 @@
         "Prescription drugs: Basic: nonpreventive generic $10; brands and specialty not covered.",
         "Maternity: Not covered. Waiting periods: verify with carrier.",
         "Maternity not covered; 1 ER visit; 1 outpatient surgery/visit per year. Hospice and specialty drugs excluded. Nonhospital setting restrictions for office/lab/imaging. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
       "mapPages": [
@@ -2079,7 +2079,7 @@
         "Prescription drugs: Preferred-drug table and brand-drug footnote conflict: confirm with carrier.",
         "Maternity: 12-month waiting period. Waiting periods: Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "Maternity 12-month wait; 2 ER visits; 2 outpatient surgeries/visits per year. Hospice and specialty drugs excluded. Nonhospital setting restrictions for office/lab/imaging. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "MedAccess Pro Rx footnote conflict: confirm with carrier.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
@@ -2142,7 +2142,7 @@
         "Prescription drugs: Preventive generics before deductible; standard generics $0 after deductible. Assistance program is not a guaranteed drug benefit..",
         "Maternity: 12-month waiting period. Waiting periods: Elective surgery excluded; do not treat as a 90-day wait. Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; elective surgery excluded. 10 combined infusion/chemo/radiation visits. Maternity 12-month waiting period. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
       "mapPages": [
@@ -2204,7 +2204,7 @@
         "Prescription drugs: Preventive generics before deductible; standard generics $0 after deductible. Assistance program is not a guaranteed drug benefit..",
         "Maternity: 12-month waiting period. Waiting periods: Elective surgery excluded; do not treat as a 90-day wait. Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; elective surgery excluded. 10 combined infusion/chemo/radiation visits. Maternity 12-month waiting period. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
       "mapPages": [
@@ -2393,7 +2393,7 @@
         "Prescription drugs: Preventive generics before deductible; standard generics $0 after deductible. Assistance program is not a guaranteed drug benefit..",
         "Maternity: 12-month waiting period. Waiting periods: Elective surgery excluded; do not treat as a 90-day wait. Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; elective surgery excluded. 10 combined infusion/chemo/radiation visits. Maternity 12-month waiting period. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
       "mapPages": [
@@ -2582,7 +2582,7 @@
         "Prescription drugs: Preventive generics before deductible; standard generics $0 after deductible. Assistance program is not a guaranteed drug benefit..",
         "Maternity: 12-month waiting period. Waiting periods: Elective surgery excluded; do not treat as a 90-day wait. Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; elective surgery excluded. 10 combined infusion/chemo/radiation visits. Maternity 12-month waiting period. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
       "mapPages": [
@@ -2771,7 +2771,7 @@
         "Prescription drugs: Preventive generics before deductible; standard generics $0 after deductible. Assistance program is not a guaranteed drug benefit..",
         "Maternity: 12-month waiting period. Waiting periods: Elective surgery excluded; do not treat as a 90-day wait. Maternity: 12-month waiting period. Other waiting periods: verify with carrier..",
         "10 combined PCP/specialist/urgent visits; 3 outpatient surgeries; 2 inpatient surgeries; elective surgery excluded. 10 combined infusion/chemo/radiation visits. Maternity 12-month waiting period. OON terms unverified.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
       "mapPages": [
@@ -3415,7 +3415,7 @@
         "Prescription drugs: Conflicting/provisional Vault schedules: confirm with carrier.",
         "Maternity: verify with carrier. Waiting periods: verify with carrier.",
         "Vault schedules have unresolved contradictions: confirm with carrier. Cancer excluded; no chemotherapy/radiation. Inpatient room-and-board only; no inpatient physician or surgery benefit. ",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Facilities use reference-based pricing at 140% of Medicare. Hospitals can refuse payment and balance bill outside the OOP max.",
         "Vault proposal/schedule or internal benefit contradictions: confirm with carrier. Do not select a disputed benefit amount, day/surgery count, Rx amount or maternity wait.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established.",
@@ -4188,7 +4188,7 @@
         "Prescription drugs: Ancillary pharmacy programs; not major-medical prescription coverage.",
         "Maternity: verify with carrier. Waiting periods: Newborn indemnity: 365 days; cancer/critical illness: 30 days. Other waiting periods: verify with carrier..",
         "Supplemental coverage; $50,000 certificate-year maximum excludes riders. Newborn indemnity 365-day wait; cancer/critical illness 30-day waits. Provider discount access does not pay remaining bills.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital confinement limit: 10 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
@@ -4251,7 +4251,7 @@
         "Prescription drugs: Ancillary pharmacy programs; not major-medical prescription coverage.",
         "Maternity: verify with carrier. Waiting periods: Newborn indemnity: 365 days; cancer/critical illness: 30 days. Other waiting periods: verify with carrier..",
         "Supplemental coverage; $50,000 certificate-year maximum excludes riders. Newborn indemnity 365-day wait; cancer/critical illness 30-day waits. Provider discount access does not pay remaining bills.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital confinement limit: 10 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
@@ -4314,7 +4314,7 @@
         "Prescription drugs: Ancillary pharmacy programs; not major-medical prescription coverage.",
         "Maternity: verify with carrier. Waiting periods: Newborn indemnity: 365 days; cancer/critical illness: 30 days. Other waiting periods: verify with carrier..",
         "Supplemental coverage; $50,000 certificate-year maximum excludes riders. Newborn indemnity 365-day wait; cancer/critical illness 30-day waits. Provider discount access does not pay remaining bills.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital confinement limit: 10 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
@@ -4377,7 +4377,7 @@
         "Prescription drugs: Ancillary pharmacy programs; not major-medical prescription coverage.",
         "Maternity: verify with carrier. Waiting periods: Newborn indemnity: 365 days; cancer/critical illness: 30 days. Other waiting periods: verify with carrier..",
         "Supplemental coverage; $50,000 certificate-year maximum excludes riders. Newborn indemnity 365-day wait; cancer/critical illness 30-day waits. Provider discount access does not pay remaining bills.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital confinement limit: 8 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],
@@ -4440,7 +4440,7 @@
         "Prescription drugs: Ancillary pharmacy programs; not major-medical prescription coverage.",
         "Maternity: verify with carrier. Waiting periods: Newborn indemnity: 365 days; cancer/critical illness: 30 days. Other waiting periods: verify with carrier..",
         "Supplemental coverage; $50,000 certificate-year maximum excludes riders. Newborn indemnity 365-day wait; cancer/critical illness 30-day waits. Provider discount access does not pay remaining bills.",
-        "First Health terminated Cleveland Clinic, including Weston/Martin/Indian River FL, effective 7/1/2025; recheck before quoting those facilities.",
+        "First Health provider participation must be verified for the exact facility and product before quoting.",
         "Hospital confinement limit: 6 days per confinement; 30 days/year. $50,000 certificate-year maximum excludes riders. PPO discounts do not cover remaining bills.",
         "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
       ],

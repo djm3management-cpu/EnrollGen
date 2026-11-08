@@ -420,7 +420,7 @@ const U65_SMALL_BUSINESS_SCREENS = [
         title: "Connect + Situation",
         blocks: [
           SPOKEN(
-            '"Hey [Owner Name], this is [Agent First Name] with New Gen Health Solutions, health insurance agency supporting DE, MD and FL agents. Quick question for you. Are you guys currently offering any kind of health benefits to your crew, or is that something your employees are handling on their own right now?"'
+            '"Hey [Owner Name], this is [Agent First Name] with New Gen Health Solutions, a health insurance agency. Quick question for you. Are you guys currently offering any kind of health benefits to your crew, or is that something your employees are handling on their own right now?"'
           ),
           {
             type: "branch-set",
