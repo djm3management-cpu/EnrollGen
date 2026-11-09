@@ -18,7 +18,7 @@ export default function PhoneDropdown({ onOpenMessages }) {
   const inbound = useInboundCall();
   const [isOpen, setIsOpen] = useState(false);
   const [dispositionPending, setDispositionPending] = useState(false);
-  const [dispositionCollapsed, setDispositionCollapsed] = useState(false);
+  const [dispositionCollapsed, setDispositionCollapsed] = useState(true);
   const [prefillContact, setPrefillContact] = useState(null);
   const [prefillVersion, setPrefillVersion] = useState(0);
   const rootRef = useRef(null);
@@ -26,6 +26,16 @@ export default function PhoneDropdown({ onOpenMessages }) {
   const hasCall = Boolean(inbound?.activeCall || inbound?.dialingCall);
   const callInProgress = hasCall || Boolean(inbound?.incomingCall);
   const pendingDisposition = dispositionPending;
+  const previousCallInProgress = useRef(callInProgress);
+
+  useEffect(() => {
+    if (previousCallInProgress.current && !callInProgress) {
+      setIsOpen(false);
+      setDispositionCollapsed(true);
+      setPrefillContact(null);
+    }
+    previousCallInProgress.current = callInProgress;
+  }, [callInProgress]);
   const panelOpen = isOpen || (pendingDisposition && !dispositionCollapsed && !callInProgress);
 
   useEffect(() => {
@@ -76,8 +86,8 @@ export default function PhoneDropdown({ onOpenMessages }) {
   }, [hasCall, inbound?.activeCall]);
 
   const collapseDisposition = useCallback((value) => {
-    setDispositionCollapsed(value);
-    if (value) setIsOpen(false);
+    // Task refreshes request expansion too. Only explicit phone/pill clicks open it.
+    if (value) { setDispositionCollapsed(true); setIsOpen(false); }
   }, []);
 
   if (!inbound?.enabled) return null;

@@ -1,30 +1,37 @@
-import {useCallback,useEffect,useState} from 'react';
+import {useAdminReviewAccess} from '../../hooks/useAdminReviewAccess.js';
+import {COMPLIANCE_UPLOADS_ENDPOINT,complianceUploadsUrl} from '../../lib/adminReviewApi.js';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import EnrollmentIntake from '../enrollment/EnrollmentIntake';
 import {useAppAuth} from '../../context/AuthContext';
 import {fetchWithClerk} from '../../lib/clerkFetch.js';
 
 export default function ComplianceUploads(){
- const {getToken,user,organization}=useAppAuth();
- const identity=`${user?.id||''}:${organization?.id||''}`;
+ const {getToken}=useAppAuth();
+ const {identity,canReview}=useAdminReviewAccess();
+ const scope=useRef(null);
+ if(scope.current?.identity!==identity||scope.current?.canReview!==canReview)scope.current={identity,canReview,denied:false};
  const [rowFilter,setRowFilter]=useState('all'),[retrying,setRetrying]=useState(null);
  const [data,setData]=useState(null),[error,setError]=useState('');
  const [intakeCall,setIntakeCall]=useState(null),[running,setRunning]=useState(false);
  const load=useCallback(async()=>{
+  const requestScope=scope.current;
+  if(!canReview||requestScope.denied)return;
   try{
-   const response=await fetchWithClerk(getToken,`/.netlify/functions/compliance-uploads?enrollment_type=${rowFilter}`);
-   if(response.status===403){setData(null);return;}
+   const response=await fetchWithClerk(getToken,complianceUploadsUrl(rowFilter));
+   if(scope.current!==requestScope)return;
+   if([401,403].includes(response.status)){requestScope.denied=true;setData(null);setError('');return;}
    const result=await response.json();if(!response.ok)throw Error(result.error);
    if(!Array.isArray(result?.failures)||!Array.isArray(result?.missing)||!Array.isArray(result?.reconciliation))throw Error('Compliance uploads returned an invalid response.');
    if(result.weekly&&!Array.isArray(result.weekly.results))throw Error('Conversely results returned an invalid response.');
-   setData({...result,identity});setError('');
-  }catch(e){setError(e.message);}
- },[getToken,identity,rowFilter]);
+   if(scope.current===requestScope){setData({...result,identity});setError('');}
+  }catch(e){if(scope.current===requestScope)setError(e.message);}
+ },[getToken,identity,rowFilter,canReview]);
  const activeRun=data?.weekly?.run&&['pending','selecting','delivering'].includes(data.weekly.run.status);
- useEffect(()=>{void load();const timer=setInterval(()=>void load(),activeRun?3000:60000);return()=>clearInterval(timer);},[load,activeRun]);
+ useEffect(()=>{if(!canReview)return;void load();const timer=setInterval(()=>void load(),activeRun?3000:60000);return()=>clearInterval(timer);},[load,activeRun,canReview]);
  const runNow=async()=>{
   setRunning(true);setError('');
   try{
-   const response=await fetchWithClerk(getToken,'/.netlify/functions/compliance-uploads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'run_conversely_now'})});
+   const response=await fetchWithClerk(getToken,COMPLIANCE_UPLOADS_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'run_conversely_now'})});
    const result=await response.json();if(!response.ok)throw Error(result.error||'Conversely run could not be started.');
    await load();
   }catch(e){setError(e.message);}finally{setRunning(false);}
@@ -32,10 +39,11 @@ export default function ComplianceUploads(){
  const retry=async id=>{
   setRetrying(id);setError('');
   try{
-   const response=await fetchWithClerk(getToken,'/.netlify/functions/compliance-uploads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'retry_ix_upload',id})});
+   const response=await fetchWithClerk(getToken,COMPLIANCE_UPLOADS_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'retry_ix_upload',id})});
    const result=await response.json();if(!response.ok)throw Error(result.error||'Retry failed.');await load();
   }catch(e){setError(e.message);}finally{setRetrying(null);}
  };
+ if(!canReview)return null;
  if(!data||data.identity!==identity)return error?<p className="ops-error" role="alert">{error}</p>:null;
  return <details className="contacts-section">
   <summary className="contacts-section-head">COMPLIANCE UPLOADS · IX {data.ix_environment} · {data.failures.filter(row=>row.last_error).length} errors · {data.missing.length} missing codes</summary>
