@@ -22,6 +22,7 @@ for(const callKind of ['activeCall','dialingCall','incomingCall'])test(`ending $
   f.phone({});await f.h.flush();assert.equal(f.panel().props.hidden,true);assert.ok(!f.nodes().some(node=>node.type==='dialer'||node.type==='active'));
   f.box().props.onVisibleChange(true);f.box().props.onCollapsedChange(false);await f.h.flush();assert.equal(f.panel().props.hidden,true);assert.equal(f.box().props.collapsed,true);
   const pill=f.nodes().find(node=>node.props.className==='phone-dd__disposition-pill');assert.ok(pill);pill.props.onClick();await f.h.flush();assert.equal(f.box().props.collapsed,false);assert.equal(f.panel().props.hidden,false);
+  assert.equal(f.panel().props.className,'phone-dd__panel phone-dd__panel--disposition');assert.ok(!f.nodes().some(node=>node.props.className==='phone-dd__backdrop'));
   f.box().props.onCollapsedChange(true);await f.h.flush();assert.equal(f.panel().props.hidden,true);
   f.trigger().props.onClick();await f.h.flush();assert.equal(f.panel().props.hidden,false);assert.equal(f.nodes().find(node=>node.type==='dialer').props.initialContact,null);
  }finally{f.h.unmount();}

@@ -232,10 +232,16 @@
    scroll region is .phone-dialer__body, not the outer panel, so the
    bottom icon nav stays pinned instead of scrolling away. */
 .phone-dd__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  transform: none;
+  box-sizing: border-box;
   z-index: 210;
   width: 280px;
   max-width: calc(100vw - 24px);
-  max-height: 600px;
+  max-height: min(600px, calc(100dvh - var(--top-bar-height, 64px) - 24px));
   border-radius: 16px;
   padding: 14px 14px 8px;
   display: flex;
@@ -785,23 +791,11 @@
 
 /* Pending outcome stays attached to the dialer; collapsing never clears it. */
 .phone-dd__panel[hidden] { display: none; }
-.phone-dd__panel--disposition-modal {
-  position: fixed;
-  z-index: 1001;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  width: min(420px, calc(100vw - 32px));
-  max-height: min(600px, calc(100dvh - 32px));
-  transform: translate(-50%, -50%);
+/* A pending disposition may widen the dropdown, but never changes its anchor. */
+.phone-dd__panel--disposition {
+  width: min(420px, calc(100vw - 24px));
   overflow: auto;
   border-radius: var(--phone-radius-outer);
-}
-.phone-dd__backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgb(0 0 0 / 55%);
 }
 .phone-disposition {
   display: flex;

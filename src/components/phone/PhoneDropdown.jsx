@@ -122,8 +122,7 @@ export default function PhoneDropdown({ onOpenMessages }) {
 
       {hasCall && !isOpen ? <ActiveCallBar onExpand={() => setIsOpen(true)} /> : null}
 
-      {pendingDisposition && panelOpen ? <div className="phone-dd__backdrop" aria-hidden="true" /> : null}
-      <div className={`phone-dd__panel${pendingDisposition && panelOpen ? " phone-dd__panel--disposition-modal" : ""}`} hidden={!panelOpen} role="dialog" aria-label="Phone">
+      <div className={`phone-dd__panel${pendingDisposition && panelOpen ? " phone-dd__panel--disposition" : ""}`} hidden={!panelOpen} role="dialog" aria-label="Phone">
         <CallDispositionBox phone={inbound} onVisibleChange={setDispositionPending} collapsed={dispositionCollapsed} onCollapsedChange={collapseDisposition} />
         {isOpen ? (hasCall ? (
             <ActiveCallExpanded onOpenMessages={onOpenMessages} />
