@@ -1,3 +1,4 @@
+import {reportSttLimit} from './sttAlert.js';
 import { egressMetrics } from '../egressMetrics.js';
 import { config } from '../config.js';
 import { onMediaLifecycle } from './mediaLifecycle.js';
@@ -20,7 +21,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
   openTrack = openDeepgramTrack, verify = verifyMediaStreamToken, now = Date.now,
   waitForAnswer = config.sttWaitForAnswer, answerPollMs = 1000,
   pathPrefix = '/media', speakersFor = () => SPEAKERS,
-  limits = MEDIA_LIMITS, transcriptWriter = claims => createTranscriptWriter({ db: supabase, claims }) } = {}) {
+  limits = MEDIA_LIMITS, onUnexpectedStop = reportSttLimit, transcriptWriter = claims => createTranscriptWriter({ db: supabase, claims }) } = {}) {
   const wss = new WebSocketServer({ noServer: true, maxPayload: limits.frameBytes, perMessageDeflate: false });
   const active = new Map();
   wss.on('wsClientError', (_error, socket) => {
@@ -48,7 +49,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     const releaseSocket = egressMetrics.acquire('twilio_media');
     ws._socket.egressDestination = 'twilio';
     ws.once('close', releaseSocket);
-    let lastFrame = now();
+    let lastFrame = now(), lastAudioMs = 0, leaseGoodAt = now();
     const watchdog = setInterval(() => {
       if (now() - lastFrame >= 45000) end(1008, 'Media heartbeat timeout');
       else if(ws.readyState===ws.OPEN)ws.ping();
@@ -87,6 +88,14 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     function end(code = 1000, reason = 'Stream stopped') {
       if (stopped) return;
       if (code !== 1000) console.warn(`[media] rejected: ${reason}`);
+      if (binding && code !== 1000) {
+        const incidentReason = reason.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,100);
+        try {
+        emit({type:'transcription_incident',reason:incidentReason,atMs:lastAudioMs,timestamp:timelineOrigin+lastAudioMs});
+        for (const speaker of Object.values(speakers)) emit({type:'transcription_error',speaker,status:'unavailable',message:'Live transcription stopped. The recording will be checked after the call.',coverageGap:true});
+        void Promise.resolve().then(()=>onUnexpectedStop({claims,reason:incidentReason})).catch(()=>console.error(JSON.stringify({event:'stt_alert_delivery_failed',call_sid:claims.parentCallSid||claims.callSid})));
+        } catch {console.error(JSON.stringify({event:'stt_incident_notification_failed',call_sid:claims.parentCallSid||claims.callSid,reason:incidentReason}));}
+      }
       stopped = true; state = 'stopped'; clearInterval(watchdog); clearTimeout(timer); clearInterval(renewal);
       clearInterval(answerTimer); unsubscribe();
       pending = []; pendingBytes = 0; customerChunks = []; customerBytes = 0;
@@ -117,6 +126,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       const audio = Buffer.from(payload, 'base64');
       if (!audio.length || audio.length > limits.audioBytes) return denied();
       if (!tracks[track]) return; // Drop ringing audio; never queue it for later.
+      lastAudioMs = Math.max(lastAudioMs, Number(message.media.timestamp)||0);
       tracks[track].send(audio, message.media.timestamp == null ? undefined : Number(message.media.timestamp));
       if (track === 'inbound') {
         customerChunks.push(audio); customerBytes += audio.length;
@@ -152,7 +162,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         // old stream before emitting any audio for the new attempt.
         active.get(claims.callSid)?.end(1000, 'Call attempt replaced');
         active.set(claims.callSid, { owner, end });
-        binding = true; state = 'active'; clearTimeout(timer);
+        binding = true; state = 'active'; leaseGoodAt = now(); clearTimeout(timer);
         timelineOrigin = now();
         // A stop received during lease acquisition wins over answer evidence.
         const pendingStop = pending.find(packet => packet.event === 'stop');
@@ -173,9 +183,11 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
           renewing = true;
           try {
             if (!(await leases.renew(claims.callSid, owner, claims))) end(1008, 'Media lease ended');
+            else leaseGoodAt = now();
           } catch {
-            reportUnavailable();
-            end(1011, 'Media binding unavailable');
+            // A transient RPC failure must not terminate a still-valid 20-second lease.
+            // Stop before that lease expires; an explicit denial above remains immediate.
+            if(now()-leaseGoodAt>=15000)end(1011, 'Media binding unavailable');
           } finally { renewing = false; }
         }, limits.renewMs); renewal.unref();
         for (const queued of pending) { if (stopped) break; consume(queued); }
@@ -196,7 +208,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       if (state !== 'active') return denied();
       consume(message);
     });
-    ws.on('close', () => end());
+    ws.on('close', () => end(1011, 'Media transport closed'));
     ws.on('error', () => end(1011, 'Media transport error'));
   });
   return { wss, handleUpgrade };

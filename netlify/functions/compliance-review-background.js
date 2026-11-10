@@ -26,6 +26,9 @@ export function createManualScoringHandler({getDb=getEvidenceServiceClient,callM
     return evidenceJson(200,{status:'N/A',scorecard_id:id});
    }
    if(eligibility.status==='incomplete')throw Error('SCORING INCOMPLETE: transcript coverage');
+   if(!call.call_end)throw Error('Call is still active');
+   // Validate source/template availability before spending on a model request.
+   await prepareVersion(db,call);
    const started=Date.now();
    const result=await classifyJudgmentOnce({diarized:call.transcript_diarized,callContext:call,passId:pass.id,callLLM:async(system,user,options)=>{
     const response=await callModel({engine:resolveEngine(call.product_type),path:'scoring',system,messages:[{role:'user',content:user}],max_completion_tokens:4096,response_format:options.response_format},llmRuntime(db,call.tenant_id,context,{pass_id:pass.id,call_record_id:call.id,endpoint:'compliance-review-background'}));

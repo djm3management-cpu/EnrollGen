@@ -600,3 +600,22 @@ test('silent media transport expires after 45 seconds and closes its tracks', as
   await new Promise(resolve => setTimeout(resolve, 5100));
   assert.ok(h.tracks.every(track => track.closed));
 });
+
+test('a transient renewal transport error keeps the valid lease and transcription alive', async t => {
+ let renewals=0;const claims=await seedCall();
+ const h=await harness(t,{leases:{claim:async()=>true,renew:async()=>{if(++renewals===1)throw Error('transient');return true;},release:async()=>true},limits:{...MEDIA_LIMITS,renewMs:5},onUnexpectedStop:async()=>{assert.fail('Unexpected stop');}});
+ const ws=await h.connect(claims);ws.send(JSON.stringify(start(claims)));await until(()=>renewals>=2);
+ assert.equal(h.tracks.every(track=>!track.closed),true);
+ // Cleanly terminate through the authenticated lifecycle rather than triggering an incident.
+ signalMediaLifecycle({callSid:claims.callSid,attemptId:claims.attemptId,ended:true});
+});
+
+test('unexpected media disconnect persists its reason and alerts without waiting for reconnect exhaustion',async t=>{
+ const persisted=[],alerts=[],claims=await seedCall();
+ const h=await harness(t,{transcriptWriter:()=>message=>persisted.push(message),onUnexpectedStop:async event=>alerts.push(event)});
+ const ws=await h.connect(claims);ws.send(JSON.stringify(start(claims)));await until(()=>h.tracks.length===2);ws.terminate();
+ await until(()=>alerts.length===1);
+ assert.equal(persisted.find(m=>m.type==='transcription_incident').reason,'media_transport_closed');
+ assert.ok(h.events.some(m=>m.type==='transcription_error'&&m.status==='unavailable'));
+ assert.equal(h.tracks.every(track=>track.closed),true);
+});

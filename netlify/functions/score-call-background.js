@@ -1,3 +1,5 @@
+import {recoverBeforeScoring} from '../lib/transcriptRecovery.js';
+import {createGapFillHandler} from './transcript-gaps-background.js';
 import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
 import {RULES_VERSION} from '../../src/compliance/rules/catalog.js';
 import {verifyPostCallEnded} from '../lib/postCallGuard.js';
@@ -39,7 +41,7 @@ function errorDetails(error) {
     ...(error?.errors ? { causes: error.errors.map(errorDetails) } : {}) };
 }
 
-export function createScoreCallHandler({ getDb = getEvidenceServiceClient, classify, recordStatus=recordProviderStatus, verifyEnded=verifyPostCallEnded } = {}) {
+export function createScoreCallHandler({ getDb = getEvidenceServiceClient, classify, recordStatus=recordProviderStatus, verifyEnded=verifyPostCallEnded, recover=recoverBeforeScoring } = {}) {
 return async (request, context) => {
   if (request.method !== "POST") return new Response('Method not allowed', { status: 405 });
   if (!hasInternalJobAuthorization(request)) {
@@ -101,6 +103,8 @@ return async (request, context) => {
       }
     }
 
+    if(!callRecord.call_end)return Response.json({pending:true,reason:'parent_call_active'},{status:202});
+
     stage = 'subscription_gate';
     const subscription = await requireActiveSubscription(sb, callRecord.tenant_id);
     if (subscription.response) {
@@ -111,6 +115,14 @@ return async (request, context) => {
     const seatLimit = await checkSeatLimit(sb, callRecord.tenant_id, subscription);
     if (seatLimit.response) {
       throw Object.assign(new Error('Seat limit blocked scoring'), { code: 'scoring_seat_limit_blocked', status: seatLimit.response.status });
+    }
+
+    if (eligibility.status === 'incomplete') {
+      const recovery = await recover({db:sb,call:callRecord,runGapJob:jobId =>
+        createGapFillHandler({getDb:()=>sb})(new Request('https://internal/transcript-gaps-background',{
+          method:'POST',headers:{'x-enrollgen-job-secret':process.env.SCORE_CALL_JOB_SECRET},body:JSON.stringify({job_id:jobId}),
+        }))});
+      return Response.json(recovery,{status:recovery.pending||recovery.recovered?202:200});
     }
 
     stage = 'generate_scorecard';

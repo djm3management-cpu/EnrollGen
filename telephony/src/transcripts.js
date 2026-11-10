@@ -5,6 +5,11 @@ import { redactSensitiveText } from './lib/redaction.js';
 export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = () => {} }) {
   let tail = Promise.resolve();
   return message => {
+    if(message.type==='transcription_incident') {
+      const args={p_attempt_id:claims.attemptId||null,p_participant_id:claims.participantId||null,p_reason:message.reason,p_at_ms:Math.round(claims.participantId?Math.max(0,message.timestamp-Date.parse(claims.startedAt)):message.atMs||0)};
+      // Incident failure must never block the transcript write queue.
+      return db.rpc('record_transcription_incident',args).then(({error})=>{if(error)console.error(JSON.stringify({event:'transcription_incident_write_failed',call_sid:claims.parentCallSid||claims.callSid}));}).catch(()=>console.error(JSON.stringify({event:'transcription_incident_write_failed',call_sid:claims.parentCallSid||claims.callSid})));
+    }
     if(message.type==='transcription_gap'){
       const offset=claims.participantId?Math.max(0,message.timestamp-Date.parse(claims.startedAt)-message.startMs):0;
       const args={p_attempt_id:claims.attemptId||null,p_participant_id:claims.participantId||null,p_gap_id:randomUUID(),p_start_ms:Math.round(offset+message.startMs),p_end_ms:Math.round(offset+message.endMs)};
@@ -43,6 +48,8 @@ export async function runTranscriptDispatch({ db, scoringUrl, secret, transport 
   if(!scoringEnabled)return;
   const { data, error } = await db.rpc('get_sale_compliance_dispatch');
   if (error) throw error;
+  try {await sendPendingRecoveryAlerts({db,scoringUrl,secret,transport});}
+  catch {console.error(JSON.stringify({event:'recovery_alert_dispatch_failed'}));}
   for (const job of data || []) {
     if (job.delivered_revision >= job.revision) continue;
     let lastError = null;
@@ -77,4 +84,14 @@ export function startTranscriptWorker(options) {
   const timer = setInterval(tick, 15_000); timer.unref();
   void tick();
   return () => clearInterval(timer);
+}
+
+// Notifications carry IDs and reason codes only, never recordings or transcript text.
+export async function sendPendingRecoveryAlerts({db,scoringUrl,secret,transport=fetch}) {
+ const {data,error}=await db.from('transcript_recovery_alerts').select('call_id,tenant_id,reason').is('alerted_at',null).order('created_at').limit(20);
+ if(error)throw error;
+ for(const alert of data||[]) {
+  const response=await transport(new URL('/.netlify/functions/stt-alert',scoringUrl),{method:'POST',headers:{'Content-Type':'application/json','x-enrollgen-job-secret':secret},body:JSON.stringify(alert),signal:AbortSignal.timeout(10000)});
+  if(!response.ok)throw Error('Recovery alert delivery failed');
+ }
 }

@@ -329,7 +329,7 @@ test('sale before transcript completion stays queued and runs when final stored 
  const id=await newCall({finished:false,diarized:[]});await setOutcome(id,'enrolled_pending_verification');
  assert.equal((await record(id)).compliance_status,'transcript_pending');
  const before=modelCalls.length;
- assert.equal((await (await score(id)).json()).status,'SCORING INCOMPLETE');assert.equal(modelCalls.length,before);
+ assert.equal((await (await score(id)).json()).reason,'parent_call_active');assert.equal(modelCalls.length,before);
  const jobs=await query('SELECT * FROM get_sale_compliance_dispatch()');assert.ok(!jobs.some(j=>j.call_id===id));
  await query(`UPDATE call_records SET call_end=now(),transcript_raw=$2,transcript_diarized=$3,
   metadata=jsonb_build_object('transcript_finalized_at',now()) WHERE id=$1`,

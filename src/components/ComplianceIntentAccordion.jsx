@@ -1,27 +1,6 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { ALL_INTENTS, INTENT_CATEGORIES } from "../compliance/intents";
-
-const RUNTIME_INTENTS = [
-  ["ENGINE_001_DUAL_AUDIO_CHANNEL_PRESENT", "Dual audio channels captured"],
-  ["ENGINE_002_SPEAKER_DIARIZATION_CONFIDENCE", "Speaker diarization confidence checked"],
-  ["ENGINE_003_TIMESTAMP_COVERAGE_COMPLETE", "Transcript timestamps cover the full call"],
-  ["ENGINE_004_TRANSCRIPT_REDACTION_COMPLETE", "PHI and PII redaction completed"],
-  ["ENGINE_005_RAG_CONTEXT_RETRIEVED", "pgvector RAG context retrieved"],
-  ["ENGINE_006_SCORECARD_TEMPLATE_APPLIED", "MA scorecard template applied"],
-  ["ENGINE_007_SEQUENCE_GRAPH_VALIDATED", "Required intent sequence graph validated"],
-  ["ENGINE_008_AUTO_FAIL_RULES_EVALUATED", "Auto-fail rules evaluated"],
-  ["ENGINE_009_CRM_PAYLOAD_COMPLETE", "CRM payload completeness checked"],
-].map(([intent_code, intent_name]) => ({
-  intent_code,
-  intent_name,
-  category: "ENGINE_RUNTIME_CHECKS",
-  failure_severity: "info",
-  auto_fail: false,
-}));
-
-const ENGINE_INTENTS = [...ALL_INTENTS, ...RUNTIME_INTENTS].slice(0, 152);
-const ENGINE_INTENT_CODES = new Set(ENGINE_INTENTS.map((intent) => intent.intent_code));
+import { ACTIVE_RULE_CATALOG, ruleMatchesProduct } from "../compliance/rules/catalog.js";
 
 function formatCategoryName(category) {
   return String(category || "")
@@ -29,31 +8,19 @@ function formatCategoryName(category) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function buildIntentGroups() {
-  let rowNumber = 0;
-  return [
-    ...Object.entries(INTENT_CATEGORIES),
-    ["ENGINE_RUNTIME_CHECKS", RUNTIME_INTENTS],
-  ]
-    .map(([category, intents]) => [
-      category,
-      intents
-        .filter((intent) => ENGINE_INTENT_CODES.has(intent.intent_code))
-        .map((intent) => ({ ...intent, rowNumber: ++rowNumber })),
-    ])
-    .filter(([, intents]) => intents.length > 0)
-    .map(([category, intents]) => ({ category, intents }));
-}
-
-const ENGINE_INTENT_GROUPS = buildIntentGroups();
-
-export default function ComplianceIntentAccordion() {
+export default function ComplianceIntentAccordion({ product = 'MA' }) {
   const [open, setOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(product);
+  const rules = ACTIVE_RULE_CATALOG.filter(rule => ruleMatchesProduct(rule, selectedProduct));
+  const groups = Object.entries(rules.reduce((groups, rule, index) => {
+    (groups[rule.category] ??= []).push({ ...rule, rowNumber: index + 1 });
+    return groups;
+  }, {})).map(([category, intents]) => ({ category, intents }));
 
   return (
     <section
       className={`operations-tab compliance-intent-accordion${open ? " is-open" : ""}`}
-      aria-label="Compliance 152 flags"
+      aria-label={`Compliance ${rules.length} flags`}
     >
       <button data-key-role="secondary"
         type="button"
@@ -61,8 +28,8 @@ export default function ComplianceIntentAccordion() {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <span>Compliance 152 Flags</span>
-        <span className="ops-command-market">{ENGINE_INTENTS.length}/152 FLAGS</span>
+        <span>Compliance {rules.length} Flags</span>
+        <span className="ops-command-market">{rules.length} FLAGS</span>
         <span className="ops-intent-chevron" aria-hidden="true">
           <ChevronDown size={14} strokeWidth={2.2} />
         </span>
@@ -71,17 +38,11 @@ export default function ComplianceIntentAccordion() {
       {open ? (
         <div className="ops-intent-accordion-body">
           <div className="ops-command-line">
-            <span>MA COMPLIANCE TAXONOMY</span>
-            <span className="ops-command-market">{ENGINE_INTENTS.length}/152 FLAGS</span>
+            <span>{selectedProduct} COMPLIANCE TAXONOMY</span>
+            <span className="ops-command-market">{rules.length} FLAGS</span>
           </div>
-          <div className="ops-terminal-tabs">
-            <span className="ops-tab-amber">CATEGORY</span>
-            <span className="ops-tab-red">AUTO FAIL</span>
-            <span className="ops-tab-red">SEVERITY</span>
-            <span className="ops-tab-blue">SEQUENCE</span>
-            <span className="ops-tab-fill">Intent classifier inventory</span>
-          </div>
-          {ENGINE_INTENT_GROUPS.map(({ category, intents }) => (
+          <label>Product <select aria-label="Compliance product" value={selectedProduct} onChange={event=>setSelectedProduct(event.target.value)}><option value="MA">Medicare Advantage</option><option value="ANNUITY">Annuity</option></select></label>
+          {groups.map(({ category, intents }) => (
             <div key={category} className="ops-calls-panel">
               <div className="ops-section-head">
                 <span>{formatCategoryName(category)}</span>

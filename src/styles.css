@@ -18802,3 +18802,52 @@ html.dark .opps-board-scrollbar { background: var(--bg-elevated) !important; }
 .compliance-review-modal.compliance-overhaul .compliance-review-head h2 {margin-right:auto;}
 .transcript-reconnecting {display:inline-block;color:var(--eg-amber-text);font-size:11px;font-weight:500;padding:3px 8px;}
 .compliance-light {color-scheme:light;}
+
+/* Compliance tables: explicit AA palette in both themes, including muted labels. */
+.compliance-review-modal.compliance-overhaul,
+.operations-tab.compliance-intent-accordion {
+  --compliance-ink: #f3f4f6;
+  --compliance-muted: #cbd5e1;
+  --compliance-paper: #171717;
+  color: var(--compliance-ink);
+  background: var(--compliance-paper);
+}
+.compliance-review-modal.compliance-light,
+:root:not(.dark) .operations-tab.compliance-intent-accordion {
+  --compliance-ink: #172033;
+  --compliance-muted: #39465a;
+  --compliance-paper: #ffffff;
+}
+:is(.compliance-overhaul, .compliance-intent-accordion) :is(.ops-table, .ops-table th, .ops-table td, .ops-command-line, .ops-command-market, .ops-intent-accordion-trigger, .compliance-review-meta dt, .compliance-review-meta dd, .compliance-overhaul-badge, .compliance-overhaul-coverage, .compliance-overhaul-timeline button, .compliance-overhaul-filters button, .compliance-overhaul-evidence, .ops-out-enrolled, .ops-out-incomplete, .ops-out-pending, .row-n) {
+  color: var(--compliance-ink);
+  background: var(--compliance-paper);
+  opacity: 1;
+}
+:is(.compliance-overhaul, .compliance-intent-accordion) .ops-section-head,
+:is(.compliance-overhaul, .compliance-intent-accordion) .ops-section-head :is(span, .ops-section-meta) {
+  background: #fbbf24;
+  color: #172033;
+  opacity: 1;
+}
+.compliance-overhaul .ops-section-head {display:flex;justify-content:space-between;gap:16px;padding:10px 12px;}
+.compliance-overhaul .ops-table {width:100%;border-collapse:collapse;}
+.compliance-overhaul .ops-table :is(th,td) {padding:10px;text-align:left;vertical-align:top;white-space:normal;}
+.compliance-overhaul .ops-table td p {color:var(--compliance-muted);margin:6px 0;}
+.compliance-overhaul .ops-table-wrap {overflow-x:auto;}
+.compliance-overhaul .compliance-time-link {color:var(--compliance-ink);background:transparent;border:0;text-decoration:underline;}
+.compliance-overhaul :is(.contacts-mini-btn, select) {color:#172033;background:#fbbf24;box-shadow:none;}
+.compliance-overhaul .ops-error {color:var(--compliance-ink);background:var(--compliance-paper);border:1px solid currentColor;padding:12px;}
+.compliance-overhaul button:disabled {opacity:1;color:var(--compliance-muted);background:var(--compliance-paper);cursor:not-allowed;}
+.compliance-summary-tiles {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:16px 0;}
+.compliance-summary-tiles>div {border:1px solid var(--compliance-muted);padding:12px;color:var(--compliance-muted);}
+.compliance-summary-tiles strong {display:block;color:var(--compliance-ink);font-size:22px;margin-top:6px;}
+/* Override the site's broad light-theme !important rules only on these screens. */
+#root .operations-tab.compliance-intent-accordion .ops-section-head,
+#root .operations-tab.compliance-intent-accordion .ops-section-head span {
+  background:#fbbf24 !important;color:#172033 !important;
+}
+#root .operations-tab.compliance-intent-accordion :is(.ops-command-market,.ops-command-line,.ops-table th,.ops-table td,.ops-intent-accordion-trigger) {
+  color:var(--compliance-ink) !important;background:var(--compliance-paper) !important;
+}
+.compliance-review-modal.compliance-overhaul :is(h2,h3,label) {color:var(--compliance-ink);}
+#root .operations-tab.compliance-intent-accordion select {color:var(--compliance-ink);background:var(--compliance-paper);border:1px solid var(--compliance-muted);}

@@ -109,12 +109,12 @@ test('the review modal shows an alert for code-only and generic failed states; c
   const chain={select:()=>chain,eq:()=>chain,single:async()=>({data:record,error:null})};
   const client={from:()=>chain};
   const Modal=componentSource('../src/components/callDetail/ComplianceReviewModal.jsx','ComplianceReviewModal',{
-   ...hooks.hooks,CallTranscriptPlayer:'transcript-player',redactSensitiveText:v=>v,useAppAuth:()=>({getToken}),URLSearchParams,fetch:async()=>({ok:true,json:async()=>({call:record,items:[],versions:[],coverage:{complete:false}})}),complianceViewModel,complianceItemStatus,evaluateRules,CATEGORY_WEIGHTS:{},scoringFailureMessage,isComplianceSale,debugLog:()=>{},fmtDateTime:()=>'',callOutcomeLabel:value=>value,
+   ...hooks.hooks,CallTranscriptPlayer:'transcript-player',redactSensitiveText:v=>v,useAppAuth:()=>({getToken}),URLSearchParams,fetch:async()=>({ok:true,json:async()=>({call:record,items:[],versions:[],coverage:{complete:false,ratio:.66,endMs:1998000,durationMs:3026000}})}),complianceViewModel,complianceItemStatus,evaluateRules,CATEGORY_WEIGHTS:{},scoringFailureMessage,isComplianceSale,debugLog:()=>{},fmtDateTime:()=>'',callOutcomeLabel:value=>value,
   });
   hooks.mount(()=>Modal({callRecordId:record.id,supabaseClient:client,onClose:()=>{}}));
   await hooks.flush();
   const alert=nodes(hooks.value).find(node=>node.props.role==='alert');assert.ok(alert);
-  assert.match(alert.children.join(''),/Scoring failed:/);assert.match(alert.children.join(''),/transcript is retained/);
+  assert.match(alert.children.join(''),/Transcript is partial/);assert.match(alert.children.join(''),/Fill transcript gaps/);assert.match(alert.children.join(''),/transcript is retained/);
   hooks.unmount();
  }
  const Chip=componentSource('../src/components/callLog/CallRowParts.jsx','ComplianceChip',{COMPLIANCE_WARNING_THRESHOLD:80,isUnscoredCompliance});
@@ -163,7 +163,7 @@ test('short call chips and review banners show neutral N/A while a real zero rem
  for(const fields of [{overall_grade:'N/A',pass_fail:'N/A'},{pass_fail:'INSUFFICIENT'}]) {
   const chip=Chip({score:0,status:'complete',grade:fields.overall_grade,passFail:fields.pass_fail});
   assert.match(chip.props.className,/is-neutral/);assert.deepEqual(chip.children,['N/A']);
-  const view=complianceViewModel({scorecard:{overall_score:0,...fields},items:[],coverage:{complete:false}});
+  const view=complianceViewModel({scorecard:{overall_score:0,...fields},items:[],coverage:{complete:false,ratio:.66,endMs:1998000,durationMs:3026000}});
   assert.equal(view.score,null);assert.equal(view.status,'N/A');
  }
  assert.match(Chip({score:0,status:'complete',grade:'F',passFail:'FAIL'}).props.className,/compliance-low/);

@@ -4,9 +4,9 @@ import { complianceItemStatus, complianceViewModel } from '../src/lib/compliance
 import { classifyCall } from '../src/compliance/engine/IntentClassifier.js';
 import { scoreCall } from '../src/compliance/engine/ScoringEngine.js';
 
-test('review filters exclude N/A by default and preserve partial and review states',()=>{
+test('review All filter includes N/A and preserve partial and review states',()=>{
  const items=[{category:'opening',result:'pass'},{category:'opening',result:'na'},{category:'opening',result:'partial'},{category:'opening',result:'review'}];
- assert.equal(complianceViewModel({items,coverage:{complete:true}}).groups.opening.length,3);
+ assert.equal(complianceViewModel({items,coverage:{complete:true}}).groups.opening.length,4);
  assert.equal(complianceViewModel({items,coverage:{complete:true},filter:'na'}).groups.opening.length,1);
 });
 

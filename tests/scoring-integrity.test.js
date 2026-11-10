@@ -23,8 +23,8 @@ let seq = 0;
 async function newCall(duration = 900) {
   const id = randomUUID();
   if((await pg.query("SELECT to_regclass('public.compliance_llm_passes') AS t")).rows[0].t)await pg.query('INSERT INTO tenants(id) VALUES($1) ON CONFLICT DO NOTHING',[tenant]);
-  await pg.query(`INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_direction,call_type,product_type,call_start,
-    call_duration_seconds,transcript_raw,transcript_diarized,metadata,call_outcome) VALUES($1,$2,$3,'Fixture Agent','inbound','sales','MA',now(),$4,$5,$6,'{"other_metadata":"keep"}','enrolled')`,
+  await pg.query(`INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_direction,call_type,product_type,call_start,call_end,
+    call_duration_seconds,transcript_raw,transcript_diarized,metadata,call_outcome) VALUES($1,$2,$3,'Fixture Agent','inbound','sales','MA',now(),now(),$4,$5,$6,'{"other_metadata":"keep"}','enrolled')`,
   [id,tenant,agent,duration,`This call is recorded. Fixture ${seq++}`,JSON.stringify(completeCall({call_duration_seconds:duration}).transcript_diarized.map(l=>({...l,text:l.speaker==='agent'&&l.start_ms===0?'Hello, we are discussing Medicare.':l.text})))]);
   return (await pg.query('SELECT * FROM call_records WHERE id=$1',[id])).rows[0];
 }

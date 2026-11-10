@@ -1,3 +1,4 @@
+import {loadRecordingPlan,recoveryEstimate} from '../lib/transcriptRecovery.js';
 import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
 import {estimateJudgment} from '../../src/compliance/engine/judgmentRequest.js';
 import {DEEPGRAM_BATCH_PER_MINUTE_USD} from '../../src/compliance/shared/scoringConfig.js';
@@ -27,15 +28,17 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
     const versions=checked(await db.from('compliance_scorecards').select('*').eq('call_id',call.id).eq('tenant_id',call.tenant_id).order('created_at',{ascending:false}));
     const card=versions.find(c=>c.id===(input.version_id||call.compliance_scorecard_id))||versions[0]||null;
     const activePass=checked(await db.from('compliance_llm_passes').select('id,created_at').eq('call_id',call.id).eq('tenant_id',call.tenant_id).in('status',['reserved','running']).limit(1).maybeSingle());
-    const items=card?checked(await db.from('scorecard_items').select('*').eq('scorecard_id',card.id).order('display_order')):[];
+    const recovery=checked(await db.from('manual_transcript_gap_fills').select('id,status,created_at').eq('call_id',call.id).eq('tenant_id',call.tenant_id).order('created_at',{ascending:false}).limit(1).maybeSingle());
+    const items=card?checked(await db.from('scorecard_items').select('*,compliance_intents(intent_code,failure_severity,is_required)').eq('scorecard_id',card.id).order('display_order')):[];
     let contact=null;
     if(call.contact_id){contact=checked(await db.from('contacts').select('first_name,last_name,source,pii_encrypted').eq('id',call.contact_id).eq('tenant_id',call.tenant_id).maybeSingle());
      for(const k of ['first_name','last_name'])if(contact?.pii_encrypted?.[k])contact[k]=checked(await db.rpc('decrypt_pii_value',{p_encrypted:contact.pii_encrypted[k]}));}
-    return evidenceJson(200,{call:{...call,transcript_diarized:sortTranscript(call.transcript_diarized),beneficiary_name:call.beneficiary_name||[contact?.first_name,contact?.last_name].filter(Boolean).join(' ')||null},coverage,eligibility,versions,scorecard:card,items,active_pass:activePass,admin:identity.admin,source:contact?.source||null});
+    return evidenceJson(200,{call:{...call,transcript_diarized:sortTranscript(call.transcript_diarized),beneficiary_name:call.beneficiary_name||[contact?.first_name,contact?.last_name].filter(Boolean).join(' ')||null},coverage,eligibility,versions,recovery,scorecard:card,items,active_pass:activePass,admin:identity.admin,source:contact?.source||null});
    }
    if(!identity.admin)throw new EvidenceError(403,'Administrator required');
    const estimatePreview=estimateJudgment(call),batchRate=DEEPGRAM_BATCH_PER_MINUTE_USD;
-   if(input.action==='preview')return evidenceJson(200,{coverage,...estimatePreview,gap_minutes:coverage.missingMinutes,gap_cost_usd:coverage.durationNeedsVerification||!coverage.durationMs?null:coverage.missingMinutes*(call.metadata?.recording_channel_speakers?.length||2)*batchRate,rules_version:RULES_VERSION});
+   const gapEstimate=recoveryEstimate(call,{mapping:call.metadata?.recording_channel_speakers||['customer','agent']});
+   if(input.action==='preview')return evidenceJson(200,{coverage,...estimatePreview,gap_minutes:gapEstimate.minutes,gap_cost_usd:coverage.durationNeedsVerification||!coverage.durationMs?null:gapEstimate.cost,rules_version:RULES_VERSION});
    if(['evaluate','review'].includes(input.action)){
     if(input.action==='review'&&!['confirm','dismiss'].includes(input.decision))throw new EvidenceError(400,'Choose confirm or dismiss');
     const decision=input.action==='review'?{item_id:input.item_id,decision:input.decision,note:String(input.note||'').slice(0,2000)}:null;
@@ -53,25 +56,27 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
     if(!Number.isFinite(batchRate)||batchRate<=0)throw new EvidenceError(409,'Contracted pricing is not configured');
     if(coverage.durationNeedsVerification)throw new EvidenceError(409,'Call duration requires verification');
     if(!call.call_end)throw new EvidenceError(409,'Call is still active');
-    if(!coverage.missingRanges.length)throw new EvidenceError(409,'No transcript gaps');
-    const mapping=call.metadata?.recording_channel_speakers;
-    const offset=call.metadata?.recording_timeline_offset_ms;
+    if(!gapEstimate.ranges.length)throw new EvidenceError(409,'No transcript gaps');
+    const verified=await loadRecordingPlan(db,call);
+    const mapping=verified?.mapping||call.metadata?.recording_channel_speakers;
+    const offset=verified?.offset??call.metadata?.recording_timeline_offset_ms;
     if(!Array.isArray(mapping)||!mapping.length||mapping.length>2||mapping.some(s=>!['agent','customer'].includes(s))||!Number.isFinite(offset))throw new EvidenceError(409,'Recording channel and timestamp mapping is not verified');
     const target=await authorizeRecordingTarget(db,identity,{call_record_id:call.id});
     const recordings=await listTargetRecordings(db,identity,target);
-    const recording=recordings.find(r=>r.id===call.metadata?.gap_fill_recording_id);
+    const recording=recordings.find(r=>r.id===(verified?.recording.id||call.metadata?.gap_fill_recording_id));
     if(!recording||String(recording.id).startsWith('legacy:'))throw new EvidenceError(409,'Choose a verified full-call recording before gap fill');
-    const estimated=coverage.missingMinutes*mapping.length*batchRate;
-    if(!Number.isFinite(input.approved_gap_cost_usd)||!Number.isFinite(input.approved_gap_minutes)||input.approved_gap_cost_usd<estimated||input.approved_gap_minutes<coverage.missingMinutes)throw new EvidenceError(409,'Gap estimate changed; confirm again');
+    const estimated=gapEstimate.minutes*mapping.length*batchRate;
+    if(!Number.isFinite(input.approved_gap_cost_usd)||!Number.isFinite(input.approved_gap_minutes)||input.approved_gap_cost_usd<estimated||input.approved_gap_minutes<gapEstimate.minutes)throw new EvidenceError(409,'Gap estimate changed; confirm again');
     const existing=checked(await db.from('manual_transcript_gap_fills').select('id').eq('request_id',input.request_id).maybeSingle());
     if(existing)return evidenceJson(200,{job_id:existing.id,reused:true});
-    const job=checked(await db.from('manual_transcript_gap_fills').insert({request_id:input.request_id,call_id:call.id,tenant_id:call.tenant_id,recording_id:recording.id,requested_by:auth.userId,source_transcript:call.transcript_diarized,ranges:coverage.missingRanges,channel_speakers:mapping,timeline_offset_ms:offset,estimated_cost_usd:estimated}).select('*').single());
+    const job=checked(await db.from('manual_transcript_gap_fills').insert({request_id:input.request_id,call_id:call.id,tenant_id:call.tenant_id,recording_id:recording.id,requested_by:auth.userId,source_transcript:call.transcript_diarized,ranges:gapEstimate.ranges,channel_speakers:mapping,timeline_offset_ms:offset,estimated_cost_usd:estimated}).select('*').single());
     const origin=new URL(env.COMPLIANCE_APP_ORIGIN||'https://enrollgen.com').origin;
     try{const response=await transport(`${origin}/.netlify/functions/transcript-gaps-background`,{method:'POST',headers:{'Content-Type':'application/json','x-enrollgen-job-secret':env.SCORE_CALL_JOB_SECRET},body:JSON.stringify({job_id:job.id}),signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Gap-fill delivery failed');}
     catch(error){checked(await db.from('manual_transcript_gap_fills').update({status:'failed',error:'delivery_failed'}).eq('id',job.id));throw error;}
     return evidenceJson(202,{job_id:job.id});
    }
    if(input.action==='rescore'){
+    if(!call.call_end)throw new EvidenceError(409,'Call is still active');
     if(env.SCORING_ENABLED!=='true'||env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)throw new EvidenceError(409,'Scoring disabled');
     if(eligibility.status!=='eligible')throw new EvidenceError(409,eligibility.status==='na'?`N/A: ${eligibility.reason}`:'SCORING INCOMPLETE');
     const estimate=estimatePreview.estimated_cost_usd;

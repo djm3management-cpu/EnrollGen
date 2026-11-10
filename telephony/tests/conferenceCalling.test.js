@@ -495,7 +495,7 @@ for (const mode of ['add', 'warm', 'blind']) test(`${mode}: real conference medi
  const tracks=[], clients=[];
  const mediaDb={...db,rpc(name,args){const pending=db.rpc(name,args);pending.abortSignal=()=>pending;return pending;}};
  const { MEDIA_LIMITS } = await import('../src/media/mediaStream.js');
- const media=createConferenceMedia({db:mediaDb,settings,notify:()=>{},limits:{...MEDIA_LIMITS,renewMs:25},
+ const media=createConferenceMedia({db:mediaDb,settings,notify:()=>{},transcriptWriter:()=>()=>{},limits:{...MEDIA_LIMITS,renewMs:25},
   openTrack:()=>{const track={send(){},close(){this.closed=true;}};tracks.push(track);return track;}});
  const server=createServer();server.on('upgrade',media.handleUpgrade);
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
