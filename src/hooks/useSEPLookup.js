@@ -9,7 +9,7 @@ import { getStateFromZip, getCarriersForZip } from "../lib/sepGeo";
 import { fetchLiveFemaDisasters, withLiveFemaResult } from "../lib/sepFema";
 import { fetchBulletins, fetchBulletinStatus } from "../lib/sepBulletins";
 import { fetchLiveNews } from "../lib/sepLiveNews";
-import { fetchCountiesForState, fetchPlansFromSupabase, fetchCountyPlanCounts, transformCmsPlan } from "../lib/sepCms";
+import { fetchCountiesForState, fetchPlansFromSupabase, fetchPlansForCountyFips, fetchCountyPlanCounts, transformCmsPlan } from "../lib/sepCms";
 import { getCountyFromZip } from "../data/sepPlanDb";
 import { getSEPsForZip, getSEPsForState } from "../lib/sepEngine";
 import { supabase } from "../lib/supabase";
@@ -166,6 +166,35 @@ export function useSEPLookup({ initialZip = "", onResidenceLookup } = {}) {
       return true;
     } catch {
       debugLog("Supabase plan fetch error");
+      setPlans([]);
+      return false;
+    } finally {
+      setCountyLoading(false);
+    }
+  }, []);
+
+  const loadPlansForZip = useCallback(async (st, countyFips) => {
+    if (!st || !countyFips?.length) return false;
+    setCountyLoading(true);
+    try {
+      const cmsRows = await fetchPlansForCountyFips(st, countyFips);
+      const seen = new Set();
+      const transformed = [];
+      for (const row of cmsRows) {
+        const key = row["ContractPlanSegmentID"];
+        if (seen.has(key)) continue;
+        seen.add(key);
+        transformed.push(transformCmsPlan(row));
+      }
+      transformed.sort((a, b) => {
+        if ((b.stars || 0) !== (a.stars || 0)) return (b.stars || 0) - (a.stars || 0);
+        if (a.prem !== b.prem) return a.prem - b.prem;
+        return a.name.localeCompare(b.name);
+      });
+      setPlans(transformed);
+      return true;
+    } catch {
+      debugLog("ZIP plan fetch error");
       setPlans([]);
       return false;
     } finally {
@@ -334,7 +363,13 @@ export function useSEPLookup({ initialZip = "", onResidenceLookup } = {}) {
       setCountyList(counties);
       setCountyPlanCounts(counts);
 
-      if (autoCounty && counties.includes(autoCounty)) {
+      if (countyFips.length) {
+        const firstCounty = counties.find((county) =>
+          countyRows.some((row) => row.county_name?.toLowerCase() === county.toLowerCase())
+        );
+        setSelectedCounty(firstCounty || autoCounty || null);
+        await loadPlansForZip(st, countyFips);
+      } else if (autoCounty && counties.includes(autoCounty)) {
         setSelectedCounty(autoCounty);
         await loadPlansForCounty(st, autoCounty);
       } else if (counties.length > 0) {
@@ -353,7 +388,7 @@ export function useSEPLookup({ initialZip = "", onResidenceLookup } = {}) {
     } finally {
       setLoading(false);
     }
-  }, [zip, loadPlansForCounty, loadSepFinderResults, onResidenceLookup, reportResidenceLookup]);
+  }, [zip, loadPlansForCounty, loadPlansForZip, loadSepFinderResults, onResidenceLookup, reportResidenceLookup]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSearch();

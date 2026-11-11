@@ -108,6 +108,40 @@ async function fetchPlansDirect(state, county) {
   return attachCountyStarRatings(rows);
 }
 
+export async function fetchPlansForCountyFips(state, countyFips = []) {
+  if (!state || !countyFips.length || !shouldUseCmsSupabase()) return [];
+  const fips = [...new Set(countyFips.map((value) => String(value).trim()).filter(Boolean))];
+  try {
+    const [countyRows, statewideRows] = await Promise.all([
+      fetchPagedRows((from, to) =>
+        supabaseCms
+          .from(CMS_TABLE)
+          .select("*")
+          .eq("State Territory Abbreviation", state)
+          .in("County FIPS", fips)
+          .neq("Sanctioned Plan", "Yes")
+          .order("County FIPS").order("ContractPlanSegmentID")
+          .range(from, to)
+      ),
+      fetchPagedRows((from, to) =>
+        supabaseCms
+          .from(CMS_TABLE)
+          .select("*")
+          .eq("State Territory Abbreviation", state)
+          .eq("County Name", "All Counties")
+          .neq("Sanctioned Plan", "Yes")
+          .order("ContractPlanSegmentID")
+          .range(from, to)
+      ),
+    ]);
+    const rows = [...countyRows, ...statewideRows];
+    return attachCountyStarRatings(rows);
+  } catch (error) {
+    debugLog("ZIP plan lookup error");
+    return [];
+  }
+}
+
 async function attachCountyStarRatings(rows) {
   const contracts = [...new Set(rows.map(row => row['Contract ID']).filter(Boolean))];
   const counties = [...new Set(rows.map(row => row['County FIPS']).filter(Boolean))];
