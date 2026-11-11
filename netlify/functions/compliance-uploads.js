@@ -4,12 +4,28 @@ import { requireClerkAuth } from './_clerkAuth.js';
 import { checked, EvidenceError, evidenceJson, evidenceFailure, getEvidenceServiceClient } from './_evidenceAccess.js';
 import { recordingIdentity, authorizeRecordingTarget } from './_recordingAccess.js';
 
+async function namedRunResults(db,tenantId,results){
+  if(!results.length)return results;
+  const ids=[...new Set(results.map(row=>row.agent_id).filter(Boolean))];
+  const agents=checked(await db.from('enrolled_agents').select('id,clerk_user_id,name').eq('tenant_id',tenantId).in('id',ids));
+  const clerkIds=[...new Set(agents.map(agent=>agent.clerk_user_id).filter(Boolean))];
+  const tenantAgents=clerkIds.length?checked(await db.from('tenant_agents').select('clerk_user_id,name,agent_slug').eq('tenant_id',tenantId).in('clerk_user_id',clerkIds)):[];
+  const byId=new Map(agents.map(agent=>[agent.id,agent]));
+  const byClerk=new Map(tenantAgents.map(agent=>[agent.clerk_user_id,agent]));
+  const usefulName=value=>value&&value.trim()&&!/^agent$/i.test(value.trim())?value.trim():null;
+  return results.map(row=>{
+    const agent=byId.get(row.agent_id),tenantAgent=byClerk.get(agent?.clerk_user_id);
+    return {...row,agent_name:usefulName(tenantAgent?.name)||usefulName(agent?.name)||usefulName(row.agent_name)||tenantAgent?.agent_slug||agent?.clerk_user_id||row.agent_id};
+  });
+}
+
 export function createComplianceUploadsHandler({authenticate=requireClerkAuth,getDb=getEvidenceServiceClient,now=()=>Date.now(),env=process.env}={}) {
   return async request=>{
     if(!['GET','PATCH','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
     const auth=await authenticate(request);if(auth.response)return auth.response;
     try{
       const db=getDb(),identity=await recordingIdentity(db,auth);
+      if(!identity.admin)throw new EvidenceError(403,'Organization admin access required.');
       if(request.method==='PATCH'){
         const input=await request.json();
         if(typeof input.sunfire_code!=='string' || input.sunfire_code.length>10000)throw new EvidenceError(400,'Enter SunFire confirmation codes, one per line.');
@@ -19,7 +35,6 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
         checked(await db.from('call_records').update({sunfire_code:codes.join('\n')}).eq('id',input.call_id).eq('tenant_id',identity.tenant.id));
         return evidenceJson(200,{saved:true});
       }
-      if(!identity.admin)throw new EvidenceError(403,'Organization admin access required.');
       if(request.method==='POST'){
         let input;try{input=await request.json();}catch{throw new EvidenceError(400,'Invalid JSON.');}
         if(input?.action==='retry_ix_upload'){
@@ -42,7 +57,7 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
         const last=checked(await db.from('conversely_runs').select('id,week_start,trigger,requested_at,started_at,completed_at,status,last_error')
           .eq('tenant_id',identity.tenant.id).order('requested_at',{ascending:false}).order('id',{ascending:false}).limit(1));
         const run=last?.[0]||null;
-        const results=run?checked(await db.rpc('conversely_run_results',{p_run:run.id,p_tenant:identity.tenant.id})):[];
+        const results=run?await namedRunResults(db,identity.tenant.id,checked(await db.rpc('conversely_run_results',{p_run:run.id,p_tenant:identity.tenant.id}))):[];
         weekly={available:true,enabled:worker?.enabled===true,worker_available:!!worker&&now()-Date.parse(worker.heartbeat_at)<=5*60_000,
           current_week:currentConverselyWeek(now()),run,results};
       }catch{weekly={available:false,enabled:false,worker_available:false,run:null,results:[],error:'Conversely run history is unavailable. Apply migration 127 and start the updated worker.'};}
