@@ -18464,6 +18464,9 @@ body[data-bg-mode="classic"] .viewport-bg {
 .app-center:has(.contacts-views--opportunities) { width: 100% !important; max-width: none !important; min-width: 0; }
 .contacts-subviews { margin-bottom: 12px; }
 .app-center:has(.contacts-views--calls) { width: 100%; max-width: none; min-width: 0; }
+@media (min-width: 1401px) {
+  .app-workspace:has(.contacts-views--calls) { padding-right: clamp(12px, 1.6vw, 24px) !important; }
+}
 .crm-call-card.msg-call-recording { grid-template-columns: minmax(0, 1fr); }
 .crm-call-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .crm-call-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; font-size: 11px; }

@@ -10,7 +10,15 @@ import CallTranscriptPlayer from '../callLog/CallTranscriptPlayer.jsx';
 export const COMPLIANCE_WARNING_THRESHOLD=80;
 const duration=ms=>`${Math.floor(ms/60000)}:${String(Math.floor(ms/1000)%60).padStart(2,'0')}`;
 const money=value=>value==null?'Unavailable':`$${Number(value).toFixed(4)}`;
-const filters=['fail','partial','review','pass','na'];
+const filters=['partial','review','pass','na'];
+function displayGrade(score) {
+ if (score == null || !Number.isFinite(Number(score))) return 'Pending';
+ const value=Number(score);
+ if(value>=97)return 'A+'; if(value>=93)return 'A'; if(value>=90)return 'A-';
+ if(value>=87)return 'B+'; if(value>=83)return 'B'; if(value>=80)return 'B-';
+ if(value>=77)return 'C+'; if(value>=73)return 'C'; if(value>=70)return 'C-';
+ if(value>=60)return 'D'; return 'F';
+}
 export default function ComplianceReviewModal({callRecordId,onClose,displayDurationSeconds}){
  const {getToken}=useAppAuth();
  const [theme,setTheme]=useState('terminal');
@@ -53,10 +61,10 @@ export default function ComplianceReviewModal({callRecordId,onClose,displayDurat
   {failure&&!incomplete&&<div className="ops-error" role="alert">Scoring did not finish ({data.call.metadata?.scoring_error_code||'processing error'}). Administrator: use Rescore. The transcript is retained.</div>}
   {!data&&!error&&<div>Loading</div>}
   {data&&<>
-   <div className="compliance-summary-tiles"><div>Score<strong>{view.score == null ? 'Not final' : `${Math.round(view.score)}%`}</strong></div><div>Grade<strong>{incomplete ? 'Incomplete' : card?.overall_grade || 'Pending'}</strong></div><div>Call length<strong>{duration((displayDurationSeconds ?? data.call.call_duration_seconds)*1000)}</strong></div></div>
+   <div className="compliance-summary-tiles"><div>Score<strong>{view.score == null ? 'Not final' : `${Math.round(view.score)}%`}</strong></div><div>Grade<strong>{incomplete ? 'Incomplete' : displayGrade(view.score)}</strong></div><div>Call length<strong>{duration((displayDurationSeconds ?? data.call.call_duration_seconds)*1000)}</strong></div></div>
    <div className="compliance-overhaul-toolbar">
-    <span className="compliance-overhaul-score">{incomplete?'INCOMPLETE':card?view.score==null?'N/A':`${Math.round(view.score)}% ${card.overall_grade}`:'Pending'}</span>
-    <span className="compliance-overhaul-badge">{incomplete?'SCORING INCOMPLETE':card?.pass_fail||'PENDING'}</span>
+    <span className="compliance-overhaul-score">{incomplete?'INCOMPLETE':card?view.score==null?'N/A':`${Math.round(view.score)}% ${displayGrade(view.score)}`:'Pending'}</span>
+    {incomplete&&<span className="compliance-overhaul-badge">SCORING INCOMPLETE</span>}
     {view.reviewRequired&&<span className="compliance-overhaul-badge">REVIEW REQUIRED</span>}<span>{card ? card.rules_version || 'Legacy (unversioned scorecard)' : 'Not scored'}</span><span>{card?.created_at?formatCallDateTime(card.created_at):''}</span>
     <span>{card?.scoring_duration_ms==null?'':duration(card.scoring_duration_ms)}</span>
     <span>{card?.request_attempts==null?'':`${card.request_attempts} attempts`}</span><span>{card?.tokens_used==null?'':`${card.tokens_used.toLocaleString()} tokens`}</span><span>{card?.estimated_cost_usd==null?'':money(card.estimated_cost_usd)}</span>
@@ -74,7 +82,7 @@ export default function ComplianceReviewModal({callRecordId,onClose,displayDurat
    <div className="compliance-overhaul-items">{Object.entries(groups).map(([category,rows])=>{
     const subtotal=view.categoryScores[category];
     return <section key={category} className="ops-calls-panel"><div className="ops-section-head"><span>{category.replaceAll('_',' ')}</span><span>{subtotal.earned}/{subtotal.possible} · {subtotal.pct == null ? 'N/A' : `${subtotal.pct.toFixed(1)}%`}{incomplete ? ' · provisional' : ''}</span></div>
-     <div className="ops-table-wrap"><table className="ops-table"><thead><tr><th>#</th><th>Flag code</th><th>Name / evidence</th><th>Severity</th><th>Required</th><th>Auto fail</th><th>Result</th><th>Points</th><th>Evidence time</th></tr></thead><tbody>{rows.map((i,index)=><tr id={`rule-${i.id}`} key={i.id}><td>{index+1}</td><td>{i.rule_id||i.intent_code||i.compliance_intents?.intent_code||'Legacy'}</td><td>{i.question_text}<p>{redactSensitiveText(i.evidence_text||i.missing_reason||i.notes||'Evidence unavailable')}</p></td><td>{i.compliance_intents?.failure_severity||'Unavailable'}</td><td>{i.compliance_intents?.is_required==null?'Unavailable':i.compliance_intents.is_required?'Yes':'No'}</td><td>{i.is_auto_fail?'Yes':'No'}</td><td>{['na','not_applicable','unscored'].includes(i.result)?'N/A':complianceItemStatus(i).label}{i.result==='review'&&data.admin&&<div><button className="contacts-mini-btn" disabled={busy||!!data.active_pass||!i.evidence_text||i.evidence_timestamp_ms==null} onClick={()=>decide(i,'confirm')}>Confirm violation</button><button className="contacts-mini-btn" disabled={busy||!!data.active_pass} onClick={()=>decide(i,'dismiss')}>Dismiss</button></div>}</td><td>{i.points_possible == null ? '—' : `${i.points_earned ?? 0}/${i.points_possible}`}</td><td>{i.evidence_timestamp_ms!=null?<button className="compliance-time-link" onClick={()=>jump(i)}>{duration(i.evidence_timestamp_ms)}</button>:'Unavailable'}</td></tr>)}</tbody></table></div>
+     <div className="ops-table-wrap"><table className="ops-table"><thead><tr><th>#</th><th>Rule code</th><th>Name / evidence</th><th>Severity</th><th>Required</th><th>Result</th><th>Points</th><th>Evidence time</th></tr></thead><tbody>{rows.map((i,index)=><tr id={`rule-${i.id}`} key={i.id}><td>{index+1}</td><td>{i.rule_id||i.intent_code||i.compliance_intents?.intent_code||'Legacy'}</td><td>{i.question_text}<p>{redactSensitiveText(i.evidence_text||i.missing_reason||i.notes||'Evidence unavailable')}</p></td><td>{i.compliance_intents?.failure_severity||'Unavailable'}</td><td>{i.compliance_intents?.is_required==null?'Unavailable':i.compliance_intents.is_required?'Yes':'No'}</td><td>{['na','not_applicable','unscored'].includes(i.result)?'N/A':i.result==='fail'?'—':complianceItemStatus(i).label}{i.result==='review'&&data.admin&&<div><button className="contacts-mini-btn" disabled={busy||!!data.active_pass||!i.evidence_text||i.evidence_timestamp_ms==null} onClick={()=>decide(i,'confirm')}>Confirm review</button><button className="contacts-mini-btn" disabled={busy||!!data.active_pass} onClick={()=>decide(i,'dismiss')}>Dismiss</button></div>}</td><td>{i.points_possible == null ? '—' : `${i.points_earned ?? 0}/${i.points_possible}`}</td><td>{i.evidence_timestamp_ms!=null?<button className="compliance-time-link" onClick={()=>jump(i)}>{duration(i.evidence_timestamp_ms)}</button>:'Unavailable'}</td></tr>)}</tbody></table></div>
     </section>;
    })}</div>
    {items.length===0&&!card&&<div role="status">No rule evaluations have been saved for this call yet.</div>}

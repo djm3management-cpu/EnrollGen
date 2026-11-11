@@ -314,10 +314,6 @@ function ComplianceDetail({ detail }) {
           <span className="ops-mini-label">Grade</span>
           <strong>{scorecard.overall_grade || "--"}</strong>
         </div>
-        <div>
-          <span className="ops-mini-label">Pass/Fail</span>
-          <strong>{String(scorecard.pass_fail || "--").toUpperCase()}</strong>
-        </div>
       </div>
       <div className="ops-category-grid">
         {categoryScores.length === 0 ? (
