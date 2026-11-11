@@ -42,10 +42,9 @@ import { scoreCompliance, scoreTwoSided } from "../context/ComplianceScorer";
 
 /* ── Color helpers, semantic score palette ── */
 function scoreBand(s) {
-  if (s >= 90) return "a";
   if (s >= 75) return "b";
-  if (s >= 50) return "c";
-  if (s >= 25) return "d";
+  if (s >= 70) return "c";
+  if (s >= 60) return "d";
   return "f";
 }
 function getScoreColor(s) {

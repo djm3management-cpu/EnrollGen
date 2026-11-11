@@ -21,7 +21,7 @@ export function complianceViewModel({scorecard,items=[],coverage,filter='all'}){
  const visible=items.filter(i=>filter==='all'||(filter==='na'?['na','not_applicable','unscored'].includes(i.result):i.result===filter));
  const groups=visible.reduce((a,i)=>{(a[i.category]??=[]).push(i);return a;},{});
  const reviewRequired=items.some(i=>i.result==='review')||[...(scorecard?.risk_flags||[]),...(scorecard?.coaching_notes||[])].some(n=>/manual review required/i.test(n));
- return {incomplete,groups,categoryScores:complianceCategoryScores(items),reviewRequired,score:incomplete||isUnscoredCompliance(scorecard)?null:scorecard?.overall_score??null,status:notApplicable?'N/A':incomplete?'SCORING INCOMPLETE':scorecard?.auto_fail_triggered?'AUTO-FAIL':scorecard?.pass_fail||'PENDING'};
+ return {incomplete,groups,categoryScores:complianceCategoryScores(items),reviewRequired,score:incomplete||isUnscoredCompliance(scorecard)?null:scorecard?.overall_score??null,status:notApplicable?'N/A':incomplete?'SCORING INCOMPLETE':scorecard?.pass_fail||'PENDING'};
 }
 
 // Sum saved points after event deductions; filters never change category totals.

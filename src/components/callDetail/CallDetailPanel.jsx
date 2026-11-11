@@ -319,9 +319,6 @@ function ComplianceDetail({ detail }) {
           <strong>{String(scorecard.pass_fail || "--").toUpperCase()}</strong>
         </div>
       </div>
-      {scorecard.auto_fail_triggered ? (
-        <ListBlock title="Auto-Fail Reasons" items={scorecard.auto_fail_reasons} />
-      ) : null}
       <div className="ops-category-grid">
         {categoryScores.length === 0 ? (
           <EmptyLine>No category scores stored</EmptyLine>

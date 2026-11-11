@@ -139,11 +139,11 @@ function DispositionChart({ rows }) {
 }
 
 export default function AgentDashboard({ userId, onOpenContacts }) {
-  const [scope, setScope] = useState('self');
+  const [scope, setScope] = useState('agency');
   const data = useDashboardData(userId, scope);
   const scopeLabel = scope === 'agency' ? 'Agency-wide' : scope === 'self' ? data.agentOptions.find(agent => agent.clerkUserId === userId)?.label || 'My data' : data.agentOptions.find(agent => agent.key === scope)?.label || 'Agent';
   const averageLabel = scope === 'self' ? 'Your' : scope === 'agency' ? 'Agency' : 'Agent';
-  const [range, setRange] = useState('today');
+  const [range, setRange] = useState('30days');
   const rangeLabel = DASHBOARD_RANGES.find(([value]) => value === range)[1];
   const summary = useMemo(() => buildDashboard(data.calls, range, data.updatedAt || new Date()), [data.calls, data.updatedAt, range]);
   // Presentation-only grouping: keep saved outcomes and all other metrics intact.
