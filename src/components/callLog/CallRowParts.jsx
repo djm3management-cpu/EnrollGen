@@ -37,9 +37,9 @@ export function ComplianceChip({ score, status, grade, passFail, duration }) {
   if (status === 'failed') return <span className="contacts-muted" title="Scoring failed">Not scored</span>;
   if (score == null || !Number.isFinite(Number(score))) return <span className="contacts-muted" title={COMPLIANCE_LABELS[status]}>Not scored</span>;
   const value = Math.round(Number(score));
-  const failing = String(passFail).toUpperCase() === 'FAIL' || value < COMPLIANCE_WARNING_THRESHOLD;
-  return <span className={`call-compliance-pill ${failing ? 'compliance-low' : 'compliance-high'}`} title={COMPLIANCE_LABELS[status]}>
-    {value}%{grade ? ` · ${grade}` : ''}
+  const band = value < 60 ? 'compliance-red' : value < 70 ? 'compliance-yellow' : value < 75 ? 'compliance-orange' : 'compliance-green';
+  return <span className={`call-compliance-pill ${band}`} title={COMPLIANCE_LABELS[status]}>
+    {value}%
   </span>;
 }
 
