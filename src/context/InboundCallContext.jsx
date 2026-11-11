@@ -28,6 +28,7 @@ import { updateLiveTranscript } from "../lib/liveTranscript.js";
 import { installAgentAudio, requestAgentMicrophone } from "../lib/audio/AgentAudioProcessor.js";
 import { readAudioPreferences } from "../lib/audioPreferences.js";
 import { useConferenceCall } from '../hooks/useConferenceCall';
+import { computeRmsLevel, computeWaveformPeaks } from "../audio/audioPeaks.js";
 
 // Inbound softphone state: Twilio Voice SDK device registration, the
 // incoming-call banner payload, and the server-transcribed AGENT/CUSTOMER
@@ -114,6 +115,99 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const [isHeld, setIsHeld] = useState(false);
   const [connectedAt, setConnectedAt] = useState(null);
   const volumeCallRef = useRef(null);
+  const waveformAudioContextRef = useRef(null);
+  const remoteWaveformCleanupRef = useRef(null);
+  const remoteWaveformRetryRef = useRef(null);
+
+  const getWaveformAudioContext = useCallback(() => {
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) return null;
+    if (!waveformAudioContextRef.current || waveformAudioContextRef.current.state === "closed") {
+      try { waveformAudioContextRef.current = new AudioContextCtor(); }
+      catch { return null; }
+    }
+    const context = waveformAudioContextRef.current;
+    if (context.state === "suspended") void context.resume().catch(() => {});
+    return context;
+  }, []);
+
+  const stopRemoteWaveform = useCallback(() => {
+    if (remoteWaveformRetryRef.current !== null) {
+      window.clearTimeout(remoteWaveformRetryRef.current);
+      remoteWaveformRetryRef.current = null;
+    }
+    remoteWaveformCleanupRef.current?.();
+    remoteWaveformCleanupRef.current = null;
+  }, []);
+
+  const startRemoteWaveform = useCallback((call, attempt = 0) => {
+    if (volumeCallRef.current !== call || remoteWaveformCleanupRef.current) return;
+    const stream = call.getRemoteStream?.();
+    if (!stream?.getAudioTracks?.().length) {
+      if (attempt < 20) remoteWaveformRetryRef.current = window.setTimeout(() => startRemoteWaveform(call, attempt + 1), 250);
+      else console.info("[waveform] customer source=remote-analyser unavailable (no remote audio track)");
+      return;
+    }
+    const audioContext = getWaveformAudioContext();
+    if (!audioContext) {
+      console.info("[waveform] customer source=remote-analyser unavailable (AudioContext)");
+      return;
+    }
+    let audioElement, source, analyser, silentGain, frame = null, sampleCount = 0;
+    try {
+      audioElement = document.createElement("audio");
+      audioElement.autoplay = true;
+      audioElement.muted = true;
+      audioElement.playsInline = true;
+      audioElement.srcObject = stream;
+      audioElement.style.display = "none";
+      document.body.appendChild(audioElement);
+      void audioElement.play().catch(() => {});
+
+      source = audioContext.createMediaStreamSource(stream);
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.76;
+      silentGain = audioContext.createGain();
+      silentGain.gain.value = 0;
+      source.connect(analyser);
+      analyser.connect(silentGain);
+      silentGain.connect(audioContext.destination);
+      const data = new Uint8Array(analyser.fftSize);
+      const tick = () => {
+        if (volumeCallRef.current !== call || remoteWaveformCleanupRef.current?.stopped) return;
+        analyser.getByteTimeDomainData(data);
+        const level = computeRmsLevel(data, { byteTimeDomain: true });
+        const peaks = computeWaveformPeaks(data, { byteTimeDomain: true });
+        publishAudioLevel("customer", level, { peaks });
+        if (sampleCount < 5) {
+          sampleCount += 1;
+          console.info(`[waveform] customer source=remote-analyser sample=${sampleCount} level=${level.toFixed(3)}`);
+        }
+        frame = requestAnimationFrame(tick);
+      };
+      const cleanup = () => {
+        cleanup.stopped = true;
+        if (frame !== null) cancelAnimationFrame(frame);
+        try { source.disconnect(); } catch { /* already disconnected */ }
+        try { analyser.disconnect(); } catch { /* already disconnected */ }
+        try { silentGain.disconnect(); } catch { /* already disconnected */ }
+        if (audioElement) {
+          audioElement.pause();
+          audioElement.srcObject = null;
+          audioElement.remove();
+        }
+      };
+      remoteWaveformCleanupRef.current = cleanup;
+      frame = requestAnimationFrame(tick);
+    } catch {
+      try { source?.disconnect(); } catch { /* ignore */ }
+      try { analyser?.disconnect(); } catch { /* ignore */ }
+      try { silentGain?.disconnect(); } catch { /* ignore */ }
+      audioElement?.remove();
+      console.info("[waveform] customer source=remote-analyser failed to initialize");
+    }
+  }, [getWaveformAudioContext]);
 
   // Twilio's Call volume event reports the local microphone and remote playback
   // levels directly, independent of the audio processing/transcription graph.
@@ -121,6 +215,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     const call = activeCall?.call;
     if (!call || typeof call.on !== 'function') {
       volumeCallRef.current = null;
+      stopRemoteWaveform();
       setCallVolumeActive(false);
       publishAudioLevel('agent', 0, { immediate: true });
       publishAudioLevel('customer', 0, { immediate: true });
@@ -128,21 +223,53 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     }
     volumeCallRef.current = call;
     setCallVolumeActive(true);
+    publishCallVolume(0, 0, { immediate: true });
+    console.info(`[waveform] agent source=Twilio Call volume waiting callSid=${call.parameters?.CallSid || 'unknown'}`);
+    console.info(`[waveform] customer source=Twilio Call volume waiting callSid=${call.parameters?.CallSid || 'unknown'}`);
     let input = 0;
     let output = 0;
-    let lastDebugAt = 0;
+    let volumeEvents = 0;
+    let agentSamples = 0;
+    let customerSamples = 0;
+    const fallbackTimer = window.setTimeout(() => {
+      if (volumeEvents > 0 || volumeCallRef.current !== call) return;
+      setCallVolumeActive(false);
+      console.info("[waveform] agent source=local-mic-analyser fallback=no Twilio volume event within 2s");
+      console.info("[waveform] customer source=remote-analyser fallback=no Twilio volume event within 2s");
+      startRemoteWaveform(call);
+    }, 2000);
+    const scaleVolume = value => {
+      const raw = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
+      return raw > 0 ? Math.min(1, Math.pow(raw, 0.7) * 1.8) : 0;
+    };
     const onVolume = (inputVolume, outputVolume) => {
       if (volumeCallRef.current !== call) return;
+      volumeEvents += 1;
+      if (volumeEvents === 1) {
+        window.clearTimeout(fallbackTimer);
+        stopRemoteWaveform();
+        console.info("[waveform] agent source=Twilio Call volume active");
+        console.info("[waveform] customer source=Twilio Call volume active");
+      }
+      setCallVolumeActive(true);
       const alpha = 0.35;
-      input = input * (1 - alpha) + (Number.isFinite(inputVolume) ? inputVolume : 0) * alpha;
-      output = output * (1 - alpha) + (Number.isFinite(outputVolume) ? outputVolume : 0) * alpha;
+      const scaledInput = scaleVolume(inputVolume);
+      const scaledOutput = scaleVolume(outputVolume);
+      input = input * (1 - alpha) + scaledInput * alpha;
+      output = output * (1 - alpha) + scaledOutput * alpha;
       publishCallVolume(input, output);
-      if (performance.now() - lastDebugAt > 1000) {
-        lastDebugAt = performance.now();
-        debugLog(`[AudioLevels] source=Twilio Call volume inputVolume=${inputVolume} outputVolume=${outputVolume}`);
+      if (agentSamples < 5) {
+        agentSamples += 1;
+        console.info(`[waveform] agent source=Twilio Call volume sample=${agentSamples} inputVolume=${inputVolume} displayed=${input.toFixed(3)}`);
+      }
+      if (customerSamples < 5) {
+        customerSamples += 1;
+        console.info(`[waveform] customer source=Twilio Call volume sample=${customerSamples} outputVolume=${outputVolume} displayed=${output.toFixed(3)}`);
       }
     };
     const stop = () => {
+      window.clearTimeout(fallbackTimer);
+      stopRemoteWaveform();
       input = 0; output = 0;
       publishCallVolume(0, 0, { immediate: true });
     };
@@ -157,10 +284,34 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         call.removeListener('volume', onVolume); call.removeListener('disconnect', stop); call.removeListener('cancel', stop); call.removeListener('reject', stop);
       }
       if (volumeCallRef.current === call) volumeCallRef.current = null;
+      window.clearTimeout(fallbackTimer);
+      stopRemoteWaveform();
       stop();
       setCallVolumeActive(false);
     };
-  }, [activeCall?.call]);
+  }, [activeCall?.call, startRemoteWaveform, stopRemoteWaveform]);
+
+  useEffect(() => {
+    const resume = () => {
+      const audioContext = waveformAudioContextRef.current;
+      if (audioContext?.state === "suspended") void audioContext.resume().catch(() => {});
+    };
+    for (const event of ["pointerdown", "touchstart", "keydown", "click"]) {
+      window.addEventListener(event, resume, true);
+    }
+    return () => {
+      for (const event of ["pointerdown", "touchstart", "keydown", "click"]) {
+        window.removeEventListener(event, resume, true);
+      }
+    };
+  }, []);
+
+  useEffect(() => () => {
+    stopRemoteWaveform();
+    const audioContext = waveformAudioContextRef.current;
+    waveformAudioContextRef.current = null;
+    if (audioContext && audioContext.state !== "closed") void audioContext.close();
+  }, [stopRemoteWaveform]);
 
   const deviceRef = useRef(null);
   const phoneConnectionRef = useRef(null);
@@ -449,6 +600,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
           // MediaStream. It can lag the accept event by a beat, so
           // retry briefly until Twilio exposes it.
           call.on("accept", () => {
+            getWaveformAudioContext();
             reportCallEvent('accepted', call);
             if (ownedCallRef.current !== call) return;
             setConnectedAt(Date.now());
@@ -528,7 +680,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
       }
       setDeviceStatus("offline");
     };
-  }, [registrationReady, agentId, fetchTokenBundle, connectAgentSocket, destroyRetiredDevice, callIsLive, destroyDevice, reportCallEvent, reportVoiceEvent]);
+  }, [registrationReady, agentId, fetchTokenBundle, connectAgentSocket, destroyRetiredDevice, callIsLive, destroyDevice, reportCallEvent, reportVoiceEvent, getWaveformAudioContext]);
 
   // Hydrate the contact record for the ringing/active call. Full PII
   // (name/phone/email/etc) is read via decrypt_pii — the agent needs
@@ -579,10 +731,11 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
     // reported for this call; discard health left over from another call.
     setTranscriptionHealth(previous => transcriptionHealthForCall(previous, incomingCall.params?.inboundCallId));
     reportCallEvent('accept_requested', incomingCall.call, { reason: 'agent_action' });
+    getWaveformAudioContext();
     incomingCall.call.accept();
     setActiveCall(incomingCall);
     setIncomingCall(null);
-  }, [incomingCall, reportCallEvent]);
+  }, [incomingCall, reportCallEvent, getWaveformAudioContext]);
 
   const declineCall = useCallback(() => {
     if (!incomingCall || ownedCallRef.current !== incomingCall.call) return;

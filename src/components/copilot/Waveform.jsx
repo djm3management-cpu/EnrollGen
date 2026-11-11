@@ -42,7 +42,10 @@ export default function Waveform({
   const peaksRef = useRef(normalizePeaks(peaks));
   const displayPeaksRef = useRef(normalizePeaks(peaks));
   const hasExternalLevel = level !== null;
-  const hasExternalPeaks = peaks !== null;
+  // Scalar sources (Twilio's Call volume event) have no sampled peak array.
+  // The store represents that as an all-zero array, which should fall back to
+  // the level-driven animated bars instead of drawing a flat peak trace.
+  const hasExternalPeaks = peaks !== null && peaks.some((peak) => clampLevel(peak) > 0.006);
 
   useEffect(() => {
     levelRef.current = clampLevel(level);

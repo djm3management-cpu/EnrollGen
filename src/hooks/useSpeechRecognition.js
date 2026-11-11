@@ -139,6 +139,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
       meterSourceRef.current = source;
       analyserRef.current = analyser;
       meterDataRef.current = new Uint8Array(analyser.fftSize);
+      let waveformSamples = 0;
 
       const tick = () => {
         const currentAnalyser = analyserRef.current;
@@ -146,7 +147,12 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
         if (!currentAnalyser || !data) return;
 
         currentAnalyser.getByteTimeDomainData(data);
-        publishAudioLevel("agent", computeRmsLevel(data, { byteTimeDomain: true }), {
+        const level = computeRmsLevel(data, { byteTimeDomain: true });
+        if (waveformSamples < 5) {
+          waveformSamples += 1;
+          console.info(`[waveform] agent source=local-mic-analyser sample=${waveformSamples} level=${level.toFixed(3)}`);
+        }
+        publishAudioLevel("agent", level, {
           peaks: computeWaveformPeaks(data, { byteTimeDomain: true }),
         });
         meterFrameRef.current = requestAnimationFrame(tick);

@@ -1,6 +1,7 @@
 import { egressMetrics } from '../telephony/src/egressMetrics.js';
 import {createCallContinuity} from '../src/lib/callContinuity.js';
 import {installAgentAudio} from '../src/lib/audio/AgentAudioProcessor.js';
+import {computeRmsLevel,computeWaveformPeaks} from '../src/audio/audioPeaks.js';
 import {updateLiveTranscript} from '../src/lib/liveTranscript.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,8 +24,16 @@ class Call extends EventEmitter {
  disconnect(){this.phase='closed';this.emit('disconnect');}
 }
 function phoneFixture(){
- let deliverTranscript;
+ let deliverTranscript;const waveform={volume:[],priority:[],levels:[],logs:[],timers:[],listeners:new Map(),audioElements:[],contexts:[],frames:new Map()};
  const harness=hookHarness(),devices=[];let agentId='agent',token=async()=>'',availability={isHydrated:true,setPhoneReady:()=>{}};
+ class FakeAudioContext {
+  constructor(){this.state='running';this.destination={};waveform.contexts.push(this);}
+  resume(){this.resumed=(this.resumed||0)+1;return Promise.resolve();}
+  close(){this.state='closed';return Promise.resolve();}
+  createMediaStreamSource(){return{connect(){},disconnect(){}};}
+  createAnalyser(){return{fftSize:0,smoothingTimeConstant:0,connect(){},disconnect(){},getByteTimeDomainData(data){data.fill(150);}};}
+  createGain(){return{gain:{value:1},connect(){},disconnect(){}};}
+ }
  class Device extends EventEmitter{
   constructor(){super();this.destroyed=0;this.audio={setAudioConstraints:async value=>{this.constraints=value;},addProcessor:async value=>{this.processor=value;},removeProcessor:async()=>{}};devices.push(this);}
   register(){assert.ok(this.processor,'processor must be installed before registration');assert.equal(this.constraints.noiseSuppression,false);this.emit('registered');}
@@ -34,20 +43,23 @@ function phoneFixture(){
  let source=readFileSync(new URL('../src/context/InboundCallContext.jsx',import.meta.url),'utf8');
  source=source.slice(source.indexOf('function paramsFromCall'),source.indexOf('function AuthedInboundCallProvider'));
  source=source.replace('import("@twilio/voice-sdk")','Promise.resolve({Device:globalThis.Device})').replace('return <InboundCallContext.Provider value={value}>{children}</InboundCallContext.Provider>;','return value;');
- const context=vm.createContext({...harness.hooks,installAgentAudio,requestAgentMicrophone:()=>{},readAudioPreferences:()=>({enabled:true}),updateLiveTranscript,callContinuity:createCallContinuity(),Device,console,Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
+ const context=vm.createContext({...harness.hooks,installAgentAudio,requestAgentMicrophone:()=>{},readAudioPreferences:()=>({enabled:true}),updateLiveTranscript,computeRmsLevel,computeWaveformPeaks,callContinuity:createCallContinuity(),Device,console:{info:(...args)=>waveform.logs.push(args.join(' ')),warn:console.warn,error:console.error},Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
   useAppAuth:()=>({getToken:token}),useTenantConfig:()=>({agents:[],supabaseClient:null}),useAvailability:()=>availability,
   // Conference-enabled lifecycle paths have their own SQL/WebSocket suite.
   useConferenceCall:()=>({enabled:false,agents:[],conference:null,busy:false,error:'',run:async()=>{}}),
   resolveRequestingAgentUuid:()=>null,transcriptionHealthError:()=>'',transcriptionHealthForCall:()=>({}),
-  updateTranscriptionHealth:()=>({}),publishSms:()=>{},publishAudioLevel:()=>{},publishCallVolume:()=>{},setCallVolumeActive:()=>{},debugLog:()=>{},createVoiceTelemetry:()=>()=>{},
+  updateTranscriptionHealth:()=>({}),publishSms:()=>{},publishAudioLevel:(...args)=>waveform.levels.push(args),publishCallVolume:(...args)=>waveform.volume.push(args),setCallVolumeActive:value=>waveform.priority.push(value),debugLog:()=>{},createVoiceTelemetry:()=>()=>{},
   checkOutbound:async()=>({blocked:false}),canonicalOutbound:async()=>({contactId:null,attemptId:'attempt',phoneNumber:'+15555555555'}),
   createAgentPhoneConnection:({onMessage})=>{deliverTranscript=onMessage;return {setReady(){},start(){},stop(){}};},
   fetch:async()=>({ok:true,json:async()=>({token:'token'})}),
-  window:{addEventListener(){},removeEventListener(){},setTimeout:()=>1,clearTimeout(){}},
+  window:{AudioContext:FakeAudioContext,addEventListener:(name,fn)=>waveform.listeners.set(name,fn),removeEventListener:name=>waveform.listeners.delete(name),
+   setTimeout:(fn,delay)=>{const timer={fn,delay,cleared:false};waveform.timers.push(timer);return timer;},clearTimeout:timer=>{if(timer)timer.cleared=true;}},
+  document:{body:{appendChild:element=>waveform.audioElements.push(element)},createElement:()=>({style:{},play:()=>Promise.resolve(),pause(){},remove(){this.removed=true;}})},
+  requestAnimationFrame:fn=>{const id=waveform.frames.size+1;waveform.frames.set(id,fn);return id;},cancelAnimationFrame:id=>waveform.frames.delete(id),
  });
  vm.runInContext(source+';globalThis.component=InboundCallProviderCore;',context);
  harness.mount(()=>context.component({agentId,identityReady:true}));
- return {harness,devices,event(message){deliverTranscript(message);},transcript(message){deliverTranscript({type:'transcript',...message});},switchAgent(id){agentId=id;harness.render();},rotate(){token=async()=>'rotated';availability={...availability,isHydrated:false,status:'wrap_up',wrapUpCallSid:SID};harness.render();}};
+ return {harness,devices,waveform,event(message){deliverTranscript(message);},transcript(message){deliverTranscript({type:'transcript',...message});},switchAgent(id){agentId=id;harness.render();},rotate(){token=async()=>'rotated';availability={...availability,isHydrated:false,status:'wrap_up',wrapUpCallSid:SID};harness.render();}};
 }
 
 test('agent speech in progress is visible without entering finalized evidence, and clears for the next call',async()=>{
@@ -141,6 +153,38 @@ test('real phone provider preserves a live inbound call through auth refresh, av
  first.disconnect();await harness.flush();const second=new Call(NEXT);device.emit('incoming',second);await harness.flush();harness.value.acceptCall();await harness.flush();
  first.emit('cancel');first.emit('error',new Error('Late old call error'));first.emit('disconnect');await harness.flush();
  assert.equal(harness.value.activeCall.call,second);assert.equal(harness.value.remoteStream,second.stream);assert.equal(harness.value.hasCallInProgress(),true);
+ }finally{harness.unmount();}
+});
+
+test('inbound PSTN waveform listener uses the accepted Call object and scales Twilio levels for the meter',async()=>{
+ const {harness,devices,waveform}=phoneFixture();try{
+  await harness.flush();const call=new Call();devices[0].emit('incoming',call);await harness.flush();
+  harness.value.acceptCall();await harness.flush();
+  assert.equal(call.listenerCount('volume'),1,'the active inbound Call object owns the listener');
+  call.emit('volume',0.05,0.3);await harness.flush();
+  const [agentLevel,customerLevel]=waveform.volume.at(-1);
+  assert.ok(agentLevel>0.05&&agentLevel<customerLevel,'normal Twilio levels are gained and smoothed into visible meter values');
+  assert.ok(customerLevel>0.15&&customerLevel<1);
+  assert.ok(waveform.logs.some(line=>line.includes('[waveform] agent source=Twilio Call volume sample=1')));
+  assert.ok(waveform.logs.some(line=>line.includes('[waveform] customer source=Twilio Call volume sample=1')));
+ }finally{harness.unmount();}
+});
+
+test('missing Twilio volume event releases priority and starts a muted remote-stream analyser fallback',async()=>{
+ const {harness,devices,waveform}=phoneFixture();try{
+  await harness.flush();const call=new Call();devices[0].emit('incoming',call);await harness.flush();
+  harness.value.acceptCall();await harness.flush();
+  const fallback=waveform.timers.find(timer=>timer.delay===2000&&!timer.cleared);
+  assert.ok(fallback,'fallback is scheduled two seconds after the active call is attached');
+  fallback.fn();await harness.flush();
+  assert.equal(waveform.priority.at(-1),false,'local mic analyser updates are no longer blocked');
+  const audio=waveform.audioElements.at(-1);
+  assert.equal(audio.muted,true);assert.equal(audio.autoplay,true);assert.equal(audio.srcObject,call.stream);
+  const tick=[...waveform.frames.values()].at(-1);assert.equal(typeof tick,'function');tick();
+  assert.ok(waveform.levels.some(([speaker,level,options])=>speaker==='customer'&&level>0.05&&options?.peaks?.some(peak=>peak>0)));
+  assert.ok(waveform.logs.some(line=>line.includes('[waveform] customer source=remote-analyser sample=1')));
+  call.disconnect();await harness.flush();
+  assert.equal(audio.removed,true,'fallback audio and analyser are cleaned up when the call ends');
  }finally{harness.unmount();}
 });
 
