@@ -1,76 +1,45 @@
 import {useAdminReviewAccess} from '../../hooks/useAdminReviewAccess.js';
 import {COMPLIANCE_UPLOADS_ENDPOINT,complianceUploadsUrl} from '../../lib/adminReviewApi.js';
-import {useCallback,useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import EnrollmentIntake from '../enrollment/EnrollmentIntake';
 import {useAppAuth} from '../../context/AuthContext';
 import {fetchWithClerk} from '../../lib/clerkFetch.js';
 
+const etDate=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
+const etTime=value=>value?new Date(value).toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit',hour12:true})+' ET':'—';
+const dayKey=value=>{const parts=Object.fromEntries(etDate.formatToParts(value).map(part=>[part.type,part.value]));return `${parts.year}-${parts.month}-${parts.day}`};
+const label=value=>String(value||'').replaceAll('_',' ');
+const initials=name=>String(name||'?').split(/\s+/).slice(0,2).map(part=>part[0]?.toUpperCase()).join('');
+function Info({children}){return <details className="cu-info"><summary aria-label="More information">i</summary><span>{children}</span></details>}
+function Flow({title,info,nodes,branch,actions,meta}){return <div className="cu-flow-row"><div className="cu-flow-title">{title}<Info>{info}</Info></div><div className="cu-flow-scroll"><div className="cu-flow">{nodes.map((node,index)=><div className="cu-flow-part" key={node.label}>{index>0&&<span className={`cu-connector ${node.health||''}`}/>}<span className="cu-node"><b>{node.count??'—'}</b><small>{node.label}</small></span></div>)}</div>{branch&&<div className="cu-branch">{branch.map(node=><span key={node.label}><b>{node.count}</b> {node.label}</span>)}</div>}</div>{actions&&<div className="cu-actions">{actions}</div>}{meta&&<div className="cu-flow-meta">{meta}</div>}</div>}
+function Heatmap({rows,onDay}){const byDay=new Map(rows.map(row=>[row.day,row]));const today=dayKey(new Date());const days=Array.from({length:30},(_,i)=>{const d=new Date(`${today}T12:00:00Z`);d.setUTCDate(d.getUTCDate()-29+i);return dayKey(d)});const offset=new Date(`${days[0]}T12:00:00Z`).getUTCDay();return <div className="cu-heatmap">{['S','M','T','W','T','F','S'].map((d,i)=><span className="cu-weekday" key={i}>{d}</span>)}{Array.from({length:offset},(_,i)=><span key={`blank-${i}`}/>)}{days.map(day=>{const row=byDay.get(day);const expected=Number(row?.expected_uploads||0),uploaded=Number(row?.uploaded||0),gap=Math.max(0,expected-uploaded);const details=`${day} · Enrollments ${row?.enrollments||0} · Expected ${expected} · Uploaded ${uploaded} · Failed ${row?.failed||0} · Missing codes ${row?.missing_codes||0} · Gap ${gap}`;return <button key={day} type="button" title={details} aria-label={details} disabled={!gap} onClick={()=>onDay(day)} className={`cu-day ${expected===0?'empty':gap===0?'good':gap<=2?'warn':'bad'}`}/>})}</div>}
 export default function ComplianceUploads(){
- const {getToken}=useAppAuth();
- const {identity,canReview}=useAdminReviewAccess();
- const scope=useRef(null);
+ const {getToken}=useAppAuth();const {identity,canReview}=useAdminReviewAccess();const scope=useRef(null);
  if(scope.current?.identity!==identity||scope.current?.canReview!==canReview)scope.current={identity,canReview,denied:false};
- const [rowFilter,setRowFilter]=useState('all'),[retrying,setRetrying]=useState(null);
- const [data,setData]=useState(null),[error,setError]=useState('');
- const [intakeCall,setIntakeCall]=useState(null),[running,setRunning]=useState(false);
- const load=useCallback(async()=>{
-  const requestScope=scope.current;
-  if(!canReview||requestScope.denied)return;
-  try{
-   const response=await fetchWithClerk(getToken,complianceUploadsUrl(rowFilter));
-   if(scope.current!==requestScope)return;
-   if([401,403].includes(response.status)){requestScope.denied=true;setData(null);setError('');return;}
-   const result=await response.json();if(!response.ok)throw Error(result.error);
-   if(!Array.isArray(result?.failures)||!Array.isArray(result?.missing)||!Array.isArray(result?.reconciliation))throw Error('Compliance uploads returned an invalid response.');
-   if(result.weekly&&!Array.isArray(result.weekly.results))throw Error('Conversely results returned an invalid response.');
-   if(scope.current===requestScope){setData({...result,identity});setError('');}
-  }catch(e){if(scope.current===requestScope)setError(e.message);}
- },[getToken,identity,rowFilter,canReview]);
+ const [rowFilter,setRowFilter]=useState('all'),[retrying,setRetrying]=useState(null),[data,setData]=useState(null),[error,setError]=useState('');
+ const [intakeCall,setIntakeCall]=useState(null),[running,setRunning]=useState(false),[confirm,setConfirm]=useState(false),[consoleOpen,setConsoleOpen]=useState(false),[dayFilter,setDayFilter]=useState(null),[sessionLog,setSessionLog]=useState([]);
+ const load=useCallback(async()=>{const requestScope=scope.current;if(!canReview||requestScope.denied)return;try{const response=await fetchWithClerk(getToken,complianceUploadsUrl(rowFilter));if(scope.current!==requestScope)return;if([401,403].includes(response.status)){requestScope.denied=true;setData(null);setError('');return;}const result=await response.json();if(!response.ok)throw Error(result.error);if(!Array.isArray(result?.failures)||!Array.isArray(result?.missing)||!Array.isArray(result?.reconciliation))throw Error('Invalid compliance uploads response.');if(scope.current===requestScope){setData({...result,identity});setError('');}}catch(e){if(scope.current===requestScope)setError(e.message)}},[getToken,identity,rowFilter,canReview]);
  const activeRun=data?.weekly?.run&&['pending','selecting','delivering'].includes(data.weekly.run.status);
- useEffect(()=>{if(!canReview)return;void load();const timer=setInterval(()=>void load(),activeRun?3000:60000);return()=>clearInterval(timer);},[load,activeRun,canReview]);
- const runNow=async()=>{
-  setRunning(true);setError('');
-  try{
-   const response=await fetchWithClerk(getToken,COMPLIANCE_UPLOADS_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'run_conversely_now'})});
-   const result=await response.json();if(!response.ok)throw Error(result.error||'Conversely run could not be started.');
-   await load();
-  }catch(e){setError(e.message);}finally{setRunning(false);}
- };
- const retry=async id=>{
-  setRetrying(id);setError('');
-  try{
-   const response=await fetchWithClerk(getToken,COMPLIANCE_UPLOADS_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'retry_ix_upload',id})});
-   const result=await response.json();if(!response.ok)throw Error(result.error||'Retry failed.');await load();
-  }catch(e){setError(e.message);}finally{setRetrying(null);}
- };
- if(!canReview)return null;
- if(!data||data.identity!==identity)return error?<p className="ops-error" role="alert">{error}</p>:null;
- return <details className="contacts-section">
-  <summary className="contacts-section-head">COMPLIANCE UPLOADS · IX {data.ix_environment} · {data.failures.filter(row=>row.last_error).length} errors · {data.missing.length} missing codes</summary>
-  <button data-key-role="secondary" className="contacts-mini-btn" onClick={()=>void load()}>Refresh</button>
-  {error && <p className="ops-error" role="alert">{error}</p>}
-  <h3 className="contacts-section-head">CONVERSELY WEEKLY SUBMISSION</h3>
-  <p className="contacts-muted">Automatic: startup and hourly checks for the previous Monday–Sunday week (America/New_York). Run now selects the current week through the request time, at most one submission per agent.</p>
-  <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={running||activeRun||!data.weekly?.enabled||!data.weekly?.worker_available} onClick={()=>void runNow()}>{running?'Starting…':'Run Conversely now'}</button>
-  {!data.weekly?.enabled&&<p className="contacts-muted">Conversely uploads are disabled on the worker.</p>}
-  {data.weekly?.enabled&&!data.weekly?.worker_available&&<p className="contacts-muted">Conversely worker is unavailable.</p>}
-  {data.weekly?.error&&<p className="ops-error" role="alert">{data.weekly.error}</p>}
-  {data.weekly?.run?<>
-   <p className="contacts-muted" role="status">Last run: {new Date(data.weekly.run.started_at||data.weekly.run.requested_at).toLocaleString('en-US',{timeZone:'America/New_York',timeZoneName:'short'})} · week of {data.weekly.run.week_start} · {data.weekly.run.trigger} · {data.weekly.run.status}</p>
-   {data.weekly.run.last_error&&<p className="ops-error">{data.weekly.run.last_error.replaceAll('_',' ')}</p>}
-   <p className="contacts-muted">{(data.weekly.results||[]).filter(row=>row.status==='submitted').length} submitted · {(data.weekly.results||[]).filter(row=>row.status==='skipped').length} skipped · {(data.weekly.results||[]).filter(row=>row.status==='failed').length} failed</p>
-   <table className="call-log-table"><thead><tr><th>Agent</th><th>Result</th><th>Reason</th><th>Attempts</th></tr></thead><tbody>
-    {(data.weekly.results||[]).map(row=><tr key={row.agent_id}><td>{row.agent_name}</td><td>{row.status}</td><td>{(row.reason||'').replaceAll('_',' ')}</td><td>{row.attempts}/5</td></tr>)}
-   </tbody></table>
-  </>:<p className="contacts-muted">No Conversely run recorded.</p>}
-  <p className="contacts-muted">UHC enrollments with an invalid SunFire code or a missing code for more than two hours</p>
-  {data.missing.map(row=><div key={row.call_id}>{row.agent_name} · {new Date(row.call_start).toLocaleString()} · {row.call_id} <button data-key-role="primary" className="contacts-mini-btn" onClick={()=>setIntakeCall(row.call_id)}>Edit enrollment / SunFire code</button></div>)}
-  {intakeCall&&<EnrollmentIntake callId={intakeCall} onClose={()=>setIntakeCall(null)} onSaved={()=>{setIntakeCall(null);void load();}}/>}
-  <label className="contacts-edit-field"><span>Enrollment type</span><select className="contacts-edit-input" value={rowFilter} onChange={event=>setRowFilter(event.target.value)}><option value="all">All enrollments</option><option value="test">Test enrollments</option><option value="real">Real enrollments</option></select></label>
-  <table className="call-log-table"><thead><tr><th>Provider</th><th>Call</th><th>Status</th><th>Attempts</th><th>Error</th><th>Enrollment</th><th>Action</th></tr></thead>
-   <tbody>{data.failures.filter(row=>rowFilter==='all'||Boolean(row.is_test_enrollment)===(rowFilter==='test')).map(row=><tr key={row.id}><td>{row.provider}</td><td>{row.call_id}</td><td>{row.status}</td><td>{row.attempts}/5</td><td>{row.last_error}{row.provider_message&&<span> · {row.provider_message}</span>}</td><td>{row.is_test_enrollment?'Test':'Real'}</td><td>{data.admin&&row.provider==='UHC IX'&&['needs_attention','failed'].includes(row.status)&&!row.finalized_at&&<button type="button" data-key-role="secondary" className="contacts-mini-btn" disabled={retrying!==null} onClick={()=>void retry(row.id)}>{retrying===row.id?'Retrying…':'Retry'}</button>}</td></tr>)}</tbody></table>
-  <p className="contacts-muted">Daily UHC reconciliation · household codes count as separate expected uploads</p>
-  <table className="call-log-table"><thead><tr><th>Date (ET)</th><th>Enrollments</th><th>Expected uploads</th><th>Uploaded</th><th>Failed</th><th>Missing codes</th><th>Gap</th></tr></thead>
-   <tbody>{data.reconciliation.map(row=><tr key={row.day}><td>{row.day}</td><td>{row.enrollments}</td><td>{row.expected_uploads}</td><td>{row.uploaded}</td><td>{row.failed}</td><td>{row.missing_codes}</td><td>{row.expected_uploads-row.uploaded}</td></tr>)}</tbody></table>
- </details>;
+ useEffect(()=>{if(!canReview)return;void load();const timer=setInterval(()=>void load(),activeRun||consoleOpen?3000:60000);return()=>clearInterval(timer)},[load,activeRun,canReview,consoleOpen]);
+ const runNow=async()=>{setConfirm(false);setConsoleOpen(true);setRunning(true);setError('');setSessionLog(['> Requesting current-week run…']);try{const response=await fetchWithClerk(getToken,COMPLIANCE_UPLOADS_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'run_conversely_now'})});const result=await response.json();if(!response.ok)throw Error(result.error||'Run could not be started.');setSessionLog([`> Run requested · ${result.run_id}`]);await load()}catch(e){setError(e.message);setSessionLog(current=>[...current,`! ${e.message}`])}finally{setRunning(false)}};
+ const retry=async id=>{setRetrying(id);setError('');try{const response=await fetchWithClerk(getToken,COMPLIANCE_UPLOADS_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'retry_ix_upload',id})});const result=await response.json();if(!response.ok)throw Error(result.error||'Retry failed.');await load()}catch(e){setError(e.message)}finally{setRetrying(null)}};
+ const weekly=data?.weekly||{},results=weekly.results||[],stages=weekly.stages||{};
+ const today=dayKey(new Date()),todayRow=data?.reconciliation?.find(row=>row.day===today)||{};
+ const exceptions=useMemo(()=>{if(!data)return [];const missing=data.missing.filter(row=>rowFilter!=='test').map(row=>({id:`missing-${row.call_id}`,provider:'UHC',call_id:row.call_id,status:'missing code',attempts:0,last_error:'Invalid or missing SunFire code',is_test_enrollment:false,call_start:row.call_start,fix:true}));const failures=data.failures.filter(row=>rowFilter==='all'||Boolean(row.is_test_enrollment)===(rowFilter==='test'));return [...missing,...failures].filter(row=>!dayFilter||row.call_start||row.updated_at?dayKey(new Date(row.call_start||row.updated_at))===dayFilter:false)},[data,rowFilter,dayFilter]);
+ if(!canReview||data?.admin===false)return null;if(!data||data.identity!==identity)return error?<p className="ops-error" role="alert">{error}</p>:null;
+ const submitted=results.filter(row=>row.status==='submitted').length,skipped=results.filter(row=>row.status==='skipped').length,failed=results.filter(row=>row.status==='failed').length;
+ const history=new Map((weekly.history||[]).map(item=>[item.week_start,item]));const weekStart=weekly.current_week||weekly.run?.week_start||today;const weeks=Array.from({length:8},(_,i)=>{const date=new Date(`${weekStart}T12:00:00Z`);date.setUTCDate(date.getUTCDate()-(7-i)*7);return date.toISOString().slice(0,10)});
+
+ const gap=Math.max(0,Number(todayRow.expected_uploads||0)-Number(todayRow.uploaded||0));
+ return <details className="contacts-section cu-section" open><summary className="contacts-section-head">COMPLIANCE UPLOADS <span className="cu-environment">UHC {data.ix_environment==='TEST'?'test environment':'production'}</span></summary><div className="cu-body">
+  <Flow title="CONVERSELY" info="Automatic checks run at startup and hourly for the previous Monday–Sunday week. Run now covers the current week through now, with at most one submission per agent." nodes={[{label:'Calls',count:stages.calls},{label:'Eligible',count:stages.eligible,health:'normal'},{label:'Selected',count:stages.selected,health:'normal'},{label:'Submitted',count:stages.submitted,health:failed?'bad':stages.selected===stages.submitted?'good':'normal'}]} actions={<><button type="button" className="contacts-mini-btn" onClick={()=>void load()}>Refresh</button>{confirm?<span className="cu-confirm">Run for current week through now? <button onClick={()=>void runNow()}>Confirm</button><button onClick={()=>setConfirm(false)}>Cancel</button></span>:<button type="button" className="contacts-mini-btn" disabled={running||activeRun||!weekly.enabled||!weekly.worker_available} onClick={()=>setConfirm(true)}>{activeRun?'Run in progress':'Run Conversely now'}</button>}{sessionLog.length>0&&<button type="button" className="contacts-mini-btn" onClick={()=>setConsoleOpen(true)}>Console</button>}</>} meta={<>Last run {etTime(weekly.run?.started_at||weekly.run?.requested_at)} · week of {weekly.run?.week_start||'—'} · next check {etTime(weekly.next_check_at)}</>}/>
+  <Flow title="UHC TODAY" info="Daily UHC reconciliation. Household codes count as separate expected uploads." nodes={[{label:'Enrollments',count:todayRow.enrollments||0},{label:'Expected uploads',count:todayRow.expected_uploads||0,health:'normal'},{label:'Uploaded',count:todayRow.uploaded||0,health:Number(todayRow.failed||0)||Number(todayRow.missing_codes||0)?'bad':gap?'normal':'good'}]} branch={Number(todayRow.failed||0)||Number(todayRow.missing_codes||0)?[{label:'Failed',count:todayRow.failed||0},{label:'Missing codes',count:todayRow.missing_codes||0}]:null}/>
+  {error&&<p className="ops-error" role="alert">{error}</p>}{weekly.error&&<p className="ops-error">{weekly.error}</p>}
+  <div className="cu-label">AGENT RESULTS <Info>Latest Conversely run, one submission per agent per week. The bar shows attempts used out of five.</Info></div><div className="cu-roster">{results.length?results.map(row=><div className={`cu-agent ${row.status}`} key={row.agent_id}><span className="cu-avatar">{initials(row.agent_name)}</span><span className="cu-agent-copy"><strong>{row.agent_name||row.agent_id}</strong><small>{label(row.reason)||'—'}</small></span><span className="cu-agent-end"><b>{label(row.status)}</b><span className="cu-attempts" aria-label={`${row.attempts||0} of 5 attempts`}>{Array.from({length:5},(_,i)=><i className={i<Number(row.attempts||0)?'used':''} key={i}/>)}</span></span></div>):<span className="contacts-muted">No run results yet.</span>}</div>
+  <div className="cu-label">WEEKLY HISTORY <Info>Last eight Conversely weeks. Green completed, amber skipped for a reason other than no eligible calls, red failed, gray no run.</Info></div><div className="cu-history">{weeks.map(week=>{const item=history.get(week);const color=!item?'empty':item.failed?'bad':item.other_skipped?'warn':item.run.status==='complete'?'good':'empty';return <span className={`cu-history-block ${color}`} key={week} title={`${week} · ${etTime(item?.run?.started_at||item?.run?.requested_at)} · Submitted ${item?.submitted||0} · Skipped ${item?.skipped||0} · Failed ${item?.failed||0}`}/>})}<span className="cu-history-caption">oldest → latest</span></div>
+  <div className="cu-label">UHC RECONCILIATION · LAST 30 DAYS <Info>Each day shows the gap between expected uploads and uploaded records. Select a day with a gap to filter exceptions.</Info></div><Heatmap rows={data.reconciliation} onDay={setDayFilter}/>
+  <div className="cu-queue-head"><div className="cu-label">EXCEPTIONS {dayFilter&&<button className="cu-clear" onClick={()=>setDayFilter(null)}>· {dayFilter} ×</button>}</div><label>Enrollment type <select value={rowFilter} onChange={event=>setRowFilter(event.target.value)}><option value="all">All</option><option value="test">Test</option><option value="real">Real</option></select></label></div>
+  {exceptions.length?<div className="cu-table-wrap"><table className="cu-table"><thead><tr><th>Provider</th><th>Call</th><th>Status</th><th>Attempts</th><th>Error</th><th>Enrollment</th><th>Action</th></tr></thead><tbody>{exceptions.map(row=><tr key={row.id}><td>{row.provider}</td><td title={row.call_id}>{row.call_id?.slice(0,8)}</td><td>{label(row.status)}</td><td>{row.attempts||0}/5</td><td>{label(row.last_error)}{row.provider_message&&` · ${row.provider_message}`}</td><td>{row.is_test_enrollment?'Test':'Real'}</td><td>{row.fix?<button className="contacts-mini-btn" onClick={()=>setIntakeCall(row.call_id)}>Fix code</button>:row.provider==='UHC IX'&&['needs_attention','failed'].includes(row.status)&&!row.finalized_at?<button className="contacts-mini-btn" disabled={retrying!==null} onClick={()=>void retry(row.id)}>{retrying===row.id?'Retrying…':'Retry'}</button>:null}</td></tr>)}</tbody></table></div>:<p className="cu-zero">{dayFilter?`0 exceptions · no exceptions on ${dayFilter}`:'0 exceptions · all UHC enrollments have valid SunFire codes'}</p>}
+  {intakeCall&&<EnrollmentIntake callId={intakeCall} onClose={()=>setIntakeCall(null)} onSaved={()=>{setIntakeCall(null);void load()}}/>}
+ </div>{consoleOpen&&<div className="cu-console" role="dialog" aria-label="Conversely run console"><div className="cu-console-head">CONVERSELY RUN <button onClick={()=>setConsoleOpen(false)} aria-label="Close console">×</button></div><div className="cu-console-lines">{sessionLog.map((line,i)=><div key={`session-${i}`}><em>›</em> {line}</div>)}{(weekly.events||[]).map(event=><div key={event.id}><em>›</em> {etTime(event.created_at)} {event.message}</div>)}{weekly.run&&!(weekly.events||[]).length&&<><div><em>›</em> {stages.calls||0} calls found · {stages.eligible||0} eligible · {stages.selected||0} selected</div>{results.map(row=><div key={row.agent_id}><em>›</em> {row.agent_name||row.agent_id}: {label(row.status)} · {label(row.reason)}</div>)}</>}{weekly.run&&!activeRun&&<div><em>›</em> Finished · {submitted} submitted · {skipped} skipped · {failed} failed</div>}</div></div>}</details>
 }

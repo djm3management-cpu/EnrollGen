@@ -59,6 +59,7 @@ before(async()=>{
  await query(`INSERT INTO conversely_weekly_runs(week_start,samples_per_agent,created_at) VALUES('2020-01-06',1,'2020-01-13T12:00:00Z')`);
  await query(`INSERT INTO conversely_weekly_audit(week_start,tenant_id,agent_id,agent_slug,call_id,recording_sid,enrollment_key,eligible,selected,reason,sample_rank,submission_id) VALUES('2020-01-06',$1,$2,'agent_a',$3,$4,'legacy',true,true,'selected',1,$5)`,[tenant,agent,id(99),sid(99),id(98)]);
  await pg.exec(file('127_conversely_manual_runs.sql'));
+ await pg.exec(file('149_conversely_run_events.sql'));
  await addCall(10,agent,'Aetna',80);await addCall(11,agent,'UnitedHealthcare',95);await addCall(12,mark,'Humana',99);await addCall(13,excluded,'Other',100);await addCall(14,agent,'Aetna',1000,{intake:false});
  await addCall(15,id(6),'Aetna',100,{targetTenant:foreign});
  await db.rpc('heartbeat_conversely_worker',{p_enabled:true});
@@ -74,6 +75,17 @@ test('manual requests are admin-only, enabled-worker gated, tenant-scoped, and d
  assert.equal((await api(member)(request({action:'run_conversely_now',role:'admin'}))).status,403);
  const requests=await Promise.all([start(),start()]);assert.equal(requests[0],requests[1]);
  const [run]=await query('SELECT * FROM conversely_runs WHERE id=$1',[requests[0]]);assert.equal(run.tenant_id,tenant);assert.equal(new Date(run.week_start).toISOString().slice(0,10),week);assert.equal(run.status,'pending');
+});
+test('non-admin access returns 403 for fetch, refresh, run, retry, and code edits',async()=>{
+ const member={userId:'user-a',orgId:'org-a',tokenPayload:{org_role:'org:member'}};
+ const handler=api(member);
+ for(const req of [
+  new Request('https://app.test/api/compliance-uploads'),
+  new Request('https://app.test/api/compliance-uploads?enrollment_type=real'),
+  request({action:'run_conversely_now'}),
+  request({action:'retry_ix_upload',id:id(98)}),
+  new Request('https://app.test/api/compliance-uploads',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({call_id:id(99),sunfire_code:'ABC'})}),
+ ])assert.equal((await handler(req)).status,403);
 });
 test('worker immediately selects current-week completed intakes, honors rules and sends only one per agent despite larger legacy sample config',async()=>{
  await processManualConverselyRun(db,{env,isPlayable:async()=>true});

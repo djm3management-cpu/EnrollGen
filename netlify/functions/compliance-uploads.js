@@ -9,7 +9,8 @@ async function namedRunResults(db,tenantId,results){
   const ids=[...new Set(results.map(row=>row.agent_id).filter(Boolean))];
   const agents=checked(await db.from('enrolled_agents').select('id,clerk_user_id,name').eq('tenant_id',tenantId).in('id',ids));
   const clerkIds=[...new Set(agents.map(agent=>agent.clerk_user_id).filter(Boolean))];
-  const tenantAgents=clerkIds.length?checked(await db.from('tenant_agents').select('clerk_user_id,name,agent_slug').eq('tenant_id',tenantId).in('clerk_user_id',clerkIds)):[];
+  let tenantAgents=[];
+  if(clerkIds.length){try{tenantAgents=checked(await db.from('tenant_agents').select('clerk_user_id,name,agent_slug').eq('tenant_id',tenantId).in('clerk_user_id',clerkIds));}catch{/* Enrollment identity remains available if roster lookup is unavailable. */}}
   const byId=new Map(agents.map(agent=>[agent.id,agent]));
   const byClerk=new Map(tenantAgents.map(agent=>[agent.clerk_user_id,agent]));
   const usefulName=value=>value&&value.trim()&&!/^agent$/i.test(value.trim())?value.trim():null;
@@ -54,12 +55,24 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
       let weekly;
       try{
         const worker=checked(await db.from('conversely_worker_status').select('enabled,heartbeat_at').eq('singleton',true).maybeSingle());
+        let nextCheckAt=null;
+        try{nextCheckAt=checked(await db.from('conversely_worker_status').select('next_check_at').eq('singleton',true).maybeSingle())?.next_check_at||null;}catch{/* Migration may still be pending. */}
         const last=checked(await db.from('conversely_runs').select('id,week_start,trigger,requested_at,started_at,completed_at,status,last_error')
           .eq('tenant_id',identity.tenant.id).order('requested_at',{ascending:false}).order('id',{ascending:false}).limit(1));
         const run=last?.[0]||null;
         const results=run?await namedRunResults(db,identity.tenant.id,checked(await db.rpc('conversely_run_results',{p_run:run.id,p_tenant:identity.tenant.id}))):[];
-        weekly={available:true,enabled:worker?.enabled===true,worker_available:!!worker&&now()-Date.parse(worker.heartbeat_at)<=5*60_000,
-          current_week:currentConverselyWeek(now()),run,results};
+        const history=checked(await db.from('conversely_runs').select('id,week_start,requested_at,started_at,completed_at,status').eq('tenant_id',identity.tenant.id).order('requested_at',{ascending:false}).limit(40));
+        const weeks=[...new Set(history.map(item=>item.week_start))].slice(0,8);
+        const historyResults=await Promise.all(weeks.map(async week=>{
+          const weekRun=history.find(item=>item.week_start===week);
+          const rows=weekRun.id===run?.id?results:checked(await db.rpc('conversely_run_results',{p_run:weekRun.id,p_tenant:identity.tenant.id}));
+          return {week_start:week,run:weekRun,submitted:rows.filter(row=>row.status==='submitted').length,skipped:rows.filter(row=>row.status==='skipped').length,failed:rows.filter(row=>row.status==='failed').length,other_skipped:rows.filter(row=>row.status==='skipped'&&!['no_eligible_calls','no_eligible_call'].includes(row.reason)).length};
+        }));
+        const audit=run?checked(await db.from('conversely_weekly_audit').select('call_id,eligible,selected').eq('tenant_id',identity.tenant.id).eq('week_start',run.week_start).limit(5000)):[];
+        let events=[];
+        if(run){try{events=checked(await db.from('conversely_run_events').select('id,created_at,kind,message').eq('tenant_id',identity.tenant.id).eq('run_id',run.id).order('id').limit(500));}catch{/* Migration may still be pending. */}}
+        weekly={available:true,enabled:worker?.enabled===true,worker_available:!!worker&&now()-Date.parse(worker.heartbeat_at)<=5*60_000,next_check_at:nextCheckAt,
+          current_week:currentConverselyWeek(now()),run,results,history:historyResults,events,stages:{calls:audit.filter(row=>row.call_id).length,eligible:audit.filter(row=>row.eligible).length,selected:audit.filter(row=>row.selected).length,submitted:results.filter(row=>row.status==='submitted').length}};
       }catch{weekly={available:false,enabled:false,worker_available:false,run:null,results:[],error:'Conversely run history is unavailable. Apply migration 127 and start the updated worker.'};}
       const enrollmentType=new URL(request.url).searchParams.get('enrollment_type')||'all';
       if(!['all','test','real'].includes(enrollmentType))throw new EvidenceError(400,'Invalid enrollment type.');

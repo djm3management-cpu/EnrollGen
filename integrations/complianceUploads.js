@@ -64,6 +64,7 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
     }
     if(schedule && now()>=nextWeeklyCheck){
       nextWeeklyCheck=now()+60*60_000;
+      try{await db.from('conversely_worker_status').update({next_check_at:new Date(nextWeeklyCheck).toISOString()}).eq('singleton',true);}catch{/* Older schema remains operational. */}
       try{await scheduleConverselyWeek(db,{env,log,now,isPlayable,fetchImpl});}
       catch{log(JSON.stringify({event:'compliance_schedule_failed',stage:'conversely_weekly'}));}
     }
@@ -74,6 +75,14 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
       if(providers[provider]?.available===false)continue;
       for(let n=0;n<10;n++){
         const [job]=providers[provider]?.claim?await providers[provider].claim():await rpc('claim_compliance_upload',{p_provider:provider});if(!job)break;
+        let runEvent=null;
+        if(provider==='conversely'){
+          try{
+            const slot=checked(await db.from('conversely_week_slots').select('week_start,agent_id').eq('submission_id',job.id).eq('tenant_id',job.tenant_id).maybeSingle());
+            if(slot){const agentRun=checked(await db.from('conversely_run_agents').select('run_id').eq('submission_id',job.id).eq('tenant_id',job.tenant_id).limit(1));runEvent=agentRun?.[0]?.run_id||null;}
+            if(runEvent)await db.from('conversely_run_events').insert({run_id:runEvent,tenant_id:job.tenant_id,kind:'attempt',message:`Submitting call ${job.call_id} · attempt ${job.attempts}/5`});
+          }catch{/* Telemetry must not stop delivery. */}
+        }
         let success=false,receipt=null,error=null,failure=null;
         try{
           let call=checked(await db.from('call_records').select('*').eq('id',job.call_id).eq('tenant_id',job.tenant_id).single());
@@ -104,6 +113,7 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
         }catch(e){failure=e;error=/^[a-z_]+(?:_\d{3})?$/.test(e.message)?e.message:'upload_failed';}
         if(providers[provider]?.finish)await providers[provider].finish(job,{success,receipt,error,failure});
         else await rpc('finish_compliance_upload',{p_provider:provider,p_id:job.id,p_token:job.lease_token,p_success:success,p_error:error,p_receipt:receipt});
+        if(runEvent){try{await db.from('conversely_run_events').insert({run_id:runEvent,tenant_id:job.tenant_id,kind:success?'submitted':'error',message:`Call ${job.call_id}: ${success?'submitted':error}`});}catch{/* Telemetry must not stop delivery. */}}
         log(JSON.stringify({event:'compliance_upload',provider,id:job.id,call_id:job.call_id,attempt:job.attempts,success,error}));
       }
     }
