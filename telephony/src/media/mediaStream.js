@@ -12,6 +12,9 @@ import { decodeMulaw, rmsLevel } from './mulaw.js';
 import { verifyMediaStreamToken } from './streamToken.js';
 import { createMediaLeaseClient } from './streamLease.js';
 import { openDeepgramTrack } from './deepgramTrack.js';
+import twilio from 'twilio';
+import { authenticatedStreamUrl } from './streamToken.js';
+import { reserveSttReconnect } from './sttReconnectBudget.js';
 
 export const MEDIA_LIMITS = Object.freeze({ frameBytes: 16 * 1024, audioBytes: 3200,
   pendingFrames: 400, pendingBytes: 256 * 1024, startMs: 5000, renewMs: 5000 });
@@ -21,9 +24,21 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
   openTrack = openDeepgramTrack, verify = verifyMediaStreamToken, now = Date.now,
   waitForAnswer = config.sttWaitForAnswer, answerPollMs = 1000,
   pathPrefix = '/media', speakersFor = () => SPEAKERS,
-  limits = MEDIA_LIMITS, onUnexpectedStop = reportSttLimit, transcriptWriter = claims => createTranscriptWriter({ db: supabase, claims }) } = {}) {
+  limits = MEDIA_LIMITS, onUnexpectedStop = reportSttLimit, transcriptWriter = claims => createTranscriptWriter({ db: supabase, claims }),
+  client = null,
+  reserveRestart = reserveSttReconnect,
+  isConference = async claims => {
+    const { data, error } = await supabase.from('call_conferences').select('call_id')
+      .eq('parent_call_sid', claims.parentCallSid || claims.callSid).is('ended_at', null).maybeSingle();
+    if (error) throw error;
+    return Boolean(data);
+  },
+  schedule = setTimeout, cancel = clearTimeout,
+  log = entry => console.info(JSON.stringify(entry)) } = {}) {
   const wss = new WebSocketServer({ noServer: true, maxPayload: limits.frameBytes, perMessageDeflate: false });
   const active = new Map();
+  const recovery = new Map();
+  const restClient = () => client || twilio(config.twilioAccountSid, config.twilioAuthToken, { timeout: 5000, autoRetry: false });
   wss.on('wsClientError', (_error, socket) => {
     console.warn('[media] rejected: invalid_websocket_handshake');
     socket.end('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
@@ -62,7 +77,12 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     let customerChunks = [], customerBytes = 0, lastLevel = now();
     const tracks = {};
     const reconnectBudget = {used:0};
-    let answerTimer = null, checkingAnswer = false, timelineOrigin = null, unsubscribe = () => {};
+    let answerTimer = null, checkingAnswer = false, timelineOrigin = null, timelineOffsetMs = 0, unsubscribe = () => {};
+    let recoveryState = null, closeHandled = false, recoveryTimer = null, releasePromise = Promise.resolve();
+    let allowRecovery = true;
+    recoveryState = recovery.get(claims.callSid) || null;
+    const callSid = claims.parentCallSid || claims.callSid;
+    const logMedia = (event, reason, extra = {}) => log({ event, call_sid: callSid, leg_sid: claims.callSid, stream_sid: streamSid, reason, ...extra });
     const openTracks = () => {
       if (stopped || Object.keys(tracks).length) return;
       for (const [track, speaker] of Object.entries(speakers)) tracks[track] = openTrack({ speaker, notify: emit, timelineOrigin, claims, reconnectBudget });
@@ -85,10 +105,89 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         status: 'unavailable', message: `${speaker === 'agent' ? 'Agent' : speaker === 'third_party' ? 'Third party' : 'Customer'} transcription stopped: call binding could not be verified.` });
     };
     const timer = setTimeout(() => end(1008, 'Media start timeout'), limits.startMs); timer.unref();
+    const reconnecting = reason => {
+      if (!binding) return;
+      for (const speaker of Object.values(speakers)) emit({ type: 'transcription_health', speaker,
+        status: 'reconnecting', message: 'Transcript reconnecting', timestamp: now(), reason });
+    };
+    const afterClose = reason => {
+      if (closeHandled) return;
+      closeHandled = true;
+      if (recoveryTimer) { cancel(recoveryTimer); recoveryTimer = null; }
+      if (allowRecovery && recoveryState && !recoveryState.exhausted) {
+        if (binding) reconnecting(reason);
+        void restartStream(reason);
+      }
+    };
+    async function restartStream(reason) {
+      if (!recoveryState || recoveryState.restarting || recoveryState.exhausted) return;
+      recoveryState.restarting = true;
+      try {
+        await releasePromise;
+        // Conference legs own their own authenticated streams and recovery loop.
+        if (claims.participantId || await isConference(claims)) {
+          recoveryState.exhausted = true;
+          logMedia('media_stream_recovery_skipped', 'conference_streams_managed_separately');
+          return;
+        }
+        const twilioClient = restClient();
+        const call = await twilioClient.calls(claims.callSid).fetch();
+        if (call.accountSid !== config.twilioAccountSid) throw new Error('account_mismatch');
+        if (call.status !== 'in-progress') {
+          logMedia('media_stream_recovery_skipped', 'call_not_in_progress', { call_status: call.status });
+          recovery.delete(claims.callSid);
+          return;
+        }
+        if (recoveryState.restarts >= 20 || !(await reserveRestart({ claims }))) {
+          recoveryState.exhausted = true;
+          for (const speaker of Object.values(speakers)) emit({ type: 'transcription_error', speaker,
+            status: 'unavailable', message: 'Transcript reconnect limit reached.', timestamp: now(), alert: true });
+          await Promise.resolve(onUnexpectedStop({ claims, reason: 'media_stream_restart_limit' })).catch(() => {});
+          logMedia('media_stream_restart_limit', 'maximum_restarts_reached', { restarts: recoveryState.restarts });
+          return;
+        }
+        recoveryState.restarts++;
+        const generation = recoveryState.restarts;
+        const name = `agent-transcription-${generation}`;
+        const identity = { callSid: claims.callSid, agentId: claims.agentId, attemptId: claims.attemptId,
+          tenantId: claims.tenantId, inboundCallId: claims.inboundCallId, direction: claims.direction };
+        // A transport can disappear while Twilio still considers its Stream live.
+        // Stop that resource first so there is only one media stream per leg.
+        if (streamSid) {
+          try { await twilioClient.calls(claims.callSid).streams(streamSid).update({ status: 'stopped' }); }
+          catch (error) { if (error.code !== 20404) throw error; }
+        }
+        recoveryState.offsetMs = Math.max(0, now() - recoveryState.timelineOrigin);
+        logMedia('media_stream_reconnect', reason, { attempt: generation, offset_ms: recoveryState.offsetMs });
+        const stream = await twilioClient.calls(claims.callSid).streams.create({ name, track: 'both_tracks', url: authenticatedStreamUrl(identity) });
+        log({ event: 'media_stream_start_requested', call_sid: callSid, leg_sid: claims.callSid,
+          stream_sid: stream.sid, reason: 'automatic_recovery', attempt: generation });
+      } catch (error) {
+        if (Number(error?.code) === 20404) {
+          logMedia('media_stream_recovery_skipped', 'call_not_found');
+          recovery.delete(claims.callSid);
+          return;
+        }
+        logMedia('media_stream_restart_error', error?.code || 'twilio_api_error', { attempt: recoveryState.restarts });
+        if (recoveryState.restarts < 20 && !recoveryState.exhausted) {
+          const delay = Math.min(5000, 250 * (2 ** Math.min(recoveryState.restarts, 4)));
+          recoveryTimer = schedule(() => { recoveryTimer = null; void restartStream(reason); }, delay);
+          recoveryTimer?.unref?.();
+        } else {
+          recoveryState.exhausted = true;
+          for (const speaker of Object.values(speakers)) emit({ type: 'transcription_error', speaker,
+            status: 'unavailable', message: 'Transcript could not reconnect.', timestamp: now(), alert: true });
+        }
+      } finally { recoveryState.restarting = false; }
+    }
     function end(code = 1000, reason = 'Stream stopped') {
       if (stopped) return;
       if (code !== 1000) console.warn(`[media] rejected: ${reason}`);
-      if (binding && code !== 1000) {
+      const recoverable = reason === 'twilio_stop_event' || reason === 'Media heartbeat timeout' || reason === 'Media start timeout' ||
+        reason === 'Media transport error' || reason.startsWith('websocket_close_');
+      if (reason === 'Call attempt replaced') allowRecovery = false;
+      if (recoveryState && !recoverable && reason !== 'Call attempt replaced') recoveryState.exhausted = true;
+      if (binding && code !== 1000 && !recoverable) {
         const incidentReason = reason.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,100);
         try {
         emit({type:'transcription_incident',reason:incidentReason,atMs:lastAudioMs,timestamp:timelineOrigin+lastAudioMs});
@@ -101,10 +200,12 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       pending = []; pendingBytes = 0; customerChunks = []; customerBytes = 0;
       for (const track of Object.values(tracks)) track.close();
       if (active.get(claims.callSid)?.owner === owner) active.delete(claims.callSid);
-      if (owned) void leases.release(claims.callSid, owner, claims).catch(() => {});
+      if (owned) releasePromise = Promise.resolve().then(() => leases.release(claims.callSid, owner, claims)).catch(() => {});
       if (binding) emit({ type: 'call_status', status: 'stream_stopped', streamId: streamSid, callSid: claims.parentCallSid || claims.callSid });
+      logMedia('media_stream_stop', reason, { close_code: code });
+      ws.once('close', () => afterClose(reason));
       if (ws.readyState === ws.OPEN) ws.close(code, reason);
-      const forceClose = setTimeout(() => ws.terminate(), 1000);
+      const forceClose = schedule(() => { ws.terminate(); afterClose(reason); }, 1000);
       forceClose.unref();
       ws.once('close', () => clearTimeout(forceClose));
     }
@@ -117,7 +218,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       if (message.streamSid !== streamSid) return denied();
       if (message.event === 'stop') {
         if (message.stop?.callSid !== claims.callSid || message.stop?.accountSid !== claims.accountSid) return denied();
-        return end();
+        return end(1000, 'twilio_stop_event');
       }
       if (message.event !== 'media') return denied();
       const { track, payload } = message.media || {};
@@ -126,8 +227,8 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       const audio = Buffer.from(payload, 'base64');
       if (!audio.length || audio.length > limits.audioBytes) return denied();
       if (!tracks[track]) return; // Drop ringing audio; never queue it for later.
-      lastAudioMs = Math.max(lastAudioMs, Number(message.media.timestamp)||0);
-      tracks[track].send(audio, message.media.timestamp == null ? undefined : Number(message.media.timestamp));
+      lastAudioMs = Math.max(lastAudioMs, timelineOffsetMs + (Number(message.media.timestamp)||0));
+      tracks[track].send(audio, message.media.timestamp == null ? undefined : timelineOffsetMs + Number(message.media.timestamp));
       if (track === 'inbound') {
         customerChunks.push(audio); customerBytes += audio.length;
         const timestamp = now();
@@ -145,15 +246,24 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       const start = message.start || {}, params = start.customParameters || {}, format = start.mediaFormat || {};
       if (typeof start.streamSid !== 'string' || !/^MZ[0-9a-fA-F]{32}$/.test(start.streamSid)) return denied('Invalid stream SID');
       if (start.callSid !== claims.callSid) return denied('Call SID mismatch');
-      if (params.agentId !== claims.agentId) return denied('Agent mismatch');
       if (start.accountSid !== claims.accountSid ||
-        params.agentId !== claims.agentId || params.attemptId !== claims.attemptId ||
-        (params.inboundCallId || null) !== claims.inboundCallId ||
+        (params.agentId != null && params.agentId !== claims.agentId) ||
+        (params.attemptId != null && params.attemptId !== claims.attemptId) ||
+        (params.inboundCallId != null && params.inboundCallId !== claims.inboundCallId) ||
         message.streamSid !== start.streamSid || format.encoding !== 'audio/x-mulaw' ||
         format.sampleRate !== 8000 || format.channels !== 1 ||
         !Array.isArray(start.tracks) || start.tracks.length !== Object.keys(speakers).length ||
         !Object.keys(speakers).every(track => start.tracks.includes(track))) return denied();
       streamSid = start.streamSid;
+      recoveryState = recovery.get(claims.callSid);
+      if (!recoveryState) {
+        recoveryState = { timelineOrigin: now(), offsetMs: 0, restarts: 0, restarting: false, exhausted: false };
+        recovery.set(claims.callSid, recoveryState);
+      }
+      timelineOrigin = recoveryState.timelineOrigin;
+      timelineOffsetMs = recoveryState.restarts ? Math.max(recoveryState.offsetMs, now() - recoveryState.timelineOrigin) : recoveryState.offsetMs;
+      recoveryState.offsetMs = timelineOffsetMs;
+      logMedia('media_stream_start', 'twilio_start_event', { generation: recoveryState.restarts });
       try {
         owned = await leases.claim(claims, streamSid, owner);
         if (stopped) { if (owned) await leases.release(claims.callSid, owner, claims); return; }
@@ -163,7 +273,6 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         active.get(claims.callSid)?.end(1000, 'Call attempt replaced');
         active.set(claims.callSid, { owner, end });
         binding = true; state = 'active'; leaseGoodAt = now(); clearTimeout(timer);
-        timelineOrigin = now();
         // A stop received during lease acquisition wins over answer evidence.
         const pendingStop = pending.find(packet => packet.event === 'stop');
         if (pendingStop) { consume(pendingStop); if (stopped) return; }
@@ -208,8 +317,14 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       if (state !== 'active') return denied();
       consume(message);
     });
-    ws.on('close', () => end(1011, 'Media transport closed'));
-    ws.on('error', () => end(1011, 'Media transport error'));
+    ws.on('close', (code, reason) => {
+      const closeReason = reason?.toString?.() || '';
+      const detail = closeReason || `websocket_close_${code}`;
+      logMedia('media_stream_close', detail, { close_code: code });
+      if (!stopped) { end(1011, `websocket_close_${code}${closeReason ? `_${closeReason}` : ''}`); afterClose(detail); }
+      else afterClose(detail);
+    });
+    ws.on('error', error => { logMedia('media_stream_error', error?.code || 'websocket_error'); end(1011, error?.code || 'Media transport error'); });
   });
   return { wss, handleUpgrade };
 }

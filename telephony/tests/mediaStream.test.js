@@ -64,12 +64,15 @@ async function until(check) {
   while (!check()) { if (Date.now() > deadline) throw new Error('Condition timed out'); await new Promise(resolve => setTimeout(resolve,5)); }
 }
 async function harness(t, options = {}) {
-  const events = [], tracks = [], clients = [];
+  const events = [], tracks = [], clients = [], logs = [];
+  const twilioStreams = [];
+  const mockTwilio = { calls: () => ({ fetch: async () => ({ status: 'completed', accountSid }),
+    streams: Object.assign(() => ({ update: async () => ({}) }), { create: async input => { const stream = { sid: sid('MZ'), input }; twilioStreams.push(stream); return stream; } }) }) };
   const media = createMediaServer({ waitForAnswer: false, transcriptWriter: () => () => {}, leases: createMediaLeaseClient(db),notify: (agentId,message) => events.push({ agentId,...message }),
     openTrack: ({ speaker,notify,timelineOrigin }) => {
-      const track = { speaker,notify,timelineOrigin,audio: [],closed: false,send(chunk) { this.audio.push(chunk); },close() { this.closed = true; } };
+      const track = { speaker,notify,timelineOrigin,audio: [],times: [],closed: false,send(chunk,time) { this.audio.push(chunk); this.times.push(time); },close() { this.closed = true; } };
       tracks.push(track); return track;
-    }, ...options });
+    }, client: mockTwilio, isConference: async () => false, reserveRestart: async () => true, log: entry => logs.push(entry), ...options });
   const server = createServer(); server.on('upgrade',media.handleUpgrade);
   await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
   const base = 'ws://127.0.0.1:' + server.address().port;
@@ -84,7 +87,7 @@ async function harness(t, options = {}) {
     await new Promise(resolve => server.close(resolve));
     await new Promise(resolve => setTimeout(resolve,5));
   });
-  return { base,connect,events,tracks,media,clients };
+  return { base,connect,events,tracks,media,clients,twilioStreams,logs };
 }
 
 test('unsigned, forged, expired, wrong-purpose and query-based upgrades are rejected before Deepgram', async t => {
@@ -120,6 +123,34 @@ test('valid stream routes both tracks and final transcripts only to the bound ag
   await until(() => h.tracks.every(track => track.closed));
   await new Promise(resolve => setTimeout(resolve,10));
   assert.equal((await sql('SELECT count(*)::int AS n FROM media_stream_leases WHERE call_sid=$1',[claims.callSid])).rows[0].n,0);
+});
+
+test('a live Twilio stop restarts the stream once with a continuous media timestamp offset', async t => {
+  let clock = Date.now();
+  const h = await harness(t, { now: () => clock,
+    client: { calls: () => ({ fetch: async () => ({ status: 'in-progress', accountSid }),
+      streams: Object.assign(() => ({ update: async () => ({}) }), { create: async input => { const stream = { sid: sid('MZ'), input }; h.twilioStreams.push(stream); return stream; } }) }) } });
+  const claims = await seedCall(), ws = await h.connect(claims), first = start(claims);
+  ws.send(JSON.stringify(first)); await until(() => h.tracks.length === 2);
+  clock += 90_000;
+  const closed = once(ws, 'close');
+  ws.send(JSON.stringify({ event: 'stop', streamSid: first.streamSid, stop: { callSid: claims.callSid, accountSid } }));
+  await closed;
+  await until(() => h.twilioStreams.length === 1);
+  assert.equal(h.twilioStreams[0].input.track, 'both_tracks');
+  assert.match(h.twilioStreams[0].input.name, /^agent-transcription-1$/);
+  assert.equal(h.logs.find(entry => entry.event === 'media_stream_reconnect')?.offset_ms, 90_000);
+  assert.ok(h.events.some(event => event.type === 'transcription_health' && event.status === 'reconnecting'));
+  assert.ok(h.events.some(event => event.type === 'call_status' && event.status === 'stream_stopped'));
+  const token = new URL(h.twilioStreams[0].input.url).pathname.split('/').at(-1);
+  const next = await h.connect(claims, token), second = start(claims);
+  second.start.customParameters = {}; // REST-created streams authenticate through their signed URL.
+  next.send(JSON.stringify(second)); await until(() => h.tracks.length === 4);
+  const resumedFrame = frame(second.streamSid, 'inbound'); resumedFrame.media.timestamp = 0;
+  next.send(JSON.stringify(resumedFrame));
+  await until(() => h.tracks[2].audio.length === 1);
+  assert.equal(h.tracks[2].times[0], 90_000);
+  assert.equal(h.tracks[2].timelineOrigin, h.tracks[0].timelineOrigin);
 });
 
 test('mismatched agent, call, account, attempt, inbound ID and audio format are rejected without tracks', async t => {
@@ -610,12 +641,14 @@ test('a transient renewal transport error keeps the valid lease and transcriptio
  signalMediaLifecycle({callSid:claims.callSid,attemptId:claims.attemptId,ended:true});
 });
 
-test('unexpected media disconnect persists its reason and alerts without waiting for reconnect exhaustion',async t=>{
+test('unexpected media disconnect persists its reason and automatically starts a replacement stream',async t=>{
  const persisted=[],alerts=[],claims=await seedCall();
- const h=await harness(t,{transcriptWriter:()=>message=>persisted.push(message),onUnexpectedStop:async event=>alerts.push(event)});
+ const h=await harness(t,{transcriptWriter:()=>message=>persisted.push(message),onUnexpectedStop:async event=>alerts.push(event),
+   client:{calls:()=>({fetch:async()=>({status:'in-progress',accountSid}),streams:Object.assign(()=>({update:async()=>({})}),{create:async input=>{const stream={sid:sid('MZ'),input};h.twilioStreams.push(stream);return stream;}})})}});
  const ws=await h.connect(claims);ws.send(JSON.stringify(start(claims)));await until(()=>h.tracks.length===2);ws.terminate();
- await until(()=>alerts.length===1);
- assert.equal(persisted.find(m=>m.type==='transcription_incident').reason,'media_transport_closed');
- assert.ok(h.events.some(m=>m.type==='transcription_error'&&m.status==='unavailable'));
+ await until(()=>h.twilioStreams.length===1);
+ assert.equal(persisted.find(m=>m.type==='transcription_incident'),undefined);
+ assert.ok(h.events.some(m=>m.type==='transcription_health'&&m.status==='reconnecting'));
+ assert.equal(alerts.length,0);
  assert.equal(h.tracks.every(track=>track.closed),true);
 });
