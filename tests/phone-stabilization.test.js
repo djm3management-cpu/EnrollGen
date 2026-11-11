@@ -39,7 +39,7 @@ function phoneFixture(){
   // Conference-enabled lifecycle paths have their own SQL/WebSocket suite.
   useConferenceCall:()=>({enabled:false,agents:[],conference:null,busy:false,error:'',run:async()=>{}}),
   resolveRequestingAgentUuid:()=>null,transcriptionHealthError:()=>'',transcriptionHealthForCall:()=>({}),
-  updateTranscriptionHealth:()=>({}),publishSms:()=>{},publishAudioLevel:()=>{},debugLog:()=>{},createVoiceTelemetry:()=>()=>{},
+  updateTranscriptionHealth:()=>({}),publishSms:()=>{},publishAudioLevel:()=>{},publishCallVolume:()=>{},setCallVolumeActive:()=>{},debugLog:()=>{},createVoiceTelemetry:()=>()=>{},
   checkOutbound:async()=>({blocked:false}),canonicalOutbound:async()=>({contactId:null,attemptId:'attempt',phoneNumber:'+15555555555'}),
   createAgentPhoneConnection:({onMessage})=>{deliverTranscript=onMessage;return {setReady(){},start(){},stop(){}};},
   fetch:async()=>({ok:true,json:async()=>({token:'token'})}),

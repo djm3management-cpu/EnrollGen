@@ -22,7 +22,7 @@ import {
 } from "../lib/agentIdentity";
 import { createAgentPhoneConnection } from "../lib/agentPhoneConnection";
 import { publishSms } from "../lib/smsEvents";
-import { publishAudioLevel } from "../stores/audioLevelStore";
+import { publishAudioLevel, publishCallVolume, setCallVolumeActive } from "../stores/audioLevelStore";
 import { updateTranscriptionHealth, transcriptionHealthError, transcriptionHealthForCall } from "../lib/transcriptionHealth";
 import { updateLiveTranscript } from "../lib/liveTranscript.js";
 import { installAgentAudio, requestAgentMicrophone } from "../lib/audio/AgentAudioProcessor.js";
@@ -113,6 +113,54 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   const [isMuted, setIsMuted] = useState(false);
   const [isHeld, setIsHeld] = useState(false);
   const [connectedAt, setConnectedAt] = useState(null);
+  const volumeCallRef = useRef(null);
+
+  // Twilio's Call volume event reports the local microphone and remote playback
+  // levels directly, independent of the audio processing/transcription graph.
+  useEffect(() => {
+    const call = activeCall?.call;
+    if (!call || typeof call.on !== 'function') {
+      volumeCallRef.current = null;
+      setCallVolumeActive(false);
+      publishAudioLevel('agent', 0, { immediate: true });
+      publishAudioLevel('customer', 0, { immediate: true });
+      return undefined;
+    }
+    volumeCallRef.current = call;
+    setCallVolumeActive(true);
+    let input = 0;
+    let output = 0;
+    let lastDebugAt = 0;
+    const onVolume = (inputVolume, outputVolume) => {
+      if (volumeCallRef.current !== call) return;
+      const alpha = 0.35;
+      input = input * (1 - alpha) + (Number.isFinite(inputVolume) ? inputVolume : 0) * alpha;
+      output = output * (1 - alpha) + (Number.isFinite(outputVolume) ? outputVolume : 0) * alpha;
+      publishCallVolume(input, output);
+      if (performance.now() - lastDebugAt > 1000) {
+        lastDebugAt = performance.now();
+        debugLog(`[AudioLevels] source=Twilio Call volume inputVolume=${inputVolume} outputVolume=${outputVolume}`);
+      }
+    };
+    const stop = () => {
+      input = 0; output = 0;
+      publishCallVolume(0, 0, { immediate: true });
+    };
+    call.on('volume', onVolume);
+    call.on('disconnect', stop);
+    call.on('cancel', stop);
+    call.on('reject', stop);
+    return () => {
+      if (typeof call.off === 'function') {
+        call.off('volume', onVolume); call.off('disconnect', stop); call.off('cancel', stop); call.off('reject', stop);
+      } else if (typeof call.removeListener === 'function') {
+        call.removeListener('volume', onVolume); call.removeListener('disconnect', stop); call.removeListener('cancel', stop); call.removeListener('reject', stop);
+      }
+      if (volumeCallRef.current === call) volumeCallRef.current = null;
+      stop();
+      setCallVolumeActive(false);
+    };
+  }, [activeCall?.call]);
 
   const deviceRef = useRef(null);
   const phoneConnectionRef = useRef(null);

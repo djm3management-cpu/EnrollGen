@@ -12,6 +12,7 @@ const pendingLevels = {
 let snapshot = { ...pendingLevels };
 let publishTimer = null;
 let lastPublishedAt = 0;
+let callVolumeActive = false;
 
 function normalizePeaks(peaks) {
   if (!peaks?.length) return EMPTY_PEAKS;
@@ -63,26 +64,30 @@ function getSnapshot() {
 }
 
 export function publishAudioLevel(channel, value, { immediate = false, peaks = null } = {}) {
-  const key = channel === "customer" ? "customerLevel" : "agentLevel";
-  const peaksKey = channel === "customer" ? "customerPeaks" : "agentPeaks";
-  pendingLevels[key] = Number.isFinite(value)
-    ? Math.max(0, Math.min(1, value))
-    : 0;
-  pendingLevels[peaksKey] =
-    peaks?.length || pendingLevels[key] > 0
-      ? normalizePeaks(peaks)
-      : EMPTY_PEAKS;
+  if (callVolumeActive) return;
+  publishLevel(channel, value, { immediate, peaks });
+}
 
+export function setCallVolumeActive(active) {
+  callVolumeActive = Boolean(active);
+}
+
+export function publishCallVolume(inputVolume, outputVolume, options = {}) {
+  callVolumeActive = true;
+  publishLevel('agent', inputVolume, options);
+  publishLevel('customer', outputVolume, options);
+}
+
+function publishLevel(channel, value, { immediate = false, peaks = null } = {}) {
+  const key = channel === 'customer' ? 'customerLevel' : 'agentLevel';
+  const peaksKey = channel === 'customer' ? 'customerPeaks' : 'agentPeaks';
+  pendingLevels[key] = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
+  pendingLevels[peaksKey] = peaks?.length || pendingLevels[key] > 0 ? normalizePeaks(peaks) : EMPTY_PEAKS;
   const elapsed = performance.now() - lastPublishedAt;
   if (immediate || elapsed >= 66) {
     if (publishTimer) window.clearTimeout(publishTimer);
     emit();
-    return;
-  }
-
-  if (!publishTimer) {
-    publishTimer = window.setTimeout(emit, Math.max(0, 66 - elapsed));
-  }
+  } else if (!publishTimer) publishTimer = window.setTimeout(emit, Math.max(0, 66 - elapsed));
 }
 
 export function useAudioLevels() {
