@@ -7,21 +7,47 @@ import { mediaUrl, fetchRecordingMedia } from '../telephony/src/recordings.js';
 
 const checked = ({data,error}) => { if(error) throw Error('database_error'); return data; };
 export const uploadEnabled = value => value === 'true';
+const requiredConversely = (value,field) => {
+  const text=String(value??'').trim();
+  if(!text)throw Error(`conversely_missing_${field}`);
+  return text;
+};
+const converselyDate = (value,field) => {
+  const date=new Date(requiredConversely(value,field));
+  if(!Number.isFinite(date.getTime()))throw Error(`conversely_invalid_${field}`);
+  return date.toISOString().slice(0,10);
+};
 export function converselyPayload(call, recordingPath, agent = {}) {
   const m = call.metadata || {};
-  return {
-    Target: 'New Gen Health Solutions', CallID: call.id, CallType: call.call_type || '',
-    RecordingPath: recordingPath, CallDateTime: call.call_start || '',
-    AgentID: call.agent_id || '', AgentName: call.agent_name || '', AgentEmail: agent.email || m.agent_email || '',
-    ApplicantFirstName: call.customer_first_name || '', ApplicantLastName: call.customer_last_name || '',
-    ApplicantPhoneNumber: call.customer_phone || '', ApplicantState: call.customer_state || call.state_code || '',
-    ApplicantZip: call.zip_code || '', CallDuration: call.call_duration_seconds || 0,
-    Disposition: call.call_outcome || '', CampaignName: m.campaign_name || call.lead_source || '',
-    PlanName: call.plan_name || '', CarrierName: call.carrier_name || '', EffectiveDate: call.effective_date || '',
-    SubmissionDate: m.submission_date || call.created_at || '', EnrollmentID: call.enrollment_intake_id ? (call.enrollment_confirmation_number || '') : (call.enrollment_confirmation_number || call.id),
-    ContractYear: m.contract_year || call.effective_date?.slice(0,4) || '', ContractID: m.contract_id || '',
-    PlanID: call.plan_id || '', SegmentID: m.segment_id || '',
+  const callTime=new Date(requiredConversely(call.call_start,'call_datetime'));
+  if(!Number.isFinite(callTime.getTime()))throw Error('conversely_invalid_call_datetime');
+  const effectiveDate=converselyDate(call.effective_date,'effective_date');
+  const planId=requiredConversely(call.plan_id,'plan_id');
+  if(!/^\d{1,3}$/.test(planId))throw Error('conversely_invalid_plan_id');
+  const contractYear=requiredConversely(m.contract_year || effectiveDate.slice(0,4),'contract_year');
+  if(!/^\d{4}$/.test(contractYear))throw Error('conversely_invalid_contract_year');
+  const record={
+    CallID:requiredConversely(call.id,'call_id'), CallType:'Medicare',
+    RecordingPath:requiredConversely(recordingPath,'recording_path'), Target:'New Gen Health Solutions',
+    ApplicantFirstName:requiredConversely(call.customer_first_name,'applicant_first_name'),
+    ApplicantLastName:requiredConversely(call.customer_last_name,'applicant_last_name'),
+    ApplicantPhoneNumber:requiredConversely(call.customer_phone,'applicant_phone_number'),
+    ApplicantState:requiredConversely(call.customer_state || call.state_code,'applicant_state'),
+    ApplicantZip:requiredConversely(call.zip_code,'applicant_zip'),
+    AgentID:requiredConversely(call.agent_id,'agent_id'), AgentName:requiredConversely(call.agent_name,'agent_name'),
+    CallDateTime:callTime.toISOString().slice(0,19).replace('T',' '), EffectiveDate:effectiveDate,
+    PlanName:requiredConversely(call.plan_name,'plan_name'), CarrierName:requiredConversely(call.carrier_name,'carrier_name'),
+    SubmissionDate:converselyDate(m.submission_date,'submission_date'),
+    EnrollmentID:requiredConversely(call.enrollment_confirmation_number,'enrollment_id'),
+    ContractYear:contractYear, ContractID:requiredConversely(m.contract_id,'contract_id'),
+    PlanID:planId.padStart(3,'0'), SegmentID:String(m.segment_id??'').trim() || '0', Conversion:'1', Billable:'1',
   };
+  const optional={AgentEmail:agent.email || m.agent_email, Disposition:call.call_outcome,
+    CampaignName:m.campaign_name || call.lead_source, PCPName:agent.pcpName};
+  for(const [key,value] of Object.entries(optional))if(String(value??'').trim())record[key]=String(value).trim();
+  if(call.call_duration_seconds!=null && Number.isFinite(Number(call.call_duration_seconds)) && Number(call.call_duration_seconds)>=0)
+    record.CallDuration=Number(call.call_duration_seconds);
+  return record;
 }
 
 export async function playableMp3(candidate,{env=process.env,fetchImpl=fetch}={}) {
@@ -105,7 +131,7 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
             if(reason)throw Error(reason);
             if(!env.CONVERSELY_API_KEY)throw Error('conversely_key_missing');
             const grant=await recordingComplianceGrant(db,{admin:true,tenant:{id:job.tenant_id},auth:{userId:'integrations-worker'}},recording,{env,format:'mp3'});
-            const result=await send('https://sms.converselyai.com/api/metadata/import',JSON.stringify({metadata:[converselyPayload(call,grant.url)]}),
+            const result=await send('https://sms.converselyai.com/api/metadata/import',JSON.stringify({metadata:[converselyPayload(call,grant.url,{pcpName:intake.data?.pcpName})]}),
               {'Api-Key':env.CONVERSELY_API_KEY,'Idempotency-Key':job.id});
             log(JSON.stringify({event:'conversely_response',id:job.id,status:result.status,
               body:typeof result.body==='string'?result.body.replaceAll(env.CONVERSELY_API_KEY,'[REDACTED]'):null}));

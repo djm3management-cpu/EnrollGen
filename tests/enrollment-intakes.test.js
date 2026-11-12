@@ -148,8 +148,10 @@ test('GHL uses durable leases, exponential retries, stable idempotency, and sani
 });
 test('compliance metadata comes only from the selected completed intake and submission timestamp',async()=>{
  const [intake]=await query('SELECT * FROM enrollment_intakes WHERE id=$1',[intakeId]);
- const callFields=intakeCallFields({id:call,carrier_name:'STALE',customer_first_name:'STALE',metadata:{contract_id:'STALE'}},intake),payload=converselyPayload(callFields,'https://recording.test/audio.mp3');
- for(const [key,value] of Object.entries({CarrierName:'UnitedHealthcare',PlanName:'Test Plan',ContractID:'H1234',PlanID:'001',SegmentID:'0',EnrollmentID:'',EffectiveDate:'2027-01-01',SubmissionDate:intake.submitted_at,ApplicantFirstName:'Jane',ApplicantLastName:'Doe',ApplicantPhoneNumber:'(212) 555-0101',ApplicantState:'NY',ApplicantZip:'10001'}))assert.equal(payload[key],value,key);
+ const source={id:call,agent_id:agent,agent_name:'Agent',call_start:'2026-10-20T12:30:45Z',carrier_name:'STALE',customer_first_name:'STALE',metadata:{contract_id:'STALE'}};
+ assert.throws(()=>converselyPayload(intakeCallFields(source,intake),'https://recording.test/audio.mp3'),/conversely_missing_enrollment_id/);
+ const callFields=intakeCallFields(source,{...intake,data:{...intake.data,enrollmentId:'APP-1'}}),payload=converselyPayload(callFields,'https://recording.test/audio.mp3');
+ for(const [key,value] of Object.entries({CarrierName:'UnitedHealthcare',PlanName:'Test Plan',ContractID:'H1234',PlanID:'001',SegmentID:'0',EnrollmentID:'APP-1',EffectiveDate:'2027-01-01',SubmissionDate:new Date(intake.submitted_at).toISOString().slice(0,10),ApplicantFirstName:'Jane',ApplicantLastName:'Doe',ApplicantPhoneNumber:'(212) 555-0101',ApplicantState:'NY',ApplicantZip:'10001'}))assert.equal(payload[key],value,key);
  const candidates=(await db.rpc('conversely_week_candidates',{p_week:'2026-10-19'})).data;assert.equal(candidates.filter(row=>row.call_id===call).length,2);
  assert.ok(candidates.every(row=>row.enrollment_key));
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,call_outcome,product_type,carrier_name,call_start) VALUES($1,$2,$3,'incomplete','MA','UnitedHealthcare','2026-10-20')`,[id(60),tenant,agent]);

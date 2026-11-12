@@ -30,7 +30,7 @@ async function addCall(n,owner,carrier,score,{when=new Date(Date.now()-1000).toI
  VALUES($1,$2,$3,'Agent',$4,'enrolled','complete',$5,'{}','MA')`,[id(n),targetTenant,owner,when,id(n+1000)]);
  await query(`INSERT INTO compliance_scorecards VALUES($1,$2,$3,$4,false)`,[id(n+1000),targetTenant,id(n),score]);
  await query(`INSERT INTO recording_ingestion(id,tenant_id,call_record_id,recording_sid,account_sid,callback_call_sid,recording_channels,provider_status,copy_status) VALUES($1,$2,$3,$4,$5,$6,2,'completed','stored')`,[id(n+2000),targetTenant,id(n),sid(n),account,parent]);
- if(intake)await query(`INSERT INTO enrollment_intakes(id,tenant_id,call_id,carrier_key,data) VALUES($1,$2,$3,$4,$5)`,[id(n+3000),targetTenant,id(n),carrierKey(carrier),JSON.stringify({newCarrier:carrier,planName:'Plan',firstName:'Fixture',lastName:'Applicant',state:'NY',contractId:'H1234',planId:'001',segmentId:'0',enrollmentId:'ENR-'+n})]);
+ if(intake)await query(`INSERT INTO enrollment_intakes(id,tenant_id,call_id,carrier_key,data) VALUES($1,$2,$3,$4,$5)`,[id(n+3000),targetTenant,id(n),carrierKey(carrier),JSON.stringify({newCarrier:carrier,planName:'Plan',firstName:'Fixture',lastName:'Applicant',phone:'(212) 555-0101',state:'NY',zip:'10001',effectiveDate:'2027-01-01',contractId:'H1234',planId:'001',segmentId:'0',enrollmentId:'ENR-'+n})]);
 }
 const api=(identity=admin)=>createComplianceUploadsHandler({authenticate:async()=>identity,getDb:()=>db});
 const request=body=>new Request('https://app.test/api/compliance-uploads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});

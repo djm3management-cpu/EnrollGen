@@ -92,7 +92,7 @@ test('weekly run persists one highest-score MP3 sample per eligible agent and lo
 });
 test('delivery uses MP3-suffixed bearer URL, fresh retry tickets and stable idempotency key, then never duplicates success',async()=>{
  await pg.exec(`CREATE TABLE enrollment_intakes(id text,tenant_id uuid,call_id uuid,data jsonb,is_test_enrollment boolean NOT NULL DEFAULT false,submitted_at timestamptz DEFAULT now(),completed_at timestamptz DEFAULT now());
- INSERT INTO enrollment_intakes(id,tenant_id,call_id,data) SELECT enrollment_key,tenant_id,call_id,'{"newCarrier":"Devoted Health","planName":"Test Plan"}'::jsonb FROM conversely_submissions;`);
+ INSERT INTO enrollment_intakes(id,tenant_id,call_id,data) SELECT enrollment_key,tenant_id,call_id,'{"newCarrier":"Devoted Health","planName":"Test Plan","firstName":"Test","lastName":"Applicant","phone":"(212) 555-0101","state":"NY","zip":"10001","effectiveDate":"2027-01-01","enrollmentId":"ENR-12","contractId":"H1234","planId":"001","segmentId":"0"}'::jsonb FROM conversely_submissions;`);
  const sent=[];const tick=createComplianceWorker(db,{env,now,log:()=>{},send:async(url,body,headers)=>{sent.push({url,payload:JSON.parse(body),headers});return {status:sent.length===1?503:200};}});
  await tick({schedule:false});await tick({schedule:false});assert.equal(sent.length,1);
  await query(`UPDATE conversely_submissions SET next_attempt_at=now()-interval '1 minute'`);
@@ -101,7 +101,7 @@ test('delivery uses MP3-suffixed bearer URL, fresh retry tickets and stable idem
  assert.equal(sent[0].payload.metadata.length,1);
  assert.ok(sent.every(({payload})=>payload.metadata.every(item=>item.Target==='New Gen Health Solutions')));
  assert.match(sent[0].payload.metadata[0].RecordingPath,/\/api\/recordings\/conversly\/[\w-]{43}\.mp3$/);
- assert.equal(Object.keys(sent[0].payload.metadata[0]).length,25);
+ assert.equal(sent[0].payload.metadata[0].CallType,'Medicare');
  assert.notEqual(sent[0].payload.metadata[0].RecordingPath,sent[1].payload.metadata[0].RecordingPath);
  assert.ok(sent.every(({headers})=>headers['Api-Key']===env.CONVERSELY_API_KEY && !Object.hasOwn(headers,'X-API-Key')));
  assert.equal(sent[0].headers['Idempotency-Key'],sent[1].headers['Idempotency-Key']);

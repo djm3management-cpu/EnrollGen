@@ -29,7 +29,7 @@ Both delivery paths now require a completed intake and load it using the job's `
 | ContractID | `call_records.metadata.contract_id` | `data.contractId` |
 | PlanID | `call_records.plan_id` | `data.planId` |
 | SegmentID | `call_records.metadata.segment_id` | `data.segmentId` |
-| EnrollmentID | `enrollment_confirmation_number`, falling back to call UUID | `data.enrollmentId` (blank allowed) |
+| EnrollmentID | `enrollment_confirmation_number`, falling back to call UUID | `data.enrollmentId` (blank allowed in the intake, but Conversely delivery requires the real value) |
 | EffectiveDate | `call_records.effective_date` | `data.effectiveDate` |
 | SubmissionDate | `metadata.submission_date`, falling back to call creation | `submitted_at` |
 | Applicant first/last name | `customer_first_name` / `customer_last_name` | `data.firstName` / `data.lastName` |
