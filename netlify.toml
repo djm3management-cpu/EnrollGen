@@ -24,9 +24,29 @@
 
 # SPA fallback
 [[redirects]]
+  from = "/assets/*"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 
 # Netlify cron expressions are UTC. These align with the requested ET
 # windows during daylight saving time.

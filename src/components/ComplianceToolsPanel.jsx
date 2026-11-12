@@ -1,8 +1,9 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
+import { lazyWithRetry } from '../lib/lazyWithRetry.js';
 
-const ComplianceIntentAccordion = lazy(() => import('./ComplianceIntentAccordion'));
-const CallHistory = lazy(() => import('./CallHistory'));
-const TranscriptUpload = lazy(() => import('./TranscriptUpload'));
+const ComplianceIntentAccordion = lazyWithRetry(() => import('./ComplianceIntentAccordion'));
+const CallHistory = lazyWithRetry(() => import('./CallHistory'));
+const TranscriptUpload = lazyWithRetry(() => import('./TranscriptUpload'));
 
 export default function ComplianceToolsPanel({ mode = 'ma' }) {
   return <Suspense fallback={<div className="contacts-muted">Loading compliance...</div>}>

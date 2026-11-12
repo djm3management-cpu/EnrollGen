@@ -4,7 +4,8 @@ import {saveAgentContactZip} from '../../lib/paragonResidence.js';
 import CrmPanelBoundary from '../CrmPanelBoundary';
 import { debugLog } from "../../lib/debugLog.js";
 import DncCallControl from "../phone/DncCallControl";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazyWithRetry } from '../../lib/lazyWithRetry.js';
 import { Archive, BriefcaseBusiness, CalendarClock, Mail, Phone, Search, Star, UsersRound } from "lucide-react";
 import {
   useContactsList,
@@ -29,7 +30,7 @@ import { useCallLogRows } from "../../hooks/useCallLogRows";
 import { formatCallDateTime as fmtDateTime, formatTalk as fmtDuration } from "../../lib/callPresentation";
 import { CRM_NAVIGATION_EVENT, navigateCrm, readCrmLocation } from "../../lib/crmRoutes";
 import { ContactCallSummary } from "./ContactCallCard";
-const CallLogTab = lazy(() => import('../callLog/CallLogTab'));
+const CallLogTab = lazyWithRetry(() => import('../callLog/CallLogTab'));
 
 const PII_FIELD_SET = new Set(["first_name", "last_name", "dob", "phone", "email", "address", "mbi_full"]);
 

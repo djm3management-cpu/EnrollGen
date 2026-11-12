@@ -6,7 +6,6 @@ import { debugLog } from "./lib/debugLog.js";
 import { createCallSessionBoundary } from "./lib/callSessionBoundary.js";
 import {
   Component,
-  lazy,
   Suspense,
   useEffect,
   useLayoutEffect,
@@ -15,6 +14,7 @@ import {
   useState,
 } from "react";
 import { preloadWorkspace } from "./lib/preloadWorkspace";
+import { lazyWithRetry } from "./lib/lazyWithRetry.js";
 import ShellTextures from "./components/ShellTextures";
 import PostCallStatusAlert from './components/PostCallStatusAlert';
 import PreloadRecoveryNotice from './components/PreloadRecoveryNotice';
@@ -63,7 +63,7 @@ const loadCarrierRef = () => import("./components/CarrierRef");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadAgentDashboard = () => import("./components/AgentDashboard");
-const AgentDashboard = lazy(loadAgentDashboard);
+const AgentDashboard = lazyWithRetry(loadAgentDashboard);
 const loadCallLogTab = () => import("./components/callLog/CallLogTab");
 const loadContactsTab = () => import("./components/contacts/ContactsTab");
 const loadTenantSettings = () => import("./components/TenantSettings");
@@ -72,25 +72,25 @@ const loadSEPQualifier = () => import("./components/leftRail/SEPQualifier");
 const loadAuthenticatedStyleGate = () => import("./components/AuthenticatedStyleGate");
 const loadRTSTab = () => import("./components/RTSTab");
 
-const LandingPage = lazy(loadLandingPage);
-const ScriptFlow = lazy(loadScriptFlow);
-const MedSupFlow = lazy(loadMedSupFlow);
-const MedSupAiCopilot = lazy(loadMedSupAiCopilot);
-const ACAScript = lazy(loadACAScript);
-const U65Script = lazy(loadU65Script);
-const AncillaryFlow = lazy(loadAncillaryFlow);
-const AgentTools = lazy(loadAgentTools);
-const SEPLookup = lazy(loadSEPLookup);
-const SessionSummary = lazy(loadSessionSummary);
-const CarrierRef = lazy(loadCarrierRef);
-const DailyVerse = lazy(loadDailyVerse);
-const ACAIntelligence = lazy(loadACAIntelligence);
-const ContactsTab = lazy(loadContactsTab);
-const TenantSettings = lazy(loadTenantSettings);
-const Onboarding = lazy(loadOnboarding);
-const SEPQualifier = lazy(loadSEPQualifier);
-const AuthenticatedStyleGate = lazy(loadAuthenticatedStyleGate);
-const RTSTab = lazy(loadRTSTab);
+const LandingPage = lazyWithRetry(loadLandingPage);
+const ScriptFlow = lazyWithRetry(loadScriptFlow);
+const MedSupFlow = lazyWithRetry(loadMedSupFlow);
+const MedSupAiCopilot = lazyWithRetry(loadMedSupAiCopilot);
+const ACAScript = lazyWithRetry(loadACAScript);
+const U65Script = lazyWithRetry(loadU65Script);
+const AncillaryFlow = lazyWithRetry(loadAncillaryFlow);
+const AgentTools = lazyWithRetry(loadAgentTools);
+const SEPLookup = lazyWithRetry(loadSEPLookup);
+const SessionSummary = lazyWithRetry(loadSessionSummary);
+const CarrierRef = lazyWithRetry(loadCarrierRef);
+const DailyVerse = lazyWithRetry(loadDailyVerse);
+const ACAIntelligence = lazyWithRetry(loadACAIntelligence);
+const ContactsTab = lazyWithRetry(loadContactsTab);
+const TenantSettings = lazyWithRetry(loadTenantSettings);
+const Onboarding = lazyWithRetry(loadOnboarding);
+const SEPQualifier = lazyWithRetry(loadSEPQualifier);
+const AuthenticatedStyleGate = lazyWithRetry(loadAuthenticatedStyleGate);
+const RTSTab = lazyWithRetry(loadRTSTab);
 const SYSTEM_MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
 const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const tenantBootstrapAttempts = new Set();

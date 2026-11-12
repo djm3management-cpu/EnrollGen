@@ -11,7 +11,7 @@ function harness() {
   const host = new EventTarget();
   let reloads = 0;
   host.location = { reload: () => reloads++ };
-  // Blocked browser storage must never cause a fallback automatic reload.
+  // The in-memory guard still works when browser storage is blocked.
   Object.defineProperty(host, 'sessionStorage', { get() { throw Error('Blocked storage'); } });
   const recovery = createPreloadRecovery(host);
   const stop = recovery.install();
@@ -23,26 +23,26 @@ function harness() {
   return { host, recovery, stop, fail, reloads: () => reloads };
 }
 
-test('load failures show a notice without reloading or swallowing the import rejection', () => {
+test('preload failures reload once and then show the fallback notice', () => {
   const h = harness();
   let changes = 0;
   const unsubscribe = h.recovery.subscribe(() => changes++);
   for (let n = 0; n < 5; n++) {
-    assert.equal(h.fail().defaultPrevented, false);
+    assert.equal(h.fail().defaultPrevented, true);
   }
   assert.equal(h.recovery.getSnapshot(), true);
   assert.equal(changes, 1);
-  assert.equal(h.reloads(), 0);
+  assert.equal(h.reloads(), 1);
   h.recovery.dismiss();
   assert.equal(h.recovery.getSnapshot(), false);
-  assert.equal(h.reloads(), 0);
-  h.fail();
+  assert.equal(h.reloads(), 1);
+  h.fail(); h.fail();
   assert.equal(h.recovery.getSnapshot(), true);
   unsubscribe(); h.stop(); h.recovery.dismiss(); h.fail();
   assert.equal(h.recovery.getSnapshot(), false);
 });
 
-test('a speculative import failure leaves the workspace running and other warmups continue', async () => {
+test('a speculative import failure reloads once and other warmups continue', async () => {
   const h = harness();
   const tasks = [];
   Object.assign(h.host, {
@@ -57,8 +57,8 @@ test('a speculative import failure leaves the workspace running and other warmup
   await tasks.shift()();
   await tasks.shift()();
   assert.equal(nextLoaded, true);
-  assert.equal(h.recovery.getSnapshot(), true);
-  assert.equal(h.reloads(), 0);
+  assert.equal(h.recovery.getSnapshot(), false);
+  assert.equal(h.reloads(), 1);
 });
 
 test('all call phases block reloads, including a call starting before React updates', () => {
@@ -69,7 +69,7 @@ test('all call phases block reloads, including a call starting before React upda
     { phone: { activeCall: {} } }, { phone: { hasCallInProgress: () => true } },
   ]) {
     assert.equal(h.recovery.reloadIfIdle(() => isAppCallActive(state)), false);
-    assert.equal(h.reloads(), 0);
+    assert.equal(h.reloads(), 1);
   }
   let callStarting = false;
   const reload = () => h.recovery.reloadIfIdle(() => isAppCallActive({
@@ -79,9 +79,9 @@ test('all call phases block reloads, including a call starting before React upda
   assert.equal(reload(), false);
   callStarting = false;
   // Ending the call never schedules a refresh; a fresh click is required.
-  assert.equal(h.reloads(), 0);
-  assert.equal(reload(), true);
   assert.equal(h.reloads(), 1);
+  assert.equal(reload(), true);
+  assert.equal(h.reloads(), 2);
 });
 
 test('existing call state is read without modifying it or opting an agent into availability', () => {
@@ -108,7 +108,7 @@ test('notice offers an explicit reload, disables it during calls and can be dism
   const Notice = module.exports.default;
   const props = { callInProgress: false, onReload: () => h.recovery.reloadIfIdle(() => false) };
   assert.equal(Notice(props), null);
-  h.fail();
+  h.fail(); h.fail();
   const active = Notice({ ...props, callInProgress: true });
   const activeButtons = React.Children.toArray(active.props.children[1].props.children);
   assert.equal(activeButtons[0].props.disabled, true);
@@ -117,10 +117,10 @@ test('notice offers an explicit reload, disables it during calls and can be dism
   const idle = Notice(props);
   const buttons = React.Children.toArray(idle.props.children[1].props.children);
   assert.equal(buttons[0].props.disabled, false);
-  assert.equal(h.reloads(), 0);
+  assert.equal(h.reloads(), 1);
   buttons[1].props.onClick();
   assert.equal(Notice(props), null);
-  assert.equal(h.reloads(), 0);
-  h.fail(); buttons[0].props.onClick();
   assert.equal(h.reloads(), 1);
+  h.fail(); buttons[0].props.onClick();
+  assert.equal(h.reloads(), 2);
 });
