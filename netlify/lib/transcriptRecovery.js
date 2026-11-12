@@ -59,7 +59,7 @@ export async function recoveryBlocked(db,call,reason,sendAlert=sendProviderFailu
  }
  return {incomplete:true,reason};
 }
-export async function recoverBeforeScoring({db,call,runGapJob,env=process.env,sendAlert}) {
+export async function recoverBeforeScoring({db,call,runGapJob,env=globalThis.process.env,sendAlert}) {
  if(env.TRANSCRIPT_AUTO_RECOVERY_ENABLED!=='true')return recoveryBlocked(db,call,'automatic_recovery_disabled',sendAlert);
  const plan=await loadRecordingPlan(db,call),estimate=recoveryEstimate(call,plan);
  if(estimate.reason)return recoveryBlocked(db,call,estimate.reason,sendAlert);

@@ -105,9 +105,20 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
             if(reason)throw Error(reason);
             if(!env.CONVERSELY_API_KEY)throw Error('conversely_key_missing');
             const grant=await recordingComplianceGrant(db,{admin:true,tenant:{id:job.tenant_id},auth:{userId:'integrations-worker'}},recording,{env,format:'mp3'});
-            const result=await send('https://sms.converselyai.com/api/metadata/import',JSON.stringify(converselyPayload(call,grant.url)),
-              {'X-API-Key':env.CONVERSELY_API_KEY,'Idempotency-Key':job.id});
+            const result=await send('https://sms.converselyai.com/api/metadata/import',JSON.stringify({metadata:[converselyPayload(call,grant.url)]}),
+              {'Api-Key':env.CONVERSELY_API_KEY,'Idempotency-Key':job.id});
+            log(JSON.stringify({event:'conversely_response',id:job.id,status:result.status,
+              body:typeof result.body==='string'?result.body.replaceAll(env.CONVERSELY_API_KEY,'[REDACTED]'):null}));
             if(result.status<200 || result.status>=300)throw Error(`conversely_http_${result.status}`);
+            if(result.body && /invalid api key|unauthori[sz]ed|forbidden|denied/i.test(result.body))throw Error('conversely_response_error');
+            if(result.body){
+              let response;
+              try{response=JSON.parse(result.body);}catch{/* Non-JSON acceptance body. */}
+              if(response && (response.success===false || response.error || /error|fail|reject/i.test(String(response.status))))
+                throw Error('conversely_response_error');
+              if((typeof response==='string' || !response) && !/^(ok|success)$/i.test(String(response || result.body).trim()))
+                throw Error('conversely_response_error');
+            }
           }else receipt=await providers[provider].deliver(job,call,recording);
           success=true;
         }catch(e){failure=e;error=/^[a-z_]+(?:_\d{3})?$/.test(e.message)?e.message:'upload_failed';}

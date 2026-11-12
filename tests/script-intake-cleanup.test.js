@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {transformSync} from 'esbuild';
 import {hookHarness} from './helpers/hookHarness.js';
 import {scriptIntakePrefill,mergeIntakePrefill,ghlPayload,emptyIntake,PLAN_TYPES,INTAKE_FIELDS} from '../src/lib/enrollmentIntake.js';
-import {ENROLLMENT_CLOSING,ENROLLMENT_CLOSING_TEMPLATE} from '../src/data/enrollmentClosing.js';
+import {ENROLLMENT_CLOSING_TEMPLATE} from '../src/data/enrollmentClosing.js';
 import {AGENCY_LINE_NUMBER,formatAgencyPhone} from '../src/lib/agencyLine.js';
 import {MA_CLOSING,MA_SCRIPT_SECTIONS} from '../src/data/maScript2027.js';
 import {hasSubmittedMAApplication,getMAScriptView} from '../src/lib/maScriptFlow.js';

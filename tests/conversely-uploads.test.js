@@ -97,9 +97,13 @@ test('delivery uses MP3-suffixed bearer URL, fresh retry tickets and stable idem
  await tick({schedule:false});await tick({schedule:false});assert.equal(sent.length,1);
  await query(`UPDATE conversely_submissions SET next_attempt_at=now()-interval '1 minute'`);
  await tick({schedule:false});await tick({schedule:false});assert.equal(sent.length,2);
- assert.match(sent[0].payload.RecordingPath,/\/api\/recordings\/conversly\/[\w-]{43}\.mp3$/);
- assert.equal(sent[0].payload.Target,'New Gen Health Solutions');assert.equal(Object.keys(sent[0].payload).length,25);
- assert.notEqual(sent[0].payload.RecordingPath,sent[1].payload.RecordingPath);
+ assert.ok(Array.isArray(sent[0].payload.metadata));
+ assert.equal(sent[0].payload.metadata.length,1);
+ assert.ok(sent.every(({payload})=>payload.metadata.every(item=>item.Target==='New Gen Health Solutions')));
+ assert.match(sent[0].payload.metadata[0].RecordingPath,/\/api\/recordings\/conversly\/[\w-]{43}\.mp3$/);
+ assert.equal(Object.keys(sent[0].payload.metadata[0]).length,25);
+ assert.notEqual(sent[0].payload.metadata[0].RecordingPath,sent[1].payload.metadata[0].RecordingPath);
+ assert.ok(sent.every(({headers})=>headers['Api-Key']===env.CONVERSELY_API_KEY && !Object.hasOwn(headers,'X-API-Key')));
  assert.equal(sent[0].headers['Idempotency-Key'],sent[1].headers['Idempotency-Key']);
  assert.ok((await query('SELECT * FROM recording_compliance_tickets')).rows.every(row=>row.format==='mp3' && !row.storage_path));
  assert.equal((await query('SELECT status FROM conversely_submissions')).rows[0].status,'uploaded');

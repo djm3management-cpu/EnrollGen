@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useAppAuth } from '../../context/AuthContext';
 import { recordingMedia, recordingTarget, downloadRecordingUrl } from '../../lib/recordingsApi';
-import { COMPLIANCE_WARNING_THRESHOLD } from '../callDetail/ComplianceReviewModal';
 import { isUnscoredCompliance } from '../../lib/complianceScore.js';
 import { callOutcomeLabel } from '../../lib/postCallPipeline';
 import { Download, Pause, Play } from 'lucide-react';

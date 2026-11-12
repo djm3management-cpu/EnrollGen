@@ -136,7 +136,7 @@ export async function fetchPlansForCountyFips(state, countyFips = []) {
     ]);
     const rows = [...countyRows, ...statewideRows];
     return attachCountyStarRatings(rows);
-  } catch (error) {
+  } catch {
     debugLog("ZIP plan lookup error");
     return [];
   }

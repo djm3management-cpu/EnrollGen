@@ -35,17 +35,13 @@ export async function postJson(urlString, body, headers = {}) {
       lookup:(_host,options,callback)=>options.all ? callback(null,[address]) : callback(null,address.address,address.family),
       headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(body),...headers},
     },res=>{
-      // Only a bounded JSON error object is passed to the allowlist sanitizer.
-      // Successful delivery never needs a body; raw response text is not logged.
-      if (res.statusCode>=200 && res.statusCode<300) {
-        res.resume();resolve({status:res.statusCode});return;
-      }
+      // Keep a bounded response body for providers that return an error with HTTP 2xx.
       let body = ''; let size = 0;
       res.on('data', chunk => { size += chunk.length; if (size<=4096) body += chunk.toString(); });
       res.on('end', () => {
         let error;
         if (size<=4096) { try { const parsed=JSON.parse(body);error={name:parsed.name,message:parsed.message}; } catch { /* no raw text */ } }
-        resolve({status:res.statusCode,error});
+        resolve({status:res.statusCode,error,body:size<=4096?body:null});
       });
       res.on('error', reject);
       res.on('aborted', () => reject(Error('Delivery timeout')));

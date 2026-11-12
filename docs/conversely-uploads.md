@@ -46,8 +46,8 @@ check is used. This keeps Mark's AmeriLife Humana enrollments out of SMS samples
 An explicit JSON object replaces the default rules; verify the roster slug when
 changing identity mappings. Carrier rules are checked again before each POST.
 
-Delivery POSTs to https://sms.converselyai.com/api/metadata/import with X-API-Key
-and Idempotency-Key, Target="New Gen Health Solutions", and the required metadata
+Delivery POSTs to https://sms.converselyai.com/api/metadata/import with Api-Key
+and Idempotency-Key, a `metadata` array whose every item has Target="New Gen Health Solutions", and the required metadata
 fields. Every attempt mints a fresh 24-hour URL ending in
 /api/recordings/conversly/:token.mp3. The endpoint verifies the Twilio recording
 identity and fetches its .mp3 rendition with audio/mpeg, HEAD and single byte
@@ -60,7 +60,7 @@ Migration 125 changes enrollment/applicant metadata to completed
 recording details still come from their original sources. See
 [Native Medicare enrollment intake](enrollment-intakes.md) for the exact before/after
 field mapping and household enrollment keys. An unauthenticated endpoint probe
-returned 403; authenticated vendor acceptance and X-API-Key semantics still
+returned 403; authenticated vendor acceptance and Api-Key semantics still
 require validation with live credentials.
 
 Both providers use atomic claims, 30-minute leases, token-checked finishes,
@@ -68,6 +68,28 @@ exponential backoff starting at 60 seconds, and at most five attempts. A success
 recording/enrollment pair is never reclaimed or enqueued again. Provider
 Idempotency-Key must also be honored for recovery after a lost response. The
 worker Docker image includes the shared recording-link and streaming helpers.
+
+## Retry the rejected Nov 10 submission after deployment
+
+The Nov 10 2026 16:02:12 UTC submission `460c0adf-5d1d-4b66-ae8f-2566967168e8`
+was falsely marked uploaded. Its status is now `failed`, the linked run is
+`delivering`, and its due time is held at 2099-01-01 to prevent the old worker
+from sending it again. After the corrected integrations worker is deployed, run
+this in the Supabase SQL editor:
+
+```sql
+UPDATE public.conversely_submissions
+SET next_attempt_at = now(), updated_at = now()
+WHERE id = '460c0adf-5d1d-4b66-ae8f-2566967168e8'
+  AND status = 'failed' AND attempts = 1
+RETURNING id, status, attempts, next_attempt_at;
+```
+
+The worker claims the same job and idempotency key. Filter the Railway
+integrations-worker logs for `conversely_response` and that submission ID to
+read the returned HTTP `status` and `body`; any copy of the configured API key
+in the body is replaced with `[REDACTED]`. Check the resulting
+`conversely_submissions` row for `uploaded` or the sanitized failure reason.
 
 ## Run Conversely now
 

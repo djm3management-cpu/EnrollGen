@@ -21,9 +21,10 @@ const admin={userId:'admin',orgId:'org-a',tokenPayload:{org_role:'org:admin'}};
 const query=async(sql,args=[]) => (await pg.query(sql,args)).rows;
 const file=name=>readFileSync(new URL('../supabase/migrations/'+name,import.meta.url),'utf8');
 const sent=[];
+const logs=[];
 let failAgent=null;
-const send=async(_url,body,headers)=>{const payload=JSON.parse(body);sent.push({payload,headers});return {status:payload.AgentID===failAgent?503:200};};
-const tick=createComplianceWorker(db,{env,send,log:()=>{},isPlayable:async()=>true});
+const send=async(_url,body,headers)=>{const payload=JSON.parse(body);assert.equal(headers['Api-Key'],env.CONVERSELY_API_KEY);assert.equal(Object.hasOwn(headers,'X-API-Key'),false);assert.ok(payload.metadata.every(item=>item.Target==='New Gen Health Solutions'));sent.push({payload,headers});return payload.metadata[0].AgentID===failAgent?{status:200,body:'Invalid API key: '+env.CONVERSELY_API_KEY}:{status:200};};
+const tick=createComplianceWorker(db,{env,send,log:line=>logs.push(JSON.parse(line)),isPlayable:async()=>true});
 async function addCall(n,owner,carrier,score,{when=new Date(Date.now()-1000).toISOString(),intake=true,targetTenant=tenant}={}){
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_start,call_outcome,compliance_status,compliance_scorecard_id,metadata,product_type)
  VALUES($1,$2,$3,'Agent',$4,'enrolled','complete',$5,'{}','MA')`,[id(n),targetTenant,owner,when,id(n+1000)]);
@@ -90,7 +91,7 @@ test('non-admin access returns 403 for fetch, refresh, run, retry, and code edit
 test('worker immediately selects current-week completed intakes, honors rules and sends only one per agent despite larger legacy sample config',async()=>{
  await processManualConverselyRun(db,{env,isPlayable:async()=>true});
  await tick({schedule:false});
- assert.equal(sent.length,1);assert.equal(sent[0].payload.CallID,id(11));assert.equal(sent[0].payload.CarrierName,'UnitedHealthcare');
+ assert.equal(sent.length,1);assert.equal(sent[0].payload.metadata[0].CallID,id(11));assert.equal(sent[0].payload.metadata[0].CarrierName,'UnitedHealthcare');
  const slots=await query('SELECT * FROM conversely_week_slots WHERE week_start=$1 AND tenant_id=$2',[week,tenant]);assert.equal(slots.length,1);assert.equal(slots[0].agent_id,agent);
  await db.rpc('finalize_conversely_runs');
  const result=await history();assert.ok(result.run.started_at);assert.ok(result.run.completed_at);assert.equal(result.run.status,'complete');
@@ -104,7 +105,9 @@ test('rerun skips a successful agent even when a newer higher-scored enrollment 
 });
 test('later eligible agents can submit, failures show per-agent, and retries reuse the same job/key without resubmitting successful teammates',async()=>{
  await addCall(17,mark,'Aetna',90);failAgent=mark;const run=await start();await processManualConverselyRun(db,{env,isPlayable:async()=>true});await tick({schedule:false});
- assert.equal(sent.length,2);let result=await history();assert.equal(result.results.find(row=>row.agent_id===mark).status,'failed');assert.equal(result.results.find(row=>row.agent_id===mark).reason,'conversely_http_503');
+ assert.equal(sent.length,2);let result=await history();assert.equal(result.results.find(row=>row.agent_id===mark).status,'failed');assert.equal(result.results.find(row=>row.agent_id===mark).reason,'conversely_response_error');
+ assert.equal(logs.filter(row=>row.event==='conversely_response').at(-1).status,200);
+ assert.equal(logs.filter(row=>row.event==='conversely_response').at(-1).body,'Invalid API key: [REDACTED]');
  assert.equal(await start(),run,'an active delivery run is reused');
  await query(`UPDATE conversely_submissions SET next_attempt_at=now()-interval '1 second' WHERE status='pending'`);failAgent=null;
  await tick({schedule:false});await db.rpc('finalize_conversely_runs');assert.equal(sent.length,3);assert.equal(sent[1].headers['Idempotency-Key'],sent[2].headers['Idempotency-Key']);
