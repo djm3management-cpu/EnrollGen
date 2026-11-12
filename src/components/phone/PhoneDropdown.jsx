@@ -18,7 +18,7 @@ export default function PhoneDropdown({ onOpenMessages }) {
   const inbound = useInboundCall();
   const [isOpen, setIsOpen] = useState(false);
   const [dispositionPending, setDispositionPending] = useState(false);
-  const [dispositionCollapsed, setDispositionCollapsed] = useState(true);
+  const [dispositionCollapsed, setDispositionCollapsed] = useState(false);
   const [prefillContact, setPrefillContact] = useState(null);
   const [prefillVersion, setPrefillVersion] = useState(0);
   const rootRef = useRef(null);
@@ -26,16 +26,6 @@ export default function PhoneDropdown({ onOpenMessages }) {
   const hasCall = Boolean(inbound?.activeCall || inbound?.dialingCall);
   const callInProgress = hasCall || Boolean(inbound?.incomingCall);
   const pendingDisposition = dispositionPending;
-  const previousCallInProgress = useRef(callInProgress);
-
-  useEffect(() => {
-    if (previousCallInProgress.current && !callInProgress) {
-      setIsOpen(false);
-      setDispositionCollapsed(true);
-      setPrefillContact(null);
-    }
-    previousCallInProgress.current = callInProgress;
-  }, [callInProgress]);
   const panelOpen = isOpen || (pendingDisposition && !dispositionCollapsed && !callInProgress);
 
   useEffect(() => {
@@ -86,8 +76,8 @@ export default function PhoneDropdown({ onOpenMessages }) {
   }, [hasCall, inbound?.activeCall]);
 
   const collapseDisposition = useCallback((value) => {
-    // Task refreshes request expansion too. Only explicit phone/pill clicks open it.
-    if (value) { setDispositionCollapsed(true); setIsOpen(false); }
+    setDispositionCollapsed(value);
+    if (value) setIsOpen(false);
   }, []);
 
   if (!inbound?.enabled) return null;
@@ -122,7 +112,8 @@ export default function PhoneDropdown({ onOpenMessages }) {
 
       {hasCall && !isOpen ? <ActiveCallBar onExpand={() => setIsOpen(true)} /> : null}
 
-      <div className={`phone-dd__panel${pendingDisposition && panelOpen ? " phone-dd__panel--disposition" : ""}`} hidden={!panelOpen} role="dialog" aria-label="Phone">
+      {pendingDisposition && panelOpen ? <div className="phone-dd__backdrop" aria-hidden="true" /> : null}
+      <div className={`phone-dd__panel${pendingDisposition && panelOpen ? " phone-dd__panel--disposition-modal" : ""}`} hidden={!panelOpen} role="dialog" aria-label="Phone">
         <CallDispositionBox phone={inbound} onVisibleChange={setDispositionPending} collapsed={dispositionCollapsed} onCollapsedChange={collapseDisposition} />
         {isOpen ? (hasCall ? (
             <ActiveCallExpanded onOpenMessages={onOpenMessages} />

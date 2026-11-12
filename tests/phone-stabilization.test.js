@@ -301,7 +301,7 @@ test('phone dropdown collapses pending disposition to a pill through ringing and
  harness.mount(()=>context.component({}));try{
   const box=()=>find(harness.value,node=>node.type==='disposition');
   const pill=()=>find(harness.value,node=>node.props.className?.includes('phone-dd__disposition-pill'));
-  box().props.onVisibleChange(true);await harness.flush();assert.equal(box().props.collapsed,true);
+  box().props.onVisibleChange(true);await harness.flush();assert.equal(box().props.collapsed,false);
   phone={enabled:true,incomingCall:{call:{}}};harness.render();await harness.flush();
   assert.equal(box().props.collapsed,true);assert.equal(pill().props.disabled,true);
   assert.equal(find(harness.value,node=>node.props.role==='dialog').props.hidden,true);

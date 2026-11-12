@@ -1,4 +1,3 @@
-import {U65_SOURCE_VERSION} from '../../data/u65Guidance.js';
 /**
  * U65Flow.jsx - five-screen U65 Off-Exchange NEPQ script flow.
  *
@@ -122,7 +121,7 @@ function useU65TemplateScreens() {
   const { sections, template } = useScriptTemplate("u65");
 
   return useMemo(() => {
-    if (!template || !sections.length || !sections.every((section) => section.source_version === U65_SOURCE_VERSION)) return U65_GATES;
+    if (!template || !sections.length || !sections.every((section) => section.source_version === "f57-source-v2")) return U65_GATES;
 
     const matchingSections = U65_GATES.map((screen) =>
       sections.find(

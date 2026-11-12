@@ -67,14 +67,6 @@ export function getMAScriptView(section, state) {
   return { items, complete };
 }
 
-// Submission is an on-call script answer, independent of the after-call intake.
-export function hasSubmittedMAApplication(state) {
-  if (state.maClosed) return false;
-  const enrollment = MA_SCRIPT_SECTIONS.find(section => section.key === 'enrollment');
-  const view = getMAScriptView(enrollment, state);
-  return view.complete && view.items.some(item => item.id === 'submitted' && item.selected === 'submitted');
-}
-
 export function changeMAAnswer(state, sectionKey, key, value) {
   const section = MA_SCRIPT_SECTIONS.find((item) => item.key === sectionKey);
   if (!section) return state;

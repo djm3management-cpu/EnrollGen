@@ -1,4 +1,3 @@
-import * as adminReviewApi from '../src/lib/adminReviewApi.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -16,8 +15,6 @@ function fixture(){
   setInterval:(fn,ms)=>{timers.set(++timerId,{fn,ms});return timerId;},clearInterval:id=>timers.delete(id),
   require(name){
    if(name==='react')return h.hooks;
-   if(name.endsWith('/adminReviewApi.js'))return adminReviewApi;
-   if(name.endsWith('/useAdminReviewAccess.js'))return {useAdminReviewAccess:()=>({identity:`${auth.user?.id||''}:${auth.organization?.id||''}`,canReview:auth.user?.id?.startsWith('admin')===true})};
    if(name.endsWith('/EnrollmentIntake'))return {__esModule:true,default:'enrollment-intake'};
    if(name.endsWith('/AuthContext'))return {useAppAuth:()=>auth};
    if(name.endsWith('/clerkFetch.js'))return {fetchWithClerk:async(_token,url,options)=>{
@@ -52,8 +49,7 @@ test('admin run button posts one action, disables while active, polls promptly, 
 test('non-admin responses hide the panel and controls, including after an identity change',async()=>{
  const f=fixture();try{
   f.setStatus(403);await f.h.flush();assert.equal(f.h.value,null);
-  const deniedRequests=f.requests.length;f.setStatus(200);[...f.timers.values()][0].fn();await f.h.flush();assert.equal(f.requests.length,deniedRequests,'403 stops further requests for this identity');
-  f.auth.user={id:'admin-refreshed'};f.h.render();await f.h.flush();assert.ok(f.nodes().some(n=>n.type==='button'&&n.children.includes('Run Conversely now')));
+  f.setStatus(200);[...f.timers.values()][0].fn();await f.h.flush();assert.ok(f.nodes().some(n=>n.type==='button'&&n.children.includes('Run Conversely now')));
   f.setStatus(403);f.auth.user={id:'member'};f.h.render();assert.equal(f.h.value,null);await f.h.flush();assert.equal(f.h.value,null);
  }finally{f.h.unmount();}
 });

@@ -2,7 +2,7 @@
 export const U65_GATE_GUIDANCE = {
   "Open & Qualify": [
     "Confirm the household needs and actual current coverage.",
-    "Help higher earners priced out of unsubsidized ACA.",
+    "DE, MD, FL agents; target higher earners priced out of unsubsidized ACA.",
     "Eligibility, availability, rating basis and ACA/MEC status: verify with carrier."
   ],
   "Discovery": [
@@ -38,7 +38,7 @@ export const U65_SOURCE_RULES = [
   "Everest newborn 365 days and cancer/CI 30 days; Life-X initial 90-day elective exclusion where stated; MedMax elective surgery excluded.",
   "Ultimate EPO: underlying SBC deductible $9,000 individual / $18,000 family; $1,500/$3,500 gap headlines are never the deductible.",
   "MedPerformance 5000 OON %, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; never select a disputed number.",
-  "First Health provider participation must be verified for the exact facility and product before quoting.",
+  "First Health terminated Cleveland Clinic including Weston/Martin/Indian River FL effective 7/1/2025; recheck before quoting those facilities.",
   "PHCS Extended/limited-benefit networks are not full PHCS PPO; UW Medicine does not take PHCS; verify exact network selector.",
   "Verify participation per provider and exact product; maps are examples, not a census.",
   "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."

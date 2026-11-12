@@ -65,9 +65,8 @@ test('pending disposition collapses fully on X, outside click or Escape; phone i
  const trigger=()=>find(harness.value,node=>node.props.className?.includes('phone-dd__trigger'));
  try{
   assert.equal(panel().props.hidden,true);
-  box().props.onVisibleChange(true);await harness.flush();assert.equal(panel().props.hidden,true,'pending disposition starts minimized');
-  trigger().props.onClick();await harness.flush();assert.equal(panel().props.hidden,false);
-  trigger().props.onClick();await harness.flush();assert.equal(panel().props.hidden,true,'phone icon closes the explicitly opened panel');
+  box().props.onVisibleChange(true);await harness.flush();assert.equal(panel().props.hidden,false);
+  trigger().props.onClick();await harness.flush();assert.equal(panel().props.hidden,true,'phone icon also closes the automatically opened panel');
   trigger().props.onClick();await harness.flush();assert.equal(panel().props.hidden,false);
   box().props.onCollapsedChange(true);await harness.flush();assert.equal(panel().props.hidden,true);
   assert.match(trigger().props['aria-label'],/disposition pending/);

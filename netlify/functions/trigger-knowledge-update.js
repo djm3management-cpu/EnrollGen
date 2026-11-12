@@ -10,53 +10,45 @@ function json(status, payload) {
   });
 }
 
-export function createTriggerKnowledgeUpdateHandler({
-  authenticate = request => requireClerkAuth(request, { allowBypass: false }),
-  run = runKnowledgeUpdate,
-} = {}) {
-  return async (request) => {
-    if (process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED !== "true") return json(200, { status: "disabled" });
-    if (request.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405 });
-    }
+export default async (request) => {
+  if (request.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405 });
+  }
 
-    const auth = await authenticate(request);
-    if (auth.response) return auth.response;
+  const auth = await requireClerkAuth(request);
+  if (auth.response) return auth.response;
 
-    if (!isAdminAuth(auth)) {
-      return json(403, {
-        error: "Forbidden",
-        detail: "Only organization admins can trigger knowledge updates.",
+  if (!isAdminAuth(auth)) {
+    return json(403, {
+      error: "Forbidden",
+      detail: "Only organization admins can trigger knowledge updates.",
+    });
+  }
+
+  try {
+    const body = await request.json().catch(() => ({}));
+    const category = String(body.category || "").trim();
+    const key = String(body.key || "").trim();
+
+    if (!category) {
+      return json(400, {
+        error: "Invalid request",
+        detail: "category is required.",
       });
     }
 
-    try {
-      const body = await request.json().catch(() => ({}));
-      const category = String(body.category || "").trim();
-      const key = String(body.key || "").trim();
+    const result = await runKnowledgeUpdate({
+      category,
+      key: key || null,
+      limit: key ? 1 : Number(body.limit || 6),
+    });
 
-      if (!category) {
-        return json(400, {
-          error: "Invalid request",
-          detail: "category is required.",
-        });
-      }
-
-      const result = await run({
-        category,
-        key: key || null,
-        limit: key ? 1 : Number(body.limit || 6),
-      });
-
-      return json(200, result);
-    } catch (error) {
-      console.error("[trigger-knowledge-update]", error);
-      return json(500, {
-        error: "Knowledge update failed",
-        detail: error?.message || String(error),
-      });
-    }
-  };
-}
-
-export default createTriggerKnowledgeUpdateHandler();
+    return json(200, result);
+  } catch (error) {
+    console.error("[trigger-knowledge-update]", error);
+    return json(500, {
+      error: "Knowledge update failed",
+      detail: error?.message || String(error),
+    });
+  }
+};

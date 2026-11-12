@@ -1,3 +1,4 @@
+import {AGENCY_CLOSING} from '../data/agencyClosing.js';
 import { debugLog } from "../lib/debugLog.js";
 import {
   useEffect,
@@ -49,7 +50,7 @@ import CenterTimerBar from "./CenterTimerBar";
 import ProgressDots from "./ProgressDots";
 import MiniLiveTranscript, { TranscriptTimer } from "./MiniLiveTranscript";
 import { SECTION_LABELS, TOTAL_SECTIONS } from "../context/scriptReducer";
-import MAFlowClosing from "./MAFlowClosing";
+import SectionWrapUp from "./SectionWrapUp";
 import ScriptSection from "./ScriptSection";
 import ScriptPrompter from "./ScriptPrompter";
 import AncillaryPopupManager from "./ancillary/AncillaryPopupManager";
@@ -1064,7 +1065,7 @@ export default function ScriptFlow() {
           </div>
           <button data-key-role="primary"
             type="button"
-            className="script-start-call-button ma-script-start-button"
+            className="script-start-call-button"
             onClick={handleManualCopilotStart}
             disabled={!canStartCopilot || availability?.status === "wrap_up"}
           >
@@ -1112,7 +1113,11 @@ export default function ScriptFlow() {
           return rendered;
         })}
 
-      <MAFlowClosing scriptBody={wrapUpSection?.body} />
+      {activeSection >= 8 && (
+        <>
+          <SectionWrapUp scriptBody={state.enrollOk ? wrapUpSection?.body : AGENCY_CLOSING} />
+        </>
+      )}
 
       <ProgressDots
         sections={scriptSections

@@ -1,8 +1,11 @@
 import { debugLog } from "../lib/debugLog.js";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useUser } from "@clerk/clerk-react";
 import { supabase } from "../lib/supabase";
 import { getStateFromZip } from "../lib/sepGeo";
 import { getCountyFromZip } from "../data/sepPlanDb";
+import { useKnowledge } from "../hooks/useKnowledge";
+import { useTenantConfig } from "../hooks/useTenantConfig";
 
 const SBE_STATES = { NJ: "sbe_plans_nj_2025", PA: "sbe_plans_pa_2025", VA: "sbe_plans_va_2025" };
 
@@ -24,6 +27,31 @@ function parseDollar(v) {
 
 function fmt(n) { return n == null ? "-" : `$${n.toLocaleString()}`; }
 function fmtRange(lo, hi) { return lo === hi ? fmt(lo) : `${fmt(lo)} – ${fmt(hi)}`; }
+function fmtDate(value) {
+  if (!value) return "No DB sync";
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function isAdminUser(user) {
+  const role =
+    user?.publicMetadata?.role ||
+    user?.organizationMemberships?.[0]?.role ||
+    user?.organizationMemberships?.[0]?.publicMetadata?.role;
+  return role === "admin" || role === "org:admin" || user?.publicMetadata?.isAdmin === true;
+}
+
+function diffPreview(before = "", after = "") {
+  const beforeLines = before.split("\n").slice(0, 8).join("\n");
+  const afterLines = after.split("\n").slice(0, 8).join("\n");
+  return { beforeLines, afterLines };
+}
+
 /* Styles */
 const card = {
   background: "var(--eg-surface-2)",
@@ -42,11 +70,130 @@ const label = {
 const mono = { fontFamily: "var(--eg-font-mono)", fontWeight: 500 };
 
 export default function ACAIntelligence() {
+  const { user } = useUser();
+  const isAdmin = isAdminUser(user);
+  const { supabaseClient } = useTenantConfig();
+  const { entries: acaKnowledgeEntries } = useKnowledge("compliance_aca");
   const [zip, setZip] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
   const [source, setSource] = useState("");
+  const [pendingUpdates, setPendingUpdates] = useState([]);
+  const [reviewBusyId, setReviewBusyId] = useState(null);
+
+  const knowledgeLastUpdated = useMemo(() => {
+    const dates = acaKnowledgeEntries
+      .map((entry) => entry.last_verified_at || entry.updated_at || entry.created_at)
+      .filter(Boolean)
+      .map((value) => Date.parse(value))
+      .filter(Number.isFinite);
+    if (!dates.length) return null;
+    return new Date(Math.max(...dates)).toISOString();
+  }, [acaKnowledgeEntries]);
+
+  const refreshPendingUpdates = useCallback(async () => {
+    try {
+      const { data: rows, error: pendingError } = await supabaseClient
+        .from("knowledge_updates")
+        .select(`
+          id,
+          knowledge_base_id,
+          previous_content,
+          new_content,
+          change_summary,
+          confidence_score,
+          status,
+          created_at,
+          knowledge_base:knowledge_base_id (
+            id,
+            tenant_id,
+            category,
+            key,
+            title,
+            content,
+            metadata,
+            version,
+            source_urls
+          )
+        `)
+        .eq("status", "pending_review")
+        .order("created_at", { ascending: false })
+        .limit(12);
+
+      if (pendingError) throw pendingError;
+      setPendingUpdates(rows || []);
+    } catch {
+      debugLog("[ACAIntelligence] pending knowledge updates unavailable");
+      setPendingUpdates([]);
+    }
+  }, [supabaseClient]);
+
+  useEffect(() => {
+    refreshPendingUpdates();
+  }, [refreshPendingUpdates]);
+
+  const reviewUpdate = useCallback(async (update, action) => {
+    if (!isAdmin || !update?.knowledge_base) return;
+    setReviewBusyId(update.id);
+    try {
+      if (action === "approve") {
+        const base = update.knowledge_base;
+        const nextVersion = Number(base.version || 1) + 1;
+
+        const { error: deactivateError } = await supabaseClient
+          .from("knowledge_base")
+          .update({ is_active: false })
+          .eq("id", base.id);
+        if (deactivateError) throw deactivateError;
+
+        const { error: insertError } = await supabaseClient
+          .from("knowledge_base")
+          .insert({
+            tenant_id: base.tenant_id,
+            category: base.category,
+            key: base.key,
+            title: base.title,
+            content: update.new_content,
+            metadata: {
+              ...(base.metadata || {}),
+              reviewed_update_id: update.id,
+            },
+            version: nextVersion,
+            is_active: true,
+            source_urls: base.source_urls || [],
+            last_verified_at: new Date().toISOString(),
+          });
+        if (insertError) throw insertError;
+
+        const { error: updateError } = await supabaseClient
+          .from("knowledge_updates")
+          .update({
+            status: "published",
+            change_source: "agentic_review",
+            reviewed_by: user?.id || "admin",
+          })
+          .eq("id", update.id);
+        if (updateError) throw updateError;
+      } else {
+        const { error: rejectError } = await supabaseClient
+          .from("knowledge_updates")
+          .update({
+            status: "rejected",
+            reviewed_by: user?.id || "admin",
+          })
+          .eq("id", update.id);
+        if (rejectError) throw rejectError;
+      }
+      await refreshPendingUpdates();
+    } catch (err) {
+      debugLog("[ACAIntelligence] review failed");
+      setError(err.message || "Knowledge review failed");
+    } finally {
+      setReviewBusyId(null);
+    }
+  }, [isAdmin, refreshPendingUpdates, supabaseClient, user?.id]);
+
   const handleSearch = useCallback(async () => {
     const z = zip.trim();
     if (!z || z.length < 5) return;
@@ -159,6 +306,22 @@ export default function ACAIntelligence() {
       {/* Search bar */}
       <div style={{ ...card, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <span style={{ ...label, color: "var(--accent)", fontSize: "0.82rem" }}>ACA INTELLIGENCE</span>
+        <span style={{ ...mono, fontSize: "0.62rem", color: "var(--text-muted)" }}>
+          KB {fmtDate(knowledgeLastUpdated)}
+        </span>
+        <span
+          style={{
+            ...mono,
+            fontSize: "0.62rem",
+            color: pendingUpdates.length ? "var(--accent)" : "var(--text-muted)",
+            border: "1px solid var(--status-pending-border)",
+            borderRadius: 999,
+            padding: "3px 8px",
+            background: pendingUpdates.length ? "var(--status-pending-bg)" : "color-mix(in srgb, var(--text-primary) 3%, transparent)",
+          }}
+        >
+          {pendingUpdates.length} PENDING
+        </span>
         <div style={{ position: "relative", flex: "1 1 200px", maxWidth: 280 }}>
           <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: 14, pointerEvents: "none" }}>⌕</span>
           <input
@@ -189,6 +352,76 @@ export default function ACAIntelligence() {
 
       {error && (
         <div style={{ ...card, borderColor: "var(--status-offline-border)", color: "var(--status-offline)", fontSize: "0.8rem" }}>{error}</div>
+      )}
+
+      {isAdmin && pendingUpdates.length > 0 && (
+        <section style={card}>
+          <h3 style={{ ...label, margin: "0 0 12px", color: "var(--accent)" }}>Pending Knowledge Updates</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {pendingUpdates.map((update) => {
+              const preview = diffPreview(update.previous_content, update.new_content);
+              return (
+                <article
+                  key={update.id}
+                  style={{
+                    borderRadius: 12,
+                    border: "1px solid var(--border-default)",
+                    background: "var(--bg-elevated)",
+                    padding: 12,
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                    <div>
+                      <div style={{ ...label, color: "var(--text-primary)", marginBottom: 4 }}>
+                        {update.knowledge_base?.title || update.knowledge_base?.key || "Knowledge Entry"}
+                      </div>
+                      <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", lineHeight: 1.45 }}>
+                        {update.change_summary || "Agentic update pending review."}
+                      </div>
+                    </div>
+                    <div style={{ ...mono, color: "var(--accent)", fontSize: "0.68rem" }}>
+                      {Math.round(Number(update.confidence_score || 0) * 100)}%
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                      gap: 8,
+                      marginTop: 10,
+                    }}
+                  >
+                    <pre style={diffBoxStyle}>{preview.beforeLines}</pre>
+                    <pre style={{ ...diffBoxStyle, borderColor: "var(--status-live-border)" }}>{preview.afterLines}</pre>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
+                    <button data-key-role="secondary"
+                      type="button"
+                      disabled={reviewBusyId === update.id}
+                      onClick={() => reviewUpdate(update, "reject")}
+                      style={reviewButtonStyle}
+                    >
+                      REJECT
+                    </button>
+                    <button data-key-role="secondary"
+                      type="button"
+                      disabled={reviewBusyId === update.id}
+                      onClick={() => reviewUpdate(update, "approve")}
+                      style={{
+                        ...reviewButtonStyle,
+                        color: "var(--status-live)",
+                        borderColor: "var(--status-live-border)",
+                        background: "var(--status-live-bg)",
+                      }}
+                    >
+                      APPROVE
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {stats && (
@@ -299,3 +532,30 @@ const th = {
   fontSize: "0.62rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)",
 };
 const td = { padding: "8px 10px", color: "var(--text-secondary)", fontSize: "0.75rem" };
+const diffBoxStyle = {
+  margin: 0,
+  minHeight: 120,
+  maxHeight: 220,
+  overflow: "auto",
+  whiteSpace: "pre-wrap",
+  borderRadius: 10,
+  border: "1px solid var(--status-offline-border)",
+  background: "var(--bg-primary)",
+  padding: 10,
+  color: "var(--text-secondary)",
+  fontSize: "0.66rem",
+  fontFamily: "var(--font-mono)",
+  lineHeight: 1.5,
+};
+const reviewButtonStyle = {
+  border: "1px solid var(--border-default)",
+  background: "var(--border-default)",
+  borderRadius: 999,
+  color: "var(--text-secondary)",
+  padding: "6px 12px",
+  cursor: "pointer",
+  fontFamily: "var(--font-primary)",
+  fontWeight: 800,
+  fontSize: "0.62rem",
+  letterSpacing: "0.1em",
+};

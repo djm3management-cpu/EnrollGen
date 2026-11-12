@@ -43,27 +43,87 @@ const U65_FLOW_OPTIONS = [
 
 function U65FlowSelector({ variant, onChange }) {
   return (
-    <div className="flow-variant-selector" role="group" aria-label="U65 coverage type">
-      {U65_FLOW_OPTIONS.map((flow) => (
-        <div
-          key={flow.id}
-          className="flow-variant-choice"
-          style={{"--flow-option-color":flow.color,"--flow-option-soft":flow.soft,"--flow-option-border":flow.border}}
-        >
-          <button
-            type="button"
-            className="flow-variant-option"
-            aria-label={flow.label}
-            aria-pressed={variant === flow.id}
-            onClick={() => onChange(flow.id)}
-            title={flow.title}
-          >
-            <span className="flow-variant-option__dot" aria-hidden="true" />
-          </button>
-          <span className="flow-variant-option__label">{flow.label}</span>
-        </div>
-      ))}
-    </div>
+    <>
+      <style>{`
+        @keyframes u65-flow-pulse {
+          0% { box-shadow: 0 0 6px 2px var(--pulse-color); }
+          50% { box-shadow: 0 0 14px 5px var(--pulse-color); }
+          100% { box-shadow: 0 0 6px 2px var(--pulse-color); }
+        }
+      `}</style>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          width: "fit-content",
+          margin: "0 auto 14px",
+          background:
+            "linear-gradient(180deg, var(--eg-surface-2) 0%, var(--eg-surface-1) 100%)",
+          border: "1px solid var(--border-default)",
+          borderRadius: 8,
+          padding: "8px 16px",
+          userSelect: "none",
+          boxShadow: "none",
+        }}
+      >
+        {U65_FLOW_OPTIONS.map((flow) => {
+          const active = variant === flow.id;
+          return (
+            <button data-key-role="secondary"
+              key={flow.id}
+              type="button"
+              onClick={() => onChange(flow.id)}
+              title={flow.title}
+              aria-pressed={active}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 5,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                fontFamily: "var(--font-primary)",
+              }}
+            >
+              <div
+                style={{
+                  "--pulse-color": "var(--focus-glow)",
+                  width: 14,
+                  height: 14,
+                  borderRadius: "50%",
+                  background: active ? flow.color : flow.soft,
+                  border: `1px solid ${active ? flow.color : flow.border}`,
+                  boxShadow: active ? "0 0 8px 2px var(--focus-glow)" : "none",
+                  transition:
+                    "background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+                  flexShrink: 0,
+                  animation: active
+                    ? "u65-flow-pulse 2.4s ease-in-out infinite"
+                    : "none",
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  fontFamily: "var(--font-primary)",
+                  color: active ? flow.color : "var(--text-muted)",
+                  transition: "color 0.2s ease",
+                  textTransform: "uppercase",
+                  lineHeight: 1,
+                }}
+              >
+                {flow.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }
 

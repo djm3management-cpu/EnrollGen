@@ -6275,13 +6275,6 @@ input::placeholder {
   white-space: nowrap;
 }
 
-/* Preserve amber Objections text through the shared glossy-key states. */
-html #root .flow-script-card.active-card > div.u65-nepq-screen__header button.u65-nepq-objection-trigger,
-html #root .flow-script-card.active-card > div.u65-nepq-screen__header button.u65-nepq-objection-trigger:is(:hover, :active, :focus-visible),
-html #root .flow-script-card.active-card > div.u65-nepq-screen__header button.u65-nepq-objection-trigger svg {
-  color: var(--eg-amber-text) !important;
-}
-
 .flow-script-card.active-card > div:first-child .u65-nepq-objection-trigger {
   flex-shrink: 0;
   min-height: 20px;
@@ -7175,13 +7168,6 @@ html #root .flow-script-card.active-card > div.u65-nepq-screen__header button.u6
 
 .script-start-call-gate--manual .script-start-call-button {
   min-width: 132px !important;
-}
-
-/* Size only the MA idle START key to its label; retain the shared control height. */
-#root .script-start-call-gate > button.ma-script-start-button {
-  width: max-content !important;
-  min-width: 0 !important;
-  padding-inline: 8px !important;
 }
 
 .script-start-call-button:hover {
@@ -12622,78 +12608,6 @@ body[data-bg-mode="classic"] .viewport-bg {
   font-size: 10px;
 }
 
-/* Dot-only selectors share no enclosing surface in the ACA and U65 flows. */
-.flow-variant-selector {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  width: fit-content;
-  margin: 0 auto 14px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.flow-variant-choice {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-}
-
-#root .flow-variant-selector button.flow-variant-option,
-#root .flow-variant-selector button.flow-variant-option:is(:hover, :active, :focus-visible, [aria-pressed]) {
-  display: flex;
-  width: 14px;
-  height: 14px;
-  min-width: 0;
-  min-height: 0;
-  padding: 0;
-  border: 0 !important;
-  border-radius: 50% !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  filter: none !important;
-  transform: none !important;
-  cursor: pointer;
-  appearance: none;
-}
-
-#root .flow-variant-selector button.flow-variant-option:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
-.flow-variant-option__dot {
-  box-sizing: border-box;
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  border: 1px solid var(--flow-option-border);
-  background: var(--flow-option-soft);
-}
-
-.flow-variant-option[aria-pressed="true"] .flow-variant-option__dot {
-  background: var(--flow-option-color);
-  border-color: var(--flow-option-color);
-}
-
-.flow-variant-option__label {
-  color: var(--text-muted);
-  font-family: var(--font-primary);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  line-height: 1;
-}
-
-.flow-variant-option[aria-pressed="true"] + .flow-variant-option__label {
-  color: var(--flow-option-color);
-}
-
 /* FFM SEP Finder — shares the MA SEP rail's terminal surface and handle system. */
 .aca-ffm-sep-finder {
   width: 100%;
@@ -13829,8 +13743,7 @@ body[data-bg-mode="classic"] .viewport-bg {
 .playbook-modal {
   position: fixed;
   inset: 0;
-  z-index: 12000;
-  box-sizing: border-box;
+  z-index: 500;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -13841,7 +13754,6 @@ body[data-bg-mode="classic"] .viewport-bg {
 }
 
 .playbook-modal__bar {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;

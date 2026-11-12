@@ -141,6 +141,39 @@ async function callClaude(entry, sourceMaterial) {
   }
 }
 
+async function publishUpdatedEntry(supabase, entry, parsed) {
+  const nextVersion = Number(entry.version || 1) + 1;
+
+  const { error: deactivateError } = await supabase
+    .from("knowledge_base")
+    .update({ is_active: false })
+    .eq("id", entry.id);
+  if (deactivateError) throw deactivateError;
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("knowledge_base")
+    .insert({
+      tenant_id: entry.tenant_id,
+      category: entry.category,
+      key: entry.key,
+      title: entry.title,
+      content: parsed.updatedContent,
+      metadata: {
+        ...(entry.metadata || {}),
+        last_agentic_update_summary: parsed.summary,
+      },
+      version: nextVersion,
+      is_active: true,
+      source_urls: entry.source_urls || [],
+      last_verified_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+  if (insertError) throw insertError;
+
+  return inserted;
+}
+
 async function logKnowledgeUpdate(supabase, entryId, payload) {
   const { error } = await supabase
     .from("knowledge_updates")
@@ -157,25 +190,61 @@ async function logKnowledgeUpdate(supabase, entryId, payload) {
   if (error) throw error;
 }
 
-async function processEntry(supabase, entry, { fetchSources, generateUpdate }) {
+async function processEntry(supabase, entry) {
   if (!entry.source_urls?.length) {
     return { id: entry.id, key: entry.key, result: "skipped_no_sources" };
   }
 
-  const sourceMaterial = await fetchSources(entry.source_urls);
-  const parsed = await generateUpdate(entry, sourceMaterial);
-  if (!parsed.changed) return { id: entry.id, key: entry.key, result: "no_changes" };
+  const sourceMaterial = await fetchSourceMaterial(entry.source_urls);
+  const parsed = await callClaude(entry, sourceMaterial);
 
-  // Confidence is informational only. No agentic proposal can publish live knowledge.
+  if (!parsed.changed) {
+    await logKnowledgeUpdate(supabase, entry.id, {
+      previousContent: entry.content,
+      newContent: entry.content,
+      summary: "No meaningful source changes detected.",
+      changeSource: "agentic_auto",
+      confidence: null,
+      status: "published",
+    });
+    return { id: entry.id, key: entry.key, result: "no_changes" };
+  }
+
+  if (!parsed.updatedContent) {
+    await logKnowledgeUpdate(supabase, entry.id, {
+      previousContent: entry.content,
+      newContent: parsed.raw,
+      summary: parsed.summary || "Changes detected but updated content was not parseable.",
+      changeSource: "agentic_auto",
+      confidence: parsed.confidence,
+      status: "draft",
+    });
+    return { id: entry.id, key: entry.key, result: "draft" };
+  }
+
+  if (parsed.confidence >= 0.85) {
+    await publishUpdatedEntry(supabase, entry, parsed);
+    await logKnowledgeUpdate(supabase, entry.id, {
+      previousContent: entry.content,
+      newContent: parsed.updatedContent,
+      summary: parsed.summary,
+      changeSource: "agentic_auto",
+      confidence: parsed.confidence,
+      status: "published",
+    });
+    return { id: entry.id, key: entry.key, result: "published", confidence: parsed.confidence };
+  }
+
+  const status = parsed.confidence >= 0.6 ? "pending_review" : "draft";
   await logKnowledgeUpdate(supabase, entry.id, {
     previousContent: entry.content,
-    newContent: parsed.updatedContent || parsed.raw,
-    summary: parsed.summary || "Changes detected but updated content was not parseable.",
+    newContent: parsed.updatedContent,
+    summary: parsed.summary,
     changeSource: "agentic_auto",
     confidence: parsed.confidence,
-    status: "pending_review",
+    status,
   });
-  return { id: entry.id, key: entry.key, result: "pending_review", confidence: parsed.confidence };
+  return { id: entry.id, key: entry.key, result: status, confidence: parsed.confidence };
 }
 
 async function fetchEntries(supabase, { category, key, limit }) {
@@ -212,18 +281,14 @@ export async function listKnowledgeCategories() {
   )).sort();
 }
 
-export async function runKnowledgeUpdate(
-  { category = null, key = null, limit = 12 } = {},
-  { getDb = getSupabase, fetchSources = fetchSourceMaterial, generateUpdate = callClaude } = {},
-) {
-  if (process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED !== "true") return { status: "disabled" };
-  const supabase = getDb();
+export async function runKnowledgeUpdate({ category = null, key = null, limit = 12 } = {}) {
+  const supabase = getSupabase();
   const entries = await fetchEntries(supabase, { category, key, limit });
   const results = [];
 
   for (const entry of entries) {
     try {
-      results.push(await processEntry(supabase, entry, { fetchSources, generateUpdate }));
+      results.push(await processEntry(supabase, entry));
     } catch (error) {
       await logKnowledgeUpdate(supabase, entry.id, {
         previousContent: entry.content,
@@ -249,7 +314,6 @@ export async function runKnowledgeUpdate(
 }
 
 export async function runAllKnowledgeCategoryUpdates({ limitPerCategory = 6 } = {}) {
-  if (process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED !== "true") return { status: "disabled" };
   const categories = await listKnowledgeCategories();
   const results = [];
 
