@@ -26,7 +26,21 @@ export async function createSessionLockStorage(host = window) {
     transaction.onerror = () => reject(transaction.error);
     transaction.onabort = () => reject(transaction.error);
   });
-  db.close();
+  const generationKey = identity => `generation:${JSON.stringify([identity.userId, identity.sessionId])}`;
+  const getGeneration = identity => new Promise((resolve, reject) => {
+    const tx = db.transaction('keys', 'readonly');
+    const request = tx.objectStore('keys').get(generationKey(identity));
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+    tx.onabort = () => reject(tx.error);
+  });
+  const setGeneration = record => new Promise((resolve, reject) => {
+    const tx = db.transaction('keys', 'readwrite');
+    tx.objectStore('keys').put(record.lockId, generationKey(record));
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
   const encode = data => new TextEncoder().encode(data);
   const read = async () => {
     const raw = host.localStorage.getItem(SESSION_LOCK_STORAGE_KEY);
@@ -36,18 +50,26 @@ export async function createSessionLockStorage(host = window) {
       if (typeof data !== 'string' || !Array.isArray(signature) || signature.length !== 32 ||
           !signature.every(value => Number.isInteger(value) && value >= 0 && value <= 255)) return null;
       if (!await crypto.subtle.verify('HMAC', key, new Uint8Array(signature), encode(data))) return null;
-      return JSON.parse(data);
+      const record = JSON.parse(data);
+      // Keep the generation outside replayable localStorage. An authentic old
+      // open record from before a lock must also fail on a new document.
+      return await getGeneration(record) === record.lockId ? record : null;
     } catch { return null; }
   };
   let queue = Promise.resolve();
   return {
     read,
-    update(change) {
+    update(change, identity) {
       const run = async () => {
-        const next = await change(await read());
+        const next = await change(await read(), {
+          seenSession: identity ? (await getGeneration(identity)) !== undefined : true,
+          hasRecord: host.localStorage.getItem(SESSION_LOCK_STORAGE_KEY) !== null,
+        });
         if (!next) return;
         const data = JSON.stringify(next);
         const signature = Array.from(new Uint8Array(await crypto.subtle.sign('HMAC', key, encode(data))));
+        // Advance first: a failed localStorage write cannot restore an old gate.
+        await setGeneration(next);
         host.localStorage.setItem(SESSION_LOCK_STORAGE_KEY, JSON.stringify({ data, signature }));
       };
       // Web Locks serialize read/modify/write across tabs, including an activity

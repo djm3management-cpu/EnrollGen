@@ -7,7 +7,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { transformSync } from 'esbuild';
 import { hookHarness } from './helpers/hookHarness.js';
-import { createSessionLock, IDLE_LOCK_MS } from '../src/lib/sessionLock.js';
+import { createSessionLock, IDLE_LOCK_MS, FRESH_SIGN_IN_MS, SIGN_IN_CLOCK_SKEW_MS, sessionLockDiagnostic } from '../src/lib/sessionLock.js';
 import { createSessionLockStorage, SESSION_LOCK_STORAGE_KEY } from '../src/lib/sessionLockStorage.js';
 import { phoneHasInProgressCall } from '../src/lib/callDisposition.js';
 
@@ -17,23 +17,27 @@ const h = (type, props, ...children) => ({ type, props: props || {}, children })
 const nodes = node => !node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flat(Infinity).flatMap(nodes)];
 function memoryStorage() {
   let saved = null, queue = Promise.resolve();
+  const seen = new Set();
   return {
     read: async () => structuredClone(saved),
-    update(change) {
-      const result = queue.then(async () => { const next = await change(structuredClone(saved)); if (next) saved = structuredClone(next); });
+    update(change, identity) {
+      const result = queue.then(async () => {
+        const next = await change(structuredClone(saved), { seenSession: seen.has(identity?.sessionId), hasRecord: saved !== null });
+        if (next) { saved = structuredClone(next); seen.add(next.sessionId); }
+      });
       queue = result.catch(() => {}); return result;
     },
     tamper(value) { saved = value; },
   };
 }
-function clerkSession({ mfa = false } = {}) {
+function clerkSession({ mfa = false, googleOnly = false, createdAt } = {}) {
   let challenge, sequence = 0, rejectCredential = false, firstAttempt;
   const calls = [];
-  const session = { id: 'session-a', user: { id: 'user-a' }, status: 'active',
+  const session = { id: 'session-a', user: { id: 'user-a' }, status: 'active', createdAt,
     async startVerification(params) {
       calls.push(['start', params]);
       challenge = { id: `verify-${++sequence}`, session, status: 'needs_first_factor', level: 'multi_factor',
-        supportedFirstFactors: [{ strategy: 'password' }, { strategy: 'email_code', emailAddressId: 'email-id' }, { strategy: 'passkey' }],
+        supportedFirstFactors: googleOnly ? [] : [{ strategy: 'password' }, { strategy: 'email_code', emailAddressId: 'email-id' }, { strategy: 'passkey' }],
         supportedSecondFactors: [{ strategy: 'totp' }, { strategy: 'phone_code', phoneNumberId: 'phone-id' }, { strategy: 'backup_code' }] };
       return challenge;
     },
@@ -54,13 +58,13 @@ function clerkSession({ mfa = false } = {}) {
   };
   return { session, calls, reject(value) { rejectCredential = value; }, setFirstAttempt(fn) { firstAttempt = fn; } };
 }
+let idSequence = 0;
 async function fixture(options = {}) {
-  let time = 0, phone = {}, current;
+  let time = options.time ?? 0, phone = {}, current;
   const sdk = clerkSession(options); current = sdk.session;
   const storage = options.storage || memoryStorage(), audit = [];
-  let nextId = 0;
   const identity = { userId: 'user-a', sessionId: 'session-a' };
-  const lock = createSessionLock({ identity, storage, now: () => time, newId: () => `lock-${++nextId}`,
+  const lock = createSessionLock({ identity, storage, now: () => time, newId: () => `lock-${++idSequence}`,
     getSession: () => current, phoneBusy: () => phoneHasInProgressCall(phone), audit: event => audit.push(event) });
   await lock.initialize();
   return { lock, storage, sdk, audit, identity,
@@ -105,13 +109,14 @@ for (const phase of ['activeCall', 'dialingCall', 'incomingCall', 'immediate-cla
   });
 }
 
-test('refresh and a second document remain locked even with an authentic open record', async () => {
+test('refresh and a second document resume an authentic open record inside the idle window', async () => {
   const first = await fixture(); await first.verify();
   const second = await fixture({ storage: first.storage });
-  assert.equal(second.lock.getSnapshot().locked, true);
-  await second.lock.activity(); assert.equal(second.lock.getSnapshot().locked, true);
+  assert.equal(second.lock.getSnapshot().locked, false);
+  await second.lock.activity(); assert.equal(second.lock.getSnapshot().locked, false);
   first.lock.dispose();
-  const refreshed = await fixture({ storage: first.storage }); assert.equal(refreshed.lock.getSnapshot().locked, true);
+  const refreshed = await fixture({ storage: first.storage }); assert.equal(refreshed.lock.getSnapshot().locked, false);
+  assert.equal(second.sdk.calls.length + refreshed.sdk.calls.length, 0);
 });
 
 test('a lock in one tab locks the other tab, and stored unlock never opens an already locked tab', async () => {
@@ -220,8 +225,8 @@ function storageHost() {
   const keys = new Map(), values = new Map(); let queue = Promise.resolve();
   const db = { createObjectStore() {}, close() {}, transaction() {
     const tx = { objectStore: () => ({
-      get(key) { const request = {}; setImmediate(() => { request.result = keys.get(key); request.onsuccess(); setImmediate(() => tx.oncomplete()); }); return request; },
-      put(value, key) { keys.set(key, value); },
+      get(key) { const request = {}; setImmediate(() => { request.result = keys.get(key); request.onsuccess(); setImmediate(() => tx.oncomplete?.()); }); return request; },
+      put(value, key) { keys.set(key, value); setImmediate(() => tx.oncomplete?.()); },
     }) }; return tx;
   } };
   return { crypto: webcrypto,
@@ -251,8 +256,8 @@ test('real storage MAC rejects well-formed edits to unlocked flag, timestamp, id
 });
 
 function contextModule(extra = {}) {
-  const compiled = transformSync(strip(source('src/context/SessionLockContext.jsx')), { loader: 'jsx', jsxFactory: 'h', format: 'cjs' }).code;
-  const context = vm.createContext({ h, createContext: () => ({ Provider: 'lock-context' }), useContext: () => ({ locked: true }), ...extra });
+  const compiled = transformSync(strip(source('src/context/SessionLockContext.jsx')).replaceAll('import.meta.env.DEV', 'false'), { loader: 'jsx', jsxFactory: 'h', format: 'cjs' }).code;
+  const context = vm.createContext({ h, createContext: () => ({ Provider: 'lock-context' }), useContext: () => ({ locked: true }), logSessionLockError() {}, sessionLockDiagnostic, ...extra });
   vm.runInContext(compiled + ';globalThis.Gate=SessionProtectedTree;globalThis.Provider=SessionLockProvider;', context);
   return context;
 }
@@ -270,9 +275,10 @@ test('the real gate never renders protected descendants while locked, including 
 test('the actual provider ignores old hashes and untrusted activity, persists trusted input, and never exposes unlock', async () => {
   const hooks = hookHarness(), listeners = new Map(), timers = new Map(), store = memoryStorage(), sdk = clerkSession();
   let now = 0, nextTimer = 0;
-  const host = { location: { hash: '#session-unlocked' }, addEventListener: (event, fn) => listeners.set(event, fn), removeEventListener: event => listeners.delete(event) };
+  const host = { location: { pathname: '/dashboard', search: '', hash: '#session-unlocked' }, addEventListener: (event, fn) => listeners.set(event, fn), removeEventListener: event => listeners.delete(event) };
   const clerk = { session: sdk.session }, token = async () => 'mocked-clerk-token';
   const context = contextModule({ ...hooks.hooks, useClerk: () => clerk, useSession: () => ({ session: clerk.session }), useAppAuth: () => ({ getToken: token }),
+    callContinuity: { getSnapshot: () => false, subscribe: () => () => {} },
     useInboundCall: () => ({}), phoneHasInProgressCall, createSessionLock: options => createSessionLock({ ...options, now: () => now }),
     createSessionLockStorage: async () => store, SESSION_LOCK_STORAGE_KEY, fetchWithClerk: async () => new Response('{}'), debugLog() {},
     Date: { now: () => now }, window: host, document: host, AbortSignal,
@@ -296,7 +302,7 @@ test('the actual provider ignores old hashes and untrusted activity, persists tr
 
 test('locked call UI displays only a phone number and answering or hanging up never opens the protected tree', () => {
   const hooks = hookHarness(); let answers = 0, hangs = 0;
-  const state = { locked: true, factors: [] };
+  const state = { locked: true, factors: [], beginVerification() {} };
   const incoming = { params: { callerPhone: '+15551234567', name: 'SECRET NAME', contactId: 'SECRET CRM' } };
   const phone = { incomingCall: incoming, contact: { name: 'SECRET RECORD' }, customerTranscript: ['SECRET TRANSCRIPT'],
     acceptCall() { answers++; phone.activeCall = phone.incomingCall; phone.incomingCall = null; }, hangUp() { hangs++; }, declineCall() {} };
@@ -385,4 +391,226 @@ test('late start/preparation responses cannot restart a challenge after a newer 
 
 test('future timeout configuration cannot disable the lock with zero, infinity, or an unbounded interval',()=>{
  for(const timeoutMs of [0,-1,Infinity,NaN,Number.MAX_SAFE_INTEGER])assert.throws(()=>createSessionLock({identity:{},phoneBusy:()=>false,storage:{},getSession:()=>null,timeoutMs}),/Idle timeout/);
+});
+
+test('fresh Google-only full sign-in opens once, writes a signed open record, and never starts reverification', async () => {
+  const store = await createSessionLockStorage(storageHost());
+  const f = await fixture({ storage: store, googleOnly: true, createdAt: new Date(0) });
+  assert.equal(f.lock.getSnapshot().locked, false);
+  assert.equal((await store.read()).locked, false);
+  assert.equal(f.sdk.calls.length, 0);
+  await f.lock.requestLock();
+  const reload = await fixture({ storage: store, googleOnly: true, createdAt: new Date(0) });
+  assert.equal(reload.lock.getSnapshot().locked, true, 'recent creation cannot erase Lock Now');
+  await reload.lock.beginVerification();
+  assert.equal(reload.lock.getSnapshot().noSupportedFactor, true);
+});
+
+test('creation freshness has an exact 60-second age bound and five-second future-clock tolerance', async () => {
+  for (const [age, open] of [[FRESH_SIGN_IN_MS, true], [FRESH_SIGN_IN_MS + 1, false],
+    [-SIGN_IN_CLOCK_SKEW_MS, true], [-SIGN_IN_CLOCK_SKEW_MS - 1, false]]) {
+    const f = await fixture({ time: 100_000, createdAt: new Date(100_000 - age), googleOnly: true });
+    assert.equal(f.lock.getSnapshot().locked, !open, `age ${age}`);
+  }
+  for (const createdAt of [undefined, new Date(NaN)]) {
+    const f = await fixture({ createdAt }); assert.equal(f.lock.getSnapshot().locked, true);
+  }
+});
+
+test('old sessions resume only authentic in-window open state; locked, expired, foreign and future state fail closed', async () => {
+  for (const variant of ['recent', 'expired', 'locked', 'foreign-user', 'foreign-session', 'future', 'missing']) {
+    const f = await fixture(); await f.verify();
+    const record = await f.storage.read();
+    if (variant === 'locked') await f.lock.requestLock();
+    if (variant === 'foreign-user') f.storage.tamper({ ...record, userId: 'foreign' });
+    if (variant === 'foreign-session') f.storage.tamper({ ...record, sessionId: 'foreign' });
+    if (variant === 'future') f.storage.tamper({ ...record, lastActivity: 2 });
+    if (variant === 'missing') f.storage.tamper(null);
+    const reload = await fixture({ storage: f.storage, createdAt: new Date(-FRESH_SIGN_IN_MS - 1),
+      time: variant === 'expired' ? IDLE_LOCK_MS : 1 });
+    assert.equal(reload.lock.getSnapshot().locked, variant !== 'recent', variant);
+    assert.equal(reload.sdk.calls.length, 0);
+  }
+});
+
+test('signed old open record replay after a lock cannot open either the current or a new document', async () => {
+  const host = storageHost(), store = await createSessionLockStorage(host);
+  const a = await fixture({ storage: store, createdAt: new Date(0) });
+  const raw = host.localStorage.getItem(SESSION_LOCK_STORAGE_KEY);
+  await a.lock.requestLock();
+  host.localStorage.setItem(SESSION_LOCK_STORAGE_KEY, raw);
+  assert.equal(await store.read(), null, 'durable generation rejects even an authentic signature');
+  // A separate storage adapter models the new document, including its IDB read.
+  const b = await fixture({ storage: await createSessionLockStorage(host), createdAt: new Date(0) });
+  assert.equal(b.lock.getSnapshot().locked, true);
+  host.localStorage.setItem(SESSION_LOCK_STORAGE_KEY, raw);
+  await a.lock.tick(); assert.equal(a.lock.getSnapshot().locked, true);
+});
+
+test('removing or tampering with a fresh-session record cannot reuse creation-time freshness', async () => {
+  for (const variant of ['remove', 'tamper']) {
+    const host = storageHost(), store = await createSessionLockStorage(host);
+    const a = await fixture({ storage: store, createdAt: new Date(0) });
+    assert.equal(a.lock.getSnapshot().locked, false);
+    if (variant === 'remove') host.localStorage.removeItem(SESSION_LOCK_STORAGE_KEY);
+    else host.localStorage.setItem(SESSION_LOCK_STORAGE_KEY, '{broken');
+    const b = await fixture({ storage: await createSessionLockStorage(host), createdAt: new Date(0) });
+    assert.equal(b.lock.getSnapshot().locked, true, variant);
+  }
+});
+
+function overlayHarness(state, phone = {}) {
+  const hooks = hookHarness();
+  const compiled = transformSync(strip(source('src/components/SessionLockOverlay.jsx')), { loader: 'jsx', jsxFactory: 'h', jsxFragment: 'fragment', format: 'cjs' }).code;
+  const context = vm.createContext({ ...hooks.hooks, h, fragment: 'fragment', useSessionLock: () => state, useInboundCall: () => phone });
+  vm.runInContext(compiled + ';globalThis.Overlay=SessionLockOverlay;', context);
+  hooks.mount(() => context.Overlay());
+  return hooks;
+}
+const button = (tree, label) => nodes(tree).find(node => node.type === 'button' && node.children.includes(label));
+
+for (const reason of ['idle', 'manual']) {
+  test(`Google-only ${reason} lock offers only full sign-in plus sign-out; a supported factor keeps the credential challenge`, async () => {
+    for (const googleOnly of [true, false]) {
+      const f = await fixture({ googleOnly, createdAt: new Date(0) });
+      if (reason === 'idle') { f.setTime(IDLE_LOCK_MS); await f.lock.tick(); }
+      else await f.lock.requestLock();
+      assert.equal(f.lock.getSnapshot().locked, true);
+      const state = { ...f.lock.getSnapshot(), factors: [], beginVerification: () => f.lock.beginVerification() };
+      const overlay = overlayHarness(state);
+      await overlay.flush(); // Real overlay starts the SDK challenge on mount.
+      Object.assign(state, f.lock.getSnapshot(), { factors: f.lock.factors() }); overlay.render();
+      assert.equal(Boolean(button(overlay.value, 'Sign in again')), googleOnly);
+      assert.equal(Boolean(button(overlay.value, 'Verify identity')), false);
+      assert.ok(button(overlay.value, 'Sign out'));
+      assert.equal(f.lock.getSnapshot().locked, true);
+      overlay.unmount();
+    }
+  });
+}
+
+test('wrong credentials, expired challenge, Clerk/network, no method and unavailable storage have distinct screen messages', async () => {
+  const cases = [
+    [{ errors: [{ code: 'form_password_incorrect' }] }, 'Wrong credential'],
+    [{ errors: [{ code: 'form_code_incorrect' }] }, 'Wrong credential'],
+    [{ errors: [{ code: 'verification_expired' }] }, 'Challenge expired'],
+    [new TypeError('Network down'), 'Network or Clerk error'],
+    [{ errors: [{ code: 'internal_error' }] }, 'Network or Clerk error'],
+  ];
+  const messages = new Set();
+  for (const [error, expected] of cases) {
+    const f = await fixture(); await f.lock.beginVerification(); await f.lock.selectFactor(1);
+    f.sdk.setFirstAttempt(async () => { throw error; }); await f.lock.submit('secret');
+    assert.equal(f.lock.getSnapshot().error, expected);
+    const overlay = overlayHarness({ ...f.lock.getSnapshot(), factors: f.lock.factors() });
+    assert.ok(nodes(overlay.value).some(node => node.props.role === 'alert' && node.children.includes(expected)));
+    messages.add(expected); overlay.unmount();
+  }
+  const noFactor = await fixture({ googleOnly: true }); await noFactor.lock.beginVerification();
+  assert.equal(noFactor.lock.getSnapshot().error, 'No supported method'); messages.add(noFactor.lock.getSnapshot().error);
+  const denied = await fixture({ storage: { update: async () => { throw Error('Denied'); } } });
+  assert.equal(denied.lock.getSnapshot().error, 'Storage unavailable'); messages.add(denied.lock.getSnapshot().error);
+  assert.equal(messages.size, 5);
+});
+
+test('development diagnostics preserve structured SDK causes without arbitrary secrets or caller details', () => {
+  const diagnostic = sessionLockDiagnostic({ status: 422, message: 'SECRET password token caller',
+    errors: [{ code: 'form_code_incorrect', message: 'SECRET', meta: { password: 'SECRET' } }], token: 'SECRET' });
+  assert.equal(diagnostic.status, 422); assert.equal(diagnostic.errors[0].code, 'form_code_incorrect');
+  assert.doesNotMatch(JSON.stringify(diagnostic), /SECRET|password|token|caller/);
+  for (const dev of [true, false]) {
+    const calls = [];
+    const logger = vm.createContext({ sessionLockDiagnostic, console: { error: (...args) => calls.push(args) } });
+    vm.runInContext(strip(source('src/lib/debugLog.js')).replaceAll('import.meta.env', `({ DEV: ${dev} })`) +
+      ';globalThis.log=logSessionLockError;', logger);
+    logger.log(sessionLockDiagnostic({ errors: [{ code: 'form_code_incorrect' }], message: 'SECRET' }));
+    assert.equal(calls.length, dev ? 1 : 0);
+    assert.doesNotMatch(JSON.stringify(calls), /SECRET/);
+  }
+});
+
+function providerHarness({ googleOnly = false, calling = false, rejectSignOut = false } = {}) {
+  const hooks = hookHarness(), store = memoryStorage(), sdk = clerkSession({ googleOnly });
+  const signedOut = [], listeners = new Set();
+  let owned = calling;
+  const continuity = { getSnapshot: () => owned, subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); } };
+  const phone = { hasCallInProgress: () => owned };
+  const clerk = { session: sdk.session, async signOut(options) {
+    signedOut.push(options);
+    if (rejectSignOut) throw Error('SECRET');
+    clerk.session = null;
+  } };
+  const token = async () => 'mock-clerk-token';
+  const host = { location: { pathname: '/dashboard/contacts', search: '?view=recent', hash: '#detail' }, addEventListener() {}, removeEventListener() {} };
+  const context = contextModule({ ...hooks.hooks, useClerk: () => clerk, useSession: () => ({ session: clerk.session }),
+    useAppAuth: () => ({ getToken: token, callProtected: owned }), useInboundCall: () => phone,
+    callContinuity: continuity, phoneHasInProgressCall, createSessionLock: options => createSessionLock({ ...options, now: () => 0 }),
+    createSessionLockStorage: async () => store, SESSION_LOCK_STORAGE_KEY, fetchWithClerk: async () => new Response('{}'), debugLog() {},
+    window: host, document: host, AbortSignal, setInterval: () => 1, clearInterval() {},
+  });
+  hooks.mount(() => context.Provider({ children: 'workspace' }));
+  return { hooks, clerk, signedOut, sdk, store,
+    endCall() { owned = false; for (const fn of listeners) fn(); hooks.render(); },
+  };
+}
+
+for (const action of ['signInAgain', 'signOut']) {
+  test(`${action} uses Clerk sign-out, defers owned calls, and never mounts protected children`, async () => {
+    for (const calling of [true, false]) {
+      const f = providerHarness({ googleOnly: true, calling });
+      await f.hooks.flush(); await f.hooks.value.props.value.beginVerification(); await f.hooks.flush();
+      const state = f.hooks.value.props.value;
+      assert.equal(state.noSupportedFactor, true);
+      const overlay = overlayHarness(state);
+      button(overlay.value, action === 'signInAgain' ? 'Sign in again' : 'Sign out').props.onClick();
+      await f.hooks.flush();
+      if (calling) {
+        assert.equal(f.signedOut.length, 0);
+        assert.equal(f.hooks.value.props.value.locked, true);
+        f.endCall(); await f.hooks.flush();
+      }
+      assert.equal(f.signedOut.length, 1);
+      assert.equal(f.clerk.session, null);
+      assert.equal(f.hooks.value.props.value.locked, true);
+      assert.equal(f.signedOut[0].redirectUrl, action === 'signInAgain' ? '/login?redirect_url=%2Fdashboard%2Fcontacts%3Fview%3Drecent%23detail' : '/login');
+      assert.equal(contextModule().Gate({ children: 'SECRET workspace', fallback: 'lock' }), 'lock');
+      overlay.unmount(); f.hooks.unmount();
+      // A returning old session is still locked. Only a newly completed full
+      // sign-in (new Clerk session ID) can bootstrap another open record.
+      const old = await fixture({ storage: f.store, googleOnly: true }); assert.equal(old.lock.getSnapshot().locked, true);
+      const newSession = clerkSession({ googleOnly: true, createdAt: new Date(0) }); newSession.session.id = 'new-full-sign-in';
+      f.store.tamper(null); // Existing AuthContext clears this on sign-out/reset.
+      const next = createSessionLock({ identity: { userId: 'user-a', sessionId: newSession.session.id }, getSession: () => newSession.session,
+        storage: f.store, phoneBusy: () => false, now: () => 0 });
+      await next.initialize(); assert.equal(next.getSnapshot().locked, false); assert.equal(newSession.calls.length, 0);
+    }
+  });
+}
+
+test('supported-factor accounts cannot invoke the full-sign-in fallback and sign-out failure keeps the gate closed', async () => {
+  const supported = providerHarness(); await supported.hooks.flush();
+  supported.hooks.value.props.value.signInAgain(); await supported.hooks.flush();
+  assert.equal(supported.signedOut.length, 0); supported.hooks.unmount();
+  const failure = providerHarness({ rejectSignOut: true }); await failure.hooks.flush();
+  failure.hooks.value.props.value.signOut(); await failure.hooks.flush();
+  assert.equal(failure.hooks.value.props.value.locked, true);
+  assert.equal(failure.hooks.value.props.value.error, 'Network or Clerk error'); failure.hooks.unmount();
+});
+
+
+test('fresh creation cannot replace an unreadable or foreign locked record on its first load', async () => {
+  for (const raw of ['{broken', JSON.stringify({ data: '{}', signature: [] })]) {
+    const host = storageHost(); host.localStorage.setItem(SESSION_LOCK_STORAGE_KEY, raw);
+    const f = await fixture({ storage: await createSessionLockStorage(host), createdAt: new Date(0) });
+    assert.equal(f.lock.getSnapshot().locked, true);
+  }
+  const host = storageHost(), store = await createSessionLockStorage(host);
+  const original = await fixture({ storage: store });
+  // Use a different session without a generation, while an authentic foreign
+  // locked record remains. Full sign-out clears the record before normal login.
+  const sdk = clerkSession({ createdAt: new Date(0) }); sdk.session.id = 'new-session';
+  const lock = createSessionLock({ identity: { userId: 'user-a', sessionId: 'new-session' },
+    storage: store, getSession: () => sdk.session, phoneBusy: () => false, now: () => 0 });
+  await lock.initialize(); assert.equal(lock.getSnapshot().locked, true);
+  original.lock.dispose();
 });

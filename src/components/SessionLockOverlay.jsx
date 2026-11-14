@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSessionLock } from '../context/SessionLockContext';
 import { useInboundCall } from '../context/InboundCallContext';
 
@@ -9,9 +9,12 @@ const phoneNumber = call => {
 };
 
 export default function SessionLockOverlay() {
-  const { locked, busy, error, verification, factor, factors, beginVerification, selectFactor, submit } = useSessionLock();
+  const { locked, busy, error, verification, factor, factors, noSupportedFactor, beginVerification, selectFactor, submit, signInAgain, signOut } = useSessionLock();
   const phone = useInboundCall();
   const [credential, setCredential] = useState('');
+  useEffect(() => {
+    if (locked && !busy && !verification && !error && !noSupportedFactor) void beginVerification();
+  }, [locked, busy, verification, error, noSupportedFactor, beginVerification]);
   if (!locked) return null;
   const call = phone?.incomingCall || phone?.activeCall;
   return <main className="session-lock-overlay">
@@ -24,7 +27,7 @@ export default function SessionLockOverlay() {
           <button data-key-role="secondary" type="button" onClick={phone.declineCall}>Decline</button>
         </> : <button data-key-role="secondary" type="button" onClick={phone.hangUp}>Hang up</button>}
       </div>}
-      {!verification ? <button data-key-role="primary" type="button" disabled={busy} onClick={beginVerification}>Verify identity</button> : <>
+      {noSupportedFactor ? <button data-key-role="primary" type="button" disabled={busy} onClick={signInAgain}>Sign in again</button> : !verification ? <button data-key-role="primary" type="button" disabled={busy} onClick={beginVerification}>Verify identity</button> : <>
         <div className="session-lock-factors">
           {factors.map((item, index) => <button data-key-role="secondary" key={`${item.strategy}:${index}`} type="button" disabled={busy}
             onClick={() => { setCredential(''); void selectFactor(index); }}>{LABELS[item.strategy]}</button>)}
@@ -43,6 +46,7 @@ export default function SessionLockOverlay() {
           <button data-key-role="primary" type="submit" disabled={busy}>Verify</button>
         </form>}
       </>}
+      <button data-key-role="secondary" type="button" onClick={signOut}>Sign out</button>
       {error && <span role="alert">{error}</span>}
       {error && verification && <button data-key-role="secondary" type="button" disabled={busy}
         onClick={() => { setCredential(''); void beginVerification(); }}>Start over</button>}

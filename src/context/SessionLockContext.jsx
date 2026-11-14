@@ -3,9 +3,10 @@ import { useClerk, useSession } from '@clerk/clerk-react';
 import { useInboundCall } from './InboundCallContext';
 import { useAppAuth } from './AuthContext';
 import { phoneHasInProgressCall } from '../lib/callDisposition.js';
-import { createSessionLock } from '../lib/sessionLock.js';
+import { callContinuity } from '../lib/callContinuity.js';
+import { createSessionLock, sessionLockDiagnostic } from '../lib/sessionLock.js';
 import { createSessionLockStorage, SESSION_LOCK_STORAGE_KEY } from '../lib/sessionLockStorage.js';
-import { debugLog } from '../lib/debugLog.js';
+import { debugLog, logSessionLockError } from '../lib/debugLog.js';
 import { fetchWithClerk } from '../lib/clerkFetch.js';
 
 const ACTIVITY_EVENTS = ['pointermove', 'keydown', 'pointerdown', 'touchstart', 'scroll', 'wheel'];
@@ -15,7 +16,10 @@ export const useSessionLock = () => useContext(SessionLockContext);
 export function SessionLockProvider({ children }) {
   const clerk = useClerk();
   const { session } = useSession();
-  const { getToken } = useAppAuth();
+  const { getToken, callProtected } = useAppAuth();
+  const [signingOut, setSigningOut] = useState(false);
+  const pendingSignOut = useRef(null);
+  const signOutInFlight = useRef(false);
   const phone = useInboundCall();
   const phoneRef = useRef(phone);
   phoneRef.current = phone;
@@ -30,11 +34,12 @@ export function SessionLockProvider({ children }) {
     ready.catch(() => {});
     const storage = {
       read: async () => (await ready).read(),
-      update: async change => (await ready).update(change),
+      update: async (change, identity) => (await ready).update(change, identity),
     };
     const instance = createSessionLock({ identity: { userId, sessionId }, storage,
       getSession: () => clerk.session,
       phoneBusy: () => phoneHasInProgressCall(phoneRef.current),
+      diagnostic: error => logSessionLockError(sessionLockDiagnostic(error)),
       onChange: state => setSnapshot({ ...state, userId, sessionId }),
       audit: event => {
         void fetchWithClerk(getToken, '/.netlify/functions/session-lock-events', {
@@ -71,11 +76,46 @@ export function SessionLockProvider({ children }) {
     };
   }, [clerk, getToken, userId, sessionId]);
 
+  // Keep the gate closed while sign-out is pending. As with the profile menu,
+  // never sign Clerk out or navigate while the phone owns a call.
+  useEffect(() => {
+    let stopped = false;
+    const finish = async () => {
+      if (stopped || signOutInFlight.current || !pendingSignOut.current || callProtected || callContinuity.getSnapshot() ||
+          phoneHasInProgressCall(phoneRef.current)) return;
+      signOutInFlight.current = true;
+      const redirectUrl = pendingSignOut.current;
+      try {
+        await clerk.signOut({ redirectUrl });
+      } catch (error) {
+        signOutInFlight.current = false;
+        logSessionLockError(sessionLockDiagnostic(error));
+        if (controller.current) {
+          pendingSignOut.current = null;
+          setSigningOut(false);
+          setSnapshot(value => ({ ...value, error: 'Network or Clerk error' }));
+        }
+      }
+    };
+    void finish();
+    const stop = callContinuity.subscribe(() => { void finish(); });
+    return () => { stopped = true; stop(); };
+  }, [clerk, signingOut, callProtected, phone?.activeCall, phone?.dialingCall, phone?.incomingCall]);
+
+  const signOut = (again = false) => {
+    if (pendingSignOut.current || (again && !snapshot.noSupportedFactor)) return;
+    const returnTo = window.location.pathname + window.location.search + window.location.hash;
+    pendingSignOut.current = again ? `/login?redirect_url=${encodeURIComponent(returnTo)}` : '/login';
+    controller.current?.cancelVerification();
+    setSigningOut(true);
+  };
+
   // An SDK call claim is synchronous; the idle controller also consults it
   // before writing a lock. A call arriving after lock never opens this gate.
   useEffect(() => { void controller.current?.tick(); }, [phone?.activeCall, phone?.dialingCall, phone?.incomingCall]);
   const sameSession = snapshot.userId === userId && snapshot.sessionId === sessionId;
-  return <SessionLockContext.Provider value={{ ...snapshot, locked: !sameSession || snapshot.locked,
+  return <SessionLockContext.Provider value={{ ...snapshot, busy: snapshot.busy || signingOut, locked: signingOut || !sameSession || snapshot.locked,
+    signOut: () => signOut(), signInAgain: () => signOut(true),
     requestLock: () => controller.current?.requestLock(),
     beginVerification: () => controller.current?.beginVerification(),
     selectFactor: index => controller.current?.selectFactor(index),

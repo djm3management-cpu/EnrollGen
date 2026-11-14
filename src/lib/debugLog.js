@@ -19,3 +19,9 @@ export function warnSttOverlap(callSid) {
 export function logSttUsageFailure(callSid) {
   console.error('[stt] Browser usage report failed', /^CA[0-9a-f]{32}$/i.test(callSid || '') ? callSid : null);
 }
+
+// Reauthentication diagnostics are always visible in development, with only
+// allowlisted SDK codes/status. Arbitrary error messages/metadata stay private.
+export function logSessionLockError(diagnostic) {
+  if (import.meta.env?.DEV) console.error('Session lock error', diagnostic);
+}
