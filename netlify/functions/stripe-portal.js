@@ -1,7 +1,7 @@
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import Stripe from "stripe";
 import { requireClerkAuth } from "./_clerkAuth.js";
-import { resolveTenantIdForOrg } from "./_subscriptionGate.js";
+import { EvidenceError, evidenceFailure, resolveCallAccessIdentity } from "./_evidenceAccess.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -32,17 +32,30 @@ function baseUrl(request) {
   ).replace(/\/$/, "");
 }
 
-export default async (request) => {
+export function createStripePortalHandler({
+  authenticate = request => requireClerkAuth(request, { allowBypass: false }),
+  getDb = getSupabase,
+  stripeClient = getStripe,
+} = {}) {
+  return async (request) => {
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
   }
 
-  const auth = await requireClerkAuth(request);
+  const auth = await authenticate(request);
   if (auth.response) return auth.response;
 
+  let supabase, tenantId;
   try {
-    const supabase = getSupabase();
-    const tenantId = await resolveTenantIdForOrg(supabase, auth.orgId);
+    supabase = getDb();
+    const identity = await resolveCallAccessIdentity(supabase, auth);
+    if (!identity.admin) throw new EvidenceError(403, "Administrator required");
+    tenantId = identity.tenant.id;
+  } catch (error) {
+    return evidenceFailure(error);
+  }
+
+  try {
     const { data: subscription, error } = await supabase
       .from("subscriptions")
       .select("stripe_customer_id")
@@ -58,7 +71,7 @@ export default async (request) => {
       });
     }
 
-    const portalSession = await getStripe().billingPortal.sessions.create({
+    const portalSession = await stripeClient().billingPortal.sessions.create({
       customer: subscription.stripe_customer_id,
       return_url: `${baseUrl(request)}/?billing=portal`,
     });
@@ -68,6 +81,9 @@ export default async (request) => {
     console.error("[stripe-portal] failed:", error);
     return json(500, { error: "Unable to create billing portal session", detail: error.message });
   }
-};
+  };
+}
+
+export default createStripePortalHandler();
 
 export const config = { path: "/api/stripe-portal" };

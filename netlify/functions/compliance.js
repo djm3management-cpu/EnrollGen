@@ -444,7 +444,15 @@ function evaluateRecalculatedItem({
   };
 }
 
-export default async (request) => {
+// P0-3: no application, worker, or scheduled caller remains for this legacy API.
+// Retire the entire HTTP surface (including direct function URLs) before auth,
+// subscription checks, or service-client creation. Keep the implementation below
+// for historical review; it must not be exported or reachable from a handler.
+export default function retiredComplianceApi() {
+  return json(410, { error: "Legacy compliance API retired. Use the protected call and Compliance Review APIs." });
+}
+
+async function legacyComplianceHandler(request) {
   const auth = await requireClerkAuth(request);
   if (auth.response) return auth.response;
 
@@ -1381,4 +1389,4 @@ export default async (request) => {
     console.error("compliance function error:", err);
     return json(500, { error: err.message || "Internal server error" });
   }
-};
+}

@@ -2,15 +2,17 @@
  * Deepgram batch transcription — transcribes a pre-recorded audio file.
  *
  * POST /transcribe
- * Body: { url: "https://...", callId: "uuid" }
+ * Body: { callId: "uuid", recordingId: "recording-ledger-id" }
  * Returns: { transcript_raw, transcript_diarized, duration_seconds }
  *
  * Uses Deepgram REST API (pre-recorded) with diarization + speaker labels.
- * If callId is provided, updates the call_records row with transcript data.
+ * Authorizes the call and recording before obtaining a server-issued media URL.
+ * Updates only that authorized call with transcript data.
  */
 
 import { requireClerkAuth } from "./_clerkAuth.js";
-import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
+import { EvidenceError, checked, evidenceFailure, getEvidenceServiceClient, scopeCallToIdentity } from "./_evidenceAccess.js";
+import { recordingIdentity, authorizeRecordingTarget, listTargetRecordings, recordingMediaGrant } from "./_recordingAccess.js";
 import {
   applyDeepgramRedactionParams,
   redactDiarizedTranscript,
@@ -20,12 +22,6 @@ import {
 const JSON_HEADERS = { "Content-Type": "application/json" };
 function json(status, data) {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
-}
-
-function getSupabase() {
-  const url = process.env.SUPABASE_URL;
-  const key = supabaseSecretKey();
-  return createClient(url, key);
 }
 
 function sentimentLabel(score) {
@@ -206,26 +202,36 @@ function computeConfidenceByChannel(utterances) {
   };
 }
 
-export default async (request) => {
+export function createTranscribeHandler({
+  authenticate = request => requireClerkAuth(request, { allowBypass: false }),
+  getDb = getEvidenceServiceClient,
+  transport = fetch,
+  env = process.env,
+} = {}) {
+  return async (request) => {
   if (request.method !== "POST") return json(405, { error: "Method not allowed" });
 
-  const auth = await requireClerkAuth(request);
+  const auth = await authenticate(request);
   if (auth.response) return auth.response;
-
-  const dgKey = process.env.DEEPGRAM_API_KEY;
-  if (!dgKey) {
-    return json(500, { error: "DEEPGRAM_API_KEY not configured in environment variables." });
-  }
 
   let body;
   try { body = await request.json(); } catch {
     return json(400, { error: "Invalid JSON body" });
   }
 
-  const { url: audioUrl, callId } = body;
-  if (!audioUrl) return json(400, { error: "Missing 'url' in request body" });
+  const { callId, recordingId } = body;
+  if (!recordingId) return json(400, { error: "Choose a recordingId for the call" });
 
   try {
+    const sb = getDb();
+    const identity = await recordingIdentity(sb, auth);
+    const target = await authorizeRecordingTarget(sb, identity, { call_record_id: callId });
+    const recordings = await listTargetRecordings(sb, identity, target);
+    const recording = recordings.find(row => row.id === recordingId);
+    if (!recording) throw new EvidenceError(403, "Recording is unavailable for this call.");
+    const dgKey = env.DEEPGRAM_API_KEY;
+    if (!dgKey) throw new EvidenceError(503, "Transcription is not configured.");
+    const { url: audioUrl } = await recordingMediaGrant(sb, identity, recording, { env });
     // Call Deepgram pre-recorded API
     const dgUrl = new URL("https://api.deepgram.com/v1/listen");
     dgUrl.searchParams.set("model", "nova-2");
@@ -240,7 +246,7 @@ export default async (request) => {
     dgUrl.searchParams.set("summarize", "v2");
     applyDeepgramRedactionParams(dgUrl);
 
-    const dgResp = await fetch(dgUrl.toString(), {
+    const dgResp = await transport(dgUrl.toString(), {
       method: "POST",
       headers: {
         "Authorization": `Token ${dgKey}`,
@@ -250,9 +256,7 @@ export default async (request) => {
     });
 
     if (!dgResp.ok) {
-      const errText = await dgResp.text();
-      console.error("Deepgram API error:", dgResp.status, errText);
-      return json(dgResp.status, { error: "Deepgram transcription failed", detail: errText });
+      return json(502, { error: "Deepgram transcription failed" });
     }
 
     const dgData = await dgResp.json();
@@ -313,10 +317,9 @@ export default async (request) => {
       analytics: callAnalytics,
     };
 
-    // If callId provided, update the call record
-    if (callId) {
-      const sb = getSupabase();
-      const { error } = await sb.from("call_records").update({
+    // Repeat tenant/owner scope on the write, even after the recording check.
+    {
+      const updated = checked(await scopeCallToIdentity(sb.from("call_records").update({
         transcript_raw: transcriptRaw,
         transcript_diarized: diarized,
         call_duration_seconds: durationSeconds,
@@ -326,15 +329,16 @@ export default async (request) => {
         dg_summary: summaryText,
         call_analytics: callAnalytics,
         updated_at: new Date().toISOString(),
-      }).eq("id", callId);
-
-      if (error) console.error("Failed to update call record:", error);
-      result.call_updated = !error;
+      }).eq("id", callId), identity).select("id").maybeSingle());
+      if (!updated) throw new EvidenceError(403, "Call is unavailable for this agent.");
+      result.call_updated = true;
     }
 
     return json(200, result);
   } catch (err) {
-    console.error("transcribe function error:", err);
-    return json(500, { error: err.message });
+    return evidenceFailure(err);
   }
-};
+  };
+}
+
+export default createTranscribeHandler();

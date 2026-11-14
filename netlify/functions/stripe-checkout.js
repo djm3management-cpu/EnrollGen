@@ -1,7 +1,7 @@
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import Stripe from "stripe";
 import { requireClerkAuth } from "./_clerkAuth.js";
-import { resolveTenantIdForOrg } from "./_subscriptionGate.js";
+import { EvidenceError, evidenceFailure, resolveCallAccessIdentity } from "./_evidenceAccess.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -32,19 +32,35 @@ function baseUrl(request) {
   ).replace(/\/$/, "");
 }
 
-function priceIdForPlan(plan) {
-  if (plan === "starter") return process.env.STRIPE_STARTER_PRICE_ID;
-  if (plan === "pro") return process.env.STRIPE_PRO_PRICE_ID;
+function priceIdForPlan(plan, env) {
+  if (plan === "starter") return env.STRIPE_STARTER_PRICE_ID;
+  if (plan === "pro") return env.STRIPE_PRO_PRICE_ID;
   return "";
 }
 
-export default async (request) => {
+export function createStripeCheckoutHandler({
+  authenticate = request => requireClerkAuth(request, { allowBypass: false }),
+  getDb = getSupabase,
+  stripeClient = getStripe,
+  env = process.env,
+} = {}) {
+  return async (request) => {
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
   }
 
-  const auth = await requireClerkAuth(request);
+  const auth = await authenticate(request);
   if (auth.response) return auth.response;
+
+  let supabase, tenantId;
+  try {
+    supabase = getDb();
+    const identity = await resolveCallAccessIdentity(supabase, auth);
+    if (!identity.admin) throw new EvidenceError(403, "Administrator required");
+    tenantId = identity.tenant.id;
+  } catch (error) {
+    return evidenceFailure(error);
+  }
 
   let body;
   try {
@@ -55,7 +71,7 @@ export default async (request) => {
 
   const plan = body.plan === "starter" || body.plan === "pro" ? body.plan : "";
   const seats = Math.max(1, Math.min(250, Number.parseInt(body.seats, 10) || 1));
-  const priceId = priceIdForPlan(plan);
+  const priceId = priceIdForPlan(plan, env);
 
   if (!plan || !priceId) {
     return json(400, {
@@ -65,16 +81,16 @@ export default async (request) => {
   }
 
   try {
-    const supabase = getSupabase();
-    const tenantId = await resolveTenantIdForOrg(supabase, auth.orgId);
-    const { data: existing } = await supabase
+    const { data: existing, error } = await supabase
       .from("subscriptions")
       .select("stripe_customer_id")
       .eq("tenant_id", tenantId)
       .maybeSingle();
 
+    if (error) throw error;
+
     const appUrl = baseUrl(request);
-    const stripe = getStripe();
+    const stripe = stripeClient();
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       ...(existing?.stripe_customer_id ? { customer: existing.stripe_customer_id } : {}),
@@ -104,6 +120,9 @@ export default async (request) => {
     console.error("[stripe-checkout] failed:", error);
     return json(500, { error: "Unable to create checkout session", detail: error.message });
   }
-};
+  };
+}
+
+export default createStripeCheckoutHandler();
 
 export const config = { path: "/api/stripe-checkout" };

@@ -5,7 +5,7 @@ import {DEEPGRAM_BATCH_PER_MINUTE_USD} from '../../src/compliance/shared/scoring
 import {authorizeRecordingTarget,listTargetRecordings} from './_recordingAccess.js';
 import {prepareVersion,saveVersion} from '../lib/complianceVersions.js';
 import {requireClerkAuth} from './_clerkAuth.js';
-import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveCallAccessIdentity} from './_evidenceAccess.js';
+import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveCallAccessIdentity,scopeCallToIdentity} from './_evidenceAccess.js';
 import {transcriptCoverage,sortTranscript} from '../../src/compliance/rules/transcript.js';
 import {RULES_VERSION} from '../../src/compliance/rules/catalog.js';
 export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(r,{allowBypass:false}),getDb=getEvidenceServiceClient,transport=fetch,env=process.env}={}){
@@ -16,7 +16,8 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
    const input=request.method==='GET'?Object.fromEntries(new URL(request.url).searchParams):await request.json();
    if(!/^[0-9a-f-]{36}$/i.test(input.call_id||''))throw new EvidenceError(400,'Call ID required');
    const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
-   const call=checked(await db.from('call_records').select('*').eq('id',input.call_id).eq('tenant_id',identity.tenant.id).maybeSingle());
+   if(request.method==='POST'&&!identity.admin)throw new EvidenceError(403,'Administrator required');
+   const call=checked(await scopeCallToIdentity(db.from('call_records').select('*').eq('id',input.call_id),identity).maybeSingle());
    if(!call)throw new EvidenceError(403,'Call unavailable');
    const coverage=transcriptCoverage(call),eligibility=scoringEligibility(call);
    if(!call.agent_name||call.agent_name==='Agent'){
@@ -67,12 +68,12 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
     if(!recording||String(recording.id).startsWith('legacy:'))throw new EvidenceError(409,'Choose a verified full-call recording before gap fill');
     const estimated=gapEstimate.minutes*mapping.length*batchRate;
     if(!Number.isFinite(input.approved_gap_cost_usd)||!Number.isFinite(input.approved_gap_minutes)||input.approved_gap_cost_usd<estimated||input.approved_gap_minutes<gapEstimate.minutes)throw new EvidenceError(409,'Gap estimate changed; confirm again');
-    const existing=checked(await db.from('manual_transcript_gap_fills').select('id').eq('request_id',input.request_id).maybeSingle());
+    const existing=checked(await db.from('manual_transcript_gap_fills').select('id').eq('request_id',input.request_id).eq('tenant_id',call.tenant_id).eq('call_id',call.id).maybeSingle());
     if(existing)return evidenceJson(200,{job_id:existing.id,reused:true});
     const job=checked(await db.from('manual_transcript_gap_fills').insert({request_id:input.request_id,call_id:call.id,tenant_id:call.tenant_id,recording_id:recording.id,requested_by:auth.userId,source_transcript:call.transcript_diarized,ranges:gapEstimate.ranges,channel_speakers:mapping,timeline_offset_ms:offset,estimated_cost_usd:estimated}).select('*').single());
     const origin=new URL(env.COMPLIANCE_APP_ORIGIN||'https://enrollgen.com').origin;
     try{const response=await transport(`${origin}/.netlify/functions/transcript-gaps-background`,{method:'POST',headers:{'Content-Type':'application/json','x-enrollgen-job-secret':env.SCORE_CALL_JOB_SECRET},body:JSON.stringify({job_id:job.id}),signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Gap-fill delivery failed');}
-    catch(error){checked(await db.from('manual_transcript_gap_fills').update({status:'failed',error:'delivery_failed'}).eq('id',job.id));throw error;}
+    catch(error){checked(await db.from('manual_transcript_gap_fills').update({status:'failed',error:'delivery_failed'}).eq('id',job.id).eq('tenant_id',call.tenant_id).eq('call_id',call.id));throw error;}
     return evidenceJson(202,{job_id:job.id});
    }
    if(input.action==='rescore'){
@@ -89,7 +90,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
     try{
      const response=await transport(`${origin}/.netlify/functions/compliance-review-background`,{method:'POST',headers:{'Content-Type':'application/json','x-enrollgen-job-secret':env.SCORE_CALL_JOB_SECRET},body:JSON.stringify({pass_id:pass.id}),signal:AbortSignal.timeout(10000)});
      if(!response.ok)throw Error('Manual scoring delivery failed');
-    }catch(error){checked(await db.from('compliance_llm_passes').update({status:'failed'}).eq('id',pass.id));throw error;}
+    }catch(error){checked(await db.from('compliance_llm_passes').update({status:'failed'}).eq('id',pass.id).eq('tenant_id',call.tenant_id).eq('call_id',call.id));throw error;}
     return evidenceJson(202,{pass_id:pass.id});
    }
    throw new EvidenceError(409,'Rubric validation and paid-action rollout are not approved');
