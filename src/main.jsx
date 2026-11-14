@@ -4,8 +4,6 @@ import App from "./App";
 import "./styles/design-tokens.css";
 import "./styles/public-shell.css";
 import "./styles/visual-refresh.css";
-import { CopilotLogProvider } from "./context/CopilotTranscriptLog";
-import { LiveCallProvider } from "./context/LiveCallContext";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -77,11 +75,7 @@ function RootProviders() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <CopilotLogProvider>
-          <LiveCallProvider>
-            <App />
-          </LiveCallProvider>
-        </CopilotLogProvider>
+        <App />
       </ThemeProvider>
     </AuthProvider>
   );

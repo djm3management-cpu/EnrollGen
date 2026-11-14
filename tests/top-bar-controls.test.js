@@ -13,6 +13,7 @@ function fixture(file,component,extra){
  source=transformSync(source,{loader:'jsx',jsxFactory:'h',format:'cjs'}).code;
  const context=vm.createContext({...harness.hooks,document,window:new EventTarget(),memo:fn=>fn,
   AVAILABILITY_OPTIONS,availabilityLabel,requiresPhoneReady,
+  useSessionLock:()=>({requestLock:()=>{}}),useInboundCall:()=>null,phoneHasInProgressCall:phone=>Boolean(phone?.activeCall||phone?.incomingCall||phone?.dialingCall),
   h:(type,props,...children)=>({type,props:props||{},children}),...extra});
  vm.runInContext(source+`;globalThis.component=${component};`,context);
  harness.mount(()=>context.component({}));
@@ -29,14 +30,14 @@ test('clicking the name opens Sign Out; outside click and Escape close without s
   assert.equal(find(harness.value,node=>node.props.role==='menuitem'),null);
   const trigger=()=>find(harness.value,node=>node.props['aria-haspopup']==='menu');
   trigger().props.onClick();await harness.flush();
-  assert.equal(signedOut,0);assert.equal(find(harness.value,node=>node.props.role==='menuitem').children[0],'Sign Out');
+  assert.equal(signedOut,0);assert.equal(find(harness.value,node=>node.props.role==='menuitem'&&node.children.includes('Sign Out')).children[0],'Sign Out');
   document.dispatchEvent(new Event('pointerdown'));await harness.flush();
   assert.equal(find(harness.value,node=>node.props.role==='menuitem'),null);
   trigger().props.onClick();await harness.flush();
   const escape=new Event('keydown');Object.assign(escape,{key:'Escape'});document.dispatchEvent(escape);await harness.flush();
   assert.equal(find(harness.value,node=>node.props.role==='menuitem'),null);assert.equal(signedOut,0);
   trigger().props.onClick();await harness.flush();
-  find(harness.value,node=>node.props.role==='menuitem').props.onClick();await harness.flush();
+  find(harness.value,node=>node.props.role==='menuitem'&&node.children.includes('Sign Out')).props.onClick();await harness.flush();
   assert.equal(signedOut,1);
  }finally{harness.unmount();}
 });
@@ -49,8 +50,8 @@ test('Sign Out is disabled during a call and rechecks the immediate call guard b
  });
  try{
   find(harness.value,node=>node.props['aria-haspopup']==='menu').props.onClick();await harness.flush();
-  let item=find(harness.value,node=>node.props.role==='menuitem');assert.equal(item.props.disabled,true);item.props.onClick();assert.equal(signedOut,0);
-  callProtected=false;harness.render();item=find(harness.value,node=>node.props.role==='menuitem');assert.equal(item.props.disabled,false);
+  let item=find(harness.value,node=>node.props.role==='menuitem'&&node.children.includes('Sign Out'));assert.equal(item.props.disabled,true);item.props.onClick();assert.equal(signedOut,0);
+  callProtected=false;harness.render();item=find(harness.value,node=>node.props.role==='menuitem'&&node.children.includes('Sign Out'));assert.equal(item.props.disabled,false);
   sdkActive=true;item.props.onClick();assert.equal(signedOut,0,'a call arriving before React renders still blocks sign out');
  }finally{harness.unmount();}
 });
@@ -123,5 +124,21 @@ test('cockpit availability buttons include Callbacks Only and keep the selection
   assert.equal(option.props['aria-pressed'],true);
   assert.equal(option.props.disabled,false);
   option.props.onClick();assert.deepEqual(selected,['callbacks_only']);
+ }finally{harness.unmount();}
+});
+
+
+test('Lock Now closes the menu, calls the lock, and checks both rendered and immediate call guards',async()=>{
+ let locks=0,phone={},sdkActive=false;
+ const {harness}=fixture('ProfileMenu.jsx','ProfileMenu',{
+  useAppAuth:()=>({identityLoaded:true,user:{fullName:'Test Agent'}}),useClerk:()=>({signOut(){}}),
+  useSessionLock:()=>({requestLock:()=>locks++}),useInboundCall:()=>phone,callContinuity:{getSnapshot:()=>sdkActive},
+ });
+ const trigger=()=>find(harness.value,node=>node.props['aria-haspopup']==='menu');
+ const action=()=>find(harness.value,node=>node.props.role==='menuitem'&&node.children.includes('Lock Now'));
+ try{
+  trigger().props.onClick();await harness.flush();action().props.onClick();await harness.flush();assert.equal(locks,1);assert.equal(action(),null);
+  trigger().props.onClick();await harness.flush();sdkActive=true;action().props.onClick();assert.equal(locks,1);
+  sdkActive=false;phone={incomingCall:{}};harness.render();assert.equal(action().props.disabled,true);action().props.onClick();assert.equal(locks,1);
  }finally{harness.unmount();}
 });

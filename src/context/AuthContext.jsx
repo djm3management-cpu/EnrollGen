@@ -20,6 +20,18 @@ function ClerkAuthBridge({ children }) {
     identity.current = {user, organization, organizationLoaded};
   }
   const retained = callProtected ? identity.current : {user, organization, organizationLoaded};
+  // A document reload discards every module cache, pending request, singleton,
+  // token client, and React tree before another identity can mount. Defer only
+  // for an already-owned call, preserving the existing call-auth safeguards.
+  const documentIdentity = useRef(auth.userId || null);
+  if (!documentIdentity.current && auth.userId) documentIdentity.current = auth.userId;
+  const identityChanged = Boolean(documentIdentity.current && auth.isLoaded && !callProtected && documentIdentity.current !== auth.userId);
+  useEffect(() => {
+    if (!identityChanged) return;
+    clearIdentityBrowserState(window);
+    window.location?.reload();
+  }, [identityChanged]);
+
   const rawAuthRef = useRef(auth);
   rawAuthRef.current = auth;
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -73,9 +85,20 @@ function ClerkAuthBridge({ children }) {
     isSignedIn: auth.isSignedIn, identityLoaded: callProtected || (auth.isLoaded && userLoaded),
     user: retained?.user, organization: retained?.organization,
     organizationLoaded: callProtected || retained?.organizationLoaded,
-  }}>{children}</AuthContext.Provider>;
+  }}>{identityChanged ? null : children}</AuthContext.Provider>;
 }
 
 export function AuthProvider({ children }) {
   return <ClerkAuthBridge>{children}</ClerkAuthBridge>;
+}
+
+export function clearIdentityBrowserState(host) {
+  // Preference-only keys (theme/audio) and identity-scoped durable outboxes are
+  // intentionally retained. These legacy unscoped keys can contain agent/call context.
+  for (const key of ['enrollgen_persist', 'enrollgen.session-lock.v1']) {
+    try { host.localStorage?.removeItem(key); } catch { /* The document still resets. */ }
+  }
+  for (const key of ['enrollgen_ancillary_prompts_v1', 'enrollgen_carrier_reference_popup_v2']) {
+    try { host.sessionStorage?.removeItem(key); } catch { /* The document still resets. */ }
+  }
 }

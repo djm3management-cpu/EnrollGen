@@ -1,4 +1,5 @@
 import { egressMetrics } from '../telephony/src/egressMetrics.js';
+import {createSessionLock,IDLE_LOCK_MS} from '../src/lib/sessionLock.js';
 import {createCallContinuity} from '../src/lib/callContinuity.js';
 import {installAgentAudio} from '../src/lib/audio/AgentAudioProcessor.js';
 import {computeRmsLevel,computeWaveformPeaks} from '../src/audio/audioPeaks.js';
@@ -315,22 +316,20 @@ test('actual dialer box auto-disposes a connected call under 15 seconds exactly 
  const {harness,requests,events}=boxFixture({seconds:14});try{await harness.flush();assert.equal(requests.filter(x=>x==='POST').length,1);assert.equal(events[0].detail.call_outcome,'short_call_hangup');assert.equal(harness.value,null);}finally{harness.unmount();}
 });
 
-test('idle lock consults the immediate SDK call guard, never accrues call time, and stays hidden if a new call arrives while locked',async()=>{
- const harness=hookHarness();let now=0,live=true,check;
- const phone={hasCallInProgress:()=>live};
- let source=stripImports(readFileSync(new URL('../src/context/SessionLockContext.jsx',import.meta.url),'utf8')).replace(/^export /gm,'');
- source=transformSync(source,{loader:'jsx',jsxFactory:'h',jsxFragment:'fragment',format:'cjs'}).code;
- const context=vm.createContext({...harness.hooks,createContext:()=>({Provider:'provider'}),useContext:()=>{},useInboundCall:()=>phone,
-  phoneHasInProgressCall,h:(type,props,...children)=>({type,props,children}),isAuthDisabled:()=>false,Date:{now:()=>now},
-  setInterval:fn=>{check=fn;return 1;},clearInterval(){},window:{addEventListener(){},removeEventListener(){}},
- });
- vm.runInContext(source+';globalThis.component=AuthedSessionLockProvider;',context);
- harness.mount(()=>context.component({children:null}));try{
- now=61*60*1000;check();await harness.flush();assert.equal(harness.value.props.value.locked,false);
- live=false;now+=15000;check();await harness.flush();assert.equal(harness.value.props.value.locked,false);
- now+=61*60*1000;check();await harness.flush();assert.equal(harness.value.props.value.locked,true);
- live=true;harness.render();assert.equal(harness.value.props.value.locked,false);
- }finally{harness.unmount();}
+test('idle lock consults the immediate SDK call guard and answering after a lock never opens the gate',async()=>{
+ let now=0,live=false,saved=null;
+ const session={id:'session',user:{id:'user'},status:'active'};
+ let challenge;
+ session.startVerification=async()=>challenge={id:'challenge',session,status:'needs_first_factor',supportedFirstFactors:[{strategy:'password'}]};
+ session.attemptFirstFactorVerification=async()=>({...challenge,status:'complete'});
+ const lock=createSessionLock({identity:{userId:'user',sessionId:'session'},getSession:()=>session,now:()=>now,
+  phoneBusy:()=>phoneHasInProgressCall({hasCallInProgress:()=>live}),storage:{read:async()=>saved,update:async change=>{const next=await change(saved);if(next)saved=next;}}});
+ await lock.initialize();await lock.beginVerification();await lock.selectFactor(0);await lock.submit('mocked-password');
+ live=true;now=IDLE_LOCK_MS*4;await lock.tick();assert.equal(lock.getSnapshot().locked,false);
+ live=false;await lock.tick();assert.equal(lock.getSnapshot().locked,false);
+ now+=IDLE_LOCK_MS;await lock.tick();assert.equal(lock.getSnapshot().locked,true);
+ live=true;await lock.tick();assert.equal(lock.getSnapshot().locked,true);
+ lock.dispose();
 });
 
 test('phone dropdown collapses pending disposition to a pill through ringing and live calls, then reopens it',async()=>{

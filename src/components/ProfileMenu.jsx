@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { useClerk } from '@clerk/clerk-react';
 import { useAppAuth } from '../context/AuthContext';
+import { useSessionLock } from '../context/SessionLockContext';
+import { phoneHasInProgressCall } from '../lib/callDisposition.js';
+import { useInboundCall } from '../context/InboundCallContext';
 import { callContinuity } from '../lib/callContinuity.js';
 
 export default function ProfileMenu() {
   const { user, identityLoaded, callProtected } = useAppAuth();
   const { signOut } = useClerk();
+  const { requestLock } = useSessionLock();
+  const phone = useInboundCall();
+  const calling = callProtected || phoneHasInProgressCall(phone);
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
@@ -42,6 +48,12 @@ export default function ProfileMenu() {
       </button>
       {open && (
         <div className="top-bar-profile-menu" role="menu" aria-label="Account">
+          <button data-key-role="secondary" type="button" role="menuitem" className="top-bar-profile-signout"
+            disabled={calling} onClick={() => {
+              if (calling || callContinuity.getSnapshot()) return;
+              setOpen(false);
+              void requestLock();
+            }}>Lock Now</button>
           <button data-key-role="secondary" type="button" role="menuitem" className="top-bar-profile-signout"
             disabled={callProtected} title={callProtected ? 'Finish the call before signing out' : undefined}
             onClick={() => {

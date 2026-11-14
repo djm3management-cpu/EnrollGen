@@ -1,58 +1,51 @@
-import { useEffect, useRef } from "react";
-import { SignIn } from "@clerk/clerk-react";
-import { useSessionLock } from "../context/SessionLockContext";
+import { useState } from 'react';
+import { useSessionLock } from '../context/SessionLockContext';
+import { useInboundCall } from '../context/InboundCallContext';
 
-const UNLOCK_HASH = "#session-unlocked";
+const LABELS = { password: 'Password', passkey: 'Passkey', email_code: 'Email code', phone_code: 'Phone code', totp: 'Authenticator code', backup_code: 'Backup code' };
+const phoneNumber = call => {
+  const value = call?.params?.callerPhone || call?.call?.parameters?.From || '';
+  return /^\+?[\d ().-]{1,30}$/.test(value) ? value : '';
+};
 
-// Clerk's <SignIn> has no "just completed" callback prop in the
-// current SDK, so we use its documented afterSignInUrl redirect as
-// the completion signal: point it at a marker hash on the current
-// URL and watch for that hash to appear. This is the officially
-// supported integration point, but I haven't been able to verify in
-// a real browser that re-authenticating an already-active session
-// through this modal actually forces a fresh credential check rather
-// than Clerk just recognizing the existing session and completing
-// instantly — worth confirming by testing what it takes to get past
-// this screen once idle-locked.
 export default function SessionLockOverlay() {
-  const { locked, unlock } = useSessionLock();
-  const markerUrlRef = useRef("");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    markerUrlRef.current = window.location.pathname + window.location.search + UNLOCK_HASH;
-  }, [locked]);
-
-  useEffect(() => {
-    if (!locked || typeof window === "undefined") return;
-    const checkHash = () => {
-      if (window.location.hash === UNLOCK_HASH) {
-        window.history.replaceState(null, "", window.location.pathname + window.location.search);
-        unlock();
-      }
-    };
-    window.addEventListener("hashchange", checkHash);
-    const poll = window.setInterval(checkHash, 500);
-    return () => {
-      window.removeEventListener("hashchange", checkHash);
-      window.clearInterval(poll);
-    };
-  }, [locked, unlock]);
-
+  const { locked, busy, error, verification, factor, factors, beginVerification, selectFactor, submit } = useSessionLock();
+  const phone = useInboundCall();
+  const [credential, setCredential] = useState('');
   if (!locked) return null;
-
-  return (
-    <div className="session-lock-overlay">
-      <div className="session-lock-card">
-        <div className="session-lock-head">
-          <h2>SESSION LOCKED</h2>
-          <p>You've been idle for a while. Sign in again to keep working — your session isn't ending.</p>
+  const call = phone?.incomingCall || phone?.activeCall;
+  return <main className="session-lock-overlay">
+    <section className="session-lock-card" aria-label="Session locked">
+      <h1>SESSION LOCKED</h1>
+      {call && <div className="session-lock-call">
+        <span>{phoneNumber(call)}</span>
+        {phone.incomingCall ? <>
+          <button data-key-role="primary" type="button" onClick={phone.acceptCall}>Answer</button>
+          <button data-key-role="secondary" type="button" onClick={phone.declineCall}>Decline</button>
+        </> : <button data-key-role="secondary" type="button" onClick={phone.hangUp}>Hang up</button>}
+      </div>}
+      {!verification ? <button data-key-role="primary" type="button" disabled={busy} onClick={beginVerification}>Verify identity</button> : <>
+        <div className="session-lock-factors">
+          {factors.map((item, index) => <button data-key-role="secondary" key={`${item.strategy}:${index}`} type="button" disabled={busy}
+            onClick={() => { setCredential(''); void selectFactor(index); }}>{LABELS[item.strategy]}</button>)}
         </div>
-        <SignIn routing="virtual" afterSignInUrl={markerUrlRef.current} />
-        <button data-key-role="secondary" type="button" className="session-lock-manual-continue" onClick={unlock}>
-          I've verified my identity — continue
-        </button>
-      </div>
-    </div>
-  );
+        {factor && <form onSubmit={event => {
+          event.preventDefault();
+          const value = credential;
+          setCredential('');
+          void submit(value);
+        }}>
+          {factor.strategy !== 'passkey' && <label>{LABELS[factor.strategy]}
+            <input aria-label={LABELS[factor.strategy]} type={factor.strategy === 'password' ? 'password' : 'text'}
+              autoComplete={factor.strategy === 'password' ? 'current-password' : 'one-time-code'}
+              value={credential} onChange={event => setCredential(event.target.value)} required disabled={busy} />
+          </label>}
+          <button data-key-role="primary" type="submit" disabled={busy}>Verify</button>
+        </form>}
+      </>}
+      {error && <span role="alert">{error}</span>}
+      {error && verification && <button data-key-role="secondary" type="button" disabled={busy}
+        onClick={() => { setCredential(''); void beginVerification(); }}>Start over</button>}
+    </section>
+  </main>;
 }

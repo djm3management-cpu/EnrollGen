@@ -9,13 +9,8 @@ import {
 } from "react";
 import { useAppAuth } from "../context/AuthContext";
 
-const tenantCache = new Map();
 const tenantRequests = new Map();
 const TenantConfigContext = createContext(null);
-
-function cachedTenantBundle() {
-  return Array.from(tenantCache.values()).find((bundle) => bundle?.tenant?.id) || null;
-}
 
 function decodeJwtPayload(token) {
   try {
@@ -47,7 +42,7 @@ async function getTenantBundle(getToken) {
   const token = await getSupabaseToken(getToken);
   if (!token) throw new Error("Session expired. Sign in after this call.");
   const payload = decodeJwtPayload(token);
-  const cacheKey = payload.org_id || token?.slice(-24) || "default";
+  const cacheKey = [payload.sub, payload.org_id || payload.o?.id || ""].join(":");
   if (tenantRequests.has(cacheKey)) return tenantRequests.get(cacheKey);
 
   const request = (async () => {
@@ -64,7 +59,7 @@ async function getTenantBundle(getToken) {
     const tenant = await fetchTenantConfig(client);
     const agents = tenant?.id ? await fetchTenantAgents(client, tenant.id) : [];
 
-    return { cacheKey, client, tenant, agents };
+    return { client, tenant, agents };
   })();
 
   tenantRequests.set(cacheKey, request);
@@ -92,7 +87,6 @@ export function TenantConfigProvider({ children }) {
 
     try {
       const bundle = await getTenantBundle(getToken);
-      if (bundle.tenant?.id) tenantCache.set(bundle.cacheKey, bundle);
       setState({
         tenant: bundle.tenant,
         agents: bundle.agents,
@@ -118,13 +112,6 @@ export function TenantConfigProvider({ children }) {
       const { getClerkSupabase, supabase } = await import("../lib/supabase");
       client = getClerkSupabase() || supabase;
     }
-    const bundle = {
-      cacheKey: tenant.clerk_org_id || tenant.id,
-      client,
-      tenant,
-      agents,
-    };
-    tenantCache.set(bundle.cacheKey, bundle);
     setState((current) => ({
       ...current,
       tenant,
@@ -139,20 +126,8 @@ export function TenantConfigProvider({ children }) {
     let cancelled = false;
 
     async function hydrate() {
-      const cached = cachedTenantBundle();
-      if (cached && !cancelled) {
-        setState({
-          tenant: cached.tenant,
-          agents: cached.agents,
-          supabaseClient: cached.client,
-          loading: false,
-          error: "",
-        });
-      }
-
       try {
         const bundle = await getTenantBundle(getToken);
-        if (bundle.tenant?.id) tenantCache.set(bundle.cacheKey, bundle);
         if (!cancelled) {
           setState({
             tenant: bundle.tenant,

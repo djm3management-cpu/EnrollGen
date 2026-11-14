@@ -21,6 +21,8 @@ import PreloadRecoveryNotice from './components/PreloadRecoveryNotice';
 import { isAppCallActive, preloadRecovery } from './lib/preloadRecovery.js';
 import { useCallStore } from './stores/callStore.js';
 import ClientQuickScripts from "./components/ClientQuickScripts";
+import { CopilotLogProvider } from "./context/CopilotTranscriptLog";
+import { LiveCallProvider } from "./context/LiveCallContext";
 import { ScriptProvider, useScript } from "./context/ScriptContext";
 import { MedSupProvider } from "./context/MedSupContext";
 import { useLiveCall } from "./context/LiveCallContext";
@@ -32,7 +34,7 @@ import PhoneDropdown from "./components/phone/PhoneDropdown";
 import { AvailabilityProvider } from "./context/AvailabilityContext";
 import AvailabilityStrip from "./components/AvailabilityStrip";
 import ProfileMenu from "./components/ProfileMenu";
-import { SessionLockProvider } from "./context/SessionLockContext";
+import { SessionLockProvider, SessionProtectedTree } from "./context/SessionLockContext";
 import SessionLockOverlay from "./components/SessionLockOverlay";
 import { useUnreadMessages } from "./hooks/useMessages";
 import SmsToastHost from "./components/SmsToastHost";
@@ -1169,17 +1171,10 @@ function AppContent({ currentUser = null }) {
   return (
     <SubscriptionGate>
       <LeftRailProvider>
-        <AvailabilityProvider>
-          <InboundCallProvider>
-            <SessionLockProvider>
-              <CallAuthBanner />
-              <PanelErrorBoundary fallbackControls={<PhoneDropdown />}>
-                <AppShell currentUser={currentUser} />
-              </PanelErrorBoundary>
-              <SessionLockOverlay />
-            </SessionLockProvider>
-          </InboundCallProvider>
-        </AvailabilityProvider>
+        <CallAuthBanner />
+        <PanelErrorBoundary fallbackControls={<PhoneDropdown />}>
+          <AppShell currentUser={currentUser} />
+        </PanelErrorBoundary>
       </LeftRailProvider>
     </SubscriptionGate>
   );
@@ -1323,23 +1318,25 @@ function AuthenticatedAppContent() {
 
 function AuthenticatedProviders({ children }) {
   return (
-    <TenantConfigProvider>
-      <SubscriptionProvider>
-        <Suspense
-          fallback={
-            <div className="subscription-paywall">
-              <div className="subscription-paywall-card">
-                <span className="billing-eyebrow">WORKSPACE</span>
-                <h1>Loading workspace</h1>
-                <p>Preparing your enrollment tools.</p>
-              </div>
-            </div>
-          }
-        >
-          <AuthenticatedStyleGate>{children}</AuthenticatedStyleGate>
-        </Suspense>
-      </SubscriptionProvider>
-    </TenantConfigProvider>
+    <Suspense fallback={<div className="auth-shell" />}>
+      <AuthenticatedStyleGate>
+        <TenantConfigProvider>
+          <AvailabilityProvider>
+            <InboundCallProvider>
+              <SessionLockProvider>
+                <SessionProtectedTree fallback={<SessionLockOverlay />}>
+                  <CopilotLogProvider>
+                    <LiveCallProvider>
+                      <SubscriptionProvider>{children}</SubscriptionProvider>
+                    </LiveCallProvider>
+                  </CopilotLogProvider>
+                </SessionProtectedTree>
+              </SessionLockProvider>
+            </InboundCallProvider>
+          </AvailabilityProvider>
+        </TenantConfigProvider>
+      </AuthenticatedStyleGate>
+    </Suspense>
   );
 }
 
