@@ -1,3 +1,6 @@
+// Explicit opt-in for existing enabled-feature behavior under test.
+process.env.PARAGON_ENABLED = 'true';
+process.env.OPERATIONAL_EMAIL_ENABLED = 'true';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import process from 'node:process';

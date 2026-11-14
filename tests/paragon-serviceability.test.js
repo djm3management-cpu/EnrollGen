@@ -1,3 +1,4 @@
+process.env.PARAGON_ENABLED='true';
 import {before,after,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';

@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { paragonReportTotals } from './_paragonControls.js';
 import { createHash } from 'node:crypto';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
@@ -45,6 +46,7 @@ export const reportCsv = calls => [COLUMNS.join(','),...calls.map(reportCall).ma
 const respond = (body,status=200,contentType='text/html; charset=utf-8') => new Response(body,{status,headers:{...HEADERS,'Content-Type':contentType}});
 
 export const createHandler = (makeDb = (url,key) => createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}})) => async request => {
+  if (!featureEnabled('PARAGON_ENABLED')) return disabledResponse('PARAGON_ENABLED');
   const url = new URL(request.url);
   const token = url.searchParams.get('token');
   const hash = token && /^[A-Za-z0-9_-]{43}$/.test(token) ? createHash('sha256').update(token).digest('hex') : null;

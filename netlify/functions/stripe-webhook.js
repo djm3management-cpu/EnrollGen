@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import Stripe from "stripe";
 
@@ -123,6 +124,7 @@ async function markSubscriptionStatus(supabase, subscriptionId, status) {
 }
 
 export default async (request) => {
+  if (!featureEnabled('STRIPE_BILLING_ENABLED')) return disabledResponse('STRIPE_BILLING_ENABLED');
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
   }

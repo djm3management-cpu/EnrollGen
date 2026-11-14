@@ -1,7 +1,9 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {getEvidenceServiceClient,checked,evidenceJson,evidenceFailure} from './_evidenceAccess.js';
 import {sendProviderFailureAlert} from '../lib/postCallProvider.js';
 export function createSttAlertHandler({getDb=getEvidenceServiceClient,sendAlert=sendProviderFailureAlert,env=process.env}={}){
  return async request=>{
+  if(!featureEnabled('OPERATIONAL_EMAIL_ENABLED',env))return disabledResponse('OPERATIONAL_EMAIL_ENABLED');
   if(request.method!=='POST'||!env.SCORE_CALL_JOB_SECRET||request.headers.get('x-enrollgen-job-secret')!==env.SCORE_CALL_JOB_SECRET)return evidenceJson(401,{error:'Unauthorized'});
   try{const body=await request.json();
    if(body.call_id){

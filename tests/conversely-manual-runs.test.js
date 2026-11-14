@@ -1,3 +1,6 @@
+// Explicit opt-in for existing enabled-feature behavior under test.
+process.env.CONVERSELY_UPLOAD_ENABLED = 'true';
+process.env.IX_UPLOAD_ENABLED = 'true';
 import {carrierKey} from '../src/lib/enrollmentIntake.js';
 import {before,after,test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -115,7 +118,7 @@ test('later eligible agents can submit, failures show per-agent, and retries reu
 });
 test('disabling the worker after a click prevents selection/delivery, and disabled or stale workers reject new requests',async()=>{
  await start();await processManualConverselyRun(db,{env:{CONVERSELY_UPLOAD_ENABLED:'false'},isPlayable:()=>assert.fail('disabled')});
- assert.equal((await history()).run.status,'disabled');assert.equal(sent.length,3);
+ assert.equal((await history()).run.status,'pending');assert.equal(sent.length,3);
  await db.rpc('heartbeat_conversely_worker',{p_enabled:false});assert.equal((await api()(request({action:'run_conversely_now'}))).status,409);
  await query(`UPDATE conversely_worker_status SET enabled=true,heartbeat_at=now()-interval '6 minutes'`);assert.equal((await api()(request({action:'run_conversely_now'}))).status,409);
  await db.rpc('heartbeat_conversely_worker',{p_enabled:true});

@@ -39,7 +39,7 @@ function summarizeUsage(rows = []) {
 }
 
 export function SubscriptionProvider({ children }) {
-  const { tenantId, supabaseClient, loading: tenantLoading } = useTenantConfig();
+  const { tenantId, supabaseClient, loading: tenantLoading, billingEntitlement } = useTenantConfig();
   const [state, setState] = useState({
     subscription: null,
     usage: emptyUsage(),
@@ -57,6 +57,11 @@ export function SubscriptionProvider({ children }) {
           loading: false,
         }));
       }
+      return;
+    }
+
+    if (billingEntitlement) {
+      setState({subscription:{...billingEntitlement,tenant_id:tenantId},usage:emptyUsage(),loading:false,error:''});
       return;
     }
 
@@ -105,7 +110,7 @@ export function SubscriptionProvider({ children }) {
         error: error?.message || "Subscription status unavailable.",
       }));
     }
-  }, [supabaseClient, tenantId, tenantLoading]);
+  }, [supabaseClient, tenantId, tenantLoading, billingEntitlement]);
 
   useEffect(() => {
     if (!tenantLoading && !tenantId) {
@@ -146,13 +151,13 @@ export function SubscriptionProvider({ children }) {
   }, [load, tenantId, tenantLoading]);
 
   const value = useMemo(() => {
-    const subscription = state.subscription;
+    const subscription = billingEntitlement ? {...billingEntitlement,tenant_id:tenantId} : state.subscription;
     const plan = subscription?.plan || null;
     const status = subscription?.status || "inactive";
     const isInternal = plan === "internal";
     const isTrial = plan === "trial" || status === "trialing";
-    const isActive = isInternal || status === "active" || status === "trialing";
-    const isPro = isInternal || plan === "pro" || plan === "trial";
+    const isActive = subscription?.billing_disabled === true || isInternal || status === "active" || status === "trialing";
+    const isPro = subscription?.billing_disabled === true || isInternal || plan === "pro" || plan === "trial";
     const isStarter = plan === "starter";
 
     return {
@@ -167,7 +172,7 @@ export function SubscriptionProvider({ children }) {
       isInternal,
       refetch: () => load(),
     };
-  }, [load, state, tenantLoading]);
+  }, [load, state, tenantLoading, billingEntitlement, tenantId]);
 
   return createElement(SubscriptionContext.Provider, { value }, children);
 }

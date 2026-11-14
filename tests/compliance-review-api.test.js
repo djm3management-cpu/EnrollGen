@@ -14,7 +14,7 @@ test('header access loads items with protected tenant scope and surfaces item re
 });
 test('non-admin decisions are rejected and paid switches reject before any dispatch',async()=>{
  const user=fixture({admin:false});const req=action=>new Request('https://example.test',{method:'POST',body:JSON.stringify({call_id:callId,action})});assert.equal((await user.handler(req('review'))).status,403);assert.deepEqual(user.writes,[]);
- const admin=fixture();assert.equal((await admin.handler(req('rescore'))).status,409);assert.equal((await admin.handler(req('fill'))).status,409);assert.deepEqual(admin.writes,[]);
+ const admin=fixture();assert.equal((await admin.handler(req('rescore'))).status,503);assert.equal((await admin.handler(req('fill'))).status,503);assert.deepEqual(admin.writes,[]);
 });
 
 test('manual rescore of a short call is blocked as N/A before claiming or dispatching any pass',async()=>{

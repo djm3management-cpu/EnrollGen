@@ -1,3 +1,4 @@
+import {useTenantConfig} from "../hooks/useTenantConfig";
 import {useCallback} from "react";
 import {useAppAuth} from "../context/AuthContext";
 import {queueResidenceLookup,residenceEnvelope,residenceScope} from "../lib/paragonResidence.js";
@@ -16,13 +17,14 @@ import SEPResultsPanel, { SEP_FINDER_FULL_DISCLAIMER } from "./SEPResultsPanel";
 import "../SEPLookupTool.css";
 
 export default function SEPLookupTool() {
+ const {features}=useTenantConfig();
   const inbound = useInboundCall();
   const {user,organization}=useAppAuth();
   const activeCall=inbound?.activeCall;
   const scope=residenceScope(user,organization);
   const onResidenceLookup=useCallback(lookup=>{
-    queueResidenceLookup(scope,residenceEnvelope(activeCall,lookup));
-  },[activeCall,scope]);
+    if(features.PARAGON_ENABLED) queueResidenceLookup(scope,residenceEnvelope(activeCall,lookup));
+  },[activeCall,scope,features.PARAGON_ENABLED]);
   const s = useSEPLookup({ initialZip: inbound?.contact?.zip || "", onResidenceLookup });
 
   const handleCountySelect = (county) => {

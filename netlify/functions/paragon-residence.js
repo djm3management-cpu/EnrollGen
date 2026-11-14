@@ -1,8 +1,10 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveCallAccessIdentity} from './_evidenceAccess.js';
 const uuid=value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value||'');
 export function createParagonResidenceHandler({authenticate=r=>requireClerkAuth(r,{allowBypass:false}),getDb=getEvidenceServiceClient}={}){
  return async request=>{
+  if (!featureEnabled('PARAGON_ENABLED')) return disabledResponse('PARAGON_ENABLED');
   if(!['GET','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try{

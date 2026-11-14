@@ -10,7 +10,7 @@ test('review renders category bands, stable points, all filters and clickable ev
  const hooks=hookHarness(),getToken=async()=>'';
  const items=['pass','fail','partial','review','na'].map((result,n)=>({id:String(n),category:'CALL_OPENING',intent_code:`RULE_${n}`,question_text:result,result,points_earned:n===0?2:n===2?1:0,points_possible:n<3?2:0,evidence_text:'Fixture',evidence_timestamp_ms:0}));
  const data={call:{call_duration_seconds:3026,compliance_status:'complete',metadata:{}},items,versions:[],coverage:{complete:false,ratio:.66,endMs:1998000,durationMs:3026000},admin:false};
- const Modal=component('../src/components/callDetail/ComplianceReviewModal.jsx','ComplianceReviewModal',{...hooks.hooks,useAppAuth:()=>({getToken}),URLSearchParams,fetch:async()=>({ok:true,json:async()=>data}),complianceViewModel,complianceItemStatus,scoringFailureMessage:()=>null,evaluateRules:()=>({timeline:{}}),redactSensitiveText:v=>v,CallTranscriptPlayer:'player',formatCallDateTime:()=>''});
+ const Modal=component('../src/components/callDetail/ComplianceReviewModal.jsx','ComplianceReviewModal',{...hooks.hooks,useTenantConfig:()=>({features:{SCORING_ENABLED:true,TRANSCRIPT_GAP_FILL_ENABLED:true}}),useAppAuth:()=>({getToken}),URLSearchParams,fetch:async()=>({ok:true,json:async()=>data}),complianceViewModel,complianceItemStatus,scoringFailureMessage:()=>null,evaluateRules:()=>({timeline:{}}),redactSensitiveText:v=>v,CallTranscriptPlayer:'player',formatCallDateTime:()=>''});
  hooks.mount(()=>Modal({callRecordId:'call',onClose(){}}));await hooks.flush();
  assert.equal(nodes(hooks.value).filter(n=>n.type==='tbody')[0].children[0].length,5);
  assert.match(text(hooks.value),/3\s*\/\s*6\s*·\s*50.0%\s*· provisional/);assert.match(text(hooks.value),/not final/);
@@ -28,4 +28,12 @@ test('reference catalog counts follow selected product and contain no dead sort 
  nodes(hooks.value).find(n=>n.type==='button').props.onClick();hooks.render();
  assert.equal(nodes(hooks.value).filter(n=>n.props.className==='ops-terminal-tabs').length,0);
  nodes(hooks.value).find(n=>n.type==='select').props.onChange({target:{value:'ANNUITY'}});hooks.render();assert.match(text(hooks.value),/24\s+FLAGS/);assert.doesNotMatch(text(hooks.value),/152/);hooks.unmount();
+});
+
+test('disabled paid scoring and manual repair buttons are absent for an administrator',async()=>{
+ const hooks=hookHarness(),getToken=async()=> 'credential';
+ const data={call:{call_duration_seconds:300,compliance_status:'complete',metadata:{}},items:[],versions:[],coverage:{complete:false,ratio:0,endMs:0,durationMs:300000},admin:true};
+ const Modal=component('../src/components/callDetail/ComplianceReviewModal.jsx','ComplianceReviewModal',{...hooks.hooks,useTenantConfig:()=>({features:{}}),useAppAuth:()=>({getToken}),URLSearchParams,fetch:async()=>Response.json(data),complianceViewModel,complianceItemStatus,scoringFailureMessage:()=>null,evaluateRules:()=>({timeline:{}}),redactSensitiveText:v=>v,CallTranscriptPlayer:'player',formatCallDateTime:()=>''});
+ hooks.mount(()=>Modal({callRecordId:'fixture',onClose(){}}));
+ try{await hooks.flush();const buttons=nodes(hooks.value).filter(n=>n.type==='button').map(text);assert.ok(buttons.includes('Re-evaluate'));assert.ok(!buttons.includes('Rescore'));assert.ok(!buttons.includes('Fill transcript gaps'));}finally{hooks.unmount();}
 });

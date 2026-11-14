@@ -22,7 +22,10 @@ export function createConferenceService({ store = createConferenceStore(supabase
   const url = path => settings.publicBaseUrl + path;
   const participantUrl = (p, action) => url(`/twilio/conference/${action}?participantId=${p.id}`);
   const fail = (status, message, code) => { throw new ConferenceError(status, message, code); };
-  const provider = (operation, request) => conferenceRequest('twilio', operation, request);
+  const provider = (operation, request) => {
+    if(!settings.conferenceCallingEnabled)fail(503,'Conference calling disabled','CONFERENCE_DISABLED');
+    return conferenceRequest('twilio', operation, request);
+  };
   const patch = (c, fields) => store.patch(c.call_id, fields);
   async function roomSid(c) {
     if (c.twilio_conference_sid) return c.twilio_conference_sid;
@@ -54,6 +57,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     return response.toString();
   }
   async function media(c, p, { recover = false } = {}) {
+    if(!settings.conferenceCallingEnabled)fail(503,'Conference calling disabled','CONFERENCE_DISABLED');
     p = await store.participant(p.id);
     if (!p.twilio_call_sid || !live(p)) return;
     const name = `conference-${p.id}`;
@@ -115,6 +119,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
         agentId: p.agent_id, status: p.status, joinedAt: p.joined_at, leftAt: p.left_at })) };
   }
   async function upgrade(attempt, phone) {
+    if(!settings.conferenceCallingEnabled)fail(503,'Conference calling disabled','CONFERENCE_DISABLED');
     if (!attempt.child_call_sid || attempt.ended_at || !attempt.answered_at) {
       fail(409, 'Wait for the connected call details to finish syncing.');
     }
@@ -263,6 +268,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     else if (c.phase === 'recovering' && p.role === 'agent') await voicemail(c);
   }
   async function action(callId, input) {
+    if(!settings.conferenceCallingEnabled)fail(503,'Conference calling disabled','CONFERENCE_DISABLED');
     return store.locked(callId, async c => {
       if (!c || c.ended_at) fail(409, 'This call has ended.');
       if (c.phase === 'upgrading') await connectOriginal(c);
@@ -302,6 +308,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     });
   }
   async function status(participantId, body) {
+    if(!settings.conferenceCallingEnabled)fail(503,'Conference calling disabled','CONFERENCE_DISABLED');
     const p = await store.participant(participantId);
     if (!p || (p.twilio_call_sid && p.twilio_call_sid !== body.CallSid)) fail(403, 'Participant mismatch.');
     if (!p.twilio_call_sid) {
@@ -341,6 +348,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     }
   }
   async function tick() {
+    if(!settings.conferenceCallingEnabled)return;
     // Existing conferences drain even after the kill switch is turned off.
     const rooms = await store.active();
     conferenceRuntime.draining = rooms.length > 0;

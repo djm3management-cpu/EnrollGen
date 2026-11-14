@@ -15,8 +15,13 @@ const xml = (res, body) => res.type('text/xml').send(body);
 export function createConferenceRouter({ service = conferenceService(), settings = config,
   authenticate = requireClerkUser, signature = requireTwilioSignature, logError = entry => console.error(JSON.stringify(entry)) } = {}) {
   const router = Router(), db = service.store.db;
+  router.use(['/api/voice/conference-capabilities','/api/voice/conference-status','/api/voice/conference-action','/twilio/conference'], (_req,res,next)=>{
+    if(!settings.conferenceCallingEnabled)return res.status(503).json({status:'disabled',feature:'CONFERENCE_CALLING_ENABLED'});
+    return next();
+  });
   const wrap = fn => async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
+    if(!settings.conferenceCallingEnabled)return res.status(503).json({status:'disabled',feature:'CONFERENCE_CALLING_ENABLED'});
     try { return await fn(req, res); }
     catch (error) {
       const requestId = randomUUID(), failure = conferenceFailure(error);

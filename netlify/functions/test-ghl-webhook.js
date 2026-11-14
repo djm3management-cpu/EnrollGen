@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
 import {
   findTenantByOrg,
@@ -32,6 +33,7 @@ function buildTestPayload(body, tenant, auth) {
 }
 
 export default async (request) => {
+  if (!featureEnabled('GHL_ENABLED')) return disabledResponse('GHL_ENABLED');
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
   }

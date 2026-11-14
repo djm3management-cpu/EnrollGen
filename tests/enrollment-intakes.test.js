@@ -1,3 +1,6 @@
+process.env.IX_UPLOAD_ENABLED='true';
+// Explicit opt-in for existing enabled-feature behavior under test.
+process.env.GHL_ENABLED = 'true';
 import assert from 'node:assert/strict';
 import {before,after,test} from 'node:test';
 import {readFileSync} from 'node:fs';
@@ -133,7 +136,7 @@ test('editing reuses the follow-up task and preserves submission time; household
  assert.equal((await query('SELECT * FROM enrollment_intakes')).length,2);assert.equal((await query('SELECT * FROM follow_ups')).length,2);assert.equal((await query('SELECT * FROM ix_uploads')).length,2);
 });
 test('GHL uses durable leases, exponential retries, stable idempotency, and sanitized errors',async()=>{
- const sent=[];const env={GHL_ENROLLMENT_WEBHOOK_URL:'https://ghl.test/webhook'};
+ const sent=[];const env={GHL_ENABLED:'true',GHL_ENROLLMENT_WEBHOOK_URL:'https://ghl.test/webhook'};
  for(let attempt=1;attempt<=5;attempt++){
   await query(`UPDATE ghl_enrollment_deliveries SET next_attempt_at=CASE WHEN id=(SELECT id FROM ghl_enrollment_deliveries ORDER BY created_at LIMIT 1) THEN now()-interval '1 second' ELSE now()+interval '1 day' END`);
   await deliverEnrollmentWebhooks(db,{env,limit:1,send:async(url,body,headers)=>{sent.push({url,body:JSON.parse(body),headers});return {status:500};}});
@@ -334,7 +337,7 @@ test('IX default off and missing credentials never consume attempts; daily summa
   for(const env of [{},{IX_UPLOAD_ENABLED:'true'}])await createComplianceWorker(db,{env,...createIxIntegration(db,{env}),log:()=>{}})({schedule:false});
   assert.equal((await query('SELECT attempts FROM ix_uploads WHERE enrollment_key=$1',[intake]))[0].attempts,0);
   const reportDay=(await query('SELECT day::text FROM compliance_reconciliation ORDER BY day LIMIT 1'))[0].day;
-  const sent=[],opts={env:{RESEND_API_KEY:'mail-key',INTEGRATIONS_REPORT_FROM:'reports@example.test'},now:()=>Date.parse(`${reportDay}T17:00:00Z`)+86400000,
+  const sent=[],opts={env:{IX_UPLOAD_ENABLED:'true',IX_REPORT_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'mail-key',INTEGRATIONS_REPORT_FROM:'reports@example.test'},now:()=>Date.parse(`${reportDay}T17:00:00Z`)+86400000,
    send:async(url,body,headers)=>{sent.push({url,body:JSON.parse(body),headers});return {status:200};}};
   await dailySummaries(db,opts);await dailySummaries(db,opts);assert.equal(sent.length,1);assert.deepEqual(sent[0].body.to,['mike@newgenhealthsolutions.com']);assert.ok(sent[0].headers['Idempotency-Key']);
  }finally{await pg.exec('ROLLBACK');}
@@ -378,7 +381,7 @@ async function safeguardFixture(work){
   await work({api,create});
  });
 }
-const adminUploads=(auth=mikeAdminAuth,env={IX_ENV:'test'})=>createComplianceUploadsHandler({getDb:()=>db,authenticate:async()=>auth,env});
+const adminUploads=(auth=mikeAdminAuth,env={IX_UPLOAD_ENABLED:'true',IX_ENV:'test'})=>createComplianceUploadsHandler({getDb:()=>db,authenticate:async()=>auth,env});
 const retryRequest=id=>new Request('https://app.test/compliance-uploads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'retry_ix_upload',id})});
 
 test('test environment sends only test intakes; real rows preserve checkpoints, attempts and scheduling until production',()=>safeguardFixture(async({create})=>{
@@ -409,7 +412,7 @@ test('production skips test rows without sending audio or consuming attempts',()
  await createComplianceWorker(db,{env:ixEnv,...createIxIntegration(db,{env:ixEnv,fetchImpl:()=>assert.fail('test intake must not reach provider')}),log:()=>{}})({schedule:false});
  const [row]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[sandbox]);
  assert.equal(row.status,'skipped_test_enrollment');assert.equal(row.attempts,0);assert.deepEqual(row.ix_state,{});
- const response=await adminUploads(mikeAdminAuth,{IX_ENV:'production'})(new Request('https://app.test/compliance-uploads'));
+ const response=await adminUploads(mikeAdminAuth,{IX_UPLOAD_ENABLED:'true',IX_ENV:'production'})(new Request('https://app.test/compliance-uploads'));
  const data=await response.json();assert.equal(data.ix_environment,'PRODUCTION');assert.ok(data.failures.some(r=>r.id===row.id&&r.is_test_enrollment));
  for(const type of ['test','real']){
   const filtered=await (await adminUploads()(new Request(`https://app.test/compliance-uploads?enrollment_type=${type}`))).json();

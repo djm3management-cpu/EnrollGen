@@ -7,7 +7,8 @@ import { FOLLOW_UPS_UPDATED, notifyFollowUpsUpdated, updateFollowUp } from '../l
 
 export function useFollowUps() {
   const {getToken}=useAppAuth();
-  const { tenantId, supabaseClient, agents, loading: tenantLoading, error: tenantError } = useTenantConfig();
+  const { tenantId, supabaseClient, agents, loading: tenantLoading, error: tenantError, features = {} } = useTenantConfig();
+  const paragonEnabled=features.PARAGON_ENABLED === true;
   const { agentUuid, agentSlug, isAdmin } = useCurrentAgent();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +33,7 @@ export function useFollowUps() {
           all.push(...(data||[]));if(!data||data.length<500)break;
         }
         return all;
-      })(),loadParagonCallbacks(getToken)]);
+      })(),paragonEnabled?loadParagonCallbacks(getToken):Promise.resolve([])]);
       if(request===generation.current){
         setRows(reads.flatMap(result=>result.status==='fulfilled'?result.value:[]).sort((a,b)=>Date.parse(a.due_at||'9999-12-31')-Date.parse(b.due_at||'9999-12-31')||a.id.localeCompare(b.id)));setNow(new Date());
         setError(reads.filter(result=>result.status==='rejected').map(result=>result.reason?.message||'Tasks unavailable.').join(' '));
@@ -40,7 +41,7 @@ export function useFollowUps() {
     } catch (err) {
       if (request === generation.current) { setRows([]); setError(err.message || 'Follow-ups unavailable.'); }
     } finally { if (request === generation.current) setLoading(false); }
-  }, [tenantId, supabaseClient, agentUuid, tenantLoading, tenantError, getToken]);
+  }, [tenantId, supabaseClient, agentUuid, tenantLoading, tenantError, getToken, paragonEnabled]);
   useEffect(() => {
     setRows([]); void refresh();
     const update = () => { void refresh(); };
@@ -49,9 +50,12 @@ export function useFollowUps() {
     return () => { generation.current += 1; clearInterval(timer); window.removeEventListener(FOLLOW_UPS_UPDATED, update); };
   }, [refresh]);
   const update = async (id, action, dueAt) => {
-    if(id.startsWith('paragon:'))await updateParagonCallback(getToken,id,action,dueAt);
+    if(id.startsWith('paragon:')) {
+      if(!paragonEnabled)throw new Error('Paragon disabled');
+      await updateParagonCallback(getToken,id,action,dueAt);
+    }
     else await updateFollowUp(supabaseClient, tenantId, id, action, dueAt);
     notifyFollowUpsUpdated();
   };
-  return { rows, loading, error, refresh, update, agents, agentSlug, isAdmin, now };
+  return { paragonEnabled, rows, loading, error, refresh, update, agents, agentSlug, isAdmin, now };
 }

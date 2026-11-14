@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 // Legacy URL retained for callback clients; residence confirmation is retired.
 import { requireClerkAuth } from './_clerkAuth.js';
 import { NGHS_TENANT_ID, JSON_HEADERS, getSupabase } from './_tenantSettings.js';
@@ -5,6 +6,7 @@ import { NGHS_TENANT_ID, JSON_HEADERS, getSupabase } from './_tenantSettings.js'
 const json = (body,status=200) => new Response(JSON.stringify(body),{ status,headers:JSON_HEADERS });
 export function createParagonCallbacksHandler({authenticate=requireClerkAuth,getDb=getSupabase}={}) {
  return async request => {
+  if (!featureEnabled('PARAGON_ENABLED')) return disabledResponse('PARAGON_ENABLED');
  try {
   if (!['GET','POST'].includes(request.method)) return json({ error:'Method not allowed' },405);
   const auth = await authenticate(request);

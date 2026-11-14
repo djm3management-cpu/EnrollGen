@@ -516,7 +516,7 @@ function isAdminUser(user) {
   return role === "admin" || role === "org:admin" || user?.publicMetadata?.isAdmin === true;
 }
 
-function getTabsForMode(mode) {
+function getTabsForMode(mode, features = {}) {
   const tabs = [
     { id: "dashboard", label: "DASHBOARD" },
     { id: "contacts", label: "CRM" },
@@ -532,12 +532,13 @@ function getTabsForMode(mode) {
   }
 
   tabs.push({ id: "rts", label: "RTS" });
-  tabs.push({ id: "verse", label: "DAILY VERSE" });
+  if (features.DAILY_VERSE_ENABLED) tabs.push({ id: "verse", label: "DAILY VERSE" });
 
   return tabs;
 }
 
 function AppShell({ currentUser = null }) {
+  const { features } = useTenantConfig();
   const [mode, setMode] = useState(getModeFromLocation);
   const [appMode, setAppMode] = useState(getAppModeFromLocation);
   const [openPanel, setOpenPanel] = useState(null);
@@ -577,7 +578,7 @@ function AppShell({ currentUser = null }) {
   }, [mode]);
 
   const canAdmin = isAdminUser(currentUser);
-  const navTabs = useMemo(() => getTabsForMode(mode), [mode]);
+  const navTabs = useMemo(() => getTabsForMode(mode, features), [mode, features]);
   const visibleLeftRailIds = LEFT_RAIL_IDS_BY_MODE[mode] || EMPTY_LEFT_RAIL_IDS;
   const visibleRailWidth = visibleLeftRailIds.includes(expandedItem?.id)
     ? railWidth
@@ -729,7 +730,7 @@ function AppShell({ currentUser = null }) {
       void loadTenantSettings().catch(() => {});
       return;
     }
-    if (panelId === "verse") {
+    if (panelId === "verse" && features.DAILY_VERSE_ENABLED) {
       void loadDailyVerse().catch(() => {});
     }
   };
@@ -872,6 +873,7 @@ function AppShell({ currentUser = null }) {
           </LazyPanel>
         );
       case "verse":
+        if (!features.DAILY_VERSE_ENABLED) return null;
         return (
           <LazyPanel>
             <div className="daily-verse-shell">
@@ -1014,7 +1016,7 @@ function AppShell({ currentUser = null }) {
         </header>
 
         <SmsToastHost onOpenContactMessages={handleOpenContactMessages} />
-        <ParagonResidenceOutbox />
+        {features.PARAGON_ENABLED && <ParagonResidenceOutbox />}
         <PostCallStatusAlert />
         <PreloadRecoveryNotice callInProgress={reloadBlocked} onReload={handleLogoClick} />
 

@@ -1,3 +1,4 @@
+import {useTenantConfig} from "../hooks/useTenantConfig";
 import { useId, useMemo, useState } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { buildDashboard, DASHBOARD_RANGES, formatMetric, metricDelta } from '../lib/dashboardMetrics';
@@ -139,6 +140,7 @@ function DispositionChart({ rows }) {
 }
 
 export default function AgentDashboard({ userId, onOpenContacts }) {
+ const {features={}}=useTenantConfig();
   const [scope, setScope] = useState('agency');
   const data = useDashboardData(userId, scope);
   const scopeLabel = scope === 'agency' ? 'Agency-wide' : scope === 'self' ? data.agentOptions.find(agent => agent.clerkUserId === userId)?.label || 'My data' : data.agentOptions.find(agent => agent.key === scope)?.label || 'Agent';
@@ -164,7 +166,7 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
           {data.agentOptions.map(agent => <option key={agent.key} value={agent.clerkUserId === userId ? "self" : agent.key}>{agent.label}{agent.clerkUserId === userId ? ' (you)' : ''}</option>)}
         </select>
       </div>
-      <div className="agent-dash-status"><ParagonCallbackBadge /><button data-key-role="secondary" onClick={onOpenContacts}>{data.loading ? 'Loading' : data.contacts} {scope === 'agency' ? 'agency contacts' : 'assigned contacts'} ↗</button><button data-key-role="secondary" onClick={data.refresh} disabled={data.loading}>Refresh</button><span role="status">{data.loading ? 'Loading your activity...' : data.updatedAt ? `Updated ${data.updatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Awaiting data'}</span></div>
+      <div className="agent-dash-status">{features.PARAGON_ENABLED && <ParagonCallbackBadge />}<button data-key-role="secondary" onClick={onOpenContacts}>{data.loading ? 'Loading' : data.contacts} {scope === 'agency' ? 'agency contacts' : 'assigned contacts'} ↗</button><button data-key-role="secondary" onClick={data.refresh} disabled={data.loading}>Refresh</button><span role="status">{data.loading ? 'Loading your activity...' : data.updatedAt ? `Updated ${data.updatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Awaiting data'}</span></div>
     </header>
     {data.error && <p className="agent-dash-error" role="alert">{data.error} Use Refresh to retry. {data.updatedAt ? 'Showing the last successful update.' : 'Metrics are unavailable until data loads.'}</p>}
     <section className="agent-dash-metrics" aria-label="Today’s key metrics">

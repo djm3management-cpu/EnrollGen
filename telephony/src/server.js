@@ -1,3 +1,4 @@
+import { featureEnabled } from './lib/deploymentFeatures.js';
 import { startEgressMetrics } from './egressMetrics.js';
 import {startParagonResidenceWorker} from './paragonResidenceWorker.js';
 import {createPostCallStatusHandler} from './postCallStatus.js';
@@ -73,9 +74,9 @@ app.use(voiceOutboundRouter);
 app.use(createConferenceRouter());
 app.use(smsRouter);
 app.use(recordingMediaRouter);
-startParagonResidenceWorker({db:createRecordingServiceClient()});
+if (featureEnabled('PARAGON_ENABLED')) startParagonResidenceWorker({db:createRecordingServiceClient()});
 startRecordingWorker({ db: createRecordingServiceClient(), config });
-startParagonBillingWorker({ db: createRecordingServiceClient(), config });
+if (featureEnabled('PARAGON_ENABLED')) startParagonBillingWorker({ db: createRecordingServiceClient(), config });
 startCallStatusRecoveryWorker({ db: createRecordingServiceClient(), config });
 
 startTranscriptWorker({ db: createRecordingServiceClient(),
@@ -85,16 +86,16 @@ const server = http.createServer(app);
 const conferenceMedia = createConferenceMedia();
 let conferenceRecoveryRunning = false;
 const recoverConferences = async () => {
-  if (conferenceRecoveryRunning) return;
+  if (!featureEnabled('CONFERENCE_CALLING_ENABLED') || conferenceRecoveryRunning) return;
   conferenceRecoveryRunning = true;
   try { await conferenceService().tick(); }
   catch (error) { if (!['42P01', 'PGRST205'].includes(error.code)) console.error('Conference recovery pending'); }
   finally { conferenceRecoveryRunning = false; }
 };
 setInterval(() => void recoverConferences(), 15000).unref();
-// Discover drain state before accepting callbacks after a flag-off restart.
-// Otherwise an already-converted call could enter the legacy release path.
-try { conferenceRuntime.draining = (await conferenceService().store.active()).length > 0; }
+// Discover existing conferences only while enabled. A flag-off startup must
+// neither query conference work nor resume its provider-side recovery.
+try { if (featureEnabled('CONFERENCE_CALLING_ENABLED')) conferenceRuntime.draining = (await conferenceService().store.active()).length > 0; }
 catch (error) { if (!['42P01', 'PGRST205'].includes(error.code)) throw error; }
 void recoverConferences();
 

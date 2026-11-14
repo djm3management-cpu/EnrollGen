@@ -30,7 +30,7 @@ test('two selected rows reveal Combine Calls; one or three hide it, and every sa
   const rows = [1, 2, 3].map(id => ({ log_id: `log-${id}`, call_record_id: `call-${id}`, occurred_at: '2026-10-20T17:12:00Z' }));
   const CallLog = load('CallLogTab', h, {
     '../../context/AuthContext': { useAppAuth: () => ({ getToken }) },
-    '../../hooks/useTenantConfig': { useTenantConfig: () => ({ supabaseClient: {} }) },
+    '../../hooks/useTenantConfig': { useTenantConfig: () => ({ supabaseClient: {},features:{PARAGON_ENABLED:true,CONVERSELY_UPLOAD_ENABLED:true,IX_UPLOAD_ENABLED:true} }) },
     '../../hooks/useCallLogRows': { useCallLogRows: () => ({ rows, count: 3, loading: false }) },
     '../../lib/postCallPipeline': { CALL_OUTCOME_OPTIONS: [], callOutcomeLabel: value => value },
     'lucide-react': {},

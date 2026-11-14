@@ -1,3 +1,4 @@
+import { featureEnabled } from '../../../telephony/src/lib/deploymentFeatures.js';
 import { createOpenAIAdapter } from './openai.ts';
 import { createAnthropicAdapter } from './anthropic.ts';
 import { assertNoPublicApiKeys, resolveEngine, resolveProvider } from './config.js';
@@ -58,7 +59,7 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
   const random = runtime.random || Math.random;
 
   if(request.path === 'scoring') {
-    if(env.SCORING_ENABLED !== 'true') throw Object.assign(new Error('Scoring disabled'),{code:'scoring_disabled'});
+    if(!featureEnabled('SCORING_ENABLED',env)) throw Object.assign(new Error('Scoring disabled'),{code:'scoring_disabled'});
     if(!runtime.authorizeScoringRequest) throw Object.assign(new Error('Scoring ledger authorization required'),{code:'scoring_ledger_required'});
     if(JSON.stringify(request.messages).length<200) throw new Error('Scoring payload too small');
     await runtime.authorizeScoringRequest(request,model,requestId);

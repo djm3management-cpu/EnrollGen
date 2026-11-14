@@ -8,13 +8,14 @@ import {hookHarness} from './helpers/hookHarness.js';
 const walk=node=>!node||typeof node!=='object'?[]:[node,...(node.children||[]).flat(Infinity).flatMap(walk)];
 const code=transformSync(readFileSync(new URL('../src/components/callLog/ComplianceUploads.jsx',import.meta.url),'utf8'),{loader:'jsx',format:'cjs',jsxFactory:'element',jsxFragment:'fragment'}).code;
 const empty=()=>({admin:true,ix_environment:'TEST',failures:[],missing:[],reconciliation:[],weekly:{available:true,enabled:true,worker_available:true,current_week:'2026-10-26',run:null,results:[]}});
-function fixture(){
+function fixture(features={CONVERSELY_UPLOAD_ENABLED:true,IX_UPLOAD_ENABLED:true}){
  const h=hookHarness(),module={exports:{}},requests=[],timers=new Map();let timerId=0,status=200,data=empty(),postStatus=202;
  const auth={getToken:async()=> 'token',user:{id:'admin'},organization:{id:'org-a'}};
  vm.runInNewContext(code,{
   module,exports:module.exports,Date,element:(type,props,...children)=>({type,props:props||{},children}),fragment:'fragment',
   setInterval:(fn,ms)=>{timers.set(++timerId,{fn,ms});return timerId;},clearInterval:id=>timers.delete(id),
   require(name){
+   if(name.endsWith('/useTenantConfig'))return {useTenantConfig:()=>({features})};
    if(name==='react')return h.hooks;
    if(name.endsWith('/adminReviewApi.js'))return adminReviewApi;
    if(name.endsWith('/useAdminReviewAccess.js'))return {useAdminReviewAccess:()=>({identity:`${auth.user?.id||''}:${auth.organization?.id||''}`,canReview:auth.user?.id?.startsWith('admin')===true})};
@@ -45,4 +46,11 @@ test('zero exceptions renders one line and no bare table',async()=>{
 });
 test('gap day and failed week feed heatmap and history',async()=>{
  const f=fixture();try{const d=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});f.setData({...empty(),reconciliation:[{day:d,enrollments:4,expected_uploads:5,uploaded:2,failed:1,missing_codes:1}],weekly:{...empty().weekly,run:{id:'run',week_start:'2026-10-26',status:'complete',started_at:'2026-10-30T15:00:00Z'},history:[{week_start:'2026-10-26',run:{status:'complete',started_at:'2026-10-30T15:00:00Z'},submitted:1,skipped:0,failed:1,other_skipped:0}],results:[{agent_id:'a',agent_name:'Agent A',status:'failed',reason:'http_503',attempts:5}]}});await f.h.flush();const text=f.nodes().flatMap(n=>n.children.filter(c=>typeof c==='string')).join(' ');assert.ok(text.includes('Agent A'));assert.ok(f.nodes().some(n=>typeof n.props.className==='string'&&n.props.className.includes('cu-history-block bad')));const heatmap=f.nodes().find(n=>typeof n.type==='function'&&n.type.name==='Heatmap');assert.equal(heatmap.props.rows.length,1);}finally{f.h.unmount();}
+});
+
+test('disabled upload entries are absent with zero admin polling, and mixed deployments hide the disabled provider',async()=>{
+ const off=fixture({});try{await off.h.flush();assert.equal(off.h.value,null);assert.equal(off.requests.length,0);assert.equal(off.timers.size,0);}finally{off.h.unmount();}
+ for(const enabled of ['IX_UPLOAD_ENABLED','CONVERSELY_UPLOAD_ENABLED']){
+  const f=fixture({[enabled]:true});try{await f.h.flush();const flows=f.nodes().filter(n=>typeof n.type==='function'&&n.type.name==='Flow');assert.equal(flows.length,1);assert.equal(flows[0].props.title,enabled==='IX_UPLOAD_ENABLED'?'UHC TODAY':'CONVERSELY');}finally{f.h.unmount();}
+ }
 });

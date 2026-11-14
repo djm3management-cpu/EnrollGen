@@ -109,7 +109,7 @@ test('the review modal shows an alert for code-only and generic failed states; c
   const chain={select:()=>chain,eq:()=>chain,single:async()=>({data:record,error:null})};
   const client={from:()=>chain};
   const Modal=componentSource('../src/components/callDetail/ComplianceReviewModal.jsx','ComplianceReviewModal',{
-   ...hooks.hooks,CallTranscriptPlayer:'transcript-player',redactSensitiveText:v=>v,useAppAuth:()=>({getToken}),URLSearchParams,fetch:async()=>({ok:true,json:async()=>({call:record,items:[],versions:[],coverage:{complete:false,ratio:.66,endMs:1998000,durationMs:3026000}})}),complianceViewModel,complianceItemStatus,evaluateRules,CATEGORY_WEIGHTS:{},scoringFailureMessage,isComplianceSale,debugLog:()=>{},fmtDateTime:()=>'',callOutcomeLabel:value=>value,
+   ...hooks.hooks,useTenantConfig:()=>({features:{SCORING_ENABLED:true,TRANSCRIPT_GAP_FILL_ENABLED:true}}),CallTranscriptPlayer:'transcript-player',redactSensitiveText:v=>v,useAppAuth:()=>({getToken}),URLSearchParams,fetch:async()=>({ok:true,json:async()=>({call:record,items:[],versions:[],coverage:{complete:false,ratio:.66,endMs:1998000,durationMs:3026000}})}),complianceViewModel,complianceItemStatus,evaluateRules,CATEGORY_WEIGHTS:{},scoringFailureMessage,isComplianceSale,debugLog:()=>{},fmtDateTime:()=>'',callOutcomeLabel:value=>value,
   });
   hooks.mount(()=>Modal({callRecordId:record.id,supabaseClient:client,onClose:()=>{}}));
   await hooks.flush();
@@ -189,7 +189,7 @@ test('all workflow navs expose CRM and Agent Tools without separate Calls or Com
   const context = vm.createContext({ modeSupportsAgentTools: mode => ['ma', 'aca'].includes(mode) });
   vm.runInContext(source.slice(source.indexOf('function getTabsForMode('), source.indexOf('function AppShell(')) + ';globalThis.tabs=getTabsForMode;', context);
   for (const mode of ['ma', 'aca', 'medsup', 'u65', 'ancillary']) {
-    const tabs = context.tabs(mode);
+    const tabs = context.tabs(mode, {DAILY_VERSE_ENABLED:true});
     assert.equal(tabs.find(tab => tab.id === 'contacts').label, 'CRM');
     assert.equal(tabs.find(tab => tab.id === 'tools').label, 'AGENT TOOLS');
     assert.deepEqual(Array.from(tabs, tab => tab.id), ['dashboard', 'contacts', 'tools',

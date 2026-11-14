@@ -1,3 +1,5 @@
+// Explicit opt-in for existing enabled-feature behavior under test.
+process.env.OPERATIONAL_EMAIL_ENABLED = 'true';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {verifiedRecordingPlan,recoveryEstimate,recoverBeforeScoring} from '../netlify/lib/transcriptRecovery.js';
@@ -23,9 +25,9 @@ function fixture({status='claimed',complete=true}={}){
  const db={from(table){const q={select(){return q},eq(){return q},single(){return Promise.resolve({data:tables[table]})},then(a,b){return Promise.resolve({data:tables[table]}).then(a,b)}};return q;},async rpc(name,args){calls.push([name,args]);return {data:name==='claim_automatic_transcript_recovery'?{status,job_id:'job'}:true};}};
  return {db,calls};
 }
-test('disabled recovery never calls a provider and records an admin alert',async()=>{
+test('disabled recovery never calls a provider or reserves an alert',async()=>{
  const f=fixture();const r=await recoverBeforeScoring({...f,call,env:{},runGapJob:()=>assert.fail('paid call'),sendAlert:async()=>{}});
- assert.equal(r.incomplete,true);assert.equal(f.calls[0][0],'mark_transcript_recovery_blocked');
+ assert.equal(r.incomplete,true);assert.equal(f.calls.length,0);
 });
 test('recovery completes before authorizing scoring; still-partial audio never resumes scoring',async()=>{
  for(const complete of [true,false]){const f=fixture({complete});let requests=0;

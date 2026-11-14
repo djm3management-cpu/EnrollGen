@@ -1,3 +1,4 @@
+import { featureEnabled } from './lib/deploymentFeatures.js';
 import { createHash } from 'node:crypto';
 import twilio from 'twilio';
 export const missingBillingMigration = error => ['PGRST202', '42P01', '42883'].includes(error?.code);
@@ -7,6 +8,7 @@ const timestamp = value => value && Number.isFinite(new Date(value).getTime()) ?
 // Runs only behind signature verification. No audio, transcript, caller phone,
 // browser timing or recording duration enters the billing event ledger.
 export async function enqueueBillingCallback(db, config, body) {
+  if (!featureEnabled('PARAGON_ENABLED')) return {status:'disabled'};
   if (body.AccountSid !== config.twilioAccountSid) throw new Error('Billing callback account mismatch');
   const parent = body.ParentCallSid || body.CallSid;
   const payload = Object.fromEntries(['AccountSid', 'CallSid', 'ParentCallSid', 'CallStatus', 'Timestamp', 'SequenceNumber',
@@ -17,17 +19,20 @@ export async function enqueueBillingCallback(db, config, body) {
 }
 
 export async function resolveParagonArrival(db, params, arrivedAt) {
+  if (!featureEnabled('PARAGON_ENABLED')) return {status:'disabled'};
   let result = await db.rpc('resolve_recent_paragon_ping_at', { ...params, p_arrived_at: arrivedAt });
   if (missingBillingMigration(result.error)) return { ...await db.rpc('resolve_recent_paragon_ping', params), billingReady:false };
   return { ...result, billingReady:!result.error };
 }
 export async function verifiedParagonArrival(config, callSid, fetchParent = sid => twilio(config.twilioAccountSid,config.twilioAuthToken,{timeout:5000,autoRetry:false}).calls(sid).fetch()) {
+  if (!featureEnabled('PARAGON_ENABLED')) return {status:'disabled'};
   const parent=await fetchParent(callSid);
   const arrived=timestamp(parent.dateCreated);
   if(parent.sid!==callSid || parent.accountSid!==config.twilioAccountSid || parent.direction!=='inbound' || !arrived || Date.parse(arrived)>Date.now()+5000) throw new Error('Paragon arrival could not be verified');
   return arrived;
 }
 export async function claimParagonArrival(db, params, arrivedAt) {
+  if (!featureEnabled('PARAGON_ENABLED')) return {status:'disabled'};
   let result = await db.rpc('claim_paragon_call_at', { ...params, p_arrived_at: arrivedAt });
   if (missingBillingMigration(result.error)) result = await db.rpc('claim_paragon_call', params);
   return result;
@@ -65,6 +70,7 @@ export function verifiedBillingSnapshot(parent, children, config, events = []) {
 }
 
 export async function processBillingJob({ db, config, job, fetchParent, fetchChildren }) {
+  if (!featureEnabled('PARAGON_ENABLED')) return {status:'disabled'};
   try {
     const parent = await fetchParent(job.parent_call_sid);
     if (parent.sid !== job.parent_call_sid) throw new Error('parent_sid_mismatch');
@@ -91,6 +97,7 @@ export async function processBillingJob({ db, config, job, fetchParent, fetchChi
   }
 }
 export function startParagonBillingWorker({ db, config, interval = setInterval, log = console.error }) {
+  if (!featureEnabled('PARAGON_ENABLED')) return {tick:async()=>{},stop:()=>{}};
   const client = twilio(config.twilioAccountSid,config.twilioAuthToken,{ timeout:8000,autoRetry:false });
   let busy=false;
   const tick = async () => {

@@ -1,3 +1,4 @@
+import { fetchWithClerk } from "../lib/clerkFetch.js";
 import {
   createContext,
   createElement,
@@ -59,7 +60,10 @@ async function getTenantBundle(getToken) {
     const tenant = await fetchTenantConfig(client);
     const agents = tenant?.id ? await fetchTenantAgents(client, tenant.id) : [];
 
-    return { client, tenant, agents };
+    const response = await fetchWithClerk(getToken, '/api/deployment-features');
+    if (!response.ok) throw new Error('Deployment features unavailable.');
+    const { features, entitlement } = await response.json();
+    return { client, tenant, agents, features, entitlement };
   })();
 
   tenantRequests.set(cacheKey, request);
@@ -88,6 +92,7 @@ export function TenantConfigProvider({ children }) {
     try {
       const bundle = await getTenantBundle(getToken);
       setState({
+        features: bundle.features, entitlement: bundle.entitlement,
         tenant: bundle.tenant,
         agents: bundle.agents,
         supabaseClient: bundle.client,
@@ -130,6 +135,7 @@ export function TenantConfigProvider({ children }) {
         const bundle = await getTenantBundle(getToken);
         if (!cancelled) {
           setState({
+            features: bundle.features, entitlement: bundle.entitlement,
             tenant: bundle.tenant,
             agents: bundle.agents,
             supabaseClient: bundle.client,
@@ -156,6 +162,8 @@ export function TenantConfigProvider({ children }) {
   }, [getToken]);
 
   const value = useMemo(() => ({
+    features: state.features || {},
+    billingEntitlement: state.entitlement || null,
     tenant: state.tenant,
     tenantId: state.tenant?.id || null,
     tenantConfig: state.tenant,

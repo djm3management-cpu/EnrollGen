@@ -1,3 +1,4 @@
+import { featureEnabled } from '../../../telephony/src/lib/deploymentFeatures.js';
 import { parseParagonFieldMap, readParagonPing } from '../_shared/paragonPingAdapter.js';
 
 const cors = {
@@ -12,8 +13,9 @@ export async function hashKey(key) {
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function createHandler({ rpc, paragonPing, routingEnabled = false, fieldMap, log = console.log, now = () => performance.now() }) {
+export function createHandler({ rpc, paragonPing, routingEnabled = false, env,  fieldMap, log = console.log, now = () => performance.now() }) {
   return async request => {
+    if(!featureEnabled('PARAGON_ENABLED',env))return Response.json({status:'disabled',feature:'PARAGON_ENABLED'},{status:503,headers:cors});
     const start = now();
     let consumer = 'unknown';
     let status = 500;

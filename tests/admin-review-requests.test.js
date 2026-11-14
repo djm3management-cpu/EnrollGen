@@ -28,7 +28,8 @@ function fixture(component,{admin=false,loaded=true,status=200}={}){
  const module={exports:{}};
  vm.runInNewContext(compiled,{module,exports:module.exports,URLSearchParams,element:(type,props,...children)=>({type,props:props||{},children}),fragment:'fragment',
   setInterval:(fn,ms)=>{timers.set(++nextId,{fn,ms});return nextId;},clearInterval:id=>timers.delete(id),
-  require(name){if(name==='react')return h.hooks;if(name.endsWith('/AuthContext'))return {useAppAuth:()=>auth};if(name.endsWith('/useAdminReviewAccess.js'))return {useAdminReviewAccess};if(name.endsWith('/adminReviewApi.js'))return api;if(name.endsWith('/clerkFetch.js'))return {fetchWithClerk};if(name.endsWith('/EnrollmentIntake'))return {__esModule:true,default:'intake'};throw Error(name);},
+  require(name){
+   if(name.endsWith('/useTenantConfig'))return {useTenantConfig:()=>({features:{PARAGON_ENABLED:true,CONVERSELY_UPLOAD_ENABLED:true,IX_UPLOAD_ENABLED:true}})};if(name==='react')return h.hooks;if(name.endsWith('/AuthContext'))return {useAppAuth:()=>auth};if(name.endsWith('/useAdminReviewAccess.js'))return {useAdminReviewAccess};if(name.endsWith('/adminReviewApi.js'))return api;if(name.endsWith('/clerkFetch.js'))return {fetchWithClerk};if(name.endsWith('/EnrollmentIntake'))return {__esModule:true,default:'intake'};throw Error(name);},
  });
  h.mount(()=>module.exports.default());
  return {h,auth,requests,timers,tokenOptions,nodes:()=>walk(h.value),setStatus:status=>{replyStatus=status;},setClaims:next=>{payload=next;},tick:async()=>{for(const {fn} of [...timers.values()])await fn();await h.flush();}};

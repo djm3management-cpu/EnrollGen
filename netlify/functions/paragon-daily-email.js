@@ -1,8 +1,11 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { paragonReportTotals } from './_paragonControls.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { addDays, etDate, etMidnight, reportCsv } from './paragon-vendor-report.js';
 
 export const createDailyHandler = ({now = () => new Date(),fetchImpl = fetch,makeDb = (url,key) => createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}})} = {}) => async () => {
+  if (!featureEnabled('PARAGON_ENABLED')) return disabledResponse('PARAGON_ENABLED');
+  if (!featureEnabled('OPERATIONAL_EMAIL_ENABLED')) return disabledResponse('OPERATIONAL_EMAIL_ENABLED');
   const current = now();
   const localHour = Number(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'numeric',hourCycle:'h23'}).format(current));
   if (localHour !== 18) return new Response('Outside 6 PM ET window');

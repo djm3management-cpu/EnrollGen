@@ -1,3 +1,4 @@
+import { featureEnabled, billingDisabledEntitlement } from '../../telephony/src/lib/deploymentFeatures.js';
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const NGHS_TENANT_ID = "00000000-0000-4000-8000-000000000001";
 
@@ -42,6 +43,8 @@ export async function requireActiveSubscription(supabase, tenantId) {
     };
   }
 
+  if (!featureEnabled('STRIPE_BILLING_ENABLED')) return billingDisabledEntitlement(tenantId);
+
   const { data, error } = await supabase
     .from("subscriptions")
     .select("*")
@@ -80,7 +83,7 @@ export async function requireActiveSubscription(supabase, tenantId) {
 }
 
 export function requirePlan(subscription, requiredPlan) {
-  if (subscription?.plan === "internal") {
+  if (subscription?.billing_disabled === true || subscription?.plan === "internal") {
     return true;
   }
 
@@ -107,7 +110,7 @@ export function requirePlan(subscription, requiredPlan) {
 }
 
 export async function checkSeatLimit(supabase, tenantId, subscription) {
-  if (subscription?.plan === "internal") {
+  if (subscription?.billing_disabled === true || subscription?.plan === "internal") {
     return true;
   }
 

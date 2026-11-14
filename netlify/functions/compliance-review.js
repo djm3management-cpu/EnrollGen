@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {loadRecordingPlan,recoveryEstimate} from '../lib/transcriptRecovery.js';
 import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
 import {estimateJudgment} from '../../src/compliance/engine/judgmentRequest.js';
@@ -14,6 +15,8 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try{
    const input=request.method==='GET'?Object.fromEntries(new URL(request.url).searchParams):await request.json();
+   if(input.action==='fill' && !featureEnabled('TRANSCRIPT_GAP_FILL_ENABLED',env))return disabledResponse('TRANSCRIPT_GAP_FILL_ENABLED');
+   if(input.action==='rescore' && !featureEnabled('SCORING_ENABLED',env))return disabledResponse('SCORING_ENABLED');
    if(!/^[0-9a-f-]{36}$/i.test(input.call_id||''))throw new EvidenceError(400,'Call ID required');
    const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
    if(request.method==='POST'&&!identity.admin)throw new EvidenceError(403,'Administrator required');
@@ -52,7 +55,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
     return evidenceJson(200,{scorecard_id:id});
    }
    if(input.action==='fill'){
-    if(env.TRANSCRIPT_GAP_FILL_ENABLED!=='true')throw new EvidenceError(409,'Manual gap fill disabled');
+    if(!featureEnabled('TRANSCRIPT_GAP_FILL_ENABLED',env))throw new EvidenceError(409,'Manual gap fill disabled');
     if(input.confirm!==true||!/^[0-9a-f-]{36}$/i.test(input.request_id||''))throw new EvidenceError(400,'Confirmed request ID required');
     if(!Number.isFinite(batchRate)||batchRate<=0)throw new EvidenceError(409,'Contracted pricing is not configured');
     if(coverage.durationNeedsVerification)throw new EvidenceError(409,'Call duration requires verification');
@@ -78,7 +81,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
    }
    if(input.action==='rescore'){
     if(!call.call_end)throw new EvidenceError(409,'Call is still active');
-    if(env.SCORING_ENABLED!=='true'||env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)throw new EvidenceError(409,'Scoring disabled');
+    if(!featureEnabled('SCORING_ENABLED',env)||env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)throw new EvidenceError(409,'Scoring disabled');
     if(eligibility.status!=='eligible')throw new EvidenceError(409,eligibility.status==='na'?`N/A: ${eligibility.reason}`:'SCORING INCOMPLETE');
     const estimate=estimatePreview.estimated_cost_usd;
     if(!Number.isFinite(input.approved_cost_usd)||input.approved_cost_usd<estimate)throw new EvidenceError(409,'Scoring estimate changed; confirm again');

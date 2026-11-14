@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
 import {RULES_VERSION} from '../../src/compliance/rules/catalog.js';
 import {getEvidenceServiceClient,checked,evidenceJson,evidenceFailure} from './_evidenceAccess.js';
@@ -8,6 +9,7 @@ import {llmRuntime} from './_llmTelemetry.js';
 import {prepareVersion,saveVersion} from '../lib/complianceVersions.js';
 export function createManualScoringHandler({getDb=getEvidenceServiceClient,callModel=complete,env=process.env}={}){
  return async (request,context)=>{
+  if(!featureEnabled('SCORING_ENABLED',env))return disabledResponse('SCORING_ENABLED');
   if(request.method!=='POST'||!env.SCORE_CALL_JOB_SECRET||request.headers.get('x-enrollgen-job-secret')!==env.SCORE_CALL_JOB_SECRET)return evidenceJson(401,{error:'Unauthorized'});
   let db,pass,call;
   try{
@@ -16,7 +18,7 @@ export function createManualScoringHandler({getDb=getEvidenceServiceClient,callM
    if(claimed.length!==1)return evidenceJson(200,{reused:true});
    pass=claimed[0];
    call=checked(await db.from('call_records').select('*').eq('id',pass.call_id).eq('tenant_id',pass.tenant_id).single());
-   if(env.SCORING_ENABLED!=='true'||env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)throw Error('scoring_disabled');
+   if(!featureEnabled('SCORING_ENABLED',env)||env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)throw Error('scoring_disabled');
 
    const eligibility=scoringEligibility(call);
    if(eligibility.status==='na'){

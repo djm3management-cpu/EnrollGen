@@ -1,3 +1,6 @@
+// Explicit opt-in for existing enabled-feature behavior under test.
+process.env.PARAGON_ENABLED = 'true';
+process.env.OPERATIONAL_EMAIL_ENABLED = 'true';
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -204,7 +207,7 @@ test('daily reports use Eastern dates, DST boundaries, one send per day and zero
   const jobs=(await db.query('SELECT * FROM integration_deliveries')).rows;assert.equal(jobs.length,1);assert.equal(jobs[0].payload.date,day);assert.equal(jobs[0].payload.calls.length,2);
   assert.equal((await db.query("SELECT count(*)::int n FROM integration_report_log WHERE result='skipped_empty'")).rows[0].n,1);
   let request;
-  await deliver(jobs[0],agg,{env:{RESEND_API_KEY:'test-key',INTEGRATIONS_REPORT_FROM:'Reports <reports@example.test>'},send:async(url,body,headers)=>{request={url,body:JSON.parse(body),headers};return {status:200};}});
+  await deliver(jobs[0],agg,{env:{PARAGON_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'test-key',INTEGRATIONS_REPORT_FROM:'Reports <reports@example.test>'},send:async(url,body,headers)=>{request={url,body:JSON.parse(body),headers};return {status:200};}});
   assert.equal(request.url,'https://api.resend.com/emails');assert.equal(request.headers['Idempotency-Key'],jobs[0].id);
   const csv=Buffer.from(request.body.attachments[0].content,'base64').toString();assert.equal(csv.trim().split('\r\n').length,3);assert.ok(csv.includes('caller_phone'));
  }
@@ -262,7 +265,7 @@ test('all actual outbound bodies discard private fields, including report attach
  const sentinel='PRIVATE_MEDICAL_VALUE';
  const contaminated={...disposition,health:sentinel,plan:sentinel,carrier:sentinel,mbi:sentinel,dob:sentinel,address:sentinel,notes:sentinel};
  const requests=[];const send=async(url,body)=>{requests.push(JSON.parse(body));return{status:200};};
- const env={RESEND_API_KEY:'test',INTEGRATIONS_REPORT_FROM:'reports@example.test'};
+ const env={PARAGON_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'test',INTEGRATIONS_REPORT_FROM:'reports@example.test'};
  for(const job of [
   {id:'1',kind:'push',payload:{...sample,notes:sentinel,agents:sample.agents.map(a=>({...a,notes:sentinel}))}},
   {id:'2',kind:'postback',payload:contaminated},

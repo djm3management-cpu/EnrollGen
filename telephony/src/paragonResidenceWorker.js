@@ -1,6 +1,8 @@
+import { featureEnabled } from './lib/deploymentFeatures.js';
 import {extractResidence,resolveResidence} from './paragonResidenceExtraction.js';
 const checked=r=>{if(r.error)throw r.error;return r.data;};
-export async function processResidenceJob(db,job){
+export async function processResidenceJob(db,job,{env=process.env}={}){
+ if(!featureEnabled('PARAGON_ENABLED',env))return {status:'disabled'};
  const prior=job.metadata||{},extracted=extractResidence(job.segments||[],{...prior,source:job.capture?.source});
  const crosswalk=new Map();
  const lookup=async zip=>{if(!crosswalk.has(zip))crosswalk.set(zip,checked(await db.from('zip_county_crosswalk').select('zip,state_code,county_fips,county_name').eq('zip',zip))||[]);return crosswalk.get(zip);};
@@ -27,10 +29,11 @@ export async function processResidenceJob(db,job){
  }
  return checked(await db.rpc('finish_paragon_residence_job',{p_call:job.inbound_call_id,p_token:job.lease_token,p_candidate:transcript||fallback||{},p_metadata:{question_at:extracted.question_at,answer_at:extracted.answer_at,transcript_zips:[...zips],ambiguous}}));
 }
-export async function runParagonResidenceWorker({db,log=console.error}){
+export async function runParagonResidenceWorker({db,log=console.error,env=process.env}){
+ if(!featureEnabled('PARAGON_ENABLED',env))return;
  const jobs=checked(await db.rpc('claim_paragon_residence_jobs',{p_limit:5}));
  for(const job of jobs||[]){
-  try{await processResidenceJob(db,job);}
+  try{await processResidenceJob(db,job,{env});}
   catch(error){
    const code=/^[A-Za-z0-9_]{1,64}$/.test(error?.code||'')?error.code:'residence_capture_failed';
    log(JSON.stringify({event:'paragon_residence_retry',call_id:job.inbound_call_id,code}));
@@ -40,6 +43,7 @@ export async function runParagonResidenceWorker({db,log=console.error}){
  }
 }
 export function startParagonResidenceWorker(options){
+ if(!featureEnabled('PARAGON_ENABLED',options.env || process.env))return ()=>{};
  let running=false,stopped=false;
  const tick=async()=>{if(running||stopped)return;running=true;try{await runParagonResidenceWorker(options);}catch(error){console.error(JSON.stringify({event:'paragon_residence_worker_error',code:error.code||'database_unavailable'}));}finally{running=false;}};
  const timer=setInterval(tick,3000);timer.unref();void tick();

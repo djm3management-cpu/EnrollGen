@@ -1,9 +1,12 @@
+import {useTenantConfig} from "./useTenantConfig";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchWithClerk } from '../lib/clerkFetch';
 import { flushConferenceCheckpoint } from '../lib/conferenceCheckpoint';
 
 const BASE = (import.meta.env.VITE_TELEPHONY_BASE_URL || '').replace(/\/$/, '');
 export function useConferenceCall({ getToken, activeCall }) {
+  const {features}=useTenantConfig();
+  const allowed=features.CONFERENCE_CALLING_ENABLED === true;
   const [enabled, setEnabled] = useState(false);
   const [agents, setAgents] = useState([]);
   const [conference, setConference] = useState(null);
@@ -16,6 +19,7 @@ export function useConferenceCall({ getToken, activeCall }) {
   const current = useRef(key);
   current.current = key;
   const request = useCallback(async (path, body) => {
+    if(!allowed)throw new Error('Conference calling disabled');
     const response = await fetchWithClerk(getToken, `${BASE}/api/voice/conference-${path}`, {
       method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' },
       ...(body ? { body: JSON.stringify(body) } : {}),
@@ -23,9 +27,10 @@ export function useConferenceCall({ getToken, activeCall }) {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Conference controls are unavailable.');
     return result;
-  }, [getToken]);
+  }, [getToken, allowed]);
   useEffect(() => {
     let canceled = false;
+    if(!allowed){setEnabled(false);setAgents(current=>current.length?[]:current);return;}
     request('capabilities').then(result => { if (!canceled) { setEnabled(result.enabled === true); setAgents(result.agents || []); } }).catch(() => {});
     return () => { canceled = true; };
   }, [request, key]);
@@ -33,6 +38,7 @@ export function useConferenceCall({ getToken, activeCall }) {
     let canceled = false, pending = false;
     setConference(null); setError(''); setBusy(false); setServerTranscriptionStarting(false);
     async function refresh() {
+      if(!allowed)return;
       if (!key || pending) return;
       pending = true;
       try {
@@ -46,6 +52,7 @@ export function useConferenceCall({ getToken, activeCall }) {
     return () => { canceled = true; window.clearInterval(timer); };
   }, [key, callSid, conferenceCallId, request, enabled]);
   const run = useCallback(async input => {
+    if(!allowed)throw new Error('Conference calling disabled');
     if (!key || busy) throw new Error('Wait for the call controls to finish.');
     setBusy(true); setError('');
     const upgrading = !conference?.callId && ['dial', 'hold'].includes(input.action);
@@ -59,6 +66,6 @@ export function useConferenceCall({ getToken, activeCall }) {
       return result.conference;
     } catch (err) { if (current.current === key) setError(err.message); throw err; }
     finally { if (current.current === key) { setBusy(false); setServerTranscriptionStarting(false); } }
-  }, [key, callSid, conferenceCallId, conference?.callId, busy, request]);
+  }, [key, callSid, conferenceCallId, conference?.callId, busy, request, allowed]);
   return useMemo(() => ({ enabled, agents, conference, serverTranscriptionStarting, busy, error, run }), [enabled, agents, conference, serverTranscriptionStarting, busy, error, run]);
 }

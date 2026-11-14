@@ -1,3 +1,4 @@
+process.env.PARAGON_ENABLED='true';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -27,7 +28,7 @@ test('inbound agent dot follows server recovery and failure, independently of br
 
 test('manual worker probe sends one synthetic CSV only to Mike, with stable idempotency and no scheduler', async () => {
   const requests = [];
-  const options = { env: { RESEND_API_KEY: 'fixture', INTEGRATIONS_REPORT_FROM: 'reports@example.com' },
+  const options = { env: { PARAGON_ENABLED:'true', OPERATIONAL_EMAIL_ENABLED:'true', RESEND_API_KEY: 'fixture', INTEGRATIONS_REPORT_FROM: 'reports@example.com' },
     send: async (url, body, headers) => { requests.push({ url, body: JSON.parse(body), headers }); return { status: 200 }; } };
   assert.equal((await runManualReport(['--test-report', '--test-id', 'oct03'], options)).result, 'sent');
   assert.equal(requests.length, 1);
@@ -47,7 +48,7 @@ test('manual worker probe sends one synthetic CSV only to Mike, with stable idem
 
 test('CallStore endCall returns timer metadata and resets without requesting a token or persisting', async () => {
   const source = read('../src/stores/callStore.js').replace(/^import .*;\n/gm, '').replace('export function useCallStore', 'function useCallStore').replace('import.meta.env.DEV', 'false');
-  const context = vm.createContext({ Date, useSyncExternalStore() {}, process: { env: { NODE_ENV: 'test' } } });
+  const context = vm.createContext({ Date, useSyncExternalStore() {}, process: { env: { PARAGON_ENABLED:'true', OPERATIONAL_EMAIL_ENABLED:'true', NODE_ENV: 'test' } } });
   vm.runInContext(source + '\nglobalThis.store = useCallStore;', context);
   context.store.getState().startCall('agent', 'call');
   const result = await context.store.getState().endCall();

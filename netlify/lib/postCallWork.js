@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 const LEGACY_ENROLLMENT_COLUMNS=['carrier_name','plan_name','plan_id','effective_date','application_id','enrollment_code','enrollment_confirmation_number','premium','sunfire_code','sixty_day_date','medicaid','medicaid_number','previous_carrier','sep','agency','writing_agent','hra','hra_date'];
 function omitMAEnrollmentColumns(record,payload){
  if(normalizeProductType(payload.product_type)==='MA')for(const key of LEGACY_ENROLLMENT_COLUMNS)delete record[key];
@@ -504,7 +505,8 @@ function buildGhlWebhookPayload(payload, tenant, tenantAgents) {
   };
 }
 
-async function sendEnrollmentWebhook(tenant, tenantAgents, payload) {
+export async function sendEnrollmentWebhook(tenant, tenantAgents, payload) {
+  if (!featureEnabled('GHL_ENABLED')) return { sent: false, sentAt: null, error: 'GHL disabled' };
   if (!tenant?.ghl_webhook_url) {
     return {
       sent: false,
@@ -654,8 +656,8 @@ async function handleWrapUp(supabase, payload, auth, tenant, tenantAgents, subsc
   // The disposition transaction owns compliance eligibility and its durable
   // request. Transcript completion and wrap-up never dispatch scoring directly.
 
-  let webhookStatus = "skipped";
-  if (outcome === "enrolled") {
+  let webhookStatus = featureEnabled('GHL_ENABLED') ? 'skipped' : 'disabled';
+  if (outcome === "enrolled" && featureEnabled('GHL_ENABLED')) {
     const webhookAllowed = requirePlan(subscription, "pro");
     if (webhookAllowed.response) {
       webhookStatus = "skipped_plan";
@@ -752,6 +754,7 @@ return async request => {
   }
 
   const action = safeText(body.action);
+  if (action === 'webhook_result' && !featureEnabled('GHL_ENABLED')) return disabledResponse('GHL_ENABLED');
   if (!["init", "checkpoint", "finalize", "wrap_up", "webhook_result"].includes(action)) {
     return json(400, { error: "Invalid action" });
   }

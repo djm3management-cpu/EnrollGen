@@ -1,3 +1,5 @@
+// Explicit opt-in for existing enabled-feature behavior under test.
+process.env.PARAGON_ENABLED = 'true';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';

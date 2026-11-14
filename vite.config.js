@@ -1,3 +1,4 @@
+import { deploymentFeatures } from './telephony/src/lib/deploymentFeatures.js';
 import { assertSafeAuthEnvironment } from "./integrations/authSafety.js";
 import process from "node:process";
 import { defineConfig, loadEnv } from "vite";
@@ -7,6 +8,7 @@ import { noiseSuppressionAudioWorkletVitePlugin } from "@workadventure/noise-sup
 
 export default defineConfig(({ mode }) => {
   const env = { ...loadEnv(mode, process.cwd(), ""), ...process.env };
+  deploymentFeatures(env);
   assertSafeAuthEnvironment(env, { build: true });
   assertNoPublicApiKeys(env);
   return {

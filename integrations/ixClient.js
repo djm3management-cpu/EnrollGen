@@ -1,3 +1,4 @@
+import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
 import {providerJson} from '../telephony/src/recordings.js';
 
 export function ixConfiguration(env = process.env) {
@@ -27,9 +28,11 @@ export function safeIxMessage(message, secrets = []) {
 
 export class SunfireIxClient {
   constructor(env = process.env, {fetchImpl = fetch, now = () => Date.now()} = {}) {
+    deploymentFeatures(env);
+    this.env = env;
     this.config = ixConfiguration(env);
     this.environment = this.config.environment;
-    this.available = !!(this.config.username && this.config.password);
+    this.available = featureEnabled('IX_UPLOAD_ENABLED',env) && !!(this.config.username && this.config.password);
     this.fetchImpl = fetchImpl;
     this.now = now;
     this.token = null;
@@ -37,6 +40,7 @@ export class SunfireIxClient {
     this.authentication = null;
   }
   async response(url, options, stage) {
+    if (!featureEnabled('IX_UPLOAD_ENABLED', this.env)) throw new IxError('ix_upload_disabled', {outcome:'failed'});
     let response;
     try { response = await this.fetchImpl(url, {...options, redirect: 'error', signal: AbortSignal.timeout(30_000)}); }
     catch { throw new IxError('ix_network_error'); }

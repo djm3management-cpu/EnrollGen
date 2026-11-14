@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {mediaUrl,twilioHeaders,providerJson,fetchRecordingMedia} from '../../telephony/src/recordings.js';
 import {getEvidenceServiceClient,checked,evidenceJson,evidenceFailure} from './_evidenceAccess.js';
 import {fillApprovedGaps} from '../lib/manualTranscriptGaps.js';
@@ -12,15 +13,19 @@ export async function readBoundedRecording(response) {
 }
 export function createGapFillHandler({getDb=getEvidenceServiceClient,transport=fetch,env=process.env}={}){
  return async request=>{
+  if(!featureEnabled('TRANSCRIPT_GAP_FILL_ENABLED',env) && !featureEnabled('TRANSCRIPT_AUTO_RECOVERY_ENABLED',env))return disabledResponse('TRANSCRIPT_GAP_FILL_ENABLED');
   if(request.method!=='POST'||!env.SCORE_CALL_JOB_SECRET||request.headers.get('x-enrollgen-job-secret')!==env.SCORE_CALL_JOB_SECRET)return evidenceJson(401,{error:'Unauthorized'});
   let db,job;
   try{
-   if(env.TRANSCRIPT_GAP_FILL_ENABLED!=='true'&&env.TRANSCRIPT_AUTO_RECOVERY_ENABLED!=='true')throw Error('Gap fill disabled');
+   if(!featureEnabled('TRANSCRIPT_GAP_FILL_ENABLED',env)&&!featureEnabled('TRANSCRIPT_AUTO_RECOVERY_ENABLED',env))throw Error('Gap fill disabled');
    const input=await request.json();db=getDb();
    // A durable admin approval or bounded automatic reservation authorizes usage.
+   const pending=checked(await db.from('manual_transcript_gap_fills').select('mode').eq('id',input.job_id).eq('status','queued').maybeSingle());
+   const modeFlag=pending?.mode==='automatic'?'TRANSCRIPT_AUTO_RECOVERY_ENABLED':'TRANSCRIPT_GAP_FILL_ENABLED';
+   if(!featureEnabled(modeFlag,env))return disabledResponse(modeFlag);
    const claimed=checked(await db.from('manual_transcript_gap_fills').update({status:'processing'}).eq('id',input.job_id).eq('status','queued').select('*'));
    if(claimed.length!==1)throw Error('Gap job already consumed');job=claimed[0];
-   if(env[job.mode==='automatic'?'TRANSCRIPT_AUTO_RECOVERY_ENABLED':'TRANSCRIPT_GAP_FILL_ENABLED']!=='true')throw Error('Gap job mode disabled');
+   if(!featureEnabled(job.mode==='automatic'?'TRANSCRIPT_AUTO_RECOVERY_ENABLED':'TRANSCRIPT_GAP_FILL_ENABLED',env))throw Error('Gap job mode disabled');
    const recording=checked(await db.from('recording_ingestion').select('*').eq('id',job.recording_id).eq('tenant_id',job.tenant_id).single());
    if(recording.call_record_id!==job.call_id)throw Error('Recording call mismatch');
    if(recording.stored_bytes>MAX_GAP_RECORDING_BYTES)throw Error('Recording exceeds recovery download cap');
@@ -37,7 +42,7 @@ export function createGapFillHandler({getDb=getEvidenceServiceClient,transport=f
     const media=await fetchRecordingMedia(mediaUrl(recording.account_sid,recording.recording_sid,job.channel_speakers.length),config,{signal:AbortSignal.timeout(120000)},transport);
     if(!media.ok)throw Error('Recording unavailable');audio=await readBoundedRecording(media);
    }
-   await fillApprovedGaps({db,job,audio,transcribe:async(bytes,channels)=>{
+   await fillApprovedGaps({db,job,audio,env,transcribe:async(bytes,channels)=>{
     const query=new URLSearchParams({model:'nova-2',utterances:'true',punctuate:'true',smart_format:'true',multichannel:String(channels===2),diarize:'true'});
     const response=await transport(`https://api.deepgram.com/v1/listen?${query}`,{method:'POST',headers:{Authorization:`Token ${env.DEEPGRAM_API_KEY}`,'Content-Type':'audio/wav'},body:bytes,signal:AbortSignal.timeout(120000)});
     if(!response.ok)throw Error(`Gap transcription HTTP ${response.status}`);return response.json();

@@ -1,3 +1,4 @@
+import {useTenantConfig} from "../../hooks/useTenantConfig";
 import {scoringFailureMessage} from '../../lib/scoringStatus.js';
 import {useCallback,useEffect,useMemo,useState} from 'react';
 import {useAppAuth} from '../../context/AuthContext';
@@ -20,6 +21,7 @@ function displayGrade(score) {
  if(value>=60)return 'D'; return 'F';
 }
 export default function ComplianceReviewModal({callRecordId,onClose,displayDurationSeconds}){
+ const {features}=useTenantConfig();
  const {getToken}=useAppAuth();
  const [theme,setTheme]=useState('terminal');
  const [data,setData]=useState(null),[error,setError]=useState(''),[version,setVersion]=useState(''),[filter,setFilter]=useState('all'),[busy,setBusy]=useState(false),[seek,setSeek]=useState(null),[preview,setPreview]=useState(null);
@@ -69,7 +71,7 @@ export default function ComplianceReviewModal({callRecordId,onClose,displayDurat
     <span>{card?.scoring_duration_ms==null?'':duration(card.scoring_duration_ms)}</span>
     <span>{card?.request_attempts==null?'':`${card.request_attempts} attempts`}</span><span>{card?.tokens_used==null?'':`${card.tokens_used.toLocaleString()} tokens`}</span><span>{card?.estimated_cost_usd==null?'':money(card.estimated_cost_usd)}</span>
     <select aria-label="Scorecard version" value={version||card?.id||''} onChange={e=>setVersion(e.target.value)}>{!data.versions.length&&<option value="">Not scored</option>}{data.versions.map((v,i)=><option key={v.id} value={v.id}>Version {data.versions.length-i} · {formatCallDateTime(v.created_at)}</option>)}</select>
-    {data.admin&&<><button className="contacts-mini-btn" disabled={busy||!!data.active_pass} onClick={()=>action('evaluate')}>Re-evaluate</button><button className="contacts-mini-btn" disabled={busy||!coverage.complete||data.eligibility?.status==='na'||(data.call.compliance_status==='scoring'||!!data.active_pass)} onClick={()=>action('rescore')}>Rescore</button>{!coverage.complete&&<button className="contacts-mini-btn" disabled={busy||['queued','processing'].includes(data.recovery?.status)} onClick={()=>action('fill')}>Fill transcript gaps</button>}</>}
+    {data.admin&&<><button className="contacts-mini-btn" disabled={busy||!!data.active_pass} onClick={()=>action('evaluate')}>Re-evaluate</button>{features.SCORING_ENABLED && <button className="contacts-mini-btn" disabled={busy||!coverage.complete||data.eligibility?.status==='na'||(data.call.compliance_status==='scoring'||!!data.active_pass)} onClick={()=>action('rescore')}>Rescore</button>}{features.TRANSCRIPT_GAP_FILL_ENABLED&&!coverage.complete&&<button className="contacts-mini-btn" disabled={busy||['queued','processing'].includes(data.recovery?.status)} onClick={()=>action('fill')}>Fill transcript gaps</button>}</>}
    </div>
    <dl className="compliance-review-meta"><div><dt>Agent</dt><dd>{data.call.agent_name||'Unknown'}</dd></div><div><dt>Consumer</dt><dd>{data.call.beneficiary_name||'Unknown'}</dd></div><div><dt>Talk</dt><dd>{duration((displayDurationSeconds??data.call.call_duration_seconds)*1000)}</dd></div><div><dt>Source</dt><dd>{data.source||'Unknown'}</dd></div></dl>
    <div className={`compliance-overhaul-coverage${coverage.complete?'':' is-incomplete'}`}><span>Transcript {duration(coverage.endMs)} of {duration(coverage.durationMs)} · {(coverage.ratio*100).toFixed(1)}%</span><progress max="1" value={coverage.ratio}/></div>

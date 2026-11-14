@@ -31,6 +31,7 @@ function requireVendorApiKey(req, res, next) {
 //   ...any additional fields }
 leadsRouter.post("/api/leads/incoming", requireVendorApiKey, async (req, res) => {
   const body = req.body || {};
+  if(!config.paragonEnabled && /paragon/i.test(String(body.vendor_source || body.publisher || '')))return res.status(503).json({status:'disabled',feature:'PARAGON_ENABLED'});
   if (!body.phone) {
     return res.status(400).json({ error: "phone is required" });
   }

@@ -387,8 +387,8 @@ test('API: verified membership/tenant owns controls; disabled switch rejects new
  assert.equal((await route(router,'/api/voice/conference-action',{callId:h.c.call_id,action:'dial',mode:'add',phone:'+16095556789'},{subject:'unknown'})).code,403);
  assert.equal((await route(router,'/api/voice/conference-action',{callId:h.c.call_id,action:'dial',mode:'add',phone:'+16095556789'},{subject:'receiver-user'})).code,403);
  const disabled=routerFor(h,{settings:{...settings,conferenceCallingEnabled:false}});
- assert.equal((await route(disabled,'/api/voice/conference-capabilities')).data.enabled,false);
- assert.equal((await route(disabled,'/api/voice/conference-action',{callId:h.c.call_id,action:'dial',mode:'add',phone:'+16095556789'})).code,409);
+ assert.equal((await route(disabled,'/api/voice/conference-capabilities')).code,503);
+ assert.equal((await route(disabled,'/api/voice/conference-action',{callId:h.c.call_id,action:'dial',mode:'add',phone:'+16095556789'})).code,503);
  assert.equal(h.twilio.operations.length,0);
 });
 test('API: signed callbacks reject wrong account/participant; completed callbacks reconcile once',async t=>{
@@ -420,12 +420,14 @@ test('receiving agent can add another person after completed internal handoff an
  await h.action({action:'dial',mode:'add',phone:'+16095556789',actor:'receiver'});
  assert.equal((await h.people()).filter(p=>p.status!=='left').length,3);
 });
-test('flag-off still exposes cleanup for a draining conference while rejecting new participants',async t=>{
+test('flag-off parks a draining conference without allowing provider cleanup side effects',async t=>{
  const h=await harness(t);await h.action({action:'dial',mode:'add',phone:'+16095556789'});
  const disabled=routerFor(h,{settings:{...settings,conferenceCallingEnabled:false}});
  const status=await route(disabled,'/api/voice/conference-status',{callId:h.c.call_id});
- assert.equal(status.data.enabled,false);assert.equal(status.data.conference.callId,h.c.call_id);
- assert.equal((await route(disabled,'/api/voice/conference-action',{callId:h.c.call_id,action:'end'})).code,200);
+ assert.equal(status.code,503);assert.equal(status.data.status,'disabled');
+ const before=h.twilio.operations.length;
+ assert.equal((await route(disabled,'/api/voice/conference-action',{callId:h.c.call_id,action:'end'})).code,503);
+ assert.equal(h.twilio.operations.length,before);
 });
 test('legacy Dial guard joins the persisted conference without finalizing; unconverted calls retain the original handler',async t=>{
  const h=await harness(t),previous=config.conferenceCallingEnabled;config.conferenceCallingEnabled=true;t.after(()=>{config.conferenceCallingEnabled=previous;});

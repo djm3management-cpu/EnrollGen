@@ -1,3 +1,4 @@
+import { featureEnabled } from '../../telephony/src/lib/deploymentFeatures.js';
 import {checked} from '../functions/_evidenceAccess.js';
 
 export function providerErrorCode(error, fallback = 'provider_error') {
@@ -31,6 +32,7 @@ export async function sendProviderFailureAlert(db, sessionId, stage, code, optio
 }
 
 async function sendProviderAlert(db, sessionId, stage, code, subject, options={}) {
+  if (!featureEnabled('OPERATIONAL_EMAIL_ENABLED')) return;
   const claimed=options.dailyClaim || checked(await db.rpc('claim_provider_quota_alert'));
   if (!claimed) return;
   const env=globalThis.process?.env || {};

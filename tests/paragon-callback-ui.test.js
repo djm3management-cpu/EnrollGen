@@ -45,7 +45,7 @@ test('filtered CRM task list includes all open own Paragon callbacks and row sho
   ...h.hooks,element,fragment:'fragment',followUpBucket,
  });
  const task={id:'paragon:task-a',source:'paragon',agent_id:'mark',status:'open',due_at:'2020-01-01',reason:callbacks.PARAGON_CALLBACK_LABEL,caller_name:'Jane Doe',caller_phone:'+15555550123',caller_state:'AZ',inbound_call_id:'original-call'};
- const data={agentSlug:'mark',isAdmin:false,now:new Date(),rows:[task,{...task,id:'other',source:undefined},{...task,id:'peer',agent_id:'dylan'},{...task,id:'completed',status:'completed'}],agents:[{name:'Mark',agent_slug:'mark'}],update:async()=>{}};
+ const data={paragonEnabled:true,agentSlug:'mark',isAdmin:false,now:new Date(),rows:[task,{...task,id:'other',source:undefined},{...task,id:'peer',agent_id:'dylan'},{...task,id:'completed',status:'completed'}],agents:[{name:'Mark',agent_slug:'mark'}],update:async()=>{}};
  h.mount(()=>FollowUpsView({data,initialSource:'paragon'}));await h.flush();
  try{
   const rows=walk(h.value).filter(node=>node.type===FollowUpRow);assert.equal(rows.length,1);assert.equal(rows[0].props.row.id,task.id);
@@ -74,7 +74,7 @@ test('CRM task hook merges regular tasks and callbacks, dispatches correct actio
   require(name){
    if(name==='react')return h.hooks;
    if(name.endsWith('/AuthContext'))return {useAppAuth:()=>({getToken})};
-   if(name.endsWith('/useTenantConfig'))return {useTenantConfig:()=>({tenantId:'tenant',supabaseClient:client,agents:[],loading:false})};
+   if(name.endsWith('/useTenantConfig'))return {useTenantConfig:()=>({tenantId:'tenant',supabaseClient:client,agents:[],loading:false,features:{PARAGON_ENABLED:true}})};
    if(name.endsWith('/useCurrentAgent'))return {useCurrentAgent:()=>({agentUuid:'id',agentSlug:'mark'})};
    if(name.endsWith('/paragonCallbacks'))return {loadParagonCallbacks:async()=>{if(callbackFailure)throw Error('Callbacks unavailable');return [callback];},updateParagonCallback:async(...args)=>updates.push(['paragon',...args])};
    if(name.endsWith('/followUps'))return {FOLLOW_UPS_UPDATED:'tasks-updated',notifyFollowUpsUpdated(){},updateFollowUp:async(...args)=>updates.push(['regular',...args])};

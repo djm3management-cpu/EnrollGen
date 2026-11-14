@@ -1,3 +1,5 @@
+// Explicit opt-in for existing enabled-feature behavior under test.
+process.env.PARAGON_ENABLED = 'true';
 import { etMidnight } from '../netlify/functions/paragon-vendor-report.js';
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';

@@ -1,3 +1,4 @@
+import {useTenantConfig} from "../../hooks/useTenantConfig";
 import EnrollmentSummary from '../enrollment/EnrollmentSummary';
 import {useAppAuth} from '../../context/AuthContext';
 import {saveAgentContactZip} from '../../lib/paragonResidence.js';
@@ -878,6 +879,7 @@ function RightPanel({
 }
 
 function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact = null, onSelectContact = null, active = true }) {
+ const {features={}}=useTenantConfig();
   const {getToken}=useAppAuth();
   const [search, setSearch] = useState("");
   const [newContact, setNewContact] = useState(null);
@@ -987,7 +989,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
       setSaving(true);
       setInlineError("");
       try {
-        if (field === 'zip') await saveAgentContactZip(getToken,selectedContact.id,next);
+        if (field === 'zip' && features.PARAGON_ENABLED) await saveAgentContactZip(getToken,selectedContact.id,next);
         else await updateContact(selectedContact.id, { [field]: next });
         if (PII_FIELD_SET.has(field)) patchField(field, field === "phone" ? normalizePhoneE164(next) : next);
         await refreshSelected();
@@ -1000,7 +1002,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         setSaving(false);
       }
     },
-    [selectedContact, updateContact, refreshSelected, patchField, getToken]
+    [features.PARAGON_ENABLED, selectedContact, updateContact, refreshSelected, patchField, getToken]
   );
 
   const saveMbiFull = useCallback(

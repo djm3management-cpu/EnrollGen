@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import Stripe from "stripe";
 import { requireClerkAuth } from "./_clerkAuth.js";
@@ -45,6 +46,7 @@ export function createStripeCheckoutHandler({
   env = process.env,
 } = {}) {
   return async (request) => {
+  if (!featureEnabled('STRIPE_BILLING_ENABLED', env)) return disabledResponse('STRIPE_BILLING_ENABLED');
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
   }

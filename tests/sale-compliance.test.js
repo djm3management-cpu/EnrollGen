@@ -1,3 +1,4 @@
+process.env.STRIPE_BILLING_ENABLED='true';
 import {excludedOutcome} from '../src/compliance/rules/callStages.js';
 import {assessment,installComplianceFixture} from './helpers/complianceFixture.js';
 import test, { before, after } from 'node:test';

@@ -1,3 +1,4 @@
+import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
 import {canonicalCarrier} from './converselySelection.js';
 import {SunfireIxClient,IxError} from './ixClient.js';
 import {postJson} from './transport.js';
@@ -34,6 +35,7 @@ export async function ixCallAttribution(db,call,recordings) {
 // State is checkpointed under the queue lease before any audio is sent, and after each PUT.
 // Retrying a successful PUT is safe; registering the same enrollment again is not.
 export async function uploadIx(job, recordings, client, {env=process.env,fetchImpl=fetch,now=()=>Date.now(),checkpoint,call={}}={}) {
+  if(!featureEnabled('IX_UPLOAD_ENABLED',env))return {status:'disabled'};
   const config={twilioAccountSid:env.TWILIO_ACCOUNT_SID,twilioAuthToken:env.TWILIO_AUTH_TOKEN};
   if(!checkpoint)throw Error('ix_checkpoint_required');
   let state=job.ix_state || {};
@@ -92,6 +94,7 @@ export async function uploadIx(job, recordings, client, {env=process.env,fetchIm
 }
 
 export async function dailySummaries(db,{env,send,now}) {
+  if(!featureEnabled('IX_UPLOAD_ENABLED',env) || !featureEnabled('IX_REPORT_ENABLED',env) || !featureEnabled('OPERATIONAL_EMAIL_ENABLED',env))return;
   if(!env.RESEND_API_KEY || !env.INTEGRATIONS_REPORT_FROM)return;
   const date=new Date(now()-86400000).toLocaleDateString('en-CA',{timeZone:'America/New_York'});
   const rows=checked(await db.from('compliance_reconciliation').select('*').eq('day',date)) || [];
@@ -107,9 +110,11 @@ export async function dailySummaries(db,{env,send,now}) {
 }
 
 export function createIxIntegration(db,{env=process.env,send=postJson,now=()=>Date.now(),fetchImpl=fetch,ixClient=new SunfireIxClient(env,{fetchImpl,now})}={}) {
+  deploymentFeatures(env);
   let nextSweep=0,nextSummary=0;
   return {
-    providers:{ix:{available:ixClient.available,claim:async()=>checked(await db.rpc('claim_ix_upload',{p_environment:ixClient.environment})),deliver:async(job,call)=>{
+    providers:{ix:{available:ixClient.available,claim:async()=>featureEnabled('IX_UPLOAD_ENABLED',env)?checked(await db.rpc('claim_ix_upload',{p_environment:ixClient.environment})):[],deliver:async(job,call)=>{
+      if(!featureEnabled('IX_UPLOAD_ENABLED',env))return {status:'disabled'};
       if(canonicalCarrier(call.carrier_name)!=='UnitedHealthcare')throw Error('carrier_no_longer_eligible');
       if(call.sunfire_code!==job.confirmation_code)throw new IxError('confirmation_code_changed',{outcome:'needs_attention'});
       const saved=checked(await db.from('ix_uploads').select('ix_state').eq('id',job.id).eq('tenant_id',job.tenant_id).single());
@@ -128,6 +133,7 @@ export function createIxIntegration(db,{env=process.env,send=postJson,now=()=>Da
         p_message:failure instanceof IxError?failure.providerMessage:'',p_receipt:receipt}));
     }}},
     scheduleExtras:async()=>{
+      if(!featureEnabled('IX_UPLOAD_ENABLED',env))return;
       if(now()>=nextSweep){
         nextSweep=now()+15*60_000;
         checked(await db.rpc('enqueue_compliance_uploads'));

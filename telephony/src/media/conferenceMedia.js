@@ -30,7 +30,7 @@ export function verifyConferenceToken(token, settings = config) {
 }
 export function createConferenceMedia({ db = supabase, settings = config, ...overrides } = {}) {
   const rpc = async (name, args) => { const r = await db.rpc(name, args).abortSignal(AbortSignal.timeout(3000)); if (r.error) throw r.error; return r.data === true; };
-  return createMediaServer({ pathPrefix: '/conference-media', verify: token => verifyConferenceToken(token, settings),
+  return createMediaServer({ pathPrefix: '/conference-media', verify: token => settings.conferenceCallingEnabled ? verifyConferenceToken(token, settings) : null,
     speakersFor: claims => ({ inbound: claims.speaker }),
     leases: {
       // A conference media lease is granted only for a joined participant.

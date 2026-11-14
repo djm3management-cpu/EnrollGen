@@ -30,15 +30,16 @@ function FollowUpRow({ row, agents, update, onOpenContact }) {
   </tr>;
 }
 export default function FollowUpsView({ data, onOpenContact, initialSource='' }) {
-  const [source,setSource]=useState(initialSource);
-  const [bucket, setBucket] = useState(initialSource==='paragon'?'all':'today');
+  const paragonEnabled=data.paragonEnabled === true;
+  const [source,setSource]=useState(paragonEnabled?initialSource:'');
+  const [bucket, setBucket] = useState(paragonEnabled&&initialSource==='paragon'?'all':'today');
   const [agent, setAgent] = useState('mine');
   const owner = agent === 'mine' ? data.agentSlug : agent;
-  const visible = data.rows.filter(row => row.status==='open' && (data.isAdmin && owner === 'all' || row.agent_id === owner) && (source!=='paragon'||row.source==='paragon') && (bucket==='all'||followUpBucket(row, data.now) === bucket));
+  const visible = data.rows.filter(row => (paragonEnabled||row.source!=='paragon') && row.status==='open' && (data.isAdmin && owner === 'all' || row.agent_id === owner) && (source!=='paragon'||row.source==='paragon') && (bucket==='all'||followUpBucket(row, data.now) === bucket));
   return <div className="call-log-tab">
     <div className="ops-command-line"><span>FOLLOW-UPS</span><span className="ops-section-meta">{visible.length} OPEN</span></div>
     <div className="call-log-filters">
-      <select aria-label="Task type filter" value={source} onChange={event=>setSource(event.target.value)}><option value="">ALL TASKS</option><option value="paragon">PARAGON CALLBACKS</option></select>
+      <select aria-label="Task type filter" value={source} onChange={event=>setSource(event.target.value)}><option value="">ALL TASKS</option>{paragonEnabled&&<option value="paragon">PARAGON CALLBACKS</option>}</select>
       <select aria-label="Follow-up due date filter" value={bucket} onChange={event => setBucket(event.target.value)}>
         <option value="all">ALL OPEN</option><option value="today">DUE TODAY</option><option value="overdue">OVERDUE</option><option value="upcoming">UPCOMING</option>
       </select>

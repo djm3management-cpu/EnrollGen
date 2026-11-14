@@ -19,6 +19,7 @@ function statusFixture(){
   module,exports:module.exports,Date,Intl,URLSearchParams,element,
   window:{setInterval:fn=>{listeners.set('timer',fn);return 1;},clearInterval(){},addEventListener:(key,fn)=>listeners.set(key,fn),removeEventListener:key=>listeners.delete(key)},
   require(name){
+   if(name.endsWith('/useTenantConfig'))return {useTenantConfig:()=>({features:{PARAGON_ENABLED:true,CONVERSELY_UPLOAD_ENABLED:true,IX_UPLOAD_ENABLED:true}})};
    if(name==='react')return {...h.hooks,useId:()=> 'status-log'};
    if(name.endsWith('/AuthContext'))return {useAppAuth:()=>auth};
    if(name.endsWith('/evidenceApi'))return {evidenceRequest};
@@ -91,7 +92,7 @@ for(const table of ['enrolled_agents','call_records','contacts','call-log'])test
   await data.flush();assert.equal(data.value.loading,false);assert.match(data.value.error,/query failed/);
   const code=source('../src/components/AgentDashboard.jsx').replace(/^import .*;\n/gm,'').replace('export default function','function');
   const Dashboard=vm.runInNewContext(transformSync(code,{loader:'jsx',format:'cjs',jsxFactory:'element',jsxFragment:'fragment'}).code+';AgentDashboard',{
-   ...view.hooks,...metrics,useId:()=> 'dashboard',useDashboardData:()=>data.value,element,fragment:'fragment',
+   ...view.hooks,...metrics,useTenantConfig:()=>({features:{PARAGON_ENABLED:true}}),useId:()=> 'dashboard',useDashboardData:()=>data.value,element,fragment:'fragment',
    ParagonCallbackBadge:'ParagonCallbackBadge',AgentStatusLog:'AgentStatusLog',callOutcomeLabel:code=>code,
   });
   view.mount(()=>Dashboard({userId:'user-a'}));await view.flush();

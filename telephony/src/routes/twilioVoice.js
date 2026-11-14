@@ -120,7 +120,10 @@ async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentId
 }
 
 // Inbound call from the FMO transfer hits here first.
-twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req, _res, next) => { req.paragonArrivalAt = new Date().toISOString(); return next(); }, routingReplay, async (req, res) => {
+twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req,res,next)=>{
+  if(!config.paragonEnabled && isParagon(vendorMetadata(req)))return res.status(503).json({status:'disabled',feature:'PARAGON_ENABLED'});
+  return next();
+}, (req, _res, next) => { req.paragonArrivalAt = new Date().toISOString(); return next(); }, routingReplay, async (req, res) => {
   let arrivedAt = req.paragonArrivalAt;
   const callSid = req.body.CallSid;
   const from = req.body.From;

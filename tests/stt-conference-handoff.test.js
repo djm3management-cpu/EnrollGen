@@ -10,7 +10,7 @@ test('conference upgrade reserves server transcription before checkpoint/network
     const h=hookHarness();let release;
     const checkpoint=new Promise(resolve=>{release=resolve;});
     const context=vm.createContext({...h.hooks,window:{setInterval:()=>1,clearInterval(){}},
-      flushConferenceCheckpoint:()=>checkpoint,
+      useTenantConfig:()=>({features:{CONFERENCE_CALLING_ENABLED:true}}),flushConferenceCheckpoint:()=>checkpoint,
       fetchWithClerk:async(_get,url)=>({ok:!(failed&&url.endsWith('action')),json:async()=>({enabled:true,conference:url.endsWith('action')?{callId:'conference'}:null,error:'failed'})}),
     });
     vm.runInContext(source+';globalThis.useHook=useConferenceCall;',context);
@@ -22,4 +22,12 @@ test('conference upgrade reserves server transcription before checkpoint/network
     await h.flush();assert.equal(h.value.serverTranscriptionStarting,false);
     assert.equal(Boolean(h.value.conference),!failed);h.unmount();
   }
+});
+
+test('disabled conference controls neither discover capabilities nor poll or dispatch',async()=>{
+ const h=hookHarness();let requests=0;
+ const context=vm.createContext({...h.hooks,useTenantConfig:()=>({features:{}}),window:{setInterval:()=>1,clearInterval(){}},fetchWithClerk:()=>{requests++;throw Error('unexpected');},flushConferenceCheckpoint:()=>assert.fail('no checkpoint')});
+ vm.runInContext(source+';globalThis.useHook=useConferenceCall;',context);
+ h.mount(()=>context.useHook({getToken:async()=> 'credential',activeCall:{params:{twilioCallSid:'CA'+'1'.repeat(32)}}}));
+ try{await h.flush();assert.equal(h.value.enabled,false);assert.equal(requests,0);await assert.rejects(h.value.run({action:'dial',mode:'add'}),/disabled/);assert.equal(requests,0);}finally{h.unmount();}
 });

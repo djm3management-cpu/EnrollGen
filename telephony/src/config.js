@@ -1,3 +1,4 @@
+import { featureEnabled } from './lib/deploymentFeatures.js';
 import "./authSafety.js";
 import { supabaseSecretKey } from "./lib/supabaseKeys.js";
 import { parseDirectAgentNumbers } from "./directRouting.js";
@@ -67,9 +68,10 @@ export const config = {
     process.env.DEFAULT_TENANT_ID || "00000000-0000-4000-8000-000000000001",
   dialTimeoutSeconds: Number(process.env.DIAL_TIMEOUT_SECONDS || 20),
   minConnectedSeconds,
-  conferenceCallingEnabled: process.env.CONFERENCE_CALLING_ENABLED?.trim().toLowerCase() === 'true',
+  conferenceCallingEnabled: featureEnabled('CONFERENCE_CALLING_ENABLED'),
   stickyRoutingEnabled: process.env.STICKY_ROUTING_ENABLED?.trim().toLowerCase() === "true",
-  paragonStateRoutingEnabled: process.env.PARAGON_STATE_ROUTING_ENABLED?.trim().toLowerCase() === "true",
+  paragonEnabled: featureEnabled('PARAGON_ENABLED'),
+  paragonStateRoutingEnabled: featureEnabled('PARAGON_ENABLED') && featureEnabled('PARAGON_STATE_ROUTING_ENABLED'),
   paragonPingFieldMap: process.env.PARAGON_PING_FIELD_MAP || null,
   // Invalid lookback is handled by the sticky fail-open path, not a startup failure.
   stickyLookbackDays: Number(process.env.STICKY_LOOKBACK_DAYS || 180),

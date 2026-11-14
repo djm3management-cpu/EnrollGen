@@ -1,3 +1,4 @@
+import { featureEnabled } from './lib/deploymentFeatures.js';
 import { randomUUID } from 'node:crypto';
 import { redactSensitiveText } from './lib/redaction.js';
 
@@ -39,11 +40,12 @@ export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = ()
   };
 }
 
-export async function runTranscriptDispatch({ db, scoringUrl, secret, transport = fetch, scoringEnabled = process.env.SCORING_ENABLED === 'true' }) {
+export async function runTranscriptDispatch({ db, scoringUrl, secret, transport = fetch, scoringEnabled = featureEnabled('SCORING_ENABLED') }) {
   // Store/reconcile terminal transcripts independently. Only disposition-created
   // sale requests can be returned for dispatch; call end cannot create eligibility.
   const reconciled = await db.rpc('reconcile_telephony_transcripts');
   if (reconciled.error) throw reconciled.error;
+  if(!scoringEnabled)return;
   if (!scoringUrl || !secret) throw new Error('Transcript scoring URL/secret is not configured');
   if(!scoringEnabled)return;
   const { data, error } = await db.rpc('get_sale_compliance_dispatch');
@@ -88,6 +90,7 @@ export function startTranscriptWorker(options) {
 
 // Notifications carry IDs and reason codes only, never recordings or transcript text.
 export async function sendPendingRecoveryAlerts({db,scoringUrl,secret,transport=fetch}) {
+ if(!featureEnabled('OPERATIONAL_EMAIL_ENABLED'))return;
  const {data,error}=await db.from('transcript_recovery_alerts').select('call_id,tenant_id,reason').is('alerted_at',null).order('created_at').limit(20);
  if(error)throw error;
  for(const alert of data||[]) {

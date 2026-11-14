@@ -1,3 +1,4 @@
+process.env.TRANSCRIPT_GAP_FILL_ENABLED='true';
 import test from 'node:test';import assert from 'node:assert/strict';import {fillApprovedGaps} from '../netlify/lib/manualTranscriptGaps.js';import {wavInfo} from '../src/lib/wavGaps.js';
 function pcm(){const bytes=new Uint8Array(44+48000),v=new DataView(bytes.buffer);for(const [at,text]of [[0,'RIFF'],[8,'WAVE'],[12,'fmt '],[36,'data']])for(let i=0;i<text.length;i++)bytes[at+i]=text.charCodeAt(i);v.setUint32(4,bytes.length-8,true);v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,16000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);v.setUint32(40,48000,true);return bytes;}
 test('manual fill submits only the approved seconds and cannot replay a consumed request',async()=>{

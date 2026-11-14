@@ -1,3 +1,5 @@
+// Explicit opt-in for existing enabled-feature behavior under test.
+process.env.IX_UPLOAD_ENABLED = 'true';
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFileSync} from 'node:fs';
@@ -6,7 +8,7 @@ import {uploadIx,ixMetadata} from '../integrations/ixUploads.js';
 const id='00000000-0000-4000-8000-000000000001';
 const account='AC'+'a'.repeat(32),parent='CA'+'c'.repeat(32);
 const leg=n=>({account_sid:account,recording_sid:'RE'+String(n).repeat(32),callback_call_sid:parent});
-const env={IX_USERNAME:'test-user',IX_PASSWORD:'test-password',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'twilio-secret'};
+const env={IX_UPLOAD_ENABLED:'true',IX_USERNAME:'test-user',IX_PASSWORD:'test-password',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'twilio-secret'};
 const okAuth=()=>Response.json({username:env.IX_USERNAME,token:'secret-token',expiresIn:100});
 const registration=payload=>({callRecordingId:id,recordingUploads:payload.callMetadata.recordings.map(({filename},index)=>({filename,presignedUrl:`https://bucket.s3.amazonaws.com/${index}`,expiresAt:'2099-01-01T00:00:00Z'})).reverse()});
 const job={id,call_id:id,confirmation_code:'SF-CODE'};

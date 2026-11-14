@@ -1,3 +1,4 @@
+import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
 import "./authSafety.js";
 import {deliverEnrollmentWebhooks} from './enrollmentWebhook.js';
 import { createSupabaseClient as createClient, supabaseSecretKey, reportSupabaseKeySelection } from "./supabase.js";
@@ -13,6 +14,7 @@ export function retryDelay(kind, attempt) {
   return Math.min(kind==='push'?60:3600,5*2**Math.min(Math.max(attempt-1,0),12));
 }
 export async function deliver(job, target, { send=postJson, env=process.env } = {}) {
+  if (!featureEnabled('PARAGON_ENABLED', env) || (job.kind === 'report' && !featureEnabled('OPERATIONAL_EMAIL_ENABLED', env))) return {status:0,result:'disabled'};
   if (!target?.active || (job.kind==='push' && !target.push_enabled)) return {status:0,result:'disabled'};
   const headers={'Idempotency-Key':job.id,'X-Delivery-ID':job.id};
   let payload, url, secret;
@@ -42,21 +44,22 @@ export async function deliver(job, target, { send=postJson, env=process.env } = 
     ...(!sent && response.error ? {error:deliveryDiagnostic(response.error,{provider:job.kind==='report'})} : {})};
 }
 export function createWorker(db, { send, env=process.env, log=console.log }={}) {
+  deploymentFeatures(env);
   const rpc=async(name,params={})=>{const {data,error}=await db.rpc(name,params);if(error)throw Error(name+' failed');return data;};
   const complianceTick=createComplianceWorker(db,{env,send,log,...createIxIntegration(db,{env,send})});
   let reportTick=0;
   return async function tick({schedule=true,deliveries=true}={}) {
     // Each stage fails independently; a vendor outage cannot prevent others' jobs.
     const reportsDue=Date.now()>=reportTick;
-    if(schedule) {
-    for(const task of ['repair_telephony_record_links','enqueue_availability_push','enqueue_disposition_postbacks',...(reportsDue?['enqueue_daily_vendor_reports']:[])]) {
+    if(schedule && featureEnabled('PARAGON_ENABLED',env)) {
+    for(const task of ['repair_telephony_record_links','enqueue_availability_push','enqueue_disposition_postbacks',...(reportsDue && featureEnabled('OPERATIONAL_EMAIL_ENABLED',env)?['enqueue_daily_vendor_reports']:[])]) {
       try{await rpc(task);}catch{log(JSON.stringify({event:'integration_stage_failed',stage:task}));}
     }
     if(reportsDue)reportTick=Date.now()+60000;
     }
     if(deliveries){try{await deliverEnrollmentWebhooks(db,{env,send});}catch{log(JSON.stringify({event:'ghl_delivery_stage_failed'}));}}
     try{await complianceTick({schedule,deliveries});}catch{log(JSON.stringify({event:'compliance_upload_stage_failed'}));}
-    if(!deliveries)return;
+    if(!deliveries || !featureEnabled('PARAGON_ENABLED',env))return;
     for(let n=0;n<20;n++) {
       let job;
       try { [job]=await rpc('claim_integration_delivery'); } catch { log(JSON.stringify({event:'integration_claim_failed'}));break; }

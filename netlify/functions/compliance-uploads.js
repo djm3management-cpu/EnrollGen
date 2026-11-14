@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {ixConfiguration} from '../../integrations/ixClient.js';
 import {currentConverselyWeek} from '../../integrations/converselySelection.js';
 import { requireClerkAuth } from './_clerkAuth.js';
@@ -22,12 +23,14 @@ async function namedRunResults(db,tenantId,results){
 
 export function createComplianceUploadsHandler({authenticate=requireClerkAuth,getDb=getEvidenceServiceClient,now=()=>Date.now(),env=process.env}={}) {
   return async request=>{
+    if(!featureEnabled('CONVERSELY_UPLOAD_ENABLED',env) && !featureEnabled('IX_UPLOAD_ENABLED',env))return disabledResponse('COMPLIANCE_UPLOADS');
     if(!['GET','PATCH','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
     const auth=await authenticate(request);if(auth.response)return auth.response;
     try{
       const db=getDb(),identity=await recordingIdentity(db,auth);
       if(!identity.admin)throw new EvidenceError(403,'Organization admin access required.');
       if(request.method==='PATCH'){
+        if(!featureEnabled('IX_UPLOAD_ENABLED',env))return disabledResponse('IX_UPLOAD_ENABLED');
         const input=await request.json();
         if(typeof input.sunfire_code!=='string' || input.sunfire_code.length>10000)throw new EvidenceError(400,'Enter SunFire confirmation codes, one per line.');
         await authorizeRecordingTarget(db,identity,{call_record_id:input.call_id});
@@ -39,12 +42,14 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
       if(request.method==='POST'){
         let input;try{input=await request.json();}catch{throw new EvidenceError(400,'Invalid JSON.');}
         if(input?.action==='retry_ix_upload'){
+          if(!featureEnabled('IX_UPLOAD_ENABLED',env))return disabledResponse('IX_UPLOAD_ENABLED');
           if(!/^[0-9a-f-]{36}$/i.test(input.id||''))throw new EvidenceError(400,'Upload ID is required.');
           const result=checked(await db.rpc('retry_ix_upload',{p_id:input.id,p_tenant:identity.tenant.id,p_actor:auth.userId}));
           const retried=Array.isArray(result)?result[0]?.retry_ix_upload:result;
           if(!retried)throw new EvidenceError(409,'Only unfinalized failed uploads or uploads needing attention can be retried.');
           return evidenceJson(200,{retried:true});
         }
+        if(!featureEnabled('CONVERSELY_UPLOAD_ENABLED',env))return disabledResponse('CONVERSELY_UPLOAD_ENABLED');
         if(input?.action!=='run_conversely_now')throw new EvidenceError(400,'Invalid compliance action.');
         const worker=checked(await db.from('conversely_worker_status').select('enabled,heartbeat_at').eq('singleton',true).maybeSingle());
         if(!worker?.enabled)throw new EvidenceError(409,'Conversely uploads are disabled on the worker.');
@@ -54,6 +59,7 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
       }
       let weekly;
       try{
+        if(!featureEnabled('CONVERSELY_UPLOAD_ENABLED',env))throw Error('disabled');
         const worker=checked(await db.from('conversely_worker_status').select('enabled,heartbeat_at').eq('singleton',true).maybeSingle());
         let nextCheckAt=null;
         try{nextCheckAt=checked(await db.from('conversely_worker_status').select('next_check_at').eq('singleton',true).maybeSingle())?.next_check_at||null;}catch{/* Migration may still be pending. */}
@@ -81,12 +87,12 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
         .eq('tenant_id',identity.tenant.id);
       if(enrollmentType!=='all')ixQuery=ixQuery.eq('is_test_enrollment',enrollmentType==='test');
       const [conversely,ix,missing,reconciliation]=await Promise.all([
-        enrollmentType==='test'?Promise.resolve({data:[],error:null}):db.from('conversely_submissions')
+        (!featureEnabled('CONVERSELY_UPLOAD_ENABLED',env)||enrollmentType==='test')?Promise.resolve({data:[],error:null}):db.from('conversely_submissions')
           .select('id,call_id,twilio_recording_sid,confirmation_code,status,attempts,last_error,updated_at,next_attempt_at')
           .eq('tenant_id',identity.tenant.id).in('status',['failed','pending']).not('last_error','is',null).order('updated_at',{ascending:false}).limit(200),
-        ixQuery.order('updated_at',{ascending:false}).limit(200),
-        db.from('compliance_missing_codes').select('*').eq('tenant_id',identity.tenant.id).order('call_start').limit(200),
-        db.from('compliance_reconciliation').select('*').eq('tenant_id',identity.tenant.id).order('day',{ascending:false}).limit(30),
+        !featureEnabled('IX_UPLOAD_ENABLED',env)?Promise.resolve({data:[],error:null}):ixQuery.order('updated_at',{ascending:false}).limit(200),
+        !featureEnabled('IX_UPLOAD_ENABLED',env)?Promise.resolve({data:[],error:null}):db.from('compliance_missing_codes').select('*').eq('tenant_id',identity.tenant.id).order('call_start').limit(200),
+        !featureEnabled('IX_UPLOAD_ENABLED',env)?Promise.resolve({data:[],error:null}):db.from('compliance_reconciliation').select('*').eq('tenant_id',identity.tenant.id).order('day',{ascending:false}).limit(30),
       ]);
       return evidenceJson(200,{admin:true,ix_environment:ixConfiguration(env).environment.toUpperCase(),failures:[...checked(conversely).map(row=>({...row,provider:'Conversely'})),...checked(ix).map(row=>({...row,provider:'UHC IX'}))],
         missing:checked(missing),reconciliation:checked(reconciliation),weekly});

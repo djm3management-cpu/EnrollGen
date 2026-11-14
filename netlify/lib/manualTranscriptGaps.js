@@ -1,8 +1,11 @@
+import { featureEnabled } from '../../telephony/src/lib/deploymentFeatures.js';
 import {randomUUID} from 'node:crypto';
 import {wavInfo,sliceWav} from '../../src/lib/wavGaps.js';
 import {redactSensitiveText} from '../functions/_redaction.js';
 import {checked} from '../functions/_evidenceAccess.js';
-export async function fillApprovedGaps({db,job,audio,transcribe}){
+export async function fillApprovedGaps({db,job,audio,transcribe,env=process.env}){
+ const flag=job.mode==='automatic'?'TRANSCRIPT_AUTO_RECOVERY_ENABLED':'TRANSCRIPT_GAP_FILL_ENABLED';
+ if(!featureEnabled(flag,env))throw new Error('Transcript gap fill disabled');
  const info=wavInfo(audio);
  if(info.channels!==job.channel_speakers.length)throw Error('Recording channel mapping mismatch');
  let transcript=job.source_transcript;

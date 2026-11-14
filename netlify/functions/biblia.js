@@ -1,8 +1,10 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 const json = (status, data) => new Response(JSON.stringify(data), {
   status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
 });
 export default async function handler(request) {
+  if (!featureEnabled('DAILY_VERSE_ENABLED')) return disabledResponse('DAILY_VERSE_ENABLED');
   if (request.method !== 'GET') return json(405, { error: 'Method not allowed' });
   const auth = await requireClerkAuth(request, { allowBypass: false });
   if (auth.response) return auth.response;

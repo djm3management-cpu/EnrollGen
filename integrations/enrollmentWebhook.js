@@ -1,8 +1,9 @@
+import { featureEnabled } from '../telephony/src/lib/deploymentFeatures.js';
 import {postJson} from './transport.js';
 const checked=({data,error})=>{if(error)throw Error('database_error');return data;};
 export async function deliverEnrollmentWebhooks(db,{env=process.env,send=postJson,limit=10}={}){
  // Queue is durable even before the server secret is configured.
- if(!env.GHL_ENROLLMENT_WEBHOOK_URL)return;
+ if(!featureEnabled('GHL_ENABLED',env) || !env.GHL_ENROLLMENT_WEBHOOK_URL)return;
  for(let n=0;n<limit;n++){
   const [job]=checked(await db.rpc('claim_compliance_upload',{p_provider:'ghl'}))||[];
   if(!job)break;

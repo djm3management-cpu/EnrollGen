@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {recoverBeforeScoring} from '../lib/transcriptRecovery.js';
 import {createGapFillHandler} from './transcript-gaps-background.js';
 import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
@@ -43,6 +44,7 @@ function errorDetails(error) {
 
 export function createScoreCallHandler({ getDb = getEvidenceServiceClient, classify, recordStatus=recordProviderStatus, verifyEnded=verifyPostCallEnded, recover=recoverBeforeScoring } = {}) {
 return async (request, context) => {
+  if(!featureEnabled('SCORING_ENABLED'))return disabledResponse('SCORING_ENABLED');
   if (request.method !== "POST") return new Response('Method not allowed', { status: 405 });
   if (!hasInternalJobAuthorization(request)) {
     console.warn('[score-bg] Rejected unauthorized scoring request');
@@ -61,7 +63,7 @@ return async (request, context) => {
     return new Response('Missing callId or tenantId', { status: 400 });
   }
 
-  if(process.env.SCORING_ENABLED!=='true'||process.env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)return Response.json({status:'disabled'},{status:503});
+  if(!featureEnabled('SCORING_ENABLED')||process.env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)return Response.json({status:'disabled'},{status:503});
   console.log(`[score-bg] Starting scoring for call ${callId}`);
   const startedAt=new Date().toISOString();
   let sb, callRecord;

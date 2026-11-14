@@ -252,6 +252,7 @@ export { isAdminUser };
 export default function TenantSettings({ currentUser = null }) {
   const { getToken } = useAppAuth();
   const tenantBundle = useTenantConfig();
+  const {features}=tenantBundle;
   const {
     tenant,
     tenantId,
@@ -283,7 +284,7 @@ export default function TenantSettings({ currentUser = null }) {
   const [vendorPaused, setVendorPaused] = useState(false);
   const [vendorPauseSaving, setVendorPauseSaving] = useState(false);
 
-  const seatLimit = isInternal ? Infinity : Number(subscription?.seat_count || 0);
+  const seatLimit = subscription?.billing_disabled || isInternal ? Infinity : Number(subscription?.seat_count || 0);
   const activeAgentCount = agents.filter((agent) => agent.is_active !== false).length || activeAgents.length;
   const atSeatLimit = Number.isFinite(seatLimit) && activeAgentCount >= seatLimit;
 
@@ -319,10 +320,10 @@ export default function TenantSettings({ currentUser = null }) {
   }, [loadAgents]);
 
   useEffect(() => {
-    if (!canAdmin) return;
+    if (!canAdmin || !features.PARAGON_ENABLED) return;
     fetchWithClerk(getToken, "/.netlify/functions/vendor-pause").then((response) => response.json())
       .then((data) => setVendorPaused(data.vendor_pause === true)).catch(() => {});
-  }, [canAdmin, getToken]);
+  }, [canAdmin, getToken, features.PARAGON_ENABLED]);
 
   const toggleVendorPause = async () => {
     setVendorPauseSaving(true);
@@ -501,16 +502,16 @@ export default function TenantSettings({ currentUser = null }) {
       {message ? <div className="billing-alert">{message}</div> : null}
       <AgentAudioSettings />
 
-      <section className="tenant-settings-card tenant-settings-card-wide">
+      {features.PARAGON_ENABLED && <section className="tenant-settings-card tenant-settings-card-wide">
         <div className="tenant-settings-section-title">Vendor availability</div>
         <div className="tenant-settings-inline">
           <button data-key-role="secondary" type="button" className={`eg-key billing-button${vendorPaused ? " is-primary" : ""}`} onClick={toggleVendorPause} disabled={vendorPauseSaving}>
             {vendorPauseSaving ? "Saving" : vendorPaused ? "Resume vendors" : "Pause vendors"}
           </button>
         </div>
-      </section>
+      </section>}
 
-      {canAdmin ? <VendorRoutingSettings getToken={getToken} /> : null}
+      {canAdmin && features.PARAGON_ENABLED ? <VendorRoutingSettings getToken={getToken} /> : null}
 
       <div className="tenant-settings-grid">
         <section className="tenant-settings-card">
@@ -543,7 +544,7 @@ export default function TenantSettings({ currentUser = null }) {
           </div>
         </section>
 
-        <section className="tenant-settings-card">
+        {features.GHL_ENABLED && <section className="tenant-settings-card">
           <div className="tenant-settings-section-title">CRM Integration</div>
           <SettingsField label="CRM webhook URL">
             <div className="tenant-settings-inline">
@@ -564,7 +565,7 @@ export default function TenantSettings({ currentUser = null }) {
             />
           </SettingsField>
 
-        </section>
+        </section>}
 
         <section className="tenant-settings-card tenant-settings-card-wide">
           <div className="tenant-settings-section-title">
@@ -577,7 +578,7 @@ export default function TenantSettings({ currentUser = null }) {
             <div className="tenant-agent-row tenant-agent-row-head">
               <span>Name</span>
               <span>NPN</span>
-              <span>CRM User ID</span>
+              <span>{features.GHL_ENABLED ? 'CRM User ID' : ''}</span>
               <span>Active</span>
               <span />
             </div>
@@ -585,7 +586,7 @@ export default function TenantSettings({ currentUser = null }) {
               <div className="tenant-agent-row" key={agent.id}>
                 <span>{agent.name}</span>
                 <span>{agent.npn || "--"}</span>
-                <span>{agent.ghl_user_id || "--"}</span>
+                <span>{features.GHL_ENABLED ? agent.ghl_user_id || '--' : ''}</span>
                 <label className="tenant-settings-toggle">
                   <input
                     type="checkbox"
@@ -615,11 +616,11 @@ export default function TenantSettings({ currentUser = null }) {
               value={newAgent.npn}
               onChange={(event) => setNewAgent((current) => ({ ...current, npn: event.target.value }))}
             />
-            <input
+            {features.GHL_ENABLED && <input
               placeholder="CRM User ID"
               value={newAgent.ghl_user_id}
               onChange={(event) => setNewAgent((current) => ({ ...current, ghl_user_id: event.target.value }))}
-            />
+            />}
             <button data-key-role="primary" type="button" className="eg-key billing-button" onClick={addAgent} disabled={atSeatLimit}>
               <Plus size={14} />
               Add Agent
@@ -755,9 +756,9 @@ export default function TenantSettings({ currentUser = null }) {
           </div>
         </section>
 
-        <section className="tenant-settings-card tenant-settings-card-wide">
+        {features.STRIPE_BILLING_ENABLED && <section className="tenant-settings-card tenant-settings-card-wide">
           <BillingSettings />
-        </section>
+        </section>}
       </div>
     </section>
   );

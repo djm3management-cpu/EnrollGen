@@ -1,3 +1,4 @@
+import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { validateParagonControls, isMissing067 } from './_paragonControls.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { isAdminAuth, NGHS_TENANT_ID, JSON_HEADERS, getSupabase } from './_tenantSettings.js';
@@ -9,6 +10,7 @@ const STATES = new Set('AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS,'Cache-Control':'no-store' } });
 
 export default async request => {
+  if (!featureEnabled('PARAGON_ENABLED')) return disabledResponse('PARAGON_ENABLED');
   if (!['GET','POST'].includes(request.method)) return json({ error:'Method not allowed' },405);
   const auth = await requireClerkAuth(request);
   if (auth.response) return auth.response;

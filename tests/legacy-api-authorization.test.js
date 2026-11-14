@@ -1,3 +1,6 @@
+// Explicit opt-in for existing enabled-feature behavior under test.
+process.env.STRIPE_BILLING_ENABLED = 'true';
+process.env.DAILY_VERSE_ENABLED = 'true';
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -34,7 +37,7 @@ function token(key, extra = {}) {
   const body = encode({ alg: 'RS256', typ: 'JWT', kid: 'offline' }) + '.' + encode({ sub: 'user-a', sid: 'session', iss: 'https://trusted.clerk.accounts.dev', iat: now - 600, nbf: now - 600, exp: now + 60, ...extra });
   return body + '.' + sign('RSA-SHA256', Buffer.from(body), key.privateKey).toString('base64url');
 }
-const env = { DEEPGRAM_API_KEY: 'offline-fixture', STRIPE_PRO_PRICE_ID: 'price_fixture' };
+const env = { STRIPE_BILLING_ENABLED:'true', SCORING_ENABLED:'true', TRANSCRIPT_GAP_FILL_ENABLED:'true', DEEPGRAM_API_KEY: 'offline-fixture', STRIPE_PRO_PRICE_ID: 'price_fixture' };
 const stripeClient = () => ({
   billingPortal: { sessions: { async create(body) { usage.stripe.push(body); return { url: 'https://stripe.offline.test/portal' }; } } },
   checkout: { sessions: { async create(body) { usage.stripe.push(body); return { id: 'checkout_fixture', url: 'https://stripe.offline.test/checkout' }; } } },

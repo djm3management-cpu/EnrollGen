@@ -1,3 +1,7 @@
+// Explicit opt-in for existing enabled-feature behavior under test.
+process.env.PARAGON_ENABLED = 'true';
+process.env.CONVERSELY_UPLOAD_ENABLED = 'true';
+process.env.IX_UPLOAD_ENABLED = 'true';
 import {before,after,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {PGlite} from '@electric-sql/pglite';

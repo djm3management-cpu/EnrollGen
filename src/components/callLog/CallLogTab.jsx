@@ -272,6 +272,7 @@ function ExpandedRow({ row, supabaseClient, playRequest, onCombine }) {
 }
 
 export default function CallLogTab({ onOpenContact = null, inboundCallId=null }) {
+ const {features={}}=useTenantConfig();
   const { supabaseClient } = useTenantConfig();
   const { getToken } = useAppAuth();
   const [exporting, setExporting] = useState(false);
@@ -363,8 +364,8 @@ export default function CallLogTab({ onOpenContact = null, inboundCallId=null })
 
   return (
     <div className="call-log-tab">
-      <ParagonResidenceReview />
-      <ComplianceUploads />
+      {features.PARAGON_ENABLED && <ParagonResidenceReview />}
+      {(features.CONVERSELY_UPLOAD_ENABLED || features.IX_UPLOAD_ENABLED) && <ComplianceUploads />}
       <div className="ops-command-line">
         <span className="call-log-title-group">
           <span>CALL LOG</span>
